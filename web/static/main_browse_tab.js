@@ -1099,7 +1099,7 @@ function actionEditSelected() {
             break;
         case "c":
             permGateAny( id, model.PERM_WR_REC | model.PERM_SHARE, function( perms ){
-                api.viewColl( id, function( data ){
+                api.collView( id, function( data ){
                     if ( data ){
                         dlgCollNewEdit.show( data, null, perms, function( data ){
                             refreshUI( id, data );
@@ -1149,7 +1149,7 @@ function actionShareSelected() {
         }
 
         if ( id.charAt(0) == "c" ){
-            api.viewColl( id, function( coll ){
+            api.collView( id, function( coll ){
                 if ( coll )
                     dlgSetACLs.show( coll );
             });
@@ -1709,7 +1709,7 @@ function taskHistoryPoll(){
     if ( !settings.user )
         return;
 
-    api._asyncGet( "/api/task/list" + (pollSince?"?since="+Math.round(2*pollSince):""), null, function( ok, data ){
+    api._asyncGet( api.taskList_url( pollSince*2 ), null, function( ok, data ){
         if ( ok && data ) {
             //console.log( "task list:",ok,data);
             if ( data.task && data.task.length ) {
@@ -1753,9 +1753,7 @@ function resetTaskPoll(){
 }
 
 function setupRepoTab(){
-    //_asyncGet( "/api/repo/list?details=true", null, function(ok,data){
     api.repoList( true, false, function(ok,data){
-        //console.log("repo list:",ok,data);
         if ( ok ){
             var html;
 
@@ -2362,92 +2360,39 @@ export function init(){
         },
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
-                data.result = {
-                    url: "/api/col/view?id="+my_root_key,
-                    cache: false
-                };
+                data.result = { url: api.collView_url( my_root_key ), cache: false };
             }else if ( data.node.key == "proj_own" ){
-                    data.result = {
-                    url: "/api/prj/list?owner=true&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
+                data.result = { url: api.projList_url( true, false, false, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key == "proj_adm" ){
-                data.result = {
-                    url: "/api/prj/list?admin=true&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
+                data.result = { url: api.projList_url( false, true, false, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key == "proj_mem" ){
-                data.result = {
-                    url: "/api/prj/list?member=true&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
+                data.result = { url: api.projList_url( false, false, true, data.node.data.offset, settings.opts.page_sz ), cache: false };
             }else if ( data.node.key.startsWith("p/")){
-                data.result = {
-                    url: "/api/col/view?id=c/p_"+data.node.key.substr(2)+"_root",
-                    cache: false
-                };
-            } else if ( data.node.key.startsWith( "shared_user" )) {
+                data.result = { url: api.collView_url( "c/p_"+data.node.key.substr(2)+"_root" ), cache: false };
+            } else if ( data.node.key.startsWith( "shared_" )) {
                 if ( data.node.data.scope ){
-                    data.result = {
-                        url: "/api/acl/by_subject/list?owner=" + encodeURIComponent(data.node.data.scope),
-                        cache: false
-                    };
+                    data.result = { url: api.aclListSharedItems_url( data.node.data.scope ), cache: false };
+                }else if ( data.node.key.charAt(7) == "u" ){
+                    data.result = { url: api.aclListSharedUsers_url(), cache: false };
                 }else{
-                    data.result = {
-                        url: "/api/acl/by_subject?inc_users=true",
-                        cache: false
-                    };
+                    data.result = { url: api.aclListSharedProjects_url(), cache: false };
                 }
             } else if ( data.node.key == "allocs" ) {
-                data.result = {
-                    url: "/api/repo/alloc/list/by_subject?subject=" + encodeURIComponent(data.node.data.scope),
-                    cache: false
-                };
+                data.result = { url: api.repoAllocListByOwner_url( data.node.data.scope, data.node.data.scope ), cache: false };
             } else if ( data.node.key.startsWith( "repo/" )) {
-                data.result = {
-                    url: "/api/dat/list/by_alloc?repo=" + encodeURIComponent(data.node.data.repo) + "&subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
-            } else if ( data.node.key.startsWith( "shared_proj" )) {
-                if ( data.node.data.scope ){
-                    data.result = {
-                        url: "/api/acl/by_subject/list?owner=" + encodeURIComponent(data.node.data.scope),
-                        cache: false
-                    };
-                }else{
-                    data.result = {
-                        url: "/api/acl/by_subject?inc_projects=true",
-                        cache: false
-                    };
-                }
+                data.result = { url: api.repoAllocListItems_url( data.node.data.repo, data.node.data.scope, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key == 'queries') {
-                data.result = {
-                    url: "/api/query/list?offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
-            } else if ( data.node.key.startsWith("published")) {
-                data.result = {
-                    url: "/api/col/published/list?subject=" + encodeURIComponent(data.node.data.scope) + "&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
-            } else if ( data.node.key == "favorites" || data.node.key == "views" ) {
-                data.result = [{title:"(not implemented yet)",icon:false,nodrag:true}];
+                data.result = { url: api.queryList_url( data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key.startsWith("q/") ) {
-                data.result = {
-                    url: "/api/query/exec?id=" + encodeURIComponent( data.node.key ),
-                    cache: false
-                };
+                data.result = { url: api.queryExec_url( data.node.key ), cache: false };
+            } else if ( data.node.key.startsWith("published")) {
+                data.result = { url: api.collListPublished_url( data.node.data.scope, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else {
                 var key = data.node.key;
                 if ( data.node.data.key_pfx )
                     key = data.node.key.substr( data.node.data.key_pfx.length );
 
-                //console.log("Lazy load coll",key);
-
-                data.result = {
-                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+settings.opts.page_sz+"&id=" + encodeURIComponent( key ),
-                    cache: false
-                };
+                data.result = { url: api.collRead_url( key, data.node.data.offset, settings.opts.page_sz ), cache: false };
             }
         },
         loadError:function( event, data ) {

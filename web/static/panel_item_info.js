@@ -42,7 +42,7 @@ export function showSelectedInfo( node, cb ){
         key = node.key;
 
     if ( key[0] == "c" ) {
-        api.viewColl( key, function( item ){
+        api.collView( key, function( item ){
             showSelectedItemInfo( item );
             cur_item = item;
             if ( cb ) cb( item );

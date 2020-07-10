@@ -280,10 +280,22 @@ export function sendDataLock( a_ids, a_lock, a_cb ){
     _asyncGet( "/api/dat/lock?lock="+a_lock+"&ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
-export function viewColl( a_id, a_cb ) {
-    _asyncGet( "/api/col/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
+export function collView_url( a_id ) {
+    return "/api/col/view?id=" + encodeURIComponent(a_id);
+}
+
+export function collRead_url( a_id, a_offset, a_count ) {
+    return "/api/col/read?id=" + encodeURIComponent(a_id)  + (a_offset!=undefined?"&offset="+a_offset:"") + (a_count!=undefined?"&count="+a_count:"");
+}
+
+export function collListPublished_url( a_owner, a_offset, a_count ){
+    return "/api/col/published/list?subject=" + encodeURIComponent( a_owner ) + "&offset=" + a_offset + "&count=" + a_count;
+}
+
+export function collView( a_id, a_cb ) {
+    //_asyncGet( "/api/col/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
+    _asyncGet( collView_url( a_id ), null, function( ok, data ){
         if ( ok ) {
-            //console.log("viewColl ok, data:", data, typeof data );
             if ( data )
                 a_cb( data );
             else
@@ -298,6 +310,11 @@ export function viewColl( a_id, a_cb ) {
 
 export function collDelete(a_ids,a_cb){
     _asyncGet( "/api/col/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
+}
+
+export function projList_url( a_owned, a_admin, a_member, a_offset, a_count ){
+    return "/api/prj/list?owner=" + (a_owned?"true":"false") + "&admin=" + (a_admin?"true":"false") + 
+        "&member="+ (a_member?"true":"false") + (a_offset!=undefined?"&offset="+a_offset:"") + (a_count!=undefined?"&count="+a_count:"");
 }
 
 export function viewProj( a_id, a_cb ){
@@ -353,6 +370,22 @@ export function getCollOffset( coll_id, item_id, page_sz, idx, cb ){
     });
 }
 
+// ===== ACL URL METHODS
+
+export function aclListSharedItems_url( a_owner ){
+    return "/api/acl/by_subject/list?owner=" + encodeURIComponent( a_owner );
+}
+
+export function aclListSharedUsers_url(){
+    return "/api/acl/by_subject?inc_users=true";
+}
+
+export function aclListSharedProjects_url(){
+    return "/api/acl/by_subject?inc_projects=true";
+}
+
+// ===== ACL METHODS
+
 export function aclView( a_id, a_cb ) {
     _asyncGet( "/api/acl/view?id="+encodeURIComponent(a_id), null, a_cb );
 }
@@ -362,19 +395,19 @@ export function aclUpdate( a_id, a_rules, a_cb ) {
 }
 
 export function aclByUser( a_cb ) {
-    _asyncGet( "/api/acl/by_subject?inc_users=true", null, a_cb );
+    _asyncGet( aclListSharedUsers_url(), null, a_cb );
 }
 
 export function aclByUserList( a_user_id, a_cb ) {
-    _asyncGet( "/api/acl/by_subject/list?owner="+encodeURIComponent(a_user_id), null, a_cb );
+    _asyncGet( aclListSharedItems_url( a_user_id ), null, a_cb );
 }
 
 export function aclByProject( a_cb ) {
-    _asyncGet( "/api/acl/by_subject?inc_projects=true", null, a_cb );
+    _asyncGet( aclListSharedProjects_url(), null, a_cb );
 }
 
 export function aclByProjectList( a_proj_id, a_cb ) {
-    _asyncGet( "/api/acl/by_subject/list?owner="+encodeURIComponent(a_proj_id), null, a_cb );
+    _asyncGet( aclListSharedItems_url( a_proj_id ), null, a_cb );
 }
 
 export function checkPerms( a_id, a_perms, a_cb ){
@@ -487,6 +520,15 @@ export function repoCalcSize( a_items, a_recursive, a_cb ){
     });
 }
 
+export function repoAllocListByOwner_url( a_owner ){
+    return "/api/repo/alloc/list/by_subject?subject=" + encodeURIComponent( a_owner );
+}
+
+export function repoAllocListItems_url( a_repo, a_owner, a_offset, a_count ){
+    return "/api/dat/list/by_alloc?repo=" + encodeURIComponent(a_repo) + "&subject=" + encodeURIComponent(a_owner) +
+        (a_offset!=undefined?"&offset="+a_offset:"") + (a_count!=undefined?"&count="+a_count:"");
+}
+
 export function allocList( a_id, a_cb ){
     _asyncGet( "/api/repo/alloc/list/by_repo?id="+a_id, null, a_cb );
 }
@@ -587,6 +629,14 @@ export function topicList( a_parent, a_offset, a_count, a_inc_data, a_cb ){
     _asyncGet( url, null, a_cb );
 }
 
+export function queryList_url( a_offset, a_count ){
+    return "/api/query/list?offset="+a_offset+"&count="+a_count;
+}
+
+export function queryExec_url( a_id ){
+    return "/api/query/exec?id=" + encodeURIComponent( a_id );
+}
+
 export function sendQueryCreate( a_title, a_query, a_callback ) {
     //_asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
     _asyncPost("/api/query/create?title="+encodeURIComponent(a_title),a_query,a_callback);
@@ -658,4 +708,8 @@ export function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
             }
         }
     });
+}
+
+export function taskList_url( a_since ){
+    return "/api/task/list" + (a_since?"?since="+a_since:"");
 }
