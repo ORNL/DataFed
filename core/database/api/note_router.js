@@ -296,11 +296,12 @@ router.get('/purge', function (req, res) {
                 //console.log("note purge, age:", req.queryParams.age_sec );
 
                 var t = (Date.now()/1000) - req.queryParams.age_sec;
-                var id, notes = g_db._query( "for i in n filter i.state == " + g_lib.NOTE_CLOSED + " && i.ut < " + t + " return i._id" );
+                var id, notes = g_db._query( "for i in n filter i.state == " + g_lib.NOTE_CLOSED + " && i.ut < " + t + " and i.parent_id == null return i._id" );
                 while ( notes.hasNext() ){
                     id = notes.next();
                     console.log("purging",id);
-                    g_lib.graph.n.remove(id);
+                    // This will also delete all dependent annotations
+                    g_lib.annotationDelete( id );
                 }
             }
         });
