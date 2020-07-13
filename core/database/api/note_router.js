@@ -104,14 +104,19 @@ router.post('/update', function (req, res) {
                     throw [g_lib.ERR_INVALID_PARAM,"Invalid new state for annotaion."];
                 }
 
-                var can_edit = ( client._id == note.creator ) || g_lib.hasAdminPermObject( client, ne._from );
+                // Subject admins can do anything
+                // Creators cannot edit if state is active
+                // Other with read permission on subject can only comment
 
-                if ( !can_edit ){
-                    if ( req.queryParams.new_state != undefined || req.queryParams.new_type != undefined || req.queryParams.title != undefined )
-                        throw g_lib.ERR_PERM_DENIED;
-
-                    // Must have all read permissions on subject to comment on annotation
-                    if ( g_lib.getPermissions( client, doc, g_lib.PERM_RD_ALL ) != g_lib.PERM_RD_ALL ){
+                if ( !g_lib.hasAdminPermObject( client, ne._from )){
+                    if ( client._id == note.creator ){
+                        if (( note.state == g_lib.NOTE_ACTIVE && ( req.queryParams.new_state != undefined ||
+                            req.queryParams.new_type != undefined || req.queryParams.title != undefined )) ||
+                            req.queryParams.new_state == g_lib.NOTE_ACTIVE ){
+                            throw g_lib.ERR_PERM_DENIED;
+                        }
+                    }else if ( g_lib.getPermissions( client, doc, g_lib.PERM_RD_ALL ) != g_lib.PERM_RD_ALL ||
+                        ( req.queryParams.new_state != undefined || req.queryParams.new_type != undefined || req.queryParams.title != undefined )){
                         throw g_lib.ERR_PERM_DENIED;
                     }
                 }
