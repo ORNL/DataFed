@@ -556,9 +556,12 @@ function GraphPanel( a_id, a_frame, a_parent ){
         if ( sel_node && sel_node.id != focus_node_id && node_data.length > 1 ){
             sel_node.prune = true;
             // Check for disconnection of the graph
+            console.log("hide",sel_node.id);
             var start = sel_node.links[0].source == sel_node?sel_node.links[0].target:sel_node.links[0].source;
+            console.log("start",start);
             if ( graphCountConnected( start, [] ) == node_data.length - 1 ){
                 for ( var i in sel_node.links ){
+                    console.log("prune",i,sel_node.links[i]);
                     sel_node.links[i].prune = true;
                 }
                 graphPrune();
@@ -570,6 +573,8 @@ function GraphPanel( a_id, a_frame, a_parent ){
                 sel_node.prune = false;
                 util.setStatusText("Node cannot be hidden");
             }
+        }else{
+            util.setStatusText("Node cannot be hidden");
         }
     };
 
