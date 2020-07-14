@@ -571,10 +571,10 @@ function GraphPanel( a_id, a_frame, a_parent ){
                 renderGraph();
             }else{
                 sel_node.prune = false;
-                util.setStatusText("Node cannot be hidden");
+                util.setStatusText("Cannot hide non-leaf nodes (try collapsing)");
             }
         }else{
-            util.setStatusText("Node cannot be hidden");
+            util.setStatusText("Cannot hide starting node");
         }
     };
 
