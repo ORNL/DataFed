@@ -190,8 +190,8 @@ export function dataPutCheck( a_id, a_cb ){
 }
 
 
-export function dataGetDeps( a_id, a_cb ) {
-    _asyncGet( "/api/dat/dep/get?id=" + encodeURIComponent(a_id), null, function( ok, data ){
+export function dataGetDeps( a_ids, a_cb ) {
+    _asyncGet( "/api/dat/dep/get?ids=" + encodeURIComponent(a_ids), null, function( ok, data ){
         if ( ok ) {
             //console.log("viewData ok, data:", data );
             a_cb( data );

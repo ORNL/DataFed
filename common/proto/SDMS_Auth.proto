@@ -262,11 +262,6 @@ message RecordSearchRequest
     optional uint32             count       = 6;
 }
 
-message RecordGetDependenciesRequest
-{
-    required string             id          = 1;
-}
-
 message RecordGetDependencyGraphRequest
 {
     required string             id          = 1;

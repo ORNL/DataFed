@@ -154,7 +154,8 @@ message ListingData
     optional uint32             notes       = 9;
     optional string             doi         = 10;
     optional string             url         = 11;
-    repeated DependencyData     dep         = 12;
+    optional bool               deps_avail  = 12;
+    repeated DependencyData     dep         = 13;
 }
 
 message PathData

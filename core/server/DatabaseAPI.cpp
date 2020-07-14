@@ -1100,15 +1100,25 @@ DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::Listin
     setListingDataReply( a_reply, result );
 }
 
-void
+/*void
 DatabaseAPI::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
 
-    dbGet( "dat/dep/get", {{"id",a_request.id()}}, result );
+    string ids="[";
+    for ( int i = 0; i < a_request.id_size(); i++ )
+    {
+        if ( i > 0 )
+            ids += ",";
+
+        ids += "\"" + a_request.id(i) + "\"";
+    }
+    ids += "]";
+
+    dbGet( "dat/dep/get", {{"ids", ids}}, result );
 
     setListingDataReply( a_reply, result );
-}
+}*/
 
 
 void
@@ -1605,6 +1615,8 @@ DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
     {
         const Value::Array &    arr2 = a_obj.asArray();
         DependencyData *        dep;
+
+        a_item->set_deps_avail( true );
 
         for ( Value::ArrayConstIter i = arr2.begin(); i != arr2.end(); i++ )
         {

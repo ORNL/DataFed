@@ -8,7 +8,7 @@ export function newGraphPanel( a_id, a_frame, a_parent ){
 }
 
 function makeLabel( node, item ){
-    console.log("makeLabel",node,item);
+    //console.log("makeLabel",node,item);
     if ( item.alias ){
         node.label = item.alias;
     }else
@@ -49,7 +49,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
             for ( i in a_data.item ){
                 item = a_data.item[i];
-                console.log("node:",item);
+                //console.log("node:",item);
                 node = {id:item.id,doi:item.doi,size:item.size,notes:item.notes,inhErr:item.inhErr,locked:item.locked,links:[]};
 
                 makeLabel( node, item );
@@ -123,7 +123,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
         var i, node, item, render = false;
 
         for ( i = 0; i < ids.length; i++ ){
-            node = findNodes( ids[i] );
+            node = findNode( ids[i] );
             if ( node ){
                 render = true;
                 item = data[i];
@@ -169,6 +169,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
             return focus_node_id;
     };
 
+    // NOTE: D3 changes link source and target IDs strings (in link_data) to node references (in node_data) when renderGraph runs
     function renderGraph(){
         var g;
 
@@ -437,14 +438,14 @@ function GraphPanel( a_id, a_frame, a_parent ){
         d3.event.sourceEvent.stopPropagation();
     }
 
-    function findNodes( a_id ){
+    function findNode( a_id ){
         for ( var i in node_data ){
             if ( node_data[i].id == a_id )
                 return node_data[i];
         }
     }
 
-    function graphLinkFind( a_id ){
+    function findLink( a_id ){
         for ( var i in link_data ){
             if ( link_data[i].id == a_id )
                 return link_data[i];
@@ -453,31 +454,25 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
     this.expandNode = function(){
         if ( sel_node && !sel_node.comp ){
-            //var exp_node = findNodes( sel_node )
-            //sel_node_id
-            api.dataGetDeps( sel_node_id, function( data ){
-                //console.log("expand node data:",data);
-                if ( data && data.item ){
-                    var rec = data.item[0];
-                    //console.log("node:",data);
+            api.dataView( sel_node_id, function( data ){
+                console.log("expand node data:",data);
+                if ( data ){
+                    var rec = data;
 
                     sel_node.comp = true;
 
                     var dep,new_node,link,i,id;
 
-                    //node = findNodes(sel_node_id);
-                    //node.comp = true;
-
-                    for ( i in rec.dep ){
-                        dep = rec.dep[i];
-                        console.log("dep:",dep);
+                    for ( i in rec.deps ){
+                        dep = rec.deps[i];
+                        //console.log("dep:",dep);
 
                         if ( dep.dir == "DEP_IN" )
                             id = dep.id+"-"+rec.id;
                         else
                             id = rec.id+"-"+dep.id;
 
-                        link = graphLinkFind( id );
+                        link = findLink( id );
                         if ( link )
                             continue;
 
@@ -492,18 +487,14 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
                         sel_node.links.push(link);
 
-                        new_node = findNodes(dep.id);
+                        new_node = findNode(dep.id);
                         if ( !new_node ){
-                            console.log("adding node");
-                            // TODO Make label consistent
                             new_node = {id:dep.id,notes:dep.notes,inhErr:dep.inhErr,links:[link]}
                             makeLabel( new_node, dep );
                             node_data.push( new_node );
                         }else{
                             new_node.links.push(link);
                         }
-
-                        //console.log("adding link");
 
                         link_data.push(link);
                     }
@@ -582,21 +573,80 @@ function GraphPanel( a_id, a_frame, a_parent ){
         }
     };
 
+    // Called automatically from API module when data records are impacted by edits or annotations
     this.updateData = function( a_data ){
-        console.log( "graph updating:", a_data );
-    
-        var i, node, item, render = false;
+        //console.log( "graph updating:", a_data );
 
-        for ( i in a_data ){
+        var j, node, item, l, l1, same, dep_cnt, render = false;
+
+        //if ( focus_node_id )
+        //    inst.load( focus_node_id, sel_node_id );
+
+        // Scan updates for dependency changes that impact current graph,
+        // if found, reload entire graph from DB
+        // If not reloading, scan for changes to title, annotations, status...
+
+        for ( var i in a_data ){
             item = a_data[i];
-            node = findNodes( i );
+            //console.log("examine:",i,item);
+            node = findNode( i );
             if ( node ){
-                render = true;
+                if ( item.depsAvail ){
+                    //console.log("deps avail on existing node:",node.links);
+                    // See if deps have changed
+                    l1 = {};
+                    for ( j in node.links ){
+                        l = node.links[j];
+                        if ( l.source.id == i )
+                            l1[l.target.id] = l.ty;
+                    }
+                    //console.log("l1:",l1);
 
+                    same = true;
+                    dep_cnt = 0;
+                    for ( j in item.dep ){
+                        l = item.dep[j];
+                        //console.log("chk dep",l);
+                        if ( l.dir == "DEP_OUT" ){
+                            if ( l1[l.id] != model.DepTypeFromString[l.type] ){
+                                //console.log("type mismatch",l.id,l1[l.id],l.type);
+                                same = false;
+                                break;
+                            }
+                            dep_cnt++;
+                        }
+                    }
+
+                    if ( same && Object.keys( l1 ).length != dep_cnt ){
+                        //console.log("len mismatch", Object.keys( l1 ).length, dep_cnt);
+                        same = false;
+                    }
+
+                    if ( !same ){
+                        // Reload graph
+                        //console.log("must reload graph (diff deps)");
+                        inst.load( focus_node_id, sel_node_id );
+                        return;
+                    }
+                }
+
+                render = true;
                 node.locked = item.locked;
                 node.notes = item.notes;
-                console.log("updating:", node);
+                //console.log("updating:", node);
                 makeLabel( node, item );
+                if ( node == sel_node )
+                    panel_info.showSelectedInfo( sel_node_id );
+            }else if ( item.depsAvail ){
+                // See if this node might need to be added to graph
+                for ( j in item.dep ){
+                    l = item.dep[j];
+                    if ( l.dir == "DEP_OUT" && findNode( l.id )){
+                        //console.log("must reload graph (new ext deps)");
+                        inst.load( focus_node_id, sel_node_id );
+                        return;
+                    }
+                }
             }
         }
 
