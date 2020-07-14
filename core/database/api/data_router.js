@@ -451,8 +451,13 @@ router.post('/update', function (req, res) {
 
         var doc, updates = [];
         result.updates.forEach( function( id ){
-            doc = g_db._document( id );
-            doc.notes = g_lib.annotationGetMask( client, doc._id );
+            if ( id == req.body.id ){
+                // Updated record is already in results - just copy it
+                doc = Object.assign( result.results[0] );
+            }else{
+                doc = g_db._document( id );
+                doc.notes = g_lib.annotationGetMask( client, doc._id );
+            }
             delete doc.desc;
             delete doc.md;
             updates.push( doc );
@@ -746,28 +751,34 @@ router.post('/export', function (req, res) {
 .summary('Export record metadata')
 .description('Export record metadata');
 
+// TODO Don't need this method
 
-router.get('/dep/get', function (req, res) {
+// Same as view, but for multiple records - returns minimal info + deps
+/* router.get('/dep/get', function (req, res) {
     const client = g_lib.getUserFromClientID( req.queryParams.client );
-    var data_id = g_lib.resolveDataID( req.queryParams.id, client );
-    var dep,result = {id:data_id,title:""};
+    var data, dep, res, result = [];
+    for ( var id in req.queryParams.id ){
+        id = g_lib.resolveDataID( id, client );
+        data = g_db._document( id );
+        res = { id: id, title: data.title };
+        res.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:id}).toArray();
 
-    result.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
+        for ( i in res.deps ){
+            dep = res.deps[i];
+            if ( dep.alias && client._id != dep.owner )
+                dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
 
-    for ( var i in result.deps ){
-        dep = result.deps[i];
-        if ( dep.alias && client._id != dep.owner )
-            dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
+            dep.notes = g_lib.annotationGetMask( client, dep.id );
+        }
 
-        dep.notes = g_lib.annotationGetMask( client, dep.id );
+        result.push( res );
     }
-
     res.send( [result] );
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Data ID or alias")
+.queryParam('ids', joi.array().items(joi.string()).required(), "Data IDs or aliases")
 .summary('Get data dependencies')
-.description('Get data dependencies');
+.description('Get data dependencies'); */
 
 router.get('/dep/graph/get', function (req, res) {
     try {
