@@ -17,6 +17,7 @@ module.exports = ( function() {
      * that isn't linked elsewhere are returned.
      */
     obj.preprocessItems = function( a_client, a_new_owner_id, a_ids, a_mode ){
+        console.log( "preprocessItems start" );
         var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, coll: [], glob_data: [], http_data: [], visited: {} };
 
         switch( a_mode ){
@@ -76,6 +77,8 @@ module.exports = ( function() {
         delete ctxt.coll_perm;
         delete ctxt.comb_perm;
 
+        console.log( "preprocessItems finished" );
+
         return ctxt;
     };
 
@@ -125,9 +128,7 @@ module.exports = ( function() {
             if ( !g_db._exists( id ))
                 throw [ g_lib.ERR_INVALID_PARAM, (is_coll?"Collection '":"Data record '") + id + "' does not exist." ];
 
-            console.log("preproc load",id);
             doc = g_db._document( id );
-            console.log("preproc loaded");
 
             if ( doc.deleted )
                 throw [g_lib.ERR_INVALID_PARAM, "Operation refers to deleted data record " + id];
@@ -223,7 +224,7 @@ module.exports = ( function() {
             }
 
             // Permission OK, process item
-            console.log("preproc perm ok");
+            //console.log("preproc perm ok");
 
             if ( is_coll ){
                 a_ctxt.coll.push( id );

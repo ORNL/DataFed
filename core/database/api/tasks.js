@@ -803,34 +803,28 @@ var tasks_func = function() {
     };
 
     obj.taskInitRecCollDelete = function( a_client, a_ids ){
-        console.log("taskInitRecCollDelete");
+        console.log("taskInitRecCollDelete start",Date.now());
 
         var result = g_proc.preprocessItems( a_client, null, a_ids, g_lib.TT_REC_DEL );
         var i,rec_ids = [];
 
-        console.log("taskInitRecCollDelete - 1",rec_ids, result.http_data );
+        console.log("HTTP records:", result.http_data.length, ", Globus records:", result.glob_data.length );
 
         for ( i in result.http_data ){
-            console.log("taskInitRecCollDelete - 1.5", result.http_data[i].id );
             rec_ids.push( result.http_data[i].id );
         }
-        console.log("taskInitRecCollDelete - 2",rec_ids);
 
         for ( i in result.glob_data )
             rec_ids.push( result.glob_data[i].id );
 
-        console.log("get exl acc",rec_ids);
-
         obj._ensureExclusiveAccess( rec_ids );
-
-        console.log("del collections");
 
         for ( i in result.coll ){
             // TODO Adjust for collection limit on allocation
             obj._deleteCollection( result.coll[i] );
         }
 
-        console.log("del empty data");
+        console.log("Del empty records",Date.now());
 
         // Delete records with no data
         for ( i in result.http_data ){
@@ -838,17 +832,16 @@ var tasks_func = function() {
         }
 
         if ( result.glob_data.length ){
-            console.log("sched data del task");
+            console.log("Sched record del task",Date.now());
 
             var state = { del: obj._buildDeleteDoc( result.glob_data )};
 
             result.task = obj._createTask( a_client._id, g_lib.TT_REC_DEL, state.del.length + 1, state );
 
-            for ( i in result.glob_data ){
-                obj._deleteDataRecord( result.glob_data[i].id );
-            }
+            obj._deleteDataRecords( result.glob_data );
         }
 
+        console.log("taskInitRecCollDelete finished",Date.now());
         return result;
     };
 
@@ -1333,7 +1326,7 @@ var tasks_func = function() {
      * but does adjust allocation.
      */
     obj._deleteDataRecord = function( a_id ){
-        console.log( "delete rec", a_id );
+        //console.log( "delete rec", a_id );
         var doc = g_db.d.document( a_id );
 
         // Delete alias
@@ -1355,6 +1348,61 @@ var tasks_func = function() {
 
         // Delete data record
         g_graph.d.remove( a_id );
+    };
+
+
+    obj._deleteDataRecords = function( a_records ){
+        console.log( "deleting records", Date.now() );
+        var i, j, id, doc, tmp, loc, alloc, allocs = {};
+
+        for ( i in a_records ){
+            id = a_records[i].id;
+            doc = g_db.d.document( id );
+
+            // Delete alias
+            tmp = g_db.alias.firstExample({ _from: id });
+            if ( tmp ){
+                g_graph.a.remove( tmp._to );
+            }
+
+            // Delete notes and all inherted notes
+            tmp = g_db.note.byExample({ _from: id });
+            while( tmp.hasNext() ){
+                g_lib.annotationDelete( tmp.next()._to );
+            }
+            
+            // Update allocation
+            loc = g_db.loc.firstExample({ _from: id });
+            if ( !( doc.owner in allocs )){
+                allocs[doc.owner] = {};
+            }
+
+            tmp = allocs[doc.owner][loc._to];
+
+            if ( !tmp ){
+                allocs[doc.owner][loc._to] = {ct: 1, sz: doc.size };
+            }else{
+                tmp.ct++;
+                tmp.sz += doc.size;
+            }
+
+            // Delete data record
+            g_graph.d.remove( id );
+        }
+
+        console.log( "allocation", allocs );
+        console.log( "updating allocation", Date.now() );
+
+        for ( i in allocs ){
+            tmp = allocs[i];
+            for ( j in tmp ){
+                alloc = g_db.alloc.firstExample({ _from: i, _to: j });
+                doc = tmp[j];
+                g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.sz, rec_count: alloc.rec_count - doc.ct });
+            }
+        }
+
+        console.log( "deleting records finished", Date.now() );
     };
 
 
@@ -1518,15 +1566,16 @@ var tasks_func = function() {
 
 
     obj._ensureExclusiveAccess = function( a_ids ){
+        console.log("_ensureExclusiveAccess start", Date.now());
         var i, id, lock;
         for ( i in a_ids ){
             id = a_ids[i];
-            console.log("_ensureExclusiveAccess",id);
+            //console.log("_ensureExclusiveAccess",id);
             lock = g_db.lock.firstExample({ _to: id });
             if ( lock )
                 throw [ g_lib.ERR_PERM_DENIED, "Operation not permitted - '" + id + "' in use." ];
         }
-        console.log("_ensureExclusiveAccess done");
+        console.log("_ensureExclusiveAccess done", Date.now());
     };
 
     return obj;
