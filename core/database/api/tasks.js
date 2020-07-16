@@ -819,27 +819,34 @@ var tasks_func = function() {
 
         obj._ensureExclusiveAccess( rec_ids );
 
-        for ( i in result.coll ){
-            // TODO Adjust for collection limit on allocation
-            obj._deleteCollection( result.coll[i] );
+        var state = {}
+
+        if ( result.coll.length ){
+            state.del_coll = result.coll;
+            for ( i in result.coll ){
+                g_db.item.removeByExample({ _to: result.coll[i] });
+            }
         }
 
-        console.log("Del empty records",Date.now());
+        state.del_rec = [];
 
-        // Delete records with no data
-        for ( i in result.http_data ){
-            obj._deleteDataRecord( result.http_data[i].id );
+        if ( result.http_data.length ){
+            for ( i in result.http_data ){
+                state.del_rec.push( result.http_data[i].id );
+                g_db.item.removeByExample({ _to: result.http_data[i].id });
+            }
         }
 
         if ( result.glob_data.length ){
-            console.log("Sched record del task",Date.now());
+            state.del_data = obj._buildDeleteDoc( result.glob_data );
 
-            var state = { del: obj._buildDeleteDoc( result.glob_data )};
-
-            result.task = obj._createTask( a_client._id, g_lib.TT_REC_DEL, state.del.length + 1, state );
-
-            obj._deleteDataRecords( result.glob_data );
+            for ( i in result.glob_data ){
+                state.del_rec.push( result.glob_data[i].id );
+                g_db.item.removeByExample({ _to: result.glob_data[i].id });
+            }
         }
+
+        result.task = obj._createTask( a_client._id, g_lib.TT_REC_DEL, state.del_data.length + 2, state );
 
         console.log("taskInitRecCollDelete finished",Date.now());
         return result;
@@ -848,17 +855,41 @@ var tasks_func = function() {
     obj.taskRunRecCollDelete = function( a_task ){
         console.log("taskRunRecCollDelete");
 
-        var reply, state = a_task.state;
+        var i, reply, state = a_task.state;
 
         // No rollback functionality
         if ( a_task.step < 0 )
             return;
 
+        if ( a_task.step == 0 ){
+            obj._transact( function(){
+                console.log("Del collections",Date.now());
+
+                for ( i in state.del_coll ){
+                    // TODO Adjust for collection limit on allocation
+                    obj._deleteCollection( state.del_coll[i] );
+                }
+
+                console.log("Del records",Date.now());
+
+                // Delete records with no data
+                if ( state.del_rec.length ){
+                    obj._deleteDataRecords( state.del_rec );
+                }
+        
+                // Update task step
+                a_task.step += 1;
+                g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
+            }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task"] );
+
+            // Continue to next step
+        }
+
         if ( a_task.step < a_task.steps - 1 ){
-            console.log("taskRunRecCollDelete - del", a_task.step );
-            reply = { cmd: g_lib.TC_RAW_DATA_DELETE, params: state.del[ a_task.step ], step: a_task.step };
+            console.log("taskRunRecCollDelete - del", a_task.step, Date.now() );
+            reply = { cmd: g_lib.TC_RAW_DATA_DELETE, params: state.del_data[ a_task.step - 1 ], step: a_task.step };
         }else{
-            console.log("taskRunRecCollDelete - complete task");
+            console.log("taskRunRecCollDelete - complete task", Date.now() );
             obj._transact( function(){
                 // Last step - complete task
                 reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
@@ -895,26 +926,31 @@ var tasks_func = function() {
         obj._ensureExclusiveAccess( a_proj_ids );
 
         var allocs, alloc;
-        var task_allocs = [];
+        var state = { proj_ids: [], allocs: [] };
 
         // For each project, determine allocation/raw data status and take appropriate actions
         for ( i in a_proj_ids ){
             proj_id = a_proj_ids[i];
 
+            state.proj_ids.push( proj_id );
+
             allocs = g_db.alloc.byExample({ _from: proj_id });
             while ( allocs.hasNext() ){
                 alloc = allocs.next();
-                task_allocs.push({ repo_id: alloc._to, repo_path: alloc.path });
+                state.allocs.push({ repo_id: alloc._to, repo_path: alloc.path });
             }
 
-            obj._projectDelete( proj_id );
+            // Remove owner, admins, members to prevent access
+            g_db.owner.removeByExample({ _from: proj_id });
+            g_db.admin.removeByExample({ _from: proj_id });
+            g_graph.g.removeByExample({ uid: proj_id, gid: "members" });
+
+            //obj._projectDelete( proj_id );
         }
 
         var result = {};
 
-        if ( task_allocs.length ){
-            result.task = obj._createTask( a_client._id, g_lib.TT_PROJ_DEL, task_allocs.length + 1, { allocs: task_allocs });
-        }
+        result.task = obj._createTask( a_client._id, g_lib.TT_PROJ_DEL, state.allocs.length + 2, state );
 
         return result;
     };
@@ -927,6 +963,22 @@ var tasks_func = function() {
         // No rollback functionality
         if ( a_task.step < 0 )
             return;
+
+        if ( a_task.step == 0 ){
+            obj._transact( function(){
+                console.log("Del projects",Date.now());
+
+                for ( i in state.proj_ids ){
+                    obj._projectDelete( state.proj_ids[i] );
+                }
+        
+                // Update task step
+                a_task.step += 1;
+                g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
+            }, [], ["d","c","p","a","g","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task"] );
+
+            // Continue to next step
+        }
 
         if ( a_task.step < a_task.steps - 1 ){
             // Request repo path delete
@@ -1351,12 +1403,12 @@ var tasks_func = function() {
     };
 
 
-    obj._deleteDataRecords = function( a_records ){
+    obj._deleteDataRecords = function( a_ids ){
         console.log( "deleting records", Date.now() );
         var i, j, id, doc, tmp, loc, alloc, allocs = {};
 
-        for ( i in a_records ){
-            id = a_records[i].id;
+        for ( i in a_ids ){
+            id = a_ids[i];
             doc = g_db.d.document( id );
 
             // Delete alias
@@ -1421,13 +1473,16 @@ var tasks_func = function() {
 
         while ( rec_ids.hasNext() ) {
             id = rec_ids.next();
-            if ( id.charAt(0) == "c" ){
-                g_lib.topicUnlink( id );
-            }
-            if ( id.startsWith( 'task' ))
+
+            if ( id.charAt(0) == "d" ){
+                obj._deleteDataRecord( id );
+            }else if ( id.charAt(0) == "c" ){
+                obj._deleteCollection( id );
+            }else if ( id.startsWith( 'task' )){
                 g_graph.task.remove( id );
-            else
+            }else{
                 g_graph[id.charAt(0)].remove( id );
+            }
         }
 
         g_graph.p.remove( a_proj_id );

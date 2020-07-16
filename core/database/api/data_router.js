@@ -264,13 +264,13 @@ function recordUpdate( client, record, result ){
         // Required permissions depend on which fields are being modified:
         // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
         var perms = 0;
-        if ( obj.md !== undefined )
+        if ( record.md !== undefined )
             perms |= g_lib.PERM_WR_META;
 
-        if ( obj.title !== undefined || obj.alias !== undefined || obj.desc !== undefined || obj.keyw !== undefined )
+        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.keyw !== undefined )
             perms |= g_lib.PERM_WR_REC;
 
-        if ( obj.size !== undefined || obj.dt !== undefined || obj.data_url !== undefined || obj.doi !== undefined || obj.source !== undefined )
+        if ( record.size !== undefined || record.dt !== undefined || record.data_url !== undefined || record.doi !== undefined || record.source !== undefined )
             perms |= g_lib.PERM_WR_DATA;
 
         if ( data.locked || !g_lib.hasPermissions( client, data, perms ))

@@ -407,8 +407,8 @@ router.post('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn"],
-                write: ["p","g","uuid","accn","c","d","a", "acl","owner","ident","alias","admin","member","item","alloc","loc","top","t","dep"],
+                read: ["u","uuid","accn","p","alloc"],
+                write: ["g","owner","acl","admin","member"],
                 exclusive: ["lock","task","block"]
             },
             action: function() {
