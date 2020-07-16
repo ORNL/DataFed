@@ -698,8 +698,10 @@ function actionDeleteSelected(){
             if ( data.length ){
                 api.sendDataDelete( data, function( ok, data ){
                     if ( ok ){
-                        if ( --done == 0 )
+                        if ( --done == 0 ){
                             refreshUI();
+                            resetTaskPoll();
+                        }
                     }else
                         util.setStatusText( "Data Delete Error: " + data, 1 );
                 });
@@ -707,8 +709,10 @@ function actionDeleteSelected(){
             if ( coll.length ){
                 api.collDelete( coll, function( ok, data ){
                     if ( ok ){
-                        if ( --done == 0 )
+                        if ( --done == 0 ){
                             refreshUI();
+                            resetTaskPoll();
+                        }
                     }else
                         util.setStatusText("Collection Delete Error: " + data, 1 );
                 });
@@ -718,6 +722,7 @@ function actionDeleteSelected(){
                     if ( ok ){
                         util.reloadNode(data_tree.getNodeByKey("proj_own"));
                         panel_info.showSelectedInfo();
+                        resetTaskPoll();
                     }else
                         util.setStatusText("Project Delete Error: " + data, 1 );
                 });

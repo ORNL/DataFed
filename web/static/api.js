@@ -2,7 +2,7 @@ import * as model from "./model.js";
 import * as util from "./util.js";
 import * as settings from "./settings.js";
 
-export function _asyncGet( a_url, a_raw_json_data, a_callback ) {
+export function _asyncGet( a_url, a_raw_json_data, a_callback, a_timeout ) {
     $.ajax({
         url : a_url,
         global : false,
@@ -36,7 +36,7 @@ export function _asyncGet( a_url, a_raw_json_data, a_callback ) {
                     a_callback( false, "Unknown error" );
             }
         },
-        timeout: 10000
+        timeout: a_timeout?a_timeout:10000
     });
 }
 
@@ -335,7 +335,7 @@ export function viewProj( a_id, a_cb ){
 }
 
 export function projDelete( a_ids, a_cb ){
-    _asyncGet( "/api/prj/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
+    _asyncGet( "/api/prj/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb, 200000 );
 }
 
 export function linkItems( a_items, a_coll, a_cb ) {
@@ -711,5 +711,5 @@ export function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
 }
 
 export function taskList_url( a_since ){
-    return "/api/task/list" + (a_since?"?since="+a_since:"");
+    return "/api/task/list" + (a_since!=undefined?"?since="+a_since:"");
 }
