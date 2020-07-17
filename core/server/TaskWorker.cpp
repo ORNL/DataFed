@@ -95,11 +95,8 @@ TaskWorker::workerThread()
                     retry = cmdAllocDelete( params );
                     break;
                 case TC_STOP:
-                    if ( obj.has( "new_tasks" ))
-                    {
-                        DL_DEBUG("found " << obj.value().size() << " new ready tasks." );
-                        m_mgr.newTasks( obj.value() );
-                    }
+                    DL_DEBUG("Task STOP. payload: " << params.toString() );
+                    m_mgr.newTasks( params );
                     break;
                 default:
                     EXCEPT_PARAM(1,"Invalid task command: " << cmd );

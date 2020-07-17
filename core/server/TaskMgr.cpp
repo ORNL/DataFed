@@ -206,7 +206,7 @@ TaskMgr::newTasks( const libjson::Value & a_tasks )
         const libjson::Value::Array & arr = a_tasks.asArray();
         libjson::Value::ArrayConstIter t = arr.begin();
 
-        DL_DEBUG("TaskMgr scheduling " << arr.size() << "new task(s)");
+        DL_DEBUG("TaskMgr scheduling " << arr.size() << " new task(s)");
 
         lock_guard<mutex> lock( m_worker_mutex );
 

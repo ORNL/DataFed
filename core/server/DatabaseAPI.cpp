@@ -3041,7 +3041,7 @@ DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataRe
 
     libjson::Value result;
 
-    dbGet( "task/list", params, result );
+    dbGet( "task/list", params, result, false );
 
     setTaskDataReplyArray( a_reply, result );
 }

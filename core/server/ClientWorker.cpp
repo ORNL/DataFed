@@ -196,6 +196,8 @@ ClientWorker::workerThread()
     uint16_t        msg_type;
     map<uint16_t,msg_fun_t>::iterator handler;
 
+    uint16_t task_list_msg_type = MsgBuf::findMessageType( 2, "TaskListRequest" );
+
     Anon::NackReply nack;
     nack.set_err_code( ID_AUTHN_REQUIRED );
     nack.set_err_msg( "Authentication required" );
@@ -208,7 +210,10 @@ ClientWorker::workerThread()
             {
                 msg_type = m_msg_buf.getMsgType();
 
-                DL_DEBUG( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
+                if ( msg_type != task_list_msg_type )
+                {
+                    DL_DEBUG( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
+                }
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
