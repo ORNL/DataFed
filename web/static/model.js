@@ -155,5 +155,5 @@ export function update( a_data ){
         }
         upd_timer = null;
         upd_data = {};
-    }, 500);
+    }, 250);
 }

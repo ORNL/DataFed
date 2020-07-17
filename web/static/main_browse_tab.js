@@ -1107,7 +1107,7 @@ function actionEditSelected() {
                 api.collView( id, function( data ){
                     if ( data ){
                         dlgCollNewEdit.show( data, null, perms, function( data ){
-                            refreshUI( id, data );
+                            //refreshUI( id, data );
                         });
                     }
                 });
@@ -1117,7 +1117,6 @@ function actionEditSelected() {
             permGateAny( id, model.PERM_WR_REC | model.PERM_WR_META | model.PERM_WR_DATA, function( perms ){
                 api.dataView( id, function( data ){
                     dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_EDIT, data, null, perms, function( data ){
-                        //refreshUI( id, data );
                         // TODO - Only do this if raw data source is changed
                         resetTaskPoll();
                     });
@@ -1649,19 +1648,20 @@ function taskUpdateHistory( task_list ){
     if ( len == 0 ){
         html = "(no recent server tasks)";
     }else{
-        html = "<table class='info_table'><tr><th>Task ID</th><th>Type</th><th>Status</th><th>Prog.</th><th>Started</th><th>Updated</th><th>Message</th></tr>";
+        html = "<table class='task-table'><tr><th>Task ID</th><th>Type</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
+        //html = "<table class='info_table'><tr><th>Task ID</th><th>Type</th><th>Status</th><th>Prog.</th><th>Started</th><th>Updated</th><th>Message</th></tr>";
         var task, time = new Date(0);
 
         for ( var i in task_list ) {
             task = task_list[i];
 
-            html += "<tr style='font-size:.9em'><td>" + task.id.substr(5) + "</td><td>";
+            html += "<tr style='font-size:.9em'><td>" + task.id.substr(5) + "</td><td style='white-space: nowrap'>";
 
             switch( task.type ){
                 case "TT_DATA_GET": html += "Get Data"; break;
                 case "TT_DATA_PUT": html += "Put Data"; break;
                 case "TT_DATA_DEL": html += "Delete Data"; break;
-                case "TT_REC_CHG_ALLOC": html += "Change Allocation"; break;
+                case "TT_REC_CHG_ALLOC": html += "Change Alloc"; break;
                 case "TT_REC_CHG_OWNER": html += "Change Owner"; break;
                 case "TT_REC_DEL": html += "Delete Record"; break;
                 case "TT_ALLOC_CREATE": html += "Create Alloc"; break;
@@ -1670,38 +1670,24 @@ function taskUpdateHistory( task_list ){
                 case "TT_PROJ_DEL": html += "Delete Project"; break;
             }
 
-            html += "</td><td>";
-
-            switch( task.status ){
-                case "TS_BLOCKED": html += "Queued"; break;
-                case "TS_READY": html += "Ready"; break;
-                case "TS_RUNNING": html += "Running"; break;
-                case "TS_SUCCEEDED": html += "Succeeded"; break;
-                case "TS_FAILED": html += "Failed"; break;
-            }
-
-            switch( task.status ){
-                case "TS_BLOCKED":
-                case "TS_READY":
-                    html += "</td><td>";
-                    break;
-                case "TS_RUNNING":
-                case "TS_FAILED":
-                    html += "</td><td>" + Math.floor(100*task.step / task.steps) + "% (" + (task.step + 1) + "/" + task.steps + ")";
-                    break;
-                case "TS_SUCCEEDED":
-                    html += "</td><td>100%";
-                    break;
-                }
-
-
             time.setTime( task.ct*1000 );
-            html += "</td><td>" + time.toLocaleDateString("en-US", settings.date_opts );
+            html += "</td><td style='white-space: nowrap'>" + time.toLocaleDateString("en-US", settings.date_opts );
 
             time.setTime( task.ut*1000 );
-            html += "</td><td>" + time.toLocaleDateString("en-US", settings.date_opts );
+            html += "</td><td style='white-space: nowrap'>" + time.toLocaleDateString("en-US", settings.date_opts );
 
-            html += "</td><td>" + task.msg + "</td></tr>";
+            html += "</td><td style='width:99%'>";
+            switch( task.status ){
+                case "TS_BLOCKED": html += "QUEUED"; break;
+                case "TS_READY": html += "READY"; break;
+                case "TS_RUNNING": html += "RUNNING (" + Math.floor(100*task.step / task.steps) + "%)"; break;
+                case "TS_SUCCEEDED": html += "<span class='task-succeeded'>SUCCEEDED</span>"; break;
+                case "TS_FAILED": html += "<span class='task-failed'>FAILED</span> - " + task.msg; break;
+            }
+
+            html += "</td></tr>";
+
+            //html += "</td><td>" + task.msg + "</td></tr>";
         }
         html += "</table>";
     }
@@ -2815,6 +2801,33 @@ task_hist.html( "(no recent transfers)" );
 
 model.registerUpdateListener( function( a_data ){
     console.log("main tab updating:",a_data);
+
+    var act_node;
+
+    switch( select_source ){
+        case SS_TREE:
+            act_node = data_tree.activeNode;
+            break;
+        case SS_CAT:
+            act_node = cat_panel.tree.activeNode;
+            break;
+        case SS_PROV:
+            act_node = graph_panel.getSelectedID();
+            break;
+        case SS_SEARCH:
+            act_node = results_tree.activeNode;
+            break;
+    }
+
+    if ( act_node ){
+        for ( var i in a_data ){
+            if ( a_data[i].id == act_node.key ){
+                panel_info.showSelectedInfo( act_node );
+                break;
+            }
+        }
+    }
+
     // Find impacted nodes in data tree and update title
     data_tree.visit( function(node){
         if ( node.key in a_data ){

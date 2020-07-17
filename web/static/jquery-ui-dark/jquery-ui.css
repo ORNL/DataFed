@@ -70,6 +70,21 @@ textarea.ui-state-disabled
 	color: #e0e0e0
 }
 
+.task-table th
+{
+    background-color:#404040;
+}
+
+.task-succeeded
+{
+	color:#0c0;
+}
+
+.task-failed
+{
+	color:#F00;
+}
+
 /* Dependency Graph Styles */
 
 .links{
