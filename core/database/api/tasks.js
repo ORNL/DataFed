@@ -925,7 +925,7 @@ var tasks_func = function() {
 
         obj._ensureExclusiveAccess( a_proj_ids );
 
-        var allocs, alloc;
+        var allocs, alloc, gr;
         var state = { proj_ids: [], allocs: [] };
 
         // For each project, determine allocation/raw data status and take appropriate actions
@@ -943,14 +943,14 @@ var tasks_func = function() {
             // Remove owner, admins, members to prevent access
             g_db.owner.removeByExample({ _from: proj_id });
             g_db.admin.removeByExample({ _from: proj_id });
-            g_graph.g.removeByExample({ uid: proj_id, gid: "members" });
 
-            //obj._projectDelete( proj_id );
+            gr = g_db.g.byExample({ uid: proj_id, gid: "members" });
+            if ( gr.hasNext() ){
+                g_graph.g.remove( gr.next()._id );
+            }
         }
 
-        var result = {};
-
-        result.task = obj._createTask( a_client._id, g_lib.TT_PROJ_DEL, state.allocs.length + 2, state );
+        var result = { task: obj._createTask( a_client._id, g_lib.TT_PROJ_DEL, state.allocs.length + 2, state )};
 
         return result;
     };
@@ -961,14 +961,15 @@ var tasks_func = function() {
         var reply, state = a_task.state;
 
         // No rollback functionality
-        if ( a_task.step < 0 )
+        if ( a_task.step < 0 ){
             return;
+        }
 
         if ( a_task.step == 0 ){
             obj._transact( function(){
                 console.log("Del projects",Date.now());
 
-                for ( i in state.proj_ids ){
+                for ( var i in state.proj_ids ){
                     obj._projectDelete( state.proj_ids[i] );
                 }
         
@@ -982,7 +983,7 @@ var tasks_func = function() {
 
         if ( a_task.step < a_task.steps - 1 ){
             // Request repo path delete
-            reply = { cmd: g_lib.TC_ALLOC_DELETE, params: state.allocs[ a_task.step ], step: a_task.step };
+            reply = { cmd: g_lib.TC_ALLOC_DELETE, params: state.allocs[ a_task.step - 1 ], step: a_task.step };
         }else{
             // Complete task
             obj._transact( function(){
@@ -1396,7 +1397,9 @@ var tasks_func = function() {
         // Update allocation
         var loc = g_db.loc.firstExample({ _from: a_id });
         var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
-        g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
+        if ( alloc ){
+            g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
+        }
 
         // Delete data record
         g_graph.d.remove( a_id );
@@ -1449,8 +1452,10 @@ var tasks_func = function() {
             tmp = allocs[i];
             for ( j in tmp ){
                 alloc = g_db.alloc.firstExample({ _from: i, _to: j });
-                doc = tmp[j];
-                g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.sz, rec_count: alloc.rec_count - doc.ct });
+                if ( alloc ){
+                    doc = tmp[j];
+                    g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.sz, rec_count: alloc.rec_count - doc.ct });
+                }
             }
         }
 
@@ -1465,25 +1470,27 @@ var tasks_func = function() {
      * DO NOT USE ON PROJECTS WITH RAW DATA!!!!
      */
     obj._projectDelete = function( a_proj_id ){
+        console.log("_projectDelete",a_proj_id);
         // Delete allocations
         g_db.alloc.removeByExample({ _from: a_proj_id });
 
-        // Delete all owned records (data, collections, groups, aliases
-        var id, rec_ids = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: a_proj_id });
+        // Delete all owned records (data, collections, groups, etc.)
+        var id, rec_ids = g_db._query( "for v in 1..1 inbound @proj owner filter !is_same_collection('a',v) return v._id", { proj: a_proj_id });
 
         while ( rec_ids.hasNext() ) {
             id = rec_ids.next();
+            console.log("del ",id);
 
             if ( id.charAt(0) == "d" ){
                 obj._deleteDataRecord( id );
             }else if ( id.charAt(0) == "c" ){
                 obj._deleteCollection( id );
-            }else if ( id.startsWith( 'task' )){
-                g_graph.task.remove( id );
             }else{
                 g_graph[id.charAt(0)].remove( id );
             }
         }
+
+        console.log("del",a_proj_id);
 
         g_graph.p.remove( a_proj_id );
     };
