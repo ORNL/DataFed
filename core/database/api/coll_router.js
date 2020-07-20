@@ -91,7 +91,7 @@ router.post('/create', function (req, res) {
             }
         });
 
-        res.send( result );
+        res.send({ results: result });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -109,7 +109,7 @@ router.post('/create', function (req, res) {
 
 router.post('/update', function (req, res) {
     try {
-        var result = [];
+        var result = { results: [], updates: [] };
 
         g_db._executeTransaction({
             collections: {
@@ -183,7 +183,8 @@ router.post('/update', function (req, res) {
                 coll.id = coll._id;
                 delete coll._id;
 
-                result.push( coll );
+                result.results.push( coll );
+                result.updates.push( coll );
             }
         });
 
@@ -218,7 +219,7 @@ router.get('/priv/list', function (req, res) {
 
         if ( client.is_admin || owner_id == client._id || g_lib.db.admin.firstExample({ _from: owner_id, _to: client._id }) ) {
             var result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return { id: v._id, title: v.title }", { owner: owner_id }).toArray();
-            res.send( result );
+            res.send({ results: result });
         } else
             throw g_lib.ERR_PERM_DENIED;
     } catch( e ) {
@@ -251,7 +252,7 @@ router.get('/view', function (req, res) {
         delete coll._key;
         delete coll._rev;
 
-        res.send( [coll] );
+        res.send({ results: [coll] });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
