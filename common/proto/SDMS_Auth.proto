@@ -453,6 +453,7 @@ message CollListPublishedRequest
 message CollDataReply
 {
     repeated SDMS.CollData      coll        = 1;
+    repeated SDMS.ListingData   update      = 2;    
 }
 
 // ============================ Group Messages

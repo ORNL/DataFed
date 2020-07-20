@@ -308,6 +308,28 @@ export function collView( a_id, a_cb ) {
     });
 }
 
+export function collCreate( a_record, a_cb ){
+    //console.log("collUpdate", a_record );
+    _asyncPost( "/api/col/create", a_record, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+
+        //if ( ok && reply.update )
+        //    model.update( reply.update );
+    });
+}
+
+export function collUpdate( a_record, a_cb ){
+    //console.log("collUpdate", a_record );
+    _asyncPost( "/api/col/update", a_record, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+
+        if ( ok && reply.update )
+            model.update( reply.update );
+    });
+}
+
 export function collDelete(a_ids,a_cb){
     _asyncGet( "/api/col/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }

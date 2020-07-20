@@ -1,11 +1,14 @@
 import * as model from "./model.js";
 import * as util from "./util.js";
 import * as api from "./api.js";
+import * as dialogs from "./dialogs.js";
+
 
 export function show( a_data, a_parent, a_upd_perms, a_cb ){
     var ele = document.createElement('div');
     ele.id = (a_data?a_data.id.replace("/","_"):"c_new")+"_edit";
-    var frame = $(ele);
+    var frame = $(ele),
+        dlg_inst;
 
     frame.html( "<table class='form-table'><tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr><tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr><tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr><tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr><tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'></td></tr></table>" );
 
@@ -20,6 +23,17 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
     util.inputTheme($('textarea',frame));
     $(".btn",frame).button();
 
+    function callback( ok, reply ){
+        if ( ok ) {
+            dlg_inst.dialog('close');
+    
+            if ( a_cb )
+                a_cb( reply.coll[0] );
+        } else {
+            dialogs.dlgAlert( "Collection " + (a_data?"Update":"Create") + " Error", reply );
+        }
+    }
+    
     var options = {
         title: dlg_title,
         modal: false,
@@ -36,10 +50,12 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
             text: a_data?"Update":"Create",
             click: function() {
                 var obj = {};
-                var url = "/api/col/";
+                dlg_inst = $(this);
+
+                //var url = "/api/col/";
 
                 if ( a_data ){
-                    url += "update";
+                    //url += "update";
 
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
@@ -52,6 +68,8 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     }
 
                     obj.id = a_data.id;
+
+                    api.collUpdate( obj, callback );
                 }else{
                     obj.parentId = $("#coll",frame).val().trim();
 
@@ -60,14 +78,15 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), {}, obj, "topic" );
 
-                    url += "create";
+                    api.collCreate( obj, callback );
                 }
 
-                var inst = $(this);
+                //var inst = $(this);
+
 
                 //console.log( "create coll", obj );
 
-                api._asyncPost( url, obj, function( ok, data ){
+                /*api._asyncPost( url, obj, function( ok, data ){
                     if ( ok ) {
                         inst.dialog('close');
                         if ( a_cb )
@@ -75,7 +94,7 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     } else {
                         util.setStatusText( data, true );
                     }
-                });
+                });*/
             }
         }],
         open: function(){

@@ -1469,39 +1469,53 @@ DatabaseAPI::setCollData( CollDataReply & a_reply, const libjson::Value & a_resu
 
     TRANSLATE_BEGIN()
 
-    const Value::Array & arr = a_result.asArray();
+    const Value::Object & res_obj = a_result.asObject();
+    Value::ArrayConstIter i;
 
-    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
+    if ( res_obj.has( "results" ))
     {
-        const  Value::Object & obj = i->asObject();
+        const Value::Array & arr = res_obj.asArray();
 
-        coll = a_reply.add_coll();
-        coll->set_id( obj.getString( "id" ));
-        coll->set_title( obj.getString( "title" ));
+        for ( i = arr.begin(); i != arr.end(); i++ )
+        {
+            const  Value::Object & obj = i->asObject();
 
-        if ( obj.has( "desc" ))
-            coll->set_desc( obj.asString() );
+            coll = a_reply.add_coll();
+            coll->set_id( obj.getString( "id" ));
+            coll->set_title( obj.getString( "title" ));
 
-        if ( obj.has( "topic" ))
-            coll->set_topic( obj.asString() );
+            if ( obj.has( "desc" ))
+                coll->set_desc( obj.asString() );
 
-        if ( obj.has( "alias" ) && !obj.value().isNull() )
-            coll->set_alias( obj.asString() );
+            if ( obj.has( "topic" ))
+                coll->set_topic( obj.asString() );
 
-        if ( obj.has( "ct" ))
-            coll->set_ct( obj.asNumber() );
+            if ( obj.has( "alias" ) && !obj.value().isNull() )
+                coll->set_alias( obj.asString() );
 
-        if ( obj.has( "ut" ))
-            coll->set_ut( obj.asNumber() );
+            if ( obj.has( "ct" ))
+                coll->set_ct( obj.asNumber() );
 
-        if ( obj.has( "parent_id" ))
-            coll->set_parent_id( obj.asString() );
+            if ( obj.has( "ut" ))
+                coll->set_ut( obj.asNumber() );
 
-        if ( obj.has( "owner" ))
-            coll->set_owner( obj.asString() );
+            if ( obj.has( "parent_id" ))
+                coll->set_parent_id( obj.asString() );
 
-        if ( obj.has( "notes" ))
-            coll->set_notes( obj.asNumber() );
+            if ( obj.has( "owner" ))
+                coll->set_owner( obj.asString() );
+
+            if ( obj.has( "notes" ))
+                coll->set_notes( obj.asNumber() );
+        }
+    }
+
+    if ( res_obj.has( "updates" ))
+    {
+        const Value::Array & arr = res_obj.asArray();
+
+        for ( i = arr.begin(); i != arr.end(); i++ )
+            setListingData( a_reply.add_update(), i->asObject() );
     }
 
     TRANSLATE_END( a_result )
