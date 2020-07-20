@@ -124,6 +124,41 @@ export const DepTypeFromString = {
     "DEP_IS_NEW_VERSION_OF":DEP_IS_NEW_VERSION_OF
 };
 
+
+export const TaskTypeFromString = {
+    "TT_DATA_GET": TT_DATA_GET,
+    "TT_DATA_PUT": TT_DATA_PUT,
+    "TT_DATA_DEL": TT_DATA_DEL,
+    "TT_REC_CHG_ALLOC": TT_REC_CHG_ALLOC,
+    "TT_REC_CHG_OWNER": TT_REC_CHG_OWNER,
+    "TT_REC_DEL": TT_REC_DEL,
+    "TT_ALLOC_CREATE": TT_ALLOC_CREATE,
+    "TT_ALLOC_DEL": TT_ALLOC_DEL,
+    "TT_USER_DEL": TT_USER_DEL,
+    "TT_PROJ_DEL": TT_PROJ_DEL
+}
+
+export const TaskTypeLabel = {
+    "TT_DATA_GET": "Get Data",
+    "TT_DATA_PUT": "Put Data",
+    "TT_DATA_DEL": "Delete Data",
+    "TT_REC_CHG_ALLOC": "Change Alloc",
+    "TT_REC_CHG_OWNER": "Change Owner",
+    "TT_REC_DEL": "Delete Record",
+    "TT_ALLOC_CREATE": "Create Alloc",
+    "TT_ALLOC_DEL": "Delete Alloc",
+    "TT_USER_DEL": "Delete User",
+    "TT_PROJ_DEL": "Delete Project"
+}
+
+export const TaskStatusLabel = {
+    "TS_BLOCKED": "QUEUED",
+    "TS_READY": "READY",
+    "TS_RUNNING": "RUNNING",
+    "TS_SUCCEEDED": "SUCCEEDED",
+    "TS_FAILED": "FAILED"
+}
+
 var upd_cbs = [];
 var upd_timer;
 var upd_data = {};

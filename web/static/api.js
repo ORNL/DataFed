@@ -713,3 +713,14 @@ export function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
 export function taskList_url( a_since ){
     return "/api/task/list" + (a_since!=undefined?"?since="+a_since:"");
 }
+
+export function taskView( a_id, a_cb ){
+    _asyncGet( "/api/task/view?id=" + encodeURIComponent(a_id), null, function( ok, reply ){
+        if ( ok ) {
+            a_cb( reply.task[0] );
+        }
+        else {
+            util.setStatusText( "Task Data Error: " + reply, true );
+        }
+    });
+}

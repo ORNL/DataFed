@@ -2888,9 +2888,11 @@ void
 DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json )
 {
     const Value::Object & obj = a_task_json.asObject();
+    const Value::Object & state = obj.getObject( "state" );
+    TaskType type = (TaskType) obj.getNumber( "type" );
 
     a_task->set_id( obj.getString( "_id" ));
-    a_task->set_type((TaskType) obj.getNumber( "type" ));
+    a_task->set_type( type );
     a_task->set_status((TaskStatus) obj.getNumber( "status" ));
     a_task->set_client( obj.getString( "client" ));
     int step = obj.getNumber( "step" );
@@ -2899,6 +2901,74 @@ DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json 
     a_task->set_msg( obj.getString( "msg" ));
     a_task->set_ct( obj.getNumber( "ct" ));
     a_task->set_ut( obj.getNumber( "ut" ));
+
+    switch ( type )
+    {
+        case TT_DATA_GET:
+            if ( state.has("glob_data"))
+            {
+                const Value::Array & arr = state.asArray();
+                string src = "";
+                for ( size_t i = 0; i < arr.size(); i++ )
+                {
+                    if ( i > 0 )
+                        src += ", ";
+
+                    src += arr[i].asObject().getString( "id" );
+                    if ( i == 4 )
+                    {
+                        src += ", ...";
+                        break;
+                    }
+                }
+                a_task->set_source( src );
+            }
+            a_task->set_dest( state.getString( "path" ));
+            break;
+        case TT_DATA_PUT:
+            a_task->set_source( state.getString( "path" ));
+            if ( state.has("glob_data"))
+            {
+                const Value::Array & arr = state.asArray();
+                a_task->set_dest( arr[0].asObject().getString( "id" ));
+            }
+            break;
+        case TT_REC_CHG_ALLOC:
+            if ( state.has("xfr"))
+            {
+                const Value::Array & arr = state.asArray();
+                string src = "", repo;
+                set<string> repos;
+
+                for ( size_t i = 0; i < arr.size(); i++ )
+                {
+                    repo = arr[i].asObject().getString( "src_repo_id" );
+                    if ( repos.find( repo ) == repos.end() )
+                    {
+                        if ( src.size() > 0 )
+                            src += ", ";
+
+                        repos.insert( repo );
+                        src += repo;
+
+                        if ( repos.size() == 5 )
+                        {
+                            src += ", ...";
+                            break;
+                        }
+                    }
+                }
+
+                a_task->set_source( src );
+            }
+
+            a_task->set_dest( state.getString( "dst_repo_id" ));
+            break;
+        case TT_REC_CHG_OWNER:
+            //a_task->set_();
+            break;
+        default: break;
+    }
 }
 
 

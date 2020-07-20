@@ -1648,16 +1648,16 @@ function taskUpdateHistory( task_list ){
     if ( len == 0 ){
         html = "(no recent server tasks)";
     }else{
-        html = "<table class='task-table'><tr><th>Task ID</th><th>Type</th><th>Started</th><th>Updated</th><th>Status</th></tr>";
-        //html = "<table class='info_table'><tr><th>Task ID</th><th>Type</th><th>Status</th><th>Prog.</th><th>Started</th><th>Updated</th><th>Message</th></tr>";
+        html = "<table class='task-table'><tr><th>Task ID</th><th>Type</th><th>Created</th><th>Updated</th><th>Status</th></tr>";
         var task, time = new Date(0);
 
         for ( var i in task_list ) {
             task = task_list[i];
 
-            html += "<tr style='font-size:.9em'><td>" + task.id.substr(5) + "</td><td style='white-space: nowrap'>";
+            html += "<tr style='font-size:.9em' class='task-row' id='"+task.id+"'><td>" + task.id.substr(5) + "</td><td style='white-space: nowrap'>";
 
-            switch( task.type ){
+            html += model.TaskTypeLabel[task.type];
+            /*switch( task.type ){
                 case "TT_DATA_GET": html += "Get Data"; break;
                 case "TT_DATA_PUT": html += "Put Data"; break;
                 case "TT_DATA_DEL": html += "Delete Data"; break;
@@ -1668,7 +1668,7 @@ function taskUpdateHistory( task_list ){
                 case "TT_ALLOC_DEL": html += "Delete Alloc"; break;
                 case "TT_USER_DEL": html += "Delete User"; break;
                 case "TT_PROJ_DEL": html += "Delete Project"; break;
-            }
+            }*/
 
             time.setTime( task.ct*1000 );
             html += "</td><td style='white-space: nowrap'>" + time.toLocaleDateString("en-US", settings.date_opts );
@@ -1692,6 +1692,15 @@ function taskUpdateHistory( task_list ){
         html += "</table>";
     }
     task_hist.html( html );
+
+    $(".task-row",task_hist).on("click",function( ev ){
+        //console.log("row click!",ev.currentTarget.id);
+        panel_info.showSelectedInfo( ev.currentTarget.id );
+    }).hover( function(){
+        $(this).addClass("my-fancytree-hover");
+    },function(){
+        $(this).removeClass("my-fancytree-hover");
+    });
 }
 
 function taskHistoryPoll(){

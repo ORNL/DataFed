@@ -54,6 +54,13 @@ export function showSelectedInfo( node, cb ){
             cur_item = data;
             if ( cb ) cb( data );
         }); 
+    }else if ( key.startsWith("task/" )) {
+        api.taskView( key, function( data ){
+            console.log("task view:",data );
+            showSelectedItemInfo( data );
+            cur_item = data;
+            if ( cb ) cb( data );
+        }); 
     }else if ( key == "mydata" ) {
         showSelectedHTML( "Owned Data<br><br>All data owned by you." );
     }else if ( key == "proj_own" ) {
@@ -495,6 +502,7 @@ function showSelectedItemForm( item ){
         case 'p': text = "Project"; cls = ".sip"; break;
         case 'r': text = "Allocation"; cls = ".sia"; break;
         case 'q': text = "Query"; cls = ".siq"; break;
+        case 't': text = "Task"; cls = ".sit"; break;
         default:
             return;
     }
@@ -651,7 +659,21 @@ function showSelectedItemForm( item ){
         $("#sel_info_allocs",form).html( text );
     }
 
-    $(".sid,.sidp,.sic,.sip,.siu,.siq,.sia",form).hide();
+    if ( cls == ".sit" ){
+        $("#sel_info_subtype",form).text( model.TaskTypeLabel[item.type] );
+        $("#sel_info_status",form).text( model.TaskStatusLabel[item.status] );
+
+        if ( item.status == "TS_FAILED" && item.msg )
+            $("#sel_info_msg",form).text( item.msg );
+
+        if ( item.source )
+            $("#sel_info_source",form).text( item.source );
+
+        if ( item.dest )
+            $("#sel_info_dest",form).text( item.dest );
+    }
+
+    $(".sid,.sidp,.sic,.sip,.siu,.siq,.sia,.sit",form).hide();
     $(cls,form).show();
 
     form.show();

@@ -977,6 +977,13 @@ app.get('/api/task/list', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/task/view', ( a_req, a_resp ) => {
+    console.log("task/view", a_req.query.id );
+    sendMessage( "TaskViewRequest", {"taskId":a_req.query.id}, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
 app.post('/api/col/create', ( a_req, a_resp ) => {
     sendMessage( "CollCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);

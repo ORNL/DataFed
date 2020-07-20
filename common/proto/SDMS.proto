@@ -361,6 +361,8 @@ message TaskData
     required string                 msg         = 7;
     required uint32                 ct          = 8;
     required uint32                 ut          = 9;
+    optional string                 source      = 10;
+    optional string                 dest        = 11;
 }
 
 
