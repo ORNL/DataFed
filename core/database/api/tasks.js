@@ -720,7 +720,7 @@ var tasks_func = function() {
                 a_task.step = 2;
                 g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
                 // Fall-through to next step
-            }, ["loc"], ["task"] );
+            }, ["c"], ["loc","alloc","acl","d","owner","item","task","a","alias"] );
         }
 
         if ( a_task.step > 1 && a_task.step < a_task.steps - 1 ){
@@ -774,7 +774,7 @@ var tasks_func = function() {
                         a_task.step += 1;
                         g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
 
-                    }, ["c"], ["loc","alloc","acl","d","owner","item","task"] );
+                    }, ["c"], ["loc","alloc","acl","d","owner","item","task","a","alias"] );
                     /* falls through */
                 case 3:
                     console.log("taskRunRecOwnerChg - delete old data");
@@ -1553,20 +1553,24 @@ var tasks_func = function() {
 
 
     obj.recMoveFini = function( a_data ) {
-        var data, loc, new_loc, alloc, coll, alias;
+        var data, loc, new_loc, alloc, coll, alias, alias_pref, a, key;
 
-        console.log("recMoveFini" );
+        //console.log("recMoveFini" );
 
         for ( var i in a_data ){
             data = a_data[i];
 
-            console.log("recMoveFini, id:", data.id );
+            //console.log("recMoveFini, id:", data.id );
 
             loc = g_db.loc.firstExample({ _from: data.id });
 
             if ( loc.new_owner ){
                 // Changing owner and repo
 
+                if ( !alias_pref ){
+                    alias_pref = loc.new_owner.charAt(0) + ":" + loc.new_owner.substr(2) + ":";
+                }
+        
                 // DEV-ONLY SANITY CHECKS:
                 if ( !loc.new_coll )
                     throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' missing destination collection!" ];
@@ -1596,8 +1600,29 @@ var tasks_func = function() {
                 // Move owner edge of alias if alias present
                 alias = g_db.alias.firstExample({ _from: data.id });
                 if ( alias ){
-                    g_db.owner.removeByExample({ _from: alias._to });
-                    g_db.owner.save({ _from: alias._to, _to: loc.new_owner });
+                    // remove old alias and all edges
+                    g_graph.a.remove( alias._to );
+
+                    // Create new alias (add suffix if collides with existing alias)
+                    alias = alias_pref + alias._to.substr( alias._to.lastIndexOf(":") + 1 );
+                    for( a = 0; ; a++ ){
+                        try{
+                            key = alias + (a>0?"-"+a:"");
+                            g_db.a.save({ _key: key });
+                            break;
+                        }catch( e ){
+                            if ( e.errorNum != 1210 ){
+                                throw e;
+                            }
+                        }
+                    }
+                    // If alias suffix, update record
+                    if ( a > 0 ){
+                        g_db.d.update( data.id, { alias: key });
+                    }
+
+                    g_db.alias.save({ _from: data.id, _to: "a/"+key });
+                    g_db.owner.save({ _from: "a/"+key, _to: loc.new_owner });
                 }
             }
 
@@ -1608,7 +1633,7 @@ var tasks_func = function() {
             if ( !alloc )
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (cur)!" ];
 
-            console.log("recMoveFini, adj src alloc to:", alloc.rec_count - 1, alloc.data_size - data.size );
+            //console.log("recMoveFini, adj src alloc to:", alloc.rec_count - 1, alloc.data_size - data.size );
 
             g_db._update( alloc._id, { rec_count: alloc.rec_count - 1, data_size: alloc.data_size - data.size });
 
@@ -1617,7 +1642,7 @@ var tasks_func = function() {
             if ( !alloc )
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (new)!" ];
 
-            console.log("recMoveFini, adj dest alloc to:", alloc.rec_count + 1, alloc.data_size + data.size );
+            //console.log("recMoveFini, adj dest alloc to:", alloc.rec_count + 1, alloc.data_size + data.size );
 
             g_db._update( alloc._id, { rec_count: alloc.rec_count + 1, data_size: alloc.data_size + data.size });
 

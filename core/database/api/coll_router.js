@@ -161,7 +161,7 @@ router.post('/update', function (req, res) {
                 coll = g_db._update( coll_id, obj, { keepNull: false, returnNew: true });
                 coll = coll.new;
 
-                if ( obj.alias != undefined ) {
+                if ( obj.alias !== undefined ) {
                     var old_alias = g_db.alias.firstExample({ _from: coll_id });
                     if ( old_alias ) {
                         const graph = require('@arangodb/general-graph')._graph('sdmsg');
