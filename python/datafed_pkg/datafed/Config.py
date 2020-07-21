@@ -92,11 +92,13 @@ class API:
     # @exception Exception: if opts parameter is not a dictionary.
     #
     def __init__( self, opts = {} ):
+        #print("Config Init")
+
         self._processOptions( opts )
 
     def _processOptions( self, opts ):
         if not isinstance( opts, dict ):
-            raise Exception( "Options parameter must be a dictionary." )
+            raise Exception( "Config API options parameter must be a dictionary." )
 
         # Setting priorities:
         # 1. Direct setting (passed in opts, or CLI option)

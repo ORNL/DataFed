@@ -45,13 +45,16 @@ class Connection:
     # @param client_priv_key - Client private CurveMQ key
     # @param zmq_ctxt - ZeroMQ context (optional)
     #
-    def __init__(self,
-                server_host,
-                server_port,
-                server_pub_key,
-                client_pub_key,
-                client_priv_key,
-                zmq_ctxt=None):
+    def __init__(
+        self,
+        server_host,
+        server_port,
+        server_pub_key,
+        client_pub_key,
+        client_priv_key,
+        zmq_ctxt = None ):
+
+        #print("Connection Init")
 
         self._msg_desc_by_type = {}
         self._msg_desc_by_name = {}

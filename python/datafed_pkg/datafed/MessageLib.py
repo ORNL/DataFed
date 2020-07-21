@@ -65,6 +65,8 @@ class API:
         manual_auth = None,
         **kwargs
         ):
+        #print("MessageLib Init")
+
         self._ctxt = 0
         self._auth = False
         self._nack_except = True

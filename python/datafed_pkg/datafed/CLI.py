@@ -96,6 +96,8 @@ def run():
     global _verbosity
     global _interactive
 
+    #print("CLI run")
+
     _addConfigOptions()
 
     session = None
@@ -194,7 +196,7 @@ def init( opts = {} ):
 
     _addConfigOptions()
 
-    _capi = CommandLib.API( **opts )
+    _capi = CommandLib.API( opts )
     uid = _capi.getAuthUser()
     if uid:
         _uid = uid
@@ -2185,7 +2187,7 @@ def _initialize( opts ):
     global _cur_ctx
     global _cur_coll
 
-    #print("_initialize, opts:",opts)
+    #print("_initialize, opts:", opts )
 
     if "version" in opts and opts["version"]:
         click.echo( version )
@@ -2196,12 +2198,13 @@ def _initialize( opts ):
         man_auth = opts["manual_auth"]
 
         if man_auth:
+            #print("CLI - manual auth")
             if _output_mode == _OM_RETN:
                 raise Exception("The --manual-auth option may not be used when running in API mode.")
             elif not _interactive:
                 raise Exception("The --manual-auth option may not be used when running non-interactively.")
 
-        _capi = CommandLib.API( **opts )
+        _capi = CommandLib.API( opts )
 
         if man_auth or _capi.getAuthUser() == None:
             if not man_auth:
@@ -2222,7 +2225,7 @@ def _initialize( opts ):
             i = 0
             while i < 3:
                 i += 1
-                uid = click.prompt("User ID: ")
+                uid = click.prompt("User ID")
                 password = getpass.getpass(prompt="Password: ")
                 try:
                     _capi.loginByPassword( uid, password )

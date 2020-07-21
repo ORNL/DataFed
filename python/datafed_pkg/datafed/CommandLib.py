@@ -53,7 +53,12 @@ class API:
     # @param opts - Configuration options (optional)
     # @exception Exception: if invalid config values are present
     #
-    def __init__( self, opts = {}, **kwargs ):
+    def __init__( self, opts = {} ):
+        #print("CommandLib Init")
+
+        if not isinstance( opts, dict ):
+            raise Exception( "CommandLib API options parameter must be a dictionary." )
+
         self._uid = None
         self._cur_sel = None
         self._cur_ep = None
