@@ -1238,31 +1238,39 @@ router.post('/owner_chg', function (req, res) {
 .description('Move data records and raw data to a new owner/allocation. IDs may be data/collection IDs or aliases.');
 
 
+
 router.post('/delete', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn"],
-                write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep","n","note"],
-                exclusive: ["lock","task","block"],
-            },
-            action: function() {
-                const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var i, id, ids = [];
+    var retry = 10;
 
-                for ( i in req.body.ids ){
-                    id = g_lib.resolveDataCollID( req.body.ids[i], client );
-                    ids.push( id );
+    for (;;)
+    {
+        try {
+            g_db._executeTransaction({
+                collections: {
+                    read: ["u","uuid","accn"],
+                    write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep","n","note"],
+                    exclusive: ["lock","task","block"],
+                },
+                action: function() {
+                    const client = g_lib.getUserFromClientID( req.queryParams.client );
+                    var i, id, ids = [];
+
+                    for ( i in req.body.ids ){
+                        id = g_lib.resolveDataCollID( req.body.ids[i], client );
+                        ids.push( id );
+                    }
+
+                    var result = g_tasks.taskInitRecCollDelete( client, ids );
+
+                    res.send(result);
                 }
-
-                var result = g_tasks.taskInitRecCollDelete( client, ids );
-
-                res.send(result);
+            });
+            break;
+        } catch( e ) {
+            if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+                g_lib.handleException( e, res );
             }
-        });
-
-    } catch( e ) {
-        g_lib.handleException( e, res );
+        }
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")

@@ -857,34 +857,45 @@ var tasks_func = function() {
     obj.taskRunRecCollDelete = function( a_task ){
         console.log("taskRunRecCollDelete");
 
-        var i, reply, state = a_task.state;
+        var i, reply, state = a_task.state, retry;
 
         // No rollback functionality
         if ( a_task.step < 0 )
             return;
 
         if ( a_task.step == 0 ){
-            obj._transact( function(){
-                console.log("Del collections",Date.now());
+            retry = 10;
 
-                for ( i in state.del_coll ){
-                    // TODO Adjust for collection limit on allocation
-                    obj._deleteCollection( state.del_coll[i] );
+            for (;;)
+            {
+                try{
+                    obj._transact( function(){
+                        console.log("Del collections",Date.now());
+
+                        for ( i in state.del_coll ){
+                            // TODO Adjust for collection limit on allocation
+                            obj._deleteCollection( state.del_coll[i] );
+                        }
+
+                        console.log("Del records",Date.now());
+
+                        // Delete records with no data
+                        if ( state.del_rec.length ){
+                            obj._deleteDataRecords( state.del_rec );
+                        }
+                
+                        // Update task step
+                        a_task.step += 1;
+                        g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
+                    }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task"] );
+                    break;
+                } catch( e ) {
+                    if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+                        throw e;
+                    }
                 }
-
-                console.log("Del records",Date.now());
-
-                // Delete records with no data
-                if ( state.del_rec.length ){
-                    obj._deleteDataRecords( state.del_rec );
-                }
-        
-                // Update task step
-                a_task.step += 1;
-                g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-            }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task"] );
-
-            // Continue to next step
+            }
+                // Continue to next step
         }
 
         if ( a_task.step < a_task.steps - 1 ){
