@@ -1606,14 +1606,11 @@ var tasks_func = function() {
                     // Create new alias (add suffix if collides with existing alias)
                     alias = alias_pref + alias._to.substr( alias._to.lastIndexOf(":") + 1 );
                     for( a = 0; ; a++ ){
-                        try{
-                            key = alias + (a>0?"-"+a:"");
+                        key = alias + (a>0?"-"+a:"");
+                        if ( !g_db.a.exists({ _key: key })){
+                            //console.log("try alias:",key);
                             g_db.a.save({ _key: key });
                             break;
-                        }catch( e ){
-                            if ( e.errorNum != 1210 ){
-                                throw e;
-                            }
                         }
                     }
                     // If alias suffix, update record
