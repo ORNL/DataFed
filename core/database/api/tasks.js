@@ -844,6 +844,8 @@ var tasks_func = function() {
                 state.del_rec.push( result.glob_data[i].id );
                 g_db.item.removeByExample({ _to: result.glob_data[i].id });
             }
+        }else{
+            state.del_data = [];
         }
 
         result.task = obj._createTask( a_client._id, g_lib.TT_REC_DEL, state.del_data.length + 2, state );
