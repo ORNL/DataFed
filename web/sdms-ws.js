@@ -1253,7 +1253,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
         const opts = {
             hostname: 'transfer.api.globusonline.org',
             method: 'GET',
-            path: '/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+a_req.query.term,
+            path: '/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+encodeURIComponent(a_req.query.term),
             rejectUnauthorized: true,
             headers:{
                 Authorization: ' Bearer ' + reply.access            
