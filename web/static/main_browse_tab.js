@@ -1725,6 +1725,10 @@ function taskHistoryPoll(){
                     }
                 }
                 taskHist = data.task.concat( taskHist );
+                // Truncate history to limit memory use
+                if ( taskHist.length > 500 )
+                    taskHist = taskHist.slice(0,500);
+
                 taskUpdateHistory( taskHist );
                 pollSince = 0;
             }
