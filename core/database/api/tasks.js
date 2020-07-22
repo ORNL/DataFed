@@ -581,10 +581,11 @@ var tasks_func = function() {
 
         if ( a_check ){
             // Get a list of available repos for client to pick from (there must be at least one)
-            allocs = g_db.alloc.byExample({ _from: owner_id });
-            if ( !allocs.hasNext() )
+            allocs = g_db.alloc.byExample({ _from: owner_id }).toArray();
+            if ( !allocs.length )
                 throw [ g_lib.ERR_PERM_DENIED, "No allocations available for '" + owner_id + "'" ];
 
+            g_lib.sortAllocations( allocs );
         }else{
             // Verify destination repo
             if ( !g_db.repo.exists( a_dst_repo_id ))
@@ -629,13 +630,12 @@ var tasks_func = function() {
         result.act_cnt = deps.length;
 
         if ( a_check ){
-            result.allocs = [];
-            while ( allocs.hasNext() ){
-                rec = allocs.next();
+            for ( i in allocs ){
+                rec = allocs[i];
                 rec.repo = rec._to;
                 delete rec._id;
-                result.allocs.push( rec );
             }
+            result.allocs = allocs;
         }
 
         // Stop if no record to process, or if this is just a check
