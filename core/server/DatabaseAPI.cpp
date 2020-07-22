@@ -2979,7 +2979,15 @@ DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json 
             a_task->set_dest( state.getString( "dst_repo_id" ));
             break;
         case TT_REC_CHG_OWNER:
-            //a_task->set_();
+            if ( state.has("glob_data"))
+            {
+                const Value::Array & arr = state.asArray();
+                if ( arr.size() )
+                {
+                    a_task->set_source( arr[0].asObject().getString( "owner" ));
+                }
+            }
+            a_task->set_dest( state.getString( "owner_id" ) + ", " + state.getString( "dst_coll_id" ) + ", " + state.getString( "dst_repo_id" ));
             break;
         default: break;
     }
