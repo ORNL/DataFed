@@ -2125,13 +2125,10 @@ $("#id_query,#text_query,#meta_query").on('keypress', function (e) {
 
 $('#text_query').droppable({
     accept: function( item ){
-        console.log("qry txt accept");
         return true;
     },
     drop: function(ev,ui){
-        // TODO What does this do?
         var sourceNode = $(ui.helper).data("ftSourceNode");
-        console.log("qry txt drop:",sourceNode);
     }
 });
 
@@ -2245,7 +2242,7 @@ export function init(){
 
                 if ( pasteSourceParent.data.scope != dest_node.data.scope ){
                     console.log("Change owner");
-                    var coll_id = dest_node.key.startsWith( "d/" )?dest_node.parent.key:dest_node.key;
+                    var coll_id = ( dest_node.key == "empty" || dest_node.key.startsWith( "d/" ))?dest_node.parent.key:dest_node.key;
                     proj_id = pasteSourceParent.data.scope.charAt(0) == 'p'?pasteSourceParent.data.scope:null;
 
                     for( i in pasteItems ){
