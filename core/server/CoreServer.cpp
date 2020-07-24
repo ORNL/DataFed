@@ -37,12 +37,13 @@ Server::Server() :
 {
     curl_global_init( CURL_GLOBAL_DEFAULT );
 
-    loadKeys (m_config.cred_dir );
+    loadKeys( m_config.cred_dir );
 
     m_config.sec_ctx.is_server = true;
     m_config.sec_ctx.public_key = m_pub_key;
     m_config.sec_ctx.private_key = m_priv_key;
 
+    waitForDB();
     loadRepositoryConfig();
 
     m_zap_thread = new thread( &Server::zapHandler, this );
@@ -81,6 +82,31 @@ Server::loadKeys( const std::string & a_cred_dir )
     inf >> m_priv_key;
     inf.close();
 }
+
+
+void
+Server::waitForDB()
+{
+    DL_INFO("Waiting for DB...");
+
+    for ( int i = 0; i < 10; i++ )
+    {
+        try
+        {
+            DatabaseAPI  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
+            db_client.serverPing();
+            return;
+        }
+        catch(...)
+        {
+            DL_INFO("DB connection error");
+        }
+        sleep( 5 );
+    }
+
+    EXCEPT(1,"Unable to connect to DB");
+}
+
 
 void
 Server::loadRepositoryConfig()

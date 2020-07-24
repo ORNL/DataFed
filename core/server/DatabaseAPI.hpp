@@ -27,6 +27,8 @@ public:
     DatabaseAPI( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass );
     ~DatabaseAPI();
 
+    void serverPing();
+
     void setClient( const std::string & a_client );
     void clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply );
     void clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply );

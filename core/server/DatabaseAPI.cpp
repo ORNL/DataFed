@@ -272,6 +272,14 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
 }
 
 void
+DatabaseAPI::serverPing()
+{
+    Value result;
+
+    dbGet( "admin/ping", {}, result );
+}
+
+void
 DatabaseAPI::clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply )
 {
     Value result;

@@ -32,6 +32,7 @@ private:
     typedef std::map<std::string,std::string> auth_client_map_t;
     typedef std::map<std::string,std::pair<std::string,time_t>> trans_client_map_t;
 
+    void waitForDB();
     void authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
     bool isClientAuthorized( const std::string & a_client_key, std::string & a_uid );
     void loadKeys( const std::string & a_cred_dir );
