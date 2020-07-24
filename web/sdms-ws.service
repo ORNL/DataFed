@@ -1,10 +1,12 @@
 [Unit]
 Description=SDMS Web Server
+Requires=sdms-core.service
+After=sdms-core.service
 [Service]
 PIDFile=/tmp/sdms-ws.pid
 Restart=always
 KillSignal=SIGQUIT
-WorkingDirectory=/home/cades/SDMS/web
-ExecStart=/home/cades/SDMS/web/sdms-ws.js
+WorkingDirectory=/opt/datafed/web
+ExecStart=/opt/datafed/web/sdms-ws.js /opt/datafed/datafed-ws.ini
 [Install]
 WantedBy=multi-user.target

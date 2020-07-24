@@ -1,11 +1,13 @@
 [Unit]
 Description=SDMS Repo Server
+Requires=sdms-core.service
+After=sdms-core.service
 [Service]
 PIDFile=/tmp/sdms-repo.pid
 Restart=always
 KillSignal=SIGQUIT
-WorkingDirectory=/home/cades/SDMS/repository/server
-ExecStart=/home/cades/SDMS/build/repository/server/sdms-repo -c /home/cades/.sdms/
+WorkingDirectory=/opt/datafed
+ExecStart=/opt/datafed/sdms-repo -c /opt/datafed/keys
 User=cades
 [Install]
 WantedBy=multi-user.target
