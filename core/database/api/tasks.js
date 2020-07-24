@@ -297,7 +297,7 @@ var tasks_func = function() {
 
             // Must do this in a retry loop in case of concurrent (non-put) updates
             retry = 10
-            while ( 1 ){
+            for (;;){
                 try{
                     obj._transact( function(){
                         g_db._update( xfr.files[0].id, upd_rec, { keepNull: false });
@@ -308,7 +308,6 @@ var tasks_func = function() {
                         throw e;
                     }
                 }
-    
             }
 
             // Request data size update
@@ -895,7 +894,7 @@ var tasks_func = function() {
                     }
                 }
             }
-                // Continue to next step
+            // Continue to next step
         }
 
         if ( a_task.step < a_task.steps - 1 ){

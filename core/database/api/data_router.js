@@ -573,40 +573,48 @@ router.post('/update/batch', function (req, res) {
 
 
 router.post('/update/size', function (req, res) {
-    try {
-        var result = [];
+        var retry = 10;
 
-        g_db._executeTransaction({
-            collections: {
-                read: ["owner","loc"],
-                write: ["d","alloc"]
-            },
-            action: function() {
-                var owner_id, data, loc, alloc, rec, obj, t = Math.floor( Date.now()/1000 );
+        // Must do this in a retry loop in case of concurrent (non-put) updates
+        for (;;){
+            try{
+                var result = [];
 
-                for ( var i in req.body.records ){
-                    rec = req.body.records[i];
+                g_db._executeTransaction({
+                    collections: {
+                        read: ["owner","loc"],
+                        write: ["d","alloc"]
+                    },
+                    action: function() {
+                        var owner_id, data, loc, alloc, rec, obj, t = Math.floor( Date.now()/1000 );
 
-                    data = g_db.d.document( rec.id );
+                        for ( var i in req.body.records ){
+                            rec = req.body.records[i];
 
-                    if ( rec.size != data.size ){
-                        owner_id = g_db.owner.firstExample({ _from: rec.id })._to;
-                        loc = g_db.loc.firstExample({ _from: rec.id });
-                        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+                            data = g_db.d.document( rec.id );
 
-                        obj = { ut: t, size: rec.size, dt: t };
+                            if ( rec.size != data.size ){
+                                owner_id = g_db.owner.firstExample({ _from: rec.id })._to;
+                                loc = g_db.loc.firstExample({ _from: rec.id });
+                                alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
 
-                        g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
-                        g_db._update( rec.id, obj );
+                                obj = { ut: t, size: rec.size, dt: t };
+
+                                g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
+                                g_db._update( rec.id, obj );
+                            }
+                        }
                     }
+                });
+
+                res.send( result );
+                break;
+            } catch( e ) {
+                if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+                    g_lib.handleException( e, res );
                 }
             }
-        });
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
+        }
 })
 .queryParam('client', joi.string().allow('').optional(), "Client ID")
 .body(joi.object({
