@@ -9,6 +9,18 @@ const   g_lib = require('./support');
 //const   perf = require('@arangodb/foxx');
 
 module.exports = router;
+
+router.get('/ping', function (req, res) {
+    try {
+        res.send({ status: 1 });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.summary('Ping DB server')
+.description('Ping DB server');
+
+
 router.get('/test', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
