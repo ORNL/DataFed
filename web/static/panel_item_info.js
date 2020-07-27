@@ -16,13 +16,12 @@ var note_active_tree = null;
 var note_open_tree = null;
 var note_closed_tree = null;
 var note_icon = ["circle-help","circle-info","alert","flag"];
-var cur_item = null;
-var cur_notes;
+var cur_item_id = null;
+
 
 export function showSelectedInfo( node, cb ){
-    cur_item = null;
-
     if ( !node ){
+        cur_item_id = null;
         showSelectedItemInfo();
         return;
     }
@@ -41,24 +40,23 @@ export function showSelectedInfo( node, cb ){
     else
         key = node.key;
 
+    cur_item_id = key;
+
     if ( key[0] == "c" ) {
         api.collView( key, function( item ){
             showSelectedItemInfo( item );
-            cur_item = item;
             if ( cb ) cb( item );
         }); 
     }else if ( key[0] == "d" ) {
         api.dataView( key, function( data ){
             //console.log("data view:",data[0]);
             showSelectedItemInfo( data );
-            cur_item = data;
             if ( cb ) cb( data );
         }); 
     }else if ( key.startsWith("task/" )) {
         api.taskView( key, function( data ){
             console.log("task view:",data );
             showSelectedItemInfo( data );
-            cur_item = data;
             if ( cb ) cb( data );
         }); 
     }else if ( key == "mydata" ) {
@@ -84,7 +82,6 @@ export function showSelectedInfo( node, cb ){
     }else if ( key.startsWith("q/")){
         api.sendQueryView( key, function( ok, item ){
             showSelectedItemInfo( item );
-            cur_item = item;
             if ( cb ) cb( item );
         }); 
     }else if ( key.startsWith("u/")){
@@ -106,6 +103,7 @@ export function showSelectedInfo( node, cb ){
 
 export function showSelectedItemInfo( item ){
     if ( item && item.id ){
+        cur_item_id = item.id;
         showSelectedItemForm( item );
         if ( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )){
             setupAnnotationTab( item.id );
@@ -116,11 +114,16 @@ export function showSelectedItemInfo( item ){
             showSelectedMetadata();
         }
     }else{
+        cur_item_id = null;
         form.hide();
         note_div.hide();
         showSelectedMetadata();
         //showSelectedHTML( "Insufficient permissions to view data record." );
     }
+}
+
+export function getActiveItemID(){
+    return cur_item_id;
 }
 
 function showSelectedHTML( html ){
@@ -136,7 +139,6 @@ function showSelectedUserInfo( key, cb ){
             console.log("userView:",item);
             item.id = item.uid;
             showSelectedItemInfo( item );
-            cur_item = item;
             if ( cb ) cb( item );
         }else{
             showSelectedItemInfo();
@@ -147,7 +149,6 @@ function showSelectedUserInfo( key, cb ){
 function showSelectedProjInfo( key, cb ){
     api.viewProj( key, function( item ){
         showSelectedItemInfo( item );
-        cur_item = item;
         if ( cb ) cb( item );
     }); 
 }
@@ -226,8 +227,6 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                 note_closed = [],
                 note, ns, nt;
 
-            cur_notes = 0;
-
             if ( data.note ){
                 for ( var i = 0; i < data.note.length; i++ ) {
                     note = data.note[i];
@@ -236,10 +235,8 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 
                     if ( ns == model.NOTE_ACTIVE ){
                         note_active.push( note );
-                        cur_notes |= (1<<nt);
                     }else if ( ns == model.NOTE_OPEN ){
                         note_open.push( note );
-                        cur_notes |= (1<<(nt+4));
                     }else{
                         note_closed.push( note );
                     }

@@ -2354,10 +2354,22 @@ export function init(){
         },
         source: tree_source,
         selectMode: 2,
-        collapse: function( event, data ) {
+        collapse: function( ev, data ) {
+            var act_id = panel_info.getActiveItemID();
+            if ( act_id ){
+                data.node.visit( function( nd ){
+                    if ( nd.key == act_id && nd.isActive() ){
+                        panel_info.showSelectedInfo();
+                        return false;
+                    }
+                });
+            }
+
             if ( data.node.isLazy() ){
                 data.node.resetLazy();
             }
+
+            updateBtnState();
         },
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
