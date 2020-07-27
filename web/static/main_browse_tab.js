@@ -1511,6 +1511,7 @@ function execQuery( query ){
 
             if ( select_source == SS_SEARCH ){
                 panel_info.showSelectedInfo();
+                updateBtnState();
             }
 
         }else{
