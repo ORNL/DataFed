@@ -1509,8 +1509,10 @@ function execQuery( query ){
             $('[href="#tab-search-results"]').closest('li').show();
             $( "#data-tabs" ).tabs({ active: 4 });
 
-            if ( !data_tree.activeNode )
+            if ( select_source == SS_SEARCH ){
                 panel_info.showSelectedInfo();
+            }
+
         }else{
             dialogs.dlgAlert("Query Error",items);
         }
