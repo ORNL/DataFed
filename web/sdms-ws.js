@@ -334,7 +334,7 @@ app.get('/api/usr/find/by_name_uid', ( a_req, a_resp ) => {
 });
 
 app.get('/api/usr/view', ( a_req, a_resp ) => {
-    console.log("/usr/view:",a_req.query.id);
+    //console.log("/usr/view:",a_req.query.id);
     sendMessage( "UserViewRequest", { uid: a_req.query.id, details:(a_req.query.details=="true"?true:false)}, a_req, a_resp, function( reply ) {
         a_resp.json( reply.user[0] );
     });
@@ -356,7 +356,7 @@ app.get('/api/usr/update', ( a_req, a_resp ) => {
 });
 
 app.get('/api/usr/revoke_cred', ( a_req, a_resp ) => {
-    console.log("/api/usr/revoke_cred");
+    //console.log("/api/usr/revoke_cred");
     sendMessage( "RevokeCredentialsRequest", {}, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
@@ -478,7 +478,7 @@ app.get('/api/prj/list', ( a_req, a_resp ) => {
         params.count = a_req.query.count;
     }
     
-    console.log("proj list:",params);
+    //console.log("proj list:",params);
     sendMessage( "ProjectListRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
         /*if ( reply.item ){
@@ -492,7 +492,7 @@ app.get('/api/prj/list', ( a_req, a_resp ) => {
 });
 
 app.post('/api/prj/search', ( a_req, a_resp ) => {
-    console.log("search:",a_req.body);
+    //console.log("search:",a_req.body);
     sendMessage( "ProjectSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply.item?reply.item:[]);
     });
@@ -642,7 +642,7 @@ app.get('/api/query/exec', ( a_req, a_resp ) => {
 
 
 app.post('/api/dat/search', ( a_req, a_resp ) => {
-    console.log("search:",a_req.body);
+    //console.log("search:",a_req.body);
     sendMessage( "RecordSearchRequest", { query: JSON.stringify( a_req.body ) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply.item?reply.item:[]);
     });
@@ -657,22 +657,22 @@ app.post('/api/dat/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/dat/create/batch', ( a_req, a_resp ) => {
-    console.log( "dat create batch", a_req.headers['content-type'], typeof a_req.body );
+    //console.log( "dat create batch", a_req.headers['content-type'], typeof a_req.body );
     sendMessage( "RecordCreateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.post('/api/dat/update', ( a_req, a_resp ) => {
-    console.log( "dat update", a_req.body );
+    //console.log( "dat update", a_req.body );
     sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
-        console.log("rec update:",reply);
+        //console.log("rec update:",reply);
         a_resp.send(reply);
     });
 });
 
 app.post('/api/dat/update/batch', ( a_req, a_resp ) => {
-    console.log( "dat update batch", a_req.headers['content-type'], typeof a_req.body );
+    //console.log( "dat update batch", a_req.headers['content-type'], typeof a_req.body );
     sendMessage( "RecordUpdateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -703,7 +703,7 @@ app.get('/api/dat/copy', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/delete', ( a_req, a_resp ) => {
-    console.log("/dat/delete",a_req.query.ids);
+    //console.log("/dat/delete",a_req.query.ids);
     sendMessage( "RecordDeleteRequest", { id: JSON.parse(a_req.query.ids) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -740,7 +740,7 @@ app.get('/api/dat/list/by_alloc', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/get', ( a_req, a_resp ) => {
-    console.log("data get",a_req.query);
+    //console.log("data get",a_req.query);
 
     var par = { id: JSON.parse( a_req.query.id )};
 
@@ -794,7 +794,7 @@ app.get('/api/dat/dep/graph/get', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/alloc_chg', ( a_req, a_resp ) => {
-    console.log('/api/dat/alloc_chg');
+    //console.log('/api/dat/alloc_chg');
 
     var params = { id: JSON.parse(a_req.query.id) };
     if ( a_req.query.repo_id )
@@ -810,7 +810,7 @@ app.get('/api/dat/alloc_chg', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
-    console.log('/api/dat/owner_chg',a_req.query);
+    //console.log('/api/dat/owner_chg',a_req.query);
     var params = { id: JSON.parse(a_req.query.id), collId: a_req.query.coll_id };
     if ( a_req.query.repo_id )
         params.repoId = a_req.query.repo_id;
@@ -819,7 +819,7 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
     if ( a_req.query.check )
         params.check = true;
 
-    console.log('/api/dat/owner_chg params:',params);
+    //console.log('/api/dat/owner_chg params:',params);
 
     sendMessage( "RecordOwnerChangeRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -827,7 +827,7 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
 });
 
 app.get('/api/doi/view', ( a_req, a_resp ) => {
-    console.log("DOI:",a_req.query.doi);
+    //console.log("DOI:",a_req.query.doi);
     sendMessage( "DOIViewRequest", { doi: a_req.query.doi }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     }, true );
@@ -918,7 +918,7 @@ app.get('/api/note/create', ( a_req, a_resp ) => {
         activate: a_req.query.activate
     };
 
-    console.log("note create",params)
+    //console.log("note create",params)
     sendMessage( "AnnotationCreateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -978,7 +978,7 @@ app.get('/api/task/list', ( a_req, a_resp ) => {
 });
 
 app.get('/api/task/view', ( a_req, a_resp ) => {
-    console.log("task/view", a_req.query.id );
+    //console.log("task/view", a_req.query.id );
     sendMessage( "TaskViewRequest", {"taskId":a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
@@ -991,7 +991,7 @@ app.post('/api/col/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/col/update', ( a_req, a_resp ) => {
-    console.log("col update:",a_req.body);
+    //console.log("col update:",a_req.body);
     sendMessage( "CollUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1019,7 +1019,7 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
     }
-    console.log("Coll Read",a_req.query.id);
+    //console.log("Coll Read",a_req.query.id);
     sendMessage( "CollReadRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1027,20 +1027,20 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
 
 app.get('/api/col/get_parents', ( a_req, a_resp ) => {
     sendMessage( "CollGetParentsRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        console.log("get_parents - cb",a_req.query.id);
+        //console.log("get_parents",reply);
         a_resp.send(reply);
     });
 });
 
 app.get('/api/col/get_offset', ( a_req, a_resp ) => {
     sendMessage( "CollGetOffsetRequest", { id: a_req.query.id, item: a_req.query.item_id, pageSz: a_req.query.page_sz}, a_req, a_resp, function( reply ) {
-        console.log("get_offset - cb",a_req.query.id, a_req.query.item_id, a_req.query.page_sz);
+        //console.log("get_offset - cb",a_req.query.id, a_req.query.item_id, a_req.query.page_sz);
         a_resp.send(reply);
     });
 });
 
 app.get('/api/col/move', ( a_req, a_resp ) => {
-    console.log("move items:",a_req.query.items,"src:",a_req.query.src_id,"dst:",a_req.query.dst_id);
+    //console.log("move items:",a_req.query.items,"src:",a_req.query.src_id,"dst:",a_req.query.dst_id);
     sendMessage( "CollMoveRequest", { srcId: a_req.query.src_id, dstId: a_req.query.dst_id, item: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1100,7 +1100,7 @@ app.post('/api/repo/update', ( a_req, a_resp ) => {
 });
 
 app.get('/api/repo/delete', ( a_req, a_resp ) => {
-    console.log("repo del, id",a_req.query.id);
+    //console.log("repo del, id",a_req.query.id);
     sendMessage( "RepoDeleteRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
@@ -1161,7 +1161,7 @@ app.get('/api/repo/alloc/delete', ( a_req, a_resp ) => {
 });
 
 app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
-    console.log("alloc set:",a_req.query.repo,a_req.query.subject,a_req.query.data_limit,a_req.query.rec_limit);
+    //console.log("alloc set:",a_req.query.repo,a_req.query.subject,a_req.query.data_limit,a_req.query.rec_limit);
     sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,dataLimit:a_req.query.data_limit,recLimit:a_req.query.rec_limit}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1172,7 +1172,7 @@ app.get('/api/repo/alloc/set/default', ( a_req, a_resp ) => {
     if ( a_req.query.subject )
         par.subject = a_req.query.subject;
 
-    console.log("alloc set def:",par);
+    //console.log("alloc set def:",par);
 
     sendMessage( "RepoAllocationSetDefaultRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -1187,7 +1187,7 @@ app.get('/api/top/list', ( a_req, a_resp ) => {
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
     }
-    console.log( "TopicListRequest", par );
+    //console.log( "TopicListRequest", par );
     sendMessage( "TopicListRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
@@ -1206,7 +1206,7 @@ app.get('/api/top/unlink', ( a_req, a_resp ) => {
 });
 
 app.get('/ui/ep/view', ( a_req, a_resp ) => {
-    console.log("/ui/ep/view", a_req.query.ep );
+    //console.log("/ui/ep/view", a_req.query.ep );
 
     //var userinfo = JSON.parse(a_req.cookies['sdms-user']);
 
@@ -1230,7 +1230,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
                 data += chunk;
             });
             res.on('end', () => {
-                console.log('done:',data);
+                //console.log('done:',data);
                 a_resp.json(JSON.parse(data));
             });
         });
@@ -1245,7 +1245,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
 });
 
 app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
-    console.log("/ui/eo/autocomp", a_req.query.term);
+    //console.log("/ui/eo/autocomp", a_req.query.term);
 
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
         //console.log("token reply:", reply );
@@ -1268,7 +1268,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             });
 
             res.on('end', () => {
-                console.log('done:',data);
+                //console.log('done:',data);
                 a_resp.json(JSON.parse(data));
             });
         });
@@ -1296,7 +1296,7 @@ app.post('/ui/ep/recent/save', ( a_req, a_resp ) => {
 
 app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
-        console.log("reply:", reply );
+        //console.log("reply:", reply );
 
         const opts = {
             hostname: 'transfer.api.globusonline.org',
@@ -1315,7 +1315,7 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
                 data += chunk;
             });
             res.on('end', () => {
-                console.log('done:',data);
+                //console.log('done:',data);
                 a_resp.json(JSON.parse(data));
             });
         });

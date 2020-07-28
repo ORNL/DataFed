@@ -231,41 +231,65 @@ export function refreshUI( a_ids, a_data, a_reload ){
     panel_info.showSelectedInfo( act_node );
 }
 
-function displayPath( path, item ){
-    //console.log("displayPath");
+function displayPath_fin( node, item ){
+    console.log("displayPath_fin",node.key);
 
-    var node;
+    var chn, ch = node.getChildren();
+    for ( var c in ch ){
+        if ( ch[c].key == item ){
+            chn = ch[c];
+            break;
+        }
+    }
 
-    function reloadPathNode( idx ){
-        //console.log("reload",idx);
-        node = data_tree.getNodeByKey( path[idx].id );
-        if ( node ){
-            $( "#data-tabs" ).tabs({ active: 0 });
-            //console.log("reload node",node.key,",offset",path[idx].off);
+    if ( chn ){
+        console.log("found",chn.key);
+
+        data_tree.selectAll(false);
+        selectScope = chn;
+        chn.setActive();
+        chn.setSelected( true );
+    }else{
+        util.setStatusText( "Record not found." );
+    }
+
+    //asyncEnd();
+}
+
+function displayPath_reload( item, path, idx ){
+    console.log("reload",idx);
+
+    var node = data_tree.getNodeByKey( path[idx].id );
+    if ( node ){
+        $( "#data-tabs" ).tabs({ active: 0 });
+        console.log("reload node",node.key,node.data.offset,",offset",path[idx].off);
+        if ( node.data.offset == path[idx].off && node.isLoaded() ){
+            // Already laoded and on the correct offset
+            console.log("already loaded");
+            if ( idx == 0 ){
+                displayPath_fin( node, item );
+            }else{
+                displayPath_reload( item, path, idx - 1 );
+            }
+        }else{
             node.data.offset = path[idx].off;
             node.load(true).done( function(){
                 node.setExpanded(true);
                 if ( idx == 0 ){
-                    node = data_tree.getNodeByKey( item );
-                    if ( node ){
-                        node.setActive();
-                        data_tree.selectAll(false);
-                        selectScope = node;
-                        treeSelectNode(node);
-                    }else{
-                        util.setStatusText("Error: item not found.");
-                        console.log("ITEM NOT FOUND!",item);
-                    }
-                    //asyncEnd();
+                    displayPath_fin( node, item );
                 }else{
-                    reloadPathNode( idx - 1 );
+                    displayPath_reload( item, path, idx - 1 );
                 }
             });
-        }else{
-            //asyncEnd();
-            util.setStatusText("Error: path not found.");
         }
+    }else{
+        //asyncEnd();
+        util.setStatusText("Error: path not found.");
     }
+}
+
+function displayPath( path, item ){
+    console.log("displayPath");
 
     // Must examine and process paths that lead to projects, or shared data
 
@@ -333,13 +357,13 @@ function displayPath( path, item ){
                     return;
                 }
                 //console.log("path:",path);
-                reloadPathNode( path.length - 1 );
+                displayPath_reload( item, path, path.length - 1 );
             }
         });
     }else if ( path[path.length - 1].id.startsWith('c/u_') ){
         var uid = path[path.length - 1].id.substr(4,path[path.length - 1].id.length-9);
         if ( uid == settings.user.uid ){
-            reloadPathNode( path.length - 1 );
+            displayPath_reload( item, path, path.length - 1 );
         }else{
             // TODO BROKEN CODE
             /*
@@ -389,19 +413,20 @@ function displayPath( path, item ){
             */
         }
     }else{
-        reloadPathNode( path.length - 1 );
+        displayPath_reload( item, path, path.length - 1 );
     }
 }
 
-// TODO -  broken code
+
 function showParent( which ){
     var ids = getSelectedIDs();
     if ( ids.length != 1 ){
-        //asyncEnd();
         return;
     }
 
     var node, item_id = ids[0];
+
+    console.log("go to",item_id);
 
     if ( which != 0 ){
         node  = data_tree.getActiveNode();
@@ -413,6 +438,7 @@ function showParent( which ){
 
     api.getParents( item_id, function( ok, data ){
         if ( ok ){
+            console.log("get parent OK",data.path);
             if ( data.path.length ){
                 var i,path;
                 var done = 0, err = false;
@@ -421,7 +447,6 @@ function showParent( which ){
                     path = data.path[0].item;
                 else{
                     // Figure out which parent path matches current location
-
 
                     for ( i in data.path ){
                         path = data.path[i].item;
@@ -438,6 +463,8 @@ function showParent( which ){
                         break;
                     }
                 }
+
+                console.log("path",path);
 
                 if ( !path ) // Might happen if displayed tree is stale
                     return;
