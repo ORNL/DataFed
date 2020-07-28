@@ -800,23 +800,30 @@ module.exports = ( function() {
                 results[idx].push({id:p._id,title:p.title,alias:p.alias});
                 p = obj.db.item.firstExample({_to: p._id });
             }
-            idx ++;
+            idx++;
         }
 
-        /*
-        parents = obj.db._query( "for v in 1..1 inbound @item item return {id:v._id,title:v.title,alias:v.alias}", { item : item_id }).toArray();
-        if ( !parents.length )
-            return [[]];
-
-        for ( i in parents ){
-            results.push([parents[i]]);
-        }
-
-        for ( i in results ){
-            var res = obj.db._query( "for v in 1..50 inbound @item item return {id:v._id,title:v.title,alias:v.alias}", { item : results[i][0].id }).toArray();
-            //console.log("par:",res);
-            results[i] = results[i].concat( res );
-        }*/
+        // Sort paths alphabetically as in collection listings
+        results.sort( function( a, b ){
+            var i,j;
+            if ( a.length < b.length ){
+                for ( i = a.length - 1, j = b.length-1; i >=0; i--, j-- ){
+                    if ( a[i].title < b[j].title )
+                        return -1;
+                    else if ( a[i].title > b[j].title )
+                        return 1;
+                }
+                return 1;
+            }else{
+                for ( i = a.length - 1, j = b.length-1; j >=0; i--, j-- ){
+                    if ( a[i].title < b[j].title )
+                        return -1;
+                    else if ( a[i].title > b[j].title )
+                        return 1;
+                }
+                return -1;
+            }
+        })
 
         return results;
     };
