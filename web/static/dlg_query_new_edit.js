@@ -14,10 +14,9 @@ export function show( a_data, a_cb ) {
                     <tr><td>Text:</td><td><textarea id='text_query' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Metadata:</td><td><textarea id='meta_query' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Scope:</td><td id='scope_cell'>\
-                        <span class='my-check'><label for='scope_mydat-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_mydat-dlg' id='scope_mydat-dlg'>&nbspMy Data</span>\
-                        <span class='my-check'><label for='scope_myproj-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_myproj-dlg' id='scope_myproj-dlg'>&nbspMy Projects</span>\
-                        <span class='my-check'><label for='scope_otherproj-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_otherproj-dlg' id='scope_otherproj-dlg'>&nbspOther Projects</span>\
-                        <span class='my-check'><label for='scope_shared-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_shared-dlg' id='scope_shared-dlg'>&nbspShared&nbspData</span>\
+                        <span class='my-check'><label for='scope_mydat-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_mydat-dlg' id='scope_mydat-dlg'>&nbspPersonal</span>\
+                        <span class='my-check'><label for='scope_proj-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_proj-dlg' id='scope_proj-dlg'>&nbspProjects</span>\
+                        <span class='my-check'><label for='scope_shared-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_shared-dlg' id='scope_shared-dlg'>&nbspShared</span>\
                         </td></tr>\
                 </table>\
             </div>\
@@ -64,12 +63,8 @@ export function show( a_data, a_cb ) {
 
             if ( $("#scope_mydat-dlg",frame).prop("checked"))
                 query.scopes.push({scope:model.SS_USER});
-            if ( $("#scope_myproj-dlg",frame).prop("checked"))
-                query.scopes.push({scope:model.SS_OWNED_PROJECTS});
-            if ( $("#scope_otherproj-dlg",frame).prop("checked")){
-                query.scopes.push({scope:model.SS_MANAGED_PROJECTS});
-                query.scopes.push({scope:model.SS_MEMBER_PROJECTS});
-            }
+            if ( $("#scope_proj-dlg",frame).prop("checked"))
+                query.scopes.push({scope:model.SS_PROJECTS});
             if ( $("#scope_shared-dlg",frame).prop("checked")){
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
@@ -170,12 +165,8 @@ export function show( a_data, a_cb ) {
                         case model.SS_USER:
                             $("#scope_mydat-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
                             break;
-                        case model.SS_OWNED_PROJECTS:
-                            $("#scope_myproj-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
-                            break;
-                        case model.SS_MANAGED_PROJECTS:
-                        case model.SS_MEMBER_PROJECTS:
-                            $("#scope_otherproj-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
+                        case model.SS_PROJECTS:
+                            $("#scope_proj-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
                             break;
                         case model.SS_SHARED_BY_ANY_USER:
                         case model.SS_SHARED_BY_ANY_PROJECT:

@@ -481,13 +481,6 @@ app.get('/api/prj/list', ( a_req, a_resp ) => {
     //console.log("proj list:",params);
     sendMessage( "ProjectListRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
-        /*if ( reply.item ){
-            console.log("prj list:",reply.item);
-            a_resp.send(reply);
-        }else{
-            console.log("prj list:[]");
-            a_resp.send([]);
-        }*/
     });
 });
 
@@ -497,25 +490,6 @@ app.post('/api/prj/search', ( a_req, a_resp ) => {
         a_resp.send(reply.item?reply.item:[]);
     });
 });
-
-/*
-app.get('/api/prj/list/by_admin', ( a_req, a_resp ) => {
-    sendMessage( "ProjectListByAdminRequest", {}, a_req, a_resp, function( reply ) {
-        if ( reply.proj )
-            a_resp.send(reply.proj);
-        else
-            a_resp.send([]);
-    });
-});
-
-app.get('/api/prj/list/by_member', ( a_req, a_resp ) => {
-    sendMessage( "ProjectListByMemberRequest", {}, a_req, a_resp, function( reply ) {
-        if ( reply.proj )
-            a_resp.send(reply.proj);
-        else
-            a_resp.send([]);
-    });
-});*/
 
 app.get('/api/grp/create', ( a_req, a_resp ) => {
     var params  = {

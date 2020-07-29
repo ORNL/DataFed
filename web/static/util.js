@@ -199,7 +199,8 @@ export function generateNoteSpan( item, codes ){
 }
 
 export function generateTitle( item, refresh, unstruct = false ) {
-    var title = "";
+    var title = "",
+        uid = "u/" + settings.user.uid;
 
     if ( item.locked )
         title += "<i class='ui-icon ui-icon-locked'></i> ";
@@ -213,10 +214,9 @@ export function generateTitle( item, refresh, unstruct = false ) {
     else
         title += "<span class='data-tree-alias'></span>";
 
+
     // Only apply owner/creator labels to data records
     if ( item.id.startsWith( "d/" ) && item.owner && item.creator ){
-        var uid = "u/" + settings.user.uid;
-
         if ( unstruct ){
             // No tree structure to convey owner of data, so show owner when user is not owner/creator
             if ( item.owner != uid && item.creator != uid ){
@@ -237,6 +237,16 @@ export function generateTitle( item, refresh, unstruct = false ) {
                 if ( item.creator != uid ) {
                     title += "&nbsp;<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
                 }
+            }
+        }
+    }
+
+    if ( item.id.startsWith( "p/" )){
+        if ( item.owner != uid ){
+            if ( item.creator == uid ){
+                title += "&nbsp;<span class='data-tree-creator-self'>(" + settings.user.uid + ")</span>";
+            } else {
+                title += "&nbsp;<span class='data-tree-creator-other'>(" + item.owner.substr(2) + ")</span>";
             }
         }
     }

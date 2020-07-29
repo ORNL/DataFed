@@ -4,7 +4,7 @@
         <div id='data-tabs-parent' style="flex:none;height:100%;resize:horizontal;overflow:visible;padding:0;min-width:0;min-height:0;width:55%">
             <div id="data-tabs" class='no-border' style="border:none;padding:0;height:100%;min-height:0;overflow:hidden">
                 <ul>
-                    <li><a href="#tab-data-tree">Data</a></li>
+                    <li><a href="#tab-data-tree">My Data</a></li>
                     <li><a href="#tab-catalogs">Catalogs</a></li>
                     <li><a href="#tab-notifications">Notifications</a></li>
                     <li style="display:none"><a href="#tab-prov-graph">Provenance</a><span class='ui-icon ui-icon-circle-close prov-graph-close'></span></li>
@@ -193,9 +193,8 @@
 
                         <tr><td>Metadata: <span class='note'>*</span></td><td colspan="3"><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions."></input></td><td><button id="save_qry_btn" class='btn small' style='width:12ch' >Save Query</button></td></tr>
                         <tr><td>Scope:</td><td colspan="3">
-                            <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbsp;My Data</span>
-                            <span class='my-check'><label for='scope_myproj'></label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>&nbsp;My Projects</span>
-                            <span class='my-check'><label for='scope_otherproj'></label><input class='scope' type='checkbox' name='scope_otherproj' id='scope_otherproj'>&nbsp;Other Projects</span>
+                            <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbsp;Personal</span>
+                            <span class='my-check'><label for='scope_proj'></label><input class='scope' type='checkbox' name='scope_proj' id='scope_proj' checked>&nbsp;Projects</span>
                             <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbsp;Shared</span>
                             <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbsp;Selected</span>
                         </td><td><button id='btn_srch_clear_select' class='btn small' style='width:12ch' disabled>Clear Sel.</button></td></tr>

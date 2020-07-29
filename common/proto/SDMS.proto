@@ -32,16 +32,14 @@ enum SearchScope
 {
     SS_USER                     = 1;
     SS_PROJECT                  = 2;
-    SS_OWNED_PROJECTS           = 3;
-    SS_MANAGED_PROJECTS         = 4;
-    SS_MEMBER_PROJECTS          = 5;
-    SS_COLLECTION               = 6;
-    SS_TOPIC                    = 7;
-    SS_SHARED_BY_USER           = 8;
-    SS_SHARED_BY_ANY_USER       = 9;
-    SS_SHARED_BY_PROJECT        = 10;
-    SS_SHARED_BY_ANY_PROJECT    = 11;
-    SS_VIEW                     = 12;
+    SS_PROJECTS                 = 3;
+    SS_COLLECTION               = 4;
+    SS_TOPIC                    = 5;
+    SS_SHARED_BY_USER           = 6;
+    SS_SHARED_BY_ANY_USER       = 7;
+    SS_SHARED_BY_PROJECT        = 8;
+    SS_SHARED_BY_ANY_PROJECT    = 9;
+    SS_VIEW                     = 10;
 }
 
 enum DependencyType

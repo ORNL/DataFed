@@ -1472,14 +1472,11 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
         case SDMS::SS_PROJECT:
             result += string("for i in 1..1 inbound '") + scope.getString( "id" ) + "' owner filter is_same_collection('d',i)";
             break;
-        case SDMS::SS_OWNED_PROJECTS:
-            result += "for i,e,p in 2..2 inbound @client owner filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
-            break;
-        case SDMS::SS_MANAGED_PROJECTS:
-            result += "for i,e,p in 2..2 inbound @client admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
-            break;
-        case SDMS::SS_MEMBER_PROJECTS:
-            result += "for i,e,p in 3..3 inbound @client member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i)";
+        case SDMS::SS_PROJECTS:
+            result += string("for i in union("
+                "(for i,e,p in 2..2 inbound @client owner, admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) return i),"
+                "(for i,e,p in 3..3 inbound @client member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i) return i)"
+                ")");
             break;
         case SDMS::SS_COLLECTION:
             result += string("for i in 1..10 outbound '") + scope.getString( "id" ) + "' item filter is_same_collection('d',i)";

@@ -172,9 +172,7 @@ export function refreshUI( a_ids, a_data, a_reload ){
     if ( !a_ids || !a_data ){
         // If no IDs or unknown action, refresh everything
         util.reloadNode(data_tree.getNodeByKey("mydata"));
-        util.reloadNode(data_tree.getNodeByKey("proj_own"));
-        util.reloadNode(data_tree.getNodeByKey("proj_adm"));
-        util.reloadNode(data_tree.getNodeByKey("proj_mem"));
+        util.reloadNode(data_tree.getNodeByKey("projects"));
         util.reloadNode(data_tree.getNodeByKey("shared_user"));
         util.reloadNode(data_tree.getNodeByKey("shared_proj"));
         //util.reloadNode(data_tree.getNodeByKey("topics"));
@@ -232,7 +230,7 @@ export function refreshUI( a_ids, a_data, a_reload ){
 }
 
 function displayPath_fin( node, item ){
-    console.log("displayPath_fin",node.key);
+    //console.log("displayPath_fin",node.key);
 
     var chn, ch = node.getChildren();
     for ( var c in ch ){
@@ -243,29 +241,30 @@ function displayPath_fin( node, item ){
     }
 
     if ( chn ){
-        console.log("found",chn.key);
+        //console.log("found",chn.key);
 
         data_tree.selectAll(false);
         selectScope = chn;
         chn.setActive();
         chn.setSelected( true );
     }else{
-        util.setStatusText( "Record not found." );
+        //util.setStatusText( "Record not found." );
+        util.setStatusText("Not found in 'My Data'",1);
     }
 
     //asyncEnd();
 }
 
 function displayPath_reload( item, path, idx ){
-    console.log("reload",idx);
+    //console.log("reload",idx);
 
     var node = data_tree.getNodeByKey( path[idx].id );
     if ( node ){
         $( "#data-tabs" ).tabs({ active: 0 });
-        console.log("reload node",node.key,node.data.offset,",offset",path[idx].off);
+        //console.log("reload node",node.key,node.data.offset,",offset",path[idx].off);
         if ( node.data.offset == path[idx].off && node.isLoaded() ){
             // Already laoded and on the correct offset
-            console.log("already loaded");
+            //console.log("already loaded");
             if ( idx == 0 ){
                 displayPath_fin( node, item );
             }else{
@@ -284,12 +283,12 @@ function displayPath_reload( item, path, idx ){
         }
     }else{
         //asyncEnd();
-        util.setStatusText("Error: path not found.");
+        util.setStatusText("Not found in 'My Data'",1);
     }
 }
 
 function displayPath( path, item ){
-    console.log("displayPath");
+    //console.log("displayPath");
 
     // Must examine and process paths that lead to projects, or shared data
 
@@ -300,63 +299,38 @@ function displayPath( path, item ){
                 //console.log("proj:",proj,settings.user.uid);
                 var uid = "u/"+settings.user.uid;
                 path.push({id:proj_id,off:0});
-                if ( proj.owner == uid )
-                    path.push({id:"proj_own",off:0});
-                else if ( proj.admin && proj.admin.indexOf( uid ) != -1 )
-                    path.push({id:"proj_adm",off:0});
-                else if ( proj.member && proj.member.indexOf( uid ) != -1 )
-                    path.push({id:"proj_mem",off:0});
-                else{
-                    console.log("NOT FOUND - shared project folder?" );
-                    // TODO BROKEN CODE
-                    /*
-                    aclByProject( function( ok, projs ){
+                if (( proj.owner == uid ) || ( proj.admin && proj.admin.indexOf( uid ) != -1 ) || ( proj.member && proj.member.indexOf( uid ) != -1 )){
+                    path.push({id:"projects",off:0});
+                }else{
+                    //console.log("list user shares");
+                    api.aclByProjectList( proj_id, function( ok, items ){
                         if ( ok ){
-                            //console.log("projs:",projs);
-                            var idx = projs.findIndex(function(p){
-                                return p.id == proj_id;
-                            });
-                            if ( idx != -1 ){
-                                //console.log("list user shares");
-                                aclByProjectList( proj_id, function( ok, items ){
-                                    if ( ok ){
-                                        console.log("shared items:",items);
-                                        var item_id;
-                                        for ( var i in items.item ){
-                                            item_id = items.item[i].id;
-                                            idx = path.findIndex(function(coll){
-                                                return coll.id == item_id;
-                                            });
-                                            if ( idx != -1 ){
-                                                //console.log("orig path:",path);
-                                                path = path.slice( 0, idx + 1 );
-                                                path.push({id:"shared_proj_"+proj_id,off:0},{id:"shared_proj",off:0});
-                                                //console.log("path:",path);
-                                                reloadPathNode( path.length - 1 );
-                                                return;
-                                            }
-                                        }
-                                        // Didn't find path, assume it's in shared_user
-                                        path = [{id:"shared_proj_"+proj_id,off:0},{id:"shared_proj",off:0}];
-                                        reloadPathNode( path.length - 1 );
-                                    }else{
-                                        util.setStatusText("Error: unable to access path information!",1);
-                                        asyncEnd();
-                                    }
+                            //console.log("shared items:",items);
+                            var item_id, idx;
+                            for ( var i in items.item ){
+                                item_id = items.item[i].id;
+                                idx = path.findIndex(function(coll){
+                                    return coll.id == item_id;
                                 });
-                            }else{
-                                util.setStatusText("Error: path to record not found!",1);
-                                asyncEnd();
+                                if ( idx != -1 ){
+                                    //console.log("orig path:",path);
+                                    path = path.slice( 0, idx + 1 );
+                                    path.push({id:"shared_proj_"+proj_id,off:0},{id:"shared_proj",off:0});
+                                    //console.log("path:",path);
+                                    displayPath_reload( item, path, path.length - 1 );
+                                    //asyncEnd();
+                                    return;
+                                }
                             }
-                        }else{
-                            util.setStatusText("Error: " + projs,1);
-                            asyncEnd();
                         }
+
+                        util.setStatusText("Not found in 'My Data'",1);
+                        //asyncEnd();
                     });
-                    */
+
                     return;
                 }
-                //console.log("path:",path);
+
                 displayPath_reload( item, path, path.length - 1 );
             }
         });
@@ -365,52 +339,32 @@ function displayPath( path, item ){
         if ( uid == settings.user.uid ){
             displayPath_reload( item, path, path.length - 1 );
         }else{
-            // TODO BROKEN CODE
-            /*
-            aclByUser( function( ok, data ){
+            //console.log("list user shares");
+            api.aclByUserList( "u/"+uid, function( ok, items ){
+                //console.log("aclByUserList:",ok,items);
                 if ( ok ){
-                    console.log("data:",data);
-                    var idx = data.items.findIndex(function(user){
-                        return user.uid == uid;
-                    });
-                    if ( idx != -1 ){
-                        //console.log("list user shares");
-                        aclByUserList( "u/"+uid, function( ok, items ){
-                            if ( ok ){
-                                //console.log("shared items:",items);
-                                var item_id;
-                                for ( var i in items.item ){
-                                    item_id = items.item[i].id;
-                                    idx = path.findIndex(function(coll){
-                                        return coll.id == item_id;
-                                    });
-                                    if ( idx != -1 ){
-                                        //console.log("orig path:",path);
-                                        path = path.slice( 0, idx + 1 );
-                                        path.push({id:"shared_user_"+uid,off:0},{id:"shared_user",off:0});
-                                        //console.log("path:",path);
-                                        reloadPathNode( path.length - 1 );
-                                        return;
-                                    }
-                                }
-                                // Didn't find path, assume it's in shared_user
-                                path = [{id:"shared_user_"+uid,off:0},{id:"shared_user",off:0}];
-                                reloadPathNode( path.length - 1 );
-                            }else{
-                                util.setStatusText("Error: unable to access path information!",1);
-                                asyncEnd();
-                            }
+                    var item_id, idx;
+                    for ( var i in items.item ){
+                        item_id = items.item[i].id;
+                        idx = path.findIndex(function(coll){
+                            return coll.id == item_id;
                         });
-                    }else{
-                        util.setStatusText("Error: path to record not found!",1);
-                        asyncEnd();
+                        if ( idx != -1 ){
+                            //console.log("orig path:",path);
+                            path = path.slice( 0, idx + 1 );
+                            path.push({id:"shared_user_u/"+uid,off:0},{id:"shared_user",off:0});
+                            //console.log("path:",path);
+                            displayPath_reload( item, path, path.length - 1 );
+                            return;
+                        }
                     }
-                }else{
-                    util.setStatusText("Error:" + users,1);
-                    asyncEnd();
                 }
+
+                util.setStatusText("Not found in 'My Data'",1);
+                //asyncEnd();
             });
-            */
+
+            return;
         }
     }else{
         displayPath_reload( item, path, path.length - 1 );
@@ -426,7 +380,7 @@ function showParent( which ){
 
     var node, item_id = ids[0];
 
-    console.log("go to",item_id);
+    //console.log("go to",item_id);
 
     if ( which != 0 ){
         node  = data_tree.getActiveNode();
@@ -438,7 +392,7 @@ function showParent( which ){
 
     api.getParents( item_id, function( ok, data ){
         if ( ok ){
-            console.log("get parent OK",data.path);
+            //console.log("get parent OK",data.path);
             if ( data.path.length ){
                 var i,path;
                 var done = 0, err = false;
@@ -464,7 +418,7 @@ function showParent( which ){
                     }
                 }
 
-                console.log("path",path);
+                //console.log("path",path);
 
                 if ( !path ) // Might happen if displayed tree is stale
                     return;
@@ -747,7 +701,7 @@ function actionDeleteSelected(){
             if ( proj.length ){
                 api.projDelete( proj, function( ok, data ){
                     if ( ok ){
-                        util.reloadNode(data_tree.getNodeByKey("proj_own"));
+                        util.reloadNode(data_tree.getNodeByKey("projects"));
                         panel_info.showSelectedInfo();
                         resetTaskPoll();
                     }else
@@ -781,7 +735,7 @@ function actionNewProj() {
 
     dlgProjNewEdit.show(null,0,function( data ){
         util.setStatusText("Project "+data.id+" created");
-        util.reloadNode( data_tree.getNodeByKey( "proj_own" ));
+        util.reloadNode( data_tree.getNodeByKey( "projects" ));
     });
 }
 
@@ -1571,12 +1525,8 @@ function parseQuickSearch(){
             key = nodes[i].key;
             if ( key == "mydata" ){
                 query.scopes.push({scope:model.SS_USER});
-            }else if ( key == "proj_own" ){
-                query.scopes.push({scope:model.SS_OWNED_PROJECTS});
-            }else if ( key == "proj_adm" ){
-                query.scopes.push({scope:model.SS_MANAGED_PROJECTS});
-            }else if ( key == "proj_mem" ){
-                query.scopes.push({scope:model.SS_MEMBER_PROJECTS});
+            }else if ( key == "projects" ){
+                query.scopes.push({scope:model.SS_PROJECTS});
             }else if ( key == "shared_all" ){
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
@@ -1607,12 +1557,8 @@ function parseQuickSearch(){
     }else{
         if ( $("#scope_mydat",frame).prop("checked"))
             query.scopes.push({scope:model.SS_USER});
-        if ( $("#scope_myproj",frame).prop("checked"))
-            query.scopes.push({scope:model.SS_OWNED_PROJECTS});
-        if ( $("#scope_otherproj",frame).prop("checked")){
-            query.scopes.push({scope:model.SS_MANAGED_PROJECTS});
-            query.scopes.push({scope:model.SS_MEMBER_PROJECTS});
-        }
+        if ( $("#scope_proj",frame).prop("checked"))
+            query.scopes.push({scope:model.SS_PROJECTS});
         if ( $("#scope_shared",frame).prop("checked")){
             query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
             query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
@@ -1924,10 +1870,8 @@ function addTreePagingNode( a_data ){
 
 var tree_source = [
     //{title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-    {title:"My Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,expanded:false,lazy:true},
-    {title:"My Projects</i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_own",offset:0},
-    {title:"Managed Projects</i>",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_adm",offset:0},
-    {title:"Member Projects",folder:true,icon:"ui-icon ui-icon-view-icons",nodrag:true,lazy:true,key:"proj_mem",offset:0},
+    {title:"Personal Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,lazy:true},
+    {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",folder:true,lazy:true},
     {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
         {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
         {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
@@ -2404,12 +2348,8 @@ export function init(){
         lazyLoad: function( event, data ) {
             if ( data.node.key == "mydata" ){
                 data.result = { url: api.collView_url( my_root_key ), cache: false };
-            }else if ( data.node.key == "proj_own" ){
-                data.result = { url: api.projList_url( true, false, false, data.node.data.offset, settings.opts.page_sz ), cache: false };
-            } else if ( data.node.key == "proj_adm" ){
-                data.result = { url: api.projList_url( false, true, false, data.node.data.offset, settings.opts.page_sz ), cache: false };
-            } else if ( data.node.key == "proj_mem" ){
-                data.result = { url: api.projList_url( false, false, true, data.node.data.offset, settings.opts.page_sz ), cache: false };
+            }else if ( data.node.key == "projects" ){
+                data.result = { url: api.projList_url( true, true, true, model.SORT_TITLE, data.node.data.offset, settings.opts.page_sz ), cache: false };
             }else if ( data.node.key.startsWith("p/")){
                 data.result = { url: api.collView_url( "c/p_"+data.node.key.substr(2)+"_root" ), cache: false };
             } else if ( data.node.key.startsWith( "shared_" )) {
@@ -2467,16 +2407,17 @@ export function init(){
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-sign-out"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
-            }else if ( data.node.key == "proj_own" || data.node.key == "proj_adm" || data.node.key == "proj_mem" ){
+            }else if ( data.node.key == "projects" ){
                 data.result = [];
                 if ( data.response.item && data.response.item.length ){
                     console.log( "pos proc project:", data.response );
-                    var admin = (data.node.key=="proj_own"?true:false);
-                    var mgr = (data.node.key=="proj_adm"?true:false);
+                    var admin, mgr, uid = "u/" + settings.user.uid;
 
                     for ( i in data.response.item ) {
                         item = data.response.item[i];
-                        data.result.push({ title: util.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:item.id,isproj:true,admin:admin,mgr:mgr,nodrag:true,lazy:true});
+                        admin = (item.owner == uid);
+                        mgr = (item.creator == uid);
+                        data.result.push({ title: util.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
                     }
                 }
 
