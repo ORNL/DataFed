@@ -1381,7 +1381,7 @@ ClientWorker::parseSearchMetadata( const string & a_query )
 string
 ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects )
 {
-    use_client = true;
+    use_client = false;
 
     libjson::Value query;
     query.fromString( a_query );
@@ -1467,12 +1467,16 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
         switch( (int)scope.getNumber( "scope" ))
         {
         case SDMS::SS_USER:
+            use_client = true;
+
             result += "for i in 1..1 inbound @client owner filter is_same_collection('d',i)";
             break;
         case SDMS::SS_PROJECT:
             result += string("for i in 1..1 inbound '") + scope.getString( "id" ) + "' owner filter is_same_collection('d',i)";
             break;
         case SDMS::SS_PROJECTS:
+            use_client = true;
+
             result += string("for i in union("
                 "(for i,e,p in 2..2 inbound @client owner, admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) return i),"
                 "(for i,e,p in 3..3 inbound @client member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i) return i)"
@@ -1486,7 +1490,9 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
         case SDMS::SS_SHARED_BY_USER:
             {
+            use_client = true;
             string & id = scope.getString( "id" );
+
             result += string("for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + id + "' return v),"
                 "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + id + "' return v),"
@@ -1496,7 +1502,9 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
         case SDMS::SS_SHARED_BY_ANY_USER:
             //result += "for u in @shared_users for i in 1..1 inbound u owner filter IS_SAME_COLLECTION('d',i) return i";
+            use_client = true;
             use_shared_users = true;
+
             result += "for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @users return v),"
                 "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @users return v),"
@@ -1505,6 +1513,7 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
         case SDMS::SS_SHARED_BY_PROJECT:
             {
+            use_client = true;
             string & id = scope.getString( "id" );
 
             result += string("for i in union_distinct("
@@ -1515,7 +1524,9 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
             }
         case SDMS::SS_SHARED_BY_ANY_PROJECT:
+            use_client = true;
             use_shared_projects = true;
+
             result += "for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @projs return v),"
                 "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @projs return v),"
