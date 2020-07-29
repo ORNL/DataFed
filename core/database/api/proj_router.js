@@ -322,7 +322,7 @@ router.get('/list', function (req, res) {
         if ( !count || req.queryParams.as_admin ){
             qry += (comma?"),(":"") + "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
             if ( count > 1 )
-                qry += " return { _id: i._id, title: i.title, owner: i.owner }";
+                qry += " return { _id: i._id, title: i.title, owner: i.owner, creator: @user }";
             comma = true;
         }
 
@@ -359,7 +359,7 @@ router.get('/list', function (req, res) {
 
     if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
         qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-        qry += " return { id: i._id, title: i.title, owner: i.owner }";
+        qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
         //console.log("proj list qry:",qry);
         result = g_db._query( qry, count?{ user: user_id }:{},{},{fullCount:true});
         var tot = result.getExtra().stats.fullCount;
@@ -367,7 +367,7 @@ router.get('/list', function (req, res) {
         result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
     }
     else{
-        qry += " return { id: i._id, title: i.title, owner: i.owner }";
+        qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
         //console.log("proj list qry:",qry);
         result = g_db._query( qry, count?{ user: user_id }:{});
     }

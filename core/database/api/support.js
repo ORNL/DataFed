@@ -111,13 +111,6 @@ module.exports = ( function() {
     obj.NOTE_MASK_LOC_ALL   = 0xFF;
     obj.NOTE_MASK_INH_ALL   = 0xC00;
 
-    obj.SS_MY_DATA          = 0x01;
-    obj.SS_MY_PROJ          = 0x02;
-    obj.SS_TEAM_PROJ        = 0x04;
-    obj.SS_USER_SHARE       = 0x08;
-    obj.SS_PROJ_SHARE       = 0x10;
-    obj.SS_PUBLIC           = 0x20;
-
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
         grant: joi.number().optional(),
