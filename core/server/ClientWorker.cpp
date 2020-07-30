@@ -1202,8 +1202,9 @@ ClientWorker::parseSearchMetadata( const string & a_query )
     static set<string> terms = {"title","desc","alias","topic","doi","data_url","owner","creator","keyw","ct","ut","size","source","ext"};
     static set<string> funcs = {"abs","acos","asin","atan","atan2","average","avg","ceil","cos","degrees","exp","exp2",
         "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
-        "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample",
-        "date_now","length","lower","upper","distance","is_in_polygon"};
+        "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample","length","lower","upper",
+        "distance","is_in_polygon"};
+    static set<string> date_funcs = {"date_now","date_timestamp"};
     static set<string> other = {"like","true","false","null","in"};
 
 
@@ -1311,6 +1312,11 @@ ClientWorker::parseSearchMetadata( const string & a_query )
                     result.append( "i['desc']" );
                 else if ( other.find( tmp ) != other.end() || (funcs.find( tmp ) != funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' ))))
                     result.append( tmp );
+                else if ( date_funcs.find( tmp ) != date_funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' )))
+                {
+                    result.append( "0.001*");
+                    result.append( tmp );
+                }
                 else if ( tmp == "id" )
                 {
                     result.append( "i._id" );
