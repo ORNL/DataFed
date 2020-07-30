@@ -147,7 +147,7 @@ function showSelectedUserInfo( key, cb ){
 }
 
 function showSelectedProjInfo( key, cb ){
-    api.viewProj( key, function( item ){
+    api.projView( key, function( item ){
         showSelectedItemInfo( item );
         if ( cb ) cb( item );
     }); 
@@ -169,10 +169,7 @@ var tree_opts1 = {
         showSelectedNoteInfo( data.node );
     },
     lazyLoad: function( event, data ) {
-        data.result = {
-            url: "/api/note/view?id="+encodeURIComponent( data.node.data.parentId ),
-            cache: false
-        };
+        data.result = { url: api.noteView_url( data.node.data.parentId ), cache: false };
     },
     postProcess: function( event, data ) {
         //console.log("postproc:",data);

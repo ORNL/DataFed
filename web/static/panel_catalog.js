@@ -1,4 +1,5 @@
 import * as util from "./util.js";
+import * as api from "./api.js";
 import * as model from "./model.js";
 import * as settings from "./settings.js";
 import * as panel_info from "./panel_item_info.js";
@@ -111,20 +112,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         },
         lazyLoad: function( event, data ) {
             if ( data.node.key == "topics" ) {
-                data.result = {
-                    url: "/api/top/list?offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
+                data.result = { url: api.topicList_url( null, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key.startsWith( "t/" )){
-                data.result = {
-                    url: "/api/top/list?id=" + encodeURIComponent( data.node.key ) + "&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
+                data.result = { url: api.topicList_url( data.node.key, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key.startsWith( "c/" )){
-                data.result = {
-                    url: "/api/col/read?offset="+data.node.data.offset+"&count="+settings.opts.page_sz+"&id=" + encodeURIComponent( data.node.key ),
-                    cache: false
-                };
+                data.result = { url: api.collRead_url( data.node.key, data.node.data.offset, settings.opts.page_sz ), cache: false };
             }
         },
         postProcess: function( event, data ) {

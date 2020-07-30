@@ -47,7 +47,7 @@ export function show( a_cb ){
     $("#btn_revoke_cred",frame).click( function(){
         dialogs.dlgConfirmChoice( "Revoke CLI Credentials", "Revoke credentials for ALL configured environments? The SDMS CLI will revert to interactive mode until new credentials are configured using the CLI 'setup' command.", ["Cancel","Revoke"], function(choice){
             if ( choice == 1 ){
-                api._asyncGet( "/api/usr/revoke_cred", null, function( ok, data ){
+                api.userRevokeCredentials( function( ok, data ){
                     if ( !ok )
                         dialogs.dlgAlert( "Revoke Credentials Error", data );
                 });
@@ -69,8 +69,9 @@ export function show( a_cb ){
         },{
             text: "Save",
             click: function(){
-                var reload = false;
-                var url = "", inst = $(this);
+                var reload = false,
+                    inst = $(this),
+                    email, pw;
 
                 var tmp = $("#new_email",frame).val();
                 if ( tmp != settings.user.email ){
@@ -78,7 +79,7 @@ export function show( a_cb ){
                         dialogs.dlgAlert( "Data Entry Error", "Invalid e-mail" );
                         return;
                     }else{
-                        url += "&email=" + encodeURIComponent(tmp);
+                        email = tmp;
                         settings.setUserEmail( tmp );
                     }
                 }
@@ -90,7 +91,7 @@ export function show( a_cb ){
                         dialogs.dlgAlert( "Update CLI Password", "Passwords do not match" );
                         return;
                     }else{
-                        url += "&pw=" + encodeURIComponent(tmp);
+                        pw = tmp;
                     }
                 }
 
@@ -111,21 +112,12 @@ export function show( a_cb ){
 
                 if ( save_opts ){
                     settings.setOptionsObj( opts );
-                    url += "&opts="+encodeURIComponent(JSON.stringify(opts));
                 }
 
-                var new_def_alloc, close_cnt = 0;
-
-                if ( url )
-                    close_cnt++;
-
-                tmp = $("#def-alloc",frame).val();
-                if ( tmp != def_alloc ){
-                    new_def_alloc = tmp;
-                    close_cnt++;
-                }
+                var close_cnt = 0;
 
                 function do_close(){
+                    //console.log("do_close",close_cnt);
                     if ( --close_cnt <= 0 ){
                         util.setStatusText("Settings saved.");
 
@@ -138,16 +130,23 @@ export function show( a_cb ){
 
                 tmp = $("#theme-sel",frame).val();
                 if ( tmp != settings.theme ){
+                    close_cnt++;
                     settings.setTheme( tmp );
                     $("#jq-theme-css").attr({href : "/jquery-ui-"+tmp+"/jquery-ui.css" });
-                    api._asyncGet( "/ui/theme/save?theme="+tmp, null, null );
+                    api.themeSave( tmp, function( ok, data ){
+                        //console.log("cb 1");
+                        if ( !ok ){
+                            dialogs.dlgAlert( "Save Theme Error", data );
+                        }else{
+                            do_close();
+                        }
+                    });
                 }
 
-                if ( close_cnt == 0 )
-                    do_close();
-
-                if ( url ){
-                    api._asyncGet( "/api/usr/update?uid=u/"+settings.user.uid + url, null, function( ok, data ){
+                if ( pw || email || save_opts ){
+                    close_cnt++;
+                    api.userUpdate( "u/"+settings.user.uid, pw, email, save_opts?opts:null, function( ok, data ){
+                        //console.log("cb 2");
                         if ( !ok ){
                             dialogs.dlgAlert( "Save Settings Error", data );
                         }else{
@@ -156,8 +155,11 @@ export function show( a_cb ){
                     });
                 }
 
-                if ( new_def_alloc ){
-                    api.setDefaultAlloc( new_def_alloc, null, function( ok, data ){
+                tmp = $("#def-alloc",frame).val();
+                if ( tmp != def_alloc ){
+                    close_cnt++;
+                    api.setDefaultAlloc( tmp, null, function( ok, data ){
+                        //console.log("cb 3");
                         if ( !ok ){
                             dialogs.dlgAlert("Set Default Allocation Error", data );
                         }else{
@@ -165,6 +167,9 @@ export function show( a_cb ){
                         }
                     });
                 }
+
+                if ( close_cnt == 0 )
+                    do_close();
             }
         }],
         open: function(event,ui){

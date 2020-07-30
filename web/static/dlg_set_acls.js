@@ -489,7 +489,7 @@ export function show( item ){
     var user_none, group_none;
 
     if ( item.owner.startsWith("p/")){
-        api.viewProj( uid, function(proj){
+        api.projView( uid, function(proj){
             if (!proj){
                 dialogs.dlgAlert("Access Error","Unable to read project data");
                 frame.dialog('close');
@@ -597,10 +597,7 @@ export function show( item ){
                     nodata: false,
                     lazyLoad: function( event, data ) {
                         if ( data.node.key.startsWith("g/")){
-                            data.result = {
-                                url: "/api/grp/view?uid="+encodeURIComponent(uid)+"&gid="+encodeURIComponent(data.node.key.substr(2)),
-                                cache: false
-                            };
+                            data.result = { url: api.groupView_url( a_uid, data.node.key.substr( 2 )), cache: false };
                         }
                     },
                     postProcess: function( event, data ) {

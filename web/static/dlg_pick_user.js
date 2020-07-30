@@ -1,5 +1,6 @@
 import * as settings from "./settings.js";
 import * as util from "./util.js";
+import * as api from "./api.js";
 
 var tree,sel_tree;
 
@@ -114,35 +115,20 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
         },
         lazyLoad: function( ev, data ) {
             if ( data.node.key == "collab" ) {
-                data.result = {
-                    url: "/api/usr/list/collab?offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
-            } else if ( data.node.key == "groups" ) {
-                data.result = {
-                    url: "/api/grp/list?uid="+a_uid,
-                    cache: false
-                };
+                data.result = { url: api.userListCollab_url( data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key == "all" ) {
-                data.result = {
-                    url: "/api/usr/list/all?offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
+                data.result = { url: api.userListAll_url( data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key == "search" ) {
                 var srch_val = search_input.val().trim();
                 if ( srch_val.length > 1 ){
-                    data.result = {
-                        url: "/api/usr/find/by_name_uid?name_uid="+encodeURIComponent(srch_val)+"&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                        cache: false
-                    };
+                    data.result = { url: api.userFindByName_url( srch_val, data.node.data.offset, settings.opts.page_sz ), cache: false };
                 }else{
                     data.result = [];
                 }
+            } else if ( data.node.key == "groups" ) {
+                data.result = { url: api.groupList_url( a_uid ), cache: false };
             } else if ( data.node.key.startsWith("g/")){
-                data.result = {
-                    url: "/api/grp/view?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(data.node.key.substr(2)),
-                    cache: false
-                };
+                data.result = { url: api.groupView_url( a_uid, data.node.key.substr( 2 )), cache: false };
             }
         },
         postProcess: function( ev, a_data ) {

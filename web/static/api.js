@@ -340,17 +340,15 @@ export function projList_url( a_owned, a_admin, a_member, a_sort, a_offset, a_co
         (a_offset!=undefined?"&offset="+a_offset:"") + (a_count!=undefined?"&count="+a_count:"");
 }
 
-export function viewProj( a_id, a_cb ){
+export function projView( a_id, a_cb ){
     _asyncGet( "/api/prj/view?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
-            //console.log("viewProj ok, data:", data, typeof data );
             if ( data )
                 a_cb( data );
             else
                 a_cb();
         }
         else {
-            //console.log("viewProj failed:", data );
             util.setStatusText( "View Project Error: "+data, true );
             a_cb();
         }
@@ -453,8 +451,19 @@ export function getPerms( a_id, a_perms, a_cb ){
     });
 }
 
+export function userListAll_url( a_offset, a_count ) {
+    return "/api/usr/list/all" + (( a_offset != undefined && a_count != undefined )?"?offset="+a_offset+"&count="+a_count:"");
+}
+
+export function userListCollab_url( a_offset, a_count ) {
+    return "/api/usr/list/collab" + (( a_offset != undefined && a_count != undefined )?"?offset="+a_offset+"&count="+a_count:"");
+}
+
+export function userFindByName_url( a_search_word, a_offset, a_count ) {
+    return "/api/usr/find/by_name_uid?name_uid="+encodeURIComponent(a_search_word)+"&offset="+a_offset+"&count="+a_count;
+}
+
 export function userView( a_id, a_details, a_cb ) {
-    //console.log("userView ",a_id);
     _asyncGet( "/api/usr/view?id="+encodeURIComponent(a_id)+(a_details?"&details=true":""), null, a_cb );
 }
 
@@ -470,12 +479,26 @@ export function userFindByNameUID( a_name_uid, a_offset, a_count, a_cb ) {
     _asyncGet( url, null, a_cb );
 }
 
+export function userRevokeCredentials( a_cb ){
+    _asyncGet( "/api/usr/revoke_cred", null, a_cb );
+}
+
+export function userUpdate( a_uid, a_pw, a_email, a_opts, a_cb ) {
+    _asyncGet( "/api/usr/update?uid="+encodeURIComponent(a_uid) + (a_pw?"&pw="+encodeURIComponent(a_pw):"") +
+        (a_email?"&email="+encodeURIComponent(a_email):"") + (a_opts?"&opts="+encodeURIComponent(JSON.stringify(a_opts)):""),
+         null, a_cb );
+}
+
+export function noteView_url( a_id ){
+    return "/api/note/view?id="+encodeURIComponent( a_id );
+}
+
 export function annotationListBySubject( a_id, a_cb ){
     _asyncGet( "/api/note/list/by_subject?subject="+encodeURIComponent(a_id), null, a_cb );
 }
 
 export function annotationView( a_id, a_cb ){
-    _asyncGet( "/api/note/view?id="+encodeURIComponent(a_id), null, a_cb );
+    _asyncGet( noteView_url( a_id ), null, a_cb );
 }
 
 
@@ -517,8 +540,12 @@ export function repoList( a_details, a_list_all, a_cb ){
     _asyncGet( url, null, a_cb );
 }
 
+export function repoView_url( a_repo ){
+    return "/api/repo/view?id="+encodeURIComponent(a_repo);
+}
+
 export function repoView( a_repo, a_cb ){
-    _asyncGet( "/api/repo/view?id="+a_repo, null, a_cb );
+    _asyncGet( repoView_url( a_repo ), null, a_cb );
 }
 
 export function repoCreate( a_repo_data, a_cb ){
@@ -589,15 +616,23 @@ export function allocSet( a_repo, a_subject, a_data_limit, a_rec_limit, a_cb ){
     _asyncGet( "/api/repo/alloc/set?repo="+a_repo+"&subject="+encodeURIComponent(a_subject)+"&data_limit="+a_data_limit+"&rec_limit="+a_rec_limit, null, a_cb );
 }
 
+export function groupView_url( a_uid, a_gid ){
+    return "/api/grp/view?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(a_gid);
+}
+
 export function groupView( a_uid, a_gid, a_cb ) {
-    if ( a_gid.startsWith("g/" ))
-        _asyncGet( "/api/grp/view?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(a_gid.substr(2)), null, a_cb );
+    if ( a_gid.startsWith("g/"))
+        _asyncGet( groupView_url( a_uid, a_gid.substr(2) ), null, a_cb );
     else
-        _asyncGet( "/api/grp/view?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(a_gid), null, a_cb );
+        _asyncGet( groupView_url( a_uid, a_gid ), null, a_cb );
+}
+
+export function groupList_url( a_uid ){
+    return "/api/grp/list?uid="+encodeURIComponent(a_uid);
 }
 
 export function groupList( a_uid, a_cb ) {
-    _asyncGet( "/api/grp/list?uid="+encodeURIComponent(a_uid), null, a_cb );
+    _asyncGet( groupList_url( a_uid ), null, a_cb );
 }
 
 
@@ -637,19 +672,18 @@ export function groupDelete( a_uid, a_gid, a_cb ) {
     _asyncGet( "/api/grp/delete?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, a_cb );
 }
 
-export function topicList( a_parent, a_offset, a_count, a_inc_data, a_cb ){
+export function topicList_url( a_id, a_offset, a_count ){
+    if ( a_id )
+        return "/api/top/list?id=" + a_id + (( a_offset != undefined && a_count != undefined )?"&offset="+a_offset+"&count="+a_count:"");
+    else
+        return "/api/top/list" + (( a_offset != undefined && a_count != undefined )?"?offset="+a_offset+"&count="+a_count:"");
+}
+
+export function topicList( a_id, a_offset, a_count, a_cb ){
     if ( !a_cb )
         return;
 
-    var url = "/api/top/list?id="+encodeURIComponent(a_parent?a_parent:"t/root");
-
-    if ( a_inc_data === false )
-        url += "&data=false";
-
-    if ( a_offset != undefined && a_count != undefined )
-        url += "&offset="+a_offset+"&count="+a_count;
-
-    _asyncGet( url, null, a_cb );
+    _asyncGet( topicList_url( a_id, a_offset, a_count ), null, a_cb );
 }
 
 export function queryList_url( a_offset, a_count ){
@@ -731,6 +765,10 @@ export function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
             }
         }
     });
+}
+
+export function themeSave( a_theme, a_cb ){
+    _asyncGet( "/ui/theme/save?theme="+encodeURIComponent(a_theme), null, a_cb );
 }
 
 export function taskList_url( a_since ){

@@ -52,11 +52,7 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                 var obj = {};
                 dlg_inst = $(this);
 
-                //var url = "/api/col/";
-
                 if ( a_data ){
-                    //url += "update";
-
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
@@ -80,21 +76,6 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
 
                     api.collCreate( obj, callback );
                 }
-
-                //var inst = $(this);
-
-
-                //console.log( "create coll", obj );
-
-                /*api._asyncPost( url, obj, function( ok, data ){
-                    if ( ok ) {
-                        inst.dialog('close');
-                        if ( a_cb )
-                            a_cb(data.coll[0]);
-                    } else {
-                        util.setStatusText( data, true );
-                    }
-                });*/
             }
         }],
         open: function(){

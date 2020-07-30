@@ -294,7 +294,7 @@ function displayPath( path, item ){
 
     if ( path[path.length - 1].id.startsWith('c/p_') ){
         var proj_id = "p/"+path[path.length - 1].id.substr(4,path[path.length - 1].id.length-9);
-        api.viewProj( proj_id, function( proj ){
+        api.projView( proj_id, function( proj ){
             if ( proj ){
                 //console.log("proj:",proj,settings.user.uid);
                 var uid = "u/"+settings.user.uid;
@@ -1074,7 +1074,7 @@ function actionEditSelected() {
     switch( id.charAt(0) ){
         case "p":
             permGateAny( id, model.PERM_WR_REC | model.PERM_SHARE, function( perms ){
-                api.viewProj( id, function( data ){
+                api.projView( id, function( data ){
                     if ( data ){
                         dlgProjNewEdit.show( data, perms, function( data ){
                             refreshUI( id, data );

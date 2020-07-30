@@ -1325,7 +1325,7 @@ app.get('/ui/theme/load', ( a_req, a_resp ) => {
 
 app.get('/ui/theme/save', ( a_req, a_resp ) => {
     a_resp.cookie( 'sdms-theme', a_req.query.theme, { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-    a_resp.send("");
+    a_resp.send("{\"ok\":true}");
 });
 
 

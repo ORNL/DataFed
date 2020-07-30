@@ -123,9 +123,7 @@ export function show( a_uid, a_excl, cb, select ){
                     nodata: false,
                     lazyLoad: function( event, data ) {
                         data.result = {
-                            url: "/api/grp/view?uid="+encodeURIComponent( a_uid )+"&gid="+encodeURIComponent(data.node.key.substr(2)),
-                            cache: false
-                        };
+                            url: api.groupView_url( a_uid, data.node.key.substr(2) ), cache: false };
                     },
                     postProcess: function( event, data ) {
                         if ( data.node.lazy ){
