@@ -269,6 +269,8 @@ router.get('/view', function (req, res) {
 
             proj.allocs = g_db.alloc.byExample({_from:proj._id}).toArray();
             if ( proj.allocs.length ) {
+                g_lib.sortAllocations( proj.allocs );
+
                 var alloc;
 
                 for ( var i in proj.allocs ){
