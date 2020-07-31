@@ -40,6 +40,8 @@ export function showSelectedInfo( node, cb ){
     else
         key = node.key;
 
+    console.log("key",key);
+
     cur_item_id = key;
 
     if ( key[0] == "c" ) {
@@ -60,13 +62,9 @@ export function showSelectedInfo( node, cb ){
             if ( cb ) cb( data );
         }); 
     }else if ( key == "mydata" ) {
-        showSelectedHTML( "Owned Data<br><br>All data owned by you." );
-    }else if ( key == "proj_own" ) {
-        showSelectedHTML( "Owned Projects<br><br>All projects owned by you." );
-    }else if ( key == "proj_adm" ) {
-        showSelectedHTML( "Managed Projects<br><br>Projects owned by other users that are managed by you." );
-    }else if ( key == "proj_mem" ) {
-        showSelectedHTML( "Member Projects<br><br>Projects owned by other users where you are a member." );
+        showSelectedHTML( "Personal Data<br><br>All data owned by you." );
+    }else if ( key == "projects" ) {
+        showSelectedHTML( "Projects<br><br>All projects owned, administerd, or accessible by you." );
     }else if ( key == "shared_all" ) {
         showSelectedHTML( "Shared Data<br><br>Data shared with you by other users and projects." );
     }else if ( key == "shared_user" ) {
