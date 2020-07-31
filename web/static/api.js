@@ -355,6 +355,14 @@ export function projView( a_id, a_cb ){
     });
 }
 
+export function projCreate( a_project, a_cb ){
+    _asyncPost( "/api/prj/create", a_project, a_cb );
+}
+
+export function projUpdate( a_project, a_cb ){
+    _asyncPost( "/api/prj/update", a_project, a_cb );
+}
+
 export function projDelete( a_ids, a_cb ){
     _asyncGet( "/api/prj/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb, 200000 );
 }

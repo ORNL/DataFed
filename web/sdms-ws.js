@@ -386,27 +386,8 @@ app.get('/api/usr/list/collab', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/prj/create', ( a_req, a_resp ) => {
-    var params  = {
-        id: a_req.query.id,
-        title: a_req.query.title,
-        domain: a_req.query.domain
-    };
-
-    if ( a_req.query.repo != undefined )
-        params.repo = a_req.query.repo;
-    if ( a_req.query.desc != undefined )
-        params.desc = a_req.query.desc;
-    if ( a_req.query.sub_repo != undefined && a_req.query.sub_alloc != undefined ){
-        params.subRepo = a_req.query.sub_repo;
-        params.subAlloc = a_req.query.sub_alloc;
-    }
-    if ( a_req.query.members != undefined )
-        params.member = JSON.parse( a_req.query.members );
-    if ( a_req.query.admins != undefined )
-        params.admin = JSON.parse( a_req.query.admins );
-
-    sendMessage( "ProjectCreateRequest", params, a_req, a_resp, function( reply ) {
+app.post('/api/prj/create', ( a_req, a_resp ) => {
+    sendMessage( "ProjectCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
         if ( reply.proj )
             a_resp.send(reply.proj);
         else
@@ -414,33 +395,8 @@ app.get('/api/prj/create', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/prj/update', ( a_req, a_resp ) => {
-    var params  = {
-        id: a_req.query.id,
-    };
-
-    if ( a_req.query.domain != undefined )
-        params.domain = a_req.query.domain;
-    if ( a_req.query.title != undefined )
-        params.title = a_req.query.title;
-    if ( a_req.query.repo != undefined )
-        params.repo = a_req.query.repo;
-    if ( a_req.query.desc != undefined )
-        params.desc = a_req.query.desc;
-    if ( a_req.query.sub_repo != undefined )
-        params.subRepo = a_req.query.sub_repo;
-    if ( a_req.query.sub_alloc != undefined )
-        params.subAlloc = a_req.query.sub_alloc;
-    if ( a_req.query.members != undefined ){
-        params.member = JSON.parse( a_req.query.members );
-        params.memberSet = true;
-    }
-    if ( a_req.query.admins ){
-        params.admin = JSON.parse( a_req.query.admins );
-        params.adminSet = true;
-    }
-
-    sendMessage( "ProjectUpdateRequest", params, a_req, a_resp, function( reply ) {
+app.post('/api/prj/update', ( a_req, a_resp ) => {
+    sendMessage( "ProjectUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         if ( reply.proj )
             a_resp.send(reply.proj);
         else
