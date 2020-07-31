@@ -13,37 +13,46 @@ router.get('/gridftp', function (req, res) {
     try {
         console.log( "authz client", req.queryParams.client, "repo", req.queryParams.repo, "file", req.queryParams.file, "act", req.queryParams.act );
 
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        //console.log("client:",client);
-
-        // Actions: read, write, create, delete, chdir, lookup
-        var req_perm = 0;
-        switch ( req.queryParams.act ) {
-            case "read":
-                req_perm = g_lib.PERM_RD_DATA;
-                break;
-            case "write":
-            case "create":
-                req_perm = g_lib.PERM_WR_DATA;
-                break;
-            case "delete":
-                throw g_lib.ERR_PERM_DENIED;
-            case "chdir":
-            case "lookup":
-                // For TESTING, allow these actions
-                return;
-            default:
-                throw [g_lib.ERR_INVALID_PARAM,"Invalid gridFTP action: ", req.queryParams.act];
-        }
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
         var idx = req.queryParams.file.lastIndexOf("/");
         var data_key = req.queryParams.file.substr( idx + 1 );
         var data_id = "d/" + data_key;
 
-        if ( !g_lib.hasAdminPermObject( client, data_id )) {
-            var data = g_db.d.document( data_id );
-            if ( !g_lib.hasPermissions( client, data, req_perm ))
+        // Special case - allow unknown client to read a publicly accessible record
+        if ( !client ){
+            if ( req.queryParams.act != "read" || !g_lib.hasPublicRead( data_id )){
                 throw g_lib.ERR_PERM_DENIED;
+            }
+            console.log("allow anon read of public record");
+        }else{
+            //console.log("client:",client);
+
+            // Actions: read, write, create, delete, chdir, lookup
+            var req_perm = 0;
+            switch ( req.queryParams.act ) {
+                case "read":
+                    req_perm = g_lib.PERM_RD_DATA;
+                    break;
+                case "write":
+                case "create":
+                    req_perm = g_lib.PERM_WR_DATA;
+                    break;
+                case "delete":
+                    throw g_lib.ERR_PERM_DENIED;
+                case "chdir":
+                case "lookup":
+                    // For TESTING, allow these actions
+                    return;
+                default:
+                    throw [g_lib.ERR_INVALID_PARAM,"Invalid gridFTP action: ", req.queryParams.act];
+            }
+
+            if ( !g_lib.hasAdminPermObject( client, data_id )) {
+                var data = g_db.d.document( data_id );
+                if ( !g_lib.hasPermissions( client, data, req_perm ))
+                    throw g_lib.ERR_PERM_DENIED;
+            }
         }
 
         // Verify repo and path are correct for record

@@ -341,6 +341,39 @@ module.exports = ( function() {
         return result[0];
     };
 
+    obj.getUserFromClientID_noexcept = function( a_client_id ) {
+        // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
+        // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
+
+        var params;
+
+        if ( a_client_id.startsWith("u/")){
+            if ( !obj.db.u.exists( a_client_id ))
+                return;
+
+            return obj.db._document({ _id: a_client_id });
+        } else if ( obj.isDomainAccount( a_client_id )) {
+            // Account
+            params = { 'id': 'accn/' + a_client_id };
+        } else if ( obj.isUUID( a_client_id  )) {
+            // UUID
+            params = { 'id': 'uuid/' + a_client_id };
+        } else {
+            if ( !obj.db.u.exists( "u/" + a_client_id ))
+                return;
+
+            return obj.db._document({ _id: "u/" + a_client_id });
+        }
+
+        var result = obj.db._query( "for j in inbound @id ident return j", params, { cache: true } ).toArray();
+
+        if ( result.length != 1 ){
+            return;
+        }
+
+        return result[0];
+    };
+
     obj.findUserFromUUIDs = function( a_uuids ) {
         var result = obj.db._query( "for i in ident filter i._to in @ids return distinct document(i._from)", { ids: a_uuids }).toArray();
 
@@ -905,6 +938,24 @@ module.exports = ( function() {
 
         return true;
     };
+
+    obj.hasPublicRead = function( a_data_id ) {
+        var i, children = [a_data_id], parents;
+
+        for(;;){
+            // Find all parent collections owned by object owner
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic}", { children : children }).toArray();
+            if ( parents.length == 0 )
+                return false;
+
+            for ( i in parents ) {
+                if ( parents[i].topic ){
+                    return true;
+                }
+            }
+            children = parents;
+        }
+    }
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
      * ownership or admin privilege - the hasAdminPermObject function performs these checks and should be
