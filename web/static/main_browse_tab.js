@@ -175,8 +175,8 @@ export function refreshUI( a_ids, a_data, a_reload ){
         util.reloadNode(data_tree.getNodeByKey("projects"));
         util.reloadNode(data_tree.getNodeByKey("shared_user"));
         util.reloadNode(data_tree.getNodeByKey("shared_proj"));
-        //util.reloadNode(data_tree.getNodeByKey("topics"));
         util.reloadNode(data_tree.getNodeByKey("queries"));
+        util.reloadNode(cat_panel.tree.getNodeByKey("topics"));
     }else{
         var ids = Array.isArray(a_ids)?a_ids:[a_ids];
         var data = Array.isArray(a_data)?a_data:[a_data];
