@@ -47,19 +47,19 @@ export function showSelectedInfo( node, cb ){
     if ( key[0] == "c" ) {
         api.collView( key, function( item ){
             showSelectedItemInfo( item );
-            if ( cb ) cb( item );
+            if ( cb ) cb( item, node );
         }); 
     }else if ( key[0] == "d" ) {
         api.dataView( key, function( data ){
             //console.log("data view:",data[0]);
             showSelectedItemInfo( data );
-            if ( cb ) cb( data );
+            if ( cb ) cb( data, node );
         }); 
     }else if ( key.startsWith("task/" )) {
         api.taskView( key, function( data ){
             console.log("task view:",data );
             showSelectedItemInfo( data );
-            if ( cb ) cb( data );
+            if ( cb ) cb( data, node );
         }); 
     }else if ( key == "mydata" ) {
         showSelectedHTML( "Personal Data<br><br>All data owned by you." );
@@ -74,7 +74,7 @@ export function showSelectedInfo( node, cb ){
     }else if ( key == "queries" ) {
         showSelectedHTML( "Saved Queries<br><br>All saved queries created by you." );
     }else if ( key.startsWith("p/")){
-        showSelectedProjInfo( key, cb );
+        showSelectedProjInfo( key, node, cb );
     //}else if ( key.startsWith("n/")){
     //    showSelectedNoteInfo( key );
     }else if ( key.startsWith("q/")){
@@ -83,17 +83,17 @@ export function showSelectedInfo( node, cb ){
             if ( cb ) cb( item );
         }); 
     }else if ( key.startsWith("u/")){
-        showSelectedUserInfo( key, cb );
+        showSelectedUserInfo( key, node, cb );
     }else if ( key.startsWith( "shared_user_" ) && node.data.scope ){
-        showSelectedUserInfo( node.data.scope, cb );
+        showSelectedUserInfo( node.data.scope, node, cb );
     }else if ( key.startsWith( "shared_proj_" ) && node.data.scope ){
-        showSelectedProjInfo( node.data.scope, cb );
+        showSelectedProjInfo( node.data.scope, node, cb );
     }else if ( key == "allocs" ) {
         showSelectedHTML( "Data Allocations<br><br>Lists allocations and associated data records." );
     }else if ( key.startsWith("published")) {
         showSelectedHTML( "Public Collections<br><br>Lists collections made public and available in DataFed catalogs." );
     }else if ( key.startsWith( "repo/" )) {
-        showSelectedAllocInfo( node.data.repo, node.data.scope, cb );
+        showSelectedAllocInfo( node.data.repo, node.data.scope, node, cb );
     }else{
         showSelectedItemInfo();
     }
@@ -131,23 +131,23 @@ function showSelectedHTML( html ){
     showSelectedMetadata();
 }
 
-function showSelectedUserInfo( key, cb ){
+function showSelectedUserInfo( key, node, cb ){
     api.userView( key, true, function( ok, item ){
         if ( ok, item ){
             console.log("userView:",item);
             item.id = item.uid;
             showSelectedItemInfo( item );
-            if ( cb ) cb( item );
+            if ( cb ) cb( item, node );
         }else{
             showSelectedItemInfo();
         }
     }); 
 }
 
-function showSelectedProjInfo( key, cb ){
+function showSelectedProjInfo( key, node, cb ){
     api.projView( key, function( item ){
         showSelectedItemInfo( item );
-        if ( cb ) cb( item );
+        if ( cb ) cb( item, node );
     }); 
 }
 
@@ -469,14 +469,14 @@ $("#note-tabs").tabs({
     }
 });
 
-function showSelectedAllocInfo( repo, user, cb ){
+function showSelectedAllocInfo( repo, user, node, cb ){
     api.allocView( repo, user, function( ok, data ){
         if ( ok ){
             var item = data.alloc[0];
             item.user = item.id;
             item.id = item.repo;
             showSelectedItemInfo( item );
-            if ( cb ) cb( item );
+            if ( cb ) cb( item, node );
         }else{
             showSelectedItemInfo();
         }

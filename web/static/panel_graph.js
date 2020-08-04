@@ -638,6 +638,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
                 render = true;
                 node.locked = item.locked;
                 node.notes = item.notes;
+                node.size = item.size;
                 //console.log("updating:", node);
                 makeLabel( node, item );
                 if ( node == sel_node )

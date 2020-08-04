@@ -59,7 +59,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 keyNav = false;
             }
 
-            panel_info.showSelectedInfo( data.node );
+            panel_info.showSelectedInfo( data.node, a_parent.checkTreeUpdate );
         },
         select: function( event, data ) {
             if ( data.node.isSelected() ){
@@ -174,15 +174,24 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     this.tree_div = $(a_id,a_frame);
     this.tree = cat_tree;
-
+    
     model.registerUpdateListener( function( a_data ){
         console.log("cat panel updating:",a_data);
+        var data;
         // Find impacted nodes in catalog tree and update title
         cat_tree.visit( function(node){
             if ( node.key in a_data ){
-                util.refreshNodeTitle( node, a_data[node.key] );
+                data = a_data[node.key];
+                // Update size if changed
+                if ( node.key.startsWith("d/") && node.data.size != data.size ){
+                    node.data.size = data.size;
+                }
+
+                util.refreshNodeTitle( node, data );
             }
         });
+
+        a_parent.updateBtnState();
     });
     
     return this;

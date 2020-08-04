@@ -1211,7 +1211,8 @@ function actionAnnotate(){
     permGateAny( id, model.PERM_RD_REC | model.PERM_RD_META | model.PERM_RD_DATA, function( perms ){
         dlgAnnotation.show( id, null, null, null, function(){
             panel_info.showSelectedInfo( id, function( data ){
-                console.log("ann data",data);
+                // TODO Should rely on model.update here
+                //console.log("ann data",data);
                 refreshUI( id, data );
             });
         });
@@ -2020,11 +2021,11 @@ $("#data-tabs").tabs({
             switch ( ui.newPanel[0].id ){
                 case "tab-data-tree":
                     select_source = SS_TREE;
-                    panel_info.showSelectedInfo( data_tree.activeNode );
+                    panel_info.showSelectedInfo( data_tree.activeNode, checkTreeUpdate );
                     break;
                 case "tab-catalogs":
                     select_source = SS_CAT;
-                    panel_info.showSelectedInfo( cat_panel.tree.activeNode );
+                    panel_info.showSelectedInfo( cat_panel.tree.activeNode, checkTreeUpdate );
                     break;
                 case "tab-notifications":
                     //select_source = SS_CAT;
@@ -2036,7 +2037,7 @@ $("#data-tabs").tabs({
                     break;
                 case "tab-search-results":
                     select_source = SS_SEARCH;
-                    panel_info.showSelectedInfo( results_tree.activeNode );
+                    panel_info.showSelectedInfo( results_tree.activeNode, checkTreeUpdate );
                     break;
             }
         }
@@ -2507,7 +2508,7 @@ export function init(){
             }
             keyNav = false;
 
-            panel_info.showSelectedInfo( data.node );
+            panel_info.showSelectedInfo( data.node, checkTreeUpdate );
         },
         select: function( event, data ) {
             //if ( searchSelect && data.node.isSelected() ){
@@ -2688,7 +2689,7 @@ export function init(){
             }
             keyNav = false;
 
-            panel_info.showSelectedInfo( data.node );
+            panel_info.showSelectedInfo( data.node, checkTreeUpdate );
         },
         select: function( event, data ) {
             updateBtnState();
@@ -2792,30 +2793,41 @@ export function init(){
 
 task_hist.html( "(no recent transfers)" );
 
+export function checkTreeUpdate( a_data, a_source ){
+    console.log("check for changes to size, alias, etc");
+
+    if ( a_source.key.startsWith( "d/" )){
+        if ( a_data.size != a_source.data.size ){
+            console.log("size diff, update!");
+            model.update( [a_data] );
+        }
+    }
+}
+
 model.registerUpdateListener( function( a_data ){
     console.log("main tab updating:",a_data);
 
-    var act_node;
+    var nd, data;
 
     switch( select_source ){
         case SS_TREE:
-            act_node = data_tree.activeNode;
+            nd = data_tree.activeNode;
             break;
         case SS_CAT:
-            act_node = cat_panel.tree.activeNode;
+            nd = cat_panel.tree.activeNode;
             break;
         case SS_PROV:
-            act_node = graph_panel.getSelectedID();
+            nd = graph_panel.getSelectedID();
             break;
         case SS_SEARCH:
-            act_node = results_tree.activeNode;
+            nd = results_tree.activeNode;
             break;
     }
 
-    if ( act_node ){
+    if ( nd ){
         for ( var i in a_data ){
-            if ( a_data[i].id == act_node.key ){
-                panel_info.showSelectedInfo( act_node );
+            if ( a_data[i].id == nd.key ){
+                panel_info.showSelectedInfo( nd );
                 break;
             }
         }
@@ -2824,14 +2836,25 @@ model.registerUpdateListener( function( a_data ){
     // Find impacted nodes in data tree and update title
     data_tree.visit( function(node){
         if ( node.key in a_data ){
-            util.refreshNodeTitle( node, a_data[node.key] );
+            data = a_data[node.key];
+            // Update size if changed
+            if ( node.key.startsWith("d/") && node.data.size != data.size ){
+                node.data.size = data.size;
+            }
+            util.refreshNodeTitle( node, data );
         }
     });
 
     // Find impacted nodes in search results and update title
     results_tree.visit( function(node){
         if ( node.key in a_data ){
-            util.refreshNodeTitle( node, a_data[node.key] );
+            // Update size if changed
+            if ( node.key.startsWith("d/") && node.data.size != data.size ){
+                node.data.size = data.size;
+            }
+            util.refreshNodeTitle( node, data );
         }
     });
+
+    updateBtnState();
 });
