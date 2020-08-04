@@ -15,7 +15,8 @@
             <div class="ui-widget-content content" style="flex:none;overflow:auto;padding:.25em">
                 <h2>Contents</h2>
                 <a href='#s1' class='toc1'>1. Introduction</a><br>
-                &nbsp&nbsp<a href='#s11' class='toc2'>1.1 Interfaces</a><br>
+                &nbsp&nbsp<a href='#s11' class='toc2'>1.1 Publications</a><br>
+                &nbsp&nbsp<a href='#s12' class='toc2'>1.2 Interfaces</a><br>
                 <a href='#s2' class='toc1'>2. System Overview</a><br>
                 &nbsp&nbsp<a href='#s21' class='toc2'>2.1 Identifiers and Aliases</a><br>
                 &nbsp&nbsp<a href='#s22' class='toc2'>2.2 Collective Ownership</a><br>
@@ -78,13 +79,44 @@
 
 <h1 id='s1'>1. Introduction</h1>
 
-<p>DataFed is a federated data <i>collaboration</i> and <i>management</i> system for science. DataFed provides many features that ease the <i>data management burden</i> associated with general scientific research; however, the primary goal of DataFed is to <i>improve scientific data quality</i> by enabling precise full-life-cycle control over data artifacts, with the ability to uniformly share and access data across geographically distributed facilities. The combined capabilities of DataFed directly support the concept of <i>"repeatable science"</i> by unambiguously identifying data, capturing context and metadata, and by providing the means to access and utilize data globally.</p>
 
-<p>DataFed can be thought of as a "Tier 2+" distributed data storage system - meaning it is intended for creating and working with data that is of medium- to long-term significance to a geographically distributed audience. Unlike a Tier 1 storage system (i.e. a local file system), DataFed compromises raw access performance in favor of data quality and sustainability. While DataFed shares many features with Tier 3 storage systems (i.e. a data archives), DataFed allows data and metadata to be updated and specifically includes features for disseminating any changes to downstream subscribers. DataFed also provides additional collaboration features to enable precise "in-band" communication regarding data and collections of data.</p>
+<p>DataFed is a federated data collaboration and management system for science. DataFed provides
+many features that ease the data management burden associated with general scientific research;
+however, the primary goal of DataFed is to improve scientific data quality by enabling precise
+full-life-cycle control over data artifacts, with the ability to uniformly share and access data
+across geographically distributed facilities. The combined capabilities of DataFed directly support
+the concept of "repeatable science" by unambiguously identifying data, capturing context and
+metadata, and by providing the means to access and utilize data globally.</p>
 
-<p>DataFed utilizes <a href="https://www.globus.org" target="_blank">Globus</a> for efficient and secure data transfers, as well as for user authentication. Globus can be thought of as a "data network" where data transfers take place between Globus "endpoints" - which are Globus services that enable access to underlying file systems hosted by member organizations. DataFed adds a data management layer on top of Globus that permits data to be located and accessed without needing to know where the data is physically stored within the Globus network. Because DataFed relies heavily on Globus, it is recommended that DataFed users familiarize themselves with how Globus works from the documentation <a href="https://www.globus.org/what-we-do" _target="_blank">here</a>.</p>
+<p>DataFed can be thought of as a "Tier 2+" distributed data storage system - meaning it is intended
+for creating and working with data that is of medium- to long-term significance to the owner and/or
+collaborators. Unlike a Tier 1 storage system (i.e. a local file system), DataFed compromises raw
+access performance in favor of FAIR data principles. While DataFed shares many features with Tier 3
+storage systems (i.e. data archives), DataFed allows data and metadata to be updated and specifically
+includes features for disseminating any changes to downstream dependents (via provenance) and/or data
+subscribers. DataFed also provides additional collaboration features to enable precise "in-band"
+communication regarding data and collections of data (as opposed to ad hoc methods such as email).</p>
 
-<h2 id='s11'>1.1 Interfaces</h2>
+<p>DataFed utilizes <a href="https://www.globus.org" target="_blank">Globus</a> for efficient and secure data transfers, as well as for user authentication.
+Globus can be thought of as a "data network" where data transfers take place between Globus "endpoints"
+- which are Globus services that enable access to underlying file systems hosted by member
+organizations. DataFed adds a data management layer on top of Globus that permits data to be located
+and accessed without needing to know where the data is physically stored within the Globus network.
+Because DataFed relies heavily on Globus, it is recommended that DataFed users familiarize themselves
+with how Globus works from their online documentation at <a href="https://www.globus.org/what-we-do"
+target="_blank">https://www.globus.org/what-we-do</a></p>
+
+<p>DataFed is an open source project hosted on GitHub at <a href="https://github.com/ORNL/DataFed"
+target="_blank">https://github.com/ORNL/DataFed</a>. DataFed is under active development at Oak Ridge
+National Laboratory (ORNL) within the Oak Ridge Leadership Computing Facility (OLCF) and is currently
+deployed in an alpha-release state for interested users.</p>
+
+<h2 id='s11'>1.1 Publications</h2>
+
+<p>Additional online documentation, including publications and presentations, can be found on the
+<a href="https://github.com/ORNL/DataFed/wiki/About-DataFed" target="_blank">DataFed Project Wiki</a>.</p>
+
+<h2 id='s12'>1.2 Interfaces</h2>
 
 <p>There are two ways to access DataFed: 1) DataFed Web Portal, and 2) DataFed command-line interface (CLI). This on-line documentation primarily covers DataFed Web Portal; however, DataFed CLI is critical for accessing and managing data from within computational and analytics environments. The CLI was specifically created to ease the data management burden of computational scientists within HPC facilities with complex security environments. DataFed CLI fills the gap left in HPC systems by the deprecation of the Globus Toolkit.</p>
 
