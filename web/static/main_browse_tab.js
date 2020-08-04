@@ -2033,7 +2033,7 @@ $("#data-tabs").tabs({
                     break;
                 case "tab-prov-graph":
                     select_source = SS_PROV;
-                    panel_info.showSelectedInfo( graph_panel.getSelectedID() );
+                    panel_info.showSelectedInfo( graph_panel.getSelectedID(), graph_panel.checkGraphUpdate );
                     break;
                 case "tab-search-results":
                     select_source = SS_SEARCH;

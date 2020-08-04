@@ -108,10 +108,20 @@ function GraphPanel( a_id, a_frame, a_parent ){
             }
 
             renderGraph();
-            panel_info.showSelectedInfo( sel_node_id );
+            panel_info.showSelectedInfo( sel_node_id, inst.checkGraphUpdate );
             a_parent.updateBtnState();
         });
     };
+
+    this.checkGraphUpdate = function( a_data, a_source ){
+        console.log("graph check updates", a_data, a_source );
+        console.log("sel node", sel_node );
+        // source is sel_node_id, so check sel_node
+        if ( a_data.size != sel_node.size ){
+            console.log("size diff, update!");
+            model.update( [a_data] );
+        }
+    }
 
     // TODO Why are IDs separate from data?
 
@@ -323,7 +333,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
                         .attr("class","select highlight");
                     sel_node = d;
                     sel_node_id = d.id;
-                    panel_info.showSelectedInfo( d.id );
+                    panel_info.showSelectedInfo( d.id, inst.checkGraphUpdate );
                     a_parent.updateBtnState();
                 }
 
@@ -656,8 +666,10 @@ function GraphPanel( a_id, a_frame, a_parent ){
             }
         }
 
-        if ( render )
+        if ( render ){
             renderGraph();
+            a_parent.updateBtnState();
+        }
     }
 
     function graphCountConnected(a_node,a_visited,a_from){
