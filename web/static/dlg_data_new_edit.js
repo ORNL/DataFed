@@ -159,6 +159,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 if ( data.length == 0 ){
                     html="<option value='bad'>(no allocations)</option>";
                     dialogs.dlgAlert("Allocation Error", "Cannot create new data record for this user/project. No available storage allocations.");
+                    // Close dialog
+                    dlg_inst.dialog('close');
                     return;
                 }else{
                     var alloc;
@@ -177,6 +179,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                     if ( !have_cap ){
                         dialogs.dlgAlert("Data Allocation Error","Cannot create new data record for this user/project. All available storage allocations are full. ");
+                        // Close dialog
+                        dlg_inst.dialog('close');
                         return;
                     }else{
                         $("#do_it").button("enable");
@@ -246,8 +250,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             id: "do_it",
             text: DLG_DATA_BTN_LABEL[a_mode],
             click: function() {
-                dlg_inst = $(this);
-
                 var anno = jsoned.getSession().getAnnotations();
 
                 if ( anno && anno.length ){
@@ -412,6 +414,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             jsoned.resize();
         },
         open: function(ev,ui){
+            dlg_inst = $(this);
+
             $(this).css('padding', '0');
 
             $("#dlg-tabs",frame).tabs({heightStyle:"fill"});
