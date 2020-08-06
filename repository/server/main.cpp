@@ -23,7 +23,7 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO( "DataFed repo server starting, ver " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD );
+        DL_INFO( "DataFed repo server starting, ver " << VER_MAJOR << "." << VER_SERVER << "." << VER_PROTOCOL << ":" << VER_CLIENT );
 
         uint16_t    port = 9000;
         string      cfg_file;
@@ -49,7 +49,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "help" ) )
             {
-                cout << "DataFed Repo Server, ver. " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << "\n";
+                cout << "DataFed Repo Server, ver. " << VER_MAJOR << "." << VER_SERVER << "." << VER_PROTOCOL << ":" << VER_CLIENT << "\n";
                 cout << "Usage: sdms-repo [options]\n";
                 cout << opts << endl;
                 return 0;
@@ -57,7 +57,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "version" ))
             {
-                cout << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << endl;
+                cout << VER_MAJOR << "." << VER_SERVER << "." << VER_PROTOCOL << ":" << VER_CLIENT << endl;
                 return 0;
             }
 

@@ -1,4 +1,14 @@
+// ALERT: If enums or messages in this proto file are REMOVED, or if the
+// definitions of existing enums or message parameters are CHANGED, then the
+// VER_PROTO_MAJOR enum value in Version.proto must be incremented and backward
+// compatability will be lost. If new values or fields are APPENDED to the end
+// of an existing defintion, then VER_PROTO_MINOR must be incremented and
+// backward compatability will be maintained. Unused enums, messages, and
+// parameters should be marked as deprecated, and these should be removed at
+// the next major version change.
+
 package SDMS;
+
 
 // ============================ Enums
 

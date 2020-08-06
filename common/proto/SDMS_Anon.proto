@@ -1,3 +1,12 @@
+// ALERT: If messages in this proto file are REORDERED or REMOVED, or if the
+// definitions of existing message parameters are CHANGED, then the
+// VER_PROTO_MAJOR enum value in Version.proto must be incremented and backward
+// compatability will be lost. If new messages are APPENDED to the end of this
+// file, or parameters are APPENDED to the end of an existing message defintion,
+// then VER_PROTO_MINOR must be incremented and backward compatability will be
+// maintained. Unused messages and parameters should be marked as deprecated,
+// and these should be removed at the next major version change.
+
 import "SDMS.proto";
 
 package SDMS.Anon;
@@ -32,8 +41,9 @@ message VersionRequest
 message VersionReply
 {
     required uint32             major       = 1;
-    required uint32             minor       = 2;
-    required uint32             build       = 3;
+    required uint32             protocol    = 2;
+    required uint32             server      = 3;
+    required uint32             client      = 4;
 }
 
 

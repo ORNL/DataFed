@@ -185,7 +185,7 @@ extern "C"
 {
     const char * getVersion()
     {
-        static std::string ver_str = std::to_string(VER_MAJOR) + "." + std::to_string(VER_MINOR) + "." + std::to_string(VER_BUILD);
+        static std::string ver_str = std::to_string(VER_MAJOR) + "." + std::to_string(VER_SERVER) + "." + std::to_string(VER_PROTOCOL) + ":" + std::to_string(VER_CLIENT);
 
         return ver_str.c_str();
     }

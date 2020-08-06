@@ -36,9 +36,11 @@ var g_ctx_next = 0;
 var g_oauth_credentials;
 var g_client_id;
 var g_client_secret;
-var g_version;
-var g_version_base;
 var ready_start = 4;
+var g_version,
+    g_ver_major,
+    g_ver_proto,
+    g_ver_server;
 
 const nullfr = Buffer.from([]);
 
@@ -70,9 +72,14 @@ function startServer(){
     sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
         if ( !reply ){
             console.log( "ERROR: No reply from core server" );
-        }else if ( reply.major + "." + reply.minor != g_version_base ){
-            console.log( "ERROR: Incompatible core server version (" + reply.major + "." + reply.minor + ")" );
+        }else if ( reply.major != g_ver_major || reply.server < g_ver_server || reply.server > ( g_ver_server + 10 ) ||
+                reply.protocol < g_ver_proto || reply.protocol > ( g_ver_proto + 10 )){
+            console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.server + "." + reply.protocol + ")" );
         }else{
+            if ( reply.server > g_ver_server || reply.protocol > g_ver_proto ){
+                console.log( "WARNING: A newer server version is available (" + reply.major + "." + reply.server + "." + reply.protocol + ")" );
+            }
+
             g_oauth_credentials = {
                 clientId: g_client_id,
                 clientSecret: g_client_secret,
@@ -1415,7 +1422,8 @@ function processProtoFile( msg ){
     var i, msg_list = [];
     for ( i in msg.parent.nested )
         msg_list.push(msg.parent.nested[i]);
-    msg_list.sort();
+
+    //msg_list.sort();
 
     var pid = msg.values.ID;
 
@@ -1425,7 +1433,7 @@ function processProtoFile( msg ){
         msg._mid = i-1;
         msg._msg_type = (pid << 8) | (i-1);
 
-        //console.log(msg.name,msg._msg_type);
+        console.log(msg.name,msg._msg_type);
 
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;
@@ -1438,24 +1446,15 @@ protobuf.load("Version.proto", function(err, root) {
 
     console.log('Version.proto loaded');
 
-    var msg = root.lookupEnum( "VerMajor" );
+    var msg = root.lookupEnum( "Version" );
     if ( !msg )
-        throw "Missing Major Version enum in Version.Anon proto file";
+        throw "Missing Version enum in Version.Anon proto file";
 
-    g_version = msg.values.VER_MAJOR + ".";
-
-    msg = root.lookupEnum( "VerMinor" );
-    if ( !msg )
-        throw "Missing Minor Version enum in Version.Anon proto file";
-
-    g_version += msg.values.VER_MINOR;
-
-    msg = root.lookupEnum( "VerBuild" );
-    if ( !msg )
-        throw "Missing Build Version enum in Version.Anon proto file";
-
-    g_version_base = g_version;
-    g_version += "."+msg.values.VER_BUILD;
+    g_ver_major = msg.values.VER_MAJOR;
+    g_ver_proto = msg.values.VER_PROTOCOL;
+    g_ver_server = msg.values.VER_SERVER;
+    
+    g_version = g_ver_major + "." + g_ver_server + "." + g_ver_proto;
 
     console.log('Running Version',g_version);
     if ( --ready_start == 0 )

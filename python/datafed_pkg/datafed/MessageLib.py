@@ -158,8 +158,23 @@ class API:
         if reply == None:
             raise Exception( "Timeout waiting for server connection." )
 
-        if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
-            raise Exception( "Incompatible server version {}.{}.{}".format(reply.major,reply.minor,reply.build))
+        '''
+        }else if ( reply.major != g_ver_major || reply.server < g_ver_server || reply.server > ( g_ver_server + 10 ) ||
+                reply.protocol < g_ver_proto || reply.protocol > ( g_ver_proto + 10 )){
+            console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.server + "." + reply.protocol + ")" );
+        }else{
+            if ( reply.server > g_ver_server || reply.protocol > g_ver_proto ){
+                console.log( "WARNING: A newer server version is available (" + reply.major + "." + reply.server + "." + reply.protocol + ")" );
+        '''
+
+        if reply.major != Version_pb2.VER_MAJOR or reply.server < Version_pb2.VER_SERVER or reply.server > ( Version_pb2.VER_SERVER + 10 ) or \
+            reply.protocol < Version_pb2.VER_PROTOCOL or reply.protocol > ( Version_pb2.VER_PROTOCOL + 10 ):
+            raise Exception( "Incompatible server version {}.{}.{}:{}".format(reply.major,reply.server,reply.protocol,reply.client))
+
+        if reply.client > Version_pb2.VER_CLIENT:
+            self.new_client_avail = True
+        else:
+            self.new_client_avail = False
 
         if client_token:
             self.manualAuthByToken( client_token )

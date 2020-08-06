@@ -116,17 +116,14 @@ class Connection:
     # @param msg_module - Protobuf module (imported *_pb2 module)
     #
     def registerProtocol( self, msg_module ):
-        # Message descriptors are stored by name - must convert to an array in alphabetic order
-        # build descriptors by type look-up
-        proto_id = msg_module._PROTOCOL.values[0].number << 8
-        idx = 0
+        # Message descriptors are stored by name created by protobuf compiler
+        # A custom post-proc tool generates and appends _msg_name_to_type with defined DataFed-sepcific numer message types
 
         for name,desc in sorted(msg_module.DESCRIPTOR.message_types_by_name.items()):
-            msg_t = proto_id | idx
+            msg_t = msg_module._msg_name_to_type[name]
             self._msg_desc_by_type[msg_t] = desc
             self._msg_desc_by_name[desc.name] = desc
             self._msg_type_by_desc[desc] = msg_t
-            idx += 1
 
     ##
     # @brief Receive a message

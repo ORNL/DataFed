@@ -2202,6 +2202,9 @@ def _initialize( opts ):
 
         _capi = CommandLib.API( opts )
 
+        if _interactive and _capi._mapi.new_client_avail:
+            click.echo("Note: Your DataFed python package is out of date.")
+
         if man_auth or _capi.getAuthUser() == None:
             if not man_auth:
                 if not _capi._mapi.keysLoaded():
