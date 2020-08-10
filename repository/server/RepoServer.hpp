@@ -18,18 +18,19 @@ namespace Repo {
 class Server
 {
 public:
-    Server( const std::string & a_cred_dir, uint32_t a_server_port );
+    Server( const std::string & a_cred_dir, uint32_t a_server_port, const std::string & a_core_server );
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
 
-    void            run( bool a_async );
-    void            stop( bool a_wait );
-    void            wait();
+    void        run( bool a_async );
+    void        stop( bool a_wait );
+    void        wait();
 
 private:
-    void            ioRun();
-    void            loadKeys( const std::string & a_cred_dir );
+    void        ioRun();
+    void        loadKeys( const std::string & a_cred_dir );
+    void        checkServerVersion();
 
     std::string getDataPath( const std::string & a_data_id );
     void        procStatusRequest();
@@ -42,6 +43,7 @@ private:
     typedef void (Server::*msg_fun_t)();
 
     uint32_t                        m_port;
+    std::string                     m_core_server;
     std::thread *                   m_io_thread;
     std::mutex                      m_api_mutex;
     std::mutex                      m_data_mutex;

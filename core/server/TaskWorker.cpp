@@ -30,13 +30,13 @@ TaskWorker::~TaskWorker()
 void
 TaskWorker::workerThread()
 {
-    bool                        retry = false;
-    string                      err_msg;
+    bool               retry = false;
+    string             err_msg;
     Value              task_cmd;
     Value::ObjectIter  iter;
-    uint32_t                    cmd;
-    int                         step;
-    bool                        first;
+    uint32_t           cmd;
+    int                step;
+    bool               first;
 
     DL_DEBUG( "Task worker " << id() << " started." )
 

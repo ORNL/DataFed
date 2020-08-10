@@ -344,7 +344,8 @@ ClientWorker::procVersionRequest( const std::string & a_uid )
     DL_INFO( "Ver request" );
 
     reply.set_major( VER_MAJOR );
-    reply.set_protocol( VER_PROTOCOL );
+    reply.set_mapi_major( VER_MAPI_MAJOR );
+    reply.set_mapi_minor( VER_MAPI_MINOR );
     reply.set_server( VER_SERVER );
     reply.set_client( VER_CLIENT );
 

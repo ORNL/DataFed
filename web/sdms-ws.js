@@ -39,7 +39,8 @@ var g_client_secret;
 var ready_start = 4;
 var g_version,
     g_ver_major,
-    g_ver_proto,
+    g_ver_mapi_major,
+    g_ver_mapi_minor,
     g_ver_server;
 
 const nullfr = Buffer.from([]);
@@ -72,12 +73,12 @@ function startServer(){
     sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
         if ( !reply ){
             console.log( "ERROR: No reply from core server" );
-        }else if ( reply.major != g_ver_major || reply.server < g_ver_server || reply.server > ( g_ver_server + 10 ) ||
-                reply.protocol < g_ver_proto || reply.protocol > ( g_ver_proto + 10 )){
-            console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.server + "." + reply.protocol + ")" );
+        }else if ( reply.major != g_ver_major || reply.mapiMajor != g_ver_mapi_major ||
+                reply.mapi_minor < g_ver_mapi_minor || reply.mapi_minor > ( g_ver_mapi_minor + 9 )){
+            console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ")" );
         }else{
-            if ( reply.server > g_ver_server || reply.protocol > g_ver_proto ){
-                console.log( "WARNING: A newer server version is available (" + reply.major + "." + reply.server + "." + reply.protocol + ")" );
+            if ( reply.server > g_ver_server || reply.mapi_minor > g_ver_mapi_minor ){
+                console.log( "WARNING: A newer server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.server + ")" );
             }
 
             g_oauth_credentials = {
@@ -1433,7 +1434,7 @@ function processProtoFile( msg ){
         msg._mid = i-1;
         msg._msg_type = (pid << 8) | (i-1);
 
-        console.log(msg.name,msg._msg_type);
+        //console.log(msg.name,msg._msg_type);
 
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;
@@ -1451,10 +1452,11 @@ protobuf.load("Version.proto", function(err, root) {
         throw "Missing Version enum in Version.Anon proto file";
 
     g_ver_major = msg.values.VER_MAJOR;
-    g_ver_proto = msg.values.VER_PROTOCOL;
+    g_ver_mapi_major = msg.values.VER_MAPI_MAJOR;
+    g_ver_mapi_minor = msg.values.VER_MAPI_MINOR;
     g_ver_server = msg.values.VER_SERVER;
     
-    g_version = g_ver_major + "." + g_ver_server + "." + g_ver_proto;
+    g_version = g_ver_major + "." + g_ver_mapi_major + "." + g_ver_mapi_minor + ":" + g_ver_server;
 
     console.log('Running Version',g_version);
     if ( --ready_start == 0 )
