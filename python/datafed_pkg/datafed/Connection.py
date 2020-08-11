@@ -125,6 +125,8 @@ class Connection:
             self._msg_desc_by_name[desc.name] = desc
             self._msg_type_by_desc[desc] = msg_t
 
+            print( msg_t, " = ", name )
+
     ##
     # @brief Receive a message
     #

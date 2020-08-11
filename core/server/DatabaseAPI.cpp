@@ -2671,7 +2671,7 @@ DatabaseAPI::taskAbort( const std::string & a_task_id, const std::string & a_msg
 
 
 void
-DatabaseAPI::taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetReply & a_reply, libjson::Value & a_result )
 {
     string body = "{\"id\":[";
 
@@ -2700,36 +2700,11 @@ DatabaseAPI::taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::Data
 
     dbPost( "dat/get", {}, &body, a_result );
 
-    setDataGetSetReply( a_reply, a_result );
-}
-
-
-void
-DatabaseAPI::taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result )
-{
-    string body = "{\"id\":[\"" + a_request.id() + "\"]";
-
-    if ( a_request.has_path() )
-        body += ",\"path\":\"" + a_request.path() + "\"";
-
-    if ( a_request.has_encrypt() )
-        body += ",\"encrypt\":" + to_string( a_request.encrypt() );
-
-    if ( a_request.has_ext() )
-        body += ",\"ext\":\"" + a_request.ext() + "\"";
-
-    if ( a_request.has_check() && a_request.check() )
-        body += ",\"check\":true";
-
-    body += "}";
-
-    dbPost( "dat/put", {}, &body, a_result );
-
-    setDataGetSetReply( a_reply, a_result );
+    setDataGetReply( a_reply, a_result );
 }
 
 void
-DatabaseAPI::setDataGetSetReply( Auth::DataGetPutReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value & a_result )
 {
     Value::ObjectIter   t;
 
@@ -2754,6 +2729,66 @@ DatabaseAPI::setDataGetSetReply( Auth::DataGetPutReply & a_reply, const libjson:
         for ( j = arr.begin(); j != arr.end(); j++ )
             setListingData( a_reply.add_item(), j->asObject() );
     }
+
+    if ( obj.has( "task" ))
+        setTaskData( a_reply.mutable_task(), obj.value() );
+
+    TRANSLATE_END( a_result )
+}
+
+void
+DatabaseAPI::taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataPutReply & a_reply, libjson::Value & a_result )
+{
+    string body = "{\"id\":[\"" + a_request.id() + "\"]";
+
+    if ( a_request.has_path() )
+        body += ",\"path\":\"" + a_request.path() + "\"";
+
+    if ( a_request.has_encrypt() )
+        body += ",\"encrypt\":" + to_string( a_request.encrypt() );
+
+    if ( a_request.has_ext() )
+        body += ",\"ext\":\"" + a_request.ext() + "\"";
+
+    if ( a_request.has_check() && a_request.check() )
+        body += ",\"check\":true";
+
+    body += "}";
+
+    dbPost( "dat/put", {}, &body, a_result );
+
+    setDataPutReply( a_reply, a_result );
+}
+
+void
+DatabaseAPI::setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value & a_result )
+{
+    Value::ObjectIter   t;
+
+    TRANSLATE_BEGIN()
+
+    const Value::Object &   obj = a_result.asObject();
+    Value::ObjectIter   i;
+    Value::ArrayConstIter   j;
+
+    if ( !obj.has( "glob_data" ) || obj.value().size() != 1 )
+        EXCEPT_PARAM( ID_BAD_REQUEST, "Invalid or missing upload target" );
+
+    const Value::Array &    arr = obj.asArray();
+    const Value::Object &   rec = arr.begin()->asObject();
+    RecordData * item = a_reply.mutable_item();
+
+    item->set_id( rec.getString( "_id" ));
+    item->set_title( rec.getString( "title" ));
+
+    if ( rec.has( "owner" ) && !rec.value().isNull( ))
+        item->set_owner( rec.asString() );
+
+    if ( rec.has( "size" ) && !rec.value().isNull( ))
+        item->set_size( rec.asNumber() );
+
+    if ( rec.has( "source" ) && !rec.value().isNull( ))
+        item->set_source( rec.asString() );
 
     if ( obj.has( "task" ))
         setTaskData( a_reply.mutable_task(), obj.value() );

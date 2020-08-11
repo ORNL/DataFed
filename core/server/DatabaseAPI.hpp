@@ -149,8 +149,8 @@ public:
     void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step = 0, std::string * a_err_msg = 0 );
     void taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply );
 
-    void taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
-    void taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
+    void taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetReply & a_reply, libjson::Value & a_result );
+    void taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataPutReply & a_reply, libjson::Value & a_result );
     void taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, Auth::TaskDataReply & a_reply, libjson::Value & a_result );
     void taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a_request, Auth::RecordAllocChangeReply & a_reply, libjson::Value & a_result );
     void taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a_request, Auth::RecordOwnerChangeReply & a_reply, libjson::Value & a_result );
@@ -190,7 +190,8 @@ private:
     void setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Value & a_result );
     void setTaskDataReplyArray( Auth::TaskDataReply & a_reply, const libjson::Value & a_result );
     void setTaskData( TaskData * a_task, const libjson::Value & a_task_json );
-    void setDataGetSetReply( Auth::DataGetPutReply & a_reply, const libjson::Value & a_result );
+    void setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value & a_result );
+    void setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value & a_result );
 
     CURL *      m_curl;
     char *      m_client;

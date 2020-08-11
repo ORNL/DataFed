@@ -1434,7 +1434,7 @@ function processProtoFile( msg ){
         msg._mid = i-1;
         msg._msg_type = (pid << 8) | (i-1);
 
-        //console.log(msg.name,msg._msg_type);
+        console.log(msg.name,msg._msg_type);
 
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;

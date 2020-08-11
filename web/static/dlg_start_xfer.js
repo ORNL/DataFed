@@ -106,9 +106,12 @@ export function show( a_mode, a_ids, a_cb ) {
         rec_tree = $.ui.fancytree.getTree($("#records",frame));
     }else{
         item = a_ids[0];
+        console.log("item:",item);
+
         var html = item.id + "&nbsp&nbsp" + util.sizeToString( item.size ) + "&nbsp&nbsp" + item.title;
         $("#title",frame).html( html );
         if ( a_mode == model.TT_DATA_PUT && item.source ){
+            console.log("source:",item.source);
             path_in.val( item.source );
         }
     }

@@ -625,17 +625,7 @@ function dataPut( a_id, a_cb ){
     api.dataPutCheck( a_id, function( ok, data ){
         if ( ok ){
             //console.log("data put check:",data);
-
-            if ( !data.item || !data.item.length ){
-                dialogs.dlgAlert("Data Put Error","Selection contains no record.");
-                return;
-            }
-
-            if ( data.item[0].doi ){
-                dialogs.dlgAlert("Data Put Error","Record has read-only, externally managed data.");
-            }else{
-                dlgStartXfer.show( model.TT_DATA_PUT, data.item, a_cb );
-            }
+            dlgStartXfer.show( model.TT_DATA_PUT, [data.item], a_cb );
         }else{
             dialogs.dlgAlert("Data Put Error",data);
         }

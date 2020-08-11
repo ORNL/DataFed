@@ -250,12 +250,6 @@ message RecordLockRequest
     required bool               lock        = 2;
 }
 
-
-/*message RecordGetDataLocationRequest
-{
-    required string             id          = 1;
-}*/
-
 message RecordDeleteRequest
 {
     repeated string             id          = 1;
@@ -342,9 +336,15 @@ message DataPutRequest
     optional bool               check       = 5;
 }
 
-message DataGetPutReply
+message DataGetReply
 {
     repeated ListingData        item        = 1;
+    optional SDMS.TaskData      task        = 2;
+}
+
+message DataPutReply
+{
+    required RecordData         item        = 1;
     optional SDMS.TaskData      task        = 2;
 }
 
@@ -533,26 +533,6 @@ message ACLListItemsBySubjectRequest
     optional string             subject     = 1;
     required string             owner       = 2;
 }
-
-/*
-message ACLByUserRequest
-{
-}
-
-message ACLByUserListRequest
-{
-    required string             owner       = 1;
-}
-
-message ACLByProjRequest
-{
-}
-
-message ACLByProjListRequest
-{
-    required string             owner       = 1;
-}
-*/
 
 message ACLDataReply
 {

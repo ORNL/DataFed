@@ -751,7 +751,7 @@ def _dataGet( df_id, path, wait, encrypt, orig_fname, context ):
 
     reply = _capi.dataGet( resolved_ids, path, encrypt = int(encrypt), orig_fname = orig_fname, wait = wait, progress_bar = bar, context = context )
 
-    if reply[1] == "DataGetPutReply":
+    if reply[1] == "DataGetReply":
         _generic_reply_handler( reply, _print_task )
 
 
@@ -774,7 +774,7 @@ def _dataPut( data_id, path, wait, extension, encrypt, context ):
 
     reply = _capi.dataPut( _resolve_id( data_id ), path, encrypt = int(encrypt), wait = wait, extension = extension, context = context )
 
-    if reply[1] == "DataGetPutReply":
+    if reply[1] == "DataPutReply":
         _generic_reply_handler( reply, _print_task )
     else:
         _generic_reply_handler( reply, _print_task_array )

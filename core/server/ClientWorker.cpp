@@ -465,7 +465,7 @@ ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid )
 bool
 ClientWorker::procDataGetRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataGetRequest, DataGetPutReply )
+    PROC_MSG_BEGIN( DataGetRequest, DataGetReply )
 
     DL_INFO( "CWORKER procDataGetRequest, uid: " << a_uid );
 
@@ -482,7 +482,7 @@ ClientWorker::procDataGetRequest( const std::string & a_uid )
 bool
 ClientWorker::procDataPutRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataPutRequest, DataGetPutReply )
+    PROC_MSG_BEGIN( DataPutRequest, DataPutReply )
 
     DL_INFO( "CWORKER procDataPutRequest, uid: " << a_uid );
 
