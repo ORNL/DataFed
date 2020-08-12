@@ -149,6 +149,11 @@ textarea.ui-state-disabled
 	display:none!important;
 }
 
+.node .data{
+	stroke: #444;
+	stroke-width: 2;
+}
+
 .node text{
 	font-size: 14px;
 	fill: #000;

@@ -359,6 +359,37 @@ function GraphPanel( a_id, a_frame, a_parent ){
                     return "select hidden";
             });
 
+        var n2 = g.filter(function(d){ return d.size });
+        n2.append("line")
+            .attr("pointer-events", "none")
+            .attr("x1", -r*.5 )
+            .attr("y1", -r*.3 )
+            .attr("x2", r*.5 )
+            .attr("y2", -r*.3 )
+            .attr("class","data");
+            //.attr("stroke-width", 1 )
+            //.attr("stroke", "white" );
+
+        n2.append("line")
+            .attr("pointer-events", "none")
+            .attr("x1", -r*.5 )
+            .attr("y1", 0 )
+            .attr("x2", r*.5 )
+            .attr("y2", 0 )
+            .attr("class","data");
+            //.attr("stroke-width", 1 )
+            //.attr("stroke", "white" );
+
+        n2.append("line")
+            .attr("pointer-events", "none")
+            .attr("x1", -r*.5 )
+            .attr("y1", r*.3 )
+            .attr("x2", r*.5 )
+            .attr("y2", r*.3 )
+            .attr("class","data");
+            //.attr("stroke-width", 1 )
+            //.attr("stroke", "white" );
+    
         g.append("text")
             .attr("class","label")
             .html(function(d) {
