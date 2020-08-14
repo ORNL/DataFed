@@ -629,17 +629,24 @@ router.post('/update/size', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
-        var data = g_db.d.document( data_id );
-        var i,dep,rem_md = false, admin = g_lib.hasAdminPermObject( client, data_id );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
-        if ( !admin) {
-            var perms = g_lib.getPermissions( client, data, g_lib.PERM_RD_REC | g_lib.PERM_RD_META );
-            if ( data.locked || ( perms & ( g_lib.PERM_RD_REC | g_lib.PERM_RD_META )) == 0 )
-                throw g_lib.ERR_PERM_DENIED;
-            if (( perms & g_lib.PERM_RD_META ) == 0 )
-                rem_md = true;
+        var data_id = g_lib.resolveDataID( req.queryParams.id, client ),
+            data = g_db.d.document( data_id ),
+            i,dep,rem_md = false, admin = false;
+
+        if ( client ){
+            admin = g_lib.hasAdminPermObject( client, data_id );
+
+            if ( !admin) {
+                var perms = g_lib.getPermissions( client, data, g_lib.PERM_RD_REC | g_lib.PERM_RD_META );
+                if ( data.locked || ( perms & ( g_lib.PERM_RD_REC | g_lib.PERM_RD_META )) == 0 )
+                    throw g_lib.ERR_PERM_DENIED;
+                if (( perms & g_lib.PERM_RD_META ) == 0 )
+                    rem_md = true;
+            }
+        }else if ( !g_lib.hasPublicRead( data_id )){
+            throw g_lib.ERR_PERM_DENIED;
         }
 
         data.notes = g_lib.annotationGetMask( client, data_id, admin );
@@ -647,7 +654,7 @@ router.get('/view', function (req, res) {
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
             dep = data.deps[i];
-            if ( dep.alias && client._id != dep.owner )
+            if ( dep.alias && ( !client || client._id != dep.owner ))
                 dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
 
             dep.notes = g_lib.annotationGetMask( client, dep.id );

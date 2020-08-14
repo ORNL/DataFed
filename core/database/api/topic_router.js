@@ -14,7 +14,7 @@ module.exports = router;
 
 router.get('/list', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
         var qry = "for v in 1..1 inbound @par top",
             result,
             item;

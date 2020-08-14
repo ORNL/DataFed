@@ -97,8 +97,9 @@ module.exports = ( function() {
      * size) and those with HTTP data.
      */
     obj._preprocessItemsRecursive = function( a_ctxt, a_ids, a_data_perm, a_coll_perm ){
-        var i, id, ids, is_coll, doc;
-        var perm, data_perm = a_data_perm, coll_perm = a_coll_perm, ok;
+        var i, id, ids, is_coll, doc, perm, ok,
+            data_perm = (a_data_perm==null?0:a_data_perm),
+            coll_perm = (a_coll_perm==null?0:a_coll_perm);
 
         for ( i in a_ids ){
             id = a_ids[i];
@@ -152,10 +153,11 @@ module.exports = ( function() {
                         else
                             perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.comb_perm );
 
-                        data_perm = perm.inhgrant | perm.inherited;
-                        coll_perm = perm.grant | perm.inherited;
+                        // inherited and inhgrant perms only apply to recursion
+                        data_perm |= ( perm.inhgrant | perm.inherited );
+                        coll_perm |= ( perm.inhgrant | perm.inherited );
 
-                        if (( coll_perm & a_ctxt.coll_perm ) != a_ctxt.coll_perm )
+                        if ((( coll_perm | perm.grant | perm.inherited ) & a_ctxt.coll_perm ) != a_ctxt.coll_perm )
                             throw [g_lib.ERR_PERM_DENIED,"Permission denied for collection " + id];
 
                     }else{

@@ -508,7 +508,7 @@ router.get('/token/get/expiring', function( req, res ) {
 
 router.get('/view', function (req, res) {
     try {
-        var client = g_lib.getUserFromClientID( req.queryParams.client );
+        var client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
         var user, det_ok = false;
 
@@ -516,36 +516,38 @@ router.get('/view', function (req, res) {
             if ( !g_db.u.exists( req.queryParams.subject ))
                 throw [ g_lib.ERR_INVALID_PARAM, "No such user '" + req.queryParams.subject + "'" ];
             user = g_db.u.document({ _id: req.queryParams.subject });
-            if ( client._id == user._id || client.is_admin )
+            if ( client && ( client._id == user._id || client.is_admin ))
                 det_ok = true;
         } else {
             user = client;
             det_ok = true;
         }
 
-        var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) return v._key", { user: user._id } ).toArray();
-        if ( repos.length )
-            user.is_repo_admin = true;
+        if ( det_ok ){
+            var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) return v._key", { user: user._id } ).toArray();
+            if ( repos.length )
+                user.is_repo_admin = true;
 
-        user.allocs = g_db.alloc.byExample({_from:user._id}).toArray();
-        if ( user.allocs.length ) {
-            var alloc;
+            user.allocs = g_db.alloc.byExample({_from:user._id}).toArray();
+            if ( user.allocs.length ) {
+                var alloc;
 
-            for ( var i in user.allocs ){
-                alloc = user.allocs[i];
-                delete alloc._from;
-                alloc.repo = alloc._to.substr(5);
-                delete alloc._to;
-                delete alloc._key;
-                delete alloc._id;
-                delete alloc._rev;
+                for ( var i in user.allocs ){
+                    alloc = user.allocs[i];
+                    delete alloc._from;
+                    alloc.repo = alloc._to.substr(5);
+                    delete alloc._to;
+                    delete alloc._key;
+                    delete alloc._id;
+                    delete alloc._rev;
+                }
             }
-        }
 
-        if ( req.queryParams.details && det_ok ){
-            var idents = g_db._query("for v in 1..1 outbound @user ident return v._key", { user: user._id } ).toArray();
-            if ( idents.length ) {
-                user.idents = idents;
+            if ( req.queryParams.details ){
+                var idents = g_db._query("for v in 1..1 outbound @user ident return v._key", { user: user._id } ).toArray();
+                if ( idents.length ) {
+                    user.idents = idents;
+                }
             }
         }else{
             delete user.options;

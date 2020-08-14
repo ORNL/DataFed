@@ -234,20 +234,26 @@ router.get('/priv/list', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
         var coll_id = g_lib.resolveCollID( req.queryParams.id, client ),
             coll = g_db.c.document( coll_id ),
+            admin = false;
+
+        if ( client ){
             admin = g_lib.hasAdminPermObject( client, coll_id );
 
-        if ( !admin) {
-            if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC ))
-                throw g_lib.ERR_PERM_DENIED;
+            if ( !admin) {
+                if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC ))
+                    throw g_lib.ERR_PERM_DENIED;
+            }
+        }else if ( !g_lib.hasPublicRead( coll_id )){
+            throw g_lib.ERR_PERM_DENIED;
         }
 
         coll.notes = g_lib.annotationGetMask( client, coll_id, admin );
-        coll.id = coll._id;
 
+        coll.id = coll._id;
         delete coll._id;
         delete coll._key;
         delete coll._rev;
@@ -265,14 +271,21 @@ router.get('/view', function (req, res) {
 
 router.get('/read', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
         var coll_id = g_lib.resolveCollID( req.queryParams.id, client ),
             coll = g_db.c.document( coll_id ),
+            admin = false;
+
+        if ( client ){
             admin = g_lib.hasAdminPermObject( client, coll_id );
 
-        if ( !admin ) {
-            if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_LIST ))
-                throw g_lib.ERR_PERM_DENIED;
+            if ( !admin ) {
+                if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_LIST ))
+                    throw g_lib.ERR_PERM_DENIED;
+            }
+        }else if ( !g_lib.hasPublicRead( coll_id )){
+            throw g_lib.ERR_PERM_DENIED;
         }
 
         var qry = "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title",

@@ -709,7 +709,7 @@ module.exports = ( function() {
             id = a_id;
         } else {
             var alias_id = "a/";
-            if ( a_id.indexOf(":") == -1 )
+            if ( a_client && a_id.indexOf(":") == -1 )
                 alias_id += "u:"+a_client._key + ":" + a_id;
             else
                 alias_id += a_id;
@@ -740,7 +740,7 @@ module.exports = ( function() {
             id = a_id;
         } else {
             var alias_id = "a/";
-            if ( a_id.indexOf(":") == -1 )
+            if ( a_client && a_id.indexOf(":") == -1 )
                 alias_id += "u:"+a_client._key + ":" + a_id;
             else
                 alias_id += a_id;
@@ -939,8 +939,15 @@ module.exports = ( function() {
         return true;
     };
 
-    obj.hasPublicRead = function( a_data_id ) {
-        var i, children = [a_data_id], parents;
+    obj.hasPublicRead = function( a_id ) {
+        // Check for local topic on collections
+        if ( a_id.startsWith("c/")){
+            var col = obj.db.c.document( a_id );
+            if ( col.topic )
+                return true;
+        }
+
+        var i, children = [a_id], parents;
 
         for(;;){
             // Find all parent collections owned by object owner
@@ -1217,6 +1224,10 @@ module.exports = ( function() {
     obj.getPermissionsLocal = function( a_client_id, a_object, a_get_inherited, a_req_perm ) {
         var perm={grant:0,inhgrant:0,inherited:0},acl,acls,i;
 
+        if ( a_object.topic ){
+            perm.grant |= obj.PERM_PUBLIC;
+        }
+
         if ( a_object.acls & 1 ){
             acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client_id } ).toArray();
 
@@ -1251,6 +1262,13 @@ module.exports = ( function() {
 
                 for ( i in parents ) {
                     parent = parents[i];
+
+                    if ( parent.topic ){
+                        perm.inherited |= obj.PERM_PUBLIC;
+        
+                        if (( a_req_perm & perm.inherited ) == a_req_perm )
+                            break;
+                    }
 
                     // User ACL
                     if ( parent.acls && (( parent.acls & 1 ) != 0 )){
@@ -1414,12 +1432,17 @@ module.exports = ( function() {
     obj.annotationGetMask = function( a_client, a_subj_id, a_admin ){
         var mask = 0, res, n, b;
 
-        if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, a_subj_id ))){
-            res = obj.db._query("for n in 1..1 outbound @id note filter n.state > 0 return {type:n.type,state:n.state,parent_id:n.parent_id}",
-                { id: a_subj_id });
+        if ( a_client ){
+            if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, a_subj_id ))){
+                res = obj.db._query("for n in 1..1 outbound @id note filter n.state > 0 return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                    { id: a_subj_id });
+            }else{
+                res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                    { id: a_subj_id, client: a_client._id });
+            }
         }else{
-            res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return {type:n.type,state:n.state,parent_id:n.parent_id}",
-                { id: a_subj_id, client: a_client._id });
+            res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 return {type:n.type,state:n.state,parent_id:n.parent_id}",
+            { id: a_subj_id });
         }
 
         while ( res.hasNext() ){
