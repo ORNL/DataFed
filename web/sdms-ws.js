@@ -30,10 +30,10 @@ var g_msg_by_id = {};
 var g_msg_by_name = {};
 var g_core_sock = zmq.socket('dealer');
 var g_core_serv_addr;
-var globus_auth;
+var g_globus_auth, g_globus_auth_cat;
+var g_oauth_credentials, g_oauth_credentials_cat;
 var g_ctx = new Array( MAX_CTX );
 var g_ctx_next = 0;
-var g_oauth_credentials;
 var g_client_id;
 var g_client_secret;
 var ready_start = 4;
@@ -90,7 +90,18 @@ function startServer(){
                 scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
             };
         
-            globus_auth = new ClientOAuth2( g_oauth_credentials );
+            g_globus_auth = new ClientOAuth2( g_oauth_credentials );
+
+            g_oauth_credentials_cat = {
+                clientId: g_client_id,
+                clientSecret: g_client_secret,
+                authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
+                accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
+                redirectUri: 'https://'+g_host+':'+g_port+'/ui/catalog/authn',
+                scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
+            };
+        
+            g_globus_auth_cat = new ClientOAuth2( g_oauth_credentials_cat );
 
             var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
             var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
@@ -141,6 +152,12 @@ app.get('/ui/doi/:doiNum*', (a_request, a_response) => {
     a_response.render('doi',{doi: doi,theme:theme,version:g_version,test_mode:g_test});
 });
 
+app.get('/ui/catalog', (a_request, a_response) => {
+    console.log("get /catalog");
+
+    var theme = a_request.cookies['sdms-theme']|| "light";
+    a_response.render('catalog',{theme:theme,version:g_version,test_mode:g_test});
+});
 
 app.get('/ui', (a_request, a_response) => {
     console.log("get /ui");
@@ -184,13 +201,20 @@ app.get('/ui/register', (a_request, a_response) => {
 
     a_response.render('register', { acc_tok: a_request.query.acc_tok, ref_tok: a_request.query.ref_tok,
         acc_tok_ttl: a_request.query.acc_tok_ttl, uid: a_request.query.uid, uname: a_request.query.uname,
-        theme:theme,version:g_version,test_mode:g_test });
+        redir: a_request.query.redir, theme: theme, version: g_version, test_mode: g_test });
 });
 
 app.get('/ui/login', (a_request, a_response) => {
     console.log("get /ui/login");
 
-    var uri = globus_auth.code.getUri();
+    var uri = g_globus_auth.code.getUri();
+    a_response.redirect(uri);
+});
+
+app.get('/ui/catalog/login', (a_request, a_response) => {
+    console.log("get /ui/catalog/login");
+
+    var uri = g_globus_auth_cat.code.getUri();
     a_response.redirect(uri);
 });
 
@@ -208,12 +232,12 @@ app.get('/ui/error', (a_request, a_response) => {
     a_response.render('error',{theme:theme,version:g_version,test_mode:g_test});
 });
 
-app.get('/ui/authn', ( a_request, a_response ) => {
-    console.log( '/ui/authn', a_request.originalUrl );
+function doLogin( a_request, a_response, a_auth, a_redirect_url ){
+    console.log( 'doLogin', a_redirect_url );
 
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
-
-    globus_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
+    
+    a_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
         //console.log( 'client token:', client_token );
         console.log( 'got client token' );
 
@@ -258,7 +282,7 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                             // Not registered
                             console.log("User not registered", userinfo );
                             a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-                            a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token + "&acc_tok_ttl=" + xfr_token.expires_in + "&uid=" + userinfo.uid + "&uname=" + userinfo.name );
+                            a_response.redirect( "/ui/register?acc_tok=" + encodeURIComponent( xfr_token.access_token ) + "&ref_tok=" + encodeURIComponent( xfr_token.refresh_token ) + "&acc_tok_ttl=" + encodeURIComponent( xfr_token.expires_in ) + "&uid=" + encodeURIComponent( userinfo.uid ) + "&uname=" + encodeURIComponent( userinfo.name ) + "&redir=" + encodeURIComponent( a_redirect_url ));
                         } else {
                             console.log( 'user', userinfo.uid, 'verified' );
                             // Registered, save access token
@@ -269,7 +293,8 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                             // TODO Account may be disable from SDMS (active = false)
                             a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
                             a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-                            a_response.redirect( "/ui/main" );
+                            console.log("auth redir",a_redirect_url);
+                            a_response.redirect( a_redirect_url );
                         }
                     });
                 }else{
@@ -291,6 +316,18 @@ app.get('/ui/authn', ( a_request, a_response ) => {
     }, function( reason ){
         console.log( "getToken failed:", reason );
     });
+}
+
+app.get('/ui/authn', ( a_request, a_response ) => {
+    console.log( '/ui/authn', a_request.originalUrl );
+
+    doLogin( a_request, a_response, g_globus_auth, "/ui/main" );
+});
+
+app.get('/ui/catalog/authn', ( a_request, a_response ) => {
+    console.log( '/ui/catalog/authn', g_globus_auth_cat, a_request.originalUrl );
+
+    doLogin( a_request, a_response, g_globus_auth_cat, "/ui/catalog" );
 });
 
 app.get('/ui/do_register', ( a_req, a_resp ) => {
@@ -318,7 +355,7 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
             userinfo.ref_tok = a_req.query.ref_tok;
             a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
             a_resp.cookie( 'sdms-user', JSON.stringify( userinfo ), { path:"/ui", maxAge: 31536000000 /*1 year in msec */ });
-            a_resp.redirect( "/ui/main" );
+            a_resp.redirect( a_req.query.redir );
         }
     });
 });
@@ -1125,8 +1162,9 @@ app.get('/api/top/list', ( a_req, a_resp ) => {
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
     }
-    //console.log( "TopicListRequest", par );
+    console.log( "TopicListRequest", par );
     sendMessage( "TopicListRequest", par, a_req, a_resp, function( reply ) {
+        console.log(reply);
         a_resp.json(reply);
     });
 });
@@ -1328,14 +1366,17 @@ function allocRequestContext( a_response, a_callback ) {
 
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
-    var client = a_anon?"anon_":a_req.cookies[ 'sdms' ];
+    //var client = a_anon?"anon_":a_req.cookies[ 'sdms' ];
+    var client = a_req.cookies[ 'sdms' ];
+    if ( !client )
+        client = "anon_";
 
     a_resp.setHeader('Content-Type', 'application/json');
 
-    if ( !client ) {
+    /*if ( !client ) {
         a_resp.status(403).send( "Not authorized" );
         return;
-    }
+    }*/
 
     //console.log("sendMsg parms:",a_msg_data);
     //if ( a_msg_name == "CollGetOffsetRequest" )

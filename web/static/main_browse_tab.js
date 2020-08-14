@@ -574,6 +574,8 @@ function moveItems( items, dest_node, cb ){
 }
 
 function dataGet( a_ids, a_cb ){
+    util.dataGet( a_ids, a_cb );
+    /*
     api.dataGetCheck( a_ids, function( ok, data ){
         if ( ok ){
             //console.log("data get check:",data);
@@ -619,6 +621,7 @@ function dataGet( a_ids, a_cb ){
             dialogs.dlgAlert("Data Get Error",data);
         }
     });
+    */
 }
 
 function dataPut( a_id, a_cb ){

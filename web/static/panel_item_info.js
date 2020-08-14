@@ -5,7 +5,9 @@ import * as api from "./api.js";
 import * as dlgAnnotation from "./dlg_annotation.js";
 
 var form = $("#sel_info_form");
-var div = $("#sel_info_div");
+var title_div = $("#sel_info_title");
+var desc_div = $("#sel_info_desc_div");
+var desc_text_div = $("#sel_info_desc");
 var note_div = $("#note-div");
 var note_details = $("#note-details");
 var data_md_tree = null;
@@ -62,17 +64,17 @@ export function showSelectedInfo( node, cb ){
             if ( cb ) cb( data, node );
         }); 
     }else if ( key == "mydata" ) {
-        showSelectedHTML( "Personal Data<br><br>All data owned by you." );
+        showSelectedHTML( "Personal Data","All data owned by you." );
     }else if ( key == "projects" ) {
-        showSelectedHTML( "Projects<br><br>All projects owned, administerd, or accessible by you." );
+        showSelectedHTML( "Projects","All projects owned, administerd, or accessible by you." );
     }else if ( key == "shared_all" ) {
-        showSelectedHTML( "Shared Data<br><br>Data shared with you by other users and projects." );
+        showSelectedHTML( "Shared Data","Data shared with you by other users and projects." );
     }else if ( key == "shared_user" ) {
-        showSelectedHTML( "Shared Data by User<br><br>Data shared with you by other users." );
+        showSelectedHTML( "Shared Data by User","Data shared with you by other users." );
     }else if ( key == "shared_proj" ) {
-        showSelectedHTML( "Shared Data by Project<br><br>Data shared with you by other projects." );
+        showSelectedHTML( "Shared Data by Project","Data shared with you by other projects." );
     }else if ( key == "queries" ) {
-        showSelectedHTML( "Saved Queries<br><br>All saved queries created by you." );
+        showSelectedHTML( "Saved Queries","All saved queries created by you." );
     }else if ( key.startsWith("p/")){
         showSelectedProjInfo( key, node, cb );
     //}else if ( key.startsWith("n/")){
@@ -89,9 +91,9 @@ export function showSelectedInfo( node, cb ){
     }else if ( key.startsWith( "shared_proj_" ) && node.data.scope ){
         showSelectedProjInfo( node.data.scope, node, cb );
     }else if ( key == "allocs" ) {
-        showSelectedHTML( "Data Allocations<br><br>Lists allocations and associated data records." );
+        showSelectedHTML( "Data Allocations","Lists allocations and associated data records." );
     }else if ( key.startsWith("published")) {
-        showSelectedHTML( "Public Collections<br><br>Lists collections made public and available in DataFed catalogs." );
+        showSelectedHTML( "Public Collections", "Lists collections made public and available in DataFed catalogs." );
     }else if ( key.startsWith( "repo/" )) {
         showSelectedAllocInfo( node.data.repo, node.data.scope, node, cb );
     }else{
@@ -113,6 +115,8 @@ export function showSelectedItemInfo( item ){
         }
     }else{
         cur_item_id = null;
+        title_div.hide();
+        desc_div.hide();
         form.hide();
         note_div.hide();
         showSelectedMetadata();
@@ -124,10 +128,12 @@ export function getActiveItemID(){
     return cur_item_id;
 }
 
-function showSelectedHTML( html ){
+function showSelectedHTML( title, desc ){
     form.hide();
     note_div.hide();
-    div.html(html).show();
+    title_div.html(title).show();
+    desc_text_div.html(desc);
+    desc_div.show();
     showSelectedMetadata();
 }
 
@@ -167,10 +173,10 @@ var tree_opts1 = {
         showSelectedNoteInfo( data.node );
     },
     lazyLoad: function( event, data ) {
-        data.result = { url: api.noteView_url( data.node.data.parentId ), cache: false };
+        data.result = { url: api.annotationView_url( data.node.data.parentId ), cache: false };
     },
     postProcess: function( event, data ) {
-        //console.log("postproc:",data);
+        console.log("postproc:",data);
 
         data.result = [];
         var note, nt, entry, resp;
@@ -349,7 +355,7 @@ function showSelectedNoteInfo( node ){
 
                 html += ".<br>";
 
-                if ( comm.user == "u/"+settings.user.uid ){
+                if ( settings.user && comm.user == "u/"+settings.user.uid ){
                     html += "<div class='row-flex' style='padding:.5em;align-items:flex-end'><div class='ui-widget-content' style='flex:1 1 auto;padding:0.5em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
                     html += "<div style='flex:none;padding:0 0 0 1em'><button class='btn btn-note-edit-comment' id='btn_note_edit_"+i+"'>Edit</button></div></div>";
                 }else{
@@ -361,24 +367,26 @@ function showSelectedNoteInfo( node ){
 
             html += "</div><div style='flex:none;padding:1em 0 0 0'>";
 
-            if ( ns != model.NOTE_CLOSED ){
-                html += "<button class='btn btn-note-comment'>Comment</button>&nbsp";
-            }
+            if ( settings.user ){
+                if ( ns != model.NOTE_CLOSED ){
+                    html += "<button class='btn btn-note-comment'>Comment</button>&nbsp";
+                }
 
-            if ( ns == model.NOTE_CLOSED ){
-                html += "<button class='btn btn-note-reopen'>Reopen</button>&nbsp";
-            }else{
-                html += "<button class='btn btn-note-edit'>Edit</button>&nbsp";
-            }
+                if ( ns == model.NOTE_CLOSED ){
+                    html += "<button class='btn btn-note-reopen'>Reopen</button>&nbsp";
+                }else{
+                    html += "<button class='btn btn-note-edit'>Edit</button>&nbsp";
+                }
 
-            if ( ns == model.NOTE_OPEN ){
-                html += "<button class='btn btn-note-activate'>Activate</button>&nbsp";
-            }else if ( ns == model.NOTE_ACTIVE ){
-                html += "<button class='btn btn-note-deactivate'>Deactivate</button>&nbsp";
-            }
+                if ( ns == model.NOTE_OPEN ){
+                    html += "<button class='btn btn-note-activate'>Activate</button>&nbsp";
+                }else if ( ns == model.NOTE_ACTIVE ){
+                    html += "<button class='btn btn-note-deactivate'>Deactivate</button>&nbsp";
+                }
 
-            if ( ns != model.NOTE_CLOSED ){
-                html += "<button class='btn btn-note-close'>Close</button>";
+                if ( ns != model.NOTE_CLOSED ){
+                    html += "<button class='btn btn-note-close'>Close</button>";
+                }
             }
 
             html += "</div></div>";
@@ -485,32 +493,44 @@ function showSelectedAllocInfo( repo, user, node, cb ){
 
 
 function showSelectedItemForm( item ){
-    var i, date = new Date(), t = item.id.charAt( 0 ), text, cls;
+    var i, date = new Date(), t = item.id.charAt( 0 ), text, cls, title;
 
     switch ( t ){
-        case 'd': text = "Data Record"; cls = item.doi?".sidp":".sid"; break;
-        case 'c': text = "Collection"; cls = ".sic"; break;
-        case 'u': text = "User"; cls = ".siu"; break;
-        case 'p': text = "Project"; cls = ".sip"; break;
-        case 'r': text = "Allocation"; cls = ".sia"; break;
-        case 'q': text = "Query"; cls = ".siq"; break;
-        case 't': text = "Task"; cls = ".sit"; break;
+        case 'd': title = "Data Record: '" + item.title + "'"; cls = item.doi?".sidp":".sid"; break;
+        case 'c': title = "Collection: '" + item.title + "'"; cls = ".sic"; break;
+        case 'u': title = "User: '" +  item.nameFirst + " " + item.nameLast + "'"; cls = ".siu"; break;
+        case 'p': title = "Project: '" + item.title + "'"; cls = ".sip"; break;
+        case 'r': title = "Allocation for " + (item.user.startsWith("u/")?" user ":" project ") + item.user; cls = ".sia"; break;
+        case 'q': title = "Saved Query"; cls = ".siq"; break;
+        case 't': title = "Task"; cls = ".sit"; break;
         default:
             return;
     }
 
-    div.hide();
+    title_div.html( title ).show();
+
+    if ( item.desc != undefined ){
+        desc_text_div.html( item.desc );
+        //desc_div.show();
+    }else{
+        desc_text_div.html( "(no description)" );
+        //desc_div.hide();
+    }
+
 
     $(".sel-info-table td:nth-child(2)",form).not(".ignore").html("<span style='color:#808080'>(none)</span>");
 
-    $("#sel_info_type",form).text( text );
+    //$("#sel_info_type",form).text( text );
     $("#sel_info_id",form).text( item.id );
 
-    if ( item.title )
-        $("#sel_info_title",form).text( item.title );
 
-    if ( item.nameLast )
-        $("#sel_info_name",form).text( item.nameFirst + " " + item.nameLast );
+    //if ( item.title )
+        //$("#sel_info_title",form).text( item.title );
+
+    //if ( item.nameLast )
+    //    info += "<b>" + item.nameFirst + " " + item.nameLast + "</b><br><br>";
+
+        //$("#sel_info_name",form).text( item.nameFirst + " " + item.nameLast );
 
     if ( item.alias && cls != ".sidp" )
         $("#sel_info_alias",form).text( item.alias );
@@ -521,8 +541,8 @@ function showSelectedItemForm( item ){
     if ( item.dataUrl )
         $("#sel_info_url",form).text( item.dataUrl );
 
-    if ( item.desc )
-        $("#sel_info_desc",form).text( item.desc );
+
+        //$("#sel_info_desc",form).text( item.desc );
 
     if ( item.keyw )
         $("#sel_info_keyw",form).text( item.keyw );
@@ -558,9 +578,9 @@ function showSelectedItemForm( item ){
     }
 
     if ( cls == ".sia" ){
-        var is_user = item.user.startsWith("u/");
-        $("#sel_info_title",form).text( "Allocation for " + (is_user?" user ":" project ") + item.user );
-        $("#sel_info_desc",form).text( "Browse data records by allocation." );
+        //var is_user = item.user.startsWith("u/");
+        //$("#sel_info_title",form).text( "Allocation for " + (is_user?" user ":" project ") + item.user );
+        //$("#sel_info_desc",form).text( "Browse data records by allocation." );
 
         $("#sel_info_data_lim",form).text( util.sizeToString( item.dataLimit ));
         var used = Math.max( Math.floor(10000*item.dataSize/item.dataLimit)/100, 0 );

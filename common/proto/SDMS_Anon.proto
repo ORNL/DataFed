@@ -94,3 +94,92 @@ message DOIViewRequest
     required string             doi         = 1;
     optional bool               details     = 2;
 }
+
+message ListingReply
+{
+    repeated ListingData        item        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+message UserViewRequest
+{
+    required string             uid         = 1;
+    optional bool               details     = 2;
+}
+
+message UserDataReply
+{
+    repeated SDMS.UserData      user        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+message ProjectViewRequest
+{
+    required string             id          = 1;
+}
+
+message ProjectDataReply
+{
+    repeated ProjectData        proj        = 1;
+}
+
+message RecordViewRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 2;
+}
+
+message RecordDataReply
+{
+    repeated SDMS.RecordData    data        = 1;
+    repeated SDMS.ListingData   update      = 2;
+}
+
+message CollViewRequest
+{
+    required string             id          = 1;
+}
+
+message CollDataReply
+{
+    repeated SDMS.CollData      coll        = 1;
+    repeated SDMS.ListingData   update      = 2;    
+}
+
+// Returns ListingReply
+message CollReadRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 3;
+    optional uint32             offset      = 4;
+    optional uint32             count       = 5;
+}
+
+message AnnotationListBySubjectRequest
+{
+    required string             subject     = 1;
+}
+
+message AnnotationViewRequest
+{
+    required string             id          = 1;
+}
+
+message AnnotationDataReply
+{
+    repeated SDMS.NoteData      note    = 1;
+    repeated SDMS.ListingData   update  = 2;
+}
+
+// Returns ListingReply
+message TopicListRequest
+{
+    optional string             topic_id    = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional bool               data        = 4 [default = true];
+}

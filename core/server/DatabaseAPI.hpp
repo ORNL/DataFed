@@ -45,72 +45,72 @@ public:
     void getPerms( const Auth::GetPermsRequest & a_request, Auth::GetPermsReply & a_reply );
 
     void userSetAccessToken( const Auth::UserSetAccessTokenRequest & a_request, Anon::AckReply & a_reply );
-    void userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply );
-    void userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply );
-    void userUpdate( const Auth::UserUpdateRequest & a_request, Auth::UserDataReply & a_reply );
-    void userListAll( const Auth::UserListAllRequest & a_request, Auth::UserDataReply & a_reply );
-    void userListCollab( const Auth::UserListCollabRequest & a_request, Auth::UserDataReply & a_reply );
-    void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply );
-    void userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Auth::UserDataReply & a_reply );
+    void userCreate( const Auth::UserCreateRequest & a_request, Anon::UserDataReply & a_reply );
+    void userView( const Anon::UserViewRequest & a_request, Anon::UserDataReply & a_reply );
+    void userUpdate( const Auth::UserUpdateRequest & a_request, Anon::UserDataReply & a_reply );
+    void userListAll( const Auth::UserListAllRequest & a_request, Anon::UserDataReply & a_reply );
+    void userListCollab( const Auth::UserListCollabRequest & a_request, Anon::UserDataReply & a_reply );
+    void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Anon::UserDataReply & a_reply );
+    void userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Anon::UserDataReply & a_reply );
     void userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply );
     void userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, Anon::AckReply & a_reply );
 
-    void projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply );
-    void projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply );
-    void projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply );
+    void projCreate( const Auth::ProjectCreateRequest & a_request, Anon::ProjectDataReply & a_reply );
+    void projUpdate( const Auth::ProjectUpdateRequest & a_request, Anon::ProjectDataReply & a_reply );
+    void projView( const Anon::ProjectViewRequest & a_request, Anon::ProjectDataReply & a_reply );
+    void projList( const Auth::ProjectListRequest & a_request, Anon::ListingReply & a_reply );
+    void projSearch( const std::string & a_query, Anon::ProjectDataReply & a_reply );
     void projGetRole( const Auth::ProjectGetRoleRequest & a_request, Auth::ProjectGetRoleReply & a_reply );
 
-    void recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply );
-    void recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply );
-    void recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply );
-    void recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result );
-    void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result );
+    void recordView( const Anon::RecordViewRequest & a_request, Anon::RecordDataReply & a_reply );
+    void recordCreate( const Auth::RecordCreateRequest & a_request, Anon::RecordDataReply & a_reply );
+    void recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Anon::RecordDataReply & a_reply );
+    void recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result );
+    void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result );
     //void recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext = 0 );
     void recordUpdateSize( const Auth::RepoDataSizeReply & a_sizes );
     void recordExport( const Auth::RecordExportRequest & a_request, Auth::RecordExportReply & a_reply );
-    void recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply );
-    void recordSearch( const Auth::RecordSearchRequest & a_request, Auth::ListingReply & a_reply );
-    void recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply );
-    //void recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply );
-    void recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply );
+    void recordLock( const Auth::RecordLockRequest & a_request, Anon::ListingReply & a_reply );
+    void recordSearch( const Auth::RecordSearchRequest & a_request, Anon::ListingReply & a_reply );
+    void recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Anon::ListingReply & a_reply );
+    //void recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Anon::ListingReply & a_reply );
+    void recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Anon::ListingReply & a_reply );
     //void recordUpdateDataMoveInit( const libjson::Value & a_rec_ids, const std::string & a_new_repo_id, const std::string & a_new_owner_id, const std::string & a_new_coll_id );
     //void recordUpdateDataMoveRevert( const libjson::Value & a_rec_ids );
     //void recordUpdateDataMoveFinalize( const libjson::Value & a_rec_ids );
 
-    void doiView( const Anon::DOIViewRequest & a_request, Auth::RecordDataReply & a_reply );
+    void doiView( const Anon::DOIViewRequest & a_request, Anon::RecordDataReply & a_reply );
 
     void dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply );
 
-    void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
-    void collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply );
-    void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
-    void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
-    void collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply );
-    void collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply );
-    void collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply );
+    void collList( const Auth::CollListRequest & a_request, Anon::CollDataReply & a_reply );
+    void collListPublished( const Auth::CollListPublishedRequest & a_request, Anon::ListingReply & a_reply );
+    void collCreate( const Auth::CollCreateRequest & a_request, Anon::CollDataReply & a_reply );
+    void collUpdate( const Auth::CollUpdateRequest & a_request, Anon::CollDataReply & a_reply );
+    void collView( const Anon::CollViewRequest & a_request, Anon::CollDataReply & a_reply );
+    void collRead( const Anon::CollReadRequest & a_request, Anon::ListingReply & a_reply );
+    void collWrite( const Auth::CollWriteRequest & a_request, Anon::ListingReply & a_reply );
     void collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply );
     void collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply );
     void collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply );
 
-    void queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply );
+    void queryList( const Auth::QueryListRequest & a_request, Anon::ListingReply & a_reply );
     void queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply );
     void queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply );
     void queryDelete( const std::string & a_id );
     void queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply );
-    void queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply );
+    void queryExec( const Auth::QueryExecRequest & a_request, Anon::ListingReply & a_reply );
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
     void aclUpdate( const Auth::ACLUpdateRequest & a_request,  Auth::ACLDataReply & a_reply );
 
-    void aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Auth::ListingReply & a_reply );
-    void aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Auth::ListingReply & a_reply );
+    void aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Anon::ListingReply & a_reply );
+    void aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Anon::ListingReply & a_reply );
 
-    //void aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply );
-    //void aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply );
+    //void aclByUser( const Auth::ACLByUserRequest & a_request,  Anon::UserDataReply & a_reply );
+    //void aclByUserList( const Auth::ACLByUserListRequest & a_request,  Anon::ListingReply & a_reply );
     //void aclByProj( const Auth::ACLByProjRequest & a_request,  Auth::ProjectDataReply & a_reply );
-    //void aclByProjList( const Auth::ACLByProjListRequest & a_request,  Auth::ListingReply & a_reply );
+    //void aclByProjList( const Auth::ACLByProjListRequest & a_request,  Anon::ListingReply & a_reply );
 
     void groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply );
     void groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply );
@@ -134,15 +134,15 @@ public:
     void repoAllocationSetDefault( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply );
     void repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply );
 
-    void topicList( const Auth::TopicListRequest & a_request, Auth::ListingReply & a_reply );
+    void topicList( const Anon::TopicListRequest & a_request, Anon::ListingReply & a_reply );
     void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
     void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
 
-    void annotationCreate( const Auth::AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationUpdate( const Auth::AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationView( const Auth::AnnotationViewRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply );
+    void annotationCreate( const Auth::AnnotationCreateRequest & a_request, Anon::AnnotationDataReply & a_reply );
+    void annotationUpdate( const Auth::AnnotationUpdateRequest & a_request, Anon::AnnotationDataReply & a_reply );
+    void annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Anon::AnnotationDataReply & a_reply );
+    void annotationView( const Anon::AnnotationViewRequest & a_request, Anon::AnnotationDataReply & a_reply );
+    void annotationListBySubject( const Anon::AnnotationListBySubjectRequest & a_request, Anon::AnnotationDataReply & a_reply );
     void annotationPurge( uint32_t a_age_sec );
 
     void taskLoadReady( libjson::Value & a_result );
@@ -171,13 +171,13 @@ private:
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
     long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, libjson::Value & a_result );
     void setAuthStatus( Anon::AuthStatusReply & a_reply, const libjson::Value & a_result );
-    void setUserData( Auth::UserDataReply & a_reply, const libjson::Value & a_result );
-    void setProjectData( Auth::ProjectDataReply & a_reply, const libjson::Value & a_result );
-    void setRecordData( Auth::RecordDataReply & a_reply, const libjson::Value & a_result );
-    void setCollData( Auth::CollDataReply & a_reply, const libjson::Value & a_result );
+    void setUserData( Anon::UserDataReply & a_reply, const libjson::Value & a_result );
+    void setProjectData( Anon::ProjectDataReply & a_reply, const libjson::Value & a_result );
+    void setRecordData( Anon::RecordDataReply & a_reply, const libjson::Value & a_result );
+    void setCollData( Anon::CollDataReply & a_reply, const libjson::Value & a_result );
     void setCollPathData( Auth::CollPathReply & a_reply, const libjson::Value & a_result );
     void setQueryData( Auth::QueryDataReply & a_reply, const libjson::Value & a_result );
-    void setListingDataReply( Auth::ListingReply & a_reply, const libjson::Value & a_result );
+    void setListingDataReply( Anon::ListingReply & a_reply, const libjson::Value & a_result );
     void setListingData( ListingData * a_item, const libjson::Value::Object & a_obj );
     void setGroupData( Auth::GroupDataReply & a_reply, const libjson::Value & a_result );
     void setACLData( Auth::ACLDataReply & a_reply, const libjson::Value & a_result );
@@ -185,7 +185,7 @@ private:
     void setAllocData( AllocData * a_alloc, const libjson::Value::Object & a_obj );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, const libjson::Value & a_result );
     void setAllocStatsData( AllocStatsData & a_stats, const libjson::Value::Object & a_object );
-    void setNoteDataReply( Auth::AnnotationDataReply & a_reply, const libjson::Value & a_result );
+    void setNoteDataReply( Anon::AnnotationDataReply & a_reply, const libjson::Value & a_result );
     void setNoteData( NoteData * a_item, const libjson::Value::Object & a_obj );
     void setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Value & a_result );
     void setTaskDataReplyArray( Auth::TaskDataReply & a_reply, const libjson::Value & a_result );

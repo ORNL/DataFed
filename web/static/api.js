@@ -497,7 +497,7 @@ export function userUpdate( a_uid, a_pw, a_email, a_opts, a_cb ) {
          null, a_cb );
 }
 
-export function noteView_url( a_id ){
+export function annotationView_url( a_id ){
     return "/api/note/view?id="+encodeURIComponent( a_id );
 }
 
@@ -506,7 +506,7 @@ export function annotationListBySubject( a_id, a_cb ){
 }
 
 export function annotationView( a_id, a_cb ){
-    _asyncGet( noteView_url( a_id ), null, a_cb );
+    _asyncGet( annotationView_url( a_id ), null, a_cb );
 }
 
 

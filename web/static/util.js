@@ -1,6 +1,8 @@
 import * as settings from "./settings.js";
 import * as model from "./model.js";
-
+import * as api from "./api.js";
+import * as dialogs from "./dialogs.js";
+import * as dlgStartXfer from "./dlg_start_xfer.js";
 
 var status_timer;
 
@@ -200,7 +202,7 @@ export function generateNoteSpan( item, codes ){
 
 export function generateTitle( item, refresh, unstruct = false ) {
     var title = "",
-        uid = "u/" + settings.user.uid;
+        uid = settings.user?"u/" + settings.user.uid:null;
 
     if ( item.locked )
         title += "<i class='ui-icon ui-icon-locked'></i> ";
@@ -476,4 +478,52 @@ export function saveFile( filename, text ){
     element.click();
   
     document.body.removeChild(element);
+}
+
+export function dataGet( a_ids, a_cb ){
+    api.dataGetCheck( a_ids, function( ok, data ){
+        if ( ok ){
+            //console.log("data get check:",data);
+            var i, internal = false, external = false;
+
+            if ( !data.item || !data.item.length ){
+                dialogs.dlgAlert("Data Get Error","Selection contains no raw data.");
+                return;
+            }
+
+            for ( i in data.item ){
+                if ( data.item[i].locked ){
+                    dialogs.dlgAlert("Data Get Error","One or more data records are currently locked.");
+                    return;
+                }
+                if ( data.item[i].url ){
+                    external = true;
+                }else if ( data.item[i].size <= 0 ){
+                    dialogs.dlgAlert("Data Get Error","One or more data records have no raw data.");
+                    return;
+                }else{
+                    internal = true;
+                }
+            }
+
+            if ( internal && external ){
+                dialogs.dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
+                return;
+            } else if ( internal ){
+                dlgStartXfer.show( model.TT_DATA_GET, data.item, a_cb );
+            }else{
+                for ( i in data.item ){
+                    //console.log("download ", data.item[i].url )
+                    var link = document.createElement("a");
+                    var idx = data.item[i].url.lastIndexOf("/");
+                    link.download = data.item[i].url.substr(idx);
+                    link.href = data.item[i].url;
+                    link.target = "_blank";
+                    link.click();
+                }
+            }
+        }else{
+            dialogs.dlgAlert("Data Get Error",data);
+        }
+    });
 }

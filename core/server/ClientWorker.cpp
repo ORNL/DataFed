@@ -77,6 +77,14 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
         SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
+        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
+        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
+        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
+        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
+        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
+        SET_MSG_HANDLER_DB( proto_id, TopicListRequest, ListingReply, topicList );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
@@ -107,7 +115,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, GetPermsRequest, GetPermsReply, getPerms );
         SET_MSG_HANDLER_DB( proto_id, UserSetAccessTokenRequest, AckReply, userSetAccessToken );
         SET_MSG_HANDLER_DB( proto_id, UserCreateRequest, UserDataReply, userCreate );
-        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
         SET_MSG_HANDLER_DB( proto_id, UserListAllRequest, UserDataReply, userListAll );
         SET_MSG_HANDLER_DB( proto_id, UserListCollabRequest, UserDataReply, userListCollab );
@@ -117,10 +124,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, UserSetRecentEPRequest, AckReply, userSetRecentEP );
         SET_MSG_HANDLER_DB( proto_id, ProjectCreateRequest, ProjectDataReply, projCreate );
         SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
-        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ListingReply, projList );
         SET_MSG_HANDLER_DB( proto_id, ProjectGetRoleRequest, ProjectGetRoleReply, projGetRole );
-        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordExportRequest, RecordExportReply, recordExport );
@@ -133,8 +138,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollListPublishedRequest, ListingReply, collListPublished );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
-        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
-        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, ListingReply, collWrite );
         SET_MSG_HANDLER_DB( proto_id, CollMoveRequest, AckReply, collMove );
         SET_MSG_HANDLER_DB( proto_id, CollGetParentsRequest, CollPathReply, collGetParents );
@@ -145,8 +148,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, AnnotationCreateRequest, AnnotationDataReply, annotationCreate );
         SET_MSG_HANDLER_DB( proto_id, AnnotationUpdateRequest, AnnotationDataReply, annotationUpdate );
         SET_MSG_HANDLER_DB( proto_id, AnnotationCommentEditRequest, AnnotationDataReply, annotationCommentEdit );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
         SET_MSG_HANDLER_DB( proto_id, TaskListRequest, TaskDataReply, taskList );
         SET_MSG_HANDLER_DB( proto_id, TaskViewRequest, TaskDataReply, taskView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
@@ -175,7 +176,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetDefaultRequest, AckReply, repoAllocationSetDefault );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
-        SET_MSG_HANDLER_DB( proto_id, TopicListRequest, ListingReply, topicList );
         SET_MSG_HANDLER_DB( proto_id, TopicLinkRequest, AckReply, topicLink );
         SET_MSG_HANDLER_DB( proto_id, TopicUnlinkRequest, AckReply, topicUnlink );
     }

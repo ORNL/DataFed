@@ -47,9 +47,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 return true;
             }
         },
-        source:[
+        
+        source: { url: api.topicList_url( null, 0, settings.opts.page_sz ), cache: false },
+        /*source:[
             {title:"By Topic",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0}
-        ],
+        ],*/
         nodata: false,
         selectMode: 2,
         activate: function( event, data ) {
@@ -111,16 +113,18 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }
         },
         lazyLoad: function( event, data ) {
-            if ( data.node.key == "topics" ) {
+            /*if ( data.node.key == "topics" ) {
                 data.result = { url: api.topicList_url( null, data.node.data.offset, settings.opts.page_sz ), cache: false };
-            } else if ( data.node.key.startsWith( "t/" )){
+            } else*/
+            if ( data.node.key.startsWith( "t/" )){
                 data.result = { url: api.topicList_url( data.node.key, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key.startsWith( "c/" )){
                 data.result = { url: api.collRead_url( data.node.key, data.node.data.offset, settings.opts.page_sz ), cache: false };
             }
         },
         postProcess: function( event, data ) {
-            if ( data.node.key == "topics" || data.node.key.startsWith("t/") || data.node.key.startsWith("c/" )) {
+            console.log("cat tree post proc:", data );
+            if ( data.node.parent == null || data.node.key.startsWith("t/") || data.node.key.startsWith("c/" )) {
                 data.result = [];
                 var item,entry;
                 var items = data.response.item;
