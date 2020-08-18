@@ -44,9 +44,21 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     color: #a0a0a0;
 }
 
+body
+{
+	color:#000;
+}
+
+
 .content
 {
     background: #f0f0f0!important;
+}
+
+.sel-info-title
+{
+    border-top: 1px solid #555555;
+    border-left: 1px solid #333333;
 }
 
 input.ui-state-disabled

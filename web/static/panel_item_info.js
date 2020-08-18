@@ -6,8 +6,7 @@ import * as dlgAnnotation from "./dlg_annotation.js";
 
 var form = $("#sel_info_form");
 var title_div = $("#sel_info_title");
-var desc_div = $("#sel_info_desc_div");
-var desc_text_div = $("#sel_info_desc");
+var desc_div = $("#sel_info_desc");
 var note_div = $("#note-div");
 var note_details = $("#note-details");
 var data_md_tree = null;
@@ -22,16 +21,13 @@ var cur_item_id = null;
 
 
 export function showSelectedInfo( node, cb ){
-    if ( !node ){
-        cur_item_id = null;
-        showSelectedItemInfo();
-        return;
-    }
-
     //console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
     var key;
 
-    if ( typeof node == 'string' )
+    if ( !node ){
+        showSelectedItemInfo();
+        return;
+    }else if ( typeof node == 'string' )
         key = node;
     else if ( node.key == "shared_proj" && node.data.scope )
         key = node.data.scope;
@@ -42,7 +38,7 @@ export function showSelectedInfo( node, cb ){
     else
         key = node.key;
 
-    console.log("key",key);
+    //console.log("key",key);
 
     cur_item_id = key;
 
@@ -53,36 +49,33 @@ export function showSelectedInfo( node, cb ){
         }); 
     }else if ( key[0] == "d" ) {
         api.dataView( key, function( data ){
-            //console.log("data view:",data[0]);
             showSelectedItemInfo( data );
             if ( cb ) cb( data, node );
         }); 
     }else if ( key.startsWith("task/" )) {
         api.taskView( key, function( data ){
-            console.log("task view:",data );
+            //console.log("task view:",data );
             showSelectedItemInfo( data );
             if ( cb ) cb( data, node );
         }); 
     }else if ( key == "mydata" ) {
-        showSelectedHTML( "Personal Data","All data owned by you." );
+        showGeneralInfo( key, "Data data owned by you" );
     }else if ( key == "projects" ) {
-        showSelectedHTML( "Projects","All projects owned, administerd, or accessible by you." );
+        showGeneralInfo( key, "Accessible projects and associated data" );
     }else if ( key == "shared_all" ) {
-        showSelectedHTML( "Shared Data","Data shared with you by other users and projects." );
+        showGeneralInfo( key, "Data shared with you" );
     }else if ( key == "shared_user" ) {
-        showSelectedHTML( "Shared Data by User","Data shared with you by other users." );
+        showGeneralInfo( key, "Data shared with you by users." );
     }else if ( key == "shared_proj" ) {
-        showSelectedHTML( "Shared Data by Project","Data shared with you by other projects." );
+        showGeneralInfo( key, "Data shared with you by projects." );
     }else if ( key == "queries" ) {
-        showSelectedHTML( "Saved Queries","All saved queries created by you." );
+        showGeneralInfo( key, "Saved queries created by you" );
     }else if ( key.startsWith("p/")){
         showSelectedProjInfo( key, node, cb );
-    //}else if ( key.startsWith("n/")){
-    //    showSelectedNoteInfo( key );
     }else if ( key.startsWith("q/")){
         api.sendQueryView( key, function( ok, item ){
             showSelectedItemInfo( item );
-            if ( cb ) cb( item );
+            if ( cb ) cb( item, node );
         }); 
     }else if ( key.startsWith("u/")){
         showSelectedUserInfo( key, node, cb );
@@ -91,9 +84,9 @@ export function showSelectedInfo( node, cb ){
     }else if ( key.startsWith( "shared_proj_" ) && node.data.scope ){
         showSelectedProjInfo( node.data.scope, node, cb );
     }else if ( key == "allocs" ) {
-        showSelectedHTML( "Data Allocations","Lists allocations and associated data records." );
+        showGeneralInfo( key, "Data allocations and associated data records" );
     }else if ( key.startsWith("published")) {
-        showSelectedHTML( "Public Collections", "Lists collections made public and available in DataFed catalogs." );
+        showGeneralInfo( key, "Collections published in DataFed catalog" );
     }else if ( key.startsWith( "repo/" )) {
         showSelectedAllocInfo( node.data.repo, node.data.scope, node, cb );
     }else{
@@ -102,25 +95,41 @@ export function showSelectedInfo( node, cb ){
 }
 
 export function showSelectedItemInfo( item ){
+    var disabled = [];
+
     if ( item && item.id ){
+        $("#info-tabs-parent").show();
+
         cur_item_id = item.id;
-        showSelectedItemForm( item );
-        if ( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )){
-            setupAnnotationTab( item.id );
+
+        if ( item.desc ){
+            desc_div.html( item.desc );
+            desc_div.show();
+        }else{
+            disabled.push(0);
+            desc_div.hide();
         }
+
+        showSelectedItemForm( item );
+
+        if (( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )) && item.notes ){
+            setupAnnotationTab( item.id );
+        }else{
+            note_div.hide();
+            disabled.push(3);
+        }
+
         if ( item.metadata ){
             showSelectedMetadata( item.metadata );
         }else{
+            disabled.push(2);
             showSelectedMetadata();
         }
+
+        $("#info-tabs").tabs("option","disabled",disabled);
     }else{
         cur_item_id = null;
-        title_div.hide();
-        desc_div.hide();
-        form.hide();
-        note_div.hide();
-        showSelectedMetadata();
-        //showSelectedHTML( "Insufficient permissions to view data record." );
+        showGeneralInfo( null, "Select an item in left-hand panels to view additional information." );
     }
 }
 
@@ -128,14 +137,13 @@ export function getActiveItemID(){
     return cur_item_id;
 }
 
-function showSelectedHTML( title, desc ){
-    form.hide();
-    note_div.hide();
-    title_div.html(title).show();
-    desc_text_div.html(desc);
-    desc_div.show();
-    showSelectedMetadata();
+
+function showGeneralInfo( a_key, a_title ){
+    $("#sel_info_icon").removeClass().addClass( "ui-icon ui-icon-" + (a_key?util.getKeyIcon( a_key ):"circle-help"));
+    title_div.html(a_title);
+    $("#info-tabs-parent").hide();
 }
+
 
 function showSelectedUserInfo( key, node, cb ){
     api.userView( key, true, function( ok, item ){
@@ -176,7 +184,7 @@ var tree_opts1 = {
         data.result = { url: api.annotationView_url( data.node.data.parentId ), cache: false };
     },
     postProcess: function( event, data ) {
-        console.log("postproc:",data);
+        //console.log("postproc:",data);
 
         data.result = [];
         var note, nt, entry, resp;
@@ -219,6 +227,7 @@ note_closed_tree = $.ui.fancytree.getTree("#note_closed_tree");
 
 function setupAnnotationTab( a_subject_id, a_cb ){
     note_details.html("");
+    note_div.hide();
 
     api.annotationListBySubject( a_subject_id, function( ok, data ){
         if ( ok ){
@@ -271,7 +280,6 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                 disabled.push(2);
 
             $("#note-tabs").tabs("option","disabled",disabled);
-
             note_div.show();
 
             if ( a_cb ) a_cb();
@@ -493,34 +501,27 @@ function showSelectedAllocInfo( repo, user, node, cb ){
 
 
 function showSelectedItemForm( item ){
-    var i, date = new Date(), t = item.id.charAt( 0 ), text, cls, title;
+    var i, date = new Date(), t = item.id.charAt( 0 ), text, cls, title, type, icon;
 
     switch ( t ){
-        case 'd': title = "Data Record: '" + item.title + "'"; cls = item.doi?".sidp":".sid"; break;
-        case 'c': title = "Collection: '" + item.title + "'"; cls = ".sic"; break;
-        case 'u': title = "User: '" +  item.nameFirst + " " + item.nameLast + "'"; cls = ".siu"; break;
-        case 'p': title = "Project: '" + item.title + "'"; cls = ".sip"; break;
-        case 'r': title = "Allocation for " + (item.user.startsWith("u/")?" user ":" project ") + item.user; cls = ".sia"; break;
-        case 'q': title = "Saved Query"; cls = ".siq"; break;
-        case 't': title = "Task"; cls = ".sit"; break;
+        case 'd': type = "Data Record"; icon = ""; title = item.title; cls = item.doi?".sidp":".sid"; break;
+        case 'c': type = "Collection"; title = item.title; cls = ".sic"; break;
+        case 'u': type = "User"; title = item.nameFirst + " " + item.nameLast; cls = ".siu"; break;
+        case 'p': type = "Project"; title = item.title; cls = ".sip"; break;
+        case 'r': type = "Allocation"; title = "Allocation for " + (item.user.startsWith("u/")?" user ":" project ") + item.user; cls = ".sia"; break;
+        case 'q': type = "Saved Query"; title = item.title; cls = ".siq"; break;
+        case 't': type = "Background Task"; title = "Background Task"; cls = ".sit"; break;
         default:
             return;
     }
 
-    title_div.html( title ).show();
+    $("#sel_info_icon").removeClass().addClass( item.id.startsWith("d/")?util.getDataIcon( item ):"ui-icon ui-icon-" + util.getKeyIcon( item.id ));
 
-    if ( item.desc != undefined ){
-        desc_text_div.html( item.desc );
-        //desc_div.show();
-    }else{
-        desc_text_div.html( "(no description)" );
-        //desc_div.hide();
-    }
-
+    title_div.html( title );
 
     $(".sel-info-table td:nth-child(2)",form).not(".ignore").html("<span style='color:#808080'>(none)</span>");
 
-    //$("#sel_info_type",form).text( text );
+    $("#sel_info_type",form).text( type );
     $("#sel_info_id",form).text( item.id );
 
 
@@ -705,10 +706,14 @@ function showSelectedMetadata( md_str )
         var md = JSON.parse( md_str );
         var src = util.buildObjSrcTree( md, "md", data_md_exp );
         data_md_tree.reload( src );
-        data_md_empty = false;
+        if ( data_md_empty ){
+            data_md_empty = false;
+            $("#md_div").show();
+        }
     } else if ( !data_md_empty ) {
         data_md_tree.reload(tree_empty_src);
         data_md_empty = true;
+        $("#md_div").hide();
     }
 }
 

@@ -1,8 +1,7 @@
 <div class="col-flex" style="padding:0;height:100%;">
     <div id='resize_container' style="min-height:0;display:flex;flex:1">
-        <!-- div id='data-tabs-parent' style="height:100%;resize:horizontal;overflow:auto;padding:.15em .15em 0 .15em;min-width:0;min-height:0;width:55%" -->
         <div id='data-tabs-parent' style="flex:none;height:100%;resize:horizontal;overflow:visible;padding:0;min-width:0;min-height:0;width:55%">
-            <div id="data-tabs" class='no-border' style="border:none;padding:0;height:100%;min-height:0;overflow:hidden">
+            <div id="data-tabs" class='tabs-no-right-border no-border' style="border:none;padding:0;height:100%;min-height:0;overflow:hidden">
                 <ul>
                     <li><a href="#tab-data-tree">My Data</a></li>
                     <li><a href="#tab-catalogs">Catalogs</a></li>
@@ -70,27 +69,29 @@
                 </div>
             </div>
         </div>
-        <div id="info-tabs-parent" class='' style="flex:1 1 auto;padding: 0;height:100%;min-width:0;min-height:0">
-            <div id="info-tabs" style="border:none;padding:0;height:100%;min-height:0">
+        <div class='col-flex' style="flex:1 1 auto;padding: 0;height:100%;min-width:0;min-height:0">
+          <div id='sel_info_hdr' class='ui-widget-header' style='flex:none;font-size:120%;font-weight:normal;padding:0.1em 0.25em'>Selection Information</div>
+          <div id='sel_info_hdr_div' class='row-flex sel-info-hdr' style="flex:none;padding:0.15em 0 0 0;">
+            <div style='flex:none'><span id='sel_info_icon' class='ui-icon ui-icon-circle-help' style='font-size:300%'>x</span></div>
+            <div id="sel_info_title" class='sel-info-title' style="flex:1 1 auto;max-height:3em;overflow:none"> </div>
+          </div>
+          <div id="info-tabs-parent" class='content' style="flex:1 1 auto;padding:0;min-width:0;min-height:0">
+            <div id="info-tabs" class='content no-border tabs-no-header' style="border:none;padding:0;min-height:0">
                 <ul>
-                    <li><a href="#tab-sel-info">Information</a></li>
+                    <li><a href="#tab-sel-desc">Description</a></li>
+                    <li><a href="#tab-sel-det">Details</a></li>
                     <li><a href="#tab-sel-md">Metadata</a></li>
                     <li><a href="#tab-sel-notes">Annotations</a></li>
                 </ul>
-                <div id="tab-sel-info" class="ui-widget-content content" style="padding:0;height:100%;min-height:0">
-                    <div id="sel_info_title" style="padding:.25em"></div>
-                    <div id="sel_info_desc_div" style="padding:.25em">
-                        <br>
-                        Description:
-                        <hr>
-                        <div id="sel_info_desc" style="overflow:auto;padding:.25em 1em 1em 1em"></div>
+                <div id="tab-sel-desc" class="ui-widget-content content" style="padding:0 0.1em;height:100%;min-height:0">
+                    <div class='content2' style='height:100%;overflow:auto'>
+                        <div id="sel_info_desc" style='white-space:pre-wrap;padding:0.5em'></div>
                     </div>
-                    <div id="sel_info_form" style="overflow:auto;padding:.25em;display:none">
-                        <br>
-                        Details:
-                        <hr>
+                </div>
+                <div id="tab-sel-det" class="ui-widget-content content" style="padding:0 0.1em;height:100%;min-height:0">
+                    <div id="sel_info_form" class='content2' style="overflow:auto;height:100%;display:none">
                         <table class="sel-info-table">
-                            <!-- tr><td>Type:</td><td id='sel_info_type'></td></tr -->
+                            <tr><td>Type:</td><td id='sel_info_type'></td></tr>
                             <tr><td>ID:</td><td id='sel_info_id'></td></tr>
                             <tr class="sid sic"><td>Alias:</td><td id='sel_info_alias'></td></tr>
                             <tr class="sidp"><td>DOI&nbsp;No.:</td><td id='sel_info_doi'></td></tr>
@@ -129,13 +130,13 @@
                         </table>
                     </div>
                 </div>
-                <div id="tab-sel-md" class="ui-widget-content" style="padding:0;height:100%;min-height:0;overflow:auto">
-                    <div class="content col-flex" style="height:100%">
-                        <div class='row-flex shadowed' style='flex:none;align-items:center;padding:.25em'>Filter:&nbsp;<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp;<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp;<button class='btn small' id='md_filter_reset'>Reset</button></div>
+                <div id="tab-sel-md" class="ui-widget-content" style="padding:0 0.1em;height:100%;min-height:0;overflow:auto">
+                    <div id='md_div' class="content2 col-flex" style="height:100%">
+                        <div class='row-flex content' style='flex:none;align-items:center;padding:.25em'>Filter:&nbsp;<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp;<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp;<button class='btn small' id='md_filter_reset'>Reset</button></div>
                         <div id="data_md_tree" class="no-border" style="flex:auto;padding:.5em 0 0 0;background:transparent;display:inline-block;overflow:auto"></div>
                     </div>
                 </div>
-                <div id="tab-sel-notes" class='ui-widget-content content' style="padding:0;height:100%;min-height:0;overflow:auto">
+                <div id="tab-sel-notes" class='ui-widget-content content' style="padding:0 0.1em;height:100%;min-height:0;overflow:auto">
                     <div id='note-div' class="col-flex" style='height:100%'> 
                         <div style='flex:none'>
                             <div id='note-tabs' class='tabs-no-header ui-widget-content content' style='border:none'>
@@ -168,9 +169,8 @@
                         </div>
                     </div>
                 </div>
-                <div id="tab-sel-general" class="ui-widget-content content" style="padding:0;height:100%;min-height:0">
-                </div>
             </div>
+          </div>
         </div>
     </div>
     <div style="flex:none;padding:.25em">

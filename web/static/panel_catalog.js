@@ -123,7 +123,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }
         },
         postProcess: function( event, data ) {
-            console.log("cat tree post proc:", data );
+            //console.log("cat tree post proc:", data );
             if ( data.node.parent == null || data.node.key.startsWith("t/") || data.node.key.startsWith("c/" )) {
                 data.result = [];
                 var item,entry;
@@ -148,7 +148,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                         }else if ( item.title.startsWith("p/") ){
                             entry = { title: item.title.substr(2),folder:true,lazy:true,key:item.id,scope:item.title,icon:"ui-icon ui-icon-box",offset:0 };
                         }else{
-                            entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,key:item.id,icon:"ui-icon ui-icon-grip-solid-horizontal",offset:0 };
+                            entry = { title: item.title.charAt(0).toUpperCase() + item.title.substr(1),folder:true,lazy:true,key:item.id,icon:"ui-icon ui-icon-structure",offset:0 };
                         }
                     }else if ( item.id[0]=="c" ){
                         entry = { title: util.generateTitle(item),folder:true,lazy:true,key:item.id,offset:0,scope:item.owner?item.owner:scope };

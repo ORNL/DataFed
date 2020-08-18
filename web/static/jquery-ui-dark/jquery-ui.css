@@ -44,9 +44,27 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     color: #808080;
 }
 
+body
+{
+	color:#ffffff;
+}
+
 .content
 {
     background: #404040!important;
+}
+
+.content2
+{
+	background: #222!important;
+	border: 1px solid #555555;
+	/*padding:0.5em 0.5em;*/
+}
+
+.sel-info-hdr
+{
+    border-top: 1px solid #555555;
+    border-left: 1px solid #333333;
 }
 
 .ui-state-disabled
@@ -196,7 +214,7 @@ textarea.ui-state-disabled
     color: #4070FF
 }
 
-.fancytree-node .ui-icon-folder
+.ui-icon-folder
 {
     color: #dFbF40
 }
@@ -206,7 +224,7 @@ textarea.ui-state-disabled
     color: #008F00
 }
 
-.fancytree-node .ui-icon-box
+.ui-icon-box
 {
     color: #8040FF
 }
@@ -221,10 +239,15 @@ textarea.ui-state-disabled
     color: #8040FF
 }
 
-.fancytree-node .ui-icon-file
+.ui-icon-file-text
+{
+    color: #90ff90
+}
+
+.ui-icon-file
 {
     /*color: #008F00*/
-    color: #808080
+    color: #ffffff
 }
 
 .ui-icon-flag

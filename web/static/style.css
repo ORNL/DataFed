@@ -131,6 +131,13 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     padding:.15em!important;
 }
 
+.sel-info-title
+{
+    padding:0.5em 0.25em;
+    font-weight:bold;
+    font-size:110%;
+}
+
 .ui-checkboxradio-label
 {
     padding:0 2px!important;
@@ -475,6 +482,11 @@ svg text
     padding:0px!important;
 }
 
+.tabs-no-right-border .ui-widget-header
+{
+    border-right:none!important;
+}
+
 .tabs-no-header .ui-widget-header
 {
     background:transparent !important;
@@ -482,7 +494,7 @@ svg text
     border-top-style:none!important;
     border-left-style:none!important;
     border-right-style:none!important;
-    padding:0.1em 0 0 0!important;
+    /*padding:0.1em 0 0 0!important;*/
 }
 
 .ui-selectmenu-button.ui-button

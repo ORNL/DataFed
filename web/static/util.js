@@ -144,6 +144,38 @@ export function checkDlgOpen( a_id ){
 
     return false;
 }
+
+export function getKeyIcon( a_key ){
+    if ( a_key.startsWith( "c/" ))
+        return "folder";
+    else if ( a_key.startsWith( "u/" ))
+        return "person";
+    else if ( a_key.startsWith( "p/" ))
+        return "box";
+    else if ( a_key.startsWith( "q/" ))
+        return "zoom";
+    else if ( a_key.startsWith( "t/" ))
+        return "structure";
+    else if ( a_key == "mydata" )
+        return "person";
+    else if ( a_key == "projects" || a_key == "shared_proj" )
+        return "view-icons";
+    else if ( a_key == "shared_all" )
+        return "circle-plus";
+    else if ( a_key == "shared_user" )
+        return "persons";
+    else if ( a_key == "allocs" )
+        return "databases";
+    else if ( a_key.startsWith( "repo/" ))
+        return "database";
+    else if ( a_key.startsWith( "queries" ))
+        return "view-list";
+    else if ( a_key.startsWith( "published" ))
+        return "sign-out";
+
+    console.log("not found", a_key );
+}
+
 export function getDataIcon( a_data ){
     if ( a_data.doi )
         return "ui-icon ui-icon-linkext";

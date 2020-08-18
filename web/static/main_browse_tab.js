@@ -61,7 +61,7 @@ $("#data-tabs-parent").resizable({
         var nextCell = ui.originalElement.next();
         var nextPercentWidth=100 * nextCell.outerWidth()/resize_container.innerWidth();
         nextCell.css('width', nextPercentWidth + '%');
-    },
+    }
 });
 
 export function windowResized(){
@@ -71,16 +71,21 @@ export function windowResized(){
     tabs.outerHeight(h);
     $(".ui-tabs-panel",tabs).outerHeight( h - hdr_h );
 
-    h = $("#info-tabs-parent").height();
-    console.log("info-tabs-parent h:",h)
-    tabs = $("#info-tabs");
-    //hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
-    hdr_h = $("#info-tabs > .ui-tabs-nav").outerHeight();
-    console.log("info-tabs hdr h:",hdr_h)
-    tabs.outerHeight(h);
-    $("#info-tabs > .ui-tabs-panel").outerHeight( h - hdr_h );
     if ( graph_panel )
         graph_panel.resized( $("#data-tabs-parent").width(), h - hdr_h );
+
+    // Match height of select info header
+    $("#sel_info_hdr").outerHeight( hdr_h ).css("line-height",hdr_h + "px");
+
+    //var th = $("#sel_info_hdr_div").outerHeight();
+    h = $("#info-tabs-parent").height();
+    //console.log("info-tabs-parent h:",h)
+    tabs = $("#info-tabs");
+    hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
+    //hdr_h = $("#info-tabs > .ui-tabs-nav").outerHeight();
+    //console.log("info-tabs hdr h:",hdr_h)
+    tabs.outerHeight(h);
+    $("#info-tabs > .ui-tabs-panel").outerHeight( h - hdr_h );
 }
 
 window.pageLoad = function( key, offset ){
@@ -1870,7 +1875,7 @@ var tree_source = [
         {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
         {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
     ]},
-    {title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},
+    /*{title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},*/
     {title:"Saved Queries",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
 ];
 
@@ -2153,7 +2158,7 @@ $("#btn_export_data",frame).on('click', function(){
 });
 
 export function init(){
-    console.log("browser - user from settings:",settings.user);
+    //console.log("browser - user from settings:",settings.user);
 
     my_root_key = "c/u_" + settings.user.uid + "_root";
 
@@ -2787,11 +2792,11 @@ export function init(){
 task_hist.html( "(no recent transfers)" );
 
 export function checkTreeUpdate( a_data, a_source ){
-    console.log("check for changes to size, alias, etc");
+    //console.log("checkTreeUpdate", a_data, a_source );
 
     if ( a_source.key.startsWith( "d/" )){
         if ( a_data.size != a_source.data.size ){
-            console.log("size diff, update!");
+            //console.log("size diff, update!");
             model.update( [a_data] );
         }
     }
