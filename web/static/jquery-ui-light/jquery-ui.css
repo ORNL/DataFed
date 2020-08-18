@@ -52,13 +52,21 @@ body
 
 .content
 {
-    background: #f0f0f0!important;
+	background: #e0e5e7!important;
+	color: #000;
 }
 
-.sel-info-title
+.content2
 {
-    border-top: 1px solid #555555;
-    border-left: 1px solid #333333;
+	background: #f8f8f8!important;
+	border: 1px solid #aaaaaa;
+	color: #000;
+}
+
+.sel-info-hdr
+{
+    border-top: 1px solid #aaaaaa;
+    /*border-left: 1px solid #333333;*/
 }
 
 input.ui-state-disabled
@@ -190,139 +198,169 @@ textarea.ui-state-disabled
 
 .ui-icon-notice
 {
-    color: #0080FF
+    color: #0080FF;
 }
 
 .ui-icon-person
 {
-    color: #0000FF
+    color: #0000FF;
 }
 
 .ui-icon-persons
 {
-    color: #0000FF
+    color: #0000FF;
 }
 
-.fancytree-node .ui-icon-folder
+.ui-icon-folder
 {
-    color: #dFbF40
+    color: #dFbF40;
 }
 
 .ui-icon-copy
 {
-    color: #008F00
+    color: #008F00;
 }
 
-.fancytree-node  .ui-icon-box
+.ui-icon-box
 {
-    color: #8040FF
+    color: #8040FF;
 }
 
 .ui-icon-view-icons
 {
-    color: #8040FF
+    color: #8040FF;
 }
 
 .ui-icon-view-icons-b
 {
-    color: #6000FF
+    color: #6000FF;
 }
 
-.fancytree-node .ui-icon-file
+
+.ui-icon-file-text
 {
-    /*color: #008F00*/
-    color: #909090
+    color: #060;
+}
+
+.ui-icon-file
+{
+    color: #444;
+}
+
+.ui-icon-files
+{
+    color: #444;
+}
+
+.ui-icon-disk
+{
+    color: #444;
+}
+
+.ui-icon-reload
+{
+    color: #444;
+}
+
+.ui-icon-arrowthick-1-e
+{
+    color: #444;
+}
+
+.ui-icon-arrowthick-1-4
+{
+    color: #444;
 }
 
 .ui-icon-flag
 {
-    color: #FF0000
+    color: #FF0000;
 }
 
 .ui-icon-alert
 {
-    color: #ef9f00
+    color: #ef9f00;
 }
 
 .ui-icon-circle-info
 {
-    color: #00aF00
+    color: #00aF00;
 }
 
 .ui-icon-circle-help
 {
-    color: #0080FF
+    color: #0080FF;
 }
 
 .ui-icon-heart
 {
-    color: #ff0000
+    color: #ff0000;
 }
 
 .ui-icon-circle-plus
 {
-    color: #009090
+    color: #009090;
 }
 
 .ui-icon-plus
 {
-    color: #006000
+    color: #006000;
 }
 
 .ui-icon-close
 {
-    color: #FF0000
+    color: #FF0000;
 }
 
 .ui-icon-view-list
 {
-    color: #a0b000
+    color: #a0b000;
 }
 
 .ui-icon-zoom
 {
-    color: #000000
+    color: #000000;
 }
 
 .ui-icon-locked
 {
-    color: #FF0000
+    color: #FF0000;
 }
 
 /*.ui-icon-minusthick*/
 .ui-icon-grip-solid-horizontal
 {
-    color: #df6000
+    color: #df6000;
 }
 
 .ui-icon-structure
 {
-    color: #df6000
+    color: #df6000;
 }
 
 .ui-icon-sign-in
 {
-    color: #007800
+    color: #007800;
 }
 
 .ui-icon-sign-out
 {
-    color: #c80000
+    color: #c80000;
 }
 
 .ui-icon-databases
 {
-    color: #606060
+    color: #606060;
 }
 
 .ui-icon-database
 {
-    color: #606060
+    color: #606060;
 }
 
 .ui-icon-linkext
 {
-    color: #ff8000
+    color: #ff8000;
 }
 
 .shadowed

@@ -58,13 +58,12 @@ body
 {
 	background: #222!important;
 	border: 1px solid #555555;
-	/*padding:0.5em 0.5em;*/
 }
 
 .sel-info-hdr
 {
     border-top: 1px solid #555555;
-    border-left: 1px solid #333333;
+    /*border-left: 1px solid #333333;*/
 }
 
 .ui-state-disabled
