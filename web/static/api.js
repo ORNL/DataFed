@@ -522,15 +522,18 @@ export function annotationCreate( a_subj_id, a_type, a_title, a_comment, a_activ
 }
 
 export function annotationUpdate( a_id, a_comment, a_new_type, a_new_state, a_new_title, a_cb ){
+    //console.log("api.annotationUpdate",a_new_type, a_new_state,a_new_title );
     _asyncGet( "/api/note/update?id="+encodeURIComponent(a_id) + "&comment="+encodeURIComponent(a_comment) +
         (a_new_type!=null?"&new_type="+a_new_type:"") + (a_new_state!=null?"&new_state="+a_new_state:"") +
         (a_new_title!=null?"&new_title="+a_new_title:""), null, function( ok, reply ){
             a_cb( ok, reply );
 
             //console.log("chk for updates:",reply);
-
-            if ( ok && reply.update )
+            //&& ( a_new_type || a_new_state )
+            if ( ok && reply.update ){
+                //console.log("updates:",reply.update);
                 model.update( reply.update );
+            }
         });
 }
 
