@@ -63,11 +63,6 @@ body
 	color: #000;
 }
 
-.sel-info-hdr
-{
-    border-top: 1px solid #aaaaaa;
-    /*border-left: 1px solid #333333;*/
-}
 
 input.ui-state-disabled
 {

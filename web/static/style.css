@@ -270,6 +270,17 @@ svg text
     width: 10em;
 }
 
+.toolbar
+{
+    border:none!important;
+    min-height:2em;
+}
+
+.sel-info-hdr
+{
+    border-top: none;
+}
+
 .sel-info-table
 {
     width:100%;

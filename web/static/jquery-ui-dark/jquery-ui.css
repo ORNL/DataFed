@@ -60,12 +60,6 @@ body
 	border: 1px solid #555555;
 }
 
-.sel-info-hdr
-{
-    border-top: 1px solid #555555;
-    /*border-left: 1px solid #333333;*/
-}
-
 .ui-state-disabled
 {
 	opacity:.45!important;
