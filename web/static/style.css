@@ -236,7 +236,7 @@ svg text
 
 .btn-icon
 {
-    padding:0.1em 0.25em 0.25em 0.25em!important;
+    padding:0 0.25em 0.25em 0.25em!important;
 }
 
 .btn.btn-icon-tiny
@@ -274,6 +274,29 @@ svg text
 {
     border:none!important;
     min-height:2em;
+}
+
+.cat-subheading
+{
+    padding:0.25em 0.5em;
+    border:none!important;
+}
+
+.cat-content
+{
+    padding:0.25em 0.5em;
+    border-top:none!important;
+}
+
+.cat-toolbar
+{
+    border-bottom:none!important;
+    padding:0.25em 0.5em;
+}
+
+.cat-topic
+{
+    padding:0.25em;
 }
 
 .sel-info-hdr

@@ -29,15 +29,7 @@
                     </div>
                 </div>
                 <div id="tab-catalogs" class="ui-widget-content" style="padding:0;overflow:hidden">
-                    <div class="col-flex" style="height:100%">
-                        <div class="ui-widget-content" style="flex:1 1 auto;border-top:none;min-height:0;overflow:auto">
-                            <div id="catalog_tree" class="no-border" style="display:inline-block"></div>
-                        </div>
-                        <div class='content toolbar' style="flex:none;padding:.25em 0 0 .25em">
-                            <button class="btn btn-icon" id="btn_cat_first_par_coll" title="Go to the first containing collection of selected record in 'My Data'." disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
-                            <button class="btn btn-icon" id="btn_cat_refresh" title='Refresh selected item'><span class="ui-icon ui-icon-reload"></span></button>
-                        </div>
-                    </div>
+                    <% include 'catalog_panel.ect' %>
                 </div>
                 <div id="tab-notifications" class="ui-widget-content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">

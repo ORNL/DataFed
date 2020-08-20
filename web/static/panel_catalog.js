@@ -9,6 +9,7 @@ export function newCatalogPanel( a_id, a_frame, a_parent ){
 }
 
 function CatalogPanel( a_id, a_frame, a_parent ){
+    /*
     $( a_id, a_frame ).fancytree({
         toggleEffect: false,
         extensions: ["themeroller","dnd5"],
@@ -47,11 +48,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 return true;
             }
         },
-        
         source: { url: api.topicList_url( null, 0, settings.opts.page_sz ), cache: false },
-        /*source:[
-            {title:"By Topic",checkbox:false,folder:true,icon:"ui-icon ui-icon-structure",lazy:true,nodrag:true,key:"topics",offset:0}
-        ],*/
         nodata: false,
         selectMode: 2,
         activate: function( event, data ) {
@@ -113,9 +110,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }
         },
         lazyLoad: function( event, data ) {
-            /*if ( data.node.key == "topics" ) {
-                data.result = { url: api.topicList_url( null, data.node.data.offset, settings.opts.page_sz ), cache: false };
-            } else*/
             if ( data.node.key.startsWith( "t/" )){
                 data.result = { url: api.topicList_url( data.node.key, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key.startsWith( "c/" )){
@@ -167,21 +161,120 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         },
     });
 
-
     var cat_tree = $.ui.fancytree.getTree( "#catalog_tree", a_frame );
     var keyNav = false, search_sel_mode = false;
 
-    this.setSearchSelectMode = function( a_enabled ){
-        search_sel_mode = a_enabled;
-        cat_tree.setOption("checkbox",a_enabled);
-    };
-
     this.tree_div = $(a_id,a_frame);
     this.tree = cat_tree;
-    
+    */
+    var cat_panel = $(".cat-panel"),
+        cur_topic_div = $("#cat_cur_topic",cat_panel),
+        cur_topic = [],
+        back_btn = $(".btn-cat-back",cat_panel);
+
+    $(".btn",cat_panel).button();
+
+    //$("#cat_topics",cat_panel).selectable({});
+    function onTopicClick( ev ){
+        var topic = $(this)[0].innerHTML,
+            topic_id = $(this)[0].id;
+
+        //console.log("cat topic",topic);
+        
+        api.topicList( topic_id, null, null, function( ok, data ){
+            if ( ok ){
+                cur_topic.push({ name: topic, id: topic_id });
+                topic = "";
+                for ( var i in cur_topic ){
+                    if ( topic.length )
+                        topic += ".";
+                    topic += cur_topic[i].name;
+                }
+
+                cur_topic_div.text( topic );
+                back_btn.button("option","disabled",false);
+                setTopics( data );
+            }
+        });
+    }
+
+    function setTopics( data ){
+        var html = "", topic;
+        console.log("topics",data);
+        for ( var i in data.item ){
+            topic = data.item[i];
+            html += "<div class='cat-topic' id='" + topic.id + "'>" + topic.title.charAt(0).toUpperCase() + topic.title.substr(1) + "</div>";
+        }
+
+        $("#cat_topics",cat_panel).html( html );
+        $(".cat-topic",cat_panel).on("click", onTopicClick );
+    }
+
+    $(".btn-cat-home",cat_panel).on("click",function(){
+        console.log("cat home");
+
+        api.topicList( null, null, null, function( ok, data ){
+            if ( ok ){
+                setTopics( data );
+                cur_topic=[];
+                cur_topic_div.text( "Home" );
+                back_btn.button("option","disabled",true);
+            }
+        });
+    });
+
+    $(".btn-cat-back",cat_panel).on("click",function(){
+        console.log("cat back");
+
+        api.topicList( cur_topic.length>1?cur_topic[cur_topic.length-2].id:null, null, null, function( ok, data ){
+            if ( ok ){
+                setTopics( data );
+                if ( cur_topic.length > 1 ){
+                    cur_topic.pop();
+
+                    var topic = "";
+                    for ( var i in cur_topic ){
+                        if ( topic.length )
+                            topic += ".";
+                        topic += cur_topic[i].name;
+                    }
+                    cur_topic_div.text( topic );
+                }else{
+                    cur_topic=[];
+                    cur_topic_div.text( "Home" );
+                    back_btn.button("option","disabled",true);
+                }
+            }
+        });
+    });
+
+    $(".btn-cat-search",cat_panel).on("click",function(){
+        console.log("cat topic search");
+        $("#cat_topic_results_div").show();
+    });
+
+    $(".btn-cat-topic-res-cls",cat_panel).on("click",function(){
+        console.log("cat topic res close");
+        $("#cat_topic_results_div").hide();
+    });
+
+    api.topicList( null, null, null, function( ok, data ){
+        if ( ok ){
+            setTopics( data );
+        }
+    });
+
+    var search_sel_mode = false;
+
+    this.setSearchSelectMode = function( a_enabled ){
+        search_sel_mode = a_enabled;
+        //cat_tree.setOption("checkbox",a_enabled);
+    };
+
     model.registerUpdateListener( function( a_data ){
-        console.log("cat panel updating:",a_data);
-        var data;
+        //console.log("cat panel updating:",a_data);
+
+        /*var data;
         // Find impacted nodes in catalog tree and update title
         cat_tree.visit( function(node){
             if ( node.key in a_data ){
@@ -195,7 +288,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }
         });
 
-        a_parent.updateBtnState();
+        a_parent.updateBtnState();*/
     });
     
     return this;

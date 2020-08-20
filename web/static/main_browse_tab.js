@@ -99,13 +99,13 @@ window.pageLoad = function( key, offset ){
 };
 
 window.pageLoadCat = function( key, offset ){
-    var node = cat_panel.tree.getNodeByKey( key );
+    /*var node = cat_panel.tree.getNodeByKey( key );
     if ( node ){
         node.data.offset = offset;
         setTimeout( function(){
             node.load(true);
         },0);
-    }
+    }*/
 };
 
 function getSelectedNodes(){
@@ -119,7 +119,7 @@ function getSelectedNodes(){
             sel = results_tree.getSelectedNodes();
             break;
         case SS_CAT:
-            sel = cat_panel.tree.getSelectedNodes();
+            //sel = cat_panel.tree.getSelectedNodes();
             break;
     }
 
@@ -143,7 +143,7 @@ function getSelectedIDs(){
             }
             break;
         case SS_CAT:
-            sel = cat_panel.tree.getSelectedNodes();
+            //sel = cat_panel.tree.getSelectedNodes();
             for ( i in sel ){
                 ids.push( sel[i].key );
             }
@@ -195,12 +195,12 @@ export function refreshUI( a_ids, a_data, a_reload ){
             }
         });
 
-        cat_panel.tree.visit( function(node){
+        /*cat_panel.tree.visit( function(node){
             idx = ids.indexOf( node.key );
             if ( idx != -1 ){
                 util.refreshNodeTitle( node, data[idx], a_reload );
             }
-        });
+        });*/
     }
 
     if ( cur_query ){
@@ -221,7 +221,7 @@ export function refreshUI( a_ids, a_data, a_reload ){
             act_node = data_tree.activeNode;
             break;
         case SS_CAT:
-            act_node = cat_panel.tree.activeNode;
+            //act_node = cat_panel.tree.activeNode;
             break;
         case SS_PROV:
             act_node = graph_panel.getSelectedID();
@@ -516,7 +516,7 @@ function refreshCollectionNodes( node_keys, scope ){
     //console.log("REF: search catalog tree");
 
     // catalog_tree is slightly different than data_tree
-    cat_panel.tree.visit( function( node ){
+    /*cat_panel.tree.visit( function( node ){
         // Ignore nodes without scope (top-level nodes)
         if ( node.data.scope !== undefined ){
             if ( node.data.scope == scope ){
@@ -532,7 +532,7 @@ function refreshCollectionNodes( node_keys, scope ){
         }else{
             //console.log("REF: ignore node:",node.key);
         }
-    });
+    });*/
 
     //console.log("REF: refresh results:",refresh);
 
@@ -1257,7 +1257,9 @@ function actionDataPut() {
 function calcActionState( sel ){
     var bits,node;
 
-    if ( sel.length > 1 ){
+    if ( !sel ){
+        bits = 0x7ff;
+    }else if ( sel.length > 1 ){
         bits = 0x71B;
         for ( var i in sel ){
             node = sel[i];
@@ -1328,7 +1330,7 @@ export function updateBtnState(){
             break;
         case SS_CAT:
             //bits = 0xFF;
-            sel = cat_panel.tree.getSelectedNodes();
+            //sel = cat_panel.tree.getSelectedNodes();
             bits = calcActionState( sel );
             break;
         case SS_PROV:
@@ -1547,12 +1549,12 @@ function parseQuickSearch(){
             //    query.scopes.push({scope:SS_TOPIC,id:key,recurse:true});
             //}
         }
-        nodes = cat_panel.tree.getSelectedNodes();
+        /*nodes = cat_panel.tree.getSelectedNodes();
         //console.log("cat tree nodes:",nodes.length);
         for ( i in nodes ){
             key = nodes[i].key;
             query.scopes.push({scope:model.SS_TOPIC,id:key,recurse:true});
-        }
+        }*/
     }else{
         if ( $("#scope_mydat",frame).prop("checked"))
             query.scopes.push({scope:model.SS_USER});
@@ -1596,25 +1598,25 @@ function querySave(){
 function updateSearchSelectState( enabled ){
     if( enabled && $("#scope_selected",frame).prop("checked")){
         $(data_tree_div).fancytree("option","checkbox",true);
-        cat_panel.setSearchSelectMode(true);
+        //cat_panel.setSearchSelectMode(true);
 
         //cat_panel.tree.setOption("checkbox",true);
         $("#btn_srch_clear_select",frame).button("option","disabled",false);
         searchSelect = true;
     }else{
         $(data_tree_div).fancytree("option","checkbox",false);
-        cat_panel.setSearchSelectMode(false);
+        //cat_panel.setSearchSelectMode(false);
         //cat_panel.tree.setOption("checkbox",false);
         $("#btn_srch_clear_select",frame).button("option","disabled",true);
         searchSelect = false;
     }
     data_tree.selectAll(false);
-    cat_panel.tree.selectAll(false);
+    //cat_panel.tree.selectAll(false);
 }
 
 function searchClearSelection(){
     data_tree.selectAll(false);
-    cat_panel.tree.selectAll(false);
+    //cat_panel.tree.selectAll(false);
 }
 
 function taskUpdateHistory( task_list ){
@@ -2023,7 +2025,7 @@ $("#data-tabs").tabs({
                     break;
                 case "tab-catalogs":
                     select_source = SS_CAT;
-                    panel_info.showSelectedInfo( cat_panel.tree.activeNode, checkTreeUpdate );
+                    //panel_info.showSelectedInfo( cat_panel.tree.activeNode, checkTreeUpdate );
                     break;
                 case "tab-notifications":
                     //select_source = SS_CAT;
@@ -2775,7 +2777,7 @@ export function init(){
     util.tooltipTheme( results_tree_div );
 
     data_tree_div.contextmenu(ctxt_menu_opts);
-    cat_panel.tree_div.contextmenu(ctxt_menu_opts);
+    //cat_panel.tree_div.contextmenu(ctxt_menu_opts);
     results_tree_div.contextmenu(ctxt_menu_opts);
 
     var node = data_tree.getNodeByKey( "mydata" );
@@ -2812,7 +2814,7 @@ model.registerUpdateListener( function( a_data ){
             nd = data_tree.activeNode;
             break;
         case SS_CAT:
-            nd = cat_panel.tree.activeNode;
+            //nd = cat_panel.tree.activeNode;
             break;
         case SS_PROV:
             nd = graph_panel.getSelectedID();

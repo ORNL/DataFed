@@ -96,6 +96,13 @@ textarea.ui-state-disabled
 	color:#F00;
 }
 
+/* Catalog Styles */
+
+.cat-topic:hover
+{
+    background:#104010;
+}
+
 /* Dependency Graph Styles */
 
 .links{
@@ -619,7 +626,7 @@ mark
 }
 .ui-selectable-helper {
 	position: absolute;
-	z-index: 100;
+	z-index: 1000;
 	border: 1px dotted black;
 }
 .ui-sortable-handle {
