@@ -764,7 +764,7 @@ module.exports = ( function() {
         var top_ar = a_topic.split(".");
         var i,topic,parent = "t/root";
 
-        top_ar.push(a_owner_id);
+        //top_ar.push(a_owner_id);
 
         for ( i = 0; i < top_ar.length; i++ ){
             topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{par:parent,title:top_ar[i]});

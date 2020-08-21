@@ -12,18 +12,13 @@ module.exports = router;
 
 //==================== TOPIC API FUNCTIONS
 
-router.get('/list', function (req, res) {
+router.get('/list/topics', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
-        var qry = "for v in 1..1 inbound @par top",
+        var qry = "for v in 1..1 inbound @par top filter is_same_collection('t',v) sort v.title",
             result,
             item;
 
-        if ( !req.queryParams.data ){
-            qry += " filter is_same_collection('t',v) sort v.title";
-        }else{
-            qry += " sort is_same_collection('t',v) DESC, v.title";
-        }
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,doi:v.doi,alias:v.alias}";
@@ -56,6 +51,90 @@ router.get('/list', function (req, res) {
 .summary('List topics')
 .description('List topics with optional parent');
 
+router.get('/list/coll', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+        var qry = "for v in 1..1 inbound @id top filter is_same_collection('c',v) sort v.title",
+            result, tot, item, tot;
+
+        if ( req.queryParams.offset == undefined )
+            req.queryParams.offset = 0;
+
+        if ( req.queryParams.count == undefined || req.queryParams.count > 100 )
+            req.queryParams.count = 100;
+
+        qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias}";
+        console.log("qry:",qry,req.queryParams.id);
+        result = g_db._query( qry, { id: req.queryParams.id },{},{fullCount:true});
+        tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+
+        for ( var i in result ){
+            item = result[i];
+            console.log("proc result:",item);
+            item.notes = g_lib.annotationGetMask( client, item.id );
+        }
+
+        result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('id', joi.string().required(), "ID of topic to list (omit for top-level)")
+.queryParam('offset', joi.number().optional(), "Offset")
+.queryParam('count', joi.number().optional(), "Count")
+.summary('List collections with topic')
+.description('List collections with topic');
+
+router.get('/search', function (req, res) {
+    try {
+        var tokens = req.queryParams.phrase.match(/(?:[^\s"]+|"[^"]*")+/g),
+            qry = "for i in topicview search analyzer((",
+            i, qry_res, result = [],
+            item, id, topic, op = false;
+
+        if ( tokens.length == 0 )
+            throw [g_lib.ERR_INVALID_PARAM,"Invalid topic search phrase."];
+
+        for ( i in tokens ){
+            if ( op ){
+                qry += " or ";
+            }
+            qry += "phrase(i.title,'" + tokens[i] + "')";
+            op = true;
+        }
+
+        qry += "),'text_en') limit 0, 100 return i";
+
+        qry_res = g_db._query( qry, {});
+        while ( qry_res.hasNext() ){
+            item = qry_res.next();
+            id = item._id;
+            topic = item.title;
+
+            while (( item = g_db.top.firstExample({ _from: item._id }))){
+                if ( item._to == "t/root" )
+                    break;
+                item = g_db.t.document( item._to );
+                topic = item.title + "." + topic;
+            }
+            result.push({ id: id, title: topic });
+        }
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('phrase', joi.string().required(), "Search words or phrase")
+.summary('Search topics')
+.description('Search topics by keyword or phrase');
+
+/*
 router.get('/link', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -100,3 +179,4 @@ router.get('/unlink', function (req, res) {
 .queryParam('id', joi.string().required(), "Data ID or alias to unlink")
 .summary('Unlink topic from data')
 .description('Unlink topic from data');
+*/
