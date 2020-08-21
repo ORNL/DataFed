@@ -176,10 +176,25 @@ message AnnotationDataReply
 }
 
 // Returns ListingReply
-message TopicListRequest
+message TopicListTopicsRequest
 {
     optional string             topic_id    = 1;
     optional uint32             offset      = 2;
     optional uint32             count       = 3;
-    optional bool               data        = 4 [default = true];
+}
+
+// Returns ListingReply
+message TopicListCollectionsRequest
+{
+    optional string             topic_id    = 1;
+    optional SortOption         sort        = 2;
+    optional bool               sort_rev    = 3;
+    optional uint32             offset      = 4;
+    optional uint32             count       = 5;
+}
+
+// Returns ListingReply
+message TopicSearchRequest
+{
+    optional string             phrase      = 1;
 }

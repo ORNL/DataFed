@@ -1154,30 +1154,33 @@ app.get('/api/repo/alloc/set/default', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/top/list', ( a_req, a_resp ) => {
+app.get('/api/top/list/topics', ( a_req, a_resp ) => {
     var par = {topicId:a_req.query.id?a_req.query.id:"t/root"};
-    if ( a_req.query.data == "false" )
-        par.data = false;
     if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
     }
-    console.log( "TopicListRequest", par );
-    sendMessage( "TopicListRequest", par, a_req, a_resp, function( reply ) {
-        console.log(reply);
+
+    sendMessage( "TopicListTopicsRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
 });
 
-app.get('/api/top/link', ( a_req, a_resp ) => {
-    sendMessage( "TopicLinkRequest", {topic:a_req.topic,id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        a_resp.json({});
+app.get('/api/top/list/coll', ( a_req, a_resp ) => {
+    var par = {topicId:a_req.query.id};
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "TopicListCollectionsRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
     });
 });
 
-app.get('/api/top/unlink', ( a_req, a_resp ) => {
-    sendMessage( "TopicUnlinkRequest", {topic:a_req.topic,id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        a_resp.json({});
+app.get('/api/top/search', ( a_req, a_resp ) => {
+    sendMessage( "TopicSearchRequest", {phrase:a_req.query.phrase}, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
     });
 });
 

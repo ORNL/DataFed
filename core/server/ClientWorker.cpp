@@ -82,7 +82,9 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
-        SET_MSG_HANDLER_DB( proto_id, TopicListRequest, ListingReply, topicList );
+        SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, ListingReply, topicListTopics );
+        SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, ListingReply, topicListCollections );
+        SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, ListingReply, topicSearch );
         SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
         SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
 
@@ -176,8 +178,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetDefaultRequest, AckReply, repoAllocationSetDefault );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
-        SET_MSG_HANDLER_DB( proto_id, TopicLinkRequest, AckReply, topicLink );
-        SET_MSG_HANDLER_DB( proto_id, TopicUnlinkRequest, AckReply, topicUnlink );
+        //SET_MSG_HANDLER_DB( proto_id, TopicLinkRequest, AckReply, topicLink );
+        //SET_MSG_HANDLER_DB( proto_id, TopicUnlinkRequest, AckReply, topicUnlink );
     }
     catch( TraceException & e)
     {

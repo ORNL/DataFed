@@ -29,7 +29,7 @@
                     </div>
                 </div>
                 <div id="tab-catalogs" class="ui-widget-content" style="padding:0;overflow:hidden">
-                    <% include 'catalog_panel.ect' %>
+                    <% include 'panel_catalog.ect' %>
                 </div>
                 <div id="tab-notifications" class="ui-widget-content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">
@@ -204,7 +204,13 @@
             <div id="tab-search" class="content" style="padding:0">
                 <div class='footer-tab-inner-div'>
                     <table style='width:100%'>
-                        <tr><td style='width:10ch'>ID/Alias:</td><td style='width:10ch'><input id="id_query" type='text' style="width:10em" title="Find data using partial ID or alias."></input></td><td style='width:5ch;text-align:center'>Text:</td><td><input id="text_query" type='text' style="width:100%" title="Find data with full-text matching on title, description, and/or keywords."></input></td><td style='width:12ch'><button id="run_qry_btn" class="btn small" style='width:12ch'>Run Query</button></td></tr>
+                        <tr>
+                            <td style='width:10ch'>ID/Alias:</td>
+                            <td style='width:10ch'><input id="id_query" type='text' style="width:10em" title="Find data using partial ID or alias."></input></td>
+                            <td style='width:5ch;text-align:center'>Text:</td>
+                            <td><input id="text_query" type='text' style="width:100%" title="Find data with full-text matching on title, description, and/or keywords."></input></td>
+                            <td style='width:12ch'><button id="run_qry_btn" class="btn small" style='width:12ch'>Run Query</button></td>
+                        </tr>
 
                         <tr><td>Metadata: <span class='note'>*</span></td><td colspan="3"><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions."></input></td><td><button id="save_qry_btn" class='btn small' style='width:12ch' >Save Query</button></td></tr>
                         <tr><td>Scope:</td><td colspan="3">

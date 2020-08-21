@@ -134,9 +134,11 @@ public:
     void repoAllocationSetDefault( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply );
     void repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply );
 
-    void topicList( const Anon::TopicListRequest & a_request, Anon::ListingReply & a_reply );
-    void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
-    void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
+    void topicListTopics( const Anon::TopicListTopicsRequest & a_request, Anon::ListingReply & a_reply );
+    void topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::ListingReply & a_reply );
+    void topicSearch( const Anon::TopicSearchRequest & a_request, Anon::ListingReply & a_reply );
+    //void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
+    //void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
 
     void annotationCreate( const Auth::AnnotationCreateRequest & a_request, Anon::AnnotationDataReply & a_reply );
     void annotationUpdate( const Auth::AnnotationUpdateRequest & a_request, Anon::AnnotationDataReply & a_reply );

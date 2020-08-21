@@ -683,18 +683,40 @@ export function groupDelete( a_uid, a_gid, a_cb ) {
     _asyncGet( "/api/grp/delete?uid="+encodeURIComponent(a_uid)+"&gid="+encodeURIComponent(a_gid.startsWith("g/")?a_gid.substr(2):a_gid), null, a_cb );
 }
 
-export function topicList_url( a_id, a_offset, a_count ){
+export function topicListTopics_url( a_id, a_offset, a_count ){
     if ( a_id )
-        return "/api/top/list?id=" + a_id + (( a_offset != undefined && a_count != undefined )?"&offset="+a_offset+"&count="+a_count:"");
+        return "/api/top/list/topics?id=" + a_id + (( a_offset != undefined && a_count != undefined )?"&offset="+a_offset+"&count="+a_count:"");
     else
-        return "/api/top/list" + (( a_offset != undefined && a_count != undefined )?"?offset="+a_offset+"&count="+a_count:"");
+        return "/api/top/list/topics" + (( a_offset != undefined && a_count != undefined )?"?offset="+a_offset+"&count="+a_count:"");
 }
 
-export function topicList( a_id, a_offset, a_count, a_cb ){
+export function topicListTopics( a_id, a_offset, a_count, a_cb ){
     if ( !a_cb )
         return;
 
-    _asyncGet( topicList_url( a_id, a_offset, a_count ), null, a_cb );
+    _asyncGet( topicListTopics_url( a_id, a_offset, a_count ), null, a_cb );
+}
+
+export function topicListColl_url( a_id, a_offset, a_count ){
+    return "/api/top/list/coll?id=" + a_id + (( a_offset != undefined && a_count != undefined )?"&offset="+a_offset+"&count="+a_count:"");
+}
+
+export function topicListColl( a_id, a_offset, a_count, a_cb ){
+    if ( !a_cb )
+        return;
+
+    _asyncGet( topicListColl_url( a_id, a_offset, a_count ), null, a_cb );
+}
+
+export function topicSearch_url( a_phrase ){
+    return "/api/top/search?phrase="+a_phrase;
+}
+
+export function topicSearch( a_phrase, a_cb ){
+    if ( !a_cb )
+        return;
+
+    _asyncGet( topicSearch_url( a_phrase ), null, a_cb );
 }
 
 export function queryList_url( a_offset, a_count ){

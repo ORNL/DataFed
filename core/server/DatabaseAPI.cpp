@@ -2454,26 +2454,51 @@ DatabaseAPI::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply
 }
 
 void
-DatabaseAPI::topicList( const Anon::TopicListRequest & a_request, Anon::ListingReply  & a_reply )
+DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, Anon::ListingReply  & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
     if ( a_request.has_topic_id() )
         params.push_back({ "id", a_request.topic_id() });
-    if ( a_request.has_data() )
-        params.push_back({ "data", a_request.data()?"true":"false" });
     if ( a_request.has_offset() && a_request.has_count() )
     {
         params.push_back({ "offset", to_string( a_request.offset() )});
         params.push_back({ "count", to_string( a_request.count() )});
     }
 
-    dbGet( "topic/list", params, result );
+    dbGet( "topic/list/topics", params, result );
 
     setListingDataReply( a_reply, result );
 }
 
+void
+DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::ListingReply  & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+    params.push_back({ "id", a_request.topic_id() });
+    if ( a_request.has_offset() && a_request.has_count() )
+    {
+        params.push_back({ "offset", to_string( a_request.offset() )});
+        params.push_back({ "count", to_string( a_request.count() )});
+    }
 
+    dbGet( "topic/list/coll", params, result );
+
+    setListingDataReply( a_reply, result );
+}
+
+void
+DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::ListingReply  & a_reply )
+{
+    Value result;
+
+    dbGet( "topic/search", {{"phrase",a_request.phrase()}}, result );
+
+    setListingDataReply( a_reply, result );
+}
+
+/*
 void
 DatabaseAPI::topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply )
 {
@@ -2492,7 +2517,7 @@ DatabaseAPI::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckR
 
     dbGet( "topic/unlink", {{ "topic", a_request.topic() },{ "id", a_request.id() }}, result );
 }
-
+*/
 
 void
 DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Anon::AnnotationDataReply & a_reply )

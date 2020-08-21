@@ -70,8 +70,9 @@ enum SortOption
 {
     SORT_ID                     = 0;
     SORT_TITLE                  = 1;
-    SORT_TIME_CREATE            = 2;
-    SORT_TIME_UPDATE            = 3;
+    SORT_OWNER                  = 2;
+    SORT_TIME_CREATE            = 3;
+    SORT_TIME_UPDATE            = 4;
 }
 
 enum ProjectRole

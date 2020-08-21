@@ -110,6 +110,20 @@ view.properties({
   true
 );
 
+view = db._createView("topicview","arangosearch",{});
+
+view.properties({
+    links: {
+      "t": {
+        fields: {"title":{analyzers:["text_en"]}},
+        includeAllFields: false
+      }
+    }
+  },
+  true
+);
+
+
 db.task.ensureIndex({ type: "hash", unique: false, fields: [ "client" ], sparse: true });
 db.task.ensureIndex({ type: "skiplist", unique: false, fields: [ "status" ], sparse: true });
 db.task.ensureIndex({ type: "hash", unique: false, fields: [ "servers[*]" ], sparse: true });

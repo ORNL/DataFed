@@ -170,7 +170,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     var cat_panel = $(".cat-panel"),
         cur_topic_div = $("#cat_cur_topic",cat_panel),
         cur_topic = [],
-        back_btn = $(".btn-cat-back",cat_panel);
+        back_btn = $(".btn-cat-back",cat_panel),
+        top_res_div = $("#cat_topic_result_div",cat_panel);
 
     $(".btn",cat_panel).button();
 
@@ -181,7 +182,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         //console.log("cat topic",topic);
         
-        api.topicList( topic_id, null, null, function( ok, data ){
+        api.topicListTopics( topic_id, null, null, function( ok, data ){
             if ( ok ){
                 cur_topic.push({ name: topic, id: topic_id });
                 topic = "";
@@ -196,9 +197,33 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 setTopics( data );
             }
         });
+
+        api.topicListColl( topic_id, 0, 100, function( ok, data ){
+            if ( ok ){
+                setCollections( data );
+            }
+        });
+    }
+
+    function onSearchTopicClick( ev ){
+        console.log("onSearchTopicClick");
+        var topic = $(this)[0].innerHTML,
+            topic_id = $(this)[0].id;
+
+        console.log("topic",topic);
+
+        api.topicListTopics( topic_id, null, null, function( ok, data ){
+            if ( ok ){
+                cur_topic = [];
+                cur_topic_div.text( topic );
+                back_btn.button("option","disabled",true);
+                setTopics( data );
+            }
+        });
     }
 
     function setTopics( data ){
+        console.log("setTopics");
         var html = "", topic;
         console.log("topics",data);
         for ( var i in data.item ){
@@ -206,14 +231,46 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             html += "<div class='cat-topic' id='" + topic.id + "'>" + topic.title.charAt(0).toUpperCase() + topic.title.substr(1) + "</div>";
         }
 
-        $("#cat_topics",cat_panel).html( html );
-        $(".cat-topic",cat_panel).on("click", onTopicClick );
+        $("#cat_topics_div",cat_panel).html( html );
+        //$(".cat-topic",cat_panel).on("click", onTopicClick );
+    }
+
+    function setSearchTopics( data ){
+        console.log("setSearchTopics");
+        var html = "", topic;
+        console.log("topics",data);
+        for ( var i in data.item ){
+            topic = data.item[i];
+            html += "<div class='cat-topic' id='" + topic.id + "'>" + topic.title + "</div>";
+        }
+
+        top_res_div.html( html );
+        //$(".cat-topic",top_res_div).on("click", onSearchTopicClick );
+    }
+
+    function setCollections( data ){
+        console.log("setCollections",data);
+        var html = "", item;
+        if ( data.item && data.item.length ){
+            //console.log("data",data);
+            for ( var i in data.item ){
+                if ( html )
+                    html += "<hr>";
+                item = data.item[i];
+                html += "<div class='cat-coll' id='" + item.id + "'>" + item.title + "</div>";
+            }
+        }else{
+            html = "<div class='cat-coll-empty'>No data collections for this topic.</div>"
+        }
+
+        $("#cat_coll_div",cat_panel).html( html );
+        //$(".cat-topic",cat_panel).on("click", onTopicClick );
     }
 
     $(".btn-cat-home",cat_panel).on("click",function(){
         console.log("cat home");
 
-        api.topicList( null, null, null, function( ok, data ){
+        api.topicListTopics( null, null, null, function( ok, data ){
             if ( ok ){
                 setTopics( data );
                 cur_topic=[];
@@ -226,7 +283,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     $(".btn-cat-back",cat_panel).on("click",function(){
         console.log("cat back");
 
-        api.topicList( cur_topic.length>1?cur_topic[cur_topic.length-2].id:null, null, null, function( ok, data ){
+        api.topicListTopics( cur_topic.length>1?cur_topic[cur_topic.length-2].id:null, null, null, function( ok, data ){
             if ( ok ){
                 setTopics( data );
                 if ( cur_topic.length > 1 ){
@@ -249,20 +306,48 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     });
 
     $(".btn-cat-search",cat_panel).on("click",function(){
-        console.log("cat topic search");
-        $("#cat_topic_results_div").show();
+        $("#cat_topic_search_div").show();
     });
 
     $(".btn-cat-topic-res-cls",cat_panel).on("click",function(){
-        console.log("cat topic res close");
-        $("#cat_topic_results_div").hide();
+        $("#cat_topic_search_div").hide();
     });
 
-    api.topicList( null, null, null, function( ok, data ){
+    function searchTopics(){
+        var phrase = $("#cat_topic_search_phrase",cat_panel).val().trim();
+        if ( phrase ){
+            api.topicSearch( phrase, function( ok, data ){
+                console.log("topicSearch handler")
+                if ( ok ){
+                    setSearchTopics(data);
+                }else{
+                    setSearchTopics([]);
+                    dlgAlert("Topic Search Error",data);
+                }
+            });
+        }else{
+            setSearchTopics([]);
+        }
+    }
+
+    $(".btn-cat-topic-search",cat_panel).on("click",function(){
+        searchTopics();
+    });
+
+    $("#cat_topic_search_phrase").on('keypress', function (e) {
+        if (e.keyCode == 13){
+            searchTopics();
+        }
+    });
+    
+    api.topicListTopics( null, null, null, function( ok, data ){
         if ( ok ){
             setTopics( data );
         }
     });
+
+    $("#cat_topics_div",cat_panel).on("click", ".cat-topic", onTopicClick );
+    $("#cat_topic_result_div",cat_panel).on("click", ".cat-topic", onSearchTopicClick );
 
     var search_sel_mode = false;
 
