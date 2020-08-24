@@ -284,7 +284,7 @@ svg text
 
 .cat-content
 {
-    padding:0.25em 0.5em;
+    padding:0.25em 0.25em;
     border-top:none!important;
 }
 
@@ -301,7 +301,7 @@ svg text
 
 div.cat-coll-container
 {
-    padding:0.5em;
+    padding:0;
 }
 
 div.cat-coll-container > hr
@@ -313,16 +313,63 @@ div.cat-coll-container > hr
 
 .cat-coll
 {
-    padding:0.25em;
-    font-size:110%;
+    padding:0;
 }
 
-.cat-coll:hover
+div.cat-coll-title-div
+{
+    padding:0.25em;
+}
+
+div.cat-coll-title
+{
+    font-size:110%;
+    flex:1 1 auto;
+    user-select: none;
+}
+
+div.cat-coll-title-div .cat-coll-btn-div
+{
+    visibility:hidden;
+}
+
+div.cat-coll-title-div:hover
 {
     background:#002000;
 }
 
+div.cat-coll-title-div:hover .cat-coll-btn-div
+{
+    visibility:visible;
+}
+
+.cat-coll-btn-div
+{
+    flex:none;
+}
+
 .cat-coll-empty
+{
+    padding:0.25em;
+    background:red;
+}
+
+.cat-data-div
+{
+    padding:0.25em 0.5em;
+}
+
+.cat-data
+{
+    padding:0.25em;
+}
+
+.cat-data:hover
+{
+    background:#002000;
+}
+
+.cat-data-empty
 {
     padding:0.25em;
     background:red;

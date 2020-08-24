@@ -288,6 +288,10 @@ export function collRead_url( a_id, a_offset, a_count ) {
     return "/api/col/read?id=" + encodeURIComponent(a_id)  + (a_offset!=undefined?"&offset="+a_offset:"") + (a_count!=undefined?"&count="+a_count:"");
 }
 
+export function collRead( a_id, a_offset, a_count, a_cb ) {
+    _asyncGet( collRead_url( a_id, a_offset, a_count ), null, a_cb);
+}
+
 export function collListPublished_url( a_owner, a_offset, a_count ){
     return "/api/col/published/list?subject=" + encodeURIComponent( a_owner ) + "&offset=" + a_offset + "&count=" + a_count;
 }

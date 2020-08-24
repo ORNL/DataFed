@@ -171,7 +171,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         cur_topic_div = $("#cat_cur_topic",cat_panel),
         cur_topic = [],
         back_btn = $(".btn-cat-back",cat_panel),
-        top_res_div = $("#cat_topic_result_div",cat_panel);
+        top_res_div = $("#cat_topic_result_div",cat_panel),
+        cat_coll_div = $("#cat_coll_div",cat_panel),
+        topics_panel = $(".topics-div",cat_panel),
+        topics_div = $("#cat_topics_div",cat_panel);
+
 
     $(".btn",cat_panel).button();
 
@@ -180,8 +184,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         var topic = $(this)[0].innerHTML,
             topic_id = $(this)[0].id;
 
-        //console.log("cat topic",topic);
-        
         api.topicListTopics( topic_id, null, null, function( ok, data ){
             if ( ok ){
                 cur_topic.push({ name: topic, id: topic_id });
@@ -206,7 +208,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     }
 
     function onSearchTopicClick( ev ){
-        console.log("onSearchTopicClick");
         var topic = $(this)[0].innerHTML,
             topic_id = $(this)[0].id;
 
@@ -220,32 +221,100 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 setTopics( data );
             }
         });
+
+        api.topicListColl( topic_id, 0, 100, function( ok, data ){
+            if ( ok ){
+                setCollections( data );
+            }
+        });
+    }
+
+    function onCollectionActivate( ev ){
+        var el = $(this), coll = el[0];
+        //console.log("this",$(this));
+        api.collView( coll.id, function( ok, data ){
+            if ( ok ){
+                panel_info.showSelectedInfo( coll.id );
+                $(".cat-coll-title-div",cat_coll_div).removeClass("ui-state-active");
+                $(".cat-coll-title-div",el).addClass("ui-state-active");
+            }else{
+                dialogs.dlgAlert("Error Reading Collection",data);
+            }
+        });
+
+        ev.stopPropagation()
+    }
+
+
+    function onDataActivate( ev ){
+        var el = $(this), item = el[0], func;
+        //console.log("this",$(this));
+        if ( item.id.startsWith( "c/" ))
+            func = api.collView;
+        else
+            func = api.dataView;
+
+        func( item.id, function( ok, data ){
+            if ( ok ){
+                panel_info.showSelectedInfo( item.id );
+                $(".cat-data",cat_coll_div).removeClass("ui-state-active");
+                el.addClass("ui-state-active");
+            }else{
+                dialogs.dlgAlert("Error Reading Item",data);
+            }
+        });
+
+        ev.stopPropagation()
+    }
+
+    function onCollectionOpenClose( ev ){
+        var el = $(this), coll=el.closest(".cat-coll");
+
+        $(".cat-data-div", cat_coll_div ).remove();
+        topics_panel.hide();
+
+        coll.append("<div class='cat-data-div'>(loading...)</div>");
+        var cont = $( ".cat-data-div", coll );
+
+        //cont.html( "(loading...)" );
+
+        api.collRead( coll[0].id, 0, 100, function( ok, data ){
+            if ( ok ){
+                setData( data, cont );
+            }else{
+                dialogs.dlgAlert("Error Reading Collection",data);
+            }
+        })
     }
 
     function setTopics( data ){
-        console.log("setTopics");
-        var html = "", topic;
-        console.log("topics",data);
-        for ( var i in data.item ){
-            topic = data.item[i];
-            html += "<div class='cat-topic' id='" + topic.id + "'>" + topic.title.charAt(0).toUpperCase() + topic.title.substr(1) + "</div>";
+        var html = "";
+        if ( data.item && data.item.length ){
+            var topic;
+            for ( var i in data.item ){
+                topic = data.item[i];
+                html += "<div class='cat-topic' id='" + topic.id + "'>" + topic.title.charAt(0).toUpperCase() + topic.title.substr(1) + "</div>";
+            }
+        }else{
+            html = "(none)";
         }
 
-        $("#cat_topics_div",cat_panel).html( html );
-        //$(".cat-topic",cat_panel).on("click", onTopicClick );
+        topics_div.html( html );
     }
 
     function setSearchTopics( data ){
-        console.log("setSearchTopics");
-        var html = "", topic;
-        console.log("topics",data);
-        for ( var i in data.item ){
-            topic = data.item[i];
-            html += "<div class='cat-topic' id='" + topic.id + "'>" + topic.title + "</div>";
+        var html = "";
+        if ( data.item && data.item.length ){
+            var topic;
+            for ( var i in data.item ){
+                topic = data.item[i];
+                html += "<div class='cat-topic' id='" + topic.id + "'>" + topic.title + "</div>";
+            }
+        }else{
+            html = "(no matches)";
         }
 
         top_res_div.html( html );
-        //$(".cat-topic",top_res_div).on("click", onSearchTopicClick );
     }
 
     function setCollections( data ){
@@ -257,18 +326,47 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 if ( html )
                     html += "<hr>";
                 item = data.item[i];
-                html += "<div class='cat-coll' id='" + item.id + "'>" + item.title + "</div>";
+                html +=
+                    "<div class='cat-coll' id='" + item.id + "'>\
+                        <div class='row-flex cat-coll-title-div'>\
+                            <div class='cat-coll-title'>" + item.title + "</div>\
+                            <div class='cat-coll-btn-div'>\
+                                <button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon ui-icon-fullscreen'>x</span></button>\
+                            </div>\
+                        </div>\
+                    </div>";
             }
         }else{
             html = "<div class='cat-coll-empty'>No data collections for this topic.</div>"
         }
 
-        $("#cat_coll_div",cat_panel).html( html );
+        cat_coll_div.html( html );
+        $(".btn",cat_coll_div).button();
+
         //$(".cat-topic",cat_panel).on("click", onTopicClick );
     }
 
+    function setData( a_data, a_container ){
+        console.log("setData",a_data);
+        var html = "", item;
+        if ( a_data.item && a_data.item.length ){
+            //console.log("data",data);
+            for ( var i in a_data.item ){
+                item = a_data.item[i];
+                html += "<div class='cat-data' id='" + item.id + "'>" + item.title + "</div>";
+            }
+        }else{
+            html = "<div class='cat-data-empty'>No data data in this collection.</div>"
+        }
+
+        a_container.html( html );
+    }
+
     $(".btn-cat-home",cat_panel).on("click",function(){
-        console.log("cat home");
+        topics_panel.show();
+
+        cat_coll_div.html( "(loading...)" );
+        top_res_div.html( "(loading...)" );
 
         api.topicListTopics( null, null, null, function( ok, data ){
             if ( ok ){
@@ -278,12 +376,23 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 back_btn.button("option","disabled",true);
             }
         });
+
+        api.topicListColl( "t/root", 0, 100, function( ok, data ){
+            if ( ok ){
+                setCollections( data );
+            }
+        });
     });
 
     $(".btn-cat-back",cat_panel).on("click",function(){
-        console.log("cat back");
+        topics_panel.show();
 
-        api.topicListTopics( cur_topic.length>1?cur_topic[cur_topic.length-2].id:null, null, null, function( ok, data ){
+        cat_coll_div.html( "(loading...)" );
+        top_res_div.html( "(loading...)" );
+
+        var top_id = cur_topic.length>1?cur_topic[cur_topic.length-2].id:"t/root";
+
+        api.topicListTopics( top_id, null, null, function( ok, data ){
             if ( ok ){
                 setTopics( data );
                 if ( cur_topic.length > 1 ){
@@ -303,19 +412,24 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 }
             }
         });
-    });
 
-    $(".btn-cat-search",cat_panel).on("click",function(){
-        $("#cat_topic_search_div").show();
+        api.topicListColl( top_id, 0, 100, function( ok, data ){
+            if ( ok ){
+                setCollections( data );
+            }
+        });
     });
 
     $(".btn-cat-topic-res-cls",cat_panel).on("click",function(){
-        $("#cat_topic_search_div").hide();
+        $("#cat_topic_result_div").hide();
     });
 
     function searchTopics(){
         var phrase = $("#cat_topic_search_phrase",cat_panel).val().trim();
         if ( phrase ){
+            topics_panel.show();
+            top_res_div.html( "(loading...)" ).show();
+
             api.topicSearch( phrase, function( ok, data ){
                 console.log("topicSearch handler")
                 if ( ok ){
@@ -339,15 +453,28 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             searchTopics();
         }
     });
-    
+
+    cat_coll_div.html( "(loading...)" );
+    top_res_div.html( "(loading...)" );
+
     api.topicListTopics( null, null, null, function( ok, data ){
         if ( ok ){
             setTopics( data );
         }
     });
 
-    $("#cat_topics_div",cat_panel).on("click", ".cat-topic", onTopicClick );
+    api.topicListColl( "t/root", 0, 100, function( ok, data ){
+        if ( ok ){
+            setCollections( data );
+        }
+    });
+
+    topics_div.on("click", ".cat-topic", onTopicClick );
     $("#cat_topic_result_div",cat_panel).on("click", ".cat-topic", onSearchTopicClick );
+    cat_coll_div.on("click", ".cat-coll", onCollectionActivate );
+    cat_coll_div.on("click", ".btn-cat-coll-open", onCollectionOpenClose );
+    cat_coll_div.on("dblclick", ".cat-coll", onCollectionOpenClose );
+    cat_coll_div.on("click", ".cat-data", onDataActivate );
 
     var search_sel_mode = false;
 
