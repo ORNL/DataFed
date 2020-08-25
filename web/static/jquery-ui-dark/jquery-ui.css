@@ -56,7 +56,7 @@ body
 
 .content2
 {
-	background: #222!important;
+	background: #202020!important;
 	border: 1px solid #555555;
 }
 
@@ -434,17 +434,17 @@ mark
 {
 	position:relative;
 	z-index:10;
-	box-shadow: .2em .4em 5px #222;
+	box-shadow: .2em .4em 5px #202020;
 }
 
 ::-webkit-scrollbar-track
 {
-    background: #222
+    background: #202020
 }
 
 ::-webkit-scrollbar-corner
 {
-    background: #222
+    background: #202020
 }
 
 ::-webkit-scrollbar-thumb
@@ -460,7 +460,7 @@ mark
 
 .scroller
 {
-    scrollbar-color: #444 #222; /* thumb and track color */
+    scrollbar-color: #404040 #202020; /* thumb and track color */
     scrollbar-width: thin;
 }
 

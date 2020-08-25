@@ -284,7 +284,7 @@ svg text
 
 .cat-content
 {
-    padding:0.25em 0.25em;
+    padding:0 0.25em;
     border-top:none!important;
 }
 
@@ -314,11 +314,15 @@ div.cat-coll-container > hr
 .cat-coll
 {
     padding:0;
+    margin: 0.25em 0 0 0;
 }
 
 div.cat-coll-title-div
 {
     padding:0.25em;
+    /*height:2.2em;*/
+    border:1px solid transparent;
+    background:#202020;
 }
 
 div.cat-coll-title
@@ -330,7 +334,7 @@ div.cat-coll-title
 
 div.cat-coll-title-div .cat-coll-btn-div
 {
-    visibility:hidden;
+    display:none;
 }
 
 div.cat-coll-title-div:hover
@@ -340,7 +344,7 @@ div.cat-coll-title-div:hover
 
 div.cat-coll-title-div:hover .cat-coll-btn-div
 {
-    visibility:visible;
+    display:block;
 }
 
 .cat-coll-btn-div
@@ -351,28 +355,54 @@ div.cat-coll-title-div:hover .cat-coll-btn-div
 .cat-coll-empty
 {
     padding:0.25em;
-    background:red;
 }
 
-.cat-data-div
+.cat-item-path
+{
+    background:#202020;
+}
+
+.cat-item-div
+{
+    padding:0 0 0 1em;
+}
+
+.cat-coll-sub-items-div
+{
+    padding:0 0 0 1em;
+}
+
+.cat-item
+{
+    background:#000;
+}
+
+.cat-item-title
 {
     padding:0.25em 0.5em;
+    border:1px solid transparent;
+    height:2.2em;
+    user-select: none;
 }
 
-.cat-data
-{
-    padding:0.25em;
-}
-
-.cat-data:hover
+.cat-item-title:hover
 {
     background:#002000;
+}
+
+div.cat-item-title .btn-cat-folder-open
+{
+    display:none;
+}
+
+div.cat-item-title:hover .btn-cat-folder-open
+{
+    display:block;
 }
 
 .cat-data-empty
 {
     padding:0.25em;
-    background:red;
 }
 
 .sel-info-hdr
