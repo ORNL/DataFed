@@ -83,7 +83,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, ListingReply, topicListTopics );
-        SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, ListingReply, topicListCollections );
+        SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
         SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, ListingReply, topicSearch );
         SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
         SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );

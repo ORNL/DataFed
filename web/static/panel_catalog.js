@@ -176,6 +176,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         topics_panel = $(".topics-div",cat_panel),
         topics_div = $("#cat_topics_div",cat_panel);
 
+    const icon_open = "ui-icon-plus",
+        icon_close = "ui-icon-close";
 
     $(".btn",cat_panel).button();
 
@@ -281,17 +283,17 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             coll.siblings().show();
             topics_panel.show();
             cat_item_div.remove();
-            $(".btn-cat-coll-open span", coll_title_div ).removeClass( "ui-icon-arrowthick-1-w" ).addClass( "ui-icon-arrowthick-1-e" );
+            $(".btn-cat-coll-open span", coll_title_div ).removeClass( icon_close ).addClass( icon_open );
         }else{
             coll.siblings().hide();
             topics_panel.hide();
             $(".cat-item-div", cat_coll_div ).remove();
             coll_title_div.removeClass("ui-state-active");
-            $(".btn-cat-coll-open span", coll_title_div ).removeClass( "ui-icon-arrowthick-1-e" ).addClass( "ui-icon-arrowthick-1-w" );
+            $(".btn-cat-coll-open span", coll_title_div ).removeClass( icon_open ).addClass( icon_close );
 
-            coll.append("<div class='cat-item-div'>(loading...)</div>");
+            coll.append("<div class='cat-item-div' style='padding-left:0'>(loading...)</div>");
             cat_item_div  = $( ".cat-item-div", coll );
-            cat_item_div.html( "(loading...)" );
+            //cat_item_div.html( "(loading...)" );
 
             api.collRead( coll[0].id, 0, 100, function( ok, data ){
                 if ( ok ){
@@ -314,7 +316,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         if ( cat_item_div.length ){
             cat_item_div.remove();
             coll.siblings().show();
+            $(".btn-cat-folder-open span", coll ).removeClass( icon_close ).addClass( icon_open );
         }else{
+            $(".btn-cat-folder-open span", coll ).removeClass( icon_open ).addClass( icon_close );
+
             api.collRead( coll[0].id, 0, 100, function( ok, data ){
                 if ( ok ){
                     coll.siblings().hide();
@@ -341,7 +346,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 html += "<div class='cat-topic' id='" + topic.id + "'>" + topic.title.charAt(0).toUpperCase() + topic.title.substr(1) + "</div>";
             }
         }else{
-            html = "(none)";
+            html = "<div class='cat-topic-empty'>(no topics)</div>";
         }
 
         topics_div.html( html );
@@ -377,10 +382,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                             <div class='row-flex'>\
                                 <div class='cat-coll-title'>" + item.title + "</div>\
                                 <div class='cat-coll-btn-div'>\
-                                    <button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon ui-icon-arrowthick-1-e'></span></button>\
+                                    <button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button>\
                                 </div>\
                             </div>\
-                            <div>Some useful info about this collection...<br>more info</div>\
+                            <div class='cat-coll-info-div'>Some useful info about this collection...<br>more info</div>\
                         </div>\
                     </div>";
             }
@@ -418,7 +423,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                         <div class='cat-item-title cat-folder row-flex'>\
                             <div style='flex:none'><span style='font-size:120%' class='ui-icon ui-icon-"+util.getKeyIcon(item.id)+"'></span></div>\
                             <div class='' style='flex:1 1 auto'>&nbsp;" + item.title + "</div>\
-                            <div style='flex:none'><button class='btn btn-icon btn-cat-folder-open'><span class='ui-icon ui-icon-arrowthick-1-e'></span></button></div>\
+                            <div style='flex:none'><button class='btn btn-icon btn-cat-folder-open'><span class='ui-icon "+icon_open+"'></span></button></div>\
                         </div>\
                     </div>";
                 }

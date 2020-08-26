@@ -135,7 +135,7 @@ public:
     void repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply );
 
     void topicListTopics( const Anon::TopicListTopicsRequest & a_request, Anon::ListingReply & a_reply );
-    void topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::ListingReply & a_reply );
+    void topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply );
     void topicSearch( const Anon::TopicSearchRequest & a_request, Anon::ListingReply & a_reply );
     //void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
     //void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
@@ -194,6 +194,8 @@ private:
     void setTaskData( TaskData * a_task, const libjson::Value & a_task_json );
     void setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value & a_result );
     void setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value & a_result );
+    void setTopicListCollectionsReply( Anon::TopicListCollectionsReply & a_reply, const libjson::Value & result );
+    void setCollInfoData( CollInfoData * a_item, const libjson::Value::Object & a_obj );
 
     CURL *      m_curl;
     char *      m_client;

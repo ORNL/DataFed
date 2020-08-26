@@ -183,7 +183,6 @@ message TopicListTopicsRequest
     optional uint32             count       = 3;
 }
 
-// Returns ListingReply
 message TopicListCollectionsRequest
 {
     optional string             topic_id    = 1;
@@ -191,6 +190,14 @@ message TopicListCollectionsRequest
     optional bool               sort_rev    = 3;
     optional uint32             offset      = 4;
     optional uint32             count       = 5;
+}
+
+message TopicListCollectionsReply
+{
+    repeated CollInfoData       coll        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
 }
 
 // Returns ListingReply

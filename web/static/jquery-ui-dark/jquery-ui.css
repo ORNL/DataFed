@@ -1437,7 +1437,8 @@ a.ui-button:active,
 .ui-button:active,
 .ui-button.ui-state-active:hover {
 	border: 1px solid #26f748;
-	background: #0e7e0c url("images/ui-bg_highlight-hard_20_0e7e0c_1x100.png") 50% 50% repeat-x;
+	background: #0e7e0c;
+	/*background: #0e7e0c url("images/ui-bg_highlight-hard_20_0e7e0c_1x100.png") 50% 50% repeat-x;*/
 	font-weight: normal;
 	color: #ffffff;
 }

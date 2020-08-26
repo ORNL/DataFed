@@ -2472,7 +2472,7 @@ DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, An
 }
 
 void
-DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::ListingReply  & a_reply )
+DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2485,7 +2485,7 @@ DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_r
 
     dbGet( "topic/list/coll", params, result );
 
-    setListingDataReply( a_reply, result );
+    setTopicListCollectionsReply( a_reply, result );
 }
 
 void
@@ -2498,26 +2498,60 @@ DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::List
     setListingDataReply( a_reply, result );
 }
 
-/*
-void
-DatabaseAPI::topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply  & a_reply )
-{
-    (void) a_reply;
-    Value result;
 
-    dbGet( "topic/link", {{ "topic", a_request.topic() },{ "id", a_request.id() }}, result );
+void
+DatabaseAPI::setTopicListCollectionsReply( Anon::TopicListCollectionsReply & a_reply, const libjson::Value & a_result )
+{
+    Value::ObjectConstIter   j;
+
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
+    {
+        const Value::Object & obj = i->asObject();
+
+        if ( obj.has( "paging" ))
+        {
+            const Value::Object & obj2 = obj.asObject();
+
+            a_reply.set_offset( obj2.getNumber( "off" ));
+            a_reply.set_count( obj2.getNumber( "cnt" ));
+            a_reply.set_total( obj2.getNumber( "tot" ));
+        }
+        else
+        {
+            setCollInfoData( a_reply.add_coll(), obj );
+        }
+    }
+
+    TRANSLATE_END( a_result )
 }
 
 
 void
-DatabaseAPI::topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::setCollInfoData( CollInfoData * a_item, const Value::Object & a_obj )
 {
-    (void) a_reply;
-    Value result;
+    if ( a_obj.has( "id" ))
+        a_item->set_id( a_obj.asString() );
+    else if ( a_obj.has( "_id" ))
+        a_item->set_id( a_obj.asString() );
 
-    dbGet( "topic/unlink", {{ "topic", a_request.topic() },{ "id", a_request.id() }}, result );
+    a_item->set_title( a_obj.getString( "title" ));
+    a_item->set_owner_id( a_obj.getString( "owner_id" ));
+    a_item->set_owner_name( a_obj.getString( "owner_name" ));
+
+    if ( a_obj.has( "alias" ) && !a_obj.value().isNull( ))
+        a_item->set_alias( a_obj.asString() );
+
+    if ( a_obj.has( "notes" ))
+        a_item->set_notes( a_obj.asNumber() );
+
+    if ( a_obj.has( "brief" ) && !a_obj.value().isNull( ))
+        a_item->set_brief( a_obj.asString() );
 }
-*/
+
 
 void
 DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Anon::AnnotationDataReply & a_reply )
