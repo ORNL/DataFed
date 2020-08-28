@@ -54,7 +54,7 @@ router.get('/list/topics', function (req, res) {
 router.get('/list/coll', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
-        var qry = "for v in 1..1 inbound @id top filter is_same_collection('c',v) sort v.title",
+        var qry = "for v in 1..1 inbound @id top filter is_same_collection('c',v) let name = (for i in u filter i._id == v.owner return concat(i.name_last,', ', i.name_first)) sort v.title",
             result, tot, item, tot;
 
         if ( req.queryParams.offset == undefined )
@@ -63,7 +63,7 @@ router.get('/list/coll', function (req, res) {
         if ( req.queryParams.count == undefined || req.queryParams.count > 100 )
             req.queryParams.count = 100;
 
-        qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias}";
+        qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,brief:v['desc'],owner_id:v.owner,owner_name:name,alias:v.alias}";
         console.log("qry:",qry,req.queryParams.id);
         result = g_db._query( qry, { id: req.queryParams.id },{},{fullCount:true});
         tot = result.getExtra().stats.fullCount;
@@ -71,7 +71,14 @@ router.get('/list/coll', function (req, res) {
 
         for ( var i in result ){
             item = result[i];
-            console.log("proc result:",item);
+            if ( item.owner_name && item.owner_name.length )
+                item.owner_name = item.owner_name[0];
+            else
+                item.owner_name = null;
+
+            if ( item.brief && item.brief.length > 120 ){
+                item.brief = item.brief.slice(0,120) + " ...";
+            }
             item.notes = g_lib.annotationGetMask( client, item.id );
         }
 
