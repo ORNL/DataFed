@@ -1,468 +1,10 @@
-/*! jQuery UI - v1.12.1 - 2018-08-24
+@import 'datafed.css';
+
+/*! jQuery UI - v1.12.1 - 2016-09-14
 * http://jqueryui.com
-* Includes: draggable.css, core.css, resizable.css, selectable.css, sortable.css, accordion.css, autocomplete.css, menu.css, button.css, controlgroup.css, checkboxradio.css, datepicker.css, dialog.css, progressbar.css, selectmenu.css, slider.css, spinner.css, tabs.css, tooltip.css, theme.css
-* To view and modify this theme, visit http://jqueryui.com/themeroller/?scope=&folderName=custom-theme&bgImgOpacityError=40&bgImgOpacityHighlight=60&bgImgOpacityActive=20&bgImgOpacityHover=33&bgImgOpacityDefault=35&bgImgOpacityContent=0&bgImgOpacityHeader=44&cornerRadiusShadow=8px&offsetLeftShadow=8px&offsetTopShadow=8px&thicknessShadow=12px&opacityShadow=50&bgImgOpacityShadow=30&bgTextureShadow=flat&bgColorShadow=%23000&opacityOverlay=80&bgImgOpacityOverlay=50&bgTextureOverlay=flat&bgColorOverlay=%235c5c5c&iconColorError=%23a83300&fcError=%23111111&borderColorError=%23ffb73d&bgTextureError=glass&bgColorError=%23ffc73d&iconColorHighlight=%2312f50a&fcHighlight=%2312f50a&borderColorHighlight=%23cccccc&bgTextureHighlight=flat&bgColorHighlight=%23121312&iconColorActive=%23222222&fcActive=%23ffffff&borderColorActive=%2326f748&bgTextureActive=highlight_hard&bgColorActive=%230e7e0c&iconColorHover=%23ffffff&fcHover=%23ffffff&borderColorHover=%2316d50b&bgTextureHover=highlight_soft&bgColorHover=%23074700&iconColorDefault=%23cccccc&fcDefault=%23eeeeee&borderColorDefault=%23444444&bgTextureDefault=highlight_soft&bgColorDefault=%23222222&iconColorContent=%23cccccc&fcContent=%23ffffff&borderColorContent=%23555555&bgTextureContent=flat&bgColorContent=%23000000&iconColorHeader=%23ffffff&fcHeader=%23ffffff&borderColorHeader=%23333333&bgTextureHeader=highlight_soft&bgColorHeader=%23444444&cornerRadius=6px&fwDefault=normal&fsDefault=1em&ffDefault=Verdana%2CArial%2Csans-serif
+* Includes: core.css, accordion.css, autocomplete.css, menu.css, button.css, controlgroup.css, checkboxradio.css, datepicker.css, dialog.css, draggable.css, resizable.css, progressbar.css, selectable.css, selectmenu.css, slider.css, sortable.css, spinner.css, tabs.css, tooltip.css, theme.css
+* To view and modify this theme, visit http://jqueryui.com/themeroller/?ffDefault=Verdana%2CArial%2Csans-serif&fwDefault=normal&fsDefault=1.1em&cornerRadius=6px&bgColorHeader=444444&bgTextureHeader=highlight_soft&bgImgOpacityHeader=44&borderColorHeader=333333&fcHeader=ffffff&iconColorHeader=ffffff&bgColorContent=000000&bgTextureContent=loop&bgImgOpacityContent=25&borderColorContent=555555&fcContent=ffffff&iconColorContent=cccccc&bgColorDefault=222222&bgTextureDefault=highlight_soft&bgImgOpacityDefault=35&borderColorDefault=444444&fcDefault=eeeeee&iconColorDefault=cccccc&bgColorHover=003147&bgTextureHover=highlight_soft&bgImgOpacityHover=33&borderColorHover=0b93d5&fcHover=ffffff&iconColorHover=ffffff&bgColorActive=0972a5&bgTextureActive=highlight_hard&bgImgOpacityActive=20&borderColorActive=26b3f7&fcActive=ffffff&iconColorActive=222222&bgColorHighlight=eeeeee&bgTextureHighlight=highlight_soft&bgImgOpacityHighlight=80&borderColorHighlight=cccccc&fcHighlight=2e7db2&iconColorHighlight=4b8e0b&bgColorError=ffc73d&bgTextureError=glass&bgImgOpacityError=40&borderColorError=ffb73d&fcError=111111&iconColorError=a83300&bgColorOverlay=5c5c5c&bgTextureOverlay=flat&bgImgOpacityOverlay=50&opacityOverlay=80&bgColorShadow=cccccc&bgTextureShadow=flat&bgImgOpacityShadow=30&opacityShadow=60&thicknessShadow=7px&offsetTopShadow=-7px&offsetLeftShadow=-7px&cornerRadiusShadow=8px
 * Copyright jQuery Foundation and other contributors; Licensed MIT */
-
-.main-header
-{
-	background: #606060;
-	color: #ffffff;
-}
-
-.fancytree-container
-{
-	background:transparent!important;
-	border:none!important;
-}
-
-.fancytree-title
-{
-	color:#fff!important;
-}
-
-.my-fancytree-hover
-{
-    border: 1px dashed rgb(78, 148, 78)!important;
-}
-
-.my-fancytree-active
-{
-    border: 1px solid rgb(83, 179, 83)!important;
-}
-
-.fancytree-selected
-{
-    background: #104010!important;
-}
-
-span.fancytree-node.fancytree-folder > span.fancytree-expander:after {
-    color: #808080;
-}
-
-span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expander:after {
-    color: #808080;
-}
-
-body
-{
-	color:#ffffff;
-}
-
-.content
-{
-    background: #404040!important;
-}
-
-.content2
-{
-	background: #202020!important;
-	border: 1px solid #555555;
-}
-
-.ui-state-disabled
-{
-	opacity:.45!important;
-}
-
-input.ui-state-disabled
-{
-	box-sizing: border-box;
-	background-color: #353535;
-	border: 1px solid #909090;
-	color: #e0e0e0;
-}
-
-textarea.ui-state-disabled
-{
-	box-sizing: border-box;
-	background-color: #353535;
-	border: 1px solid #909090;
-	color: #e0e0e0
-}
-
-.task-table th
-{
-    background-color:#404040;
-}
-
-.task-succeeded
-{
-	color:#0c0;
-}
-
-.task-failed
-{
-	color:#F00;
-}
-
-/* Catalog Styles */
-
-.cat-topic:hover
-{
-    background:#104010;
-}
-
-/* Dependency Graph Styles */
-
-.links{
-	stroke-width: 3px;
-}
-
-.links .derivation {
-	stroke: #06C;
-}
-
-.links .component {
-	stroke: #aaa;
-}
-
-.links .new-version {
-	stroke: #E00;
-}
-
-.arrow-path
-{
-	stroke: none;
-}
-
-.arrow-path.derivation {
-	fill: #06C;
-}
-
-.arrow-path.component {
-	fill: #aaa;
-}
-
-.arrow-path.new-version {
-	fill: #E00;
-}
-
-.nodes {
-	stroke-width:2.5px;
-}
-
-.nodes .main {
-	fill: #090;
-}
-
-.nodes .prov {
-	fill: #06C;
-}
-
-.nodes .other {
-	fill: #555;
-}
-
-.nodes .comp {
-	stroke: #fff;
-}
-
-.nodes .part {
-	stroke: #777;
-}
-
-.node .highlight{
-	stroke:#0f0!important;
-	stroke-width:2px!important;
-	fill:none!important;
-}
-
-.node .hidden{
-	display:none!important;
-}
-
-.node .data{
-	stroke: #ccc;
-	stroke-width: 2;
-}
-
-.node text{
-	font-size: 14px;
-	fill: #fff;
-}
-
-.node text.locked{
-	font-size: 14px;
-	fill: #FF6040;
-}
-
-.note{
-	color: #12f50a!important;
-}
-
-.inh-err-title{
-	color: #AF0000!important;
-}
-
-.inh-warn-title{
-	color: #cf7f00!important;
-}
-
-.ui-icon-notice
-{
-    color: #0080FF
-}
-
-.ui-icon-person
-{
-    color: #4070FF
-}
-
-.ui-icon-persons
-{
-    color: #4070FF
-}
-
-.ui-icon-folder
-{
-    color: #dFbF40
-}
-
-.ui-icon-copy
-{
-    color: #008F00
-}
-
-.ui-icon-box
-{
-    color: #8040FF
-}
-
-.ui-icon-view-icons
-{
-    color: #8040FF
-}
-
-.ui-icon-view-icons-b
-{
-    color: #8040FF
-}
-
-.ui-icon-file-text
-{
-    color: #90ff90
-}
-
-.ui-icon-file
-{
-    /*color: #008F00*/
-    color: #ffffff
-}
-
-.ui-icon-flag
-{
-    color: #FF0000
-}
-
-.ui-icon-alert
-{
-    color: #ef9f00
-}
-
-.ui-icon-circle-info
-{
-    color: #40df40
-}
-
-.ui-icon-circle-help
-{
-    color: #40b0FF
-}
-
-.ui-icon-heart
-{
-    color: #ff0000
-}
-
-.ui-icon-circle-plus
-{
-    color: #009090
-}
-
-.ui-icon-plus
-{
-    color: #00FF00
-}
-
-.ui-icon-close
-{
-    color: #FF4020
-}
-
-.ui-icon-view-list
-{
-    color: #DFFF20
-}
-
-.ui-icon-zoom
-{
-    color: #FFFFFF
-}
-
-.ui-icon-linkext
-{
-    color: #ff8000
-}
-
-/*.ui-icon-minusthick*/
-
-.ui-icon-grip-solid-horizontal
-{
-    color: #ff8000
-}
-
-.ui-icon-structure
-{
-    color: #ff8000
-}
-
-.ui-icon-sign-in
-{
-    color: #00af00
-}
-
-.ui-icon-sign-out
-{
-    color: #ff4040
-}
-
-.ui-icon-databases
-{
-    color: #a0a0a0
-}
-
-.ui-icon-database
-{
-    color: #a0a0a0
-}
-
-.ui-icon-locked
-{
-    color: #FF6040
-}
-
-.ui-draggable-handle {
-	-ms-touch-action: none;
-	touch-action: none;
-}
-
-span.fancytree-node.fancytree-folder > span.fancytree-custom-icon:hover {
-	cursor: pointer;
-}
-
-span.fancytree-node.fancytree-folder > span.fancytree-icon:hover:after {
-	cursor: pointer;
-}
-
-span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
-    color: #dFbF40;
-}
-
-span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:after {
-    color: #dFbF40;
-}
-
-.data-tree-id
-{
-    color:#8090FF;
-}
-
-.data-tree-alias
-{
-    color:#40A040;
-}
-
-.data-tree-owner-other
-{
-    color:#F03030;
-}
-
-.data-tree-creator-other
-{
-    color:#E07010;
-}
-
-.data-tree-creator-self
-{
-    color:#0080FF;
-}
-
-.pick-hl
-{
-	background:#ffc73d!important;
-	color:#111111!important;
-}
-
-mark
-{
-	background:#ffc73d;
-	color:#111111;
-}
-
-.fancytree-ext-filter-dimm span.fancytree-node span.fancytree-title {
-	color: #aaa!important;
-	font-weight: lighter!important;
-}
-
-.fancytree-ext-filter-dimm tr.fancytree-submatch span.fancytree-title,
-.fancytree-ext-filter-dimm span.fancytree-node.fancytree-submatch span.fancytree-title {
-	color: #fff!important;
-	font-weight: bold!important;
-}
-
-.fancytree-ext-filter-hide tr.fancytree-submatch span.fancytree-title,
-.fancytree-ext-filter-hide span.fancytree-node.fancytree-submatch span.fancytree-title {
-	color: #aaa!important;
-	font-weight: lighter!important;
-}
-
-
-.fancytree-ext-filter-dimm tr.fancytree-match span.fancytree-title,
-.fancytree-ext-filter-dimm span.fancytree-node.fancytree-match span.fancytree-title {
-	color: #fff!important;
-	font-weight: bold!important;
-}
-
-.fancytree-ext-filter-hide tr.fancytree-match span.fancytree-title,
-.fancytree-ext-filter-hide span.fancytree-node.fancytree-match span.fancytree-title {
-	color: #fff!important;
-	font-weight: normal!important;
-}
-
-.shadowed
-{
-	position:relative;
-	z-index:10;
-	box-shadow: .2em .4em 5px #202020;
-}
-
-::-webkit-scrollbar-track
-{
-    background: #202020
-}
-
-::-webkit-scrollbar-corner
-{
-    background: #202020
-}
-
-::-webkit-scrollbar-thumb
-{
-	background: #444;
-	border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover
-{
-    background: #074700;
-}
-
-.scroller
-{
-    scrollbar-color: #404040 #202020; /* thumb and track color */
-    scrollbar-width: thin;
-}
 
 /* Layout helpers
 ----------------------------------*/
@@ -550,89 +92,6 @@ mark
 	width: 100%;
 	height: 100%;
 }
-.ui-resizable {
-	position: relative;
-}
-.ui-resizable-handle {
-	position: absolute;
-	font-size: 0.1px;
-	display: block;
-	-ms-touch-action: none;
-	touch-action: none;
-}
-.ui-resizable-disabled .ui-resizable-handle,
-.ui-resizable-autohide .ui-resizable-handle {
-	display: none;
-}
-.ui-resizable-n {
-	cursor: n-resize;
-	height: 7px;
-	width: 100%;
-	top: -5px;
-	left: 0;
-}
-.ui-resizable-s {
-	cursor: s-resize;
-	height: 7px;
-	width: 100%;
-	bottom: -5px;
-	left: 0;
-}
-.ui-resizable-e {
-	cursor: e-resize;
-	width: 7px;
-	right: -5px;
-	top: 0;
-	height: 100%;
-}
-.ui-resizable-w {
-	cursor: w-resize;
-	width: 7px;
-	left: -5px;
-	top: 0;
-	height: 100%;
-}
-.ui-resizable-se {
-	cursor: se-resize;
-	width: 12px;
-	height: 12px;
-	right: 1px;
-	bottom: 1px;
-}
-.ui-resizable-sw {
-	cursor: sw-resize;
-	width: 9px;
-	height: 9px;
-	left: -5px;
-	bottom: -5px;
-}
-.ui-resizable-nw {
-	cursor: nw-resize;
-	width: 9px;
-	height: 9px;
-	left: -5px;
-	top: -5px;
-}
-.ui-resizable-ne {
-	cursor: ne-resize;
-	width: 9px;
-	height: 9px;
-	right: -5px;
-	top: -5px;
-}
-.ui-selectable {
-	-ms-touch-action: none;
-	touch-action: none;
-}
-.ui-selectable-helper {
-	position: absolute;
-	z-index: 1000;
-	border: 1px dotted black;
-}
-.ui-sortable-handle {
-	-ms-touch-action: none;
-	touch-action: none;
-}
 .ui-accordion .ui-accordion-header {
 	display: block;
 	cursor: pointer;
@@ -707,7 +166,7 @@ mark
 	right: 0;
 }
 .ui-button {
-	padding: .25em .5em;
+	padding: .1em .5em 0.25em .5em;
 	display: inline-block;
 	position: relative;
 	line-height: normal;
@@ -834,13 +293,13 @@ button.ui-button::-moz-focus-inner {
 
 .ui-checkboxradio-label .ui-icon-background {
 	box-shadow: inset 1px 1px 1px #ccc;
-	border-radius: .12em;
+	/*border-radius: .12em;*/
 	border: none;
 }
 .ui-checkboxradio-radio-label .ui-icon-background {
 	width: 16px;
 	height: 16px;
-	border-radius: 1em;
+	/*border-radius: 1em;*/
 	overflow: visible;
 	border: none;
 }
@@ -1030,13 +489,15 @@ button.ui-button::-moz-focus-inner {
 	left: .5em;
 	top: .3em;
 }
+
 .ui-dialog {
 	position: absolute;
 	top: 0;
 	left: 0;
-	padding: .2em;
+	padding: 0;
 	outline: 0;
 }
+
 .ui-dialog .ui-dialog-titlebar {
 	padding: .4em 1em;
 	position: relative;
@@ -1121,6 +582,80 @@ button.ui-button::-moz-focus-inner {
 .ui-draggable .ui-dialog-titlebar {
 	cursor: move;
 }
+.ui-draggable-handle {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-resizable {
+	position: relative;
+}
+.ui-resizable-handle {
+	position: absolute;
+	font-size: 0.1px;
+	display: block;
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-resizable-disabled .ui-resizable-handle,
+.ui-resizable-autohide .ui-resizable-handle {
+	display: none;
+}
+.ui-resizable-n {
+	cursor: n-resize;
+	height: 7px;
+	width: 100%;
+	top: -5px;
+	left: 0;
+}
+.ui-resizable-s {
+	cursor: s-resize;
+	height: 7px;
+	width: 100%;
+	bottom: -5px;
+	left: 0;
+}
+.ui-resizable-e {
+	cursor: e-resize;
+	width: 7px;
+	right: -5px;
+	top: 0;
+	height: 100%;
+}
+.ui-resizable-w {
+	cursor: w-resize;
+	width: 7px;
+	left: -5px;
+	top: 0;
+	height: 100%;
+}
+.ui-resizable-se {
+	cursor: se-resize;
+	width: 12px;
+	height: 12px;
+	right: 1px;
+	bottom: 1px;
+}
+.ui-resizable-sw {
+	cursor: sw-resize;
+	width: 9px;
+	height: 9px;
+	left: -5px;
+	bottom: -5px;
+}
+.ui-resizable-nw {
+	cursor: nw-resize;
+	width: 9px;
+	height: 9px;
+	left: -5px;
+	top: -5px;
+}
+.ui-resizable-ne {
+	cursor: ne-resize;
+	width: 9px;
+	height: 9px;
+	right: -5px;
+	top: -5px;
+}
 .ui-progressbar {
 	height: 2em;
 	text-align: left;
@@ -1138,6 +673,15 @@ button.ui-button::-moz-focus-inner {
 }
 .ui-progressbar-indeterminate .ui-progressbar-value {
 	background-image: none;
+}
+.ui-selectable {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-selectable-helper {
+	position: absolute;
+	z-index: 100;
+	border: 1px dotted black;
 }
 .ui-selectmenu-menu {
 	padding: 0;
@@ -1244,6 +788,10 @@ button.ui-button::-moz-focus-inner {
 .ui-slider-vertical .ui-slider-range-max {
 	top: 0;
 }
+.ui-sortable-handle {
+	-ms-touch-action: none;
+	touch-action: none;
+}
 .ui-spinner {
 	position: relative;
 	display: inline-block;
@@ -1306,7 +854,7 @@ button.ui-button::-moz-focus-inner {
 }
 .ui-tabs .ui-tabs-nav .ui-tabs-anchor {
 	float: left;
-	padding: .25em .5em;
+	padding: .5em 1em;
 	text-decoration: none;
 }
 .ui-tabs .ui-tabs-nav li.ui-tabs-active {
@@ -1336,7 +884,6 @@ button.ui-button::-moz-focus-inner {
 body .ui-tooltip {
 	border-width: 2px;
 }
-
 /* Component containers
 ----------------------------------*/
 .ui-widget {
@@ -1354,21 +901,22 @@ body .ui-tooltip {
 	font-size: 1em;
 }
 .ui-widget.ui-widget-content {
-	border: 1px solid #444444;
+	border: 1px solid #000;
 }
 .ui-widget-content {
-	border: 1px solid #555555;
-	background: #000000;
-	color: #ffffff;
+	/*border: 1px solid #353535;*/
+	background: #24292e;
+	color: #ddd;
 }
 .ui-widget-content a {
 	color: #ffffff;
 }
 .ui-widget-header {
-	border: 1px solid #333333;
-	background: #444444 url("images/ui-bg_highlight-soft_44_444444_1x100.png") 50% 50% repeat-x;
-	color: #ffffff;
-	font-weight: bold;
+	/*border: none;*/
+	border-bottom: 1px solid #000;
+	background: rgb( 27, 29, 35);
+	color: #ddd;
+	/*font-weight: bold;*/
 }
 .ui-widget-header a {
 	color: #ffffff;
@@ -1385,8 +933,10 @@ body .ui-tooltip {
 works properly when clicked or hovered */
 html .ui-button.ui-state-disabled:hover,
 html .ui-button.ui-state-disabled:active {
-	border: 1px solid #444444;
-	background: #222222 url("images/ui-bg_highlight-soft_35_222222_1x100.png") 50% 50% repeat-x;
+	border: none;
+	/*border: 1px solid #000;
+	background: transparent;*/
+	background:#101213;
 	font-weight: normal;
 	color: #eeeeee;
 }
@@ -1408,8 +958,8 @@ a:visited.ui-button,
 .ui-widget-header .ui-state-focus,
 .ui-button:hover,
 .ui-button:focus {
-	border: 1px solid #16d50b;
-	background: #074700 url("images/ui-bg_highlight-soft_33_074700_1x100.png") 50% 50% repeat-x;
+	border: none;
+	background: #003147;
 	font-weight: normal;
 	color: #ffffff;
 }
@@ -1436,15 +986,15 @@ a.ui-button:focus {
 a.ui-button:active,
 .ui-button:active,
 .ui-button.ui-state-active:hover {
-	border: 1px solid #26f748;
-	background: #0e7e0c;
-	/*background: #0e7e0c url("images/ui-bg_highlight-hard_20_0e7e0c_1x100.png") 50% 50% repeat-x;*/
+	/*border: 1px solid #26b3f7;*/
+	/*background: #0972a5;*/
+	background: #085d7c;
 	font-weight: normal;
 	color: #ffffff;
 }
 .ui-icon-background,
 .ui-state-active .ui-icon-background {
-	border: #26f748;
+	border: #26b3f7;
 	background-color: #ffffff;
 }
 .ui-state-active a,
@@ -1460,23 +1010,23 @@ a.ui-button:active,
 .ui-widget-content .ui-state-highlight,
 .ui-widget-header .ui-state-highlight {
 	border: 1px solid #cccccc;
-	background: #121312;
-	color: #12f50a;
+	background: #eeeeee;
+	color: #2e7db2;
 }
 .ui-state-checked {
 	border: 1px solid #cccccc;
-	background: #121312;
+	background: #eeeeee;
 }
 .ui-state-highlight a,
 .ui-widget-content .ui-state-highlight a,
 .ui-widget-header .ui-state-highlight a {
-	color: #12f50a;
+	color: #2e7db2;
 }
 .ui-state-error,
 .ui-widget-content .ui-state-error,
 .ui-widget-header .ui-state-error {
 	border: 1px solid #ffb73d;
-	background: #ffc73d url("images/ui-bg_glass_40_ffc73d_1x400.png") 50% 50% repeat-x;
+	background: #ffc73d;
 	color: #111111;
 }
 .ui-state-error a,
@@ -1539,7 +1089,7 @@ a.ui-button:active,
 }
 .ui-state-highlight .ui-icon,
 .ui-button .ui-state-highlight.ui-icon {
-	background-image: url("images/ui-icons_12f50a_256x240.png");
+	background-image: url("images/ui-icons_4b8e0b_256x240.png");
 }
 .ui-state-error .ui-icon,
 .ui-state-error-text .ui-icon {
@@ -1731,30 +1281,52 @@ a.ui-button:active,
 /* Misc visuals
 ----------------------------------*/
 
+.ui-dialog.ui-corner-all
+{
+	border-radius: 0.5em;
+}
+
+.ui-dialog-titlebar.ui-corner-all
+{
+	border-top-right-radius: 0.5em;
+	border-top-left-radius: 0.5em;
+}
+
+.ui-dialog-buttonpane
+{
+	border-bottom-right-radius: 0.5em;
+	border-bottom-left-radius: 0.5em;
+}
+
+.ui-button.ui-corner-all
+{
+	border-radius: 0.25em;
+}
+
 /* Corner radius */
 .ui-corner-all,
 .ui-corner-top,
 .ui-corner-left,
 .ui-corner-tl {
-	border-top-left-radius: 4px;
+	border-top-left-radius: 0;
 }
 .ui-corner-all,
 .ui-corner-top,
 .ui-corner-right,
 .ui-corner-tr {
-	border-top-right-radius: 4px;
+	border-top-right-radius: 0;
 }
 .ui-corner-all,
 .ui-corner-bottom,
 .ui-corner-left,
 .ui-corner-bl {
-	border-bottom-left-radius: 4px;
+	border-bottom-left-radius: 0;
 }
 .ui-corner-all,
 .ui-corner-bottom,
 .ui-corner-right,
 .ui-corner-br {
-	border-bottom-right-radius: 4px;
+	border-bottom-right-radius: 0;
 }
 
 /* Overlays */
@@ -1764,6 +1336,6 @@ a.ui-button:active,
 	filter: Alpha(Opacity=80); /* support: IE8 */
 }
 .ui-widget-shadow {
-	-webkit-box-shadow: 8px 8px 12px #000;
-	box-shadow: 8px 8px 12px #000;
+	-webkit-box-shadow: -7px -7px 7px #cccccc;
+	box-shadow: -7px -7px 7px #cccccc;
 }

@@ -370,22 +370,30 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     function setCollections( data ){
         console.log("setCollections",data);
         var html = "", item;
-        if ( data.item && data.item.length ){
+        if ( data.coll && data.coll.length ){
             //console.log("data",data);
-            for ( var i in data.item ){
+            for ( var i in data.coll ){
                 //if ( html )
                 //    html += "<hr>";
-                item = data.item[i];
+                item = data.coll[i];
                 html +=
                     "<div class='cat-coll' id='" + item.id + "'>\
-                        <div class='cat-coll-title-div'>\
+                        <div class='cat-coll-title-div ui-button'>\
                             <div class='row-flex'>\
                                 <div class='cat-coll-title'>" + item.title + "</div>\
+                                <div class='cat-coll-notes'>" + (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") + "</div>\
                                 <div class='cat-coll-btn-div'>\
                                     <button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button>\
                                 </div>\
                             </div>\
-                            <div class='cat-coll-info-div'>Some useful info about this collection...<br>more info</div>\
+                            <div class='cat-coll-info-div'>\
+                                <div class='cat-coll-info-brief'>"+ item.brief + "</div>\
+                                <div><table class='cat-coll-info-table'><tr><td>" + (item.ownerId.startsWith("u/")
+                                    ?"Owner:</td><td>" + item.ownerName
+                                    :"Project:</td><td>"+ item.ownerId.substr(2)) + "</td></tr>\
+                                    <tr><td>Collection ID:</td><td>" + item.id + (item.alias?" ("+item.alias+")":"") + "</td></tr>" +
+                                "</table></div>\
+                            </div>\
                         </div>\
                     </div>";
             }
@@ -393,6 +401,9 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             html = "<div class='cat-coll-empty'>No data collections for this topic.<p>You may browse the catalog by selecting\
                 topics from available sub-topics (to the left), or use topic search (above) to locate specific topics.</p></div>"
         }
+
+        //item.id + " " + (item.alias?item.alias:"") + " " +
+        //(item.notes?"<tr><td>Annotations:</td><td>"+ util.generateNoteSpan(item) + "</td><tr>":"") +
 
         cat_coll_div.html( html );
         $(".btn",cat_coll_div).button();

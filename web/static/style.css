@@ -330,17 +330,16 @@ div.cat-coll-container > hr
 
 div.cat-coll-title-div
 {
-    padding:0.5em 1em 0.75em 1em;
-    /*height:2.2em;*/
-    border:1px solid transparent;
-    background:#202020;
+    padding:0.5em .25em 0.75em 1em;
+    /*border:1px solid transparent;
+    background:#202020;*/
 }
 
 div.cat-coll-title
 {
-    font-size:110%;
+    font-size:1.2em;
     flex:1 1 auto;
-    user-select: none;
+    /*user-select: none;*/
 }
 
 div.cat-coll-title-div .cat-coll-btn-div
@@ -349,15 +348,24 @@ div.cat-coll-title-div .cat-coll-btn-div
     visibility:hidden;
 }
 
+/*
 div.cat-coll-title-div:hover
 {
     background:#002000;
 }
+*/
 
 div.cat-coll-title-div:hover .cat-coll-btn-div
 {
     /*display:block;*/
     visibility:visible;
+}
+
+.cat-coll-notes
+{
+    font-size:1.2em!important;
+    flex:none;
+    white-space:nowrap;
 }
 
 .cat-coll-btn-div
@@ -368,6 +376,24 @@ div.cat-coll-title-div:hover .cat-coll-btn-div
 .cat-coll-info-div
 {
     user-select: none;
+}
+
+.cat-coll-info-brief
+{
+    padding:1em 1em 1em 0;
+    font-size:1rem;
+}
+
+.cat-coll-info-table
+{
+    width:100%;
+    font-size:.9rem;
+}
+
+.cat-coll-info-table tr td:nth-child(1)
+{
+    width:10em;
+    white-space:nowrap;
 }
 
 .cat-coll-empty

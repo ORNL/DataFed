@@ -208,12 +208,12 @@ var tree_opts1 = {
 
             if ( note.parentId ){
                 //entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";
-                entry.title = "<i class='ui-icon ui-icon-" + note_icon[nt] + "'></i> [inherited] ";
+                entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> [inherited] ";
                 entry.parentId = note.parentId;
                 entry.folder = true;
                 entry.lazy = true;
             }else{
-                entry.title = "<i class='ui-icon ui-icon-" + note_icon[nt] + "'></i> ";
+                entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> ";
             }
 
             entry.title += note.title;

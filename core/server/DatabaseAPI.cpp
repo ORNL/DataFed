@@ -2540,7 +2540,9 @@ DatabaseAPI::setCollInfoData( CollInfoData * a_item, const Value::Object & a_obj
 
     a_item->set_title( a_obj.getString( "title" ));
     a_item->set_owner_id( a_obj.getString( "owner_id" ));
-    a_item->set_owner_name( a_obj.getString( "owner_name" ));
+
+    if ( a_obj.has( "owner_name" ) && !a_obj.value().isNull( ))
+        a_item->set_owner_name( a_obj.asString());
 
     if ( a_obj.has( "alias" ) && !a_obj.value().isNull( ))
         a_item->set_alias( a_obj.asString() );

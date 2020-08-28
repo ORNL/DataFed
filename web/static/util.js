@@ -194,6 +194,53 @@ export function generateNoteSpan( item, codes ){
             if ( codes )
                 res += " &#xe6e9;";
             else
+                res += "<span class='ui-icon ui-icon-flag'></span>";
+        }else if ( item.notes & model.NOTE_MASK_LOC_WARN ){
+            if ( codes )
+                res += " &#xe65f;";
+            else
+                res += "<span class='ui-icon ui-icon-alert'></span>";
+        }else if ( item.notes & model.NOTE_MASK_LOC_INFO ){
+            if ( codes )
+                res += " &#xe665;";
+            else
+                res += "<span class='ui-icon ui-icon-circle-info'></span>";
+        }
+
+        // Show separate question icon
+        if ( item.notes & model.NOTE_MASK_LOC_QUES ){
+            if ( codes )
+                res += " &#xe662;";
+            else
+                res += "<span class='ui-icon ui-icon-circle-help'></span>";
+        }
+
+        // Show separate icon for most critical nhererited note - err > warn
+        if ( item.notes & model.NOTE_MASK_INH_ERR ){
+            if ( codes )
+                res += " (&#xe6e9;)";
+            else
+                res += " <span class='inh-err-title'>(<span class='ui-icon ui-icon-flag inh-err-title'></span>)</span> ";
+        }else if ( item.notes & model.NOTE_MASK_INH_WARN ){
+            if ( codes )
+                res += " (&#xe65f;)";
+            else
+                res += " <span class='inh-warn-title'>(<span class='ui-icon ui-icon-alert inh-warn-title'></span>)</span> ";
+        }
+    }
+
+    return res;
+}
+
+export function generateNoteSpan2( item, codes ){
+    var res = "";
+
+    if ( item.notes ){
+        // Show icon for most critical note only - err > warn > info
+        if ( item.notes & model.NOTE_MASK_LOC_ERR ){
+            if ( codes )
+                res += " &#xe6e9;";
+            else
                 res += "<i class='ui-icon ui-icon-flag' style='margin: 0 1px 1px -4px'></i>";
         }else if ( item.notes & model.NOTE_MASK_LOC_WARN ){
             if ( codes )

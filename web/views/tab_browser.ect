@@ -1,4 +1,4 @@
-<div class="col-flex" style="padding:0;height:100%;">
+<div class="col-flex ui-widget-content" style="padding:0;height:100%;">
     <div id='resize_container' style="min-height:0;display:flex;flex:1">
         <div id='data-tabs-parent' style="flex:none;height:100%;resize:horizontal;overflow:visible;padding:0;min-width:0;min-height:0;width:55%">
             <div id="data-tabs" class='no-border' style="border:none;padding:0;height:100%;min-height:0;overflow:hidden">
@@ -11,10 +11,10 @@
                 </ul>
                 <div id="tab-data-tree" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
                     <div class="col-flex" style="height:100%">
-                        <div class="ui-widget-content" style="flex:1 1 auto;border-top:none;min-height:0;overflow:auto">
-                            <div id="data_tree" class="no-border" style="display:inline-block"></div>
+                        <div class="content" style="flex:1 1 auto;border-top:none;min-height:0;overflow:auto">
+                            <div id="data_tree" class="content" style="display:inline-block"></div>
                         </div>
-                        <div class='content toolbar' style="flex:none;padding:.25em 0 0 .25em">
+                        <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
                             <button class="btn btn-icon" id="btn_new_data" title='Create new data record' disabled><span class="ui-icon ui-icon-file"></span></button>
                             <button class="btn btn-icon" id="btn_dup_data" title='Create new duplicate data record' disabled><span class="ui-icon ui-icon-files"></span></button>
                             <button class="btn btn-icon" id="btn_new_coll" title='Create new collection' disabled><span class="ui-icon ui-icon-folder"></span></button>
@@ -28,32 +28,32 @@
                         </div>
                     </div>
                 </div>
-                <div id="tab-catalogs" class="ui-widget-content" style="padding:0;overflow:hidden">
+                <div id="tab-catalogs" style="padding:0;overflow:hidden">
                     <% include 'panel_catalog.ect' %>
                 </div>
-                <div id="tab-notifications" class="ui-widget-content" style="padding:0;border-top:none;overflow:hidden">
+                <div id="tab-notifications" class="content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">
                     Feature not implemented.
                     </div>
                 </div>
-                <div id="tab-prov-graph" class="ui-widget-content" style="padding:0;border-top:none;overflow:hidden">
+                <div id="tab-prov-graph" class="content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">
-                        <div class="ui-widget-content" style="flex:1 1 100%;min-height:0;overflow:auto">
+                        <div class="content" style="flex:1 1 100%;min-height:0;overflow:auto">
                             <svg id="data-graph" style='display:block;width:100%;height:100%'></svg>
                         </div>
-                        <div class='content toolbar' style="flex:none;padding:.25em 0 0 .25em">
+                        <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
                             <button class="btn" id="btn_exp_node" title='Expand selected node'>Expand</button>
                             <button class="btn" id="btn_col_node" title='Collapse selected node'>Collapse</button>
                             <button class="btn" id="btn_hide_node" title='Hide selected node'>Hide</button>
                         </div>
                     </div>
                 </div>
-                <div id="tab-search-results" class="ui-widget-content" style="padding:0;border-top:none;overflow:hidden">
+                <div id="tab-search-results" class="content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">
-                        <div class="ui-widget-content" style="flex:1 1 auto;min-height:0;overflow:auto">
-                            <div id="search_results_tree" class="no-border" ></div>
+                        <div style="flex:1 1 auto;min-height:0;overflow:auto">
+                            <div id="search_results_tree" class="content" ></div>
                         </div>
-                        <div class='content toolbar' style="flex:none;padding:.25em 0 0 .25em">
+                        <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
                             <button class="btn" id="btn_srch_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.' disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
                             <button class="btn" id="btn_srch_refresh" title='Refresh query results'>Refresh</button>
                         </div>
@@ -62,30 +62,31 @@
             </div>
         </div>
         <div class='col-flex' style="flex:1 1 auto;padding: 0;height:100%;min-width:0;min-height:0">
-          <div id='sel_info_hdr' class='ui-widget-header' style='flex:none;border-left:none;font-size:120%;font-weight:normal;padding:0.1em 0.25em'>Selection Information</div>
+          <!-- div id='sel_info_hdr' class='ui-widget-header' style='flex:none;border-left:none;font-size:120%;font-weight:normal;padding:0.1em 0.25em'>Selection Information</div -->
+          <div class='ui-widget-header' style='height:2rem'></div>
           <div id='sel_info_hdr_div' class='row-flex sel-info-hdr' style="flex:none;padding:0.5em;">
             <div style='flex:none'><span id='sel_info_icon' class='ui-icon ui-icon-circle-help' style='font-size:300%'>x</span></div>
             <div id="sel_info_title" class='sel-info-title' style="flex:1 1 auto;max-height:3em;overflow:none"> </div>
           </div>
-          <div id="info-tabs-parent" class='content' style="flex:1 1 auto;padding:0 0.5em;min-width:0;min-height:0">
-            <div id="info-tabs" class='content no-border tabs-no-header' style="border:none;padding:0;min-height:0">
+          <div id="info-tabs-parent" class='ui-widget-content' style="flex:1 1 auto;padding:0 0.5em;min-width:0;min-height:0">
+            <div id="info-tabs" class='no-border tabs-no-header' style="border:none;padding:0;min-height:0">
                 <ul style='padding:0'>
-                    <li><a href="#tab-sel-desc">Description</a></li>
+                    <li><a href="#tab-sel-desc">Summary</a></li>
                     <li><a href="#tab-sel-det">Details</a></li>
                     <li><a href="#tab-sel-md">Metadata</a></li>
-                    <li><a href="#tab-sel-notes">Annotations</a></li>
+                    <li><a href="#tab-sel-notes">Notes</a></li>
                 </ul>
-                <div id="tab-sel-desc" class="ui-widget-content content" style="padding:0;height:100%;min-height:0">
+                <div id="tab-sel-desc" style="padding:0;height:100%;min-height:0">
                     <div class='col-flex' style='height:100%'>
-                        <div id="sel_info_desc" class='content2' style='flex:1 1 auto;border-top:none;overflow:auto;white-space:pre-wrap;padding:0.5em'>
+                        <div id="sel_info_desc" style='flex:1 1 auto;border-top:none;overflow:auto;white-space:pre-wrap;padding:0.5em'>
                         </div>
-                        <div class='ui-widget-content content toolbar' style='flex:none'>
+                        <div class='toolbar' style='flex:none'>
                         </div>
                     </div>
                 </div>
-                <div id="tab-sel-det" class="ui-widget-content content" style="padding:0;height:100%;min-height:0">
+                <div id="tab-sel-det" style="padding:0;height:100%;min-height:0">
                     <div id="sel_info_form" class='col-flex' style="overflow:auto;height:100%;display:none">
-                        <div class='content2' style='flex: 1 1 auto;border-top:none;overflow:auto'>
+                        <div style='flex: 1 1 auto;border-top:none;overflow:auto'>
                             <table class="sel-info-table">
                                 <tr><td>Type:</td><td id='sel_info_type'></td></tr>
                                 <tr><td>ID:</td><td id='sel_info_id'></td></tr>
@@ -125,47 +126,47 @@
                                 <tr class="sit"><td>Dest:</td><td id='sel_info_dest'></td></tr>
                             </table>
                         </div>
-                        <div class='ui-widget-content content toolbar' style='flex:none'>
+                        <div class='toolbar' style='flex:none'>
                         </div>
                     </div>
                 </div>
-                <div id="tab-sel-md" class="ui-widget-content" style="padding:0;height:100%;min-height:0;overflow:auto">
+                <div id="tab-sel-md" style="padding:0;height:100%;min-height:0;overflow:auto">
                     <div id='md_div' class="col-flex" style="height:100%">
-                        <div class="content2" style="flex:auto;border-top:none;overflow:auto;min-height:0">
+                        <div style="flex:auto;border-top:none;overflow:auto;min-height:0">
                             <div id="data_md_tree" class="no-border" style="padding:.5em 0 0 0;background:transparent;display:inline-block"></div>
                         </div>
-                        <div class='row-flex content toolbar' style='flex:none;align-items:center;padding:.25em 0'>Filter:&nbsp;<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp;<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp;<button class='btn small' id='md_filter_reset'>Reset</button></div>
+                        <div class='row-flex toolbar' style='flex:none;align-items:center;padding:.25em 0'>Filter:&nbsp;<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp;<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp;<button class='btn small' id='md_filter_reset'>Reset</button></div>
                     </div>
                 </div>
-                <div id="tab-sel-notes" class='ui-widget-content' style="padding:0;height:100%;min-height:0">
+                <div id="tab-sel-notes" style="padding:0;height:100%;min-height:0">
                     <div id='note-div' class="col-flex" style='height:100%'> 
-                        <div class="col-flex content2" style='flex:1 1 auto;border-top:none;min-height:0'> 
-                            <div id='note-tabs' class='tabs-no-header ui-widget-content content' style='flex:none;border:none;padding:0'>
+                        <div class="col-flex" style='flex:1 1 auto;border-top:none;min-height:0'> 
+                            <div id='note-tabs' class='tabs-no-header' style='flex:none;border:none;padding:0'>
                                 <ul>
                                     <li><a href="#tab-note-active">Active</a></li>
                                     <li><a href="#tab-note-open">Open</a></li>
                                     <li><a href="#tab-note-closed">Closed</a></li>
                                 </ul>
-                                <div id="tab-note-active" class='content2' style="padding:0.25em 0.5em">
-                                    <div class='ui-widget-content' style="padding:0;height:6em;overflow:auto">
-                                        <div id='note_active_tree' class='no-border'></div>
+                                <div id="tab-note-active" style="padding:0.25em 0.5em">
+                                    <div class='content' style="padding:0;height:6em;overflow:auto">
+                                        <div id='note_active_tree' class='content'></div>
                                     </div>
                                 </div>
-                                <div id="tab-note-open" class='content2' style="padding:0.25em 0.5em">
-                                    <div class='ui-widget-content' style="padding:0;height:6em;overflow:auto">
-                                        <div id='note_open_tree' class='no-border'></div>
+                                <div id="tab-note-open" style="padding:0.25em 0.5em">
+                                    <div class='content' style="padding:0;height:6em;overflow:auto">
+                                        <div id='note_open_tree' class='content'></div>
                                     </div>
                                 </div>
-                                <div id="tab-note-closed" class='content2' style="padding:0.25em 0.5em">
-                                    <div class='ui-widget-content' style="padding:0;height:6em;overflow:auto">
-                                        <div id='note_closed_tree' class='no-border'></div>
+                                <div id="tab-note-closed" style="padding:0.25em 0.5em">
+                                    <div class='content' style="padding:0;height:6em;overflow:auto">
+                                        <div id='note_closed_tree' class='content'></div>
                                     </div>
                                 </div>
                             </div>
-                            <div id='note-details' class='ui-widget-content content2' style='flex:1 1 auto;min-height:0;overflow:auto;padding:.45em .45em 0 .45em;border:none'>
+                            <div id='note-details' style='flex:1 1 auto;min-height:0;overflow:auto;padding:.45em .45em 0 .45em;border:none'>
                             </div>
                         </div>
-                        <div class='ui-widget-content content toolbar' style='flex:none;padding:.25em 0 0 0' align='right'>
+                        <div class='toolbar' style='flex:none;padding:.25em 0 0 0' align='right'>
                             <button class='btn btn-icon btn-note-comment'>Comment</button>
                             <button class='btn btn-icon btn-note-edit'>Edit</button>
                             <button class='btn btn-icon btn-note-activate'>Activate/Deactivate</button>
@@ -192,17 +193,22 @@
         <!-- button class="btn" id="btn_lock" title='Lock selected item' disabled>Lock</button>
         <button class="btn" id="btn_unlock" title='Unlock selected item' disabled>Unlock</button -->
     </div>
-    <div id="footer" style="flex:none;padding:0">
+    <div id="footer" class='ui-widget-header' style="flex:none;padding:0">
         <div id="footer-tabs" style="border:none;padding:0;border-radius:0">
             <ul>
                 <li><a href="#tab-search">Search</a></li>
                 <li><a href="#tab-tasks">Tasks</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
                 <li style='display:none'><a href="#tab-admin">Administration</a></li>
-                <span style='float:right;padding:.1em 0 0 0'><span id='mode_label' class='ui-state-error' style='display:none'>&nbsp;<b>TEST</b>&nbsp;</span>&nbsp;<span id='is_admin' class='ui-state-error' style='display:none'>&nbsp;<b>ADMIN</b>&nbsp;</span>&nbsp;<span style='font-weight:normal'>V-<%- @version %></span></span>
+                <span style='float:right;padding:.1em 0 0 0'>
+                    <span id='uname'></span>&nbsp;
+                    <span id='mode_label' class='ui-state-error' style='display:none'>&nbsp;<b>TEST</b>&nbsp;</span>&nbsp;
+                    <span id='is_admin' class='ui-state-error' style='display:none'>&nbsp;<b>ADMIN</b>&nbsp;</span>&nbsp;
+                    <span style='font-weight:normal'>V-<%- @version %></span>
+                </span>
             </ul>
-            <div id="tab-search" class="content" style="padding:0">
-                <div class='footer-tab-inner-div'>
+            <div id="tab-search" class="" style="padding:0">
+                <div class=''>
                     <table style='width:100%'>
                         <tr>
                             <td style='width:10ch'>ID/Alias:</td>
@@ -223,13 +229,13 @@
                     <div style='padding:.5em 0 0 0'><span class='note'>* Note: metadata text comparisons are case sensitive.</span></div>
                 </div>
             </div>
-            <div id="tab-tasks" class="content" style="padding:0">
+            <div id="tab-tasks" class="" style="padding:0">
                 <div id="task_hist" class="text footer-tab-inner-div" style="padding-top:0"></div>
             </div>
-            <div id="tab-repo" class="content" style="padding:0">
+            <div id="tab-repo" class="" style="padding:0">
                 <div id="repo_list" class="text footer-tab-inner-div"></div>
             </div>
-            <div id="tab-admin" class="content" style="padding:0">
+            <div id="tab-admin" class="" style="padding:0">
                 <div style='padding:0.25em'>
                     <button class="btn" id="btn_manage_users" title='Manage user accounts' disabled>Manage Users</button>
                     <button class="btn" id="btn_manage_projs" title='Manage projects' disabled>Manage Projects</button>
