@@ -13,8 +13,8 @@ export function show( item ){
             <div class='row-flex' style='flex:1 1 100%;width:100%;min-height:0'>\
                 <div class='col-flex' style='flex:1 1 40%;min-width:0;min-height:0;'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Permissions:</div>\
-                    <div class='ui-widget-content text' style='flex:1 1 50%;min-height:0;min-width:0;width:100%;max-width:100%;overflow:auto'>\
-                        <div id='dlg_rule_tree' class='no-border' style='min-height:0'></div>\
+                    <div class='content text' style='flex:1 1 50%;min-height:0;min-width:0;width:100%;max-width:100%;overflow:auto'>\
+                        <div id='dlg_rule_tree' class='content no-border' style='min-height:0'></div>\
                     </div>\
                     <div style='flex:none;padding:2px 0 0 0;white-space:nowrap'>\
                         <button id='dlg_add_user' class='btn small'>Add User</button>\
@@ -27,7 +27,7 @@ export function show( item ){
                 <div style='flex:none'>&nbsp</div>\
                 <div class='col-flex' style='flex:1 1 30%'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Local:</div>\
-                    <div id='local_perm_div' class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
+                    <div id='local_perm_div' class='content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                     </div>\
                     <div style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button title='Set permissions to \"read only\"' id='dlg_read_only' class='btn small'>RO</button>\
@@ -40,7 +40,7 @@ export function show( item ){
                 <div id='col_div_1' style='flex:none'>&nbsp</div>\
                 <div id='col_div_2' class='col-flex' style='flex:1 1 30%'>\
                     <div style='flex:none;padding:.5rem 0 0 0'>Inherited:</div>\
-                    <div id='inh_perm_div' class='ui-widget-content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
+                    <div id='inh_perm_div' class='content' style='flex:1 1 auto;overflow:auto;padding:.25em'>\
                     </div>\
                     <div  style='flex:none;white-space:nowrap;padding:2px 0 0 0'>\
                         <button title='Set inherited permissions to \"read-only\"' id='dlg_inh_read_only' class='btn small'>RO</button>\
@@ -92,10 +92,7 @@ export function show( item ){
             extensions: ["themeroller"],
             themeroller: {
                 activeClass: "my-fancytree-active",
-                addClass: "",
-                focusClass: "",
-                hoverClass: "my-fancytree-hover",
-                selectedClass: ""
+                hoverClass: ""
             },
             source: src,
             checkbox: true,
@@ -587,10 +584,7 @@ export function show( item ){
                     extensions: ["themeroller"],
                     themeroller: {
                         activeClass: "my-fancytree-active",
-                        addClass: "",
-                        focusClass: "",
-                        hoverClass: "my-fancytree-hover",
-                        selectedClass: ""
+                        hoverClass: ""
                     },
                     source: src,
                     selectMode: 1,

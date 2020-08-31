@@ -2322,10 +2322,7 @@ export function init(){
         },
         themeroller: {
             activeClass: "my-fancytree-active",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "my-fancytree-hover",
-            selectedClass: ""
+            hoverClass: ""
         },
         source: tree_source,
         selectMode: 2,
@@ -2665,10 +2662,7 @@ export function init(){
         extensions: ["themeroller","dnd5"],
         themeroller: {
             activeClass: "my-fancytree-active",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "my-fancytree-hover",
-            selectedClass: ""
+            hoverClass: ""
         },
         dnd5:{
             preventForeignNodes: true,

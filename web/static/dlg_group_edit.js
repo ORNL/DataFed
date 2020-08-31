@@ -14,8 +14,8 @@ export function show( a_uid, a_excl, a_group, cb ){
                 </table>\
             </div>\
             <div style='flex:none'>Members:</div>\
-            <div class='ui-widget-content text' style='flex:1 1 100%;overflow:auto'>\
-                <div id='member_list' class='no-border' style='overflow:auto'></div>\
+            <div class='content text' style='flex:1 1 100%;overflow:auto'>\
+                <div id='member_list' class='content no-border' style='overflow:auto'></div>\
             </div>\
             <div style='flex:none;padding:.25rem'><button id='btn_add' class='btn small'>Add</button>&nbsp<button id='btn_remove' class='btn small'>Remove</button>&nbsp<button id='btn_clear' class='btn small'>Clear</button></div>\
             </div>\
@@ -104,11 +104,8 @@ export function show( a_uid, a_excl, a_group, cb ){
     $("#member_list",frame).fancytree({
         extensions: ["themeroller"],
         themeroller: {
-            activeClass: "ui-state-hover",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "ui-state-active",
-            selectedClass: ""
+            activeClass: "my-fancytree-active",
+            hoverClass: ""
         },
         source: src,
         selectMode: 1,

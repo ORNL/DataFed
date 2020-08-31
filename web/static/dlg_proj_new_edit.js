@@ -26,16 +26,16 @@ export function show( a_data, a_upd_perms, a_cb ) {
         <div class='row-flex' style='flex: 1 1 100%;min-height:0'>\
             <div class='col-flex' style='flex: 1 1 50%;height:100%'>\
                 <div style='flex:none'>Members:</div>\
-                <div class='ui-widget-content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
-                    <div id='proj_mem_tree' class='no-border'></div>\
+                <div class='content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
+                    <div id='proj_mem_tree' class='content no-border'></div>\
                 </div>\
                 <div style='flex:none;padding-top:.25em'><button id='add_mem_btn' class='btn'>Add</button>&nbsp<button id='rem_mem_btn' class='btn' disabled>Remove</button></div>\
             </div>\
             <div style='flex:none'>&nbsp</div>\
             <div class='col-flex' style='flex: 1 1 50%;height:100%'>\
                 <div style='flex:none'>Admins:</div>\
-                <div class='ui-widget-content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
-                    <div id='proj_adm_tree' class='no-border'></div>\
+                <div class='content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
+                    <div id='proj_adm_tree' class='content no-border'></div>\
                 </div>\
                 <div style='flex:none;padding-top:.25em'><button id='add_adm_btn' class='btn'>Add</button>&nbsp<button id='rem_adm_btn' class='btn' disabled>Remove</button></div>\
             </div>\
@@ -250,12 +250,9 @@ export function show( a_data, a_upd_perms, a_cb ) {
             $("#proj_mem_tree",frame).fancytree({
                 extensions: ["themeroller"],
                 themeroller: {
-                    activeClass: "ui-state-hover",
-                    addClass: "",
-                    focusClass: "",
-                    hoverClass: "ui-state-active",
-                    selectedClass: ""
-                },
+                    activeClass: "my-fancytree-active",
+                    hoverClass: ""
+                        },
                 source: mem_src,
                 nodata: false,
                 selectMode: 1,
@@ -268,11 +265,8 @@ export function show( a_data, a_upd_perms, a_cb ) {
             $("#proj_adm_tree",frame).fancytree({
                 extensions: ["themeroller"],
                 themeroller: {
-                    activeClass: "ui-state-hover",
-                    addClass: "",
-                    focusClass: "",
-                    hoverClass: "ui-state-active",
-                    selectedClass: ""
+                    activeClass: "my-fancytree-active",
+                    hoverClass: ""
                 },
                 source: adm_src,
                 nodata: false,

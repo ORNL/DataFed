@@ -176,10 +176,7 @@ var tree_opts1 = {
     extensions: ["themeroller"],
     themeroller: {
         activeClass: "my-fancytree-active",
-        addClass: "",
-        focusClass: "",
-        hoverClass: "my-fancytree-hover",
-        selectedClass: ""
+        hoverClass: ""
     },
     source: [],
     nodata: false,
@@ -742,10 +739,7 @@ $("#data_md_tree").fancytree({
     extensions: ["themeroller","filter","dnd5"],
     themeroller: {
         activeClass: "my-fancytree-active",
-        addClass: "",
-        focusClass: "",
-        hoverClass: "my-fancytree-hover",
-        selectedClass: ""
+        hoverClass: ""
     },
     dnd5:{
         preventNonNodes: true,

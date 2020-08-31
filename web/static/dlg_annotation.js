@@ -27,7 +27,7 @@ export function show( a_subject, a_annotation, a_new_state, a_comment_idx, a_cb 
 
     if ( a_annotation ){ // Edit annotation
         if ( a_comment_idx != -1 ){
-            $("#title",frame).prop('readonly', true);
+            util.inputDisable( $("#title", frame ));
         }
 
         if ( a_comment_idx == -1 ){

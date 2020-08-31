@@ -21,12 +21,12 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
     frame.html(
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none;padding:0 0 .5em 0;align-items: center' class='row-flex'><div style='flex:none'>Search:&nbsp</div><div style='flex:1 1 auto'><input id='search_input' type='text' style='width:100%;box-sizing:border-box'></input></div></div>\
-            <div style='flex:3 3 75%;overflow:auto;padding:0' class='ui-widget-content text'>\
-                <div id='user_tree' class='no-border'></div>\
+            <div style='flex:3 3 75%;overflow:auto;padding:0' class='content'>\
+                <div id='user_tree' class='content no-border'></div>\
             </div>\
             <div style='flex:none;padding:0.5em 0 .25em 0' class='row-flex'><div style='flex:1 1 auto'>Selection:</div><div style='flex:none'><button id='sel_rem' class='btn small'>Remove</button></div></div>\
-            <div style='flex:1 1 25%;overflow:auto;padding:0' class='ui-widget-content text'>\
-                <div id='sel_tree' class='no-border'></div>\
+            <div style='flex:1 1 25%;overflow:auto;padding:0' class='content'>\
+                <div id='sel_tree' class='content no-border'></div>\
             </div>\
         </div>" );
 
@@ -75,10 +75,7 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
         extensions: ["themeroller"],
         themeroller: {
             activeClass: "my-fancytree-active",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "my-fancytree-hover",
-            selectedClass: ""
+            hoverClass: ""
         },
         source: src,
         nodata: false,
@@ -190,10 +187,7 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
         extensions: ["themeroller"],
         themeroller: {
             activeClass: "my-fancytree-active",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "my-fancytree-hover",
-            selectedClass: ""
+            hoverClass: ""
         },
         source: [],
         nodata: false,

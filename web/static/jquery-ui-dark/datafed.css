@@ -8,35 +8,26 @@ body
 {
     /*background: #03090a!important;*/
     /*background:#101213!important;*/
-    background:#000!important;
+    background:#08090a!important;
     border:none!important;
-}
-
-.content2
-{
-	background: #181818!important;
 }
 
 input
 {
-    background:#101213!important;
+    background:#08090a!important;
+    box-sizing:border-box;
 }
 
 textarea
 {
-    background:#101213!important;
+    background:#08090a!important;
+    resize: none;
 }
 
 #data-tabs > .ui-tabs-nav
 {
     height: 2rem;
 }
-
-/*.ui-widget-header
-{
-    height: 2rem;
-    padding: 0.2rem 0.2rem 0;
-}*/
 
 .fancytree-container
 {
@@ -47,23 +38,22 @@ textarea
 
 .fancytree-title
 {
-	color:#fff!important;
+	color:#ddd!important;
 }
 
-.my-fancytree-hover
-{
-    border: 1px dashed rgb(78, 148, 78)!important;
-}
 
 .my-fancytree-active
 {
-    border: 1px solid rgb(83, 179, 83)!important;
+    border: 1px solid #085d7c;
 }
 
 .fancytree-selected
 {
-    background: #104010!important;
+	background: #085d7c!important;
+	font-weight: normal!important;
+	color: #ffffff!important;
 }
+
 
 span.fancytree-node.fancytree-folder > span.fancytree-expander:after {
     color: #808080;
@@ -76,9 +66,12 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 
 .ui-state-disabled
 {
-	opacity:.45!important;
+    opacity:.45!important;
+    color: #eee;
 }
 
+
+/*
 input.ui-state-disabled
 {
 	box-sizing: border-box;
@@ -86,7 +79,9 @@ input.ui-state-disabled
 	border: 1px solid #909090;
 	color: #e0e0e0;
 }
+*/
 
+/*
 textarea.ui-state-disabled
 {
 	box-sizing: border-box;
@@ -94,10 +89,11 @@ textarea.ui-state-disabled
 	border: 1px solid #909090;
 	color: #e0e0e0
 }
+*/
 
 .task-table th
 {
-    background-color:#404040;
+    /*background-color:#404040;*/
 }
 
 .task-succeeded
@@ -475,7 +471,7 @@ mark
 
 ::-webkit-scrollbar-thumb:hover
 {
-    background: #074700;
+    background: #003147;
 }
 
 .scroller

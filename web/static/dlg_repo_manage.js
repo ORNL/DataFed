@@ -107,11 +107,8 @@ export function show(){
                 $("#dlg_repo_tree",frame).fancytree({
                     extensions: ["themeroller"],
                     themeroller: {
-                        activeClass: "ui-state-hover",
-                        addClass: "",
-                        focusClass: "",
-                        hoverClass: "ui-state-active",
-                        selectedClass: ""
+                        activeClass: "my-fancytree-active",
+                        hoverClass: ""
                     },
                     source: src,
                     selectMode: 1,

@@ -76,10 +76,7 @@ export function show( a_mode, a_ids, a_cb ) {
             extensions: ["themeroller"],
             themeroller: {
                 activeClass: "my-fancytree-active",
-                addClass: "",
-                focusClass: "",
-                hoverClass: "my-fancytree-hover",
-                selectedClass: ""
+                hoverClass: ""
             },
             source: src,
             nodata: false,

@@ -37,16 +37,16 @@ export function show( a_repo_id, a_cb ){
             <div style='flex:none'>&nbsp</div>\
             <div class='col-flex' style='flex:1 1 30%;min-height:100%'>\
                 <div style='flex:none' class='ui-widget-header'>Administrators: <span class='note'>*</span></div>\
-                <div style='flex:1 1 40%;overflow:auto' class='ui-widget-content text'>\
-                    <div id='admin_tree' class='no-border' style='min-height:0'></div>\
+                <div style='flex:1 1 40%;overflow:auto' class='content text'>\
+                    <div id='admin_tree' class='content no-border' style='min-height:0'></div>\
                 </div>\
                 <div style='flex:none;padding:.25em 0'>\
                     <button class='btn small' id='add_adm_btn'>Add</button>\
                     <button class='btn small' id='rem_adm_btn' disabled>Remove</button>\
                 </div>\
                 <div style='flex:none' class='ui-widget-header edit-only'>Allocations:</div>\
-                <div style='flex:1 1 60%;overflow:auto' class='ui-widget-content text edit-only'>\
-                    <div id='alloc_tree' class='no-border' style='min-height:0'></div>\
+                <div style='flex:1 1 60%;overflow:auto' class='content text edit-only'>\
+                    <div id='alloc_tree' class='content no-border' style='min-height:0'></div>\
                 </div>\
                 <div style='flex:none;padding:.25em 0' class='edit-only'>\
                     <button class='btn small' id='add_alloc_btn'>Add</button>\
@@ -228,11 +228,8 @@ export function show( a_repo_id, a_cb ){
     $("#admin_tree",frame).fancytree({
         extensions: ["themeroller"],
         themeroller: {
-            activeClass: "ui-state-hover",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "ui-state-active",
-            selectedClass: ""
+            activeClass: "my-fancytree-active",
+            hoverClass: ""
         },
         source: [],
         selectMode: 1,
@@ -247,11 +244,8 @@ export function show( a_repo_id, a_cb ){
     $("#alloc_tree",frame).fancytree({
         extensions: ["themeroller"],
         themeroller: {
-            activeClass: "ui-state-hover",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "ui-state-active",
-            selectedClass: ""
+            activeClass: "my-fancytree-active",
+            hoverClass: ""
         },
         source: [],
         selectMode: 1,

@@ -135,11 +135,8 @@ export function show( a_ep, a_path, a_mode, a_cb ) {
             $("#file_tree").fancytree({
                 extensions: ["themeroller","table"],
                 themeroller: {
-                    activeClass: "ui-state-hover",
-                    addClass: "",
-                    focusClass: "",
-                    hoverClass: "ui-state-active",
-                    selectedClass: ""
+                    activeClass: "my-fancytree-active",
+                    hoverClass: ""
                 },
                 table: {
                     //indentation: 20,

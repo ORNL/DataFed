@@ -18,8 +18,8 @@ window.projPageLoad = function( key, offset ){
 export function show( a_excl, a_single_sel, cb ){
     var frame = $(document.createElement('div'));
     frame.html(
-        "<div class='ui-widget-content text' style='height:98%;overflow:auto'>\
-            <div id='dlg_proj_tree' class='no-border'></div>\
+        "<div class='content text' style='height:98%;overflow:auto'>\
+            <div id='dlg_proj_tree' class='content no-border'></div>\
         </div>" );
 
 
@@ -65,11 +65,8 @@ export function show( a_excl, a_single_sel, cb ){
     $("#dlg_proj_tree",frame).fancytree({
         extensions: ["themeroller"],
         themeroller: {
-            activeClass: "ui-state-hover",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "ui-state-active",
-            selectedClass: ""
+            activeClass: "my-fancytree-active",
+            hoverClass: ""
         },
         source: src,
         nodata: false,
