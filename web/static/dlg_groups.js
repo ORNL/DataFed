@@ -111,11 +111,8 @@ export function show( a_uid, a_excl, cb, select ){
                 $("#dlg_group_tree",frame).fancytree({
                     extensions: ["themeroller"],
                     themeroller: {
-                        activeClass: "ui-state-hover",
-                        addClass: "",
-                        focusClass: "",
-                        hoverClass: "ui-state-active",
-                        selectedClass: ""
+                        activeClass: "my-fancytree-active",
+                        hoverClass: ""
                     },
                     source: src,
                     selectMode: select?2:1,

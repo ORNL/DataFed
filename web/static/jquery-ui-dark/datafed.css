@@ -24,10 +24,12 @@ textarea
     resize: none;
 }
 
+/*
 #data-tabs > .ui-tabs-nav
 {
     height: 2rem;
 }
+*/
 
 .fancytree-container
 {
@@ -44,14 +46,14 @@ textarea
 
 .my-fancytree-active
 {
-    border: 1px solid #085d7c;
+    border: 1px solid #345!important;
+    background: none!important;
 }
 
 .fancytree-selected
 {
-	background: #085d7c!important;
-	font-weight: normal!important;
-	color: #ffffff!important;
+	background: #003147!important;
+    font-weight: normal!important;
 }
 
 
@@ -107,16 +109,38 @@ textarea.ui-state-disabled
 }
 
 /* Catalog Styles */
+
+.cat-topic-container
+{
+    background:#08090a!important;
+    border-right:1px solid #24292e!important;
+    border-top:none!important;
+    border-bottom:none!important;
+    border-left:none!important;
+}
+
 .cat-coll-title-div
 {
     display:block!important;
     text-align:left!important;
 }
 
-.cat-topic:hover
+/*.cat-topic
 {
-    background:#103010;
+
+}*/
+
+/*.cat-topic:hover
+{
+    background:#003147;
+}*/
+
+.cat-coll-info-div
+{
+    color: #999;
 }
+
+
 
 /* Dependency Graph Styles */
 
@@ -416,6 +440,11 @@ mark
 	color:#111111;
 }
 
+span.fancytree-node
+{
+    padding: 0.1em 0 0.1em 0;
+}
+
 .fancytree-ext-filter-dimm span.fancytree-node span.fancytree-title {
 	color: #aaa!important;
 	font-weight: lighter!important;
@@ -466,7 +495,7 @@ mark
 ::-webkit-scrollbar-thumb
 {
 	background: #444;
-	border-radius: 4px;
+	/*border-radius: 4px;*/
 }
 
 ::-webkit-scrollbar-thumb:hover

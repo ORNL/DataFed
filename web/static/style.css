@@ -183,9 +183,10 @@ svg text
 .data-tree-subtitle
 {
     display:block;
-    line-height: .85em;
-    font-size: .85em;
-    margin:0 0 .2em 0!important;
+    font-size: .9em;
+    padding:0.1em 0 0.25em 0;
+    /*line-height: .85em;*/
+    /*margin:0 0 .2em 0!important;*/
 }
 
 .data-tree-id
@@ -276,9 +277,15 @@ svg text
     min-height:2em;
 }
 
+.cat-nav-bar
+{
+    padding:0.4em .4em;
+    border:none!important;
+}
+
 .cat-subheading
 {
-    padding:0.5em .75em;
+    padding:0.5em .5em 0.25em .5em;
     border:none!important;
 }
 
@@ -302,7 +309,8 @@ svg text
 
 .cat-topic
 {
-    padding:0.5em 1em;
+    margin-bottom: 1em;
+    display:block!important;
 }
 
 .cat-topic-empty
@@ -339,6 +347,7 @@ div.cat-coll-title
 {
     font-size:1.2em;
     flex:1 1 auto;
+    padding-bottom: 0.5em;
     /*user-select: none;*/
 }
 
@@ -368,6 +377,7 @@ div.cat-coll-title-div:hover .cat-coll-btn-div
     white-space:nowrap;
 }
 
+
 .cat-coll-btn-div
 {
     flex:none;
@@ -380,7 +390,7 @@ div.cat-coll-title-div:hover .cat-coll-btn-div
 
 .cat-coll-info-brief
 {
-    padding:1em 1em 1em 0;
+    padding:0 1em 1em 0;
     font-size:1rem;
 }
 
@@ -401,10 +411,10 @@ div.cat-coll-title-div:hover .cat-coll-btn-div
     padding:0.25em;
 }
 
-.cat-item-path
+/*.cat-item-path
 {
     background:#202020;
-}
+}*/
 
 .cat-item-div
 {
@@ -416,10 +426,10 @@ div.cat-coll-title-div:hover .cat-coll-btn-div
     padding:0 0 0 1em;
 }
 
-.cat-item
+/*.cat-item
 {
     background:#000;
-}
+}*/
 
 .cat-item-title
 {
@@ -429,10 +439,10 @@ div.cat-coll-title-div:hover .cat-coll-btn-div
     user-select: none;
 }
 
-.cat-item-title:hover
+/*.cat-item-title:hover
 {
     background:#002000;
-}
+}*/
 
 div.cat-item-title .btn-cat-folder-open
 {

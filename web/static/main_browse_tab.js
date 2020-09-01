@@ -119,7 +119,7 @@ function getSelectedNodes(){
             sel = results_tree.getSelectedNodes();
             break;
         case SS_CAT:
-            //sel = cat_panel.tree.getSelectedNodes();
+            sel = cat_panel.getSelectedNodes();
             break;
     }
 
@@ -143,7 +143,7 @@ function getSelectedIDs(){
             }
             break;
         case SS_CAT:
-            //sel = cat_panel.tree.getSelectedNodes();
+            sel = cat_panel.getSelectedNodes();
             for ( i in sel ){
                 ids.push( sel[i].key );
             }
@@ -1329,8 +1329,7 @@ export function updateBtnState(){
             bits = calcActionState( sel );
             break;
         case SS_CAT:
-            //bits = 0xFF;
-            //sel = cat_panel.tree.getSelectedNodes();
+            sel = cat_panel.getSelectedNodes();
             bits = calcActionState( sel );
             break;
         case SS_PROV:

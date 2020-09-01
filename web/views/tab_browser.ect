@@ -1,6 +1,6 @@
 <div class="col-flex ui-widget-content" style="padding:0;height:100%;">
     <div id='resize_container' style="min-height:0;display:flex;flex:1">
-        <div id='data-tabs-parent' style="flex:none;height:100%;resize:horizontal;overflow:visible;padding:0;min-width:0;min-height:0;width:55%">
+        <div id='data-tabs-parent' style="flex:none;height:100%;resize:horizontal;overflow:visible;padding:0;min-width:0;min-height:0;width:65%">
             <div id="data-tabs" class='no-border' style="border:none;padding:0;height:100%;min-height:0;overflow:hidden">
                 <ul>
                     <li><a href="#tab-data-tree">My Data</a></li>
@@ -63,7 +63,7 @@
         </div>
         <div class='col-flex' style="flex:1 1 auto;padding: 0;height:100%;min-width:0;min-height:0">
           <!-- div id='sel_info_hdr' class='ui-widget-header' style='flex:none;border-left:none;font-size:120%;font-weight:normal;padding:0.1em 0.25em'>Selection Information</div -->
-          <div class='ui-widget-header' style='height:2rem'></div>
+          <div class='ui-widget-header' style='height:1.75rem'></div>
           <div id='sel_info_hdr_div' class='row-flex sel-info-hdr' style="flex:none;padding:0.5em;">
             <div style='flex:none'><span id='sel_info_icon' class='ui-icon ui-icon-circle-help' style='font-size:300%'>x</span></div>
             <div id="sel_info_title" class='sel-info-title' style="flex:1 1 auto;max-height:3em;overflow:none"> </div>
@@ -183,17 +183,17 @@
         <button class="btn" id="btn_subscribe" title='Manage subscription on selected data record or collection' disabled>Subscribe</button>
         <button class="btn" id="btn_annotate" title='Creaye new annotation on selected data record or collection' disabled>Annotate</button>
         <span style='padding-left:1em'>&nbsp;</span>
+        <button class="btn" id="btn_download" title='Download raw data from selected data record(s) and/or collection(s)' disabled>Download</button>
+        <span style='padding-left:1em'>&nbsp;</span>
+        <button class="btn" id="btn_upload" title='Upload raw data to selected data record' disabled>Upload</button>
         <button class="btn" id="btn_edit" title='Edit selected item' disabled>Edit</button>
         <!-- button class="btn" id="btn_dup" disabled>Duplicate</button -->
         <button class="btn" id="btn_share" title='Set sharing permissions on selected item' disabled>Share</button>
-        <button class="btn" id="btn_download" title='Download raw data from selected data record(s) and/or collection(s)' disabled>Download</button>
-        <button class="btn" id="btn_upload" title='Upload raw data to selected data record' disabled>Upload</button>
-        <span style='padding-left:1em'>&nbsp;</span>
         <button class="btn" id="btn_del" title='Delete selected item' disabled>Delete</button>
         <!-- button class="btn" id="btn_lock" title='Lock selected item' disabled>Lock</button>
         <button class="btn" id="btn_unlock" title='Unlock selected item' disabled>Unlock</button -->
     </div>
-    <div id="footer" class='ui-widget-header' style="flex:none;padding:0">
+    <div id="footer" class='' style="flex:none;padding:0">
         <div id="footer-tabs" style="border:none;padding:0;border-radius:0">
             <ul>
                 <li><a href="#tab-search">Search</a></li>

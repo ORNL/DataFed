@@ -1,42 +1,44 @@
 <div class="cat-panel ui-widget-content col-flex" style="height:100%;padding:0;overflow:hidden">
-    <div class='cat-subheading row-flex' style='flex:none'>
-        <div style='flex:none'>
-            <button class='btn btn-icon btn-cat-home'><span class='ui-icon ui-icon-home'>x</span></button>
-            <button class='btn btn-icon btn-cat-back' disabled><span class='ui-icon ui-icon-undo'>x</span></button>
-            &nbsp;
+    <div class='topic-header'>
+        <div class='cat-nav-bar row-flex' style='flex:none'>
+            <div style='flex:none'>
+                <button class='btn btn-icon btn-cat-home'><span class='ui-icon ui-icon-home'>x</span></button>
+                <button class='btn btn-icon btn-cat-back'><span class='ui-icon ui-icon-undo'>x</span></button>
+                <button class='btn btn-icon btn-cat-search'><span class='ui-icon ui-icon-zoom'></span></button>
+                &nbsp;
+            </div>
+            <span id='cat_cur_topic' style='flex:1 1 auto;font-size:120%;vertical-align:middle;'>Home</span>
         </div>
-        <span id='cat_cur_topic' style='flex:1 1 auto;font-size:120%;vertical-align:middle;'>Home</span>
-    </div>
 
-    <div class='' style='flex:none;padding:0 0 0 0.25em'>
-        <table style='width:100%'><tr>
-            <td class='min-width'>Topic search:</td>
-            <td><input id='cat_topic_search_phrase' type='text' style="width:100%"></input></td>
-            <td class='min-width'>
-                <button class='btn btn-icon btn-cat-topic-search'><span class='ui-icon ui-icon-zoom'></span></button>
-                <button class='btn btn-icon btn-cat-topic-res-cls'><span class='ui-icon ui-icon-close'></span></button>
-            </td>
-        </tr></table>
-    </div>
+        <div class='cat-search-div' style='flex:none;padding:0 0 0 0.25em;display:none'>
+            <table style='width:100%'><tr>
+                <td class='min-width'>Topic search:</td>
+                <td><input id='cat_topic_search_phrase' type='text' style="width:100%"></input></td>
+                <td class='min-width'>
+                    <button class='btn btn-icon btn-cat-topic-search'><span class='ui-icon ui-icon-triangle-1-e'></span></button>
+                    <button class='btn btn-icon btn-cat-topic-res-cls'><span class='ui-icon ui-icon-close'></span></button>
+                </td>
+            </tr></table>
+            <div id='cat_topic_result_div' class='content cat-content' style='flex:1 1 20%;min-height:1em;overflow:auto;display:none'></div>
+        </div>
 
-    <div id='cat_topic_result_div' class='content cat-content' style='flex:1 1 20%;min-height:1em;overflow:auto;display:none'>
     </div>
 
     <div class="ui-widget-content row-flex" style="flex:1 1 80%;padding:0;min-height:0">
         <div class='col-flex topics-div' style='flex:none;padding:0;min-height:0;overflow:hidden'>
-            <div class='cat-subheading' style='flex:none;font-size:110%'>Topics</div>
-            <div class='content cat-topic-container' style='flex:1 1 auto;overflow:auto;min-height:0'>
+            <div class='cat-subheading' style='flex:none'>Topics</div>
+            <div class='cat-topic-container' style='flex:1 1 auto;overflow:auto;min-height:0'>
                 <div id='cat_topics_div'></div>
             </div>
         </div>
 
         <div class='col-flex' style='flex:1 1 auto;;padding:0;min-height:0;overflow:hidden'>
-            <div id='coll_div_title' class='cat-subheading' style='flex:none;font-size:110%'>Collection(s)</div>
-            <!-- div class='content2 cat-toolbar' style='flex:none'>buttons</div -->
+            <div id='coll_div_title' class='cat-subheading' style='flex:none'>Collections &amp; Data</div>
             <div class='content cat-content' style='flex:1 1 auto;overflow:auto;min-height:0'>
                 <div id='cat_coll_div' class='cat-coll-container'>
                     Select a topic to view collections and sub-topics.
                 </div>
+                <div id='cat_coll_tree' class='content' style='display:none'></div>
             </div>
         </div>
     </div>
