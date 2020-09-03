@@ -58,6 +58,10 @@ textarea
     resize: none;
 }
 
+.btn-icon span
+{
+    color:#222!important;
+}
 
 .task-table th
 {

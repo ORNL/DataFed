@@ -24,6 +24,11 @@ textarea
     resize: none;
 }
 
+.btn-icon span
+{
+    color:#fff!important;
+}
+
 /*
 #data-tabs > .ui-tabs-nav
 {

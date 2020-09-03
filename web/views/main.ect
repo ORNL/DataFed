@@ -45,17 +45,13 @@
     <body>
     <div class="col-flex" style="height:100%;width:100%">
         <!-- div class="main-header row-flex" style="flex:none;align-items:center;padding:0 .5em" -->
-        <div class="ui-widget-header row-flex" style="border:none;flex:none;align-items:center;padding:0 .5em">
-            <div style="flex:none;font-size:1.8em;">
-                <span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span>
-            </div>
-            <div style="flex:auto;font-size:2em;">
-                &nbsp;DataFed Portal
-            </div>
-            <div style="flex:none">
-                <button id='btn_settings' class='btn' title='Update application and account settings'>Settings</button>&nbsp;
-                <button class="btn" onclick="window.open('/ui/docs','sdms-docs')" title='DataFed on-line documentation.'>Help</button>&nbsp;
-                <button class="btn" onclick="logout()">Log Out</button>
+        <div class="ui-widget-header" style="border:none;flex:none;padding:0.2em .5em">
+            <span class='ui-icon ui-icon-box' style='vertical-align:middle;color:white;font-size:1.6em'></span>
+            <span style="font-size:1.8em;vertical-align:middle">&nbsp;DataFed</span>
+            <div style='float:right;padding:.2em 0 0 0'>
+                <button id='btn_settings' class='btn btn-icon' title='Application and account settings'><span class='ui-icon ui-icon-gear'></span></button>&nbsp;
+                <button class="btn btn-icon" onclick="window.open('/ui/docs','sdms-docs')" title='DataFed on-line documentation.'><span class='ui-icon ui-icon-circle-help'></span></button>&nbsp;
+                <button class="btn btn-icon" onclick="logout()"><span class='ui-icon ui-icon-logout'></span></button>
             </div>
         </div>
         <div id="content" class="ui-widget-content" style="flex:1;min-height:0">
