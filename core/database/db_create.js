@@ -97,6 +97,19 @@ view.properties({
   true
 );
 
+view = db._createView("collview","arangosearch",{});
+
+view.properties({
+    links: {
+      "c": {
+        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},
+        includeAllFields: false
+      }
+    }
+  },
+  true
+);
+
 view = db._createView("projview","arangosearch",{});
 
 view.properties({
@@ -123,6 +136,8 @@ view.properties({
   true
 );
 
+db.d.ensureIndex({ type: "fulltext", unique: false, fields: [ "keyw" ], sparse: true, minLength: 3 });
+db.c.ensureIndex({ type: "fulltext", unique: false, fields: [ "topic" ], sparse: true, minLength: 3 });
 
 db.task.ensureIndex({ type: "hash", unique: false, fields: [ "client" ], sparse: true });
 db.task.ensureIndex({ type: "skiplist", unique: false, fields: [ "status" ], sparse: true });

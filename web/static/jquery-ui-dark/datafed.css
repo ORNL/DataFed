@@ -125,21 +125,10 @@ textarea.ui-state-disabled
     text-align:left!important;
 }
 
-/*.cat-topic
-{
-
-}*/
-
-/*.cat-topic:hover
-{
-    background:#003147;
-}*/
-
 .cat-coll-info-div
 {
-    color: #999;
+    color: #aaa;
 }
-
 
 
 /* Dependency Graph Styles */

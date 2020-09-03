@@ -1,471 +1,11 @@
-/*! jQuery UI - v1.12.1 - 2018-09-13
+@import 'datafed.css';
+
+/*! jQuery UI - v1.12.1 - 2016-09-14
 * http://jqueryui.com
-* Includes: draggable.css, core.css, resizable.css, selectable.css, sortable.css, accordion.css, autocomplete.css, menu.css, button.css, controlgroup.css, checkboxradio.css, datepicker.css, dialog.css, progressbar.css, selectmenu.css, slider.css, spinner.css, tabs.css, tooltip.css, theme.css
-* To view and modify this theme, visit http://jqueryui.com/themeroller/?scope=&folderName=custom-theme&bgImgOpacityError=50&bgImgOpacityHighlight=80&bgImgOpacityActive=40&bgImgOpacityHover=75&bgImgOpacityDefault=50&bgImgOpacityContent=75&bgImgOpacityHeader=35&cornerRadiusShadow=5px&offsetLeftShadow=8px&offsetTopShadow=8px&thicknessShadow=10px&opacityShadow=20&bgImgOpacityShadow=75&bgTextureShadow=flat&bgColorShadow=%23808080&opacityOverlay=80&bgImgOpacityOverlay=85&bgTextureOverlay=white_lines&bgColorOverlay=%23b9b9b9&iconColorError=%23ffeb33&fcError=%23ffffff&borderColorError=%23ff6b7f&bgTextureError=diagonals_small&bgColorError=%23ff3853&iconColorHighlight=%23000000&fcHighlight=%23363636&borderColorHighlight=%2395ff6e&bgTextureHighlight=dots_medium&bgColorHighlight=%2395ff6e&iconColorActive=%23000000&fcActive=%23000000&borderColorActive=%2329c59c&bgTextureActive=diagonals_small&bgColorActive=%2329c59c&iconColorHover=%23454545&fcHover=%23212121&borderColorHover=%23a0e1cb&bgTextureHover=diagonals_small&bgColorHover=%23a0e1cb&iconColorDefault=%23ffffff&fcDefault=%23333333&borderColorDefault=%2393c3cd&bgTextureDefault=diagonals_small&bgColorDefault=%2393c3cd&iconColorContent=%23c02669&fcContent=%232c4359&borderColorContent=%23aaaaaa&bgTextureContent=flat&bgColorContent=%23ffffff&iconColorHeader=%23ffffff&fcHeader=%23ffffff&borderColorHeader=%232c4359&bgTextureHeader=dots_small&bgColorHeader=%2335414f&cornerRadius=4px&fwDefault=bold&fsDefault=1.2em&ffDefault=Gill%20Sans%2CArial%2Csans-serif
+* Includes: core.css, accordion.css, autocomplete.css, menu.css, button.css, controlgroup.css, checkboxradio.css, datepicker.css, dialog.css, draggable.css, resizable.css, progressbar.css, selectable.css, selectmenu.css, slider.css, sortable.css, spinner.css, tabs.css, tooltip.css, theme.css
+* To view and modify this theme, visit http://jqueryui.com/themeroller/?ffDefault=Verdana%2CArial%2Csans-serif&fwDefault=normal&fsDefault=1.1em&cornerRadius=6px&bgColorHeader=444444&bgTextureHeader=highlight_soft&bgImgOpacityHeader=44&borderColorHeader=333333&fcHeader=ffffff&iconColorHeader=ffffff&bgColorContent=000000&bgTextureContent=loop&bgImgOpacityContent=25&borderColorContent=555555&fcContent=ffffff&iconColorContent=cccccc&bgColorDefault=222222&bgTextureDefault=highlight_soft&bgImgOpacityDefault=35&borderColorDefault=444444&fcDefault=eeeeee&iconColorDefault=cccccc&bgColorHover=003147&bgTextureHover=highlight_soft&bgImgOpacityHover=33&borderColorHover=0b93d5&fcHover=ffffff&iconColorHover=ffffff&bgColorActive=0972a5&bgTextureActive=highlight_hard&bgImgOpacityActive=20&borderColorActive=26b3f7&fcActive=ffffff&iconColorActive=222222&bgColorHighlight=eeeeee&bgTextureHighlight=highlight_soft&bgImgOpacityHighlight=80&borderColorHighlight=cccccc&fcHighlight=2e7db2&iconColorHighlight=4b8e0b&bgColorError=ffc73d&bgTextureError=glass&bgImgOpacityError=40&borderColorError=ffb73d&fcError=111111&iconColorError=a83300&bgColorOverlay=5c5c5c&bgTextureOverlay=flat&bgImgOpacityOverlay=50&opacityOverlay=80&bgColorShadow=cccccc&bgTextureShadow=flat&bgImgOpacityShadow=30&opacityShadow=60&thicknessShadow=7px&offsetTopShadow=-7px&offsetLeftShadow=-7px&cornerRadiusShadow=8px
 * Copyright jQuery Foundation and other contributors; Licensed MIT */
 
-.main-header
-{
-	background: #2a3545;
-	color: #ffffff;
-}
-
-.fancytree-container
-{
-	background:transparent!important;
-	border:none!important;
-}
-
-.fancytree-title
-{
-	color:#000!important;
-}
-
-.my-fancytree-hover
-{
-    border: 1px dashed #212121!important;
-}
-
-.my-fancytree-active
-{
-    border: 1px solid #21946e!important;
-}
-
-.fancytree-selected
-{
-	background: #a0e1cb url("images/ui-bg_diagonals-small_75_a0e1cb_40x40.png") 50% 50% repeat;
-}
-
-span.fancytree-node.fancytree-folder > span.fancytree-expander:after {
-    color: #a0a0a0;
-}
-
-span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expander:after {
-    color: #a0a0a0;
-}
-
-body
-{
-	color:#000;
-}
-
-
-.content
-{
-	background: #e0e5e7!important;
-	color: #000;
-}
-
-.content2
-{
-	background: #f8f8f8!important;
-	border: 1px solid #aaaaaa;
-	color: #000;
-}
-
-
-input.ui-state-disabled
-{
-	box-sizing: border-box;
-	background-color: #e0e0e0;
-	border: 1px solid #808080;
-	color: #000000;
-}
-
-textarea.ui-state-disabled
-{
-	box-sizing: border-box;
-	background-color: #e0e0e0;
-	border: 1px solid #808080;
-	color: #000000;
-}
-
-.task-table th
-{
-    background-color:#f0f0f0;
-}
-
-.task-succeeded
-{
-	color:#090;
-}
-
-.task-failed
-{
-	color:#F00;
-}
-
-/* Dependency Graph Styles */
-
-.links{
-	stroke-width: 3px;
-}
-
-.links .derivation {
-	stroke: #06C;
-}
-
-.links .component {
-	stroke: #888;
-}
-
-.links .new-version {
-	stroke: #E00;
-}
-
-.arrow-path
-{
-	stroke: none;
-}
-
-.arrow-path.derivation {
-	fill: #06C;
-}
-
-.arrow-path.component {
-	fill: #888;
-}
-
-.arrow-path.new-version {
-	fill: #E00;
-}
-
-.nodes {
-	stroke-width:2.5px;
-}
-
-.nodes .main {
-	fill: #8E8;
-}
-
-.nodes .prov {
-	fill: #8AF;
-}
-
-.nodes .other {
-	fill: #aaa;
-}
-
-.nodes .comp {
-	stroke: #000;
-}
-
-.nodes .part {
-	stroke: #888;
-}
-
-.node .highlight{
-	stroke:#088!important;
-	stroke-width:2px!important;
-	fill:none!important;
-}
-
-.node .hidden{
-	display:none!important;
-}
-
-.node .data{
-	stroke: #444;
-	stroke-width: 2;
-}
-
-.node text{
-	font-size: 14px;
-	fill: #000;
-}
-
-.node text.locked{
-	font-size: 14px;
-	fill: #FF0000;
-}
-
-.note{
-    color: #803636!important;
-}
-
-.inh-err-title{
-	color: #bf0000!important;
-}
-
-.inh-warn-title{
-	color: #cf7f00!important;
-}
-
-.ui-icon-notice
-{
-    color: #0080FF;
-}
-
-.ui-icon-person
-{
-    color: #0000FF;
-}
-
-.ui-icon-persons
-{
-    color: #0000FF;
-}
-
-.ui-icon-folder
-{
-    color: #dFbF40;
-}
-
-.ui-icon-copy
-{
-    color: #008F00;
-}
-
-.ui-icon-box
-{
-    color: #8040FF;
-}
-
-.ui-icon-view-icons
-{
-    color: #8040FF;
-}
-
-.ui-icon-view-icons-b
-{
-    color: #6000FF;
-}
-
-
-.ui-icon-file-text
-{
-    color: #060;
-}
-
-.ui-icon-file
-{
-    color: #444;
-}
-
-.ui-icon-files
-{
-    color: #444;
-}
-
-.ui-icon-disk
-{
-    color: #444;
-}
-
-.ui-icon-reload
-{
-    color: #444;
-}
-
-.ui-icon-arrowthick-1-e
-{
-    color: #444;
-}
-
-.ui-icon-arrowthick-1-4
-{
-    color: #444;
-}
-
-.ui-icon-flag
-{
-    color: #FF0000;
-}
-
-.ui-icon-alert
-{
-    color: #ef9f00;
-}
-
-.ui-icon-circle-info
-{
-    color: #00aF00;
-}
-
-.ui-icon-circle-help
-{
-    color: #0080FF;
-}
-
-.ui-icon-heart
-{
-    color: #ff0000;
-}
-
-.ui-icon-circle-plus
-{
-    color: #009090;
-}
-
-.ui-icon-plus
-{
-    color: #006000;
-}
-
-.ui-icon-close
-{
-    color: #FF0000;
-}
-
-.ui-icon-view-list
-{
-    color: #a0b000;
-}
-
-.ui-icon-zoom
-{
-    color: #000000;
-}
-
-.ui-icon-locked
-{
-    color: #FF0000;
-}
-
-/*.ui-icon-minusthick*/
-.ui-icon-grip-solid-horizontal
-{
-    color: #df6000;
-}
-
-.ui-icon-structure
-{
-    color: #df6000;
-}
-
-.ui-icon-sign-in
-{
-    color: #007800;
-}
-
-.ui-icon-sign-out
-{
-    color: #c80000;
-}
-
-.ui-icon-databases
-{
-    color: #606060;
-}
-
-.ui-icon-database
-{
-    color: #606060;
-}
-
-.ui-icon-linkext
-{
-    color: #ff8000;
-}
-
-.shadowed
-{
-	position:relative;
-	z-index:10;
-	box-shadow: .2em .4em 5px #888;
-}
-
-mark
-{
-	background:#ff3853;
-	color: #ffffff;
-}
-
-.fancytree-ext-filter-dimm span.fancytree-node span.fancytree-title {
-	color: #666!important;
-	font-weight: lighter!important;
-}
-
-.fancytree-ext-filter-dimm tr.fancytree-submatch span.fancytree-title,
-.fancytree-ext-filter-dimm span.fancytree-node.fancytree-submatch span.fancytree-title {
-	color: #000!important;
-	font-weight: bold!important;
-}
-
-.fancytree-ext-filter-hide tr.fancytree-submatch span.fancytree-title,
-.fancytree-ext-filter-hide span.fancytree-node.fancytree-submatch span.fancytree-title {
-	color: #666!important;
-	font-weight: lighter!important;
-}
-
-.fancytree-ext-filter-dimm tr.fancytree-match span.fancytree-title,
-.fancytree-ext-filter-dimm span.fancytree-node.fancytree-match span.fancytree-title {
-	color: #000!important;
-	font-weight: bold!important;
-}
-
-.fancytree-ext-filter-hide tr.fancytree-match span.fancytree-title,
-.fancytree-ext-filter-hide span.fancytree-node.fancytree-match span.fancytree-title {
-	color: #000!important;
-	font-weight: normal!important;
-}
-
-::-webkit-scrollbar-track
-{
-    background: #f8f8f8;
-}
-
-::-webkit-scrollbar-corner
-{
-    background: #f8f8f8;
-}
-
-::-webkit-scrollbar-thumb
-{
-	background: #d8d8d8;
-	border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover
-{
-    background: #a0e1cb;
-}
-
-.scroller
-{
-    scrollbar-color: #d8d8d8 #f8f8f8; /* thumb and track color */
-    scrollbar-width: thin;
-}
-
-span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
-    color: #dFbF40;
-}
-
-span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:after {
-    color: #dFbF40;
-}
-
-.data-tree-id
-{
-	color:#6070eF;
-}
-
-.data-tree-alias
-{
-	color:#309030;
-}
-
-.data-tree-owner-other
-{
-    color:#B03020;
-}
-
-.data-tree-creator-other
-{
-    color:#EF7000;
-}
-
-.data-tree-creator-self
-{
-    color:#0040FF;
-}
-
-
-
-.ui-draggable-handle {
-	-ms-touch-action: none;
-	touch-action: none;
-}
 /* Layout helpers
 ----------------------------------*/
 .ui-helper-hidden {
@@ -552,89 +92,6 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
 	width: 100%;
 	height: 100%;
 }
-.ui-resizable {
-	position: relative;
-}
-.ui-resizable-handle {
-	position: absolute;
-	font-size: 0.1px;
-	display: block;
-	-ms-touch-action: none;
-	touch-action: none;
-}
-.ui-resizable-disabled .ui-resizable-handle,
-.ui-resizable-autohide .ui-resizable-handle {
-	display: none;
-}
-.ui-resizable-n {
-	cursor: n-resize;
-	height: 7px;
-	width: 100%;
-	top: -5px;
-	left: 0;
-}
-.ui-resizable-s {
-	cursor: s-resize;
-	height: 7px;
-	width: 100%;
-	bottom: -5px;
-	left: 0;
-}
-.ui-resizable-e {
-	cursor: e-resize;
-	width: 7px;
-	right: -5px;
-	top: 0;
-	height: 100%;
-}
-.ui-resizable-w {
-	cursor: w-resize;
-	width: 7px;
-	left: -5px;
-	top: 0;
-	height: 100%;
-}
-.ui-resizable-se {
-	cursor: se-resize;
-	width: 12px;
-	height: 12px;
-	right: 1px;
-	bottom: 1px;
-}
-.ui-resizable-sw {
-	cursor: sw-resize;
-	width: 9px;
-	height: 9px;
-	left: -5px;
-	bottom: -5px;
-}
-.ui-resizable-nw {
-	cursor: nw-resize;
-	width: 9px;
-	height: 9px;
-	left: -5px;
-	top: -5px;
-}
-.ui-resizable-ne {
-	cursor: ne-resize;
-	width: 9px;
-	height: 9px;
-	right: -5px;
-	top: -5px;
-}
-.ui-selectable {
-	-ms-touch-action: none;
-	touch-action: none;
-}
-.ui-selectable-helper {
-	position: absolute;
-	z-index: 100;
-	border: 1px dotted black;
-}
-.ui-sortable-handle {
-	-ms-touch-action: none;
-	touch-action: none;
-}
 .ui-accordion .ui-accordion-header {
 	display: block;
 	cursor: pointer;
@@ -709,7 +166,7 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
 	right: 0;
 }
 .ui-button {
-	padding: .25em .5em;
+	padding: .1em .5em 0.25em .5em;
 	display: inline-block;
 	position: relative;
 	line-height: normal;
@@ -836,13 +293,13 @@ button.ui-button::-moz-focus-inner {
 
 .ui-checkboxradio-label .ui-icon-background {
 	box-shadow: inset 1px 1px 1px #ccc;
-	border-radius: .12em;
+	/*border-radius: .12em;*/
 	border: none;
 }
 .ui-checkboxradio-radio-label .ui-icon-background {
 	width: 16px;
 	height: 16px;
-	border-radius: 1em;
+	/*border-radius: 1em;*/
 	overflow: visible;
 	border: none;
 }
@@ -1032,13 +489,15 @@ button.ui-button::-moz-focus-inner {
 	left: .5em;
 	top: .3em;
 }
+
 .ui-dialog {
 	position: absolute;
 	top: 0;
 	left: 0;
-	padding: .2em;
+	padding: 0;
 	outline: 0;
 }
+
 .ui-dialog .ui-dialog-titlebar {
 	padding: .4em 1em;
 	position: relative;
@@ -1123,6 +582,80 @@ button.ui-button::-moz-focus-inner {
 .ui-draggable .ui-dialog-titlebar {
 	cursor: move;
 }
+.ui-draggable-handle {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-resizable {
+	position: relative;
+}
+.ui-resizable-handle {
+	position: absolute;
+	font-size: 0.1px;
+	display: block;
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-resizable-disabled .ui-resizable-handle,
+.ui-resizable-autohide .ui-resizable-handle {
+	display: none;
+}
+.ui-resizable-n {
+	cursor: n-resize;
+	height: 7px;
+	width: 100%;
+	top: -5px;
+	left: 0;
+}
+.ui-resizable-s {
+	cursor: s-resize;
+	height: 7px;
+	width: 100%;
+	bottom: -5px;
+	left: 0;
+}
+.ui-resizable-e {
+	cursor: e-resize;
+	width: 7px;
+	right: -5px;
+	top: 0;
+	height: 100%;
+}
+.ui-resizable-w {
+	cursor: w-resize;
+	width: 7px;
+	left: -5px;
+	top: 0;
+	height: 100%;
+}
+.ui-resizable-se {
+	cursor: se-resize;
+	width: 12px;
+	height: 12px;
+	right: 1px;
+	bottom: 1px;
+}
+.ui-resizable-sw {
+	cursor: sw-resize;
+	width: 9px;
+	height: 9px;
+	left: -5px;
+	bottom: -5px;
+}
+.ui-resizable-nw {
+	cursor: nw-resize;
+	width: 9px;
+	height: 9px;
+	left: -5px;
+	top: -5px;
+}
+.ui-resizable-ne {
+	cursor: ne-resize;
+	width: 9px;
+	height: 9px;
+	right: -5px;
+	top: -5px;
+}
 .ui-progressbar {
 	height: 2em;
 	text-align: left;
@@ -1140,6 +673,15 @@ button.ui-button::-moz-focus-inner {
 }
 .ui-progressbar-indeterminate .ui-progressbar-value {
 	background-image: none;
+}
+.ui-selectable {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-selectable-helper {
+	position: absolute;
+	z-index: 100;
+	border: 1px dotted black;
 }
 .ui-selectmenu-menu {
 	padding: 0;
@@ -1246,6 +788,10 @@ button.ui-button::-moz-focus-inner {
 .ui-slider-vertical .ui-slider-range-max {
 	top: 0;
 }
+.ui-sortable-handle {
+	-ms-touch-action: none;
+	touch-action: none;
+}
 .ui-spinner {
 	position: relative;
 	display: inline-block;
@@ -1308,7 +854,7 @@ button.ui-button::-moz-focus-inner {
 }
 .ui-tabs .ui-tabs-nav .ui-tabs-anchor {
 	float: left;
-	padding: .25em .5em;
+	padding: .5em 1em;
 	text-decoration: none;
 }
 .ui-tabs .ui-tabs-nav li.ui-tabs-active {
@@ -1338,7 +884,6 @@ button.ui-button::-moz-focus-inner {
 body .ui-tooltip {
 	border-width: 2px;
 }
-
 /* Component containers
 ----------------------------------*/
 .ui-widget {
@@ -1356,21 +901,22 @@ body .ui-tooltip {
 	font-size: 1em;
 }
 .ui-widget.ui-widget-content {
-	border: 1px solid #93c3cd;
+	border: 1px solid #999;
 }
 .ui-widget-content {
-	border: 1px solid #aaaaaa;
-	background: #ffffff;
-	color: #2c4359;
+	/*border: 1px solid #353535;*/
+	background: #eee;
+	color: #000;
 }
 .ui-widget-content a {
-	color: #2c4359;
+	color: #ffffff;
 }
 .ui-widget-header {
-	border: 1px solid #2c4359;
-	background: #35414f url("images/ui-bg_dots-small_35_35414f_2x2.png") 50% 50% repeat;
-	color: #ffffff;
-	font-weight: bold;
+	/*border: none;*/
+	border-bottom: 1px solid #000;
+	background: #35414f;
+	color: #fff;
+	/*font-weight: bold;*/
 }
 .ui-widget-header a {
 	color: #ffffff;
@@ -1387,7 +933,7 @@ body .ui-tooltip {
 works properly when clicked or hovered */
 html .ui-button.ui-state-disabled:hover,
 html .ui-button.ui-state-disabled:active {
-	border: 1px solid #93c3cd;
+	border: none; /*1px solid #93c3cd;*/
 	background: #93c3cd url("images/ui-bg_diagonals-small_50_93c3cd_40x40.png") 50% 50% repeat;
 	font-weight: normal;
 	color: #333333;
@@ -1399,7 +945,7 @@ a.ui-button,
 a:link.ui-button,
 a:visited.ui-button,
 .ui-button {
-	color: #333333;
+	color: #000;
 	text-decoration: none;
 }
 .ui-state-hover,
@@ -1410,7 +956,7 @@ a:visited.ui-button,
 .ui-widget-header .ui-state-focus,
 .ui-button:hover,
 .ui-button:focus {
-	border: 1px solid #a0e1cb;
+	border: none; /*1px solid #a0e1cb;*/
 	background: #a0e1cb url("images/ui-bg_diagonals-small_75_a0e1cb_40x40.png") 50% 50% repeat;
 	font-weight: normal;
 	color: #212121;
@@ -1425,7 +971,7 @@ a:visited.ui-button,
 .ui-state-focus a:visited,
 a.ui-button:hover,
 a.ui-button:focus {
-	color: #212121;
+	color: #333333;
 	text-decoration: none;
 }
 
@@ -1438,20 +984,22 @@ a.ui-button:focus {
 a.ui-button:active,
 .ui-button:active,
 .ui-button.ui-state-active:hover {
-	border: 1px solid #29c59c;
-	background: #29c59c url("images/ui-bg_diagonals-small_40_29c59c_40x40.png") 50% 50% repeat;
+	/*border: 1px solid #26b3f7;*/
+	/*background: #0972a5;*/
+	/*background: #085d7c;*/
+	background: #29c59c url("images/ui-bg_diagonals-small_75_a0e1cb_40x40.png") 50% 50% repeat;
 	font-weight: normal;
-	color: #000000;
+	color: #000;
 }
 .ui-icon-background,
 .ui-state-active .ui-icon-background {
-	border: #29c59c;
-	background-color: #000000;
+	border: #26b3f7;
+	background-color: #ffffff;
 }
 .ui-state-active a,
 .ui-state-active a:link,
 .ui-state-active a:visited {
-	color: #000000;
+	color: #000;
 	text-decoration: none;
 }
 
@@ -1460,35 +1008,35 @@ a.ui-button:active,
 .ui-state-highlight,
 .ui-widget-content .ui-state-highlight,
 .ui-widget-header .ui-state-highlight {
-	border: 1px solid #95ff6e;
-	background: #95ff6e url("images/ui-bg_dots-medium_80_95ff6e_4x4.png") 50% 50% repeat;
-	color: #363636;
+	border: 1px solid #cccccc;
+	background: #eeeeee;
+	color: #2e7db2;
 }
 .ui-state-checked {
-	border: 1px solid #95ff6e;
-	background: #95ff6e;
+	border: 1px solid #cccccc;
+	background: #eeeeee;
 }
 .ui-state-highlight a,
 .ui-widget-content .ui-state-highlight a,
 .ui-widget-header .ui-state-highlight a {
-	color: #363636;
+	color: #2e7db2;
 }
 .ui-state-error,
 .ui-widget-content .ui-state-error,
 .ui-widget-header .ui-state-error {
-	border: 1px solid #ff6b7f;
-	background: #ff3853 url("images/ui-bg_diagonals-small_50_ff3853_40x40.png") 50% 50% repeat;
-	color: #ffffff;
+	border: 1px solid #ffb73d;
+	background: #ffc73d;
+	color: #111111;
 }
 .ui-state-error a,
 .ui-widget-content .ui-state-error a,
 .ui-widget-header .ui-state-error a {
-	color: #ffffff;
+	color: #111111;
 }
 .ui-state-error-text,
 .ui-widget-content .ui-state-error-text,
 .ui-widget-header .ui-state-error-text {
-	color: #ffffff;
+	color: #111111;
 }
 .ui-priority-primary,
 .ui-widget-content .ui-priority-primary,
@@ -1523,7 +1071,7 @@ a.ui-button:active,
 }
 .ui-icon,
 .ui-widget-content .ui-icon {
-	background-image: url("images/ui-icons_c02669_256x240.png");
+	background-image: url("images/ui-icons_cccccc_256x240.png");
 }
 .ui-widget-header .ui-icon {
 	background-image: url("images/ui-icons_ffffff_256x240.png");
@@ -1532,22 +1080,22 @@ a.ui-button:active,
 .ui-state-focus .ui-icon,
 .ui-button:hover .ui-icon,
 .ui-button:focus .ui-icon {
-	background-image: url("images/ui-icons_454545_256x240.png");
+	background-image: url("images/ui-icons_ffffff_256x240.png");
 }
 .ui-state-active .ui-icon,
 .ui-button:active .ui-icon {
-	background-image: url("images/ui-icons_000000_256x240.png");
+	background-image: url("images/ui-icons_222222_256x240.png");
 }
 .ui-state-highlight .ui-icon,
 .ui-button .ui-state-highlight.ui-icon {
-	background-image: url("images/ui-icons_000000_256x240.png");
+	background-image: url("images/ui-icons_4b8e0b_256x240.png");
 }
 .ui-state-error .ui-icon,
 .ui-state-error-text .ui-icon {
-	background-image: url("images/ui-icons_ffeb33_256x240.png");
+	background-image: url("images/ui-icons_a83300_256x240.png");
 }
 .ui-button .ui-icon {
-	background-image: url("images/ui-icons_ffffff_256x240.png");
+	background-image: url("images/ui-icons_cccccc_256x240.png");
 }
 
 /* positioning */
@@ -1732,6 +1280,28 @@ a.ui-button:active,
 /* Misc visuals
 ----------------------------------*/
 
+.ui-dialog.ui-corner-all
+{
+	border-radius: 0.5em;
+}
+
+.ui-dialog-titlebar.ui-corner-all
+{
+	border-top-right-radius: 0.5em;
+	border-top-left-radius: 0.5em;
+}
+
+.ui-dialog-buttonpane
+{
+	border-bottom-right-radius: 0.5em;
+	border-bottom-left-radius: 0.5em;
+}
+
+.ui-button.ui-corner-all
+{
+	border-radius: 0.25em;
+}
+
 /* Corner radius */
 .ui-corner-all,
 .ui-corner-top,
@@ -1760,11 +1330,11 @@ a.ui-button:active,
 
 /* Overlays */
 .ui-widget-overlay {
-	background: #b9b9b9 url("images/ui-bg_white-lines_85_b9b9b9_40x100.png") 50% 50% repeat;
+	background: #5c5c5c;
 	opacity: .8;
 	filter: Alpha(Opacity=80); /* support: IE8 */
 }
 .ui-widget-shadow {
-	-webkit-box-shadow: 8px 8px 10px #404040;
-	box-shadow: 8px 8px 10px #404040;
+	-webkit-box-shadow: -7px -7px 7px #cccccc;
+	box-shadow: -7px -7px 7px #cccccc;
 }
