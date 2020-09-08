@@ -159,7 +159,7 @@ module.exports = ( function() {
         gid: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'group ID' },
         id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key", label: 'ID' },
         doi: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_DOI, label: 'doi' },
-        data_url: { required: false, update: true, max_len: 200, lower: false, charset: obj.CHARSET_URL, label: 'data URL' },
+        data_url: { required: false, update: true, max_len: 200, lower: false, charset: obj.CHARSET_URL, label: 'data URL' }
     };
 
     obj.DEF_MAX_COLL    = 50;
@@ -1648,6 +1648,51 @@ module.exports = ( function() {
             }
         }
     };
+
+    obj.addTags = function( a_tags ){
+        console.log("addTags",a_tags);
+
+        var id, tag, j, code;
+
+        for ( var i in a_tags ){
+            tag = a_tags[i].toLowerCase();
+            id = "tag/" + tag;
+            if ( obj.db.tag.exists( id )){
+                tag = obj.db.tag.document( id );
+                obj.db._update( id, { count: tag.count + 1 });
+            }else{
+                if ( tag.length > 40 )
+                    throw [obj.ERR_INVALID_PARAM,"Tag too long (max 40 characters)."];
+
+                for ( j = 0; j < tag.length; j++) {
+                    code = tag.charCodeAt(j);
+                    if (!(code > 47 && code < 58) && // numeric (0-9)
+                        !(code > 96 && code < 123) && // lower alpha (a-z)
+                        code != 45 ) // "-"
+                        throw [obj.ERR_INVALID_CHAR,"Invalid character(s) in tag."];
+                }
+
+                obj.db.tag.save({ _key: tag, count: 1 });
+            }
+        }
+    }
+
+    obj.removeTags = function( a_tags ){
+        console.log("removeTags",a_tags);
+
+        var id, tag;
+        for ( var i in a_tags ){
+            id = "tag/" + a_tags[i].toLowerCase();
+            if ( obj.db.tag.exists( id )){
+                tag = obj.db.tag.document( id );
+                if ( tag.count > 1 ){
+                    obj.db._update( id, { count: tag.count - 1 });
+                }else{
+                    obj.db.remove( id );
+                }
+            }
+        }
+    }
 
     obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){
         var path = a_path, idx = a_path.lastIndexOf("/");

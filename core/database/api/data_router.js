@@ -84,6 +84,11 @@ function recordCreate( client, record, result ){
         }
     }
 
+    if ( record.tags != undefined ){
+        g_lib.addTags( record.tags );
+        obj.tags = record.tags;
+    }
+
     var data = g_db.d.save( obj, { returnNew: true });
 
     g_db.owner.save({ _from: data.new._id, _to: owner_id });
@@ -128,6 +133,7 @@ function recordCreate( client, record, result ){
             g_lib.annotationDependenciesUpdated( data.new, dep_ids, null, updates );
     }
 
+
     g_db.item.save({ _from: parent_id, _to: data.new._id });
 
     data.new.id = data.new._id;
@@ -152,7 +158,7 @@ router.post('/create', function (req, res) {
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -185,6 +191,7 @@ router.post('/create', function (req, res) {
     deps: joi.array().items(joi.object({
         id: joi.string().required(),
         type: joi.number().integer().required()})).optional(),
+    tags: joi.array().items(joi.string()).optional()
 }).required(), 'Record fields')
 .summary('Create a new data record')
 .description('Create a new data record from JSON body');
@@ -203,7 +210,7 @@ router.post('/create/batch', function (req, res) {
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -239,6 +246,7 @@ router.post('/create/batch', function (req, res) {
         deps: joi.array().items(joi.object({
             id: joi.string().required(),
             type: joi.number().integer().required()})).optional(),
+        tags: joi.array().items(joi.string()).optional(),
         id: joi.string().allow('').optional(), // Ignored
         locked: joi.boolean().optional(), // Ignore
         size: joi.number().optional(), // Ignored
@@ -340,6 +348,33 @@ function recordUpdate( client, record, result ){
     if ( record.dt != undefined )
         obj.dt = record.dt;
 
+    if ( record.tags != undefined ){
+        if ( data.tags && data.tags.length ){
+            var add_tags = [], rem_tags = [], i, tag;
+
+            for ( i in data.tags ){
+                tag = data.tags[i];
+                if ( !( tag in record.tags )){
+                    rem_tags.push( tag );
+                }
+            }
+
+            for ( i in record.tags ){
+                tag = record.tags[i];
+                if ( !( tag in data.tags )){
+                    add_tags.push( tag );
+                }
+            }
+
+            g_lib.addTags( add_tags );
+            g_lib.removeTags( rem_tags );
+        }else{
+            g_lib.addTags( record.tags );
+        }
+
+        obj.tags = record.tags;
+    }
+    
     data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: record.mdset?false:true });
     data = data.new;
 
@@ -441,7 +476,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep","n","note"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -478,6 +513,7 @@ router.post('/update', function (req, res) {
     alias: joi.string().allow('').optional(),
     doi: joi.string().allow('').optional(),
     data_url: joi.string().allow('').optional(),
+    tags: joi.array().items(joi.string()).optional(),
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
     size: joi.number().optional(),
@@ -504,7 +540,7 @@ router.post('/update/batch', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep","n","note"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -548,6 +584,7 @@ router.post('/update/batch', function (req, res) {
         alias: joi.string().allow('').optional(),
         doi: joi.string().allow('').optional(),
         data_url: joi.string().allow('').optional(),
+        tags: joi.array().items(joi.string()).optional(),
         md: joi.any().optional(),
         mdset: joi.boolean().optional().default(false),
         ext: joi.string().allow('').optional(),
