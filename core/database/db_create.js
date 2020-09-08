@@ -19,6 +19,7 @@ graph._addVertexCollection("n");    // Annotations (notes)
 graph._addVertexCollection("q");    // Saved queries
 graph._addVertexCollection("repo"); // Repository servers
 graph._addVertexCollection("task"); // Tasks
+graph._addVertexCollection("tag"); // Tags
 
 
 var owner = graph_module._relation("owner", ["d","c","p","g","a","q","task"], ["u","p"]);
@@ -68,6 +69,7 @@ graph._extendEdgeDefinitions(block);
 
 var userview = db._createView("userview","arangosearch",{});
 var analyzers = require("@arangodb/analyzers");
+
 var user_name = analyzers.save("user_name","ngram",{
   "min": 3,
   "max": 5,
@@ -79,6 +81,24 @@ userview.properties({
   links:{
     "u":{
       fields:{"name":{analyzers:["user_name"]}},
+      includeAllFields: false
+    }
+  }
+},true);
+
+var tag_name = analyzers.save("tag_name","ngram",{
+  "min": 3,
+  "max": 5,
+  "streamType":"utf8",
+  "preserveOriginal":true
+}, ["frequency","norm","position"]); 
+
+var tagview = db._createView("tagview","arangosearch",{});
+
+tagview.properties({
+  links:{
+    "tag":{
+      fields:{"_key":{analyzers:["tag_name"]}},
       includeAllFields: false
     }
   }
@@ -149,4 +169,3 @@ db.u.ensureIndex({ type: "hash", unique: true, fields: [ "access" ], sparse: tru
 db.g.ensureIndex({ type: "hash", unique: true, fields: [ "uid", "gid" ] });
 db.loc.ensureIndex({ type: "hash", unique: false, fields: [ "uid" ], sparse: true });
 db.dep.ensureIndex({ type: "hash", unique: false, fields: [ "type" ], sparse: true });
-

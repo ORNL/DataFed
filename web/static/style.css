@@ -18,6 +18,11 @@ div
     box-sizing: border-box;
 }
 
+.ui-resizable-s
+{
+    bottom:0!important;
+}
+
 
 /*.ui-resizable-e {
     right: 0!important;
@@ -277,6 +282,11 @@ svg text
     min-height:2em;
 }
 
+#data-tabs .ui-widget-header
+{
+    height:1.8rem;
+}
+
 .cat-nav-bar
 {
     padding:0.4em .4em;
@@ -301,10 +311,12 @@ svg text
     padding:0.25em 0.5em;
 }
 
-.cat-topic-container
+.cat-sidebar-container
 {
     padding:0.5em;
-    border:none!important;
+    border-top:none!important;
+    border-bottom:none!important;
+    border-left:none!important;
 }
 
 .cat-topic

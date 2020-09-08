@@ -24,15 +24,19 @@
 
     </div>
 
-    <div class="ui-widget-content row-flex" style="flex:1 1 80%;padding:0;min-height:0">
-        <div class='col-flex topics-div' style='flex:none;padding:0;min-height:0;overflow:hidden'>
-            <div class='cat-subheading' style='flex:none'>Topics</div>
-            <div class='cat-topic-container' style='flex:1 1 auto;overflow:auto;min-height:0'>
+    <div class="ui-widget-content row-flex" style="flex:1 1 auto;padding:0;min-height:0;height:100%">
+        <div class='col-flex topics-div' style='flex:none;padding:0;min-height:0;overflow:hidden;height:100%'>
+            <div class='cat-subheading' style='flex:none'>Categories</div>
+            <div id='cat_top_sidebar' class='cat-sidebar-container' style='flex:none;overflow:auto;min-height:0;height:50%'>
                 <div id='cat_topics_div'></div>
+            </div>
+            <div class='cat-subheading' style='flex:none'>Tags</div>
+            <div id='cat_tags_sidebar' class='cat-sidebar-container' style='flex:1 1 auto;overflow:auto;'>
+                <div id='cat_tags_div'>Tags</div>
             </div>
         </div>
 
-        <div class='col-flex' style='flex:1 1 auto;;padding:0;min-height:0;overflow:hidden'>
+        <div class='col-flex' style='flex:1 1 auto;padding:0;min-height:0;overflow:hidden'>
             <div id='coll_div_title' class='cat-subheading' style='flex:none'>Collections &amp; Data</div>
             <div class='content cat-content' style='flex:1 1 auto;overflow:auto;min-height:0'>
                 <div id='cat_coll_div' class='cat-coll-container'>

@@ -29,6 +29,11 @@ textarea
     color:#fff!important;
 }
 
+.ui-resizable-s:hover
+{
+    background:#003147;
+}
+
 /*
 #data-tabs > .ui-tabs-nav
 {
@@ -115,13 +120,10 @@ textarea.ui-state-disabled
 
 /* Catalog Styles */
 
-.cat-topic-container
+.cat-sidebar-container
 {
     background:#08090a!important;
     border-right:1px solid #24292e!important;
-    border-top:none!important;
-    border-bottom:none!important;
-    border-left:none!important;
 }
 
 .cat-coll-title-div

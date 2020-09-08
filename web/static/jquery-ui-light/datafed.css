@@ -63,6 +63,11 @@ textarea
     color:#222!important;
 }
 
+.ui-resizable-s:hover
+{
+    background:#a0e1cb;
+}
+
 .task-table th
 {
     background-color:#f0f0f0;
@@ -80,13 +85,10 @@ textarea
 
 /* Catalog Styles */
 
-.cat-topic-container
+.cat-sidebar-container
 {
     background:#fff!important;
     border-right:1px solid #eee!important;
-    border-top:none!important;
-    border-bottom:none!important;
-    border-left:none!important;
 }
 
 .cat-coll-title-div

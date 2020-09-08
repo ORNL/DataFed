@@ -638,6 +638,19 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     var search_sel_mode = false;
 
+    $("#cat_top_sidebar").resizable({
+        handles:"s",
+        stop: function(event, ui){
+            /*
+            var cellPercentH=100 * ui.originalElement.outerHeight()/ $(".topics-div",cat_panel).innerHeight();
+            ui.originalElement.css('height', cellPercentH + '%');  
+            var nextCell = ui.originalElement.next();
+            var nextPercentH=100 * nextCell.outerHeight()/ $(".topics-div",cat_panel).innerHeight();
+            nextCell.css('height', nextPercentH + '%');
+            */
+        }
+    });
+    
     this.setSearchSelectMode = function( a_enabled ){
         search_sel_mode = a_enabled;
         //cat_tree.setOption("checkbox",a_enabled);
