@@ -50,7 +50,6 @@ function recordCreate( client, record, result ){
 
     g_lib.procInputParam( record, "title", false, obj );
     g_lib.procInputParam( record, "desc", false, obj );
-    g_lib.procInputParam( record, "keyw", false, obj );
     g_lib.procInputParam( record, "alias", false, obj );
     g_lib.procInputParam( record, "doi", false, obj );
     g_lib.procInputParam( record, "data_url", false, obj );
@@ -179,7 +178,6 @@ router.post('/create', function (req, res) {
 .body(joi.object({
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
-    keyw: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     doi: joi.string().allow('').optional(),
     data_url: joi.string().allow('').optional(),
@@ -234,7 +232,6 @@ router.post('/create/batch', function (req, res) {
     joi.object({
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
-        keyw: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
         doi: joi.string().allow('').optional(),
         data_url: joi.string().allow('').optional(),
@@ -275,7 +272,7 @@ function recordUpdate( client, record, result ){
         if ( record.md !== undefined )
             perms |= g_lib.PERM_WR_META;
 
-        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.keyw !== undefined )
+        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.tags !== undefined )
             perms |= g_lib.PERM_WR_REC;
 
         if ( record.size !== undefined || record.dt !== undefined || record.data_url !== undefined || record.doi !== undefined || record.source !== undefined )
@@ -291,7 +288,6 @@ function recordUpdate( client, record, result ){
 
     g_lib.procInputParam( record, "title", true, obj );
     g_lib.procInputParam( record, "desc", true, obj );
-    g_lib.procInputParam( record, "keyw", true, obj );
     g_lib.procInputParam( record, "alias", true, obj );
     g_lib.procInputParam( record, "source", true, obj );
     g_lib.procInputParam( record, "doi", true, obj );
@@ -509,7 +505,6 @@ router.post('/update', function (req, res) {
     id: joi.string().required(),
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
-    keyw: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     doi: joi.string().allow('').optional(),
     data_url: joi.string().allow('').optional(),
@@ -580,7 +575,6 @@ router.post('/update/batch', function (req, res) {
         id: joi.string().required(),
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
-        keyw: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
         doi: joi.string().allow('').optional(),
         data_url: joi.string().allow('').optional(),

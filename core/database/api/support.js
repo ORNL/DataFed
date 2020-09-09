@@ -1688,7 +1688,7 @@ module.exports = ( function() {
                 if ( tag.count > 1 ){
                     obj.db._update( id, { count: tag.count - 1 });
                 }else{
-                    obj.db.remove( id );
+                    obj.db._remove( id );
                 }
             }
         }
