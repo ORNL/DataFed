@@ -109,7 +109,8 @@ var view = db._createView("textview","arangosearch",{});
 view.properties({
     links: {
       "d": {
-        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},
+        /*fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},*/
+        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]}},
         includeAllFields: false
       }
     }
@@ -122,7 +123,7 @@ view = db._createView("collview","arangosearch",{});
 view.properties({
     links: {
       "c": {
-        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},
+        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]}},
         includeAllFields: false
       }
     }
@@ -135,7 +136,7 @@ view = db._createView("projview","arangosearch",{});
 view.properties({
     links: {
       "p": {
-        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},
+        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]}},
         includeAllFields: false
       }
     }
@@ -156,16 +157,23 @@ view.properties({
   true
 );
 
-db.d.ensureIndex({ type: "fulltext", unique: false, fields: [ "keyw" ], sparse: true, minLength: 3 });
-db.c.ensureIndex({ type: "fulltext", unique: false, fields: [ "topic" ], sparse: true, minLength: 3 });
+/*db.d.ensureIndex({ type: "fulltext", unique: false, fields: [ "keyw" ], sparse: true, minLength: 3 });
+db.c.ensureIndex({ type: "fulltext", unique: false, fields: [ "topic" ], sparse: true, minLength: 3 });*/
 
 db.task.ensureIndex({ type: "hash", unique: false, fields: [ "client" ], sparse: true });
 db.task.ensureIndex({ type: "skiplist", unique: false, fields: [ "status" ], sparse: true });
 db.task.ensureIndex({ type: "hash", unique: false, fields: [ "servers[*]" ], sparse: true });
+
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "doi" ], sparse: true });
+db.d.ensureIndex({ type: "persistent", unique: false, fields: [ "tags[*]" ] });
+
+db.c.ensureIndex({ type: "persistent", unique: false, fields: [ "tags[*]" ] });
+
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "access" ], sparse: true });
 db.g.ensureIndex({ type: "hash", unique: true, fields: [ "uid", "gid" ] });
 db.loc.ensureIndex({ type: "hash", unique: false, fields: [ "uid" ], sparse: true });
 db.dep.ensureIndex({ type: "hash", unique: false, fields: [ "type" ], sparse: true });
+
+db.tag.ensureIndex({ type: "persistent", unique: false, fields: [ "count" ], sparse: true });

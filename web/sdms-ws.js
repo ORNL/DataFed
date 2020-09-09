@@ -943,6 +943,47 @@ app.get('/api/note/list/by_subject', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/tag/search', ( a_req, a_resp ) => {
+    var par = { name: a_req.query.name };
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "TagSearchRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.get('/api/tag/autocomp', ( a_req, a_resp ) => {
+    console.log("tag autocomp, term:", a_req.query.term );
+    var par = { name: a_req.query.term, offset: 0, count: 10 };
+
+    sendMessage( "TagSearchRequest", par, a_req, a_resp, function( reply ) {
+        var res = [], tag;
+        if ( reply.tag ){
+            for ( var i in reply.tag ){
+                tag = reply.tag[i];
+                res.push({ value: tag.name, label: tag.name + " (" + tag.count + ")" });
+            }
+        }
+        console.log("tags:",res);
+        a_resp.json( res );
+    });
+});
+
+app.get('/api/tag/list/by_count', ( a_req, a_resp ) => {
+    var par = {};
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "TagListByCountRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
 app.get('/api/task/list', ( a_req, a_resp ) => {
     var params = {};
     if ( a_req.query.since )

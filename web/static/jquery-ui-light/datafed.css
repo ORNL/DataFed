@@ -58,6 +58,11 @@ textarea
     resize: none;
 }
 
+ul.tagit {
+    background:#fff;
+    border-radius: 0;
+}
+
 .btn-icon span
 {
     color:#222!important;

@@ -178,6 +178,12 @@ message CollInfoData
     optional string             brief       = 7;
 }
 
+message TagData
+{
+    required string             name        = 1;
+    required uint64             count       = 2;
+}
+
 message PathData
 {
     repeated ListingData        item        = 1;
@@ -189,7 +195,7 @@ message RecordData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
-    optional string             keyw        = 5;
+    repeated string             tag         = 5;
     optional string             doi         = 6;
     optional string             data_url    = 7;
     optional string             metadata    = 8;
@@ -236,12 +242,13 @@ message CollData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
-    optional string             topic       = 5;
-    optional string             owner       = 6;
-    optional uint32             ct          = 7;
-    optional uint32             ut          = 8;
-    optional string             parent_id   = 9;
-    optional uint32             notes       = 10;
+    repeated string             tag         = 5;
+    optional string             topic       = 6;
+    optional string             owner       = 7;
+    optional uint32             ct          = 8;
+    optional uint32             ut          = 9;
+    optional string             parent_id   = 10;
+    optional uint32             notes       = 11;
 }
 
 message GroupData

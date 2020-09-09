@@ -25,6 +25,9 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         is_published,
         parent_coll;
     
+    console.log("data:",a_data);
+
+    //<tr><td>Tags:</td><td colspan='3'><input title='Tags (optional, space delimited)' type='text' id='tags' style='width:100%'></input></td></tr>
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
@@ -39,7 +42,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     <tr><td>Title: <span class='note'>*</span></td><td colspan='3'><input title='Title string (required)' type='text' id='title' maxlength='80' style='width:100%'></input></td></tr>\
                     <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' maxlength='40' id='alias' style='width:100%'></input></td></tr>\
                     <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' maxlength='2000' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
-                    <tr><td>Keywords:</td><td colspan='3'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
+                    <tr><td>Tags:</td><td colspan='3'><ul id='tags'></ul></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
                 </table>\
             </div>\
@@ -100,6 +103,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         dlg_title = "New Data Record";
     else
         return;
+
+    var tag_el = $("#tags",frame);
 
     util.inputTheme( $('input:text',frame ));
     util.inputTheme( $('textarea',frame ));
@@ -280,8 +285,10 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
-                    util.getUpdatedValue( $("#keyw",frame).val(), a_data, obj, "keyw" );
                     util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
+
+                    // TODO Only assign tags if changed
+                    obj.tag = tag_el.tagit("assignedTags");
 
                     if ( is_published ){
                         var doi = $("#doi",frame).val(),
@@ -373,7 +380,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
-                    util.getUpdatedValue( $("#keyw",frame).val(), {}, obj, "keyw" );
+                    //util.getUpdatedValue( $("#tags",frame).val(), {}, obj, "tags" );
 
                     if ( is_published ){
                         util.getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
@@ -425,6 +432,15 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
             $("select",frame).selectmenu({width:200});
 
+            tag_el.tagit({
+                autocomplete: {
+                    delay: 500,
+                    minLength: 3,
+                    source: "/api/tag/autocomp"
+                },
+                caseSensistive: false
+            });
+        
             jsoned = ace.edit( $("#md",frame).get(0), {
                 theme:(settings.theme=="light"?"ace/theme/light":"ace/theme/dark"),
                 mode:"ace/mode/json",
@@ -443,7 +459,12 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 }
 
                 $("#desc",frame).val(a_data.desc);
-                $("#keyw",frame).val(a_data.keyw);
+                
+                if ( a_data.tag && a_data.tag.length ){
+                    for ( var t in a_data.tag ){
+                        tag_el.tagit("createTag", a_data.tag[t] );
+                    }
+                }
 
                 if ( a_data.metadata ){
                     var md = JSON.parse( a_data.metadata );
@@ -477,7 +498,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         $("#md_set",frame).attr('disabled',true);
                     }
                     if (( a_upd_perms & model.PERM_WR_REC ) == 0 ){
-                        util.inputDisable( $("#title,#desc,#alias,#keyw", frame ));
+                        util.inputDisable( $("#title,#desc,#alias", frame ));
                         util.inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
                         $(".ref-row select", frame ).selectmenu("disable");
                     }
@@ -518,7 +539,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
-                $("#keyw",frame).val("");
+                //$("#tags",frame).val("");
                 //$("#md",frame).val("");
                 $("#dlg_md_row2",frame).css("display","none");
                 if ( a_parent )

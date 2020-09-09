@@ -920,10 +920,21 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::Re
     string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
-    if ( a_request.has_keyw() )
-        body += ",\"keyw\":\"" + escapeJSON( a_request.keyw() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
+
+    if ( a_request.tag_size() )
+    {
+        body += ",\"tags\":[";
+        for ( int i = 0; i < a_request.tag_size(); i++ )
+        {
+            if ( i )
+                body += ",";
+            body += "\"" + a_request.tag(i) + "\"";
+        }
+        body += "]";
+    }
+
     if ( a_request.has_metadata() )
         body += ",\"md\":" + a_request.metadata();
     if ( a_request.has_doi() )
@@ -969,10 +980,21 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
         body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
-    if ( a_request.has_keyw() )
-        body += ",\"keyw\":\"" + escapeJSON( a_request.keyw() ) + "\"";
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
+
+    if ( a_request.tag_size() )
+    {
+        body += ",\"tags\":[";
+        for ( int i = 0; i < a_request.tag_size(); i++ )
+        {
+            if ( i )
+                body += ",";
+            body += "\"" + a_request.tag(i) + "\"";
+        }
+        body += "]";
+    }
+
     if ( a_request.has_metadata() )
     {
         body += ",\"md\":" + (a_request.metadata().size()?a_request.metadata():"\"\"");
@@ -1187,8 +1209,15 @@ DatabaseAPI::setRecordData( Anon::RecordDataReply & a_reply, const Value & a_res
             if ( obj.has( "desc" ))
                 rec->set_desc( obj.asString() );
 
-            if ( obj.has( "keyw" ))
-                rec->set_keyw( obj.asString() );
+            if ( obj.has( "tags" ))
+            {
+                const Value::Array & arr2 = obj.asArray();
+
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    rec->add_tag( k->asString() );
+                }
+            }
 
             if ( obj.has( "doi" ))
                 rec->set_doi( obj.asString() );
@@ -1457,6 +1486,7 @@ DatabaseAPI::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth
     setCollPathData( a_reply, result );
 }
 
+
 void
 DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply )
 {
@@ -1469,6 +1499,7 @@ DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::
     a_reply.set_offset( result.asObject().getNumber( "offset" ));
 }
 
+
 void
 DatabaseAPI::setCollData( Anon::CollDataReply & a_reply, const libjson::Value & a_result )
 {
@@ -1478,7 +1509,7 @@ DatabaseAPI::setCollData( Anon::CollDataReply & a_reply, const libjson::Value & 
     TRANSLATE_BEGIN()
 
     const Value::Object & res_obj = a_result.asObject();
-    Value::ArrayConstIter i;
+    Value::ArrayConstIter i, k;
 
     if ( res_obj.has( "results" ))
     {
@@ -1500,6 +1531,16 @@ DatabaseAPI::setCollData( Anon::CollDataReply & a_reply, const libjson::Value & 
 
             if ( obj.has( "alias" ) && !obj.value().isNull() )
                 coll->set_alias( obj.asString() );
+
+            if ( obj.has( "tags" ))
+            {
+                const Value::Array & arr2 = obj.asArray();
+
+                for ( k = arr2.begin(); k != arr2.end(); k++ )
+                {
+                    coll->add_tag( k->asString() );
+                }
+            }
 
             if ( obj.has( "ct" ))
                 coll->set_ct( obj.asNumber() );
@@ -2698,6 +2739,82 @@ DatabaseAPI::setNoteData( NoteData * a_note, const libjson::Value::Object & a_ob
                 comment->set_state((NoteState) obj.asNumber() );
         }
     }
+}
+
+
+void
+DatabaseAPI::tagSearch( const Anon::TagSearchRequest & a_request, Anon::TagDataReply & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+
+    params.push_back({ "name", a_request.name() });
+
+    if ( a_request.has_offset() && a_request.has_count() )
+    {
+        params.push_back({ "offset", to_string( a_request.offset() )});
+        params.push_back({ "count", to_string( a_request.count() )});
+    }
+
+    dbPost( "tag/search", params, 0, result );
+
+    setTagDataReply( a_reply, result );
+}
+
+
+void
+DatabaseAPI::tagListByCount( const Anon::TagListByCountRequest & a_request, Anon::TagDataReply & a_reply )
+{
+    Value result;
+    vector<pair<string,string>> params;
+
+    if ( a_request.has_offset() && a_request.has_count() )
+    {
+        params.push_back({ "offset", to_string( a_request.offset() )});
+        params.push_back({ "count", to_string( a_request.count() )});
+    }
+
+    dbPost( "tag/list/by_count", params, 0, result );
+
+    setTagDataReply( a_reply, result );
+}
+
+void
+DatabaseAPI::setTagDataReply( Anon::TagDataReply & a_reply, const Value & a_result )
+{
+    Value::ObjectConstIter   j;
+
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
+    {
+        const Value::Object & obj = i->asObject();
+
+        if ( obj.has( "paging" ))
+        {
+            const Value::Object & obj2 = obj.asObject();
+
+            a_reply.set_offset( obj2.getNumber( "off" ));
+            a_reply.set_count( obj2.getNumber( "cnt" ));
+            a_reply.set_total( obj2.getNumber( "tot" ));
+        }
+        else
+        {
+            setTagData( a_reply.add_tag(), obj );
+        }
+    }
+
+    TRANSLATE_END( a_result )
+}
+
+
+void
+DatabaseAPI::setTagData( TagData * a_tag, const libjson::Value::Object & a_obj )
+{
+    a_tag->set_name( a_obj.getString( "name" ));
+    a_tag->set_count( a_obj.getNumber( "count" ));
 }
 
 void

@@ -166,7 +166,8 @@ public:
     void taskView( const Auth::TaskViewRequest & a_request, Auth::TaskDataReply & a_reply );
     void taskPurge( uint32_t a_age_sec );
 
-    // TODO Project Delete
+    void tagSearch( const Anon::TagSearchRequest & a_request, Anon::TagDataReply & a_reply );
+    void tagListByCount( const Anon::TagListByCountRequest & a_request, Anon::TagDataReply & a_reply );
 
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, libjson::Value & a_result, bool a_log = true );
@@ -196,6 +197,8 @@ private:
     void setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value & a_result );
     void setTopicListCollectionsReply( Anon::TopicListCollectionsReply & a_reply, const libjson::Value & result );
     void setCollInfoData( CollInfoData * a_item, const libjson::Value::Object & a_obj );
+    void setTagDataReply( Anon::TagDataReply & a_reply, const libjson::Value & a_result );
+    void setTagData( TagData * a_tag, const libjson::Value::Object & a_obj );
 
     CURL *      m_curl;
     char *      m_client;

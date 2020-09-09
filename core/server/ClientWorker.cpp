@@ -87,6 +87,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, ListingReply, topicSearch );
         SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
         SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
+        SET_MSG_HANDLER_DB( proto_id, TagSearchRequest, TagDataReply, tagSearch );
+        SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
