@@ -20,7 +20,7 @@ router.post('/create', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","a","alias","owner","item","t","top"]
+                write: ["c","a","alias","owner","item","t","top","tag"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -61,6 +61,11 @@ router.post('/create', function (req, res) {
                     g_lib.procInputParam( req.body, "topic", false, obj );
                 }
 
+                if ( req.body.tags != undefined ){
+                    g_lib.addTags( req.body.tags );
+                    obj.tags = req.body.tags;
+                }
+            
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: owner._id });
 
@@ -102,7 +107,8 @@ router.post('/create', function (req, res) {
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     topic: joi.string().allow('').optional(),
-    parent: joi.string().allow('').optional()
+    parent: joi.string().allow('').optional(),
+    tags: joi.array().items(joi.string()).optional()
 }).required(), 'Collection fields')
 .summary('Create a new data collection')
 .description('Create a new data collection from JSON body');
@@ -114,7 +120,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","a","owner","alias","t","top"]
+                write: ["c","a","owner","alias","t","top","tag"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -158,6 +164,35 @@ router.post('/update', function (req, res) {
                     }
                 }
 
+                console.log("col upd tags",req.body.tags);
+
+                if ( req.body.tags != undefined ){
+                    if ( coll.tags && coll.tags.length ){
+                        var add_tags = [], rem_tags = [], i, tag;
+            
+                        for ( i in coll.tags ){
+                            tag = coll.tags[i];
+                            if ( !( tag in req.body.tags )){
+                                rem_tags.push( tag );
+                            }
+                        }
+            
+                        for ( i in req.body.tags ){
+                            tag = req.body.tags[i];
+                            if ( !( tag in coll.tags )){
+                                add_tags.push( tag );
+                            }
+                        }
+            
+                        g_lib.addTags( add_tags );
+                        g_lib.removeTags( rem_tags );
+                    }else{
+                        g_lib.addTags( req.body.tags );
+                    }
+            
+                    obj.tags = req.body.tags;
+                }
+            
                 coll = g_db._update( coll_id, obj, { keepNull: false, returnNew: true });
                 coll = coll.new;
 
@@ -199,7 +234,8 @@ router.post('/update', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    topic: joi.string().allow('').optional()
+    topic: joi.string().allow('').optional(),
+    tags: joi.array().items(joi.string()).optional()
 }).required(), 'Collection fields')
 .summary('Update an existing collection')
 .description('Update an existing collection from JSON body');
