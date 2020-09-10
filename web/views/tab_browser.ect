@@ -95,7 +95,7 @@
                                 <!-- tr class="sid sidp sic sip sia siq"><td>Title:</td><td id='sel_info_title'></td></tr -->
                                 <tr class="siu"><td>Name:</td><td id='sel_info_name'></td></tr>
                                 <!-- tr class="sid sidp sic sip sia"><td>Description:</td><td id='sel_info_desc' style='white-space:pre-wrap'></td></tr -->
-                                <tr class="sid sidp"><td>Keywords:</td><td id='sel_info_keyw'></td></tr>
+                                <tr class="sid sidp sic"><td>Tags:</td><td id='sel_info_tags'></td></tr>
                                 <tr class="sidp"><td>Data&nbsp;URL:</td><td id='sel_info_url' style='word-break:break-all'></td></tr>
                                 <tr class="sid"><td>Data&nbsp;Repo:</td><td id='sel_info_repo'></td></tr>
                                 <tr class="sid"><td>Data&nbsp;Size:</td><td id='sel_info_size'></td></tr>
@@ -196,7 +196,7 @@
     <div id="footer" class='' style="flex:none;padding:0">
         <div id="footer-tabs" style="border:none;padding:0;border-radius:0">
             <ul>
-                <li><a href="#tab-search">Search</a></li>
+                <li><a href="#tab-search">Data Search</a></li>
                 <li><a href="#tab-tasks">Tasks</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
                 <li style='display:none'><a href="#tab-admin">Administration</a></li>
@@ -208,25 +208,36 @@
                 </span>
             </ul>
             <div id="tab-search" class="" style="padding:0">
-                <div class=''>
-                    <table style='width:100%'>
-                        <tr>
-                            <td style='width:10ch'>ID/Alias:</td>
-                            <td style='width:10ch'><input id="id_query" type='text' style="width:10em" title="Find data using partial ID or alias."></input></td>
-                            <td style='width:5ch;text-align:center'>Text:</td>
-                            <td><input id="text_query" type='text' style="width:100%" title="Find data with full-text matching on title, description, and/or keywords."></input></td>
-                            <td style='width:12ch'><button id="run_qry_btn" class="btn small" style='width:12ch'>Run Query</button></td>
-                        </tr>
-
-                        <tr><td>Metadata: <span class='note'>*</span></td><td colspan="3"><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions."></input></td><td><button id="save_qry_btn" class='btn small' style='width:12ch' >Save Query</button></td></tr>
-                        <tr><td>Scope:</td><td colspan="3">
-                            <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbsp;Personal</span>
-                            <span class='my-check'><label for='scope_proj'></label><input class='scope' type='checkbox' name='scope_proj' id='scope_proj' checked>&nbsp;Projects</span>
-                            <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbsp;Shared</span>
-                            <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbsp;Selected</span>
-                        </td><td><button id='btn_srch_clear_select' class='btn small' style='width:12ch' disabled>Clear Sel.</button></td></tr>
-                    </table>
-                    <div style='padding:.5em 0 0 0'><span class='note'>* Note: metadata text comparisons are case sensitive.</span></div>
+                <div style='height:11em'>
+                <div class='row-flex search-row'>
+                    <div style='flex:none;width:11ch'>ID/Alias:</div>
+                    <div style='flex:none'><input id="id_query" style='width:13ch' type='text' title="Find data using partial ID or alias."></input></div>
+                    <div style='flex:none'>Text:</div>
+                    <div style='flex:1 1 auto'><input id="text_query" type='text' style='width:100%' title="Find data with full-text matching on title, description, and/or keywords."></input></div>
+                </div>
+                <div class='row-flex search-row'>
+                    <div style='flex:none;width:11ch'>Metadata: <span class='note'>*</span></div>
+                    <div style='flex:1 1 auto'><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions (case-sensitive)."></input></div>
+                </div>
+                <div class='row-flex search-row' style='align-items:start'>
+                    <div style='flex:none;width:11ch'>Tags:</div>
+                    <div style='flex:1 1 auto'><ul id='tag_query' style='height:3.3em;overflow:auto'></ul></div>
+                </div>
+                <div class='row-flex search-row'>
+                    <div style='flex:none;width:11ch'>Scope:</div>
+                    <div style='flex:1 1 auto'>
+                        <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbsp;Personal</span>
+                        <span class='my-check'><label for='scope_proj'></label><input class='scope' type='checkbox' name='scope_proj' id='scope_proj' checked>&nbsp;Projects</span>
+                        <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbsp;Shared</span>
+                        <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbsp;Selected</span>
+                    </div>
+                    <div style='flex:none'>
+                        <button id="run_qry_btn" class="btn btn-icon"><span class='ui-icon ui-icon-play'></span></button>
+                        <button id="save_qry_btn" class='btn btn-icon'><span class='ui-icon ui-icon-save'></span></button>
+                        <button id='btn_srch_clear_select' class='btn btn-icon' disabled><span class='ui-icon ui-icon-close'></span></button>
+                    </div>
+                </div>
+                <div style='padding:.5em .5em 0 .5em'><span class='note'>* Text comparisons are case sensitive.</span></div>
                 </div>
             </div>
             <div id="tab-tasks" class="" style="padding:0">

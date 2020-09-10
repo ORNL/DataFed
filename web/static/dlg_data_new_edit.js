@@ -288,7 +288,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
 
                     // TODO Only assign tags if changed
-                    obj.tag = tag_el.tagit("assignedTags");
+                    obj.tags = tag_el.tagit("assignedTags");
 
                     if ( is_published ){
                         var doi = $("#doi",frame).val(),
@@ -364,8 +364,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         }
                     }
 
-                    console.log("dep add:",obj.depAdd);
-                    console.log("dep rem:",obj.depRem);
+                    //console.log("dep add:",obj.depAdd);
+                    //console.log("dep rem:",obj.depRem);
 
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
@@ -411,6 +411,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }else if (repo_id != 'default' )
                         obj.repoId = repo_id;
 
+                    obj.tags = tag_el.tagit("assignedTags");
+
                     obj.parentId = $("#coll",frame).val().trim();
                     parent_coll = obj.parentId;
                     api.dataCreate( obj, callback );
@@ -438,7 +440,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     minLength: 3,
                     source: "/api/tag/autocomp"
                 },
-                caseSensistive: false
+                caseSensitive: false
             });
         
             jsoned = ace.edit( $("#md",frame).get(0), {
@@ -460,9 +462,9 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                 $("#desc",frame).val(a_data.desc);
                 
-                if ( a_data.tag && a_data.tag.length ){
-                    for ( var t in a_data.tag ){
-                        tag_el.tagit("createTag", a_data.tag[t] );
+                if ( a_data.tags && a_data.tags.length ){
+                    for ( var t in a_data.tags ){
+                        tag_el.tagit("createTag", a_data.tags[t] );
                     }
                 }
 

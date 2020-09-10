@@ -154,7 +154,7 @@ message RecordCreateRequest
 {
     optional string             title       = 1;
     optional string             desc        = 2;
-    repeated string             tag         = 3;
+    repeated string             tags        = 3;
     optional string             alias       = 4;
     optional string             doi         = 5;
     optional string             data_url    = 6;
@@ -176,7 +176,7 @@ message RecordUpdateRequest
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    repeated string             tag         = 4;
+    repeated string             tags        = 4;
     optional string             alias       = 5;
     optional string             doi         = 6;
     optional string             data_url    = 7;
@@ -337,6 +337,7 @@ message CollCreateRequest
     optional string             alias       = 3;
     optional string             parent_id   = 4;
     optional string             topic       = 6;
+    repeated string             tags        = 7;
 }
 
 message CollUpdateRequest
@@ -346,6 +347,7 @@ message CollUpdateRequest
     optional string             desc        = 3;
     optional string             alias       = 4;
     optional string             topic       = 6;
+    repeated string             tags        = 7;
 }
 
 message CollDeleteRequest

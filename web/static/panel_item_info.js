@@ -562,8 +562,8 @@ function showSelectedItemForm( item ){
 
         //$("#sel_info_desc",form).text( item.desc );
 
-    if ( item.keyw )
-        $("#sel_info_keyw",form).text( item.keyw );
+    if ( item.tags )
+        $("#sel_info_tags",form).text( item.tags.toString() );
 
     if ( item.topic )
         $("#sel_info_topic",form).text( item.topic );

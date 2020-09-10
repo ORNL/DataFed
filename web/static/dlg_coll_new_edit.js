@@ -10,7 +10,13 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
     var frame = $(ele),
         dlg_inst;
 
-    frame.html( "<table class='form-table'><tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr><tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr><tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr><tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr><tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'></td></tr></table>" );
+    frame.html( "<table class='form-table'>\
+        <tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr>\
+        <tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr>\
+        <tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr>\
+        <tr><td>Tags:</td><td colspan='2'><ul id='tags'></ul></td></tr>\
+        <tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr>\
+        <tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'></td></tr></table>" );
 
     var dlg_title;
     if ( a_data ) {
@@ -22,6 +28,8 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
     util.inputTheme($('input',frame));
     util.inputTheme($('textarea',frame));
     $(".btn",frame).button();
+
+    var tag_el = $("#tags",frame);
 
     function callback( ok, reply ){
         if ( ok ) {
@@ -58,6 +66,9 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
 
+                    // TODO Only assign tags if changed
+                    obj.tags = tag_el.tagit("assignedTags");
+
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
                         return;
@@ -74,6 +85,8 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), {}, obj, "topic" );
 
+                    obj.tags = tag_el.tagit("assignedTags");
+
                     api.collCreate( obj, callback );
                 }
             }
@@ -82,6 +95,15 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
             var widget = frame.dialog( "widget" );
 
             $(".ui-dialog-buttonpane",widget).append("<div style='font-size:85%' class='note'><span style='width:2em;display:inline-block;text-align:right'>*</span> Required fields<br><span style='width:2em;display:inline-block;text-align:right'>**</span> Enables anonymous read<div>");
+
+            tag_el.tagit({
+                autocomplete: {
+                    delay: 500,
+                    minLength: 3,
+                    source: "/api/tag/autocomp"
+                },
+                caseSensitive: false
+            });
 
             if ( a_data ){
                 console.log("coll data:",a_data);
@@ -103,6 +125,11 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     util.inputDisable( $("#topic", frame ));
                 }
 
+                if ( a_data.tags && a_data.tags.length ){
+                    for ( var t in a_data.tags ){
+                        tag_el.tagit("createTag", a_data.tags[t] );
+                    }
+                }
             } else {
                 $("#title",frame).val("");
                 $("#alias",frame).val("");

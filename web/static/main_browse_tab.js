@@ -1516,6 +1516,10 @@ function parseQuickSearch(){
     if ( tmp )
         query.meta = tmp;
 
+    tmp = $("#tag_query",frame).tagit("assignedTags");
+    if ( tmp.length )
+        query.tags = tmp;
+
     query.scopes = [];
 
     if ( $("#scope_selected",frame).prop("checked")){
@@ -1738,12 +1742,12 @@ function setupRepoTab(){
             var html;
 
             if ( data && data.length ){
-                html = "<table class='info_table'><tr><th>Repo ID</th><th>Title</th><th>Address</th><th>Endpoint UUID</th><th>Capacity</th><th>Path</th></tr>";
+                html = "<table class='info_table'><tr><th>Repo ID</th><th>Title</th><th>Address</th><th>Capacity</th><th>Path</th></tr>";
                 var repo;
                 for ( var i in data ){
                     repo = data[i];
-                    html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+repo.endpoint+
-                        "</td><td>"+util.sizeToString( repo.capacity )+"</td><td>"+repo.path+"</td><td><button class='btn small repo_adm' repo='"+
+                    html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+
+                        util.sizeToString( repo.capacity )+"</td><td>"+repo.path+"</td><td><button class='btn small repo_adm' repo='"+
                         repo.id+"'>Admin</button></td></tr>";
                 }
                 html += "</table>";
@@ -2054,6 +2058,26 @@ $("#btn_srch_refresh").on("click", function(){
         execQuery( cur_query );
 });
 
+$("#tag_query",frame).tagit({
+    autocomplete: {
+        delay: 500,
+        minLength: 3,
+        source: "/api/tag/autocomp",
+        position: {
+            my: "left bottom",
+            at: "left top"
+        }
+    },
+    caseSensitive: false,
+    removeConfirmation: true,
+    afterTagAdded: function(){
+        $("#run_qry_btn").addClass("ui-state-error");
+    },
+    afterTagRemoved: function(){
+        $("#run_qry_btn").addClass("ui-state-error");
+    }
+});
+
 $("#btn_edit",frame).on('click', actionEditSelected );
 //$("#btn_dup",frame).on('click', dupSelected );
 $("#btn_del",frame).on('click', actionDeleteSelected );
@@ -2095,7 +2119,7 @@ $("#btn_settings").on('click', function(){ dlgSettings.show( function(reload){
     taskTimer = setTimeout( taskHistoryPoll, 1000 );
 });});
 
-$("#id_query,#text_query,#meta_query").on('keypress', function (e) {
+$("#id_query,#text_query,#meta_query,#tag_query").on('keypress', function (e) {
     if (e.keyCode == 13){
         searchDirect();
     }
@@ -2785,6 +2809,7 @@ export function init(){
 }
 
 task_hist.html( "(no recent transfers)" );
+
 
 export function checkTreeUpdate( a_data, a_source ){
     //console.log("checkTreeUpdate", a_data, a_source );

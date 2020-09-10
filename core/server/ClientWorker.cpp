@@ -1140,6 +1140,22 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
 }
 
 string
+ClientWorker::parseSearchTags( const libjson::Value::Array & a_tags )
+{
+    string res;
+
+    for ( libjson::Value::ArrayConstIter i = a_tags.begin(); i != a_tags.end(); i++ )
+    {
+        if ( res.size() )
+            res += " && ";
+
+        res += "'" + i->asString() + "' in i.tags";
+    }
+
+    return res;
+}
+
+string
 ClientWorker::parseSearchIdAlias( const string & a_query )
 {
     string val;
@@ -1402,7 +1418,7 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     libjson::Value::Object &    obj = query.asObject();
     libjson::Value::ObjectIter  j, i = obj.find( "text" );
 
-    if ( !obj.has( "id" ) && !obj.has( "text" ) && !obj.has( "meta" ))
+    if ( !obj.has( "id" ) && !obj.has( "text" ) && !obj.has( "meta" ) && !obj.has( "tags" ))
         EXCEPT( 1, "Query contains no search terms." );
 
     if ( i != obj.end( ))
@@ -1420,37 +1436,41 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
                 phrase += " or ";
             phrase += parseSearchPhrase( "desc", obj.asString() );
         }
-
-        if ( obj.has( "keyw" ))
-        {
-            if ( phrase.size( ))
-                phrase += " or ";
-            phrase += parseSearchPhrase( "keyw", obj.asString() );
-        }
     }
 
-    string id;
+    string filter = "";
+    size_t fcnt = 0;
+
+    if ( obj.has( "tags" ))
+    {
+        filter += string("(") + parseSearchTags( obj.asArray() ) + ")";
+        fcnt++;
+    }
 
     if ( obj.has( "id" ))
     {
-        id = parseSearchIdAlias( obj.asString() );
+        if ( fcnt )
+            filter += " && ";
+        filter += string("(") + parseSearchIdAlias( obj.asString() ) + ")";
+        fcnt++;
     }
-
-    string meta;
 
     if ( obj.has( "meta" ))
     {
-        meta = parseSearchMetadata( obj.asString() );
+        if ( fcnt )
+            filter += " && ";
+        filter += string("(") + parseSearchMetadata( obj.asString() ) + ")";
+        fcnt++;
     }
 
-    if ( meta.size() && id.size() )
+    /*if ( meta.size() && id.size() )
     {
-        meta = string("(") + id + ") && (" + meta + ")";
+        filter = string("(") + id + ") && (" + meta + ")";
     }
     else if ( id.size() )
     {
-        meta = id;
-    }
+        filter = id;
+    }*/
 
     string result;
 
@@ -1563,8 +1583,8 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     if ( phrase.size() )
         result += "))";
 
-    if ( meta.size() )
-        result += " filter " + meta;
+    if ( filter.size() )
+        result += " filter " + filter;
 
     result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi,size:i.size}";
 

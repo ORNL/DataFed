@@ -957,7 +957,7 @@ app.get('/api/tag/search', ( a_req, a_resp ) => {
 
 app.get('/api/tag/autocomp', ( a_req, a_resp ) => {
     console.log("tag autocomp, term:", a_req.query.term );
-    var par = { name: a_req.query.term, offset: 0, count: 10 };
+    var par = { name: a_req.query.term, offset: 0, count: 20 };
 
     sendMessage( "TagSearchRequest", par, a_req, a_resp, function( reply ) {
         var res = [], tag;

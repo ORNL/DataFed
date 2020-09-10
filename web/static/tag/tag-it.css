@@ -1,13 +1,15 @@
 ul.tagit {
-    padding: 1px 5px;
+    padding: 0.2em 0.2em 0 0.2em;
     overflow: auto;
-    margin-left: inherit; /* usually we don't want the regular ul margins. */
-    margin-right: inherit;
+    /*margin-left: inherit;
+    margin-right: inherit;*/
+    margin: 0;
 }
 ul.tagit li {
     display: block;
     float: left;
-    margin: 2px 5px 2px 0;
+    margin: 0 2px 0 0;
+    /*margin: 2px 5px 2px 0;*/
 }
 ul.tagit li.tagit-choice {    
     position: relative;
@@ -21,11 +23,13 @@ ul.tagit li.tagit-choice-read-only {
 } 
 
 ul.tagit li.tagit-choice-editable { 
-    padding: .2em; 
+    padding: 0 .1em;
+    margin-bottom: .2em;
 } 
 
 ul.tagit li.tagit-new {
-    padding: .25em 4px .25em 0;
+    padding: .1em;
+    /*padding: .25em 4px .25em 0;*/
 }
 
 ul.tagit li.tagit-choice a.tagit-label {

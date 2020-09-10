@@ -195,7 +195,7 @@ message RecordData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
-    repeated string             tag         = 5;
+    repeated string             tags        = 5;
     optional string             doi         = 6;
     optional string             data_url    = 7;
     optional string             metadata    = 8;
@@ -242,7 +242,7 @@ message CollData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
-    repeated string             tag         = 5;
+    repeated string             tags        = 5;
     optional string             topic       = 6;
     optional string             owner       = 7;
     optional uint32             ct          = 8;

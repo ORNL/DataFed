@@ -923,14 +923,14 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::Re
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
 
-    if ( a_request.tag_size() )
+    if ( a_request.tags_size() )
     {
         body += ",\"tags\":[";
-        for ( int i = 0; i < a_request.tag_size(); i++ )
+        for ( int i = 0; i < a_request.tags_size(); i++ )
         {
             if ( i )
                 body += ",";
-            body += "\"" + a_request.tag(i) + "\"";
+            body += "\"" + a_request.tags(i) + "\"";
         }
         body += "]";
     }
@@ -983,14 +983,14 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
 
-    if ( a_request.tag_size() )
+    if ( a_request.tags_size() )
     {
         body += ",\"tags\":[";
-        for ( int i = 0; i < a_request.tag_size(); i++ )
+        for ( int i = 0; i < a_request.tags_size(); i++ )
         {
             if ( i )
                 body += ",";
-            body += "\"" + a_request.tag(i) + "\"";
+            body += "\"" + a_request.tags(i) + "\"";
         }
         body += "]";
     }
@@ -1215,7 +1215,7 @@ DatabaseAPI::setRecordData( Anon::RecordDataReply & a_reply, const Value & a_res
 
                 for ( k = arr2.begin(); k != arr2.end(); k++ )
                 {
-                    rec->add_tag( k->asString() );
+                    rec->add_tags( k->asString() );
                 }
             }
 
@@ -1342,16 +1342,32 @@ void
 DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Anon::CollDataReply & a_reply )
 {
     Value result;
-
     string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
+
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
+
     if ( a_request.has_parent_id() )
         body += ",\"parent\":\"" + a_request.parent_id() + "\"";
+
     if ( a_request.has_topic() )
         body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
+
+    if ( a_request.tags_size() )
+    {
+        body += ",\"tags\":[";
+        for ( int i = 0; i < a_request.tags_size(); i++ )
+        {
+            if ( i )
+                body += ",";
+            body += "\"" + a_request.tags(i) + "\"";
+        }
+        body += "]";
+    }
+
     body += "}";
 
     dbPost( "col/create", {}, &body, result );
@@ -1363,16 +1379,32 @@ void
 DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Anon::CollDataReply & a_reply )
 {
     Value result;
-
     string body = "{\"id\":\"" + a_request.id() + "\"";
+
     if ( a_request.has_title() )
         body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
+
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
+
     if ( a_request.has_topic() )
         body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
+
+    if ( a_request.tags_size() )
+    {
+        body += ",\"tags\":[";
+        for ( int i = 0; i < a_request.tags_size(); i++ )
+        {
+            if ( i )
+                body += ",";
+            body += "\"" + a_request.tags(i) + "\"";
+        }
+        body += "]";
+    }
+
     body += "}";
 
     dbPost( "col/update", {}, &body, result );
@@ -1538,7 +1570,7 @@ DatabaseAPI::setCollData( Anon::CollDataReply & a_reply, const libjson::Value & 
 
                 for ( k = arr2.begin(); k != arr2.end(); k++ )
                 {
-                    coll->add_tag( k->asString() );
+                    coll->add_tags( k->asString() );
                 }
             }
 

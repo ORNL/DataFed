@@ -23,6 +23,16 @@ div
     bottom:0!important;
 }
 
+.search-row
+{
+    padding: 0.25em 0 0 0.5em;
+    align-items:center;
+}
+
+.search-row div
+{
+    padding: 0 0.5em 0 0;
+}
 
 /*.ui-resizable-e {
     right: 0!important;
