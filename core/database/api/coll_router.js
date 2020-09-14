@@ -59,6 +59,17 @@ router.post('/create', function (req, res) {
 
                 if ( req.body.topic ){
                     g_lib.procInputParam( req.body, "topic", false, obj );
+                    obj.public = true;
+
+                    if ( !req.body.tags )
+                        req.body.tags = [];
+
+                    var tag, tags = req.body.topic.split(".");
+                    for ( var i in tags ){
+                        tag = tags[i];
+                        if ( tag && req.body.tags.indexOf( tag ) == -1 )
+                            req.body.tags.push( tag );
+                    }
                 }
 
                 if ( req.body.tags != undefined ){
@@ -127,8 +138,9 @@ router.post('/update', function (req, res) {
                 var coll_id = g_lib.resolveCollID( req.body.id, client );
                 var coll = g_db.c.document( coll_id );
 
-                var time = Math.floor( Date.now()/1000 );
-                var obj = {ut:time};
+                var time = Math.floor( Date.now()/1000 ),
+                    obj = {ut:time},
+                    i, tags, tag, idx;
 
                 g_lib.procInputParam( req.body, "title", true, obj );
                 g_lib.procInputParam( req.body, "desc", true, obj );
@@ -152,24 +164,50 @@ router.post('/update', function (req, res) {
 
                 if ( obj.topic !== undefined && obj.topic != coll.topic ){
                     //console.log("update topic, old:", data.topic ,",new:", obj.topic );
+                    if ( !req.body.tags )
+                        req.body.tags = coll.tags?coll.tags:[];
 
                     if ( coll.topic ){
                         //console.log("unlink old topic");
                         g_lib.topicUnlink( coll._id );
+                        obj.public = null;
+
+                        tags = coll.topic.split(".");
+                        for ( i in tags ){
+                            idx = req.body.tags.indexOf( tags[i] );
+                            if ( idx != -1 )
+                                req.body.tags.splice( idx, 1 );
+                        }
                     }
 
                     if ( obj.topic && obj.topic.length ){
                         //console.log("link new topic");
                         g_lib.topicLink( obj.topic, coll._id, coll.owner );
+                        obj.public = true;
+
+                        tags = obj.topic.split(".");
+                        for ( i in tags ){
+                            tag = tags[i];
+                            if ( tag && req.body.tags.indexOf( tag ) == -1 )
+                                req.body.tags.push( tag );
+                        }
+                    }
+                }else if ( coll.topic && req.body.tags != undefined ){
+                    // Prevent user from removing topic-related tags
+                    tags = coll.topic.split(".");
+                    for ( i in tags ){
+                        tag = tags[i];
+                        if ( tag && req.body.tags.indexOf( tag ) == -1 )
+                            req.body.tags.push( tag );
                     }
                 }
 
-                console.log("col upd tags",req.body.tags);
+                //console.log("col upd tags",req.body.tags);
 
                 if ( req.body.tags != undefined ){
                     if ( coll.tags && coll.tags.length ){
                         var add_tags = [], rem_tags = [], i, tag;
-            
+
                         for ( i in coll.tags ){
                             tag = coll.tags[i];
                             if ( !( tag in req.body.tags )){
@@ -671,7 +709,7 @@ router.get('/published/list', function (req, res) {
             owner_id = client._id;
         }
 
-        var qry = "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.topic != null sort v.title";
+        var qry = "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.public sort v.title";
         var result;
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
@@ -698,4 +736,90 @@ router.get('/published/list', function (req, res) {
 .queryParam('count', joi.number().optional(), "Count")
 .summary('Get list of clients published collections.')
 .description('Get list of clients published collections.');
+
+
+router.post('/published/search', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
+        var off = req.body.offset?req.body.offset:0,
+            cnt = req.body.count?req.body.count:100,
+            par = {},
+            qry, result;
+
+        qry = "for i in collview search i.public == true";
+
+        if ( req.body.text && req.body.text.length ){
+            qry += " and analyzer(";
+            for ( var i in req.body.text ){
+                if ( i != "0" )
+                    qry += " and";
+                qry += " (phrase(i.title,'" + req.body.text[i] + "') or phrase(i['desc'],'" + req.body.text[i] + "'))";
+            }
+        
+            qry += ", 'text_en')";
+        }
+
+        if ( req.body.owner ){
+            qry += " and i.owner == @owner";
+            par.owner = req.body.owner;
+        }
+
+        if ( req.body.tags ){
+            qry += " and @tags all in i.tags";
+            par.tags = req.body.tags;
+        }
+
+        if ( req.body.from != undefined ){
+            qry += " and i.ut >= @utfr";
+            par.utfr = req.body.from;
+        }
+
+        if ( req.body.to != undefined ){
+            qry += " and i.ut <= @utto";
+            par.utto = req.body.to;
+        }
+
+        qry += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first))";
+
+        qry += " sort i.title limit " + off + ", " + cnt + " return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias}";
+
+        result = g_db._query( qry, par, {}, { fullCount: true })
+        var item, tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+
+        for ( var i in result ){
+            item = result[i];
+            if ( item.owner_name && item.owner_name.length )
+                item.owner_name = item.owner_name[0];
+            else
+                item.owner_name = null;
+
+            if ( item.desc && item.desc.length > 120 ){
+                item.desc = item.desc.slice(0,120) + " ...";
+            }
+
+            item.notes = g_lib.annotationGetMask( client, item._id );
+        }
+
+        result.push({ paging: { off: off, cnt: cnt, tot: tot }});
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.body(joi.object({
+    text: joi.array().items(joi.string()).optional(),
+    tags: joi.array().items(joi.string()).optional(),
+    owner: joi.string().optional(),
+    from: joi.number().integer().min(0).optional(),
+    to: joi.number().integer().min(0).optional(),
+    offset: joi.number().integer().min(0).optional(),
+    count: joi.number().integer().min(1).optional(),
+    sort: joi.number().integer().min(0).optional()
+}).required(), 'Collection fields')
+.summary('Search published collections.')
+.description('Search published collections.');
 
