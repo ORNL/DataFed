@@ -1086,6 +1086,13 @@ app.get('/api/col/published/list', ( a_req, a_resp ) => {
     });
 });
 
+
+app.post('/api/col/pub/search', ( a_req, a_resp ) => {
+    sendMessage( "CollPublishedSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 app.get('/api/repo/list', ( a_req, a_resp ) => {
     var params = {};
     if ( a_req.query.all )

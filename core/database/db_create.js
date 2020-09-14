@@ -123,10 +123,20 @@ view = db._createView("collview","arangosearch",{});
 view.properties({
     links: {
       "c": {
-        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]}},
+        fields: { 
+          "title": { analyzers: ["text_en"] },
+          "desc": { analyzers: ["text_en"] },
+          "owner": { analyzers: ["identity"] },
+          "ut": { analyzers: ["identity"] },
+          "tags": { analyzers: ["identity"] },
+          "public": { analyzers: ["identity"] }
+        },
         includeAllFields: false
       }
-    }
+    },
+    primarySort:[
+      {field:"title",direction:"asc"}
+    ]
   },
   true
 );
@@ -164,10 +174,11 @@ db.task.ensureIndex({ type: "hash", unique: false, fields: [ "client" ], sparse:
 db.task.ensureIndex({ type: "skiplist", unique: false, fields: [ "status" ], sparse: true });
 db.task.ensureIndex({ type: "hash", unique: false, fields: [ "servers[*]" ], sparse: true });
 
-db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });
+/*db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });*/
 db.d.ensureIndex({ type: "hash", unique: false, fields: [ "doi" ], sparse: true });
 db.d.ensureIndex({ type: "persistent", unique: false, fields: [ "tags[*]" ] });
 
+db.c.ensureIndex({ type: "persistent", unique: false, fields: [ "public" ], sparse: true });
 db.c.ensureIndex({ type: "persistent", unique: false, fields: [ "tags[*]" ] });
 
 db.u.ensureIndex({ type: "hash", unique: true, fields: [ "pub_key" ], sparse: true });

@@ -338,6 +338,10 @@ export function collDelete(a_ids,a_cb){
     _asyncGet( "/api/col/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
+export function collPubSearch( a_query, a_cb ){
+    _asyncPost( "/api/col/pub/search", a_query, a_cb );
+}
+
 export function projList_url( a_owned, a_admin, a_member, a_sort, a_offset, a_count ){
     return "/api/prj/list?owner=" + (a_owned?"true":"false") + "&admin=" + (a_admin?"true":"false") + 
         "&member="+ (a_member?"true":"false") + (a_sort!=undefined?"&sort="+a_sort:"") +

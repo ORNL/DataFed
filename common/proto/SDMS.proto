@@ -172,7 +172,7 @@ message CollInfoData
     required string             id          = 1;
     required string             title       = 2;
     required string             owner_id    = 3;
-    required string             owner_name  = 4;
+    optional string             owner_name  = 4;
     optional string             alias       = 5;
     optional uint32             notes       = 6;
     optional string             brief       = 7;

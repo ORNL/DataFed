@@ -1531,6 +1531,116 @@ DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::
     a_reply.set_offset( result.asObject().getNumber( "offset" ));
 }
 
+void
+DatabaseAPI::collPublishedSearch( const Anon::CollPublishedSearchRequest & a_request, Anon::CollPublishedSearchReply & a_reply )
+{
+    Value result;
+
+    string body = "{\"sort\":0";
+
+    if ( a_request.text_size() > 0 )
+    {
+        body+=",\"text\":[";
+        for ( int i = 0; i < a_request.text_size(); ++i )
+        {
+            if ( i > 0 )
+                body += ",";
+            body += "\"" + a_request.text(i) + "\"";
+        }
+        body += "]";
+    }
+
+    if ( a_request.tags_size() > 0 )
+    {
+        body+=",\"tags\":[";
+        for ( int i = 0; i < a_request.tags_size(); ++i )
+        {
+            if ( i > 0 )
+                body += ",";
+            body += "\"" + a_request.tags(i) + "\"";
+        }
+        body += "]";
+    }
+
+    if ( a_request.has_owner() )
+        body += ",\"owner\":\"" + a_request.owner() + "\"";
+
+    if ( a_request.has_from() )
+        body += ",\"from\":" + to_string( a_request.from() );
+
+    if ( a_request.has_to() )
+        body += ",\"to\":" + to_string( a_request.to() );
+
+    if ( a_request.has_offset() )
+        body += ",\"offset\":" + to_string( a_request.offset() );
+
+    if ( a_request.has_count() )
+        body += ",\"count\":" + to_string( a_request.count() );
+
+    body += "}";
+
+    dbPost( "col/published/search", {}, &body, result );
+
+    setCollPublishedSearchReply( a_reply, result );
+
+}
+
+void
+DatabaseAPI::setCollPublishedSearchReply( Anon::CollPublishedSearchReply & a_reply, const libjson::Value & a_result )
+{
+    Value::ObjectConstIter   j;
+
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
+    {
+        const Value::Object & obj = i->asObject();
+
+        if ( obj.has( "paging" ))
+        {
+            const Value::Object & obj2 = obj.asObject();
+
+            a_reply.set_offset( obj2.getNumber( "off" ));
+            a_reply.set_count( obj2.getNumber( "cnt" ));
+            a_reply.set_total( obj2.getNumber( "tot" ));
+        }
+        else
+        {
+            setCollInfoData( a_reply.add_coll(), obj );
+        }
+    }
+
+    TRANSLATE_END( a_result )
+}
+
+
+void
+DatabaseAPI::setCollInfoData( CollInfoData * a_item, const Value::Object & a_obj )
+{
+    if ( a_obj.has( "id" ))
+        a_item->set_id( a_obj.asString() );
+    else if ( a_obj.has( "_id" ))
+        a_item->set_id( a_obj.asString() );
+
+    a_item->set_title( a_obj.getString( "title" ));
+    a_item->set_owner_id( a_obj.getString( "owner_id" ));
+
+    if ( a_obj.has( "owner_name" ) && !a_obj.value().isNull( ))
+        a_item->set_owner_name( a_obj.asString());
+
+    if ( a_obj.has( "alias" ) && !a_obj.value().isNull( ))
+        a_item->set_alias( a_obj.asString() );
+
+    if ( a_obj.has( "notes" ))
+        a_item->set_notes( a_obj.asNumber() );
+
+    if ( a_obj.has( "desc" ) && !a_obj.value().isNull( ))
+        a_item->set_brief( a_obj.asString() );
+}
+
+
 
 void
 DatabaseAPI::setCollData( Anon::CollDataReply & a_reply, const libjson::Value & a_result )
@@ -2544,7 +2654,8 @@ DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, An
     setListingDataReply( a_reply, result );
 }
 
-void
+
+/*void
 DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply )
 {
     Value result;
@@ -2559,7 +2670,7 @@ DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_r
     dbGet( "topic/list/coll", params, result );
 
     setTopicListCollectionsReply( a_reply, result );
-}
+}*/
 
 void
 DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::ListingReply  & a_reply )
@@ -2570,63 +2681,6 @@ DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::List
 
     setListingDataReply( a_reply, result );
 }
-
-
-void
-DatabaseAPI::setTopicListCollectionsReply( Anon::TopicListCollectionsReply & a_reply, const libjson::Value & a_result )
-{
-    Value::ObjectConstIter   j;
-
-    TRANSLATE_BEGIN()
-
-    const Value::Array & arr = a_result.asArray();
-
-    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
-    {
-        const Value::Object & obj = i->asObject();
-
-        if ( obj.has( "paging" ))
-        {
-            const Value::Object & obj2 = obj.asObject();
-
-            a_reply.set_offset( obj2.getNumber( "off" ));
-            a_reply.set_count( obj2.getNumber( "cnt" ));
-            a_reply.set_total( obj2.getNumber( "tot" ));
-        }
-        else
-        {
-            setCollInfoData( a_reply.add_coll(), obj );
-        }
-    }
-
-    TRANSLATE_END( a_result )
-}
-
-
-void
-DatabaseAPI::setCollInfoData( CollInfoData * a_item, const Value::Object & a_obj )
-{
-    if ( a_obj.has( "id" ))
-        a_item->set_id( a_obj.asString() );
-    else if ( a_obj.has( "_id" ))
-        a_item->set_id( a_obj.asString() );
-
-    a_item->set_title( a_obj.getString( "title" ));
-    a_item->set_owner_id( a_obj.getString( "owner_id" ));
-
-    if ( a_obj.has( "owner_name" ) && !a_obj.value().isNull( ))
-        a_item->set_owner_name( a_obj.asString());
-
-    if ( a_obj.has( "alias" ) && !a_obj.value().isNull( ))
-        a_item->set_alias( a_obj.asString() );
-
-    if ( a_obj.has( "notes" ))
-        a_item->set_notes( a_obj.asNumber() );
-
-    if ( a_obj.has( "brief" ) && !a_obj.value().isNull( ))
-        a_item->set_brief( a_obj.asString() );
-}
-
 
 void
 DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Anon::AnnotationDataReply & a_reply )

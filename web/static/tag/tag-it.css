@@ -1,5 +1,6 @@
 ul.tagit {
-    padding: 0.2em 0.2em 0 0.2em;
+    /*padding: 0.2em 0.2em 0 0.2em;*/
+    padding: 0;
     overflow: auto;
     /*margin-left: inherit;
     margin-right: inherit;*/
@@ -11,10 +12,26 @@ ul.tagit li {
     margin: 0 2px 0 0;
     /*margin: 2px 5px 2px 0;*/
 }
+
+.tagit-vertical li{
+    clear: left;
+}
+
+/*.tag-vertical {
+    clear: left;
+}
+
+.tag-vertical:after {
+    clear: left;
+    content:"\a";
+    white-space:pre;
+}*/
+
 ul.tagit li.tagit-choice {    
     position: relative;
     line-height: inherit;
 }
+
 input.tagit-hidden-field {
     display: none;
 }
@@ -64,10 +81,10 @@ ul.tagit input[type="text"] {
     -webkit-box-shadow: none;
     box-shadow: none;
 
-    border: none;
+    /*border: 1px solid #999;*/
     margin: 0;
     padding: 0;
-    width: inherit;
+    width: 20ch;
     background-color: inherit;
     outline: none;
 }

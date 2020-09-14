@@ -81,9 +81,10 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
         SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
+        SET_MSG_HANDLER_DB( proto_id, CollPublishedSearchRequest, CollPublishedSearchReply, collPublishedSearch );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, ListingReply, topicListTopics );
-        SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
+        //SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
         SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, ListingReply, topicSearch );
         SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
         SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
@@ -889,10 +890,8 @@ ClientWorker::parseSearchTerms( const string & a_key, const vector<string> & a_t
     {
         if ( i != or_terms.begin() )
             result += " or ";
-        //if ( isPhrase( *i ) )
+
         result += "phrase(i['" + a_key + "'],'" + *i + "')";
-        //else
-        //    result += "i['" + a_key + "'] == '" + *i + "'";
     }
 
     if ( or_terms.size() > 1 )
@@ -902,20 +901,16 @@ ClientWorker::parseSearchTerms( const string & a_key, const vector<string> & a_t
     {
         if ( result.size() )
             result += " and ";
-        //if ( isPhrase( *i ) )
+
         result += "phrase(i['" + a_key + "'],'" + *i + "')";
-        //else
-        //    result += "i['" + a_key + "'] == '" + *i + "'";
     }
 
     for ( i = nand_terms.begin(); i != nand_terms.end(); i++ )
     {
         if ( result.size() )
             result += " and ";
-        //if ( isPhrase( *i ) )
+
         result += "not phrase(i['" + a_key + "'],'" + *i + "')";
-        //else
-        //    result += "i['" + a_key + "'] != '" + *i + "'";
     }
 
     return "("+result+")";
@@ -983,8 +978,7 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
     static map<string,int> cat_map =
     {
         {"t:",1},{"title:",1},
-        {"d:",2},{"desc:",2},{"descr:",2},{"description:",2},
-        {"k:",4},{"key:",4},{"keyw:",4},{"keyword:",4},{"keywords:",4}
+        {"d:",2},{"desc:",2},{"descr:",2},{"description:",2}
     };
 
     string separator1("");//dont let quoted arguments escape themselves
@@ -1055,14 +1049,12 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
             {
                 if ( cat & 1 ) title.push_back( extra );
                 if ( cat & 2 ) desc.push_back( extra );
-                if ( cat & 4 ) keyw.push_back( extra );
             }
         }
         else
         {
             if ( cat & 1 ) title.push_back( *t );
             if ( cat & 2 ) desc.push_back( *t );
-            if ( cat & 4 ) keyw.push_back( *t );
         }
     }
 
@@ -1089,17 +1081,6 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
     else if ( !desc.size() )
         EXCEPT(1,"Description category specified without search terms" );
 
-    if ( ops[4] == 0 )
-    {
-        if ( keyw.size() )
-        {
-            ops[4] = 1;
-            count_or++;
-        }
-    }
-    else if ( !keyw.size() )
-        EXCEPT(1,"Keywords category specified without search terms" );
-
     // Build OR phrase
     if ( count_or > 1 && count_other > 0 )
         result += "(";
@@ -1109,9 +1090,6 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
 
     if ( ops[2] == 1 )
         result += (result.size()?" or ":"") + parseSearchTerms( "desc", desc );
-
-    if ( ops[4] == 1 )
-        result += (result.size()?" or ":"") + parseSearchTerms( "keyw", keyw );
 
     if ( count_or > 1 && count_other > 0 )
         result += ")";
@@ -1123,18 +1101,12 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
     if ( ops[2] == 2 )
         result += (result.size()?" and ":"") + parseSearchTerms( "desc", desc );
 
-    if ( ops[4] == 2 )
-        result += (result.size()?" and ":"") + parseSearchTerms( "keyw", keyw );
-
     // Build NAND phrase
     if ( ops[1] == 3 )
         result += (result.size()?" and not (":"not (") + parseSearchTerms( "title", title ) + ")";
 
     if ( ops[2] == 3 )
         result += (result.size()?" and not (":"not (") + parseSearchTerms( "desc", desc ) + ")";
-
-    if ( ops[4] == 3 )
-        result += (result.size()?" and not (":"not (") + parseSearchTerms( "keyw", keyw ) + ")";
 
     return result;
 }

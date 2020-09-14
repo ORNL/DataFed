@@ -93,6 +93,7 @@ public:
     void collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply );
     void collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply );
     void collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply );
+    void collPublishedSearch( const Anon::CollPublishedSearchRequest & a_request, Anon::CollPublishedSearchReply & a_reply );
 
     void queryList( const Auth::QueryListRequest & a_request, Anon::ListingReply & a_reply );
     void queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply );
@@ -135,7 +136,7 @@ public:
     void repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply );
 
     void topicListTopics( const Anon::TopicListTopicsRequest & a_request, Anon::ListingReply & a_reply );
-    void topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply );
+    //void topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply );
     void topicSearch( const Anon::TopicSearchRequest & a_request, Anon::ListingReply & a_reply );
     //void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
     //void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
@@ -195,7 +196,7 @@ private:
     void setTaskData( TaskData * a_task, const libjson::Value & a_task_json );
     void setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value & a_result );
     void setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value & a_result );
-    void setTopicListCollectionsReply( Anon::TopicListCollectionsReply & a_reply, const libjson::Value & result );
+    void setCollPublishedSearchReply( Anon::CollPublishedSearchReply & a_reply, const libjson::Value & result );
     void setCollInfoData( CollInfoData * a_item, const libjson::Value::Object & a_obj );
     void setTagDataReply( Anon::TagDataReply & a_reply, const libjson::Value & a_result );
     void setTagData( TagData * a_tag, const libjson::Value::Object & a_obj );

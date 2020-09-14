@@ -30,9 +30,23 @@
             <div id='cat_top_sidebar' class='cat-sidebar-container' style='flex:none;overflow:auto;min-height:0;height:50%'>
                 <div id='cat_topics_div'></div>
             </div>
-            <div class='cat-subheading' style='flex:none'>Tags</div>
+            <div class='cat-subheading' style='flex:none'>Text<button style='float:right' id='cat_qry_text_clear' class='btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>
+            <div id='cat_text_sidebar' class='cat-sidebar-container' style='flex:none'>
+                <textarea id='cat_text_qry' style='width:100%;height:4em;'></textarea>
+            </div>
+            <div class='cat-subheading' style='flex:none'>Tags<button style='float:right' id='cat_qry_tags_clear' class='btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>
             <div id='cat_tags_sidebar' class='cat-sidebar-container' style='flex:1 1 auto;overflow:auto;'>
-                <div id='cat_tags_div'>Tags</div>
+                <ul id='cat_tags_div' class='content no-border tagit-vertical'></ul>
+            </div>
+            <div class='cat-subheading' style='flex:none'>Owner
+                <div style='float:right'>
+                    <button id='cat_qry_owner_pick_user' class='btn btn-icon'><span class='ui-icon ui-icon-person'></span></button>
+                    <button id='cat_qry_owner_pick_proj' class='btn btn-icon'><span class='ui-icon ui-icon-box'></span></button>
+                    <button id='cat_qry_owner_clear' class='btn btn-icon'><span class='ui-icon ui-icon-close'></span></button>
+                </div>
+            </div>
+            <div id='cat_text_sidebar' class='cat-sidebar-container' style='flex:none'>
+                <input id='cat_qry_owner' style='width:20ch'></input>
             </div>
         </div>
 
