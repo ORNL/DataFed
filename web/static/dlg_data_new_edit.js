@@ -42,7 +42,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     <tr><td>Title: <span class='note'>*</span></td><td colspan='3'><input title='Title string (required)' type='text' id='title' maxlength='80' style='width:100%'></input></td></tr>\
                     <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' maxlength='40' id='alias' style='width:100%'></input></td></tr>\
                     <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' maxlength='2000' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
-                    <tr><td>Tags:</td><td colspan='3'><ul id='tags'></ul></td></tr>\
+                    <tr><td style='vertical-align:top'>Tags:</td><td colspan='3'><ul id='tags' class='content'></ul></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
                 </table>\
             </div>\
@@ -105,11 +105,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         return;
 
     var tag_el = $("#tags",frame);
-
-    util.inputTheme( $('input:text',frame ));
-    util.inputTheme( $('textarea',frame ));
-
-    $(".btn",frame).button();
 
     $("#pick_source",frame).on("click",function(){
         dlgStartXfer.show( null, null, function( a_path, a_encrypt_mode ){
@@ -451,6 +446,10 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 wrap:true
             });
 
+            util.inputTheme( $('input:text',frame ));
+            util.inputTheme( $('textarea',frame ));
+            $(".btn",frame).button();
+        
             var parent;
             if ( a_data ){
                 $("#title",frame).val(a_data.title);

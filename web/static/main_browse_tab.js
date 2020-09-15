@@ -181,7 +181,7 @@ export function refreshUI( a_ids, a_data, a_reload ){
         util.reloadNode(data_tree.getNodeByKey("shared_user"));
         util.reloadNode(data_tree.getNodeByKey("shared_proj"));
         util.reloadNode(data_tree.getNodeByKey("queries"));
-        util.reloadNode(cat_panel.tree.getNodeByKey("topics"));
+        //util.reloadNode(cat_panel.tree.getNodeByKey("topics"));
     }else{
         var ids = Array.isArray(a_ids)?a_ids:[a_ids];
         var data = Array.isArray(a_data)?a_data:[a_data];
@@ -2025,22 +2025,32 @@ $("#data-tabs").tabs({
                 case "tab-data-tree":
                     select_source = SS_TREE;
                     panel_info.showSelectedInfo( data_tree.activeNode, checkTreeUpdate );
+                    $(".search-scope",frame).show();
+                    $(".search-scope-alt",frame).hide();
                     break;
                 case "tab-catalogs":
                     select_source = SS_CAT;
-                    //panel_info.showSelectedInfo( cat_panel.tree.activeNode, checkTreeUpdate );
+                    panel_info.showSelectedInfo( cat_panel.getActiveNode(), checkTreeUpdate );
+                    $(".search-scope",frame).hide();
+                    $(".search-scope-alt",frame).show();
                     break;
                 case "tab-notifications":
                     //select_source = SS_CAT;
                     //panel_info.showSelectedInfo( cat_panel.tree.activeNode );
+                    $(".search-scope",frame).show();
+                    $(".search-scope-alt",frame).hide();
                     break;
                 case "tab-prov-graph":
                     select_source = SS_PROV;
                     panel_info.showSelectedInfo( graph_panel.getSelectedID(), graph_panel.checkGraphUpdate );
+                    $(".search-scope",frame).hide();
+                    $(".search-scope-alt",frame).show();
                     break;
                 case "tab-search-results":
                     select_source = SS_SEARCH;
                     panel_info.showSelectedInfo( results_tree.activeNode, checkTreeUpdate );
+                    $(".search-scope",frame).show();
+                    $(".search-scope-alt",frame).hide();
                     break;
             }
         }

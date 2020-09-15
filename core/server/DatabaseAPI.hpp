@@ -72,6 +72,7 @@ public:
     void recordExport( const Auth::RecordExportRequest & a_request, Auth::RecordExportReply & a_reply );
     void recordLock( const Auth::RecordLockRequest & a_request, Anon::ListingReply & a_reply );
     void recordSearch( const Auth::RecordSearchRequest & a_request, Anon::ListingReply & a_reply );
+    void recordSearchPublished( const std::string & a_query, const std::string & a_params, Anon::ListingReply & a_reply );
     void recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Anon::ListingReply & a_reply );
     //void recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Anon::ListingReply & a_reply );
     void recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Anon::ListingReply & a_reply );

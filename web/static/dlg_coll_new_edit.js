@@ -14,9 +14,9 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
         <tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr>\
         <tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr>\
         <tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr>\
-        <tr><td>Tags:</td><td colspan='2'><ul id='tags'></ul></td></tr>\
+        <tr><td style='vertical-align:top'>Tags:</td><td colspan='2'><ul id='tags' class='content'></ul></td></tr>\
         <tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr>\
-        <tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'></td></tr></table>" );
+        <tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td></tr></table>" );
 
     var dlg_title;
     if ( a_data ) {
@@ -24,10 +24,6 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
     } else {
         dlg_title = "New Collection";
     }
-
-    util.inputTheme($('input',frame));
-    util.inputTheme($('textarea',frame));
-    $(".btn",frame).button();
 
     var tag_el = $("#tags",frame);
 
@@ -137,6 +133,10 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                 $("#coll",frame).val(a_parent?a_parent:"");
                 $("#topic",frame).val("");
             }
+
+            util.inputTheme($('input',frame));
+            util.inputTheme($('textarea',frame));
+            $(".btn",frame).button();
         },
         close: function( ev, ui ) {
             $(this).dialog("destroy").remove();

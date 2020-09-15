@@ -885,6 +885,16 @@ DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, Anon::ListingR
 }
 
 void
+DatabaseAPI::recordSearchPublished( const std::string & a_query, Anon::ListingReply & a_reply )
+{
+    Value result;
+
+    dbPost( "/col/pub/search", {}, &a_query, result );
+
+    setListingDataReply( a_reply, result );
+}
+
+void
 DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Anon::ListingReply & a_reply )
 {
     Value result;

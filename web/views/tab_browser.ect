@@ -55,7 +55,7 @@
                         </div>
                         <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
                             <button class="btn" id="btn_srch_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.' disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
-                            <button class="btn" id="btn_srch_refresh" title='Refresh query results'>Refresh</button>
+                            <button class="btn btn-icon" id="btn_srch_refresh" title='Refresh query results'><span class="ui-icon ui-icon-reload"></span></button>
                         </div>
                     </div>
                 </div>
@@ -226,10 +226,13 @@
                 <div class='row-flex search-row'>
                     <div style='flex:none;width:11ch'>Scope:</div>
                     <div style='flex:1 1 auto'>
-                        <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbsp;Personal</span>
-                        <span class='my-check'><label for='scope_proj'></label><input class='scope' type='checkbox' name='scope_proj' id='scope_proj' checked>&nbsp;Projects</span>
-                        <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbsp;Shared</span>
-                        <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbsp;Selected</span>
+                        <div class='search-scope'>
+                            <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbsp;Personal</span>
+                            <span class='my-check'><label for='scope_proj'></label><input class='scope' type='checkbox' name='scope_proj' id='scope_proj' checked>&nbsp;Projects</span>
+                            <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbsp;Shared</span>
+                            <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbsp;Select</span>
+                        </div>
+                        <div class='search-scope-alt' style='display:none'>Based on current view.</div>
                     </div>
                     <div style='flex:none'>
                         <button id="run_qry_btn" class="btn btn-icon"><span class='ui-icon ui-icon-play'></span></button>

@@ -909,7 +909,7 @@ body .ui-tooltip {
 	color: #000;
 }
 .ui-widget-content a {
-	color: #ffffff;
+	color: #004;
 }
 .ui-widget-header {
 	/*border: none;*/
@@ -919,7 +919,7 @@ body .ui-tooltip {
 	/*font-weight: bold;*/
 }
 .ui-widget-header a {
-	color: #ffffff;
+	color: #fff;
 }
 
 /* Interaction states

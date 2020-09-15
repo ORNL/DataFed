@@ -591,7 +591,7 @@ def _data():
 @click.argument( "data_id", metavar="ID" )
 def _dataView( data_id, context ):
     '''
-    View data record information. Displays record title, description, keywords,
+    View data record information. Displays record title, description, tags,
     and other informational and administrative fields. ID may be a data record
     identifier, alias, or index value from a listing. By default, description
     text is truncated and metadata is not shown unless the verbosity is as
@@ -605,7 +605,7 @@ def _dataView( data_id, context ):
 @click.argument("title", required=True)
 @click.option("-a","--alias",type=str,required=False,help="Record alias.")
 @click.option("-d","--description",type=str,required=False,help="Description text.")
-@click.option("-k","--keywords",type=str,required=False,help="Keywords (comma separated list).")
+@click.option("-T","--tags",type=str,required=False,help="Tags (comma separated list).")
 @click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.")
 @click.option("-x","--extension",type=str,required=False,help="Override raw data file extension if provided (default is auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.")
@@ -615,7 +615,7 @@ def _dataView( data_id, context ):
 @click.option("-D","--deps",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.")
 @_global_context_options
 @_global_output_options
-def _dataCreate( title, alias, description, keywords, raw_data_file, extension, metadata, metadata_file, parent, repository, deps, context ):
+def _dataCreate( title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, parent, repository, deps, context ):
     '''
     Create a new data record. The data record 'title' is required, but all
     other attributes are optional. On success, the ID of the created data
@@ -632,12 +632,15 @@ def _dataCreate( title, alias, description, keywords, raw_data_file, extension, 
     if metadata and metadata_file:
         raise Exception( "Cannot specify both --metadata and --metadata-file options." )
 
+    if tags:
+        tags = tags.split(",")
+
     if parent:
         parent_id = _resolve_coll_id( parent, context )
     else:
         parent_id = _cur_coll
 
-    reply = _capi.dataCreate( title, alias = alias, description = description, keywords = keywords, extension = extension,
+    reply = _capi.dataCreate( title, alias = alias, description = description, tags = tags, extension = extension,
         metadata = metadata, metadata_file = metadata_file, parent_id = parent_id, deps = deps, repo_id = repository, context = context )
     _generic_reply_handler( reply, _print_data )
 
@@ -652,7 +655,7 @@ def _dataCreate( title, alias, description, keywords, raw_data_file, extension, 
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
-@click.option("-k","--keywords",type=str,required=False,help="Keywords (comma separated list)")
+@click.option("-T","--tags",type=str,required=False,help="Tags (comma separated list)")
 @click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.")
 @click.option("-x","--extension",type=str,required=False,help="Override extension for raw data file (default = auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format.")
@@ -662,7 +665,7 @@ def _dataCreate( title, alias, description, keywords, raw_data_file, extension, 
 @click.option("-R","--deps-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
 @_global_context_options
 @_global_output_options
-def _dataUpdate( data_id, title, alias, description, keywords, raw_data_file, extension, metadata, metadata_file, metadata_set, deps_add, deps_rem, context ):
+def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, metadata_set, deps_add, deps_rem, context ):
     '''
     Update an existing data record. The data record ID is required and can be
     an ID, alias, or listing index; all other record attributes are optional.
@@ -676,7 +679,10 @@ def _dataUpdate( data_id, title, alias, description, keywords, raw_data_file, ex
     if metadata and metadata_file:
         raise Exception( "Cannot specify both --metadata and --metadata-file options." )
 
-    reply = _capi.dataUpdate( _resolve_id( data_id ), title = title, alias = alias, description = description, keywords = keywords, extension = extension,
+    if tags:
+        tags = tags.split(",")
+
+    reply = _capi.dataUpdate( _resolve_id( data_id ), title = title, alias = alias, description = description, tags = tags, extension = extension,
         metadata = metadata, metadata_file = metadata_file, metadata_set = metadata_set, deps_add = deps_add, deps_rem = deps_rem, context = context )
     _generic_reply_handler( reply, _print_data )
 
@@ -896,10 +902,11 @@ def _collView( coll_id, context ):
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-p","--parent",type=str,required=False,help="Parent collection ID/alias (default is current working collection)")
 @click.option("-d","--description",type=str,required=False,help="Description text")
+@click.option("-T","--tags",type=str,required=False,help="Tags (comma separated list).")
 @click.option("--topic", type=str, required=False, help="Publish the collection to the provided topic.")
 @_global_context_options
 @_global_output_options
-def _collCreate( title, alias, description, topic, parent, context ):
+def _collCreate( title, alias, description, tags, topic, parent, context ):
     '''
     Create a new collection. The collection 'title' is required, but all
     other attributes are optional. On success, the ID of the created
@@ -913,7 +920,10 @@ def _collCreate( title, alias, description, topic, parent, context ):
     else:
         parent_id = _cur_coll
 
-    reply = _capi.collectionCreate( title, alias = alias, description = description, topic = topic, parent_id = parent_id, context = context )
+    if tags:
+        tags = tags.split(",")
+
+    reply = _capi.collectionCreate( title, alias = alias, description = description, tags = tags, topic = topic, parent_id = parent_id, context = context )
     _generic_reply_handler( reply, _print_coll )
 
 
@@ -922,17 +932,21 @@ def _collCreate( title, alias, description, topic, parent, context ):
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
+@click.option("-T","--tags",type=str,required=False,help="Tags (comma separated list).")
 @click.option("--topic", type=str, required=False, help="Publish the collection under the provided topic.")
 @_global_context_options
 @_global_output_options
-def _collUpdate( coll_id, title, alias, description, topic, context):
+def _collUpdate( coll_id, title, alias, description, tags, topic, context):
     '''
     Update an existing collection. The collection ID is required and can be
     an ID, alias, or listing index; all other collection attributes are
     optional.
     '''
 
-    reply = _capi.collectionUpdate( _resolve_coll_id( coll_id, context = context ), title = title, alias = alias, description = description, topic = topic, context = context )
+    if tags:
+        tags = tags.split(",")
+
+    reply = _capi.collectionUpdate( _resolve_coll_id( coll_id, context = context ), title = title, alias = alias, description = description, tags = tags, topic = topic, context = context )
     _generic_reply_handler( reply, _print_coll )
 
 
@@ -1643,7 +1657,7 @@ def _print_user_listing( message ):
     _list_items = []
     for i in message.user:
         _list_items.append(i.uid)
-        click.echo("{:2}. {:24} {}".format(df_idx,i.uid,i.name))
+        click.echo("{:2}. {:24} {}, {}".format(df_idx,i.uid,i.name_last,i.name_first))
         df_idx += 1
 
 
@@ -1689,7 +1703,7 @@ def _print_data( message ):
         click.echo( "{:<15}{:<50}".format('ID: ', dr.id))
         click.echo( "{:<15}{:<50}".format('Alias: ', dr.alias if dr.alias else "(none)" ))
         _wrap_text( dr.title, "Title:", 15 )
-        _wrap_text( dr.keyw, "Keywords:", 15 )
+        #_wrap_text( dr.tags, "Tags:", 15 )
 
         if dr.data_url:
             click.echo("{:<15}{:<50}".format('DOI No.: ', dr.doi))
@@ -1826,7 +1840,7 @@ def _print_user( message ):
     for usr in message.user:
         if _verbosity >= 0:
             click.echo("{:<10} {:<50}".format('User ID: ', usr.uid) + '\n' +
-                       "{:<10} {:<50}".format('Name: ', usr.name) + '\n' +
+                       "{:<10} {:<50}".format('Name: ', usr.name_last + ", " + usr.name_first) + '\n' +
                        "{:<10} {:<50}".format('Email: ', usr.email))
 
 def _print_proj( message ):

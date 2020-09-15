@@ -166,6 +166,16 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }
     }
 
+    this.getActiveNode = function(){
+        if ( cat_tree_div.is( ":visible" ))
+            return cat_tree.activeNode;
+        else if ( cur_sel ){
+            return {key: cur_sel, data: {}};
+        }else{
+            return null;
+        }
+    }
+
     function setTopicPath(){
         var topic;
 
@@ -448,7 +458,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                                 </div>\
                             </div>\
                             <div class='cat-coll-info-div'>\
-                                <div class='cat-coll-info-brief'>"+ item.brief + "</div>\
+                                <div class='cat-coll-info-brief'>"+ (item.brief?item.brief:"(no description)") + "</div>\
                                 <div><table class='cat-coll-info-table'><tr><td>" + (item.ownerId.startsWith("u/")
                                     ?"Owner:</td><td>" + item.ownerName
                                     :"Project:</td><td>"+ item.ownerId.substr(2)) + "</td></tr>\

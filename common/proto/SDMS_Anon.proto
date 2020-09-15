@@ -180,6 +180,25 @@ message CollPublishedSearchReply
     optional uint32             total       = 4;
 }
 
+// Returns ListingReply
+message RecordSearchPublishedRequest
+{
+    repeated string             text        = 1;
+    repeated string             tags        = 2;
+    optional string             owner       = 3;
+    optional uint32             from        = 4;
+    optional uint32             to          = 5;
+    repeated string             data_text   = 6;
+    repeated string             data_tags   = 7;
+    optional string             data_md     = 8;
+    optional string             data_id     = 9;
+    optional uint32             data_from   = 10;
+    optional uint32             data_to     = 11;
+    optional uint32             offset      = 12;
+    optional uint32             count       = 13;
+    optional SDMS.SortOption    sort        = 14;
+    optional bool               sort_rev    = 15;
+}
 
 message AnnotationListBySubjectRequest
 {

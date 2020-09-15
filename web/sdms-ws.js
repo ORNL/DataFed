@@ -956,7 +956,6 @@ app.get('/api/tag/search', ( a_req, a_resp ) => {
 });
 
 app.get('/api/tag/autocomp', ( a_req, a_resp ) => {
-    console.log("tag autocomp, term:", a_req.query.term );
     var par = { name: a_req.query.term, offset: 0, count: 20 };
 
     sendMessage( "TagSearchRequest", par, a_req, a_resp, function( reply ) {
@@ -967,7 +966,7 @@ app.get('/api/tag/autocomp', ( a_req, a_resp ) => {
                 res.push({ value: tag.name, label: tag.name + " (" + tag.count + ")" });
             }
         }
-        console.log("tags:",res);
+
         a_resp.json( res );
     });
 });
@@ -1618,7 +1617,7 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
             msg = msg_class;
         }
     } else {
-        console.log( "unkown mtype" );
+        console.log( "unknown mtype" );
     }
 
     var f = g_ctx[ctx];

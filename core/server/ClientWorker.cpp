@@ -104,6 +104,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RecordAllocChangeRequest, &ClientWorker::procRecordAllocChangeRequest );
         SET_MSG_HANDLER( proto_id, RecordOwnerChangeRequest, &ClientWorker::procRecordOwnerChangeRequest );
         SET_MSG_HANDLER( proto_id, RecordSearchRequest, &ClientWorker::procRecordSearchRequest );
+        SET_MSG_HANDLER( proto_id, RecordSearchPublishedRequest, &ClientWorker::procRecordSearchPublishedRequest );
         SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &ClientWorker::procProjectSearchRequest );
         SET_MSG_HANDLER( proto_id, QueryCreateRequest, &ClientWorker::procQueryCreateRequest );
         SET_MSG_HANDLER( proto_id, QueryUpdateRequest, &ClientWorker::procQueryUpdateRequest );
@@ -712,6 +713,22 @@ ClientWorker::procRecordSearchRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
+bool
+ClientWorker::procRecordSearchPublishedRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordSearchPublishedRequest, ListingReply )
+
+    m_db_client.setClient( a_uid );
+
+    string qry, params;
+
+    parseQuery( request, qry, params );
+    DL_INFO("parsed query[" << qry << "]" );
+
+    m_db_client.recordSearchPublished( qry, params, reply );
+
+    PROC_MSG_END
+}
 
 bool
 ClientWorker::procProjectSearchRequest( const std::string & a_uid )

@@ -109,8 +109,12 @@ var view = db._createView("textview","arangosearch",{});
 view.properties({
     links: {
       "d": {
-        /*fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]},"keyw":{analyzers:["text_en"]}},*/
-        fields: { "title":{analyzers:["text_en"]},"desc":{analyzers:["text_en"]}},
+        fields:{
+          "_id": { analyzers: ["identity"] },
+          "title": { analyzers: ["text_en"] },
+          "desc": { analyzers: ["text_en"] },
+          "tags": { analyzers: ["identity"] }
+        },
         includeAllFields: false
       }
     }
