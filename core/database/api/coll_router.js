@@ -823,3 +823,166 @@ router.post('/published/search', function (req, res) {
 .summary('Search published collections.')
 .description('Search published collections.');
 
+router.post('/published/search2', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
+        var off = req.body.offset?req.body.offset:0,
+            cnt = req.body.count?req.body.count:100,
+            par = {},
+            qry, result, i;
+
+        qry = "for i in collview search i.public == true";
+
+        if ( req.body.text && req.body.text.length ){
+            qry += " and analyzer(";
+            for ( i in req.body.text ){
+                if ( i != "0" )
+                    qry += " and";
+                qry += " (phrase(i.title,'" + req.body.text[i] + "') or phrase(i['desc'],'" + req.body.text[i] + "'))";
+            }
+        
+            qry += ", 'text_en')";
+        }
+
+        if ( req.body.owner ){
+            qry += " and i.owner == @owner";
+            par.owner = req.body.owner;
+        }
+
+        if ( req.body.tags ){
+            qry += " and @tags all in i.tags";
+            par.tags = req.body.tags;
+        }
+
+        if ( req.body.from != undefined ){
+            qry += " and i.ut >= @utfr";
+            par.utfr = req.body.from;
+        }
+
+        if ( req.body.to != undefined ){
+            qry += " and i.ut <= @utto";
+            par.utto = req.body.to;
+        }
+
+        if ( req.body.data && ( req.body.data.text || req.body.data.tags || req.body.data.md )){
+            if ( req.body.data.text ){
+                // Must use textview for text matching
+                qry += " for v in 1..10 outbound i item for t in textview search t._id == v._id and analyzer(";
+
+                for ( i in req.body.data.text ){
+                    if ( i != "0" )
+                        qry += " and";
+                    qry += " (phrase(t.title,'" + req.body.data.text[i] + "') or phrase(t['desc'],'" + req.body.data.text[i] + "'))";
+                }
+            
+                qry += ",'text_en')";
+    
+                if ( req.body.data.tags ){
+                    qry += " and @dtags all in t.tags";
+                    par.dtags = req.body.data.tags;
+                }
+
+                if ( req.body.data.md ){
+                    qry += " and (" + req.body.data.md + ")";
+                }
+            }else{
+                // Use plain graph traversal with filters
+                qry += " for v in 1..10 outbound i item filter is_same_collection('d',v)";
+
+                if ( req.body.data.tags ){
+                    qry += " and @dtags all in v.tags";
+                    par.dtags = req.body.data.tags;
+                }
+
+                if ( req.body.data.md ){
+                    qry += " and (" +req.body.data.md + ")";
+                }
+            }
+        }else{
+            // Use plain graph traversal, no filters
+            qry += " for v in 1..10 outbound i item filter is_same_collection('d',v)";
+        }
+
+        qry += " limit " + off + ", " + cnt + " return { _id: v._id, title: v.title, alias: v.alias }";
+
+        console.log("qry:",qry);
+
+        result = g_db._query( qry, par, {}, { fullCount: true })
+        var item, tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+
+        /*for ( var i in result ){
+            item = result[i];
+            if ( item.owner_name && item.owner_name.length )
+                item.owner_name = item.owner_name[0];
+            else
+                item.owner_name = null;
+
+            if ( item.desc && item.desc.length > 120 ){
+                item.desc = item.desc.slice(0,120) + " ...";
+            }
+
+            item.notes = g_lib.annotationGetMask( client, item._id );
+        }*/
+
+        result.push({ paging: { off: off, cnt: cnt, tot: tot }});
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.body(joi.object({
+    text: joi.array().items(joi.string()).optional(),
+    tags: joi.array().items(joi.string()).optional(),
+    owner: joi.string().optional(),
+    from: joi.number().integer().min(0).optional(),
+    to: joi.number().integer().min(0).optional(),
+    data: joi.object().optional({
+        id: joi.string().optional(),
+        text: joi.array().items(joi.string()).optional(),
+        tags: joi.array().items(joi.string()).optional(),
+        md: joi.string().optional(),
+        from: joi.number().integer().min(0).optional(),
+        to: joi.number().integer().min(0).optional()
+    }),
+    offset: joi.number().integer().min(0).optional(),
+    count: joi.number().integer().min(1).optional(),
+    sort: joi.number().integer().min(0).optional()
+}).required(), 'Collection fields')
+.summary('Search published collections.')
+.description('Search published collections.');
+
+
+router.post('/pub/search/data', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","c","d","a"],
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
+                var doc, result = g_db._query( req.body.query, req.body.params ).toArray();
+
+                for ( var i in result ){
+                    doc = result[i];
+                    doc.notes = g_lib.annotationGetMask( client, doc._id );
+                }
+
+                res.send( result );
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    query: joi.string().required(),
+    params: joi.object().required()
+}).required(), 'Collection fields')
+.summary('Execute published data search query')
+.description('Execute published data search query');
