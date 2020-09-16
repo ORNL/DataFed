@@ -619,7 +619,7 @@ app.get('/api/query/exec', ( a_req, a_resp ) => {
 app.post('/api/dat/search', ( a_req, a_resp ) => {
     //console.log("search:",a_req.body);
     sendMessage( "RecordSearchRequest", { query: JSON.stringify( a_req.body ) }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.item?reply.item:[]);
+        a_resp.send(reply);
     });
 });
 
@@ -1087,7 +1087,13 @@ app.get('/api/col/published/list', ( a_req, a_resp ) => {
 
 
 app.post('/api/col/pub/search', ( a_req, a_resp ) => {
-    sendMessage( "CollPublishedSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
+    sendMessage( "CollSearchPublishedRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.post('/api/col/pub/search/data', ( a_req, a_resp ) => {
+    sendMessage( "RecordSearchPublishedRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

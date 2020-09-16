@@ -72,7 +72,7 @@ public:
     void recordExport( const Auth::RecordExportRequest & a_request, Auth::RecordExportReply & a_reply );
     void recordLock( const Auth::RecordLockRequest & a_request, Anon::ListingReply & a_reply );
     void recordSearch( const Auth::RecordSearchRequest & a_request, Anon::ListingReply & a_reply );
-    void recordSearchPublished( const std::string & a_query, const std::string & a_params, Anon::ListingReply & a_reply );
+    void recordSearchPublished( const Anon::RecordSearchPublishedRequest & a_request, Anon::ListingReply & a_reply );
     void recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Anon::ListingReply & a_reply );
     //void recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Anon::ListingReply & a_reply );
     void recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Anon::ListingReply & a_reply );
@@ -94,7 +94,7 @@ public:
     void collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply );
     void collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply );
     void collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply );
-    void collPublishedSearch( const Anon::CollPublishedSearchRequest & a_request, Anon::CollPublishedSearchReply & a_reply );
+    void collSearchPublished( const Anon::CollSearchPublishedRequest & a_request, Anon::CollSearchPublishedReply & a_reply );
 
     void queryList( const Auth::QueryListRequest & a_request, Anon::ListingReply & a_reply );
     void queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply );
@@ -197,10 +197,17 @@ private:
     void setTaskData( TaskData * a_task, const libjson::Value & a_task_json );
     void setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value & a_result );
     void setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value & a_result );
-    void setCollPublishedSearchReply( Anon::CollPublishedSearchReply & a_reply, const libjson::Value & result );
+    void setCollSearchPublishedReply( Anon::CollSearchPublishedReply & a_reply, const libjson::Value & result );
     void setCollInfoData( CollInfoData * a_item, const libjson::Value::Object & a_obj );
     void setTagDataReply( Anon::TagDataReply & a_reply, const libjson::Value & a_result );
     void setTagData( TagData * a_tag, const libjson::Value::Object & a_obj );
+
+    void parseCollSearchPublishedRequest( const Anon::CollSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial = false );
+    void parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params );
+    std::string parseSearchTextPhrase( const std::string & a_phrase, const std::string & a_iter );
+    std::string parseSearchTerms( const std::string & a_key, const std::vector<std::string> & a_terms, const std::string & a_iter );
+    std::string parseSearchMetadata( const std::string & a_query );
+    std::string parseSearchIdAlias( const std::string & a_query, const std::string & a_iter );
 
     CURL *      m_curl;
     char *      m_client;

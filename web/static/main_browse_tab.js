@@ -1463,45 +1463,47 @@ function reloadNode( a_node, a_cb ){
 }
 */
 
+function handleQueryResults( data ){
+    var results = [];
+    if ( data.item && data.item.length > 0 ){
+        util.setStatusText( "Found " + data.item.length + " result" + (data.item.length==1?"":"s"));
+        for ( var i in data.item ){
+            var item = data.item[i];
+            results.push({title:util.generateTitle( item, false, true ),icon: util.getDataIcon( item ),
+                checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi,size:item.size});
+        }
+    } else {
+        util.setStatusText("No results found");
+        results.push({title:"(no results)",icon:false,checkbox:false,nodrag:true,notarg:true});
+    }
+
+    $.ui.fancytree.getTree("#search_results_tree").reload(results);
+    $('[href="#tab-search-results"]').closest('li').show();
+    $( "#data-tabs" ).tabs({ active: 4 });
+
+    if ( select_source == SS_SEARCH ){
+        panel_info.showSelectedInfo();
+        updateBtnState();
+    }
+}
+
 function execQuery( query ){
     util.setStatusText("Executing search query...");
-    api.dataFind( query, function( ok, items ){
-        console.log( "qry res:", ok, items );
+    api.dataFind( query, function( ok, data ){
+        console.log( "qry res:", ok, data );
         if ( ok ){
             //var srch_node = data_tree.getNodeByKey("search");
 
             // Set this query as current for refresh
             cur_query = query;
-
-            var results = [];
-            if ( items.length > 0 ){
-                util.setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
-                for ( var i in items ){
-                    var item = items[i];
-                    results.push({title:util.generateTitle( item, false, true ),icon: util.getDataIcon( item ),
-                        checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi,size:item.size});
-                }
-            } else {
-                util.setStatusText("No results found");
-                results.push({title:"(no results)",icon:false,checkbox:false,nodrag:true,notarg:true});
-            }
-
-            $.ui.fancytree.getTree("#search_results_tree").reload(results);
-            $('[href="#tab-search-results"]').closest('li').show();
-            $( "#data-tabs" ).tabs({ active: 4 });
-
-            if ( select_source == SS_SEARCH ){
-                panel_info.showSelectedInfo();
-                updateBtnState();
-            }
-
+            handleQueryResults( data );
         }else{
-            dialogs.dlgAlert("Query Error",items);
+            dialogs.dlgAlert("Query Error",data);
         }
     });
 }
 
-function parseQuickSearch(){
+function parseQuickSearch( a_noscope ){
     //console.log("parse query");
     var query = {};
     var tmp = $("#text_query",frame).val();
@@ -1520,52 +1522,54 @@ function parseQuickSearch(){
     if ( tmp.length )
         query.tags = tmp;
 
-    query.scopes = [];
+    if ( !a_noscope ){
+        query.scopes = [];
 
-    if ( $("#scope_selected",frame).prop("checked")){
-        //console.log("select mode");
-        var i, key, nodes = data_tree.getSelectedNodes();
-        for ( i in nodes ){
-            key = nodes[i].key;
-            if ( key == "mydata" ){
+        if ( $("#scope_selected",frame).prop("checked")){
+            //console.log("select mode");
+            var i, key, nodes = data_tree.getSelectedNodes();
+            for ( i in nodes ){
+                key = nodes[i].key;
+                if ( key == "mydata" ){
+                    query.scopes.push({scope:model.SS_USER});
+                }else if ( key == "projects" ){
+                    query.scopes.push({scope:model.SS_PROJECTS});
+                }else if ( key == "shared_all" ){
+                    query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
+                    query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
+                }else if ( key == "shared_user" ){
+                    if ( nodes[i].data.scope )
+                        query.scopes.push({scope:model.SS_SHARED_BY_USER,id:nodes[i].data.scope});
+                    else
+                        query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
+                }else if ( key == "shared_proj" ){
+                    if ( nodes[i].data.scope )
+                        query.scopes.push({scope:model.SS_SHARED_BY_PROJECT,id:nodes[i].data.scope});
+                    else
+                        query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
+                }else if ( key.startsWith("c/") )
+                    query.scopes.push({scope:model.SS_COLLECTION,id:key,recurse:true});
+                else if ( key.startsWith("p/") )
+                    query.scopes.push({scope:model.SS_PROJECT,id:key});
+                //else if ( key.startsWith("t/") ){
+                //    query.scopes.push({scope:SS_TOPIC,id:key,recurse:true});
+                //}
+            }
+            /*nodes = cat_panel.tree.getSelectedNodes();
+            //console.log("cat tree nodes:",nodes.length);
+            for ( i in nodes ){
+                key = nodes[i].key;
+                query.scopes.push({scope:model.SS_TOPIC,id:key,recurse:true});
+            }*/
+        }else{
+            if ( $("#scope_mydat",frame).prop("checked"))
                 query.scopes.push({scope:model.SS_USER});
-            }else if ( key == "projects" ){
+            if ( $("#scope_proj",frame).prop("checked"))
                 query.scopes.push({scope:model.SS_PROJECTS});
-            }else if ( key == "shared_all" ){
+            if ( $("#scope_shared",frame).prop("checked")){
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
-            }else if ( key == "shared_user" ){
-                if ( nodes[i].data.scope )
-                    query.scopes.push({scope:model.SS_SHARED_BY_USER,id:nodes[i].data.scope});
-                else
-                    query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
-            }else if ( key == "shared_proj" ){
-                if ( nodes[i].data.scope )
-                    query.scopes.push({scope:model.SS_SHARED_BY_PROJECT,id:nodes[i].data.scope});
-                else
-                    query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
-            }else if ( key.startsWith("c/") )
-                query.scopes.push({scope:model.SS_COLLECTION,id:key,recurse:true});
-            else if ( key.startsWith("p/") )
-                query.scopes.push({scope:model.SS_PROJECT,id:key});
-            //else if ( key.startsWith("t/") ){
-            //    query.scopes.push({scope:SS_TOPIC,id:key,recurse:true});
-            //}
-        }
-        /*nodes = cat_panel.tree.getSelectedNodes();
-        //console.log("cat tree nodes:",nodes.length);
-        for ( i in nodes ){
-            key = nodes[i].key;
-            query.scopes.push({scope:model.SS_TOPIC,id:key,recurse:true});
-        }*/
-    }else{
-        if ( $("#scope_mydat",frame).prop("checked"))
-            query.scopes.push({scope:model.SS_USER});
-        if ( $("#scope_proj",frame).prop("checked"))
-            query.scopes.push({scope:model.SS_PROJECTS});
-        if ( $("#scope_shared",frame).prop("checked")){
-            query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
-            query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
+            }
         }
     }
 
@@ -1578,10 +1582,32 @@ function parseQuickSearch(){
 function searchDirect(){
     $("#run_qry_btn").removeClass("ui-state-error");
 
-    var query = parseQuickSearch();
+    if ( select_source == SS_CAT ){
+        var qry = parseQuickSearch( true );
+        // TODO Fix this when data search is updated
+        if ( qry.meta ){
+            qry.md = qry.meta;
+            delete qry.meta;
+        }
+        qry.coll = cat_panel.getCollectionQuery();
 
-    //if ( query.scopes.length && ( query.text || query.meta || query.id ))
-    execQuery( query );
+        console.log("qry",qry);
+
+        util.setStatusText("Executing collection search...");
+        api.dataPubSearch( qry, function( ok, data ){
+            console.log( "qry res:", ok, data );
+            if ( ok ){
+                handleQueryResults( data );
+            }else{
+                dialogs.dlgAlert("Search Error",data);
+            }
+        });
+    }else{
+        var query = parseQuickSearch();
+
+        //if ( query.scopes.length && ( query.text || query.meta || query.id ))
+        execQuery( query );
+    }
 }
 
 function querySave(){

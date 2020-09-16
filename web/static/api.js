@@ -276,6 +276,10 @@ export function dataFind( a_query, a_callback ) {
     _asyncPost("/api/dat/search",a_query,a_callback);
 }
 
+export function dataPubSearch( a_query, a_cb ){
+    _asyncPost( "/api/col/pub/search/data", a_query, a_cb );
+}
+
 export function sendDataLock( a_ids, a_lock, a_cb ){
     _asyncGet( "/api/dat/lock?lock="+a_lock+"&ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }

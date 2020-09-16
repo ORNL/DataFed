@@ -159,20 +159,21 @@ message CollReadRequest
     optional uint32             count       = 5;
 }
 
-message CollPublishedSearchRequest
+message CollSearchPublishedRequest
 {
-    repeated string             text        = 1;
-    repeated string             tags        = 2;
-    optional string             owner       = 3;
-    optional uint32             from        = 4;
-    optional uint32             to          = 5;
-    optional uint32             offset      = 6;
-    optional uint32             count       = 7;
-    optional SDMS.SortOption    sort        = 8;
-    optional bool               sort_rev    = 9;
+    optional string             id          = 1;
+    optional string             text        = 2;
+    repeated string             tags        = 3;
+    optional string             owner       = 4;
+    optional uint32             from        = 5;
+    optional uint32             to          = 6;
+    optional uint32             offset      = 7;
+    optional uint32             count       = 8;
+    optional SDMS.SortOption    sort        = 9;
+    optional bool               sort_rev    = 10;
 }
 
-message CollPublishedSearchReply
+message CollSearchPublishedReply
 {
     repeated CollInfoData       coll        = 1;
     optional uint32             offset      = 2;
@@ -183,21 +184,15 @@ message CollPublishedSearchReply
 // Returns ListingReply
 message RecordSearchPublishedRequest
 {
-    repeated string             text        = 1;
-    repeated string             tags        = 2;
-    optional string             owner       = 3;
-    optional uint32             from        = 4;
-    optional uint32             to          = 5;
-    repeated string             data_text   = 6;
-    repeated string             data_tags   = 7;
-    optional string             data_md     = 8;
-    optional string             data_id     = 9;
-    optional uint32             data_from   = 10;
-    optional uint32             data_to     = 11;
-    optional uint32             offset      = 12;
-    optional uint32             count       = 13;
-    optional SDMS.SortOption    sort        = 14;
-    optional bool               sort_rev    = 15;
+    required CollSearchPublishedRequest     coll        = 1;
+    optional string                         id          = 2;
+    optional string                         text        = 3;
+    repeated string                         tags        = 4;
+    optional string                         md          = 5;
+    optional uint32                         from        = 6;
+    optional uint32                         to          = 7;
+    optional SDMS.SortOption                sort        = 8;
+    optional bool                           sort_rev    = 9;
 }
 
 message AnnotationListBySubjectRequest

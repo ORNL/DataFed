@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <zmq.h>
 #include <unistd.h>
+#include <boost/tokenizer.hpp>
 #include "Util.hpp"
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
@@ -885,11 +886,21 @@ DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, Anon::ListingR
 }
 
 void
-DatabaseAPI::recordSearchPublished( const std::string & a_query, Anon::ListingReply & a_reply )
+DatabaseAPI::recordSearchPublished( const Anon::RecordSearchPublishedRequest & a_request, Anon::ListingReply & a_reply )
 {
     Value result;
+    string query, params;
+    
+    parseRecordSearchPublishedRequest( a_request, query, params );
 
-    dbPost( "/col/pub/search", {}, &a_query, result );
+    if ( params.size() )
+        params[0] = ' '; // Get rid of leading delimiter;
+
+    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"}}";
+
+    DL_INFO("Record Search Pub Req: [" << body << "]");
+
+    dbPost( "/col/pub/search", {}, &body, result );
 
     setListingDataReply( a_reply, result );
 }
@@ -1542,61 +1553,27 @@ DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::
 }
 
 void
-DatabaseAPI::collPublishedSearch( const Anon::CollPublishedSearchRequest & a_request, Anon::CollPublishedSearchReply & a_reply )
+DatabaseAPI::collSearchPublished( const Anon::CollSearchPublishedRequest & a_request, Anon::CollSearchPublishedReply & a_reply )
 {
     Value result;
+    string query, params;
+    
+    parseCollSearchPublishedRequest( a_request, query, params );
 
-    string body = "{\"sort\":0";
+    if ( params.size() )
+        params[0] = ' '; // Get rid of leading delimiter;
 
-    if ( a_request.text_size() > 0 )
-    {
-        body+=",\"text\":[";
-        for ( int i = 0; i < a_request.text_size(); ++i )
-        {
-            if ( i > 0 )
-                body += ",";
-            body += "\"" + a_request.text(i) + "\"";
-        }
-        body += "]";
-    }
+    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"}}";
 
-    if ( a_request.tags_size() > 0 )
-    {
-        body+=",\"tags\":[";
-        for ( int i = 0; i < a_request.tags_size(); ++i )
-        {
-            if ( i > 0 )
-                body += ",";
-            body += "\"" + a_request.tags(i) + "\"";
-        }
-        body += "]";
-    }
+    DL_INFO("Coll Search Pub Req: [" << body << "]");
 
-    if ( a_request.has_owner() )
-        body += ",\"owner\":\"" + a_request.owner() + "\"";
+    dbPost( "col/pub/search", {}, &body, result );
 
-    if ( a_request.has_from() )
-        body += ",\"from\":" + to_string( a_request.from() );
-
-    if ( a_request.has_to() )
-        body += ",\"to\":" + to_string( a_request.to() );
-
-    if ( a_request.has_offset() )
-        body += ",\"offset\":" + to_string( a_request.offset() );
-
-    if ( a_request.has_count() )
-        body += ",\"count\":" + to_string( a_request.count() );
-
-    body += "}";
-
-    dbPost( "col/published/search", {}, &body, result );
-
-    setCollPublishedSearchReply( a_reply, result );
-
+    setCollSearchPublishedReply( a_reply, result );
 }
 
 void
-DatabaseAPI::setCollPublishedSearchReply( Anon::CollPublishedSearchReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setCollSearchPublishedReply( Anon::CollSearchPublishedReply & a_reply, const libjson::Value & a_result )
 {
     Value::ObjectConstIter   j;
 
@@ -3471,6 +3448,621 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
     libjson::Value result;
 
     dbGet( "task/purge", {{"age_sec",to_string( a_age_sec )}}, result );
+}
+
+
+void
+DatabaseAPI::parseCollSearchPublishedRequest( const Anon::CollSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial )
+{
+    a_query = "for i in collview search i.public == true";
+
+    if ( a_request.has_text() > 0 )
+    {
+        a_query += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
+    }
+
+    if ( a_request.tags_size() > 0 )
+    {
+        a_query += " and @tags all in i.tags";
+
+        a_params += ",\"tags\":[";
+        for ( int i = 0; i < a_request.tags_size(); ++i )
+        {
+            if ( i > 0 )
+                a_params += ",";
+            a_params += "\"" + a_request.tags(i) + "\"";
+        }
+        a_params += "]";
+    }
+
+    if ( a_request.has_id() )
+    {
+        a_query += " and " + parseSearchIdAlias( a_request.id(), "i" );
+    }
+
+    if ( a_request.has_owner() )
+    {
+        a_query += " and i.owner == @owner";
+        a_params += ",\"owner\":\"" + a_request.owner() + "\"";
+    }
+
+    if ( a_request.has_from() )
+    {
+        a_query += " and i.ut >= @utfr";
+        a_params += ",\"utfr\":" + to_string( a_request.from() );
+    }
+
+    if ( a_request.has_to() )
+    {
+        a_query += " and i.ut <= @utto";
+        a_params += ",\"utto\":" + to_string( a_request.to() );
+    }
+
+    if ( !a_partial )
+    {
+        a_query += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first))";
+
+        // TODO add sort options
+        a_query += " sort i.title";
+    }
+
+    a_query += " limit ";
+
+    if ( a_request.has_offset() )
+        a_query += to_string( a_request.offset() );
+    else
+        a_query += "0";
+
+    if ( a_request.has_count() && a_request.count() <= 200 )
+        a_query += "," + to_string( a_request.count() );
+    else
+        a_query += ",200";
+
+    // If not part of another query, build full query string
+    if ( !a_partial )
+    {
+        a_query += " return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias}";
+    }
+}
+
+
+void
+DatabaseAPI::parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params )
+{
+    parseCollSearchPublishedRequest( a_request.coll(), a_query, a_params, true );
+
+    a_query += " for v in 1..10 outbound i item";
+
+    string iter;
+
+    if ( a_request.has_text() )
+    {
+        a_query += " for t in textview search t._id == v._id and analyzer(" + parseSearchTextPhrase( a_request.text(), "t" ) + ",'text_en')";
+        iter = "t";
+    }
+    else
+    {
+        a_query += " filter is_same_collection('d',v)";
+        iter = "v";
+    }
+
+    if ( a_request.tags_size() > 0 )
+    {
+        a_query += " and @dtags all in " + iter + ".tags";
+
+        a_params += ",\"dtags\":[";
+        for ( int i = 0; i < a_request.tags_size(); ++i )
+        {
+            if ( i > 0 )
+                a_params += ",";
+            a_params += "\"" + a_request.tags(i) + "\"";
+        }
+        a_params += "]";
+    }
+
+    if ( a_request.has_id() )
+    {
+        a_query += " and " + parseSearchIdAlias( a_request.id(), "v" );
+    }
+
+    if ( a_request.has_md() )
+    {
+        a_query += " and (" + parseSearchMetadata( a_request.md() ) + ")";
+    }
+
+    if ( a_request.has_from() )
+    {
+        a_query += " and v.ut >= @dutfr";
+        a_params += ",\"dutfr\":" + to_string( a_request.from() );
+    }
+
+    if ( a_request.has_to() )
+    {
+        a_query += " and v.ut <= @dutto";
+        a_params += ",\"dutto\":" + to_string( a_request.to() );
+    }
+
+    a_query += " limit 0,100 sort v.title return { _id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size }";
+}
+
+
+string
+DatabaseAPI::parseSearchTextPhrase( const string & a_phrase, const string & a_iter )
+{
+    /* This function parses category logic (if present) around full-
+    text queries. Text queries are typed into the text input and are
+    simpler than advanced queries.Categories are title, description, and
+    keywords. Categories may be specified just before query terms:
+
+        title: fusion simulation keywords: -experiment
+
+    If no categories are specified, all categories are searched and the
+    default operator is OR for both categories and terms.
+
+    If one or more categories are specified, the default operator for categories
+    is AND but for terms it is still OR.
+
+    Operator may be specified by prefixing category or term with:
+        +   AND
+        -   AND NOT
+
+    There is no NOR operator since this would produce low-specificity queryies.
+
+    If terms are included before a category is specified, these terms apply to all
+    categories (as if they were copied as-is into each category phrase)
+
+    Categories may only be specified once.
+
+    Phrases are specified with single or double quotations.
+    All punctuation is ignored.
+
+    The order of categories and terms does not matter, they are grouped by operator
+    in an expression such as:
+
+        (term1 or term2 or term3) and term4 and term5 and not term6 and not term7
+        OR terms                        AND terms           NAND terms
+    */
+    static map<string,int> cat_map =
+    {
+        {"t:",1},{"title:",1},
+        {"d:",2},{"desc:",2},{"descr:",2},{"description:",2}
+    };
+
+    string separator1("");//dont let quoted arguments escape themselves
+    string separator2(" ");//split on spaces
+    string separator3("\"\'");//let it have quoted arguments
+
+    boost::escaped_list_separator<char> els(separator1,separator2,separator3);
+    boost::tokenizer<boost::escaped_list_separator<char>> tok(a_phrase, els);
+
+    string result;
+    vector<string>  title,desc;
+    size_t pos;
+    int op = 0;
+    int ops[5] = {0,0,0,0,0};
+    int cat = 7;
+    int count_or = 0;
+    int count_other = 0;
+    string op_str, extra;
+
+    map<string,int>::const_iterator c;
+
+    for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
+    {
+        pos = (*t).find_first_of(':');
+        if ( pos != string::npos )
+        {
+            if ( pos < (*t).size() -  1 )
+            {
+                op_str = (*t).substr(0,pos+1);
+                extra = (*t).substr(pos+1);
+            }
+            else
+            {
+                op_str = *t;
+                extra.clear();
+            }
+
+            if ( op_str[0] == '+' )
+            {
+                c = cat_map.find(op_str.substr(1));
+                op = 2; // AND
+                count_other++;
+            }
+            else if ( op_str[0] == '-' )
+            {
+                c = cat_map.find(op_str.substr(1));
+                op = 3; // NAND
+                count_other++;
+            }
+            else
+            {
+                c = cat_map.find(op_str);
+                op = 1; // OR
+                count_or++;
+            }
+
+            if ( c == cat_map.end() )
+                EXCEPT_PARAM(1,"Invalid query scope '" << op_str << "'" );
+
+            cat = c->second;
+
+            if ( ops[cat] != 0 )
+                EXCEPT_PARAM(1,"Invalid query - categories may only be specified once." );
+
+            ops[cat] = op;
+
+            if ( extra.size() )
+            {
+                if ( cat & 1 ) title.push_back( extra );
+                if ( cat & 2 ) desc.push_back( extra );
+            }
+        }
+        else
+        {
+            if ( cat & 1 ) title.push_back( *t );
+            if ( cat & 2 ) desc.push_back( *t );
+        }
+    }
+
+    // Apply default operator for unspecified categories, check for empty categories
+    if ( ops[1] == 0  )
+    {
+        if ( title.size() )
+        {
+            ops[1] = 1;
+            count_or++;
+        }
+    }
+    else if ( !title.size() )
+        EXCEPT(1,"Title category specified without search terms" );
+
+    if ( ops[2] == 0 )
+    {
+        if ( desc.size() )
+        {
+            ops[2] = 1;
+            count_or++;
+        }
+    }
+    else if ( !desc.size() )
+        EXCEPT(1,"Description category specified without search terms" );
+
+    // Build OR phrase
+    if ( count_or > 1 && count_other > 0 )
+        result += "(";
+
+    if ( ops[1] == 1 )
+        result += parseSearchTerms( "title", title, a_iter );
+
+    if ( ops[2] == 1 )
+        result += (result.size()?" or ":"") + parseSearchTerms( "desc", desc, a_iter );
+
+    if ( count_or > 1 && count_other > 0 )
+        result += ")";
+
+    // Build AND phrase
+    if ( ops[1] == 2 )
+        result += (result.size()?" and ":"") + parseSearchTerms( "title", title, a_iter );
+
+    if ( ops[2] == 2 )
+        result += (result.size()?" and ":"") + parseSearchTerms( "desc", desc, a_iter );
+
+    // Build NAND phrase
+    if ( ops[1] == 3 )
+        result += (result.size()?" and not (":"not (") + parseSearchTerms( "title", title, a_iter ) + ")";
+
+    if ( ops[2] == 3 )
+        result += (result.size()?" and not (":"not (") + parseSearchTerms( "desc", desc, a_iter ) + ")";
+
+    return result;
+}
+
+std::string
+DatabaseAPI::parseSearchTerms( const std::string & a_key, const std::vector<std::string> & a_terms, const std::string & a_iter )
+{
+    vector<string> and_terms;
+    vector<string> nand_terms;
+    vector<string> or_terms;
+
+    for ( vector<string>::const_iterator t = a_terms.begin(); t != a_terms.end(); ++t )
+    {
+        switch( (*t)[0] )
+        {
+        case '+':
+            and_terms.push_back( (*t).substr(1) );
+            break;
+        case '-':
+            nand_terms.push_back( (*t).substr(1) );
+            break;
+        default:
+            or_terms.push_back( *t );
+            break;
+        }
+    }
+
+    string result;
+    vector<string>::iterator i;
+
+    if ( or_terms.size() > 1 )
+        result += "(";
+
+    for ( i = or_terms.begin(); i != or_terms.end(); i++ )
+    {
+        if ( i != or_terms.begin() )
+            result += " or ";
+
+        result += "phrase("+a_iter+"['" + a_key + "'],'" + *i + "')";
+    }
+
+    if ( or_terms.size() > 1 )
+        result += ")";
+
+    for ( i = and_terms.begin(); i != and_terms.end(); i++ )
+    {
+        if ( result.size() )
+            result += " and ";
+
+        result += "phrase("+a_iter+"['" + a_key + "'],'" + *i + "')";
+    }
+
+    for ( i = nand_terms.begin(); i != nand_terms.end(); i++ )
+    {
+        if ( result.size() )
+            result += " and ";
+
+        result += "not phrase("+a_iter+"['" + a_key + "'],'" + *i + "')";
+    }
+
+    return "("+result+")";
+}
+
+std::string
+DatabaseAPI::parseSearchMetadata( const std::string & a_query )
+{
+    // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
+    // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
+    static set<string> terms = {"title","desc","alias","doi","data_url","owner","creator","ct","ut","size","source","ext"};
+    static set<string> funcs = {"abs","acos","asin","atan","atan2","average","avg","ceil","cos","degrees","exp","exp2",
+        "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
+        "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample","length","lower","upper",
+        "distance","is_in_polygon"};
+    static set<string> date_funcs = {"date_now","date_timestamp"};
+    static set<string> other = {"like","true","false","null","in"};
+
+
+    struct Var
+    {
+        Var() : start(0), len(0) {}
+        void reset() { start = 0; len = 0; }
+
+        size_t  start;
+        size_t  len;
+    };
+
+    enum ParseState
+    {
+        PS_DEFAULT = 0,
+        PS_SINGLE_QUOTE,
+        PS_DOUBLE_QUOTE,
+        PS_TOKEN,
+        PS_STOP
+    };
+
+    ParseState state = PS_DEFAULT;
+    Var v;
+    string result,tmp;
+    char last = 0, next = 0, next_nws = 0;
+    string::const_iterator c2;
+    bool val_token, last_char = false;
+
+    for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
+    {
+        if ( c+1 != a_query.end() )
+            next = *(c+1);
+        else
+            next = 0;
+
+        next_nws = 0;
+        for ( c2 = c + 1; c2 != a_query.end(); c2++ )
+        {
+            if ( !isspace( *c2 ))
+            {
+                next_nws = *c2;
+                break;
+            }
+        }
+        cout << "c[" << *c << "]\n";
+
+        switch( state )
+        {
+        case PS_SINGLE_QUOTE: // Single quote (not escaped)
+            if ( *c == '\'' && *(c-1) != '\\' )
+                state = PS_DEFAULT;
+            break;
+        case PS_DOUBLE_QUOTE: // Double quote (not escaped)
+            if ( *c == '\"' && *(c-1) != '\\' )
+                state = PS_DEFAULT;
+            break;
+        case PS_DEFAULT: // Not quoted, not an identifier
+            if ( *c == '\'' )
+            {
+                state = PS_SINGLE_QUOTE;
+                cout << "single q start\n";
+                break;
+            }
+            else if ( *c == '\"' )
+            {
+                state = PS_DOUBLE_QUOTE;
+                cout << "dbl q start\n";
+                break;
+            }
+            else if ( !isalpha( *c ))
+                break;
+
+            v.start = c - a_query.begin();
+            cout << "tok start: " << v.start << "\n";
+            v.len = 0;
+            state = PS_TOKEN;
+            // FALL-THROUGH to token processing
+        case PS_TOKEN: // Token
+            //if ( spec.find( *c ) != spec.end() )
+            val_token = isalnum( *c ) || *c == '.' || *c == '_';
+            last_char = (( c + 1 ) == a_query.end());
+
+            if ( !val_token || last_char )
+            {
+                //cout << "start: " << v.start << ", len: " << v.len << "\n";
+                if ( !val_token )
+                {
+                    tmp = a_query.substr( v.start, v.len );
+                    if ( *c == '\'' )
+                        state = PS_SINGLE_QUOTE;
+                    else if ( *c == '\"' )
+                        state = PS_DOUBLE_QUOTE;
+                    else
+                        state = PS_DEFAULT;
+                }
+                else
+                {
+                    tmp = a_query.substr( v.start, v.len + 1 );
+                    state = PS_STOP;
+                }
+                cout << "token[" << tmp << "]" << endl;
+
+                // Determine if identifier needs to be prefixed with "v." by testing agains allowed identifiers
+                if ( tmp == "desc" )
+                    result.append( "v['desc']" );
+                else if ( other.find( tmp ) != other.end() || (funcs.find( tmp ) != funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' ))))
+                    result.append( tmp );
+                else if ( date_funcs.find( tmp ) != date_funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' )))
+                {
+                    result.append( "0.001*");
+                    result.append( tmp );
+                }
+                else if ( tmp == "id" )
+                {
+                    result.append( "v._id" );
+                }
+                else if ( terms.find( tmp ) != terms.end() )
+                {
+                    result.append( "v." );
+                    result.append( tmp );
+                }
+                else
+                {
+                    if ( tmp == "md" || tmp.compare( 0, 3, "md." ) == 0 )
+                        result.append( "v." );
+                    else
+                        result.append( "v.md." );
+                    result.append( tmp );
+                }
+
+                v.reset();
+            }
+            else
+            {
+                v.len++;
+            }
+            break;
+        default:
+            break;
+        }
+
+        // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
+
+        if ( state == PS_STOP )
+            break;
+        else if ( state == PS_DEFAULT )
+        {
+            if ( *c == '?' )
+                result += " like ";
+            else if ( *c == '~' )
+                if ( last != '=' )
+                    result += "=~";
+                else
+                    result += '~';
+            else if ( *c == '=' )
+                if ( last != '=' && last != '<' && last != '>' && last != '!' && next != '~' && next != '=' )
+                    result += "==";
+                else
+                    result += '=';
+            else
+                result += *c;
+        }
+        else if ( state != PS_TOKEN )
+            result += *c;
+
+        last = *c;
+    }
+
+    if ( state == PS_SINGLE_QUOTE || state == PS_DOUBLE_QUOTE )
+    {
+        EXCEPT(1,"Mismatched quotation marks in query" );
+    }
+
+    //cout << "[" << a_query << "]=>[" << result << "]\n";
+    return result;
+}
+
+std::string
+DatabaseAPI::parseSearchIdAlias( const std::string & a_query, const std::string & a_iter )
+{
+    string val;
+    val.resize(a_query.size());
+    std::transform(a_query.begin(), a_query.end(), val.begin(), ::tolower);
+
+    bool id_ok = true;
+    bool alias_ok = true;
+    size_t p;
+
+    if (( p = val.find_first_of("/") ) != string::npos ) // Aliases cannot contain "/"
+    {
+        if ( p == 0 || ( p == 1 && val[0] == 'd' ))
+        {
+            // Minimum len of key (numbers) is 2
+            if ( val.size() >= p + 3 )
+            {
+                for ( string::const_iterator c = val.begin()+p+1; c != val.end(); c++ )
+                {
+                    if ( !isdigit( *c ) )
+                    {
+                        id_ok = false;
+                        break;
+                    }
+                }
+
+                if ( id_ok )
+                    return a_iter + "._id like 'd/" + val.substr(p+1) + "%'";
+            }
+        }
+
+        EXCEPT(1,"Invalid ID/Alias query value.");
+    }
+
+    for ( string::const_iterator c = val.begin(); c != val.end(); c++ )
+    {
+        // ids (keys) are only digits
+        // alias are alphanum plus "_-."
+        if ( !isdigit( *c ))
+        {
+            id_ok = false;
+            if ( !isalpha( *c ) && *c != '_' && *c != '-' && *c != '.' )
+            {
+                alias_ok = false;
+                break;
+            }
+        }
+    }
+
+    if ( id_ok && alias_ok )
+        return string("(") + a_iter + "._id like '%" + val + "%' || "+a_iter+".alias like '%" + val + "%')";
+    else if ( id_ok )
+        return a_iter + "._id like '%" + val + "%'";
+    else if ( alias_ok )
+        return a_iter + ".alias like '%" + val + "%'";
+    else
+        EXCEPT(1,"Invalid ID/Alias query value.");
 }
 
 }}

@@ -641,6 +641,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     //cat_coll_div.on("click", ".btn-cat-folder-open", onFolderOpenClose );
     //cat_coll_div.on("dblclick", ".cat-item-title.cat-folder", onFolderOpenClose );
 
+    this.getCollectionQuery = function(){
+        return coll_qry;
+    }
+
     function getCollections(){
         cat_coll_div.html( "(loading)" );
 
@@ -648,7 +652,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         var tmp = $("#cat_text_qry",cat_panel).val().trim();
         if ( tmp ){
-            coll_qry.text = tmp.split(" ");
+            coll_qry.text = tmp;
         }else{
             delete coll_qry.text;
         }
