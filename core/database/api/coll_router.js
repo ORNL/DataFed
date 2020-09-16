@@ -956,7 +956,7 @@ router.post('/published/search2', function (req, res) {
 .description('Search published collections.');
 
 
-router.post('/pub/search/data', function (req, res) {
+router.post('/pub/search', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -965,11 +965,21 @@ router.post('/pub/search/data', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
-                var doc, result = g_db._query( req.body.query, req.body.params ).toArray();
+                var item, result = g_db._query( req.body.query, req.body.params ).toArray();
 
                 for ( var i in result ){
-                    doc = result[i];
-                    doc.notes = g_lib.annotationGetMask( client, doc._id );
+                    item = result[i];
+
+                    if ( item.owner_name && item.owner_name.length )
+                        item.owner_name = item.owner_name[0];
+                    else
+                        item.owner_name = null;
+        
+                    if ( item.desc && item.desc.length > 120 ){
+                        item.desc = item.desc.slice(0,120) + " ...";
+                    }
+    
+                    item.notes = g_lib.annotationGetMask( client, item._id );
                 }
 
                 res.send( result );
