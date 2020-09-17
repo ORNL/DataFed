@@ -168,7 +168,7 @@ router.post('/update', function (req, res) {
                         req.body.tags = coll.tags?coll.tags:[];
 
                     if ( coll.topic ){
-                        //console.log("unlink old topic");
+                        console.log("unlink old topic");
                         g_lib.topicUnlink( coll._id );
                         obj.public = null;
 

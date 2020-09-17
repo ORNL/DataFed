@@ -151,7 +151,6 @@ module.exports = ( function() {
         desc: { required: false, update: true, max_len: 2000, label: 'description' },
         summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc", label: 'description' },
         comment: { required: true, update: true, max_len: 2000, in_field: "comment", out_field: "comment", label: 'comment' },
-        keyw: { required: false, update: true, max_len: 200, lower: true, label: 'keywords' },
         topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
         domain: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'domain' },
         source: { required: false, update: true, max_len: 300, lower: false, label: 'source' },
@@ -759,50 +758,87 @@ module.exports = ( function() {
         return id;
     };
 
-    obj.topicLink = function( a_topic, a_coll_id, a_owner_id ){
-        //var top_ar = obj.parseTopic( a_topic );
-        var top_ar = a_topic.split(".");
-        var i,topic,parent = "t/root";
+    obj.topicCreate = function( a_topics, a_idx, a_par_id, a_owner_id ){
+        var topic, par_id = a_par_id;
 
-        //top_ar.push(a_owner_id);
-
-        for ( i = 0; i < top_ar.length; i++ ){
-            topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{par:parent,title:top_ar[i]});
-            if ( topic.hasNext() ){
-                parent = topic.next()._id;
-            }else{
-                for ( ; i < top_ar.length; i++ ){
-                    topic = obj.db.t.save({title:top_ar[i]},{returnNew:true});
-                    obj.db.top.save({_from:topic._id,_to:parent});
-                    parent = topic._id;
-                }
-                break;
-            }
+        for ( var i = a_idx; i < a_topics.length; i++ ){
+            topic = obj.db.t.save({ title: a_topics[i], creator: a_owner_id },{ returnNew: true });
+            obj.db.top.save({ _from: topic._id, _to: par_id });
+            par_id = topic._id;
         }
 
-        if ( !obj.db.top.firstExample({_from:a_coll_id,_to:parent})){
-            obj.db.top.save({_from:a_coll_id,_to:parent});
+        return par_id;
+    }
+
+    obj.topicLink = function( a_topic, a_coll_id, a_owner_id ){
+        var i, topics = a_topic.split(".");
+
+        // Trim misplaced "." characters
+        for ( i in topics ){
+            if ( topics[i].length == 0 )
+                throw [ obj.ERR_INVALID_PARAM, "Invalid category" ];
+        }
+
+        var i,topic,parent;
+
+        // Find or create top-level topics
+        parent = obj.db._query("for i in t filter i.top == true && i.title == @title return i",{ title: topics[0] });
+
+        if ( parent.hasNext() ){
+            parent = parent.next()._id;
+
+            for ( i = 1; i < topics.length; i++ ){
+                topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{ par: parent, title: topics[i] });
+                if ( topic.hasNext() ){
+                    parent = topic.next()._id;
+                }else{
+                    parent = this.topicCreate( topics, i, parent, a_owner_id );
+                    break;
+                }
+            }
+        }else{
+            parent = obj.db.t.save({ title: topics[0], top: true, creator: a_owner_id },{ returnNew: true })._id;
+
+            parent = this.topicCreate( topics, 1, parent, a_owner_id );
+        }
+
+        if ( !obj.db.top.firstExample({ _from: a_coll_id, _to: parent })){
+            obj.db.top.save({ _from: a_coll_id, _to: parent });
         }
     };
 
     obj.topicUnlink = function( a_coll_id ){
         //console.log("topicUnlink");
-        var top = obj.db.top.firstExample({_from: a_coll_id});
-        if ( !top ){
+        var top_lnk = obj.db.top.firstExample({_from: a_coll_id});
+        if ( !top_lnk ){
             return;
         }
 
-        var parent = top._to;
-        obj.db.top.remove(top);
+        // Save parent topic id, delete link from collection
+        var topic, topic_id = top_lnk._to;
+        console.log("rem top lnk",top_lnk._id);
+        obj.db.top.remove( top_lnk );
 
-        // Unwind path, deleting orphaned topics along the way
-        while ( parent != "t/root" ){
-            if ( obj.db.top.firstExample({ _to: parent }))
+        // Unwind path, deleting orphaned, non-admin topics along the way
+        while( topic_id ){
+            topic = obj.db.t.document( topic_id );
+
+            // If parent is admin controlled, or other topics are linked to parent, stop
+            if ( topic.admin || obj.db.top.firstExample({ _to: topic_id })){
+                console.log("stop no del topic",topic);
                 break;
-            else {
-                top = obj.db.top.firstExample({ _from: parent });
-                parent = top._to;
-                obj.graph.t.remove( top._from );
+            }else{
+                top_lnk = obj.db.top.firstExample({ _from: topic_id });
+
+                if ( top_lnk ){
+                    topic_id = top_lnk._to;
+                    console.log("rem topic",top_lnk._from);
+                    obj.graph.t.remove( top_lnk._from );
+                }else{
+                    console.log("rem topic",topic_id);
+                    obj.graph.t.remove( topic_id );
+                    topic_id = null;
+                }
             }
         }
     };

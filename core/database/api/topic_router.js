@@ -14,57 +14,54 @@ module.exports = router;
 
 router.get('/list/topics', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
-        var qry = "for v in 1..1 inbound @par top filter is_same_collection('t',v) sort v.title",
-            result,
-            item;
+        var qry, par = {}, result, off = 0, cnt = 50;
 
+        if ( req.queryParams.offset != undefined )
+            off = req.queryParams.offset;
 
-        if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
-            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,owner:v.owner,doi:v.doi,alias:v.alias}";
-            result = g_db._query( qry, { par: req.queryParams.id?req.queryParams.id:"t/root" },{},{fullCount:true});
-            var tot = result.getExtra().stats.fullCount;
-            result = result.toArray();
-            result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
-        }
-        else{
-            qry += " return {id:v._id,title:v.title,owner:v.owner,alias:v.alias,doi:v.doi}";
-            result = g_db._query( qry, { par: req.queryParams.id?req.queryParams.id:"t/root" }).toArray();
+        if ( req.queryParams.count != undefined && req.queryParams.count <= 100 )
+            cnt = req.queryParams.count;
+
+        if ( req.queryParams.id ){
+            qry = "for i in 1..1 inbound @par top filter is_same_collection('t',i)",
+            par.par = req.queryParams.id;
+        }else{
+            qry = "for i in t filter i.top == true";
         }
 
-        for ( var i in result ){
-            item = result[i];
-            if ( item.id && ( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )))
-                item.notes = g_lib.annotationGetMask( client, item.id );
-        }
+        qry += " sort i.title limit " + off + "," + cnt + " return i";
+        result = g_db._query( qry, par, {}, { fullCount: true });
+        var tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+        result.push({ paging: {off: off, cnt: cnt, tot: tot }});
 
         res.send( result );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('client', joi.string().optional(), "Client ID")
 .queryParam('id', joi.string().optional(), "ID of topic to list (omit for top-level)")
-.queryParam('data', joi.boolean().default(true), "Include data records (default)")
-.queryParam('offset', joi.number().optional(), "Offset")
-.queryParam('count', joi.number().optional(), "Count")
+.queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
+.queryParam('count', joi.number().integer().min(1).optional(), "Count")
 .summary('List topics')
-.description('List topics with optional parent');
+.description('List topics under specified topic ID. If ID is omitted, lists top-level topics.');
 
+/*
 router.get('/list/coll', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
         var qry = "for v in 1..1 inbound @id top filter is_same_collection('c',v) let name = (for i in u filter i._id == v.owner return concat(i.name_last,', ', i.name_first)) sort v.title",
-            result, tot, item, tot;
+            result, tot, item, off = 0, cnt = 50, tot;
 
         if ( req.queryParams.offset == undefined )
-            req.queryParams.offset = 0;
+            off = 0;
 
-        if ( req.queryParams.count == undefined || req.queryParams.count > 100 )
-            req.queryParams.count = 100;
+        if ( req.queryParams.count == undefined && req.queryParams.count <= 100 )
+            cnt = req.queryParams.count;
 
-        qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count + " return {id:v._id,title:v.title,brief:v['desc'],owner_id:v.owner,owner_name:name,alias:v.alias}";
-        console.log("qry:",qry,req.queryParams.id);
+        qry += " limit " + off + ", " + cnt + " return {id: v._id, title: v.title, brief: v['desc'], owner_id: v.owner, owner_name:name, alias:v.alias }";
         result = g_db._query( qry, { id: req.queryParams.id },{},{fullCount:true});
         tot = result.getExtra().stats.fullCount;
         result = result.toArray();
@@ -90,11 +87,13 @@ router.get('/list/coll', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "ID of topic to list (omit for top-level)")
+.queryParam('id', joi.string().required(), "ID of topic to list")
 .queryParam('offset', joi.number().optional(), "Offset")
 .queryParam('count', joi.number().optional(), "Count")
 .summary('List collections with topic')
 .description('List collections with topic');
+*/
+
 
 router.get('/search', function (req, res) {
     try {
@@ -121,14 +120,15 @@ router.get('/search', function (req, res) {
             item = qry_res.next();
             id = item._id;
             topic = item.title;
+            path = [];
 
             while (( item = g_db.top.firstExample({ _from: item._id }))){
-                if ( item._to == "t/root" )
-                    break;
                 item = g_db.t.document( item._to );
                 topic = item.title + "." + topic;
+                path.unshift( item.id );
             }
-            result.push({ id: id, title: topic });
+
+            result.push({ id: id, title: topic, path: path });
         }
 
         res.send( result );
