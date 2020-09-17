@@ -331,8 +331,30 @@ svg text
 
 .cat-topic
 {
-    margin-bottom: 1em;
+    margin-bottom: .5em;
+}
+
+.cat-topic-div
+{
     display:block!important;
+    text-align:left!important;
+    padding:0 0 0 0.5em!important;
+    margin:0!important;
+}
+
+div.cat-topic-div .cat-topic-btn-div
+{
+    visibility:hidden;
+}
+
+div.cat-topic-div:hover .cat-topic-btn-div
+{
+    visibility:visible;
+}
+
+.btn-cat-topic-open
+{
+    margin:0!important;
 }
 
 .cat-topic-empty
@@ -370,25 +392,15 @@ div.cat-coll-title
     font-size:1.2em;
     flex:1 1 auto;
     padding-bottom: 0.5em;
-    /*user-select: none;*/
 }
 
 div.cat-coll-title-div .cat-coll-btn-div
 {
-    /*display:none;*/
     visibility:hidden;
 }
 
-/*
-div.cat-coll-title-div:hover
-{
-    background:#002000;
-}
-*/
-
 div.cat-coll-title-div:hover .cat-coll-btn-div
 {
-    /*display:block;*/
     visibility:visible;
 }
 

@@ -137,8 +137,9 @@ public:
     void repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply );
 
     void topicListTopics( const Anon::TopicListTopicsRequest & a_request, Anon::ListingReply & a_reply );
-    //void topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply );
+    void topicView( const Anon::TopicViewRequest  & a_request, Anon::TopicViewReply & a_reply );
     void topicSearch( const Anon::TopicSearchRequest & a_request, Anon::ListingReply & a_reply );
+    //void topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply );
     //void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
     //void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
 
@@ -201,6 +202,7 @@ private:
     void setCollInfoData( CollInfoData * a_item, const libjson::Value::Object & a_obj );
     void setTagDataReply( Anon::TagDataReply & a_reply, const libjson::Value & a_result );
     void setTagData( TagData * a_tag, const libjson::Value::Object & a_obj );
+    void setTopicViewReply( Anon::TopicViewReply & a_reply, const libjson::Value & a_result );
 
     void parseCollSearchPublishedRequest( const Anon::CollSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial = false );
     void parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params );

@@ -2641,6 +2641,39 @@ DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, An
     setListingDataReply( a_reply, result );
 }
 
+void
+DatabaseAPI::topicView( const Anon::TopicViewRequest  & a_request, Anon::TopicViewReply & a_reply )
+{
+    Value result;
+
+    dbGet( "topic/view", {{"id",a_request.id()}}, result );
+
+    setTopicViewReply( a_reply, result );
+}
+
+void
+DatabaseAPI::setTopicViewReply( Anon::TopicViewReply & a_reply, const libjson::Value & a_result )
+{
+    TRANSLATE_BEGIN()
+
+    const Value::Object & obj = a_result.asObject();
+
+    TopicData * topic = a_reply.mutable_topic();
+
+    topic->set_id( obj.getString( "_id" ));
+    topic->set_title( obj.getString( "title" ));
+
+    if ( obj.has( "desc" ))
+        topic->set_desc( obj.asString() );
+
+    if ( obj.has( "creator" ))
+        topic->set_creator( obj.asString() );
+
+    if ( obj.has( "admin" ))
+        topic->set_admin( obj.asBool() );
+
+    TRANSLATE_END( a_result )
+}
 
 /*void
 DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply )

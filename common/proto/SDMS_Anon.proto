@@ -219,24 +219,15 @@ message TopicListTopicsRequest
     optional uint32             count       = 3;
 }
 
-/*
-message TopicListCollectionsRequest
+message TopicViewRequest
 {
-    optional string             topic_id    = 1;
-    optional SortOption         sort        = 2;
-    optional bool               sort_rev    = 3;
-    optional uint32             offset      = 4;
-    optional uint32             count       = 5;
+    required string             id          = 1;
 }
 
-message TopicListCollectionsReply
+message TopicViewReply
 {
-    repeated CollInfoData       coll        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    required TopicData          topic       = 1;
 }
-*/
 
 // Returns ListingReply
 message TopicSearchRequest

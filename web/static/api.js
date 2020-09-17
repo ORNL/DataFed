@@ -731,6 +731,17 @@ export function topicSearch( a_phrase, a_cb ){
     _asyncGet( topicSearch_url( a_phrase ), null, a_cb );
 }
 
+export function topicView_url( a_id, a_offset, a_count ){
+    return "/api/top/view?id=" + a_id;
+}
+
+export function topicView( a_id, a_cb ){
+    if ( !a_cb )
+        return;
+
+    _asyncGet( topicView_url( a_id ), null, a_cb );
+}
+
 export function queryList_url( a_offset, a_count ){
     return "/api/query/list?offset="+a_offset+"&count="+a_count;
 }

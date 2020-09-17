@@ -192,3 +192,5 @@ db.loc.ensureIndex({ type: "hash", unique: false, fields: [ "uid" ], sparse: tru
 db.dep.ensureIndex({ type: "hash", unique: false, fields: [ "type" ], sparse: true });
 
 db.tag.ensureIndex({ type: "persistent", unique: false, fields: [ "count" ], sparse: true });
+
+db.t.ensureIndex({ type: "persistent", unique: false, fields: [ "top" ], sparse: true });

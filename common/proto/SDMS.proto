@@ -267,6 +267,16 @@ message ACLRule
     optional uint32             inhgrant    = 3;
 }
 
+message TopicData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             desc        = 3;
+    optional string             creator     = 4;
+    optional bool               admin       = 5;
+    // TODO add metrics: no. collections/data, popularity, tags, etc.
+}
+
 message RepoData
 {
     required string             id          = 1;

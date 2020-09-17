@@ -1208,7 +1208,11 @@ app.get('/api/repo/alloc/set/default', ( a_req, a_resp ) => {
 });
 
 app.get('/api/top/list/topics', ( a_req, a_resp ) => {
-    var par = {topicId:a_req.query.id?a_req.query.id:"t/root"};
+    var par = {}
+
+    if ( a_req.query.id )
+        par.topicId = a_req.query.id;
+
     if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
@@ -1227,6 +1231,12 @@ app.get('/api/top/list/coll', ( a_req, a_resp ) => {
     }
 
     sendMessage( "TopicListCollectionsRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.get('/api/top/view', ( a_req, a_resp ) => {
+    sendMessage( "TopicViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
 });
