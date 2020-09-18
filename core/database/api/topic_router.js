@@ -29,7 +29,7 @@ router.get('/list/topics', function (req, res) {
             qry = "for i in t filter i.top == true";
         }
 
-        qry += " sort i.title limit " + off + "," + cnt + " return i";
+        qry += " sort i.title limit " + off + "," + cnt + " return {_id:i._id, title: i.title, admin: i.admin}";
         result = g_db._query( qry, par, {}, { fullCount: true });
         var tot = result.getExtra().stats.fullCount;
         result = result.toArray();
@@ -46,6 +46,24 @@ router.get('/list/topics', function (req, res) {
 .queryParam('count', joi.number().integer().min(1).optional(), "Count")
 .summary('List topics')
 .description('List topics under specified topic ID. If ID is omitted, lists top-level topics.');
+
+
+router.get('/view', function (req, res) {
+    try {
+        if ( !g_db.t.exists( req.queryParams.id ))
+            throw [g_lib.ERR_NOT_FOUND,"Topic, "+req.queryParams.id+", not found"];
+
+        var topic = g_db.t.document( req.queryParams.id );
+
+        res.send( [topic] );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('id', joi.string().optional(), "ID of topic to view")
+.summary('View topic')
+.description('View a topic.');
 
 /*
 router.get('/list/coll', function (req, res) {
@@ -100,7 +118,7 @@ router.get('/search', function (req, res) {
         var tokens = req.queryParams.phrase.match(/(?:[^\s"]+|"[^"]*")+/g),
             qry = "for i in topicview search analyzer((",
             i, qry_res, result = [],
-            item, id, topic, op = false;
+            item, id, admin, topic, path, op = false;
 
         if ( tokens.length == 0 )
             throw [g_lib.ERR_INVALID_PARAM,"Invalid topic search phrase."];
@@ -119,16 +137,17 @@ router.get('/search', function (req, res) {
         while ( qry_res.hasNext() ){
             item = qry_res.next();
             id = item._id;
+            admin = item.admin;
             topic = item.title;
-            path = [];
+            path = [{ _id: item._id, title: item.title }];
 
             while (( item = g_db.top.firstExample({ _from: item._id }))){
                 item = g_db.t.document( item._to );
                 topic = item.title + "." + topic;
-                path.unshift( item.id );
+                path.unshift({ _id: item._id, title: item.title });
             }
 
-            result.push({ id: id, title: topic, path: path });
+            result.push({ _id: id, title: topic, path: path, admin: admin });
         }
 
         res.send( result );
