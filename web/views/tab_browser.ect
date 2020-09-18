@@ -71,22 +71,23 @@
           <div id="info-tabs-parent" class='ui-widget-content' style="flex:1 1 auto;padding:0 0.5em;min-width:0;min-height:0">
             <div id="info-tabs" class='no-border tabs-no-header' style="border:none;padding:0;min-height:0">
                 <ul style='padding:0'>
-                    <li><a href="#tab-sel-desc">Summary</a></li>
-                    <li><a href="#tab-sel-det">Details</a></li>
+                    <!-- li><a href="#tab-sel-desc">Summary</a></li -->
+                    <li><a href="#tab-sel-det">General</a></li>
                     <li><a href="#tab-sel-md">Metadata</a></li>
                     <li><a href="#tab-sel-notes">Notes</a></li>
                 </ul>
-                <div id="tab-sel-desc" style="padding:0;height:100%;min-height:0">
+                <!-- div id="tab-sel-desc" style="padding:0;height:100%;min-height:0">
                     <div class='col-flex' style='height:100%'>
                         <div id="sel_info_desc" style='flex:1 1 auto;border-top:none;overflow:auto;white-space:pre-wrap;padding:0.5em'>
                         </div>
                         <div class='toolbar' style='flex:none'>
                         </div>
                     </div>
-                </div>
+                </div -->
                 <div id="tab-sel-det" style="padding:0;height:100%;min-height:0">
                     <div id="sel_info_form" class='col-flex' style="overflow:auto;height:100%;display:none">
-                        <div style='flex: 1 1 auto;border-top:none;overflow:auto'>
+                        <div id='sel_info_desc' style='flex: 1 1 none;white-space:pre-wrap;padding:0.5em 0.5em 2em 0.5em'></div>
+                        <div style='flex: 1 1 auto;border-top:none'>
                             <table class="sel-info-table">
                                 <tr><td>Type:</td><td id='sel_info_type'></td></tr>
                                 <tr><td>ID:</td><td id='sel_info_id'></td></tr>
@@ -115,7 +116,7 @@
                                 <tr class="siq"><td>Metadata:</td><td id='sel_info_qry_meta'></td></tr>
                                 <tr class="sic"><td>Topic:</td><td id='sel_info_topic'></td></tr>
                                 <tr class="sid sidp sic sip siq"><td>Owner:</td><td id='sel_info_owner'></td></tr>
-                                <tr class="sid sidp"><td>Creator:</td><td id='sel_info_creator'></td></tr>
+                                <tr class="sid sidp sitp"><td>Creator:</td><td id='sel_info_creator'></td></tr>
                                 <tr class="sid sidp sic sit"><td>Created:</td><td id='sel_info_ct'></td></tr>
                                 <tr class="sid sidp sic sit"><td>Updated:</td><td id='sel_info_ut'></td></tr>
                                 <tr class="sid sidp"><td>Uploaded:</td><td id='sel_info_dt'></td></tr>

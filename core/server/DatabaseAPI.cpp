@@ -2624,7 +2624,7 @@ DatabaseAPI::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply
 }
 
 void
-DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, Anon::ListingReply  & a_reply )
+DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, Anon::TopicDataReply  & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2638,41 +2638,18 @@ DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, An
 
     dbGet( "topic/list/topics", params, result );
 
-    setListingDataReply( a_reply, result );
+    setTopicDataReply( a_reply, result );
+    //setListingDataReply( a_reply, result );
 }
 
 void
-DatabaseAPI::topicView( const Anon::TopicViewRequest  & a_request, Anon::TopicViewReply & a_reply )
+DatabaseAPI::topicView( const Anon::TopicViewRequest  & a_request, Anon::TopicDataReply & a_reply )
 {
     Value result;
 
     dbGet( "topic/view", {{"id",a_request.id()}}, result );
 
-    setTopicViewReply( a_reply, result );
-}
-
-void
-DatabaseAPI::setTopicViewReply( Anon::TopicViewReply & a_reply, const libjson::Value & a_result )
-{
-    TRANSLATE_BEGIN()
-
-    const Value::Object & obj = a_result.asObject();
-
-    TopicData * topic = a_reply.mutable_topic();
-
-    topic->set_id( obj.getString( "_id" ));
-    topic->set_title( obj.getString( "title" ));
-
-    if ( obj.has( "desc" ))
-        topic->set_desc( obj.asString() );
-
-    if ( obj.has( "creator" ))
-        topic->set_creator( obj.asString() );
-
-    if ( obj.has( "admin" ))
-        topic->set_admin( obj.asBool() );
-
-    TRANSLATE_END( a_result )
+    setTopicDataReply( a_reply, result );
 }
 
 /*void
@@ -2693,13 +2670,67 @@ DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_r
 }*/
 
 void
-DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::ListingReply  & a_reply )
+DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::TopicDataReply & a_reply )
 {
     Value result;
 
     dbGet( "topic/search", {{"phrase",a_request.phrase()}}, result );
 
-    setListingDataReply( a_reply, result );
+    setTopicDataReply( a_reply, result );
+    //setListingDataReply( a_reply, result );
+}
+
+void
+DatabaseAPI::setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::Value & a_result )
+{
+    TRANSLATE_BEGIN()
+
+    Value::ArrayConstIter j;
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
+    {
+        const Value::Object & obj = i->asObject();
+
+        if ( obj.has( "paging" ))
+        {
+            const Value::Object & obj2 = obj.asObject();
+
+            a_reply.set_offset( obj2.getNumber( "off" ));
+            a_reply.set_count( obj2.getNumber( "cnt" ));
+            a_reply.set_total( obj2.getNumber( "tot" ));
+        }
+        else
+        {
+            TopicData *topic2, *topic = a_reply.add_topic();
+
+            topic->set_id( obj.getString( "_id" ));
+            topic->set_title( obj.getString( "title" ));
+
+            if ( obj.has( "desc" ))
+                topic->set_desc( obj.asString() );
+
+            if ( obj.has( "creator" ))
+                topic->set_creator( obj.asString() );
+
+            if ( obj.has( "admin" ))
+                topic->set_admin( obj.asBool() );
+
+            if ( obj.has( "path" )){
+                const Value::Array & arr2 = obj.asArray();
+                for ( j = arr2.begin(); j != arr2.end(); j++ )
+                {
+                    const Value::Object & obj2 = j->asObject();
+
+                    topic2 = topic->add_path();
+                    topic2->set_id( obj2.getString( "_id" ));
+                    topic2->set_title( obj2.getString( "title" ));
+                }
+            }
+        }
+    }
+
+    TRANSLATE_END( a_result )
 }
 
 void

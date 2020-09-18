@@ -38,8 +38,8 @@ export function showSelectedInfo( node, cb ){
         key = node;
     else if ( node.key == "shared_proj" && node.data.scope )
         key = node.data.scope;
-    else if ( node.key.startsWith( "t/" ) && node.data.scope )
-        key = node.data.scope;
+    //else if ( node.key.startsWith( "t/" ) && node.data.scope )
+    //    key = node.data.scope;
     else if ( node.data.key_pfx )
         key = node.key.substr( node.data.key_pfx.length );
     else
@@ -62,6 +62,13 @@ export function showSelectedInfo( node, cb ){
     }else if ( key.startsWith("task/" )) {
         api.taskView( key, function( data ){
             //console.log("task view:",data );
+            showSelectedItemInfo( data );
+            if ( cb ) cb( data, node );
+        }); 
+    }else if ( key.startsWith("t/" )) {
+        console.log("show topic",key);
+        api.topicView( key, function( data ){
+            console.log("show topic info",data);
             showSelectedItemInfo( data );
             if ( cb ) cb( data, node );
         }); 
@@ -113,7 +120,7 @@ export function showSelectedItemInfo( item ){
             desc_div.html( item.desc );
             desc_div.show();
         }else{
-            disabled.push(0);
+            //disabled.push(0);
             desc_div.hide();
         }
 
@@ -123,13 +130,13 @@ export function showSelectedItemInfo( item ){
             setupAnnotationTab( item.id );
         }else{
             note_div.hide();
-            disabled.push(3);
+            disabled.push(2);
         }
 
         if ( item.metadata ){
             showSelectedMetadata( item.metadata );
         }else{
-            disabled.push(2);
+            disabled.push(1);
             showSelectedMetadata();
         }
 
@@ -527,7 +534,13 @@ function showSelectedItemForm( item ){
         case 'p': type = "Project"; title = item.title; cls = ".sip"; break;
         case 'r': type = "Allocation"; title = "Allocation for " + (item.user.startsWith("u/")?" user ":" project ") + item.user; cls = ".sia"; break;
         case 'q': type = "Saved Query"; title = item.title; cls = ".siq"; break;
-        case 't': type = "Background Task"; title = "Background Task"; cls = ".sit"; break;
+        case 't':
+            if ( item.id.charAt(1) == '/' ){
+                type = "Catalog Category"; title = item.title.charAt(0).toUpperCase() + item.title.substr(1); cls = ".sitp";
+            }else{
+                type = "Background Task"; title = "Background Task"; cls = ".sit";
+            }
+            break;
         default:
             return;
     }
@@ -536,10 +549,16 @@ function showSelectedItemForm( item ){
 
     title_div.html( title );
 
+    //$("#sel_info_desc",form).text( item.desc );
+
     $(".sel-info-table td:nth-child(2)",form).not(".ignore").html("<span style='color:#808080'>(none)</span>");
 
     $("#sel_info_type",form).text( type );
-    $("#sel_info_id",form).text( item.id );
+
+    if ( cls == ".sitp" )
+        $("#sel_info_id",form).text( item.title );
+    else
+        $("#sel_info_id",form).text( item.id );
 
 
     //if ( item.title )
@@ -558,9 +577,6 @@ function showSelectedItemForm( item ){
 
     if ( item.dataUrl )
         $("#sel_info_url",form).text( item.dataUrl );
-
-
-        //$("#sel_info_desc",form).text( item.desc );
 
     if ( item.tags )
         $("#sel_info_tags",form).text( item.tags.toString() );

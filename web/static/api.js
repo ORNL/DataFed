@@ -739,7 +739,13 @@ export function topicView( a_id, a_cb ){
     if ( !a_cb )
         return;
 
-    _asyncGet( topicView_url( a_id ), null, a_cb );
+    _asyncGet( topicView_url( a_id ), null, function( ok, reply ){
+        if ( ok ) {
+            a_cb( reply.topic?reply.topic[0]:null );
+        }else{
+            util.setStatusText( "View Topic Error: " + reply, true );
+        }
+    });
 }
 
 export function queryList_url( a_offset, a_count ){

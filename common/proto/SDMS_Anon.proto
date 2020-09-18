@@ -211,7 +211,7 @@ message AnnotationDataReply
     repeated SDMS.ListingData   update  = 2;
 }
 
-// Returns ListingReply
+// Returns TopicDataReply
 message TopicListTopicsRequest
 {
     optional string             topic_id    = 1;
@@ -219,20 +219,24 @@ message TopicListTopicsRequest
     optional uint32             count       = 3;
 }
 
+// Returns TopicDataReply
 message TopicViewRequest
 {
     required string             id          = 1;
 }
 
-message TopicViewReply
-{
-    required TopicData          topic       = 1;
-}
-
-// Returns ListingReply
+// Returns TopicDataReply
 message TopicSearchRequest
 {
     optional string             phrase      = 1;
+}
+
+message TopicDataReply
+{
+    repeated TopicData          topic       = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
 }
 
 // Returns TagDataReply

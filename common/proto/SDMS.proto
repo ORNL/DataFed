@@ -271,10 +271,15 @@ message TopicData
 {
     required string             id          = 1;
     required string             title       = 2;
-    optional string             desc        = 3;
-    optional string             creator     = 4;
-    optional bool               admin       = 5;
-    // TODO add metrics: no. collections/data, popularity, tags, etc.
+    repeated TopicData          path        = 3;
+    optional string             desc        = 4;
+    optional string             creator     = 5;
+    optional bool               admin       = 6;
+
+    //required uint32             coll_cnt    = 6;
+    //repeated TagMetrics         tags        = 7;
+    //repeated UserMetrics        users       = 8;
+    //repeated DateMetrics        date        = 9;
 }
 
 message RepoData

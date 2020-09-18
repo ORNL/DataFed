@@ -146,7 +146,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         search_sel_mode = false,
         coll_qry = { tags: [], offset: 0, count: 50 },
         topic_tags = [], user_tags = [],
-        tags_div = $("#cat_tags_div",cat_panel);
+        tags_div = $("#cat_tags_div",cat_panel),
+        topic_search_path = {};
 
         //coll_div_title = $("#coll_div_title",cat_panel);
         
@@ -188,7 +189,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                     else
                         topic += " - ";
                 }
-                topic += cur_topic[i].name;
+                topic += cur_topic[i].title;
             }
         }else{
             topic = "Home";
@@ -208,7 +209,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         api.topicListTopics( topic[0].id, null, null, function( ok, data ){
             if ( ok ){
-                cur_topic.push({ name: name, id: topic[0].id });
+                cur_topic.push({ title: name, id: topic[0].id });
                 setTopicPath();
                 setTopics( data );
             }
@@ -231,15 +232,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         $(".cat-topic-div",topics_div).removeClass("ui-state-active");
         $(".cat-topic-div",el).addClass("ui-state-active");
 
-        /*api.collView( coll.id, function( ok, data ){
-            if ( ok ){
-                panel_info.showSelectedInfo( coll.id );
-                cur_sel = coll.id;
-                a_parent.updateBtnState();
-            }else{
-                dialogs.dlgAlert("Error Reading Collection",data);
-            }
-        });*/
+        console.log("topic ID",el[0].id);
+
+        panel_info.showSelectedInfo( el[0].id );
+        a_parent.updateBtnState();
 
         ev.stopPropagation()
     }
@@ -258,9 +254,16 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         api.topicListTopics( topic_id, null, null, function( ok, data ){
             if ( ok ){
-                cur_topic = [];
+                if ( topic_id in topic_search_path ){
+                    cur_topic = topic_search_path[topic_id];
+                }else{
+                    cur_topic = [];
+                }
                 cur_topic_div.text( topic );
-                back_btn.button( "disable" );
+                if ( cur_topic.length )
+                    back_btn.button( "enable" );
+                else
+                    back_btn.button( "disable" );
                 setTopics( data );
             }
         });
@@ -276,7 +279,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         $(".cat-coll-title-div,.cat-item-title",cat_coll_div).removeClass("ui-state-active");
         $(".cat-coll-title-div",el).addClass("ui-state-active");
 
-        api.collView( coll.id, function( ok, data ){
+        panel_info.showSelectedInfo( coll.id );
+        cur_sel = coll.id;
+        a_parent.updateBtnState();
+
+        /*api.collView( coll.id, function( ok, data ){
             if ( ok ){
                 panel_info.showSelectedInfo( coll.id );
                 cur_sel = coll.id;
@@ -284,7 +291,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }else{
                 dialogs.dlgAlert("Error Reading Collection",data);
             }
-        });
+        });*/
 
         ev.stopPropagation()
     }
@@ -369,7 +376,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             $(".btn-cat-coll-open span", coll_title_div ).removeClass( icon_close ).addClass( icon_open ).css("visibility","");
         }else{*/
 
-            cur_topic.push({ name: $(".cat-coll-title",coll).text(), id: coll[0].id });
+            cur_topic.push({ title: $(".cat-coll-title",coll).text(), id: coll[0].id });
             setTopicPath();
 
             openCollTree( coll[0].id );
@@ -432,10 +439,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     function setTopics( data ){
         var html = "";
-        if ( data.item && data.item.length ){
+        if ( data.topic && data.topic.length ){
             var topic;
-            for ( var i in data.item ){
-                topic = data.item[i];
+            for ( var i in data.topic ){
+                topic = data.topic[i];
                 //ui-button cat-topic
                 html += "<div class='cat-topic' id='" + topic.id + "' data='"+topic.title+"'>\
                     <div class='cat-topic-div ui-button ui-corner-all' style='display:block;text-align:left'>\
@@ -456,10 +463,12 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     function setSearchTopics( data ){
         var html = "";
-        if ( data.item && data.item.length ){
+        if ( data.topic && data.topic.length ){
             var topic;
-            for ( var i in data.item ){
-                topic = data.item[i];
+            topic_search_path = {};
+            for ( var i in data.topic ){
+                topic = data.topic[i];
+                topic_search_path[topic.id] = topic.path;
                 html += "<div class='cat-topic' id='" + topic.id + "'>" + topic.title + "</div>";
             }
         }else{
@@ -629,16 +638,16 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             top_res_div.html( "(loading...)" ).show();
 
             api.topicSearch( phrase, function( ok, data ){
-                console.log("topicSearch handler")
+                console.log("topicSearch handler",data);
                 if ( ok ){
-                    setSearchTopics(data);
+                    setSearchTopics( data );
                 }else{
-                    setSearchTopics([]);
-                    dlgAlert("Topic Search Error",data);
+                    setSearchTopics({});
+                    util.setStatusText( "Topic search error " + data, true );
                 }
             });
         }else{
-            setSearchTopics([]);
+            setSearchTopics({});
         }
     }
 
