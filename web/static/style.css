@@ -306,6 +306,7 @@ svg text
 .cat-subheading
 {
     padding:0.25em;
+    padding-left: 0.5em;
     border:none!important;
 }
 
@@ -327,6 +328,23 @@ svg text
     border-top:none!important;
     border-bottom:none!important;
     border-left:none!important;
+}
+
+.cat-topic-result-div
+{
+    max-height:5em;
+    overflow:auto;
+    padding:0.25em 0.25em 0 0.25em;
+}
+
+.cat-topic-result
+{
+    margin: 0 0.25em 0.25em 0!important;
+}
+
+.cat-topic-result-empty
+{
+    margin: 0 0.25em 0.25em 0!important;
 }
 
 .cat-topic
@@ -359,7 +377,7 @@ div.cat-topic-div:hover .cat-topic-btn-div
 
 .cat-topic-empty
 {
-    padding:0.5em 1em;
+    /*padding:0.5em 1em;*/
 }
 
 div.cat-coll-container
@@ -440,10 +458,11 @@ div.cat-coll-title-div:hover .cat-coll-btn-div
     white-space:nowrap;
 }
 
+/*
 .cat-coll-empty
 {
-    padding:0.25em;
 }
+*/
 
 /*.cat-item-path
 {

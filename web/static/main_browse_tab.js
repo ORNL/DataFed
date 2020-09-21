@@ -1321,7 +1321,7 @@ function calcActionState( sel ){
 
 // Exported for sub-panels
 export function updateBtnState(){
-    //console.log("updateBtnState");
+    console.log("updateBtnState");
     var bits,sel;
     switch( select_source ){
         case SS_TREE:

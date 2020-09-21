@@ -2713,7 +2713,7 @@ DatabaseAPI::setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::V
             if ( obj.has( "creator" ))
                 topic->set_creator( obj.asString() );
 
-            if ( obj.has( "admin" ))
+            if ( obj.has( "admin" ) && !obj.value().isNull() )
                 topic->set_admin( obj.asBool() );
 
             if ( obj.has( "path" )){

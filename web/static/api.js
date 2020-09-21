@@ -343,7 +343,11 @@ export function collDelete(a_ids,a_cb){
 }
 
 export function collPubSearch( a_query, a_cb ){
-    _asyncPost( "/api/col/pub/search", a_query, a_cb );
+    //_asyncPost( "/api/col/pub/search", a_query, a_cb );
+    _asyncPost( "/api/col/pub/search", a_query, function( ok, data ){
+        setTimeout( function(){ a_cb( ok, data ); }, 2000 );
+    });
+
 }
 
 export function projList_url( a_owned, a_admin, a_member, a_sort, a_offset, a_count ){
@@ -707,6 +711,9 @@ export function topicListTopics( a_id, a_offset, a_count, a_cb ){
         return;
 
     _asyncGet( topicListTopics_url( a_id, a_offset, a_count ), null, a_cb );
+    /*_asyncGet( topicListTopics_url( a_id, a_offset, a_count ), null, function( ok, data ){
+        setTimeout( function(){ a_cb( ok, data ); }, 2000 );
+    });*/
 }
 
 export function topicListColl_url( a_id, a_offset, a_count ){
@@ -719,6 +726,8 @@ export function topicListColl( a_id, a_offset, a_count, a_cb ){
 
     _asyncGet( topicListColl_url( a_id, a_offset, a_count ), null, a_cb );
 }
+
+
 
 export function topicSearch_url( a_phrase ){
     return "/api/top/search?phrase="+a_phrase;
