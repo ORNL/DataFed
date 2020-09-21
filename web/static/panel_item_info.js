@@ -117,7 +117,7 @@ export function showSelectedItemInfo( item ){
         cur_item_id = item.id;
 
         if ( item.desc ){
-            desc_div.html( item.desc );
+            desc_div.html( marked( item.desc ));
             desc_div.show();
         }else{
             //disabled.push(0);

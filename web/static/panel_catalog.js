@@ -153,8 +153,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         //coll_div_title = $("#coll_div_title",cat_panel);
         
 
-    const icon_open = "ui-icon-plus",
-        icon_close = "ui-icon-close";
+    const icon_open = "ui-icon-play";
 
     $(".btn",cat_panel).button();
 
@@ -294,7 +293,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     function onCollectionActivate( ev ){
         console.log("coll activate");
         var el = $(this), coll = el[0];
-        //console.log("this",$(this));
 
         $(".cat-coll-title-div,.cat-item-title",cat_coll_div).removeClass("ui-state-active");
         $(".cat-coll-title-div",el).addClass("ui-state-active");
@@ -302,16 +300,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         panel_info.showSelectedInfo( coll.id );
         cur_sel = coll.id;
         a_parent.updateBtnState();
-
-        /*api.collView( coll.id, function( ok, data ){
-            if ( ok ){
-                panel_info.showSelectedInfo( coll.id );
-                cur_sel = coll.id;
-                a_parent.updateBtnState();
-            }else{
-                dialogs.dlgAlert("Error Reading Collection",data);
-            }
-        });*/
 
         ev.stopPropagation()
     }
@@ -343,28 +331,16 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     function openCollTree( a_coll_id ){
         var coll = cur_coll[a_coll_id];
 
-        console.log("load coll ", coll );
-
         cat_coll_div.hide();
         topics_panel.hide();
 
         cat_tree.reload([{title: util.generateTitle( coll ), key: a_coll_id, scope: coll.owner, folder: true, lazy: true, selected: true }])
             .done( function(){
-                console.log("loaded tree",cat_tree.rootNode);
                 cat_tree.rootNode.children[0].setExpanded();
             });
 
         cat_tree_div.show();
         a_parent.updateBtnState();
-
-        /*api.collRead( a_coll_id, 0, 100, function( ok, data ){
-            if ( ok ){
-                setData( data, cat_item_div );
-            }else{
-                dialogs.dlgAlert("Error Reading Collection",data);
-                cat_item_div.html( "(faile to load colelction)" );
-            }
-        })*/
     }
 
     function closeCollTree( a_coll_id ){
@@ -382,80 +358,15 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     function onCollectionOpen( ev ){
         var el = $(this),
             coll=el.closest(".cat-coll");
-            /*
-            coll_title_div = $(".cat-coll-title-div", coll ),
-            cat_item_div = $(".cat-item-div", coll );
-            */
 
-        /*if ( cat_item_div.length ){
-            coll.siblings().show();
-            topics_panel.show();
-            //topic_header.show();
-            //coll_div_title.text("Collections");
-            cat_item_div.remove();
-            $(".btn-cat-coll-open span", coll_title_div ).removeClass( icon_close ).addClass( icon_open ).css("visibility","");
-        }else{*/
+        cur_topic.push({ title: $(".cat-coll-title",coll).text(), id: coll[0].id });
+        setTopicPath();
+        back_btn.button( "enable" );
 
-            cur_topic.push({ title: $(".cat-coll-title",coll).text(), id: coll[0].id });
-            setTopicPath();
+        openCollTree( coll[0].id );
 
-            openCollTree( coll[0].id );
-
-            /*
-            coll.siblings().hide();
-            topics_panel.hide();
-            //topic_header.hide();
-            //coll_div_title.text();
-            $(".cat-item-div", cat_coll_div ).remove();
-            coll_title_div.removeClass("ui-state-active");
-            $(".btn-cat-coll-open span", coll_title_div ).removeClass( icon_open ).addClass( icon_close ).css("visibility","visible");
-
-            coll.append("<div class='cat-item-div' style='padding-left:0'>(loading...)</div>");
-            cat_item_div  = $( ".cat-item-div", coll );
-            //cat_item_div.html( "(loading...)" );
-
-            api.collRead( coll[0].id, 0, 100, function( ok, data ){
-                if ( ok ){
-                    setData( data, cat_item_div );
-                }else{
-                    dialogs.dlgAlert("Error Reading Collection",data);
-                    cat_item_div.html( "(faile to load colelction)" );
-                }
-            })
-            */
-
-            ev.stopPropagation()
-        //}
+        ev.stopPropagation()
     }
-
-    /*function onFolderOpenClose( ev ){
-        var el = $(this),
-            coll=el.closest(".cat-item"),
-            cat_item_div = $(".cat-item-div",coll);
-
-        if ( cat_item_div.length ){
-            cat_item_div.remove();
-            coll.siblings().show();
-            $(".btn-cat-folder-open span", coll ).removeClass( icon_close ).addClass( icon_open );
-        }else{
-            $(".btn-cat-folder-open span", coll ).removeClass( icon_open ).addClass( icon_close );
-
-            api.collRead( coll[0].id, 0, 100, function( ok, data ){
-                if ( ok ){
-                    coll.siblings().hide();
-                    coll.append("<div class='cat-item-div'>(loading...)</div>");
-                    cat_item_div = $( ".cat-item-div", coll );
-                    //cat_item_div = coll.next();
-
-                    setData( data, cat_item_div );
-                }else{
-                    dialogs.dlgAlert("Error Reading Collection",data);
-                    cat_item_div.html( "(faile to load colelction)" );
-                }
-            });
-        }
-    }*/
-
 
     function setTopics( data ){
         var html = "";
@@ -539,9 +450,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }else{
             html = "<div class='cat-coll-empty'>No matching collections.<p>Try other categories and/or adjust collection filters.</p></div>"
         }
-
-        //item.id + " " + (item.alias?item.alias:"") + " " +
-        //(item.notes?"<tr><td>Annotations:</td><td>"+ util.generateNoteSpan(item) + "</td><tr>":"") +
 
         cat_coll_div.html( html );
         $(".btn",cat_coll_div).button();

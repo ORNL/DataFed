@@ -153,6 +153,12 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     font-size:110%;
 }
 
+.sel-info-desc
+{
+    /*white-space:pre-wrap;*/
+    padding: 0 0.5em;
+}
+
 .ui-checkboxradio-label
 {
     padding:0 2px!important;
