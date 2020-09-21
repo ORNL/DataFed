@@ -343,11 +343,10 @@ export function collDelete(a_ids,a_cb){
 }
 
 export function collPubSearch( a_query, a_cb ){
-    //_asyncPost( "/api/col/pub/search", a_query, a_cb );
-    _asyncPost( "/api/col/pub/search", a_query, function( ok, data ){
+    _asyncPost( "/api/col/pub/search", a_query, a_cb );
+    /*_asyncPost( "/api/col/pub/search", a_query, function( ok, data ){
         setTimeout( function(){ a_cb( ok, data ); }, 2000 );
-    });
-
+    });*/
 }
 
 export function projList_url( a_owned, a_admin, a_member, a_sort, a_offset, a_count ){

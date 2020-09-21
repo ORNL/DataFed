@@ -159,12 +159,9 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     $(".btn",cat_panel).button();
 
     this.getSelectedNodes = function(){
-        console.log("getSelectedNodes");
         if ( cat_tree_div.is( ":visible" )){
-            console.log("cat_tree");
             return cat_tree.getSelectedNodes();
         }else if ( cur_sel ){
-            console.log(cur_sel);
             return [{key: cur_sel, data: {}}];
         }else{
             return [];
@@ -208,6 +205,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             back_btn.button( cur_topic.length?"enable":"disable" );
             $(".cat-topic-div",topics_div).removeClass("ui-button-disabled ui-state-disabled");
             $(".btn",topics_div).button("enable");
+            panel_info.showSelectedInfo();
         }
     }
 
@@ -245,6 +243,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         topic_tags.push( name );
         loadCollections();
+
+        ev.stopPropagation()
     }
 
     function onTopicActivate( ev ){
