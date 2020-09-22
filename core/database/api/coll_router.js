@@ -965,7 +965,9 @@ router.post('/pub/search', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
-                var item, result = g_db._query( req.body.query, req.body.params ).toArray();
+                var result = g_db._query( req.body.query, req.body.params, {}, { fullCount: true });
+                var item, tot = result.getExtra().stats.fullCount;
+                result = result.toArray();
 
                 for ( var i in result ){
                     item = result[i];
@@ -981,6 +983,8 @@ router.post('/pub/search', function (req, res) {
     
                     item.notes = g_lib.annotationGetMask( client, item._id );
                 }
+
+                result.push({ paging: { off: req.body.params.off, cnt: req.body.params.cnt, tot: tot }});
 
                 res.send( result );
             }
