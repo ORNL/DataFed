@@ -29,7 +29,7 @@ router.get('/list/topics', function (req, res) {
             qry = "for i in t filter i.top == true";
         }
 
-        qry += " sort i.title limit " + off + "," + cnt + " return {_id:i._id, title: i.title, admin: i.admin}";
+        qry += " sort i.title limit " + off + "," + cnt + " return {_id:i._id, title: i.title, admin: i.admin, coll_cnt: i.coll_cnt}";
         result = g_db._query( qry, par, {}, { fullCount: true });
         var tot = result.getExtra().stats.fullCount;
         result = result.toArray();
@@ -118,7 +118,7 @@ router.get('/search', function (req, res) {
         var tokens = req.queryParams.phrase.match(/(?:[^\s"]+|"[^"]*")+/g),
             qry = "for i in topicview search analyzer((",
             i, qry_res, result = [],
-            item, id, admin, topic, path, op = false;
+            item, it, topic, path, op = false;
 
         if ( tokens.length == 0 )
             throw [g_lib.ERR_INVALID_PARAM,"Invalid topic search phrase."];
@@ -136,9 +136,8 @@ router.get('/search', function (req, res) {
         qry_res = g_db._query( qry, {});
         while ( qry_res.hasNext() ){
             item = qry_res.next();
-            id = item._id;
-            admin = item.admin;
-            topic = item.title;
+            it = item;
+
             path = [{ _id: item._id, title: item.title }];
 
             while (( item = g_db.top.firstExample({ _from: item._id }))){
@@ -147,7 +146,7 @@ router.get('/search', function (req, res) {
                 path.unshift({ _id: item._id, title: item.title });
             }
 
-            result.push({ _id: id, title: topic, path: path, admin: admin });
+            result.push({ _id: it._id, title: topic, path: path, admin: it.admin, coll_cnt: it.coll_cnt });
         }
 
         res.send( result );

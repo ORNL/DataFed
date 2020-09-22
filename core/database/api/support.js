@@ -762,7 +762,7 @@ module.exports = ( function() {
         var topic, par_id = a_par_id;
 
         for ( var i = a_idx; i < a_topics.length; i++ ){
-            topic = obj.db.t.save({ title: a_topics[i], creator: a_owner_id },{ returnNew: true });
+            topic = obj.db.t.save({ title: a_topics[i], creator: a_owner_id, coll_cnt: 1 },{ returnNew: true });
             obj.db.top.save({ _from: topic._id, _to: par_id });
             par_id = topic._id;
         }
@@ -773,7 +773,7 @@ module.exports = ( function() {
     obj.topicLink = function( a_topic, a_coll_id, a_owner_id ){
         var i, topics = a_topic.split(".");
 
-        // Trim misplaced "." characters
+        // Detect misplaced topic delimiters
         for ( i in topics ){
             if ( topics[i].length == 0 )
                 throw [ obj.ERR_INVALID_PARAM, "Invalid category" ];
@@ -785,19 +785,26 @@ module.exports = ( function() {
         parent = obj.db._query("for i in t filter i.top == true && i.title == @title return i",{ title: topics[0] });
 
         if ( parent.hasNext() ){
-            parent = parent.next()._id;
+            parent = parent.next();
+
+            // Increment coll_cnt
+            obj.db.t.update( parent._id, { coll_cnt: parent.coll_cnt + 1 });
+            parent = parent._id;
 
             for ( i = 1; i < topics.length; i++ ){
                 topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{ par: parent, title: topics[i] });
                 if ( topic.hasNext() ){
-                    parent = topic.next()._id;
+                    parent = topic.next();
+                    // Increment coll_cnt
+                    obj.db.t.update( parent._id, { coll_cnt: parent.coll_cnt + 1 });
+                    parent = parent._id;
                 }else{
                     parent = this.topicCreate( topics, i, parent, a_owner_id );
                     break;
                 }
             }
         }else{
-            parent = obj.db.t.save({ title: topics[0], top: true, creator: a_owner_id },{ returnNew: true })._id;
+            parent = obj.db.t.save({ title: topics[0], top: true, creator: a_owner_id, coll_cnt: 1 },{ returnNew: true })._id;
 
             parent = this.topicCreate( topics, 1, parent, a_owner_id );
         }
@@ -815,27 +822,35 @@ module.exports = ( function() {
         }
 
         // Save parent topic id, delete link from collection
-        var topic, topic_id = top_lnk._to;
-        console.log("rem top lnk",top_lnk._id);
+        var topic, topic_id = top_lnk._to, dec_only = false;
+        //console.log("rem top lnk",top_lnk._id);
         obj.db.top.remove( top_lnk );
 
         // Unwind path, deleting orphaned, non-admin topics along the way
         while( topic_id ){
             topic = obj.db.t.document( topic_id );
+            // Decrement coll_cnt
+            obj.db.t.update( topic._id, { coll_cnt: topic.coll_cnt - 1 });
 
             // If parent is admin controlled, or other topics are linked to parent, stop
-            if ( topic.admin || obj.db.top.firstExample({ _to: topic_id })){
-                console.log("stop no del topic",topic);
-                break;
+            if ( dec_only || topic.admin || obj.db.top.firstExample({ _to: topic_id })){
+                //console.log("stop no del topic",topic);
+                dec_only = true;
+                top_lnk = obj.db.top.firstExample({ _from: topic_id });
+                if ( top_lnk ){
+                    topic_id = top_lnk._to;
+                }else{
+                    break;
+                }
             }else{
                 top_lnk = obj.db.top.firstExample({ _from: topic_id });
 
                 if ( top_lnk ){
                     topic_id = top_lnk._to;
-                    console.log("rem topic",top_lnk._from);
+                    //console.log("rem topic",top_lnk._from);
                     obj.graph.t.remove( top_lnk._from );
                 }else{
-                    console.log("rem topic",topic_id);
+                    //console.log("rem topic",topic_id);
                     obj.graph.t.remove( topic_id );
                     topic_id = null;
                 }
