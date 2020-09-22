@@ -578,8 +578,15 @@ function showSelectedItemForm( item ){
     if ( item.dataUrl )
         $("#sel_info_url",form).text( item.dataUrl );
 
-    if ( item.tags )
-        $("#sel_info_tags",form).text( item.tags.toString() );
+    if ( item.tags ){
+        var tmp = "";
+        for ( i in item.tags ){
+            if ( tmp )
+                tmp += ", ";
+            tmp += item.tags[i];
+        }
+        $("#sel_info_tags",form).text( tmp );
+    }
 
     if ( item.topic )
         $("#sel_info_topic",form).text( item.topic );

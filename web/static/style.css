@@ -552,6 +552,7 @@ div.cat-item-title:hover .btn-cat-folder-open
 
 .sel-info-table td:nth-child(2){
     width:100%;
+    word-break: break-word;
 }
 
 
