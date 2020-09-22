@@ -3571,6 +3571,11 @@ DatabaseAPI::parseCollSearchPublishedRequest( const Anon::CollSearchPublishedReq
         a_query += " sort i.title";
     }
 
+    a_query += " limit @off,@cnt";
+    a_params += ",\"off\":" + (a_request.has_offset()?to_string( a_request.offset() ):"0");
+    a_params += ",\"cnt\":" + (a_request.has_count()?to_string( a_request.count() ):"50");
+
+/*
     a_query += " limit ";
 
     if ( a_request.has_offset() )
@@ -3582,6 +3587,7 @@ DatabaseAPI::parseCollSearchPublishedRequest( const Anon::CollSearchPublishedReq
         a_query += "," + to_string( a_request.count() );
     else
         a_query += ",200";
+*/
 
     // If not part of another query, build full query string
     if ( !a_partial )

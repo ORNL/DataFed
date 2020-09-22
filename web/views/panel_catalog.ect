@@ -50,15 +50,31 @@
             </div>
         </div>
 
-        <div class='col-flex' style='flex:1 1 auto;padding:0;min-height:0;overflow:hidden'>
-            <div id='coll_div_title' class='cat-subheading' style='flex:none'>Collections &amp; Data</div>
-            <div class='content cat-content' style='flex:1 1 auto;overflow:auto;min-height:0'>
-                <div id='cat_coll_div' class='cat-coll-container'>
-                    Select a topic to view collections and sub-topics.
+        <div class='col-flex' style='flex:1 1 auto;height:100%'>
+            <div class='row-flex' style='flex:none'>
+                <div class='cat-subheading' style='flex:1 1 auto'>Collections &amp; Data</div>
+                <div style='flex:none'>
+                    <button class='cat-coll-prev btn btn-icon-tiny'><span class='ui-icon ui-icon-triangle-1-w'></span></button>
+                    <button class='cat-coll-next btn btn-icon-tiny'><span class='ui-icon ui-icon-triangle-1-e'></span></button>
                 </div>
-                <div id='cat_coll_tree' class='content no-border' style='display:none'></div>
             </div>
+            <div id='cat_coll_div' class='content cat-content' style='flex:1 1 auto;min-height:0;overflow:auto'></div>
+            <div id='cat_coll_tree' class='content no-border' style='flex:1 1 auto;min-height:0;overflow:auto;display:none'></div>
+            <!-- div class='toolbar' style='flex:none'>YYY</div -->
         </div>
+
+        <!-- div class='col-flex' style='flex:1 1 auto;padding:0;height:100%'>
+            <div id='coll_div_title' class='cat-subheading' style='flex:none'>Collections &amp; Data</div>
+            <div style='flex:1 1 auto'>
+                <div class='content cat-content' style=''>
+                    <div id='cat_coll_div' class='col-flex cat-coll-container' style='height:100%'>
+                        <div style='flex:1 1 auto;' id='cat_coll_res'></div>
+                        <div style='flex:none' class='toolbar'>Stuff</div>
+                    </div>
+                </div>
+                <div id='cat_coll_tree' class='content no-border' style='display:none;overflow:auto;min-height:0'></div>
+            </div>
+        </div -->
     </div>
 
 </div>

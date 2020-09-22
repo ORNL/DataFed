@@ -136,6 +136,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         back_btn = $(".btn-cat-back",cat_panel),
         top_res_div = $("#cat_topic_result_div",cat_panel),
         cat_coll_div = $("#cat_coll_div",cat_panel),
+        cat_coll_res = cat_coll_div, //$("#cat_coll_res",cat_coll_div),
         topics_panel = $(".topics-div",cat_panel),
         topics_div = $("#cat_topics_div",cat_panel),
         cur_coll = {},
@@ -148,7 +149,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         topic_tags = [], user_tags = [],
         tags_div = $("#cat_tags_div",cat_panel),
         topic_search_path = {},
-        loading = 0;
+        loading = 0,
+        coll_off = 0;
 
         //coll_div_title = $("#coll_div_title",cat_panel);
         
@@ -241,6 +243,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         loadTopics( topic[0].id );
 
         topic_tags.push( name );
+
+        coll_off = 0;
         loadCollections();
 
         ev.stopPropagation()
@@ -287,6 +291,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         loadTopics( topic_id );
 
+        coll_off = 0;
         loadCollections();
     }
 
@@ -294,7 +299,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         console.log("coll activate");
         var el = $(this), coll = el[0];
 
-        $(".cat-coll-title-div,.cat-item-title",cat_coll_div).removeClass("ui-state-active");
+        $(".cat-coll-title-div,.cat-item-title",cat_coll_res).removeClass("ui-state-active");
         $(".cat-coll-title-div",el).addClass("ui-state-active");
 
         panel_info.showSelectedInfo( coll.id );
@@ -452,8 +457,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             html = "<div class='cat-coll-empty'>No matching collections.<p>Try other categories and/or adjust collection filters.</p></div>"
         }
 
-        cat_coll_div.html( html );
-        $(".btn",cat_coll_div).button();
+        $(".cat-coll-prev",cat_panel).button(data.offset?"enable":"disable");
+        $(".cat-coll-next",cat_panel).button((data.offset+data.count)<data.total?"enable":"disable");
+
+        cat_coll_res.html( html );
+        $(".btn",cat_coll_res).button();
         cur_sel = null;
         a_parent.updateBtnState();
     }
@@ -509,7 +517,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             a_parent.updateBtnState();
         }
 
-        cat_coll_div.html( "Loading..." );
+        cat_coll_res.html( "Loading..." );
 
         loadTopics( null, function(){
             cur_topic=[];
@@ -517,7 +525,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         });
 
         topic_tags = [];
-
+        coll_off = 0;
         loadCollections();
     });
 
@@ -529,7 +537,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             a_parent.updateBtnState();
         }
 
-        cat_coll_div.html( "Loading..." );
+        cat_coll_res.html( "Loading..." );
         var top_id = cur_topic.length>1?cur_topic[cur_topic.length-2].id:null
 
         if ( cur_topic.length ){
@@ -540,6 +548,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         topic_tags.pop();
 
         loadTopics( top_id );
+        coll_off = 0;
         loadCollections();
     });
 
@@ -588,6 +597,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     top_res_div.html( "(loading...)" );
 
     loadTopics();
+    coll_off = 0;
     loadCollections();
 
     topics_div.on("click", ".cat-topic", onTopicActivate );
@@ -595,19 +605,26 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     topics_div.on("click", ".btn-cat-topic-open", onTopicClick );
 
     $("#cat_topic_result_div",cat_panel).on("click", ".cat-topic-result", onSearchTopicClick );
-    cat_coll_div.on("click", ".cat-coll", onCollectionActivate );
-    cat_coll_div.on("click", ".btn-cat-coll-open", onCollectionOpen );
-    cat_coll_div.on("dblclick", ".cat-coll-title-div", onCollectionOpen );
+    cat_coll_res.on("click", ".cat-coll", onCollectionActivate );
+    cat_coll_res.on("click", ".btn-cat-coll-open", onCollectionOpen );
+    cat_coll_res.on("dblclick", ".cat-coll-title-div", onCollectionOpen );
+
+    cat_panel.on("click", ".cat-coll-next", onCollectionsNext );
+    cat_panel.on("click", ".cat-coll-prev", onCollectionsPrev );
 
     this.getCollectionQuery = function(){
         return coll_qry;
     }
 
     function loadCollections(){
-        $(".btn-cat-home,.btn-cat-back,.cat-topic-result",cat_panel).button("disable");
+        $(".cat-coll-prev,.btn-cat-home,.btn-cat-back,.cat-topic-result",cat_panel).button("disable");
+
         loading |= 2;
 
-        cat_coll_div.html( "Loading..." );
+        cat_coll_res.html( "Loading..." );
+
+        coll_qry.offset = coll_off;
+        coll_qry.count = settings.opts.page_sz;
 
         coll_qry.tags = topic_tags.concat( user_tags );
 
@@ -630,11 +647,28 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             loading &= 1;
 
             if ( ok ){
+                console.log("col data", data );
+
                 setCollections( data );
             }
 
             updateTopicNav();
         });
+    }
+
+    function onCollectionsNext(){
+        coll_off += settings.opts.page_sz;
+
+        loadCollections();
+    }
+
+    function onCollectionsPrev(){
+        if ( coll_off > settings.opts.page_sz )
+            coll_off -= settings.opts.page_sz;
+        else
+        coll_off = 0;
+
+        loadCollections();
     }
 
     tags_div.tagit({
@@ -647,12 +681,14 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         removeConfirmation: true,
         afterTagAdded: function( ev, ui ){
             user_tags.push( ui.tagLabel );
+            coll_off = 0;
             loadCollections();
         },
         beforeTagRemoved: function( ev, ui ){
             var idx = user_tags.indexOf( ui.tagLabel );
             if ( idx != -1 )
                 user_tags.splice( idx, 1 );
+            coll_off = 0;
             loadCollections();
         }
     });
@@ -661,6 +697,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     $("#cat_qry_tags_clear",cat_panel).on("click",function(){
         tags_div.tagit("removeAll");
+        coll_off = 0;
         loadCollections();
     });
 
@@ -671,6 +708,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             if ( textTimer )
                 clearTimeout( textTimer );
             ev.preventDefault();
+            coll_off = 0;
             loadCollections();
         }
     });
@@ -680,6 +718,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             clearTimeout( textTimer );
 
         textTimer = setTimeout(function(){
+            coll_off = 0;
             loadCollections();
             textTimer = null;
         },500);
@@ -689,12 +728,14 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         if ( textTimer )
             clearTimeout( textTimer );
         $("#cat_text_qry",cat_panel).val("");
+        coll_off = 0;
         loadCollections();
     });
 
     $("#cat_qry_owner_pick_user",cat_panel).on("click",function(){
         dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
             $("#cat_qry_owner",cat_panel).val( users[0] );
+            coll_off = 0;
             loadCollections();
         });
     });
@@ -702,6 +743,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     $("#cat_qry_owner_pick_proj",cat_panel).on("click",function(){
         dlgPickProj.show( [], true, function( proj ){
             $("#cat_qry_owner",cat_panel).val( proj[0] );
+            coll_off = 0;
             loadCollections();
         });
     });
@@ -710,6 +752,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         if ( textTimer )
             clearTimeout( textTimer );
         $("#cat_qry_owner",cat_panel).val("");
+        coll_off = 0;
         loadCollections();
     });
 
