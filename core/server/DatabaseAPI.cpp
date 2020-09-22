@@ -2706,6 +2706,7 @@ DatabaseAPI::setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::V
 
             topic->set_id( obj.getString( "_id" ));
             topic->set_title( obj.getString( "title" ));
+            topic->set_coll_cnt( obj.getNumber( "coll_cnt" ));
 
             if ( obj.has( "desc" ))
                 topic->set_desc( obj.asString() );

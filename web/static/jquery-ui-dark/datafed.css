@@ -137,6 +137,11 @@ textarea.ui-state-disabled
     color: #aaa;
 }
 
+.cat-topic-cnt
+{
+    background:#003147;
+    color:#ddd;
+}
 
 /* Dependency Graph Styles */
 

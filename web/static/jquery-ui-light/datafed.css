@@ -107,6 +107,12 @@ ul.tagit {
     color: #373737;
 }
 
+.cat-topic-cnt
+{
+    background:#333;
+    color:#ddd;
+}
+
 /* Dependency Graph Styles */
 
 .links{

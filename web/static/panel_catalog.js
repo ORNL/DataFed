@@ -375,10 +375,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             for ( var i in data.topic ){
                 topic = data.topic[i];
                 //ui-button cat-topic
-                html += "<div class='cat-topic' id='" + topic.id + "' data='"+topic.title+"'>\
+                html += "<div class='cat-topic' id='" + topic.id + "' data='" + topic.title + "'>\
                     <div class='cat-topic-div ui-button ui-corner-all"+(loading?" ui-button-disabled ui-state-disabled":"")+"' style='display:block;text-align:left'>\
                         <div class='row-flex'>\
-                            <div style='flex:1 1 auto;padding-top:2px'>" + topic.title.charAt(0).toUpperCase() + topic.title.substr(1) + "</div>\
+                            <div style='flex:1 1 none;padding-top:2px'>" + topic.title.charAt(0).toUpperCase() + topic.title.substr(1) + "</div>\
+                            <div style='flex:1 1 auto'><div class='cat-topic-cnt'>" + util.countToString(topic.collCnt) + "</div></div>\
                             <div class='cat-topic-btn-div' style='flex:none'><button class='btn btn-icon btn-cat-topic-open'" +
                             (loading?"disabled":"") +
                             "><span class='ui-icon ui-icon-play'></span></button></div>\

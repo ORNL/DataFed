@@ -275,8 +275,8 @@ message TopicData
     optional string             desc        = 4;
     optional string             creator     = 5;
     optional bool               admin       = 6;
+    required uint32             coll_cnt    = 7;
 
-    //required uint32             coll_cnt    = 6;
     //repeated TagMetrics         tags        = 7;
     //repeated UserMetrics        users       = 8;
     //repeated DateMetrics        date        = 9;

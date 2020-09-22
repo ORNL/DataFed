@@ -52,6 +52,17 @@ export function sizeToString( a_bytes ){
         return Math.floor( a_bytes / 109951162777.6 )/10 + " TB";
 }
 
+export function countToString( a_bytes ){
+    if ( a_bytes < 1000 )
+        return a_bytes;
+    else if ( a_bytes < 1000000 )
+        return (a_bytes/1000).toPrecision(3) + "K";
+    else if ( a_bytes < 1000000000 )
+        return (a_bytes/1000000).toPrecision(3) + "M";
+    else
+        return (a_bytes/1000000000).toPrecision(3) + "B";
+}
+
 export function parseSize( a_size_str ){
     var result = null, val;
     var tokens = a_size_str.toUpperCase().trim().split(" ");

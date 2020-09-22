@@ -376,6 +376,17 @@ div.cat-topic-div:hover .cat-topic-btn-div
     visibility:visible;
 }
 
+
+.cat-topic-cnt
+{
+    display:inline-block;
+    font-size:80%;
+    margin-top:0.25em;
+    margin-left:0.5em;
+    padding: 0.05em 0.4em 0.1em 0.4em;
+    border-radius:0.5em;
+}
+
 .btn-cat-topic-open
 {
     margin:0!important;
