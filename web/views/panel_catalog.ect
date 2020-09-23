@@ -54,6 +54,18 @@
             <div class='row-flex' style='flex:none'>
                 <div class='cat-subheading' style='flex:1 1 auto'>Collections &amp; Data</div>
                 <div style='flex:none'>
+                    <select class='cat-coll-sort'>
+                        <option value='1' selected>Title</option>
+                        <option value='-1'>Title (rev)</option>
+                        <option value='2'>Owner</option>
+                        <option value='-2'>Owner (rev)</option>
+                        <option value='3'>Created</option>
+                        <option value='-3'>Created (rev)</option>
+                        <option value='4'>Updated</option>
+                        <option value='-4'>Updated (rev)</option>
+                        <option value='5'>Relevance</option>
+                    </select>
+                    <!-- button class='cat-coll-sort-dir btn btn-icon-tiny'><span class='ui-icon ui-icon-arrow-1-n'></span></button -->
                     <button class='cat-coll-prev btn btn-icon-tiny'><span class='ui-icon ui-icon-triangle-1-w'></span></button>
                     <button class='cat-coll-next btn btn-icon-tiny'><span class='ui-icon ui-icon-triangle-1-e'></span></button>
                 </div>
@@ -62,7 +74,7 @@
             <div id='cat_coll_tree' class='content no-border' style='flex:1 1 auto;min-height:0;overflow:auto;display:none'></div>
             <!-- div class='toolbar' style='flex:none'>YYY</div -->
         </div>
-
+    
         <!-- div class='col-flex' style='flex:1 1 auto;padding:0;height:100%'>
             <div id='coll_div_title' class='cat-subheading' style='flex:none'>Collections &amp; Data</div>
             <div style='flex:1 1 auto'>

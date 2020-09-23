@@ -73,6 +73,7 @@ enum SortOption
     SORT_OWNER                  = 2;
     SORT_TIME_CREATE            = 3;
     SORT_TIME_UPDATE            = 4;
+    SORT_RELEVANCE              = 5;
 }
 
 enum ProjectRole

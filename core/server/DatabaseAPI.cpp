@@ -3565,10 +3565,49 @@ DatabaseAPI::parseCollSearchPublishedRequest( const Anon::CollSearchPublishedReq
 
     if ( !a_partial )
     {
-        a_query += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first))";
+        bool sort_relevance = false;
 
-        // TODO add sort options
-        a_query += " sort i.title";
+        a_query += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first)) sort ";
+
+        if ( a_request.has_sort() )
+        {
+            switch( a_request.sort() )
+            {
+                case SORT_OWNER:
+                    a_query += "i.name";
+                    break;
+                case SORT_TIME_CREATE:
+                    a_query += "i.ct";
+                    break;
+                case SORT_TIME_UPDATE:
+                    a_query += "i.ut";
+                    break;
+                case SORT_RELEVANCE:
+                    if ( a_request.has_text() )
+                    {
+                        a_query += "BM25(i) DESC";
+                        sort_relevance = true;
+                    }
+                    else
+                    {
+                        a_query += "i.title";
+                    }
+                    break;
+                case SORT_TITLE:
+                default:
+                    a_query += "i.title";
+                    break;
+            }
+
+            if ( a_request.has_sort_rev() && a_request.sort_rev() && !sort_relevance )
+            {
+                a_query += " DESC";
+            }
+        }
+        else
+        {
+            a_query += " i.title";
+        }
     }
 
     a_query += " limit @off,@cnt";

@@ -150,6 +150,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         tags_div = $("#cat_tags_div",cat_panel),
         topic_search_path = {},
         loading = 0,
+        sort_rev = false,
         coll_off = 0;
 
         //coll_div_title = $("#coll_div_title",cat_panel);
@@ -207,6 +208,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             $(".cat-topic-div",topics_div).removeClass("ui-button-disabled ui-state-disabled");
             $(".btn",topics_div).button("enable");
             panel_info.showSelectedInfo();
+            $(".cat-coll-sort",cat_panel).selectmenu("enable");
         }
     }
 
@@ -466,10 +468,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         a_parent.updateBtnState();
     }
 
-    function enableTopicUI( a_enable ){
-        $(".btn-cat-home,.btn-cat-back,.cat-topic-result",cat_panel).button(a_enable?"enable":"disable");
-    }
-
     /*
     function setData( a_data, a_container, a_parent ){
         console.log("setData",a_data);
@@ -594,12 +592,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }
     });
 
-    top_res_div.html( "(loading...)" );
-
-    loadTopics();
-    coll_off = 0;
-    loadCollections();
-
     topics_div.on("click", ".cat-topic", onTopicActivate );
     topics_div.on("dblclick", ".cat-topic", onTopicClick );
     topics_div.on("click", ".btn-cat-topic-open", onTopicClick );
@@ -612,16 +604,41 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     cat_panel.on("click", ".cat-coll-next", onCollectionsNext );
     cat_panel.on("click", ".cat-coll-prev", onCollectionsPrev );
 
+    $(".cat-coll-sort",cat_panel).on("selectmenuchange", function(){
+        loadCollections();
+    });
+    
+
+    /*cat_panel.on("click", ".cat-coll-sort-dir", function(){
+        if ( sort_rev ){
+            sort_rev = false;
+            $(".cat-coll-sort-dir span",cat_panel).removeClass("ui-icon-arrow-1-s").addClass("ui-icon-arrow-1-n");
+        }else{
+            sort_rev = true;
+            $(".cat-coll-sort-dir span",cat_panel).removeClass("ui-icon-arrow-1-n").addClass("ui-icon-arrow-1-s");
+        }
+    });*/
+    
+
     this.getCollectionQuery = function(){
         return coll_qry;
     }
 
     function loadCollections(){
         $(".cat-coll-prev,.btn-cat-home,.btn-cat-back,.cat-topic-result",cat_panel).button("disable");
+        $(".cat-coll-sort",cat_panel).selectmenu("disable");
 
         loading |= 2;
 
         cat_coll_res.html( "Loading..." );
+
+        coll_qry.sort = parseInt( $(".cat-coll-sort",cat_panel).val() );
+        if ( coll_qry.sort < 0 ){
+            coll_qry.sort = -coll_qry.sort;
+            coll_qry.sortRev = true;
+        }else{
+            coll_qry.sortRev = false;
+        }
 
         coll_qry.offset = coll_off;
         coll_qry.count = settings.opts.page_sz;
@@ -772,6 +789,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     });
 
     util.inputTheme( $('input,textarea',cat_panel));
+    $(".cat-coll-sort",cat_panel).selectmenu({ width: false });
 
     this.setSearchSelectMode = function( a_enabled ){
         search_sel_mode = a_enabled;
@@ -798,5 +816,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         a_parent.updateBtnState();*/
     });
     
+    top_res_div.html( "(loading...)" );
+
+    loadTopics();
+    coll_off = 0;
+    loadCollections();
+
     return this;
 }

@@ -531,6 +531,11 @@ div.cat-item-title:hover .btn-cat-folder-open
     padding:0.25em;
 }
 
+.cat-coll-sort + span
+{
+    width:14ch!important;
+}
+
 .sel-info-hdr
 {
     border-top: none;
