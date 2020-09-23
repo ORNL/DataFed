@@ -362,9 +362,12 @@ function recordUpdate( client, record, result ){
                 }
             }
 
+            console.log("add tags",add_tags);
+            console.log("rem tags",rem_tags);
             g_lib.addTags( add_tags );
             g_lib.removeTags( rem_tags );
         }else{
+            console.log("add tags",record.tags);
             g_lib.addTags( record.tags );
         }
 
