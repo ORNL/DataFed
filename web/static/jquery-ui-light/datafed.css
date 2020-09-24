@@ -36,9 +36,10 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 
 body
 {
-	color:#000;
+    color:#000;
+    background:#fff;
+scrollbar-color: #d8d8d8 #f8f8f8;
 }
-
 
 .content
 {
@@ -439,11 +440,6 @@ mark
     background: #a0e1cb;
 }
 
-.scroller
-{
-    scrollbar-color: #d8d8d8 #f8f8f8; /* thumb and track color */
-    scrollbar-width: thin;
-}
 
 span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
     color: #dFbF40;

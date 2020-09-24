@@ -2,6 +2,7 @@ body
 {
     color:#ddd;
     background:#111;
+    scrollbar-color: #444 #202020;
 }
 
 .content
@@ -483,6 +484,7 @@ span.fancytree-node
 	box-shadow: .2em .4em 5px #202020;
 }
 
+
 ::-webkit-scrollbar-track
 {
     background: #202020
@@ -496,7 +498,6 @@ span.fancytree-node
 ::-webkit-scrollbar-thumb
 {
 	background: #444;
-	/*border-radius: 4px;*/
 }
 
 ::-webkit-scrollbar-thumb:hover
@@ -504,8 +505,3 @@ span.fancytree-node
     background: #003147;
 }
 
-.scroller
-{
-    scrollbar-color: #404040 #202020; /* thumb and track color */
-    scrollbar-width: thin;
-}

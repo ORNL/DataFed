@@ -11,7 +11,7 @@
                 </ul>
                 <div id="tab-data-tree" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
                     <div class="col-flex" style="height:100%">
-                        <div class="content" style="flex:1 1 auto;border-top:none;min-height:0;overflow:auto">
+                        <div class="content scrollable" style="flex:1 1 auto;border-top:none;min-height:0">
                             <div id="data_tree" class="content no-border" style="display:inline-block"></div>
                         </div>
                         <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
@@ -38,7 +38,7 @@
                 </div>
                 <div id="tab-prov-graph" class="content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">
-                        <div class="content" style="flex:1 1 100%;min-height:0;overflow:auto">
+                        <div class="content scrollable" style="flex:1 1 100%;min-height:0">
                             <svg id="data-graph" style='display:block;width:100%;height:100%'></svg>
                         </div>
                         <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
@@ -50,7 +50,7 @@
                 </div>
                 <div id="tab-search-results" class="content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">
-                        <div style="flex:1 1 auto;min-height:0;overflow:auto">
+                        <div class='scrollable' style="flex:1 1 auto;min-height:0">
                             <div id="search_results_tree" class="content no-border" ></div>
                         </div>
                         <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
@@ -85,7 +85,7 @@
                     </div>
                 </div -->
                 <div id="tab-sel-det" style="padding:0;height:100%;min-height:0">
-                    <div id="sel_info_form" class='col-flex' style="overflow:auto;height:100%;display:none">
+                    <div id="sel_info_form" class='col-flex scrollable' style="height:100%;display:none">
                         <!-- div id='sel_info_desc' style='flex: 1 1 none;white-space:pre-wrap;padding:0.5em 0.5em 2em 0.5em'></div -->
                         <div id='sel_info_desc' class='sel-info-desc'></div>
                         <!-- div style='flex: 1 1 auto;border-top:none' -->
@@ -133,9 +133,9 @@
                         </div -->
                     </div>
                 </div>
-                <div id="tab-sel-md" style="padding:0;height:100%;min-height:0;overflow:auto">
+                <div id="tab-sel-md" style="padding:0;height:100%;min-height:0">
                     <div id='md_div' class="col-flex" style="height:100%">
-                        <div style="flex:auto;border-top:none;overflow:auto;min-height:0">
+                        <div class='scrollable' style="flex:auto;border-top:none;min-height:0">
                             <div id="data_md_tree" class="no-border" style="padding:.5em 0 0 0;background:transparent;display:inline-block"></div>
                         </div>
                         <div class='row-flex toolbar' style='flex:none;align-items:center;padding:.25em 0'>Filter:&nbsp;<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp;<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp;<button class='btn small' id='md_filter_reset'>Reset</button></div>
@@ -151,22 +151,22 @@
                                     <li><a href="#tab-note-closed">Closed</a></li>
                                 </ul>
                                 <div id="tab-note-active" style="padding:0.25em 0.5em">
-                                    <div class='content' style="padding:0;height:6em;overflow:auto">
+                                    <div class='content scrollable' style="padding:0;height:6em">
                                         <div id='note_active_tree' class='content'></div>
                                     </div>
                                 </div>
                                 <div id="tab-note-open" style="padding:0.25em 0.5em">
-                                    <div class='content' style="padding:0;height:6em;overflow:auto">
+                                    <div class='content scrollable' style="padding:0;height:6em">
                                         <div id='note_open_tree' class='content'></div>
                                     </div>
                                 </div>
                                 <div id="tab-note-closed" style="padding:0.25em 0.5em">
-                                    <div class='content' style="padding:0;height:6em;overflow:auto">
+                                    <div class='content scrollable' style="padding:0;height:6em">
                                         <div id='note_closed_tree' class='content'></div>
                                     </div>
                                 </div>
                             </div>
-                            <div id='note-details' style='flex:1 1 auto;min-height:0;overflow:auto;padding:.45em .45em 0 .45em;border:none'>
+                            <div class='scrollable' id='note-details' style='flex:1 1 auto;min-height:0;padding:.45em .45em 0 .45em;border:none'>
                             </div>
                         </div>
                         <div class='toolbar' style='flex:none;padding:.25em 0 0 0' align='right'>
@@ -224,7 +224,7 @@
                 </div>
                 <div class='row-flex search-row' style='align-items:start'>
                     <div style='flex:none;width:11ch'>Tags:</div>
-                    <div style='flex:1 1 auto'><ul id='tag_query' style='height:3.3em;overflow:auto'></ul></div>
+                    <div class='scrollable' style='flex:1 1 auto'><ul id='tag_query' class='content' style='height:3.3em'></ul></div>
                 </div>
                 <div class='row-flex search-row'>
                     <div style='flex:none;width:11ch'>Scope:</div>

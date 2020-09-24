@@ -907,6 +907,7 @@ body .ui-tooltip {
 	/*border: 1px solid #353535;*/
 	background: #eee;
 	color: #000;
+	scrollbar-width: thin;
 }
 .ui-widget-content a {
 	color: #004;
