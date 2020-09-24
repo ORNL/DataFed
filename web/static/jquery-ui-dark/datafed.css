@@ -35,6 +35,7 @@ textarea
     background:#003147;
 }
 
+
 /*
 #data-tabs > .ui-tabs-nav
 {
@@ -106,7 +107,7 @@ textarea.ui-state-disabled
 
 .task-table th
 {
-    /*background-color:#404040;*/
+    background-color:#24292e;
 }
 
 .task-succeeded

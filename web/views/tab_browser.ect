@@ -5,7 +5,7 @@
                 <ul>
                     <li><a href="#tab-data-tree">My Data</a></li>
                     <li><a href="#tab-catalogs">Catalog</a></li>
-                    <li><a href="#tab-notifications">Notifications</a></li>
+                    <li style="display:none"><a href="#tab-notifications">Notifications</a></li>
                     <li style="display:none"><a href="#tab-prov-graph">Provenance</a><span class='ui-icon ui-icon-circle-close prov-graph-close'></span></li>
                     <li style="display:none"><a href="#tab-search-results">Search Results</a><span class='ui-icon ui-icon-circle-close search-results-close'></span></li>
                 </ul>
@@ -62,8 +62,7 @@
             </div>
         </div>
         <div class='col-flex' style="flex:1 1 auto;padding: 0;height:100%;min-width:0;min-height:0">
-          <div class='ui-widget-header' style='height:1.8rem'>
-          </div>
+          <div class='ui-widget-header' style='flex:none;height:1.8rem'></div>
           <div id='sel_info_hdr_div' class='row-flex sel-info-hdr' style="flex:none;padding:0.5em;">
             <div style='flex:none'><span id='sel_info_icon' class='ui-icon ui-icon-circle-help' style='font-size:300%'>x</span></div>
             <div id="sel_info_title" class='sel-info-title' style="flex:1 1 auto;max-height:3em;overflow:none"> </div>
@@ -211,7 +210,7 @@
                 </span>
             </ul>
             <div id="tab-search" class="" style="padding:0">
-                <div style='height:11em'>
+                <div class='footer-tab-inner-div'>
                 <div class='row-flex search-row'>
                     <div style='flex:none;width:11ch'>ID/Alias:</div>
                     <div style='flex:none'><input id="id_query" style='width:13ch' type='text' title="Find data using partial ID or alias."></input></div>
@@ -243,7 +242,7 @@
                         <button id='btn_srch_clear_select' class='btn btn-icon' disabled><span class='ui-icon ui-icon-close'></span></button>
                     </div>
                 </div>
-                <div style='padding:.5em .5em 0 .5em'><span class='note'>* Text comparisons are case sensitive.</span></div>
+                <div style='padding:.25em .5em 0 .5em'><span class='note'>* Text comparisons are case sensitive.</span></div>
                 </div>
             </div>
             <div id="tab-tasks" class="" style="padding:0">

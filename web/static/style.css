@@ -31,7 +31,7 @@ div
 
 .search-row
 {
-    padding: 0.25em 0 0 0.5em;
+    padding: 0 0 0.25em 0.5em;
     align-items:center;
 }
 
@@ -184,7 +184,7 @@ scrollbar-width: thin;
 .footer-tab-inner-div
 {
     padding:.5em .5em 0 .5em;
-    height:7.7em;
+    height:11em;
     overflow:auto;
 }
 
@@ -472,7 +472,7 @@ div.cat-coll-title-div:hover .cat-coll-btn-div
 {
     padding:0 1em 1em 0;
     font-size:1rem;
-    word-break:break-all;
+    word-break:break-word;
 }
 
 .cat-coll-info-table
@@ -726,6 +726,7 @@ td.min-width
     padding: 0.25em 2em 0.25em 0;
 }
 
+
 .cfg-info-table
 {
     font-size: 90%;
@@ -935,13 +936,4 @@ textarea
 {
     width: 0.5em;
     height: 0.5em;
-}
-
-#MozillaGtkWidget.background
-{
-    scrollbar
-    {
-        background-color: transparent;
-        border-color: transparent;
-    }
 }

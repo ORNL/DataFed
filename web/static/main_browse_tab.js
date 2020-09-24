@@ -34,15 +34,16 @@ var dragging = false;
 var hoverTimer;
 var keyNav, keyNavMS;
 var pasteItems = [], pasteMode, pasteSourceParent, pasteCollections;
-var SS_TREE = 0;
-var SS_CAT = 1;
-var SS_PROV = 2;
-var SS_SEARCH = 3;
-var SS_NOTIFY = 4;
-var select_source = SS_TREE;
-var cur_query;
-var update_files, import_direct;
-var cat_panel, graph_panel;
+var SS_TREE = 0,
+    SS_CAT = 1,
+    SS_PROV = 2,
+    SS_SEARCH = 3,
+    SS_NOTIFY = 4,
+    select_source = SS_TREE,
+    select_source_prev = SS_TREE,
+    cur_query,
+    update_files, import_direct,
+    cat_panel, graph_panel;
 
 // Task history vars (to be moved to panel_task_hist )
 var taskTimer, taskHist = [];
@@ -2012,14 +2013,14 @@ $("#info-tabs").tabs({
 $(".prov-graph-close").click( function(){
     graph_panel.clear();
     $('[href="#tab-prov-graph"]').closest('li').hide();
-    $( "#data-tabs" ).tabs({ active: 0 });
+    $( "#data-tabs" ).tabs({ active: select_source_prev });
 });
 
 $(".search-results-close").click( function(){
     cur_query = null;
     $.ui.fancytree.getTree("#search_results_tree").clear();
     $('[href="#tab-search-results"]').closest('li').hide();
-    $( "#data-tabs" ).tabs({ active: 0 });
+    $( "#data-tabs" ).tabs({ active: select_source_prev });
 });
 
 $("#footer-tabs").tabs({
@@ -2047,6 +2048,9 @@ $("#data-tabs").tabs({
     active: 0,
     activate: function(ev,ui){
         if ( ui.newPanel.length ){
+            if ( select_source == SS_TREE || select_source == SS_CAT )
+                select_source_prev = select_source;
+
             switch ( ui.newPanel[0].id ){
                 case "tab-data-tree":
                     select_source = SS_TREE;
