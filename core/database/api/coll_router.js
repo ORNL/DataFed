@@ -168,7 +168,7 @@ router.post('/update', function (req, res) {
                         req.body.tags = coll.tags?coll.tags:[];
 
                     if ( coll.topic ){
-                        console.log("unlink old topic");
+                        //console.log("unlink old topic");
                         g_lib.topicUnlink( coll._id );
                         obj.public = null;
 
@@ -203,8 +203,12 @@ router.post('/update', function (req, res) {
                 }
 
                 //console.log("col upd tags",req.body.tags);
-
-                if ( req.body.tags != undefined ){
+                if ( req.body.tags_clear ){
+                    if ( coll.tags ){
+                        g_lib.removeTags( coll.tags );
+                        obj.tags = null;
+                    }
+                }else if ( req.body.tags != undefined ){
                     if ( coll.tags && coll.tags.length ){
                         var add_tags = [], rem_tags = [], i, tag;
 
@@ -273,7 +277,8 @@ router.post('/update', function (req, res) {
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     topic: joi.string().allow('').optional(),
-    tags: joi.array().items(joi.string()).optional()
+    tags: joi.array().items(joi.string()).optional(),
+    tags_clear: joi.boolean().optional()
 }).required(), 'Collection fields')
 .summary('Update an existing collection')
 .description('Update an existing collection from JSON body');
@@ -458,7 +463,7 @@ router.get('/write', function (req, res) {
                 if ( req.queryParams.add ) {
                     // Limit number of items in collection
                     cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:coll_id});
-                    console.log("coll item count:",cres.count());
+                    //console.log("coll item count:",cres.count());
                     if ( cres.count() + req.queryParams.add.length > g_lib.MAX_COLL_ITEMS )
                         throw [g_lib.ERR_INPUT_TOO_LONG,"Collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 
@@ -512,7 +517,7 @@ router.get('/write', function (req, res) {
                 if ( loose.length ){
                     var root_id = g_lib.getRootID(owner_id);
                     cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
-                    console.log("root item count:",cres.count());
+                    //console.log("root item count:",cres.count());
                     if ( cres.count() + req.queryParams.add.length > g_lib.MAX_COLL_ITEMS )
                         throw [g_lib.ERR_INPUT_TOO_LONG,"Root collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 
@@ -906,7 +911,7 @@ router.post('/published/search2', function (req, res) {
 
         qry += " limit " + off + ", " + cnt + " return { _id: v._id, title: v.title, alias: v.alias }";
 
-        console.log("qry:",qry);
+        //console.log("qry:",qry);
 
         result = g_db._query( qry, par, {}, { fullCount: true })
         var item, tot = result.getExtra().stats.fullCount;
