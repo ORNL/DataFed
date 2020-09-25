@@ -177,18 +177,19 @@ message RecordUpdateRequest
     optional string             title       = 2;
     optional string             desc        = 3;
     repeated string             tags        = 4;
-    optional string             alias       = 5;
-    optional string             doi         = 6;
-    optional string             data_url    = 7;
-    optional string             metadata    = 8;
-    optional bool               mdset       = 9;
-    optional string             source      = 10;
-    optional string             ext         = 11;
-    optional bool               ext_auto    = 12;
-    optional uint64             size        = 13;
-    optional uint32             dt          = 14;
-    repeated DependencySpecData dep_add     = 15;
-    repeated DependencySpecData dep_rem     = 16;
+    optional bool               tags_clear  = 5;
+    optional string             alias       = 6;
+    optional string             doi         = 7;
+    optional string             data_url    = 8;
+    optional string             metadata    = 9;
+    optional bool               mdset       = 10;
+    optional string             source      = 11;
+    optional string             ext         = 12;
+    optional bool               ext_auto    = 13;
+    optional uint64             size        = 14;
+    optional uint32             dt          = 15;
+    repeated DependencySpecData dep_add     = 16;
+    repeated DependencySpecData dep_rem     = 17;
 }
 
 message RecordUpdateBatchRequest
@@ -348,6 +349,7 @@ message CollUpdateRequest
     optional string             alias       = 4;
     optional string             topic       = 6;
     repeated string             tags        = 7;
+    optional bool               tags_clear  = 8;
 }
 
 message CollDeleteRequest

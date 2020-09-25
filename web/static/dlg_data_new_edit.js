@@ -285,6 +285,10 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     // TODO Only assign tags if changed
                     obj.tags = tag_el.tagit("assignedTags");
 
+                    if (( !obj.tags || obj.tags.length == 0 ) && a_data.tags && a_data.tags.length ){
+                        obj.tagsClear = true;
+                    }
+
                     if ( is_published ){
                         var doi = $("#doi",frame).val(),
                             data_url = $("#data_url",frame).val();

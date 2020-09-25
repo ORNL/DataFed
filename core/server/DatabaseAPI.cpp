@@ -1004,7 +1004,11 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
     if ( a_request.has_alias() )
         body += ",\"alias\":\"" + a_request.alias() + "\"";
 
-    if ( a_request.tags_size() )
+    if ( a_request.has_tags_clear() && a_request.tags_clear() )
+    {
+        body += ",\"tags_clear\":true";
+    }
+    else if ( a_request.tags_size() )
     {
         body += ",\"tags\":[";
         for ( int i = 0; i < a_request.tags_size(); i++ )
@@ -1414,7 +1418,11 @@ DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Anon::CollDa
     if ( a_request.has_topic() )
         body += ",\"topic\":\"" + escapeJSON( a_request.topic() ) + "\"";
 
-    if ( a_request.tags_size() )
+    if ( a_request.has_tags_clear() && a_request.tags_clear() )
+    {
+        body += ",\"tags_clear\":true";
+    }
+    else if ( a_request.tags_size() )
     {
         body += ",\"tags\":[";
         for ( int i = 0; i < a_request.tags_size(); i++ )
