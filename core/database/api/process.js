@@ -157,6 +157,8 @@ module.exports = ( function() {
                         data_perm |= ( perm.inhgrant | perm.inherited );
                         coll_perm |= ( perm.inhgrant | perm.inherited );
 
+                        //console.log("req perm:",a_ctxt.comb_perm,",act perm:",perm);
+
                         if ((( coll_perm | perm.grant | perm.inherited ) & a_ctxt.coll_perm ) != a_ctxt.coll_perm )
                             throw [g_lib.ERR_PERM_DENIED,"Permission denied for collection " + id];
 
@@ -218,8 +220,10 @@ module.exports = ( function() {
                             else
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
 
-                            if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm )
+                            if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm ){
+                                //console.log("req perm:",a_ctxt.data_perm,",act perm:",perm);
                                 throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                            }
                         }
                     }
                 }
@@ -262,7 +266,7 @@ module.exports = ( function() {
         for ( i in a_ids ){
             id = a_ids[i];
 
-            console.log("proc task dep:",id);
+            //console.log("proc task dep:",id);
 
             owner = g_db.owner.firstExample({ _from: id });
             if ( owner )
@@ -271,7 +275,7 @@ module.exports = ( function() {
             // Gather other tasks with priority over this new one
             locks = g_db.lock.byExample({_to: id });
             while ( locks.hasNext() ){
-                console.log("has a lock!");
+                //console.log("has a lock!");
 
                 lock = locks.next();
                 if ( lock.context == a_context ){
@@ -281,7 +285,7 @@ module.exports = ( function() {
                 }
             }
 
-            console.log("save a lock");
+            //console.log("save a lock");
 
             // Add new lock
             if ( a_context )
@@ -323,12 +327,12 @@ module.exports = ( function() {
         for ( i in a_deps ){
             dep = a_deps[i];
 
-            console.log("lock task dep:",dep.id);
+            //console.log("lock task dep:",dep.id);
 
             // Gather other tasks with priority over this new one
             locks = g_db.lock.byExample({_to: dep.id });
             while ( locks.hasNext() ){
-                console.log("has a lock!");
+                //console.log("has a lock!");
 
                 lock = locks.next();
                 if ( lock.context == dep.ctx ){
@@ -338,7 +342,7 @@ module.exports = ( function() {
                 }
             }
 
-            console.log("save a lock");
+            //console.log("save a lock");
 
             // Add new lock
             if ( dep.ctx )

@@ -916,7 +916,7 @@ module.exports = ( function() {
 
 
     obj.hasAnyCommonAccessScope = function( src_item_id, dst_coll_id ){
-        console.log("hasAnyCommonAccessScope",src_item_id, dst_coll_id);
+        //console.log("hasAnyCommonAccessScope",src_item_id, dst_coll_id);
 
         if ( src_item_id[0] == 'c' ){
             // Collections can only be linked in one place, can use hasCommonAccessScope on parent
@@ -938,7 +938,7 @@ module.exports = ( function() {
     };
 
     obj.hasCommonAccessScope = function( src_coll_id, dst_coll_id ){
-        console.log("hasCommonAccessScope",src_coll_id, dst_coll_id);
+        //console.log("hasCommonAccessScope",src_coll_id, dst_coll_id);
         var p1 = [src_coll_id], p2 = [dst_coll_id];
         var parent, child = src_coll_id;
 
@@ -966,7 +966,7 @@ module.exports = ( function() {
             if ( p1[i] != p2[i] )
                 break;
         }
-        console.log("hasCommonAccessScope",p1, p2,i);
+        //console.log("hasCommonAccessScope",p1, p2,i);
 
         if ( i == 0 ){
             return false;
@@ -1275,8 +1275,12 @@ module.exports = ( function() {
     obj.getPermissionsLocal = function( a_client_id, a_object, a_get_inherited, a_req_perm ) {
         var perm={grant:0,inhgrant:0,inherited:0},acl,acls,i;
 
+        //console.log("getPermissionsLocal",a_object._id);
+
         if ( a_object.topic ){
+            //console.log("has topic 1");
             perm.grant |= obj.PERM_PUBLIC;
+            perm.inhgrant |= obj.PERM_PUBLIC;
         }
 
         if ( a_object.acls & 1 ){
@@ -1300,6 +1304,7 @@ module.exports = ( function() {
         }
 
         if ( a_get_inherited ){
+            //console.log("chk inherited");
             var children = [a_object];
             var parents,parent;
 
@@ -1308,6 +1313,8 @@ module.exports = ( function() {
 
                 parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", { children : children }).toArray();
 
+                //console.log("parents",parents);
+
                 if ( parents.length == 0 )
                     break;
 
@@ -1315,6 +1322,8 @@ module.exports = ( function() {
                     parent = parents[i];
 
                     if ( parent.topic ){
+                        //console.log("has topic 2");
+
                         perm.inherited |= obj.PERM_PUBLIC;
         
                         if (( a_req_perm & perm.inherited ) == a_req_perm )
@@ -1465,13 +1474,13 @@ module.exports = ( function() {
     };
 
     obj.checkDependencies = function(id,src,depth){
-        console.log("checkdep ",id,src,depth);
+        //console.log("checkdep ",id,src,depth);
 
         var dep,deps = obj.db._query("for v in 1..1 outbound @id dep return v._id",{id:id});
         if ( !depth || depth < 50 ){
-            console.log("checkdep depth ok");
+            //console.log("checkdep depth ok");
             while( deps.hasNext() ){
-                console.log("has next");
+                //console.log("has next");
                 dep = deps.next();
                 if ( dep == src )
                     throw [obj.ERR_INVALID_PARAM,"Circular dependency detected in references, from "+id];
@@ -1511,7 +1520,7 @@ module.exports = ( function() {
     };
 
     obj.annotationInitDependents = function( a_client, a_parent_note, a_updates ){
-        console.log("annotationInitDependents",a_parent_note._id);
+        //console.log("annotationInitDependents",a_parent_note._id);
 
         var subj = obj.db._document( a_parent_note.subject_id ),
             note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return v",{id:subj._id}),
@@ -1528,7 +1537,7 @@ module.exports = ( function() {
         // Create new linked annotation for each dependent
         while( deps.hasNext() ){
             dep = deps.next();
-            console.log("dep:",dep._id);
+            //console.log("dep:",dep._id);
             new_note.subject_id = dep._id;
             note = obj.db.n.save( new_note, { returnNew: true });
             obj.db.note.save({ _from: dep._id, _to: note.new._id });
@@ -1627,7 +1636,7 @@ module.exports = ( function() {
     };
 
     obj.annotationDelete = function( a_id, a_update_ids ){
-        console.log("delete note:",a_id);
+        //console.log("delete note:",a_id);
         var n, notes = obj.db.note.byExample({ _to: a_id });
         while ( notes.hasNext() ){
             n = notes.next();
@@ -1642,33 +1651,33 @@ module.exports = ( function() {
     };
 
     obj.annotationDependenciesUpdated = function( a_data, a_dep_ids_added, a_dep_ids_removed, a_update_ids ){
-        console.log("annotationDependenciesUpdated",a_data._id);
+        //console.log("annotationDependenciesUpdated",a_data._id);
         // Called when dependencies are added/removed to/from existing/new data record
         var res, qry_res;
 
         a_update_ids.add( a_data._id );
 
         if ( a_dep_ids_removed ){
-            console.log("deletings notes from:",a_data._id);
+            //console.log("deletings notes from:",a_data._id);
 
             // Find local annotations linked to upstream dependencies
             qry_res = obj.db._query( "for v,e,p in 3..3 any @src note filter is_same_collection('d',v) && p.edges[1]._from == p.vertices[1]._id return {src: p.vertices[1], dst: p.vertices[3]}", { src: a_data._id });
 
             while ( qry_res.hasNext() ){
                 res = qry_res.next();
-                console.log("examine:",res.dst._id);
+                //console.log("examine:",res.dst._id);
 
                 if ( a_dep_ids_removed.has( res.dst._id )){
                     // Delete local and downstream annotations
                     obj.annotationDelete( res.src._id, a_update_ids );
                 }else{
-                    console.log("not removed:",res.dst._id);
+                    //console.log("not removed:",res.dst._id);
                 }
             }
         }
 
         if ( a_dep_ids_added ){
-            console.log("deps added:",Array.from( a_dep_ids_added ));
+            //console.log("deps added:",Array.from( a_dep_ids_added ));
             // Get all annotations from new dependencies that may need to be propagated
             qry_res = obj.db._query( "for i in @src for v in 1..1 outbound i note filter v.type > 1 return v", { src: Array.from( a_dep_ids_added )});
 
@@ -1677,11 +1686,11 @@ module.exports = ( function() {
     
                 while ( qry_res.hasNext() ){
                     res = qry_res.next();
-                    console.log("dep:",res);
+                    //console.log("dep:",res);
 
                     // Only need to propagate if dependents are already present or state is active
                     if ( res.state == obj.NOTE_ACTIVE || obj.db.note.byExample({ _to: res._id }).count() > 1 ){
-                        console.log("propagate");
+                        //console.log("propagate");
                         new_note = {
                             state: obj.NOTE_OPEN, type: res.type, parent_id: res._id, creator: res.creator,
                             subject_id: a_data._id, ct: time, ut: time, title: res.title, comments: [{
@@ -1701,7 +1710,7 @@ module.exports = ( function() {
     };
 
     obj.addTags = function( a_tags ){
-        console.log("addTags",a_tags);
+        //console.log("addTags",a_tags);
 
         var id, tag, j, code;
 
@@ -1729,7 +1738,7 @@ module.exports = ( function() {
     }
 
     obj.removeTags = function( a_tags ){
-        console.log("removeTags",a_tags);
+        //console.log("removeTags",a_tags);
 
         var id, tag;
         for ( var i in a_tags ){
