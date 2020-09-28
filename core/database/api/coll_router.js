@@ -138,6 +138,8 @@ router.post('/update', function (req, res) {
                 var coll_id = g_lib.resolveCollID( req.body.id, client );
                 var coll = g_db.c.document( coll_id );
 
+                console.log("update coll",req.body);
+
                 var time = Math.floor( Date.now()/1000 ),
                     obj = {ut:time},
                     i, tags, tag, idx;
@@ -162,9 +164,25 @@ router.post('/update', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
+                /* Updating topic and tags is complex because topic parts are added as
+                collection tags, and the user must not be able to interfere with this
+                behavior.
+                    1. If topic is changed, old unused topic tags must be removed, and new topic tags added
+                    2. If user updates tags, tags must be added/removed based on diff, excluding any topic tags
+                    3. If both topic and tags are changed, user tags and topic tags must be differentiated
+                       and topic tags take priority. (user may not remove a topic tag)
+                */
+
+                //if ( coll.tags ){
+                //g_lib.removeTags( coll.tags );
+
+                if ( req.body.tags_clear ){
+                    req.body.tags = [];
+                }
+
                 if ( obj.topic !== undefined && obj.topic != coll.topic ){
                     //console.log("update topic, old:", data.topic ,",new:", obj.topic );
-                    if ( !req.body.tags )
+                    if ( req.body.tags == undefined )
                         req.body.tags = coll.tags?coll.tags:[];
 
                     if ( coll.topic ){
@@ -203,29 +221,28 @@ router.post('/update', function (req, res) {
                 }
 
                 //console.log("col upd tags",req.body.tags);
-                if ( req.body.tags_clear ){
-                    if ( coll.tags ){
-                        g_lib.removeTags( coll.tags );
-                        obj.tags = null;
-                    }
-                }else if ( req.body.tags != undefined ){
+                if ( req.body.tags != undefined ){
                     if ( coll.tags && coll.tags.length ){
                         var add_tags = [], rem_tags = [], i, tag;
 
+                        console.log("coll.tags:",coll.tags,"req.body.tags:",req.body.tags);
+
                         for ( i in coll.tags ){
                             tag = coll.tags[i];
-                            if ( !( tag in req.body.tags )){
+                            if ( !req.body.tags.includes( tag )){
                                 rem_tags.push( tag );
                             }
                         }
             
                         for ( i in req.body.tags ){
                             tag = req.body.tags[i];
-                            if ( !( tag in coll.tags )){
+                            if ( !coll.tags.includes( tag )){
                                 add_tags.push( tag );
                             }
                         }
             
+                        console.log("add_tags:",add_tags,"rem_tags:",rem_tags);
+
                         g_lib.addTags( add_tags );
                         g_lib.removeTags( rem_tags );
                     }else{

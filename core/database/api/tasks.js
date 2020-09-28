@@ -1380,6 +1380,11 @@ var tasks_func = function() {
         if ( tmp )
             g_lib.topicUnlink( a_id );
 
+        // Remove tags
+        var doc = g_db.c.document( a_id );
+        if ( doc.tags && doc.tags.length )
+            obj.removeTags( doc.tags );
+
         // Delete collection
         g_graph.c.remove( a_id );
     };
@@ -1405,7 +1410,11 @@ var tasks_func = function() {
         while( tmp.hasNext() ){
             g_lib.annotationDelete( tmp.next()._to );
         }
-        
+
+        // Remove tags
+        if ( doc.tags && doc.tags.length )
+            obj.removeTags( doc.tags );
+
         // Update allocation
         var loc = g_db.loc.firstExample({ _from: a_id });
         var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
@@ -1437,7 +1446,11 @@ var tasks_func = function() {
             while( tmp.hasNext() ){
                 g_lib.annotationDelete( tmp.next()._to );
             }
-            
+
+            // Remove tags
+            if ( doc.tags && doc.tags.length )
+                obj.removeTags( doc.tags );
+
             // Update allocation
             loc = g_db.loc.firstExample({ _from: id });
             if ( !( doc.owner in allocs )){
@@ -1457,8 +1470,8 @@ var tasks_func = function() {
             g_graph.d.remove( id );
         }
 
-        console.log( "allocation", allocs );
-        console.log( "updating allocation", Date.now() );
+        // /console.log( "allocation", allocs );
+        //console.log( "updating allocation", Date.now() );
 
         for ( i in allocs ){
             tmp = allocs[i];
@@ -1491,7 +1504,7 @@ var tasks_func = function() {
 
         while ( rec_ids.hasNext() ) {
             id = rec_ids.next();
-            console.log("del ",id);
+            //console.log("del ",id);
 
             if ( id.charAt(0) == "d" ){
                 obj._deleteDataRecord( id );
@@ -1502,7 +1515,7 @@ var tasks_func = function() {
             }
         }
 
-        console.log("del",a_proj_id);
+        //console.log("del",a_proj_id);
 
         g_graph.p.remove( a_proj_id );
     };

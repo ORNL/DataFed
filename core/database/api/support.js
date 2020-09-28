@@ -759,10 +759,18 @@ module.exports = ( function() {
     };
 
     obj.topicCreate = function( a_topics, a_idx, a_par_id, a_owner_id ){
-        var topic, par_id = a_par_id;
+        var topic, par_id = a_par_id, doc;
 
         for ( var i = a_idx; i < a_topics.length; i++ ){
-            topic = obj.db.t.save({ title: a_topics[i], creator: a_owner_id, coll_cnt: 1 },{ returnNew: true });
+            topic = a_topics[i];
+
+            /*if (( doc = obj.db.tag.firstExample({ _key: topic })) != null ){
+                obj.db.tag.update( doc._id, { count: doc.count + 1 });
+            }else{
+                obj.db.tag.save({ _key: topic, count: 1 });
+            }*/
+
+            topic = obj.db.t.save({ title: topic, creator: a_owner_id, coll_cnt: 1 },{ returnNew: true });
             obj.db.top.save({ _from: topic._id, _to: par_id });
             par_id = topic._id;
         }
@@ -779,7 +787,7 @@ module.exports = ( function() {
                 throw [ obj.ERR_INVALID_PARAM, "Invalid category" ];
         }
 
-        var i,topic,parent;
+        var i,topic,parent; //,tag;
 
         // Find or create top-level topics
         parent = obj.db._query("for i in t filter i.top == true && i.title == @title return i",{ title: topics[0] });
@@ -791,12 +799,25 @@ module.exports = ( function() {
             obj.db.t.update( parent._id, { coll_cnt: parent.coll_cnt + 1 });
             parent = parent._id;
 
+            /*if (( tag = obj.db.tag.firstExample({ _key: topics[0] })) != null ){
+                obj.db.tag.update( tag._id, { count: tag.count + 1 });
+            }else{
+                obj.db.tag.save({ _key: topics[0], count: 1 });
+            }*/
+
             for ( i = 1; i < topics.length; i++ ){
                 topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{ par: parent, title: topics[i] });
                 if ( topic.hasNext() ){
                     parent = topic.next();
                     // Increment coll_cnt
                     obj.db.t.update( parent._id, { coll_cnt: parent.coll_cnt + 1 });
+
+                    /*if (( tag = obj.db.tag.firstExample({ _key: topics[i] })) != null ){
+                        obj.db.tag.update( tag._id, { count: tag.count + 1 });
+                    }else{
+                        obj.db.tag.save({ _key: topics[i], count: 1 });
+                    }*/
+        
                     parent = parent._id;
                 }else{
                     parent = this.topicCreate( topics, i, parent, a_owner_id );
@@ -822,15 +843,18 @@ module.exports = ( function() {
         }
 
         // Save parent topic id, delete link from collection
-        var topic, topic_id = top_lnk._to, dec_only = false;
+        var topic, topic_id = top_lnk._to, dec_only = false; //, tags = [];
         //console.log("rem top lnk",top_lnk._id);
         obj.db.top.remove( top_lnk );
 
         // Unwind path, deleting orphaned, non-admin topics along the way
         while( topic_id ){
             topic = obj.db.t.document( topic_id );
+
             // Decrement coll_cnt
             obj.db.t.update( topic._id, { coll_cnt: topic.coll_cnt - 1 });
+
+            //tags.push( topic.title );
 
             // If parent is admin controlled, or other topics are linked to parent, stop
             if ( dec_only || topic.admin || obj.db.top.firstExample({ _to: topic_id })){
@@ -856,6 +880,8 @@ module.exports = ( function() {
                 }
             }
         }
+
+        //obj.removeTags( tags );
     };
 
     obj.getParents = function( item_id ){
@@ -1716,7 +1742,7 @@ module.exports = ( function() {
     };
 
     obj.addTags = function( a_tags ){
-        //console.log("addTags",a_tags);
+        console.log("addTags",a_tags);
 
         var id, tag, j, code;
 
@@ -1724,9 +1750,11 @@ module.exports = ( function() {
             tag = a_tags[i].toLowerCase();
             id = "tag/" + tag;
             if ( obj.db.tag.exists( id )){
+                console.log( "update", id );
                 tag = obj.db.tag.document( id );
                 obj.db._update( id, { count: tag.count + 1 });
             }else{
+                console.log( "save", id );
                 if ( tag.length > 40 )
                     throw [obj.ERR_INVALID_PARAM,"Tag too long (max 40 characters)."];
 
@@ -1744,7 +1772,7 @@ module.exports = ( function() {
     }
 
     obj.removeTags = function( a_tags ){
-        //console.log("removeTags",a_tags);
+        console.log("removeTags",a_tags);
 
         var id, tag;
         for ( var i in a_tags ){
@@ -1752,8 +1780,10 @@ module.exports = ( function() {
             if ( obj.db.tag.exists( id )){
                 tag = obj.db.tag.document( id );
                 if ( tag.count > 1 ){
+                    console.log("update",id);
                     obj.db._update( id, { count: tag.count - 1 });
                 }else{
+                    console.log("remove",id);
                     obj.db._remove( id );
                 }
             }
