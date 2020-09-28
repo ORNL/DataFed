@@ -1489,15 +1489,16 @@ module.exports = ( function() {
         }
     };
 
+    // Returns bitmask: CLOSED_BIT (1) | OPEN_TYPE_INH (4) | OPEN_TYPE (4) | ACTIVE_TYPE (4)
     obj.annotationGetMask = function( a_client, a_subj_id, a_admin ){
         var mask = 0, res, n, b;
 
         if ( a_client ){
             if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, a_subj_id ))){
-                res = obj.db._query("for n in 1..1 outbound @id note filter n.state > 0 return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                res = obj.db._query("for n in 1..1 outbound @id note return {type:n.type,state:n.state,parent_id:n.parent_id}",
                     { id: a_subj_id });
             }else{
-                res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || n.creator == @client return {type:n.type,state:n.state,parent_id:n.parent_id}",
                     { id: a_subj_id, client: a_client._id });
             }
         }else{
@@ -1508,12 +1509,17 @@ module.exports = ( function() {
         while ( res.hasNext() ){
             n = res.next();
 
-            b = 1<<n.type;
-            if ( n.parent_id && n.state == obj.NOTE_OPEN )
-                b <<= 8;
-            else if ( n.state == obj.NOTE_OPEN )
-                b <<= 4;
-            mask |= b;
+            if ( n.state == obj.NOTE_CLOSED ){
+                mask |= 0x1000;
+            }else{
+                b = 1<<n.type;
+                if ( n.parent_id && n.state == obj.NOTE_OPEN )
+                    b <<= 8;
+                else if ( n.state == obj.NOTE_OPEN )
+                    b <<= 4;
+
+                mask |= b;
+            }
         }
 
         return mask;

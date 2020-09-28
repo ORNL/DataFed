@@ -447,7 +447,7 @@ function recordUpdate( client, record, result ){
     }
 
     if ( deps_add.size || deps_rem.size ){
-        data.notes = g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, result.updates );
+        g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, result.updates );
     }
 
     data.notes = g_lib.annotationGetMask( client, data._id );
