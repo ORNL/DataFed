@@ -1258,6 +1258,8 @@ function actionDataPut() {
 function calcActionState( sel ){
     var bits,node;
 
+    //console.log("calcActionState",sel);
+
     if ( !sel ){
         bits = 0x7ff;
     }else if ( sel.length > 1 ){
@@ -1284,7 +1286,7 @@ function calcActionState( sel ){
     }else if ( sel.length ){
         node = sel[0];
 
-        switch ( node.key[0] ){
+        switch ( node.key.charAt(0) ){
             //case "c": bits = node.data.isroot?0x2F7:0x272;  break;
             case "c": bits = node.data.isroot?0x2D7:0x252;  break;
             case "d":
@@ -1298,11 +1300,16 @@ function calcActionState( sel ){
                     bits |= 0x20;
                 break;
             case "p":
-                bits = 0x7Fa;
-                if ( node.data.mgr )
-                    bits |= 4;
-                else if ( !node.data.admin )
-                    bits |= 5;
+                if ( node.key.charAt(1) == "/" ){
+                    bits = 0x7Fa;
+                    if ( node.data.mgr )
+                        bits |= 4;
+                    else if ( !node.data.admin )
+                        bits |= 5;
+                }else{
+                    // pub_c/xxx = Published collection
+                    bits = 0x252;
+                }
                 break;
             case "q": bits = 0x7FA; break;
             default:
@@ -1322,7 +1329,8 @@ function calcActionState( sel ){
 
 // Exported for sub-panels
 export function updateBtnState(){
-    console.log("updateBtnState");
+    //console.log("updateBtnState");
+
     var bits,sel;
     switch( select_source ){
         case SS_TREE:
