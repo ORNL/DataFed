@@ -151,7 +151,7 @@ module.exports = ( function() {
         desc: { required: false, update: true, max_len: 2000, label: 'description' },
         summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc", label: 'description' },
         comment: { required: true, update: true, max_len: 2000, in_field: "comment", out_field: "comment", label: 'comment' },
-        topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
+        topic: { required: false, update: true, max_len: 500, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
         domain: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'domain' },
         source: { required: false, update: true, max_len: 300, lower: false, label: 'source' },
         ext: { required: false, update: true, max_len: 40, lower: false, label: 'extension' },

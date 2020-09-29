@@ -886,7 +886,7 @@ var tasks_func = function() {
                         // Update task step
                         a_task.step += 1;
                         g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-                    }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task"] );
+                    }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag"] );
                     break;
                 } catch( e ) {
                     if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
@@ -988,7 +988,7 @@ var tasks_func = function() {
                 // Update task step
                 a_task.step += 1;
                 g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-            }, [], ["d","c","p","a","g","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task"] );
+            }, [], ["d","c","p","a","g","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag"] );
 
             // Continue to next step
         }
@@ -1383,7 +1383,7 @@ var tasks_func = function() {
         // Remove tags
         var doc = g_db.c.document( a_id );
         if ( doc.tags && doc.tags.length )
-            obj.removeTags( doc.tags );
+            g_lib.removeTags( doc.tags );
 
         // Delete collection
         g_graph.c.remove( a_id );
@@ -1413,7 +1413,7 @@ var tasks_func = function() {
 
         // Remove tags
         if ( doc.tags && doc.tags.length )
-            obj.removeTags( doc.tags );
+            g_lib.removeTags( doc.tags );
 
         // Update allocation
         var loc = g_db.loc.firstExample({ _from: a_id });
@@ -1449,7 +1449,7 @@ var tasks_func = function() {
 
             // Remove tags
             if ( doc.tags && doc.tags.length )
-                obj.removeTags( doc.tags );
+                g_lib.removeTags( doc.tags );
 
             // Update allocation
             loc = g_db.loc.firstExample({ _from: id });
