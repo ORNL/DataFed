@@ -136,7 +136,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         back_btn = $(".btn-cat-back",cat_panel),
         top_res_div = $("#cat_topic_result_div",cat_panel),
         cat_coll_div = $("#cat_coll_div",cat_panel),
-        cat_coll_res = cat_coll_div, //$("#cat_coll_res",cat_coll_div),
         topics_panel = $(".topics-div",cat_panel),
         topics_div = $("#cat_topics_div",cat_panel),
         cur_coll = {},
@@ -299,13 +298,13 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     function onCollectionActivate( ev ){
         console.log("coll activate");
-        var el = $(this), coll = el[0];
+        var el = $(this), coll = el[0], id = "c/" + coll.id;
 
-        $(".cat-coll-title-div,.cat-item-title",cat_coll_res).removeClass("ui-state-active");
+        $(".cat-coll-title-div,.cat-item-title",cat_coll_div).removeClass("ui-state-active");
         $(".cat-coll-title-div",el).addClass("ui-state-active");
 
-        panel_info.showSelectedInfo( coll.id );
-        cur_sel = coll.id;
+        panel_info.showSelectedInfo( id );
+        cur_sel = id;
         a_parent.updateBtnState();
 
         ev.stopPropagation()
@@ -338,6 +337,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     function openCollTree( a_coll_id ){
         var coll = cur_coll[a_coll_id];
 
+        cat_coll_div.empty();
         cat_coll_div.hide();
         topics_panel.hide();
 
@@ -350,7 +350,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         a_parent.updateBtnState();
     }
 
-    function closeCollTree( a_coll_id ){
+    function closeCollTree(){
         cat_tree_div.hide();
         cur_sel = null;
 
@@ -364,13 +364,14 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     function onCollectionOpen( ev ){
         var el = $(this),
-            coll=el.closest(".cat-coll");
+            coll=el.closest(".cat-coll"),
+            id = "c/" + coll[0].id;
 
-        cur_topic.push({ title: $(".cat-coll-title",coll).text(), id: coll[0].id });
+        cur_topic.push({ title: $(".cat-coll-title",coll).text(), id: id });
         setTopicPath();
         back_btn.button( "enable" );
 
-        openCollTree( coll[0].id );
+        openCollTree( id );
 
         ev.stopPropagation()
     }
@@ -421,8 +422,44 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }
     }
 
+    function makeCollDiv( item, div ){
+        if ( div ){
+            $(".cat-coll-title",div).text( item.title );
+            $(".cat-coll-notes",div).html( (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") );
+            // There is no way to update brief since it is not returned by updates
+
+            /*if ( item.brief ){
+                $(".cat-coll-info-brief",div).text( item.brief );
+            }else if ( item.desc ){
+                if ( item.desc.length > 120 )
+                    item.desc.slice(0,120) + " ..."
+                $(".cat-coll-info-brief",div).text( item.desc );
+            }else{
+                $(".cat-coll-info-brief",div).text( "(no description)" );
+            }*/
+        }else{
+            return "<div class='cat-coll-title-div ui-widget-content ui-corner-all ui-button'>\
+                        <div class='row-flex'>\
+                            <div class='cat-coll-title'>" + item.title + "</div>\
+                            <div class='cat-coll-notes'>" + (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") + "</div>\
+                            <div class='cat-coll-btn-div'>\
+                                <button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button>\
+                            </div>\
+                        </div>\
+                        <div class='cat-coll-info-div'>\
+                            <div class='cat-coll-info-brief'>"+ (item.brief?item.brief:"(no description)") + "</div>\
+                            <div><table class='cat-coll-info-table'><tr><td>" + (item.ownerId.startsWith("u/")
+                                ?"Owner:</td><td>" + item.ownerName
+                                :"Project:</td><td>"+ item.ownerId.substr(2)) + "</td></tr>\
+                                <tr><td>Collection ID:</td><td>" + item.id + (item.alias?" ("+item.alias+")":"") + "</td></tr>" +
+                            "</table></div>\
+                        </div>\
+                    </div>";
+        }
+    }
+
     function setCollections( data ){
-        console.log("setCollections",data);
+        //console.log("setCollections",data);
         var html = "", item;
         if ( data.coll && data.coll.length ){
             cur_coll = {};
@@ -434,8 +471,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 item = data.coll[i];
                 cur_coll[item.id] = item;
 
-                html +=
-                    "<div class='cat-coll' id='" + item.id + "'>\
+                html += "<div class='cat-coll' id='" + item.id.substr(2) + "'>" + makeCollDiv( item ) + "</div>";
+
+                /*html +=
+                    "<div class='cat-coll' id='" + item.id.substr(2) + "'>\
                         <div class='cat-coll-title-div ui-widget-content ui-corner-all ui-button'>\
                             <div class='row-flex'>\
                                 <div class='cat-coll-title'>" + item.title + "</div>\
@@ -453,7 +492,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                                 "</table></div>\
                             </div>\
                         </div>\
-                    </div>";
+                    </div>";*/
             }
         }else{
             html = "<div class='cat-coll-empty'>No matching collections.<p>Try other categories and/or adjust collection filters.</p></div>"
@@ -462,8 +501,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         $(".cat-coll-prev",cat_panel).button(data.offset?"enable":"disable");
         $(".cat-coll-next",cat_panel).button((data.offset+data.count)<data.total?"enable":"disable");
 
-        cat_coll_res.html( html );
-        $(".btn",cat_coll_res).button();
+        cat_coll_div.html( html );
+        $(".btn",cat_coll_div).button();
         cur_sel = null;
         a_parent.updateBtnState();
     }
@@ -515,7 +554,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             a_parent.updateBtnState();
         }
 
-        cat_coll_res.html( "Loading..." );
+        cat_coll_div.html( "Loading..." );
 
         loadTopics( null, function(){
             cur_topic=[];
@@ -535,7 +574,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             a_parent.updateBtnState();
         }
 
-        cat_coll_res.html( "Loading..." );
+        cat_coll_div.html( "Loading..." );
         var top_id = cur_topic.length>1?cur_topic[cur_topic.length-2].id:null
 
         if ( cur_topic.length ){
@@ -597,9 +636,9 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     topics_div.on("click", ".btn-cat-topic-open", onTopicClick );
 
     $("#cat_topic_result_div",cat_panel).on("click", ".cat-topic-result", onSearchTopicClick );
-    cat_coll_res.on("click", ".cat-coll", onCollectionActivate );
-    cat_coll_res.on("click", ".btn-cat-coll-open", onCollectionOpen );
-    cat_coll_res.on("dblclick", ".cat-coll-title-div", onCollectionOpen );
+    cat_coll_div.on("click", ".cat-coll", onCollectionActivate );
+    cat_coll_div.on("click", ".btn-cat-coll-open", onCollectionOpen );
+    cat_coll_div.on("dblclick", ".cat-coll-title-div", onCollectionOpen );
 
     cat_panel.on("click", ".cat-coll-next", onCollectionsNext );
     cat_panel.on("click", ".cat-coll-prev", onCollectionsPrev );
@@ -630,7 +669,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         loading |= 2;
 
-        cat_coll_res.html( "Loading..." );
+        cat_coll_div.html( "Loading..." );
 
         coll_qry.sort = parseInt( $(".cat-coll-sort",cat_panel).val() );
         if ( coll_qry.sort < 0 ){
@@ -796,24 +835,48 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         //cat_tree.setOption("checkbox",a_enabled);
     };
 
-    model.registerUpdateListener( function( a_data ){
-        //console.log("cat panel updating:",a_data);
-
-        /*var data;
-        // Find impacted nodes in catalog tree and update title
-        cat_tree.visit( function(node){
-            if ( node.key in a_data ){
-                data = a_data[node.key];
-                // Update size if changed
-                if ( node.key.startsWith("d/") && node.data.size != data.size ){
-                    node.data.size = data.size;
-                }
-
-                util.refreshNodeTitle( node, data );
+    this.refreshUI = function( a_ids, a_data, a_reload ){
+        // This doesn't work yet
+        /*console.log("cat refresh",a_ids,a_data);
+        if ( !a_ids || !a_data ){
+            if ( cat_tree_div.is( ":visible" )){
+                cat_tree.reload();
+            }else{
+                loadCollections();
             }
-        });
+        }*/
+    }
+    
+    model.registerUpdateListener( function( a_data ){
+        console.log("cat panel updating:",a_data);
+        var data;
 
-        a_parent.updateBtnState();*/
+        if ( cat_tree_div.is( ":visible" )){
+            cat_tree.visit( function(node){
+                if ( node.key in a_data ){
+                    data = a_data[node.key];
+                    // Update size if changed
+                    if ( node.key.startsWith("d/") && node.data.size != data.size ){
+                        node.data.size = data.size;
+                    }
+    
+                    util.refreshNodeTitle( node, data );
+                }
+            });
+    
+            a_parent.updateBtnState();
+        }else{
+            // Only care about collections in updates
+            var div;
+            for ( var i in a_data ){
+                data = a_data[i];
+                div = $( "#"+data.id.substr(2), cat_coll_div );
+                if ( div.length ){
+                    console.log("found",data,div);
+                    makeCollDiv( data, div );
+                }
+            }
+        }
     });
     
     top_res_div.html( "(loading...)" );

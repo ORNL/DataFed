@@ -211,6 +211,8 @@ export function refreshUI( a_ids, a_data, a_reload ){
             graph_panel.load( graph_panel.getSubjectID(), graph_panel.getSelectedID() );
     }
 
+    cat_panel.refreshUI( a_ids, a_data, a_reload );
+
     var act_node;
 
     switch( select_source ){

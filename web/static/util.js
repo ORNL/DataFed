@@ -182,7 +182,7 @@ export function getKeyIcon( a_key ){
     else if ( a_key.startsWith( "queries" ))
         return "view-list";
     else if ( a_key.startsWith( "published" ))
-        return "sign-out";
+        return "book";
 
     console.log("not found", a_key );
 }
