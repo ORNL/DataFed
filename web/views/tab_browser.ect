@@ -84,8 +84,9 @@
                     </div>
                 </div -->
                 <div id="tab-sel-det" style="padding:0;height:100%;min-height:0">
-                    <div id="sel_info_form" class='col-flex scrollable' style="height:100%;display:none">
+                    <div id="sel_info_form" class='col-flex' style="height:100%;display:none">
                         <!-- div id='sel_info_desc' style='flex: 1 1 none;white-space:pre-wrap;padding:0.5em 0.5em 2em 0.5em'></div -->
+                        <div class='scrollable' style='flex: 1 1 auto'>
                         <div id='sel_info_desc' class='sel-info-desc'></div>
                         <!-- div style='flex: 1 1 auto;border-top:none' -->
                         <div style='border-bottom: 1px solid black'>Details</div>
@@ -127,9 +128,8 @@
                                 <tr class="sit"><td>Source:</td><td id='sel_info_source'></td></tr>
                                 <tr class="sit"><td>Dest:</td><td id='sel_info_dest'></td></tr>
                             </table>
-                        <!-- /div>
-                        <div class='toolbar' style='flex:none'>
-                        </div -->
+                        </div>
+                        <div class='toolbar' style='flex:none;height:1em'></div>
                     </div>
                 </div>
                 <div id="tab-sel-md" style="padding:0;height:100%;min-height:0">
@@ -142,33 +142,31 @@
                 </div>
                 <div id="tab-sel-notes" style="padding:0;height:100%;min-height:0">
                     <div id='note-div' class="col-flex" style='height:100%'> 
-                        <div class="col-flex" style='flex:1 1 auto;border-top:none;min-height:0'> 
-                            <div id='note-tabs' class='tabs-no-header' style='flex:none;border:none;padding:0'>
-                                <ul>
-                                    <li><a href="#tab-note-active">Active</a></li>
-                                    <li><a href="#tab-note-open">Open</a></li>
-                                    <li><a href="#tab-note-closed">Closed</a></li>
-                                </ul>
-                                <div id="tab-note-active" style="padding:0.25em 0.5em">
-                                    <div class='content scrollable' style="padding:0;height:6em">
-                                        <div id='note_active_tree' class='content'></div>
-                                    </div>
-                                </div>
-                                <div id="tab-note-open" style="padding:0.25em 0.5em">
-                                    <div class='content scrollable' style="padding:0;height:6em">
-                                        <div id='note_open_tree' class='content'></div>
-                                    </div>
-                                </div>
-                                <div id="tab-note-closed" style="padding:0.25em 0.5em">
-                                    <div class='content scrollable' style="padding:0;height:6em">
-                                        <div id='note_closed_tree' class='content'></div>
-                                    </div>
+                        <div id='note-tabs' class='tabs-no-header' style='flex:none;border:none;padding:0'>
+                            <ul>
+                                <li><a href="#tab-note-active">Active</a></li>
+                                <li><a href="#tab-note-open">Open</a></li>
+                                <li><a href="#tab-note-closed">Closed</a></li>
+                            </ul>
+                            <div id="tab-note-active" style="padding:0.25em 0.5em">
+                                <div class='content scrollable' style="padding:0;height:6em">
+                                    <div id='note_active_tree' class='content'></div>
                                 </div>
                             </div>
-                            <div class='scrollable' id='note-details' style='flex:1 1 auto;min-height:0;padding:.45em .45em 0 .45em;border:none'>
+                            <div id="tab-note-open" style="padding:0.25em 0.5em">
+                                <div class='content scrollable' style="padding:0;height:6em">
+                                    <div id='note_open_tree' class='content'></div>
+                                </div>
+                            </div>
+                            <div id="tab-note-closed" style="padding:0.25em 0.5em">
+                                <div class='content scrollable' style="padding:0;height:6em">
+                                    <div id='note_closed_tree' class='content'></div>
+                                </div>
                             </div>
                         </div>
-                        <div class='toolbar' style='flex:none;padding:.25em 0 0 0' align='right'>
+                        <div class='scrollable' id='note-details' style='flex:1 1 auto;min-height:0;padding:.45em .45em 0 .45em;border:none'>
+                        </div>
+                        <div class='toolbar' style='flex:none;padding:.25em 0 0 0'>
                             <button class='btn btn-icon btn-note-comment'>Comment</button>
                             <button class='btn btn-icon btn-note-edit'>Edit</button>
                             <button class='btn btn-icon btn-note-activate'>Activate/Deactivate</button>
@@ -183,7 +181,7 @@
     <div style="flex:none;padding:.25em">
         <button class="btn" id="btn_dep_graph" title='View dependency graph of selected data record' disabled>Provenance</button>
         <button class="btn" id="btn_subscribe" title='Manage subscription on selected data record or collection' disabled>Subscribe</button>
-        <button class="btn" id="btn_annotate" title='Creaye new annotation on selected data record or collection' disabled>Annotate</button>
+        <button class="btn" id="btn_annotate" title='Create new annotation on selected data record or collection' disabled>Annotate</button>
         <span style='padding-left:1em'>&nbsp;</span>
         <button class="btn" id="btn_download" title='Download raw data from selected data record(s) and/or collection(s)' disabled>Download</button>
         <span style='padding-left:1em'>&nbsp;</span>

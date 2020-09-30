@@ -76,15 +76,11 @@ export function windowResized(){
         graph_panel.resized( $("#data-tabs-parent").width(), h - hdr_h );
 
     // Match height of select info header
-    $("#sel_info_hdr").outerHeight( hdr_h ).css("line-height",hdr_h + "px");
+    //$("#sel_info_hdr").outerHeight( hdr_h ).css("line-height",hdr_h + "px");
 
-    //var th = $("#sel_info_hdr_div").outerHeight();
     h = $("#info-tabs-parent").height();
-    //console.log("info-tabs-parent h:",h)
     tabs = $("#info-tabs");
     hdr_h = $(".ui-tabs-nav",tabs).outerHeight();
-    //hdr_h = $("#info-tabs > .ui-tabs-nav").outerHeight();
-    //console.log("info-tabs hdr h:",hdr_h)
     tabs.outerHeight(h);
     $("#info-tabs > .ui-tabs-panel").outerHeight( h - hdr_h );
 }

@@ -4,20 +4,23 @@ import * as settings from "./settings.js";
 import * as api from "./api.js";
 import * as dlgAnnotation from "./dlg_annotation.js";
 
-var form = $("#sel_info_form");
-var title_div = $("#sel_info_title");
-var desc_div = $("#sel_info_desc");
-var note_div = $("#note-div");
-var note_details = $("#note-details");
-var data_md_tree = null;
-var data_md_empty = true;
-var tree_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}];
-var data_md_exp = {};
-var note_active_tree = null;
-var note_open_tree = null;
-var note_closed_tree = null;
-var note_icon = ["circle-help","circle-info","alert","flag"];
-var cur_item_id = null,
+var form = $("#sel_info_form"),
+    info_tabs = $("#info-tabs"),
+    tabs_parent = $("#info-tabs-parent"),
+    tabs_parent_vis = true,
+    title_div = $("#sel_info_title"),
+    desc_div = $("#sel_info_desc"),
+    note_div = $("#note-div"),
+    note_details = $("#note-details"),
+    data_md_tree = null,
+    data_md_empty = true,
+    tree_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}],
+    data_md_exp = {},
+    note_active_tree = null,
+    note_open_tree = null,
+    note_closed_tree = null,
+    note_icon = ["circle-help","circle-info","alert","flag"],
+    cur_item_id = null,
     cur_note = null,
     cur_note_node = null,
     ignore_call = false;
@@ -112,7 +115,17 @@ export function showSelectedItemInfo( item ){
     var disabled = [];
 
     if ( item && item.id ){
-        $("#info-tabs-parent").show();
+        if ( !tabs_parent_vis ){
+            tabs_parent.show();
+            tabs_parent_vis = true;
+
+            // Recompute jquery-ui tabs height
+            var h = tabs_parent.height(),
+                hdr_h = $(".ui-tabs-nav",info_tabs).outerHeight();
+            
+            info_tabs.outerHeight( h );
+            $("#info-tabs > .ui-tabs-panel").outerHeight( h - hdr_h );
+        }
 
         cur_item_id = item.id;
 
@@ -155,7 +168,10 @@ export function getActiveItemID(){
 function showGeneralInfo( a_key, a_title ){
     $("#sel_info_icon").removeClass().addClass( "ui-icon ui-icon-" + (a_key?util.getKeyIcon( a_key ):"circle-help"));
     title_div.html(a_title);
-    $("#info-tabs-parent").hide();
+    if ( tabs_parent_vis ){
+        tabs_parent.hide();
+        tabs_parent_vis = false;
+    }
 }
 
 
