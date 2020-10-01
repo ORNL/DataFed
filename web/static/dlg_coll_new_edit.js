@@ -16,7 +16,18 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
         <tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr>\
         <tr><td style='vertical-align:top'>Tags:</td><td colspan='2'><ul id='tags' class='content'></ul></td></tr>\
         <tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr>\
-        <tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td></tr></table>" );
+        <tr><td>Access:</span></td>\
+            <td colspan='2'>\
+                <input type='radio' name='acc_mode' id='acc_priv' checked><label for='acc_priv'>Private</label>\
+                <input type='radio' name='acc_mode' id='acc_public'><label for='acc_pub'>Public</label>\
+            </td></tr>\
+        <tr>\
+            <td>Category:</td>\
+            <td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td>\
+            <td><button class='btn btn-icon' id='btn_pick_topic'><span class='ui-icon ui-icon-structure'></span></button></td>\
+        </tr>\
+        <tr><td></td><td colspan='2'><label for='auto_tag'></label><input type='checkbox' name='auto_tag' id='auto_tag' checked>Auto-tag data records</td></tr>\
+        </table>" );
 
     var dlg_title;
     if ( a_data ) {
@@ -94,7 +105,7 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
         open: function(){
             var widget = frame.dialog( "widget" );
 
-            $(".ui-dialog-buttonpane",widget).append("<div style='font-size:85%' class='note'><span style='width:2em;display:inline-block;text-align:right'>*</span> Required fields<br><span style='width:2em;display:inline-block;text-align:right'>**</span> Enables anonymous read<div>");
+            $(".ui-dialog-buttonpane",widget).append("<div style='font-size:85%' class='note'><span style='width:2em;display:inline-block;text-align:right'>*</span> Required fields<div>");
 
             tag_el.tagit({
                 autocomplete: {
@@ -103,6 +114,10 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     source: "/api/tag/autocomp"
                 },
                 caseSensitive: false
+            });
+
+            $("#btn_pick_topic",frame).on("click",function(){
+                console.log("pick topic");
             });
 
             if ( a_data ){
@@ -115,7 +130,13 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                 }
                 $("#desc",frame).val(a_data.desc);
                 $("#parent_row",frame).css("display","none");
-                $("#topic",frame).val(a_data.topic);
+
+                if ( a_data.topic ){
+                    $("#topic",frame).val(a_data.topic);
+                }else{
+                    util.inputDisable( $("#topic", frame ));
+                    util.inputDisable( $("#btn_pick_topic", frame ));
+                }
 
                 if (( a_upd_perms & model.PERM_WR_REC ) == 0 ){
                     util.inputDisable( $("#title,#desc,#alias", frame ));
@@ -135,7 +156,10 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
                 $("#coll",frame).val(a_parent?a_parent:"");
-                $("#topic",frame).val("");
+
+                util.inputDisable( $("#topic", frame ));
+                util.inputDisable( $("#btn_pick_topic", frame ));
+                //util.inputDisable( $("#auto_tag", frame ));
             }
 
             util.inputTheme($('input',frame));
