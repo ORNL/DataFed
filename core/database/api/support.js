@@ -758,6 +758,9 @@ module.exports = ( function() {
         return id;
     };
 
+    obj.dataUpdateTopicTags = function( a_coll ){
+    }
+
     obj.topicCreate = function( a_topics, a_idx, a_par_id, a_owner_id ){
         var topic, par_id = a_par_id, doc;
 

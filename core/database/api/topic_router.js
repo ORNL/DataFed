@@ -137,7 +137,7 @@ router.get('/search', function (req, res) {
         while ( qry_res.hasNext() ){
             item = qry_res.next();
             it = item;
-
+            topic = item.title;
             path = [{ _id: item._id, title: item.title }];
 
             while (( item = g_db.top.firstExample({ _from: item._id }))){
