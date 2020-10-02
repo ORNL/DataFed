@@ -2,6 +2,7 @@ import * as model from "./model.js";
 import * as util from "./util.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
+import * as dlgPickTopic from "./dlg_pick_topic.js";
 
 
 export function show( a_data, a_parent, a_upd_perms, a_cb ){
@@ -19,15 +20,16 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
         <tr><td>Access:</span></td>\
             <td colspan='2'>\
                 <input type='radio' name='acc_mode' id='acc_priv' checked><label for='acc_priv'>Private</label>\
-                <input type='radio' name='acc_mode' id='acc_public'><label for='acc_pub'>Public</label>\
+                <input type='radio' name='acc_mode' id='acc_pub'><label for='acc_pub'>Public</label>\
             </td></tr>\
         <tr>\
             <td>Category:</td>\
             <td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td>\
             <td><button class='btn btn-icon' id='btn_pick_topic'><span class='ui-icon ui-icon-structure'></span></button></td>\
         </tr>\
-        <tr><td></td><td colspan='2'><label for='auto_tag'></label><input type='checkbox' name='auto_tag' id='auto_tag' checked>Auto-tag data records</td></tr>\
         </table>" );
+
+        //<tr><td></td><td colspan='2'><label for='auto_tag'></label><input type='checkbox' name='auto_tag' id='auto_tag' checked>Auto-tag data records</td></tr>\
 
     var dlg_title;
     if ( a_data ) {
@@ -64,7 +66,9 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
         },{
             text: a_data?"Update":"Create",
             click: function() {
-                var obj = {};
+                var obj = {},
+                    is_pub = $("#acc_pub").prop("checked");
+
                 dlg_inst = $(this);
 
                 if ( a_data ){
@@ -72,6 +76,11 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
+
+                    if ( is_pub && !obj.topic ){
+                        dialogs.dlgAlert( "Data Entry Error", "Category is required for public data." );
+                        return;
+                    }
 
                     // TODO Only assign tags if changed
                     obj.tags = tag_el.tagit("assignedTags");
@@ -96,6 +105,11 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), {}, obj, "topic" );
 
+                    if ( is_pub && !obj.topic ){
+                        dialogs.dlgAlert( "Data Entry Error", "Category is required for public data." );
+                        return;
+                    }
+
                     obj.tags = tag_el.tagit("assignedTags");
 
                     api.collCreate( obj, callback );
@@ -117,7 +131,22 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
             });
 
             $("#btn_pick_topic",frame).on("click",function(){
-                console.log("pick topic");
+                dlgPickTopic.show( function( topic ){
+                    $("#topic",frame).val( topic );
+                });
+            });
+
+            $("input[type=radio][name=acc_mode]",frame).change( function( ev ){
+                var top = $("#topic", frame );
+
+                if( this.id == 'acc_pub' ){
+                    util.inputEnable( top );
+                    util.inputEnable( $("#btn_pick_topic", frame ));
+                }else{
+                    util.inputDisable( top );
+                    util.inputDisable( $("#btn_pick_topic", frame ));
+                    top.val("");
+                }
             });
 
             if ( a_data ){
@@ -133,6 +162,7 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
 
                 if ( a_data.topic ){
                     $("#topic",frame).val(a_data.topic);
+                    $("#acc_pub",frame).prop("checked",true);
                 }else{
                     util.inputDisable( $("#topic", frame ));
                     util.inputDisable( $("#btn_pick_topic", frame ));

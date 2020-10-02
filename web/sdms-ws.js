@@ -1218,6 +1218,9 @@ app.get('/api/top/list/topics', ( a_req, a_resp ) => {
         par.count = a_req.query.count;
     }
 
+    console.log("top qry",a_req.query);
+    console.log("top par",par);
+
     sendMessage( "TopicListTopicsRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
@@ -1242,6 +1245,7 @@ app.get('/api/top/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/top/search', ( a_req, a_resp ) => {
+    console.log("top srch",a_req.query.phrase);
     sendMessage( "TopicSearchRequest", {phrase:a_req.query.phrase}, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });

@@ -20,12 +20,14 @@ export function tooltipTheme( a_objs ){
 }
 
 export function inputDisable( a_objs ){
-    a_objs.prop("disabled",true).removeClass("ui-widget-content").addClass("ui-state-disabled");
+    a_objs.prop("disabled",true).addClass("ui-state-disabled");
+    //a_objs.prop("disabled",true).removeClass("ui-widget-content").addClass("ui-state-disabled");
     return a_objs;
 }
 
 export function inputEnable( a_objs ){
-    a_objs.prop("disabled",false).removeClass("ui-state-disabled").addClass("ui-widget-content");
+    a_objs.prop("disabled",false).removeClass("ui-state-disabled");
+    //a_objs.prop("disabled",false).removeClass("ui-state-disabled").addClass("ui-widget-content");
     return a_objs;
 }
 

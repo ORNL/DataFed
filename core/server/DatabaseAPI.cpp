@@ -2684,8 +2684,11 @@ DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::Topi
 
     dbGet( "topic/search", {{"phrase",a_request.phrase()}}, result );
 
+    DL_INFO("srch res: " << result.toString());
+
     setTopicDataReply( a_reply, result );
     //setListingDataReply( a_reply, result );
+    DL_INFO("reply: " << a_reply.DebugString() );
 }
 
 void
@@ -2734,6 +2737,7 @@ DatabaseAPI::setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::V
                     topic2 = topic->add_path();
                     topic2->set_id( obj2.getString( "_id" ));
                     topic2->set_title( obj2.getString( "title" ));
+                    topic2->set_coll_cnt( 0 );
                 }
             }
         }
