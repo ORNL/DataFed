@@ -257,8 +257,9 @@ router.post('/update', function (req, res) {
                 coll = g_db._update( coll_id, obj, { keepNull: false, returnNew: true });
                 coll = coll.new;
 
-                if ( )
-                                    //g_lib.topicUpdateData( coll.new );
+                if ( obj.topic !== undefined && obj.topic != coll.topic ){
+                    g_lib.topicUpdateData( coll.new );
+                }
 
                 if ( obj.alias !== undefined ) {
                     var old_alias = g_db.alias.firstExample({ _from: coll_id });

@@ -324,8 +324,9 @@ function recordUpdate( client, record, result ){
             obj.ext = "." + obj.ext;
     }
 
-    var loc = g_db.loc.firstExample({ _from: data_id });
-    var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+    var loc = g_db.loc.firstExample({ _from: data_id }),
+        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to }),
+        i;
 
     if ( record.size !== undefined ) {
         obj.size = record.size;
@@ -351,7 +352,7 @@ function recordUpdate( client, record, result ){
         }
     }else if ( record.tags != undefined ){
         if ( data.tags && data.tags.length ){
-            var add_tags = [], rem_tags = [], i, tag;
+            var add_tags = [], rem_tags = [], tag;
 
             for ( i in data.tags ){
                 tag = data.tags[i];
@@ -405,7 +406,7 @@ function recordUpdate( client, record, result ){
     if ( record.deps != undefined && ( record.deps_add != undefined || record.deps_rem != undefined ))
         throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
 
-    var i,dep,id,deps_add=new Set(),deps_rem=new Set();
+    var dep,id,deps_add=new Set(),deps_rem=new Set();
 
     if ( record.dep_rem != undefined ){
         //console.log("dep_rem set");

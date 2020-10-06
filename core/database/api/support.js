@@ -814,7 +814,7 @@ module.exports = ( function() {
             ctx = topicUpdateData_parent( a_coll, a_visited );
         }
 
-        var p, par, _ctx, tmp, item, items = obj.db.item.byExample({ _from: a_coll._id }),
+        var p, par, _ctx, tmp, item, items = obj.db.item.byExample({ _from: a_coll._id });
 
         while ( items.hasNext() ){
             item = items.next();
