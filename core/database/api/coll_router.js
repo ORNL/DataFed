@@ -59,17 +59,18 @@ router.post('/create', function (req, res) {
 
                 if ( req.body.topic ){
                     g_lib.procInputParam( req.body, "topic", false, obj );
-                    obj.public = true;
 
-                    if ( !req.body.tags )
-                        req.body.tags = [];
+                    obj.public = true;
+                    obj.cat_tags = [];
 
                     var tag, tags = req.body.topic.split(".");
                     for ( var i in tags ){
                         tag = tags[i];
-                        if ( tag && req.body.tags.indexOf( tag ) == -1 )
-                            req.body.tags.push( tag );
+                        if ( tag )
+                            obj.cat_tags.push( tag );
                     }
+
+                    //g_lib.addTags( obj.cat_tags );
                 }
 
                 if ( req.body.tags != undefined ){
@@ -94,6 +95,7 @@ router.post('/create', function (req, res) {
 
                 if ( obj.topic ){
                     g_lib.topicLink( obj.topic, coll._id, owner._id );
+                    //g_lib.topicUpdateData( coll.new );
                 }
 
                 coll = coll.new;
@@ -180,50 +182,50 @@ router.post('/update', function (req, res) {
                     req.body.tags = [];
                 }
 
+                var add_tags = [], rem_tags = [], i, tag;
+
                 if ( obj.topic !== undefined && obj.topic != coll.topic ){
                     //console.log("update topic, old:", data.topic ,",new:", obj.topic );
-                    if ( req.body.tags == undefined )
-                        req.body.tags = coll.tags?coll.tags:[];
+                    console.log("coll.cat_tags:",coll.cat_tags);
 
                     if ( coll.topic ){
                         //console.log("unlink old topic");
                         g_lib.topicUnlink( coll._id );
                         obj.public = null;
-
-                        tags = coll.topic.split(".");
-                        for ( i in tags ){
-                            idx = req.body.tags.indexOf( tags[i] );
-                            if ( idx != -1 )
-                                req.body.tags.splice( idx, 1 );
-                        }
+                        obj.cat_tags = null;
+                        //rem_tags = coll.cat_tags;
                     }
 
                     if ( obj.topic && obj.topic.length ){
                         //console.log("link new topic");
                         g_lib.topicLink( obj.topic, coll._id, coll.owner );
                         obj.public = true;
+                        obj.cat_tags = [];
 
                         tags = obj.topic.split(".");
                         for ( i in tags ){
                             tag = tags[i];
-                            if ( tag && req.body.tags.indexOf( tag ) == -1 )
-                                req.body.tags.push( tag );
+                            if ( tag ){
+                                obj.cat_tags.push( tag );
+                                //idx = rem_tag.indexOf( tag );
+                                //if ( idx != -1 ){
+                                //    rem_tag.splice( idx, 1 );
+                                //}
+                            }
                         }
                     }
-                }else if ( coll.topic && req.body.tags != undefined ){
-                    // Prevent user from removing topic-related tags
-                    tags = coll.topic.split(".");
-                    for ( i in tags ){
-                        tag = tags[i];
-                        if ( tag && req.body.tags.indexOf( tag ) == -1 )
-                            req.body.tags.push( tag );
-                    }
+
+                    //console.log("cat add_tags:",add_tags,"cat rem_tags:",rem_tags);
+
+                    //g_lib.addTags( add_tags );
+                    //g_lib.removeTags( rem_tags );
                 }
 
                 //console.log("col upd tags",req.body.tags);
                 if ( req.body.tags != undefined ){
                     if ( coll.tags && coll.tags.length ){
-                        var add_tags = [], rem_tags = [], i, tag;
+                        //add_tags = [];
+                        //rem_tags = [];
 
                         console.log("coll.tags:",coll.tags,"req.body.tags:",req.body.tags);
 
@@ -254,6 +256,9 @@ router.post('/update', function (req, res) {
             
                 coll = g_db._update( coll_id, obj, { keepNull: false, returnNew: true });
                 coll = coll.new;
+
+                if ( )
+                                    //g_lib.topicUpdateData( coll.new );
 
                 if ( obj.alias !== undefined ) {
                     var old_alias = g_db.alias.firstExample({ _from: coll_id });

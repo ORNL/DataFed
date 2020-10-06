@@ -758,8 +758,113 @@ module.exports = ( function() {
         return id;
     };
 
-    obj.dataUpdateTopicTags = function( a_coll ){
+    /*
+    obj.topicUpdateData = function( a_coll_id, a_public, a_new_tags ){
+        // Recurse into all child collections and update data record tags and public flag
+        var ctx = { pub: a_public, tags: a_new_tags, visited: {}, par: null };
+        obj.topicUpdateData_recurse( a_coll_id, ctx );
     }
+    */
+
+    obj.topicUpdateData_parent = function( a_coll, a_visited ){
+        var c, ctx = { pub: a_coll.public, tags: new Set( a_coll.cat_tags?a_coll.cat_tags:[] )},
+            item = obj.db.item.firstExample({ _to: a_coll._id });
+
+        while ( item ){
+            c = a_visited[item._from];
+
+            if ( c ){
+                ctx.pub |= c.pub;
+                if ( c.tags ){
+                    c.tags.forEach( ctx.tags.add, ctx.tags );
+                }
+                break;
+            }else{
+                c = obj.db.c.document( item._from );
+                ctx.pub |= c.public;
+                if ( c.cat_tags ){
+                    c.cat_tags.forEach( ctx.tags.add, ctx.tags );
+                }
+            }
+
+            item = obj.db.item.firstExample({ _to: item._from });
+        }
+
+        a_visited[a_coll._id] = ctx;
+        return ctx;
+    }
+
+    /* This recursive function updates data record public flag and category tags based
+    on current public status of all parent collections, including the entry collection.
+    When a collection topic is change, the collection should be updated first before
+    calling this function. Note that the public state and category tags of child
+    collections are not changed by this function.
+    */
+    obj.topicUpdateData = function( a_coll, a_ctx, a_visited = {}){
+        var ctx;
+
+        if ( a_ctx ){
+            ctx = { pub: a_coll.public | a_ctx.pub, tags: new Set( a_ctx.tags )};
+            if ( a_coll.cat_tags ){
+                a_coll.cat_tags.forEach( ctx.tags.add, ctx.tags );
+            }
+            a_visited[a_coll._id] = ctx;
+        }else{
+            // First collection - must compute pub/tags from parent collections
+            ctx = topicUpdateData_parent( a_coll, a_visited );
+        }
+
+        var p, par, _ctx, tmp, item, items = obj.db.item.byExample({ _from: a_coll._id }),
+
+        while ( items.hasNext() ){
+            item = items.next();
+
+            if ( item._to.charAt(0) == 'c' ){
+                par = obj.db.c.document( item._to );
+                obj.topicUpdateData( par, ctx, a_visited );
+            }else{
+                // Determine if this record is published by other collections
+                par = obj.db.item.byExample({ _to: item._to });
+                _ctx = ctx;
+
+                while( par.hasNext() ){
+                    p = par.next();
+
+                    if ( p._from != a_coll._id ){
+                        // Record has a parent outside of starting collection tree
+                        tmp = a_visited[p._from];
+                        if ( !tmp ){
+                            tmp = obj.db.c.document( item._to );
+                            tmp = obj.topicUpdateData_parent( tmp, a_visited );
+                        }
+
+                        // Only merge tags if this parent coll is public (or has public ancestor)
+                        if ( tmp.pub ){
+                            // Create new context for record if needed
+                            if ( _ctx === ctx ){
+                                _ctx = { pub: ctx.pub, tags: new Set( ctx.tags )};
+                            }
+
+                            _ctx.pub |= tmp.pub;
+                            tmp.tags.forEach( _ctx.tags.add, _ctx.tags );
+                        }
+                    }
+                }
+
+                // Update record with pub flag & tags
+                obj.db._update( item._to, { public: _ctx.pub, cat_tags: _ctx.pub?_ctx.tags:null }, { keepNull: false });
+            }
+        }
+    }
+
+    if ( ctx._tags == null )
+    ctx._tags = new Set();
+
+p = a_ctx.visited[p._from];
+ctx._pub |= p._pub;
+if ( p._tags ){
+    p._tags.forEach( ctx._tags.add, ctx._tags );
+}
 
     obj.topicCreate = function( a_topics, a_idx, a_par_id, a_owner_id ){
         var topic, par_id = a_par_id, doc;
