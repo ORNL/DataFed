@@ -296,7 +296,8 @@ var tasks_func = function() {
             }
 
             // Must do this in a retry loop in case of concurrent (non-put) updates
-            retry = 10
+            retry = 10;
+
             for (;;){
                 try{
                     obj._transact( function(){
@@ -818,7 +819,7 @@ var tasks_func = function() {
 
         obj._ensureExclusiveAccess( rec_ids );
 
-        var state = {}
+        var state = {};
 
         if ( result.coll.length ){
             state.del_coll = result.coll;

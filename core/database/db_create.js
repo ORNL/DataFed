@@ -104,20 +104,27 @@ tagview.properties({
   }
 },true);
 
-var view = db._createView("textview","arangosearch",{});
+var view = db._createView("dataview","arangosearch",{});
 
 view.properties({
     links: {
       "d": {
         fields:{
-          "_id": { analyzers: ["identity"] },
+          "public": { analyzers: ["identity"] },
+          "cat_tags": { analyzers: ["identity"] },
+          "tags": { analyzers: ["identity"] },
           "title": { analyzers: ["text_en"] },
           "desc": { analyzers: ["text_en"] },
-          "tags": { analyzers: ["identity"] }
+          "owner": { analyzers: ["identity"] },
+          "ut": { analyzers: ["identity"] },
+          "_id": { analyzers: ["identity"] }
         },
         includeAllFields: false
       }
-    }
+    },
+    primarySort:[
+      {field:"title",direction:"asc"}
+    ]
   },
   true
 );
@@ -128,12 +135,13 @@ view.properties({
     links: {
       "c": {
         fields: { 
+          "public": { analyzers: ["identity"] },
+          "cat_tags": { analyzers: ["identity"] },
+          "tags": { analyzers: ["identity"] },
           "title": { analyzers: ["text_en"] },
           "desc": { analyzers: ["text_en"] },
           "owner": { analyzers: ["identity"] },
-          "ut": { analyzers: ["identity"] },
-          "tags": { analyzers: ["identity"] },
-          "public": { analyzers: ["identity"] }
+          "ut": { analyzers: ["identity"] }
         },
         includeAllFields: false
       }

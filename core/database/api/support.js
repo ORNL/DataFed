@@ -792,7 +792,7 @@ module.exports = ( function() {
 
         a_visited[a_coll._id] = ctx;
         return ctx;
-    }
+    };
 
     /* This recursive function updates data record public flag and category tags based
     on current public status of all parent collections, including the entry collection.
@@ -811,7 +811,7 @@ module.exports = ( function() {
             a_visited[a_coll._id] = ctx;
         }else{
             // First collection - must compute pub/tags from parent collections
-            ctx = topicUpdateData_parent( a_coll, a_visited );
+            ctx = obj.topicUpdateData_parent( a_coll, a_visited );
         }
 
         var p, par, _ctx, tmp, item, items = obj.db.item.byExample({ _from: a_coll._id });
@@ -855,19 +855,11 @@ module.exports = ( function() {
                 obj.db._update( item._to, { public: _ctx.pub, cat_tags: _ctx.pub?_ctx.tags:null }, { keepNull: false });
             }
         }
-    }
+    };
 
-    if ( ctx._tags == null )
-    ctx._tags = new Set();
-
-p = a_ctx.visited[p._from];
-ctx._pub |= p._pub;
-if ( p._tags ){
-    p._tags.forEach( ctx._tags.add, ctx._tags );
-}
 
     obj.topicCreate = function( a_topics, a_idx, a_par_id, a_owner_id ){
-        var topic, par_id = a_par_id, doc;
+        var topic, par_id = a_par_id; //, doc;
 
         for ( var i = a_idx; i < a_topics.length; i++ ){
             topic = a_topics[i];
@@ -884,7 +876,7 @@ if ( p._tags ){
         }
 
         return par_id;
-    }
+    };
 
     obj.topicLink = function( a_topic, a_coll_id, a_owner_id ){
         var i, topics = a_topic.split(".");
@@ -895,7 +887,7 @@ if ( p._tags ){
                 throw [ obj.ERR_INVALID_PARAM, "Invalid category" ];
         }
 
-        var i,topic,parent; //,tag;
+        var topic,parent; //,tag;
 
         // Find or create top-level topics
         parent = obj.db._query("for i in t filter i.top == true && i.title == @title return i",{ title: topics[0] });
@@ -1034,7 +1026,7 @@ if ( p._tags ){
                 }
                 return -1;
             }
-        })
+        });
 
         return results;
     };
@@ -1147,7 +1139,7 @@ if ( p._tags ){
             }
             children = parents;
         }
-    }
+    };
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
      * ownership or admin privilege - the hasAdminPermObject function performs these checks and should be
@@ -1778,13 +1770,15 @@ if ( p._tags ){
     obj.annotationDelete = function( a_id, a_update_ids ){
         //console.log("delete note:",a_id);
         var n, notes = obj.db.note.byExample({ _to: a_id });
+
         while ( notes.hasNext() ){
             n = notes.next();
             if ( n._from.startsWith("n/")){
                 obj.annotationDelete( n._from, a_update_ids );
             }
         }
-        var n = obj.db.n.document( a_id );
+
+        n = obj.db.n.document( a_id );
         if ( a_update_ids )
             a_update_ids.add( n.subject_id );
         obj.graph.n.remove( a_id );
@@ -1877,7 +1871,7 @@ if ( p._tags ){
                 obj.db.tag.save({ _key: tag, count: 1 });
             }
         }
-    }
+    };
 
     obj.removeTags = function( a_tags ){
         console.log("removeTags",a_tags);
@@ -1896,7 +1890,7 @@ if ( p._tags ){
                 }
             }
         }
-    }
+    };
 
     obj.saveRecentGlobusPath = function( a_client, a_path, a_mode ){
         var path = a_path, idx = a_path.lastIndexOf("/");

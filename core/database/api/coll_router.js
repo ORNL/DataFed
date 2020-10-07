@@ -144,7 +144,7 @@ router.post('/update', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 ),
                     obj = {ut:time},
-                    i, tags, tag, idx;
+                    i, tags, tag; //, idx;
 
                 g_lib.procInputParam( req.body, "title", true, obj );
                 g_lib.procInputParam( req.body, "desc", true, obj );
@@ -181,8 +181,6 @@ router.post('/update', function (req, res) {
                 if ( req.body.tags_clear ){
                     req.body.tags = [];
                 }
-
-                var add_tags = [], rem_tags = [], i, tag;
 
                 if ( obj.topic !== undefined && obj.topic != coll.topic ){
                     //console.log("update topic, old:", data.topic ,",new:", obj.topic );
@@ -224,8 +222,7 @@ router.post('/update', function (req, res) {
                 //console.log("col upd tags",req.body.tags);
                 if ( req.body.tags != undefined ){
                     if ( coll.tags && coll.tags.length ){
-                        //add_tags = [];
-                        //rem_tags = [];
+                        var add_tags = [], rem_tags = [];
 
                         console.log("coll.tags:",coll.tags,"req.body.tags:",req.body.tags);
 
@@ -773,13 +770,13 @@ router.post('/published/search', function (req, res) {
         var off = req.body.offset?req.body.offset:0,
             cnt = req.body.count?req.body.count:100,
             par = {},
-            qry, result;
+            qry, result, i;
 
         qry = "for i in collview search i.public == true";
 
         if ( req.body.text && req.body.text.length ){
             qry += " and analyzer(";
-            for ( var i in req.body.text ){
+            for ( i in req.body.text ){
                 if ( i != "0" )
                     qry += " and";
                 qry += " (phrase(i.title,'" + req.body.text[i] + "') or phrase(i['desc'],'" + req.body.text[i] + "'))";
@@ -812,11 +809,11 @@ router.post('/published/search', function (req, res) {
 
         qry += " sort i.title limit " + off + ", " + cnt + " return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias}";
 
-        result = g_db._query( qry, par, {}, { fullCount: true })
+        result = g_db._query( qry, par, {}, { fullCount: true });
         var item, tot = result.getExtra().stats.fullCount;
         result = result.toArray();
 
-        for ( var i in result ){
+        for ( i in result ){
             item = result[i];
             if ( item.owner_name && item.owner_name.length )
                 item.owner_name = item.owner_name[0];
@@ -853,7 +850,7 @@ router.post('/published/search', function (req, res) {
 
 router.post('/published/search2', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+        //const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
         var off = req.body.offset?req.body.offset:0,
             cnt = req.body.count?req.body.count:100,
@@ -936,8 +933,8 @@ router.post('/published/search2', function (req, res) {
 
         //console.log("qry:",qry);
 
-        result = g_db._query( qry, par, {}, { fullCount: true })
-        var item, tot = result.getExtra().stats.fullCount;
+        result = g_db._query( qry, par, {}, { fullCount: true });
+        var tot = result.getExtra().stats.fullCount;
         result = result.toArray();
 
         /*for ( var i in result ){
