@@ -133,7 +133,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","a","owner","alias","t","top","tag"]
+                write: ["c","a","d","owner","alias","t","top","tag"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -184,9 +184,8 @@ router.post('/update', function (req, res) {
 
                 if ( obj.topic !== undefined && obj.topic != coll.topic ){
                     //console.log("update topic, old:", data.topic ,",new:", obj.topic );
-                    console.log("coll.cat_tags:",coll.cat_tags);
-
                     if ( coll.topic ){
+                        console.log("rem cat_tags:",coll.cat_tags);
                         //console.log("unlink old topic");
                         g_lib.topicUnlink( coll._id );
                         obj.public = null;
@@ -211,6 +210,7 @@ router.post('/update', function (req, res) {
                                 //}
                             }
                         }
+                        console.log("add cat_tags:",obj.cat_tags);
                     }
 
                     //console.log("cat add_tags:",add_tags,"cat rem_tags:",rem_tags);
@@ -254,8 +254,9 @@ router.post('/update', function (req, res) {
                 coll = g_db._update( coll_id, obj, { keepNull: false, returnNew: true });
                 coll = coll.new;
 
-                if ( obj.topic !== undefined && obj.topic != coll.topic ){
-                    g_lib.topicUpdateData( coll.new );
+                if ( obj.cat_tags !== undefined ){
+                    console.log("update topic data");
+                    g_lib.topicUpdateData( coll );
                 }
 
                 if ( obj.alias !== undefined ) {

@@ -774,14 +774,14 @@ module.exports = ( function() {
             c = a_visited[item._from];
 
             if ( c ){
-                ctx.pub |= c.pub;
+                ctx.pub ||= c.pub;
                 if ( c.tags ){
                     c.tags.forEach( ctx.tags.add, ctx.tags );
                 }
                 break;
             }else{
                 c = obj.db.c.document( item._from );
-                ctx.pub |= c.public;
+                ctx.pub ||= c.public;
                 if ( c.cat_tags ){
                     c.cat_tags.forEach( ctx.tags.add, ctx.tags );
                 }
@@ -804,7 +804,7 @@ module.exports = ( function() {
         var ctx;
 
         if ( a_ctx ){
-            ctx = { pub: a_coll.public | a_ctx.pub, tags: new Set( a_ctx.tags )};
+            ctx = { pub: (a_coll.public || a_ctx.pub), tags: new Set( a_ctx.tags )};
             if ( a_coll.cat_tags ){
                 a_coll.cat_tags.forEach( ctx.tags.add, ctx.tags );
             }
@@ -845,14 +845,14 @@ module.exports = ( function() {
                                 _ctx = { pub: ctx.pub, tags: new Set( ctx.tags )};
                             }
 
-                            _ctx.pub |= tmp.pub;
+                            _ctx.pub ||= tmp.pub;
                             tmp.tags.forEach( _ctx.tags.add, _ctx.tags );
                         }
                     }
                 }
 
                 // Update record with pub flag & tags
-                obj.db._update( item._to, { public: _ctx.pub, cat_tags: _ctx.pub?_ctx.tags:null }, { keepNull: false });
+                obj.db._update( item._to, { public: _ctx.pub, cat_tags: _ctx.pub?Array.from(_ctx.tags):null }, { keepNull: false });
             }
         }
     };
