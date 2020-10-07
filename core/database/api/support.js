@@ -767,21 +767,24 @@ module.exports = ( function() {
     */
 
     obj.topicUpdateData_parent = function( a_coll, a_visited ){
+        console.log("topicUpdateData_parent",a_coll._id);
         var c, ctx = { pub: a_coll.public, tags: new Set( a_coll.cat_tags?a_coll.cat_tags:[] )},
             item = obj.db.item.firstExample({ _to: a_coll._id });
 
         while ( item ){
+            console.log("chk",item);
             c = a_visited[item._from];
 
             if ( c ){
-                ctx.pub ||= c.pub;
+                ctx.pub = (ctx.pub || c.pub);
                 if ( c.tags ){
                     c.tags.forEach( ctx.tags.add, ctx.tags );
                 }
+                console.log("found visited - stop");
                 break;
             }else{
                 c = obj.db.c.document( item._from );
-                ctx.pub ||= c.public;
+                ctx.pub = (ctx.pub || c.public);
                 if ( c.cat_tags ){
                     c.cat_tags.forEach( ctx.tags.add, ctx.tags );
                 }
@@ -789,6 +792,7 @@ module.exports = ( function() {
 
             item = obj.db.item.firstExample({ _to: item._from });
         }
+        console.log("update visited",ctx);
 
         a_visited[a_coll._id] = ctx;
         return ctx;
@@ -834,7 +838,7 @@ module.exports = ( function() {
                         // Record has a parent outside of starting collection tree
                         tmp = a_visited[p._from];
                         if ( !tmp ){
-                            tmp = obj.db.c.document( item._to );
+                            tmp = obj.db.c.document( item._from );
                             tmp = obj.topicUpdateData_parent( tmp, a_visited );
                         }
 
@@ -845,7 +849,7 @@ module.exports = ( function() {
                                 _ctx = { pub: ctx.pub, tags: new Set( ctx.tags )};
                             }
 
-                            _ctx.pub ||= tmp.pub;
+                            _ctx.pub = (_ctx.pub || tmp.pub);
                             tmp.tags.forEach( _ctx.tags.add, _ctx.tags );
                         }
                     }
