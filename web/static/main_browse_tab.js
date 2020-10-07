@@ -1286,9 +1286,11 @@ function calcActionState( sel ){
 
         switch ( node.key.charAt(0) ){
             //case "c": bits = node.data.isroot?0x2F7:0x272;  break;
-            case "c": bits = node.data.isroot?0x2D7:0x252;  break;
+            case "c":
+                bits = node.data.isroot?0x2D7:0x252;
+                break;
             case "d":
-                if ( node.parent.key.startsWith("c/"))
+                if ( node.parent && node.parent.key.startsWith("c/"))
                     bits = 0x00;
                 else
                     bits = 0x102;

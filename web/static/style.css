@@ -543,6 +543,11 @@ div.cat-item-title:hover .btn-cat-folder-open
     padding:0.25em;
 }
 
+.cat-mode + span
+{
+    width:13ch!important;
+}
+
 .cat-coll-sort + span
 {
     width:14ch!important;

@@ -1561,12 +1561,12 @@ DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::
 }
 
 void
-DatabaseAPI::collSearchPublished( const Anon::CollSearchPublishedRequest & a_request, Anon::CollSearchPublishedReply & a_reply )
+DatabaseAPI::catalogSearch( const Anon::CatalogSearchRequest & a_request, Anon::CatalogSearchReply & a_reply )
 {
     Value result;
     string query, params;
     
-    parseCollSearchPublishedRequest( a_request, query, params );
+    parseCatalogSearchRequest( a_request, query, params );
 
     if ( params.size() )
         params[0] = ' '; // Get rid of leading delimiter;
@@ -1577,11 +1577,11 @@ DatabaseAPI::collSearchPublished( const Anon::CollSearchPublishedRequest & a_req
 
     dbPost( "col/pub/search", {}, &body, result );
 
-    setCollSearchPublishedReply( a_reply, result );
+    setCatalogSearchReply( a_reply, result );
 }
 
 void
-DatabaseAPI::setCollSearchPublishedReply( Anon::CollSearchPublishedReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setCatalogSearchReply( Anon::CatalogSearchReply & a_reply, const libjson::Value & a_result )
 {
     Value::ObjectConstIter   j;
 
@@ -3529,13 +3529,27 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
 
 
 void
-DatabaseAPI::parseCollSearchPublishedRequest( const Anon::CollSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial )
+DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial )
 {
-    a_query = "for i in collview search i.public == true";
+    a_query = string("for i in ") + (a_request.mode()==0?"collview":"dataview") + " search i.public == true";
 
     if ( a_request.has_text() > 0 )
     {
         a_query += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
+    }
+
+    if ( a_request.cat_tags_size() > 0 )
+    {
+        a_query += " and @ctags all in i.cat_tags";
+
+        a_params += ",\"ctags\":[";
+        for ( int i = 0; i < a_request.cat_tags_size(); ++i )
+        {
+            if ( i > 0 )
+                a_params += ",";
+            a_params += "\"" + a_request.cat_tags(i) + "\"";
+        }
+        a_params += "]";
     }
 
     if ( a_request.tags_size() > 0 )
@@ -3573,6 +3587,12 @@ DatabaseAPI::parseCollSearchPublishedRequest( const Anon::CollSearchPublishedReq
     {
         a_query += " and i.ut <= @utto";
         a_params += ",\"utto\":" + to_string( a_request.to() );
+    }
+
+    if ( a_request.mode() == 1 && a_request.has_meta() )
+    {
+        a_query += " filter first(for j in d filter j._id ==  i._id and (" + parseSearchMetadata( a_request.meta() ) + ") return true)";
+        //a_query += " and (" + parseSearchMetadata( a_request.meta() ) + ")";
     }
 
     if ( !a_partial )
@@ -3651,7 +3671,7 @@ DatabaseAPI::parseCollSearchPublishedRequest( const Anon::CollSearchPublishedReq
 void
 DatabaseAPI::parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params )
 {
-    parseCollSearchPublishedRequest( a_request.coll(), a_query, a_params, true );
+    parseCatalogSearchRequest( a_request.coll(), a_query, a_params, true );
 
     a_query += " for v in 1..10 outbound i item";
 
@@ -3689,7 +3709,7 @@ DatabaseAPI::parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishe
 
     if ( a_request.has_md() )
     {
-        a_query += " and (" + parseSearchMetadata( a_request.md() ) + ")";
+        a_query += " and (" + parseSearchMetadata( a_request.md(), "v" ) + ")";
     }
 
     if ( a_request.has_from() )
@@ -3940,7 +3960,7 @@ DatabaseAPI::parseSearchTerms( const std::string & a_key, const std::vector<std:
 }
 
 std::string
-DatabaseAPI::parseSearchMetadata( const std::string & a_query )
+DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string & a_iter )
 {
     // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
     // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
@@ -3994,7 +4014,7 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query )
                 break;
             }
         }
-        cout << "c[" << *c << "]\n";
+        //cout << "c[" << *c << "]\n";
 
         switch( state )
         {
@@ -4010,20 +4030,20 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query )
             if ( *c == '\'' )
             {
                 state = PS_SINGLE_QUOTE;
-                cout << "single q start\n";
+                //cout << "single q start\n";
                 break;
             }
             else if ( *c == '\"' )
             {
                 state = PS_DOUBLE_QUOTE;
-                cout << "dbl q start\n";
+                //cout << "dbl q start\n";
                 break;
             }
             else if ( !isalpha( *c ))
                 break;
 
             v.start = c - a_query.begin();
-            cout << "tok start: " << v.start << "\n";
+            //cout << "tok start: " << v.start << "\n";
             v.len = 0;
             state = PS_TOKEN;
             // FALL-THROUGH to token processing
@@ -4050,11 +4070,14 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query )
                     tmp = a_query.substr( v.start, v.len + 1 );
                     state = PS_STOP;
                 }
-                cout << "token[" << tmp << "]" << endl;
+                //cout << "token[" << tmp << "]" << endl;
 
                 // Determine if identifier needs to be prefixed with "v." by testing agains allowed identifiers
                 if ( tmp == "desc" )
-                    result.append( "v['desc']" );
+                {
+                    result.append( a_iter );
+                    result.append( "['desc']" );
+                }
                 else if ( other.find( tmp ) != other.end() || (funcs.find( tmp ) != funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' ))))
                     result.append( tmp );
                 else if ( date_funcs.find( tmp ) != date_funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' )))
@@ -4064,19 +4087,23 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query )
                 }
                 else if ( tmp == "id" )
                 {
-                    result.append( "v._id" );
+                    result.append( a_iter );
+                    result.append( "._id" );
                 }
                 else if ( terms.find( tmp ) != terms.end() )
                 {
-                    result.append( "v." );
+                    result.append( a_iter );
+                    result.append( "." );
                     result.append( tmp );
                 }
                 else
                 {
+                    result.append( a_iter );
+
                     if ( tmp == "md" || tmp.compare( 0, 3, "md." ) == 0 )
-                        result.append( "v." );
+                        result.append( "." );
                     else
-                        result.append( "v.md." );
+                        result.append( ".md." );
                     result.append( tmp );
                 }
 

@@ -1086,17 +1086,19 @@ app.get('/api/col/published/list', ( a_req, a_resp ) => {
 });
 
 
-app.post('/api/col/pub/search', ( a_req, a_resp ) => {
-    sendMessage( "CollSearchPublishedRequest", a_req.body, a_req, a_resp, function( reply ) {
+app.post('/api/cat/search', ( a_req, a_resp ) => {
+    sendMessage( "CatalogSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
+
 
 app.post('/api/col/pub/search/data', ( a_req, a_resp ) => {
     sendMessage( "RecordSearchPublishedRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
+
 
 app.get('/api/repo/list', ( a_req, a_resp ) => {
     var params = {};

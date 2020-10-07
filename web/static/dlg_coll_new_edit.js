@@ -77,7 +77,7 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
 
-                    if ( is_pub && !obj.topic ){
+                    if ( !a_data.topic && is_pub && !obj.topic ){
                         dialogs.dlgAlert( "Data Entry Error", "Category is required for public data." );
                         return;
                     }

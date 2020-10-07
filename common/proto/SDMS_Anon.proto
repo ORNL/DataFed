@@ -159,21 +159,24 @@ message CollReadRequest
     optional uint32             count       = 5;
 }
 
-message CollSearchPublishedRequest
+message CatalogSearchRequest
 {
-    optional string             id          = 1;
-    optional string             text        = 2;
-    repeated string             tags        = 3;
-    optional string             owner       = 4;
-    optional uint32             from        = 5;
-    optional uint32             to          = 6;
-    optional uint32             offset      = 7;
-    optional uint32             count       = 8;
-    optional SDMS.SortOption    sort        = 9;
-    optional bool               sort_rev    = 10;
+    optional uint32             mode        = 1;
+    optional string             id          = 2;
+    optional string             text        = 3;
+    repeated string             cat_tags    = 4;
+    repeated string             tags        = 5;
+    optional string             owner       = 6;
+    optional uint32             from        = 7;
+    optional uint32             to          = 8;
+    optional uint32             offset      = 9;
+    optional uint32             count       = 10;
+    optional SDMS.SortOption    sort        = 11;
+    optional bool               sort_rev    = 12;
+    optional string             meta        = 13;
 }
 
-message CollSearchPublishedReply
+message CatalogSearchReply
 {
     repeated CollInfoData       coll        = 1;
     optional uint32             offset      = 2;
@@ -184,7 +187,7 @@ message CollSearchPublishedReply
 // Returns ListingReply
 message RecordSearchPublishedRequest
 {
-    required CollSearchPublishedRequest     coll        = 1;
+    required CatalogSearchRequest           coll        = 1;
     optional string                         id          = 2;
     optional string                         text        = 3;
     repeated string                         tags        = 4;
@@ -194,6 +197,7 @@ message RecordSearchPublishedRequest
     optional SDMS.SortOption                sort        = 8;
     optional bool                           sort_rev    = 9;
 }
+
 
 message AnnotationListBySubjectRequest
 {

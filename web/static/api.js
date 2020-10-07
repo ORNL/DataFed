@@ -342,8 +342,8 @@ export function collDelete(a_ids,a_cb){
     _asyncGet( "/api/col/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
-export function collPubSearch( a_query, a_cb ){
-    _asyncPost( "/api/col/pub/search", a_query, a_cb );
+export function catalogSearch( a_query, a_cb ){
+    _asyncPost( "/api/cat/search", a_query, a_cb );
     /*_asyncPost( "/api/col/pub/search", a_query, function( ok, data ){
         setTimeout( function(){ a_cb( ok, data ); }, 2000 );
     });*/

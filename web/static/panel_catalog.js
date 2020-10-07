@@ -149,7 +149,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         tags_div = $("#cat_tags_div",cat_panel),
         topic_search_path = {},
         loading = 0,
-        sort_rev = false,
+        cur_mode = 0,
         coll_off = 0;
 
         //coll_div_title = $("#coll_div_title",cat_panel);
@@ -207,6 +207,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             $(".cat-topic-div",topics_div).removeClass("ui-button-disabled ui-state-disabled");
             $(".btn",topics_div).button("enable");
             panel_info.showSelectedInfo();
+            $(".cat-mode",cat_panel).selectmenu("enable");
             $(".cat-coll-sort",cat_panel).selectmenu("enable");
         }
     }
@@ -297,8 +298,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     }
 
     function onCollectionActivate( ev ){
-        console.log("coll activate");
-        var el = $(this), coll = el[0], id = "c/" + coll.id;
+        //console.log("coll activate");
+        var el = $(this), coll = el[0], id = coll.id.charAt(0) + "/" + coll.id.substr(2);
 
         $(".cat-coll-title-div,.cat-item-title",cat_coll_div).removeClass("ui-state-active");
         $(".cat-coll-title-div",el).addClass("ui-state-active");
@@ -335,7 +336,12 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     }*/
 
     function openCollTree( a_coll_id ){
+        if ( cur_mode != 0 )
+            return;
+
         var coll = cur_coll[a_coll_id];
+
+        console.log("openCollTree",a_coll_id,coll);
 
         cat_coll_div.empty();
         cat_coll_div.hide();
@@ -365,7 +371,9 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     function onCollectionOpen( ev ){
         var el = $(this),
             coll=el.closest(".cat-coll"),
-            id = "c/" + coll[0].id;
+            id = coll[0].id;
+
+        id = id.charAt(0) + "/" + id.substr(2);
 
         cur_topic.push({ title: $(".cat-coll-title",coll).text(), id: id });
         setTopicPath();
@@ -441,11 +449,9 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             return "<div class='cat-coll-title-div ui-widget-content ui-corner-all ui-button'>\
                         <div class='row-flex'>\
                             <div class='cat-coll-title'>" + item.title + "</div>\
-                            <div class='cat-coll-notes'>" + (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") + "</div>\
-                            <div class='cat-coll-btn-div'>\
-                                <button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button>\
-                            </div>\
-                        </div>\
+                            <div class='cat-coll-notes'>" + (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") + "</div>"+
+                            (cur_mode==0?"<div class='cat-coll-btn-div'><button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button></div>":"") +
+                        "</div>\
                         <div class='cat-coll-info-div'>\
                             <div class='cat-coll-info-brief'>"+ (item.brief?item.brief:"(no description)") + "</div>\
                             <div><table class='cat-coll-info-table'><tr><td>" + (item.ownerId.startsWith("u/")
@@ -469,9 +475,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 //if ( html )
                 //    html += "<hr>";
                 item = data.coll[i];
-                cur_coll[item.id] = item;
+                if ( cur_mode == 0 )
+                    cur_coll[item.id] = item;
 
-                html += "<div class='cat-coll' id='" + item.id.substr(2) + "'>" + makeCollDiv( item ) + "</div>";
+                html += "<div class='cat-coll' id='" + item.id.charAt(0) + "_" + item.id.substr(2) + "'>" + makeCollDiv( item ) + "</div>";
 
                 /*html +=
                     "<div class='cat-coll' id='" + item.id.substr(2) + "'>\
@@ -643,6 +650,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     cat_panel.on("click", ".cat-coll-next", onCollectionsNext );
     cat_panel.on("click", ".cat-coll-prev", onCollectionsPrev );
 
+    $(".cat-mode",cat_panel).on("selectmenuchange", function(){
+        cur_mode = parseInt( $(".cat-mode",cat_panel).val() );
+        loadCollections();
+    });
+
     $(".cat-coll-sort",cat_panel).on("selectmenuchange", function(){
         loadCollections();
     });
@@ -665,12 +677,14 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     function loadCollections(){
         $(".cat-coll-prev,.btn-cat-home,.btn-cat-back,.cat-topic-result",cat_panel).button("disable");
+        $(".cat-mode",cat_panel).selectmenu("disable");
         $(".cat-coll-sort",cat_panel).selectmenu("disable");
 
         loading |= 2;
 
         cat_coll_div.html( "Loading..." );
 
+        coll_qry.mode = parseInt( $(".cat-mode",cat_panel).val() );
         coll_qry.sort = parseInt( $(".cat-coll-sort",cat_panel).val() );
         if ( coll_qry.sort < 0 ){
             coll_qry.sort = -coll_qry.sort;
@@ -681,14 +695,21 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         coll_qry.offset = coll_off;
         coll_qry.count = settings.opts.page_sz;
-
-        coll_qry.tags = topic_tags.concat( user_tags );
+        coll_qry.catTags = topic_tags;
+        coll_qry.tags = user_tags;
 
         var tmp = $("#cat_text_qry",cat_panel).val().trim();
         if ( tmp ){
             coll_qry.text = tmp;
         }else{
             delete coll_qry.text;
+        }
+
+        var tmp = $("#cat_meta_qry",cat_panel).val().trim();
+        if ( tmp ){
+            coll_qry.meta = tmp;
+        }else{
+            delete coll_qry.meta;
         }
 
         tmp = $("#cat_qry_owner",cat_panel).val().trim();
@@ -699,7 +720,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }
 
         console.log("col qry", coll_qry );
-        api.collPubSearch( coll_qry, function( ok, data ){
+        api.catalogSearch( coll_qry, function( ok, data ){
             loading &= 1;
 
             if ( ok ){
@@ -759,7 +780,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     var textTimer = null;
 
-    $("#cat_text_qry,#cat_qry_owner",cat_panel).on("keypress",function( ev ){
+    $("#cat_text_qry,#cat_qry_owner,#cat_meta_qry",cat_panel).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
             if ( textTimer )
                 clearTimeout( textTimer );
@@ -769,7 +790,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }
     });
 
-    $("#cat_text_qry,#cat_qry_owner",cat_panel).on("input",function( ev ){
+    $("#cat_text_qry,#cat_qry_owner,#cat_meta_qry",cat_panel).on("input",function( ev ){
         if ( textTimer )
             clearTimeout( textTimer );
 
@@ -777,13 +798,21 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             coll_off = 0;
             loadCollections();
             textTimer = null;
-        },500);
+        },1000);
     });
 
     $("#cat_qry_text_clear",cat_panel).on("click",function(){
         if ( textTimer )
             clearTimeout( textTimer );
         $("#cat_text_qry",cat_panel).val("");
+        coll_off = 0;
+        loadCollections();
+    });
+
+    $("#cat_qry_meta_clear",cat_panel).on("click",function(){
+        if ( textTimer )
+            clearTimeout( textTimer );
+        $("#cat_meta_qry",cat_panel).val("");
         coll_off = 0;
         loadCollections();
     });
@@ -828,6 +857,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     });
 
     util.inputTheme( $('input,textarea',cat_panel));
+    $(".cat-mode",cat_panel).selectmenu({ width: false });
     $(".cat-coll-sort",cat_panel).selectmenu({ width: false });
 
     this.setSearchSelectMode = function( a_enabled ){
@@ -870,7 +900,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             var div;
             for ( var i in a_data ){
                 data = a_data[i];
-                div = $( "#"+data.id.substr(2), cat_coll_div );
+                div = $( "#"+data.id.charAt(0)+"_"+data.id.substr(2), cat_coll_div );
                 if ( div.length ){
                     console.log("found",data,div);
                     makeCollDiv( data, div );
