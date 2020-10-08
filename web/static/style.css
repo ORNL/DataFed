@@ -317,6 +317,12 @@ svg text
     border:none!important;
 }
 
+.cat-heading
+{
+    padding: 0 0.25em 0.25em 0.25em;
+    border:none!important;
+}
+
 .cat-subheading
 {
     padding:0.25em;

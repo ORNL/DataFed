@@ -652,6 +652,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     $(".cat-mode",cat_panel).on("selectmenuchange", function(){
         cur_mode = parseInt( $(".cat-mode",cat_panel).val() );
+        if ( cur_mode ){
+            $(".cat-filter-meta",cat_panel).show();
+        }else{
+            $(".cat-filter-meta",cat_panel).hide();
+        }
         loadCollections();
     });
 
@@ -790,7 +795,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }
     });
 
-    $("#cat_text_qry,#cat_qry_owner,#cat_meta_qry",cat_panel).on("input",function( ev ){
+    $("#cat_text_qry,#cat_qry_owner",cat_panel).on("input",function( ev ){
         if ( textTimer )
             clearTimeout( textTimer );
 
@@ -859,6 +864,34 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     util.inputTheme( $('input,textarea',cat_panel));
     $(".cat-mode",cat_panel).selectmenu({ width: false });
     $(".cat-coll-sort",cat_panel).selectmenu({ width: false });
+
+    $(".accordion.acc-act",cat_panel).accordion({
+        header: "h3",
+        collapsible: true,
+        heightStyle: "content",
+        create: function( ev, ui ){
+            console.log("create",ev,ui);
+            ui.header.removeClass("ui-state-active");
+        },
+        activate: function( ev, ui ){
+            ui.newHeader.removeClass("ui-state-active");
+        }
+    });
+
+    $(".accordion:not(.acc-act)",cat_panel).accordion({
+        header: "h3",
+        collapsible: true,
+        heightStyle: "content",
+        active: false,
+        activate: function( ev, ui ){
+            ui.newHeader.removeClass("ui-state-active");
+        }
+    });
+
+    // Prevent active tabs from being highlighted
+    /*$(".accordion .ui-accordion-header",cat_panel).click(function(e) {
+        $(this).removeClass("ui-state-active");
+    });*/
 
     this.setSearchSelectMode = function( a_enabled ){
         search_sel_mode = a_enabled;
