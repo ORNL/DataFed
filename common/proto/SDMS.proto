@@ -168,7 +168,7 @@ message ListingData
     repeated DependencyData     dep         = 13;
 }
 
-message CollInfoData
+message CatItemInfoData
 {
     required string             id          = 1;
     required string             title       = 2;
@@ -177,6 +177,7 @@ message CollInfoData
     optional string             alias       = 5;
     optional uint32             notes       = 6;
     optional string             brief       = 7;
+    optional double             size        = 8;
 }
 
 message TagData

@@ -178,7 +178,7 @@ message CatalogSearchRequest
 
 message CatalogSearchReply
 {
-    repeated CollInfoData       coll        = 1;
+    repeated CatItemInfoData    item        = 1;
     optional uint32             offset      = 2;
     optional uint32             count       = 3;
     optional uint32             total       = 4;

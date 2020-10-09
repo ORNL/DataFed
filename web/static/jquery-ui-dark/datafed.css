@@ -124,20 +124,8 @@ textarea.ui-state-disabled
 
 .accordion .ui-accordion-content
 {
-    /*background:#08090a!important;
-    border-right:1px solid #24292e!important;*/
     padding: 0.25em 0.5em!important;
 }
-
-.my-accordion-header
-{
-    background:none!important;
-}
-/*.cat-sidebar-container
-{
-    background:#08090a!important;
-    border-right:1px solid #24292e!important;
-}*/
 
 .cat-coll-title-div
 {

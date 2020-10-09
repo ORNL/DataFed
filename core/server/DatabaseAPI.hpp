@@ -200,7 +200,7 @@ private:
     void setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value & a_result );
     void setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value & a_result );
     void setCatalogSearchReply( Anon::CatalogSearchReply & a_reply, const libjson::Value & a_result );
-    void setCollInfoData( CollInfoData * a_item, const libjson::Value::Object & a_obj );
+    void setCatItemInfoData( CatItemInfoData * a_item, const libjson::Value::Object & a_obj );
     void setTagDataReply( Anon::TagDataReply & a_reply, const libjson::Value & a_result );
     void setTagData( TagData * a_tag, const libjson::Value::Object & a_obj );
     void setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::Value & a_result );

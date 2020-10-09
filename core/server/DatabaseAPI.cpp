@@ -1603,7 +1603,7 @@ DatabaseAPI::setCatalogSearchReply( Anon::CatalogSearchReply & a_reply, const li
         }
         else
         {
-            setCollInfoData( a_reply.add_coll(), obj );
+            setCatItemInfoData( a_reply.add_item(), obj );
         }
     }
 
@@ -1612,7 +1612,7 @@ DatabaseAPI::setCatalogSearchReply( Anon::CatalogSearchReply & a_reply, const li
 
 
 void
-DatabaseAPI::setCollInfoData( CollInfoData * a_item, const Value::Object & a_obj )
+DatabaseAPI::setCatItemInfoData( CatItemInfoData * a_item, const Value::Object & a_obj )
 {
     if ( a_obj.has( "id" ))
         a_item->set_id( a_obj.asString() );
@@ -1633,6 +1633,9 @@ DatabaseAPI::setCollInfoData( CollInfoData * a_item, const Value::Object & a_obj
 
     if ( a_obj.has( "desc" ) && !a_obj.value().isNull( ))
         a_item->set_brief( a_obj.asString() );
+
+    if ( a_obj.has( "size" ))
+        a_item->set_size( a_obj.asNumber() );
 }
 
 
@@ -3663,7 +3666,7 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
     // If not part of another query, build full query string
     if ( !a_partial )
     {
-        a_query += " return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias}";
+        a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size":"")+"}";
     }
 }
 

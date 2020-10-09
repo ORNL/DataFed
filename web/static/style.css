@@ -412,6 +412,13 @@ div.cat-topic-div:hover .cat-topic-btn-div
 }
 
 /*
+.accordion .ui-accordion-content
+{
+    max-height: 20em;
+}
+*/
+
+/*
 div.cat-coll-container
 {
     padding:0.5em 0.25em 0 0.25em;

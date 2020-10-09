@@ -25,53 +25,73 @@
     </div>
 
     <div class="ui-widget-content row-flex" style="flex:1 1 auto;padding:0;min-height:0;height:100%">
-        <div class='topics-div scrollable' style='flex:none;padding:0;min-height:0;height:100%;width:20ch'>
+        <div class='topics-div' style='flex:none;padding:0;width:20ch'>
             <div class='cat-heading' style='height:1.7rem;padding-left:0.5em;padding-top:0.15em'>Filter Options</div>
-            <div class='accordion acc-act'>
-                <h3>Categories</h3>
-                <!-- div id='cat_top_sidebar' class='cat-sidebar-container scrollable' style='flex:none;min-height:0;height:50%' -->
-                <div id='cat_topics_div'></div>
-            </div>
+            <div class='scrollable' style='min-height:0;height:100%'>
+                <div class='accordion acc-act'>
+                    <h3>Categories</h3>
+                    <div id='cat_topics_div'></div>
+                </div>
 
-            <!-- div class='cat-subheading accordion' style='flex:none'>Text<button style='float:right' id='cat_qry_text_clear' class='btn btn-icon'><span class='ui-icon ui-icon-close'></span></button -->
-            <div class='accordion'>
-                <h3>Text / Keywords</h3>
-                <!-- div id='cat_text_sidebar' class='cat-sidebar-container' style='flex:none' -->
-                <div>
-                    <textarea id='cat_text_qry' style='width:100%;height:4em;'></textarea>
-                    <button style='float:right' id='cat_qry_text_clear' class='btn btn-small'>reset</button>
-                </div>
-            </div>
-            <div class='accordion'>
-                <h3>Tags</h3>
-            <!-- div class='cat-subheading' style='flex:none'>Tags<button style='float:right' id='cat_qry_tags_clear' class='btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>
-            <div id='cat_tags_sidebar' class='cat-sidebar-container scrollable' style='flex:1 1 auto;' -->
-                <div>
-                    <ul id='cat_tags_div' class='content no-border tagit-vertical'></ul>
-                    <div style='float:right;padding-top:0.25em'>
-                        <button id='cat_qry_tags_clear' class='btn btn-small'>reset</button>
+                <div class='accordion'>
+                    <h3>Text / Keywords</h3>
+                    <div>
+                        <textarea id='cat_text_qry' style='width:100%;height:4em;'></textarea>
+                        <button style='float:right' id='cat_qry_text_clear' class='btn btn-small'>reset</button>
                     </div>
                 </div>
-            </div>
-            <div class='accordion'>
-                <h3>Owner</h3>
-                <div>
-                    <input id='cat_qry_owner' style='width:100%'></input>
-                    <div style='float:right;padding-top:0.25em'>
-                        <button id='cat_qry_owner_pick_user' class='btn btn-icon'><span class='ui-icon ui-icon-person'></span></button>
-                        <button id='cat_qry_owner_pick_proj' class='btn btn-icon'><span class='ui-icon ui-icon-box'></span></button>
-                        <button id='cat_qry_owner_clear' class='btn btn-small'>reset</button>
+                <div class='accordion'>
+                    <h3>Tags</h3>
+                    <div>
+                        <ul id='cat_tags_div' class='content no-border tagit-vertical'></ul>
+                        <div style='float:right;padding-top:0.25em'>
+                            <button id='cat_qry_tags_clear' class='btn btn-small'>reset</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <!-- div class='cat-subheading' style='flex:none'>Metadata<button style='float:right' id='cat_qry_meta_clear' class='btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>
-            <div id='cat_tags_sidebar' class='cat-sidebar-container scrollable' style='flex:1 1 auto;' -->
-            <div class='accordion cat-filter-meta' style='display:none'>
-                <h3>Metadata</h3>
-                <div>
-                    <textarea id='cat_meta_qry' style='width:100%;height:6em;'></textarea>
-                    <div style='float:right;padding-top:0.25em'>
-                        <button id='cat_qry_meta_clear' class='btn btn-small'>reset</button>
+                <div class='accordion'>
+                    <h3>Date / Time</h3>
+                    <div>
+                        <table>
+                            <tr><td>From:</td><td><input id='cat_qry_date_from' style='width:100%'></input></td></tr>
+                            <tr><td>To:</td><td><input id='cat_qry_date_to' style='width:100%'></input></td></tr>
+                        </table>
+                        <input id='cat_qry_date_from_ts' style='display:none'></input>
+                        <input id='cat_qry_date_to_ts' style='display:none'></input>
+
+                        <!-- div>From</div>
+                        <table>
+                            <tr><td>Date:</td><td><input id='cat_qry_date_from' style='width:100%'></input></td></tr>
+                            <tr><td>Time:</td><td><input id='cat_qry_time_from' style='width:100%'></input></td></tr>
+                        </table>
+                        <div style='padding-top:1em'>Until</div>
+                        <table>
+                            <tr><td>Date:</td><td><input id='cat_qry_date_to' style='width:100%'></input></td></tr>
+                            <tr><td>Time:</td><td><input id='cat_qry_time_to' style='width:100%'></input></td></tr>
+                        </table -->
+                        <div style='float:right;padding-top:0.25em'>
+                            <button id='cat_qry_datetime_clear' class='btn btn-small'>reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div class='accordion'>
+                    <h3>Owner</h3>
+                    <div>
+                        <input id='cat_qry_owner' style='width:100%'></input>
+                        <div style='float:right;padding-top:0.25em'>
+                            <button id='cat_qry_owner_pick_user' class='btn btn-icon'><span class='ui-icon ui-icon-person'></span></button>
+                            <button id='cat_qry_owner_pick_proj' class='btn btn-icon'><span class='ui-icon ui-icon-box'></span></button>
+                            <button id='cat_qry_owner_clear' class='btn btn-small'>reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div class='accordion cat-filter-meta' style='display:none'>
+                    <h3>Metadata</h3>
+                    <div>
+                        <textarea id='cat_meta_qry' style='width:100%;height:6em;'></textarea>
+                        <div style='float:right;padding-top:0.25em'>
+                            <button id='cat_qry_meta_clear' class='btn btn-small'>reset</button>
+                        </div>
                     </div>
                 </div>
             </div>
