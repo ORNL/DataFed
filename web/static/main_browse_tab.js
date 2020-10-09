@@ -1857,20 +1857,27 @@ function treeSelectRange( a_tree, a_node ){
     */
 function pasteAllowed( dest_node, src_node ){
     //console.log("pasteAllowed:",dest_node, src_node);
+    //console.log("pasteAllowed");
 
     if ( !dest_node.data.notarg && dest_node.data.scope ){
         // Prevent pasting to self or across scopes or from other trees
-        if ( !pasteSourceParent || pasteSourceParent.key == dest_node.key )
+        if ( !pasteSourceParent || pasteSourceParent.key == dest_node.key ){
+            //console.log("no 1",pasteSourceParent,pasteSourceParent.key,dest_node.key);
             return false;
+        }
 
         // Different scopes requires destination or destination parent to be a collection
         if ( dest_node.data.scope != src_node.data.scope ){
-            if ( !(dest_node.key.startsWith( "c/" ) || dest_node.parent.key.startsWith( "c/" )))
+            if ( !(dest_node.key.startsWith( "c/" ) || dest_node.parent.key.startsWith( "c/" ))){
+                //console.log("no 2");
                 return false;
+            }
         }else{
             if ( dest_node.key.startsWith( "d/" ) || dest_node.key == "empty" ){
-                if ( pasteSourceParent.key == dest_node.parent.key || !(dest_node.parent.key.startsWith("c/") || dest_node.parent.key.startsWith("repo/")))
+                if ( pasteSourceParent.key == dest_node.parent.key || !(dest_node.parent.key.startsWith("c/") || dest_node.parent.key.startsWith("repo/"))){
+                    //console.log("no 3",pasteSourceParent.key, dest_node.parent.key);
                     return false;
+                }
             }
 
             if ( pasteCollections.length ){
@@ -1881,16 +1888,21 @@ function pasteAllowed( dest_node, src_node ){
                     for ( i in pasteCollections ){
                         coll = pasteCollections[i];
                         for ( j in dest_par ){
-                            if ( dest_par[j].key == coll.key )
+                            if ( dest_par[j].key == coll.key ){
+                                //console.log("no 4");
                                 return false;
+                            }
                         }
                     }
                 }
             }
         }
+        //console.log("OK");
         return "over";
-    }else
+    }else{
+        //console.log("no 5");
         return false;
+    }
 }
 
 
@@ -2173,14 +2185,14 @@ $("#id_query,#text_query,#meta_query,#tag_query").on('keypress', function (e) {
     }
 });
 
-$('#text_query').droppable({
+/*$('#text_query').droppable({
     accept: function( item ){
         return true;
     },
     drop: function(ev,ui){
         var sourceNode = $(ui.helper).data("ftSourceNode");
     }
-});
+});*/
 
 // Connect event/click handlers
 $("#btn_file_menu",frame).on('click', fileMenu );
@@ -2379,10 +2391,11 @@ export function init(){
                 }
                 drag_enabled = true;
             },
-            dragOver: function(node, data) {
-                data.dropEffect = data.dropEffectSuggested;
-            },
+            /*dragOver: function(node, data) {
+                //data.dropEffect = data.dropEffectSuggested;
+            },*/
             dragEnter: function(node, data) {
+                console.log("dragEnter");
                 var allowed = pasteAllowed( node, data.otherNode );
 
                 return allowed;
