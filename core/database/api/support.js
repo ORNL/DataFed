@@ -766,13 +766,22 @@ module.exports = ( function() {
     }
     */
 
+    // For use when creating a new record
+    obj.getRecordCategoryTags = function( a_coll_id ){
+        var coll = obj.db.c.document( a_coll_id ),
+            ctx = obj.topicUpdateData_parent( coll, {} );
+
+        if ( ctx.pub )
+            return Array.from( ctx.tags );
+    };
+
     obj.topicUpdateData_parent = function( a_coll, a_visited ){
         console.log("topicUpdateData_parent",a_coll._id);
         var c, ctx = { pub: a_coll.public, tags: new Set( a_coll.cat_tags?a_coll.cat_tags:[] )},
             item = obj.db.item.firstExample({ _to: a_coll._id });
 
         while ( item ){
-            console.log("chk",item);
+            //console.log("chk",item);
             c = a_visited[item._from];
 
             if ( c ){
@@ -780,7 +789,7 @@ module.exports = ( function() {
                 if ( c.tags ){
                     c.tags.forEach( ctx.tags.add, ctx.tags );
                 }
-                console.log("found visited - stop");
+                //console.log("found visited - stop");
                 break;
             }else{
                 c = obj.db.c.document( item._from );
@@ -792,11 +801,12 @@ module.exports = ( function() {
 
             item = obj.db.item.firstExample({ _to: item._from });
         }
-        console.log("update visited",ctx);
+        //console.log("update visited",ctx);
 
         a_visited[a_coll._id] = ctx;
         return ctx;
     };
+
 
     /* This recursive function updates data record public flag and category tags based
     on current public status of all parent collections, including the entry collection.

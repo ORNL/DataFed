@@ -88,6 +88,13 @@ function recordCreate( client, record, result ){
         obj.tags = record.tags;
     }
 
+    // If parent collection or ancestor is published, get tags
+    var cat_tags = g_lib.getRecordCategoryTags( parent_id );
+    if ( cat_tags ){
+        obj.cat_tags = cat_tags;
+        obj.public = true;
+    }
+
     var data = g_db.d.save( obj, { returnNew: true });
 
     g_db.owner.save({ _from: data.new._id, _to: owner_id });
@@ -131,7 +138,6 @@ function recordCreate( client, record, result ){
         if ( dep_ids.size )
             g_lib.annotationDependenciesUpdated( data.new, dep_ids, null, updates );
     }
-
 
     g_db.item.save({ _from: parent_id, _to: data.new._id });
 
