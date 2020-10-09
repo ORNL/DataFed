@@ -89,7 +89,7 @@ function recordCreate( client, record, result ){
     }
 
     // If parent collection or ancestor is published, get tags
-    var cat_tags = g_lib.getRecordCategoryTags( parent_id );
+    var cat_tags = g_lib.getCollCategoryTags( parent_id );
     if ( cat_tags ){
         obj.cat_tags = cat_tags;
         obj.public = true;

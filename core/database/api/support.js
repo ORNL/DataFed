@@ -767,7 +767,7 @@ module.exports = ( function() {
     */
 
     // For use when creating a new record
-    obj.getRecordCategoryTags = function( a_coll_id ){
+    obj.getCollCategoryTags = function( a_coll_id ){
         var coll = obj.db.c.document( a_coll_id ),
             ctx = obj.topicUpdateData_parent( coll, {} );
 
@@ -775,8 +775,49 @@ module.exports = ( function() {
             return Array.from( ctx.tags );
     };
 
+    // For use when moving a record
+    obj.getCollCategoryTags = function( a_coll_id ){
+        var coll = obj.db.c.document( a_coll_id ),
+            ctx = obj.topicUpdateData_parent( coll, {} );
+
+        if ( ctx.pub )
+            return Array.from( ctx.tags );
+    };
+    
+    obj.catalogUpdateRecord = function( a_data, a_coll, a_ctx, a_visited = {}){
+        var p, par = obj.db.item.byExample({ _to: a_data._id }),
+            tmp, _ctx = a_ctx;
+
+        while( par.hasNext() ){
+            p = par.next();
+
+            if ( p._from != a_coll._id ){
+                // Record has a parent outside of starting collection tree
+                tmp = a_visited[p._from];
+                if ( !tmp ){
+                    tmp = obj.db.c.document( item._from );
+                    tmp = obj.topicUpdateData_parent( tmp, a_visited );
+                }
+
+                // Only merge tags if this parent coll is public (or has public ancestor)
+                if ( tmp.pub ){
+                    // Create new context for record if needed
+                    if ( _ctx === a_ctx ){
+                        _ctx = { pub: a_ctx.pub, tags: new Set( a_ctx.tags )};
+                    }
+
+                    _ctx.pub = (_ctx.pub || tmp.pub);
+                    tmp.tags.forEach( _ctx.tags.add, _ctx.tags );
+                }
+            }
+        }
+
+        // Update record with pub flag & tags
+        obj.db._update( a_data._id, { public: _ctx.pub, cat_tags: _ctx.pub?Array.from(_ctx.tags):null }, { keepNull: false });
+    }
+
     obj.topicUpdateData_parent = function( a_coll, a_visited ){
-        console.log("topicUpdateData_parent",a_coll._id);
+        //console.log("topicUpdateData_parent",a_coll._id);
         var c, ctx = { pub: a_coll.public, tags: new Set( a_coll.cat_tags?a_coll.cat_tags:[] )},
             item = obj.db.item.firstExample({ _to: a_coll._id });
 
@@ -807,6 +848,7 @@ module.exports = ( function() {
         return ctx;
     };
 
+    // TODO rename to catalogUpdateCollection
 
     /* This recursive function updates data record public flag and category tags based
     on current public status of all parent collections, including the entry collection.
@@ -837,6 +879,8 @@ module.exports = ( function() {
                 par = obj.db.c.document( item._to );
                 obj.topicUpdateData( par, ctx, a_visited );
             }else{
+                // TODO Refactor to use catalogUpdateRecord function
+
                 // Determine if this record is published by other collections
                 par = obj.db.item.byExample({ _to: item._to });
                 _ctx = ctx;

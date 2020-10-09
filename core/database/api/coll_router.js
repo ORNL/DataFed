@@ -255,7 +255,7 @@ router.post('/update', function (req, res) {
                 coll = coll.new;
 
                 if ( obj.cat_tags !== undefined ){
-                    console.log("update topic data");
+                    //console.log("update topic data");
                     g_lib.topicUpdateData( coll );
                 }
 
@@ -566,21 +566,27 @@ router.get('/move', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","d","c","uuid","accn"],
-                write: ["item"]
+                read: ["u","c","uuid","accn"],
+                write: ["item","d"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var src_id = g_lib.resolveCollID( req.queryParams.source, client );
-                var src = g_db.c.document( src_id );
-                var dst_id = g_lib.resolveCollID( req.queryParams.dest, client );
-                var dst = g_db.c.document( dst_id );
+                var src_id = g_lib.resolveCollID( req.queryParams.source, client ),
+                    src = g_db.c.document( src_id ),
+                    dst_id = g_lib.resolveCollID( req.queryParams.dest, client ),
+                    dst = g_db.c.document( dst_id ),
+                    visited = {},
+                    src_ctx = g_lib.topicUpdateData_parent( src, visited ),
+                    dst_ctx = g_lib.topicUpdateData_parent( dst, visited ),
+                    is_pub = src_ctx.pub | dst_ctx.pub;
 
                 if ( src.owner != dst.owner )
                     throw [g_lib.ERR_LINK,req.queryParams.source+" and "+req.queryParams.dest+" have different owners"];
 
-                var chk_perm = false;
-                var src_perms = 0, dst_perms = 0;
+                var chk_perm = false,
+                    src_perms = 0,
+                    dst_perms = 0,
+                    coll;
 
                 if ( !g_lib.hasAdminPermObject( client, src_id )) {
                     src_perms = g_lib.getPermissions( client, src, g_lib.PERM_LINK, true );
@@ -627,6 +633,17 @@ router.get('/move', function (req, res) {
 
                     g_db.item.removeByExample({ _from: src_id, _to: item._id });
                     g_db.item.save({ _from: dst_id, _to: item._id });
+
+                    // Update public flag & cat tags for published items
+                    if ( is_pub ){
+                        if ( item._id.charAt(0) == 'c' ){
+                            // Must update all records in this collection
+                            g_lib.topicUpdateData( item, dst_ctx, visited );
+                        }else{
+                            // Update this record
+                            g_lib.catalogUpdateRecord( item, dst, dst_ctx, visited );
+                        }
+                    }
                 }
 
                 var cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:dst_id});
