@@ -1058,6 +1058,8 @@ function actionEditSelected() {
     //if ( async_guard )
     //    return;
 
+    console.log("actionEditSelected");
+
     var ids = getSelectedIDs();
 
     if ( ids.length != 1 )
@@ -1067,6 +1069,7 @@ function actionEditSelected() {
 
     if ( util.checkDlgOpen( id + "_edit" ))
         return;
+    console.log("id", id);
 
     switch( id.charAt(0) ){
         case "p":
@@ -1300,16 +1303,11 @@ function calcActionState( sel ){
                     bits |= 0x20;
                 break;
             case "p":
-                if ( node.key.charAt(1) == "/" ){
-                    bits = 0x7Fa;
-                    if ( node.data.mgr )
-                        bits |= 4;
-                    else if ( !node.data.admin )
-                        bits |= 5;
-                }else{
-                    // pub_c/xxx = Published collection
-                    bits = 0x252;
-                }
+                bits = 0x7Fa;
+                if ( node.data.mgr )
+                    bits |= 4;
+                else if ( !node.data.admin )
+                    bits |= 5;
                 break;
             case "q": bits = 0x7FA; break;
             default:
@@ -2454,8 +2452,6 @@ export function init(){
                 data.result = { url: api.collListPublished_url( data.node.data.scope, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else {
                 var key = data.node.key;
-                if ( data.node.data.key_pfx )
-                    key = data.node.key.substr( data.node.data.key_pfx.length );
 
                 data.result = { url: api.collRead_url( key, data.node.data.offset, settings.opts.page_sz ), cache: false };
             }
@@ -2541,11 +2537,10 @@ export function init(){
                 }
             } else if ( data.node.parent ) {
                 // General data/collection listing for all nodes
-                // Define key prefixes for collections in special tree locations
 
-                var key_pfx = "";
+                var is_pub = false;
                 if ( data.node.key.startsWith("published"))
-                    key_pfx = "pub_";
+                    is_pub = true;
 
                 data.result = [];
                 var entry;
@@ -2558,7 +2553,7 @@ export function init(){
                     item = items[i];
                     //console.log("item:",item);
                     if ( item.id[0]=="c" ){
-                        entry = { title: util.generateTitle(item),folder:true,lazy:true,scope:scope, key: key_pfx + item.id, offset: 0, nodrag: key_pfx?true:false, key_pfx: key_pfx };
+                        entry = { title: util.generateTitle(item),folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub };
                     }else{
                         entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon: util.getDataIcon( item ),
                         scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size };
