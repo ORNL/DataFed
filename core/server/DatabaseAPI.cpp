@@ -1472,6 +1472,9 @@ void
 DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Anon::ListingReply & a_reply )
 {
     string add_list, rem_list;
+    vector<pair<string,string>> params;
+
+    params.push_back({ "id", a_request.id() });
 
     if ( a_request.add_size() > 0 )
     {
@@ -1484,9 +1487,8 @@ DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Anon::ListingR
             add_list += "\"" + a_request.add(i) + "\"";
         }
         add_list += "]";
+        params.push_back({ "add", add_list });
     }
-    else
-        add_list = "[]";
 
     if ( a_request.rem_size() > 0 )
     {
@@ -1499,13 +1501,12 @@ DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Anon::ListingR
             rem_list += "\"" + a_request.rem(i) + "\"";
         }
         rem_list += "]";
+        params.push_back({ "remove", rem_list });
     }
-    else
-        rem_list = "[]";
 
     Value result;
 
-    dbGet( "col/write", {{"id",a_request.id()},{"add",add_list},{"remove",rem_list}}, result );
+    dbGet( "col/write", params, result );
 
     setListingDataReply( a_reply, result );
 }

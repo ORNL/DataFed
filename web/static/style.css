@@ -411,12 +411,13 @@ div.cat-topic-div:hover .cat-topic-btn-div
     /*padding:0.5em 1em;*/
 }
 
-/*
-.accordion .ui-accordion-content
+
+.accordion .ui-accordion-header
 {
-    max-height: 20em;
+    margin: 0!important;
+    border-radius: 0!important;
 }
-*/
+
 
 /*
 div.cat-coll-container
