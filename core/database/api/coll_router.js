@@ -95,7 +95,6 @@ router.post('/create', function (req, res) {
 
                 if ( obj.topic ){
                     g_lib.topicLink( obj.topic, coll._id, owner._id );
-                    //g_lib.topicUpdateData( coll.new );
                 }
 
                 coll = coll.new;
@@ -256,7 +255,7 @@ router.post('/update', function (req, res) {
 
                 if ( obj.cat_tags !== undefined ){
                     //console.log("update topic data");
-                    g_lib.topicUpdateData( coll );
+                    g_lib.catalogUpdateColl( coll );
                 }
 
                 if ( obj.alias !== undefined ) {
@@ -426,11 +425,15 @@ router.get('/write', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","d","c","uuid","accn"],
-                write: ["item"]
+                read: ["u","c","uuid","accn"],
+                write: ["item","d"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+                if ( req.queryParams.add && req.queryParams.remove ){
+                    throw [g_lib.ERR_INVALID_PARAM,"Cannot add and remove collection items at the same time."];
+                }
 
                 var coll_id = g_lib.resolveCollID( req.queryParams.id, client );
                 var coll = g_db.c.document( coll_id );
@@ -447,8 +450,12 @@ router.get('/write', function (req, res) {
                     chk_perm = true;
                 }
 
-                var i,obj,idx,cres;
-                var loose = [];
+                console.log("write to coll",coll_id);
+
+                var i, obj, cres,
+                    loose, have_loose = false,
+                    visited = {},
+                    coll_ctx = g_lib.catalogCalcParCtxt( coll, visited );
 
                 // Enforce following link/unlink rules:
                 // 1. Root collection may not be linked
@@ -460,6 +467,10 @@ router.get('/write', function (req, res) {
                 // 7. All records and collections must have at least one parent (except root)
 
                 if ( req.queryParams.remove ) {
+                    console.log("remove items");
+
+                    loose = {};
+
                     for ( i in req.queryParams.remove ) {
                         obj = g_lib.getObject( req.queryParams.remove[i], client );
 
@@ -476,12 +487,23 @@ router.get('/write', function (req, res) {
                         g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
 
                         if ( !g_db.item.firstExample({ _to: obj._id }) ){
-                            loose.push({ id: obj._id, title: obj.title });
+                            loose[obj._id] = obj;
+                            have_loose = true;
+                        }else if ( coll_ctx.pub ){
+                            if ( obj._id.charAt(0) == 'c' ){
+                                // Must update all records in this collection
+                                g_lib.catalogUpdateColl( obj, null, visited );
+                            }else{
+                                // Update this record
+                                g_lib.catalogUpdateRecord( obj, null, null, visited );
+                            }
                         }
                     }
                 }
 
                 if ( req.queryParams.add ) {
+                    console.log("add items");
+
                     // Limit number of items in collection
                     cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:coll_id});
                     //console.log("coll item count:",cres.count());
@@ -513,42 +535,74 @@ router.get('/write', function (req, res) {
                             }
                         }
     
-                        if ( obj._id[0] == "c" ){
+                        if ( obj._id.charAt(0) == "c" ){
                             // Check for circular dependency
                             if ( obj._id == coll_id || g_lib.isSrcParentOfDest( obj._id, coll_id ))
                                 throw [g_lib.ERR_LINK,"Cannot link ancestor, "+obj._id+", to descendant, "+coll_id];
 
                             // Collections can only be linked to one parent
                             g_db.item.removeByExample({ _to: obj._id });
-                        }
+                            g_db.item.save({ _from: coll_id, _to: obj._id });
 
-                        g_db.item.save({ _from: coll_id, _to: obj._id });
+                            if ( coll_ctx.pub ){
+                                console.log("update pub coll");
 
-                        // If item has no parent collection AND it's not being added, link to root
-                        for ( idx in loose ){
-                            if ( loose[idx].id == obj._id ){
-                                loose.slice(idx,1);
-                                break;
+                                // Must update all records in this collection
+                                g_lib.catalogUpdateColl( obj, coll_ctx, visited );
+                            }
+                        }else{
+                            g_db.item.save({ _from: coll_id, _to: obj._id });
+
+                            if ( coll_ctx.pub ){
+                                console.log("update pub record");
+
+                                // Update this record
+                                g_lib.catalogUpdateRecord( obj, coll, coll_ctx, visited );
                             }
                         }
                     }
                 }
 
+                console.log("check loose stuff");
+
                 // 7. Re-link loose items to root
-                if ( loose.length ){
-                    var root_id = g_lib.getRootID(owner_id);
-                    cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
+                if ( have_loose ){
+                    var root_id = g_lib.getRootID(owner_id),
+                        rctxt = null,
+                        loose_res = [],
+                        cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
+
                     //console.log("root item count:",cres.count());
-                    if ( cres.count() + req.queryParams.add.length > g_lib.MAX_COLL_ITEMS )
+                    if ( cres.count() + (req.queryParams.add?req.queryParams.add.length:0) > g_lib.MAX_COLL_ITEMS )
                         throw [g_lib.ERR_INPUT_TOO_LONG,"Root collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 
                     cres.dispose();
 
-                    for ( i in loose )
-                        g_db.item.save({ _from: root_id, _to: loose[i].id });
-                }
+                    if ( coll_ctx.pub ){
+                        rctxt = { pub: false, tag:  new Set() };
+                    }
 
-                res.send( loose );
+                    for ( i in loose ){
+                        obj = loose[i];
+                        g_db.item.save({ _from: root_id, _to: obj._id });
+
+                        loose_res.push({ id: obj._id, title: obj.title });
+
+                        if ( coll_ctx.pub ){
+                            if ( obj._id.charAt(0) == 'c' ){
+                                // Must update all records in this collection
+                                g_lib.catalogUpdateColl( obj, rctxt, visited );
+                            }else{
+                                // Update this record
+                                g_db._update( obj._id, { public: false, cat_tags: null }, { keepNull: false });
+                            }
+                        }
+
+                        res.send( loose_res );
+                    }
+                }else{
+                    res.send( [] );
+                }
             }
         });
     } catch( e ) {
@@ -576,8 +630,8 @@ router.get('/move', function (req, res) {
                     dst_id = g_lib.resolveCollID( req.queryParams.dest, client ),
                     dst = g_db.c.document( dst_id ),
                     visited = {},
-                    src_ctx = g_lib.topicUpdateData_parent( src, visited ),
-                    dst_ctx = g_lib.topicUpdateData_parent( dst, visited ),
+                    src_ctx = g_lib.catalogCalcParCtxt( src, visited ),
+                    dst_ctx = g_lib.catalogCalcParCtxt( dst, visited ),
                     is_pub = src_ctx.pub | dst_ctx.pub;
 
                 if ( src.owner != dst.owner )
@@ -638,7 +692,7 @@ router.get('/move', function (req, res) {
                     if ( is_pub ){
                         if ( item._id.charAt(0) == 'c' ){
                             // Must update all records in this collection
-                            g_lib.topicUpdateData( item, dst_ctx, visited );
+                            g_lib.catalogUpdateColl( item, dst_ctx, visited );
                         }else{
                             // Update this record
                             g_lib.catalogUpdateRecord( item, dst, dst_ctx, visited );
