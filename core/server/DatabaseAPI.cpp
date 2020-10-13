@@ -3662,6 +3662,7 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
     if ( !a_partial )
     {
         a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size":"")+"}";
+        a_query = escapeJSON( a_query );
     }
 
     return cnt;
