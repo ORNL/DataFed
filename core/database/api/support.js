@@ -786,7 +786,7 @@ module.exports = ( function() {
     
     obj.catalogUpdateRecord = function( a_data, a_coll, a_ctx, a_visited = {}){
         var p, par = obj.db.item.byExample({ _to: a_data._id }),
-            tmp, _ctx = a_ctx;
+            tmp, _ctx = (a_ctx?a_ctx:{ pub: false, tags: new Set()});
 
         while( par.hasNext() ){
             p = par.next();

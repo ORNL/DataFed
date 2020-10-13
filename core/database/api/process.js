@@ -18,7 +18,7 @@ module.exports = ( function() {
      */
     obj.preprocessItems = function( a_client, a_new_owner_id, a_ids, a_mode ){
         console.log( "preprocessItems start" );
-        var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, coll: [], glob_data: [], http_data: [], visited: {} };
+        var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, has_pub: false, coll: [], glob_data: [], http_data: [], visited: {} };
 
         switch( a_mode ){
             case g_lib.TT_DATA_GET:
@@ -133,6 +133,9 @@ module.exports = ( function() {
 
             if ( doc.deleted )
                 throw [g_lib.ERR_INVALID_PARAM, "Operation refers to deleted data record " + id];
+
+            if ( doc.public )
+                a_ctxt.has_pub = true;
 
             // Check permissions
 

@@ -598,6 +598,10 @@ var tasks_func = function() {
 
         var result = g_proc.preprocessItems( a_client, owner_id, a_res_ids, g_lib.TT_REC_OWNER_CHG );
 
+        if ( result.has_pub ){
+            throw [g_lib.ERR_PERM_DENIED, "Deletion not allowed - selection contains public data."];
+        }
+
         var i,loc,rec,deps = [];
 
         result.tot_cnt = result.http_data.length + result.glob_data.length;
@@ -806,6 +810,11 @@ var tasks_func = function() {
         console.log("taskInitRecCollDelete start",Date.now());
 
         var result = g_proc.preprocessItems( a_client, null, a_ids, g_lib.TT_REC_DEL );
+
+        if ( result.has_pub ){
+            throw [g_lib.ERR_PERM_DENIED, "Deletion not allowed - selection contains public data."];
+        }
+
         var i,rec_ids = [];
 
         console.log("HTTP records:", result.http_data.length, ", Globus records:", result.glob_data.length );
@@ -821,6 +830,7 @@ var tasks_func = function() {
 
         var state = {};
 
+        // For deleted collections, unlink all contained items
         if ( result.coll.length ){
             state.del_coll = result.coll;
             for ( i in result.coll ){

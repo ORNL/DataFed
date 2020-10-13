@@ -457,6 +457,8 @@ router.get('/write', function (req, res) {
                     visited = {},
                     coll_ctx = g_lib.catalogCalcParCtxt( coll, visited );
 
+                console.log("coll ctx", coll_ctx);
+
                 // Enforce following link/unlink rules:
                 // 1. Root collection may not be linked
                 // 2. Items can only be linked once to a given collection
