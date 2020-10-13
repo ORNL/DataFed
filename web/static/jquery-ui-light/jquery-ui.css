@@ -958,7 +958,8 @@ a:visited.ui-button,
 .ui-button:hover,
 .ui-button:focus {
 	border: none; /*1px solid #a0e1cb;*/
-	background: #a0e1cb url("images/ui-bg_diagonals-small_75_a0e1cb_40x40.png") 50% 50% repeat;
+	/*background: #a0e1cb url("images/ui-bg_diagonals-small_75_a0e1cb_40x40.png") 50% 50% repeat;*/
+	background: #a0e1cb url("images/ui-bg_diagonals-small_75_ccd232_40x40.png") 50% 50% repeat;
 	font-weight: normal;
 	color: #212121;
 }
