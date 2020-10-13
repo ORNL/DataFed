@@ -1064,9 +1064,14 @@ router.post('/pub/search', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
-                var result = g_db._query( req.body.query, req.body.params, {}, { fullCount: true });
-                var item, tot = result.getExtra().stats.fullCount;
-                result = result.toArray();
+                var item, count, result = g_db._query( req.body.query, req.body.params, {}, { fullCount: true }).toArray();
+
+                if ( result.length > req.body.limit ){
+                    result.length = req.body.limit;
+                    count = req.body.limit + 1;
+                }else{
+                    count = result.length;
+                }
 
                 for ( var i in result ){
                     item = result[i];
@@ -1083,7 +1088,7 @@ router.post('/pub/search', function (req, res) {
                     item.notes = g_lib.annotationGetMask( client, item._id );
                 }
 
-                result.push({ paging: { off: req.body.params.off, cnt: req.body.params.cnt, tot: tot }});
+                result.push({ paging: { off: req.body.params.off, cnt: result.length, tot: req.body.params.off + count }});
 
                 res.send( result );
             }
@@ -1095,7 +1100,8 @@ router.post('/pub/search', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
     query: joi.string().required(),
-    params: joi.object().required()
+    params: joi.object().required(),
+    limit: joi.number().integer().required()
 }).required(), 'Collection fields')
 .summary('Execute published data search query')
 .description('Execute published data search query');
