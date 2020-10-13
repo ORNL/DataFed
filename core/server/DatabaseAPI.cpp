@@ -1566,13 +1566,13 @@ DatabaseAPI::catalogSearch( const Anon::CatalogSearchRequest & a_request, Anon::
 {
     Value result;
     string query, params;
-    
-    parseCatalogSearchRequest( a_request, query, params );
+
+    uint32_t cnt = parseCatalogSearchRequest( a_request, query, params );
 
     if ( params.size() )
         params[0] = ' '; // Get rid of leading delimiter;
 
-    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"}}";
+    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
 
     DL_INFO("Coll Search Pub Req: [" << body << "]");
 
@@ -3532,7 +3532,7 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
 }
 
 
-void
+uint32_t
 DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial )
 {
     a_query = string("for i in ") + (a_request.mode()==0?"collview":"dataview") + " search i.public == true";
@@ -3647,28 +3647,24 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
     }
 
     a_query += " limit @off,@cnt";
-    a_params += ",\"off\":" + (a_request.has_offset()?to_string( a_request.offset() ):"0");
-    a_params += ",\"cnt\":" + (a_request.has_count()?to_string( a_request.count() ):"50");
 
-/*
-    a_query += " limit ";
+    uint32_t cnt = min(a_request.has_count()?a_request.count():50,100U),
+             off = a_request.has_offset()?a_request.offset():0;
 
-    if ( a_request.has_offset() )
-        a_query += to_string( a_request.offset() );
-    else
-        a_query += "0";
+    if ( off + cnt >= 1000 ){
+        off = 999 - cnt;
+    }
 
-    if ( a_request.has_count() && a_request.count() <= 200 )
-        a_query += "," + to_string( a_request.count() );
-    else
-        a_query += ",200";
-*/
+    a_params += ",\"off\":" + to_string( off );
+    a_params += ",\"cnt\":" + to_string( cnt + 1 ); // Add one to detect more results (truncated by DB)
 
     // If not part of another query, build full query string
     if ( !a_partial )
     {
         a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size":"")+"}";
     }
+
+    return cnt;
 }
 
 

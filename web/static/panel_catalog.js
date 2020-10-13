@@ -471,7 +471,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     }
 
     function setItems( data ){
-        //console.log("setItems",data);
+        console.log("setItems",data);
         var html = "", item;
         if ( data.item && data.item.length ){
             cur_items = {};

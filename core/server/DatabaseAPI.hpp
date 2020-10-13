@@ -205,7 +205,7 @@ private:
     void setTagData( TagData * a_tag, const libjson::Value::Object & a_obj );
     void setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::Value & a_result );
 
-    void parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial = false );
+    uint32_t parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial = false );
     void parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params );
     std::string parseSearchTextPhrase( const std::string & a_phrase, const std::string & a_iter );
     std::string parseSearchTerms( const std::string & a_key, const std::vector<std::string> & a_terms, const std::string & a_iter );
