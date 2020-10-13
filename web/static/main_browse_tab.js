@@ -681,7 +681,7 @@ function actionDeleteSelected(){
                             resetTaskPoll();
                         }
                     }else
-                        util.setStatusText( "Data Delete Error: " + data, 1 );
+                        dialogs.dlgAlert( "Data Delete Error", data );
                 });
             }
             if ( coll.length ){
@@ -692,7 +692,7 @@ function actionDeleteSelected(){
                             resetTaskPoll();
                         }
                     }else
-                        util.setStatusText("Collection Delete Error: " + data, 1 );
+                        dialogs.dlgAlert( "Collection Delete Error", data );
                 });
             }
             if ( proj.length ){
@@ -702,7 +702,7 @@ function actionDeleteSelected(){
                         panel_info.showSelectedInfo();
                         resetTaskPoll();
                     }else
-                        util.setStatusText("Project Delete Error: " + data, 1 );
+                        dialogs.dlgAlert( "Project Error", data );
                 });
             }
             if ( qry.length ){
@@ -711,7 +711,7 @@ function actionDeleteSelected(){
                         util.reloadNode(data_tree.getNodeByKey("queries"));
                         panel_info.showSelectedInfo();
                     }else
-                        util.setStatusText("Query Delete Error: " + data, 1 );
+                        dialogs.dlgAlert( "Query Delete Error", data );
                 });
             }
         }
