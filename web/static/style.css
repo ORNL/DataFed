@@ -74,6 +74,11 @@ div
     max-width:58ch;
     overflow-wrap:anywhere;
     white-space:pre-wrap;
+    user-select:text!important;
+    -o-user-select:text!important; 
+    -moz-user-select:text!important;
+    -khtml-user-select:text!important;
+    -webkit-user-select:text!important;
 }
 
 .md_tree_val_il
@@ -82,6 +87,11 @@ div
     max-width:58ch;
     overflow-wrap:anywhere;
     white-space:pre-wrap;
+    user-select:text!important;
+    -o-user-select:text!important; 
+    -moz-user-select:text!important;
+    -khtml-user-select:text!important;
+    -webkit-user-select:text!important;
 }
 
 /* fancytree animation resize hack*/

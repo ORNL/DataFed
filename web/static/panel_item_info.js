@@ -25,6 +25,20 @@ var form = $("#sel_info_form"),
     cur_note_node = null,
     ignore_call = false;
 
+jQuery.fn.extend({
+    onFirst: function( name, fn ) {
+        var elem, handlers, i, _len;
+
+        this.on( name, fn );
+
+        for (i = 0, _len = this.length; i < _len; i++) {
+            elem = this[i];
+            handlers = jQuery._data(elem).events[name.split('.')[0]];
+            handlers.unshift(handlers.pop());
+        }
+    }
+});
+
 export function showSelectedInfo( node, cb ){
     if ( ignore_call ){
         ignore_call = false;
@@ -766,6 +780,13 @@ function showSelectedMetadata( md_str )
             data_md_empty = false;
             $("#md_div").show();
         }
+
+        /*$(".md_tree_val",$("#data_md_tree")).on("selectstart",function(ev){ ev.stopPropagation(); })
+        .on("selectionchange",function(ev){ ev.stopPropagation(); })
+        .on("mousedown",function(ev){ ev.stopPropagation(); })
+        .on("mousemove",function(ev){ ev.stopPropagation(); })
+        .on("mouseup",function(ev){ ev.stopPropagation(); });*/
+        
     } else if ( !data_md_empty ) {
         data_md_tree.reload(tree_empty_src);
         data_md_empty = true;
@@ -775,20 +796,10 @@ function showSelectedMetadata( md_str )
 
 
 $("#data_md_tree").fancytree({
-    extensions: ["themeroller","filter","dnd5"],
+    extensions: ["themeroller","filter"],
     themeroller: {
         activeClass: "my-fancytree-active",
         hoverClass: ""
-    },
-    dnd5:{
-        preventNonNodes: true,
-        dropEffectDefault: "copy",
-        scroll: false,
-        dragStart: function(node, data) {
-            console.log( "dnd start" );
-            data.dataTransfer.setData("text/plain",node.key);
-            return true;
-        }
     },
     filter:{
         autoExpand: true,
@@ -815,10 +826,28 @@ $("#data_md_tree").fancytree({
         }else{
             data_md_exp[path] = 10;
         }
+    },
+    createNode:function( ev, data ){
+        console.log("createNode",ev,data.node);
+        $(".md_tree_val",data.node.li).on("selectstart",function(ev){ ev.stopPropagation(); })
+        .on("selectionchange",function(ev){ ev.stopPropagation(); })
+        .on("mousedown",function(ev){ ev.stopPropagation(); })
+        .on("mousemove",function(ev){ ev.stopPropagation(); })
+        .on("mouseup",function(ev){ ev.stopPropagation(); });
+
+    },
+    click:function(){
+        console.log("click 1");
+        //return false;
+    },
+    dblclick:function(){
+        console.log("dblclick 1");
+        //return false;
     }
 });
 
 data_md_tree = $.ui.fancytree.getTree("#data_md_tree");
+
 
 $("#md_filter_text").on('keypress', function (e) {
     if (e.keyCode == 13){
@@ -840,3 +869,9 @@ $("#md_filter_reset").on('click', function (e) {
         node.li.scrollIntoView();
     }
 });
+
+window.md_key_drag = function( ev ){
+    var node = data_md_tree.getNodeByKey(ev.target.title);
+    ev.dataTransfer.setData("text", node.key );
+}
+
