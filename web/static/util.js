@@ -459,7 +459,7 @@ export function treeSelectRange( a_tree, a_node ){
 }
 
 export function buildObjSrcTree( obj, base, md_exp ){
-    var src = [], k2, o, i, v, pod, val, len, vs, is_arr = Array.isArray( obj ), fkey, kbase;
+    var src = [], k2, o, i, v, skip, val, len, vs, is_arr = Array.isArray( obj ), fkey, kbase;
     
     if (is_arr)
         kbase = (base?base:"") + "[";
@@ -473,25 +473,41 @@ export function buildObjSrcTree( obj, base, md_exp ){
         if ( Array.isArray( obj[k] )){
             // Test for POD arrays (no objects) - If POD, put all values in title of this node; otherwise, add as children
             o = obj[k];
-            pod = true;
+            skip = true;
 
             for ( i in o ){
-                if ( typeof o[i] === 'object' || typeof o[i] === 'string' ){
-                    pod = false;
+                if ( typeof o[i] === 'object' /*|| typeof o[i] === 'string' */ ){
+                    skip = false;
                     break;
                 }
             }
+        }else{
+            skip = false;
+        }
+        
+        if ( !skip && typeof obj[k] === 'object' ){
+            if ( md_exp ){
+                if ( md_exp[fkey] ){
+                    md_exp[fkey] = 10;
+                }
 
-            if ( pod ){
-                // Array of POD types - jam all on one line
+                src.push({key:fkey,title:k2 + " :", icon: false, folder: true, expanded: md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,md_exp)});
+            }else{
+                src.push({key:fkey,title:k2 + " :", icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)});
+            }
+        }else{
+            if ( typeof obj[k] === 'string' ){
+                val = "\"" + escapeHTML( obj[k] ) + "\"";
+                //src.push({key:fkey,title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false });
+                //src.push({key:fkey,title:"<div class='row-flex' style='max-width:60ch'><div>"+k2 + ":</div><div style='flex: 1 1 auto;word-break:break-all;white-space:pre-wrap'>\"" + escapeHTML( obj[k] ) + "\"</div></div>", icon: false });
+            }else if ( Array.isArray( obj[k] )){
                 val = null;
-                len = 0;
 
                 for ( i in o ){
                     v = o[i];
 
                     if ( val ){
-                        val += ",";
+                        val += ", ";
                     }else{
                         val = "[";
                     }
@@ -501,37 +517,21 @@ export function buildObjSrcTree( obj, base, md_exp ){
                     }else{
                         vs = String(v);
                     }
-                    len += vs.length;
-                    if ( len > 100 ){
-                        val += "<br>";
-                        len = 0;
-                    }
                     val += vs;
                 }
 
                 val += "]";
-                src.push({key:fkey,title:k2 + " : " + val, icon: false });
-                return;
-            }
-        }
-        
-        if ( typeof obj[k] === 'object' ){
-
-            if ( md_exp ){
-                if ( md_exp[fkey] ){
-                    md_exp[fkey] = 10;
-                }
-
-                src.push({key:fkey,title:k2, icon: false, folder: true, expanded: md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,md_exp)});
             }else{
-                src.push({key:fkey,title:k2, icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)});
+                val = String(obj[k]);
+                /*src.push({key:fkey,title:k2 + " : " + String(obj[k]), icon: false });*/
             }
-        }else if ( typeof obj[k] === 'string' ){
-            src.push({key:fkey,title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false });
-        }else if ( obj[k] === null ){
-            src.push({key:fkey,title:k2 + " : null", icon: false });
-        }else{
-            src.push({key:fkey,title:k2 + " : " + String(obj[k]), icon: false });
+
+            if ( k2.length + val.length > 60 ){
+                src.push({key:fkey,title:"<div class='md_tree_div'><div class='md_tree_key'>" +k2 + " :</div><div class='md_tree_val'>" + val + "</div></div>", icon: false });
+            }else{
+                src.push({key:fkey,title:"<span class='md_tree_div md_tree_key'>" +k2 + " : </span><span class='md_tree_div md_tree_val_il'>" + val + "</span>", icon: false });
+                //src.push({ key: fkey, title: k2 + " : " + val, icon: false });
+            }
         }
     });
 

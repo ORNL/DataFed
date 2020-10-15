@@ -56,6 +56,34 @@ div
 }
 */
 
+.md_tree_div
+{
+    white-space:normal;
+}
+
+.md_tree_key
+{
+    max-width:60ch;
+    word-break:break-all;
+}
+
+.md_tree_val
+{
+    padding-left:2em;
+    min-width:30ch;
+    max-width:58ch;
+    overflow-wrap:anywhere;
+    white-space:pre-wrap;
+}
+
+.md_tree_val_il
+{
+    min-width:30ch;
+    max-width:58ch;
+    overflow-wrap:anywhere;
+    white-space:pre-wrap;
+}
+
 /* fancytree animation resize hack*/
 ul.ui-effects-placeholder { width:10px !important; }
 
@@ -86,6 +114,13 @@ ul.fancytree-container ul
 {
     padding: 0 0 0 21px!important;
 }
+
+/*
+#data_md_tree ul.fancytree-container
+{
+    white-space:normal!important;
+}
+*/
 
 /* Override Fancytree folder icons */
 span.fancytree-node.fancytree-folder > span.fancytree-icon {
