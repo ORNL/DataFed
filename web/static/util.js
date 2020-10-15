@@ -459,6 +459,7 @@ export function treeSelectRange( a_tree, a_node ){
 }
 
 export function buildObjSrcTree( obj, base, md_exp ){
+    //console.log("buildObjSrcTree",base, md_exp);
     var src = [], k2, o, i, v, skip, val, vs, is_arr = Array.isArray( obj ), fkey, kbase;
     
     if (is_arr)
@@ -487,6 +488,7 @@ export function buildObjSrcTree( obj, base, md_exp ){
         
         if ( !skip && typeof obj[k] === 'object' ){
             if ( md_exp ){
+                //console.log("expanded:",md_exp[fkey]);
                 if ( md_exp[fkey] ){
                     md_exp[fkey] = 10;
                 }

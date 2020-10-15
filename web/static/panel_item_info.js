@@ -810,25 +810,15 @@ $("#data_md_tree").fancytree({
     selectMode: 1,
     beforeExpand: function(event,data){
         // Handle auto-expansion
-        var path = data.node.title;
-        var par = data.node.parent;
-        while ( par ){
-            if ( par.title == "root" && !par.parent )
-                break;
-            path = par.title + "." + path;
-            par = par.parent;
-        }
-
-        path = "md." + path;
-
         if ( data.node.isExpanded() ){
-            delete data_md_exp[path];
+            delete data_md_exp[data.node.key];
         }else{
-            data_md_exp[path] = 10;
+            data_md_exp[data.node.key] = 10;
         }
+        //console.log("exp:",data_md_exp);
     },
     createNode:function( ev, data ){
-        console.log("createNode",ev,data.node);
+        //console.log("createNode",ev,data.node);
         $(".md_tree_val",data.node.li).on("selectstart",function(ev){ ev.stopPropagation(); })
         .on("selectionchange",function(ev){ ev.stopPropagation(); })
         .on("mousedown",function(ev){ ev.stopPropagation(); })
