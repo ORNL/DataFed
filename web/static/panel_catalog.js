@@ -442,9 +442,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             $(".cat-coll-notes",div).html( (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") );
             // There is no way to update brief since it is not returned by updates
         }else{
-            return "<div class='cat-coll-title-div ui-widget-content ui-corner-all '>\
+            //return "<div class='cat-coll-title-div ui-widget-content ui-corner-all '>\
+            return "<div class='cat-coll-title-div ui-button'>\
                         <div class='row-flex'>\
-                            <div class='cat-coll-title'><span class='ui-icon ui-icon-"+util.getItemIcon(item)+"'></span>&nbsp;" + item.title + "</div>\
+                            <div class='cat-coll-icon'><span class='ui-icon ui-icon-"+util.getItemIcon(item)+"'></span></div>\
+                            <div class='cat-coll-title'>" + item.title + "</div>\
                             <div class='cat-coll-notes'>" + (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") + "</div>"+
                             (cur_mode==0?"<div class='cat-coll-btn-div'><button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button></div>":"") +
                         "</div>\

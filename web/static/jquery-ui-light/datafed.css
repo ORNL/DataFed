@@ -98,8 +98,7 @@ ul.tagit {
 
 .cat-coll-title-div
 {
-    display:block!important;
-    text-align:left!important;
+    border-bottom: solid 1px #eee!important;
 }
 
 .cat-coll-info-div

@@ -368,7 +368,7 @@ svg text
 
 .cat-content
 {
-    padding:0 0.25em;
+    padding: 0;
     border-top:none!important;
 }
 
@@ -472,14 +472,24 @@ div.cat-coll-container > hr
 
 .cat-coll
 {
-    padding:0.5em 0.25em 0 0.25em;
+    padding:0;
 }
 
 div.cat-coll-title-div
 {
-    padding:0.5em .25em 0.75em 1em;
+    padding:1em 1.5em;
+    margin:0!important;
+    display:block!important;
+    text-align:left!important;
+
     /*border:1px solid transparent;
     background:#202020;*/
+}
+
+.cat-coll-icon
+{
+    font-size:1.1em;
+    padding-right:0.5em;
 }
 
 div.cat-coll-title
@@ -626,6 +636,11 @@ div.cat-item-title:hover .btn-cat-folder-open
     word-break: break-word;
 }
 
+.sel-info-icon
+{
+    font-size:1.5em;
+    padding-top:0.25em!important;
+}
 
 .sel-note-table
 {
