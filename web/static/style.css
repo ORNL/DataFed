@@ -69,7 +69,6 @@ div
 
 .md_tree_val
 {
-    padding-left:2em;
     min-width:30ch;
     max-width:58ch;
     overflow-wrap:anywhere;
@@ -81,17 +80,9 @@ div
     -webkit-user-select:text!important;
 }
 
-.md_tree_val_il
+.md_tree_val_indent
 {
-    min-width:30ch;
-    max-width:58ch;
-    overflow-wrap:anywhere;
-    white-space:pre-wrap;
-    user-select:text!important;
-    -o-user-select:text!important; 
-    -moz-user-select:text!important;
-    -khtml-user-select:text!important;
-    -webkit-user-select:text!important;
+    padding-left:2em;
 }
 
 /* fancytree animation resize hack*/
@@ -461,6 +452,7 @@ div.cat-topic-div:hover .cat-topic-btn-div
 {
     margin: 0!important;
     border-radius: 0!important;
+    background:transparent!important;
 }
 
 
@@ -480,9 +472,7 @@ div.cat-coll-container > hr
 
 .cat-coll
 {
-    /*padding:0;*/
     padding:0.5em 0.25em 0 0.25em;
-    margin: 0 0 0.5em 0;
 }
 
 div.cat-coll-title-div

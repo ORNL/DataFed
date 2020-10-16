@@ -441,20 +441,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             $(".cat-coll-title",div).text( item.title );
             $(".cat-coll-notes",div).html( (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") );
             // There is no way to update brief since it is not returned by updates
-
-            /*if ( item.brief ){
-                $(".cat-coll-info-brief",div).text( item.brief );
-            }else if ( item.desc ){
-                if ( item.desc.length > 120 )
-                    item.desc.slice(0,120) + " ..."
-                $(".cat-coll-info-brief",div).text( item.desc );
-            }else{
-                $(".cat-coll-info-brief",div).text( "(no description)" );
-            }*/
         }else{
-            return "<div class='cat-coll-title-div ui-widget-content ui-corner-all ui-button'>\
+            return "<div class='cat-coll-title-div ui-widget-content ui-corner-all '>\
                         <div class='row-flex'>\
-                            <div class='cat-coll-title'>" + item.title + "</div>\
+                            <div class='cat-coll-title'><span class='ui-icon ui-icon-"+util.getItemIcon(item)+"'></span>&nbsp;" + item.title + "</div>\
                             <div class='cat-coll-notes'>" + (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") + "</div>"+
                             (cur_mode==0?"<div class='cat-coll-btn-div'><button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button></div>":"") +
                         "</div>\

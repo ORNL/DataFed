@@ -198,6 +198,13 @@ export function getDataIcon( a_data ){
         return "ui-icon ui-icon-file";
 }
 
+export function getItemIcon( a_item ){
+    if ( a_item.id.startsWith( "d/" ))
+        return getDataIcon( a_item );
+    else
+        return getKeyIcon( a_item.id );
+}
+
 export function generateNoteSpan( item, codes ){
     var res = "";
 
@@ -526,9 +533,9 @@ export function buildObjSrcTree( obj, base, md_exp ){
             }
 
             if ( k2.length + val.length > 60 ){
-                src.push({key:fkey,title:"<div class='md_tree_div'><div class='md_tree_key' title='"+fkey+"' draggable='true' ondragstart='md_key_drag(event)'>" +k2 + " :</div><div class='md_tree_val'>" + val + "</div></div>", icon: false });
+                src.push({key:fkey,title:"<div class='md_tree_div'><div class='md_tree_key' title='"+fkey+"' draggable='true' ondragstart='md_key_drag(event)'>" +k2 + " :</div><div class='md_tree_val md_tree_val_indent'>" + val + "</div></div>", icon: false });
             }else{
-                src.push({key:fkey,title:"<span class='md_tree_div md_tree_key' title='"+fkey+"' draggable='true' ondragstart='md_key_drag(event)'>" +k2 + " : </span><span class='md_tree_div md_tree_val_il'>" + val + "</span>", icon: false });
+                src.push({key:fkey,title:"<span class='md_tree_div md_tree_key' title='"+fkey+"' draggable='true' ondragstart='md_key_drag(event)'>" +k2 + " : </span><span class='md_tree_div md_tree_val'>" + val + "</span>", icon: false });
             }
         }
     });
