@@ -1220,8 +1220,8 @@ app.get('/api/top/list/topics', ( a_req, a_resp ) => {
         par.count = a_req.query.count;
     }
 
-    console.log("top qry",a_req.query);
-    console.log("top par",par);
+    //console.log("top qry",a_req.query);
+    //console.log("top par",par);
 
     sendMessage( "TopicListTopicsRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
@@ -1418,7 +1418,7 @@ function allocRequestContext( a_response, a_callback ) {
     if ( ctx == MAX_CTX ) {
         ctx = g_ctx.indexOf( null );
         if ( ctx == -1 ) {
-            console.log("out of contexts");
+            console.log("ERROR: out of msg contexts!!!");
             if ( a_response ) {
                 console.log("SEND FAIL");
                 a_response.status( 503 );
@@ -1438,24 +1438,18 @@ function allocRequestContext( a_response, a_callback ) {
 
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
-    //var client = a_anon?"anon_":a_req.cookies[ 'sdms' ];
     var client = a_req.cookies[ 'sdms' ];
     if ( !client )
         client = "anon_";
 
     a_resp.setHeader('Content-Type', 'application/json');
 
-    /*if ( !client ) {
-        a_resp.status(403).send( "Not authorized" );
-        return;
-    }*/
-
     //console.log("sendMsg parms:",a_msg_data);
-    //if ( a_msg_name == "CollGetOffsetRequest" )
+
     //    console.log("sendMsg alloc ctx", a_msg_name );
     allocRequestContext( a_resp, function( ctx ){
-        //if ( a_msg_name == "CollGetOffsetRequest" )
-        //    console.log("sendMsg got ctx", a_msg_name );
+        console.log("sendMsg", a_msg_name, ctx );
+
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
             throw "Invalid message type: " + a_msg_name;
@@ -1512,6 +1506,8 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         throw "Invalid message type: " + a_msg_name;
 
     allocRequestContext( null, function( ctx ){
+        console.log("sendMsgDir", a_msg_name, ctx );
+
         var msg_buf = msg.encode(a_msg_data).finish();
         //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
@@ -1547,7 +1543,7 @@ function processProtoFile( msg ){
         msg._mid = i-1;
         msg._msg_type = (pid << 8) | (i-1);
 
-        console.log(msg.name,msg._msg_type);
+        //console.log(msg.name,msg._msg_type);
 
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;
@@ -1631,15 +1627,15 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
             try {
                 msg = msg_class.decode( msg_buf );
                 if ( !msg )
-                    console.log( "decode failed" );
+                    console.log( "ERROR: msg decode failed: no reason" );
             } catch ( err ) {
-                console.log( "decode failed:", err );
+                console.log( "ERROR: msg decode failed:", err );
             }
         } else {
             msg = msg_class;
         }
     } else {
-        console.log( "unknown mtype" );
+        console.log( "ERROR: unknown msg type:", mtype );
     }
 
     var f = g_ctx[ctx];
@@ -1648,7 +1644,7 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
         g_ctx_next = ctx;
         f( msg );
     } else {
-        console.log( "no callback found!" );
+        console.log( "ERROR: no callback found for ctxt", ctx," - msg type:", mtype, ", name:", msg_class.name );
     }
 });
 
