@@ -41,7 +41,7 @@ export function _asyncGet( a_url, a_raw_json_data, a_callback, a_timeout ) {
 }
 
 export function _asyncPost( a_url, a_raw_json_data, a_callback ) {
-    console.log("post",a_raw_json_data);
+    //console.log("post",a_raw_json_data);
     $.ajax({
         url : a_url,
         //global : false,

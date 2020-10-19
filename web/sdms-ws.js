@@ -1641,6 +1641,7 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
     var f = g_ctx[ctx];
     if ( f ) {
         g_ctx[ctx] = null;
+        console.log("freed ctx",ctx,"for msg",msg_class.name);
         g_ctx_next = ctx;
         f( msg );
     } else {

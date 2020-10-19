@@ -70,7 +70,7 @@ class API:
         self._ctxt = 0
         self._auth = False
         self._nack_except = True
-        self._timeout = 5000
+        self._timeout = 30000
 
         if not server_host:
             raise Exception("Server host is not defined")
@@ -302,7 +302,7 @@ class API:
         if reply == None:
             return None, None
         if ctxt != self._ctxt:
-            raise Exception("Mismatched reply")
+            raise Exception("Mismatched reply. Expected {} got {}".format( self._ctxt, ctxt ))
         return reply, mt
 
 

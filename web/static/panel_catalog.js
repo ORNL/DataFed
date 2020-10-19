@@ -88,7 +88,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }
         },
         postProcess: function( event, data ) {
-            console.log("cat tree post proc:", data );
+            //console.log("cat tree post proc:", data );
             if ( data.node.parent ){
                 data.result = [];
                 var item,entry;
@@ -463,7 +463,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     }
 
     function setItems( data ){
-        console.log("setItems",data);
+        //console.log("setItems",data);
         var html = "", item;
         if ( data.item && data.item.length ){
             cur_items = {};
@@ -709,7 +709,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             delete coll_qry.to;
         }
 
-        console.log("cat qry", coll_qry );
+        //console.log("cat qry", coll_qry );
 
         api.catalogSearch( coll_qry, function( ok, data ){
             loading &= 1;
@@ -866,7 +866,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         collapsible: true,
         heightStyle: "content",
         create: function( ev, ui ){
-            console.log("create",ev,ui);
             ui.header.removeClass("ui-state-active");
         },
         activate: function( ev, ui ){

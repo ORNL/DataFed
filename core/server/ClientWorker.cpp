@@ -209,6 +209,8 @@ ClientWorker::workerThread()
     nack.set_err_code( ID_AUTHN_REQUIRED );
     nack.set_err_msg( "Authentication required" );
 
+    //int delay;
+
     while ( m_run )
     {
         try
@@ -216,6 +218,13 @@ ClientWorker::workerThread()
             if ( comm.recv( m_msg_buf, true, 1000 ))
             {
                 msg_type = m_msg_buf.getMsgType();
+
+                // DEBUG - Inject random delay in message processing
+                /*delay = (rand() % 2000)*1000;
+                if ( delay )
+                {
+                    usleep( delay );
+                }*/
 
                 if ( msg_type != task_list_msg_type )
                 {
@@ -238,6 +247,10 @@ ClientWorker::workerThread()
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
                             comm.send( m_msg_buf );
+                            if ( msg_type != task_list_msg_type )
+                            {
+                                DL_DEBUG( "W"<<m_tid<<" reply sent." );
+                            }
                         }
                     }
                     else

@@ -85,10 +85,10 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
         curl_free( esc_txt );
     }
 
-    if ( a_log )
+    /*if ( a_log )
     {
         DL_DEBUG( "get url: " << url );
-    }
+    }*/
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
@@ -169,7 +169,7 @@ DatabaseAPI::dbGetRaw( const char * a_url_path, const vector<pair<string,string>
         curl_free( esc_txt );
     }
 
-    DL_TRACE( "get raw url: " << url );
+    //DL_TRACE( "get raw url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
@@ -240,7 +240,7 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         {
             try
             {
-                DL_DEBUG( "PARSE [" << res_json << "]" );
+                //DL_DEBUG( "PARSE [" << res_json << "]" );
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )
@@ -1574,7 +1574,7 @@ DatabaseAPI::catalogSearch( const Anon::CatalogSearchRequest & a_request, Anon::
 
     string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
 
-    DL_INFO("Coll Search Pub Req: [" << body << "]");
+    //DL_INFO("Coll Search Pub Req: [" << body << "]");
 
     dbPost( "col/pub/search", {}, &body, result );
 

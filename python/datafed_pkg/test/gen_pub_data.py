@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import sys
 import random
 import datafed.CommandLib
+import time
 
 print("DataFed data gen test script")
 
@@ -48,8 +50,20 @@ try:
 except Exception:
     api.collectionCreate( par_coll, par_coll, parent_id = root_coll )
 
+if len(sys.argv) != 3:
+    print("Usage: gen_pub_data start count")
+    exit()
 
-for i in range(500):
+start = int(sys.argv[1])
+count = int(sys.argv[2])
+
+if start < 0 or count < 1:
+    print("Invalid start/count")
+    exit()
+
+tstart = time.time()
+
+for i in range( start, start + count ):
     name = "Published Collection {}".format(i)
     alias = "pub-coll-{}".format(i)
 
@@ -63,10 +77,15 @@ for i in range(500):
     for j in sel:
         _tags.append( tags[j] )
 
+    '''
     sel = random.randint(0,len(topics)-1)
     _topic = topics[sel]
+    '''
+    _topic = None
 
-    api.collectionCreate( name, alias = alias, parent_id = par_coll, description = _desc, tags = _tags, topic = _topic )
+    if api.collectionCreate( name, alias = alias, parent_id = par_coll, description = _desc, tags = _tags, topic = _topic )[0] == None:
+        print("Timeout on collectionCreate, coll {}".format(i))
+        exit()
 
     for j in range(20):
         name = "Demo Data {}.{}".format(i,j)
@@ -81,7 +100,10 @@ for i in range(500):
         for k in sel:
             _tags.append( tags[k] )
 
-        api.dataCreate( name, metadata = "{{\"x\":{},\"y\":{}}}".format(i,j), parent_id = alias, description = _desc, tags = _tags )
+        if api.dataCreate( name, metadata = "{{\"x\":{},\"y\":{}}}".format(i,j), parent_id = alias, description = _desc, tags = _tags )[0] == None:
+            print("Timeout on dataCreate, coll {}, rec {}".format(i,j))
+            exit()
 
+tend = time.time()
 
-print("done")
+print("done in {} sec".format( tend - tstart ))
