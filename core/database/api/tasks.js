@@ -1342,12 +1342,16 @@ var tasks_func = function() {
     obj._buildDeleteDoc = function( a_data ){
         var loc, locs, doc = [], repo_map = {};
 
-        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
+        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
 
-        console.log("locs hasNext",locs.hasNext());
+        //console.log("locs hasNext",locs.hasNext());
 
         while ( locs.hasNext() ){
             loc = locs.next();
+
+            // Skip records with no raw data
+            if ( !loc.d_sz )
+                continue;
 
             if ( loc.r_id in repo_map ){
                 repo_map[loc.r_id].ids.push(loc.d_id);
@@ -1589,14 +1593,17 @@ var tasks_func = function() {
     obj.recMoveFini = function( a_data ) {
         var data, loc, new_loc, alloc, coll, alias, alias_pref, a, key;
 
-        //console.log("recMoveFini" );
+        console.log("recMoveFini" );
 
         for ( var i in a_data ){
             data = a_data[i];
 
-            //console.log("recMoveFini, id:", data.id );
-
             loc = g_db.loc.firstExample({ _from: data.id });
+
+            console.log("recMoveFini, id:", data.id, "loc:", loc );
+
+            if ( !loc.new_owner && !loc.new_repo )
+                continue;
 
             if ( loc.new_owner ){
                 // Changing owner and repo
@@ -1664,16 +1671,19 @@ var tasks_func = function() {
             if ( !alloc )
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (cur)!" ];
 
-            //console.log("recMoveFini, adj src alloc to:", alloc.rec_count - 1, alloc.data_size - data.size );
+            //console.log("alloc:", alloc );
+            console.log("recMoveFini, adj src alloc to:", alloc.rec_count - 1, alloc.data_size - data.size );
 
             g_db._update( alloc._id, { rec_count: alloc.rec_count - 1, data_size: alloc.data_size - data.size });
+
+            console.log("update alloc:", alloc );
 
             // Update new allocation stats
             alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });
             if ( !alloc )
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (new)!" ];
 
-            //console.log("recMoveFini, adj dest alloc to:", alloc.rec_count + 1, alloc.data_size + data.size );
+            console.log("recMoveFini, adj dest alloc to:", alloc.rec_count + 1, alloc.data_size + data.size );
 
             g_db._update( alloc._id, { rec_count: alloc.rec_count + 1, data_size: alloc.data_size + data.size });
 
