@@ -443,7 +443,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             // There is no way to update brief since it is not returned by updates
         }else{
             //return "<div class='cat-coll-title-div ui-widget-content ui-corner-all '>\
-            return "<div class='cat-coll-title-div ui-button'>\
+            return "<div class='cat-coll-title-div'>\
                         <div class='row-flex'>\
                             <div class='cat-coll-icon'><span class='ui-icon ui-icon-"+util.getItemIcon(item)+"'></span></div>\
                             <div class='cat-coll-title'>" + item.title + "</div>\

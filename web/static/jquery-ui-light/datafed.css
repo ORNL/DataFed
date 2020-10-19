@@ -96,6 +96,11 @@ ul.tagit {
     padding: 0.25em 0.5em!important;
 }
 
+.cat-coll-title-div:hover
+{
+    background: #93c3cd url("images/ui-bg_diagonals-small_50_93c3cd_40x40.png") 50% 50% repeat;
+}
+
 .cat-coll-title-div
 {
     border-bottom: solid 1px #eee!important;

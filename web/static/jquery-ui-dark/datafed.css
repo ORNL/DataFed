@@ -135,6 +135,11 @@ textarea.ui-state-disabled
     padding: 0.25em 0.5em!important;
 }
 
+.cat-coll-title-div:hover
+{
+    background:#003147;
+}
+
 .cat-coll-title-div
 {
     border-bottom: solid 1px #24292e!important;
