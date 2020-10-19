@@ -14,6 +14,11 @@ module.exports = router;
 //===== COLLECTION API FUNCTIONS =====
 
 router.post('/create', function (req, res) {
+    var retry = 10;
+
+    for (;;)
+    {
+
     try {
         var result = [];
 
@@ -109,8 +114,13 @@ router.post('/create', function (req, res) {
         });
 
         res.send({ results: result });
+        break;
     } catch( e ) {
-        g_lib.handleException( e, res );
+        if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+            g_lib.handleException( e, res );
+        }
+    }
+
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
@@ -126,6 +136,11 @@ router.post('/create', function (req, res) {
 .description('Create a new data collection from JSON body');
 
 router.post('/update', function (req, res) {
+    var retry = 10;
+
+    for (;;)
+    {
+
     try {
         var result = { results: [], updates: [] };
 
@@ -286,8 +301,13 @@ router.post('/update', function (req, res) {
         });
 
         res.send( result );
+        break;
     } catch( e ) {
-        g_lib.handleException( e, res );
+        if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+            g_lib.handleException( e, res );
+        }
+    }
+
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
