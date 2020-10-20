@@ -599,7 +599,7 @@ var tasks_func = function() {
         var result = g_proc.preprocessItems( a_client, owner_id, a_res_ids, g_lib.TT_REC_OWNER_CHG );
 
         if ( result.has_pub ){
-            throw [g_lib.ERR_PERM_DENIED, "Deletion not allowed - selection contains public data."];
+            throw [g_lib.ERR_PERM_DENIED, "Owner change not allowed - selection contains public data."];
         }
 
         var i,loc,rec,deps = [];
@@ -1536,21 +1536,10 @@ var tasks_func = function() {
     };
 
 
-    /*
-    if ( a_new_coll_id ){
-        if ( !g_db.c.exists( req.body.new_coll_id ))
-            throw [ g_lib.ERR_INTERNAL_FAULT, "New collection '" + req.body.new_coll_id + "' does not exist!" ];
-
-        var coll = g_db.c.document( req.body.new_coll_id );
-
-        if ( coll.owner != req.body.new_owner_id )
-            throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' destination collection '" + req.body.new_coll_id + "' not owner by new owner!" ];
-    }*/
-
     obj.recMoveInit = function( a_data, a_new_repo_id, a_new_owner_id, a_new_coll_id ) {
         var loc;
 
-        console.log("recMoveInit", a_new_repo_id, a_new_owner_id, a_new_coll_id );
+        //console.log("recMoveInit", a_new_repo_id, a_new_owner_id, a_new_coll_id );
 
         for ( var i in a_data ){
             loc = g_db.loc.firstExample({ _from: a_data[i].id });
@@ -1582,7 +1571,7 @@ var tasks_func = function() {
 
         for ( var i in a_data ){
             id = a_data[i].id;
-            console.log("recMoveRevert", id );
+            //console.log("recMoveRevert", id );
 
             loc = g_db.loc.firstExample({ _from: id });
             g_db._update( loc._id, { new_repo: null, new_owner: null, new_coll: null }, { keepNull: false } );
@@ -1593,14 +1582,14 @@ var tasks_func = function() {
     obj.recMoveFini = function( a_data ) {
         var data, loc, new_loc, alloc, coll, alias, alias_pref, a, key;
 
-        console.log("recMoveFini" );
+        //console.log("recMoveFini" );
 
         for ( var i in a_data ){
             data = a_data[i];
 
             loc = g_db.loc.firstExample({ _from: data.id });
 
-            console.log("recMoveFini, id:", data.id, "loc:", loc );
+            //console.log("recMoveFini, id:", data.id, "loc:", loc );
 
             if ( !loc.new_owner && !loc.new_repo )
                 continue;
@@ -1672,18 +1661,18 @@ var tasks_func = function() {
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (cur)!" ];
 
             //console.log("alloc:", alloc );
-            console.log("recMoveFini, adj src alloc to:", alloc.rec_count - 1, alloc.data_size - data.size );
+            //console.log("recMoveFini, adj src alloc to:", alloc.rec_count - 1, alloc.data_size - data.size );
 
             g_db._update( alloc._id, { rec_count: alloc.rec_count - 1, data_size: alloc.data_size - data.size });
 
-            console.log("update alloc:", alloc );
+            //console.log("update alloc:", alloc );
 
             // Update new allocation stats
             alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });
             if ( !alloc )
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (new)!" ];
 
-            console.log("recMoveFini, adj dest alloc to:", alloc.rec_count + 1, alloc.data_size + data.size );
+            //console.log("recMoveFini, adj dest alloc to:", alloc.rec_count + 1, alloc.data_size + data.size );
 
             g_db._update( alloc._id, { rec_count: alloc.rec_count + 1, data_size: alloc.data_size + data.size });
 

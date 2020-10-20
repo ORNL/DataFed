@@ -104,6 +104,8 @@ module.exports = ( function() {
         for ( i in a_ids ){
             id = a_ids[i];
 
+            //console.log( "preprocessItem", id );
+
             if ( id.charAt(0) == 'c' ){
                 if ( a_ctxt.mode == g_lib.TT_DATA_PUT )
                     throw [ g_lib.ERR_INVALID_PARAM, "Collections not supported for PUT operations." ];
@@ -176,7 +178,7 @@ module.exports = ( function() {
                     if ( doc.owner != a_ctxt.client._id ){
                         if ( doc.owner.startsWith( "p/" )){
                             if (!( doc.owner in a_ctxt.visited )){
-                                if ( g_lib.hasManagerPermProj( a_ctxt.client._id, doc.owner )){
+                                if ( g_lib.hasManagerPermProj( a_ctxt.client, doc.owner )){
                                     // Put project ID in visited to avoid checking permissions again
                                     a_ctxt.visited[doc.owner] = 1;
                                 }else{
@@ -195,7 +197,7 @@ module.exports = ( function() {
 
                         if ( doc.owner.startsWith( "p/" )){
                             if (!( doc.owner in a_ctxt.visited )){
-                                if ( g_lib.hasManagerPermProj( a_ctxt.client._id, doc.owner )){
+                                if ( g_lib.hasManagerPermProj( a_ctxt.client, doc.owner )){
                                     // Put project ID in visited to avoid checking permissions again
                                     a_ctxt.visited[doc.owner] = 1;
                                     ok = true;
@@ -210,6 +212,8 @@ module.exports = ( function() {
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc );
                             else
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
+
+                            console.log( "pp 4" );
 
                             if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm )
                                 throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
