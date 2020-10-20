@@ -591,7 +591,7 @@ export function show( item ){
                     nodata: false,
                     lazyLoad: function( event, data ) {
                         if ( data.node.key.startsWith("g/")){
-                            data.result = { url: api.groupView_url( a_uid, data.node.key.substr( 2 )), cache: false };
+                            data.result = { url: api.groupView_url( uid, data.node.key.substr( 2 )), cache: false };
                         }
                     },
                     postProcess: function( event, data ) {
