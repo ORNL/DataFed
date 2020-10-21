@@ -6,6 +6,7 @@ import sys
 import argparse
 import random
 import datafed.CommandLib
+import json
 import time
 
 parser = argparse.ArgumentParser( description='DataFed Data Generator' )
@@ -47,7 +48,7 @@ args = parser.parse_args()
 start = args.start
 end = args.end
 
-if start < 0 or end <= start:
+if start < 0 or end < start:
     print("Invalid start/end indexes")
     exit()
 
@@ -173,7 +174,18 @@ for i in range( start, end + 1 ):
         for k in sel:
             _tags.append( tags[k] )
 
-        if api.dataCreate( name, alias=data_alias, metadata = "{{\"x\":{},\"y\":{}}}".format(i,j), parent_id = alias, description = _desc, tags = _tags, repo_id = repo )[0] == None:
+        md = {
+            "i" : i,
+            "j" : j,
+            "x": random.randint(-100,100),
+            "y": random.randint(-100,100),
+            "a": random.randint(0,3599)/10.0,
+            "v": random.randint(0,100),
+            "tag": tags[selectRand(1, 1, len( tags ))[0]],
+            "keyword": keywords[selectRand(1, 1, len( keywords ))[0]]
+        }
+
+        if api.dataCreate( name, alias=data_alias, metadata = json.dumps(md), parent_id = alias, description = _desc, tags = _tags, repo_id = repo )[0] == None:
             print("Timeout on dataCreate, coll {}, rec {}".format(i,j))
             exit()
 

@@ -128,6 +128,8 @@ export function showSelectedInfo( node, cb ){
 export function showSelectedItemInfo( item ){
     var disabled = [];
 
+    console.log("show info",item);
+
     if ( item && item.id ){
         if ( !tabs_parent_vis ){
             tabs_parent.show();
@@ -555,7 +557,7 @@ function showSelectedAllocInfo( repo, user, node, cb ){
 
 
 function showSelectedItemForm( item ){
-    var i, date = new Date(), t = item.id.charAt( 0 ), text, cls, title, type, icon;
+    var i, tmp, date = new Date(), t = item.id.charAt( 0 ), text, cls, title, type, icon;
 
     switch ( t ){
         case 'd': type = "Data Record"; icon = ""; title = item.title; cls = item.doi?".sidp":".sid"; break;
@@ -609,7 +611,7 @@ function showSelectedItemForm( item ){
         $("#sel_info_url",form).text( item.dataUrl );
 
     if ( item.tags ){
-        var tmp = "";
+        tmp = "";
         for ( i in item.tags ){
             if ( tmp )
                 tmp += ", ";
@@ -646,6 +648,15 @@ function showSelectedItemForm( item ){
             $("#sel_info_qry_text",form).text( qry.text );
         if ( qry.meta )
             $("#sel_info_qry_meta",form).text( qry.meta );
+        if ( qry.tags ){
+            tmp = "";
+            for ( i in qry.tags ){
+                if ( tmp )
+                    tmp += ", ";
+                tmp += qry.tags[i];
+            }
+            $("#sel_info_tags",form).text( tmp );
+        }
     }
 
     if ( cls == ".sia" ){
@@ -813,7 +824,7 @@ $("#data_md_tree").fancytree({
 
 data_md_tree = $.ui.fancytree.getTree("#data_md_tree");
 
-function stopPropFunc(){
+function stopPropFunc( ev ){
     ev.stopPropagation();
 }
 

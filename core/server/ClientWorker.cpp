@@ -1430,8 +1430,12 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
 
     if ( obj.has( "tags" ))
     {
-        filter += string("(") + parseSearchTags( obj.asArray() ) + ")";
-        fcnt++;
+        const libjson::Value::Array & arr = obj.asArray();
+        if ( arr.size() )
+        {
+            filter += string("(") + parseSearchTags( arr ) + ")";
+            fcnt++;
+        }
     }
 
     if ( obj.has( "id" ))
@@ -1450,19 +1454,10 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
         fcnt++;
     }
 
-    /*if ( meta.size() && id.size() )
-    {
-        filter = string("(") + id + ") && (" + meta + ")";
-    }
-    else if ( id.size() )
-    {
-        filter = id;
-    }*/
-
     string result;
 
     if ( phrase.size() )
-        result += string("for i in intersection((for i in textview search analyzer(") + phrase + ",'text_en') return i),(";
+        result += string("for i in intersection((for i in dataview search analyzer(") + phrase + ",'text_en') return i),(";
 
     libjson::Value::Array & scopes = obj.getArray( "scopes" );
 
