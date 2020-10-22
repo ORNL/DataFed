@@ -1703,7 +1703,7 @@ def _print_data( message ):
         click.echo( "{:<15}{:<50}".format('ID: ', dr.id))
         click.echo( "{:<15}{:<50}".format('Alias: ', dr.alias if dr.alias else "(none)" ))
         _wrap_text( dr.title, "Title:", 15 )
-        #_wrap_text( dr.tags, "Tags:", 15 )
+        _wrap_text( _arrayToCSV( dr.tags, 0 ), "Tags:", 15 )
 
         if dr.data_url:
             click.echo("{:<15}{:<50}".format('DOI No.: ', dr.doi))
@@ -1760,6 +1760,7 @@ def _print_coll( message ):
         click.echo( "{:<15}{:<50}".format('ID: ', coll.id))
         click.echo( "{:<15}{:<50}".format('Alias: ', coll.alias if coll.alias else "(none)" ))
         _wrap_text( coll.title, "Title:", 15 )
+        _wrap_text( _arrayToCSV( coll.tags, 0 ), "Tags:", 15 )
 
         click.echo( "{:<15}{:<50}".format('Topic: ', coll.topic if coll.topic else '(not published)') + '\n' +
                     "{:<15}{:<50}".format('Owner: ', coll.owner[2:]) + '\n' +
@@ -1814,10 +1815,10 @@ def _print_task( message ):
                     "{:<20} {:<50}".format('Updated: ', _capi.timestampToStr(message.task.ut)))
 
 def _print_task_array( message ):
-    print("_print_task_array")
+    #print("_print_task_array")
 
     for t in message.task:
-        print(t)
+        #print(t)
 
         task_type = _task_types.get(t.type, "None")
         task_status = _task_statuses.get(t.status, "None")
