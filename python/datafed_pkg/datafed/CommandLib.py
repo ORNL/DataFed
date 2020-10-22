@@ -277,7 +277,10 @@ class API:
             msg.desc = description
 
         if tags is not None:
-            msg.tags.extend( tags )
+            if not tags:
+                msg.tags_clear = True
+            else:
+                msg.tags.extend( tags )
 
         if extension is not None:
             if extension:
@@ -698,8 +701,11 @@ class API:
         if description is not None:
             msg.desc = description
 
-        if tags:
-            msg.tags.extend( tags )
+        if tags is not None:
+            if not tags:
+                msg.tags_clear = True
+            else:
+                msg.tags.extend( tags )
 
         if topic is not None:
             msg.topic = topic
