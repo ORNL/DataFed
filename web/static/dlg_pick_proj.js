@@ -1,4 +1,6 @@
 import * as settings from "./settings.js";
+import * as api from "./api.js";
+import * as model from "./model.js";
 
 var tree;
 
@@ -16,8 +18,8 @@ window.projPageLoad = function( key, offset ){
 export function show( a_excl, a_single_sel, cb ){
     var frame = $(document.createElement('div'));
     frame.html(
-        "<div class='ui-widget-content text' style='height:98%;overflow:auto'>\
-            <div id='dlg_proj_tree' class='no-border'></div>\
+        "<div class='content text' style='height:98%;overflow:auto'>\
+            <div id='dlg_proj_tree' class='content no-border'></div>\
         </div>" );
 
 
@@ -63,11 +65,8 @@ export function show( a_excl, a_single_sel, cb ){
     $("#dlg_proj_tree",frame).fancytree({
         extensions: ["themeroller"],
         themeroller: {
-            activeClass: "ui-state-hover",
-            addClass: "",
-            focusClass: "",
-            hoverClass: "ui-state-active",
-            selectedClass: ""
+            activeClass: "my-fancytree-active",
+            hoverClass: ""
         },
         source: src,
         nodata: false,
@@ -81,17 +80,10 @@ export function show( a_excl, a_single_sel, cb ){
         },
         checkbox: true,
         lazyLoad: function( event, data ) {
-            if ( data.node.key == "all-id" ) {
-                data.result = {
-                    url: "/api/prj/list?sort=0&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
-            } else if ( data.node.key == "all-title" ) {
-                data.result = {
-                    url: "/api/prj/list?sort=1&offset="+data.node.data.offset+"&count="+settings.opts.page_sz,
-                    cache: false
-                };
-            }
+            data.result = {
+                url: api.projList_url( false, false, false, (data.node.key == "all-id"?model.SORT_ID:model.SORT_TITLE), data.node.data.offset, settings.opts.page_sz ),
+                cache: false
+            };
         },
         postProcess: function( event, data ) {
             if ( data.node.lazy ){

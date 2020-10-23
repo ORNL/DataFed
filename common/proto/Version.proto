@@ -1,14 +1,10 @@
-enum VerMajor
+enum Version
 {
-    VER_MAJOR = 0;
+    option allow_alias = true;
+    VER_MAJOR = 1;
+    VER_MAPI_MAJOR = 1;
+    VER_MAPI_MINOR = 0;
+    VER_SERVER = 1;
+    VER_CLIENT = 0;
 }
 
-enum VerMinor
-{
-    VER_MINOR = 13;
-}
-
-enum VerBuild
-{
-    VER_BUILD = 0;
-}

@@ -245,7 +245,7 @@ router.get('/view', function (req, res) {
     try {
         // TODO Enforce view permission
 
-        g_lib.getUserFromClientID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
         if ( !g_db.p.exists( req.queryParams.id ))
             throw [ g_lib.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'" ];
@@ -259,7 +259,7 @@ router.get('/view', function (req, res) {
         } else
             proj.admins = [];
 
-        //if ( g_lib.getProjectRole( client._id, proj._id ) != g_lib.PROJ_NO_ROLE ){
+        if ( client ){
             var members = g_db._query( "for v,e,p in 2..2 inbound @proj owner, outbound member filter p.vertices[1].gid == 'members' return v._id", { proj: proj._id }).toArray();
 
             if ( members.length ) {
@@ -269,6 +269,8 @@ router.get('/view', function (req, res) {
 
             proj.allocs = g_db.alloc.byExample({_from:proj._id}).toArray();
             if ( proj.allocs.length ) {
+                g_lib.sortAllocations( proj.allocs );
+
                 var alloc;
 
                 for ( var i in proj.allocs ){
@@ -281,7 +283,7 @@ router.get('/view', function (req, res) {
                     delete alloc._rev;
                 }
             }
-        //}
+        }
 
         proj.id = proj._id;
 
@@ -322,7 +324,7 @@ router.get('/list', function (req, res) {
         if ( !count || req.queryParams.as_admin ){
             qry += (comma?"),(":"") + "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
             if ( count > 1 )
-                qry += " return { _id: i._id, title: i.title, owner: i.owner }";
+                qry += " return { _id: i._id, title: i.title, owner: i.owner, creator: @user }";
             comma = true;
         }
 
@@ -359,7 +361,7 @@ router.get('/list', function (req, res) {
 
     if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
         qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-        qry += " return { id: i._id, title: i.title, owner: i.owner }";
+        qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
         //console.log("proj list qry:",qry);
         result = g_db._query( qry, count?{ user: user_id }:{},{},{fullCount:true});
         var tot = result.getExtra().stats.fullCount;
@@ -367,7 +369,7 @@ router.get('/list', function (req, res) {
         result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
     }
     else{
-        qry += " return { id: i._id, title: i.title, owner: i.owner }";
+        qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
         //console.log("proj list qry:",qry);
         result = g_db._query( qry, count?{ user: user_id }:{});
     }

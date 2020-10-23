@@ -7,8 +7,8 @@ export function show( a_uid, a_excl, cb, select ){
     const content =
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none;padding:.5rem 0 0 0'>Groups:</div>\
-            <div class='ui-widget-content text' style='flex:1 1 100%;overflow:auto'>\
-                <div id='dlg_group_tree' class='no-border'></div>\
+            <div class='content text' style='flex:1 1 100%;overflow:auto'>\
+                <div id='dlg_group_tree' class='content no-border'></div>\
             </div>\
             <div style='flex:none;white-space:nowrap;padding:.25rem 0 0 0'>\
                 <button id='dlg_add_grp' class='btn small'>New</button>\
@@ -111,11 +111,8 @@ export function show( a_uid, a_excl, cb, select ){
                 $("#dlg_group_tree",frame).fancytree({
                     extensions: ["themeroller"],
                     themeroller: {
-                        activeClass: "ui-state-hover",
-                        addClass: "",
-                        focusClass: "",
-                        hoverClass: "ui-state-active",
-                        selectedClass: ""
+                        activeClass: "my-fancytree-active",
+                        hoverClass: ""
                     },
                     source: src,
                     selectMode: select?2:1,
@@ -123,9 +120,7 @@ export function show( a_uid, a_excl, cb, select ){
                     nodata: false,
                     lazyLoad: function( event, data ) {
                         data.result = {
-                            url: "/api/grp/view?uid="+encodeURIComponent( a_uid )+"&gid="+encodeURIComponent(data.node.key.substr(2)),
-                            cache: false
-                        };
+                            url: api.groupView_url( a_uid, data.node.key.substr(2) ), cache: false };
                     },
                     postProcess: function( event, data ) {
                         if ( data.node.lazy ){

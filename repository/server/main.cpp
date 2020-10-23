@@ -23,12 +23,13 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO( "DataFed repo server starting, ver " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD );
+        DL_INFO( "DataFed repo server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_SERVER );
 
         uint16_t    port = 9000;
         string      cfg_file;
         bool        gen_keys = false;
         string      cred_dir = "/etc/datafed/";
+        string      core_server;
 
         po::options_description opts( "Options" );
 
@@ -37,6 +38,7 @@ int main( int a_argc, char ** a_argv )
             ("version,v", "Show version number")
             ("cred-dir,c",po::value<string>( &cred_dir ),"Server credentials directory")
             ("port,p",po::value<uint16_t>( &port ),"Service port")
+            ("server,s",po::value<string>( &core_server ),"Core server address")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
             ("gen-keys",po::bool_switch( &gen_keys ),"Generate new server keys then exit")
             ;
@@ -49,7 +51,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "help" ) )
             {
-                cout << "DataFed Repo Server, ver. " << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << "\n";
+                cout << "DataFed Repo Server, ver. " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_SERVER << "\n";
                 cout << "Usage: sdms-repo [options]\n";
                 cout << opts << endl;
                 return 0;
@@ -57,7 +59,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "version" ))
             {
-                cout << VER_MAJOR << "." << VER_MINOR << "." << VER_BUILD << endl;
+                cout << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_SERVER << endl;
                 return 0;
             }
 
@@ -104,7 +106,7 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-        Repo::Server server( cred_dir, port );
+        Repo::Server server( cred_dir, port, core_server );
 
         server.run( false );
 
@@ -117,6 +119,10 @@ int main( int a_argc, char ** a_argv )
     catch( exception &e )
     {
         DL_ERROR( "Exception: " << e.what() );
+    }
+    catch( ... )
+    {
+        DL_ERROR( "Unexpected/unknown exception" );
     }
 
     return 0;

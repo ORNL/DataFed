@@ -1,3 +1,12 @@
+// ALERT: If messages in this proto file are REORDERED or REMOVED, or if the
+// definitions of existing message parameters are CHANGED, then the
+// VER_PROTO_MAJOR enum value in Version.proto must be incremented and backward
+// compatability will be lost. If new messages are APPENDED to the end of this
+// file, or parameters are APPENDED to the end of an existing message defintion,
+// then VER_PROTO_MINOR must be incremented and backward compatability will be
+// maintained. Unused messages and parameters should be marked as deprecated,
+// and these should be removed at the next major version change.
+
 import "SDMS.proto";
 
 package SDMS.Auth;
@@ -78,11 +87,6 @@ message UserCreateRequest
     optional string             options     = 6;
 }
 
-message UserViewRequest
-{
-    required string             uid         = 1;
-    optional bool               details     = 2;
-}
 
 message UserFindByUUIDsRequest
 {
@@ -116,15 +120,6 @@ message UserListCollabRequest
     optional uint32             count       = 2;
 }
 
-// Returned for any command the returns one or more user records
-message UserDataReply
-{
-    repeated SDMS.UserData      user        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
-}
-
 message UserGetRecentEPRequest
 {
 }
@@ -137,16 +132,6 @@ message UserGetRecentEPReply
 message UserSetRecentEPRequest
 {
     repeated string             ep          = 1;
-}
-
-// ============================ Data Record AND Collection Messages
-
-message ListingReply
-{
-    repeated ListingData        item        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
 }
 
 // ============================ Data Record Messages
@@ -165,25 +150,11 @@ message RecordListByAllocRequest
     optional uint32             count       = 4;
 }
 
-message RecordViewRequest
-{
-    required string             id          = 1;
-    optional bool               details     = 2;
-}
-
-
-// Returned for any command the returns one or more user records
-message RecordDataReply
-{
-    repeated SDMS.RecordData    data        = 1;
-    repeated SDMS.ListingData   update      = 2;
-}
-
 message RecordCreateRequest
 {
     optional string             title       = 1;
     optional string             desc        = 2;
-    optional string             keyw        = 3;
+    repeated string             tags        = 3;
     optional string             alias       = 4;
     optional string             doi         = 5;
     optional string             data_url    = 6;
@@ -205,19 +176,20 @@ message RecordUpdateRequest
     required string             id          = 1;
     optional string             title       = 2;
     optional string             desc        = 3;
-    optional string             keyw        = 4;
-    optional string             alias       = 5;
-    optional string             doi         = 6;
-    optional string             data_url    = 7;
-    optional string             metadata    = 8;
-    optional bool               mdset       = 9;
-    optional string             source      = 10;
-    optional string             ext         = 11;
-    optional bool               ext_auto    = 12;
-    optional uint64             size        = 13;
-    optional uint32             dt          = 14;
-    repeated DependencySpecData dep_add     = 15;
-    repeated DependencySpecData dep_rem     = 16;
+    repeated string             tags        = 4;
+    optional bool               tags_clear  = 5;
+    optional string             alias       = 6;
+    optional string             doi         = 7;
+    optional string             data_url    = 8;
+    optional string             metadata    = 9;
+    optional bool               mdset       = 10;
+    optional string             source      = 11;
+    optional string             ext         = 12;
+    optional bool               ext_auto    = 13;
+    optional uint64             size        = 14;
+    optional uint32             dt          = 15;
+    repeated DependencySpecData dep_add     = 16;
+    repeated DependencySpecData dep_rem     = 17;
 }
 
 message RecordUpdateBatchRequest
@@ -240,12 +212,6 @@ message RecordLockRequest
     repeated string             id          = 1;
     required bool               lock        = 2;
 }
-
-
-/*message RecordGetDataLocationRequest
-{
-    required string             id          = 1;
-}*/
 
 message RecordDeleteRequest
 {
@@ -333,9 +299,15 @@ message DataPutRequest
     optional bool               check       = 5;
 }
 
-message DataGetPutReply
+message DataGetReply
 {
     repeated ListingData        item        = 1;
+    optional SDMS.TaskData      task        = 2;
+}
+
+message DataPutReply
+{
+    required RecordData         item        = 1;
     optional SDMS.TaskData      task        = 2;
 }
 
@@ -366,6 +338,7 @@ message CollCreateRequest
     optional string             alias       = 3;
     optional string             parent_id   = 4;
     optional string             topic       = 6;
+    repeated string             tags        = 7;
 }
 
 message CollUpdateRequest
@@ -375,6 +348,8 @@ message CollUpdateRequest
     optional string             desc        = 3;
     optional string             alias       = 4;
     optional string             topic       = 6;
+    repeated string             tags        = 7;
+    optional bool               tags_clear  = 8;
 }
 
 message CollDeleteRequest
@@ -388,19 +363,6 @@ message CollListRequest
     optional bool               details     = 2;
     optional uint32             offset      = 3;
     optional uint32             count       = 4;
-}
-
-message CollViewRequest
-{
-    required string             id          = 1;
-}
-
-message CollReadRequest
-{
-    required string             id          = 1;
-    optional bool               details     = 3;
-    optional uint32             offset      = 4;
-    optional uint32             count       = 5;
 }
 
 message CollWriteRequest
@@ -448,12 +410,6 @@ message CollListPublishedRequest
     optional string             subject     = 1;
     optional uint32             offset      = 2;
     optional uint32             count       = 3;
-}
-
-message CollDataReply
-{
-    repeated SDMS.CollData      coll        = 1;
-    repeated SDMS.ListingData   update      = 2;    
 }
 
 // ============================ Group Messages
@@ -525,26 +481,6 @@ message ACLListItemsBySubjectRequest
     required string             owner       = 2;
 }
 
-/*
-message ACLByUserRequest
-{
-}
-
-message ACLByUserListRequest
-{
-    required string             owner       = 1;
-}
-
-message ACLByProjRequest
-{
-}
-
-message ACLByProjListRequest
-{
-    required string             owner       = 1;
-}
-*/
-
 message ACLDataReply
 {
     repeated ACLRule            rule        = 1;
@@ -595,11 +531,6 @@ message ProjectSearchRequest
     repeated string             scope       = 2;
 }
 
-message ProjectViewRequest
-{
-    required string             id          = 1;
-}
-
 message ProjectGetRoleRequest
 {
     required string             id          = 1;
@@ -609,11 +540,6 @@ message ProjectGetRoleRequest
 message ProjectGetRoleReply
 {
     required ProjectRole        role        = 1;
-}
-
-message ProjectDataReply
-{
-    repeated ProjectData        proj        = 1;
 }
 
 // ============================ Repo Messages
@@ -786,14 +712,6 @@ message RepoAuthzRequest
 
 // ============================ Topic Messages
 
-message TopicListRequest
-{
-    optional string             topic_id    = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional bool               data        = 4 [default = true];
-}
-
 message TopicLinkRequest
 {
     required string             topic       = 1;
@@ -882,22 +800,6 @@ message AnnotationCommentEditRequest
     required string             id          = 1;
     required uint32             comment_idx = 2;
     required string             comment     = 3;
-}
-
-message AnnotationListBySubjectRequest
-{
-    required string             subject     = 1;
-}
-
-message AnnotationViewRequest
-{
-    required string             id          = 1;
-}
-
-message AnnotationDataReply
-{
-    repeated SDMS.NoteData      note    = 1;
-    repeated SDMS.ListingData   update  = 2;
 }
 
 // ============================ Task Messages

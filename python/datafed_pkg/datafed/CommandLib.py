@@ -15,6 +15,7 @@ import json as jsonlib
 import time
 import pathlib
 import wget
+from . import SDMS_Anon_pb2 as anon
 from . import SDMS_Auth_pb2 as auth
 from . import SDMS_pb2 as sdms
 from . import MessageLib
@@ -156,7 +157,7 @@ class API:
     # @exception Exception: On communication or server error
     #
     def dataView( self, data_id, details = False, context = None ):
-        msg = auth.RecordViewRequest()
+        msg = anon.RecordViewRequest()
         msg.id = self._resolve_id( data_id, context )
         msg.details = details
 
@@ -172,7 +173,7 @@ class API:
     # @param title - Title of record (required)
     # @param alias - Alias of record (optional)
     # @param description - Text description (optional)
-    # @param keywords - Comma-separated keywords (optional)
+    # @param tags - Array of tags (optional)
     # @param extension - Raw data file extension override (optional)
     # @param metadata - Domain-specific metadata (JSON object, optional)
     # @param metadata_file - Path to local file containing domain-specific metadata (JSON object, optional)
@@ -183,7 +184,7 @@ class API:
     # @return A RecordDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def dataCreate( self, title, alias = None, description = None, keywords = None, extension = None,
+    def dataCreate( self, title, alias = None, description = None, tags = None, extension = None,
         metadata = None, metadata_file = None, parent_id = "root", deps = None, repo_id = None, context = None ):
 
         if metadata and metadata_file:
@@ -199,8 +200,8 @@ class API:
         if description:
             msg.desc = description
 
-        if keywords:
-            msg.keyw = keywords
+        if tags:
+            msg.tags.extend( tags )
 
         if repo_id:
             msg.repo_id = repo_id
@@ -244,7 +245,7 @@ class API:
     # @param title - Title of record (optional)
     # @param alias - Alias of record (optional)
     # @param description - Text description (optional)
-    # @param keywords - Comma-separated keywords (optional)
+    # @param tags - Array of tags (optional)
     # @param extension - Raw data file extension override (optional)
     # @param metadata - Domain-specific metadata (JSON object, optional)
     # @param metadata_file - Path to local file containing domain-specific metadata (JSON object, optional)
@@ -256,7 +257,7 @@ class API:
     # @return A RecordDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def dataUpdate( self, data_id, title = None, alias = None, description = None, keywords = None,
+    def dataUpdate( self, data_id, title = None, alias = None, description = None, tags = None,
         extension = None, metadata = None, metadata_file = None, metadata_set = False, deps_add = None,
         deps_rem = None, context = None ):
 
@@ -275,8 +276,11 @@ class API:
         if description is not None:
             msg.desc = description
 
-        if keywords is not None:
-            msg.keyw = keywords
+        if tags is not None:
+            if not tags:
+                msg.tags_clear = True
+            else:
+                msg.tags.extend( tags )
 
         if extension is not None:
             if extension:
@@ -621,7 +625,7 @@ class API:
     # @exception Exception: On invalid options or communication/server error
     #
     def collectionView( self, coll_id, context = None ):
-        msg = auth.CollViewRequest()
+        msg = anon.CollViewRequest()
         msg.id = self._resolve_id( coll_id, context )
         #msg.id = self._resolve_coll_id( coll_id, context )
 
@@ -638,13 +642,14 @@ class API:
     # @param title - Title of collection (required)
     # @param alias - Alias of collection (optional)
     # @param description - Text description (optional)
+    # @param tags - Array of tags (optional)
     # @param topic - Topic for publishing collection
     # @param parent_id - ID/alias of parent collection (default is root)
     # @param context - User or project ID to use for alias resolution (optional)
     # @return A CollDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def collectionCreate( self, title, alias = None, description = None, topic = None, parent_id = None, context = None ):
+    def collectionCreate( self, title, alias = None, description = None, tags = None, topic = None, parent_id = None, context = None ):
         msg = auth.CollCreateRequest()
         msg.title = title
 
@@ -653,6 +658,9 @@ class API:
 
         if description:
             msg.desc = description
+
+        if tags:
+            msg.tags.extend( tags )
 
         if topic:
             msg.topic = topic
@@ -674,12 +682,13 @@ class API:
     # @param title - Title of collection (optional)
     # @param alias - Alias of collection (optional)
     # @param description - Text description (optional)
+    # @param tags - Array of tags (optional)
     # @param topic - Topic for publishing collection
     # @param context - User or project ID to use for alias resolution (optional)
     # @return A CollDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
     #
-    def collectionUpdate( self, coll_id, title = None, alias = None, description = None, topic = None, context = None ):
+    def collectionUpdate( self, coll_id, title = None, alias = None, description = None, tags = None, topic = None, context = None ):
         msg = auth.CollUpdateRequest()
         msg.id = self._resolve_id( coll_id, context )
 
@@ -691,6 +700,12 @@ class API:
 
         if description is not None:
             msg.desc = description
+
+        if tags is not None:
+            if not tags:
+                msg.tags_clear = True
+            else:
+                msg.tags.extend( tags )
 
         if topic is not None:
             msg.topic = topic
@@ -736,7 +751,7 @@ class API:
     # @exception Exception: On invalid options or communication/server error
     #
     def collectionItemsList( self, coll_id, offset = 0, count = 20, context = None ):
-        msg = auth.CollReadRequest()
+        msg = anon.CollReadRequest()
         msg.count = count
         msg.offset = offset
         msg.id = self._resolve_id( coll_id, context )
@@ -849,7 +864,7 @@ class API:
     #
     # @param title - Title of query (required)
     # @param id - ID/alias query text (optional)
-    # @param text - Title, description, and/or keyword text query (optional)
+    # @param text - Title / description text query (optional)
     # @param meta - Metadata query (optional)
     # @param no_default - Omit default scopes if True (optional)
     # @param coll - A collection ID/alias to add to scope (multiple allowed)
@@ -873,7 +888,7 @@ class API:
     #
     # @param query_id - Query ID (required)
     # @param id - ID/alias query text (optional)
-    # @param text - Title, description, and/or keyword text query (optional)
+    # @param text - Title / description text query (optional)
     # @param meta - Metadata query (optional)
     # @return A QueryDataReply Google protobuf message object
     # @exception Exception: On invalid options or communication/server error
@@ -961,7 +976,7 @@ class API:
     # Directly run a manually entered query and return matches.
     #
     # @param id - ID/alias query text (optional)
-    # @param text - Title, description, and/or keyword text query (optional)
+    # @param text - Title / description text query (optional)
     # @param meta - Metadata query (optional)
     # @param no_default - Omit default scopes if True (optional)
     # @param coll - A collection ID/alias to add to scope (multiple allowed)
@@ -1032,7 +1047,7 @@ class API:
     # @exception Exception: On invalid options or communication/server error
     #
     def userView( self, uid ):
-        msg = auth.UserViewRequest()
+        msg = anon.UserViewRequest()
         msg.uid = uid
 
         return self._mapi.sendRecv( msg )
@@ -1077,7 +1092,7 @@ class API:
     # @exception Exception: On invalid options or communication/server error
     #
     def projectView( self, project_id ):
-        msg = auth.ProjectViewRequest()
+        msg = anon.ProjectViewRequest()
         msg.id = project_id
 
         return self._mapi.sendRecv( msg )
@@ -1422,7 +1437,7 @@ class API:
             id2 = item_id
 
             if id2[0:2] == "p/":
-                msg = auth.ProjectViewRequest()
+                msg = anon.ProjectViewRequest()
                 msg.id = id2
             else:
                 if id2[0:2] != "u/":
@@ -1430,7 +1445,7 @@ class API:
                         raise Exception("setContext invalid ID, '" + id2 + "'. Must be a user or a project ID")
                     id2 = "u/" + id2
 
-                msg = auth.UserViewRequest()
+                msg = anon.UserViewRequest()
                 msg.uid = id2
 
             # Don't need reply - just using to throw an except if id/uid is invalid

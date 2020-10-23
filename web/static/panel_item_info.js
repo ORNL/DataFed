@@ -4,121 +4,175 @@ import * as settings from "./settings.js";
 import * as api from "./api.js";
 import * as dlgAnnotation from "./dlg_annotation.js";
 
-var form = $("#sel_info_form");
-var div = $("#sel_info_div");
-var note_div = $("#note-div");
-var note_details = $("#note-details");
-var data_md_tree = null;
-var data_md_empty = true;
-var tree_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}];
-var data_md_exp = {};
-var note_active_tree = null;
-var note_open_tree = null;
-var note_closed_tree = null;
-var note_icon = ["circle-help","circle-info","alert","flag"];
-var cur_item_id = null;
+var form = $("#sel_info_form"),
+    info_tabs = $("#info-tabs"),
+    tabs_parent = $("#info-tabs-parent"),
+    tabs_parent_vis = true,
+    title_div = $("#sel_info_title"),
+    desc_div = $("#sel_info_desc"),
+    note_div = $("#note-div"),
+    note_details = $("#note-details"),
+    data_md_tree = null,
+    data_md_empty = true,
+    tree_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}],
+    data_md_exp = {},
+    note_active_tree = null,
+    note_open_tree = null,
+    note_closed_tree = null,
+    note_icon = ["circle-help","circle-info","alert","flag"],
+    cur_item_id = null,
+    cur_note = null,
+    cur_note_node = null,
+    ignore_call = false;
 
+jQuery.fn.extend({
+    onFirst: function( name, fn ) {
+        var elem, handlers, i, _len;
+
+        this.on( name, fn );
+
+        for (i = 0, _len = this.length; i < _len; i++) {
+            elem = this[i];
+            handlers = jQuery._data(elem).events[name.split('.')[0]];
+            handlers.unshift(handlers.pop());
+        }
+    }
+});
 
 export function showSelectedInfo( node, cb ){
-    if ( !node ){
-        cur_item_id = null;
-        showSelectedItemInfo();
+    if ( ignore_call ){
+        ignore_call = false;
         return;
     }
 
     //console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
     var key;
 
-    if ( typeof node == 'string' )
+    if ( !node ){
+        showSelectedItemInfo();
+        return;
+    }else if ( typeof node == 'string' )
         key = node;
     else if ( node.key == "shared_proj" && node.data.scope )
         key = node.data.scope;
-    else if ( node.key.startsWith( "t/" ) && node.data.scope )
-        key = node.data.scope;
+    //else if ( node.key.startsWith( "t/" ) && node.data.scope )
+    //    key = node.data.scope;
     else if ( node.data.key_pfx )
         key = node.key.substr( node.data.key_pfx.length );
     else
         key = node.key;
+
+    //console.log("key",key);
 
     cur_item_id = key;
 
     if ( key[0] == "c" ) {
         api.collView( key, function( item ){
             showSelectedItemInfo( item );
-            if ( cb ) cb( item );
+            if ( cb ) cb( item, node );
         }); 
     }else if ( key[0] == "d" ) {
         api.dataView( key, function( data ){
-            //console.log("data view:",data[0]);
             showSelectedItemInfo( data );
-            if ( cb ) cb( data );
+            if ( cb ) cb( data, node );
         }); 
     }else if ( key.startsWith("task/" )) {
         api.taskView( key, function( data ){
-            console.log("task view:",data );
+            //console.log("task view:",data );
             showSelectedItemInfo( data );
-            if ( cb ) cb( data );
+            if ( cb ) cb( data, node );
+        }); 
+    }else if ( key.startsWith("t/" )) {
+        console.log("show topic",key);
+        api.topicView( key, function( data ){
+            console.log("show topic info",data);
+            showSelectedItemInfo( data );
+            if ( cb ) cb( data, node );
         }); 
     }else if ( key == "mydata" ) {
-        showSelectedHTML( "Owned Data<br><br>All data owned by you." );
-    }else if ( key == "proj_own" ) {
-        showSelectedHTML( "Owned Projects<br><br>All projects owned by you." );
-    }else if ( key == "proj_adm" ) {
-        showSelectedHTML( "Managed Projects<br><br>Projects owned by other users that are managed by you." );
-    }else if ( key == "proj_mem" ) {
-        showSelectedHTML( "Member Projects<br><br>Projects owned by other users where you are a member." );
+        showGeneralInfo( key, "Data data owned by you" );
+    }else if ( key == "projects" ) {
+        showGeneralInfo( key, "Accessible projects and associated data" );
     }else if ( key == "shared_all" ) {
-        showSelectedHTML( "Shared Data<br><br>Data shared with you by other users and projects." );
+        showGeneralInfo( key, "Data shared with you" );
     }else if ( key == "shared_user" ) {
-        showSelectedHTML( "Shared Data by User<br><br>Data shared with you by other users." );
+        showGeneralInfo( key, "Data shared with you by users." );
     }else if ( key == "shared_proj" ) {
-        showSelectedHTML( "Shared Data by Project<br><br>Data shared with you by other projects." );
+        showGeneralInfo( key, "Data shared with you by projects." );
     }else if ( key == "queries" ) {
-        showSelectedHTML( "Saved Queries<br><br>All saved queries created by you." );
+        showGeneralInfo( key, "Saved queries created by you" );
     }else if ( key.startsWith("p/")){
-        showSelectedProjInfo( key, cb );
-    //}else if ( key.startsWith("n/")){
-    //    showSelectedNoteInfo( key );
+        showSelectedProjInfo( key, node, cb );
     }else if ( key.startsWith("q/")){
         api.sendQueryView( key, function( ok, item ){
             showSelectedItemInfo( item );
-            if ( cb ) cb( item );
+            if ( cb ) cb( item, node );
         }); 
     }else if ( key.startsWith("u/")){
-        showSelectedUserInfo( key, cb );
+        showSelectedUserInfo( key, node, cb );
     }else if ( key.startsWith( "shared_user_" ) && node.data.scope ){
-        showSelectedUserInfo( node.data.scope, cb );
+        showSelectedUserInfo( node.data.scope, node, cb );
     }else if ( key.startsWith( "shared_proj_" ) && node.data.scope ){
-        showSelectedProjInfo( node.data.scope, cb );
+        showSelectedProjInfo( node.data.scope, node, cb );
     }else if ( key == "allocs" ) {
-        showSelectedHTML( "Data Allocations<br><br>Lists allocations and associated data records." );
+        showGeneralInfo( key, "Data allocations and associated data records" );
     }else if ( key.startsWith("published")) {
-        showSelectedHTML( "Public Collections<br><br>Lists collections made public and available in DataFed catalogs." );
+        showGeneralInfo( key, "Collections published in DataFed catalog" );
     }else if ( key.startsWith( "repo/" )) {
-        showSelectedAllocInfo( node.data.repo, node.data.scope, cb );
+        showSelectedAllocInfo( node.data.repo, node.data.scope, node, cb );
     }else{
         showSelectedItemInfo();
     }
 }
 
 export function showSelectedItemInfo( item ){
+    var disabled = [];
+
+    console.log("show info",item);
+
     if ( item && item.id ){
-        cur_item_id = item.id;
-        showSelectedItemForm( item );
-        if ( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )){
-            setupAnnotationTab( item.id );
+        if ( !tabs_parent_vis ){
+            tabs_parent.show();
+            tabs_parent_vis = true;
+
+            // Recompute jquery-ui tabs height
+            var h = tabs_parent.height(),
+                hdr_h = $(".ui-tabs-nav",info_tabs).outerHeight();
+            
+            info_tabs.outerHeight( h );
+            $("#info-tabs > .ui-tabs-panel").outerHeight( h - hdr_h );
         }
+
+        cur_item_id = item.id;
+
+        if ( item.desc ){
+            desc_div.html( marked( item.desc ));
+            desc_div.show();
+        }else{
+            //disabled.push(0);
+            desc_div.hide();
+        }
+
+        showSelectedItemForm( item );
+
+        if (( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )) && item.notes ){
+            setupAnnotationTab( item.id );
+        }else{
+            note_div.hide();
+            disabled.push(2);
+        }
+
         if ( item.metadata ){
             showSelectedMetadata( item.metadata );
         }else{
+            disabled.push(1);
             showSelectedMetadata();
         }
+
+        $("#info-tabs").tabs("option","disabled",disabled);
     }else{
         cur_item_id = null;
-        form.hide();
-        note_div.hide();
-        showSelectedMetadata();
-        //showSelectedHTML( "Insufficient permissions to view data record." );
+        showGeneralInfo( null, "Select an item in left-hand panels to view additional information." );
     }
 }
 
@@ -126,30 +180,34 @@ export function getActiveItemID(){
     return cur_item_id;
 }
 
-function showSelectedHTML( html ){
-    form.hide();
-    note_div.hide();
-    div.html(html).show();
-    showSelectedMetadata();
+
+function showGeneralInfo( a_key, a_title ){
+    $("#sel_info_icon").removeClass().addClass( "ui-icon ui-icon-" + (a_key?util.getKeyIcon( a_key ):"circle-help"));
+    title_div.html(a_title);
+    if ( tabs_parent_vis ){
+        tabs_parent.hide();
+        tabs_parent_vis = false;
+    }
 }
 
-function showSelectedUserInfo( key, cb ){
+
+function showSelectedUserInfo( key, node, cb ){
     api.userView( key, true, function( ok, item ){
         if ( ok, item ){
             console.log("userView:",item);
             item.id = item.uid;
             showSelectedItemInfo( item );
-            if ( cb ) cb( item );
+            if ( cb ) cb( item, node );
         }else{
             showSelectedItemInfo();
         }
     }); 
 }
 
-function showSelectedProjInfo( key, cb ){
-    api.viewProj( key, function( item ){
+function showSelectedProjInfo( key, node, cb ){
+    api.projView( key, function( item ){
         showSelectedItemInfo( item );
-        if ( cb ) cb( item );
+        if ( cb ) cb( item, node );
     }); 
 }
 
@@ -157,10 +215,7 @@ var tree_opts1 = {
     extensions: ["themeroller"],
     themeroller: {
         activeClass: "my-fancytree-active",
-        addClass: "",
-        focusClass: "",
-        hoverClass: "my-fancytree-hover",
-        selectedClass: ""
+        hoverClass: ""
     },
     source: [],
     nodata: false,
@@ -169,10 +224,7 @@ var tree_opts1 = {
         showSelectedNoteInfo( data.node );
     },
     lazyLoad: function( event, data ) {
-        data.result = {
-            url: "/api/note/view?id="+encodeURIComponent( data.node.data.parentId ),
-            cache: false
-        };
+        data.result = { url: api.annotationView_url( data.node.data.parentId ), cache: false };
     },
     postProcess: function( event, data ) {
         //console.log("postproc:",data);
@@ -192,12 +244,12 @@ var tree_opts1 = {
 
             if ( note.parentId ){
                 //entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";
-                entry.title = "<i class='ui-icon ui-icon-" + note_icon[nt] + "'></i> [inherited] ";
+                entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> [inherited] ";
                 entry.parentId = note.parentId;
                 entry.folder = true;
                 entry.lazy = true;
             }else{
-                entry.title = "<i class='ui-icon ui-icon-" + note_icon[nt] + "'></i> ";
+                entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> ";
             }
 
             entry.title += note.title;
@@ -218,6 +270,14 @@ note_closed_tree = $.ui.fancytree.getTree("#note_closed_tree");
 
 function setupAnnotationTab( a_subject_id, a_cb ){
     note_details.html("");
+    note_div.hide();
+    cur_note = null;
+    cur_note_node = null;
+
+    $(".btn-note-comment").button("option","disabled",true);
+    $(".btn-note-edit").button("option","disabled",true);
+    $(".btn-note-activate").button("option","disabled",true).button("option","label","Activate");
+    $(".btn-note-open").button("option","disabled",true).button("option","label","Open");
 
     api.annotationListBySubject( a_subject_id, function( ok, data ){
         if ( ok ){
@@ -270,7 +330,6 @@ function setupAnnotationTab( a_subject_id, a_cb ){
                 disabled.push(2);
 
             $("#note-tabs").tabs("option","disabled",disabled);
-
             note_div.show();
 
             if ( a_cb ) a_cb();
@@ -279,6 +338,7 @@ function setupAnnotationTab( a_subject_id, a_cb ){
 }
 
 function showSelectedNoteInfo( node ){
+    console.log("showSelectedNoteInfo",node.key);
     if ( !node.key.startsWith("n/")){
         note_details.html("");
         return;
@@ -287,24 +347,17 @@ function showSelectedNoteInfo( node ){
     api.annotationView( node.key, function( ok, data ){
         if ( ok && data.note ){
             var note = data.note[0],
-                nt = model.NoteTypeFromString[note.type],
-                ns = model.NoteStateFromString[note.state],
                 html, comm, date_ct = new Date(), date_ut = new Date();
+
+            cur_note = note;
+            cur_note_node = node;
 
             //console.log("note:",note);
 
             date_ct.setTime(note.ct*1000);
             date_ut.setTime(note.ut*1000);
 
-            html = "<div class='col-flex' style='height:100%'>\
-                    <div style='flex:none;padding:0 0 .5em 0'>\
-                        <table>\
-                            <tr><td>Annotation ID:</td><td>" + note.id + "</td></tr>\
-                            <tr><td>Subject ID:</td><td>" + note.subjectId + "</td></tr>\
-                            <tr><td>State:</td><td>" + model.NoteStateLabel[ns] + "</td></tr>\
-                        </table>\
-                    </div>\
-                    <div style='flex:1 1 auto;overflow:auto'>";
+            html = "<div style='height:100%;overflow:auto'>";
 
             //var has_admin = ( note.comment[0].user == "u/"+settings.user.uid );
 
@@ -354,7 +407,7 @@ function showSelectedNoteInfo( node ){
 
                 html += ".<br>";
 
-                if ( comm.user == "u/"+settings.user.uid ){
+                if ( settings.user && comm.user == "u/"+settings.user.uid ){
                     html += "<div class='row-flex' style='padding:.5em;align-items:flex-end'><div class='ui-widget-content' style='flex:1 1 auto;padding:0.5em;white-space:pre-wrap'>" + util.escapeHTML(comm.comment) + "</div>";
                     html += "<div style='flex:none;padding:0 0 0 1em'><button class='btn btn-note-edit-comment' id='btn_note_edit_"+i+"'>Edit</button></div></div>";
                 }else{
@@ -363,94 +416,108 @@ function showSelectedNoteInfo( node ){
 
                 html += "</div>";
             }
-
-            html += "</div><div style='flex:none;padding:1em 0 0 0'>";
-
-            if ( ns != model.NOTE_CLOSED ){
-                html += "<button class='btn btn-note-comment'>Comment</button>&nbsp";
-            }
-
-            if ( ns == model.NOTE_CLOSED ){
-                html += "<button class='btn btn-note-reopen'>Reopen</button>&nbsp";
-            }else{
-                html += "<button class='btn btn-note-edit'>Edit</button>&nbsp";
-            }
-
-            if ( ns == model.NOTE_OPEN ){
-                html += "<button class='btn btn-note-activate'>Activate</button>&nbsp";
-            }else if ( ns == model.NOTE_ACTIVE ){
-                html += "<button class='btn btn-note-deactivate'>Deactivate</button>&nbsp";
-            }
-
-            if ( ns != model.NOTE_CLOSED ){
-                html += "<button class='btn btn-note-close'>Close</button>";
-            }
-
-            html += "</div></div>";
+            html += "</div>";
 
             note_details.html(html);
-
             $(".btn",note_details).button();
+
             $(".btn-note-edit-comment",note_details).on("click",function(){
-                var idx = parseInt( this.id.substr( this.id.lastIndexOf( "_" ) + 1 ));
-                dlgAnnotation.show( note.subjectId, note, null, idx, function( new_note ){
-                    if ( new_note ){
-                        showSelectedNoteInfo( node );
-                    }
-                });
+                console.log("edit comment");
+                if ( cur_note ){
+                    var idx = parseInt( this.id.substr( this.id.lastIndexOf( "_" ) + 1 ));
+                    dlgAnnotation.show( cur_note.subjectId, cur_note, null, idx, function( new_note ){
+                        if ( new_note ){
+                            showSelectedNoteInfo( cur_note_node );
+                        }
+                    });
+                }
             });
-
-            $(".btn-note-comment",note_details).on("click",function(){
-                dlgAnnotation.show( note.subjectId, note, null, null, function( new_note ){
-                    if ( new_note ){
-                        showSelectedNoteInfo( node );
-                    }
-                });
-            });
-
-            $(".btn-note-edit",note_details).on("click",function(){
-                dlgAnnotation.show( note.subjectId, note, null, -1, function( new_note ){
-                    if ( new_note ){
-                        setupAnnotationTab( note.subjectId );
-                    }
-                });
-            });
-
-            $(".btn-note-reopen",note_details).on("click",function(){
-                dlgAnnotation.show( note.subjectId, note, model.NOTE_OPEN, null, function( new_note ){
-                    if ( new_note ){
-                        setupAnnotationTab( note.subjectId );
-                    }
-                });
-            });
-
-            $(".btn-note-close",note_details).on("click",function(){
-                dlgAnnotation.show( note.subjectId, note, model.NOTE_CLOSED, null, function( new_note ){
-                    if ( new_note ){
-                        setupAnnotationTab( note.subjectId );
-                    }
-                });
-            });
-
-            $(".btn-note-activate",note_details).on("click",function(){
-                dlgAnnotation.show( note.subjectId, note, model.NOTE_ACTIVE, null, function( new_note ){
-                    if ( new_note ){
-                        setupAnnotationTab( note.subjectId );
-                    }
-                });
-            });
-
-            $(".btn-note-deactivate",note_details).on("click",function(){
-                dlgAnnotation.show( note.subjectId, note, model.NOTE_OPEN, null, function( new_note ){
-                    if ( new_note ){
-                        setupAnnotationTab( note.subjectId );
-                    }
-                });
-            });
+            
+            if ( cur_note.state == "NOTE_ACTIVE" ){
+                $(".btn-note-comment").button("option","disabled",false);
+                $(".btn-note-edit").button("option","disabled",false);
+                $(".btn-note-activate").button("option","disabled",false).button("option","label","Deactivate");
+                $(".btn-note-open").button("option","disabled",false).button("option","label","Close");
+            }else if ( cur_note.state == "NOTE_OPEN" ){
+                $(".btn-note-comment").button("option","disabled",false);
+                $(".btn-note-edit").button("option","disabled",false);
+                $(".btn-note-activate").button("option","disabled",false).button("option","label","Activate");
+                $(".btn-note-open").button("option","disabled",false).button("option","label","Close");
+            }else{
+                $(".btn-note-comment").button("option","disabled",true);
+                $(".btn-note-edit").button("option","disabled",true);
+                $(".btn-note-activate").button("option","disabled",true).button("option","label","Activate");
+                $(".btn-note-open").button("option","disabled",false).button("option","label","Reopen");
+            }
         }
     });
 }
 
+
+$(".btn-note-comment").on("click",function(){
+    if ( cur_note ){
+        ignore_call = true;
+        dlgAnnotation.show( cur_note.subjectId, cur_note, null, null, function( new_note ){
+            if ( new_note ){
+                showSelectedNoteInfo( cur_note_node );
+                //setupAnnotationTab( cur_note.subjectId );
+            }
+        });
+    }
+});
+
+$(".btn-note-edit").on("click",function(){
+    if ( cur_note ){
+            ignore_call = true;
+            dlgAnnotation.show( cur_note.subjectId, cur_note, null, -1, function( new_note ){
+            if ( new_note ){
+                setupAnnotationTab( cur_note.subjectId );
+            }
+        });
+    }
+});
+
+$(".btn-note-open").on("click",function(){
+    if ( cur_note ){
+        ignore_call = true;
+        console.log("note state:",cur_note.state);
+        // Close/Reopen
+        dlgAnnotation.show( cur_note.subjectId, cur_note, cur_note.state!="NOTE_CLOSED"?model.NOTE_CLOSED:model.NOTE_OPEN, null, function( new_note ){
+            if ( new_note ){
+                setupAnnotationTab( cur_note.subjectId );
+            }
+        });
+    }
+});
+
+/*$(".btn-note-close",note_details).on("click",function(){
+    dlgAnnotation.show( note.subjectId, note, model.NOTE_CLOSED, null, function( new_note ){
+        if ( new_note ){
+            setupAnnotationTab( note.subjectId );
+        }
+    });
+});*/
+
+$(".btn-note-activate").on("click",function(){
+    if ( cur_note ){
+        ignore_call = true;
+        console.log("note state:",cur_note.state);
+        // Activate/deactivate
+        dlgAnnotation.show( cur_note.subjectId, cur_note, cur_note.state=="NOTE_ACTIVE"?model.NOTE_OPEN:model.NOTE_ACTIVE, null, function( new_note ){
+            if ( new_note ){
+                setupAnnotationTab( cur_note.subjectId );
+            }
+        });
+    }
+});
+
+/*$(".btn-note-deactivate",note_details).on("click",function(){
+    dlgAnnotation.show( note.subjectId, note, model.NOTE_OPEN, null, function( new_note ){
+        if ( new_note ){
+            setupAnnotationTab( note.subjectId );
+        }
+    });
+});*/
 
 $("#note-tabs").tabs({
     heightStyle:"content",
@@ -474,14 +541,14 @@ $("#note-tabs").tabs({
     }
 });
 
-function showSelectedAllocInfo( repo, user, cb ){
+function showSelectedAllocInfo( repo, user, node, cb ){
     api.allocView( repo, user, function( ok, data ){
         if ( ok ){
             var item = data.alloc[0];
             item.user = item.id;
             item.id = item.repo;
             showSelectedItemInfo( item );
-            if ( cb ) cb( item );
+            if ( cb ) cb( item, node );
         }else{
             showSelectedItemInfo();
         }
@@ -490,32 +557,49 @@ function showSelectedAllocInfo( repo, user, cb ){
 
 
 function showSelectedItemForm( item ){
-    var i, date = new Date(), t = item.id.charAt( 0 ), text, cls;
+    var i, tmp, date = new Date(), t = item.id.charAt( 0 ), text, cls, title, type, icon;
 
     switch ( t ){
-        case 'd': text = "Data Record"; cls = item.doi?".sidp":".sid"; break;
-        case 'c': text = "Collection"; cls = ".sic"; break;
-        case 'u': text = "User"; cls = ".siu"; break;
-        case 'p': text = "Project"; cls = ".sip"; break;
-        case 'r': text = "Allocation"; cls = ".sia"; break;
-        case 'q': text = "Query"; cls = ".siq"; break;
-        case 't': text = "Task"; cls = ".sit"; break;
+        case 'd': type = "Data Record"; icon = ""; title = item.title; cls = item.doi?".sidp":".sid"; break;
+        case 'c': type = "Collection"; title = item.title; cls = ".sic"; break;
+        case 'u': type = "User"; title = item.nameFirst + " " + item.nameLast; cls = ".siu"; break;
+        case 'p': type = "Project"; title = item.title; cls = ".sip"; break;
+        case 'r': type = "Allocation"; title = "Allocation for " + (item.user.startsWith("u/")?" user ":" project ") + item.user; cls = ".sia"; break;
+        case 'q': type = "Saved Query"; title = item.title; cls = ".siq"; break;
+        case 't':
+            if ( item.id.charAt(1) == '/' ){
+                type = "Catalog Category"; title = item.title.charAt(0).toUpperCase() + item.title.substr(1); cls = ".sitp";
+            }else{
+                type = "Background Task"; title = "Background Task"; cls = ".sit";
+            }
+            break;
         default:
             return;
     }
 
-    div.hide();
+    $("#sel_info_icon").removeClass().addClass( item.id.startsWith("d/")?util.getDataIcon( item ):"ui-icon ui-icon-" + util.getKeyIcon( item.id ));
+
+    title_div.html( title );
+
+    //$("#sel_info_desc",form).text( item.desc );
 
     $(".sel-info-table td:nth-child(2)",form).not(".ignore").html("<span style='color:#808080'>(none)</span>");
 
-    $("#sel_info_type",form).text( text );
-    $("#sel_info_id",form).text( item.id );
+    $("#sel_info_type",form).text( type );
 
-    if ( item.title )
-        $("#sel_info_title",form).text( item.title );
+    if ( cls == ".sitp" )
+        $("#sel_info_id",form).text( item.title );
+    else
+        $("#sel_info_id",form).text( item.id );
 
-    if ( item.nameLast )
-        $("#sel_info_name",form).text( item.nameFirst + " " + item.nameLast );
+
+    //if ( item.title )
+        //$("#sel_info_title",form).text( item.title );
+
+    //if ( item.nameLast )
+    //    info += "<b>" + item.nameFirst + " " + item.nameLast + "</b><br><br>";
+
+        //$("#sel_info_name",form).text( item.nameFirst + " " + item.nameLast );
 
     if ( item.alias && cls != ".sidp" )
         $("#sel_info_alias",form).text( item.alias );
@@ -526,11 +610,15 @@ function showSelectedItemForm( item ){
     if ( item.dataUrl )
         $("#sel_info_url",form).text( item.dataUrl );
 
-    if ( item.desc )
-        $("#sel_info_desc",form).text( item.desc );
-
-    if ( item.keyw )
-        $("#sel_info_keyw",form).text( item.keyw );
+    if ( item.tags ){
+        tmp = "";
+        for ( i in item.tags ){
+            if ( tmp )
+                tmp += ", ";
+            tmp += item.tags[i];
+        }
+        $("#sel_info_tags",form).text( tmp );
+    }
 
     if ( item.topic )
         $("#sel_info_topic",form).text( item.topic );
@@ -560,12 +648,21 @@ function showSelectedItemForm( item ){
             $("#sel_info_qry_text",form).text( qry.text );
         if ( qry.meta )
             $("#sel_info_qry_meta",form).text( qry.meta );
+        if ( qry.tags ){
+            tmp = "";
+            for ( i in qry.tags ){
+                if ( tmp )
+                    tmp += ", ";
+                tmp += qry.tags[i];
+            }
+            $("#sel_info_tags",form).text( tmp );
+        }
     }
 
     if ( cls == ".sia" ){
-        var is_user = item.user.startsWith("u/");
-        $("#sel_info_title",form).text( "Allocation for " + (is_user?" user ":" project ") + item.user );
-        $("#sel_info_desc",form).text( "Browse data records by allocation." );
+        //var is_user = item.user.startsWith("u/");
+        //$("#sel_info_title",form).text( "Allocation for " + (is_user?" user ":" project ") + item.user );
+        //$("#sel_info_desc",form).text( "Browse data records by allocation." );
 
         $("#sel_info_data_lim",form).text( util.sizeToString( item.dataLimit ));
         var used = Math.max( Math.floor(10000*item.dataSize/item.dataLimit)/100, 0 );
@@ -690,32 +787,23 @@ function showSelectedMetadata( md_str )
         var md = JSON.parse( md_str );
         var src = util.buildObjSrcTree( md, "md", data_md_exp );
         data_md_tree.reload( src );
-        data_md_empty = false;
+        if ( data_md_empty ){
+            data_md_empty = false;
+            $("#md_div").show();
+        }
+
     } else if ( !data_md_empty ) {
         data_md_tree.reload(tree_empty_src);
         data_md_empty = true;
+        $("#md_div").hide();
     }
 }
 
-
 $("#data_md_tree").fancytree({
-    extensions: ["themeroller","filter","dnd5"],
+    extensions: ["themeroller","filter"],
     themeroller: {
         activeClass: "my-fancytree-active",
-        addClass: "",
-        focusClass: "",
-        hoverClass: "my-fancytree-hover",
-        selectedClass: ""
-    },
-    dnd5:{
-        preventNonNodes: true,
-        dropEffectDefault: "copy",
-        scroll: false,
-        dragStart: function(node, data) {
-            console.log( "dnd start" );
-            data.dataTransfer.setData("text/plain",node.key);
-            return true;
-        }
+        hoverClass: ""
     },
     filter:{
         autoExpand: true,
@@ -726,26 +814,26 @@ $("#data_md_tree").fancytree({
     selectMode: 1,
     beforeExpand: function(event,data){
         // Handle auto-expansion
-        var path = data.node.title;
-        var par = data.node.parent;
-        while ( par ){
-            if ( par.title == "root" && !par.parent )
-                break;
-            path = par.title + "." + path;
-            par = par.parent;
-        }
-
-        path = "md." + path;
-
         if ( data.node.isExpanded() ){
-            delete data_md_exp[path];
+            delete data_md_exp[data.node.key];
         }else{
-            data_md_exp[path] = 10;
+            data_md_exp[data.node.key] = 10;
         }
-    }
+    },
 });
 
 data_md_tree = $.ui.fancytree.getTree("#data_md_tree");
+
+function stopPropFunc( ev ){
+    ev.stopPropagation();
+}
+
+$("#data_md_tree .fancytree-container")
+    .on("selectstart",".md_tree_val", stopPropFunc )
+    .on("selectionchange",".md_tree_val", stopPropFunc )
+    .on("mousedown",".md_tree_val", stopPropFunc )
+    .on("mousemove",".md_tree_val", stopPropFunc )
+    .on("mouseup",".md_tree_val", stopPropFunc );
 
 $("#md_filter_text").on('keypress', function (e) {
     if (e.keyCode == 13){
@@ -767,3 +855,9 @@ $("#md_filter_reset").on('click', function (e) {
         node.li.scrollIntoView();
     }
 });
+
+window.md_key_drag = function( ev ){
+    var node = data_md_tree.getNodeByKey(ev.target.title);
+    ev.dataTransfer.setData("text", node.key );
+}
+

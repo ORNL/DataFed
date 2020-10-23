@@ -30,15 +30,18 @@ var g_msg_by_id = {};
 var g_msg_by_name = {};
 var g_core_sock = zmq.socket('dealer');
 var g_core_serv_addr;
-var globus_auth;
+var g_globus_auth, g_globus_auth_cat;
+var g_oauth_credentials, g_oauth_credentials_cat;
 var g_ctx = new Array( MAX_CTX );
 var g_ctx_next = 0;
-var g_oauth_credentials;
 var g_client_id;
 var g_client_secret;
-var g_version;
-var g_version_base;
 var ready_start = 4;
+var g_version,
+    g_ver_major,
+    g_ver_mapi_major,
+    g_ver_mapi_minor,
+    g_ver_server;
 
 const nullfr = Buffer.from([]);
 
@@ -70,9 +73,14 @@ function startServer(){
     sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
         if ( !reply ){
             console.log( "ERROR: No reply from core server" );
-        }else if ( reply.major + "." + reply.minor != g_version_base ){
-            console.log( "ERROR: Incompatible core server version (" + reply.major + "." + reply.minor + ")" );
+        }else if ( reply.major != g_ver_major || reply.mapiMajor != g_ver_mapi_major ||
+                reply.mapi_minor < g_ver_mapi_minor || reply.mapi_minor > ( g_ver_mapi_minor + 9 )){
+            console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ")" );
         }else{
+            if ( reply.server > g_ver_server || reply.mapi_minor > g_ver_mapi_minor ){
+                console.log( "WARNING: A newer server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.server + ")" );
+            }
+
             g_oauth_credentials = {
                 clientId: g_client_id,
                 clientSecret: g_client_secret,
@@ -82,7 +90,18 @@ function startServer(){
                 scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
             };
         
-            globus_auth = new ClientOAuth2( g_oauth_credentials );
+            g_globus_auth = new ClientOAuth2( g_oauth_credentials );
+
+            g_oauth_credentials_cat = {
+                clientId: g_client_id,
+                clientSecret: g_client_secret,
+                authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
+                accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
+                redirectUri: 'https://'+g_host+':'+g_port+'/ui/catalog/authn',
+                scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
+            };
+        
+            g_globus_auth_cat = new ClientOAuth2( g_oauth_credentials_cat );
 
             var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
             var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
@@ -133,6 +152,12 @@ app.get('/ui/doi/:doiNum*', (a_request, a_response) => {
     a_response.render('doi',{doi: doi,theme:theme,version:g_version,test_mode:g_test});
 });
 
+app.get('/ui/catalog', (a_request, a_response) => {
+    console.log("get /catalog");
+
+    var theme = a_request.cookies['sdms-theme']|| "light";
+    a_response.render('catalog',{theme:theme,version:g_version,test_mode:g_test});
+});
 
 app.get('/ui', (a_request, a_response) => {
     console.log("get /ui");
@@ -176,13 +201,20 @@ app.get('/ui/register', (a_request, a_response) => {
 
     a_response.render('register', { acc_tok: a_request.query.acc_tok, ref_tok: a_request.query.ref_tok,
         acc_tok_ttl: a_request.query.acc_tok_ttl, uid: a_request.query.uid, uname: a_request.query.uname,
-        theme:theme,version:g_version,test_mode:g_test });
+        redir: a_request.query.redir, theme: theme, version: g_version, test_mode: g_test });
 });
 
 app.get('/ui/login', (a_request, a_response) => {
     console.log("get /ui/login");
 
-    var uri = globus_auth.code.getUri();
+    var uri = g_globus_auth.code.getUri();
+    a_response.redirect(uri);
+});
+
+app.get('/ui/catalog/login', (a_request, a_response) => {
+    console.log("get /ui/catalog/login");
+
+    var uri = g_globus_auth_cat.code.getUri();
     a_response.redirect(uri);
 });
 
@@ -200,12 +232,12 @@ app.get('/ui/error', (a_request, a_response) => {
     a_response.render('error',{theme:theme,version:g_version,test_mode:g_test});
 });
 
-app.get('/ui/authn', ( a_request, a_response ) => {
-    console.log( '/ui/authn', a_request.originalUrl );
+function doLogin( a_request, a_response, a_auth, a_redirect_url ){
+    console.log( 'doLogin', a_redirect_url );
 
     // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
-
-    globus_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
+    
+    a_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
         //console.log( 'client token:', client_token );
         console.log( 'got client token' );
 
@@ -250,7 +282,7 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                             // Not registered
                             console.log("User not registered", userinfo );
                             a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-                            a_response.redirect( "/ui/register?acc_tok=" + xfr_token.access_token + "&ref_tok=" + xfr_token.refresh_token + "&acc_tok_ttl=" + xfr_token.expires_in + "&uid=" + userinfo.uid + "&uname=" + userinfo.name );
+                            a_response.redirect( "/ui/register?acc_tok=" + encodeURIComponent( xfr_token.access_token ) + "&ref_tok=" + encodeURIComponent( xfr_token.refresh_token ) + "&acc_tok_ttl=" + encodeURIComponent( xfr_token.expires_in ) + "&uid=" + encodeURIComponent( userinfo.uid ) + "&uname=" + encodeURIComponent( userinfo.name ) + "&redir=" + encodeURIComponent( a_redirect_url ));
                         } else {
                             console.log( 'user', userinfo.uid, 'verified' );
                             // Registered, save access token
@@ -261,7 +293,8 @@ app.get('/ui/authn', ( a_request, a_response ) => {
                             // TODO Account may be disable from SDMS (active = false)
                             a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
                             a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-                            a_response.redirect( "/ui/main" );
+                            console.log("auth redir",a_redirect_url);
+                            a_response.redirect( a_redirect_url );
                         }
                     });
                 }else{
@@ -283,6 +316,18 @@ app.get('/ui/authn', ( a_request, a_response ) => {
     }, function( reason ){
         console.log( "getToken failed:", reason );
     });
+}
+
+app.get('/ui/authn', ( a_request, a_response ) => {
+    console.log( '/ui/authn', a_request.originalUrl );
+
+    doLogin( a_request, a_response, g_globus_auth, "/ui/main" );
+});
+
+app.get('/ui/catalog/authn', ( a_request, a_response ) => {
+    console.log( '/ui/catalog/authn', g_globus_auth_cat, a_request.originalUrl );
+
+    doLogin( a_request, a_response, g_globus_auth_cat, "/ui/catalog" );
 });
 
 app.get('/ui/do_register', ( a_req, a_resp ) => {
@@ -310,7 +355,7 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
             userinfo.ref_tok = a_req.query.ref_tok;
             a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
             a_resp.cookie( 'sdms-user', JSON.stringify( userinfo ), { path:"/ui", maxAge: 31536000000 /*1 year in msec */ });
-            a_resp.redirect( "/ui/main" );
+            a_resp.redirect( a_req.query.redir );
         }
     });
 });
@@ -334,7 +379,7 @@ app.get('/api/usr/find/by_name_uid', ( a_req, a_resp ) => {
 });
 
 app.get('/api/usr/view', ( a_req, a_resp ) => {
-    console.log("/usr/view:",a_req.query.id);
+    //console.log("/usr/view:",a_req.query.id);
     sendMessage( "UserViewRequest", { uid: a_req.query.id, details:(a_req.query.details=="true"?true:false)}, a_req, a_resp, function( reply ) {
         a_resp.json( reply.user[0] );
     });
@@ -356,7 +401,7 @@ app.get('/api/usr/update', ( a_req, a_resp ) => {
 });
 
 app.get('/api/usr/revoke_cred', ( a_req, a_resp ) => {
-    console.log("/api/usr/revoke_cred");
+    //console.log("/api/usr/revoke_cred");
     sendMessage( "RevokeCredentialsRequest", {}, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
@@ -386,27 +431,8 @@ app.get('/api/usr/list/collab', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/prj/create', ( a_req, a_resp ) => {
-    var params  = {
-        id: a_req.query.id,
-        title: a_req.query.title,
-        domain: a_req.query.domain
-    };
-
-    if ( a_req.query.repo != undefined )
-        params.repo = a_req.query.repo;
-    if ( a_req.query.desc != undefined )
-        params.desc = a_req.query.desc;
-    if ( a_req.query.sub_repo != undefined && a_req.query.sub_alloc != undefined ){
-        params.subRepo = a_req.query.sub_repo;
-        params.subAlloc = a_req.query.sub_alloc;
-    }
-    if ( a_req.query.members != undefined )
-        params.member = JSON.parse( a_req.query.members );
-    if ( a_req.query.admins != undefined )
-        params.admin = JSON.parse( a_req.query.admins );
-
-    sendMessage( "ProjectCreateRequest", params, a_req, a_resp, function( reply ) {
+app.post('/api/prj/create', ( a_req, a_resp ) => {
+    sendMessage( "ProjectCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
         if ( reply.proj )
             a_resp.send(reply.proj);
         else
@@ -414,33 +440,8 @@ app.get('/api/prj/create', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/prj/update', ( a_req, a_resp ) => {
-    var params  = {
-        id: a_req.query.id,
-    };
-
-    if ( a_req.query.domain != undefined )
-        params.domain = a_req.query.domain;
-    if ( a_req.query.title != undefined )
-        params.title = a_req.query.title;
-    if ( a_req.query.repo != undefined )
-        params.repo = a_req.query.repo;
-    if ( a_req.query.desc != undefined )
-        params.desc = a_req.query.desc;
-    if ( a_req.query.sub_repo != undefined )
-        params.subRepo = a_req.query.sub_repo;
-    if ( a_req.query.sub_alloc != undefined )
-        params.subAlloc = a_req.query.sub_alloc;
-    if ( a_req.query.members != undefined ){
-        params.member = JSON.parse( a_req.query.members );
-        params.memberSet = true;
-    }
-    if ( a_req.query.admins ){
-        params.admin = JSON.parse( a_req.query.admins );
-        params.adminSet = true;
-    }
-
-    sendMessage( "ProjectUpdateRequest", params, a_req, a_resp, function( reply ) {
+app.post('/api/prj/update', ( a_req, a_resp ) => {
+    sendMessage( "ProjectUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         if ( reply.proj )
             a_resp.send(reply.proj);
         else
@@ -478,44 +479,18 @@ app.get('/api/prj/list', ( a_req, a_resp ) => {
         params.count = a_req.query.count;
     }
     
-    console.log("proj list:",params);
+    //console.log("proj list:",params);
     sendMessage( "ProjectListRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
-        /*if ( reply.item ){
-            console.log("prj list:",reply.item);
-            a_resp.send(reply);
-        }else{
-            console.log("prj list:[]");
-            a_resp.send([]);
-        }*/
     });
 });
 
 app.post('/api/prj/search', ( a_req, a_resp ) => {
-    console.log("search:",a_req.body);
+    //console.log("search:",a_req.body);
     sendMessage( "ProjectSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply.item?reply.item:[]);
     });
 });
-
-/*
-app.get('/api/prj/list/by_admin', ( a_req, a_resp ) => {
-    sendMessage( "ProjectListByAdminRequest", {}, a_req, a_resp, function( reply ) {
-        if ( reply.proj )
-            a_resp.send(reply.proj);
-        else
-            a_resp.send([]);
-    });
-});
-
-app.get('/api/prj/list/by_member', ( a_req, a_resp ) => {
-    sendMessage( "ProjectListByMemberRequest", {}, a_req, a_resp, function( reply ) {
-        if ( reply.proj )
-            a_resp.send(reply.proj);
-        else
-            a_resp.send([]);
-    });
-});*/
 
 app.get('/api/grp/create', ( a_req, a_resp ) => {
     var params  = {
@@ -642,9 +617,9 @@ app.get('/api/query/exec', ( a_req, a_resp ) => {
 
 
 app.post('/api/dat/search', ( a_req, a_resp ) => {
-    console.log("search:",a_req.body);
+    //console.log("search:",a_req.body);
     sendMessage( "RecordSearchRequest", { query: JSON.stringify( a_req.body ) }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.item?reply.item:[]);
+        a_resp.send(reply);
     });
 });
 
@@ -657,22 +632,22 @@ app.post('/api/dat/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/dat/create/batch', ( a_req, a_resp ) => {
-    console.log( "dat create batch", a_req.headers['content-type'], typeof a_req.body );
+    //console.log( "dat create batch", a_req.headers['content-type'], typeof a_req.body );
     sendMessage( "RecordCreateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.post('/api/dat/update', ( a_req, a_resp ) => {
-    console.log( "dat update", a_req.body );
+    //console.log( "dat update", a_req.body );
     sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
-        console.log("rec update:",reply);
+        //console.log("rec update:",reply);
         a_resp.send(reply);
     });
 });
 
 app.post('/api/dat/update/batch', ( a_req, a_resp ) => {
-    console.log( "dat update batch", a_req.headers['content-type'], typeof a_req.body );
+    //console.log( "dat update batch", a_req.headers['content-type'], typeof a_req.body );
     sendMessage( "RecordUpdateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -703,7 +678,7 @@ app.get('/api/dat/copy', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/delete', ( a_req, a_resp ) => {
-    console.log("/dat/delete",a_req.query.ids);
+    //console.log("/dat/delete",a_req.query.ids);
     sendMessage( "RecordDeleteRequest", { id: JSON.parse(a_req.query.ids) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -740,7 +715,7 @@ app.get('/api/dat/list/by_alloc', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/get', ( a_req, a_resp ) => {
-    console.log("data get",a_req.query);
+    //console.log("data get",a_req.query);
 
     var par = { id: JSON.parse( a_req.query.id )};
 
@@ -794,7 +769,7 @@ app.get('/api/dat/dep/graph/get', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/alloc_chg', ( a_req, a_resp ) => {
-    console.log('/api/dat/alloc_chg');
+    //console.log('/api/dat/alloc_chg');
 
     var params = { id: JSON.parse(a_req.query.id) };
     if ( a_req.query.repo_id )
@@ -810,7 +785,7 @@ app.get('/api/dat/alloc_chg', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
-    console.log('/api/dat/owner_chg',a_req.query);
+    //console.log('/api/dat/owner_chg',a_req.query);
     var params = { id: JSON.parse(a_req.query.id), collId: a_req.query.coll_id };
     if ( a_req.query.repo_id )
         params.repoId = a_req.query.repo_id;
@@ -819,7 +794,7 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
     if ( a_req.query.check )
         params.check = true;
 
-    console.log('/api/dat/owner_chg params:',params);
+    //console.log('/api/dat/owner_chg params:',params);
 
     sendMessage( "RecordOwnerChangeRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -827,7 +802,7 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
 });
 
 app.get('/api/doi/view', ( a_req, a_resp ) => {
-    console.log("DOI:",a_req.query.doi);
+    //console.log("DOI:",a_req.query.doi);
     sendMessage( "DOIViewRequest", { doi: a_req.query.doi }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     }, true );
@@ -918,7 +893,7 @@ app.get('/api/note/create', ( a_req, a_resp ) => {
         activate: a_req.query.activate
     };
 
-    console.log("note create",params)
+    //console.log("note create",params)
     sendMessage( "AnnotationCreateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -968,6 +943,46 @@ app.get('/api/note/list/by_subject', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/tag/search', ( a_req, a_resp ) => {
+    var par = { name: a_req.query.name };
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "TagSearchRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.get('/api/tag/autocomp', ( a_req, a_resp ) => {
+    var par = { name: a_req.query.term, offset: 0, count: 20 };
+
+    sendMessage( "TagSearchRequest", par, a_req, a_resp, function( reply ) {
+        var res = [], tag;
+        if ( reply.tag ){
+            for ( var i in reply.tag ){
+                tag = reply.tag[i];
+                res.push({ value: tag.name, label: tag.name + " (" + tag.count + ")" });
+            }
+        }
+
+        a_resp.json( res );
+    });
+});
+
+app.get('/api/tag/list/by_count', ( a_req, a_resp ) => {
+    var par = {};
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "TagListByCountRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
 app.get('/api/task/list', ( a_req, a_resp ) => {
     var params = {};
     if ( a_req.query.since )
@@ -978,7 +993,7 @@ app.get('/api/task/list', ( a_req, a_resp ) => {
 });
 
 app.get('/api/task/view', ( a_req, a_resp ) => {
-    console.log("task/view", a_req.query.id );
+    //console.log("task/view", a_req.query.id );
     sendMessage( "TaskViewRequest", {"taskId":a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
@@ -991,7 +1006,7 @@ app.post('/api/col/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/col/update', ( a_req, a_resp ) => {
-    console.log("col update:",a_req.body);
+    //console.log("col update:",a_req.body);
     sendMessage( "CollUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1019,7 +1034,7 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
     }
-    console.log("Coll Read",a_req.query.id);
+    //console.log("Coll Read",a_req.query.id);
     sendMessage( "CollReadRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1027,20 +1042,20 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
 
 app.get('/api/col/get_parents', ( a_req, a_resp ) => {
     sendMessage( "CollGetParentsRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        console.log("get_parents - cb",a_req.query.id);
+        //console.log("get_parents",reply);
         a_resp.send(reply);
     });
 });
 
 app.get('/api/col/get_offset', ( a_req, a_resp ) => {
     sendMessage( "CollGetOffsetRequest", { id: a_req.query.id, item: a_req.query.item_id, pageSz: a_req.query.page_sz}, a_req, a_resp, function( reply ) {
-        console.log("get_offset - cb",a_req.query.id, a_req.query.item_id, a_req.query.page_sz);
+        //console.log("get_offset - cb",a_req.query.id, a_req.query.item_id, a_req.query.page_sz);
         a_resp.send(reply);
     });
 });
 
 app.get('/api/col/move', ( a_req, a_resp ) => {
-    console.log("move items:",a_req.query.items,"src:",a_req.query.src_id,"dst:",a_req.query.dst_id);
+    //console.log("move items:",a_req.query.items,"src:",a_req.query.src_id,"dst:",a_req.query.dst_id);
     sendMessage( "CollMoveRequest", { srcId: a_req.query.src_id, dstId: a_req.query.dst_id, item: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1069,6 +1084,21 @@ app.get('/api/col/published/list', ( a_req, a_resp ) => {
         a_resp.send(reply);
     });
 });
+
+
+app.post('/api/cat/search', ( a_req, a_resp ) => {
+    sendMessage( "CatalogSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+
+app.post('/api/col/pub/search/data', ( a_req, a_resp ) => {
+    sendMessage( "RecordSearchPublishedRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
 
 app.get('/api/repo/list', ( a_req, a_resp ) => {
     var params = {};
@@ -1100,7 +1130,7 @@ app.post('/api/repo/update', ( a_req, a_resp ) => {
 });
 
 app.get('/api/repo/delete', ( a_req, a_resp ) => {
-    console.log("repo del, id",a_req.query.id);
+    //console.log("repo del, id",a_req.query.id);
     sendMessage( "RepoDeleteRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
@@ -1161,7 +1191,7 @@ app.get('/api/repo/alloc/delete', ( a_req, a_resp ) => {
 });
 
 app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
-    console.log("alloc set:",a_req.query.repo,a_req.query.subject,a_req.query.data_limit,a_req.query.rec_limit);
+    //console.log("alloc set:",a_req.query.repo,a_req.query.subject,a_req.query.data_limit,a_req.query.rec_limit);
     sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,dataLimit:a_req.query.data_limit,recLimit:a_req.query.rec_limit}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1172,41 +1202,59 @@ app.get('/api/repo/alloc/set/default', ( a_req, a_resp ) => {
     if ( a_req.query.subject )
         par.subject = a_req.query.subject;
 
-    console.log("alloc set def:",par);
+    //console.log("alloc set def:",par);
 
     sendMessage( "RepoAllocationSetDefaultRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
-app.get('/api/top/list', ( a_req, a_resp ) => {
-    var par = {topicId:a_req.query.id?a_req.query.id:"t/root"};
-    if ( a_req.query.data == "false" )
-        par.data = false;
+app.get('/api/top/list/topics', ( a_req, a_resp ) => {
+    var par = {}
+
+    if ( a_req.query.id )
+        par.topicId = a_req.query.id;
+
     if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
     }
-    console.log( "TopicListRequest", par );
-    sendMessage( "TopicListRequest", par, a_req, a_resp, function( reply ) {
+
+    //console.log("top qry",a_req.query);
+    //console.log("top par",par);
+
+    sendMessage( "TopicListTopicsRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
 });
 
-app.get('/api/top/link', ( a_req, a_resp ) => {
-    sendMessage( "TopicLinkRequest", {topic:a_req.topic,id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        a_resp.json({});
+app.get('/api/top/list/coll', ( a_req, a_resp ) => {
+    var par = {topicId:a_req.query.id};
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        par.offset = a_req.query.offset;
+        par.count = a_req.query.count;
+    }
+
+    sendMessage( "TopicListCollectionsRequest", par, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
     });
 });
 
-app.get('/api/top/unlink', ( a_req, a_resp ) => {
-    sendMessage( "TopicUnlinkRequest", {topic:a_req.topic,id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        a_resp.json({});
+app.get('/api/top/view', ( a_req, a_resp ) => {
+    sendMessage( "TopicViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.get('/api/top/search', ( a_req, a_resp ) => {
+    console.log("top srch",a_req.query.phrase);
+    sendMessage( "TopicSearchRequest", {phrase:a_req.query.phrase}, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
     });
 });
 
 app.get('/ui/ep/view', ( a_req, a_resp ) => {
-    console.log("/ui/ep/view", a_req.query.ep );
+    //console.log("/ui/ep/view", a_req.query.ep );
 
     //var userinfo = JSON.parse(a_req.cookies['sdms-user']);
 
@@ -1230,7 +1278,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
                 data += chunk;
             });
             res.on('end', () => {
-                console.log('done:',data);
+                //console.log('done:',data);
                 a_resp.json(JSON.parse(data));
             });
         });
@@ -1245,7 +1293,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
 });
 
 app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
-    console.log("/ui/eo/autocomp", a_req.query.term);
+    //console.log("/ui/eo/autocomp", a_req.query.term);
 
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
         //console.log("token reply:", reply );
@@ -1268,7 +1316,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             });
 
             res.on('end', () => {
-                console.log('done:',data);
+                //console.log('done:',data);
                 a_resp.json(JSON.parse(data));
             });
         });
@@ -1296,7 +1344,7 @@ app.post('/ui/ep/recent/save', ( a_req, a_resp ) => {
 
 app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
-        console.log("reply:", reply );
+        //console.log("reply:", reply );
 
         const opts = {
             hostname: 'transfer.api.globusonline.org',
@@ -1315,7 +1363,7 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
                 data += chunk;
             });
             res.on('end', () => {
-                console.log('done:',data);
+                //console.log('done:',data);
                 a_resp.json(JSON.parse(data));
             });
         });
@@ -1351,7 +1399,7 @@ app.get('/ui/theme/load', ( a_req, a_resp ) => {
 
 app.get('/ui/theme/save', ( a_req, a_resp ) => {
     a_resp.cookie( 'sdms-theme', a_req.query.theme, { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-    a_resp.send("");
+    a_resp.send("{\"ok\":true}");
 });
 
 
@@ -1370,7 +1418,7 @@ function allocRequestContext( a_response, a_callback ) {
     if ( ctx == MAX_CTX ) {
         ctx = g_ctx.indexOf( null );
         if ( ctx == -1 ) {
-            console.log("out of contexts");
+            console.log("ERROR: out of msg contexts!!!");
             if ( a_response ) {
                 console.log("SEND FAIL");
                 a_response.status( 503 );
@@ -1390,21 +1438,18 @@ function allocRequestContext( a_response, a_callback ) {
 
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
-    var client = a_anon?"anon_":a_req.cookies[ 'sdms' ];
+    var client = a_req.cookies[ 'sdms' ];
+    if ( !client )
+        client = "anon_";
 
     a_resp.setHeader('Content-Type', 'application/json');
 
-    if ( !client ) {
-        a_resp.status(403).send( "Not authorized" );
-        return;
-    }
-
     //console.log("sendMsg parms:",a_msg_data);
-    //if ( a_msg_name == "CollGetOffsetRequest" )
+
     //    console.log("sendMsg alloc ctx", a_msg_name );
     allocRequestContext( a_resp, function( ctx ){
-        //if ( a_msg_name == "CollGetOffsetRequest" )
-        //    console.log("sendMsg got ctx", a_msg_name );
+        console.log("sendMsg", a_msg_name, ctx );
+
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
             throw "Invalid message type: " + a_msg_name;
@@ -1461,6 +1506,8 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         throw "Invalid message type: " + a_msg_name;
 
     allocRequestContext( null, function( ctx ){
+        console.log("sendMsgDir", a_msg_name, ctx );
+
         var msg_buf = msg.encode(a_msg_data).finish();
         //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
@@ -1485,7 +1532,8 @@ function processProtoFile( msg ){
     var i, msg_list = [];
     for ( i in msg.parent.nested )
         msg_list.push(msg.parent.nested[i]);
-    msg_list.sort();
+
+    //msg_list.sort();
 
     var pid = msg.values.ID;
 
@@ -1508,24 +1556,16 @@ protobuf.load("Version.proto", function(err, root) {
 
     console.log('Version.proto loaded');
 
-    var msg = root.lookupEnum( "VerMajor" );
+    var msg = root.lookupEnum( "Version" );
     if ( !msg )
-        throw "Missing Major Version enum in Version.Anon proto file";
+        throw "Missing Version enum in Version.Anon proto file";
 
-    g_version = msg.values.VER_MAJOR + ".";
-
-    msg = root.lookupEnum( "VerMinor" );
-    if ( !msg )
-        throw "Missing Minor Version enum in Version.Anon proto file";
-
-    g_version += msg.values.VER_MINOR;
-
-    msg = root.lookupEnum( "VerBuild" );
-    if ( !msg )
-        throw "Missing Build Version enum in Version.Anon proto file";
-
-    g_version_base = g_version;
-    g_version += "."+msg.values.VER_BUILD;
+    g_ver_major = msg.values.VER_MAJOR;
+    g_ver_mapi_major = msg.values.VER_MAPI_MAJOR;
+    g_ver_mapi_minor = msg.values.VER_MAPI_MINOR;
+    g_ver_server = msg.values.VER_SERVER;
+    
+    g_version = g_ver_major + "." + g_ver_mapi_major + "." + g_ver_mapi_minor + ":" + g_ver_server;
 
     console.log('Running Version',g_version);
     if ( --ready_start == 0 )
@@ -1587,24 +1627,25 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
             try {
                 msg = msg_class.decode( msg_buf );
                 if ( !msg )
-                    console.log( "decode failed" );
+                    console.log( "ERROR: msg decode failed: no reason" );
             } catch ( err ) {
-                console.log( "decode failed:", err );
+                console.log( "ERROR: msg decode failed:", err );
             }
         } else {
             msg = msg_class;
         }
     } else {
-        console.log( "unkown mtype" );
+        console.log( "ERROR: unknown msg type:", mtype );
     }
 
     var f = g_ctx[ctx];
     if ( f ) {
         g_ctx[ctx] = null;
+        console.log("freed ctx",ctx,"for msg",msg_class.name);
         g_ctx_next = ctx;
         f( msg );
     } else {
-        console.log( "no callback found!" );
+        console.log( "ERROR: no callback found for ctxt", ctx," - msg type:", mtype, ", name:", msg_class.name );
     }
 });
 

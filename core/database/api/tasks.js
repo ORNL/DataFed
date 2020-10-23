@@ -296,7 +296,8 @@ var tasks_func = function() {
             }
 
             // Must do this in a retry loop in case of concurrent (non-put) updates
-            retry = 10
+            retry = 10;
+
             for (;;){
                 try{
                     obj._transact( function(){
@@ -597,6 +598,10 @@ var tasks_func = function() {
 
         var result = g_proc.preprocessItems( a_client, owner_id, a_res_ids, g_lib.TT_REC_OWNER_CHG );
 
+        if ( result.has_pub ){
+            throw [g_lib.ERR_PERM_DENIED, "Owner change not allowed - selection contains public data."];
+        }
+
         var i,loc,rec,deps = [];
 
         result.tot_cnt = result.http_data.length + result.glob_data.length;
@@ -805,6 +810,11 @@ var tasks_func = function() {
         console.log("taskInitRecCollDelete start",Date.now());
 
         var result = g_proc.preprocessItems( a_client, null, a_ids, g_lib.TT_REC_DEL );
+
+        if ( result.has_pub ){
+            throw [g_lib.ERR_PERM_DENIED, "Deletion not allowed - selection contains public data."];
+        }
+
         var i,rec_ids = [];
 
         console.log("HTTP records:", result.http_data.length, ", Globus records:", result.glob_data.length );
@@ -818,8 +828,9 @@ var tasks_func = function() {
 
         obj._ensureExclusiveAccess( rec_ids );
 
-        var state = {}
+        var state = {};
 
+        // For deleted collections, unlink all contained items
         if ( result.coll.length ){
             state.del_coll = result.coll;
             for ( i in result.coll ){
@@ -886,7 +897,7 @@ var tasks_func = function() {
                         // Update task step
                         a_task.step += 1;
                         g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-                    }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task"] );
+                    }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag"] );
                     break;
                 } catch( e ) {
                     if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
@@ -988,7 +999,7 @@ var tasks_func = function() {
                 // Update task step
                 a_task.step += 1;
                 g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-            }, [], ["d","c","p","a","g","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task"] );
+            }, [], ["d","c","p","a","g","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag"] );
 
             // Continue to next step
         }
@@ -1331,12 +1342,16 @@ var tasks_func = function() {
     obj._buildDeleteDoc = function( a_data ){
         var loc, locs, doc = [], repo_map = {};
 
-        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
+        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
 
-        console.log("locs hasNext",locs.hasNext());
+        //console.log("locs hasNext",locs.hasNext());
 
         while ( locs.hasNext() ){
             loc = locs.next();
+
+            // Skip records with no raw data
+            if ( !loc.d_sz )
+                continue;
 
             if ( loc.r_id in repo_map ){
                 repo_map[loc.r_id].ids.push(loc.d_id);
@@ -1380,6 +1395,11 @@ var tasks_func = function() {
         if ( tmp )
             g_lib.topicUnlink( a_id );
 
+        // Remove tags
+        var doc = g_db.c.document( a_id );
+        if ( doc.tags && doc.tags.length )
+            g_lib.removeTags( doc.tags );
+
         // Delete collection
         g_graph.c.remove( a_id );
     };
@@ -1405,7 +1425,11 @@ var tasks_func = function() {
         while( tmp.hasNext() ){
             g_lib.annotationDelete( tmp.next()._to );
         }
-        
+
+        // Remove tags
+        if ( doc.tags && doc.tags.length )
+            g_lib.removeTags( doc.tags );
+
         // Update allocation
         var loc = g_db.loc.firstExample({ _from: a_id });
         var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
@@ -1437,7 +1461,11 @@ var tasks_func = function() {
             while( tmp.hasNext() ){
                 g_lib.annotationDelete( tmp.next()._to );
             }
-            
+
+            // Remove tags
+            if ( doc.tags && doc.tags.length )
+                g_lib.removeTags( doc.tags );
+
             // Update allocation
             loc = g_db.loc.firstExample({ _from: id });
             if ( !( doc.owner in allocs )){
@@ -1457,8 +1485,8 @@ var tasks_func = function() {
             g_graph.d.remove( id );
         }
 
-        console.log( "allocation", allocs );
-        console.log( "updating allocation", Date.now() );
+        // /console.log( "allocation", allocs );
+        //console.log( "updating allocation", Date.now() );
 
         for ( i in allocs ){
             tmp = allocs[i];
@@ -1491,7 +1519,7 @@ var tasks_func = function() {
 
         while ( rec_ids.hasNext() ) {
             id = rec_ids.next();
-            console.log("del ",id);
+            //console.log("del ",id);
 
             if ( id.charAt(0) == "d" ){
                 obj._deleteDataRecord( id );
@@ -1502,27 +1530,16 @@ var tasks_func = function() {
             }
         }
 
-        console.log("del",a_proj_id);
+        //console.log("del",a_proj_id);
 
         g_graph.p.remove( a_proj_id );
     };
 
 
-    /*
-    if ( a_new_coll_id ){
-        if ( !g_db.c.exists( req.body.new_coll_id ))
-            throw [ g_lib.ERR_INTERNAL_FAULT, "New collection '" + req.body.new_coll_id + "' does not exist!" ];
-
-        var coll = g_db.c.document( req.body.new_coll_id );
-
-        if ( coll.owner != req.body.new_owner_id )
-            throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + id + "' destination collection '" + req.body.new_coll_id + "' not owner by new owner!" ];
-    }*/
-
     obj.recMoveInit = function( a_data, a_new_repo_id, a_new_owner_id, a_new_coll_id ) {
         var loc;
 
-        console.log("recMoveInit", a_new_repo_id, a_new_owner_id, a_new_coll_id );
+        //console.log("recMoveInit", a_new_repo_id, a_new_owner_id, a_new_coll_id );
 
         for ( var i in a_data ){
             loc = g_db.loc.firstExample({ _from: a_data[i].id });
@@ -1554,7 +1571,7 @@ var tasks_func = function() {
 
         for ( var i in a_data ){
             id = a_data[i].id;
-            console.log("recMoveRevert", id );
+            //console.log("recMoveRevert", id );
 
             loc = g_db.loc.firstExample({ _from: id });
             g_db._update( loc._id, { new_repo: null, new_owner: null, new_coll: null }, { keepNull: false } );
@@ -1570,9 +1587,12 @@ var tasks_func = function() {
         for ( var i in a_data ){
             data = a_data[i];
 
-            //console.log("recMoveFini, id:", data.id );
-
             loc = g_db.loc.firstExample({ _from: data.id });
+
+            //console.log("recMoveFini, id:", data.id, "loc:", loc );
+
+            if ( !loc.new_owner && !loc.new_repo )
+                continue;
 
             if ( loc.new_owner ){
                 // Changing owner and repo
@@ -1640,9 +1660,12 @@ var tasks_func = function() {
             if ( !alloc )
                 throw [ g_lib.ERR_INTERNAL_FAULT, "Record '" + data.id + "' has mismatched allocation/location (cur)!" ];
 
+            //console.log("alloc:", alloc );
             //console.log("recMoveFini, adj src alloc to:", alloc.rec_count - 1, alloc.data_size - data.size );
 
             g_db._update( alloc._id, { rec_count: alloc.rec_count - 1, data_size: alloc.data_size - data.size });
+
+            //console.log("update alloc:", alloc );
 
             // Update new allocation stats
             alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });

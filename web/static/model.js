@@ -22,16 +22,14 @@ export const PAYLOAD_MAX_SIZE            = 1048576; // Max server payload size =
 
 export const SS_USER                     = 1;
 export const SS_PROJECT                  = 2;
-export const SS_OWNED_PROJECTS           = 3;
-export const SS_MANAGED_PROJECTS         = 4;
-export const SS_MEMBER_PROJECTS          = 5;
-export const SS_COLLECTION               = 6;
-export const SS_TOPIC                    = 7;
-export const SS_SHARED_BY_USER           = 8;
-export const SS_SHARED_BY_ANY_USER       = 9;
-export const SS_SHARED_BY_PROJECT        = 10;
-export const SS_SHARED_BY_ANY_PROJECT    = 11;
-export const SS_VIEW                     = 12;
+export const SS_PROJECTS                 = 3;
+export const SS_COLLECTION               = 4;
+export const SS_TOPIC                    = 5;
+export const SS_SHARED_BY_USER           = 6;
+export const SS_SHARED_BY_ANY_USER       = 7;
+export const SS_SHARED_BY_PROJECT        = 8;
+export const SS_SHARED_BY_ANY_PROJECT    = 9;
+export const SS_VIEW                     = 10;
 
 export const TT_DATA_GET         = 0;
 export const TT_DATA_PUT         = 1;
@@ -86,6 +84,11 @@ export const NOTE_MASK_LOC_WARN  = 0x44;
 export const NOTE_MASK_LOC_ERR   = 0x88;
 export const NOTE_MASK_LOC_ALL   = 0xFF;
 export const NOTE_MASK_INH_ALL   = 0xC00;
+
+export const SORT_ID            = 0;
+export const SORT_TITLE         = 1;
+export const SORT_TIME_CREATE   = 2;
+export const SORT_TIME_UPDATE   = 3;
 
 export const NoteTypeLabel = [
     "Question",

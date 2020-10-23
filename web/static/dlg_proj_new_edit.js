@@ -26,16 +26,16 @@ export function show( a_data, a_upd_perms, a_cb ) {
         <div class='row-flex' style='flex: 1 1 100%;min-height:0'>\
             <div class='col-flex' style='flex: 1 1 50%;height:100%'>\
                 <div style='flex:none'>Members:</div>\
-                <div class='ui-widget-content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
-                    <div id='proj_mem_tree' class='no-border'></div>\
+                <div class='content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
+                    <div id='proj_mem_tree' class='content no-border'></div>\
                 </div>\
                 <div style='flex:none;padding-top:.25em'><button id='add_mem_btn' class='btn'>Add</button>&nbsp<button id='rem_mem_btn' class='btn' disabled>Remove</button></div>\
             </div>\
             <div style='flex:none'>&nbsp</div>\
             <div class='col-flex' style='flex: 1 1 50%;height:100%'>\
                 <div style='flex:none'>Admins:</div>\
-                <div class='ui-widget-content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
-                    <div id='proj_adm_tree' class='no-border'></div>\
+                <div class='content text' style='flex:1 1 100%;min-height:5em;overflow:auto'>\
+                    <div id='proj_adm_tree' class='content no-border'></div>\
                 </div>\
                 <div style='flex:none;padding-top:.25em'><button id='add_adm_btn' class='btn'>Add</button>&nbsp<button id='rem_adm_btn' class='btn' disabled>Remove</button></div>\
             </div>\
@@ -68,42 +68,36 @@ export function show( a_data, a_upd_perms, a_cb ) {
         },{
             text: a_data?"Update":"Create",
             click: function() {
-                var obj ={}, i, url = "", inst = $(this);
+                var proj = {}, i, inst = $(this),
+                    mem_tree = $.ui.fancytree.getTree("#proj_mem_tree"),
+                    adm_tree = $.ui.fancytree.getTree("#proj_adm_tree"),
+                    admins = [],
+                    members = [],
+                    result,
+                    close_cnt = 0;
 
-                if ( a_data ){
-                    util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
-                    util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
-                }else{
-                    obj.title = $("#title",frame).val().trim();
-                    obj.desc = $("#desc",frame).val().trim();
-                }
-
-                if ( obj.title )
-                    url += "&title="+ encodeURIComponent(obj.title);
-
-                if ( obj.desc )
-                    url += "&desc="+ encodeURIComponent(obj.desc);
-
-                var mem_tree = $.ui.fancytree.getTree("#proj_mem_tree");
-                var adm_tree = $.ui.fancytree.getTree("#proj_adm_tree");
-
-                var admins = [];
                 adm_tree.visit( function(node){
                     admins.push( node.key );
                 });
 
-                var members = [];
                 mem_tree.visit( function(node){
                     members.push( node.key );
                 });
 
-                var new_def_alloc, close_cnt = 0;
-
                 if ( a_data ){
-                    var diff;
+                    var diff, do_upd = false;
 
+                    proj.id = a_data.id;
+
+                    util.getUpdatedValue( $("#title",frame).val(), a_data, proj, "title" );
+                    util.getUpdatedValue( $("#desc",frame).val(), a_data, proj, "desc" );
+
+                    if ( proj.title != undefined || proj.desc != undefined ){
+                        do_upd = true;
+                    }
+
+                    diff = false;
                     if ( a_data.admin && a_data.admin.length ){
-                        diff = true;
                         if ( a_data.admin.length == admins.length ){
                             diff = false;
                             for ( i = 0; i < admins.length; i++ ){
@@ -112,66 +106,101 @@ export function show( a_data, a_upd_perms, a_cb ) {
                                     break;
                                 }
                             }
-                        }
-                        if ( diff ){
-                            url += "&admins=" + JSON.stringify( admins );
+                        }else{
+                            diff = true;
                         }
                     }else if ( admins.length ){
-                        url += "&admins=" + JSON.stringify( admins );
+                        diff = true;
                     }
 
+                    if ( diff ){
+                        do_upd = true;
+                        proj.admin = admins;
+                        proj.adminSet = true;
+                    }
+
+                    diff = false;
                     if ( a_data.member && a_data.member.length ){
-                        diff = true;
                         if ( a_data.member.length == members.length ){
-                            diff = false;
                             for ( i = 0; i < members.length; i++ ){
                                 if ( a_data.member[i] != members[i] ){
                                     diff = true;
                                     break;
                                 }
                             }
-                        }
-                        if ( diff ){
-                            url += "&members=" + JSON.stringify( members );
+                        }else{
+                            diff = true;
                         }
                     }else if ( members.length ){
-                        url += "&members=" + JSON.stringify( members );
+                        diff = true;
                     }
 
-                    if ( url ){
+                    if ( diff ){
+                        do_upd = true;
+                        proj.member = members;
+                        proj.memberSet = true;
+                    }
+
+                    if ( do_upd ){
                         close_cnt++;
-                        url = "/api/prj/update?id=" + encodeURIComponent( a_data.id ) + url;
+                        console.log( "update project" );
+                        api.projUpdate( proj, function( ok, data ){
+                            if ( !ok ) {
+                                dialogs.dlgAlert( "Project Update Error", data );
+                            }else{
+                                result = data[0];
+                                do_close();
+                            }
+                        });
                     }
 
                     var tmp = $("#def_alloc",frame).val();
                     if ( tmp != def_alloc ){
-                        new_def_alloc = tmp;
                         close_cnt++;
+                        console.log( "Set def alloc", tmp );
+                        api.setDefaultAlloc( tmp, a_data.id, function( ok, data ){
+                            if ( !ok ){
+                                dialogs.dlgAlert("Error Setting Default Allocation", data );
+                            }else{
+                                if ( !result )
+                                    result = a_data;
+                                do_close();
+                            }
+                        });
                     }
                 }else{
-                    var id = $("#id",frame).val().trim();
+                    close_cnt = 1;
 
-                    if ( !id ){
+                    proj.id = $("#id",frame).val().trim();
+                    proj.title = $("#title",frame).val().trim();
+                    proj.desc = $("#desc",frame).val().trim();
+
+                    if ( !proj.id ){
                         util.setStatusText( "ID field is required.", true );
                         return;
                     }
 
-                    if ( !obj.title ){
+                    if ( !proj.title ){
                         util.setStatusText( "Title field is required.", true );
                         return;
                     }
 
-                    if ( members.length )
-                        url += "&members=" + JSON.stringify( members );
+                    if ( members.length ){
+                        proj.member = members;
+                    }
 
                     if ( admins.length )
-                        url += "&admins=" + JSON.stringify( admins );
+                        proj.admin = admins;
 
-                    url = "/api/prj/create?id=" + encodeURIComponent( id ) + url;
-                    close_cnt = 1;
+                    api.projCreate( proj, function( ok, data ){
+                        if ( !ok ) {
+                            dialogs.dlgAlert( "Project Create Error", data );
+                        }else{
+                            result = data[0];
+                            do_close();
+                        }
+                    });
                 }
-
-                var result;
 
                 function do_close(){
                     console.log( "do_close", close_cnt );
@@ -188,30 +217,6 @@ export function show( a_data, a_upd_perms, a_cb ) {
                 if ( close_cnt == 0 )
                     do_close();
 
-                if ( url ){
-                    console.log( "URL", url );
-                    api._asyncGet( url, null, function( ok, data ){
-                        if ( !ok ) {
-                            dialogs.dlgAlert( "Project " + (a_data?"Update":"Create") +" Error", data );
-                        }else{
-                            result = data[0];
-                            do_close();
-                        }
-                    });
-                }
-
-                if ( new_def_alloc ){
-                    console.log( "Set def alloc", new_def_alloc );
-                    api.setDefaultAlloc( new_def_alloc, a_data.id, function( ok, data ){
-                        if ( !ok ){
-                            dialogs.dlgAlert("Error Setting Default Allocation", data );
-                        }else{
-                            if ( !result )
-                                result = a_data;
-                            do_close();
-                        }
-                    });
-                }
             }
         }],
         open: function(event,ui){
@@ -245,12 +250,9 @@ export function show( a_data, a_upd_perms, a_cb ) {
             $("#proj_mem_tree",frame).fancytree({
                 extensions: ["themeroller"],
                 themeroller: {
-                    activeClass: "ui-state-hover",
-                    addClass: "",
-                    focusClass: "",
-                    hoverClass: "ui-state-active",
-                    selectedClass: ""
-                },
+                    activeClass: "my-fancytree-active",
+                    hoverClass: ""
+                        },
                 source: mem_src,
                 nodata: false,
                 selectMode: 1,
@@ -263,11 +265,8 @@ export function show( a_data, a_upd_perms, a_cb ) {
             $("#proj_adm_tree",frame).fancytree({
                 extensions: ["themeroller"],
                 themeroller: {
-                    activeClass: "ui-state-hover",
-                    addClass: "",
-                    focusClass: "",
-                    hoverClass: "ui-state-active",
-                    selectedClass: ""
+                    activeClass: "my-fancytree-active",
+                    hoverClass: ""
                 },
                 source: adm_src,
                 nodata: false,

@@ -12,12 +12,12 @@ export function show( a_data, a_cb ) {
                     <tr><td>Title: <span class='note'>*</span></td><td><input type='text' id='title' style='width:100%'></input></td></tr>\
                     <tr><td>ID/Alias:</td><td><input type='text' id='id_query' style='width:100%'></input></td></tr>\
                     <tr><td>Text:</td><td><textarea id='text_query' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
+                    <tr><td style='vertical-align:top'>Tags:</td><td><ul id='tags' class='input-bg'></ul></td></tr>\
                     <tr><td>Metadata:</td><td><textarea id='meta_query' rows=3 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td>Scope:</td><td id='scope_cell'>\
-                        <span class='my-check'><label for='scope_mydat-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_mydat-dlg' id='scope_mydat-dlg'>&nbspMy Data</span>\
-                        <span class='my-check'><label for='scope_myproj-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_myproj-dlg' id='scope_myproj-dlg'>&nbspMy Projects</span>\
-                        <span class='my-check'><label for='scope_otherproj-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_otherproj-dlg' id='scope_otherproj-dlg'>&nbspOther Projects</span>\
-                        <span class='my-check'><label for='scope_shared-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_shared-dlg' id='scope_shared-dlg'>&nbspShared&nbspData</span>\
+                        <span class='my-check'><label for='scope_mydat-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_mydat-dlg' id='scope_mydat-dlg'>&nbspPersonal</span>\
+                        <span class='my-check'><label for='scope_proj-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_proj-dlg' id='scope_proj-dlg'>&nbspProjects</span>\
+                        <span class='my-check'><label for='scope_shared-dlg'></label><input class='scope-dlg' type='checkbox' name='scope_shared-dlg' id='scope_shared-dlg'>&nbspShared</span>\
                         </td></tr>\
                 </table>\
             </div>\
@@ -33,9 +33,7 @@ export function show( a_data, a_cb ) {
     }else
         dlg_title = "New Query";
 
-    util.inputTheme( $('input:text',frame ));
-    util.inputTheme( $('textarea',frame ));
-    $(".scope-dlg",frame).checkboxradio();
+    var tag_el = $("#tags",frame);
 
     function parseSearchDialog(){
         var query = {};
@@ -51,6 +49,8 @@ export function show( a_data, a_cb ) {
         else
             delete query.text;
 
+        query.tags = tag_el.tagit("assignedTags");
+
         tmp = $("#meta_query",frame).val();
         if ( tmp )
             query.meta = tmp;
@@ -64,12 +64,8 @@ export function show( a_data, a_cb ) {
 
             if ( $("#scope_mydat-dlg",frame).prop("checked"))
                 query.scopes.push({scope:model.SS_USER});
-            if ( $("#scope_myproj-dlg",frame).prop("checked"))
-                query.scopes.push({scope:model.SS_OWNED_PROJECTS});
-            if ( $("#scope_otherproj-dlg",frame).prop("checked")){
-                query.scopes.push({scope:model.SS_MANAGED_PROJECTS});
-                query.scopes.push({scope:model.SS_MEMBER_PROJECTS});
-            }
+            if ( $("#scope_proj-dlg",frame).prop("checked"))
+                query.scopes.push({scope:model.SS_PROJECTS});
             if ( $("#scope_shared-dlg",frame).prop("checked")){
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
@@ -95,18 +91,19 @@ export function show( a_data, a_cb ) {
             click: function() {
                 var qry = parseSearchDialog();
                 console.log("qry:",qry);
-                api.dataFind( qry, function( ok, items ){
+                api.dataFind( qry, function( ok, reply ){
                     if ( ok ){
+                        console.log("items:",reply);
                         var html;
-                        if ( items.length > 0 ){
-                            html = "<table style='width:100%;text-align:left;'><tr><th>ID/alias</th><th>Title</th></tr>";
-                            for ( var i in items ){
-                                var item = items[i];
+                        if ( reply.item && reply.item.length > 0 ){
+                            html = "<table style='width:100%;text-align:left;'>";
+                            for ( var i in reply.item ){
+                                var item = reply.item[i];
                                 html += "<tr><td style='vertical-align:top'>";
                                 if ( item.alias )
-                                    html += "(" + item.alias.substr(item.alias.lastIndexOf(":") + 1) + ")&nbsp";
+                                    html += item.alias.substr(item.alias.lastIndexOf(":") + 1);
                                 else
-                                    html += "[" + item.id.substr(2) + "]&nbsp";
+                                    html += item.id;
 
                                 html += "</td><td style='width:100%'>\"" + util.escapeHTML( item.title ) + "\"</td></tr>";
                             }
@@ -116,7 +113,7 @@ export function show( a_data, a_cb ) {
                         }
                         $("#results",frame).html(html);
                     }else{
-                        dialogs.dlgAlert("Query Error",items);
+                        dialogs.dlgAlert("Query Error",reply);
                     }
                 });
         
@@ -146,10 +143,29 @@ export function show( a_data, a_cb ) {
         },
         open: function(ev,ui){
             if ( a_data ){
+                tag_el.tagit({
+                    autocomplete: {
+                        delay: 500,
+                        minLength: 3,
+                        source: "/api/tag/autocomp"
+                    },
+                    caseSensitive: false
+                });
+
+                util.inputTheme( $('input:text',frame ));
+                util.inputTheme( $('textarea',frame ));
+                $(".scope-dlg",frame).checkboxradio();
+
                 $("#title",frame).val(a_data.title);
                 $("#id_query",frame).val(old_qry.id);
                 $("#text_query",frame).val(old_qry.text);
                 $("#meta_query",frame).val(old_qry.meta);
+
+                if ( old_qry.tags && old_qry.tags.length ){
+                    for ( var t in old_qry.tags ){
+                        tag_el.tagit("createTag", old_qry.tags[t] );
+                    }
+                }
 
                 for ( var i in old_qry.scopes ){
                     switch( old_qry.scopes[i].scope ){
@@ -170,12 +186,8 @@ export function show( a_data, a_cb ) {
                         case model.SS_USER:
                             $("#scope_mydat-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
                             break;
-                        case model.SS_OWNED_PROJECTS:
-                            $("#scope_myproj-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
-                            break;
-                        case model.SS_MANAGED_PROJECTS:
-                        case model.SS_MEMBER_PROJECTS:
-                            $("#scope_otherproj-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
+                        case model.SS_PROJECTS:
+                            $("#scope_proj-dlg",frame).prop("checked",true).checkboxradio( "refresh" );
                             break;
                         case model.SS_SHARED_BY_ANY_USER:
                         case model.SS_SHARED_BY_ANY_PROJECT:

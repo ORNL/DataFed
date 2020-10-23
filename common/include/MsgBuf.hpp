@@ -292,25 +292,29 @@ public:
         uint16_t id = val_desc->number();
         getFileDescriptorMap()[id] = file;
 
-        int count = file->message_type_count();
-        const DescriptorType * desc;
-        std::map<std::string,const DescriptorType*> msg_types;
-        DescriptorMap & desc_map = getDescriptorMap();
-        MsgTypeMap & mt_map = getMsgTypeMap();
+        int                     count = file->message_type_count();
+        const DescriptorType *  desc;
+        DescriptorMap &         desc_map = getDescriptorMap();
+        MsgTypeMap &            mt_map = getMsgTypeMap();
+        uint16_t                msg_type = id << 8;
 
-        for ( int i = 0; i < count; i++ )
+        //std::map<std::string,const DescriptorType*> msg_types;
+
+        for ( int i = 0; i < count; i++, msg_type++ )
         {
             desc = file->message_type(i);
-            msg_types[desc->name()] = desc;
+            desc_map[msg_type] = desc;
+            mt_map[desc] = msg_type;
+
+            //msg_types[desc->name()] = desc;
         }
 
-        uint16_t msg_type = id << 8;
-        for ( std::map<std::string,const DescriptorType*>::iterator m = msg_types.begin(); m != msg_types.end(); m++, msg_type++ )
+        /*for ( std::map<std::string,const DescriptorType*>::iterator m = msg_types.begin(); m != msg_types.end(); m++, msg_type++ )
         {
             //std::cout << "MT: " << msg_type << " = " << m->second->name() << "\n";
             desc_map[msg_type] = m->second;
             mt_map[m->second] = msg_type;
-        }
+        }*/
 
         return id;
     }

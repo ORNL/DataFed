@@ -31,8 +31,9 @@ namespace Repo {
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
 
 
-Server::Server( const std::string & a_cred_dir, uint32_t a_port ) :
+Server::Server( const std::string & a_cred_dir, uint32_t a_port, const std::string & a_core_server ) :
     m_port( a_port ),
+    m_core_server( a_core_server ),
     m_io_running( false )
 {
     loadKeys( a_cred_dir );
@@ -68,11 +69,13 @@ Server::run( bool a_async )
 
     if ( a_async )
     {
+        checkServerVersion();
         m_io_thread = new thread( &Server::ioRun, this );
     }
     else
     {
         lock.unlock();
+        checkServerVersion();
         ioRun();
         lock.lock();
         m_io_running = false;
@@ -80,6 +83,59 @@ Server::run( bool a_async )
     }
 }
 
+
+void
+Server::checkServerVersion()
+{
+    DL_INFO( "Checking core server connection and version" );
+
+    VersionRequest      msg;
+    MsgBuf::Message *   reply;
+    MsgComm::SecurityContext sec_ctx;
+
+    char pub_key[41];
+    char priv_key[41];
+
+    sec_ctx.is_server = false;
+    sec_ctx.server_key = m_core_key;
+
+    if ( zmq_curve_keypair( pub_key, priv_key ) != 0 )
+        EXCEPT_PARAM( 1, "Temp security key generation failed: " << zmq_strerror( errno ));
+
+    sec_ctx.public_key = pub_key;
+    sec_ctx.private_key = priv_key;
+
+    for( int i = 0; i < 10; i++ )
+    {
+        MsgComm comm( m_core_server, MsgComm::DEALER, false, &sec_ctx );
+        MsgBuf buffer;
+
+        comm.send( msg );
+
+        if ( !comm.recv( buffer, false, 20000 ))
+        {
+            DL_ERROR( "Timeout waiting for response from core server " << m_core_server );
+            cerr.flush();
+        }
+        else
+        {
+            reply = buffer.unserialize();
+
+            VersionReply * ver_reply = dynamic_cast<VersionReply*>( reply );
+            if ( ver_reply == 0 )
+                EXCEPT_PARAM( 1, "Invalid response from core server " << m_core_server );
+            
+            if ( ver_reply->major() != VER_MAJOR || ver_reply->mapi_major() != VER_MAPI_MAJOR ||
+                VER_MAPI_MINOR > (int)ver_reply->mapi_minor() || ver_reply->mapi_minor() > VER_MAPI_MINOR + 9 )
+                EXCEPT_PARAM( 1, "Incompatible server version (" << ver_reply->major() << "." << ver_reply->mapi_major() << "." << ver_reply->mapi_minor() << ")" );
+
+            DL_INFO( "Core server connection and version OK." );
+            return;
+        }
+    }
+
+    EXCEPT_PARAM( 1, "Could not connect with core server " << m_core_server );
+}
 
 void
 Server::stop( bool a_wait )
@@ -286,8 +342,10 @@ Server::procVersionRequest()
     DL_DEBUG( "Version request" );
 
     reply.set_major( VER_MAJOR );
-    reply.set_minor( VER_MINOR );
-    reply.set_build( VER_BUILD );
+    reply.set_mapi_major( VER_MAPI_MAJOR );
+    reply.set_mapi_minor( VER_MAPI_MINOR );
+    reply.set_server( VER_SERVER );
+    reply.set_client( VER_CLIENT );
 
     PROC_MSG_END
 }

@@ -107,19 +107,13 @@ export function show(){
                 $("#dlg_repo_tree",frame).fancytree({
                     extensions: ["themeroller"],
                     themeroller: {
-                        activeClass: "ui-state-hover",
-                        addClass: "",
-                        focusClass: "",
-                        hoverClass: "ui-state-active",
-                        selectedClass: ""
+                        activeClass: "my-fancytree-active",
+                        hoverClass: ""
                     },
                     source: src,
                     selectMode: 1,
                     lazyLoad: function( event, data ) {
-                        data.result = {
-                            url: "/api/repo/view?id="+encodeURIComponent(data.node.key),
-                            cache: false
-                        };
+                        data.result = { url: api.repoView_url( data.node.key ), cache: false };
                     },
                     postProcess: function( event, data ) {
                         if ( data.node.lazy && data.response.length ){

@@ -1,4 +1,14 @@
+// ALERT: If enums or messages in this proto file are REMOVED, or if the
+// definitions of existing enums or message parameters are CHANGED, then the
+// VER_PROTO_MAJOR enum value in Version.proto must be incremented and backward
+// compatability will be lost. If new values or fields are APPENDED to the end
+// of an existing defintion, then VER_PROTO_MINOR must be incremented and
+// backward compatability will be maintained. Unused enums, messages, and
+// parameters should be marked as deprecated, and these should be removed at
+// the next major version change.
+
 package SDMS;
+
 
 // ============================ Enums
 
@@ -32,16 +42,14 @@ enum SearchScope
 {
     SS_USER                     = 1;
     SS_PROJECT                  = 2;
-    SS_OWNED_PROJECTS           = 3;
-    SS_MANAGED_PROJECTS         = 4;
-    SS_MEMBER_PROJECTS          = 5;
-    SS_COLLECTION               = 6;
-    SS_TOPIC                    = 7;
-    SS_SHARED_BY_USER           = 8;
-    SS_SHARED_BY_ANY_USER       = 9;
-    SS_SHARED_BY_PROJECT        = 10;
-    SS_SHARED_BY_ANY_PROJECT    = 11;
-    SS_VIEW                     = 12;
+    SS_PROJECTS                 = 3;
+    SS_COLLECTION               = 4;
+    SS_TOPIC                    = 5;
+    SS_SHARED_BY_USER           = 6;
+    SS_SHARED_BY_ANY_USER       = 7;
+    SS_SHARED_BY_PROJECT        = 8;
+    SS_SHARED_BY_ANY_PROJECT    = 9;
+    SS_VIEW                     = 10;
 }
 
 enum DependencyType
@@ -62,8 +70,10 @@ enum SortOption
 {
     SORT_ID                     = 0;
     SORT_TITLE                  = 1;
-    SORT_TIME_CREATE            = 2;
-    SORT_TIME_UPDATE            = 3;
+    SORT_OWNER                  = 2;
+    SORT_TIME_CREATE            = 3;
+    SORT_TIME_UPDATE            = 4;
+    SORT_RELEVANCE              = 5;
 }
 
 enum ProjectRole
@@ -158,6 +168,24 @@ message ListingData
     repeated DependencyData     dep         = 13;
 }
 
+message CatItemInfoData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    required string             owner_id    = 3;
+    optional string             owner_name  = 4;
+    optional string             alias       = 5;
+    optional uint32             notes       = 6;
+    optional string             brief       = 7;
+    optional double             size        = 8;
+}
+
+message TagData
+{
+    required string             name        = 1;
+    required uint64             count       = 2;
+}
+
 message PathData
 {
     repeated ListingData        item        = 1;
@@ -169,7 +197,7 @@ message RecordData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
-    optional string             keyw        = 5;
+    repeated string             tags        = 5;
     optional string             doi         = 6;
     optional string             data_url    = 7;
     optional string             metadata    = 8;
@@ -216,12 +244,13 @@ message CollData
     required string             title       = 2;
     optional string             alias       = 3;
     optional string             desc        = 4;
-    optional string             topic       = 5;
-    optional string             owner       = 6;
-    optional uint32             ct          = 7;
-    optional uint32             ut          = 8;
-    optional string             parent_id   = 9;
-    optional uint32             notes       = 10;
+    repeated string             tags        = 5;
+    optional string             topic       = 6;
+    optional string             owner       = 7;
+    optional uint32             ct          = 8;
+    optional uint32             ut          = 9;
+    optional string             parent_id   = 10;
+    optional uint32             notes       = 11;
 }
 
 message GroupData
@@ -238,6 +267,21 @@ message ACLRule
     required string             id          = 1;
     optional uint32             grant       = 2;
     optional uint32             inhgrant    = 3;
+}
+
+message TopicData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    repeated TopicData          path        = 3;
+    optional string             desc        = 4;
+    optional string             creator     = 5;
+    optional bool               admin       = 6;
+    required uint32             coll_cnt    = 7;
+
+    //repeated TagMetrics         tags        = 7;
+    //repeated UserMetrics        users       = 8;
+    //repeated DateMetrics        date        = 9;
 }
 
 message RepoData

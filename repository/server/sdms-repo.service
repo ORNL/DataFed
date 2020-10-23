@@ -7,7 +7,7 @@ PIDFile=/tmp/sdms-repo.pid
 Restart=always
 KillSignal=SIGQUIT
 WorkingDirectory=/opt/datafed
-ExecStart=/opt/datafed/sdms-repo -c /opt/datafed/keys
+ExecStart=/opt/datafed/sdms-repo -c /opt/datafed/keys -s tcp://datafed.ornl.gov:7512
 User=cades
 [Install]
 WantedBy=multi-user.target

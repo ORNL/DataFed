@@ -3,16 +3,23 @@
     <head>
         <% include 'head.ect' %>
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.35.0/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.35.0/jquery.fancytree-all.min.js"></script>
+        <!-- link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.35.0/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.35.0/jquery.fancytree-all.min.js"></script -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.37.0/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.37.0/jquery.fancytree-all.min.js"></script>
         <script src="/jquery/jquery-ui-contextmenu.min.js"></script>
         <script src="/ace/ace.js" type="text/javascript" charset="utf-8"></script>
         <script src="/ace/theme-light.js" type="text/javascript" charset="utf-8"></script>
         <script src="/ace/theme-dark.js" type="text/javascript" charset="utf-8"></script>
         <script src="/ace/mode-json.js" type="text/javascript" charset="utf-8"></script>
 
+        <script src="/tag/tag-it.js" type="text/javascript" charset="utf-8"></script>
+        <link href="/tag/tag-it.css" rel="stylesheet" type="text/css">
+
         <!-- script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script -->
         <script src="https://d3js.org/d3.v5.min.js"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
         <script type="module" charset="utf-8" src="/model.js"></script>
         <script type="module" charset="utf-8" src="/util.js"></script>
@@ -44,26 +51,20 @@
     </head>
     <body>
     <div class="col-flex" style="height:100%;width:100%">
-        <div class="main-header row-flex" style="flex:none;align-items:center;padding:0 .5em">
-            <div style="flex:none;font-size:1.8em;">
-                <span class='ui-icon ui-icon-box' style='color:white;font-size:100%'></span>
-            </div>
-            <div style="flex:none;font-size:2em;">
-                &nbsp;DataFed Portal
-            </div>
-            <div style="flex:auto;font-size:1.6em;font-weight:normal;padding:0 1em">
-                <span id='uname'></span>
-            </div>
-            <div style="flex:none">
-                <button id='btn_settings' class='btn' title='Update application and account settings'>Settings</button>&nbsp;
-                <button class="btn" onclick="window.open('/ui/docs','sdms-docs')" title='DataFed on-line documentation.'>Help</button>&nbsp;
-                <button class="btn" onclick="logout()">Log Out</button>
+        <!-- div class="main-header row-flex" style="flex:none;align-items:center;padding:0 .5em" -->
+        <div class="ui-widget-header" style="border:none;flex:none;padding:0.2em .5em">
+            <span class='ui-icon ui-icon-box' style='vertical-align:middle;color:white;font-size:1.6em'></span>
+            <span style="font-size:1.8em;vertical-align:middle">&nbsp;Scientific Data Federation</span>
+            <div style='float:right;padding:.2em 0 0 0'>
+                <button id='btn_settings' class='btn btn-icon' title='Application and account settings'><span class='ui-icon ui-icon-gear'></span></button>&nbsp;
+                <button class="btn btn-icon" onclick="window.open('/ui/docs','sdms-docs')" title='DataFed on-line documentation.'><span class='ui-icon ui-icon-circle-help'></span></button>&nbsp;
+                <button class="btn btn-icon" onclick="logout()"><span class='ui-icon ui-icon-logout'></span></button>
             </div>
         </div>
-        <div id="content" class="content" style="flex:1;min-height:0">
+        <div id="content" class="ui-widget-content" style="flex:1;min-height:0">
             <% include 'tab_browser.ect' %>
         </div>
-        <div class="ui-widget-header" style="flex:none;padding:.25em;z-index:500">
+        <div class="ui-widget-content" style="flex:none;padding:.25em;z-index:500">
             <div id="status_text" style="height:1.65em;width:100%;padding:.3em 0 0 0;text-align:center;font-size:.9em;font-style:normal;background:black;color:white"></div>
         </div>
     </div>
@@ -119,7 +120,7 @@
 
         api.userView( settings.user.uid, true, function( ok, user ){
             if ( ok && user ){
-                console.log("user from settings:",settings.user);
+                //console.log("user from settings:",settings.user);
 
                 api.epRecentLoad();
 

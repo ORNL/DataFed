@@ -108,10 +108,20 @@ function GraphPanel( a_id, a_frame, a_parent ){
             }
 
             renderGraph();
-            panel_info.showSelectedInfo( sel_node_id );
+            panel_info.showSelectedInfo( sel_node_id, inst.checkGraphUpdate );
             a_parent.updateBtnState();
         });
     };
+
+    this.checkGraphUpdate = function( a_data, a_source ){
+        console.log("graph check updates", a_data, a_source );
+        console.log("sel node", sel_node );
+        // source is sel_node_id, so check sel_node
+        if ( a_data.size != sel_node.size ){
+            console.log("size diff, update!");
+            model.update( [a_data] );
+        }
+    }
 
     // TODO Why are IDs separate from data?
 
@@ -323,7 +333,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
                         .attr("class","select highlight");
                     sel_node = d;
                     sel_node_id = d.id;
-                    panel_info.showSelectedInfo( d.id );
+                    panel_info.showSelectedInfo( d.id, inst.checkGraphUpdate );
                     a_parent.updateBtnState();
                 }
 
@@ -349,6 +359,37 @@ function GraphPanel( a_id, a_frame, a_parent ){
                     return "select hidden";
             });
 
+        var n2 = g.filter(function(d){ return d.size });
+        n2.append("line")
+            .attr("pointer-events", "none")
+            .attr("x1", -r*.5 )
+            .attr("y1", -r*.3 )
+            .attr("x2", r*.5 )
+            .attr("y2", -r*.3 )
+            .attr("class","data");
+            //.attr("stroke-width", 1 )
+            //.attr("stroke", "white" );
+
+        n2.append("line")
+            .attr("pointer-events", "none")
+            .attr("x1", -r*.5 )
+            .attr("y1", 0 )
+            .attr("x2", r*.5 )
+            .attr("y2", 0 )
+            .attr("class","data");
+            //.attr("stroke-width", 1 )
+            //.attr("stroke", "white" );
+
+        n2.append("line")
+            .attr("pointer-events", "none")
+            .attr("x1", -r*.5 )
+            .attr("y1", r*.3 )
+            .attr("x2", r*.5 )
+            .attr("y2", r*.3 )
+            .attr("class","data");
+            //.attr("stroke-width", 1 )
+            //.attr("stroke", "white" );
+    
         g.append("text")
             .attr("class","label")
             .html(function(d) {
@@ -638,6 +679,7 @@ function GraphPanel( a_id, a_frame, a_parent ){
                 render = true;
                 node.locked = item.locked;
                 node.notes = item.notes;
+                node.size = item.size;
                 //console.log("updating:", node);
                 makeLabel( node, item );
                 if ( node == sel_node )
@@ -655,8 +697,10 @@ function GraphPanel( a_id, a_frame, a_parent ){
             }
         }
 
-        if ( render )
+        if ( render ){
             renderGraph();
+            a_parent.updateBtnState();
+        }
     }
 
     function graphCountConnected(a_node,a_visited,a_from){

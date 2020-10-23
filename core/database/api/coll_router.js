@@ -14,13 +14,18 @@ module.exports = router;
 //===== COLLECTION API FUNCTIONS =====
 
 router.post('/create', function (req, res) {
+    var retry = 10;
+
+    for (;;)
+    {
+
     try {
         var result = [];
 
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","a","alias","owner","item","t","top"]
+                write: ["c","a","alias","owner","item","t","top","tag"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -59,8 +64,25 @@ router.post('/create', function (req, res) {
 
                 if ( req.body.topic ){
                     g_lib.procInputParam( req.body, "topic", false, obj );
+
+                    obj.public = true;
+                    obj.cat_tags = [];
+
+                    var tag, tags = req.body.topic.split(".");
+                    for ( var i in tags ){
+                        tag = tags[i];
+                        if ( tag )
+                            obj.cat_tags.push( tag );
+                    }
+
+                    //g_lib.addTags( obj.cat_tags );
                 }
 
+                if ( req.body.tags != undefined ){
+                    g_lib.addTags( req.body.tags );
+                    obj.tags = req.body.tags;
+                }
+            
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: owner._id });
 
@@ -92,8 +114,13 @@ router.post('/create', function (req, res) {
         });
 
         res.send({ results: result });
+        break;
     } catch( e ) {
-        g_lib.handleException( e, res );
+        if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+            g_lib.handleException( e, res );
+        }
+    }
+
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
@@ -102,27 +129,36 @@ router.post('/create', function (req, res) {
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     topic: joi.string().allow('').optional(),
-    parent: joi.string().allow('').optional()
+    parent: joi.string().allow('').optional(),
+    tags: joi.array().items(joi.string()).optional()
 }).required(), 'Collection fields')
 .summary('Create a new data collection')
 .description('Create a new data collection from JSON body');
 
 router.post('/update', function (req, res) {
+    var retry = 10;
+
+    for (;;)
+    {
+
     try {
         var result = { results: [], updates: [] };
 
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn"],
-                write: ["c","a","owner","alias","t","top"]
+                write: ["c","a","d","owner","alias","t","top","tag"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var coll_id = g_lib.resolveCollID( req.body.id, client );
                 var coll = g_db.c.document( coll_id );
 
-                var time = Math.floor( Date.now()/1000 );
-                var obj = {ut:time};
+                console.log("update coll",req.body);
+
+                var time = Math.floor( Date.now()/1000 ),
+                    obj = {ut:time},
+                    i, tags, tag; //, idx;
 
                 g_lib.procInputParam( req.body, "title", true, obj );
                 g_lib.procInputParam( req.body, "desc", true, obj );
@@ -144,22 +180,98 @@ router.post('/update', function (req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                 }
 
+                /* Updating topic and tags is complex because topic parts are added as
+                collection tags, and the user must not be able to interfere with this
+                behavior.
+                    1. If topic is changed, old unused topic tags must be removed, and new topic tags added
+                    2. If user updates tags, tags must be added/removed based on diff, excluding any topic tags
+                    3. If both topic and tags are changed, user tags and topic tags must be differentiated
+                       and topic tags take priority. (user may not remove a topic tag)
+                */
+
+                //if ( coll.tags ){
+                //g_lib.removeTags( coll.tags );
+
+                if ( req.body.tags_clear ){
+                    req.body.tags = [];
+                }
+
                 if ( obj.topic !== undefined && obj.topic != coll.topic ){
                     //console.log("update topic, old:", data.topic ,",new:", obj.topic );
-
                     if ( coll.topic ){
+                        console.log("rem cat_tags:",coll.cat_tags);
                         //console.log("unlink old topic");
                         g_lib.topicUnlink( coll._id );
+                        obj.public = null;
+                        obj.cat_tags = null;
+                        //rem_tags = coll.cat_tags;
                     }
 
                     if ( obj.topic && obj.topic.length ){
                         //console.log("link new topic");
                         g_lib.topicLink( obj.topic, coll._id, coll.owner );
+                        obj.public = true;
+                        obj.cat_tags = [];
+
+                        tags = obj.topic.split(".");
+                        for ( i in tags ){
+                            tag = tags[i];
+                            if ( tag ){
+                                obj.cat_tags.push( tag );
+                                //idx = rem_tag.indexOf( tag );
+                                //if ( idx != -1 ){
+                                //    rem_tag.splice( idx, 1 );
+                                //}
+                            }
+                        }
+                        console.log("add cat_tags:",obj.cat_tags);
                     }
+
+                    //console.log("cat add_tags:",add_tags,"cat rem_tags:",rem_tags);
+
+                    //g_lib.addTags( add_tags );
+                    //g_lib.removeTags( rem_tags );
                 }
 
+                //console.log("col upd tags",req.body.tags);
+                if ( req.body.tags != undefined ){
+                    if ( coll.tags && coll.tags.length ){
+                        var add_tags = [], rem_tags = [];
+
+                        console.log("coll.tags:",coll.tags,"req.body.tags:",req.body.tags);
+
+                        for ( i in coll.tags ){
+                            tag = coll.tags[i];
+                            if ( !req.body.tags.includes( tag )){
+                                rem_tags.push( tag );
+                            }
+                        }
+            
+                        for ( i in req.body.tags ){
+                            tag = req.body.tags[i];
+                            if ( !coll.tags.includes( tag )){
+                                add_tags.push( tag );
+                            }
+                        }
+            
+                        console.log("add_tags:",add_tags,"rem_tags:",rem_tags);
+
+                        g_lib.addTags( add_tags );
+                        g_lib.removeTags( rem_tags );
+                    }else{
+                        g_lib.addTags( req.body.tags );
+                    }
+            
+                    obj.tags = req.body.tags;
+                }
+            
                 coll = g_db._update( coll_id, obj, { keepNull: false, returnNew: true });
                 coll = coll.new;
+
+                if ( obj.cat_tags !== undefined ){
+                    //console.log("update topic data");
+                    g_lib.catalogUpdateColl( coll );
+                }
 
                 if ( obj.alias !== undefined ) {
                     var old_alias = g_db.alias.firstExample({ _from: coll_id });
@@ -189,8 +301,13 @@ router.post('/update', function (req, res) {
         });
 
         res.send( result );
+        break;
     } catch( e ) {
-        g_lib.handleException( e, res );
+        if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
+            g_lib.handleException( e, res );
+        }
+    }
+
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
@@ -199,7 +316,9 @@ router.post('/update', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    topic: joi.string().allow('').optional()
+    topic: joi.string().allow('').optional(),
+    tags: joi.array().items(joi.string()).optional(),
+    tags_clear: joi.boolean().optional()
 }).required(), 'Collection fields')
 .summary('Update an existing collection')
 .description('Update an existing collection from JSON body');
@@ -234,20 +353,26 @@ router.get('/priv/list', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
         var coll_id = g_lib.resolveCollID( req.queryParams.id, client ),
             coll = g_db.c.document( coll_id ),
+            admin = false;
+
+        if ( client ){
             admin = g_lib.hasAdminPermObject( client, coll_id );
 
-        if ( !admin) {
-            if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC ))
-                throw g_lib.ERR_PERM_DENIED;
+            if ( !admin) {
+                if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC ))
+                    throw g_lib.ERR_PERM_DENIED;
+            }
+        }else if ( !g_lib.hasPublicRead( coll_id )){
+            throw g_lib.ERR_PERM_DENIED;
         }
 
         coll.notes = g_lib.annotationGetMask( client, coll_id, admin );
-        coll.id = coll._id;
 
+        coll.id = coll._id;
         delete coll._id;
         delete coll._key;
         delete coll._rev;
@@ -265,14 +390,21 @@ router.get('/view', function (req, res) {
 
 router.get('/read', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
         var coll_id = g_lib.resolveCollID( req.queryParams.id, client ),
             coll = g_db.c.document( coll_id ),
+            admin = false;
+
+        if ( client ){
             admin = g_lib.hasAdminPermObject( client, coll_id );
 
-        if ( !admin ) {
-            if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_LIST ))
-                throw g_lib.ERR_PERM_DENIED;
+            if ( !admin ) {
+                if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_LIST ))
+                    throw g_lib.ERR_PERM_DENIED;
+            }
+        }else if ( !g_lib.hasPublicRead( coll_id )){
+            throw g_lib.ERR_PERM_DENIED;
         }
 
         var qry = "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title",
@@ -313,11 +445,15 @@ router.get('/write', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","d","c","uuid","accn"],
-                write: ["item"]
+                read: ["u","c","uuid","accn"],
+                write: ["item","d"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+                if ( req.queryParams.add && req.queryParams.remove ){
+                    throw [g_lib.ERR_INVALID_PARAM,"Cannot add and remove collection items at the same time."];
+                }
 
                 var coll_id = g_lib.resolveCollID( req.queryParams.id, client );
                 var coll = g_db.c.document( coll_id );
@@ -334,8 +470,14 @@ router.get('/write', function (req, res) {
                     chk_perm = true;
                 }
 
-                var i,obj,idx,cres;
-                var loose = [];
+                console.log("write to coll",coll_id);
+
+                var i, obj, cres,
+                    loose, have_loose = false,
+                    visited = {},
+                    coll_ctx = g_lib.catalogCalcParCtxt( coll, visited );
+
+                console.log("coll ctx", coll_ctx);
 
                 // Enforce following link/unlink rules:
                 // 1. Root collection may not be linked
@@ -347,6 +489,10 @@ router.get('/write', function (req, res) {
                 // 7. All records and collections must have at least one parent (except root)
 
                 if ( req.queryParams.remove ) {
+                    console.log("remove items");
+
+                    loose = {};
+
                     for ( i in req.queryParams.remove ) {
                         obj = g_lib.getObject( req.queryParams.remove[i], client );
 
@@ -363,15 +509,26 @@ router.get('/write', function (req, res) {
                         g_db.item.removeByExample({ _from: coll_id, _to: obj._id });
 
                         if ( !g_db.item.firstExample({ _to: obj._id }) ){
-                            loose.push({ id: obj._id, title: obj.title });
+                            loose[obj._id] = obj;
+                            have_loose = true;
+                        }else if ( coll_ctx.pub ){
+                            if ( obj._id.charAt(0) == 'c' ){
+                                // Must update all records in this collection
+                                g_lib.catalogUpdateColl( obj, null, visited );
+                            }else{
+                                // Update this record
+                                g_lib.catalogUpdateRecord( obj, null, null, visited );
+                            }
                         }
                     }
                 }
 
                 if ( req.queryParams.add ) {
+                    console.log("add items");
+
                     // Limit number of items in collection
                     cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:coll_id});
-                    console.log("coll item count:",cres.count());
+                    //console.log("coll item count:",cres.count());
                     if ( cres.count() + req.queryParams.add.length > g_lib.MAX_COLL_ITEMS )
                         throw [g_lib.ERR_INPUT_TOO_LONG,"Collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 
@@ -400,42 +557,74 @@ router.get('/write', function (req, res) {
                             }
                         }
     
-                        if ( obj._id[0] == "c" ){
+                        if ( obj._id.charAt(0) == "c" ){
                             // Check for circular dependency
                             if ( obj._id == coll_id || g_lib.isSrcParentOfDest( obj._id, coll_id ))
                                 throw [g_lib.ERR_LINK,"Cannot link ancestor, "+obj._id+", to descendant, "+coll_id];
 
                             // Collections can only be linked to one parent
                             g_db.item.removeByExample({ _to: obj._id });
-                        }
+                            g_db.item.save({ _from: coll_id, _to: obj._id });
 
-                        g_db.item.save({ _from: coll_id, _to: obj._id });
+                            if ( coll_ctx.pub ){
+                                console.log("update pub coll");
 
-                        // If item has no parent collection AND it's not being added, link to root
-                        for ( idx in loose ){
-                            if ( loose[idx].id == obj._id ){
-                                loose.slice(idx,1);
-                                break;
+                                // Must update all records in this collection
+                                g_lib.catalogUpdateColl( obj, coll_ctx, visited );
+                            }
+                        }else{
+                            g_db.item.save({ _from: coll_id, _to: obj._id });
+
+                            if ( coll_ctx.pub ){
+                                console.log("update pub record");
+
+                                // Update this record
+                                g_lib.catalogUpdateRecord( obj, coll, coll_ctx, visited );
                             }
                         }
                     }
                 }
 
+                console.log("check loose stuff");
+
                 // 7. Re-link loose items to root
-                if ( loose.length ){
-                    var root_id = g_lib.getRootID(owner_id);
-                    cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
-                    console.log("root item count:",cres.count());
-                    if ( cres.count() + req.queryParams.add.length > g_lib.MAX_COLL_ITEMS )
+                if ( have_loose ){
+                    var root_id = g_lib.getRootID(owner_id),
+                        rctxt = null,
+                        loose_res = [],
+                        cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
+
+                    //console.log("root item count:",cres.count());
+                    if ( cres.count() + (req.queryParams.add?req.queryParams.add.length:0) > g_lib.MAX_COLL_ITEMS )
                         throw [g_lib.ERR_INPUT_TOO_LONG,"Root collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 
                     cres.dispose();
 
-                    for ( i in loose )
-                        g_db.item.save({ _from: root_id, _to: loose[i].id });
-                }
+                    if ( coll_ctx.pub ){
+                        rctxt = { pub: false, tag:  new Set() };
+                    }
 
-                res.send( loose );
+                    for ( i in loose ){
+                        obj = loose[i];
+                        g_db.item.save({ _from: root_id, _to: obj._id });
+
+                        loose_res.push({ id: obj._id, title: obj.title });
+
+                        if ( coll_ctx.pub ){
+                            if ( obj._id.charAt(0) == 'c' ){
+                                // Must update all records in this collection
+                                g_lib.catalogUpdateColl( obj, rctxt, visited );
+                            }else{
+                                // Update this record
+                                g_db._update( obj._id, { public: false, cat_tags: null }, { keepNull: false });
+                            }
+                        }
+
+                        res.send( loose_res );
+                    }
+                }else{
+                    res.send( [] );
+                }
             }
         });
     } catch( e ) {
@@ -453,21 +642,27 @@ router.get('/move', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: ["u","d","c","uuid","accn"],
-                write: ["item"]
+                read: ["u","c","uuid","accn"],
+                write: ["item","d"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var src_id = g_lib.resolveCollID( req.queryParams.source, client );
-                var src = g_db.c.document( src_id );
-                var dst_id = g_lib.resolveCollID( req.queryParams.dest, client );
-                var dst = g_db.c.document( dst_id );
+                var src_id = g_lib.resolveCollID( req.queryParams.source, client ),
+                    src = g_db.c.document( src_id ),
+                    dst_id = g_lib.resolveCollID( req.queryParams.dest, client ),
+                    dst = g_db.c.document( dst_id ),
+                    visited = {},
+                    src_ctx = g_lib.catalogCalcParCtxt( src, visited ),
+                    dst_ctx = g_lib.catalogCalcParCtxt( dst, visited ),
+                    is_pub = src_ctx.pub | dst_ctx.pub;
 
                 if ( src.owner != dst.owner )
                     throw [g_lib.ERR_LINK,req.queryParams.source+" and "+req.queryParams.dest+" have different owners"];
 
-                var chk_perm = false;
-                var src_perms = 0, dst_perms = 0;
+                var chk_perm = false,
+                    src_perms = 0,
+                    dst_perms = 0,
+                    coll;
 
                 if ( !g_lib.hasAdminPermObject( client, src_id )) {
                     src_perms = g_lib.getPermissions( client, src, g_lib.PERM_LINK, true );
@@ -514,6 +709,17 @@ router.get('/move', function (req, res) {
 
                     g_db.item.removeByExample({ _from: src_id, _to: item._id });
                     g_db.item.save({ _from: dst_id, _to: item._id });
+
+                    // Update public flag & cat tags for published items
+                    if ( is_pub ){
+                        if ( item._id.charAt(0) == 'c' ){
+                            // Must update all records in this collection
+                            g_lib.catalogUpdateColl( item, dst_ctx, visited );
+                        }else{
+                            // Update this record
+                            g_lib.catalogUpdateRecord( item, dst, dst_ctx, visited );
+                        }
+                    }
                 }
 
                 var cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:dst_id});
@@ -622,7 +828,7 @@ router.get('/published/list', function (req, res) {
             owner_id = client._id;
         }
 
-        var qry = "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.topic != null sort v.title";
+        var qry = "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.public sort v.title";
         var result;
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
@@ -650,3 +856,272 @@ router.get('/published/list', function (req, res) {
 .summary('Get list of clients published collections.')
 .description('Get list of clients published collections.');
 
+
+router.post('/published/search', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
+        var off = req.body.offset?req.body.offset:0,
+            cnt = req.body.count?req.body.count:100,
+            par = {},
+            qry, result, i;
+
+        qry = "for i in collview search i.public == true";
+
+        if ( req.body.text && req.body.text.length ){
+            qry += " and analyzer(";
+            for ( i in req.body.text ){
+                if ( i != "0" )
+                    qry += " and";
+                qry += " (phrase(i.title,'" + req.body.text[i] + "') or phrase(i['desc'],'" + req.body.text[i] + "'))";
+            }
+        
+            qry += ", 'text_en')";
+        }
+
+        if ( req.body.owner ){
+            qry += " and i.owner == @owner";
+            par.owner = req.body.owner;
+        }
+
+        if ( req.body.tags ){
+            qry += " and @tags all in i.tags";
+            par.tags = req.body.tags;
+        }
+
+        if ( req.body.from != undefined ){
+            qry += " and i.ut >= @utfr";
+            par.utfr = req.body.from;
+        }
+
+        if ( req.body.to != undefined ){
+            qry += " and i.ut <= @utto";
+            par.utto = req.body.to;
+        }
+
+        qry += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first))";
+
+        qry += " sort i.title limit " + off + ", " + cnt + " return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias}";
+
+        result = g_db._query( qry, par, {}, { fullCount: true });
+        var item, tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+
+        for ( i in result ){
+            item = result[i];
+            if ( item.owner_name && item.owner_name.length )
+                item.owner_name = item.owner_name[0];
+            else
+                item.owner_name = null;
+
+            if ( item.desc && item.desc.length > 120 ){
+                item.desc = item.desc.slice(0,120) + " ...";
+            }
+
+            item.notes = g_lib.annotationGetMask( client, item._id );
+        }
+
+        result.push({ paging: { off: off, cnt: cnt, tot: tot }});
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.body(joi.object({
+    text: joi.array().items(joi.string()).optional(),
+    tags: joi.array().items(joi.string()).optional(),
+    owner: joi.string().optional(),
+    from: joi.number().integer().min(0).optional(),
+    to: joi.number().integer().min(0).optional(),
+    offset: joi.number().integer().min(0).optional(),
+    count: joi.number().integer().min(1).optional(),
+    sort: joi.number().integer().min(0).optional()
+}).required(), 'Collection fields')
+.summary('Search published collections.')
+.description('Search published collections.');
+
+router.post('/published/search2', function (req, res) {
+    try {
+        //const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
+        var off = req.body.offset?req.body.offset:0,
+            cnt = req.body.count?req.body.count:100,
+            par = {},
+            qry, result, i;
+
+        qry = "for i in collview search i.public == true";
+
+        if ( req.body.text && req.body.text.length ){
+            qry += " and analyzer(";
+            for ( i in req.body.text ){
+                if ( i != "0" )
+                    qry += " and";
+                qry += " (phrase(i.title,'" + req.body.text[i] + "') or phrase(i['desc'],'" + req.body.text[i] + "'))";
+            }
+        
+            qry += ", 'text_en')";
+        }
+
+        if ( req.body.owner ){
+            qry += " and i.owner == @owner";
+            par.owner = req.body.owner;
+        }
+
+        if ( req.body.tags ){
+            qry += " and @tags all in i.tags";
+            par.tags = req.body.tags;
+        }
+
+        if ( req.body.from != undefined ){
+            qry += " and i.ut >= @utfr";
+            par.utfr = req.body.from;
+        }
+
+        if ( req.body.to != undefined ){
+            qry += " and i.ut <= @utto";
+            par.utto = req.body.to;
+        }
+
+        if ( req.body.data && ( req.body.data.text || req.body.data.tags || req.body.data.md )){
+            if ( req.body.data.text ){
+                // Must use textview for text matching
+                qry += " for v in 1..10 outbound i item for t in textview search t._id == v._id and analyzer(";
+
+                for ( i in req.body.data.text ){
+                    if ( i != "0" )
+                        qry += " and";
+                    qry += " (phrase(t.title,'" + req.body.data.text[i] + "') or phrase(t['desc'],'" + req.body.data.text[i] + "'))";
+                }
+            
+                qry += ",'text_en')";
+    
+                if ( req.body.data.tags ){
+                    qry += " and @dtags all in t.tags";
+                    par.dtags = req.body.data.tags;
+                }
+
+                if ( req.body.data.md ){
+                    qry += " and (" + req.body.data.md + ")";
+                }
+            }else{
+                // Use plain graph traversal with filters
+                qry += " for v in 1..10 outbound i item filter is_same_collection('d',v)";
+
+                if ( req.body.data.tags ){
+                    qry += " and @dtags all in v.tags";
+                    par.dtags = req.body.data.tags;
+                }
+
+                if ( req.body.data.md ){
+                    qry += " and (" +req.body.data.md + ")";
+                }
+            }
+        }else{
+            // Use plain graph traversal, no filters
+            qry += " for v in 1..10 outbound i item filter is_same_collection('d',v)";
+        }
+
+        qry += " limit " + off + ", " + cnt + " return { _id: v._id, title: v.title, alias: v.alias }";
+
+        //console.log("qry:",qry);
+
+        result = g_db._query( qry, par, {}, { fullCount: true });
+        var tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+
+        /*for ( var i in result ){
+            item = result[i];
+            if ( item.owner_name && item.owner_name.length )
+                item.owner_name = item.owner_name[0];
+            else
+                item.owner_name = null;
+
+            if ( item.desc && item.desc.length > 120 ){
+                item.desc = item.desc.slice(0,120) + " ...";
+            }
+
+            item.notes = g_lib.annotationGetMask( client, item._id );
+        }*/
+
+        result.push({ paging: { off: off, cnt: cnt, tot: tot }});
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.body(joi.object({
+    text: joi.array().items(joi.string()).optional(),
+    tags: joi.array().items(joi.string()).optional(),
+    owner: joi.string().optional(),
+    from: joi.number().integer().min(0).optional(),
+    to: joi.number().integer().min(0).optional(),
+    data: joi.object().optional({
+        id: joi.string().optional(),
+        text: joi.array().items(joi.string()).optional(),
+        tags: joi.array().items(joi.string()).optional(),
+        md: joi.string().optional(),
+        from: joi.number().integer().min(0).optional(),
+        to: joi.number().integer().min(0).optional()
+    }),
+    offset: joi.number().integer().min(0).optional(),
+    count: joi.number().integer().min(1).optional(),
+    sort: joi.number().integer().min(0).optional()
+}).required(), 'Collection fields')
+.summary('Search published collections.')
+.description('Search published collections.');
+
+
+router.post('/pub/search', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn","c","d","a"],
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
+                var item, count, result = g_db._query( req.body.query, req.body.params, {}, { fullCount: true }).toArray();
+
+                if ( result.length > req.body.limit ){
+                    result.length = req.body.limit;
+                    count = req.body.limit + 1;
+                }else{
+                    count = result.length;
+                }
+
+                for ( var i in result ){
+                    item = result[i];
+
+                    if ( item.owner_name && item.owner_name.length )
+                        item.owner_name = item.owner_name[0];
+                    else
+                        item.owner_name = null;
+        
+                    if ( item.desc && item.desc.length > 120 ){
+                        item.desc = item.desc.slice(0,120) + " ...";
+                    }
+    
+                    item.notes = g_lib.annotationGetMask( client, item._id );
+                }
+
+                result.push({ paging: { off: req.body.params.off, cnt: result.length, tot: req.body.params.off + count }});
+
+                res.send( result );
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    query: joi.string().required(),
+    params: joi.object().required(),
+    limit: joi.number().integer().required()
+}).required(), 'Collection fields')
+.summary('Execute published data search query')
+.description('Execute published data search query');

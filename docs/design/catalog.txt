@@ -1,0 +1,136 @@
+Catalog Redesign
+---------------------------
+
+The new approach for implementing the DataFed catalog system will be based on a combination of tags
+and a hierarchical category structure. Generally, the approach will be similar to how 
+Stackoverflow implements their tag-based search system, but with additional high-level guidance
+provided by the category system.
+
+The basic idea is that when a collection is published, the user must select or specify tags for the
+category of the collection. These tags will be applied to the collection itself, and, potentially,
+modify the category structure itself (if we allow user-defined categories). The catalog view would
+then present the categories as a navagable hierarchy, and if a user selects a category, the
+associated tag would be applied as a filter to the the view of collections. Thus, at the very top-
+level, all collections would be listed, but as deeper catagories are selected, the size of the
+collection result would be reduced by the applied tags. These category tags would be functionally
+no different from any other tags, and are simply presented as an organizational/discoverability
+convenience.
+
+Additional tags can be applied by the user at any point, and all active tags will be displayed with
+the ability to easily remove them. (It will be necessary to synchronize the category view if
+category-specific tags are removed.)
+
+Additional collection filtering fields can be added for:
+    - Text in title and/or description
+    - Collection owner
+    - Creation and update times (from, to, range)
+
+Collection results will support paging, but total results will be limited to a realistic quantity
+to prevent undue loading of the database (1000 is probably a good number).
+
+General tags will have collection counts associated with them, but probably not data record counts.
+Categories will maintain category-specific tag counts to reflect the number of collections
+contained in each category instead of the entire database.
+
+At any time, users may search the current collection list for data records with the following data
+record fields:
+    - Tags (excluding current collection tags)
+    - Text in title and/or description
+    - Record owner (if not specified for collections)
+    - Record creator
+    - Creation and update times (from, to, range)
+    - Metadata expression
+
+This search will be the same search as provided for the data browser, but the search scope will be
+automatically set to the current collection list. The collection scope will be limited in the
+same manner as the collection search results (first 1000 matches). Results of the record search
+will be displayed in the standard search results panel.
+
+User Created Categories
+--------------------------
+
+It would be easy to allow the creation of new categories by users; however, this could lead to
+poor organization or conflicts of tag definitions. It is also desirable to keep all top level
+tags unique - if a secondary tag is used under different primary tags, or as a primary tag too,
+it would lead to much confusion and misuse. For these reasons, the categories should be controlled
+but encourage users to submit suggestions or edits to the categories. We can provide a TBD/other
+category as a catch all until new categories are created.
+
+
+Database Model
+--------------------------
+
+Topic
+	_id:		auto numeric (1236)
+	Desc:		string, description of topic (optional)
+    coll_cnt:   long int, no of collections with this topic
+
+    refs:       parent topic
+                associated tag
+
+Tag
+    _key        string, hash and n-gram indexed
+	count:		long int, total collection/data count, indexed (delete on count reaching 0)
+
+	No tag edges - search will use indexed tag ID, not graph traversal.
+
+Collection
+	title:		string, text indexed
+	desc:		string, text indexed
+	owner_id:	string, hash indexed
+	ct/ut:		timestamp, indexed
+    public:     bool, is a published collection (readable by all)
+	tags:		array of tag ids, array indexed
+	item_cnt:	long int, total collection/data record count
+
+    refs:       contained items
+                owner
+
+Data
+	title:		string, text indexed
+	desc:		string, text indexed
+	owner_id:	string, hash indexed
+	creator_id:	string, hash indexed
+	ct/ut:		timestamp, indexed
+	tags:		array of tag ids, array indexed
+
+
+
+
+
+Search for Topics by Keyword:
+	Search is based only on indexed values, no graph traversal
+
+	- Tokenize search string
+	- Search using topic view with phrase per token
+ 	- Reconstruct path of matching topics with IDs
+
+Search for Collections within Topic(s):
+	Search is based only on indexed values, no graph traversal
+	Limited to first 100 matches
+
+	Only current topic:
+		- Use current topic ID as topic_id term (identity)
+
+	Current topic and all children:
+		- Use current topic ID as topic_path term (identity, in array)
+
+	- Add title/description search terms
+	- Add owner search term (select from list, not partial)
+	- Add ct/dt term (before, after, range)
+	- Add tag terms (identity match)
+
+Search for Data within Collection(s):
+	Search is based on both indexed values and graph traversal from candiate collections
+	Limited to first 100 matches
+
+	- Add title/description search terms
+	- Add owner search term (select from list, not partial)
+	- Add ct/dt term (before, after, range)
+	- Add tag terms (identity match)
+	- Add metadata filter expression
+
+Notes:
+	Search UI should persist query during session (not saved to DB)
+	Queries can be saved
+

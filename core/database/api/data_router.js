@@ -15,7 +15,7 @@ module.exports = router;
 function recordCreate( client, record, result ){
     var owner_id, parent_id, repo_alloc, alias_key;
 
-    console.log("Create new data:",record.title);
+    //console.log("Create new data:",record.title);
 
     if ( record.parent ) {
         parent_id = g_lib.resolveCollID( record.parent, client );
@@ -50,7 +50,6 @@ function recordCreate( client, record, result ){
 
     g_lib.procInputParam( record, "title", false, obj );
     g_lib.procInputParam( record, "desc", false, obj );
-    g_lib.procInputParam( record, "keyw", false, obj );
     g_lib.procInputParam( record, "alias", false, obj );
     g_lib.procInputParam( record, "doi", false, obj );
     g_lib.procInputParam( record, "data_url", false, obj );
@@ -82,6 +81,18 @@ function recordCreate( client, record, result ){
         if ( obj.alias ){
             alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
         }
+    }
+
+    if ( record.tags != undefined ){
+        g_lib.addTags( record.tags );
+        obj.tags = record.tags;
+    }
+
+    // If parent collection or ancestor is published, get tags
+    var cat_tags = g_lib.getCollCategoryTags( parent_id );
+    if ( cat_tags ){
+        obj.cat_tags = cat_tags;
+        obj.public = true;
     }
 
     var data = g_db.d.save( obj, { returnNew: true });
@@ -152,7 +163,7 @@ router.post('/create', function (req, res) {
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -173,7 +184,6 @@ router.post('/create', function (req, res) {
 .body(joi.object({
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
-    keyw: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     doi: joi.string().allow('').optional(),
     data_url: joi.string().allow('').optional(),
@@ -185,6 +195,7 @@ router.post('/create', function (req, res) {
     deps: joi.array().items(joi.object({
         id: joi.string().required(),
         type: joi.number().integer().required()})).optional(),
+    tags: joi.array().items(joi.string()).optional()
 }).required(), 'Record fields')
 .summary('Create a new data record')
 .description('Create a new data record from JSON body');
@@ -198,12 +209,12 @@ router.post('/create/batch', function (req, res) {
         try {
             var result = { results: [] };
 
-            console.log( "create data" );
+            //console.log( "create data" );
 
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -227,7 +238,6 @@ router.post('/create/batch', function (req, res) {
     joi.object({
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
-        keyw: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
         doi: joi.string().allow('').optional(),
         data_url: joi.string().allow('').optional(),
@@ -239,6 +249,7 @@ router.post('/create/batch', function (req, res) {
         deps: joi.array().items(joi.object({
             id: joi.string().required(),
             type: joi.number().integer().required()})).optional(),
+        tags: joi.array().items(joi.string()).optional(),
         id: joi.string().allow('').optional(), // Ignored
         locked: joi.boolean().optional(), // Ignore
         size: joi.number().optional(), // Ignored
@@ -255,7 +266,7 @@ router.post('/create/batch', function (req, res) {
 
 
 function recordUpdate( client, record, result ){
-    console.log("recordUpdate:",record);
+    // /console.log("recordUpdate:",record);
 
     var data_id = g_lib.resolveDataID( record.id, client );
     var data = g_db.d.document( data_id );
@@ -267,7 +278,7 @@ function recordUpdate( client, record, result ){
         if ( record.md !== undefined )
             perms |= g_lib.PERM_WR_META;
 
-        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.keyw !== undefined )
+        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.tags !== undefined )
             perms |= g_lib.PERM_WR_REC;
 
         if ( record.size !== undefined || record.dt !== undefined || record.data_url !== undefined || record.doi !== undefined || record.source !== undefined )
@@ -283,7 +294,6 @@ function recordUpdate( client, record, result ){
 
     g_lib.procInputParam( record, "title", true, obj );
     g_lib.procInputParam( record, "desc", true, obj );
-    g_lib.procInputParam( record, "keyw", true, obj );
     g_lib.procInputParam( record, "alias", true, obj );
     g_lib.procInputParam( record, "source", true, obj );
     g_lib.procInputParam( record, "doi", true, obj );
@@ -320,8 +330,9 @@ function recordUpdate( client, record, result ){
             obj.ext = "." + obj.ext;
     }
 
-    var loc = g_db.loc.firstExample({ _from: data_id });
-    var alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+    var loc = g_db.loc.firstExample({ _from: data_id }),
+        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to }),
+        i;
 
     if ( record.size !== undefined ) {
         obj.size = record.size;
@@ -339,6 +350,43 @@ function recordUpdate( client, record, result ){
 
     if ( record.dt != undefined )
         obj.dt = record.dt;
+
+    if ( record.tags_clear ){
+        if ( data.tags ){
+            g_lib.removeTags( data.tags );
+            obj.tags = null;
+        }
+    }else if ( record.tags != undefined ){
+        if ( data.tags && data.tags.length ){
+            var add_tags = [], rem_tags = [], tag;
+
+            for ( i in data.tags ){
+                tag = data.tags[i];
+                if ( !( tag in record.tags )){
+                    rem_tags.push( tag );
+                }
+            }
+
+            for ( i in record.tags ){
+                tag = record.tags[i];
+                if ( !( tag in data.tags )){
+                    add_tags.push( tag );
+                }
+            }
+
+            //console.log("add tags",add_tags);
+            //console.log("rem tags",rem_tags);
+            g_lib.addTags( add_tags );
+            g_lib.removeTags( rem_tags );
+        }else{
+            //console.log("add tags",record.tags);
+            g_lib.addTags( record.tags );
+        }
+
+        obj.tags = record.tags;
+    }
+
+    //console.log("upd obj",obj);
 
     data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: record.mdset?false:true });
     data = data.new;
@@ -364,13 +412,13 @@ function recordUpdate( client, record, result ){
     if ( record.deps != undefined && ( record.deps_add != undefined || record.deps_rem != undefined ))
         throw [g_lib.ERR_INVALID_PARAM,"Cannot use both dependency set and add/remove."];
 
-    var i,dep,id,deps_add=new Set(),deps_rem=new Set();
+    var dep,id,deps_add=new Set(),deps_rem=new Set();
 
     if ( record.dep_rem != undefined ){
-        console.log("dep_rem set");
+        //console.log("dep_rem set");
         for ( i in record.dep_rem ) {
             dep = record.dep_rem[i];
-            console.log("dep_rem: ", dep.id, dep.type );
+            //console.log("dep_rem: ", dep.id, dep.type );
 
             id = g_lib.resolveDataID( dep.id, client );
             dep = g_db.dep.firstExample({ _from: data._id, _to: id, type: dep.type });
@@ -378,7 +426,7 @@ function recordUpdate( client, record, result ){
                 throw [g_lib.ERR_INVALID_PARAM,"Specified dependency on "+id+" does not exist."];
 
             if ( dep.type <= g_lib.DEP_IS_COMPONENT_OF ){
-                console.log("will remove:", id );
+                //console.log("will remove:", id );
                 deps_rem.add( id );
             }
 
@@ -406,7 +454,7 @@ function recordUpdate( client, record, result ){
     }
 
     if ( deps_add.size || deps_rem.size ){
-        data.notes = g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, result.updates );
+        g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, result.updates );
     }
 
     data.notes = g_lib.annotationGetMask( client, data._id );
@@ -441,7 +489,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep","n","note"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -474,10 +522,11 @@ router.post('/update', function (req, res) {
     id: joi.string().required(),
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
-    keyw: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
     doi: joi.string().allow('').optional(),
     data_url: joi.string().allow('').optional(),
+    tags: joi.array().items(joi.string()).optional(),
+    tags_clear: joi.boolean().optional(),
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
     size: joi.number().optional(),
@@ -504,7 +553,7 @@ router.post('/update/batch', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep","n","note"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -544,10 +593,11 @@ router.post('/update/batch', function (req, res) {
         id: joi.string().required(),
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
-        keyw: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
         doi: joi.string().allow('').optional(),
         data_url: joi.string().allow('').optional(),
+        tags: joi.array().items(joi.string()).optional(),
+        tags_clear: joi.boolean().optional(),
         md: joi.any().optional(),
         mdset: joi.boolean().optional().default(false),
         ext: joi.string().allow('').optional(),
@@ -629,17 +679,24 @@ router.post('/update/size', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
-        var data = g_db.d.document( data_id );
-        var i,dep,rem_md = false, admin = g_lib.hasAdminPermObject( client, data_id );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
-        if ( !admin) {
-            var perms = g_lib.getPermissions( client, data, g_lib.PERM_RD_REC | g_lib.PERM_RD_META );
-            if ( data.locked || ( perms & ( g_lib.PERM_RD_REC | g_lib.PERM_RD_META )) == 0 )
-                throw g_lib.ERR_PERM_DENIED;
-            if (( perms & g_lib.PERM_RD_META ) == 0 )
-                rem_md = true;
+        var data_id = g_lib.resolveDataID( req.queryParams.id, client ),
+            data = g_db.d.document( data_id ),
+            i,dep,rem_md = false, admin = false;
+
+        if ( client ){
+            admin = g_lib.hasAdminPermObject( client, data_id );
+
+            if ( !admin) {
+                var perms = g_lib.getPermissions( client, data, g_lib.PERM_RD_REC | g_lib.PERM_RD_META );
+                if ( data.locked || ( perms & ( g_lib.PERM_RD_REC | g_lib.PERM_RD_META )) == 0 )
+                    throw g_lib.ERR_PERM_DENIED;
+                if (( perms & g_lib.PERM_RD_META ) == 0 )
+                    rem_md = true;
+            }
+        }else if ( !g_lib.hasPublicRead( data_id )){
+            throw g_lib.ERR_PERM_DENIED;
         }
 
         data.notes = g_lib.annotationGetMask( client, data_id, admin );
@@ -647,7 +704,7 @@ router.get('/view', function (req, res) {
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
             dep = data.deps[i];
-            if ( dep.alias && client._id != dep.owner )
+            if ( dep.alias && ( !client || client._id != dep.owner ))
                 dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
 
             dep.notes = g_lib.annotationGetMask( client, dep.id );
@@ -797,10 +854,10 @@ router.get('/dep/graph/get', function (req, res) {
 
         // Get Ancestors
 
-        console.log("get ancestors");
+        //console.log("get ancestors");
 
         while ( cur.length ){
-            console.log("gen",gen);
+            //console.log("gen",gen);
             for ( i in cur ) {
                 entry = cur[i];
                 rec = g_db.d.document( entry[0] );
@@ -809,7 +866,7 @@ router.get('/dep/graph/get', function (req, res) {
                     rec.alias = rec.owner.charAt(0) + ":" + rec.owner.substr(2) + ":" + rec.alias;
                 }
                     
-                console.log("calc notes for", rec._id );
+                //console.log("calc notes for", rec._id );
                 notes = g_lib.annotationGetMask( client, rec._id );
 
                 if ( entry[1] ){
@@ -839,14 +896,14 @@ router.get('/dep/graph/get', function (req, res) {
 
         // Get Descendants
 
-        console.log("get descendants");
+        //console.log("get descendants");
 
         cur = [[data_id,true]];
         next = [];
         gen = 1;
 
         while ( cur.length ){
-            console.log("gen",gen);
+            //console.log("gen",gen);
 
             for ( i in cur ) {
                 entry = cur[i];
@@ -858,10 +915,10 @@ router.get('/dep/graph/get', function (req, res) {
                     for ( j in deps ){
                         dep = deps[j]; 
 
-                        console.log("dep:",dep.id,"ty:",dep.type);
+                        //console.log("dep:",dep.id,"ty:",dep.type);
 
                         if ( visited.indexOf(dep.id) < 0 ){
-                            console.log("follow");
+                            //console.log("follow");
 
                             node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,doi:dep.doi,size:dep.size,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
                             if ( node.alias && client._id != node.owner )

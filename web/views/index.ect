@@ -2,19 +2,24 @@
 <html>
     <head>
         <% include 'head.ect' %>
-        <title>DataFed Welcome</title>
+        <title>DataFed Login</title>
     </head>
     <body>
         <div class="col-flex ui-widget-content" style="height:100%;border:none">
-            <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
-                <div style="flex:1 1 100%;font-size:2em;">DataFed - Welcome! <span id='mode_label' class='ui-state-error'></span></div>
-                <div style="flex:none"><button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn" onclick="location.href='/ui/login'">Log In / Register</button></div>
+            <div class="ui-widget-header" style="border:none;flex:none;padding:0.2em .5em">
+                <span class='ui-icon ui-icon-box' style='vertical-align:middle;color:white;font-size:1.6em'></span>
+                <span style="font-size:1.8em;vertical-align:middle">&nbsp;Scientific Data Federation</span>
+                <div style='float:right;padding:.2em 0 0 0'>
+                    <button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn" onclick="location.href='/ui/login'">Log In / Register</button>
+                </div>
+
+            <!-- div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
+                <div style="flex:1 1 100%;font-size:2em;"><span class='ui-icon ui-icon-box' style='vertical-align:middle;color:white;font-size:1.6em'></span> Scientific Data Federation&nbsp;<span id='mode_label' class='ui-state-error' style='font-size:70%'></span></div>
+                <div style="flex:none"><button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp<button class="btn" onclick="location.href='/ui/login'">Log In / Register</button></div-->
             </div>
             <div class="" style="padding:3rem 8rem 0;font-size:120%;flex:auto;overflow:auto">
-                <p style='font-size:150%'>A <span style='font-size:120%'><b><i>Data Fed</i></b></span>eration for Science</p>
-                <p style='font-size:120%'><i>Providing powerful data management and collaboration capabilities for data-oriented, cross-facility research.</i></p>
-                <br>
-                <p>DataFed brings together geographically distributed scientific data repositories,  experimental/compute facilities, and powerful data management services to form the <i>DataFed Network</i>. Scientists can uniformly access, organize, and share big data from anywhere within the DataFed Network.<br><br>
+                
+                <p>The Scientific Data Federation (aka DataFed) brings together geographically distributed scientific data repositories,  experimental/compute facilities, and powerful data management services to form the <i>DataFed Network</i>. Scientists can uniformly access, organize, and share big data from anywhere within the DataFed Network.<br><br>
                 Simple, Efficient, and Secure - DataFed boosts scientific productivity and enhances scientific reproducibility.</p>
                 <p><center><a href='/ui/docs'>Learn More</a></center></p>
                 <div style="margin:1rem 1rem;padding:1em;font-size:90%;">
@@ -27,6 +32,7 @@
             </div>
             <div class="ui-widget-header" style="flex:none;padding:.25em">
                 User: Not Logged In
+                <div style='float:right'><span id='mode_label' class='ui-state-error'></span></div>
             </div>
         </div>
     </body>
@@ -36,7 +42,7 @@
 
         var g_test_mode = "<%- @test_mode %>";
         if ( g_test_mode ){
-            $("#mode_label").html("<b>DEV/TEST MODE</b>");
+            $("#mode_label").html("<b>DEV MODE</b>");
         }
 
     </script>

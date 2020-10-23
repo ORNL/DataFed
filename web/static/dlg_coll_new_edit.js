@@ -2,6 +2,7 @@ import * as model from "./model.js";
 import * as util from "./util.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
+import * as dlgPickTopic from "./dlg_pick_topic.js";
 
 
 export function show( a_data, a_parent, a_upd_perms, a_cb ){
@@ -10,7 +11,25 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
     var frame = $(ele),
         dlg_inst;
 
-    frame.html( "<table class='form-table'><tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr><tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr><tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr><tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr><tr><td>Topic: <span class='note'>**</span></td><td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td><td style='width:1em'></td></tr></table>" );
+    frame.html( "<table class='form-table'>\
+        <tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr>\
+        <tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr>\
+        <tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr>\
+        <tr><td style='vertical-align:top'>Tags:</td><td colspan='2'><ul id='tags' class='input-bg'></ul></td></tr>\
+        <tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr>\
+        <tr><td>Access:</span></td>\
+            <td colspan='2'>\
+                <input type='radio' name='acc_mode' id='acc_priv' checked><label for='acc_priv'>Private</label>\
+                <input type='radio' name='acc_mode' id='acc_pub'><label for='acc_pub'>Public</label>\
+            </td></tr>\
+        <tr>\
+            <td>Category:</td>\
+            <td><input title='Topic for publication' type='text' id='topic' style='width:100%'></input></td>\
+            <td><button class='btn btn-icon' id='btn_pick_topic'><span class='ui-icon ui-icon-structure'></span></button></td>\
+        </tr>\
+        </table>" );
+
+        //<tr><td></td><td colspan='2'><label for='auto_tag'></label><input type='checkbox' name='auto_tag' id='auto_tag' checked>Auto-tag data records</td></tr>\
 
     var dlg_title;
     if ( a_data ) {
@@ -19,9 +38,7 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
         dlg_title = "New Collection";
     }
 
-    util.inputTheme($('input',frame));
-    util.inputTheme($('textarea',frame));
-    $(".btn",frame).button();
+    var tag_el = $("#tags",frame);
 
     function callback( ok, reply ){
         if ( ok ) {
@@ -49,18 +66,28 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
         },{
             text: a_data?"Update":"Create",
             click: function() {
-                var obj = {};
+                var obj = {},
+                    is_pub = $("#acc_pub").prop("checked");
+
                 dlg_inst = $(this);
 
-                //var url = "/api/col/";
-
                 if ( a_data ){
-                    //url += "update";
-
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), a_data, obj, "topic" );
+
+                    if ( !a_data.topic && is_pub && !obj.topic ){
+                        dialogs.dlgAlert( "Data Entry Error", "Category is required for public data." );
+                        return;
+                    }
+
+                    // TODO Only assign tags if changed
+                    obj.tags = tag_el.tagit("assignedTags");
+
+                    if (( !obj.tags || obj.tags.length == 0 ) && a_data.tags && a_data.tags.length ){
+                        obj.tagsClear = true;
+                    }
 
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
@@ -78,29 +105,49 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     util.getUpdatedValue( $("#topic",frame).val().toLowerCase(), {}, obj, "topic" );
 
+                    if ( is_pub && !obj.topic ){
+                        dialogs.dlgAlert( "Data Entry Error", "Category is required for public data." );
+                        return;
+                    }
+
+                    obj.tags = tag_el.tagit("assignedTags");
+
                     api.collCreate( obj, callback );
                 }
-
-                //var inst = $(this);
-
-
-                //console.log( "create coll", obj );
-
-                /*api._asyncPost( url, obj, function( ok, data ){
-                    if ( ok ) {
-                        inst.dialog('close');
-                        if ( a_cb )
-                            a_cb(data.coll[0]);
-                    } else {
-                        util.setStatusText( data, true );
-                    }
-                });*/
             }
         }],
         open: function(){
             var widget = frame.dialog( "widget" );
 
-            $(".ui-dialog-buttonpane",widget).append("<div style='font-size:85%' class='note'><span style='width:2em;display:inline-block;text-align:right'>*</span> Required fields<br><span style='width:2em;display:inline-block;text-align:right'>**</span> Enables anonymous read<div>");
+            $(".ui-dialog-buttonpane",widget).append("<div style='font-size:85%' class='note'><span style='width:2em;display:inline-block;text-align:right'>*</span> Required fields<div>");
+
+            tag_el.tagit({
+                autocomplete: {
+                    delay: 500,
+                    minLength: 3,
+                    source: "/api/tag/autocomp"
+                },
+                caseSensitive: false
+            });
+
+            $("#btn_pick_topic",frame).on("click",function(){
+                dlgPickTopic.show( function( topic ){
+                    $("#topic",frame).val( topic );
+                });
+            });
+
+            $("input[type=radio][name=acc_mode]",frame).change( function( ev ){
+                var top = $("#topic", frame );
+
+                if( this.id == 'acc_pub' ){
+                    util.inputEnable( top );
+                    util.inputEnable( $("#btn_pick_topic", frame ));
+                }else{
+                    util.inputDisable( top );
+                    util.inputDisable( $("#btn_pick_topic", frame ));
+                    top.val("");
+                }
+            });
 
             if ( a_data ){
                 console.log("coll data:",a_data);
@@ -112,7 +159,14 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                 }
                 $("#desc",frame).val(a_data.desc);
                 $("#parent_row",frame).css("display","none");
-                $("#topic",frame).val(a_data.topic);
+
+                if ( a_data.topic ){
+                    $("#topic",frame).val(a_data.topic);
+                    $("#acc_pub",frame).prop("checked",true);
+                }else{
+                    util.inputDisable( $("#topic", frame ));
+                    util.inputDisable( $("#btn_pick_topic", frame ));
+                }
 
                 if (( a_upd_perms & model.PERM_WR_REC ) == 0 ){
                     util.inputDisable( $("#title,#desc,#alias", frame ));
@@ -122,13 +176,25 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     util.inputDisable( $("#topic", frame ));
                 }
 
+                if ( a_data.tags && a_data.tags.length ){
+                    for ( var t in a_data.tags ){
+                        tag_el.tagit("createTag", a_data.tags[t] );
+                    }
+                }
             } else {
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
                 $("#coll",frame).val(a_parent?a_parent:"");
-                $("#topic",frame).val("");
+
+                util.inputDisable( $("#topic", frame ));
+                util.inputDisable( $("#btn_pick_topic", frame ));
+                //util.inputDisable( $("#auto_tag", frame ));
             }
+
+            util.inputTheme($('input',frame));
+            util.inputTheme($('textarea',frame));
+            $(".btn",frame).button();
         },
         close: function( ev, ui ) {
             $(this).dialog("destroy").remove();

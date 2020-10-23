@@ -9,7 +9,7 @@ export var opts = {
 export var date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false, second: '2-digit' };
 
 export function loadUser() {
-    console.log( "settings.loadUser" );
+    //console.log( "settings.loadUser" );
 
     var cookie_user = Cookies.get( 'sdms-user' );
     //console.log( "user cookie: ", user );

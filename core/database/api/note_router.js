@@ -227,7 +227,7 @@ router.post('/comment/edit', function (req, res) {
 
 router.get('/view', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
         if ( !req.queryParams.id.startsWith( "n/" ))
             throw [g_lib.ERR_INVALID_PARAM,"Invalid annotaion ID '" + req.queryParams.id + "'"];
@@ -237,13 +237,17 @@ router.get('/view', function (req, res) {
 
         var note = g_db.n.document( req.queryParams.id );
 
-        if ( client._id != note.creator ){
+        if ( !client || client._id != note.creator ){
             var ne = g_db.note.firstExample({ _to: note._id });
-            if ( !g_lib.hasAdminPermObject( client, ne._from )) {
+            if ( !client || !g_lib.hasAdminPermObject( client, ne._from )) {
                 if ( note.state == g_lib.NOTE_ACTIVE ){
                     // Anyone with read permission to subject doc can comment on active notes
                     var doc = g_db._document( ne._from );
-                    if (( g_lib.getPermissions( client, doc, g_lib.PERM_RD_REC ) & g_lib.PERM_RD_REC ) == 0 ){
+                    if ( !client ){
+                        if ( !g_lib.hasPublicRead( doc._id )){
+                            throw g_lib.ERR_PERM_DENIED;
+                        }
+                    }else if (( g_lib.getPermissions( client, doc, g_lib.PERM_RD_REC ) & g_lib.PERM_RD_REC ) == 0 ){
                         throw g_lib.ERR_PERM_DENIED;
                     }
                 }else{
@@ -268,10 +272,14 @@ router.get('/view', function (req, res) {
 
 router.get('/list/by_subject', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
         var results, qry, id = g_lib.resolveDataCollID( req.queryParams.subject, client );
 
-        if ( g_lib.hasAdminPermObject( client, id )) {
+        if ( !client ){
+            qry = "for v in 1..1 outbound @subj note filter v.state == 2 sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
+            results = g_db._query( qry, { subj: id });
+        }else if ( g_lib.hasAdminPermObject( client, id )) {
             qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
             results = g_db._query( qry, { subj: id });
         }else{

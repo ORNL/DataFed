@@ -111,13 +111,6 @@ module.exports = ( function() {
     obj.NOTE_MASK_LOC_ALL   = 0xFF;
     obj.NOTE_MASK_INH_ALL   = 0xC00;
 
-    obj.SS_MY_DATA          = 0x01;
-    obj.SS_MY_PROJ          = 0x02;
-    obj.SS_TEAM_PROJ        = 0x04;
-    obj.SS_USER_SHARE       = 0x08;
-    obj.SS_PROJ_SHARE       = 0x10;
-    obj.SS_PUBLIC           = 0x20;
-
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
         grant: joi.number().optional(),
@@ -158,15 +151,14 @@ module.exports = ( function() {
         desc: { required: false, update: true, max_len: 2000, label: 'description' },
         summary: { required: false, update: true, max_len: 500, in_field: "desc", out_field: "desc", label: 'description' },
         comment: { required: true, update: true, max_len: 2000, in_field: "comment", out_field: "comment", label: 'comment' },
-        keyw: { required: false, update: true, max_len: 200, lower: true, label: 'keywords' },
-        topic: { required: false, update: true, max_len: 30, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
+        topic: { required: false, update: true, max_len: 500, lower: true, charset: obj.CHARSET_TOPIC, label: 'topic' },
         domain: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'domain' },
         source: { required: false, update: true, max_len: 300, lower: false, label: 'source' },
         ext: { required: false, update: true, max_len: 40, lower: false, label: 'extension' },
         gid: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, label: 'group ID' },
         id: { required: true, update: false, max_len: 40, lower: true, charset: obj.CHARSET_ID, out_field: "_key", label: 'ID' },
         doi: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_DOI, label: 'doi' },
-        data_url: { required: false, update: true, max_len: 200, lower: false, charset: obj.CHARSET_URL, label: 'data URL' },
+        data_url: { required: false, update: true, max_len: 200, lower: false, charset: obj.CHARSET_URL, label: 'data URL' }
     };
 
     obj.DEF_MAX_COLL    = 50;
@@ -343,6 +335,39 @@ module.exports = ( function() {
         if ( result.length != 1 ){
             //console.log("Client", a_client_id, "not found, params:", params );
             throw [obj.ERR_NOT_FOUND,"Account/Identity '"+a_client_id+"' not found"];
+        }
+
+        return result[0];
+    };
+
+    obj.getUserFromClientID_noexcept = function( a_client_id ) {
+        // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
+        // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
+
+        var params;
+
+        if ( a_client_id.startsWith("u/")){
+            if ( !obj.db.u.exists( a_client_id ))
+                return;
+
+            return obj.db._document({ _id: a_client_id });
+        } else if ( obj.isDomainAccount( a_client_id )) {
+            // Account
+            params = { 'id': 'accn/' + a_client_id };
+        } else if ( obj.isUUID( a_client_id  )) {
+            // UUID
+            params = { 'id': 'uuid/' + a_client_id };
+        } else {
+            if ( !obj.db.u.exists( "u/" + a_client_id ))
+                return;
+
+            return obj.db._document({ _id: "u/" + a_client_id });
+        }
+
+        var result = obj.db._query( "for j in inbound @id ident return j", params, { cache: true } ).toArray();
+
+        if ( result.length != 1 ){
+            return;
         }
 
         return result[0];
@@ -683,7 +708,7 @@ module.exports = ( function() {
             id = a_id;
         } else {
             var alias_id = "a/";
-            if ( a_id.indexOf(":") == -1 )
+            if ( a_client && a_id.indexOf(":") == -1 )
                 alias_id += "u:"+a_client._key + ":" + a_id;
             else
                 alias_id += a_id;
@@ -714,7 +739,7 @@ module.exports = ( function() {
             id = a_id;
         } else {
             var alias_id = "a/";
-            if ( a_id.indexOf(":") == -1 )
+            if ( a_client && a_id.indexOf(":") == -1 )
                 alias_id += "u:"+a_client._key + ":" + a_id;
             else
                 alias_id += a_id;
@@ -733,52 +758,297 @@ module.exports = ( function() {
         return id;
     };
 
-    obj.topicLink = function( a_topic, a_coll_id, a_owner_id ){
-        //var top_ar = obj.parseTopic( a_topic );
-        var top_ar = a_topic.split(".");
-        var i,topic,parent = "t/root";
+    /*
+    obj.topicUpdateData = function( a_coll_id, a_public, a_new_tags ){
+        // Recurse into all child collections and update data record tags and public flag
+        var ctx = { pub: a_public, tags: a_new_tags, visited: {}, par: null };
+        obj.topicUpdateData_recurse( a_coll_id, ctx );
+    }
+    */
 
-        top_ar.push(a_owner_id);
+    // For use when creating a new record
+    obj.getCollCategoryTags = function( a_coll_id ){
+        var coll = obj.db.c.document( a_coll_id ),
+            ctx = obj.catalogCalcParCtxt( coll, {} );
 
-        for ( i = 0; i < top_ar.length; i++ ){
-            topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{par:parent,title:top_ar[i]});
-            if ( topic.hasNext() ){
-                parent = topic.next()._id;
-            }else{
-                for ( ; i < top_ar.length; i++ ){
-                    topic = obj.db.t.save({title:top_ar[i]},{returnNew:true});
-                    obj.db.top.save({_from:topic._id,_to:parent});
-                    parent = topic._id;
+        if ( ctx.pub )
+            return Array.from( ctx.tags );
+    };
+
+    // For use when moving a record
+    obj.getCollCategoryTags = function( a_coll_id ){
+        var coll = obj.db.c.document( a_coll_id ),
+            ctx = obj.catalogCalcParCtxt( coll, {} );
+
+        if ( ctx.pub )
+            return Array.from( ctx.tags );
+    };
+    
+    obj.catalogUpdateRecord = function( a_data, a_coll, a_ctx, a_visited = {}){
+        var p, par = obj.db.item.byExample({ _to: a_data._id }),
+            tmp, _ctx = (a_ctx?a_ctx:{ pub: false, tags: new Set()});
+
+        while( par.hasNext() ){
+            p = par.next();
+
+            if ( a_coll && p._from != a_coll._id ){
+                // Record has a parent outside of starting collection tree
+                tmp = a_visited[p._from];
+                if ( !tmp ){
+                    tmp = obj.db.c.document( p._from );
+                    tmp = obj.catalogCalcParCtxt( tmp, a_visited );
                 }
-                break;
+
+                // Only merge tags if this parent coll is public (or has public ancestor)
+                if ( tmp.pub ){
+                    // Create new context for record if needed
+                    if ( _ctx === a_ctx ){
+                        _ctx = { pub: a_ctx.pub, tags: new Set( a_ctx.tags )};
+                    }
+
+                    _ctx.pub = (_ctx.pub || tmp.pub);
+                    tmp.tags.forEach( _ctx.tags.add, _ctx.tags );
+                }
             }
         }
 
-        if ( !obj.db.top.firstExample({_from:a_coll_id,_to:parent})){
-            obj.db.top.save({_from:a_coll_id,_to:parent});
+        // Update record with pub flag & tags
+        obj.db._update( a_data._id, { public: _ctx.pub, cat_tags: _ctx.pub?Array.from(_ctx.tags):null }, { keepNull: false });
+    }
+
+    obj.catalogCalcParCtxt = function( a_coll, a_visited ){
+        console.log("catalogCalcParCtxt",a_coll._id);
+        var c, ctx = { pub: a_coll.public?true:false, tags: new Set( a_coll.cat_tags?a_coll.cat_tags:[] )},
+            item = obj.db.item.firstExample({ _to: a_coll._id });
+
+        while ( item ){
+            console.log("chk par",item);
+            c = a_visited[item._from];
+
+            if ( c ){
+                ctx.pub = (ctx.pub || c.pub);
+                if ( c.tags ){
+                    c.tags.forEach( ctx.tags.add, ctx.tags );
+                }
+                console.log("found visited - stop");
+                break;
+            }else{
+                c = obj.db.c.document( item._from );
+                ctx.pub = (ctx.pub || c.public);
+                if ( c.cat_tags ){
+                    c.cat_tags.forEach( ctx.tags.add, ctx.tags );
+                }
+            }
+
+            item = obj.db.item.firstExample({ _to: item._from });
+        }
+        console.log("update visited",ctx);
+
+        a_visited[a_coll._id] = ctx;
+        return ctx;
+    };
+
+    /* This recursive function updates data record public flag and category tags based
+    on current public status of all parent collections, including the entry collection.
+    When a collection topic is change, the collection should be updated first before
+    calling this function. Note that the public state and category tags of child
+    collections are not changed by this function.
+    */
+    obj.catalogUpdateColl = function( a_coll, a_ctx, a_visited = {}){
+        console.log("catalogUpdateColl",a_coll._id,a_ctx);
+        var ctx;
+
+        if ( a_ctx ){
+            ctx = { pub: (a_coll.public || a_ctx.pub), tags: new Set( a_ctx.tags )};
+            if ( a_coll.cat_tags ){
+                a_coll.cat_tags.forEach( ctx.tags.add, ctx.tags );
+            }
+            a_visited[a_coll._id] = ctx;
+        }else{
+            // First collection - must compute pub/tags from parent collections
+            ctx = obj.catalogCalcParCtxt( a_coll, a_visited );
+        }
+
+        var p, par, _ctx, tmp, item, items = obj.db.item.byExample({ _from: a_coll._id });
+
+        while ( items.hasNext() ){
+            item = items.next();
+
+            if ( item._to.charAt(0) == 'c' ){
+                par = obj.db.c.document( item._to );
+                obj.catalogUpdateColl( par, ctx, a_visited );
+            }else{
+                // TODO Refactor to use catalogUpdateRecord function
+
+                // Determine if this record is published by other collections
+                par = obj.db.item.byExample({ _to: item._to });
+                _ctx = ctx;
+
+                while( par.hasNext() ){
+                    p = par.next();
+
+                    if ( p._from != a_coll._id ){
+                        console.log("chk link to ",p._from );
+                        // Record has a parent outside of starting collection tree
+                        tmp = a_visited[p._from];
+                        if ( !tmp ){
+                            console.log("not visited");
+
+                            tmp = obj.db.c.document( p._from );
+                            //console.log("loaded",tmp);
+                            tmp = obj.catalogCalcParCtxt( tmp, a_visited );
+                        }
+
+                        console.log("ctx",tmp);
+
+                        // Only merge tags if this parent coll is public (or has public ancestor)
+                        if ( tmp.pub ){
+                            console.log("merge");
+
+                            // Create new context for record if needed
+                            if ( _ctx === ctx ){
+                                _ctx = { pub: ctx.pub, tags: new Set( ctx.tags )};
+                            }
+
+                            _ctx.pub = (_ctx.pub || tmp.pub);
+                            tmp.tags.forEach( _ctx.tags.add, _ctx.tags );
+                        }
+                    }else{
+                        console.log("ignore link to ",a_coll._id );
+                    }
+                }
+
+                // Update record with pub flag & tags
+                obj.db._update( item._to, { public: _ctx.pub, cat_tags: _ctx.pub?Array.from(_ctx.tags):null }, { keepNull: false });
+            }
+        }
+    };
+
+
+    obj.topicCreate = function( a_topics, a_idx, a_par_id, a_owner_id ){
+        var topic, par_id = a_par_id; //, doc;
+
+        for ( var i = a_idx; i < a_topics.length; i++ ){
+            topic = a_topics[i];
+
+            /*if (( doc = obj.db.tag.firstExample({ _key: topic })) != null ){
+                obj.db.tag.update( doc._id, { count: doc.count + 1 });
+            }else{
+                obj.db.tag.save({ _key: topic, count: 1 });
+            }*/
+
+            topic = obj.db.t.save({ title: topic, creator: a_owner_id, coll_cnt: 1 },{ returnNew: true });
+            obj.db.top.save({ _from: topic._id, _to: par_id });
+            par_id = topic._id;
+        }
+
+        return par_id;
+    };
+
+    obj.topicLink = function( a_topic, a_coll_id, a_owner_id ){
+        var i, topics = a_topic.split(".");
+
+        // Detect misplaced topic delimiters
+        for ( i in topics ){
+            if ( topics[i].length == 0 )
+                throw [ obj.ERR_INVALID_PARAM, "Invalid category" ];
+        }
+
+        var topic,parent; //,tag;
+
+        // Find or create top-level topics
+        parent = obj.db._query("for i in t filter i.top == true && i.title == @title return i",{ title: topics[0] });
+
+        if ( parent.hasNext() ){
+            parent = parent.next();
+
+            // Increment coll_cnt
+            obj.db.t.update( parent._id, { coll_cnt: parent.coll_cnt + 1 });
+            parent = parent._id;
+
+            /*if (( tag = obj.db.tag.firstExample({ _key: topics[0] })) != null ){
+                obj.db.tag.update( tag._id, { count: tag.count + 1 });
+            }else{
+                obj.db.tag.save({ _key: topics[0], count: 1 });
+            }*/
+
+            for ( i = 1; i < topics.length; i++ ){
+                topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",{ par: parent, title: topics[i] });
+                if ( topic.hasNext() ){
+                    parent = topic.next();
+                    // Increment coll_cnt
+                    obj.db.t.update( parent._id, { coll_cnt: parent.coll_cnt + 1 });
+
+                    /*if (( tag = obj.db.tag.firstExample({ _key: topics[i] })) != null ){
+                        obj.db.tag.update( tag._id, { count: tag.count + 1 });
+                    }else{
+                        obj.db.tag.save({ _key: topics[i], count: 1 });
+                    }*/
+        
+                    parent = parent._id;
+                }else{
+                    parent = this.topicCreate( topics, i, parent, a_owner_id );
+                    break;
+                }
+            }
+        }else{
+            parent = obj.db.t.save({ title: topics[0], top: true, creator: a_owner_id, coll_cnt: 1 },{ returnNew: true })._id;
+
+            parent = this.topicCreate( topics, 1, parent, a_owner_id );
+        }
+
+        if ( !obj.db.top.firstExample({ _from: a_coll_id, _to: parent })){
+            obj.db.top.save({ _from: a_coll_id, _to: parent });
         }
     };
 
     obj.topicUnlink = function( a_coll_id ){
         //console.log("topicUnlink");
-        var top = obj.db.top.firstExample({_from: a_coll_id});
-        if ( !top ){
+        var top_lnk = obj.db.top.firstExample({_from: a_coll_id});
+        if ( !top_lnk ){
             return;
         }
 
-        var parent = top._to;
-        obj.db.top.remove(top);
+        // Save parent topic id, delete link from collection
+        var topic, topic_id = top_lnk._to, dec_only = false; //, tags = [];
+        //console.log("rem top lnk",top_lnk._id);
+        obj.db.top.remove( top_lnk );
 
-        // Unwind path, deleting orphaned topics along the way
-        while ( parent != "t/root" ){
-            if ( obj.db.top.firstExample({ _to: parent }))
-                break;
-            else {
-                top = obj.db.top.firstExample({ _from: parent });
-                parent = top._to;
-                obj.graph.t.remove( top._from );
+        // Unwind path, deleting orphaned, non-admin topics along the way
+        while( topic_id ){
+            topic = obj.db.t.document( topic_id );
+
+            // Decrement coll_cnt
+            obj.db.t.update( topic._id, { coll_cnt: topic.coll_cnt - 1 });
+
+            //tags.push( topic.title );
+
+            // If parent is admin controlled, or other topics are linked to parent, stop
+            if ( dec_only || topic.admin || obj.db.top.firstExample({ _to: topic_id })){
+                //console.log("stop no del topic",topic);
+                dec_only = true;
+                top_lnk = obj.db.top.firstExample({ _from: topic_id });
+                if ( top_lnk ){
+                    topic_id = top_lnk._to;
+                }else{
+                    break;
+                }
+            }else{
+                top_lnk = obj.db.top.firstExample({ _from: topic_id });
+
+                if ( top_lnk ){
+                    topic_id = top_lnk._to;
+                    //console.log("rem topic",top_lnk._from);
+                    obj.graph.t.remove( top_lnk._from );
+                }else{
+                    //console.log("rem topic",topic_id);
+                    obj.graph.t.remove( topic_id );
+                    topic_id = null;
+                }
             }
         }
+
+        //obj.removeTags( tags );
     };
 
     obj.getParents = function( item_id ){
@@ -800,23 +1070,30 @@ module.exports = ( function() {
                 results[idx].push({id:p._id,title:p.title,alias:p.alias});
                 p = obj.db.item.firstExample({_to: p._id });
             }
-            idx ++;
+            idx++;
         }
 
-        /*
-        parents = obj.db._query( "for v in 1..1 inbound @item item return {id:v._id,title:v.title,alias:v.alias}", { item : item_id }).toArray();
-        if ( !parents.length )
-            return [[]];
-
-        for ( i in parents ){
-            results.push([parents[i]]);
-        }
-
-        for ( i in results ){
-            var res = obj.db._query( "for v in 1..50 inbound @item item return {id:v._id,title:v.title,alias:v.alias}", { item : results[i][0].id }).toArray();
-            //console.log("par:",res);
-            results[i] = results[i].concat( res );
-        }*/
+        // Sort paths alphabetically as in collection listings
+        results.sort( function( a, b ){
+            var i,j;
+            if ( a.length < b.length ){
+                for ( i = a.length - 1, j = b.length-1; i >=0; i--, j-- ){
+                    if ( a[i].title < b[j].title )
+                        return -1;
+                    else if ( a[i].title > b[j].title )
+                        return 1;
+                }
+                return 1;
+            }else{
+                for ( i = a.length - 1, j = b.length-1; j >=0; i--, j-- ){
+                    if ( a[i].title < b[j].title )
+                        return -1;
+                    else if ( a[i].title > b[j].title )
+                        return 1;
+                }
+                return -1;
+            }
+        });
 
         return results;
     };
@@ -832,7 +1109,7 @@ module.exports = ( function() {
 
 
     obj.hasAnyCommonAccessScope = function( src_item_id, dst_coll_id ){
-        console.log("hasAnyCommonAccessScope",src_item_id, dst_coll_id);
+        //console.log("hasAnyCommonAccessScope",src_item_id, dst_coll_id);
 
         if ( src_item_id[0] == 'c' ){
             // Collections can only be linked in one place, can use hasCommonAccessScope on parent
@@ -854,7 +1131,7 @@ module.exports = ( function() {
     };
 
     obj.hasCommonAccessScope = function( src_coll_id, dst_coll_id ){
-        console.log("hasCommonAccessScope",src_coll_id, dst_coll_id);
+        //console.log("hasCommonAccessScope",src_coll_id, dst_coll_id);
         var p1 = [src_coll_id], p2 = [dst_coll_id];
         var parent, child = src_coll_id;
 
@@ -882,7 +1159,7 @@ module.exports = ( function() {
             if ( p1[i] != p2[i] )
                 break;
         }
-        console.log("hasCommonAccessScope",p1, p2,i);
+        //console.log("hasCommonAccessScope",p1, p2,i);
 
         if ( i == 0 ){
             return false;
@@ -904,6 +1181,31 @@ module.exports = ( function() {
         }
 
         return true;
+    };
+
+    obj.hasPublicRead = function( a_id ) {
+        // Check for local topic on collections
+        if ( a_id.startsWith("c/")){
+            var col = obj.db.c.document( a_id );
+            if ( col.topic )
+                return true;
+        }
+
+        var i, children = [a_id], parents;
+
+        for(;;){
+            // Find all parent collections owned by object owner
+            parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic}", { children : children }).toArray();
+            if ( parents.length == 0 )
+                return false;
+
+            for ( i in parents ) {
+                if ( parents[i].topic ){
+                    return true;
+                }
+            }
+            children = parents;
+        }
     };
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
@@ -1166,6 +1468,14 @@ module.exports = ( function() {
     obj.getPermissionsLocal = function( a_client_id, a_object, a_get_inherited, a_req_perm ) {
         var perm={grant:0,inhgrant:0,inherited:0},acl,acls,i;
 
+        //console.log("getPermissionsLocal",a_object._id);
+
+        if ( a_object.topic ){
+            //console.log("has topic 1");
+            perm.grant |= obj.PERM_PUBLIC;
+            perm.inhgrant |= obj.PERM_PUBLIC;
+        }
+
         if ( a_object.acls & 1 ){
             acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client_id } ).toArray();
 
@@ -1187,6 +1497,7 @@ module.exports = ( function() {
         }
 
         if ( a_get_inherited ){
+            //console.log("chk inherited");
             var children = [a_object];
             var parents,parent;
 
@@ -1195,11 +1506,22 @@ module.exports = ( function() {
 
                 parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", { children : children }).toArray();
 
+                //console.log("parents",parents);
+
                 if ( parents.length == 0 )
                     break;
 
                 for ( i in parents ) {
                     parent = parents[i];
+
+                    if ( parent.topic ){
+                        //console.log("has topic 2");
+
+                        perm.inherited |= obj.PERM_PUBLIC;
+        
+                        if (( a_req_perm & perm.inherited ) == a_req_perm )
+                            break;
+                    }
 
                     // User ACL
                     if ( parent.acls && (( parent.acls & 1 ) != 0 )){
@@ -1345,13 +1667,13 @@ module.exports = ( function() {
     };
 
     obj.checkDependencies = function(id,src,depth){
-        console.log("checkdep ",id,src,depth);
+        //console.log("checkdep ",id,src,depth);
 
         var dep,deps = obj.db._query("for v in 1..1 outbound @id dep return v._id",{id:id});
         if ( !depth || depth < 50 ){
-            console.log("checkdep depth ok");
+            //console.log("checkdep depth ok");
             while( deps.hasNext() ){
-                console.log("has next");
+                //console.log("has next");
                 dep = deps.next();
                 if ( dep == src )
                     throw [obj.ERR_INVALID_PARAM,"Circular dependency detected in references, from "+id];
@@ -1360,33 +1682,44 @@ module.exports = ( function() {
         }
     };
 
+    // Returns bitmask: CLOSED_BIT (1) | OPEN_TYPE_INH (4) | OPEN_TYPE (4) | ACTIVE_TYPE (4)
     obj.annotationGetMask = function( a_client, a_subj_id, a_admin ){
         var mask = 0, res, n, b;
 
-        if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, a_subj_id ))){
-            res = obj.db._query("for n in 1..1 outbound @id note filter n.state > 0 return {type:n.type,state:n.state,parent_id:n.parent_id}",
-                { id: a_subj_id });
+        if ( a_client ){
+            if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, a_subj_id ))){
+                res = obj.db._query("for n in 1..1 outbound @id note return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                    { id: a_subj_id });
+            }else{
+                res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || n.creator == @client return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                    { id: a_subj_id, client: a_client._id });
+            }
         }else{
-            res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || ( n.creator == @client && n.state == 1 ) return {type:n.type,state:n.state,parent_id:n.parent_id}",
-                { id: a_subj_id, client: a_client._id });
+            res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 return {type:n.type,state:n.state,parent_id:n.parent_id}",
+            { id: a_subj_id });
         }
 
         while ( res.hasNext() ){
             n = res.next();
 
-            b = 1<<n.type;
-            if ( n.parent_id && n.state == obj.NOTE_OPEN )
-                b <<= 8;
-            else if ( n.state == obj.NOTE_OPEN )
-                b <<= 4;
-            mask |= b;
+            if ( n.state == obj.NOTE_CLOSED ){
+                mask |= 0x1000;
+            }else{
+                b = 1<<n.type;
+                if ( n.parent_id && n.state == obj.NOTE_OPEN )
+                    b <<= 8;
+                else if ( n.state == obj.NOTE_OPEN )
+                    b <<= 4;
+
+                mask |= b;
+            }
         }
 
         return mask;
     };
 
     obj.annotationInitDependents = function( a_client, a_parent_note, a_updates ){
-        console.log("annotationInitDependents",a_parent_note._id);
+        //console.log("annotationInitDependents",a_parent_note._id);
 
         var subj = obj.db._document( a_parent_note.subject_id ),
             note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return v",{id:subj._id}),
@@ -1403,7 +1736,7 @@ module.exports = ( function() {
         // Create new linked annotation for each dependent
         while( deps.hasNext() ){
             dep = deps.next();
-            console.log("dep:",dep._id);
+            //console.log("dep:",dep._id);
             new_note.subject_id = dep._id;
             note = obj.db.n.save( new_note, { returnNew: true });
             obj.db.note.save({ _from: dep._id, _to: note.new._id });
@@ -1502,48 +1835,50 @@ module.exports = ( function() {
     };
 
     obj.annotationDelete = function( a_id, a_update_ids ){
-        console.log("delete note:",a_id);
+        //console.log("delete note:",a_id);
         var n, notes = obj.db.note.byExample({ _to: a_id });
+
         while ( notes.hasNext() ){
             n = notes.next();
             if ( n._from.startsWith("n/")){
                 obj.annotationDelete( n._from, a_update_ids );
             }
         }
-        var n = obj.db.n.document( a_id );
+
+        n = obj.db.n.document( a_id );
         if ( a_update_ids )
             a_update_ids.add( n.subject_id );
         obj.graph.n.remove( a_id );
     };
 
     obj.annotationDependenciesUpdated = function( a_data, a_dep_ids_added, a_dep_ids_removed, a_update_ids ){
-        console.log("annotationDependenciesUpdated",a_data._id);
+        //console.log("annotationDependenciesUpdated",a_data._id);
         // Called when dependencies are added/removed to/from existing/new data record
         var res, qry_res;
 
         a_update_ids.add( a_data._id );
 
         if ( a_dep_ids_removed ){
-            console.log("deletings notes from:",a_data._id);
+            //console.log("deletings notes from:",a_data._id);
 
             // Find local annotations linked to upstream dependencies
             qry_res = obj.db._query( "for v,e,p in 3..3 any @src note filter is_same_collection('d',v) && p.edges[1]._from == p.vertices[1]._id return {src: p.vertices[1], dst: p.vertices[3]}", { src: a_data._id });
 
             while ( qry_res.hasNext() ){
                 res = qry_res.next();
-                console.log("examine:",res.dst._id);
+                //console.log("examine:",res.dst._id);
 
                 if ( a_dep_ids_removed.has( res.dst._id )){
                     // Delete local and downstream annotations
                     obj.annotationDelete( res.src._id, a_update_ids );
                 }else{
-                    console.log("not removed:",res.dst._id);
+                    //console.log("not removed:",res.dst._id);
                 }
             }
         }
 
         if ( a_dep_ids_added ){
-            console.log("deps added:",Array.from( a_dep_ids_added ));
+            //console.log("deps added:",Array.from( a_dep_ids_added ));
             // Get all annotations from new dependencies that may need to be propagated
             qry_res = obj.db._query( "for i in @src for v in 1..1 outbound i note filter v.type > 1 return v", { src: Array.from( a_dep_ids_added )});
 
@@ -1552,11 +1887,11 @@ module.exports = ( function() {
     
                 while ( qry_res.hasNext() ){
                     res = qry_res.next();
-                    console.log("dep:",res);
+                    //console.log("dep:",res);
 
                     // Only need to propagate if dependents are already present or state is active
                     if ( res.state == obj.NOTE_ACTIVE || obj.db.note.byExample({ _to: res._id }).count() > 1 ){
-                        console.log("propagate");
+                        //console.log("propagate");
                         new_note = {
                             state: obj.NOTE_OPEN, type: res.type, parent_id: res._id, creator: res.creator,
                             subject_id: a_data._id, ct: time, ut: time, title: res.title, comments: [{
@@ -1570,6 +1905,55 @@ module.exports = ( function() {
                         obj.db.note.save({ _from: a_data._id, _to: new_note._id });
                         obj.db.note.save({ _from: new_note._id, _to: res._id });
                     }
+                }
+            }
+        }
+    };
+
+    obj.addTags = function( a_tags ){
+        console.log("addTags",a_tags);
+
+        var id, tag, j, code;
+
+        for ( var i in a_tags ){
+            tag = a_tags[i].toLowerCase();
+            id = "tag/" + tag;
+            if ( obj.db.tag.exists( id )){
+                console.log( "update", id );
+                tag = obj.db.tag.document( id );
+                obj.db._update( id, { count: tag.count + 1 });
+            }else{
+                console.log( "save", id );
+                if ( tag.length > 40 )
+                    throw [obj.ERR_INVALID_PARAM,"Tag too long (max 40 characters)."];
+
+                for ( j = 0; j < tag.length; j++) {
+                    code = tag.charCodeAt(j);
+                    if (!(code > 47 && code < 58) && // numeric (0-9)
+                        !(code > 96 && code < 123) && // lower alpha (a-z)
+                        code != 45 ) // "-"
+                        throw [obj.ERR_INVALID_CHAR,"Invalid character(s) in tag."];
+                }
+
+                obj.db.tag.save({ _key: tag, count: 1 });
+            }
+        }
+    };
+
+    obj.removeTags = function( a_tags ){
+        console.log("removeTags",a_tags);
+
+        var id, tag;
+        for ( var i in a_tags ){
+            id = "tag/" + a_tags[i].toLowerCase();
+            if ( obj.db.tag.exists( id )){
+                tag = obj.db.tag.document( id );
+                if ( tag.count > 1 ){
+                    console.log("update",id);
+                    obj.db._update( id, { count: tag.count - 1 });
+                }else{
+                    console.log("remove",id);
+                    obj.db._remove( id );
                 }
             }
         }

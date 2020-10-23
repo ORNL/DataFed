@@ -531,8 +531,12 @@ MsgComm::init( SockType a_sock_type, const SecurityContext * a_sec_ctx, void * a
 {
     //cout << "Init conn to " << m_address << "\n";
 
+    //cerr << "init 1" << endl;
+
     int rc;
     void * ctx = a_zmq_ctx?a_zmq_ctx:getContext();
+
+    //cerr << "init 2" << endl;
 
     m_socket = zmq_socket( ctx, a_sock_type );
     if ( !m_socket )
@@ -541,7 +545,11 @@ MsgComm::init( SockType a_sock_type, const SecurityContext * a_sec_ctx, void * a
         EXCEPT( 1, "zmq_socket failed." );
     }
 
+    //cerr << "init 3" << endl;
+
     setupSecurityContext( a_sec_ctx );
+
+    //cerr << "init 4" << endl;
 
     int value = 1;
     zmq_setsockopt( m_socket, ZMQ_TCP_KEEPALIVE, &value, sizeof( int ));
@@ -556,23 +564,26 @@ MsgComm::init( SockType a_sock_type, const SecurityContext * a_sec_ctx, void * a
     value = 4000;
     zmq_setsockopt( m_socket, ZMQ_RECONNECT_IVL_MAX, &value, sizeof( int ));
 
+    //cerr << "init 5" << endl;
 
     if ( m_bound )
     {
         if (( rc = zmq_bind( m_socket, m_address.c_str() )) == -1 )
-            EXCEPT_PARAM( 1, "ZeroMQ bind to address " << m_address << " failed." );
+            EXCEPT_PARAM( 1, "ZeroMQ bind to address '" << m_address << "' failed." );
     }
     else
     {
         if (( rc = zmq_connect( m_socket, m_address.c_str() )) == -1 )
-            EXCEPT_PARAM( 1, "ZeroMQ connect to address " << m_address << " failed." );
+            EXCEPT_PARAM( 1, "ZeroMQ connect to address '" << m_address << "' failed." );
     }
 
     if ( a_sock_type == ZMQ_SUB )
     {
         if (( rc = zmq_setsockopt( m_socket, ZMQ_SUBSCRIBE, "", 0 )) == -1 )
-            EXCEPT_PARAM( 1, "ZeroMQ subscribe for address " << m_address << " failed." );
+            EXCEPT_PARAM( 1, "ZeroMQ subscribe for address '" << m_address << "' failed." );
     }
+
+    //cerr << "init 6" << endl;
 
     value = 100;
     zmq_setsockopt( m_socket, ZMQ_LINGER, &value, sizeof( int ));

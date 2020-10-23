@@ -153,7 +153,7 @@ router.get('/check', function (req, res) {
                 count += subres.length;
                 result.query_multi_owner = subres;
 
-                subres = g_db._query("for i in t let x = (for v in 1..1 outbound i._id top return v) filter i._id != 't/root' && length(x) == 0 return i._id").toArray();
+                subres = g_db._query("for i in t let x = (for v in 1..1 outbound i._id top return v) filter i.top != true && length(x) == 0 return i._id").toArray();
                 count += subres.length;
                 result.topic_no_parent = subres;
 

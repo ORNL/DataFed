@@ -77,6 +77,21 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
         SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
+        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
+        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
+        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
+        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
+        SET_MSG_HANDLER_DB( proto_id, CatalogSearchRequest, CatalogSearchReply, catalogSearch );
+        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
+        SET_MSG_HANDLER_DB( proto_id, RecordSearchPublishedRequest, ListingReply, recordSearchPublished );
+        SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, TopicDataReply, topicListTopics );
+        SET_MSG_HANDLER_DB( proto_id, TopicViewRequest, TopicDataReply, topicView );
+        //SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
+        SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, TopicDataReply, topicSearch );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
+        SET_MSG_HANDLER_DB( proto_id, TagSearchRequest, TagDataReply, tagSearch );
+        SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
@@ -107,7 +122,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, GetPermsRequest, GetPermsReply, getPerms );
         SET_MSG_HANDLER_DB( proto_id, UserSetAccessTokenRequest, AckReply, userSetAccessToken );
         SET_MSG_HANDLER_DB( proto_id, UserCreateRequest, UserDataReply, userCreate );
-        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
         SET_MSG_HANDLER_DB( proto_id, UserListAllRequest, UserDataReply, userListAll );
         SET_MSG_HANDLER_DB( proto_id, UserListCollabRequest, UserDataReply, userListCollab );
@@ -117,10 +131,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, UserSetRecentEPRequest, AckReply, userSetRecentEP );
         SET_MSG_HANDLER_DB( proto_id, ProjectCreateRequest, ProjectDataReply, projCreate );
         SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
-        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ListingReply, projList );
         SET_MSG_HANDLER_DB( proto_id, ProjectGetRoleRequest, ProjectGetRoleReply, projGetRole );
-        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordExportRequest, RecordExportReply, recordExport );
@@ -133,8 +145,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, CollListPublishedRequest, ListingReply, collListPublished );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
-        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
-        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, ListingReply, collWrite );
         SET_MSG_HANDLER_DB( proto_id, CollMoveRequest, AckReply, collMove );
         SET_MSG_HANDLER_DB( proto_id, CollGetParentsRequest, CollPathReply, collGetParents );
@@ -145,8 +155,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, AnnotationCreateRequest, AnnotationDataReply, annotationCreate );
         SET_MSG_HANDLER_DB( proto_id, AnnotationUpdateRequest, AnnotationDataReply, annotationUpdate );
         SET_MSG_HANDLER_DB( proto_id, AnnotationCommentEditRequest, AnnotationDataReply, annotationCommentEdit );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
         SET_MSG_HANDLER_DB( proto_id, TaskListRequest, TaskDataReply, taskList );
         SET_MSG_HANDLER_DB( proto_id, TaskViewRequest, TaskDataReply, taskView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
@@ -175,9 +183,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetDefaultRequest, AckReply, repoAllocationSetDefault );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
-        SET_MSG_HANDLER_DB( proto_id, TopicListRequest, ListingReply, topicList );
-        SET_MSG_HANDLER_DB( proto_id, TopicLinkRequest, AckReply, topicLink );
-        SET_MSG_HANDLER_DB( proto_id, TopicUnlinkRequest, AckReply, topicUnlink );
+        //SET_MSG_HANDLER_DB( proto_id, TopicLinkRequest, AckReply, topicLink );
+        //SET_MSG_HANDLER_DB( proto_id, TopicUnlinkRequest, AckReply, topicUnlink );
     }
     catch( TraceException & e)
     {
@@ -202,6 +209,8 @@ ClientWorker::workerThread()
     nack.set_err_code( ID_AUTHN_REQUIRED );
     nack.set_err_msg( "Authentication required" );
 
+    //int delay;
+
     while ( m_run )
     {
         try
@@ -209,6 +218,13 @@ ClientWorker::workerThread()
             if ( comm.recv( m_msg_buf, true, 1000 ))
             {
                 msg_type = m_msg_buf.getMsgType();
+
+                // DEBUG - Inject random delay in message processing
+                /*delay = (rand() % 2000)*1000;
+                if ( delay )
+                {
+                    usleep( delay );
+                }*/
 
                 if ( msg_type != task_list_msg_type )
                 {
@@ -231,6 +247,10 @@ ClientWorker::workerThread()
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
                             comm.send( m_msg_buf );
+                            if ( msg_type != task_list_msg_type )
+                            {
+                                DL_DEBUG( "W"<<m_tid<<" reply sent." );
+                            }
                         }
                     }
                     else
@@ -344,8 +364,10 @@ ClientWorker::procVersionRequest( const std::string & a_uid )
     DL_INFO( "Ver request" );
 
     reply.set_major( VER_MAJOR );
-    reply.set_minor( VER_MINOR );
-    reply.set_build( VER_BUILD );
+    reply.set_mapi_major( VER_MAPI_MAJOR );
+    reply.set_mapi_minor( VER_MAPI_MINOR );
+    reply.set_server( VER_SERVER );
+    reply.set_client( VER_CLIENT );
 
     PROC_MSG_END
 }
@@ -463,7 +485,7 @@ ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid )
 bool
 ClientWorker::procDataGetRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataGetRequest, DataGetPutReply )
+    PROC_MSG_BEGIN( DataGetRequest, DataGetReply )
 
     DL_INFO( "CWORKER procDataGetRequest, uid: " << a_uid );
 
@@ -480,7 +502,7 @@ ClientWorker::procDataGetRequest( const std::string & a_uid )
 bool
 ClientWorker::procDataPutRequest( const std::string & a_uid )
 {
-    PROC_MSG_BEGIN( DataPutRequest, DataGetPutReply )
+    PROC_MSG_BEGIN( DataPutRequest, DataPutReply )
 
     DL_INFO( "CWORKER procDataPutRequest, uid: " << a_uid );
 
@@ -883,10 +905,8 @@ ClientWorker::parseSearchTerms( const string & a_key, const vector<string> & a_t
     {
         if ( i != or_terms.begin() )
             result += " or ";
-        //if ( isPhrase( *i ) )
+
         result += "phrase(i['" + a_key + "'],'" + *i + "')";
-        //else
-        //    result += "i['" + a_key + "'] == '" + *i + "'";
     }
 
     if ( or_terms.size() > 1 )
@@ -896,20 +916,16 @@ ClientWorker::parseSearchTerms( const string & a_key, const vector<string> & a_t
     {
         if ( result.size() )
             result += " and ";
-        //if ( isPhrase( *i ) )
+
         result += "phrase(i['" + a_key + "'],'" + *i + "')";
-        //else
-        //    result += "i['" + a_key + "'] == '" + *i + "'";
     }
 
     for ( i = nand_terms.begin(); i != nand_terms.end(); i++ )
     {
         if ( result.size() )
             result += " and ";
-        //if ( isPhrase( *i ) )
+
         result += "not phrase(i['" + a_key + "'],'" + *i + "')";
-        //else
-        //    result += "i['" + a_key + "'] != '" + *i + "'";
     }
 
     return "("+result+")";
@@ -977,8 +993,7 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
     static map<string,int> cat_map =
     {
         {"t:",1},{"title:",1},
-        {"d:",2},{"desc:",2},{"descr:",2},{"description:",2},
-        {"k:",4},{"key:",4},{"keyw:",4},{"keyword:",4},{"keywords:",4}
+        {"d:",2},{"desc:",2},{"descr:",2},{"description:",2}
     };
 
     string separator1("");//dont let quoted arguments escape themselves
@@ -1049,14 +1064,12 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
             {
                 if ( cat & 1 ) title.push_back( extra );
                 if ( cat & 2 ) desc.push_back( extra );
-                if ( cat & 4 ) keyw.push_back( extra );
             }
         }
         else
         {
             if ( cat & 1 ) title.push_back( *t );
             if ( cat & 2 ) desc.push_back( *t );
-            if ( cat & 4 ) keyw.push_back( *t );
         }
     }
 
@@ -1083,17 +1096,6 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
     else if ( !desc.size() )
         EXCEPT(1,"Description category specified without search terms" );
 
-    if ( ops[4] == 0 )
-    {
-        if ( keyw.size() )
-        {
-            ops[4] = 1;
-            count_or++;
-        }
-    }
-    else if ( !keyw.size() )
-        EXCEPT(1,"Keywords category specified without search terms" );
-
     // Build OR phrase
     if ( count_or > 1 && count_other > 0 )
         result += "(";
@@ -1103,9 +1105,6 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
 
     if ( ops[2] == 1 )
         result += (result.size()?" or ":"") + parseSearchTerms( "desc", desc );
-
-    if ( ops[4] == 1 )
-        result += (result.size()?" or ":"") + parseSearchTerms( "keyw", keyw );
 
     if ( count_or > 1 && count_other > 0 )
         result += ")";
@@ -1117,9 +1116,6 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
     if ( ops[2] == 2 )
         result += (result.size()?" and ":"") + parseSearchTerms( "desc", desc );
 
-    if ( ops[4] == 2 )
-        result += (result.size()?" and ":"") + parseSearchTerms( "keyw", keyw );
-
     // Build NAND phrase
     if ( ops[1] == 3 )
         result += (result.size()?" and not (":"not (") + parseSearchTerms( "title", title ) + ")";
@@ -1127,10 +1123,23 @@ ClientWorker::parseSearchTextPhrase( const string & a_phrase )
     if ( ops[2] == 3 )
         result += (result.size()?" and not (":"not (") + parseSearchTerms( "desc", desc ) + ")";
 
-    if ( ops[4] == 3 )
-        result += (result.size()?" and not (":"not (") + parseSearchTerms( "keyw", keyw ) + ")";
-
     return result;
+}
+
+string
+ClientWorker::parseSearchTags( const libjson::Value::Array & a_tags )
+{
+    string res;
+
+    for ( libjson::Value::ArrayConstIter i = a_tags.begin(); i != a_tags.end(); i++ )
+    {
+        if ( res.size() )
+            res += " && ";
+
+        res += "'" + i->asString() + "' in i.tags";
+    }
+
+    return res;
 }
 
 string
@@ -1202,8 +1211,9 @@ ClientWorker::parseSearchMetadata( const string & a_query )
     static set<string> terms = {"title","desc","alias","topic","doi","data_url","owner","creator","keyw","ct","ut","size","source","ext"};
     static set<string> funcs = {"abs","acos","asin","atan","atan2","average","avg","ceil","cos","degrees","exp","exp2",
         "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
-        "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample",
-        "date_now","length","lower","upper","distance","is_in_polygon"};
+        "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample","length","lower","upper",
+        "distance","is_in_polygon"};
+    static set<string> date_funcs = {"date_now","date_timestamp"};
     static set<string> other = {"like","true","false","null","in"};
 
 
@@ -1311,6 +1321,11 @@ ClientWorker::parseSearchMetadata( const string & a_query )
                     result.append( "i['desc']" );
                 else if ( other.find( tmp ) != other.end() || (funcs.find( tmp ) != funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' ))))
                     result.append( tmp );
+                else if ( date_funcs.find( tmp ) != date_funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' )))
+                {
+                    result.append( "0.001*");
+                    result.append( tmp );
+                }
                 else if ( tmp == "id" )
                 {
                     result.append( "i._id" );
@@ -1381,7 +1396,7 @@ ClientWorker::parseSearchMetadata( const string & a_query )
 string
 ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects )
 {
-    use_client = true;
+    use_client = false;
 
     libjson::Value query;
     query.fromString( a_query );
@@ -1390,7 +1405,7 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     libjson::Value::Object &    obj = query.asObject();
     libjson::Value::ObjectIter  j, i = obj.find( "text" );
 
-    if ( !obj.has( "id" ) && !obj.has( "text" ) && !obj.has( "meta" ))
+    if ( !obj.has( "id" ) && !obj.has( "text" ) && !obj.has( "meta" ) && !obj.has( "tags" ))
         EXCEPT( 1, "Query contains no search terms." );
 
     if ( i != obj.end( ))
@@ -1408,42 +1423,41 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
                 phrase += " or ";
             phrase += parseSearchPhrase( "desc", obj.asString() );
         }
+    }
 
-        if ( obj.has( "keyw" ))
+    string filter = "";
+    size_t fcnt = 0;
+
+    if ( obj.has( "tags" ))
+    {
+        const libjson::Value::Array & arr = obj.asArray();
+        if ( arr.size() )
         {
-            if ( phrase.size( ))
-                phrase += " or ";
-            phrase += parseSearchPhrase( "keyw", obj.asString() );
+            filter += string("(") + parseSearchTags( arr ) + ")";
+            fcnt++;
         }
     }
 
-    string id;
-
     if ( obj.has( "id" ))
     {
-        id = parseSearchIdAlias( obj.asString() );
+        if ( fcnt )
+            filter += " && ";
+        filter += string("(") + parseSearchIdAlias( obj.asString() ) + ")";
+        fcnt++;
     }
-
-    string meta;
 
     if ( obj.has( "meta" ))
     {
-        meta = parseSearchMetadata( obj.asString() );
-    }
-
-    if ( meta.size() && id.size() )
-    {
-        meta = string("(") + id + ") && (" + meta + ")";
-    }
-    else if ( id.size() )
-    {
-        meta = id;
+        if ( fcnt )
+            filter += " && ";
+        filter += string("(") + parseSearchMetadata( obj.asString() ) + ")";
+        fcnt++;
     }
 
     string result;
 
     if ( phrase.size() )
-        result += string("for i in intersection((for i in textview search analyzer(") + phrase + ",'text_en') return i),(";
+        result += string("for i in intersection((for i in dataview search analyzer(") + phrase + ",'text_en') return i),(";
 
     libjson::Value::Array & scopes = obj.getArray( "scopes" );
 
@@ -1467,19 +1481,20 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
         switch( (int)scope.getNumber( "scope" ))
         {
         case SDMS::SS_USER:
+            use_client = true;
+
             result += "for i in 1..1 inbound @client owner filter is_same_collection('d',i)";
             break;
         case SDMS::SS_PROJECT:
             result += string("for i in 1..1 inbound '") + scope.getString( "id" ) + "' owner filter is_same_collection('d',i)";
             break;
-        case SDMS::SS_OWNED_PROJECTS:
-            result += "for i,e,p in 2..2 inbound @client owner filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
-            break;
-        case SDMS::SS_MANAGED_PROJECTS:
-            result += "for i,e,p in 2..2 inbound @client admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i)";
-            break;
-        case SDMS::SS_MEMBER_PROJECTS:
-            result += "for i,e,p in 3..3 inbound @client member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i)";
+        case SDMS::SS_PROJECTS:
+            use_client = true;
+
+            result += string("for i in union("
+                "(for i,e,p in 2..2 inbound @client owner, admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) return i),"
+                "(for i,e,p in 3..3 inbound @client member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i) return i)"
+                ")");
             break;
         case SDMS::SS_COLLECTION:
             result += string("for i in 1..10 outbound '") + scope.getString( "id" ) + "' item filter is_same_collection('d',i)";
@@ -1489,7 +1504,9 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
         case SDMS::SS_SHARED_BY_USER:
             {
+            use_client = true;
             string & id = scope.getString( "id" );
+
             result += string("for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + id + "' return v),"
                 "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + id + "' return v),"
@@ -1499,7 +1516,9 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
         case SDMS::SS_SHARED_BY_ANY_USER:
             //result += "for u in @shared_users for i in 1..1 inbound u owner filter IS_SAME_COLLECTION('d',i) return i";
+            use_client = true;
             use_shared_users = true;
+
             result += "for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @users return v),"
                 "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @users return v),"
@@ -1508,6 +1527,7 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
         case SDMS::SS_SHARED_BY_PROJECT:
             {
+            use_client = true;
             string & id = scope.getString( "id" );
 
             result += string("for i in union_distinct("
@@ -1518,7 +1538,9 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
             break;
             }
         case SDMS::SS_SHARED_BY_ANY_PROJECT:
+            use_client = true;
             use_shared_projects = true;
+
             result += "for i in union_distinct("
                 "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @projs return v),"
                 "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @projs return v),"
@@ -1543,8 +1565,8 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     if ( phrase.size() )
         result += "))";
 
-    if ( meta.size() )
-        result += " filter " + meta;
+    if ( filter.size() )
+        result += " filter " + filter;
 
     result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi,size:i.size}";
 

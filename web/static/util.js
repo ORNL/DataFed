@@ -1,6 +1,8 @@
 import * as settings from "./settings.js";
 import * as model from "./model.js";
-
+import * as api from "./api.js";
+import * as dialogs from "./dialogs.js";
+import * as dlgStartXfer from "./dlg_start_xfer.js";
 
 var status_timer;
 
@@ -18,12 +20,14 @@ export function tooltipTheme( a_objs ){
 }
 
 export function inputDisable( a_objs ){
-    a_objs.prop("disabled",true).removeClass("ui-widget-content").addClass("ui-state-disabled");
+    a_objs.prop("disabled",true).addClass("ui-state-disabled");
+    //a_objs.prop("disabled",true).removeClass("ui-widget-content").addClass("ui-state-disabled");
     return a_objs;
 }
 
 export function inputEnable( a_objs ){
-    a_objs.prop("disabled",false).removeClass("ui-state-disabled").addClass("ui-widget-content");
+    a_objs.prop("disabled",false).removeClass("ui-state-disabled");
+    //a_objs.prop("disabled",false).removeClass("ui-state-disabled").addClass("ui-widget-content");
     return a_objs;
 }
 
@@ -48,6 +52,17 @@ export function sizeToString( a_bytes ){
         return Math.floor( a_bytes / 107374182.4 )/10 + " GB";
     else
         return Math.floor( a_bytes / 109951162777.6 )/10 + " TB";
+}
+
+export function countToString( a_bytes ){
+    if ( a_bytes < 1000 )
+        return a_bytes;
+    else if ( a_bytes < 1000000 )
+        return (a_bytes/1000).toPrecision(3) + "K";
+    else if ( a_bytes < 1000000000 )
+        return (a_bytes/1000000).toPrecision(3) + "M";
+    else
+        return (a_bytes/1000000000).toPrecision(3) + "B";
 }
 
 export function parseSize( a_size_str ){
@@ -142,6 +157,38 @@ export function checkDlgOpen( a_id ){
 
     return false;
 }
+
+export function getKeyIcon( a_key ){
+    if ( a_key.startsWith( "c/" ))
+        return "folder";
+    else if ( a_key.startsWith( "u/" ))
+        return "person";
+    else if ( a_key.startsWith( "p/" ))
+        return "box";
+    else if ( a_key.startsWith( "q/" ))
+        return "zoom";
+    else if ( a_key.startsWith( "t/" ))
+        return "structure";
+    else if ( a_key == "mydata" )
+        return "person";
+    else if ( a_key == "projects" || a_key == "shared_proj" )
+        return "view-icons";
+    else if ( a_key == "shared_all" )
+        return "circle-plus";
+    else if ( a_key == "shared_user" )
+        return "persons";
+    else if ( a_key == "allocs" )
+        return "databases";
+    else if ( a_key.startsWith( "repo/" ))
+        return "database";
+    else if ( a_key.startsWith( "queries" ))
+        return "view-list";
+    else if ( a_key.startsWith( "published" ))
+        return "book";
+
+    console.log("not found", a_key );
+}
+
 export function getDataIcon( a_data ){
     if ( a_data.doi )
         return "ui-icon ui-icon-linkext";
@@ -151,7 +198,61 @@ export function getDataIcon( a_data ){
         return "ui-icon ui-icon-file";
 }
 
+export function getItemIcon( a_item ){
+    if ( a_item.id.startsWith( "d/" ))
+        return getDataIcon( a_item );
+    else
+        return getKeyIcon( a_item.id );
+}
+
 export function generateNoteSpan( item, codes ){
+    var res = "";
+
+    if ( item.notes ){
+        // Show icon for most critical note only - err > warn > info
+        if ( item.notes & model.NOTE_MASK_LOC_ERR ){
+            if ( codes )
+                res += " &#xe6e9;";
+            else
+                res += "<span class='ui-icon ui-icon-flag'></span>";
+        }else if ( item.notes & model.NOTE_MASK_LOC_WARN ){
+            if ( codes )
+                res += " &#xe65f;";
+            else
+                res += "<span class='ui-icon ui-icon-alert'></span>";
+        }else if ( item.notes & model.NOTE_MASK_LOC_INFO ){
+            if ( codes )
+                res += " &#xe665;";
+            else
+                res += "<span class='ui-icon ui-icon-circle-info'></span>";
+        }
+
+        // Show separate question icon
+        if ( item.notes & model.NOTE_MASK_LOC_QUES ){
+            if ( codes )
+                res += " &#xe662;";
+            else
+                res += "<span class='ui-icon ui-icon-circle-help'></span>";
+        }
+
+        // Show separate icon for most critical nhererited note - err > warn
+        if ( item.notes & model.NOTE_MASK_INH_ERR ){
+            if ( codes )
+                res += " (&#xe6e9;)";
+            else
+                res += " <span class='inh-err-title'>(<span class='ui-icon ui-icon-flag inh-err-title'></span>)</span> ";
+        }else if ( item.notes & model.NOTE_MASK_INH_WARN ){
+            if ( codes )
+                res += " (&#xe65f;)";
+            else
+                res += " <span class='inh-warn-title'>(<span class='ui-icon ui-icon-alert inh-warn-title'></span>)</span> ";
+        }
+    }
+
+    return res;
+}
+
+export function generateNoteSpan2( item, codes ){
     var res = "";
 
     if ( item.notes ){
@@ -199,7 +300,8 @@ export function generateNoteSpan( item, codes ){
 }
 
 export function generateTitle( item, refresh, unstruct = false ) {
-    var title = "";
+    var title = "",
+        uid = settings.user?"u/" + settings.user.uid:null;
 
     if ( item.locked )
         title += "<i class='ui-icon ui-icon-locked'></i> ";
@@ -213,10 +315,9 @@ export function generateTitle( item, refresh, unstruct = false ) {
     else
         title += "<span class='data-tree-alias'></span>";
 
+
     // Only apply owner/creator labels to data records
     if ( item.id.startsWith( "d/" ) && item.owner && item.creator ){
-        var uid = "u/" + settings.user.uid;
-
         if ( unstruct ){
             // No tree structure to convey owner of data, so show owner when user is not owner/creator
             if ( item.owner != uid && item.creator != uid ){
@@ -237,6 +338,16 @@ export function generateTitle( item, refresh, unstruct = false ) {
                 if ( item.creator != uid ) {
                     title += "&nbsp;<span class='data-tree-creator-other'>(" + item.creator.substr(2) + ")</span>";
                 }
+            }
+        }
+    }
+
+    if ( item.id.startsWith( "p/" )){
+        if ( item.owner != uid ){
+            if ( item.creator == uid ){
+                title += "&nbsp;<span class='data-tree-creator-self'>(" + settings.user.uid + ")</span>";
+            } else {
+                title += "&nbsp;<span class='data-tree-creator-other'>(" + item.owner.substr(2) + ")</span>";
             }
         }
     }
@@ -355,7 +466,8 @@ export function treeSelectRange( a_tree, a_node ){
 }
 
 export function buildObjSrcTree( obj, base, md_exp ){
-    var src = [], k2, o, i, v, pod, val, len, vs, is_arr = Array.isArray( obj ), fkey, kbase;
+    //console.log("buildObjSrcTree",base, md_exp);
+    var src = [], k2, o, i, v, skip, val, vs, is_arr = Array.isArray( obj ), fkey, kbase;
     
     if (is_arr)
         kbase = (base?base:"") + "[";
@@ -369,25 +481,40 @@ export function buildObjSrcTree( obj, base, md_exp ){
         if ( Array.isArray( obj[k] )){
             // Test for POD arrays (no objects) - If POD, put all values in title of this node; otherwise, add as children
             o = obj[k];
-            pod = true;
+            skip = true;
 
             for ( i in o ){
-                if ( typeof o[i] === 'object' || typeof o[i] === 'string' ){
-                    pod = false;
+                if ( typeof o[i] === 'object' /*|| typeof o[i] === 'string' */ ){
+                    skip = false;
                     break;
                 }
             }
-
-            if ( pod ){
-                // Array of POD types - jam all on one line
+        }else{
+            skip = false;
+        }
+        
+        if ( !skip && typeof obj[k] === 'object' ){
+            if ( md_exp ){
+                //console.log("expanded:",md_exp[fkey]);
+                if ( md_exp[fkey] ){
+                    md_exp[fkey] = 10;
+                }
+                i = "<span class='md_tree_div md_tree_key' title='"+fkey+"' draggable='true' ondragstart='md_key_drag(event)'>" + k2 + " :";
+                src.push({key:fkey,title: i, icon: false, folder: true, expanded: md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,md_exp)});
+            }else{
+                src.push({key:fkey,title: i, icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)});
+            }
+        }else{
+            if ( typeof obj[k] === 'string' ){
+                val = "\"" + escapeHTML( obj[k] ) + "\"";
+            }else if ( Array.isArray( obj[k] )){
                 val = null;
-                len = 0;
 
                 for ( i in o ){
                     v = o[i];
 
                     if ( val ){
-                        val += ",";
+                        val += ", ";
                     }else{
                         val = "[";
                     }
@@ -397,37 +524,19 @@ export function buildObjSrcTree( obj, base, md_exp ){
                     }else{
                         vs = String(v);
                     }
-                    len += vs.length;
-                    if ( len > 100 ){
-                        val += "<br>";
-                        len = 0;
-                    }
                     val += vs;
                 }
 
                 val += "]";
-                src.push({key:fkey,title:k2 + " : " + val, icon: false });
-                return;
-            }
-        }
-        
-        if ( typeof obj[k] === 'object' ){
-
-            if ( md_exp ){
-                if ( md_exp[fkey] ){
-                    md_exp[fkey] = 10;
-                }
-
-                src.push({key:fkey,title:k2, icon: false, folder: true, expanded: md_exp[fkey]?true:false, children: buildObjSrcTree(obj[k],fkey,md_exp)});
             }else{
-                src.push({key:fkey,title:k2, icon: false, folder: true, children: buildObjSrcTree(obj[k],fkey)});
+                val = String(obj[k]);
             }
-        }else if ( typeof obj[k] === 'string' ){
-            src.push({key:fkey,title:k2 + " : \"" + escapeHTML( obj[k] ) + "\"", icon: false });
-        }else if ( obj[k] === null ){
-            src.push({key:fkey,title:k2 + " : null", icon: false });
-        }else{
-            src.push({key:fkey,title:k2 + " : " + String(obj[k]), icon: false });
+
+            if ( k2.length + val.length > 60 ){
+                src.push({key:fkey,title:"<div class='md_tree_div'><div class='md_tree_key' title='"+fkey+"' draggable='true' ondragstart='md_key_drag(event)'>" +k2 + " :</div><div class='md_tree_val md_tree_val_indent'>" + val + "</div></div>", icon: false });
+            }else{
+                src.push({key:fkey,title:"<span class='md_tree_div md_tree_key' title='"+fkey+"' draggable='true' ondragstart='md_key_drag(event)'>" +k2 + " : </span><span class='md_tree_div md_tree_val'>" + val + "</span>", icon: false });
+            }
         }
     });
 
@@ -466,4 +575,52 @@ export function saveFile( filename, text ){
     element.click();
   
     document.body.removeChild(element);
+}
+
+export function dataGet( a_ids, a_cb ){
+    api.dataGetCheck( a_ids, function( ok, data ){
+        if ( ok ){
+            //console.log("data get check:",data);
+            var i, internal = false, external = false;
+
+            if ( !data.item || !data.item.length ){
+                dialogs.dlgAlert("Data Get Error","Selection contains no raw data.");
+                return;
+            }
+
+            for ( i in data.item ){
+                if ( data.item[i].locked ){
+                    dialogs.dlgAlert("Data Get Error","One or more data records are currently locked.");
+                    return;
+                }
+                if ( data.item[i].url ){
+                    external = true;
+                }else if ( data.item[i].size <= 0 ){
+                    dialogs.dlgAlert("Data Get Error","One or more data records have no raw data.");
+                    return;
+                }else{
+                    internal = true;
+                }
+            }
+
+            if ( internal && external ){
+                dialogs.dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
+                return;
+            } else if ( internal ){
+                dlgStartXfer.show( model.TT_DATA_GET, data.item, a_cb );
+            }else{
+                for ( i in data.item ){
+                    //console.log("download ", data.item[i].url )
+                    var link = document.createElement("a");
+                    var idx = data.item[i].url.lastIndexOf("/");
+                    link.download = data.item[i].url.substr(idx);
+                    link.href = data.item[i].url;
+                    link.target = "_blank";
+                    link.click();
+                }
+            }
+        }else{
+            dialogs.dlgAlert("Data Get Error",data);
+        }
+    });
 }

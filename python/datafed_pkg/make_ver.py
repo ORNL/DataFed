@@ -1,7 +1,7 @@
 from os import path
 from datafed import Version_pb2
 
-version="{}.{}.{}".format(Version_pb2.VER_MAJOR,Version_pb2.VER_MINOR,Version_pb2.VER_BUILD)
+version = "{}.{}.{}:{}".format(Version_pb2.VER_MAJOR,Version_pb2.VER_MAPI_MAJOR,Version_pb2.VER_MAPI_MINOR,Version_pb2.VER_CLIENT)
 
 # Write contents of the VERSION file
 this_directory = path.abspath(path.dirname(__file__))

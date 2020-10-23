@@ -1,3 +1,12 @@
+// ALERT: If messages in this proto file are REORDERED or REMOVED, or if the
+// definitions of existing message parameters are CHANGED, then the
+// VER_PROTO_MAJOR enum value in Version.proto must be incremented and backward
+// compatability will be lost. If new messages are APPENDED to the end of this
+// file, or parameters are APPENDED to the end of an existing message defintion,
+// then VER_PROTO_MINOR must be incremented and backward compatability will be
+// maintained. Unused messages and parameters should be marked as deprecated,
+// and these should be removed at the next major version change.
+
 import "SDMS.proto";
 
 package SDMS.Anon;
@@ -32,8 +41,10 @@ message VersionRequest
 message VersionReply
 {
     required uint32             major       = 1;
-    required uint32             minor       = 2;
-    required uint32             build       = 3;
+    required uint32             mapi_major  = 2;
+    required uint32             mapi_minor  = 3;
+    required uint32             server      = 4;
+    required uint32             client      = 5;
 }
 
 
@@ -82,4 +93,175 @@ message DOIViewRequest
 {
     required string             doi         = 1;
     optional bool               details     = 2;
+}
+
+message ListingReply
+{
+    repeated ListingData        item        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+message UserViewRequest
+{
+    required string             uid         = 1;
+    optional bool               details     = 2;
+}
+
+message UserDataReply
+{
+    repeated SDMS.UserData      user        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+message ProjectViewRequest
+{
+    required string             id          = 1;
+}
+
+message ProjectDataReply
+{
+    repeated ProjectData        proj        = 1;
+}
+
+message RecordViewRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 2;
+}
+
+message RecordDataReply
+{
+    repeated SDMS.RecordData    data        = 1;
+    repeated SDMS.ListingData   update      = 2;
+}
+
+message CollViewRequest
+{
+    required string             id          = 1;
+}
+
+message CollDataReply
+{
+    repeated SDMS.CollData      coll        = 1;
+    repeated SDMS.ListingData   update      = 2;    
+}
+
+// Returns ListingReply
+message CollReadRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 3;
+    optional uint32             offset      = 4;
+    optional uint32             count       = 5;
+}
+
+message CatalogSearchRequest
+{
+    optional uint32             mode        = 1;
+    optional string             id          = 2;
+    optional string             text        = 3;
+    repeated string             cat_tags    = 4;
+    repeated string             tags        = 5;
+    optional string             owner       = 6;
+    optional uint32             from        = 7;
+    optional uint32             to          = 8;
+    optional uint32             offset      = 9;
+    optional uint32             count       = 10;
+    optional SDMS.SortOption    sort        = 11;
+    optional bool               sort_rev    = 12;
+    optional string             meta        = 13;
+}
+
+message CatalogSearchReply
+{
+    repeated CatItemInfoData    item        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+// Returns ListingReply
+message RecordSearchPublishedRequest
+{
+    required CatalogSearchRequest           coll        = 1;
+    optional string                         id          = 2;
+    optional string                         text        = 3;
+    repeated string                         tags        = 4;
+    optional string                         md          = 5;
+    optional uint32                         from        = 6;
+    optional uint32                         to          = 7;
+    optional SDMS.SortOption                sort        = 8;
+    optional bool                           sort_rev    = 9;
+}
+
+
+message AnnotationListBySubjectRequest
+{
+    required string             subject     = 1;
+}
+
+message AnnotationViewRequest
+{
+    required string             id          = 1;
+}
+
+message AnnotationDataReply
+{
+    repeated SDMS.NoteData      note    = 1;
+    repeated SDMS.ListingData   update  = 2;
+}
+
+// Returns TopicDataReply
+message TopicListTopicsRequest
+{
+    optional string             topic_id    = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
+// Returns TopicDataReply
+message TopicViewRequest
+{
+    required string             id          = 1;
+}
+
+// Returns TopicDataReply
+message TopicSearchRequest
+{
+    optional string             phrase      = 1;
+}
+
+message TopicDataReply
+{
+    repeated TopicData          topic       = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+// Returns TagDataReply
+message TagSearchRequest
+{
+    optional string             name        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
+// Returns TagDataReply
+message TagListByCountRequest
+{
+    optional uint32             offset      = 1;
+    optional uint32             count       = 2;
+}
+
+message TagDataReply
+{
+    repeated SDMS.TagData       tag         = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
 }

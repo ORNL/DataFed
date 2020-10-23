@@ -1,0 +1,126 @@
+<div class="cat-panel ui-widget-content col-flex" style="height:100%;padding:0;overflow:hidden">
+    <div class='topic-header'>
+        <div class='cat-nav-bar row-flex' style='flex:none'>
+            <div style='flex:none'>
+                <button class='btn btn-icon btn-cat-home'><span class='ui-icon ui-icon-home'>x</span></button>
+                <button class='btn btn-icon btn-cat-back'><span class='ui-icon ui-icon-undo'>x</span></button>
+                <button class='btn btn-icon btn-cat-search'><span class='ui-icon ui-icon-zoom'></span></button>
+                &nbsp;
+            </div>
+            <span id='cat_cur_topic' style='flex:1 1 auto;font-size:120%;vertical-align:middle;'>Home</span>
+        </div>
+
+        <div class='cat-search-div' style='flex:none;padding:0 0 0 0.25em;display:none'>
+            <table style='width:100%'><tr>
+                <td class='min-width'>Category search:</td>
+                <td><input id='cat_topic_search_phrase' type='text' style="width:100%"></input></td>
+                <td class='min-width'>
+                    <button class='btn btn-icon btn-cat-topic-search'><span class='ui-icon ui-icon-triangle-1-e'></span></button>
+                    <button class='btn btn-icon btn-cat-topic-res-cls'><span class='ui-icon ui-icon-close'></span></button>
+                </td>
+            </tr></table>
+            <div id='cat_topic_result_div' class='content cat-topic-result-div' style='display:none'></div>
+        </div>
+
+    </div>
+
+    <div class="ui-widget-content row-flex" style="flex:1 1 auto;padding:0;min-height:0;height:100%">
+        <div class='topics-div' style='flex:none;padding:0;width:20ch'>
+            <div class='cat-heading' style='height:1.7rem;padding-left:0.5em;padding-top:0.15em'>Filter Options</div>
+            <div class='scrollable' style='min-height:0;height:100%'>
+                <div class='accordion acc-act'>
+                    <h3>Categories</h3>
+                    <div id='cat_topics_div'></div>
+                </div>
+
+                <div class='accordion'>
+                    <h3>Text / Keywords</h3>
+                    <div>
+                        <textarea id='cat_text_qry' style='width:100%;height:4em;'></textarea>
+                        <button style='float:right' id='cat_qry_text_clear' class='btn btn-small'>reset</button>
+                    </div>
+                </div>
+                <div class='accordion'>
+                    <h3>Tags</h3>
+                    <div>
+                        <ul id='cat_tags_div' class='input-bg no-border tagit-vertical'></ul>
+                        <div style='float:right;padding-top:0.25em'>
+                            <button id='cat_qry_tags_clear' class='btn btn-small'>reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div class='accordion'>
+                    <h3>Date / Time</h3>
+                    <div>
+                        <table>
+                            <tr><td>From:</td><td><input id='cat_qry_date_from' style='width:100%'></input></td></tr>
+                            <tr><td>To:</td><td><input id='cat_qry_date_to' style='width:100%'></input></td></tr>
+                        </table>
+                        <input id='cat_qry_date_from_ts' style='display:none'></input>
+                        <input id='cat_qry_date_to_ts' style='display:none'></input>
+
+                        <!-- div>From</div>
+                        <table>
+                            <tr><td>Date:</td><td><input id='cat_qry_date_from' style='width:100%'></input></td></tr>
+                            <tr><td>Time:</td><td><input id='cat_qry_time_from' style='width:100%'></input></td></tr>
+                        </table>
+                        <div style='padding-top:1em'>Until</div>
+                        <table>
+                            <tr><td>Date:</td><td><input id='cat_qry_date_to' style='width:100%'></input></td></tr>
+                            <tr><td>Time:</td><td><input id='cat_qry_time_to' style='width:100%'></input></td></tr>
+                        </table -->
+                        <div style='float:right;padding-top:0.25em'>
+                            <button id='cat_qry_datetime_clear' class='btn btn-small'>reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div class='accordion'>
+                    <h3>Owner</h3>
+                    <div>
+                        <input id='cat_qry_owner' style='width:100%'></input>
+                        <div style='float:right;padding-top:0.25em'>
+                            <button id='cat_qry_owner_pick_user' class='btn btn-icon'><span class='ui-icon ui-icon-person'></span></button>
+                            <button id='cat_qry_owner_pick_proj' class='btn btn-icon'><span class='ui-icon ui-icon-box'></span></button>
+                            <button id='cat_qry_owner_clear' class='btn btn-small'>reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div class='accordion cat-filter-meta' style='display:none'>
+                    <h3>Metadata</h3>
+                    <div>
+                        <textarea id='cat_meta_qry' style='width:100%;height:6em;'></textarea>
+                        <div style='float:right;padding-top:0.25em'>
+                            <button id='cat_qry_meta_clear' class='btn btn-small'>reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='col-flex' style='flex:1 1 auto;height:100%'>
+            <div class='row-flex' style='height:1.7rem;flex:none;padding-left:0.25em;align-items:center'>
+                <div style='flex:none;line-height:1.7em' class='cat-heading'>View:</div>
+                <div style='flex:1 1 auto' class='cat-heading' ><select class='cat-mode'><option value='0' selected>Collections</option><option value='1'>Data</option></select></div>
+                <div style='flex:none;line-height:1.7em' class='cat-heading'>Sort by:</div>
+                <div style='flex:none' class='cat-heading'>
+                    <select class='cat-coll-sort'>
+                        <option value='1' selected>Title</option>
+                        <option value='-1'>Title (rev)</option>
+                        <option value='2'>Owner</option>
+                        <option value='-2'>Owner (rev)</option>
+                        <option value='3'>Created</option>
+                        <option value='-3'>Created (rev)</option>
+                        <option value='4'>Updated</option>
+                        <option value='-4'>Updated (rev)</option>
+                        <option value='5'>Relevance</option>
+                    </select>
+                    <button class='cat-coll-prev btn btn-icon-tiny'><span class='ui-icon ui-icon-triangle-1-w'></span></button>
+                    <button class='cat-coll-next btn btn-icon-tiny'><span class='ui-icon ui-icon-triangle-1-e'></span></button>
+                </div>
+            </div>
+            <div id='cat_coll_div' class='content cat-content scrollable' style='flex:1 1 auto;min-height:0'></div>
+            <div id='cat_coll_tree' class='content no-border scrollable' style='flex:1 1 auto;min-height:0;display:none'></div>
+        </div>
+    </div>
+
+</div>

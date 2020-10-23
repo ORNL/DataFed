@@ -1,0 +1,91 @@
+ul.tagit {
+    /*padding: 0.2em 0.2em 0 0.2em;*/
+    padding: 0;
+    overflow: auto;
+    /*margin-left: inherit;
+    margin-right: inherit;*/
+    margin: 0;
+}
+ul.tagit li {
+    display: block;
+    float: left;
+    margin: 0 2px 0 0;
+    /*margin: 2px 5px 2px 0;*/
+}
+
+.tagit-vertical li{
+    clear: left;
+}
+
+/*.tag-vertical {
+    clear: left;
+}
+
+.tag-vertical:after {
+    clear: left;
+    content:"\a";
+    white-space:pre;
+}*/
+
+ul.tagit li.tagit-choice {    
+    position: relative;
+    line-height: inherit;
+}
+
+input.tagit-hidden-field {
+    display: none;
+}
+ul.tagit li.tagit-choice-read-only { 
+    padding: .2em .5em .2em .5em; 
+} 
+
+ul.tagit li.tagit-choice-editable { 
+    padding: 0 .1em;
+    margin-bottom: .2em;
+} 
+
+ul.tagit li.tagit-new {
+    padding: .1em;
+    /*padding: .25em 4px .25em 0;*/
+}
+
+ul.tagit li.tagit-choice a.tagit-label {
+    cursor: pointer;
+    text-decoration: none;
+}
+ul.tagit li.tagit-choice .tagit-close {
+    cursor: pointer;
+    /*position: absolute;
+    right: .1em;
+    top: 50%;
+    margin-top: -8px;
+    line-height: 17px;*/
+}
+
+/* used for some custom themes that don't need image icons */
+ul.tagit li.tagit-choice .tagit-close .text-icon {
+    display: none;
+}
+
+ul.tagit li.tagit-choice input {
+    display: block;
+    float: left;
+    margin: 2px 5px 2px 0;
+}
+ul.tagit input[type="text"] {
+    -moz-box-sizing:    border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing:         border-box;
+
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+
+    /*border: 1px solid #999;*/
+    margin: 0;
+    padding: 0;
+    /*width: 20ch;*/
+    width: 100%;
+    background-color: inherit;
+    outline: none;
+}

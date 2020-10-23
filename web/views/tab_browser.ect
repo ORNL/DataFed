@@ -1,21 +1,20 @@
-<div class="col-flex" style="padding:0;height:100%;">
+<div class="col-flex ui-widget-content" style="padding:0;height:100%;">
     <div id='resize_container' style="min-height:0;display:flex;flex:1">
-        <!-- div id='data-tabs-parent' style="height:100%;resize:horizontal;overflow:auto;padding:.15em .15em 0 .15em;min-width:0;min-height:0;width:55%" -->
-        <div id='data-tabs-parent' style="flex:none;height:100%;resize:horizontal;overflow:visible;padding:0;min-width:0;min-height:0;width:55%">
+        <div id='data-tabs-parent' style="flex:none;height:100%;resize:horizontal;overflow:visible;padding:0;min-width:0;min-height:0;width:65%">
             <div id="data-tabs" class='no-border' style="border:none;padding:0;height:100%;min-height:0;overflow:hidden">
                 <ul>
-                    <li><a href="#tab-data-tree">Data</a></li>
-                    <li><a href="#tab-catalogs">Catalogs</a></li>
-                    <li><a href="#tab-notifications">Notifications</a></li>
+                    <li><a href="#tab-data-tree">My Data</a></li>
+                    <li><a href="#tab-catalogs">Catalog</a></li>
+                    <li style="display:none"><a href="#tab-notifications">Notifications</a></li>
                     <li style="display:none"><a href="#tab-prov-graph">Provenance</a><span class='ui-icon ui-icon-circle-close prov-graph-close'></span></li>
                     <li style="display:none"><a href="#tab-search-results">Search Results</a><span class='ui-icon ui-icon-circle-close search-results-close'></span></li>
                 </ul>
                 <div id="tab-data-tree" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
                     <div class="col-flex" style="height:100%">
-                        <div class="ui-widget-content" style="flex:1 1 auto;min-height:0;overflow:auto">
-                            <div id="data_tree" class="no-border" style="display:inline-block"></div>
+                        <div class="content scrollable" style="flex:1 1 auto;border-top:none;min-height:0">
+                            <div id="data_tree" class="content no-border" style="display:inline-block"></div>
                         </div>
-                        <div class='content' style="flex:none;padding:.25em 0 0 .25em">
+                        <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
                             <button class="btn btn-icon" id="btn_new_data" title='Create new data record' disabled><span class="ui-icon ui-icon-file"></span></button>
                             <button class="btn btn-icon" id="btn_dup_data" title='Create new duplicate data record' disabled><span class="ui-icon ui-icon-files"></span></button>
                             <button class="btn btn-icon" id="btn_new_coll" title='Create new collection' disabled><span class="ui-icon ui-icon-folder"></span></button>
@@ -29,187 +28,219 @@
                         </div>
                     </div>
                 </div>
-                <div id="tab-catalogs" class="ui-widget-content" style="padding:0;overflow:hidden">
-                    <div class="col-flex" style="height:100%">
-                        <div class="ui-widget-content" style="flex:1 1 auto;min-height:0;overflow:auto">
-                            <div id="catalog_tree" class="no-border" style="display:inline-block"></div>
-                        </div>
-                        <div class='content' style="flex:none;padding:.25em 0 0 .25em">
-                            <button class="btn btn-icon" id="btn_cat_first_par_coll" title="Go to the first containing collection of selected record in 'My Data'." disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
-                            <button class="btn btn-icon" id="btn_cat_refresh" title='Refresh selected item'><span class="ui-icon ui-icon-reload"></span></button>
-                        </div>
-                    </div>
+                <div id="tab-catalogs" style="padding:0;overflow:hidden">
+                    <% include 'panel_catalog.ect' %>
                 </div>
-                <div id="tab-notifications" class="ui-widget-content" style="padding:0;overflow:hidden">
+                <div id="tab-notifications" class="content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">
                     Feature not implemented.
                     </div>
                 </div>
-                <div id="tab-prov-graph" class="ui-widget-content" style="padding:0;overflow:hidden">
+                <div id="tab-prov-graph" class="content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">
-                        <div class="ui-widget-content" style="flex:1 1 100%;min-height:0;overflow:auto">
+                        <div class="content scrollable" style="flex:1 1 100%;min-height:0">
                             <svg id="data-graph" style='display:block;width:100%;height:100%'></svg>
                         </div>
-                        <div class='content' style="flex:none;padding:.25em 0 0 .25em">
+                        <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
                             <button class="btn" id="btn_exp_node" title='Expand selected node'>Expand</button>
                             <button class="btn" id="btn_col_node" title='Collapse selected node'>Collapse</button>
                             <button class="btn" id="btn_hide_node" title='Hide selected node'>Hide</button>
                         </div>
                     </div>
                 </div>
-                <div id="tab-search-results" class="ui-widget-content" style="padding:0;overflow:hidden">
+                <div id="tab-search-results" class="content" style="padding:0;border-top:none;overflow:hidden">
                     <div class="col-flex" style="height:100%">
-                        <div class="ui-widget-content" style="flex:1 1 auto;min-height:0;overflow:auto">
-                            <div id="search_results_tree" class="no-border" ></div>
+                        <div class='scrollable' style="flex:1 1 auto;min-height:0">
+                            <div id="search_results_tree" class="content no-border" ></div>
                         </div>
-                        <div class='content' style="flex:none;padding:.25em 0 0 .25em">
+                        <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
                             <button class="btn" id="btn_srch_first_par_coll" title='Go to the first containing collection of selected record in \'My Data\'.' disabled><span class="ui-icon ui-icon-arrowstop-1-w"></span></button>
-                            <button class="btn" id="btn_srch_refresh" title='Refresh query results'>Refresh</button>
+                            <button class="btn btn-icon" id="btn_srch_refresh" title='Refresh query results'><span class="ui-icon ui-icon-reload"></span></button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="info-tabs-parent" class='' style="flex:1 1 auto;padding: 0;height:100%;min-width:0;min-height:0">
-            <div id="info-tabs" style="border:none;padding:0;height:100%;min-height:0">
-                <ul>
-                    <li><a href="#tab-sel-info">Information</a></li>
+        <div class='col-flex' style="flex:1 1 auto;padding: 0;height:100%;min-width:0;min-height:0">
+          <div class='ui-widget-header' style='flex:none;height:1.8rem'></div>
+          <div id='sel_info_hdr_div' class='row-flex sel-info-hdr' style="flex:none;padding:0.5em;">
+            <div class='sel-info-icon' style='flex:none'><span id='sel_info_icon' class='ui-icon ui-icon-circle-help'></span></div>
+            <div id="sel_info_title" class='sel-info-title' style="flex:1 1 auto;max-height:3em;overflow:none"> </div>
+          </div>
+          <div id="info-tabs-parent" class='ui-widget-content' style="flex:1 1 auto;padding:0 0.5em;min-width:0;min-height:0">
+            <div id="info-tabs" class='no-border tabs-no-header' style="border:none;padding:0;min-height:0">
+                <ul style='padding:0'>
+                    <li><a href="#tab-sel-det">General</a></li>
                     <li><a href="#tab-sel-md">Metadata</a></li>
-                    <li><a href="#tab-sel-notes">Annotations</a></li>
+                    <li><a href="#tab-sel-notes">Notes</a></li>
                 </ul>
-                <div id="tab-sel-info" class="ui-widget-content content" style="padding:0;height:100%;min-height:0">
-                    <div id="sel_info_div" style="height:100%;overflow:auto;padding:.5em .5em;display:none"></div>
-                    <div id="sel_info_form" style="height:100%;overflow:auto;padding:.25em;display:none">
-                        <table class="sel-info-table">
-                            <tr><td>Type:</td><td id='sel_info_type'></td></tr>
-                            <tr><td>ID:</td><td id='sel_info_id'></td></tr>
-                            <tr class="sid sic"><td>Alias:</td><td id='sel_info_alias'></td></tr>
-                            <tr class="sidp"><td>DOI&nbsp;No.:</td><td id='sel_info_doi'></td></tr>
-                            <tr class="sid sidp sic sip sia siq"><td>Title:</td><td id='sel_info_title'></td></tr>
-                            <tr class="siu"><td>Name:</td><td id='sel_info_name'></td></tr>
-                            <tr class="sid sidp sic sip sia"><td>Description:</td><td id='sel_info_desc' style='white-space:pre-wrap'></td></tr>
-                            <tr class="sid sidp"><td>Keywords:</td><td id='sel_info_keyw'></td></tr>
-                            <tr class="sidp"><td>Data&nbsp;URL:</td><td id='sel_info_url' style='word-break:break-all'></td></tr>
-                            <tr class="sid"><td>Data&nbsp;Repo:</td><td id='sel_info_repo'></td></tr>
-                            <tr class="sid"><td>Data&nbsp;Size:</td><td id='sel_info_size'></td></tr>
-                            <tr class="sid"><td>Data&nbsp;Source:</td><td id='sel_info_src'></td></tr>
-                            <tr class="sid"><td>Data&nbsp;Ext:</td><td id='sel_info_ext'></td></tr>
-                            <tr class="sid sidp"><td>Provenance:</td><td id='sel_info_prov'></td></tr>
-                            <tr class="siu"><td>E&#8209;Mail:</td><td id='sel_info_email'></td></tr>
-                            <tr class="sia"><td>Data&nbsp;Limit:</td><td id='sel_info_data_lim'></td></tr>
-                            <tr class="sia"><td>Data&nbsp;Usage:</td><td id='sel_info_data_sz'></td></tr>
-                            <tr class="sia"><td>Record&nbsp;Limit:</td><td id='sel_info_rec_lim'></td></tr>
-                            <tr class="sia"><td>Record&nbsp;Count:</td><td id='sel_info_rec_cnt'></td></tr>
-                            <tr class="sip"><td>Admins:</td><td id='sel_info_admins'></td></tr>
-                            <tr class="sip"><td>Members:</td><td id='sel_info_members'></td></tr>
-                            <tr class="sip siu"><td>Allocations:</td><td id='sel_info_allocs'></td></tr>
-                            <tr class="siq"><td>ID/Alias:</td><td id='sel_info_qry_id'></td></tr>
-                            <tr class="siq"><td>Text:</td><td id='sel_info_qry_text'></td></tr>
-                            <tr class="siq"><td>Metadata:</td><td id='sel_info_qry_meta'></td></tr>
-                            <tr class="sic"><td>Topic:</td><td id='sel_info_topic'></td></tr>
-                            <tr class="sid sidp sic sip siq"><td>Owner:</td><td id='sel_info_owner'></td></tr>
-                            <tr class="sid sidp"><td>Creator:</td><td id='sel_info_creator'></td></tr>
-                            <tr class="sid sidp sic sit"><td>Created:</td><td id='sel_info_ct'></td></tr>
-                            <tr class="sid sidp sic sit"><td>Updated:</td><td id='sel_info_ut'></td></tr>
-                            <tr class="sid sidp"><td>Uploaded:</td><td id='sel_info_dt'></td></tr>
-                            <tr class="sit"><td>Sub&#8209;Type:</td><td id='sel_info_subtype'></td></tr>
-                            <tr class="sit"><td>Status:</td><td id='sel_info_status'></td></tr>
-                            <tr class="sit"><td>Message:</td><td id='sel_info_msg'></td></tr>
-                            <tr class="sit"><td>Source:</td><td id='sel_info_source'></td></tr>
-                            <tr class="sit"><td>Dest:</td><td id='sel_info_dest'></td></tr>
-                        </table>
+                <div id="tab-sel-det" style="padding:0;height:100%;min-height:0">
+                    <div id="sel_info_form" class='col-flex' style="height:100%;display:none">
+                        <!-- div id='sel_info_desc' style='flex: 1 1 none;white-space:pre-wrap;padding:0.5em 0.5em 2em 0.5em'></div -->
+                        <div class='scrollable' style='flex: 1 1 auto'>
+                        <div id='sel_info_desc' class='sel-info-desc'></div>
+                        <!-- div style='flex: 1 1 auto;border-top:none' -->
+                        <div style='border-bottom: 1px solid black'>Details</div>
+                            <table class="sel-info-table">
+                                <tr><td>Type:</td><td id='sel_info_type'></td></tr>
+                                <tr><td>ID:</td><td id='sel_info_id'></td></tr>
+                                <tr class="sid sic"><td>Alias:</td><td id='sel_info_alias'></td></tr>
+                                <tr class="sidp"><td>DOI&nbsp;No.:</td><td id='sel_info_doi'></td></tr>
+                                <!-- tr class="sid sidp sic sip sia siq"><td>Title:</td><td id='sel_info_title'></td></tr -->
+                                <tr class="siu"><td>Name:</td><td id='sel_info_name'></td></tr>
+                                <!-- tr class="sid sidp sic sip sia"><td>Description:</td><td id='sel_info_desc' style='white-space:pre-wrap'></td></tr -->
+                                <tr class="sid sidp sic siq"><td>Tags:</td><td id='sel_info_tags'></td></tr>
+                                <tr class="sidp"><td>Data&nbsp;URL:</td><td id='sel_info_url' style='word-break:break-all'></td></tr>
+                                <tr class="sid"><td>Data&nbsp;Repo:</td><td id='sel_info_repo'></td></tr>
+                                <tr class="sid"><td>Data&nbsp;Size:</td><td id='sel_info_size'></td></tr>
+                                <tr class="sid"><td>Data&nbsp;Source:</td><td id='sel_info_src'></td></tr>
+                                <tr class="sid"><td>Data&nbsp;Ext:</td><td id='sel_info_ext'></td></tr>
+                                <tr class="sid sidp"><td>Provenance:</td><td id='sel_info_prov'></td></tr>
+                                <tr class="siu"><td>E&#8209;Mail:</td><td id='sel_info_email'></td></tr>
+                                <tr class="sia"><td>Data&nbsp;Limit:</td><td id='sel_info_data_lim'></td></tr>
+                                <tr class="sia"><td>Data&nbsp;Usage:</td><td id='sel_info_data_sz'></td></tr>
+                                <tr class="sia"><td>Record&nbsp;Limit:</td><td id='sel_info_rec_lim'></td></tr>
+                                <tr class="sia"><td>Record&nbsp;Count:</td><td id='sel_info_rec_cnt'></td></tr>
+                                <tr class="sip"><td>Admins:</td><td id='sel_info_admins'></td></tr>
+                                <tr class="sip"><td>Members:</td><td id='sel_info_members'></td></tr>
+                                <tr class="sip siu"><td>Allocations:</td><td id='sel_info_allocs'></td></tr>
+                                <tr class="siq"><td>ID/Alias:</td><td id='sel_info_qry_id'></td></tr>
+                                <tr class="siq"><td>Text:</td><td id='sel_info_qry_text'></td></tr>
+                                <tr class="siq"><td>Metadata:</td><td id='sel_info_qry_meta'></td></tr>
+                                <tr class="sic"><td>Category:</td><td id='sel_info_topic'></td></tr>
+                                <tr class="sid sidp sic sip siq"><td>Owner:</td><td id='sel_info_owner'></td></tr>
+                                <tr class="sid sidp sitp"><td>Creator:</td><td id='sel_info_creator'></td></tr>
+                                <tr class="sid sidp sic sit"><td>Created:</td><td id='sel_info_ct'></td></tr>
+                                <tr class="sid sidp sic sit"><td>Updated:</td><td id='sel_info_ut'></td></tr>
+                                <tr class="sid sidp"><td>Uploaded:</td><td id='sel_info_dt'></td></tr>
+                                <tr class="sit"><td>Sub&#8209;Type:</td><td id='sel_info_subtype'></td></tr>
+                                <tr class="sit"><td>Status:</td><td id='sel_info_status'></td></tr>
+                                <tr class="sit"><td>Message:</td><td id='sel_info_msg'></td></tr>
+                                <tr class="sit"><td>Source:</td><td id='sel_info_source'></td></tr>
+                                <tr class="sit"><td>Dest:</td><td id='sel_info_dest'></td></tr>
+                            </table>
+                        </div>
+                        <div class='toolbar' style='flex:none;height:1em'></div>
                     </div>
                 </div>
-                <div id="tab-sel-md" class="ui-widget-content" style="padding:0;height:100%;min-height:0;overflow:auto">
-                    <div class="content col-flex" style="height:100%">
-                        <div class='row-flex shadowed' style='flex:none;align-items:center;padding:.25em'>Filter:&nbsp;<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp;<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp;<button class='btn small' id='md_filter_reset'>Reset</button></div>
-                        <div id="data_md_tree" class="no-border" style="flex:auto;padding:.5em 0 0 0;background:transparent;display:inline-block;overflow:auto"></div>
+                <div id="tab-sel-md" style="padding:0;height:100%;min-height:0">
+                    <div id='md_div' class="col-flex" style="height:100%">
+                        <div class='scrollable' style="flex:auto;border-top:none;min-height:0;padding-right:1em">
+                            <div id="data_md_tree" class="no-border" style="padding:.5em 0 0 0;background:transparent;display:inline-block"></div>
+                        </div>
+                        <div class='row-flex toolbar' style='flex:none;align-items:center;padding:.25em 0'>Filter:&nbsp;<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp;<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp;<button class='btn small' id='md_filter_reset'>Reset</button></div>
                     </div>
                 </div>
-                <div id="tab-sel-notes" class='ui-widget-content content' style="padding:0;height:100%;min-height:0;overflow:auto">
+                <div id="tab-sel-notes" style="padding:0;height:100%;min-height:0">
                     <div id='note-div' class="col-flex" style='height:100%'> 
-                        <div style='flex:none'>
-                            <div id='note-tabs' class='tabs-no-header ui-widget-content content' style='border:none'>
-                                <ul>
-                                    <li><a href="#tab-note-active">Active</a></li>
-                                    <li><a href="#tab-note-open">Open</a></li>
-                                    <li><a href="#tab-note-closed">Closed</a></li>
-                                </ul>
-                                <div id="tab-note-active" style="padding:0.25em 0.5em">
-                                    <div style='padding:0.25em 0'>Annotation List (select to view):</div>
-                                    <div class='ui-widget-content' style="padding:0;height:8em;overflow:auto">
-                                        <div id='note_active_tree' class='no-border'></div>
-                                    </div>
+                        <div id='note-tabs' class='tabs-no-header' style='flex:none;border:none;padding:0'>
+                            <ul>
+                                <li><a href="#tab-note-active">Active</a></li>
+                                <li><a href="#tab-note-open">Open</a></li>
+                                <li><a href="#tab-note-closed">Closed</a></li>
+                            </ul>
+                            <div id="tab-note-active" style="padding:0.25em 0.5em">
+                                <div class='content scrollable' style="padding:0;height:6em">
+                                    <div id='note_active_tree' class='content'></div>
                                 </div>
-                                <div id="tab-note-open" style="padding:0.25em 0.5em">
-                                    <div style='padding:0.25em 0'>Annotation List (select to view):</div>
-                                    <div class='ui-widget-content' style="padding:0;height:8em;overflow:auto">
-                                        <div id='note_open_tree' class='no-border'></div>
-                                    </div>
+                            </div>
+                            <div id="tab-note-open" style="padding:0.25em 0.5em">
+                                <div class='content scrollable' style="padding:0;height:6em">
+                                    <div id='note_open_tree' class='content'></div>
                                 </div>
-                                <div id="tab-note-closed" style="padding:0.25em 0.5em">
-                                    <div style='padding:0.25em 0'>Annotation List (select to view):</div>
-                                    <div class='ui-widget-content' style="padding:0;height:8em;overflow:auto">
-                                        <div id='note_closed_tree' class='no-border'></div>
-                                    </div>
+                            </div>
+                            <div id="tab-note-closed" style="padding:0.25em 0.5em">
+                                <div class='content scrollable' style="padding:0;height:6em">
+                                    <div id='note_closed_tree' class='content'></div>
                                 </div>
                             </div>
                         </div>
-                        <div id='note-details' class='ui-widget-content content' style='flex:1 1 auto;overflow:auto;padding:.45em .45em 0 .45em;border:none'>
+                        <div class='scrollable' id='note-details' style='flex:1 1 auto;min-height:0;padding:.45em .45em 0 .45em;border:none'>
+                        </div>
+                        <div class='toolbar' style='flex:none;padding:.25em 0 0 0'>
+                            <button class='btn btn-icon btn-note-comment'>Comment</button>
+                            <button class='btn btn-icon btn-note-edit'>Edit</button>
+                            <button class='btn btn-icon btn-note-activate'>Activate/Deactivate</button>
+                            <button class='btn btn-icon btn-note-open'>Open/Close</button>
                         </div>
                     </div>
                 </div>
             </div>
+          </div>
         </div>
     </div>
     <div style="flex:none;padding:.25em">
         <button class="btn" id="btn_dep_graph" title='View dependency graph of selected data record' disabled>Provenance</button>
-        <button class="btn" id="btn_subscribe" title='Manage subscription on selected data record or collection' disabled>Subscribe</button>
-        <button class="btn" id="btn_annotate" title='Creaye new annotation on selected data record or collection' disabled>Annotate</button>
+        <!-- button class="btn" id="btn_subscribe" title='Manage subscription on selected data record or collection' disabled>Subscribe</button -->
+        <button class="btn" id="btn_annotate" title='Create new annotation on selected data record or collection' disabled>Annotate</button>
         <span style='padding-left:1em'>&nbsp;</span>
+        <button class="btn" id="btn_download" title='Download raw data from selected data record(s) and/or collection(s)' disabled>Download</button>
+        <span style='padding-left:1em'>&nbsp;</span>
+        <button class="btn" id="btn_upload" title='Upload raw data to selected data record' disabled>Upload</button>
         <button class="btn" id="btn_edit" title='Edit selected item' disabled>Edit</button>
         <!-- button class="btn" id="btn_dup" disabled>Duplicate</button -->
         <button class="btn" id="btn_share" title='Set sharing permissions on selected item' disabled>Share</button>
-        <button class="btn" id="btn_download" title='Download raw data from selected data record(s) and/or collection(s)' disabled>Download</button>
-        <button class="btn" id="btn_upload" title='Upload raw data to selected data record' disabled>Upload</button>
-        <span style='padding-left:1em'>&nbsp;</span>
         <button class="btn" id="btn_del" title='Delete selected item' disabled>Delete</button>
         <!-- button class="btn" id="btn_lock" title='Lock selected item' disabled>Lock</button>
         <button class="btn" id="btn_unlock" title='Unlock selected item' disabled>Unlock</button -->
     </div>
-    <div id="footer" style="flex:none;padding:0">
+    <div id="footer" class='' style="flex:none;padding:0">
         <div id="footer-tabs" style="border:none;padding:0;border-radius:0">
             <ul>
-                <li><a href="#tab-search">Search</a></li>
+                <li><a href="#tab-search">Data Search</a></li>
                 <li><a href="#tab-tasks">Tasks</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
                 <li style='display:none'><a href="#tab-admin">Administration</a></li>
-                <span style='float:right;padding:.1em 0 0 0'><span id='mode_label' class='ui-state-error' style='display:none'>&nbsp;<b>TEST</b>&nbsp;</span>&nbsp;<span id='is_admin' class='ui-state-error' style='display:none'>&nbsp;<b>ADMIN</b>&nbsp;</span>&nbsp;<span style='font-weight:normal'>V-<%- @version %></span></span>
+                <span style='float:right;padding:.1em 0 0 0'>
+                    <span id='uname'></span>&nbsp;
+                    <span id='mode_label' class='ui-state-error' style='display:none'>&nbsp;<b>TEST</b>&nbsp;</span>&nbsp;
+                    <span id='is_admin' class='ui-state-error' style='display:none'>&nbsp;<b>ADMIN</b>&nbsp;</span>&nbsp;
+                    <span style='font-weight:normal'>V-<%- @version %></span>
+                </span>
             </ul>
-            <div id="tab-search" class="content" style="padding:0">
+            <div id="tab-search" class="" style="padding:0">
                 <div class='footer-tab-inner-div'>
-                    <table style='width:100%'>
-                        <tr><td style='width:10ch'>ID/Alias:</td><td style='width:10ch'><input id="id_query" type='text' style="width:10em" title="Find data using partial ID or alias."></input></td><td style='width:5ch;text-align:center'>Text:</td><td><input id="text_query" type='text' style="width:100%" title="Find data with full-text matching on title, description, and/or keywords."></input></td><td style='width:12ch'><button id="run_qry_btn" class="btn small" style='width:12ch'>Run Query</button></td></tr>
-
-                        <tr><td>Metadata: <span class='note'>*</span></td><td colspan="3"><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions."></input></td><td><button id="save_qry_btn" class='btn small' style='width:12ch' >Save Query</button></td></tr>
-                        <tr><td>Scope:</td><td colspan="3">
-                            <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbsp;My Data</span>
-                            <span class='my-check'><label for='scope_myproj'></label><input class='scope' type='checkbox' name='scope_myproj' id='scope_myproj' checked>&nbsp;My Projects</span>
-                            <span class='my-check'><label for='scope_otherproj'></label><input class='scope' type='checkbox' name='scope_otherproj' id='scope_otherproj'>&nbsp;Other Projects</span>
+                <div class='row-flex search-row'>
+                    <div style='flex:none;width:11ch'>ID/Alias:</div>
+                    <div style='flex:none'><input id="id_query" style='width:13ch' type='text' title="Find data using partial ID or alias."></input></div>
+                    <div style='flex:none'>Text:</div>
+                    <div style='flex:1 1 auto'><input id="text_query" type='text' style='width:100%' title="Find data with full-text matching on title, description, and/or keywords."></input></div>
+                </div>
+                <div class='row-flex search-row'>
+                    <div style='flex:none;width:11ch'>Metadata: <span class='note'>*</span></div>
+                    <div style='flex:1 1 auto'><input id="meta_query" type='text' style="width:100%" title="Find data using metadata query expressions (case-sensitive)."></input></div>
+                </div>
+                <div class='row-flex search-row' style='align-items:start'>
+                    <div style='flex:none;width:11ch'>Tags:</div>
+                    <div class='scrollable' style='flex:1 1 auto'><ul id='tag_query' class='input-bg' style='height:3.3em'></ul></div>
+                </div>
+                <div class='row-flex search-row'>
+                    <div style='flex:none;width:11ch'>Scope:</div>
+                    <div style='flex:1 1 auto'>
+                        <div class='search-scope'>
+                            <span class='my-check'><label for='scope_mydat'></label><input class='scope' type='checkbox' name='scope_mydat' id='scope_mydat' checked>&nbsp;Personal</span>
+                            <span class='my-check'><label for='scope_proj'></label><input class='scope' type='checkbox' name='scope_proj' id='scope_proj' checked>&nbsp;Projects</span>
                             <span class='my-check'><label for='scope_shared'></label><input class='scope' type='checkbox' name='scope_shared' id='scope_shared'>&nbsp;Shared</span>
-                            <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbsp;Selected</span>
-                        </td><td><button id='btn_srch_clear_select' class='btn small' style='width:12ch' disabled>Clear Sel.</button></td></tr>
-                    </table>
-                    <div style='padding:.5em 0 0 0'><span class='note'>* Note: metadata text comparisons are case sensitive.</span></div>
+                            <span class='my-check'><label for='scope_selected'></label><input class='scope2' type='checkbox' name='scope_selected' id='scope_selected'>&nbsp;Select</span>
+                        </div>
+                        <div class='search-scope-alt' style='display:none'>Based on current view.</div>
+                    </div>
+                    <div style='flex:none'>
+                        <button id="run_qry_btn" class="btn btn-icon"><span class='ui-icon ui-icon-play'></span></button>
+                        <button id="save_qry_btn" class='btn btn-icon'><span class='ui-icon ui-icon-save'></span></button>
+                        <button id='btn_srch_clear_select' class='btn btn-icon' disabled><span class='ui-icon ui-icon-close'></span></button>
+                    </div>
+                </div>
+                <div style='padding:.25em .5em 0 .5em'><span class='note'>* Text comparisons are case sensitive.</span></div>
                 </div>
             </div>
-            <div id="tab-tasks" class="content" style="padding:0">
+            <div id="tab-tasks" class="" style="padding:0">
                 <div id="task_hist" class="text footer-tab-inner-div" style="padding-top:0"></div>
             </div>
-            <div id="tab-repo" class="content" style="padding:0">
+            <div id="tab-repo" class="" style="padding:0">
                 <div id="repo_list" class="text footer-tab-inner-div"></div>
             </div>
-            <div id="tab-admin" class="content" style="padding:0">
+            <div id="tab-admin" class="" style="padding:0">
                 <div style='padding:0.25em'>
                     <button class="btn" id="btn_manage_users" title='Manage user accounts' disabled>Manage Users</button>
                     <button class="btn" id="btn_manage_projs" title='Manage projects' disabled>Manage Projects</button>

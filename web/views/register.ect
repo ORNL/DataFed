@@ -41,7 +41,7 @@
             else if ( pw1 != pw2 )
                 alert( "Passwords do not match" );
             else
-                window.location = "/ui/do_register?pw="+pw1+"&acc_tok=<%- @acc_tok %>&ref_tok=<%- @ref_tok %>&expires=<%- @acc_tok_ttl %>";
+                window.location = "/ui/do_register?pw="+pw1+"&acc_tok=<%- @acc_tok %>&ref_tok=<%- @ref_tok %>&expires=<%- @acc_tok_ttl %>&redir=<%- @redir %>";
         }
     </script>
 </html>

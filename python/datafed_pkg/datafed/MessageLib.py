@@ -70,7 +70,7 @@ class API:
         self._ctxt = 0
         self._auth = False
         self._nack_except = True
-        self._timeout = 5000
+        self._timeout = 30000
 
         if not server_host:
             raise Exception("Server host is not defined")
@@ -158,8 +158,14 @@ class API:
         if reply == None:
             raise Exception( "Timeout waiting for server connection." )
 
-        if reply.major != Version_pb2.VER_MAJOR or reply.minor != Version_pb2.VER_MINOR:
-            raise Exception( "Incompatible server version {}.{}.{}".format(reply.major,reply.minor,reply.build))
+        if reply.major != Version_pb2.VER_MAJOR or reply.mapi_major != Version_pb2.VER_MAPI_MAJOR or \
+            reply.mapi_minor < Version_pb2.VER_MAPI_MINOR or reply.mapi_minor > ( Version_pb2.VER_MAPI_MINOR + 9 ):
+            raise Exception( "Incompatible server version {}.{}.{}:{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client))
+
+        if reply.client > Version_pb2.VER_CLIENT:
+            self.new_client_avail = True
+        else:
+            self.new_client_avail = False
 
         if client_token:
             self.manualAuthByToken( client_token )
@@ -296,7 +302,7 @@ class API:
         if reply == None:
             return None, None
         if ctxt != self._ctxt:
-            raise Exception("Mismatched reply")
+            raise Exception("Mismatched reply. Expected {} got {}".format( self._ctxt, ctxt ))
         return reply, mt
 
 

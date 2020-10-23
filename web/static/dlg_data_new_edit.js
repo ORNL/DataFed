@@ -25,6 +25,9 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         is_published,
         parent_coll;
     
+    console.log("data:",a_data);
+
+    //<tr><td>Tags:</td><td colspan='3'><input title='Tags (optional, space delimited)' type='text' id='tags' style='width:100%'></input></td></tr>
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
@@ -39,7 +42,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     <tr><td>Title: <span class='note'>*</span></td><td colspan='3'><input title='Title string (required)' type='text' id='title' maxlength='80' style='width:100%'></input></td></tr>\
                     <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' maxlength='40' id='alias' style='width:100%'></input></td></tr>\
                     <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' maxlength='2000' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
-                    <tr><td>Keywords:</td><td colspan='3'><input title='Keywords (optional, comma delimited)' type='text' id='keyw' style='width:100%'></input></td></tr>\
+                    <tr><td style='vertical-align:top'>Tags:</td><td colspan='3'><ul id='tags' class='input-bg'></ul></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
                 </table>\
             </div>\
@@ -101,10 +104,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     else
         return;
 
-    util.inputTheme( $('input:text',frame ));
-    util.inputTheme( $('textarea',frame ));
-
-    $(".btn",frame).button();
+    var tag_el = $("#tags",frame);
 
     $("#pick_source",frame).on("click",function(){
         dlgStartXfer.show( null, null, function( a_path, a_encrypt_mode ){
@@ -159,6 +159,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 if ( data.length == 0 ){
                     html="<option value='bad'>(no allocations)</option>";
                     dialogs.dlgAlert("Allocation Error", "Cannot create new data record for this user/project. No available storage allocations.");
+                    // Close dialog
+                    dlg_inst.dialog('close');
                     return;
                 }else{
                     var alloc;
@@ -177,6 +179,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                     if ( !have_cap ){
                         dialogs.dlgAlert("Data Allocation Error","Cannot create new data record for this user/project. All available storage allocations are full. ");
+                        // Close dialog
+                        dlg_inst.dialog('close');
                         return;
                     }else{
                         $("#do_it").button("enable");
@@ -246,8 +250,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             id: "do_it",
             text: DLG_DATA_BTN_LABEL[a_mode],
             click: function() {
-                dlg_inst = $(this);
-
                 var anno = jsoned.getSession().getAnnotations();
 
                 if ( anno && anno.length ){
@@ -278,8 +280,14 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
-                    util.getUpdatedValue( $("#keyw",frame).val(), a_data, obj, "keyw" );
                     util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
+
+                    // TODO Only assign tags if changed
+                    obj.tags = tag_el.tagit("assignedTags");
+
+                    if (( !obj.tags || obj.tags.length == 0 ) && a_data.tags && a_data.tags.length ){
+                        obj.tagsClear = true;
+                    }
 
                     if ( is_published ){
                         var doi = $("#doi",frame).val(),
@@ -355,8 +363,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         }
                     }
 
-                    console.log("dep add:",obj.depAdd);
-                    console.log("dep rem:",obj.depRem);
+                    //console.log("dep add:",obj.depAdd);
+                    //console.log("dep rem:",obj.depRem);
 
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
@@ -371,7 +379,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
-                    util.getUpdatedValue( $("#keyw",frame).val(), {}, obj, "keyw" );
+                    //util.getUpdatedValue( $("#tags",frame).val(), {}, obj, "tags" );
 
                     if ( is_published ){
                         util.getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
@@ -402,6 +410,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }else if (repo_id != 'default' )
                         obj.repoId = repo_id;
 
+                    obj.tags = tag_el.tagit("assignedTags");
+
                     obj.parentId = $("#coll",frame).val().trim();
                     parent_coll = obj.parentId;
                     api.dataCreate( obj, callback );
@@ -412,6 +422,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             jsoned.resize();
         },
         open: function(ev,ui){
+            dlg_inst = $(this);
+
             $(this).css('padding', '0');
 
             $("#dlg-tabs",frame).tabs({heightStyle:"fill"});
@@ -421,6 +433,15 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
             $("select",frame).selectmenu({width:200});
 
+            tag_el.tagit({
+                autocomplete: {
+                    delay: 500,
+                    minLength: 3,
+                    source: "/api/tag/autocomp"
+                },
+                caseSensitive: false
+            });
+        
             jsoned = ace.edit( $("#md",frame).get(0), {
                 theme:(settings.theme=="light"?"ace/theme/light":"ace/theme/dark"),
                 mode:"ace/mode/json",
@@ -429,6 +450,10 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 wrap:true
             });
 
+            util.inputTheme( $('input:text',frame ));
+            util.inputTheme( $('textarea',frame ));
+            $(".btn",frame).button();
+        
             var parent;
             if ( a_data ){
                 $("#title",frame).val(a_data.title);
@@ -439,7 +464,12 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 }
 
                 $("#desc",frame).val(a_data.desc);
-                $("#keyw",frame).val(a_data.keyw);
+                
+                if ( a_data.tags && a_data.tags.length ){
+                    for ( var t in a_data.tags ){
+                        tag_el.tagit("createTag", a_data.tags[t] );
+                    }
+                }
 
                 if ( a_data.metadata ){
                     var md = JSON.parse( a_data.metadata );
@@ -473,7 +503,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         $("#md_set",frame).attr('disabled',true);
                     }
                     if (( a_upd_perms & model.PERM_WR_REC ) == 0 ){
-                        util.inputDisable( $("#title,#desc,#alias,#keyw", frame ));
+                        util.inputDisable( $("#title,#desc,#alias", frame ));
                         util.inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
                         $(".ref-row select", frame ).selectmenu("disable");
                     }
@@ -514,7 +544,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
-                $("#keyw",frame).val("");
+                //$("#tags",frame).val("");
                 //$("#md",frame).val("");
                 $("#dlg_md_row2",frame).css("display","none");
                 if ( a_parent )

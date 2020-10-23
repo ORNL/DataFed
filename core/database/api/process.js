@@ -18,7 +18,7 @@ module.exports = ( function() {
      */
     obj.preprocessItems = function( a_client, a_new_owner_id, a_ids, a_mode ){
         console.log( "preprocessItems start" );
-        var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, coll: [], glob_data: [], http_data: [], visited: {} };
+        var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, has_pub: false, coll: [], glob_data: [], http_data: [], visited: {} };
 
         switch( a_mode ){
             case g_lib.TT_DATA_GET:
@@ -97,11 +97,14 @@ module.exports = ( function() {
      * size) and those with HTTP data.
      */
     obj._preprocessItemsRecursive = function( a_ctxt, a_ids, a_data_perm, a_coll_perm ){
-        var i, id, ids, is_coll, doc;
-        var perm, data_perm = a_data_perm, coll_perm = a_coll_perm, ok;
+        var i, id, ids, is_coll, doc, perm, ok,
+            data_perm = (a_data_perm==null?0:a_data_perm),
+            coll_perm = (a_coll_perm==null?0:a_coll_perm);
 
         for ( i in a_ids ){
             id = a_ids[i];
+
+            //console.log( "preprocessItem", id );
 
             if ( id.charAt(0) == 'c' ){
                 if ( a_ctxt.mode == g_lib.TT_DATA_PUT )
@@ -133,6 +136,9 @@ module.exports = ( function() {
             if ( doc.deleted )
                 throw [g_lib.ERR_INVALID_PARAM, "Operation refers to deleted data record " + id];
 
+            if ( doc.public )
+                a_ctxt.has_pub = true;
+
             // Check permissions
 
             if ( is_coll ){
@@ -152,10 +158,13 @@ module.exports = ( function() {
                         else
                             perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.comb_perm );
 
-                        data_perm = perm.inhgrant | perm.inherited;
-                        coll_perm = perm.grant | perm.inherited;
+                        // inherited and inhgrant perms only apply to recursion
+                        data_perm |= ( perm.inhgrant | perm.inherited );
+                        coll_perm |= ( perm.inhgrant | perm.inherited );
 
-                        if (( coll_perm & a_ctxt.coll_perm ) != a_ctxt.coll_perm )
+                        //console.log("req perm:",a_ctxt.comb_perm,",act perm:",perm);
+
+                        if ((( coll_perm | perm.grant | perm.inherited ) & a_ctxt.coll_perm ) != a_ctxt.coll_perm )
                             throw [g_lib.ERR_PERM_DENIED,"Permission denied for collection " + id];
 
                     }else{
@@ -169,7 +178,7 @@ module.exports = ( function() {
                     if ( doc.owner != a_ctxt.client._id ){
                         if ( doc.owner.startsWith( "p/" )){
                             if (!( doc.owner in a_ctxt.visited )){
-                                if ( g_lib.hasManagerPermProj( a_ctxt.client._id, doc.owner )){
+                                if ( g_lib.hasManagerPermProj( a_ctxt.client, doc.owner )){
                                     // Put project ID in visited to avoid checking permissions again
                                     a_ctxt.visited[doc.owner] = 1;
                                 }else{
@@ -188,7 +197,7 @@ module.exports = ( function() {
 
                         if ( doc.owner.startsWith( "p/" )){
                             if (!( doc.owner in a_ctxt.visited )){
-                                if ( g_lib.hasManagerPermProj( a_ctxt.client._id, doc.owner )){
+                                if ( g_lib.hasManagerPermProj( a_ctxt.client, doc.owner )){
                                     // Put project ID in visited to avoid checking permissions again
                                     a_ctxt.visited[doc.owner] = 1;
                                     ok = true;
@@ -204,6 +213,8 @@ module.exports = ( function() {
                             else
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
 
+                            console.log( "pp 4" );
+
                             if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm )
                                 throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
                         }
@@ -216,8 +227,10 @@ module.exports = ( function() {
                             else
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
 
-                            if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm )
+                            if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm ){
+                                //console.log("req perm:",a_ctxt.data_perm,",act perm:",perm);
                                 throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
+                            }
                         }
                     }
                 }
@@ -260,7 +273,7 @@ module.exports = ( function() {
         for ( i in a_ids ){
             id = a_ids[i];
 
-            console.log("proc task dep:",id);
+            //console.log("proc task dep:",id);
 
             owner = g_db.owner.firstExample({ _from: id });
             if ( owner )
@@ -269,7 +282,7 @@ module.exports = ( function() {
             // Gather other tasks with priority over this new one
             locks = g_db.lock.byExample({_to: id });
             while ( locks.hasNext() ){
-                console.log("has a lock!");
+                //console.log("has a lock!");
 
                 lock = locks.next();
                 if ( lock.context == a_context ){
@@ -279,7 +292,7 @@ module.exports = ( function() {
                 }
             }
 
-            console.log("save a lock");
+            //console.log("save a lock");
 
             // Add new lock
             if ( a_context )
@@ -321,12 +334,12 @@ module.exports = ( function() {
         for ( i in a_deps ){
             dep = a_deps[i];
 
-            console.log("lock task dep:",dep.id);
+            //console.log("lock task dep:",dep.id);
 
             // Gather other tasks with priority over this new one
             locks = g_db.lock.byExample({_to: dep.id });
             while ( locks.hasNext() ){
-                console.log("has a lock!");
+                //console.log("has a lock!");
 
                 lock = locks.next();
                 if ( lock.context == dep.ctx ){
@@ -336,7 +349,7 @@ module.exports = ( function() {
                 }
             }
 
-            console.log("save a lock");
+            //console.log("save a lock");
 
             // Add new lock
             if ( dep.ctx )
