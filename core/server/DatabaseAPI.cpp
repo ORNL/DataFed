@@ -272,6 +272,91 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
     }
 }
 
+long
+DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, nlohmann::json & a_result )
+{
+    //DL_DEBUG( "dbPost " << a_url_path << " [" << (a_body?*a_body:"") << "]" );
+
+    a_result.clear();
+
+    string  url;
+    string  res_json;
+    char    error[CURL_ERROR_SIZE];
+
+    error[0] = 0;
+
+    url.reserve( 512 );
+
+    // TODO Get URL base from ctor
+    url.append( m_db_url );
+    url.append( a_url_path );
+    url.append( "?client=" );
+    url.append( m_client );
+
+    char * esc_txt;
+
+    for ( vector<pair<string,string>>::const_iterator iparam = a_params.begin(); iparam != a_params.end(); ++iparam )
+    {
+        url.append( "&" );
+        url.append( iparam->first.c_str() );
+        url.append( "=" );
+        esc_txt = curl_easy_escape( m_curl, iparam->second.c_str(), 0 );
+        url.append( esc_txt );
+        curl_free( esc_txt );
+    }
+
+    DL_TRACE( "post url: " << url );
+
+    curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
+    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
+    curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
+    curl_easy_setopt( m_curl, CURLOPT_POST, 1 );
+    if ( a_body )
+        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, a_body->c_str() );
+
+    CURLcode res = curl_easy_perform( m_curl );
+
+    long http_code = 0;
+    curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
+
+    if ( res == CURLE_OK )
+    {
+        if ( res_json.size() )
+        {
+            try
+            {
+                //DL_DEBUG( "PARSE [" << res_json << "]" );
+                a_result = nlohmann::json::parse( res_json );
+            }
+            catch( exception & e )
+            {
+                DL_DEBUG( "PARSE [" << res_json << "]" );
+                EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.what() );
+            }
+        }
+
+        if ( http_code >= 200 && http_code < 300 )
+        {
+            return http_code;
+        }
+        else
+        {
+            /*if ( res_json.size() && a_result.asObject().has( "errorMessage" ))
+            {
+                EXCEPT_PARAM( ID_BAD_REQUEST, a_result.asObject().asString());
+            }
+            else
+            {*/
+                EXCEPT_PARAM( ID_BAD_REQUEST, "SDMS DB service call failed. Code: " << http_code << ", err: " << error );
+            //}
+        }
+    }
+    else
+    {
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "SDMS DB interface failed. error: " << error << ", " << curl_easy_strerror( res ));
+    }
+}
+
 void
 DatabaseAPI::serverPing()
 {
@@ -1069,6 +1154,85 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
     dbPost( "dat/update", {}, &body, result );
 
     setRecordData( a_reply, result );
+}
+
+
+void
+DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::RecordDataReply & a_reply, nlohmann::json & a_result )
+{
+    string body = "{\"id\":\"" + a_request.id() + "\"";
+    if ( a_request.has_title() )
+        body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+    if ( a_request.has_desc() )
+        body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
+    if ( a_request.has_alias() )
+        body += ",\"alias\":\"" + a_request.alias() + "\"";
+
+    if ( a_request.has_tags_clear() && a_request.tags_clear() )
+    {
+        body += ",\"tags_clear\":true";
+    }
+    else if ( a_request.tags_size() )
+    {
+        body += ",\"tags\":[";
+        for ( int i = 0; i < a_request.tags_size(); i++ )
+        {
+            if ( i )
+                body += ",";
+            body += "\"" + a_request.tags(i) + "\"";
+        }
+        body += "]";
+    }
+
+    if ( a_request.has_metadata() )
+    {
+        body += ",\"md\":" + (a_request.metadata().size()?a_request.metadata():"\"\"");
+        if ( a_request.has_mdset() )
+        {
+            body += ",\"mdset\":";
+            body += (a_request.mdset()?"true":"false");
+        }
+    }
+    if ( a_request.has_doi() )
+        body += string(",\"doi\":\"") + a_request.doi() + "\"";
+    if ( a_request.has_data_url() )
+        body += string(",\"data_url\":\"") + a_request.data_url() + "\"";
+    if ( a_request.has_size() )
+        body += ",\"size\":" + to_string(a_request.size());
+    if ( a_request.has_source() )
+        body += ",\"source\":\"" + a_request.source() + "\"";
+    if ( a_request.has_ext() )
+        body += ",\"ext\":\"" + a_request.ext() + "\"";
+    if ( a_request.has_ext_auto() )
+        body += string(",\"ext_auto\":") + (a_request.ext_auto()?"true":"false");
+    if ( a_request.has_dt() )
+        body += ",\"dt\":" + to_string(a_request.dt());
+
+    if ( a_request.dep_add_size() )
+    {
+        body += ",\"dep_add\":[";
+        for ( int i = 0; i < a_request.dep_add_size(); i++ )
+        {
+            body += string(i>0?",":"")+"{\"id\":\"" + a_request.dep_add(i).id() + "\",\"type\":" + to_string(a_request.dep_add(i).type()) + "}";
+        }
+        body += "]";
+    }
+
+    if ( a_request.dep_rem_size() )
+    {
+        body += ",\"dep_rem\":[";
+        for ( int i = 0; i < a_request.dep_rem_size(); i++ )
+        {
+            body += string(i>0?",":"")+"{\"id\":\"" + a_request.dep_rem(i).id() + "\",\"type\":" + to_string(a_request.dep_rem(i).type()) + "}";
+        }
+        body += "]";
+    }
+
+    body += "}";
+
+    dbPost( "dat/update", {}, &body, a_result );
+
+    //setRecordData( a_reply, result );
 }
 
 

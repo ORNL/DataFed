@@ -337,6 +337,8 @@ void perfTest()
     //cout << "Parsed: " << v.toString() << "\n";
     size_t i, ntest = 10000;
     double elapsed;
+    string res;
+
     timerDef();
 
     try
@@ -346,6 +348,7 @@ void perfTest()
         for ( i = 0; i < ntest; i++ )
         {
             v.fromString( json );
+            res = v.toString();
         }
 
         timerStop();

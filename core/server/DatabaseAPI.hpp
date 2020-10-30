@@ -9,6 +9,7 @@
 #include "SDMS_Anon.pb.h"
 #include "SDMS_Auth.pb.h"
 #include "libjson.hpp"
+#include <nlohmann/json.hpp>
 
 namespace SDMS {
 namespace Core {
@@ -66,6 +67,7 @@ public:
     void recordCreate( const Auth::RecordCreateRequest & a_request, Anon::RecordDataReply & a_reply );
     void recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Anon::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result );
+    void recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::RecordDataReply & a_reply, nlohmann::json & result );
     void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result );
     //void recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext = 0 );
     void recordUpdateSize( const Auth::RepoDataSizeReply & a_sizes );
@@ -173,10 +175,14 @@ public:
     void tagSearch( const Anon::TagSearchRequest & a_request, Anon::TagDataReply & a_reply );
     void tagListByCount( const Anon::TagListByCountRequest & a_request, Anon::TagDataReply & a_reply );
 
+    void schemaView( const std::string & a_id, Anon::TagDataReply & a_reply );
+
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, libjson::Value & a_result, bool a_log = true );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
     long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, libjson::Value & a_result );
+    long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, nlohmann::json & a_result );
+
     void setAuthStatus( Anon::AuthStatusReply & a_reply, const libjson::Value & a_result );
     void setUserData( Anon::UserDataReply & a_reply, const libjson::Value & a_result );
     void setProjectData( Anon::ProjectDataReply & a_reply, const libjson::Value & a_result );

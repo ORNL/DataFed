@@ -1,6 +1,8 @@
 #include <iostream>
 #include <atomic>
 #include <boost/tokenizer.hpp>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json-schema.hpp>
 #include <ClientWorker.hpp>
 #include <TraceException.hpp>
 #include <DynaLog.hpp>
@@ -523,11 +525,22 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     m_db_client.setClient( a_uid );
 
-    libjson::Value result;
+    // Validate metdata if present
+
+    //libjson::Value result;
+    nlohmann::json result;
 
     m_db_client.recordUpdate( *request, reply, result );
 
-    handleTaskResponse( result );
+    if ( request->has_metadata() || request->has_schema() )
+    {
+        nlohmann::json::iterator i = result.find("schema");
+        if ( i != result.end() )
+        {
+            cout << "Record has schema - must validate\n";
+        }
+    }
+
 
     PROC_MSG_END
 }

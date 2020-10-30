@@ -49,6 +49,9 @@ else()
 	find_package(Zeromq REQUIRED)
 endif()
 
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
+
 
 if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})
         message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )
