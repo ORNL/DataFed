@@ -211,6 +211,16 @@ app.get('/ui/login', (a_request, a_response) => {
     a_response.redirect(uri);
 });
 
+app.get('/ui/login/retry', (a_request, a_response) => {
+    console.log("get /ui/login");
+
+    a_response.clearCookie( 'sdms' );
+    a_response.clearCookie( 'sdms-user', { path: "/ui" } );
+
+    var uri = g_globus_auth.code.getUri();
+    a_response.redirect(uri);
+});
+
 app.get('/ui/catalog/login', (a_request, a_response) => {
     console.log("get /ui/catalog/login");
 
@@ -223,7 +233,7 @@ app.get('/ui/logout', (a_request, a_response) => {
 
     a_response.clearCookie( 'sdms' );
     a_response.clearCookie( 'sdms-user', { path: "/ui" } );
-    a_response.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=https://sdms.ornl.gov");
+    a_response.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=https://"+g_host);
 });
 
 app.get('/ui/error', (a_request, a_response) => {
