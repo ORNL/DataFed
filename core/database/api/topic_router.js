@@ -65,54 +65,6 @@ router.get('/view', function (req, res) {
 .summary('View topic')
 .description('View a topic.');
 
-/*
-router.get('/list/coll', function (req, res) {
-    try {
-        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
-
-        var qry = "for v in 1..1 inbound @id top filter is_same_collection('c',v) let name = (for i in u filter i._id == v.owner return concat(i.name_last,', ', i.name_first)) sort v.title",
-            result, tot, item, off = 0, cnt = 50, tot;
-
-        if ( req.queryParams.offset == undefined )
-            off = 0;
-
-        if ( req.queryParams.count == undefined && req.queryParams.count <= 100 )
-            cnt = req.queryParams.count;
-
-        qry += " limit " + off + ", " + cnt + " return {id: v._id, title: v.title, brief: v['desc'], owner_id: v.owner, owner_name:name, alias:v.alias }";
-        result = g_db._query( qry, { id: req.queryParams.id },{},{fullCount:true});
-        tot = result.getExtra().stats.fullCount;
-        result = result.toArray();
-
-        for ( var i in result ){
-            item = result[i];
-            if ( item.owner_name && item.owner_name.length )
-                item.owner_name = item.owner_name[0];
-            else
-                item.owner_name = null;
-
-            if ( item.brief && item.brief.length > 120 ){
-                item.brief = item.brief.slice(0,120) + " ...";
-            }
-            item.notes = g_lib.annotationGetMask( client, item.id );
-        }
-
-        result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "ID of topic to list")
-.queryParam('offset', joi.number().optional(), "Offset")
-.queryParam('count', joi.number().optional(), "Count")
-.summary('List collections with topic')
-.description('List collections with topic');
-*/
-
-
 router.get('/search', function (req, res) {
     try {
         var tokens = req.queryParams.phrase.match(/(?:[^\s"]+|"[^"]*")+/g),
@@ -159,49 +111,3 @@ router.get('/search', function (req, res) {
 .summary('Search topics')
 .description('Search topics by keyword or phrase');
 
-/*
-router.get('/link', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["d"],
-                write: ["t","top"]
-            },
-            action: function() {
-                if ( !g_db.d.exists( req.queryParams.id ))
-                    throw [g_lib.ERR_NOT_FOUND,"Data record, "+req.queryParams.id+", not found"];
-
-                g_lib.topicLink( req.queryParams.topic.toLowerCase(), req.queryParams.id );
-            }
-        });
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('topic', joi.string().required(), "Topic path")
-.queryParam('id', joi.string().required(), "Data ID to link")
-.summary('Link topic to data')
-.description('Link topic to data');
-
-router.get('/unlink', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["d"],
-                write: ["t","top"]
-            },
-            action: function() {
-                if ( !g_db.d.exists( req.queryParams.id ))
-                    throw [g_lib.ERR_NOT_FOUND,"Data record, "+req.queryParams.id+", not found"];
-
-                g_lib.topicUnlink( req.queryParams.id );
-            }
-        });
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('id', joi.string().required(), "Data ID or alias to unlink")
-.summary('Unlink topic from data')
-.description('Unlink topic from data');
-*/
