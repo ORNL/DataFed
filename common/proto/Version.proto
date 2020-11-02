@@ -4,7 +4,7 @@ enum Version
     VER_MAJOR = 1;
     VER_MAPI_MAJOR = 1;
     VER_MAPI_MINOR = 0;
-    VER_SERVER = 1;
+    VER_SERVER = 2;
     VER_CLIENT = 0;
 }
 
