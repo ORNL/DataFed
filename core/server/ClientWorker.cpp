@@ -530,14 +530,47 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
     //libjson::Value result;
     nlohmann::json result;
 
+    DL_INFO("Updating record");
+
     m_db_client.recordUpdate( *request, reply, result );
 
     if ( request->has_metadata() || request->has_schema() )
     {
-        nlohmann::json::iterator i = result.find("schema");
-        if ( i != result.end() )
+        DL_INFO("Has metadata/schema");
+
+        DL_INFO( "Returned JSON " << result );
+
+        nlohmann::json::iterator res = result.find("results");
+        if ( res != result.end() && res.value().size() == 1 )
         {
-            cout << "Record has schema - must validate\n";
+            DL_INFO( "Has result [1]" );
+
+            nlohmann::json & obj = res.value().begin().value();
+            nlohmann::json::iterator i = obj.find("schema");
+            nlohmann::json::iterator md = obj.find("md");
+
+            if ( i != obj.end() && md != obj.end() )
+            {
+                DL_INFO("Must validate JSON, schema " << i.value() );
+
+                nlohmann::json schema;
+                m_db_client.schemaView( i.value(), schema );
+
+                DL_INFO( "Schema " << schema );
+
+                nlohmann::json_schema::json_validator validator;
+                try
+                {
+                    DL_INFO( "Setting root schema" );
+                    validator.set_root_schema( schema );
+                    DL_INFO( "Validating" );
+                    validator.validate( md.value() );
+                }
+                catch( exception & e )
+                {
+                    DL_ERROR( "Validation failed: " << e.what() );
+                }
+            }
         }
     }
 

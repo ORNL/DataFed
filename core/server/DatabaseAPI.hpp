@@ -175,10 +175,11 @@ public:
     void tagSearch( const Anon::TagSearchRequest & a_request, Anon::TagDataReply & a_reply );
     void tagListByCount( const Anon::TagListByCountRequest & a_request, Anon::TagDataReply & a_reply );
 
-    void schemaView( const std::string & a_id, Anon::TagDataReply & a_reply );
+    void schemaView( const std::string & a_id, nlohmann::json & a_result );
 
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, libjson::Value & a_result, bool a_log = true );
+    long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, nlohmann::json & a_result );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
     long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, libjson::Value & a_result );
     long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, nlohmann::json & a_result );

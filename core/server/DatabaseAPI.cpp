@@ -138,6 +138,75 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
 }
 
 
+long
+DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, nlohmann::json & a_result )
+{
+    string  url;
+    string  res_json;
+    char    error[CURL_ERROR_SIZE];
+
+    error[0] = 0;
+
+    url.reserve( 512 );
+
+    // TODO Get URL base from ctor
+    url.append( m_db_url );
+    url.append( a_url_path );
+    url.append( "?client=" );
+    url.append( m_client );
+
+    char * esc_txt;
+
+    for ( vector<pair<string,string>>::const_iterator iparam = a_params.begin(); iparam != a_params.end(); ++iparam )
+    {
+        url.append( "&" );
+        url.append( iparam->first.c_str() );
+        url.append( "=" );
+        esc_txt = curl_easy_escape( m_curl, iparam->second.c_str(), 0 );
+        url.append( esc_txt );
+        curl_free( esc_txt );
+    }
+
+    curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
+    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
+    curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
+    curl_easy_setopt( m_curl, CURLOPT_HTTPGET, 1 );
+
+    CURLcode res = curl_easy_perform( m_curl );
+
+    long http_code = 0;
+    curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
+
+    if ( res == CURLE_OK )
+    {
+        if ( res_json.size() )
+        {
+            try
+            {
+                a_result = nlohmann::json::parse( res_json );
+            }
+            catch( exception & e )
+            {
+                DL_DEBUG( "PARSE [" << res_json << "]" );
+                EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.what() );
+            }
+        }
+
+        if ( http_code >= 200 && http_code < 300 )
+        {
+            return http_code;
+        }
+        else
+        {
+            EXCEPT_PARAM( ID_BAD_REQUEST, "SDMS DB service call failed. Code: " << http_code << ", err: " << error );
+        }
+    }
+    else
+    {
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "SDMS DB interface failed. error: " << error << ", " << curl_easy_strerror( res ));
+    }
+}
+
 bool
 DatabaseAPI::dbGetRaw( const char * a_url_path, const vector<pair<string,string>> &a_params, string & a_result )
 {
@@ -3134,6 +3203,14 @@ DatabaseAPI::setTagData( TagData * a_tag, const libjson::Value::Object & a_obj )
     a_tag->set_name( a_obj.getString( "name" ));
     a_tag->set_count( a_obj.getNumber( "count" ));
 }
+
+
+void
+DatabaseAPI::schemaView( const std::string & a_id, nlohmann::json & a_result )
+{
+    dbGet( "schema/view", {{"id",a_id}}, a_result );
+}
+
 
 void
 DatabaseAPI::taskLoadReady( libjson::Value & a_result )
