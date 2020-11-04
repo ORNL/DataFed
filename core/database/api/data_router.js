@@ -303,12 +303,15 @@ function recordUpdate( client, record, result ){
     g_lib.procInputParam( record, "data_url", true, obj );
     g_lib.procInputParam( record, "schema", true, obj );
 
-    if ( record.md === "" )
+    if ( record.md === "" ){
         obj.md = null;
+        obj.schema_err = null;
+    }
     else if ( record.md ){
         obj.md = record.md;
         if ( Array.isArray( obj.md ))
             throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
+        obj.schema_err = null;
     }
 
     if ( record.ext_auto !== undefined )
@@ -511,7 +514,7 @@ router.post('/update', function (req, res) {
                 doc.notes = g_lib.annotationGetMask( client, doc._id );
             }
             delete doc.desc;
-            delete doc.md;
+            //delete doc.md;
             updates.push( doc );
         });
         result.updates = updates;
@@ -626,6 +629,32 @@ router.post('/update/batch', function (req, res) {
 ).required(), 'Array of records and field updates')
 .summary('Update a batch of existing data record')
 .description('Update a batch of existing data record from JSON body');
+
+router.post('/update/val_err', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                write: ["d"]
+            },
+            action: function() {
+                console.log("update val_err", req.queryParams.id );
+
+                if ( !g_db.d.exists({ _id: req.queryParams.id }))
+                    throw [g_lib.ERR_INVALID_PARAM,"Record, "+req.queryParams.id+", does not exist."];
+
+                // TODO Update schema validation error flag
+                g_db._update( req.queryParams.id, { schema_err: req.body?req.body:null }, { keepNull: false });
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('id', joi.string().required(), "Record ID")
+.body( joi.string().allow('').required(), 'Error message')
+.summary('Update data record schema validation error message')
+.description('Update data record schema validation error message');
 
 
 router.post('/update/size', function (req, res) {
