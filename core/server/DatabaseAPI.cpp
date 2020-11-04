@@ -309,7 +309,7 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         {
             try
             {
-                //DL_DEBUG( "PARSE [" << res_json << "]" );
+                DL_DEBUG( "PARSE [" << res_json << "]" );
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )
@@ -1332,6 +1332,14 @@ DatabaseAPI::recordUpdateSize( const Auth::RepoDataSizeReply & a_size_rep )
     body += "]}";
 
     dbPost( "dat/update/size", {}, &body, result );
+}
+
+void
+DatabaseAPI::recordUpdateSchemaError( const std::string & a_rec_id, const std::string & a_err_msg )
+{
+    libjson::Value result;
+    string tmp = "\"" + escapeJSON(a_err_msg) + "\"";
+    dbPost( "dat/update/val_err", {{"id", a_rec_id }}, &tmp, result );
 }
 
 void

@@ -71,6 +71,7 @@ public:
     void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result );
     //void recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext = 0 );
     void recordUpdateSize( const Auth::RepoDataSizeReply & a_sizes );
+    void recordUpdateSchemaError( const std::string & a_rec_id, const std::string & a_err_msg );
     void recordExport( const Auth::RecordExportRequest & a_request, Auth::RecordExportReply & a_reply );
     void recordLock( const Auth::RecordLockRequest & a_request, Anon::ListingReply & a_reply );
     void recordSearch( const Auth::RecordSearchRequest & a_request, Anon::ListingReply & a_reply );

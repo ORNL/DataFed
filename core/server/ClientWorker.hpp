@@ -6,6 +6,8 @@
 #include <thread>
 #include <algorithm>
 #include <zmq.h>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json-schema.hpp>
 #include "MsgComm.hpp"
 #include "DatabaseAPI.hpp"
 #include "ICoreServer.hpp"
@@ -15,7 +17,7 @@ namespace SDMS {
 namespace Core {
 
 
-class ClientWorker
+class ClientWorker : public nlohmann::json_schema::basic_error_handler
 {
 public:
     ClientWorker( ICoreServer & a_core, size_t a_tid );
@@ -75,6 +77,15 @@ private:
 
     typedef bool (ClientWorker::*msg_fun_t)( const std::string & a_uid );
 
+    void error( const nlohmann::json_pointer<nlohmann::basic_json<>> & a_ptr, const nlohmann::json & a_inst, const std::string & a_err_msg ) override
+    {
+        (void) a_ptr;
+        (void) a_inst;
+        const std::string & path = a_ptr.to_string();
+        m_validator_err += "At " + (path.size()?path:"top-level") + ": " + a_err_msg + "\n";
+        //std::cerr << "ERROR: '" << pointer << "' - '" << instance << "': " << message << "\n";
+    }
+
     Config &            m_config;
     ICoreServer &       m_core;
     size_t              m_tid;
@@ -83,6 +94,7 @@ private:
     DatabaseAPI         m_db_client;
     MsgBuf              m_msg_buf;
     GlobusAPI           m_globus_api;
+    std::string         m_validator_err;
 
     static std::map<uint16_t,msg_fun_t> m_msg_handlers;
 };

@@ -1,8 +1,6 @@
 #include <iostream>
 #include <atomic>
 #include <boost/tokenizer.hpp>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json-schema.hpp>
 #include <ClientWorker.hpp>
 #include <TraceException.hpp>
 #include <DynaLog.hpp>
@@ -564,11 +562,29 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
                     DL_INFO( "Setting root schema" );
                     validator.set_root_schema( schema );
                     DL_INFO( "Validating" );
-                    validator.validate( md.value() );
+
+                    m_validator_err.clear();
+                    validator.validate( md.value(), *this );
                 }
                 catch( exception & e )
                 {
-                    DL_ERROR( "Validation failed: " << e.what() );
+                    m_validator_err = string( "Invalid metadat schema: ") + e.what() + "\n";
+                    DL_ERROR( "Invalid metadat schema: " << e.what() );
+                }
+
+                if ( m_validator_err.size() )
+                {
+                    DL_ERROR( "Validation error - update record" );
+
+                    i = obj.find("id");
+                    if ( i != obj.end() )
+                    {
+                        m_db_client.recordUpdateSchemaError( i.value(), m_validator_err );
+                    }
+                    else
+                    {
+                        DL_ERROR( "No id field in update response!" );
+                    }
                 }
             }
         }
