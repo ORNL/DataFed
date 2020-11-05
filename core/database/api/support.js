@@ -110,6 +110,7 @@ module.exports = ( function() {
     obj.NOTE_MASK_INH_ERR   = 0x800;
     obj.NOTE_MASK_LOC_ALL   = 0xFF;
     obj.NOTE_MASK_INH_ALL   = 0xC00;
+    obj.NOTE_MASK_MD_ERR    = 0x1000;
 
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),

@@ -295,6 +295,7 @@ function recordUpdate( client, record, result ){
 
     var obj = { ut: Math.floor( Date.now()/1000 ) };
 
+    console.log("schema:",record.schema);
     g_lib.procInputParam( record, "title", true, obj );
     g_lib.procInputParam( record, "desc", true, obj );
     g_lib.procInputParam( record, "alias", true, obj );
@@ -305,14 +306,19 @@ function recordUpdate( client, record, result ){
 
     if ( record.md === "" ){
         obj.md = null;
-        obj.schema_err = null;
+        obj.md_err_msg = null;
+        obj.md_err = false;
     }
     else if ( record.md ){
         obj.md = record.md;
         if ( Array.isArray( obj.md ))
             throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
-        obj.schema_err = null;
+        obj.md_err_msg = null;
+        obj.md_err = false;
     }
+
+    if ( obj.schema && !g_db.schema.exists( "schema/" + obj.schema ))
+        throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.schema + "' does not exist" ];
 
     if ( record.ext_auto !== undefined )
         obj.ext_auto = record.ext_auto;
@@ -630,7 +636,7 @@ router.post('/update/batch', function (req, res) {
 .summary('Update a batch of existing data record')
 .description('Update a batch of existing data record from JSON body');
 
-router.post('/update/val_err', function (req, res) {
+router.post('/update/md_err_msg', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
@@ -643,7 +649,7 @@ router.post('/update/val_err', function (req, res) {
                     throw [g_lib.ERR_INVALID_PARAM,"Record, "+req.queryParams.id+", does not exist."];
 
                 // TODO Update schema validation error flag
-                g_db._update( req.queryParams.id, { schema_err: req.body?req.body:null }, { keepNull: false });
+                g_db._update( req.queryParams.id, { md_err_msg: req.body, md_err: true }, { keepNull: false });
             }
         });
     } catch( e ) {
@@ -652,7 +658,8 @@ router.post('/update/val_err', function (req, res) {
 })
 .queryParam('client', joi.string().optional(), "Client ID")
 .queryParam('id', joi.string().required(), "Record ID")
-.body( joi.string().allow('').required(), 'Error message')
+//.body( joi.string().required(), 'Error message')
+.body(['text/plain'], 'Error message' )
 .summary('Update data record schema validation error message')
 .description('Update data record schema validation error message');
 
