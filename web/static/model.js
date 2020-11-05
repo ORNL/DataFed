@@ -84,6 +84,7 @@ export const NOTE_MASK_LOC_WARN  = 0x44;
 export const NOTE_MASK_LOC_ERR   = 0x88;
 export const NOTE_MASK_LOC_ALL   = 0xFF;
 export const NOTE_MASK_INH_ALL   = 0xC00;
+export const NOTE_MASK_MD_ERR    = 0x1000;
 
 export const SORT_ID            = 0;
 export const SORT_TITLE         = 1;

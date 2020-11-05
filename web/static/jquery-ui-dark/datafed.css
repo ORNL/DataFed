@@ -255,145 +255,150 @@ textarea.ui-state-disabled
 
 .ui-icon-notice
 {
-    color: #0080FF
+    color: #0080FF;
+}
+
+.ui-icon-wrench
+{
+    color: #ff0000;
 }
 
 .ui-icon-person
 {
-    color: #4070FF
+    color: #4070FF;
 }
 
 .ui-icon-persons
 {
-    color: #4070FF
+    color: #4070FF;
 }
 
 .ui-icon-folder
 {
-    color: #dFbF40
+    color: #dFbF40;
 }
 
 .ui-icon-copy
 {
-    color: #008F00
+    color: #008F00;
 }
 
 .ui-icon-box
 {
-    color: #8040FF
+    color: #8040FF;
 }
 
 .ui-icon-view-icons
 {
-    color: #8040FF
+    color: #8040FF;
 }
 
 .ui-icon-view-icons-b
 {
-    color: #8040FF
+    color: #8040FF;
 }
 
 .ui-icon-file-text
 {
-    color: #90ff90
+    color: #90ff90;
 }
 
 .ui-icon-file
 {
     /*color: #008F00*/
-    color: #ffffff
+    color: #ffffff;
 }
 
 .ui-icon-flag
 {
-    color: #FF0000
+    color: #FF0000;
 }
 
 .ui-icon-alert
 {
-    color: #ef9f00
+    color: #ef9f00;
 }
 
 .ui-icon-circle-info
 {
-    color: #40df40
+    color: #40df40;
 }
 
 .ui-icon-circle-help
 {
-    color: #40b0FF
+    color: #40b0FF;
 }
 
 .ui-icon-heart
 {
-    color: #ff0000
+    color: #ff0000;
 }
 
 .ui-icon-circle-plus
 {
-    color: #009090
+    color: #009090;
 }
 
 .ui-icon-plus
 {
-    color: #00FF00
+    color: #00FF00;
 }
 
 .ui-icon-close
 {
-    color: #FF4020
+    color: #FF4020;
 }
 
 .ui-icon-view-list
 {
-    color: #DFFF20
+    color: #DFFF20;
 }
 
 .ui-icon-zoom
 {
-    color: #FFFFFF
+    color: #FFFFFF;
 }
 
 .ui-icon-linkext
 {
-    color: #ff8000
+    color: #ff8000;
 }
 
 /*.ui-icon-minusthick*/
 
 .ui-icon-grip-solid-horizontal
 {
-    color: #ff8000
+    color: #ff8000;
 }
 
 .ui-icon-structure
 {
-    color: #ff8000
+    color: #ff8000;
 }
 
 .ui-icon-sign-in
 {
-    color: #00af00
+    color: #00af00;
 }
 
 .ui-icon-book
 {
-    color: #a06000
+    color: #a06000;
 }
 
 .ui-icon-databases
 {
-    color: #a0a0a0
+    color: #a0a0a0;
 }
 
 .ui-icon-database
 {
-    color: #a0a0a0
+    color: #a0a0a0;
 }
 
 .ui-icon-locked
 {
-    color: #FF6040
+    color: #FF6040;
 }
 
 .ui-draggable-handle {

@@ -525,8 +525,8 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     // Validate metdata if present
 
-    //libjson::Value result;
-    nlohmann::json result;
+    libjson::Value result;
+    //nlohmann::json result;
 
     DL_INFO("Updating record");
 
@@ -534,62 +534,48 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     if ( request->has_metadata() || request->has_schema() )
     {
-        DL_INFO("Has metadata/schema");
+        //DL_INFO("Has metadata/schema");
 
-        DL_INFO( "Returned JSON " << result );
+        const libjson::Value::Object & obj = result.asObject().getArray("results").begin()->asObject();
+        libjson::Value::ObjectConstIter m = obj.find("md"), s = obj.find("schema");
 
-        nlohmann::json::iterator res = result.find("results");
-        if ( res != result.end() && res.value().size() == 1 )
+        if ( m != obj.end() && s != obj.end() )
         {
-            DL_INFO( "Has result [1]" );
+            //DL_INFO( "Must validate JSON, schema " << s->second.asString() );
 
-            nlohmann::json & obj = res.value().begin().value();
-            nlohmann::json::iterator i = obj.find("schema");
-            nlohmann::json::iterator md = obj.find("md");
+            nlohmann::json schema;
+            m_db_client.schemaView( s->second.asString(), schema );
 
-            if ( i != obj.end() && md != obj.end() )
+            //DL_INFO( "Schema " << schema );
+
+            nlohmann::json_schema::json_validator validator;
+            try
             {
-                DL_INFO("Must validate JSON, schema " << i.value() );
+                //DL_INFO( "Setting root schema" );
+                validator.set_root_schema( schema );
+                //DL_INFO( "Validating" );
 
-                nlohmann::json schema;
-                m_db_client.schemaView( i.value(), schema );
+                // TODO This is a hacky way to convert between JSON implementations...
+                nlohmann::json md = nlohmann::json::parse( m->second.toString() );
 
-                DL_INFO( "Schema " << schema );
+                m_validator_err.clear();
+                validator.validate( md, *this );
+                //validator.validate( md.value(), *this );
+            }
+            catch( exception & e )
+            {
+                m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
+                DL_ERROR( "Invalid metadata schema: " << e.what() );
+            }
 
-                nlohmann::json_schema::json_validator validator;
-                try
-                {
-                    DL_INFO( "Setting root schema" );
-                    validator.set_root_schema( schema );
-                    DL_INFO( "Validating" );
+            if ( m_validator_err.size() )
+            {
+                DL_ERROR( "Validation error - update record" );
 
-                    m_validator_err.clear();
-                    validator.validate( md.value(), *this );
-                }
-                catch( exception & e )
-                {
-                    m_validator_err = string( "Invalid metadat schema: ") + e.what() + "\n";
-                    DL_ERROR( "Invalid metadat schema: " << e.what() );
-                }
-
-                if ( m_validator_err.size() )
-                {
-                    DL_ERROR( "Validation error - update record" );
-
-                    i = obj.find("id");
-                    if ( i != obj.end() )
-                    {
-                        m_db_client.recordUpdateSchemaError( i.value(), m_validator_err );
-                    }
-                    else
-                    {
-                        DL_ERROR( "No id field in update response!" );
-                    }
-                }
+                m_db_client.recordUpdateSchemaError( obj.getString("id"), m_validator_err );
             }
         }
     }
-
 
     PROC_MSG_END
 }

@@ -235,7 +235,7 @@ export function generateNoteSpan( item, codes ){
                 res += "<span class='ui-icon ui-icon-circle-help'></span>";
         }
 
-        // Show separate icon for most critical nhererited note - err > warn
+        // Show separate icon for most critical inhererited note - err > warn
         if ( item.notes & model.NOTE_MASK_INH_ERR ){
             if ( codes )
                 res += " (&#xe6e9;)";
@@ -246,6 +246,14 @@ export function generateNoteSpan( item, codes ){
                 res += " (&#xe65f;)";
             else
                 res += " <span class='inh-warn-title'>(<span class='ui-icon ui-icon-alert inh-warn-title'></span>)</span> ";
+        }
+
+        // Show metadata error icon
+        if ( item.notes & model.NOTE_MASK_MD_ERR ){
+            if ( codes )
+                res += " &#xe662;";
+            else
+                res += "<span class='ui-icon ui-icon-wrench'></span>";
         }
     }
 

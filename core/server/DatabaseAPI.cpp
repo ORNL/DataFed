@@ -1183,6 +1183,8 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
             body += (a_request.mdset()?"true":"false");
         }
     }
+    if ( a_request.has_schema() )
+        body += string(",\"schema\":\"") + a_request.schema() + "\"";
     if ( a_request.has_doi() )
         body += string(",\"doi\":\"") + a_request.doi() + "\"";
     if ( a_request.has_data_url() )
@@ -1219,6 +1221,8 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
     }
 
     body += "}";
+
+    DL_INFO("update body[" << body << "]");
 
     dbPost( "dat/update", {}, &body, result );
 
@@ -1262,6 +1266,8 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
             body += (a_request.mdset()?"true":"false");
         }
     }
+    if ( a_request.has_schema() )
+        body += string(",\"schema\":\"") + a_request.schema() + "\"";
     if ( a_request.has_doi() )
         body += string(",\"doi\":\"") + a_request.doi() + "\"";
     if ( a_request.has_data_url() )
@@ -1338,8 +1344,8 @@ void
 DatabaseAPI::recordUpdateSchemaError( const std::string & a_rec_id, const std::string & a_err_msg )
 {
     libjson::Value result;
-    string tmp = "\"" + escapeJSON(a_err_msg) + "\"";
-    dbPost( "dat/update/val_err", {{"id", a_rec_id }}, &tmp, result );
+
+    dbPost( "dat/update/md_err_msg", {{"id", a_rec_id }}, &a_err_msg, result );
 }
 
 void
@@ -1493,6 +1499,12 @@ DatabaseAPI::setRecordData( Anon::RecordDataReply & a_reply, const Value & a_res
 
             if ( obj.has( "md" ))
                 rec->set_metadata( obj.value().toString() );
+
+            if ( obj.has( "md_err_msg" ))
+                rec->set_md_err_msg( obj.asString() );
+
+            if ( obj.has( "schema" ))
+                rec->set_schema( obj.asString() );
 
             if ( obj.has( "repo_id" ))
                 rec->set_repo_id( obj.asString() );

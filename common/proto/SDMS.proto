@@ -215,6 +215,8 @@ message RecordData
     optional string             parent_id   = 20;
     repeated DependencyData     deps        = 21;
     optional uint32             notes       = 22;
+    optional string             md_err_msg  = 23;
+    optional string             schema      = 24;
 }
 
 // Fields required for a data repo to locate raw data

@@ -78,9 +78,8 @@
                     <div id="sel_info_form" class='col-flex' style="height:100%;display:none">
                         <!-- div id='sel_info_desc' style='flex: 1 1 none;white-space:pre-wrap;padding:0.5em 0.5em 2em 0.5em'></div -->
                         <div class='scrollable' style='flex: 1 1 auto'>
-                        <div id='sel_info_desc' class='sel-info-desc'></div>
-                        <!-- div style='flex: 1 1 auto;border-top:none' -->
-                        <div style='border-bottom: 1px solid black'>Details</div>
+                            <div id='sel_info_desc' class='sel-info-desc'></div>
+                            <!--div style='border-bottom: 1px solid'>Details</div-->
                             <table class="sel-info-table">
                                 <tr><td>Type:</td><td id='sel_info_type'></td></tr>
                                 <tr><td>ID:</td><td id='sel_info_id'></td></tr>
@@ -90,6 +89,7 @@
                                 <tr class="siu"><td>Name:</td><td id='sel_info_name'></td></tr>
                                 <!-- tr class="sid sidp sic sip sia"><td>Description:</td><td id='sel_info_desc' style='white-space:pre-wrap'></td></tr -->
                                 <tr class="sid sidp sic siq"><td>Tags:</td><td id='sel_info_tags'></td></tr>
+                                <tr class="sid sidp"><td>Schema:</td><td id='sel_info_schema'></td></tr>
                                 <tr class="sidp"><td>Data&nbsp;URL:</td><td id='sel_info_url' style='word-break:break-all'></td></tr>
                                 <tr class="sid"><td>Data&nbsp;Repo:</td><td id='sel_info_repo'></td></tr>
                                 <tr class="sid"><td>Data&nbsp;Size:</td><td id='sel_info_size'></td></tr>
@@ -127,6 +127,11 @@
                     <div id='md_div' class="col-flex" style="height:100%">
                         <div class='scrollable' style="flex:auto;border-top:none;min-height:0;padding-right:1em">
                             <div id="data_md_tree" class="no-border" style="padding:.5em 0 0 0;background:transparent;display:inline-block"></div>
+                            <div id='schema_val_err_div'>
+                                <hr>
+                                Schema Validation Errors:<br>
+                                <div id='schema_val_err' style='padding: 0.5em;white-space:pre-wrap'></div>
+                            </div>
                         </div>
                         <div class='row-flex toolbar' style='flex:none;align-items:center;padding:.25em 0'>Filter:&nbsp;<input type='text' id='md_filter_text' style='flex:auto'/>&nbsp;<button id='md_filter_apply' class='btn small'>Apply</button>&nbsp;<button class='btn small' id='md_filter_reset'>Reset</button></div>
                     </div>

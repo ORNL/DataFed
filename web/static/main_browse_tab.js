@@ -2551,7 +2551,7 @@ export function init(){
 
                 for ( i in items ) {
                     item = items[i];
-                    //console.log("item:",item);
+                    console.log("item:",item);
                     if ( item.id[0]=="c" ){
                         entry = { title: util.generateTitle(item),folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub };
                     }else{

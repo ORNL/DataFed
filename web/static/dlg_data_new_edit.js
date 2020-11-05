@@ -80,8 +80,13 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             </div>\
             <div id='tab-dlg-meta' style='padding:1em'>\
                 <div class='col-flex' style='height:100%'>\
-                    <div style='flex:none'>\
-                        Enter metadata as JSON: <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
+                    <div class='row-flex' style='flex:none;align-items:center;padding-bottom:0.5em'>\
+                        <div style='flex:none'>Schema:&nbsp</div>\
+                        <div style='flex:1 1 auto'><input id='schema' type='text' style='width:100%'></input></div>\
+                        <div style='flex:none'>&nbsp<button title='Browse schemas' id='pick_schema' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></div>\
+                    </div>\
+                    <div style='flex:none;padding-bottom:0.25em'>\
+                        Metadata: <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
                     </div>\
                     <div class='ui-widget ui-widget-content' style='flex:1 1 100%;padding:0'>\
                         <div id='md' style='height:100%;width:100%'></div>\
@@ -281,6 +286,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
+                    util.getUpdatedValue( $("#schema",frame).val(), a_data, obj, "schema" );
 
                     // TODO Only assign tags if changed
                     obj.tags = tag_el.tagit("assignedTags");
@@ -365,6 +371,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                     //console.log("dep add:",obj.depAdd);
                     //console.log("dep rem:",obj.depRem);
+                    console.log("upd:",obj);
 
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
@@ -469,6 +476,10 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     for ( var t in a_data.tags ){
                         tag_el.tagit("createTag", a_data.tags[t] );
                     }
+                }
+
+                if ( a_data.schema ){
+                    $("#schema",frame).val(a_data.schema);
                 }
 
                 if ( a_data.metadata ){

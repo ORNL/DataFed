@@ -12,6 +12,8 @@ var form = $("#sel_info_form"),
     desc_div = $("#sel_info_desc"),
     note_div = $("#note-div"),
     note_details = $("#note-details"),
+    schema_val_err_div = $("#schema_val_err_div"),
+    schema_val_err = $("#schema_val_err"),
     data_md_tree = null,
     data_md_empty = true,
     tree_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}],
@@ -146,7 +148,7 @@ export function showSelectedItemInfo( item ){
         cur_item_id = item.id;
 
         if ( item.desc ){
-            desc_div.html( marked( item.desc ));
+            desc_div.html( marked( item.desc ) + "<hr>");
             desc_div.show();
         }else{
             //disabled.push(0);
@@ -163,7 +165,7 @@ export function showSelectedItemInfo( item ){
         }
 
         if ( item.metadata ){
-            showSelectedMetadata( item.metadata );
+            showSelectedMetadata( item.metadata, item.mdErrMsg );
         }else{
             disabled.push(1);
             showSelectedMetadata();
@@ -620,6 +622,9 @@ function showSelectedItemForm( item ){
         $("#sel_info_tags",form).text( tmp );
     }
 
+    if ( item.schema )
+        $("#sel_info_schema",form).text( item.schema );
+
     if ( item.topic )
         $("#sel_info_topic",form).text( item.topic );
 
@@ -773,7 +778,7 @@ function showSelectedItemForm( item ){
     form.show();
 }
 
-function showSelectedMetadata( md_str )
+function showSelectedMetadata( md_str, md_err )
 {
     //console.log("showSelectedMetadata, inst:",inst);
     if ( md_str ){
@@ -787,6 +792,14 @@ function showSelectedMetadata( md_str )
         var md = JSON.parse( md_str );
         var src = util.buildObjSrcTree( md, "md", data_md_exp );
         data_md_tree.reload( src );
+
+        if ( md_err ){
+            schema_val_err.text( md_err );
+            schema_val_err_div.show();
+        }else{
+            schema_val_err_div.hide();
+        }
+
         if ( data_md_empty ){
             data_md_empty = false;
             $("#md_div").show();
@@ -794,6 +807,7 @@ function showSelectedMetadata( md_str )
 
     } else if ( !data_md_empty ) {
         data_md_tree.reload(tree_empty_src);
+        schema_val_err.text("");
         data_md_empty = true;
         $("#md_div").hide();
     }
