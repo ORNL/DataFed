@@ -80,26 +80,34 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             </div>\
             <div id='tab-dlg-meta' style='padding:1em'>\
                 <div class='col-flex' style='height:100%'>\
-                    <div class='row-flex' style='flex:none;align-items:center;padding-bottom:0.5em'>\
-                        <div style='flex:none'>Schema:&nbsp</div>\
-                        <div style='flex:1 1 auto'><input id='schema' type='text' style='width:100%'></input></div>\
-                        <div style='flex:none'>&nbsp<button title='Browse schemas' id='pick_schema' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></div>\
-                    </div>\
                     <div style='flex:none;padding-bottom:0.25em'>\
-                        Metadata: <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
+                        Metadata (JSON): <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
                     </div>\
                     <div class='ui-widget ui-widget-content' style='flex:1 1 100%;padding:0'>\
                         <div id='md' style='height:100%;width:100%'></div>\
                     </div>\
-                    <div id='dlg_md_row2' style='flex:none;padding:.5em 2px 2px 2px'><span>Metadata update mode:</span>\
+                    <div id='dlg_md_row2' style='flex:none;padding-top:.5em'><span>Update mode:</span>\
                         <input type='radio' id='md_merge' name='md_mode' value='merge'/>\
                         <label for='md_merge'>Merge</label>\
                         <input type='radio' id='md_set' name='md_mode' value='set' checked/>\
                         <label for='md_set'>Replace</label>\
                     </div>\
+                    <div  style='flex:none;padding-top:0.5em'>\
+                        <table class='form-table' style='border-collapse: collapse'>\
+                            <tr><td>Schema:&nbsp</td><td><input id='schema' type='text' style='width:100%'></input></td><td><button title='Browse schemas' id='pick_schema' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></td></tr>\
+                            <tr><td></td><td colspan='2' style='text-align:right'><button class='btn' id='md_validate'>Validate</button></td></tr>\
+                        </table>\
+                    </div>\
                 </div>\
             </div>\
         </div>" );
+
+        /* <div class='row-flex' style='flex:none;align-items:center;padding-top:0.5em'>\
+        <div style='flex:none'>Schema:&nbsp</div>\
+        <div style='flex:1 1 auto'><input id='schema' type='text' style='width:100%'></input></div>\
+        <div style='flex:none'>&nbsp<button title='Browse schemas' id='pick_schema' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></div>\
+    </div>\
+    <div style='padding-top:0.5em;float:right'><button class='btn' id='md_validate'>Validate</button></div>\ */
 
     var dlg_title;
     if ( a_data && ( a_mode == DLG_DATA_MODE_EDIT || a_mode == DLG_DATA_MODE_DUP ))
@@ -127,7 +135,39 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     $(".rem-ref",frame).on("click",function(ev){
         remRef(ev);
     });
+    
+    $("#md_validate",frame).on("click",function(ev){
+        var anno = jsoned.getSession().getAnnotations();
 
+        if ( anno && anno.length ){
+            dialogs.dlgAlert( "Validation Error", "Metadata input has unresolved JSON syntax errors.");
+            return;
+        }
+
+        var schema = $("#schema").val().trim();
+
+        if ( !schema ){
+            dialogs.dlgAlert( "Validation Error", "No schema specified.");
+            return;
+        }
+
+        api.metadataValidate( schema, jsoned.getValue(), function( ok, data ){
+            console.log("val res:", ok, data );
+            var msg;
+
+            if ( ok ){
+                if ( data.errors ){
+                    msg = data.errors;
+                }else{
+                    msg = "No errors."
+                }
+            }else{
+                msg = data;
+            }
+
+            dialogs.dlgAlert( "Validation Result", msg );
+        });      
+    });
 
     function addRef(){
         var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");

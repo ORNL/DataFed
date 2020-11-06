@@ -284,6 +284,11 @@ export function sendDataLock( a_ids, a_lock, a_cb ){
     _asyncGet( "/api/dat/lock?lock="+a_lock+"&ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
+export function metadataValidate( a_schema, a_metadata, a_cb ){
+    var doc = { schema: a_schema, metadata: a_metadata };
+    _asyncPost( "/api/metadata/validate", doc, a_cb );
+}
+
 export function collView_url( a_id ) {
     return "/api/col/view?id=" + encodeURIComponent(a_id);
 }

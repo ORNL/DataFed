@@ -12,6 +12,7 @@
 #include "DatabaseAPI.hpp"
 #include "ICoreServer.hpp"
 #include "GlobusAPI.hpp"
+#include <DynaLog.hpp>
 
 namespace SDMS {
 namespace Core {
@@ -57,6 +58,7 @@ private:
     bool procRepoAllocationDeleteRequest( const std::string & a_uid );
     bool procRepoAuthzRequest( const std::string & a_uid );
     bool procUserGetAccessTokenRequest( const std::string & a_uid );
+    bool procMetadataValidateRequest( const std::string & a_uid );
 
     void recordCollectionDelete( const std::vector<std::string> & a_ids, Auth::TaskDataReply & a_reply );
     void handleTaskResponse( libjson::Value & a_result );
@@ -76,6 +78,15 @@ private:
     std::string parseProjectQuery( const std::string & a_text_query, const std::vector<std::string> & a_scope );
 
     typedef bool (ClientWorker::*msg_fun_t)( const std::string & a_uid );
+
+    void schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value )
+    {
+        //DL_INFO( "Load schema: " << a_uri.path() );
+
+        m_db_client.schemaView( a_uri.path(), a_value );
+
+        //DL_INFO( "Schema: " << a_value );
+    }
 
     void error( const nlohmann::json_pointer<nlohmann::basic_json<>> & a_ptr, const nlohmann::json & a_inst, const std::string & a_err_msg ) override
     {

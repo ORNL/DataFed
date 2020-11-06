@@ -265,3 +265,14 @@ message TagDataReply
     optional uint32             count       = 3;
     optional uint32             total       = 4;
 }
+
+message MetadataValidateRequest
+{
+    required string             metadata    = 1;
+    required string             schema      = 2;
+}
+
+message MetadataValidateReply
+{
+    optional string             errors      = 1;
+}

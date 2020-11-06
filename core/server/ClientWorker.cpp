@@ -3,7 +3,6 @@
 #include <boost/tokenizer.hpp>
 #include <ClientWorker.hpp>
 #include <TraceException.hpp>
-#include <DynaLog.hpp>
 #include <Util.hpp>
 #include <Version.pb.h>
 #include <SDMS.pb.h>
@@ -76,6 +75,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
+        SET_MSG_HANDLER( proto_id, MetadataValidateRequest, &ClientWorker::procMetadataValidateRequest );
         SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
@@ -92,6 +92,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
         SET_MSG_HANDLER_DB( proto_id, TagSearchRequest, TagDataReply, tagSearch );
         SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
+
+
 
         proto_id = REG_PROTO( SDMS::Auth );
 
@@ -515,6 +517,54 @@ ClientWorker::procDataPutRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
+bool
+ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( MetadataValidateRequest, MetadataValidateReply )
+
+    m_db_client.setClient( a_uid );
+
+    nlohmann::json schema;
+
+    try
+    {
+        m_db_client.schemaView( request->schema(), schema );
+    }
+    catch( ... )
+    {
+        EXCEPT(1,"Schema not found.");
+    }
+
+    //DL_INFO( "Schema " << schema );
+
+    nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+    try
+    {
+        //DL_INFO( "Setting root schema" );
+        validator.set_root_schema( schema );
+        //DL_INFO( "Validating" );
+
+        nlohmann::json md = nlohmann::json::parse( request->metadata() );
+
+        m_validator_err.clear();
+        validator.validate( md, *this );
+    }
+    catch( exception & e )
+    {
+        m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
+        DL_ERROR( "Invalid metadata schema: " << e.what() );
+    }
+
+    
+    if ( m_validator_err.size() )
+    {
+        reply.set_errors( m_validator_err );
+    }
+
+    PROC_MSG_END
+}
+
 
 bool
 ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
@@ -548,7 +598,8 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
             //DL_INFO( "Schema " << schema );
 
-            nlohmann::json_schema::json_validator validator;
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
             try
             {
                 //DL_INFO( "Setting root schema" );
