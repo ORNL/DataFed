@@ -1112,6 +1112,8 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::Re
 
     if ( a_request.has_metadata() )
         body += ",\"md\":" + a_request.metadata();
+    if ( a_request.has_schema() )
+        body += string(",\"schema\":\"") + a_request.schema() + "\"";
     if ( a_request.has_doi() )
         body += string(",\"doi\":\"") + a_request.doi() + "\"";
     if ( a_request.has_data_url() )
@@ -3922,7 +3924,7 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
     // If not part of another query, build full query string
     if ( !a_partial )
     {
-        a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size":"")+"}";
+        a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size,md_err:i.md_err":"")+"}";
         a_query = escapeJSON( a_query );
     }
 

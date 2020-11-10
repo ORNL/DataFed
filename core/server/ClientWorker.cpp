@@ -102,6 +102,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RevokeCredentialsRequest, &ClientWorker::procRevokeCredentialsRequest );
         SET_MSG_HANDLER( proto_id, DataGetRequest, &ClientWorker::procDataGetRequest );
         SET_MSG_HANDLER( proto_id, DataPutRequest, &ClientWorker::procDataPutRequest );
+        SET_MSG_HANDLER( proto_id, RecordCreateRequest, &ClientWorker::procRecordCreateRequest );
         SET_MSG_HANDLER( proto_id, RecordUpdateRequest, &ClientWorker::procRecordUpdateRequest );
         SET_MSG_HANDLER( proto_id, RecordUpdateBatchRequest, &ClientWorker::procRecordUpdateBatchRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &ClientWorker::procRecordDeleteRequest );
@@ -135,7 +136,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ListingReply, projList );
         SET_MSG_HANDLER_DB( proto_id, ProjectGetRoleRequest, ProjectGetRoleReply, projGetRole );
-        SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
+        //SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordExportRequest, RecordExportReply, recordExport );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
@@ -567,6 +568,78 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
 
 
 bool
+ClientWorker::procRecordCreateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordCreateRequest, RecordDataReply )
+
+    m_db_client.setClient( a_uid );
+
+    // Validate metdata if present
+
+    //libjson::Value result;
+
+    DL_INFO("Creating record");
+
+    m_db_client.recordCreate( *request, reply );
+
+    if ( request->has_metadata() && request->has_schema() )
+    {
+        //DL_INFO("Has metadata/schema");
+
+            //DL_INFO( "Must validate JSON, schema " << s->second.asString() );
+
+            nlohmann::json schema;
+
+            try
+            {
+                m_db_client.schemaView( request->schema(), schema );
+                //DL_INFO( "Schema " << schema );
+
+                nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+                try
+                {
+                    //DL_INFO( "Setting root schema" );
+                    validator.set_root_schema( schema );
+                    //DL_INFO( "Validating" );
+
+                    nlohmann::json md = nlohmann::json::parse( request->metadata() );
+
+                    m_validator_err.clear();
+                    validator.validate( md, *this );
+                    //validator.validate( md.value(), *this );
+                }
+                catch( exception & e )
+                {
+                    m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
+                    DL_ERROR( "Invalid metadata schema: " << e.what() );
+                }
+            }
+            catch( exception & e )
+            {
+                m_validator_err = string( "Metadata schema error: ") + e.what() + "\n";
+                DL_ERROR( "Could not load metadata schema: " << e.what() );
+            }
+
+
+            if ( m_validator_err.size() )
+            {
+                DL_ERROR( "Validation error - update record" );
+
+                //const string & id = obj.getString("id");
+                RecordData * data = reply.mutable_data(0);
+
+                m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
+                // TODO need a def for md_err mask
+                data->set_notes( data->notes() | 0x1000 );
+            }
+
+    }
+
+    PROC_MSG_END
+}
+
+bool
 ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RecordUpdateRequest, RecordDataReply )
@@ -623,7 +696,28 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
             {
                 DL_ERROR( "Validation error - update record" );
 
-                m_db_client.recordUpdateSchemaError( obj.getString("id"), m_validator_err );
+                const string & id = obj.getString("id");
+
+                m_db_client.recordUpdateSchemaError( id, m_validator_err );
+                // Must find and update md_err flag in reply
+                for ( int i = 0; i < reply.data_size(); i++ )
+                {
+                    RecordData * data = reply.mutable_data(i);
+                    if ( data->id() == id )
+                    {
+                        // TODO need a def for md_err mask
+                        data->set_notes( data->notes() | 0x1000 );
+                    }
+                }
+                for ( int i = 0; i < reply.update_size(); i++ )
+                {
+                    ListingData * data = reply.mutable_update(i);
+                    if ( data->id() == id )
+                    {
+                        // TODO need a def for md_err mask
+                        data->set_notes( data->notes() | 0x1000 );
+                    }
+                }
             }
         }
     }
@@ -1667,7 +1761,7 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     if ( filter.size() )
         result += " filter " + filter;
 
-    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi,size:i.size}";
+    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi,size:i.size,md_err:i.md_err}";
 
 
     return result;

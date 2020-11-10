@@ -22,61 +22,29 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         ref_rows = 1,
         orig_deps = [],
         encrypt_mode = 1,
-        is_published,
         parent_coll;
     
-    console.log("data:",a_data);
-
-    //<tr><td>Tags:</td><td colspan='3'><input title='Tags (optional, space delimited)' type='text' id='tags' style='width:100%'></input></td></tr>
+    //console.log("data:",a_data);
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
             <ul>\
                 <li><a href='#tab-dlg-gen'>General</a></li>\
-                <li><a href='#tab-dlg-ref'>References</a></li>\
-                <li><a href='#tab-dlg-data'>Data</a></li>\
+                <!-- li><a href='#tab-dlg-data'>Data</a></li -->\
                 <li><a href='#tab-dlg-meta'>Metadata</a></li>\
+                <li><a href='#tab-dlg-ref'>References</a></li>\
             </ul>\
             <div id='tab-dlg-gen' style='padding:1em'>\
                 <table class='form-table'>\
                     <tr><td>Title: <span class='note'>*</span></td><td colspan='3'><input title='Title string (required)' type='text' id='title' maxlength='80' style='width:100%'></input></td></tr>\
                     <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' maxlength='40' id='alias' style='width:100%'></input></td></tr>\
-                    <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' maxlength='2000' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
+                    <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' maxlength='2000' rows=8 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td style='vertical-align:top'>Tags:</td><td colspan='3'><ul id='tags' class='input-bg'></ul></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
-                </table>\
-            </div>\
-            <div id='tab-dlg-ref' style='padding:1em'>\
-                <div class='col-flex' style='height:100%'>\
-                    <div style='flex:1 1 auto;overflow:auto'>\
-                        <table id='ref-table'>\
-                            <tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>\
-                        </table>\
-                    </div>\
-                    <div style='flex:none;padding:1em 0 0 .1em'><button title='Add new reference' class='btn add-ref'>Add Reference</button></div>\
-                </div>\
-            </div>\
-            <div id='tab-dlg-data' style='padding:1em'>\
-                <span title='Set data mode to published.' style='display:inline-block;white-space:nowrap'><label for='published'>Published Data</label><input id='published' type='checkbox'></input> <span id='pub_del_warn_ast' style='display:none' class='note'>**</span></span><br><br>\
-                <div id='working_data'>\
-                    <table class='form-table'>\
-                        <tr id='dlg_alloc_row'><td>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
-                        <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%' readonly></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-file'></span></button></tr>\
-                        <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
-                    </table>\
-                </div>\
-                <div id='published_data' style='display:none'>\
-                    <table class='form-table'>\
-                        <tr><td>DOI:</td><td colspan='3'><input title='DOI number (optional)' type='text' id='doi' style='width:100%'></input></td></tr>\
-                        <tr><td>Data&nbspURL:</td><td colspan='3'><input title='Data URL (optional)' type='text' id='data_url' style='width:100%'></input></td></tr>\
-                    </table>\
-                </div><br><br>\
-                <div id='pub_del_warn' style='display:none;width:100%' class='note'>\
-                    ** Setting record to published will delete associated DataFed-managed raw data.\
-                </div>\
-                <div id='pub_upd_warn' style='display:none' class='note'>\
-                    Note: Editing data source information of published records is not recommended due to potential impact on data subscribers.\
-                </div>\
+                    <tr id='dlg_alloc_row'><td>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
+                    <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%' readonly></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-file'></span></button></tr>\
+                    <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
+            </table>\
             </div>\
             <div id='tab-dlg-meta' style='padding:1em'>\
                 <div class='col-flex' style='height:100%'>\
@@ -94,20 +62,29 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     </div>\
                     <div  style='flex:none;padding-top:0.5em'>\
                         <table class='form-table' style='border-collapse: collapse'>\
-                            <tr><td>Schema:&nbsp</td><td><input id='schema' type='text' style='width:100%'></input></td><td><button title='Browse schemas' id='pick_schema' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></td></tr>\
-                            <tr><td></td><td colspan='2' style='text-align:right'><button class='btn' id='md_validate'>Validate</button></td></tr>\
+                            <tr>\
+                                <td>Schema:&nbsp</td>\
+                                <td><input id='schema' type='text' style='width:100%'></input></td>\
+                                <td><button title='Browse schemas' id='pick_schema' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></td>\
+                                <td><button title='Validate with specified schemas' id='md_validate' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-refresh'></span></button></td>\
+                            </tr>\
                         </table>\
                     </div>\
+                    <div id='md_err_msg' class='ui-widget content' style='flex:none;padding:.5em;white-space:pre-wrap;max-height:4em;overflow:auto;margin-top:0.5em;display:none'></div>\
+                </div>\
+            </div>\
+            <div id='tab-dlg-ref' style='padding:1em'>\
+                <div class='col-flex' style='height:100%'>\
+                    <div style='flex:1 1 auto;overflow:auto'>\
+                        <table id='ref-table'>\
+                            <tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>\
+                        </table>\
+                    </div>\
+                    <div style='flex:none;padding:1em 0 0 .1em'><button title='Add new reference' class='btn add-ref'>Add Reference</button></div>\
                 </div>\
             </div>\
         </div>" );
 
-        /* <div class='row-flex' style='flex:none;align-items:center;padding-top:0.5em'>\
-        <div style='flex:none'>Schema:&nbsp</div>\
-        <div style='flex:1 1 auto'><input id='schema' type='text' style='width:100%'></input></div>\
-        <div style='flex:none'>&nbsp<button title='Browse schemas' id='pick_schema' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></div>\
-    </div>\
-    <div style='padding-top:0.5em;float:right'><button class='btn' id='md_validate'>Validate</button></div>\ */
 
     var dlg_title;
     if ( a_data && ( a_mode == DLG_DATA_MODE_EDIT || a_mode == DLG_DATA_MODE_DUP ))
@@ -153,19 +130,15 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
         api.metadataValidate( schema, jsoned.getValue(), function( ok, data ){
             console.log("val res:", ok, data );
-            var msg;
-
             if ( ok ){
                 if ( data.errors ){
-                    msg = data.errors;
+                    $("#md_err_msg",frame).text(data.errors).show();
                 }else{
-                    msg = "No errors."
+                    $("#md_err_msg",frame).text("").hide();
                 }
             }else{
-                msg = data;
+                dialogs.dlgAlert( "Validation Error", data );;
             }
-
-            dialogs.dlgAlert( "Validation Result", msg );
         });      
     });
 
@@ -257,7 +230,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         if ( ok ) {
             // Start transfer if source changed
             var tmp = $("#source_file").val().trim();
-            if ( !is_published && tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
+            if ( tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
                 api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, reply2 ){
                     if ( ok2 ){
                         util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
@@ -315,12 +288,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
                 });
 
-                if ( $("#published",frame).prop("checked") )
-                    is_published = true;
-                else
-                    is_published = false;
-
-
                 if ( a_data && a_mode == DLG_DATA_MODE_EDIT ){
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
@@ -335,31 +302,19 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         obj.tagsClear = true;
                     }
 
-                    if ( is_published ){
-                        var doi = $("#doi",frame).val(),
-                            data_url = $("#data_url",frame).val();
+                    if ( a_data.doi ){
+                        obj.doi="";
+                        obj.dataUrl="";
+                    }
 
-                        if ( !doi || !data_url ){
-                            dialogs.dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
-                            return;
-                        }
-                        util.getUpdatedValue( doi, a_data, obj, "doi" );
-                        util.getUpdatedValue( data_url, a_data, obj, "dataUrl" );
+                    if ( $("#ext_auto",frame).prop("checked") ){
+                        if ( !a_data.extAuto )
+                            obj.extAuto = true;
                     }else{
-                        if ( a_data.doi ){
-                            obj.doi="";
-                            obj.dataUrl="";
-                        }
+                        if ( a_data.extAuto )
+                            obj.extAuto = false;
 
-                        if ( $("#ext_auto",frame).prop("checked") ){
-                            if ( !a_data.extAuto )
-                                obj.extAuto = true;
-                        }else{
-                            if ( a_data.extAuto )
-                                obj.extAuto = false;
-
-                            util.getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
-                        }
+                        util.getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
                     }
 
                     if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
@@ -426,21 +381,12 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
-                    //util.getUpdatedValue( $("#tags",frame).val(), {}, obj, "tags" );
+                    util.getUpdatedValue( $("#schema",frame).val(), {}, obj, "schema" );
 
-                    if ( is_published ){
-                        util.getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
-                        util.getUpdatedValue( $("#data_url",frame).val(), {}, obj, "dataUrl" );
-                        if ( !obj.doi || !obj.dataUrl ){
-                            dialogs.dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
-                            return;
-                        }
+                    if ( $("#ext_auto",frame).prop("checked") ){
+                        obj.extAuto = true;
                     }else{
-                        if ( $("#ext_auto",frame).prop("checked") ){
-                            obj.extAuto = true;
-                        }else{
-                            util.getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
-                        }
+                        util.getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
                     }
 
                     var tmp = jsoned.getValue();
@@ -553,6 +499,13 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         $("#md_merge",frame).attr('disabled',true);
                         $("#md_set",frame).attr('disabled',true);
                     }
+
+                    if ( a_data.mdErrMsg ){
+                        $("#md_err_msg",frame).text( a_data.mdErrMsg ).show();
+                    }else{
+                        $("#md_err_msg",frame).hide();
+                    }
+
                     if (( a_upd_perms & model.PERM_WR_REC ) == 0 ){
                         util.inputDisable( $("#title,#desc,#alias", frame ));
                         util.inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
@@ -575,7 +528,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
                     $("#doi",frame).val(a_data.doi);
                     $("#data_url",frame).val(a_data.dataUrl);
-                    if ( a_data.dataUrl ){
+                    
+                    /*if ( a_data.dataUrl ){
                         $("#published",frame).prop("checked",true);
                         $("#working_data",frame).hide();
                         $("#published_data",frame).show();
@@ -583,7 +537,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         util.inputDisable( $("#alias", frame ));
                     }else if ( a_data.size > 0 ){
                         $("#pub_del_warn,#pub_del_warn_ast",frame).show();
-                    }
+                    }*/
                 }else{
                     $("#dlg_md_row2",frame).css("display","none");
                     if ( a_parent )

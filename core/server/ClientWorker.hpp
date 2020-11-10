@@ -42,6 +42,7 @@ private:
     bool procDataGetRequest( const std::string & a_uid );
     bool procDataPutRequest( const std::string & a_uid );
     bool procDataCopyRequest( const std::string & a_uid );
+    bool procRecordCreateRequest( const std::string & a_uid );
     bool procRecordUpdateRequest( const std::string & a_uid );
     bool procRecordUpdateBatchRequest( const std::string & a_uid );
     bool procRecordDeleteRequest( const std::string & a_uid );
