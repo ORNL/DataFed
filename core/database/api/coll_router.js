@@ -884,6 +884,8 @@ router.post('/pub/search', function (req, res) {
             }
 
             item.notes = g_lib.annotationGetMask( client, item._id );
+            if ( item.md_err )
+                item.notes |= g_lib.NOTE_MASK_MD_ERR;
         }
 
         result.push({ paging: { off: req.body.params.off, cnt: result.length, tot: req.body.params.off + count }});

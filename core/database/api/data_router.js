@@ -518,6 +518,8 @@ router.post('/update', function (req, res) {
             }else{
                 doc = g_db._document( id );
                 doc.notes = g_lib.annotationGetMask( client, doc._id );
+                if ( doc.md_err )
+                    doc.notes |= g_lib.NOTE_MASK_MD_ERR;
             }
             delete doc.desc;
             //delete doc.md;
@@ -590,6 +592,9 @@ router.post('/update/batch', function (req, res) {
         result.updates.forEach( function( id ){
             doc = g_db._document( id );
             doc.notes = g_lib.annotationGetMask( client, doc._id );
+            if ( doc.md_err )
+                doc.notes |= g_lib.NOTE_MASK_MD_ERR;
+
             delete doc.desc;
             delete doc.md;
             updates.push( doc );
@@ -742,6 +747,8 @@ router.get('/view', function (req, res) {
         }
 
         data.notes = g_lib.annotationGetMask( client, data_id, admin );
+        if ( data.md_err )
+            data.notes |= g_lib.NOTE_MASK_MD_ERR;
 
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
@@ -910,7 +917,9 @@ router.get('/dep/graph/get', function (req, res) {
                     
                 //console.log("calc notes for", rec._id );
                 notes = g_lib.annotationGetMask( client, rec._id );
-
+                if ( rec.md_err )
+                    notes |= g_lib.NOTE_MASK_MD_ERR;
+    
                 if ( entry[1] ){
                     deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:entry[0]}).toArray();
 
@@ -967,7 +976,7 @@ router.get('/dep/graph/get', function (req, res) {
                                 node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
 
                             node.notes = g_lib.annotationGetMask( client, node.id );
-
+                
                             if ( dep.type<2 )
                                 node.gen = gen;
                             result.push(node);
@@ -1161,6 +1170,8 @@ router.get('/search', function (req, res) {
         for ( var i in results ){
             doc = results[i];
             doc.notes = g_lib.annotationGetMask( client, doc.id );
+            if ( doc.md_err )
+                doc.notes |= g_lib.NOTE_MASK_MD_ERR;
         }
 
         res.send( results );
