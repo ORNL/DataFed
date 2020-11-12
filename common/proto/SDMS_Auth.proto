@@ -164,7 +164,7 @@ message RecordCreateRequest
     optional string             ext         = 10;
     optional bool               ext_auto    = 11;
     repeated DependencySpecData deps        = 12;
-    optional string             schema      = 13;
+    optional string             sch_id      = 13;
 }
 
 message RecordCreateBatchRequest
@@ -184,7 +184,7 @@ message RecordUpdateRequest
     optional string             data_url    = 8;
     optional string             metadata    = 9;
     optional bool               mdset       = 10;
-    optional string             schema      = 11;
+    optional string             sch_id      = 11;
     optional string             source      = 12;
     optional string             ext         = 13;
     optional bool               ext_auto    = 14;

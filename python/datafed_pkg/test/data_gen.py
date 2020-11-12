@@ -137,7 +137,7 @@ for i in range( start, end + 1 ):
             print("Timeout on collectionDelete, coll {}".format(i))
             exit()
 
-        continue;
+        continue
 
     name = "{} Collection {}".format(title_pfx,i)
 

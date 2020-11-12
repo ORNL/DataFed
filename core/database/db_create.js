@@ -20,7 +20,7 @@ graph._addVertexCollection("q");    // Saved queries
 graph._addVertexCollection("repo"); // Repository servers
 graph._addVertexCollection("task"); // Tasks
 graph._addVertexCollection("tag"); // Tags
-graph._addVertexCollection("schema"); // Schemas
+graph._addVertexCollection("sch"); // Schemas
 
 
 var owner = graph_module._relation("owner", ["d","c","p","g","a","q","task"], ["u","p"]);
@@ -65,11 +65,20 @@ graph._extendEdgeDefinitions(lock);
 var block = graph_module._relation("block", ["task"], ["task"]);
 graph._extendEdgeDefinitions(block);
 
+var sch_dep = graph_module._relation("sch_dep", ["sch"], ["sch"]);
+graph._extendEdgeDefinitions(sch_dep);
+
+var sch_ver = graph_module._relation("sch_ver", ["sch"], ["sch"]);
+graph._extendEdgeDefinitions(sch_ver);
+
+
 //db._query("for doc in userview2 search analyzer(doc.name in tokens('Joe Samson','na2'), 'na2') let s = BM25(doc) filter s > 2 sort s desc return {id: doc._id,name:doc.name,score:s}");
 //db._query("for doc in userview search analyzer(doc.name in tokens('x st','user_name'), 'user_name') let s = BM25(doc,1.2,.5) sort s desc return {id:doc._id,name:doc.name,score:s}");
 
 var userview = db._createView("userview","arangosearch",{});
 var analyzers = require("@arangodb/analyzers");
+
+// ---------- User name indexing (view) ----------
 
 var user_name = analyzers.save("user_name","ngram",{
   "min": 3,
@@ -86,6 +95,8 @@ userview.properties({
     }
   }
 },true);
+
+// ---------- Tag name indexing (view) ----------
 
 var tag_name = analyzers.save("tag_name","ngram",{
   "min": 3,
@@ -105,6 +116,31 @@ tagview.properties({
   }
 },true);
 
+// ---------- Schema indexing (view) ----------
+
+var sch_id = analyzers.save("sch_id","ngram",{
+  "min": 3,
+  "max": 5,
+  "streamType":"utf8",
+  "preserveOriginal":true
+}, ["frequency","norm","position"]); 
+
+var schemaview = db._createView("schemaview","arangosearch",{});
+
+schemaview.properties({
+  links:{
+    "sch":{
+      fields:{
+        "id": { analyzers: ["sch_id"] },
+        "desc": { analyzers: ["text_en"] }
+      },
+      includeAllFields: false
+    }
+  }
+},true);
+
+// ---------- Data indexing (view) ----------
+
 var view = db._createView("dataview","arangosearch",{});
 
 view.properties({
@@ -118,6 +154,7 @@ view.properties({
           "desc": { analyzers: ["text_en"] },
           "owner": { analyzers: ["identity"] },
           "ut": { analyzers: ["identity"] },
+          "_sch_id": { analyzers: ["identity"] },
           "_id": { analyzers: ["identity"] }
         },
         includeAllFields: false
@@ -129,6 +166,8 @@ view.properties({
   },
   true
 );
+
+// ---------- Collection indexing (view) ----------
 
 view = db._createView("collview","arangosearch",{});
 
@@ -153,6 +192,8 @@ view.properties({
   },
   true
 );
+
+// ---------- Project indexing (view) ----------
 
 view = db._createView("projview","arangosearch",{});
 
@@ -180,6 +221,8 @@ view.properties({
   true
 );
 
+// ---------- Individual field indexing ----------
+
 /*db.d.ensureIndex({ type: "fulltext", unique: false, fields: [ "keyw" ], sparse: true, minLength: 3 });
 db.c.ensureIndex({ type: "fulltext", unique: false, fields: [ "topic" ], sparse: true, minLength: 3 });*/
 
@@ -203,3 +246,5 @@ db.dep.ensureIndex({ type: "hash", unique: false, fields: [ "type" ], sparse: tr
 db.tag.ensureIndex({ type: "persistent", unique: false, fields: [ "count" ], sparse: true });
 
 db.t.ensureIndex({ type: "persistent", unique: false, fields: [ "top" ], sparse: true });
+
+db.sch.ensureIndex({ type: "hash", unique: true, fields: [ "id" ], sparse: false });

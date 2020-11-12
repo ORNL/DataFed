@@ -3943,7 +3943,7 @@ DatabaseAPI::parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishe
 
     if ( a_request.has_text() )
     {
-        a_query += " for t in textview search t._id == v._id and analyzer(" + parseSearchTextPhrase( a_request.text(), "t" ) + ",'text_en')";
+        a_query += " for t in dataview search t._id == v._id and analyzer(" + parseSearchTextPhrase( a_request.text(), "t" ) + ",'text_en')";
         iter = "t";
     }
     else
