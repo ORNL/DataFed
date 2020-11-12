@@ -14,8 +14,9 @@ module.exports = router;
 
 router.get('/view', function (req, res) {
     try {
-        var result = g_db.schema.document( "schema" + (req.queryParams.id.charAt(0) == "/"?"":"/") + req.queryParams.id );
-        result._id = result._id.substr(7);
+        //var result = g_db.schema.document( "schema" + (req.queryParams.id.charAt(0) == "/"?"":"/") + req.queryParams.id );
+        var result = g_db.sch.firstExample({ id: req.queryParams.id });
+        delete result._id;
         delete result._key;
         delete result._rev;
 

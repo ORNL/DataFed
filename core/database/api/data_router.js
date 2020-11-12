@@ -53,7 +53,7 @@ function recordCreate( client, record, result ){
     g_lib.procInputParam( record, "alias", false, obj );
     g_lib.procInputParam( record, "doi", false, obj );
     g_lib.procInputParam( record, "data_url", false, obj );
-    g_lib.procInputParam( record, "schema", false, obj );
+    g_lib.procInputParam( record, "sch_id", false, obj );
 
     if ( record.md ){
         obj.md = record.md;
@@ -191,7 +191,7 @@ router.post('/create', function (req, res) {
     parent: joi.string().allow('').optional(),
     repo: joi.string().allow('').optional(),
     md: joi.any().optional(),
-    schema: joi.string().allow('').optional(),
+    sch_id: joi.string().allow('').optional(),
     ext: joi.string().allow('').optional(),
     ext_auto: joi.boolean().optional(),
     deps: joi.array().items(joi.object({
@@ -246,7 +246,7 @@ router.post('/create/batch', function (req, res) {
         parent: joi.string().allow('').optional(),
         repo: joi.string().allow('').optional(),
         md: joi.any().optional(),
-        schema: joi.string().allow('').optional(),
+        sch_id: joi.string().allow('').optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
         deps: joi.array().items(joi.object({
@@ -295,14 +295,13 @@ function recordUpdate( client, record, result ){
 
     var obj = { ut: Math.floor( Date.now()/1000 ) };
 
-    console.log("schema:",record.schema);
     g_lib.procInputParam( record, "title", true, obj );
     g_lib.procInputParam( record, "desc", true, obj );
     g_lib.procInputParam( record, "alias", true, obj );
     g_lib.procInputParam( record, "source", true, obj );
     g_lib.procInputParam( record, "doi", true, obj );
     g_lib.procInputParam( record, "data_url", true, obj );
-    g_lib.procInputParam( record, "schema", true, obj );
+    g_lib.procInputParam( record, "sch_id", true, obj );
 
     if ( record.md === "" ){
         obj.md = null;
@@ -317,8 +316,21 @@ function recordUpdate( client, record, result ){
         obj.md_err = false;
     }
 
-    if ( obj.schema && !g_db.schema.exists( "schema/" + obj.schema ))
-        throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.schema + "' does not exist" ];
+    if ( obj.sch_id === "" ){
+        if ( data.sch_id ){
+            // TODO Ref count dec old
+        }
+    }else if ( obj.sch_id ) {
+        var sch = g_db.sch.firstExample({ id: obj.sch_id });
+        if ( !sch )
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist" ];
+
+        obj.sch_id = sch._id;
+        // TODO Ref count inc new
+        if ( data.sch_id ){
+            // TODO Ref count dec old
+        }
+    }
 
     if ( record.ext_auto !== undefined )
         obj.ext_auto = record.ext_auto;
@@ -544,7 +556,7 @@ router.post('/update', function (req, res) {
     tags_clear: joi.boolean().optional(),
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
-    schema: joi.string().allow('').optional(),
+    sch_id: joi.string().allow('').optional(),
     size: joi.number().optional(),
     source: joi.string().allow('').optional(),
     ext: joi.string().allow('').optional(),
@@ -619,7 +631,7 @@ router.post('/update/batch', function (req, res) {
         tags_clear: joi.boolean().optional(),
         md: joi.any().optional(),
         mdset: joi.boolean().optional().default(false),
-        schema: joi.string().allow('').optional(),
+        sch_id: joi.string().allow('').optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
         dep_add: joi.array().items(joi.object({
