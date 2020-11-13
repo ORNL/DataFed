@@ -744,8 +744,8 @@ export function topicSearch( a_phrase, a_cb ){
     _asyncGet( topicSearch_url( a_phrase ), null, a_cb );
 }
 
-export function topicView_url( a_id, a_offset, a_count ){
-    return "/api/top/view?id=" + a_id;
+export function topicView_url( a_id ){
+    return "/api/top/view?id=" + encodeURIComponent(a_id);
 }
 
 export function topicView( a_id, a_cb ){
@@ -759,6 +759,26 @@ export function topicView( a_id, a_cb ){
             util.setStatusText( "View Topic Error: " + reply, true );
         }
     });
+}
+
+export function schemaView( a_id, a_cb ){
+    if ( !a_cb )
+        return;
+
+    _asyncGet( "/api/sch/view?id=" + encodeURIComponent(a_id), null, function( ok, reply ){
+        if ( ok ) {
+            a_cb( reply.schema?reply.schema[0]:null );
+        }else{
+            util.setStatusText( "View Schema Error: " + reply, true );
+        }
+    });
+}
+
+export function schemaSearch( a_req, a_cb ){
+    if ( !a_cb )
+        return;
+
+    _asyncPost( "/api/sch/search", a_req, a_cb );
 }
 
 export function queryList_url( a_offset, a_count ){

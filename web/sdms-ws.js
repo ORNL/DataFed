@@ -1271,6 +1271,18 @@ app.get('/api/top/search', ( a_req, a_resp ) => {
     });
 });
 
+app.get('/api/sch/view', ( a_req, a_resp ) => {
+    sendMessage( "SchemaViewRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/search', ( a_req, a_resp ) => {
+    sendMessage( "SchemaSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
 app.get('/ui/ep/view', ( a_req, a_resp ) => {
     //console.log("/ui/ep/view", a_req.query.ep );
 
@@ -1466,7 +1478,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
     //    console.log("sendMsg alloc ctx", a_msg_name );
     allocRequestContext( a_resp, function( ctx ){
-        console.log("sendMsg", a_msg_name, ctx );
+        //console.log("sendMsg", a_msg_name, ctx );
 
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
@@ -1659,7 +1671,7 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
     var f = g_ctx[ctx];
     if ( f ) {
         g_ctx[ctx] = null;
-        console.log("freed ctx",ctx,"for msg",msg_class.name);
+        //console.log("freed ctx",ctx,"for msg",msg_class.name);
         g_ctx_next = ctx;
         f( msg );
     } else {

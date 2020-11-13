@@ -293,7 +293,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
-                    util.getUpdatedValue( $("#schema",frame).val(), a_data, obj, "schema" );
+                    util.getUpdatedValue( $("#schema",frame).val(), a_data, obj, "schId" );
 
                     // TODO Only assign tags if changed
                     obj.tags = tag_el.tagit("assignedTags");
@@ -381,7 +381,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
-                    util.getUpdatedValue( $("#schema",frame).val(), {}, obj, "schema" );
+                    util.getUpdatedValue( $("#schema",frame).val(), {}, obj, "schId" );
 
                     if ( $("#ext_auto",frame).prop("checked") ){
                         obj.extAuto = true;
@@ -464,8 +464,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
                 }
 
-                if ( a_data.schema ){
-                    $("#schema",frame).val(a_data.schema);
+                if ( a_data.schId ){
+                    $("#schema",frame).val(a_data.schId);
                 }
 
                 if ( a_data.metadata ){

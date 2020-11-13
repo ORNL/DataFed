@@ -9,7 +9,6 @@
 #include "SDMS_Anon.pb.h"
 #include "SDMS_Auth.pb.h"
 #include "libjson.hpp"
-#include <nlohmann/json.hpp>
 
 namespace SDMS {
 namespace Core {
@@ -67,7 +66,6 @@ public:
     void recordCreate( const Auth::RecordCreateRequest & a_request, Anon::RecordDataReply & a_reply );
     void recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Anon::RecordDataReply & a_reply );
     void recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result );
-    void recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::RecordDataReply & a_reply, nlohmann::json & result );
     void recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result );
     //void recordUpdatePostPut( const std::string & a_data_id, size_t a_file_size, time_t a_mod_time, const std::string & a_src_path, const std::string * a_ext = 0 );
     void recordUpdateSize( const Auth::RepoDataSizeReply & a_sizes );
@@ -176,14 +174,14 @@ public:
     void tagSearch( const Anon::TagSearchRequest & a_request, Anon::TagDataReply & a_reply );
     void tagListByCount( const Anon::TagListByCountRequest & a_request, Anon::TagDataReply & a_reply );
 
-    void schemaView( const std::string & a_id, nlohmann::json & a_result );
+    void schemaSearch( const Anon::SchemaSearchRequest & a_request, Anon::SchemaDataReply & a_reply );
+    void schemaView( const Anon::SchemaViewRequest & a_request, Anon::SchemaDataReply & a_reply );
+    void schemaView( const std::string & a_id, libjson::Value & a_result );
 
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, libjson::Value & a_result, bool a_log = true );
-    long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, nlohmann::json & a_result );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );
     long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, libjson::Value & a_result );
-    long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, nlohmann::json & a_result );
 
     void setAuthStatus( Anon::AuthStatusReply & a_reply, const libjson::Value & a_result );
     void setUserData( Anon::UserDataReply & a_reply, const libjson::Value & a_result );
@@ -212,6 +210,8 @@ private:
     void setTagDataReply( Anon::TagDataReply & a_reply, const libjson::Value & a_result );
     void setTagData( TagData * a_tag, const libjson::Value::Object & a_obj );
     void setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::Value & a_result );
+    void setSchemaDataReply( Anon::SchemaDataReply & a_reply, const libjson::Value & a_result );
+    void setSchemaData( SchemaData * a_schema, const libjson::Value::Object & a_obj );
 
     uint32_t parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial = false );
     void parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params );

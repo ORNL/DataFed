@@ -269,10 +269,30 @@ message TagDataReply
 message MetadataValidateRequest
 {
     required string             metadata    = 1;
-    required string             schema      = 2;
+    required string             sch_id      = 2;
 }
 
 message MetadataValidateReply
 {
     optional string             errors      = 1;
+}
+
+message SchemaViewRequest
+{
+    required string             id          = 1;
+}
+
+message SchemaSearchRequest
+{
+    optional string             id          = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
+message SchemaDataReply
+{
+    repeated SDMS.SchemaData    schema      = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
 }

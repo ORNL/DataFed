@@ -622,8 +622,8 @@ function showSelectedItemForm( item ){
         $("#sel_info_tags",form).text( tmp );
     }
 
-    if ( item.schema )
-        $("#sel_info_schema",form).text( item.schema );
+    if ( item.schId )
+        $("#sel_info_schema",form).text( item.schId );
 
     if ( item.topic )
         $("#sel_info_topic",form).text( item.topic );

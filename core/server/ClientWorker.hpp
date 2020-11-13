@@ -82,11 +82,13 @@ private:
 
     void schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value )
     {
-        //DL_INFO( "Load schema: " << a_uri.path() );
+        DL_INFO( "Load schema, scheme: " << a_uri.scheme() << ", path: " << a_uri.path() << ", auth: " << a_uri.authority() << ", id: " << a_uri.identifier() );
 
-        m_db_client.schemaView( a_uri.path(), a_value );
+        libjson::Value sch;
+        m_db_client.schemaView( a_uri.path(), sch );
 
-        //DL_INFO( "Schema: " << a_value );
+        a_value = nlohmann::json::parse( sch.asObject().getValue("def").toString() );
+        DL_INFO( "Loaded schema: " << a_value );
     }
 
     void error( const nlohmann::json_pointer<nlohmann::basic_json<>> & a_ptr, const nlohmann::json & a_inst, const std::string & a_err_msg ) override

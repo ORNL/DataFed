@@ -216,7 +216,7 @@ message RecordData
     repeated DependencyData     deps        = 21;
     optional uint32             notes       = 22;
     optional string             md_err_msg  = 23;
-    optional string             schema      = 24;
+    optional string             sch_id      = 24;
 }
 
 // Fields required for a data repo to locate raw data
@@ -421,4 +421,16 @@ message HttpXfrData
     required uint32             updated     = 6;
     required bool               failed      = 7;
     optional string             err_msg     = 8; // Only set if status == XFR_FAILED
+}
+
+// -------------------------------------------------- TASK DEFINES
+
+message SchemaData
+{
+    required string             id          = 1;
+    optional uint32             ver         = 2;
+    optional uint32             cnt         = 3;
+    optional string             desc        = 4;
+    optional string             def         = 5;
+    // Add dependencies, topics, owner, public
 }

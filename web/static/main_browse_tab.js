@@ -17,6 +17,7 @@ import * as dlgSettings from "./dlg_settings.js";
 import * as dlgCollNewEdit from "./dlg_coll_new_edit.js";
 import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";
 import * as dlgAnnotation from "./dlg_annotation.js";
+import * as dlgSchemaList from "./dlg_schema_list.js";
 
 var frame = $("#content");
 var task_hist = $("#task_hist",frame);
@@ -1256,6 +1257,10 @@ function actionDataPut() {
     }
 }*/
 
+function actionSchemaList() {
+    dlgSchemaList.show();
+}
+
 function calcActionState( sel ){
     var bits,node;
 
@@ -2153,6 +2158,8 @@ $("#btn_refresh",frame).on('click', actionRefresh );
 $("#btn_srch_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_refresh",frame).on('click', actionRefresh );
+$("#btn_schemas",frame).on('click', actionSchemaList );
+
 
 $("#btn_exp_node",frame).on('click', function(){
     graph_panel.expandNode();

@@ -92,8 +92,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
         SET_MSG_HANDLER_DB( proto_id, TagSearchRequest, TagDataReply, tagSearch );
         SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
-
-
+        SET_MSG_HANDLER_DB( proto_id, SchemaSearchRequest, SchemaDataReply, schemaSearch );
+        SET_MSG_HANDLER_DB( proto_id, SchemaViewRequest, SchemaDataReply, schemaView );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
@@ -529,7 +529,9 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
 
     try
     {
-        m_db_client.schemaView( request->schema(), schema );
+        libjson::Value sch;
+        m_db_client.schemaView( request->sch_id(), sch );
+        schema = nlohmann::json::parse( sch.asObject().getValue("def").toString() );
     }
     catch( ... )
     {
@@ -582,7 +584,7 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
 
     m_db_client.recordCreate( *request, reply );
 
-    if ( request->has_metadata() && request->has_schema() )
+    if ( request->has_metadata() && request->has_sch_id() )
     {
         //DL_INFO("Has metadata/schema");
 
@@ -592,8 +594,9 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
 
             try
             {
-                m_db_client.schemaView( request->schema(), schema );
-                //DL_INFO( "Schema " << schema );
+                libjson::Value sch;
+                m_db_client.schemaView( request->sch_id(), sch );
+                schema = nlohmann::json::parse( sch.asObject().getValue("def").toString() );
 
                 nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
 
@@ -655,32 +658,40 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     m_db_client.recordUpdate( *request, reply, result );
 
-    if ( request->has_metadata() || request->has_schema() )
+    if ( request->has_metadata() || request->has_sch_id() )
     {
         //DL_INFO("Has metadata/schema");
 
         const libjson::Value::Object & obj = result.asObject().getArray("results").begin()->asObject();
-        libjson::Value::ObjectConstIter m = obj.find("md"), s = obj.find("schema");
+        libjson::Value::ObjectConstIter m = obj.find("md"), s = obj.find("sch_id");
 
         if ( m != obj.end() && s != obj.end() )
         {
-            //DL_INFO( "Must validate JSON, schema " << s->second.asString() );
+            DL_INFO( "Must validate JSON, schema " << s->second.asString() );
 
-            nlohmann::json schema;
-            m_db_client.schemaView( s->second.asString(), schema );
+            libjson::Value sch;
+            m_db_client.schemaView( s->second.asString(), sch );
 
-            //DL_INFO( "Schema " << schema );
+            DL_INFO( "Schema record JSON:" << sch.toString() );
+            DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
+
+            nlohmann::json schema = nlohmann::json::parse( sch.asObject().getValue("def").toString() );
+
+            DL_INFO( "Schema nlohmann: " << schema );
 
             nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
 
             try
             {
-                //DL_INFO( "Setting root schema" );
+                DL_INFO( "Setting root schema" );
                 validator.set_root_schema( schema );
-                //DL_INFO( "Validating" );
 
                 // TODO This is a hacky way to convert between JSON implementations...
+                DL_INFO( "Parse md" );
+
                 nlohmann::json md = nlohmann::json::parse( m->second.toString() );
+
+                DL_INFO( "Validating" );
 
                 m_validator_err.clear();
                 validator.validate( md, *this );
