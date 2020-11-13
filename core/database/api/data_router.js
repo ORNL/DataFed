@@ -291,9 +291,9 @@ function recordUpdate( client, record, result ){
             throw g_lib.ERR_PERM_DENIED;
     }
 
-    var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-
-    var obj = { ut: Math.floor( Date.now()/1000 ) };
+    var owner_id = g_db.owner.firstExample({ _from: data_id })._to,
+        obj = { ut: Math.floor( Date.now()/1000 ) },
+        sch;
 
     g_lib.procInputParam( record, "title", true, obj );
     g_lib.procInputParam( record, "desc", true, obj );
@@ -316,9 +316,13 @@ function recordUpdate( client, record, result ){
         obj.md_err = false;
     }
 
+    // Note: sch_id function param is the "id" field of sch, not "_id", must convert to "_id" before processing
+    // sch_id stored in record is sch "_id" field.
+
     if ( obj.sch_id === "" ){
         if ( data.sch_id ){
-            // TODO Ref count dec old
+            sch = g_db.sch.document( data.sch_id );
+            g_db._update( sch._id, { cnt: sch.cnt - 1 });
         }
     }else if ( obj.sch_id ) {
         var sch = g_db.sch.firstExample({ id: obj.sch_id });
@@ -326,9 +330,11 @@ function recordUpdate( client, record, result ){
             throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist" ];
 
         obj.sch_id = sch._id;
-        // TODO Ref count inc new
+        g_db._update( sch._id, { cnt: sch.cnt + 1 });
+
         if ( data.sch_id ){
-            // TODO Ref count dec old
+            sch = g_db.sch.document( data.sch_id );
+            g_db._update( sch._id, { cnt: sch.cnt - 1 });
         }
     }
 
@@ -482,6 +488,12 @@ function recordUpdate( client, record, result ){
         g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, result.updates );
     }
 
+    // Convert DB _id to user-assigned id
+    if ( data.sch_id ){
+        sch = g_db.sch.document( data.sch_id );
+        data.sch_id = sch.id;
+    }
+
     data.notes = g_lib.annotationGetMask( client, data._id );
 
     data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
@@ -514,7 +526,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag","sch"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -581,7 +593,7 @@ router.post('/update/batch', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag","sch"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -762,6 +774,10 @@ router.get('/view', function (req, res) {
         if ( data.md_err )
             data.notes |= g_lib.NOTE_MASK_MD_ERR;
 
+        if ( data.sch_id ){
+            data.sch_id = g_db.sch.document( data.sch_id ).id;
+        }
+        
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
             dep = data.deps[i];

@@ -30,6 +30,35 @@ router.get('/view', function (req, res) {
 .summary('View schema')
 .description('View schema');
 
+router.get('/search', function (req, res) {
+    try {
+        var qry, par = {}, result, off = 0, cnt = 50;
+
+        if ( req.queryParams.offset != undefined )
+            off = req.queryParams.offset;
+
+        if ( req.queryParams.count != undefined && req.queryParams.count <= 100 )
+            cnt = req.queryParams.count;
+
+        qry = "for i in sch";
+
+        qry += " sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt}";
+        result = g_db._query( qry, par, {}, { fullCount: true });
+        var tot = result.getExtra().stats.fullCount;
+        result = result.toArray();
+        result.push({ paging: {off: off, cnt: cnt, tot: tot }});
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('id', joi.number().integer().min(0).optional(), "ID (partial)")
+.queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
+.queryParam('count', joi.number().integer().min(1).optional(), "Count")
+.summary('Search schemas')
+.description('Search schema');
 
 /*
 router.get('/list', function (req, res) {
