@@ -180,7 +180,7 @@ gsi_authz_init()
 globus_result_t
 gsi_authz_destroy()
 {
-    //syslog( LOG_INFO, "gsi_authz_destroy\n" );
+    syslog( LOG_INFO, "gsi_authz_destroy\n" );
 
     return 0;
 }
@@ -189,7 +189,7 @@ gsi_authz_destroy()
 globus_result_t
 gsi_authz_handle_init( va_list ap )
 {
-    //syslog( LOG_INFO, "gsi_authz_handle_init" );
+    syslog( LOG_INFO, "gsi_authz_handle_init" );
 
     globus_result_t             result              = GLOBUS_FAILURE;
     globus_gsi_authz_handle_t * handle              = va_arg( ap, globus_gsi_authz_handle_t * );
@@ -227,7 +227,7 @@ gsi_authz_handle_init( va_list ap )
 globus_result_t
 gsi_authz_handle_destroy( va_list ap )
 {
-    //syslog( LOG_INFO, "gsi_authz_handle_destroy" );
+    syslog( LOG_INFO, "gsi_authz_handle_destroy" );
 
     globus_result_t             result              = GLOBUS_FAILURE;
     globus_gsi_authz_handle_t   handle              = va_arg( ap, globus_gsi_authz_handle_t );
@@ -255,7 +255,7 @@ gsi_authz_handle_destroy( va_list ap )
 globus_result_t
 gsi_authz_authorize_async( va_list ap )
 {
-    //syslog( LOG_INFO, "gsi_authz_authorize_async" );
+    syslog( LOG_INFO, "gsi_authz_authorize_async" );
 
     globus_result_t             result              = GLOBUS_FAILURE;
     globus_gsi_authz_handle_t   handle              = va_arg(ap, globus_gsi_authz_handle_t);
@@ -272,7 +272,7 @@ gsi_authz_authorize_async( va_list ap )
         return result;
     }
 
-    //syslog( LOG_ERR, "gsi_authz_authorize_async, handle: %p, act: %s, obj: %s", handle, action, object );
+    syslog( LOG_ERR, "gsi_authz_authorize_async, handle: %p, act: %s, obj: %s", handle, action, object );
     
     OM_uint32 min_stat;
     gss_name_t client = GSS_C_NO_NAME;
@@ -392,6 +392,8 @@ gsi_authz_authorize_async( va_list ap )
         callback( callback_arg, handle, result );
     }
 
+    syslog( LOG_ERR, "Authz returning" );
+
     return result;
 }
 
@@ -399,7 +401,7 @@ gsi_authz_authorize_async( va_list ap )
 globus_result_t
 gsi_authz_cancel()
 {
-    //syslog( LOG_INFO, "gsi_authz_cancel\n" );
+    syslog( LOG_INFO, "gsi_authz_cancel\n" );
     return 0;
 }
 
@@ -409,7 +411,7 @@ gsi_authz_identify( va_list ap )
 {
     (void)ap;
 
-    //syslog( LOG_INFO, "gsi_authz_identify\n" );
+    syslog( LOG_INFO, "gsi_authz_identify\n" );
     return 0;
 }
 
@@ -417,7 +419,7 @@ gsi_authz_identify( va_list ap )
 globus_result_t
 gsi_map_user( va_list Ap )
 {
-    //syslog( LOG_INFO, "gsi_map_user" );
+    syslog( LOG_INFO, "gsi_map_user" );
 
     char *          service          = NULL;
     char *          desired_identity = NULL;

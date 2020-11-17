@@ -1,6 +1,7 @@
 import * as settings from "./settings.js";
 import * as util from "./util.js";
 import * as api from "./api.js";
+import * as dlgPickUser from "./dlg_pick_user.js";
 
 var tree;
 
@@ -23,7 +24,7 @@ function loadSchemas(){
                 var sch;
                 for ( var i in data.schema ){
                     sch = data.schema[i];
-                    src.push({ title: sch.id + " V." + sch.ver + " (" + sch.cnt + ")", key: sch.id });
+                    src.push({ title: sch.id + " ver " + sch.ver + " (" + sch.cnt + ")", key: sch.id });
                 }
             }else{
                 src.push({ title: "(no matches)" });
@@ -40,9 +41,23 @@ export function show( a_select, a_cb ){
 
     frame.html(
         "<div class='col-flex' style='height:100%'>\
-            <div style='flex:none;padding:0 0 .5em 0;align-items: center' class='row-flex'><div style='flex:none'>Search:&nbsp</div><div style='flex:1 1 auto'><input id='search_input' type='text' style='width:100%;box-sizing:border-box'></input></div></div>\
             <div style='flex:3 3 75%;overflow:auto;padding:0' class='content'>\
                 <div id='sch_tree' class='content no-border'></div>\
+            </div>\
+            <div style='flex:none;padding-top:0.5em'>Search Options:</div>\
+            <div style='flex:none;padding:0.5em 0 0 0.5em'>\
+                <table class='form-table'>\
+                    <tr><td>ID:</td><td colspan='2'><input id='srch_id' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
+                    <tr><td>Keywords:</td><td colspan='2'><input id='srch_txt' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
+                    <tr><td>Owner:</td><td><input id='srch_owner' type='text' style='width:100%;box-sizing:border-box'></input></td>\
+                        <td><button title='Select user' id='pick_user' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-person'></span></button></td></tr>\
+                    <tr><td>Sort By:</td><td>\
+                        <select id='srch_sort'>\
+                            <option value='1' selected>ID</option>\
+                            <option value='2'>Popularity</option>\
+                        </select>\
+                    </td></tr>\
+                </table>\
             </div>\
         </div>" );
 
@@ -58,6 +73,7 @@ export function show( a_select, a_cb ){
             if ( a_select ){
                 $("#ok_btn").button("disable");
             }
+            $("#srch_sort",frame).selectmenu();
         },
         close: function( ev, ui ) {
             $(this).dialog("destroy").remove();
@@ -114,6 +130,12 @@ export function show( a_select, a_cb ){
     tree = $.ui.fancytree.getTree($("#sch_tree",frame));
 
     loadSchemas();
+
+    $("#pick_user",frame).click(function(){
+        dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
+            $("#srch_owner",frame).val( users[0].substr(2) );
+        });
+    });
 
     //var in_timer;
 

@@ -247,4 +247,5 @@ db.tag.ensureIndex({ type: "persistent", unique: false, fields: [ "count" ], spa
 
 db.t.ensureIndex({ type: "persistent", unique: false, fields: [ "top" ], sparse: true });
 
-db.sch.ensureIndex({ type: "hash", unique: true, fields: [ "id" ], sparse: false });
+//db.sch.ensureIndex({ type: "hash", unique: true, fields: [ "id" ], sparse: false });
+db.sch.ensureIndex({ type: "hash", unique: true, fields: [ "id", "ver" ], sparse: false });
