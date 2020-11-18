@@ -9,6 +9,41 @@ const   g_lib = require('./support');
 
 module.exports = router;
 
+function fixSchOwnNm( a_sch ){
+    if ( !a_sch.own_nm )
+        return;
+
+    var j, nm = "", tmp = a_sch.own_nm.split(" ");
+
+    console.log("tmp", tmp, tmp.length );
+
+    for ( j = 0; j < tmp.length - 1; j++ ){
+        if ( j )
+            nm += " ";
+        nm += tmp[j].charAt(0).toUpperCase() + tmp[j].substr(1);
+    }
+
+    a_sch.own_nm = nm;
+}
+
+function fixSchOwnNmAr( a_sch ){
+    //console.log("fixSchOwnNmAr");
+    var sch, tmp, j, nm;
+    for ( var i in a_sch ){
+        sch = a_sch[i];
+        if ( !sch.own_nm )
+            continue;
+        tmp = sch.own_nm.split(" ");
+        nm = "";
+        for ( j = 0; j < tmp.length - 1; j++ ){
+            if ( j )
+                nm += " ";
+            nm += tmp[j].charAt(0).toUpperCase() + tmp[j].substr(1);
+        }
+        sch.own_nm = nm;
+    }
+}
+
 
 //==================== SCHEMA API FUNCTIONS
 
@@ -16,7 +51,7 @@ router.post('/create', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-        var obj = { cnt: 0, ver: 1, pub: req.body.pub, def: req.body.def };
+        var obj = { cnt: 0, ver: 0, pub: req.body.pub, def: req.body.def };
 
         if ( req.body.sys ){
             if ( !client.is_admin )
@@ -35,7 +70,13 @@ router.post('/create', function (req, res) {
 
         // TODO Parse definition to find references and add sch_dep edges
 
-        res.send( sch );
+        fixSchOwnNm( sch );
+
+        delete sch._id;
+        delete sch._key;
+        delete sch._rev;
+
+        res.send([ sch ]);
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -94,7 +135,13 @@ router.post('/update', function (req, res) {
 
         // TODO Parse definition to find references and add sch_dep edges
 
-        res.send( sch_new );
+        fixSchOwnNm( sch_new );
+
+        delete sch_new._id;
+        delete sch_new._key;
+        delete sch_new._rev;
+
+        res.send([ sch_new ]);
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -113,16 +160,24 @@ router.post('/update', function (req, res) {
 .description('Update schema');
 
 
-
 router.get('/view', function (req, res) {
     try {
-        //var result = g_db.schema.document( "schema" + (req.queryParams.id.charAt(0) == "/"?"":"/") + req.queryParams.id );
-        var result = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
-        delete result._id;
-        delete result._key;
-        delete result._rev;
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var sch = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
 
-        res.send( result );
+        if ( !sch )
+            throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + (req.queryParams.ver?"-"+req.queryParams.ver:"") + "' not found."];
+
+        if ( !( sch.pub || sch.own_id == client._id || client.is_admin ))
+            throw g_lib.ERR_PERM_DENIED;
+
+        delete sch._id;
+        delete sch._key;
+        delete sch._rev;
+
+        fixSchOwnNm( sch );
+
+        res.send([ sch ]);
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -133,9 +188,11 @@ router.get('/view', function (req, res) {
 .summary('View schema')
 .description('View schema');
 
+
 router.get('/search', function (req, res) {
     try {
-        var qry, par = {}, result, off = 0, cnt = 50;
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var qry, par = {uid: client._id}, result, off = 0, cnt = 50;
 
         if ( req.queryParams.offset != undefined )
             off = req.queryParams.offset;
@@ -145,10 +202,13 @@ router.get('/search', function (req, res) {
 
         qry = "for i in sch";
 
-        qry += " sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt}";
+        qry += " filter (i.pub == true || i.own_id == @uid) sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
         result = g_db._query( qry, par, {}, { fullCount: true });
         var tot = result.getExtra().stats.fullCount;
         result = result.toArray();
+
+        fixSchOwnNmAr( result );
+
         result.push({ paging: {off: off, cnt: cnt, tot: tot }});
 
         res.send( result );
@@ -156,65 +216,9 @@ router.get('/search', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.number().integer().min(0).optional(), "ID (partial)")
 .queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
 .queryParam('count', joi.number().integer().min(1).optional(), "Count")
 .summary('Search schemas')
 .description('Search schema');
-
-/*
-router.get('/list', function (req, res) {
-    try {
-        var qry, par = {}, result, off = 0, cnt = 50;
-
-        if ( req.queryParams.offset != undefined )
-            off = req.queryParams.offset;
-
-        if ( req.queryParams.count != undefined && req.queryParams.count <= 100 )
-            cnt = req.queryParams.count;
-
-        if ( req.queryParams.id ){
-            qry = "for i in 1..1 inbound @par top filter is_same_collection('t',i)",
-            par.par = req.queryParams.id;
-        }else{
-            qry = "for i in t filter i.top == true";
-        }
-
-        qry += " sort i.title limit " + off + "," + cnt + " return {_id:i._id, title: i.title, admin: i.admin, coll_cnt: i.coll_cnt}";
-        result = g_db._query( qry, par, {}, { fullCount: true });
-        var tot = result.getExtra().stats.fullCount;
-        result = result.toArray();
-        result.push({ paging: {off: off, cnt: cnt, tot: tot }});
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().optional(), "Client ID")
-.queryParam('id', joi.string().optional(), "ID of topic to list (omit for top-level)")
-.queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
-.queryParam('count', joi.number().integer().min(1).optional(), "Count")
-.summary('List topics')
-.description('List topics under specified topic ID. If ID is omitted, lists top-level topics.');
-
-
-router.get('/view', function (req, res) {
-    try {
-        if ( !g_db.t.exists( req.queryParams.id ))
-            throw [g_lib.ERR_NOT_FOUND,"Topic, "+req.queryParams.id+", not found"];
-
-        var topic = g_db.t.document( req.queryParams.id );
-
-        res.send( [topic] );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().optional(), "Client ID")
-.queryParam('id', joi.string().optional(), "ID of topic to view")
-.summary('View topic')
-.description('View a topic.');
-*/
-
