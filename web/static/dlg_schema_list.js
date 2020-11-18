@@ -1,7 +1,9 @@
 import * as settings from "./settings.js";
 import * as util from "./util.js";
 import * as api from "./api.js";
+import * as dialogs from "./dialogs.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
+import * as dlgSchema from "./dlg_schema.js";
 
 var tree;
 
@@ -24,7 +26,8 @@ function loadSchemas(){
                 var sch;
                 for ( var i in data.schema ){
                     sch = data.schema[i];
-                    src.push({ title: sch.id + " ver " + sch.ver + " (" + sch.cnt + ")", key: sch.id });
+                    //src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ownNm?" " + sch.ownNm:"") + (sch.ownId?" (" + sch.ownId +")":""), key: sch.id + ":" + sch.ver });
+                    src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":""), own_nm: sch.ownNm, own_id: sch.ownId, id: sch.id, ver: sch.ver, key: sch.id + ":" + sch.ver });
                 }
             }else{
                 src.push({ title: "(no matches)" });
@@ -34,7 +37,19 @@ function loadSchemas(){
             dialogs.dlgAlert( "Schema Search Error", data );
         }
     });
-}
+};
+
+function getSelSchema( a_cb ){
+    var data = tree.getSelectedNodes()[0].data;
+    api.schemaView( data.id, data.ver, function( ok, reply ){
+        console.log("schema",reply);
+        if ( ok && reply.schema ){
+            a_cb( reply.schema[0] );
+        }else{
+            dialogs.dlgAlert( "Schema Load Error", reply );
+        }
+    });
+};
 
 export function show( a_select, a_cb ){
     var frame = $(document.createElement('div'));
@@ -42,7 +57,18 @@ export function show( a_select, a_cb ){
     frame.html(
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:3 3 75%;overflow:auto;padding:0' class='content'>\
-                <div id='sch_tree' class='content no-border'></div>\
+                <!-- div id='sch_tree' class='content no-border'></div -->\
+                <table id='sch_tree'>\
+                    <colgroup><col width='*'></col><col></col><col></col></colgroup>\
+                    <tbody><tr><td style='white-space: nowrap;padding: 0 2em 0 0'></td><td style='white-space: nowrap;padding: 0 2em 0 0'></td><td style='white-space: nowrap'></td></tr></tbody>\
+                </table>\
+            </div>\
+            <div style='flex:none;padding-top:0.5em'>\
+                <button id='sch_new' class='btn' title='Create new schema'>New</button>\
+                <button id='sch_view' class='btn btn-sel' title='View schema details' disabled>View</button>\
+                <button id='sch_edit' class='btn btn-sel' title='Edit schema' disabled>Edit</button>\
+                <button id='sch_rev' class='btn btn-sel' title='Create new revision of schema' disabled>Revise</button>\
+                <button id='sch_del' class='btn btn-sel' title='Delete schema' disabled>Delete</button>\
             </div>\
             <div style='flex:none;padding-top:0.5em'>Search Options:</div>\
             <div style='flex:none;padding:0.5em 0 0 0.5em'>\
@@ -64,7 +90,7 @@ export function show( a_select, a_cb ){
     var dlg_opts = {
         title: (a_select?"Select Schema":"Manage Schemas"),
         modal: true,
-        width: 450,
+        width: 600,
         height: 500,
         resizable: true,
         buttons:[],
@@ -106,34 +132,45 @@ export function show( a_select, a_cb ){
     var src = [{title:"Loading...",icon:false,folder:false}];
 
     $("#sch_tree",frame).fancytree({
-        extensions: ["themeroller"],
+        extensions: ["themeroller","table"],
         themeroller: {
             activeClass: "my-fancytree-active",
             hoverClass: ""
+        },
+        table: {
+            nodeColumnIdx: 0,
         },
         source: src,
         nodata: false,
         selectMode: 1,
         icon: false,
         checkbox: false,
-        click: function( ev, data ) {
-            if ( data.node.isSelected() )
-                data.node.setSelected( false );
-            else
-                data.node.setSelected( true );
-        },
         activate: function( ev, data ){
             data.node.setSelected( true );
-        }
+            $(".btn-sel",frame).button("enable");
+        },
+        renderColumns: function( ev, data ) {
+            var node = data.node, $tdList = $(node.tr).find(">td");
+
+            $tdList.eq(1).text(node.data.own_nm);
+            $tdList.eq(2).text(node.data.own_id?"("+node.data.own_id+")":"");
+        },
     });
 
     tree = $.ui.fancytree.getTree($("#sch_tree",frame));
 
     loadSchemas();
 
+
     $("#pick_user",frame).click(function(){
         dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
             $("#srch_owner",frame).val( users[0].substr(2) );
+        });
+    });
+
+    $("#sch_view",frame).on("click",function(){
+        getSelSchema( function( schema ){
+            dlgSchema.show( dlgSchema.mode_view, schema );
         });
     });
 

@@ -3015,7 +3015,7 @@ void
 DatabaseAPI::schemaView( const Anon::SchemaViewRequest & a_request, Anon::SchemaDataReply & a_reply )
 {
     libjson::Value result;
-    dbGet( "schema/view", {{ "id", a_request.id() }}, result );
+    dbGet( "schema/view", {{ "id", a_request.id() }, { "ver", to_string( a_request.ver() )}}, result );
     setSchemaDataReply( a_reply, result );
 }
 
@@ -3055,15 +3055,22 @@ void
 DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object & a_obj )
 {
     a_schema->set_id( a_obj.getString( "id" ));
-
-    if ( a_obj.has( "ver" ))
-        a_schema->set_ver( a_obj.asNumber() );
+    a_schema->set_ver( a_obj.getNumber( "ver" ));
 
     if ( a_obj.has( "cnt" ))
         a_schema->set_cnt( a_obj.asNumber() );
 
+    if ( a_obj.has( "own_id" ) && !a_obj.value().isNull() )
+        a_schema->set_own_id( a_obj.asString() );
+
+    if ( a_obj.has( "own_nm" ) && !a_obj.value().isNull() )
+        a_schema->set_own_nm( a_obj.asString() );
+
     if ( a_obj.has( "desc" ))
         a_schema->set_desc( a_obj.asString() );
+
+    if ( a_obj.has( "pub" ))
+        a_schema->set_pub( a_obj.asBool() );
 
     if ( a_obj.has( "def" ))
         a_schema->set_def( a_obj.value().toString() );

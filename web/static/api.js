@@ -761,16 +761,12 @@ export function topicView( a_id, a_cb ){
     });
 }
 
-export function schemaView( a_id, a_cb ){
+export function schemaView( a_id, a_ver, a_cb ){
     if ( !a_cb )
         return;
 
-    _asyncGet( "/api/sch/view?id=" + encodeURIComponent(a_id), null, function( ok, reply ){
-        if ( ok ) {
-            a_cb( reply.schema?reply.schema[0]:null );
-        }else{
-            util.setStatusText( "View Schema Error: " + reply, true );
-        }
+    _asyncGet( "/api/sch/view?id=" + encodeURIComponent(a_id) + "&ver=" + encodeURIComponent(a_ver), null, function( ok, reply ){
+        a_cb( ok, reply );
     });
 }
 

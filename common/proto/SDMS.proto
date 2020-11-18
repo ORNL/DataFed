@@ -428,9 +428,14 @@ message HttpXfrData
 message SchemaData
 {
     required string             id          = 1;
-    optional uint32             ver         = 2;
+    required uint32             ver         = 2;
     optional uint32             cnt         = 3;
-    optional string             desc        = 4;
-    optional string             def         = 5;
-    // Add dependencies, topics, owner, public
+    optional string             own_id      = 4;
+    optional string             own_nm      = 5;
+    optional string             desc        = 6;
+    optional bool               pub         = 7;
+    optional string             def         = 8;
+    repeated SchemaData         uses        = 9;
+    repeated SchemaData         used_by     = 10;
+    // Add topics?
 }
