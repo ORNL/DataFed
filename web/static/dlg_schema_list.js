@@ -51,16 +51,16 @@ function getSelSchema( a_cb ){
     });
 };
 
+
 export function show( a_select, a_cb ){
     var frame = $(document.createElement('div'));
 
     frame.html(
         "<div class='col-flex' style='height:100%'>\
-            <div style='flex:3 3 75%;overflow:auto;padding:0' class='content'>\
-                <!-- div id='sch_tree' class='content no-border'></div -->\
+            <div style='flex:3 3 75%;overflow:auto;padding:0' class='ui-widget ui-widget-content content'>\
                 <table id='sch_tree'>\
                     <colgroup><col width='*'></col><col></col><col></col></colgroup>\
-                    <tbody><tr><td style='white-space: nowrap;padding: 0 2em 0 0'></td><td style='white-space: nowrap;padding: 0 2em 0 0'></td><td style='white-space: nowrap'></td></tr></tbody>\
+                    <tbody><tr><td style='white-space: nowrap;padding: 0 2em 0 0'></td><td style='white-space: nowrap;padding: 0 2em 0 0'></td></tr></tbody>\
                 </table>\
             </div>\
             <div style='flex:none;padding-top:0.5em'>\
@@ -152,8 +152,12 @@ export function show( a_select, a_cb ){
         renderColumns: function( ev, data ) {
             var node = data.node, $tdList = $(node.tr).find(">td");
 
-            $tdList.eq(1).text(node.data.own_nm);
-            $tdList.eq(2).text(node.data.own_id?"("+node.data.own_id+")":"");
+            //$tdList.eq(1).text(node.data.own_nm);
+            if ( node.data.own_nm ){
+                $tdList.eq(1).html("<span title='"+node.data.own_id.substr(2)+"'>"+node.data.own_nm+"</span>");
+            }
+            //$tdList.eq(2).text(node.data.own_id?"("+node.data.own_id+")":"");
+
         },
     });
 
@@ -171,6 +175,22 @@ export function show( a_select, a_cb ){
     $("#sch_view",frame).on("click",function(){
         getSelSchema( function( schema ){
             dlgSchema.show( dlgSchema.mode_view, schema );
+        });
+    });
+
+    $("#sch_edit",frame).on("click",function(){
+        getSelSchema( function( schema ){
+            dlgSchema.show( dlgSchema.mode_edit, schema );
+        });
+    });
+
+    $("#sch_new",frame).on("click",function(){
+        dlgSchema.show( dlgSchema.mode_new );
+    });
+
+    $("#sch_rev",frame).on("click",function(){
+        getSelSchema( function( schema ){
+            dlgSchema.show( dlgSchema.mode_rev, schema );
         });
     });
 

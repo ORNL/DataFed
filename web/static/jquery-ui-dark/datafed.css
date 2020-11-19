@@ -88,30 +88,9 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 
 .ui-state-disabled
 {
-    opacity:.45!important;
-    color: #eee;
+    opacity:.55!important;
+    color: #ccc;
 }
-
-
-/*
-input.ui-state-disabled
-{
-	box-sizing: border-box;
-	background-color: #353535;
-	border: 1px solid #909090;
-	color: #e0e0e0;
-}
-*/
-
-/*
-textarea.ui-state-disabled
-{
-	box-sizing: border-box;
-	background-color: #353535;
-	border: 1px solid #909090;
-	color: #e0e0e0
-}
-*/
 
 .task-table th
 {

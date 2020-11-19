@@ -270,6 +270,7 @@ message MetadataValidateRequest
 {
     required string             metadata    = 1;
     required string             sch_id      = 2;
+    required uint32             sch_ver     = 3;
 }
 
 message MetadataValidateReply

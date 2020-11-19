@@ -59,6 +59,12 @@ textarea
     resize: none;
 }
 
+.ui-state-disabled
+{
+    opacity:.65!important;
+    color: #555;
+}
+
 ul.tagit {
     background:#fff;
     border-radius: 0;

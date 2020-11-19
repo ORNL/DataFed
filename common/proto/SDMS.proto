@@ -217,6 +217,7 @@ message RecordData
     optional uint32             notes       = 22;
     optional string             md_err_msg  = 23;
     optional string             sch_id      = 24;
+    optional uint32             sch_ver     = 25;
 }
 
 // Fields required for a data repo to locate raw data
@@ -429,13 +430,14 @@ message SchemaData
 {
     required string             id          = 1;
     required uint32             ver         = 2;
-    optional uint32             cnt         = 3;
-    optional string             own_id      = 4;
-    optional string             own_nm      = 5;
-    optional string             desc        = 6;
-    optional bool               pub         = 7;
-    optional string             def         = 8;
-    repeated SchemaData         uses        = 9;
-    repeated SchemaData         used_by     = 10;
+    optional bool               depr        = 3;
+    optional uint32             cnt         = 4;
+    optional string             own_id      = 5;
+    optional string             own_nm      = 6;
+    optional string             desc        = 7;
+    optional bool               pub         = 8;
+    optional string             def         = 9;
+    repeated SchemaData         uses        = 10;
+    repeated SchemaData         used_by     = 11;
     // Add topics?
 }
