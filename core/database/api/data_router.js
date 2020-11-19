@@ -96,14 +96,14 @@ function recordCreate( client, record, result ){
         obj.public = true;
     }
 
-    var data = g_db.d.save( obj, { returnNew: true });
+    var data = g_db.d.save( obj, { returnNew: true }).new;
 
-    g_db.owner.save({ _from: data.new._id, _to: owner_id });
+    g_db.owner.save({ _from: data._id, _to: owner_id });
 
-    g_lib.makeTitleUnique( parent_id, data.new );
+    g_lib.makeTitleUnique( parent_id, data );
 
     // Create data location edge and update allocation and stats
-    var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
+    var loc = { _from: data._id, _to: repo_alloc._to, uid: owner_id };
     g_db.loc.save( loc );
     g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
 
@@ -112,16 +112,17 @@ function recordCreate( client, record, result ){
             throw [g_lib.ERR_INVALID_PARAM,"Alias, "+alias_key+", already in use"];
 
         g_db.a.save({ _key: alias_key });
-        g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
+        g_db.alias.save({ _from: data._id, _to: "a/" + alias_key });
         g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
     }
+
 
     var updates = new Set();
 
     // Handle specified dependencies
     if ( record.deps != undefined ){
         var dep,id,dep_data,dep_ids=new Set();
-        data.new.deps = [];
+        data.deps = [];
 
         for ( var i in record.deps ) {
             dep = record.deps[i];
@@ -130,27 +131,32 @@ function recordCreate( client, record, result ){
             if ( g_db.dep.firstExample({ _from: data._id, _to: id }))
                 throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
             g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
-            data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
+            data.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
 
             if ( dep.type < g_lib.DEP_IS_NEW_VERSION_OF )
                 dep_ids.add( id );
         }
 
         if ( dep_ids.size )
-            g_lib.annotationDependenciesUpdated( data.new, dep_ids, null, updates );
+            g_lib.annotationDependenciesUpdated( data, dep_ids, null, updates );
     }
 
-    g_db.item.save({ _from: parent_id, _to: data.new._id });
+    g_db.item.save({ _from: parent_id, _to: data._id });
 
-    data.new.id = data.new._id;
-    data.new.parent_id = parent_id;
-    data.new.repo_id = repo_alloc._to;
+    if ( record.sch_id ){
+        data.sch_id = record.id;
+        data.sch_ver = record.ver;
+    }
+    
+    data.id = data._id;
+    data.parent_id = parent_id;
+    data.repo_id = repo_alloc._to;
 
-    delete data.new._id;
-    delete data.new._key;
-    delete data.new._rev;
+    delete data._id;
+    delete data._key;
+    delete data._rev;
 
-    result.results.push( data.new );
+    result.results.push( data );
 }
 
 router.post('/create', function (req, res) {
@@ -192,6 +198,7 @@ router.post('/create', function (req, res) {
     repo: joi.string().allow('').optional(),
     md: joi.any().optional(),
     sch_id: joi.string().allow('').optional(),
+    sch_ver: joi.number().integer().min(0).optional(),
     ext: joi.string().allow('').optional(),
     ext_auto: joi.boolean().optional(),
     deps: joi.array().items(joi.object({
@@ -247,6 +254,7 @@ router.post('/create/batch', function (req, res) {
         repo: joi.string().allow('').optional(),
         md: joi.any().optional(),
         sch_id: joi.string().allow('').optional(),
+        sch_ver: joi.number().integer().min(0).optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
         deps: joi.array().items(joi.object({
@@ -325,9 +333,12 @@ function recordUpdate( client, record, result ){
             g_db._update( sch._id, { cnt: sch.cnt - 1 });
         }
     }else if ( obj.sch_id ) {
-        var sch = g_db.sch.firstExample({ id: obj.sch_id });
+        if ( record.sch_ver === undefined )
+            throw [g_lib.ERR_MISSING_REQ_PARAM,"Schema version must be specified in addition to ID."];
+
+        var sch = g_db.sch.firstExample({ id: obj.sch_id, ver: record.sch_ver });
         if ( !sch )
-            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist" ];
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' ver. " + record.sch_ver + " does not exist" ];
 
         obj.sch_id = sch._id;
         g_db._update( sch._id, { cnt: sch.cnt + 1 });
@@ -490,8 +501,9 @@ function recordUpdate( client, record, result ){
 
     // Convert DB _id to user-assigned id
     if ( data.sch_id ){
-        sch = g_db.sch.document( data.sch_id );
+        var sch = g_db.sch.document( data.sch_id );
         data.sch_id = sch.id;
+        data.sch_ver = sch.ver;
     }
 
     data.notes = g_lib.annotationGetMask( client, data._id );
@@ -569,6 +581,7 @@ router.post('/update', function (req, res) {
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
     sch_id: joi.string().allow('').optional(),
+    sch_ver: joi.number().integer().min(0).optional(),
     size: joi.number().optional(),
     source: joi.string().allow('').optional(),
     ext: joi.string().allow('').optional(),
@@ -644,6 +657,7 @@ router.post('/update/batch', function (req, res) {
         md: joi.any().optional(),
         mdset: joi.boolean().optional().default(false),
         sch_id: joi.string().allow('').optional(),
+        sch_ver: joi.number().integer().min(0).optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
         dep_add: joi.array().items(joi.object({
@@ -775,7 +789,9 @@ router.get('/view', function (req, res) {
             data.notes |= g_lib.NOTE_MASK_MD_ERR;
 
         if ( data.sch_id ){
-            data.sch_id = g_db.sch.document( data.sch_id ).id;
+            var sch = g_db.sch.document( data.sch_id );
+            data.sch_id = sch.id;
+            data.sch_ver = sch.ver;
         }
         
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
