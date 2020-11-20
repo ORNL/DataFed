@@ -161,7 +161,7 @@ module.exports = ( function() {
         doi: { required: false, update: true, max_len: 40, lower: true, charset: obj.CHARSET_DOI, label: 'doi' },
         data_url: { required: false, update: true, max_len: 200, lower: false, charset: obj.CHARSET_URL, label: 'data URL' },
         sch_id: { required: false, update: true, max_len: 120, lower: true, charset: obj.CHARSET_ID, label: 'schema' },
-        _sch_id: { required: true, update: false, max_len: 120, lower: true, charset: obj.CHARSET_ID, in_field: "id", out_field: "id", label: 'schema' }
+        _sch_id: { required: true, update: true, max_len: 120, lower: true, charset: obj.CHARSET_ID, in_field: "id", out_field: "id", label: 'schema' }
     };
 
     obj.DEF_MAX_COLL    = 50;

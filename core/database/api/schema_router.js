@@ -6,6 +6,7 @@ const   joi = require('joi');
 
 const   g_db = require('@arangodb').db;
 const   g_lib = require('./support');
+const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 
 module.exports = router;
 
@@ -83,7 +84,7 @@ router.post('/create', function (req, res) {
 })
 .queryParam('client', joi.string().optional(), "Client ID")
 .body(joi.object({
-    _sch_id: joi.string().required(),
+    id: joi.string().required(),
     desc: joi.string().required(),
     def: joi.object().required(),
     pub: joi.boolean().optional().default(true),
@@ -131,6 +132,7 @@ router.post('/update', function (req, res) {
         if ( req.body.def )
             obj.def = req.body.def;
 
+        console.log("sch upd",obj);
         var sch_new = g_db.sch.update( sch_old._id, obj, { returnNew: true, keepNull: false }).new;
 
         // TODO Parse definition to find references and add sch_dep edges
@@ -158,6 +160,114 @@ router.post('/update', function (req, res) {
 }).required(), 'Schema fields')
 .summary('Update schema')
 .description('Update schema');
+
+router.post('/revise', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        var sch = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
+
+        if ( !sch )
+            throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
+
+        if ( sch.own_id != client._id && !client.is_admin )
+            throw g_lib.ERR_PERM_DENIED;
+
+        if ( g_sb.sch_ver.firstExample({ _from: sch._id }) )
+            throw [ g_lib.ERR_PERM_DENIED, "A revision of schema '" + req.queryParams.id + "' already exists." ];
+
+        if ( !sch.own_id && !client.is_admin )
+            throw [ g_lib.ERR_PERM_DENIED, "Revising a system schema requires admin privileges."];
+
+        sch.ver++;
+
+        // TODO Figure out rules for if pub/sys schemas can be revised to non-system schemas, etc
+        
+        if ( req.body.pub != undefined ){
+            sch.pub = req.body.pub;
+        }
+
+        if ( req.body.sys ){
+            if ( !client.is_admin )
+                throw [ g_lib.ERR_PERM_DENIED, "Creating a system schema requires admin privileges."];
+            if ( !sch.pub )
+                throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
+            obj.own_id = null;
+            obj.own_nm = null;
+        }else{
+            obj.own_id = client._id;
+            obj.own_nm = client.name;
+        }
+
+        if ( !sch.pub && )
+            throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
+
+        g_lib.procInputParam( req.body, "desc", true, sch );
+
+        if ( req.body.def != undefined )
+            sch.def = req.body.def;
+
+        var old_id = sch._id;
+        delete sch._id;
+        delete sch._key;
+        delete sch._rev;
+
+        console.log("sch rev",sch);
+
+        var sch_new = g_db.sch.save( sch, { returnNew: true }).new;
+        g_db.sch_ver.save({ _from: old_id, _to: sch_new._id });
+
+        // TODO Parse definition to find references and add sch_dep edges
+
+        fixSchOwnNm( sch_new );
+
+        delete sch_new._id;
+        delete sch_new._key;
+        delete sch_new._rev;
+
+        res.send([ sch_new ]);
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('id', joi.string().required(), "Schema ID")
+.queryParam('ver', joi.number().integer().min(0).required(), "Schema Version")
+.body(joi.object({
+    desc: joi.string().optional(),
+    def: joi.object().optional(),
+    pub: joi.boolean().optional(),
+    sys: joi.boolean().optional()
+}).required(), 'Schema fields')
+.summary('Revise schema')
+.description('Revise schema');
+
+router.post('/delete', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+        var sch_old = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
+
+        if ( !sch_old )
+            throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
+
+        if ( sch_old.cnt )
+            throw [ g_lib.ERR_PERM_DENIED, "Schema is in use - cannot delete." ];
+
+        if ( sch_old.own_id != client._id && !client.is_admin )
+            throw g_lib.ERR_PERM_DENIED;
+
+        // TODO Handle older / newer versions
+
+        g_graph.sch.remove( sch_old._id );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('id', joi.string().required(), "Schema ID")
+.queryParam('ver', joi.number().integer().min(0).required(), "Schema Version")
+.summary('Delete schema')
+.description('Delete schema');
 
 
 router.get('/view', function (req, res) {
