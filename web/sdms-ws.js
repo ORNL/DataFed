@@ -812,7 +812,7 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
 });
 
 app.post('/api/metadata/validate', ( a_req, a_resp ) => {
-    //console.log( "dat update", a_req.body );
+    console.log( "md val", a_req.body );
     sendMessage( "MetadataValidateRequest", a_req.body, a_req, a_resp, function( reply ) {
         //console.log("rec update:",reply);
         a_resp.send(reply);
@@ -1273,13 +1273,36 @@ app.get('/api/top/search', ( a_req, a_resp ) => {
 
 app.get('/api/sch/view', ( a_req, a_resp ) => {
     sendMessage( "SchemaViewRequest", { id: a_req.query.id, ver: a_req.query.ver }, a_req, a_resp, function( reply ) {
-        console.log("schem:",reply);
         a_resp.json(reply);
     });
 });
 
 app.post('/api/sch/search', ( a_req, a_resp ) => {
     sendMessage( "SchemaSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/create', ( a_req, a_resp ) => {
+    sendMessage( "SchemaCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/revise', ( a_req, a_resp ) => {
+    sendMessage( "SchemaReviseRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/update', ( a_req, a_resp ) => {
+    sendMessage( "SchemaUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/delete', ( a_req, a_resp ) => {
+    sendMessage( "SchemaDeleteRequest", { id: a_req.query.id, ver: a_req.query.ver }, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
 });

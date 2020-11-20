@@ -266,6 +266,8 @@ message TagDataReply
     optional uint32             total       = 4;
 }
 
+// ============================ Schema / Validation Messages
+
 message MetadataValidateRequest
 {
     required string             metadata    = 1;

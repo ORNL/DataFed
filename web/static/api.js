@@ -284,8 +284,8 @@ export function sendDataLock( a_ids, a_lock, a_cb ){
     _asyncGet( "/api/dat/lock?lock="+a_lock+"&ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
-export function metadataValidate( a_schema, a_metadata, a_cb ){
-    var doc = { schema: a_schema, metadata: a_metadata };
+export function metadataValidate( a_sch_id, a_sch_ver, a_metadata, a_cb ){
+    var doc = { schId: a_sch_id, schVer: a_sch_ver, metadata: a_metadata };
     _asyncPost( "/api/metadata/validate", doc, a_cb );
 }
 
@@ -775,6 +775,34 @@ export function schemaSearch( a_req, a_cb ){
         return;
 
     _asyncPost( "/api/sch/search", a_req, a_cb );
+}
+
+export function schemaCreate( a_req, a_cb ){
+    _asyncPost( "/api/sch/create", a_req, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+    });
+}
+
+export function schemaUpdate( a_req, a_cb ){
+    _asyncPost( "/api/sch/update", a_req, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+    });
+}
+
+export function schemaRevise( a_req, a_cb ){
+    _asyncPost( "/api/sch/revise", a_req, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+    });
+}
+
+export function schemaDelete( a_id, a_ver, a_cb ){
+    _asyncPost( "/api/sch/delete?id=" + a_id + "&ver=" + a_ver, {}, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+    });
 }
 
 export function queryList_url( a_offset, a_count ){

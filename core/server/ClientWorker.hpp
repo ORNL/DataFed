@@ -8,6 +8,7 @@
 #include <zmq.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json-schema.hpp>
+#include "Util.hpp"
 #include "MsgComm.hpp"
 #include "DatabaseAPI.hpp"
 #include "ICoreServer.hpp"
@@ -85,9 +86,20 @@ private:
         DL_INFO( "Load schema, scheme: " << a_uri.scheme() << ", path: " << a_uri.path() << ", auth: " << a_uri.authority() << ", id: " << a_uri.identifier() );
 
         libjson::Value sch;
-        m_db_client.schemaView( a_uri.path(), sch );
+        std::string id = a_uri.path();
+        uint32_t ver;
+        size_t d = id.find_last_of(":");
 
-        a_value = nlohmann::json::parse( sch.asObject().getValue("def").toString() );
+        if ( d == std::string::npos )
+            EXCEPT_PARAM( 1, "Reference schema '" << id << "' is missing version number suffix." );
+
+        if ( to_uint32( id.substr( d + 1 ).c_str(), ver ))
+            EXCEPT_PARAM( 1, "Reference schema '" << id << "' has invalid version number suffix." );
+
+        id = id.substr( 1, d - 1 ); // Skip leading "/"
+        m_db_client.schemaView( id, ver, sch );
+
+        a_value = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
         DL_INFO( "Loaded schema: " << a_value );
     }
 

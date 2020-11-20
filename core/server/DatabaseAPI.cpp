@@ -961,6 +961,8 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::Re
         body += ",\"md\":" + a_request.metadata();
     if ( a_request.has_sch_id() )
         body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
+    if ( a_request.has_sch_ver() )
+        body += string(",\"sch_ver\":\"") + to_string( a_request.sch_ver() ) + "\"";
     if ( a_request.has_doi() )
         body += string(",\"doi\":\"") + a_request.doi() + "\"";
     if ( a_request.has_data_url() )
@@ -1034,6 +1036,8 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
     }
     if ( a_request.has_sch_id() )
         body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
+    if ( a_request.has_sch_ver() )
+        body += string(",\"sch_ver\":\"") + to_string( a_request.sch_ver() ) + "\"";
     if ( a_request.has_doi() )
         body += string(",\"doi\":\"") + a_request.doi() + "\"";
     if ( a_request.has_data_url() )
@@ -1273,6 +1277,9 @@ DatabaseAPI::setRecordData( Anon::RecordDataReply & a_reply, const Value & a_res
 
             if ( obj.has( "sch_id" ))
                 rec->set_sch_id( obj.asString() );
+
+            if ( obj.has( "sch_ver" ))
+                rec->set_sch_ver( obj.asNumber() );
 
             if ( obj.has( "repo_id" ))
                 rec->set_repo_id( obj.asString() );
@@ -3019,6 +3026,132 @@ DatabaseAPI::schemaView( const Anon::SchemaViewRequest & a_request, Anon::Schema
     setSchemaDataReply( a_reply, result );
 }
 
+void
+DatabaseAPI::schemaCreate( const Auth::SchemaCreateRequest & a_request, Anon::AckReply & a_reply )
+{
+    libjson::Value result;
+    string body = "{\"id\":\"";
+    body.append( a_request.id() );
+    body.append( "\",\"desc\":\"" );
+    body.append( escapeJSON( a_request.desc() ));
+    body.append( "\",\"pub\":" );
+    body.append( a_request.pub()?"true":"false" );
+    body.append( ",\"sys\":" );
+    body.append( a_request.sys()?"true":"false" );
+    body.append( ",\"def\":" );
+    body.append( a_request.def() );
+    body.append( "}" );
+
+    dbPost( "schema/create", {}, &body, result );
+}
+
+void
+DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request, Anon::AckReply & a_reply )
+{
+    libjson::Value result;
+    string body = "{\"id\":\"";
+    body.append( a_request.id() );
+    body.append( "\",\"ver\":" );
+    body.append( to_string( a_request.ver() ));
+
+    if ( a_request.has_desc() )
+    {
+        body.append( ",\"desc\":\"" );
+        body.append( a_request.desc() );
+        body.append( "\"" );
+    }
+
+    if ( a_request.has_pub() )
+    {
+        body.append( ",\"pub\":" );
+        body.append( a_request.pub()?"true":"false" );
+    }
+
+    if ( a_request.has_sys() )
+    {
+        body.append( ",\"sys\":" );
+        body.append( a_request.sys()?"true":"false" );
+    }
+
+    if ( a_request.has_def() )
+    {
+        body.append( ",\"def\":" );
+        body.append( a_request.def() );
+    }
+
+    body.append("}");
+
+    dbPost( "schema/revise", {}, &body, result );
+}
+
+
+void
+DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request, Anon::AckReply & a_reply )
+{
+    libjson::Value result;
+    string body = "{";
+
+    if ( a_request.has_id_new() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"id\":\"" );
+        body.append( a_request.id_new() );
+        body.append( "\"" );
+    }
+
+    if ( a_request.has_desc() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"desc\":\"" );
+        body.append( a_request.desc() );
+        body.append( "\"" );
+    }
+
+    if ( a_request.has_pub() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"pub\":" );
+        body.append( a_request.pub()?"true":"false" );
+    }
+
+    if ( a_request.has_sys() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"sys\":" );
+        body.append( a_request.sys()?"true":"false" );
+    }
+
+    if ( a_request.has_def() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"def\":" );
+        body.append( a_request.def() );
+    }
+
+    body.append("}");
+
+    DL_INFO("sch upd " << body );
+
+    dbPost( "schema/update", {{"id",a_request.id()},{"ver",to_string(a_request.ver())}}, &body, result );
+}
+
+void
+DatabaseAPI::schemaDelete( const Auth::SchemaDeleteRequest & a_request, Anon::AckReply & a_reply )
+{
+    libjson::Value result;
+
+    dbPost( "schema/delete", {{"id",a_request.id()},{"ver",to_string(a_request.ver())}}, 0, result );
+}
 
 void
 DatabaseAPI::setSchemaDataReply( Anon::SchemaDataReply & a_reply, const libjson::Value & a_result )
@@ -3078,9 +3211,9 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
 
 
 void
-DatabaseAPI::schemaView( const std::string & a_id, libjson::Value & a_result )
+DatabaseAPI::schemaView( const std::string & a_id, uint32_t a_ver, libjson::Value & a_result )
 {
-    dbGet( "schema/view", {{"id",a_id}}, a_result );
+    dbGet( "schema/view", {{ "id", a_id }, { "ver", to_string( a_ver ) }}, a_result );
 }
 
 

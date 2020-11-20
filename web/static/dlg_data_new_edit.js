@@ -64,7 +64,10 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         <table class='form-table' style='border-collapse: collapse'>\
                             <tr>\
                                 <td>Schema:&nbsp</td>\
-                                <td><input id='schema' type='text' style='width:100%'></input></td>\
+                                <td><input id='sch_id' type='text' style='width:100%'></input></td>\
+                                <td>&nbsp;Ver:&nbsp;</td>\
+                                <td><input id='sch_ver' type='text' style='width:5ch'></input></td>\
+                                <td>&nbsp;</td>\
                                 <td><button title='Browse schemas' id='pick_schema' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></td>\
                                 <td><button title='Validate with specified schemas' id='md_validate' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-refresh'></span></button></td>\
                             </tr>\
@@ -121,14 +124,15 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             return;
         }
 
-        var schema = $("#schema").val().trim();
+        var sch_id = $("#sch_id").val().trim(),
+            sch_ver = $("#sch_ver").val().trim();
 
-        if ( !schema ){
-            dialogs.dlgAlert( "Validation Error", "No schema specified.");
+        if ( !sch_id || !sch_ver ){
+            dialogs.dlgAlert( "Validation Error", "Schema ID or version not specified.");
             return;
         }
 
-        api.metadataValidate( schema, jsoned.getValue(), function( ok, data ){
+        api.metadataValidate( sch_id, sch_ver, jsoned.getValue(), function( ok, data ){
             console.log("val res:", ok, data );
             if ( ok ){
                 if ( data.errors ){
@@ -293,7 +297,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
-                    util.getUpdatedValue( $("#schema",frame).val(), a_data, obj, "schId" );
+                    util.getUpdatedValue( $("#sch_id",frame).val(), a_data, obj, "schId" );
+                    util.getUpdatedValue( $("#sch_ver",frame).val(), a_data, obj, "schVer" );
 
                     // TODO Only assign tags if changed
                     obj.tags = tag_el.tagit("assignedTags");
@@ -381,7 +386,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
-                    util.getUpdatedValue( $("#schema",frame).val(), {}, obj, "schId" );
+                    util.getUpdatedValue( $("#sch_id",frame).val(), {}, obj, "schId" );
+                    util.getUpdatedValue( $("#sch_ver",frame).val(), {}, obj, "schVer" );
 
                     if ( $("#ext_auto",frame).prop("checked") ){
                         obj.extAuto = true;
@@ -465,7 +471,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 }
 
                 if ( a_data.schId ){
-                    $("#schema",frame).val(a_data.schId);
+                    $("#sch_id",frame).val(a_data.schId);
+                    $("#sch_ver",frame).val(a_data.schVer);
                 }
 
                 if ( a_data.metadata ){

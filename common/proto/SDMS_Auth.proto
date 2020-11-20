@@ -186,7 +186,7 @@ message RecordUpdateRequest
     optional string             metadata    = 9;
     optional bool               mdset       = 10;
     optional string             sch_id      = 11;
-    optional string             sch_ver     = 12;
+    optional uint32             sch_ver     = 12;
     optional string             source      = 13;
     optional string             ext         = 14;
     optional bool               ext_auto    = 15;
@@ -827,4 +827,42 @@ message TaskListRequest
 message TaskDataReply
 {
     repeated SDMS.TaskData      task        = 1;
+}
+
+// ============================ Schema Messages
+
+message SchemaCreateRequest
+{
+    required string             id          = 1;
+    required string             desc        = 2;
+    required bool               pub         = 3;
+    required bool               sys         = 4;
+    required string             def         = 5;
+}
+
+message SchemaReviseRequest
+{
+    required string             id          = 1;
+    required uint32             ver         = 2;
+    optional string             desc        = 3;
+    optional bool               pub         = 4;
+    optional bool               sys         = 5;
+    optional string             def         = 6;
+}
+
+message SchemaUpdateRequest
+{
+    required string             id          = 1;
+    required uint32             ver         = 2;
+    optional string             id_new      = 3;
+    optional string             desc        = 4;
+    optional bool               pub         = 5;
+    optional bool               sys         = 6;
+    optional string             def         = 7;
+}
+
+message SchemaDeleteRequest
+{
+    required string             id          = 1;
+    required uint32             ver         = 2;
 }

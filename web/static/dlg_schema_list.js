@@ -180,19 +180,34 @@ export function show( a_select, a_cb ){
 
     $("#sch_edit",frame).on("click",function(){
         getSelSchema( function( schema ){
-            dlgSchema.show( dlgSchema.mode_edit, schema );
+            dlgSchema.show( dlgSchema.mode_edit, schema, function(){
+                loadSchemas();
+            });
         });
     });
 
     $("#sch_new",frame).on("click",function(){
-        dlgSchema.show( dlgSchema.mode_new );
+        dlgSchema.show( dlgSchema.mode_new, function(){
+            loadSchemas();
+        });
     });
 
     $("#sch_rev",frame).on("click",function(){
         getSelSchema( function( schema ){
-            dlgSchema.show( dlgSchema.mode_rev, schema );
+            dlgSchema.show( dlgSchema.mode_rev, schema, function(){
+                loadSchemas();
+            });
         });
     });
+
+    $("#sch_del",frame).on("click",function(){
+        getSelSchema( function( schema ){
+            api.schemaDelete( schema.id, schema.ver, function(){
+                loadSchemas();
+            });
+        });
+    });
+    
 
     //var in_timer;
 

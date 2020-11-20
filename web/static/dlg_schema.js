@@ -77,6 +77,15 @@ export function show( a_mode, a_schema, a_cb ){
         wrap:true
     });
 
+    function handleSubmit( ok, reply ){
+        if ( ok ){
+            if ( a_cb ) a_cb();
+            dlg_inst.dialog('close');
+        }else{
+            dialogs.dlgAlert( "Schema Update Error", reply );
+        }
+    }
+
     var dlg_opts = {
         title: dlg_title[a_mode] + " Schema",
         modal: true,
@@ -94,10 +103,6 @@ export function show( a_mode, a_schema, a_cb ){
 
             var widget = frame.dialog( "widget" );
 
-            /*if ( a_mode != mode_new ){
-                $(".ui-dialog-buttonpane",widget).append("<span  style='padding:1em;line-height:200%'>Schema version: "+a_schema.ver+"</span>");
-            }*/
-
             if ( a_mode != mode_view ){
                 $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>* Required fields</span>");
             }
@@ -105,11 +110,9 @@ export function show( a_mode, a_schema, a_cb ){
             $(".btn",frame).button();
             $("#dlg-tabs",frame).tabs({heightStyle:"fill"});
 
-            //$("#srch_sort",frame).selectmenu();
-
             if ( a_schema ){
                 $("#sch_id",frame).val( a_schema.id );
-                $("#sch_desc",frame).text( a_schema.desc );
+                $("#sch_desc",frame).val( a_schema.desc );
                 $("#sch_ver",frame).val( a_schema.ver );
                 $("#sch_cnt",frame).val( "" + a_schema.cnt );
 
@@ -167,17 +170,55 @@ export function show( a_mode, a_schema, a_cb ){
         });
     }
 
-    //"$schema": "datafed://schema/person",
     dlg_opts.buttons.push({
         id:"ok_btn",
         text: btn_title[a_mode],
-        click: function() {
-            //$('input[name=md_mode]:checked', frame ).val() == "set" )
-
-            if ( a_cb ){
-                a_cb();
+        click: function(){
+            if ( a_mode == mode_view ){
+                dlg_inst.dialog('close');
+                return;
             }
-            $(this).dialog('close');
+    
+            var anno = jsoned.getSession().getAnnotations();
+
+            if ( anno && anno.length ){
+                dialogs.dlgAlert( "Schema Error", "Schema input has unresolved JSON syntax errors.");
+                return;
+            }
+    
+            var obj = {};
+
+            obj.desc = $("#sch_desc",frame).val();
+
+            var acc = $('input[name=sch_acc]:checked', frame ).val();
+            console.log("sch acc",acc);
+            if ( acc == "public"){
+                obj.pub = true;
+            }else if ( acc == "private"){
+                obj.pub = false;
+            }else{
+                obj.pub = true;
+                obj.sys = true;
+            }
+
+            obj.def = jsoned.getValue();
+
+            if ( a_mode == mode_new ){
+                obj.id = $("#sch_id",frame).val();
+                console.log("new",obj);
+                api.schemaCreate( obj, handleSubmit );
+            }else if ( a_mode == mode_rev ){
+                obj.id = a_schema.id;
+                obj.ver = a_schema.ver;
+                console.log("rev",obj);
+                api.schemaRevise( obj, handleSubmit );
+            }else{ // edit mode
+                obj.id = a_schema.id;
+                obj.ver = a_schema.ver;
+                obj.idNew = $("#sch_id",frame).val();
+                console.log("upd",obj);
+                api.schemaUpdate( obj, handleSubmit );
+            }
         }
     });
 

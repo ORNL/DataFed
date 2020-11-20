@@ -186,8 +186,10 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetDefaultRequest, AckReply, repoAllocationSetDefault );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
-        //SET_MSG_HANDLER_DB( proto_id, TopicLinkRequest, AckReply, topicLink );
-        //SET_MSG_HANDLER_DB( proto_id, TopicUnlinkRequest, AckReply, topicUnlink );
+        SET_MSG_HANDLER_DB( proto_id, SchemaCreateRequest, AckReply, schemaCreate );
+        SET_MSG_HANDLER_DB( proto_id, SchemaReviseRequest, AckReply, schemaRevise );
+        SET_MSG_HANDLER_DB( proto_id, SchemaUpdateRequest, AckReply, schemaUpdate );
+        SET_MSG_HANDLER_DB( proto_id, SchemaDeleteRequest, AckReply, schemaDelete );
     }
     catch( TraceException & e)
     {
@@ -521,6 +523,8 @@ ClientWorker::procDataPutRequest( const std::string & a_uid )
 bool
 ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
 {
+    DL_INFO( "Meta validate" );
+
     PROC_MSG_BEGIN( MetadataValidateRequest, MetadataValidateReply )
 
     m_db_client.setClient( a_uid );
@@ -530,12 +534,21 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
     try
     {
         libjson::Value sch;
-        m_db_client.schemaView( request->sch_id(), sch );
-        schema = nlohmann::json::parse( sch.asObject().getValue("def").toString() );
+        DL_INFO( "Schema " << request->sch_id() << ", ver " << request->sch_ver() );
+
+        m_db_client.schemaView( request->sch_id(), request->sch_ver(), sch );
+
+        DL_INFO( "Schema: " << sch.asArray().begin()->asObject().getValue("def").toString() );
+
+        schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
     }
-    catch( ... )
+    catch( TraceException & e )
     {
-        EXCEPT(1,"Schema not found.");
+        throw;
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM(1,"Schema parse error: " << e.what() );
     }
 
     //DL_INFO( "Schema " << schema );
@@ -595,8 +608,8 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
             try
             {
                 libjson::Value sch;
-                m_db_client.schemaView( request->sch_id(), sch );
-                schema = nlohmann::json::parse( sch.asObject().getValue("def").toString() );
+                m_db_client.schemaView( request->sch_id(), request->sch_ver(), sch );
+                schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
 
                 nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
 
@@ -658,24 +671,24 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     m_db_client.recordUpdate( *request, reply, result );
 
-    if ( request->has_metadata() || request->has_sch_id() )
+    if ( request->has_metadata() || request->has_sch_id() || request->has_sch_ver() )
     {
         //DL_INFO("Has metadata/schema");
 
         const libjson::Value::Object & obj = result.asObject().getArray("results").begin()->asObject();
-        libjson::Value::ObjectConstIter m = obj.find("md"), s = obj.find("sch_id");
+        libjson::Value::ObjectConstIter m = obj.find("md"), s = obj.find("sch_id"), v = obj.find("sch_ver");
 
         if ( m != obj.end() && s != obj.end() )
         {
             DL_INFO( "Must validate JSON, schema " << s->second.asString() );
 
             libjson::Value sch;
-            m_db_client.schemaView( s->second.asString(), sch );
+            m_db_client.schemaView( s->second.asString(), v->second.asNumber(), sch );
 
             DL_INFO( "Schema record JSON:" << sch.toString() );
-            DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
+            //DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
 
-            nlohmann::json schema = nlohmann::json::parse( sch.asObject().getValue("def").toString() );
+            nlohmann::json schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
 
             DL_INFO( "Schema nlohmann: " << schema );
 

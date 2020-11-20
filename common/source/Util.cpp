@@ -175,3 +175,14 @@ string escapeJSON( const std::string & a_value )
 
     return result;
 }
+
+bool to_uint32( const char * a_str, uint32_t & a_out )
+{
+    char *endptr;
+    a_out = std::strtoul( a_str, &endptr, 10 );
+
+    if ( endptr == a_str || *endptr != '\0' )
+        return true;
+    else
+        return false;
+}
