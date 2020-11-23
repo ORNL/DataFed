@@ -4,6 +4,7 @@ import * as util from "./util.js";
 import * as settings from "./settings.js";
 import * as dialogs from "./dialogs.js";
 import * as dlgStartXfer from "./dlg_start_xfer.js";
+import * as dlgSchList from "./dlg_schema_list.js";
 
 export var DLG_DATA_MODE_NEW = 0;
 export var DLG_DATA_MODE_EDIT = 1;
@@ -68,7 +69,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                                 <td>&nbsp;Ver:&nbsp;</td>\
                                 <td><input id='sch_ver' type='text' style='width:5ch'></input></td>\
                                 <td>&nbsp;</td>\
-                                <td><button title='Browse schemas' id='pick_schema' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></td>\
+                                <td><button title='Browse schemas' id='sch_pick' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></td>\
                                 <td><button title='Validate with specified schemas' id='md_validate' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-refresh'></span></button></td>\
                             </tr>\
                         </table>\
@@ -116,6 +117,13 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         remRef(ev);
     });
     
+    $("#sch_pick",frame).on("click",function(ev){
+        dlgSchList.show( true, function( schema ){
+            $("#sch_id",frame).val( schema.id );
+            $("#sch_ver",frame).val( schema.ver );
+        });
+    });
+
     $("#md_validate",frame).on("click",function(ev){
         var anno = jsoned.getSession().getAnnotations();
 

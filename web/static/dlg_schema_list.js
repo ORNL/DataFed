@@ -5,7 +5,7 @@ import * as dialogs from "./dialogs.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
 import * as dlgSchema from "./dlg_schema.js";
 
-var tree;
+var tree, dlg_inst;
 
 window.schemaPageLoad = function( key, offset ){
     var node = tree.getNodeByKey( key );
@@ -95,14 +95,16 @@ export function show( a_select, a_cb ){
         resizable: true,
         buttons:[],
         open: function(event,ui){
+            dlg_inst = $(this);
+
             $(".btn",frame).button();
             if ( a_select ){
-                $("#ok_btn").button("disable");
+                $("#dlg_sch_list_ok_btn").button("disable");
             }
             $("#srch_sort",frame).selectmenu();
         },
         close: function( ev, ui ) {
-            $(this).dialog("destroy").remove();
+            dlg_inst.dialog("destroy").remove();
         }
     };
 
@@ -110,19 +112,23 @@ export function show( a_select, a_cb ){
         dlg_opts.buttons.push({
             text: "Cancel",
             click: function() {
-                $(this).dialog('close');
+                dlg_inst.dialog('close');
             }
         });
     }
 
     dlg_opts.buttons.push({
-        id:"ok_btn",
+        id:"dlg_sch_list_ok_btn",
         text: (a_select?"Select":"Close"),
         click: function() {
-            if ( a_cb ){
-                a_cb();
+            if ( a_select && a_cb ){
+                getSelSchema( function( schema ){
+                    a_cb( schema );
+                    dlg_inst.dialog('close');
+                });
+            }else{
+                dlg_inst.dialog('close');
             }
-            $(this).dialog('close');
         }
     });
 
@@ -148,6 +154,9 @@ export function show( a_select, a_cb ){
         activate: function( ev, data ){
             data.node.setSelected( true );
             $(".btn-sel",frame).button("enable");
+            if ( a_select ){
+                $("#dlg_sch_list_ok_btn").button("enable");
+            }
         },
         renderColumns: function( ev, data ) {
             var node = data.node, $tdList = $(node.tr).find(">td");
