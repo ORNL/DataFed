@@ -50,34 +50,41 @@ function fixSchOwnNmAr( a_sch ){
 
 router.post('/create', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["sch","sch_dep"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-        var obj = { cnt: 0, ver: 0, pub: req.body.pub, def: req.body.def };
-
-        if ( req.body.sys ){
-            if ( !client.is_admin )
-                throw [ g_lib.ERR_PERM_DENIED, "Creating a system schema requires admin privileges."];
-            if ( !req.body.pub )
-                throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
-        }else{
-            obj.own_id = client._id;
-            obj.own_nm = client.name;
-        }
-
-        g_lib.procInputParam( req.body, "_sch_id", false, obj );
-        g_lib.procInputParam( req.body, "desc", false, obj );
-
-        var sch = g_db.sch.save( obj, { returnNew: true }).new;
-
-        // TODO Parse definition to find references and add sch_dep edges
-
-        fixSchOwnNm( sch );
-
-        delete sch._id;
-        delete sch._key;
-        delete sch._rev;
-
-        res.send([ sch ]);
+                var obj = { cnt: 0, ver: 0, pub: req.body.pub, def: req.body.def };
+        
+                if ( req.body.sys ){
+                    if ( !client.is_admin )
+                        throw [ g_lib.ERR_PERM_DENIED, "Creating a system schema requires admin privileges."];
+                    if ( !req.body.pub )
+                        throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
+                }else{
+                    obj.own_id = client._id;
+                    obj.own_nm = client.name;
+                }
+        
+                g_lib.procInputParam( req.body, "_sch_id", false, obj );
+                g_lib.procInputParam( req.body, "desc", false, obj );
+        
+                var sch = g_db.sch.save( obj, { returnNew: true }).new;
+        
+                updateSchemaRefs( sch );
+                fixSchOwnNm( sch );
+        
+                delete sch._id;
+                delete sch._key;
+                delete sch._rev;
+        
+                res.send([ sch ]);
+            }
+        });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -96,54 +103,60 @@ router.post('/create', function (req, res) {
 
 router.post('/update', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var sch_old = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["sch","sch_dep"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var sch_old = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
 
-        if ( !sch_old )
-            throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
+                if ( !sch_old )
+                    throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
 
-        if ( sch_old.cnt )
-            throw [ g_lib.ERR_PERM_DENIED, "Schema is in use - cannot update." ];
+                if ( sch_old.cnt )
+                    throw [ g_lib.ERR_PERM_DENIED, "Schema is in use - cannot update." ];
 
-        if ( sch_old.own_id != client._id && !client.is_admin )
-            throw g_lib.ERR_PERM_DENIED;
+                if ( sch_old.own_id != client._id && !client.is_admin )
+                    throw g_lib.ERR_PERM_DENIED;
 
-        var obj = {};
+                var obj = {};
 
-        if ( req.body.sys ){
-            if ( !client.is_admin )
-                throw [ g_lib.ERR_PERM_DENIED, "Changing to a system schema requires admin privileges."];
+                if ( req.body.sys ){
+                    if ( !client.is_admin )
+                        throw [ g_lib.ERR_PERM_DENIED, "Changing to a system schema requires admin privileges."];
 
-            if ( !sch_old.pub && !req.body.pub )
-                throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
+                    if ( !sch_old.pub && !req.body.pub )
+                        throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
 
-            obj.own_id = null;
-            obj.own_nm = null;
-        }
-    
-        g_lib.procInputParam( req.body, "_sch_id", true, obj );
+                    obj.own_id = null;
+                    obj.own_nm = null;
+                }
+            
+                g_lib.procInputParam( req.body, "_sch_id", true, obj );
 
-        if ( obj.id && ( sch_old.ver || g_db.sch_ver.firstExample({ _from: sch_old._id }) )){
-            throw [ g_lib.ERR_PERM_DENIED, "Cannot change schema ID once revisions exist."];
-        }
+                if ( obj.id && ( sch_old.ver || g_db.sch_ver.firstExample({ _from: sch_old._id }) )){
+                    throw [ g_lib.ERR_PERM_DENIED, "Cannot change schema ID once revisions exist."];
+                }
 
-        g_lib.procInputParam( req.body, "desc", true, obj );
+                g_lib.procInputParam( req.body, "desc", true, obj );
 
-        if ( req.body.def )
-            obj.def = req.body.def;
+                if ( req.body.def )
+                    obj.def = req.body.def;
 
-        console.log("sch upd",obj);
-        var sch_new = g_db.sch.update( sch_old._id, obj, { returnNew: true, keepNull: false }).new;
+                var sch_new = g_db.sch.update( sch_old._id, obj, { returnNew: true, mergeObjects: false, keepNull: false }).new;
 
-        // TODO Parse definition to find references and add sch_dep edges
+                updateSchemaRefs( sch );
+                fixSchOwnNm( sch_new );
 
-        fixSchOwnNm( sch_new );
+                delete sch_new._id;
+                delete sch_new._key;
+                delete sch_new._rev;
 
-        delete sch_new._id;
-        delete sch_new._key;
-        delete sch_new._rev;
-
-        res.send([ sch_new ]);
+                res.send([ sch_new ]);
+            }
+        });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -163,67 +176,81 @@ router.post('/update', function (req, res) {
 
 router.post('/revise', function (req, res) {
     try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var sch = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
+        g_db._executeTransaction({
+            collections: {
+                read: ["u","uuid","accn"],
+                write: ["sch","sch_dep","sch_ver"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var sch = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
 
-        if ( !sch )
-            throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
+                if ( !sch )
+                    throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
 
-        if ( sch.own_id != client._id && !client.is_admin )
-            throw g_lib.ERR_PERM_DENIED;
+                if ( sch.own_id != client._id && !client.is_admin )
+                    throw g_lib.ERR_PERM_DENIED;
 
-        if ( g_sb.sch_ver.firstExample({ _from: sch._id }) )
-            throw [ g_lib.ERR_PERM_DENIED, "A revision of schema '" + req.queryParams.id + "' already exists." ];
+                if ( g_db.sch_ver.firstExample({ _from: sch._id }) )
+                    throw [ g_lib.ERR_PERM_DENIED, "A revision of schema '" + req.queryParams.id + "' ver " + req.queryParams.ver + " already exists." ];
 
-        if ( !sch.own_id && !client.is_admin )
-            throw [ g_lib.ERR_PERM_DENIED, "Revising a system schema requires admin privileges."];
+                if ( !sch.own_id && !client.is_admin )
+                    throw [ g_lib.ERR_PERM_DENIED, "Revising a system schema requires admin privileges."];
 
-        sch.ver++;
+                sch.ver++;
 
-        if ( req.body.pub != undefined ){
-            sch.pub = req.body.pub;
+                if ( req.body.pub != undefined ){
+                    sch.pub = req.body.pub;
 
-            if ( !sch.own_id ){
-                sch.own_id = client._id;
-                sch.own_nm = client.name;
+                    if ( !sch.own_id ){
+                        sch.own_id = client._id;
+                        sch.own_nm = client.name;
+                    }
+                }
+
+                if ( req.body.sys ){
+                    if ( !client.is_admin )
+                        throw [ g_lib.ERR_PERM_DENIED, "Creating a system schema requires admin privileges."];
+
+                    sch.own_id = null;
+                    sch.own_nm = null;
+                }
+
+                if ( !sch.pub && !sch.own_id )
+                    throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
+
+                g_lib.procInputParam( req.body, "desc", true, sch );
+
+                if ( req.body.def != undefined )
+                    sch.def = req.body.def;
+
+                var old_id = sch._id;
+                delete sch._id;
+                delete sch._key;
+                delete sch._rev;
+
+                console.log("sch rev",sch);
+
+                var sch_new = g_db.sch.save( sch, { returnNew: true }).new;
+                console.log("sch rev 1");
+
+                g_db.sch_ver.save({ _from: old_id, _to: sch_new._id });
+                console.log("sch rev 2");
+
+                updateSchemaRefs( sch_new );
+                console.log("sch rev 3");
+
+                fixSchOwnNm( sch_new );
+
+                delete sch_new._id;
+                delete sch_new._key;
+                delete sch_new._rev;
+
+                console.log("sch rev 4");
+
+                res.send([ sch_new ]);
             }
-        }
-
-        if ( req.body.sys ){
-            if ( !client.is_admin )
-                throw [ g_lib.ERR_PERM_DENIED, "Creating a system schema requires admin privileges."];
-
-            sch.own_id = null;
-            sch.own_nm = null;
-        }
-
-        if ( !sch.pub && !sch.own_id )
-            throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
-
-        g_lib.procInputParam( req.body, "desc", true, sch );
-
-        if ( req.body.def != undefined )
-            sch.def = req.body.def;
-
-        var old_id = sch._id;
-        delete sch._id;
-        delete sch._key;
-        delete sch._rev;
-
-        console.log("sch rev",sch);
-
-        var sch_new = g_db.sch.save( sch, { returnNew: true }).new;
-        g_db.sch_ver.save({ _from: old_id, _to: sch_new._id });
-
-        // TODO Parse definition to find references and add sch_dep edges
-
-        fixSchOwnNm( sch_new );
-
-        delete sch_new._id;
-        delete sch_new._key;
-        delete sch_new._rev;
-
-        res.send([ sch_new ]);
+        });
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -249,13 +276,19 @@ router.post('/delete', function (req, res) {
         if ( !sch_old )
             throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
 
-        if ( sch_old.cnt )
-            throw [ g_lib.ERR_PERM_DENIED, "Schema is in use - cannot delete." ];
-
         if ( sch_old.own_id != client._id && !client.is_admin )
             throw g_lib.ERR_PERM_DENIED;
 
-        // TODO Handle older / newer versions
+        if ( sch_old.cnt )
+            throw [ g_lib.ERR_PERM_DENIED, "Schema in use on data records - cannot delete." ];
+
+        // Cannot delete schemas references by other schemas
+        if ( g_db.sch_dep.firstExample({ _to: sch_old._id }))
+            throw [ g_lib.ERR_PERM_DENIED, "Schema referenced by other schemas - cannot delete." ];
+
+        // Only allow deletion of oldest and newest revisions of schemas
+        if ( g_db.sch_ver.firstExample({ _from: sch_old._id }) && g_db.sch_ver.firstExample({ _to: sch_old._id }))
+            throw [ g_lib.ERR_PERM_DENIED, "Cannot delete intermediate schema revisions." ];
 
         g_graph.sch.remove( sch_old._id );
     } catch( e ) {
@@ -331,3 +364,51 @@ router.get('/search', function (req, res) {
 .queryParam('count', joi.number().integer().min(1).optional(), "Count")
 .summary('Search schemas')
 .description('Search schema');
+
+function updateSchemaRefs( a_sch ){
+    // Schema has been created, revised, or updated
+    // Find and update dependencies to other schemas (not versions)
+
+    g_db.sch_dep.removeByExample({ _from: a_sch._id });
+
+    var idx,id,ver,r,refs = new Set();
+
+    parseProps( a_sch.def.properties, refs );
+
+    refs.forEach( function( v ){
+        idx = v.indexOf(":");
+
+        if ( idx < 0 )
+            throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference ID '" + v + "' in schema (expected id:ver)." ];
+
+        id = v.substr(0,idx);
+        ver = parseInt( v.substr(idx+1) );
+        console.log("ref",id,ver);
+
+        r = g_db.sch.firstExample({ id: id, ver: ver });
+
+        if ( !r )
+            throw [ g_lib.ERR_INVALID_PARAM, "Referenced schema '" + v + "' does not exist." ];
+
+        if ( r._id == a_sch._id )
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema references self." ];
+
+        g_graph.sch_dep.save({_from: a_sch._id, _to: r._id });
+    });
+}
+
+function parseProps( a_doc, a_refs ){
+    var v;
+    for ( var k in a_doc ){
+        v = a_doc[k];
+
+        if (  v !== null && typeof v === 'object' && Array.isArray( v ) === false ){
+            parseProps( v, a_refs )
+        }else if ( k == "$ref" ){
+            if ( typeof v !== 'string' )
+                throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference type in schema." ];
+
+            a_refs.add( v );
+        }
+    }
+}
