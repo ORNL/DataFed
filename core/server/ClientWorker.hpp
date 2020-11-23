@@ -61,6 +61,10 @@ private:
     bool procRepoAuthzRequest( const std::string & a_uid );
     bool procUserGetAccessTokenRequest( const std::string & a_uid );
     bool procMetadataValidateRequest( const std::string & a_uid );
+    bool procSchemaCreateRequest( const std::string & a_uid );
+    bool procSchemaReviseRequest( const std::string & a_uid );
+    bool procSchemaUpdateRequest( const std::string & a_uid );
+    void schemaEnforceRequiredProperties( const nlohmann::json & a_schema );
 
     void recordCollectionDelete( const std::vector<std::string> & a_ids, Auth::TaskDataReply & a_reply );
     void handleTaskResponse( libjson::Value & a_result );

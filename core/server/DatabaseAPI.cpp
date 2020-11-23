@@ -3049,39 +3049,45 @@ void
 DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request, Anon::AckReply & a_reply )
 {
     libjson::Value result;
-    string body = "{\"id\":\"";
-    body.append( a_request.id() );
-    body.append( "\",\"ver\":" );
-    body.append( to_string( a_request.ver() ));
+    string body = "{";
 
     if ( a_request.has_desc() )
     {
-        body.append( ",\"desc\":\"" );
+        body.append( "\"desc\":\"" );
         body.append( a_request.desc() );
         body.append( "\"" );
     }
 
     if ( a_request.has_pub() )
     {
-        body.append( ",\"pub\":" );
+        if ( body.size() > 1 )
+            body.append( "," );
+
+        body.append( "\"pub\":" );
         body.append( a_request.pub()?"true":"false" );
     }
 
     if ( a_request.has_sys() )
     {
-        body.append( ",\"sys\":" );
+        if ( body.size() > 1 )
+            body.append( "," );
+
+        body.append( "\"sys\":" );
         body.append( a_request.sys()?"true":"false" );
     }
 
     if ( a_request.has_def() )
     {
-        body.append( ",\"def\":" );
+        if ( body.size() > 1 )
+            body.append( "," );
+
+        body.append( "\"def\":" );
         body.append( a_request.def() );
     }
 
     body.append("}");
 
-    dbPost( "schema/revise", {}, &body, result );
+    dbPost( "schema/revise", {{ "id", a_request.id() },{ "ver", to_string( a_request.ver() )}}, &body, result );
 }
 
 

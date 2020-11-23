@@ -196,7 +196,7 @@ export function show( a_select, a_cb ){
     });
 
     $("#sch_new",frame).on("click",function(){
-        dlgSchema.show( dlgSchema.mode_new, function(){
+        dlgSchema.show( dlgSchema.mode_new, null, function(){
             loadSchemas();
         });
     });
@@ -211,8 +211,12 @@ export function show( a_select, a_cb ){
 
     $("#sch_del",frame).on("click",function(){
         getSelSchema( function( schema ){
-            api.schemaDelete( schema.id, schema.ver, function(){
-                loadSchemas();
+            api.schemaDelete( schema.id, schema.ver, function( ok, reply ){
+                if ( ok ){
+                    loadSchemas();
+                }else{
+                    dialogs.dlgAlert("Schema Delete Error", reply );
+                }
             });
         });
     });

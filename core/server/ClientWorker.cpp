@@ -119,6 +119,9 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RepoAllocationCreateRequest, &ClientWorker::procRepoAllocationCreateRequest );
         SET_MSG_HANDLER( proto_id, RepoAllocationDeleteRequest, &ClientWorker::procRepoAllocationDeleteRequest );
         SET_MSG_HANDLER( proto_id, UserGetAccessTokenRequest, &ClientWorker::procUserGetAccessTokenRequest );
+        SET_MSG_HANDLER( proto_id, SchemaCreateRequest, &ClientWorker::procSchemaCreateRequest );
+        SET_MSG_HANDLER( proto_id, SchemaReviseRequest, &ClientWorker::procSchemaReviseRequest );
+        SET_MSG_HANDLER( proto_id, SchemaUpdateRequest, &ClientWorker::procSchemaUpdateRequest );
 
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
@@ -186,9 +189,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetDefaultRequest, AckReply, repoAllocationSetDefault );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
-        SET_MSG_HANDLER_DB( proto_id, SchemaCreateRequest, AckReply, schemaCreate );
-        SET_MSG_HANDLER_DB( proto_id, SchemaReviseRequest, AckReply, schemaRevise );
-        SET_MSG_HANDLER_DB( proto_id, SchemaUpdateRequest, AckReply, schemaUpdate );
         SET_MSG_HANDLER_DB( proto_id, SchemaDeleteRequest, AckReply, schemaDelete );
     }
     catch( TraceException & e)
@@ -516,6 +516,128 @@ ClientWorker::procDataPutRequest( const std::string & a_uid )
     m_db_client.setClient( a_uid );
     m_db_client.taskInitDataPut( *request, reply, result );
     handleTaskResponse( result );
+
+    PROC_MSG_END
+}
+
+void
+ClientWorker::schemaEnforceRequiredProperties( const nlohmann::json & a_schema )
+{
+    // json_schema validator does not check for required fields in schema
+    // Must include properties and type: Object
+    if ( !a_schema.is_object() )
+        EXCEPT(1,"Schema must be a JSON object.");
+
+    nlohmann::json::const_iterator i = a_schema.find("properties");
+
+    if ( i == a_schema.end() )
+        EXCEPT(1,"Schema is missing required 'properties' field.");
+
+    if ( !i.value().is_object() )
+        EXCEPT(1,"Schema properties field must be a JSON object.");
+
+    i = a_schema.find("type");
+
+    if ( i == a_schema.end() )
+        EXCEPT(1,"Schema is missing required 'type' field.");
+
+    if ( !i.value().is_string() || i.value().get<string>() != "object" )
+        EXCEPT(1,"Schema type must be 'object'.");
+}
+
+bool
+ClientWorker::procSchemaCreateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( SchemaCreateRequest, AckReply )
+
+    m_db_client.setClient( a_uid );
+
+    DL_INFO( "Schema create" );
+
+    try
+    {
+        nlohmann::json schema = nlohmann::json::parse( request->def() );
+
+        schemaEnforceRequiredProperties( schema );
+
+        nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+        validator.set_root_schema( schema );
+
+        m_db_client.schemaCreate( *request, reply );
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
+        DL_ERROR( "Invalid metadata schema: " << e.what() );
+    }
+
+    PROC_MSG_END
+}
+
+
+bool
+ClientWorker::procSchemaReviseRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( SchemaReviseRequest, AckReply )
+
+    m_db_client.setClient( a_uid );
+
+    DL_INFO( "Schema revise" );
+
+    if ( request->has_def() )
+    {
+        try
+        {
+            nlohmann::json schema = nlohmann::json::parse( request->def() );
+
+            schemaEnforceRequiredProperties( schema );
+
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+            validator.set_root_schema( schema );
+        }
+        catch( exception & e )
+        {
+            EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
+            DL_ERROR( "Invalid metadata schema: " << e.what() );
+        }
+    }
+
+    m_db_client.schemaRevise( *request, reply );
+
+    PROC_MSG_END
+}
+
+bool
+ClientWorker::procSchemaUpdateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( SchemaUpdateRequest, AckReply )
+
+    m_db_client.setClient( a_uid );
+
+    DL_INFO( "Schema update" );
+
+    if ( request->has_def() )
+    {
+        try
+        {
+            nlohmann::json schema = nlohmann::json::parse( request->def() );
+
+            schemaEnforceRequiredProperties( schema );
+
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+            validator.set_root_schema( schema );
+        }
+        catch( exception & e )
+        {
+            EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
+            DL_ERROR( "Invalid metadata schema: " << e.what() );
+        }
+    }
+
+    m_db_client.schemaUpdate( *request, reply );
 
     PROC_MSG_END
 }
