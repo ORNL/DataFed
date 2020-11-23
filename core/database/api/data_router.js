@@ -96,6 +96,21 @@ function recordCreate( client, record, result ){
         obj.public = true;
     }
 
+    // Note: sch_id function param is the "id" field of sch, not "_id", must convert to "_id" before processing
+    // sch_id stored in record is sch "_id" field.
+
+    if ( obj.sch_id ) {
+        if ( record.sch_ver === undefined )
+            throw [g_lib.ERR_MISSING_REQ_PARAM,"Schema version must be specified in addition to ID."];
+
+        var sch = g_db.sch.firstExample({ id: obj.sch_id, ver: record.sch_ver });
+        if ( !sch )
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' ver. " + record.sch_ver + " does not exist" ];
+
+        obj.sch_id = sch._id;
+        g_db._update( sch._id, { cnt: sch.cnt + 1 });
+    }
+
     var data = g_db.d.save( obj, { returnNew: true }).new;
 
     g_db.owner.save({ _from: data._id, _to: owner_id });
@@ -170,7 +185,7 @@ router.post('/create', function (req, res) {
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag","sch"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -223,7 +238,7 @@ router.post('/create/batch', function (req, res) {
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag","sch"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );

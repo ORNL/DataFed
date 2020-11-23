@@ -180,25 +180,24 @@ router.post('/revise', function (req, res) {
 
         sch.ver++;
 
-        // TODO Figure out rules for if pub/sys schemas can be revised to non-system schemas, etc
-        
         if ( req.body.pub != undefined ){
             sch.pub = req.body.pub;
+
+            if ( !sch.own_id ){
+                sch.own_id = client._id;
+                sch.own_nm = client.name;
+            }
         }
 
         if ( req.body.sys ){
             if ( !client.is_admin )
                 throw [ g_lib.ERR_PERM_DENIED, "Creating a system schema requires admin privileges."];
-            if ( !sch.pub )
-                throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
-            obj.own_id = null;
-            obj.own_nm = null;
-        }else{
-            obj.own_id = client._id;
-            obj.own_nm = client.name;
+
+            sch.own_id = null;
+            sch.own_nm = null;
         }
 
-        if ( !sch.pub && )
+        if ( !sch.pub && !sch.own_id )
             throw [ g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
 
         g_lib.procInputParam( req.body, "desc", true, sch );
