@@ -342,7 +342,7 @@ function recordUpdate( client, record, result ){
     // Note: sch_id function param is the "id" field of sch, not "_id", must convert to "_id" before processing
     // sch_id stored in record is sch "_id" field.
 
-    if ( obj.sch_id === "" ){
+    if ( obj.sch_id === null ){
         if ( data.sch_id ){
             sch = g_db.sch.document( data.sch_id );
             g_db._update( sch._id, { cnt: sch.cnt - 1 });
@@ -781,9 +781,12 @@ router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
-        var data_id = g_lib.resolveDataID( req.queryParams.id, client ),
-            data = g_db.d.document( data_id ),
+        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
+        console.log("id:",data_id);
+        var data = g_db.d.document( data_id ),
             i,dep,rem_md = false, admin = false;
+
+        console.log("view 2");
 
         if ( client ){
             admin = g_lib.hasAdminPermObject( client, data_id );

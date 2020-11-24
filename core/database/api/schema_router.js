@@ -147,7 +147,7 @@ router.post('/update', function (req, res) {
 
                 var sch_new = g_db.sch.update( sch_old._id, obj, { returnNew: true, mergeObjects: false, keepNull: false }).new;
 
-                updateSchemaRefs( sch );
+                updateSchemaRefs( sch_new );
                 fixSchOwnNm( sch_new );
 
                 delete sch_new._id;
@@ -313,6 +313,10 @@ router.get('/view', function (req, res) {
         if ( !( sch.pub || sch.own_id == client._id || client.is_admin ))
             throw g_lib.ERR_PERM_DENIED;
 
+        sch.depr = g_db.sch_ver.firstExample({ _from: sch._id })?true:false;
+        sch.uses = g_db._query("for i in 1..1 outbound @sch sch_dep return {id:i.id,ver:i.ver}",{sch:sch._id}).toArray();
+        sch.used_by = g_db._query("for i in 1..1 inbound @sch sch_dep return {id:i.id,ver:i.ver}",{sch:sch._id}).toArray();
+        
         delete sch._id;
         delete sch._key;
         delete sch._rev;
