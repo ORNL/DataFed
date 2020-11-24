@@ -3211,8 +3211,42 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
     if ( a_obj.has( "pub" ))
         a_schema->set_pub( a_obj.asBool() );
 
+    if ( a_obj.has( "depr" ))
+        a_schema->set_depr( a_obj.asBool() );
+
     if ( a_obj.has( "def" ))
         a_schema->set_def( a_obj.value().toString() );
+
+    Value::ArrayConstIter j;
+    SchemaData * dep;
+
+    if ( a_obj.has( "uses" ) && a_obj.value().size() )
+    {
+        const Value::Array & arr = a_obj.asArray();
+
+        for ( j = arr.begin(); j != arr.end(); j++ )
+        {
+            const Value::Object & obj = j->asObject();
+            dep = a_schema->add_uses();
+            
+            dep->set_id( obj.getString( "id" ));
+            dep->set_ver( obj.getNumber( "ver" ));
+        }
+    }
+
+    if ( a_obj.has( "used_by" ) && a_obj.value().size() )
+    {
+        const Value::Array & arr = a_obj.asArray();
+
+        for ( j = arr.begin(); j != arr.end(); j++ )
+        {
+            const Value::Object & obj = j->asObject();
+            dep = a_schema->add_used_by();
+            
+            dep->set_id( obj.getString( "id" ));
+            dep->set_ver( obj.getNumber( "ver" ));
+        }
+    }
 }
 
 

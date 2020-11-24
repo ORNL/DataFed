@@ -58,16 +58,15 @@ export function show( a_mode, a_schema, a_cb ){
                 </div>\
             </div>\
             <div id='tab-dlg-ref' style='padding:.5em 1em'>\
+                <div class='col-flex' style='height:100%'>\
+                    <div>Schema Uses:</div>\
+                    <div id='sch_uses' class='ui-widget ui-widget-content content' style='flex: 1 1 50%;overflow:auto;margin-top:0.5em;padding:0.25em'></div>\
+                    <div style='padding-top:0.5em'>Schema Used By:</div>\
+                    <div id='sch_used_by' class='ui-widget ui-widget-content content' style='flex: 1 1 50%;overflow:auto;margin-top:0.5em;padding:0.25em'></div>\
+                </div>\
             </div>\
         </div>" );
 
-        /*
-        required uint32             ver         = 2;
-        optional uint32             cnt         = 3;
-
-        repeated SchemaData         uses        = 9;
-        repeated SchemaData         used_by     = 10;
-        */
     
     var jsoned = ace.edit( $("#sch_def",frame).get(0), {
         theme:(settings.theme=="light"?"ace/theme/light":"ace/theme/dark"),
@@ -113,7 +112,7 @@ export function show( a_mode, a_schema, a_cb ){
             if ( a_schema ){
                 $("#sch_id",frame).val( a_schema.id );
                 $("#sch_desc",frame).val( a_schema.desc );
-                $("#sch_ver",frame).val( a_schema.ver );
+                $("#sch_ver",frame).val( a_schema.ver + (a_schema.depr?" (deprecated)":""));
                 $("#sch_cnt",frame).val( "" + a_schema.cnt );
 
                 if ( a_schema.ownNm ){
@@ -131,6 +130,24 @@ export function show( a_mode, a_schema, a_cb ){
 
                 var def = JSON.parse( a_schema.def );
                 jsoned.setValue( JSON.stringify( def, null, 4 ), -1);
+
+                var i, dep, html;
+                if ( a_schema.uses ){
+                    html = "";
+                    for ( i in a_schema.uses ){
+                        dep = a_schema.uses[i];
+                        html += dep.id + ":" + dep.ver + "<br>";
+                    }
+                    $("#sch_uses",frame).html( html );
+                }
+                if ( a_schema.usedBy ){
+                    html = "";
+                    for ( i in a_schema.usedBy ){
+                        dep = a_schema.usedBy[i];
+                        html += dep.id + ":" + dep.ver + "<br>";
+                    }
+                    $("#sch_used_by",frame).html( html );
+                }
             }else{
                 $("#sch_ver",frame).val( 0 );
                 $("#sch_cnt",frame).val( 0 );
