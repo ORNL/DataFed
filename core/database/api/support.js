@@ -81,8 +81,10 @@ module.exports = ( function() {
 
     obj.SORT_ID             = 0;
     obj.SORT_TITLE          = 1;
-    obj.SORT_TIME_CREATE    = 2;
-    obj.SORT_TIME_UPDATE    = 3;
+    obj.SORT_OWNER          = 2;
+    obj.SORT_TIME_CREATE    = 3;
+    obj.SORT_TIME_UPDATE    = 4;
+    obj.SORT_RELEVANCE      = 5;
 
     obj.PROJ_NO_ROLE        = 0;    // No permissions
     obj.PROJ_MEMBER         = 1;    // Data/collection Permissions derived from "members" group and other ACLs

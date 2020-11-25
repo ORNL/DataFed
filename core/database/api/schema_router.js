@@ -123,6 +123,10 @@ router.post('/update', function (req, res) {
 
                 var obj = {};
 
+                if ( req.body.pub != undefined ){
+                    obj.pub = req.body.pub;
+                }
+
                 if ( req.body.sys ){
                     if ( !client.is_admin )
                         throw [ g_lib.ERR_PERM_DENIED, "Changing to a system schema requires admin privileges."];
@@ -338,7 +342,7 @@ router.get('/view', function (req, res) {
 router.get('/search', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var qry, par = {uid: client._id}, result, off = 0, cnt = 50;
+        var qry, par = {}, result, off = 0, cnt = 50, comb = false;
 
         if ( req.queryParams.offset != undefined )
             off = req.queryParams.offset;
@@ -346,12 +350,52 @@ router.get('/search', function (req, res) {
         if ( req.queryParams.count != undefined && req.queryParams.count <= 100 )
             cnt = req.queryParams.count;
 
-        qry = "for i in sch";
+        qry = "for i in schemaview search ";
 
-        qry += " filter (i.pub == true || i.own_id == @uid) sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
+        if ( req.queryParams.owner && req.queryParams.owner != client._id ){
+            if ( req.queryParams.owner.startsWith("u/")){
+                qry += "(i.pub == true && i.own_id == @owner)";
+            }else{
+                qry += "(i.pub == true && analyzer(i.own_nm in tokens(@owner,'user_name'), 'user_name'))";
+            }
+
+            par.owner = req.queryParams.owner.toLowerCase();
+        }else{
+            qry += "boost(i.pub == true || i.own_id == @owner,0.01)";
+            par.owner = client._id;
+        }
+
+        if ( req.queryParams.text ){
+            // TODO handle multiple words/phrases
+            qry += " and analyzer( phrase(i['desc'],'" + req.queryParams.text.toLowerCase() + "'), 'text_en')";
+        }
+
+        if ( req.queryParams.id ){
+            qry += " and analyzer(i.id in tokens(@id,'sch_id'), 'sch_id')";
+            par.id = req.queryParams.id.toLowerCase();
+        }
+
+        if ( req.queryParams.sort == g_lib.SORT_RELEVANCE && ( req.queryParams.id || req.queryParams.text )){
+            qry += " let s = BM25(i) sort s desc";
+        }else if ( req.queryParams.sort == g_lib.SORT_OWNER ){
+            qry += " sort i.own_nm";
+            qry += (req.queryParams.sort_rev?" desc":"");
+        }else{
+            qry += " sort i.id";
+            qry += (req.queryParams.sort_rev?" desc":"");
+        }
+
+        qry += " limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
+
+        //qry += " filter (i.pub == true || i.own_id == @uid) sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
+
         result = g_db._query( qry, par, {}, { fullCount: true });
         var tot = result.getExtra().stats.fullCount;
         result = result.toArray();
+
+        /*for ( var i in result ){
+            console.log("id:",result[i].id,", score:",result[i].s);
+        }*/
 
         fixSchOwnNmAr( result );
 
@@ -363,7 +407,11 @@ router.get('/search', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.number().integer().min(0).optional(), "ID (partial)")
+.queryParam('id', joi.string().optional(), "ID (partial)")
+.queryParam('text', joi.string().optional(), "Text or phrase")
+.queryParam('owner', joi.string().optional(), "Owner ID")
+.queryParam('sort', joi.number().integer().min(0).optional(), "Sort by")
+.queryParam('sort_rev', joi.bool().optional(), "Sort in reverse order")
 .queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
 .queryParam('count', joi.number().integer().min(1).optional(), "Count")
 .summary('Search schemas')
