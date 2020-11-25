@@ -88,8 +88,11 @@ export const NOTE_MASK_MD_ERR    = 0x1000;
 
 export const SORT_ID            = 0;
 export const SORT_TITLE         = 1;
-export const SORT_TIME_CREATE   = 2;
-export const SORT_TIME_UPDATE   = 3;
+export const SORT_OWNER         = 2;
+export const SORT_TIME_CREATE   = 3;
+export const SORT_TIME_UPDATE   = 4;
+export const SORT_RELEVANCE     = 5;
+
 
 export const NoteTypeLabel = [
     "Question",

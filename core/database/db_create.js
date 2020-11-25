@@ -131,8 +131,11 @@ schemaview.properties({
   links:{
     "sch":{
       fields:{
-        "id": { analyzers: ["sch_id"] },
-        "desc": { analyzers: ["text_en"] }
+        "pub":{ analyzers: ["identity"] },
+        "id": { analyzers: ["sch_id","identity"] },
+        "desc": { analyzers: ["text_en"] },
+        "own_id": { analyzers: ["identity"] },
+        "own_nm": { analyzers: ["user_name","identity"] }
       },
       includeAllFields: false
     }

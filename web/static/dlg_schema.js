@@ -152,7 +152,7 @@ export function show( a_mode, a_schema, a_cb ){
                 $("#sch_ver",frame).val( 0 );
                 $("#sch_cnt",frame).val( 0 );
                 $("#sch_own",frame).val( settings.user.uid );
-                jsoned.setValue( JSON.stringify({ "properties": {},"required": [],"type": "object"}, null,4),-1);
+                jsoned.setValue( JSON.stringify({ "properties": {"example":{"type":"string"}},"required": ["example"],"type": "object"}, null,4),-1);
             }
 
             jsoned.resize();

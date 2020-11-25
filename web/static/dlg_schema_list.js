@@ -1,11 +1,12 @@
 import * as settings from "./settings.js";
+import * as model from "./model.js";
 import * as util from "./util.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
 import * as dlgSchema from "./dlg_schema.js";
 
-var tree, dlg_inst;
+var tree, dlg_inst, frame;
 
 window.schemaPageLoad = function( key, offset ){
     var node = tree.getNodeByKey( key );
@@ -18,7 +19,30 @@ window.schemaPageLoad = function( key, offset ){
 };
 
 function loadSchemas(){
-    api.schemaSearch({}, function(ok,data){
+    var tmp, par = {};
+
+    tmp = $("#srch_id",frame).val().trim();
+    if ( tmp )
+        par.id = tmp;
+
+    tmp = $("#srch_txt",frame).val().trim();
+    if ( tmp )
+        par.text = tmp;
+
+    tmp = $("#srch_owner",frame).val().trim();
+    if ( tmp )
+        par.owner = tmp;
+
+    par.sort = $("#srch_sort",frame).val();
+    if ( par.sort < 0 ){
+        par.sortRev = true;
+        par.sort = -par.sort;
+    }
+    par.sort--;
+
+    console.log("search",par);
+
+    api.schemaSearch(par, function(ok,data){
         if ( ok ){
             console.log( "sch res: ", data );
             var src = [];
@@ -53,7 +77,7 @@ function getSelSchema( a_cb ){
 
 
 export function show( a_select, a_cb ){
-    var frame = $(document.createElement('div'));
+    frame = $(document.createElement('div'));
 
     frame.html(
         "<div class='col-flex' style='height:100%'>\
@@ -72,17 +96,25 @@ export function show( a_select, a_cb ){
             </div>\
             <div style='flex:none;padding-top:0.5em'>Search Options:</div>\
             <div style='flex:none;padding:0.5em 0 0 0.5em'>\
-                <table class='form-table'>\
-                    <tr><td>ID:</td><td colspan='2'><input id='srch_id' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
-                    <tr><td>Keywords:</td><td colspan='2'><input id='srch_txt' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
-                    <tr><td>Owner:</td><td><input id='srch_owner' type='text' style='width:100%;box-sizing:border-box'></input></td>\
-                        <td><button title='Select user' id='pick_user' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-person'></span></button></td></tr>\
-                    <tr><td>Sort By:</td><td>\
-                        <select id='srch_sort'>\
-                            <option value='1' selected>ID</option>\
-                            <option value='2'>Popularity</option>\
-                        </select>\
-                    </td></tr>\
+                <table style='width:100%'>\
+                    <tr><td>ID:</td><td colspan='4'><input id='srch_id' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
+                    <tr><td>Text:</td><td colspan='4'><input id='srch_txt' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
+                    <tr><td>Owner:</td><td colspan='3'><input id='srch_owner' type='text' style='width:100%;box-sizing:border-box'></input></td>\
+                        <td style='width:0'><button title='Select user' id='pick_user' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-person'></span></button></td></tr>\
+                    <tr>\
+                        <td>Sort&nbsp;By:</td><td colspan='2' style='width:100%'>\
+                            <select id='srch_sort'>\
+                                <option value='" + (model.SORT_ID + 1) + "' selected>ID</option>\
+                                <option value='-"+ (model.SORT_ID + 1) +"'>ID (reverse)</option>\
+                                <option value='"+ (model.SORT_OWNER + 1) +"'>Owner</option>\
+                                <option value='-"+ (model.SORT_OWNER + 1) +"'>Owner (reverse)</option>\
+                                <option value='"+ (model.SORT_RELEVANCE + 1) +"'>Relevance</option>\
+                            </select>\
+                        </td>\
+                        <td colspan='2'>\
+                            <button class='btn' id='srch_btn'>Search</button>\
+                        </td>\
+                    </tr>\
                 </table>\
             </div>\
         </div>" );
@@ -177,7 +209,7 @@ export function show( a_select, a_cb ){
 
     $("#pick_user",frame).click(function(){
         dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
-            $("#srch_owner",frame).val( users[0].substr(2) );
+            $("#srch_owner",frame).val( users );
         });
     });
 
@@ -197,7 +229,9 @@ export function show( a_select, a_cb ){
 
     $("#sch_new",frame).on("click",function(){
         dlgSchema.show( dlgSchema.mode_new, null, function(){
-            loadSchemas();
+            setTimeout( function(){
+                loadSchemas();
+            }, 1000 );
         });
     });
 
@@ -221,7 +255,16 @@ export function show( a_select, a_cb ){
         });
     });
     
+    $("#srch_btn",frame).on("click",function(){
+        loadSchemas();
+    });
 
+    $("#srch_txt,#srch_id,#srch_owner",frame).on('keypress', function (e) {
+        if (e.keyCode == 13){
+            loadSchemas();
+        }
+    });
+    
     //var in_timer;
 
     /*search_input.on( "input", function(e) {

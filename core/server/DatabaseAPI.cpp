@@ -3008,6 +3008,14 @@ DatabaseAPI::schemaSearch( const Anon::SchemaSearchRequest & a_request, Anon::Sc
 
     if ( a_request.has_id() )
         params.push_back({ "id", a_request.id() });
+    if ( a_request.has_text() )
+        params.push_back({ "text", a_request.text() });
+    if ( a_request.has_owner() )
+        params.push_back({ "owner", a_request.owner() });
+    if ( a_request.has_sort() )
+        params.push_back({ "sort", to_string( a_request.sort() )});
+    if ( a_request.has_sort_rev() )
+        params.push_back({ "sort_rev", a_request.sort_rev()?"true":"false" });
     if ( a_request.has_offset( ))
         params.push_back({ "offset", to_string( a_request.offset() )});
     if ( a_request.has_count( ))
