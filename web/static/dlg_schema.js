@@ -14,7 +14,7 @@ const btn_title = ["Close","Save","Create","Create"];
 
 export function show( a_mode, a_schema, a_cb ){
     var frame = $(document.createElement('div')),
-        dlg_inst;
+        dlg_inst, json_val;
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
@@ -26,13 +26,14 @@ export function show( a_mode, a_schema, a_cb ){
             <div id='tab-dlg-gen' style='padding:0.5em 1em'>\
                 <div class='col-flex' style='height:100%'>\
                     <div style='flex:none'><table style='width:100%'>\
-                        <tr><td>ID: <span class='note'>*</span></td><td colspan='3'><input title='Schema ID' type='text' id='sch_id' maxlength='120' style='width:100%'></input></td></tr>\
+                        <tr><td>ID: <span class='note'>*</span></td><td colspan='5'><input title='Schema ID' type='text' id='sch_id' maxlength='120' style='width:100%'></input></td></tr>\
                         <tr>\
                             <td>Version:</td><td><input type='text' title='Version number' id='sch_ver' style='width:95%'></input></td>\
-                            <td>Uses:</td><td><input type='text' title='Number of records using this schema' id='sch_cnt' style='width:100%'></input></td>\
+                            <td>Uses:</td><td><input type='text' title='Number of records using this schema' id='sch_cnt' style='width:95%'></input></td>\
+                            <td>Refs:</td><td><input type='text' title='Number of references to this schema' id='sch_refs' style='width:100%'></input></td>\
                         </tr>\
-                        <tr><td>Owner:</td><td colspan='3'><input type='text' title='Owner name/ID' id='sch_own' style='width:100%'></input></td></tr>\
-                        <tr><td>Access:</td><td colspan='3'>\
+                        <tr><td>Owner:</td><td colspan='5'><input type='text' title='Owner name/ID' id='sch_own' style='width:100%'></input></td></tr>\
+                        <tr><td>Access:</td><td colspan='5'>\
                             <input type='radio' id='sch_priv' name='sch_acc' value='private' checked/>\
                             <label for='sch_priv'>Private</label>&nbsp;&nbsp;\
                             <input type='radio' id='sch_pub' name='sch_acc' value='public'/>\
@@ -113,7 +114,12 @@ export function show( a_mode, a_schema, a_cb ){
                 $("#sch_id",frame).val( a_schema.id );
                 $("#sch_desc",frame).val( a_schema.desc );
                 $("#sch_ver",frame).val( a_schema.ver + (a_schema.depr?" (deprecated)":""));
-                $("#sch_cnt",frame).val( "" + a_schema.cnt );
+                $("#sch_cnt",frame).val( a_schema.cnt );
+                if ( a_schema.usedBy ){
+                    $("#sch_refs",frame).val( a_schema.usedBy.length );
+                }else{
+                    $("#sch_refs",frame).val( 0 );
+                }
 
                 if ( a_schema.ownNm ){
                     $("#sch_own",frame).val( a_schema.ownNm + " (" +a_schema.ownId.substr(2) + ")" );
@@ -125,11 +131,11 @@ export function show( a_mode, a_schema, a_cb ){
                 }else{
                     $("#sch_own",frame).val( "System" );
                     $("#sch_sys",frame).attr("checked", true);
-
                 }
 
                 var def = JSON.parse( a_schema.def );
-                jsoned.setValue( JSON.stringify( def, null, 4 ), -1);
+                json_val = JSON.stringify( def, null, 4 );
+                jsoned.setValue( json_val, -1);
 
                 var i, dep, html;
                 if ( a_schema.uses ){
@@ -151,13 +157,14 @@ export function show( a_mode, a_schema, a_cb ){
             }else{
                 $("#sch_ver",frame).val( 0 );
                 $("#sch_cnt",frame).val( 0 );
+                $("#sch_refs",frame).val( 0 );
                 $("#sch_own",frame).val( settings.user.uid );
                 jsoned.setValue( JSON.stringify({ "properties": {"example":{"type":"string"}},"required": ["example"],"type": "object"}, null,4),-1);
             }
 
             jsoned.resize();
 
-            util.inputDisable( $("#sch_ver,#sch_cnt,#sch_own", frame ));
+            util.inputDisable( $("#sch_ver,#sch_cnt,#sch_refs,#sch_own", frame ));
 
             if ( a_mode == mode_view ){
                 util.inputDisable( $("#sch_id,#sch_desc", frame ));
@@ -169,6 +176,10 @@ export function show( a_mode, a_schema, a_cb ){
             }else if( a_mode == mode_edit ){
                 if ( a_schema.depr || a_schema.ver > 0 )
                     util.inputDisable( $("#sch_id", frame ));
+                if ( a_schema.cnt || ( a_schema.usedBy && a_schema.usedBy.length )){
+                    jsoned.setReadOnly(true);
+                    jsoned.container.style.opacity=0.45;
+                }
             }
 
             if ( !settings.user.isAdmin ){
@@ -206,12 +217,9 @@ export function show( a_mode, a_schema, a_cb ){
                 return;
             }
     
-            var obj = {};
+            var obj = {},
+                acc = $('input[name=sch_acc]:checked', frame ).val();
 
-            obj.desc = $("#sch_desc",frame).val();
-
-            var acc = $('input[name=sch_acc]:checked', frame ).val();
-            console.log("sch acc",acc);
             if ( acc == "public"){
                 obj.pub = true;
             }else if ( acc == "private"){
@@ -221,21 +229,34 @@ export function show( a_mode, a_schema, a_cb ){
                 obj.sys = true;
             }
 
+            obj.id = a_schema.id;
+            obj.ver = a_schema.ver;
+            obj.desc = $("#sch_desc",frame).val().trim();
             obj.def = jsoned.getValue();
 
             if ( a_mode == mode_new ){
-                obj.id = $("#sch_id",frame).val();
                 console.log("new",obj);
                 api.schemaCreate( obj, handleSubmit );
             }else if ( a_mode == mode_rev ){
-                obj.id = a_schema.id;
-                obj.ver = a_schema.ver;
                 console.log("rev",obj);
                 api.schemaRevise( obj, handleSubmit );
             }else{ // edit mode
-                obj.id = a_schema.id;
-                obj.ver = a_schema.ver;
-                obj.idNew = $("#sch_id",frame).val();
+                var tmp = $("#sch_id",frame).val().trim();
+                if ( tmp != a_schema.id )
+                    obj.idNew = tmp;
+
+                if ( obj.desc == a_schema.desc )
+                    delete obj.desc;
+
+                if ( obj.def == json_val )
+                    delete obj.def;
+
+                if ( obj.pub == a_schema.pub )
+                    delete obj.pub;
+
+                if ( !a_schema.ownNm && obj.sys )
+                    delete obj.sys;
+
                 console.log("upd",obj);
                 api.schemaUpdate( obj, handleSubmit );
             }
