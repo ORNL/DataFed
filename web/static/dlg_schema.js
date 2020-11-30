@@ -166,6 +166,9 @@ export function show( a_mode, a_schema, a_cb ){
                 jsoned.container.style.opacity=0.45;
             }else if ( a_mode == mode_rev ){
                 util.inputDisable( $("#sch_id", frame ));
+            }else if( a_mode == mode_edit ){
+                if ( a_schema.depr || a_schema.ver > 0 )
+                    util.inputDisable( $("#sch_id", frame ));
             }
 
             if ( !settings.user.isAdmin ){
