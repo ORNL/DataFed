@@ -384,8 +384,12 @@ router.get('/search', function (req, res) {
             qry += " sort i.own_nm";
             qry += (req.queryParams.sort_rev?" desc":"");
         }else{
-            qry += " sort i.id,i.ver";
-            qry += (req.queryParams.sort_rev?" desc":"");
+            if ( req.queryParams.sort_rev )
+                qry += " sort i.id desc, i.ver";
+            else
+                qry += " sort i.id,i.ver";
+
+            //qry += (req.queryParams.sort_rev?" desc":"");
         }
 
         qry += " limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
