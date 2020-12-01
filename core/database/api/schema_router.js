@@ -55,6 +55,7 @@ router.post('/create', function (req, res) {
                 read: ["u","uuid","accn"],
                 write: ["sch","sch_dep"]
             },
+            waitForSync: true,
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
@@ -108,6 +109,7 @@ router.post('/update', function (req, res) {
                 read: ["u","uuid","accn"],
                 write: ["sch","sch_dep"]
             },
+            waitForSync: true,
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var sch_old = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
@@ -185,6 +187,7 @@ router.post('/revise', function (req, res) {
                 read: ["u","uuid","accn"],
                 write: ["sch","sch_dep","sch_ver"]
             },
+            waitForSync: true,
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var sch = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
@@ -381,7 +384,7 @@ router.get('/search', function (req, res) {
             qry += " sort i.own_nm";
             qry += (req.queryParams.sort_rev?" desc":"");
         }else{
-            qry += " sort i.id";
+            qry += " sort i.id,i.ver";
             qry += (req.queryParams.sort_rev?" desc":"");
         }
 
