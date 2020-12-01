@@ -229,18 +229,24 @@ export function show( a_mode, a_schema, a_cb ){
                 obj.sys = true;
             }
 
-            obj.id = a_schema.id;
-            obj.ver = a_schema.ver;
             obj.desc = $("#sch_desc",frame).val().trim();
             obj.def = jsoned.getValue();
 
             if ( a_mode == mode_new ){
+                obj.id = $("#sch_id",frame).val().trim();
+
                 console.log("new",obj);
                 api.schemaCreate( obj, handleSubmit );
             }else if ( a_mode == mode_rev ){
+                obj.id = a_schema.id;
+                obj.ver = a_schema.ver;
+
                 console.log("rev",obj);
                 api.schemaRevise( obj, handleSubmit );
             }else{ // edit mode
+                obj.id = a_schema.id;
+                obj.ver = a_schema.ver;
+
                 var tmp = $("#sch_id",frame).val().trim();
                 if ( tmp != a_schema.id )
                     obj.idNew = tmp;

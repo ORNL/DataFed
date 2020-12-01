@@ -222,7 +222,9 @@ export function show( a_select, a_cb ){
     $("#sch_edit",frame).on("click",function(){
         getSelSchema( function( schema ){
             dlgSchema.show( dlgSchema.mode_edit, schema, function(){
-                loadSchemas();
+                setTimeout( function(){
+                    loadSchemas();
+                }, 1000 );
             });
         });
     });
@@ -238,7 +240,9 @@ export function show( a_select, a_cb ){
     $("#sch_rev",frame).on("click",function(){
         getSelSchema( function( schema ){
             dlgSchema.show( dlgSchema.mode_rev, schema, function(){
-                loadSchemas();
+                setTimeout( function(){
+                    loadSchemas();
+                }, 1000 );
             });
         });
     });
