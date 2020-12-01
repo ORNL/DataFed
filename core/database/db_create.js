@@ -157,7 +157,7 @@ view.properties({
           "desc": { analyzers: ["text_en"] },
           "owner": { analyzers: ["identity"] },
           "ut": { analyzers: ["identity"] },
-          "_sch_id": { analyzers: ["identity"] },
+          "sch_id": { analyzers: ["identity"] },
           "_id": { analyzers: ["identity"] }
         },
         includeAllFields: false
