@@ -862,6 +862,18 @@ router.post('/pub/search', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
+        if ( req.body.params.sch_id ){
+            req.body.params.sch = g_db.sch.firstExample({id:req.body.params.sch_id,ver:req.body.params.sch_ver});
+            if ( !req.body.params.sch )
+                throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.body.params.sch_id + "-" + req.body.params.sch_ver + "' does not exist." ];
+
+            req.body.params.sch = req.body.params.sch._id;
+            delete req.body.params.sch_id;
+            delete req.body.params.sch_ver;
+        }
+
+        //console.log("pu/src",req.body.query, req.body.params);
+
         var item, count, result = g_db._query( req.body.query, req.body.params, {}, { fullCount: true }).toArray();
 
         if ( result.length > req.body.limit ){
