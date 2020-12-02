@@ -3,6 +3,7 @@ import * as api from "./api.js";
 import * as model from "./model.js";
 import * as settings from "./settings.js";
 import * as panel_info from "./panel_item_info.js";
+//import * as dialogs from "./dialogs.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
 import * as dlgPickProj from "./dlg_pick_proj.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
@@ -476,7 +477,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 html += "<div class='cat-coll' id='" + item.id.charAt(0) + "_" + item.id.substr(2) + "'>" + makeCollDiv( item ) + "</div>";
             }
         }else{
-            html = "<div class='cat-coll-empty'>No matching collections.<p>Try other categories and/or adjust collection filters.</p></div>"
+            html = "<div class='cat-coll-empty'>No matching collections or data records.<p>Try other categories and/or adjust filter options.</p></div>"
         }
 
         $(".cat-coll-prev",cat_panel).button(data.offset?"enable":"disable");
@@ -684,7 +685,17 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             delete coll_qry.text;
         }
 
-        var tmp = $("#cat_meta_qry",cat_panel).val().trim();
+        tmp = $("#cat_qry_sch_id",cat_panel).val().trim();
+        if ( tmp ){
+            coll_qry.schId = tmp;
+            tmp = $("#cat_qry_sch_ver",cat_panel).val();
+            coll_qry.schVer = tmp?tmp:0;
+        }else{
+            delete coll_qry.schId;
+            delete coll_qry.schVer;
+        }
+
+        tmp = $("#cat_meta_qry",cat_panel).val().trim();
         if ( tmp ){
             coll_qry.meta = tmp;
         }else{
@@ -710,15 +721,17 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             delete coll_qry.to;
         }
 
-        //console.log("cat qry", coll_qry );
+        console.log("cat qry", coll_qry );
 
         api.catalogSearch( coll_qry, function( ok, data ){
             loading &= 1;
 
             if ( ok ){
-                //console.log("col data", data );
-
                 setItems( data );
+            }else{
+                setItems( [] );
+                util.setStatusText( data, true );
+                //dialogs.dlgAlert( "Catalog Search Error", data );
             }
 
             updateTopicNav();
@@ -772,7 +785,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     var textTimer = null;
 
-    $("#cat_text_qry,#cat_qry_owner,#cat_meta_qry",cat_panel).on("keypress",function( ev ){
+    $("#cat_text_qry,#cat_qry_owner,#cat_meta_qry,#cat_qry_sch_id,#cat_qry_sch_ver",cat_panel).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
             if ( textTimer )
                 clearTimeout( textTimer );

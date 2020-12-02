@@ -3831,6 +3831,12 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
 {
     a_query = string("for i in ") + (a_request.mode()==0?"collview":"dataview") + " search i.public == true";
 
+    if ( a_request.mode() == 1 && a_request.has_sch_id() > 0 )
+    {
+        a_query += " and i.sch_id == @sch";
+        a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\",\"sch_ver\":" + to_string(a_request.has_sch_ver()?a_request.sch_ver():0);
+    }
+
     if ( a_request.has_text() > 0 )
     {
         a_query += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
