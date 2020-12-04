@@ -29,15 +29,15 @@ div
     bottom:0!important;
 }
 
-.search-row
+.input-row
 {
-    padding: 0 0 0.25em 0.5em;
+    padding: 0 0 0.25em 0;
     align-items:center;
 }
 
-.search-row div
+.input-row div + div
 {
-    padding: 0 0.5em 0 0;
+    padding-left: 0.5em;
 }
 
 /*.ui-resizable-e {

@@ -1,0 +1,43 @@
+query-builder{
+    display:block;
+    background:#000040;
+    height:100%;
+    width:100%;
+}
+
+/*.query-builder-container{
+    background:#400000;
+    height:100%;
+    width:100%;
+    overflow:auto;
+}*/
+
+.query-builder-group{
+    background:#004040;
+    padding: 0.5em;
+    margin: 0.5em 0 0 1em;
+    border: 1px solid black;
+    border-radius: 6px;
+}
+
+.query-builder-field{
+    background:#004080;
+    padding:0.5em 0 0.5em 1em;
+}
+
+button.qb-btn-icon + button.qb-btn-icon{
+    margin-left:0.5em;
+}
+
+.qb-btn-icon{
+    padding:0.1em 0.25em 0.25em 0.25em!important;
+}
+
+.qb-field-sel-dlg .ui-dialog-titlebar{
+    display:none;
+}
+
+
+/*div.query-builder-field ul.ui-menu{
+    max-height: 1em!important;
+}*/

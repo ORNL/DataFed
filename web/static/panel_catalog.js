@@ -7,6 +7,8 @@ import * as panel_info from "./panel_item_info.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
 import * as dlgPickProj from "./dlg_pick_proj.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
+import * as dlgQueryBuild from "./dlg_query_builder.js";
+
 
 export function newCatalogPanel( a_id, a_frame, a_parent ){
     return new CatalogPanel( a_id, a_frame, a_parent );
@@ -630,7 +632,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         if ( cur_mode ){
             $(".cat-filter-meta,.cat-filter-schema",cat_panel).show();
         }else{
-            $(".cat-filter-meta.cat-filter-schema",cat_panel).hide();
+            $(".cat-filter-meta,.cat-filter-schema",cat_panel).hide();
         }
         loadCollections();
     });
@@ -829,6 +831,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         $("#cat_qry_sch_id,#cat_qry_sch_ver",cat_panel).val("");
         coll_off = 0;
         loadCollections();
+    });
+
+    $("#cat_qry_build",cat_panel).on("click",function(){
+        console.log("qry build click");
+        dlgQueryBuild.show();
     });
 
     $("#cat_qry_meta_clear",cat_panel).on("click",function(){

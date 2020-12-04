@@ -632,3 +632,32 @@ export function dataGet( a_ids, a_cb ){
         }
     });
 }
+
+export function schemaGetProperties( a_schema ){
+    var props = {};
+    parseProps( a_schema.def, props );
+    return props;
+}
+
+function parseProps( a_schema, a_props ){
+    var p = a_props.properties;
+    if ( p ){
+        var v;
+        for ( var k in p ){
+            v = p[k];
+
+            if ( v !== null && typeof v === 'object' && Array.isArray( v ) === false ){
+            }
+
+            if ( v !== null && typeof v === 'object' && Array.isArray( v ) === false ){
+                a_fields[k] = {}
+                parseProps( v, a_fields[k] )
+            }else if ( k == "$ref" ){
+                if ( typeof v !== 'string' )
+                    throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference type in schema." ];
+
+                a_fields.add( v );
+            }
+        }
+    }
+}
