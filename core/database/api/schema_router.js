@@ -45,6 +45,29 @@ function fixSchOwnNmAr( a_sch ){
     }
 }
 
+// This function only works on schemas that have already been validated
+function _resolveRefs( a_props, a_refs ){
+    var v, p, s, tmp, id, vr;
+    for ( var k in a_props ){
+        v = a_props[k];
+
+        if ( "$ref" in v ){
+            s = v["$ref"];
+            if ( !(s in a_refs )){
+                tmp = s.indexOf(":");
+                id = s.substr(0,tmp);
+                vr = parseInt( s.substr(tmp+1) );
+                tmp = g_db.sch.firstExample({ id: id, ver: vr });
+                //delete tmp._id;
+                a_refs[s] = tmp.def;
+                _resolveRefs( tmp.def.properties, a_refs );
+            }
+        }else if (( p = v.properties ) != undefined ) {
+            _resolveRefs( p, a_refs );
+        }
+    }
+}
+
 
 //==================== SCHEMA API FUNCTIONS
 
@@ -320,6 +343,12 @@ router.get('/view', function (req, res) {
         if ( !( sch.pub || sch.own_id == client._id || client.is_admin ))
             throw g_lib.ERR_PERM_DENIED;
 
+        if ( req.queryParams.resolve ){
+            var refs = {};
+            _resolveRefs( sch.def.properties, refs );
+            sch.def._refs = refs;
+        }
+
         sch.depr = g_db.sch_ver.firstExample({ _from: sch._id })?true:false;
         sch.uses = g_db._query("for i in 1..1 outbound @sch sch_dep return {id:i.id,ver:i.ver}",{sch:sch._id}).toArray();
         sch.used_by = g_db._query("for i in 1..1 inbound @sch sch_dep return {id:i.id,ver:i.ver}",{sch:sch._id}).toArray();
@@ -338,6 +367,7 @@ router.get('/view', function (req, res) {
 .queryParam('client', joi.string().optional(), "Client ID")
 .queryParam('id', joi.string().required(), "ID of schema")
 .queryParam('ver', joi.number().integer().min(0).required(), "Schema Version")
+.queryParam('resolve', joi.bool().optional(), "Resolve references")
 .summary('View schema')
 .description('View schema');
 
@@ -427,6 +457,8 @@ router.get('/search', function (req, res) {
 function updateSchemaRefs( a_sch ){
     // Schema has been created, revised, or updated
     // Find and update dependencies to other schemas (not versions)
+
+    // TODO This does not catch circular references
 
     g_db.sch_dep.removeByExample({ _from: a_sch._id });
 
