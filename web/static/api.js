@@ -761,11 +761,11 @@ export function topicView( a_id, a_cb ){
     });
 }
 
-export function schemaView( a_id, a_ver, a_cb ){
+export function schemaView( a_id, a_ver, a_res, a_cb ){
     if ( !a_cb )
         return;
 
-    _asyncGet( "/api/sch/view?id=" + encodeURIComponent(a_id) + "&ver=" + encodeURIComponent(a_ver), null, function( ok, reply ){
+    _asyncGet( "/api/sch/view?id=" + encodeURIComponent(a_id) + "&ver=" + encodeURIComponent(a_ver) + (a_res?"&resolve=true":""), null, function( ok, reply ){
         a_cb( ok, reply );
     });
 }

@@ -1,3 +1,4 @@
+
 export class QueryBuilder extends HTMLElement {
     /*static get observedAttributes(){
         return ['schema','query'];
@@ -45,6 +46,12 @@ export class QueryBuilder extends HTMLElement {
     init( a_schema, a_query ){
         this._sch = a_schema;
         this._qry = a_query;
+        this._sch_fields = {};
+
+        this._sch.def = JSON.parse( this._sch.def );
+        console.log( "sch def:", this._sch.def );
+        this._buildFieldSchema( this._sch.def.properties, this._sch_fields, this._sch.def._refs );
+        this._buildFieldHTML();
 
         var grp = document.createElement('div');
         grp.setAttribute('class','query-builder-group');
@@ -120,58 +127,156 @@ export class QueryBuilder extends HTMLElement {
 
     _fieldSelectBtnClick( ev ){
         console.log("field select");
-        selectSchemaField( this._sch, ev.currentTarget, function( field ){
+        this._selectSchemaField( ev.currentTarget, function( field ){
             console.log("field selected");
         })
     }
-}
 
-export function selectSchemaField( a_sch_fields, a_target, a_cb ){
-    console.log("show query builder dialog");
+    _selectSchemaField( a_target, a_cb ){
+        console.log("show query builder dialog");
 
-    var frame = $(document.createElement('div'));
+        var frame = $(document.createElement('div')),
+            frame_outer,
+            dlg_inst;
 
-    frame.html("Schema Tree");
+        //frame.text("Schema Tree: " + JSON.stringify( this._sch_fields ));
+        //frame.html( this.sch_field_html );
+        frame.html("<div class='qb-field-sel-tree no-border'></div>");
 
-    var options = {
-        title: "Select Schema Field",
-        modal: true,
-        width: 400,
-        height: 350,
-        resizable: true,
-        position:{
-            my: "left",
-            at: "right",
-            of: a_target,
-            collision: "flip"
-        },
-        dialogClass: "qb-field-sel-dlg",
-        buttons: [{
-            text: "Cancel",
-            click: function() {
-                $(this).dialog('close');
+   
+        //var sel_tree = $.ui.fancytree.getTree($("#sel_tree",frame));
+
+        function dlgSubmit(){
+            if ( a_cb ){
+                a_cb();
             }
-        },{
-            id:"ok_btn",
-            text: "Ok",
-            click: function() {
-                if ( a_cb )
-                    a_cb();
 
-                $(this).dialog('close');
-            }
-        }],
-        open: function( ev, ui ){
-            $(".btn",frame).button();
-            $('input',frame).addClass("ui-widget ui-widget-content");
-        },
-        close: function( ev, ui ) {
-            $(this).dialog("destroy").remove();
+            dlg_inst.dialog('close');
         }
-    };
 
+        $(".qb-field-sel-tree",frame).fancytree({
+            extensions: ["themeroller","filter"],
+            themeroller: {
+                activeClass: "my-fancytree-active",
+                hoverClass: ""
+            },
+            filter:{
+                autoExpand: true,
+                mode: "hide"
+            },
+            source: this.sch_field_src,
+            nodata: false,
+            icon: false,
+            selectMode: 1,
+            checkbox: false,
+            select: function( ev, data ){
+                if ( data.node.isFolder() )
+                    $("#ok_btn",frame_outer).button("disable");
+                else
+                    $("#ok_btn",frame_outer).button("enable");
+            },
+            activate:function( ev, data ) {
+                data.node.setSelected( true );
+            },
+            keydown:function( ev, data ) {
+                console.log("keypress");
+            },
+            dblclick:function( ev, data ) {
+                if ( !data.node.isFolder() ){
+                    data.node.setSelected( true );
+                    dlgSubmit();
+                }
+            },
+        });
 
-    frame.dialog( options );
+        var options = {
+            title: "Select Schema Field",
+            modal: true,
+            width: 400,
+            height: 350,
+            resizable: true,
+            position:{
+                my: "left",
+                at: "right",
+                of: a_target,
+                collision: "flip"
+            },
+            dialogClass: "qb-field-sel-dlg",
+            buttons: [{
+                text: "Cancel",
+                click: function() {
+                    dlg_inst.dialog('close');
+                }
+            },{
+                id:"ok_btn",
+                text: "Ok",
+                click: function() {
+                    dlgSubmit();
+                }
+            }],
+            open: function( ev, ui ){
+                dlg_inst = $(this);
+                $(".btn",frame).button();
+                $('input',frame).addClass("ui-widget ui-widget-content");
+                frame_outer = frame.closest(".ui-dialog");
+            },
+            close: function( ev, ui ) {
+                dlg_inst.dialog("destroy").remove();
+            }
+        };
+
+        frame.dialog( options );
+    }
+
+    _buildFieldSchema( a_props, a_out, a_refs ){
+        var v, p;
+        for ( var k in a_props ){
+            v = a_props[k];
+    
+            if ( "$ref" in v ){
+                a_out[k] = {};
+                this._buildFieldSchema( a_refs[v["$ref"]].properties, a_out[k], a_refs );
+            }else if (( p = v.properties ) != undefined ) {
+                a_out[k] = {};
+                this._buildFieldSchema( p, a_out[k], a_refs );
+            }else{
+                a_out[k] = v;
+            }
+        }
+    }
+
+    _buildFieldHTML(){
+        //this.sch_field_html = "<div class='qb-field-sel-container'>";
+        this.sch_field_src = [];
+
+        console.log( "sch flds:", this._sch_fields );
+
+        this._buildFieldHTMLRecurse( this._sch_fields, this.sch_field_src );
+
+        //this.sch_field_html += "</div>";
+    }
+
+    _buildFieldHTMLRecurse( a_fields, a_src ){
+        var f;
+        for ( var k in a_fields ){
+            f = a_fields[k];
+            //console.log("key",k,"val",f);
+            if ( !f.type ){
+                //console.log("nested");
+                //this.sch_field_html += "<div  class='qb-field-sel-object-name'>" + k + "</div><div class='qb-field-sel-object'>";
+                var chld = [];
+                this._buildFieldHTMLRecurse( f, chld );
+                //this.sch_field_html += "</div>";
+                a_src.push({ title: k, folder: true, children: chld, key: k });
+
+            }else{
+                //console.log("field");
+                //this.sch_field_html += "<div class='qb-field-sel' title='" + f.description + "'>" + k + "</div>";
+                a_src.push({ title: k, key: k });
+            }
+        }
+    }
 }
+
 
 customElements.define( 'query-builder', QueryBuilder );

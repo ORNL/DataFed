@@ -3030,7 +3030,14 @@ void
 DatabaseAPI::schemaView( const Anon::SchemaViewRequest & a_request, Anon::SchemaDataReply & a_reply )
 {
     libjson::Value result;
-    dbGet( "schema/view", {{ "id", a_request.id() }, { "ver", to_string( a_request.ver() )}}, result );
+    vector<pair<string,string>> params;
+
+    params.push_back({ "id", a_request.id() });
+    params.push_back({ "ver", to_string( a_request.ver() )});
+    if ( a_request.has_resolve() && a_request.resolve() )
+        params.push_back({ "resolve", "true" });
+
+    dbGet( "schema/view", params, result );
     setSchemaDataReply( a_reply, result );
 }
 

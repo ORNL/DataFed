@@ -633,31 +633,22 @@ export function dataGet( a_ids, a_cb ){
     });
 }
 
-export function schemaGetProperties( a_schema ){
-    var props = {};
-    parseProps( a_schema.def, props );
-    return props;
+// Only works on schema records with valid JSON schema definitions
+/*
+export function schemaResolveRefs( a_schema ){
+    var refs = {};
+    _schemaResolveRefs( a_schema.def.properties, refs );
 }
 
-function parseProps( a_schema, a_props ){
-    var p = a_props.properties;
-    if ( p ){
-        var v;
-        for ( var k in p ){
-            v = p[k];
+function _schemaResolveRefs( a_props, a_refs ){
+    var v, p;
+    for ( var k in a_props ){
+        v = a_props[k];
 
-            if ( v !== null && typeof v === 'object' && Array.isArray( v ) === false ){
-            }
-
-            if ( v !== null && typeof v === 'object' && Array.isArray( v ) === false ){
-                a_fields[k] = {}
-                parseProps( v, a_fields[k] )
-            }else if ( k == "$ref" ){
-                if ( typeof v !== 'string' )
-                    throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference type in schema." ];
-
-                a_fields.add( v );
-            }
+        if ( "$ref" in v ){
+        }else if (( p = v.properties ) != undefined ) {
+            _schemaResolveRefs( p, a_refs );
         }
     }
 }
+*/

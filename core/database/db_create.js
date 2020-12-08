@@ -35,7 +35,7 @@ graph._extendEdgeDefinitions(item);
 var acl = graph_module._relation("acl", ["d","c"], ["u","g"]);
 graph._extendEdgeDefinitions(acl);
 
-var topic = graph_module._relation("top", ["d","t"], ["t"]);
+var topic = graph_module._relation("top", ["c","t"], ["t"]);
 graph._extendEdgeDefinitions(topic);
 
 var ident = graph_module._relation("ident", ["u"], ["accn","uuid"]);

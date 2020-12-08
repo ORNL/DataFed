@@ -2162,7 +2162,8 @@ $("#btn_cat_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_refresh",frame).on('click', actionRefresh );
 //$("#btn_schemas",frame).on('click', actionSchemaList );
 $("#btn_schemas",frame).on('click', function(){
-    api.schemaView( "person", 0, function( ok, sch ){
+    api.schemaView( "person", 0, true, function( ok, sch ){
+        console.log("resolved schema:", sch.schema[0]);
         dlgQueryBuild.show( ok?sch.schema[0]:null );
     });
 });

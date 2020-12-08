@@ -37,6 +37,25 @@ button.qb-btn-icon + button.qb-btn-icon{
     display:none;
 }
 
+.qb-field-sel-container{
+    padding: 0;
+}
+
+.qb-field-sel-object-name{
+    padding: 0;
+}
+
+.qb-field-sel-object{
+    padding: 0.125em 0 0.125em 1em;
+}
+
+.qb-field-sel{
+    padding: 0.125em 0 0.125em 0;
+}
+
+.qb-field-sel:hover{
+    background: #000040;
+}
 
 /*div.query-builder-field ul.ui-menu{
     max-height: 1em!important;

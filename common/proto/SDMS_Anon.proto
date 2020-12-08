@@ -286,6 +286,7 @@ message SchemaViewRequest
 {
     required string             id          = 1;
     required uint32             ver         = 2;
+    optional bool               resolve     = 3;
 }
 
 message SchemaSearchRequest

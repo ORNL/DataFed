@@ -65,7 +65,7 @@ function loadSchemas(){
 
 function getSelSchema( a_cb ){
     var data = tree.getSelectedNodes()[0].data;
-    api.schemaView( data.id, data.ver, function( ok, reply ){
+    api.schemaView( data.id, data.ver, false, function( ok, reply ){
         console.log("schema",reply);
         if ( ok && reply.schema ){
             a_cb( reply.schema[0] );

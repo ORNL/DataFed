@@ -1272,7 +1272,7 @@ app.get('/api/top/search', ( a_req, a_resp ) => {
 });
 
 app.get('/api/sch/view', ( a_req, a_resp ) => {
-    sendMessage( "SchemaViewRequest", { id: a_req.query.id, ver: a_req.query.ver }, a_req, a_resp, function( reply ) {
+    sendMessage( "SchemaViewRequest", { id: a_req.query.id, ver: a_req.query.ver, resolve: a_req.query.resolve }, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
 });
