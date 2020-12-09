@@ -1,12 +1,57 @@
+import * as util from "./util.js";
 
 export class QueryBuilder extends HTMLElement {
     /*static get observedAttributes(){
         return ['schema','query'];
     }*/
+    //static _top_html = "<button class='btn-opr-group qb-btn-icon' title='Change operator to combine contained items'>AND</button><button class='btn-add-field qb-btn-icon' title='Add new field'><span class='ui-icon ui-icon-input'></span></button><button class='btn-add-group qb-btn-icon' title='Add new sub-group'>( )</button>";
+    //static _grp_html = "<button class='btn-opr-group qb-btn-icon' title='Change operator to combine contained items'>AND</button><button class='btn-add-field qb-btn-icon' title='Add new field'><span class='ui-icon ui-icon-input'></span></button><button class='btn-add-group qb-btn-icon' title='Add new sub-group'>( )</button><div style='float:right'><button class='btn-rem-group qb-btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>";
     static _top_html = "<button class='btn-opr-group qb-btn-icon'>AND</button><button class='btn-add-field qb-btn-icon'><span class='ui-icon ui-icon-input'></span></button><button class='btn-add-group qb-btn-icon'>( )</button>";
     static _grp_html = "<button class='btn-opr-group qb-btn-icon'>AND</button><button class='btn-add-field qb-btn-icon'><span class='ui-icon ui-icon-input'></span></button><button class='btn-add-group qb-btn-icon'>( )</button><div style='float:right'><button class='btn-rem-group qb-btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>";
-    static _fld_html = "<button class='btn-sel-field'>Select Field...</button><button class='btn-opr-field' disabled>Operator</button><div style='float:right'><button class='btn-rem-field qb-btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>";
+    static _fld_html = "<button class='btn-sel-field'>Select Field...</button><select class='sel-opr-field' disabled></select><input class='inp-val-field'></input><div style='float:right'><button class='btn-rem-field qb-btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>";
     //static _fld_html = "<select class='sel-field'><option>AAA</option><option>BBBBB</option><option>CCCCCCCCCCCCCCCCCC</option><option>DDD</option><option>EEE</option><option>FFF</option></select><div style='float:right'><button class='btn-rem-field qb-btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>";
+
+    static _FLD_STR     = 1;
+    static _FLD_NUM     = 2;
+    static _FLD_BOOL    = 3;
+
+    static _OPR_AND     = 1;
+    static _OPR_OR      = 2;
+    static _OPR_LT      = 3;
+    static _OPR_LTE     = 4;
+    static _OPR_EQ      = 5;
+    static _OPR_NEQ     = 6;
+    static _OPR_GTE     = 7;
+    static _OPR_GT      = 8;
+    static _OPR_RNG     = 9;
+    static _OPR_DF      = 10;
+    static _OPR_NDF     = 11;
+    static _OPR_RGX     = 12;
+    static _OPR_WLD     = 13;
+
+    static _oper_label = {
+        _OPR_AND : "And",
+        _OPR_OR  : "Or",
+        _OPR_LT  : "<",
+        _OPR_LTE : "<=",
+        _OPR_EQ  : "==",
+        _OPR_NEQ : "<>",
+        _OPR_GTE : ">=",
+        _OPR_GT  : ">",
+        _OPR_RNG : "Range",
+        _OPR_DF  : "Defined",
+        _OPR_NDF : "Not Defined",
+        _OPR_RGX : "RegEx",
+        _OPR_WLD : "Wildcard",
+        _OPR_T   : "True",
+        _OPR_F   : "False"
+    };
+
+    static _fld_cfg = {
+        _FLD_STR: [_OPR_EQ,_OPR_NEQ,_OPR_RGX,_OPR_WLD,_OPR_DF,_OPR_NDF],
+        _FLD_NUM: [_OPR_EQ,_OPR_NEQ,_OPR_LT,_OPR_LTE,_OPR_GTE,_OPR_GT,_OPR_RNG,_OPR_DF,_OPR_NDF],
+        _FLD_BOOL: [_OPR_T,_OPR_F,_OPR_DF,_OPR_NDF],
+    }
 
     constructor(){
         super();
@@ -27,7 +72,7 @@ export class QueryBuilder extends HTMLElement {
     }
 
     connectedCallback(){
-        console.log("query builder is on the page!")
+        //console.log("query builder is on the page!")
 
         this._ui_front = $(this).closest(".ui-front");
 
@@ -40,16 +85,15 @@ export class QueryBuilder extends HTMLElement {
     }
 
     disconnectedCallback(){
-        console.log("query builder has been removed")
+        //console.log("query builder has been removed")
     }
 
     init( a_schema, a_query ){
         this._sch = a_schema;
         this._qry = a_query;
         this._sch_fields = {};
-
         this._sch.def = JSON.parse( this._sch.def );
-        console.log( "sch def:", this._sch.def );
+
         this._buildFieldSchema( this._sch.def.properties, this._sch_fields, this._sch.def._refs );
         this._buildFieldHTML();
 
@@ -61,6 +105,8 @@ export class QueryBuilder extends HTMLElement {
         $("button",grp).button();
 
         this.append( grp );
+
+        //util.tooltipTheme( $(grp) );
     }
 
     getSchema(){
@@ -84,10 +130,9 @@ export class QueryBuilder extends HTMLElement {
         var fld = document.createElement('div');
         fld.setAttribute('class','query-builder-field');
         fld.innerHTML = QueryBuilder._fld_html;
-        $("button",fld).button();
-        //$("select",fld).selectmenu({ appendTo: this._ui_front, width: "auto", position: { my: "left top", at: "left bottom", collision: "flip" }});
-
         a_container.append( fld );
+        $("button",fld).button();
+        $("select",fld).selectmenu({width:false});
     }
 
     _groupAddBtnClick( ev ){
@@ -128,33 +173,66 @@ export class QueryBuilder extends HTMLElement {
     _fieldSelectBtnClick( ev ){
         console.log("field select");
         this._selectSchemaField( ev.currentTarget, function( field ){
-            console.log("field selected");
+            console.log("selected:", field );
+
+            var btn = $(ev.currentTarget),
+                div = btn.closest(".query-builder-field"),
+                sel = $(".sel-opr-field",div),
+                val = $(".inp-val-field",div),
+                path = field[field.length-1],
+                label;
+
+            for ( var i = field.length - 2; i >= 0; i-- ){
+                path = field[i] + "." + path;
+            }
+
+            if ( path.length > 20 ){
+                label = "..." + path.substr(path.length-20);
+            }else{
+                label = path;
+            }
+
+            btn.button("option","label", label );
+            btn.attr("title", path );
+            util.tooltipTheme( btn );
+
+            sel.html("<option>AAA</option><option>BBB</option>");
+            sel.selectmenu("enable");
+            sel.selectmenu("refresh");
+
+            val.show();
         })
     }
 
     _selectSchemaField( a_target, a_cb ){
-        console.log("show query builder dialog");
+        //console.log("show query builder dialog");
 
         var frame = $(document.createElement('div')),
             frame_outer,
             dlg_inst;
 
-        //frame.text("Schema Tree: " + JSON.stringify( this._sch_fields ));
-        //frame.html( this.sch_field_html );
+        /*frame.html("<table class='qb-field-sel-tree no-border'>\
+            <colgroup><col width='*'></col><col></col></colgroup>\
+            <tbody><tr><td style='white-space: nowrap;padding:0 2em 0 0'></td><td style='white-space:nowrap'></td></tr></tbody>\
+        </table>");*/
+
         frame.html("<div class='qb-field-sel-tree no-border'></div>");
 
-   
-        //var sel_tree = $.ui.fancytree.getTree($("#sel_tree",frame));
-
-        function dlgSubmit(){
+        function dlgSubmit( a_node ){
             if ( a_cb ){
-                a_cb();
+                var node = a_node?a_node:tree.getSelectedNodes()[0],
+                    path = [node.key];
+                while ( node.parent.parent ){
+                    node = node.parent;
+                    path.unshift( node.key );
+                }
+                a_cb( path );
             }
 
             dlg_inst.dialog('close');
         }
 
-        $(".qb-field-sel-tree",frame).fancytree({
+        var tree_opts = {
             extensions: ["themeroller","filter"],
             themeroller: {
                 activeClass: "my-fancytree-active",
@@ -169,32 +247,40 @@ export class QueryBuilder extends HTMLElement {
             icon: false,
             selectMode: 1,
             checkbox: false,
-            select: function( ev, data ){
+            autoActivate: true,
+            activate:function( ev, data ) {
+                data.node.setSelected( true );
                 if ( data.node.isFolder() )
                     $("#ok_btn",frame_outer).button("disable");
                 else
                     $("#ok_btn",frame_outer).button("enable");
             },
-            activate:function( ev, data ) {
-                data.node.setSelected( true );
-            },
             keydown:function( ev, data ) {
-                console.log("keypress");
-            },
-            dblclick:function( ev, data ) {
-                if ( !data.node.isFolder() ){
-                    data.node.setSelected( true );
-                    dlgSubmit();
+                if ( ev.keyCode == 13 && !data.node.isFolder() ){
+                    dlgSubmit( data.node );
                 }
             },
-        });
+            click:function( ev, data ) {
+                if ( !data.node.isFolder() ){
+                    dlgSubmit( data.node );
+                }
+            },
+            init: function( ev, data ){
+                data.tree.rootNode.children[0].setActive( true );
+            }
+        };
 
         var options = {
             title: "Select Schema Field",
             modal: true,
-            width: 400,
-            height: 350,
+            //width: 'auto',
             resizable: true,
+            minWidth: 0,
+            minHeight: 0,
+            create: function() {
+                $(this).css("maxHeight", 50);        
+                $(this).css("maxWidth", 400);        
+            },
             position:{
                 my: "left",
                 at: "right",
@@ -219,6 +305,10 @@ export class QueryBuilder extends HTMLElement {
                 $(".btn",frame).button();
                 $('input',frame).addClass("ui-widget ui-widget-content");
                 frame_outer = frame.closest(".ui-dialog");
+                $(".qb-field-sel-tree",frame).fancytree( tree_opts ).on("mouseenter", ".fancytree-title", function(ev){
+                    var node = $.ui.fancytree.getNode(ev);
+                    node.setActive(true);
+                });
             },
             close: function( ev, ui ) {
                 dlg_inst.dialog("destroy").remove();
@@ -246,33 +336,21 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _buildFieldHTML(){
-        //this.sch_field_html = "<div class='qb-field-sel-container'>";
         this.sch_field_src = [];
-
-        console.log( "sch flds:", this._sch_fields );
-
         this._buildFieldHTMLRecurse( this._sch_fields, this.sch_field_src );
-
-        //this.sch_field_html += "</div>";
     }
 
     _buildFieldHTMLRecurse( a_fields, a_src ){
         var f;
         for ( var k in a_fields ){
             f = a_fields[k];
-            //console.log("key",k,"val",f);
             if ( !f.type ){
-                //console.log("nested");
-                //this.sch_field_html += "<div  class='qb-field-sel-object-name'>" + k + "</div><div class='qb-field-sel-object'>";
                 var chld = [];
                 this._buildFieldHTMLRecurse( f, chld );
-                //this.sch_field_html += "</div>";
-                a_src.push({ title: k, folder: true, children: chld, key: k });
+                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", folder: true, children: chld, key: k });
 
             }else{
-                //console.log("field");
-                //this.sch_field_html += "<div class='qb-field-sel' title='" + f.description + "'>" + k + "</div>";
-                a_src.push({ title: k, key: k });
+                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", key: k });
             }
         }
     }

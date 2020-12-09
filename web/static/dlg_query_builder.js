@@ -69,7 +69,7 @@ export function show( a_schema, a_cb ){
     };
 
     $("#dlg_qry_bld_sch_pick",frame).on( "click", function(){
-        dlgSchemaList.show( true, function( schema ){
+        dlgSchemaList.show( true, true, function( schema ){
             _schema = schema;
             $("#dlg_qry_bld_sch_id",frame).val( _schema.id );
             $("#dlg_qry_bld_sch_ver",frame).val( _schema.ver );

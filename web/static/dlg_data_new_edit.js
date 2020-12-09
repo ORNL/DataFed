@@ -118,7 +118,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     });
     
     $("#sch_pick",frame).on("click",function(ev){
-        dlgSchList.show( true, function( schema ){
+        dlgSchList.show( true, false, function( schema ){
             $("#sch_id",frame).val( schema.id );
             $("#sch_ver",frame).val( schema.ver );
         });

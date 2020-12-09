@@ -40,7 +40,7 @@ function loadSchemas(){
     }
     par.sort--;
 
-    console.log("search",par);
+    //console.log("search",par);
 
     api.schemaSearch(par, function(ok,data){
         if ( ok ){
@@ -63,10 +63,10 @@ function loadSchemas(){
     });
 };
 
-function getSelSchema( a_cb ){
+function getSelSchema( a_cb, a_resolve ){
     var data = tree.getSelectedNodes()[0].data;
-    api.schemaView( data.id, data.ver, false, function( ok, reply ){
-        console.log("schema",reply);
+    api.schemaView( data.id, data.ver, a_resolve, function( ok, reply ){
+        //console.log("schema",reply);
         if ( ok && reply.schema ){
             a_cb( reply.schema[0] );
         }else{
@@ -76,7 +76,7 @@ function getSelSchema( a_cb ){
 };
 
 
-export function show( a_select, a_cb ){
+export function show( a_select, a_resolve, a_cb ){
     frame = $(document.createElement('div'));
 
     frame.html(
@@ -157,7 +157,7 @@ export function show( a_select, a_cb ){
                 getSelSchema( function( schema ){
                     a_cb( schema );
                     dlg_inst.dialog('close');
-                });
+                }, a_resolve );
             }else{
                 dlg_inst.dialog('close');
             }

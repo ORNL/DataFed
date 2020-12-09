@@ -856,27 +856,10 @@ td.min-width
     /*padding:0.1em 0 0 0!important;*/
 }
 
-.ui-selectmenu-button.ui-button
-{
-    padding: 1px .5em!important;
-}
-
 .ui-tabs .ui-tabs-nav .ui-tabs-anchor
 {
 	padding: .1em .25em!important;
 }
-
-.search-wiz-select-button
-{
-    padding: 1px .5em!important;
-    vertical-align:bottom!important;
-    width: 9ch!important;
-}
-
-/* Hide all jQ dialog close buttons */
-/*.ui-dialog-titlebar-close {
-    visibility: hidden;
-}*/
 
 .ui-tabs-nav{
     border-top-left-radius: 0!important;

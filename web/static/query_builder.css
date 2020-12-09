@@ -33,9 +33,24 @@ button.qb-btn-icon + button.qb-btn-icon{
     padding:0.1em 0.25em 0.25em 0.25em!important;
 }
 
-.qb-field-sel-dlg .ui-dialog-titlebar{
+.qb-field-sel-dlg .ui-dialog-titlebar,
+.qb-field-sel-dlg .ui-dialog-buttonpane{
     display:none;
 }
+
+.qb-field-sel-dlg .ui-dialog-content{
+    padding:0 0.25em!important;
+    /*min-height:2em!important;
+    max-height:12em!important;
+    max-width:400px!important;*/
+}
+
+/*.qb-field-sel-dlg .ui-dialog{
+    min-height:2em!important;
+    max-height:6em!important;
+    min-width:6em!important;
+    max-width:400px!important;
+}*/
 
 .qb-field-sel-container{
     padding: 0;
@@ -55,6 +70,18 @@ button.qb-btn-icon + button.qb-btn-icon{
 
 .qb-field-sel:hover{
     background: #000040;
+}
+
+.btn-sel-field{
+    width:20ch!important;
+}
+
+.sel-opr-field + span{
+    width:15ch!important;
+}
+
+.inp-val-field{
+    display:none;
 }
 
 /*div.query-builder-field ul.ui-menu{

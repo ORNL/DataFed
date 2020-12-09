@@ -817,7 +817,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     });
 
     $("#cat_qry_sch_pick",cat_panel).on("click",function(){
-        dlgSchemaList.show( true, function( schema ){
+        dlgSchemaList.show( true, false, function( schema ){
             $("#cat_qry_sch_id",cat_panel).val( schema.id );
             $("#cat_qry_sch_ver",cat_panel).val( schema.ver );
             coll_off = 0;
