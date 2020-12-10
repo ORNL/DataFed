@@ -1,5 +1,21 @@
 import * as util from "./util.js";
 
+export const OPR_AND     = "and";
+export const OPR_OR      = "or";
+export const OPR_LT      = "<";
+export const OPR_LTE     = "<=";
+export const OPR_EQ      = "==";
+export const OPR_NEQ     = "!=";
+export const OPR_GTE     = ">=";
+export const OPR_GT      = ">";
+export const OPR_DF      = "defined";
+export const OPR_NDF     = "omitted";
+export const OPR_RGX     = "regex";
+export const OPR_WLD     = "wild";
+export const OPR_TRU     = "true";
+export const OPR_FAL     = "false";
+export const OPR_CON     = "contains";
+
 export class QueryBuilder extends HTMLElement {
     /*static get observedAttributes(){
         return ['schema','query'];
@@ -14,43 +30,16 @@ export class QueryBuilder extends HTMLElement {
     static _FLD_STR     = 1;
     static _FLD_NUM     = 2;
     static _FLD_BOOL    = 3;
-
-    static _OPR_AND     = 1;
-    static _OPR_OR      = 2;
-    static _OPR_LT      = 3;
-    static _OPR_LTE     = 4;
-    static _OPR_EQ      = 5;
-    static _OPR_NEQ     = 6;
-    static _OPR_GTE     = 7;
-    static _OPR_GT      = 8;
-    static _OPR_RNG     = 9;
-    static _OPR_DF      = 10;
-    static _OPR_NDF     = 11;
-    static _OPR_RGX     = 12;
-    static _OPR_WLD     = 13;
-
-    static _oper_label = {
-        _OPR_AND : "And",
-        _OPR_OR  : "Or",
-        _OPR_LT  : "<",
-        _OPR_LTE : "<=",
-        _OPR_EQ  : "==",
-        _OPR_NEQ : "<>",
-        _OPR_GTE : ">=",
-        _OPR_GT  : ">",
-        _OPR_RNG : "Range",
-        _OPR_DF  : "Defined",
-        _OPR_NDF : "Not Defined",
-        _OPR_RGX : "RegEx",
-        _OPR_WLD : "Wildcard",
-        _OPR_T   : "True",
-        _OPR_F   : "False"
-    };
+    static _FLD_ARR     = 4;
+    static _FLD_OBJ     = 5;
 
     static _fld_cfg = {
-        _FLD_STR: [_OPR_EQ,_OPR_NEQ,_OPR_RGX,_OPR_WLD,_OPR_DF,_OPR_NDF],
-        _FLD_NUM: [_OPR_EQ,_OPR_NEQ,_OPR_LT,_OPR_LTE,_OPR_GTE,_OPR_GT,_OPR_RNG,_OPR_DF,_OPR_NDF],
-        _FLD_BOOL: [_OPR_T,_OPR_F,_OPR_DF,_OPR_NDF],
+        "string": {opr:[OPR_EQ,OPR_NEQ,OPR_RGX,OPR_WLD,OPR_DF,OPR_NDF]},
+        "number": {opr:[OPR_EQ,OPR_NEQ,OPR_LT,OPR_LTE,OPR_GTE,OPR_GT,OPR_DF,OPR_NDF]},
+        "integer": {opr:[OPR_EQ,OPR_NEQ,OPR_LT,OPR_LTE,OPR_GTE,OPR_GT,OPR_DF,OPR_NDF]},
+        "bool"  : {opr:[OPR_TRU,OPR_FAL,OPR_EQ,OPR_NEQ,OPR_DF,OPR_NDF]},
+        "array" : {opr:[OPR_CON,OPR_DF,OPR_NDF]},
+        "object": {opr:[OPR_DF,OPR_NDF]}
     }
 
     constructor(){
@@ -99,14 +88,11 @@ export class QueryBuilder extends HTMLElement {
 
         var grp = document.createElement('div');
         grp.setAttribute('class','query-builder-group');
-        grp.style.background = "#004000";
         grp.style.margin = "0";
         grp.innerHTML = QueryBuilder._top_html;
         $("button",grp).button();
 
         this.append( grp );
-
-        //util.tooltipTheme( $(grp) );
     }
 
     getSchema(){
@@ -178,25 +164,20 @@ export class QueryBuilder extends HTMLElement {
             var btn = $(ev.currentTarget),
                 div = btn.closest(".query-builder-field"),
                 sel = $(".sel-opr-field",div),
-                val = $(".inp-val-field",div),
-                path = field[field.length-1],
-                label;
+                val = $(".inp-val-field",div);
 
-            for ( var i = field.length - 2; i >= 0; i-- ){
-                path = field[i] + "." + path;
-            }
-
-            if ( path.length > 20 ){
-                label = "..." + path.substr(path.length-20);
-            }else{
-                label = path;
-            }
-
-            btn.button("option","label", label );
-            btn.attr("title", path );
+            btn.button("option","label", field.label.length > 20?"..." + field.label.substr(field.label.length-20):field.label );
+            btn.attr("title", field.label + " : " + field.desc );
             util.tooltipTheme( btn );
 
-            sel.html("<option>AAA</option><option>BBB</option>");
+            var oper = QueryBuilder._fld_cfg[field.type].opr,
+                html = "";
+
+            for ( var i in oper ){
+                html += "<option>" + oper[i] + "</option>";
+            }
+            console.log("sel opt:",html);
+            sel.html( html );
             sel.selectmenu("enable");
             sel.selectmenu("refresh");
 
@@ -205,28 +186,27 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _selectSchemaField( a_target, a_cb ){
-        //console.log("show query builder dialog");
-
         var frame = $(document.createElement('div')),
             frame_outer,
             dlg_inst;
-
-        /*frame.html("<table class='qb-field-sel-tree no-border'>\
-            <colgroup><col width='*'></col><col></col></colgroup>\
-            <tbody><tr><td style='white-space: nowrap;padding:0 2em 0 0'></td><td style='white-space:nowrap'></td></tr></tbody>\
-        </table>");*/
 
         frame.html("<div class='qb-field-sel-tree no-border'></div>");
 
         function dlgSubmit( a_node ){
             if ( a_cb ){
                 var node = a_node?a_node:tree.getSelectedNodes()[0],
-                    path = [node.key];
+                    path = [node.key],
+                    label = node.key,
+                    desc = node.data.desc,
+                    val_ty = node.data.val_type;
+
                 while ( node.parent.parent ){
                     node = node.parent;
                     path.unshift( node.key );
+                    label = node.key + "." + label;
                 }
-                a_cb( path );
+                //console.log("node:",a_node);
+                a_cb({ path: path, label: label, desc: desc, type: val_ty });
             }
 
             dlg_inst.dialog('close');
@@ -250,18 +230,22 @@ export class QueryBuilder extends HTMLElement {
             autoActivate: true,
             activate:function( ev, data ) {
                 data.node.setSelected( true );
-                if ( data.node.isFolder() )
+                /*if ( data.node.isFolder() )
                     $("#ok_btn",frame_outer).button("disable");
                 else
-                    $("#ok_btn",frame_outer).button("enable");
+                    $("#ok_btn",frame_outer).button("enable");*/
             },
             keydown:function( ev, data ) {
-                if ( ev.keyCode == 13 && !data.node.isFolder() ){
+                if ( ev.keyCode == 13 /*&& !data.node.isFolder()*/ ){
                     dlgSubmit( data.node );
                 }
             },
             click:function( ev, data ) {
-                if ( !data.node.isFolder() ){
+                console.log("click",ev,data);
+                //if ( !data.node.isFolder() ){
+                if ( data.targetType == "expander" && data.node.isFolder() ){
+                    data.node.toggleExpanded();
+                }else{
                     dlgSubmit( data.node );
                 }
             },
@@ -288,7 +272,7 @@ export class QueryBuilder extends HTMLElement {
                 collision: "flip"
             },
             dialogClass: "qb-field-sel-dlg",
-            buttons: [{
+            /*buttons: [{
                 text: "Cancel",
                 click: function() {
                     dlg_inst.dialog('close');
@@ -299,7 +283,7 @@ export class QueryBuilder extends HTMLElement {
                 click: function() {
                     dlgSubmit();
                 }
-            }],
+            }],*/
             open: function( ev, ui ){
                 dlg_inst = $(this);
                 $(".btn",frame).button();
@@ -344,13 +328,13 @@ export class QueryBuilder extends HTMLElement {
         var f;
         for ( var k in a_fields ){
             f = a_fields[k];
+            console.log("field", k, f);
             if ( !f.type ){
                 var chld = [];
                 this._buildFieldHTMLRecurse( f, chld );
-                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", folder: true, children: chld, key: k });
-
+                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", folder: true, children: chld, key: k, val_type: "object", desc: (f.description?f.description:"(no description)") });
             }else{
-                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", key: k });
+                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", key: k, val_type: f.type, desc: (f.description?f.description:"(no description)") });
             }
         }
     }
