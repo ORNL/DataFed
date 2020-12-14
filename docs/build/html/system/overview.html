@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>System Overview &#8212; DataFed 1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Web Portal" href="../user/web/portal.html" />
+    <link rel="prev" title="Welcome to DataFed’s documentation!" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="system-overview">
+<h1>System Overview<a class="headerlink" href="#system-overview" title="Permalink to this headline">¶</a></h1>
+<p>DataFed is a federated data collaboration and management system for science. DataFed provides
+many features that ease the data management burden associated with general scientific research;
+however, the primary goal of DataFed is to improve scientific data quality by enabling precise
+full-life-cycle control over data artifacts, with the ability to uniformly share and access data
+across geographically distributed facilities. The combined capabilities of DataFed directly support
+the concept of “repeatable science” by unambiguously identifying data, capturing context and
+metadata, and by providing the means to access and utilize data globally.</p>
+<p>DataFed can be thought of as a “Tier 2+” distributed data storage system - meaning it is intended
+for creating and working with data that is of medium- to long-term significance to the owner and/or
+collaborators. Unlike a Tier 1 storage system (i.e. a local file system), DataFed compromises raw
+access performance in favor of FAIR data principles. While DataFed shares many features with Tier 3
+storage systems (i.e. data archives), DataFed allows data and metadata to be updated and specifically
+includes features for disseminating any changes to downstream dependents (via provenance) and/or data
+subscribers. DataFed also provides additional collaboration features to enable precise “in-band”
+communication regarding data and collections of data (as opposed to ad hoc methods such as email).</p>
+<p>DataFed utilizes <a class="reference external" href="https://www.globus.org">Globus</a> for efficient and secure data transfers, as well as
+for user authentication. Globus can be thought of as a “data network” where data transfers take place
+between Globus “endpoints” - which are Globus services that enable access to underlying file systems
+hosted by member organizations. DataFed adds a data management layer on top of Globus that permits data
+to be located and accessed without needing to know where the data is physically stored within the Globus
+network. Because DataFed relies heavily on Globus, it is recommended that DataFed users familiarize
+themselves with how Globus works from their online documentation at <a class="reference external" href="https://www.globus.org/what-we-do">https://www.globus.org/what-we-do</a>.</p>
+<p>DataFed is an open source project hosted on GitHub at <a class="reference external" href="https://github.com/ORNL/DataFed">https://github.com/ORNL/DataFed</a>. DataFed is
+under active development at Oak Ridge National Laboratory (ORNL) within the Oak Ridge Leadership
+Computing Facility (OLCF) and is currently deployed in an alpha-release state for early access users.</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">DataFed</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/web/portal.html">Web Portal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/python.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/api/python.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/scripting.html">Scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../admin/general.html">Administration</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Welcome to DataFed’s documentation!</a></li>
+      <li>Next: <a href="../user/web/portal.html" title="next chapter">Web Portal</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Dale Stansberry.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/system/overview.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
