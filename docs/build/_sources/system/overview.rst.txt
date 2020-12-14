@@ -1,5 +1,0 @@
-===============
-System Overview
-===============
-
-This is an overview of the DataFed System.

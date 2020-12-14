@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'DataFed'
-copyright = '2020, Dale Stansberry'
+copyright = '2020, Oak Ridge National Laboratories'
 author = 'Dale Stansberry'
 
 # The full version, including alpha/beta/rc tags

@@ -1,5 +1,0 @@
-=========
-Scripting
-=========
-
-Scripting guide here.
