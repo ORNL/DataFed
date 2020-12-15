@@ -1,115 +1,584 @@
 
-<!DOCTYPE html>
 
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Command Line Interface &#8212; DataFed 1.4 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>DataFed Command Line Interface &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Python API" href="../api/python.html" />
-    <link rel="prev" title="Web Portal" href="../web/portal.html" />
+    <link rel="prev" title="DataFed Web Portal" href="../web/portal.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
           
 
-          <div class="body" role="main">
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> DataFed
+          
+
+          
+          </a>
+
+          
             
-  <div class="section" id="command-line-interface">
-<h1>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Permalink to this headline">¶</a></h1>
-<p>Using the Python CLI.</p>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
 </div>
 
-
-          </div>
           
         </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">DataFed</a></h1>
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../system/overview.html">System Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../web/portal.html">Web Portal</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../web/portal.html">DataFed Web Portal</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">DataFed Command Line Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#configuration-settings">Configuration Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#server-configuration-file">Server Configuration File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#server-public-key-file">Server Public Key File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#server-host">Server Host</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#server-port">Server Port</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#client-configuration-file">Client Configuration File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#client-config-directory">Client Config Directory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#client-public-key-file">Client Public Key File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#client-private-key-file">Client Private Key File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#default-endpoint">Default Endpoint</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration-files">Configuration Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration-priority">Configuration Priority</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuring-automatic-authentication">Configuring Automatic Authentication</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#command-line-interface-usage">Command Line Interface Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scripting-with-the-cli">Scripting with the CLI</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../api/python.html">Python API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../scripting.html">Scripting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../admin/general.html">Administration</a></li>
 </ul>
 
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="../web/portal.html" title="previous chapter">Web Portal</a></li>
-      <li>Next: <a href="../api/python.html" title="next chapter">Python API</a></li>
-  </ul></li>
-</ul>
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>DataFed Command Line Interface</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/user/cli/python.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
 </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="datafed-command-line-interface">
+<h1>DataFed Command Line Interface</h1>
+<div class="section" id="introduction">
+<h2>Introduction</h2>
+<p>The DataFed command-line-interface (CLI) provides access to basic DataFed capabilities for both
+interactive use and non-interactive scripting from a command shell. The DataFed CLI is provided
+via a Python 3 package called “datafed” available on the <a class="reference external" href="https://pypi.org">PyPi</a> site, and,
+because the DataFed CLI is based on Python, it can be installed and used on any operating system
+that supports Python 3. (See the installation section, below, for specifics.)</p>
+<p>The DataFed CLI Python package also contains an accessible API that can be used to build custom
+Python applications that directly interface with the DataFed service. For more information on the
+DataFed API, please refer to REF_REF_REF.</p>
+</div>
+<div class="section" id="installation">
+<h2>Installation</h2>
+<p>The DataFed CLI requires Python 3 to be installed and properly configured. Within supported
+facilities, both Python 3 and the DataFed CLI is may already be installed and ready to use;
+however, if you need to use the DataFed CLI from a non-supported facility, or on an external
+workstation or laptop, then you will need to ensure that Python 3 is available, then install and
+configure the DataFed CLI manually. In some cases, <a class="reference external" href="https://www.globus.org/globus-connect-personal">Globus Personal Connect</a> may also need to be installed if access to
+locally stored files is desired.</p>
+<p>Like many Python packages, the DataFed CLI is easy to install using Python’s “pip” tool. For Linux
+and Mac OS, the command is as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="n">datafed</span>
+</pre></div>
+</div>
+<p>And for Windows, the command is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">datafed</span>
+</pre></div>
+</div>
+<p>Pip will install the DataFed CLI package and all dependencies, and will also install an executable
+“datafed” command script in the configured pip package binary, or “bin” directory. This bin directory
+must be included in the executable search path for the DataFed CLI command to be accessible.</p>
+<p>The DataFed CLI must be configured before it can be used, and this is discussed in the next section.</p>
+</div>
+<div class="section" id="configuration">
+<h2>Configuration</h2>
+<p>Users would typically not need to configure the DataFed CLI from within a facility-supported
+environments; however, when installing the CLI on personal workstations or laptops, the CLI requires a
+few key settings to be configured prior to use.</p>
+<p>Configuration settings may be specified using environment variables, configuration files, or command-line
+options (or any combination thereof). The following sections list and describe the DataFed CLI settings.</p>
+<div class="section" id="configuration-settings">
+<h3>Configuration Settings</h3>
+<p>The table below lists all of the DataFed CLI settings and how they can be set using either a configuration
+file (.ini), an environment variable, or a command-line option. Many of the listed settings relate to
+the communication channel between the CLI and the DataFed server. Because all communications across the
+channel are encrypted, the locations of public and private DataFed encryption key files must be specified.
+These keys are similar to SSH keys, but they are unique to DataFed; however, like SSH keys, access to
+private DataFed key files must be restricted to prevent unauthorized access to user accounts. Configuring
+DataFed key files, as well as other settings, are discussed in following sections.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 7%" />
+<col style="width: 16%" />
+<col style="width: 29%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Setting</p></th>
+<th class="head"><p>Section</p></th>
+<th class="head"><p>Setting</p></th>
+<th class="head"><p>Environment Variable</p></th>
+<th class="head"><p>CLI Option(s)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Server config file</p></td>
+<td><p>N/A</p></td>
+<td><p>N/A</p></td>
+<td><p>DATAFED_SERVER_CFG_FILE</p></td>
+<td><p>–server-cfg-file</p></td>
+</tr>
+<tr class="row-odd"><td><p>Server config directory</p></td>
+<td><p>server</p></td>
+<td><p>config_dir</p></td>
+<td><p>DATAFED_SERVER_CFG_DIR</p></td>
+<td><p>–server-cfg-dir</p></td>
+</tr>
+<tr class="row-even"><td><p>Server public key file</p></td>
+<td><p>server</p></td>
+<td><p>public_key_file</p></td>
+<td><p>DATAFED_SERVER_PUB_KEY_FILE</p></td>
+<td><p>–server-pub-key-file</p></td>
+</tr>
+<tr class="row-odd"><td><p>Sever hostname / IP</p></td>
+<td><p>server</p></td>
+<td><p>host</p></td>
+<td><p>DATAFED_SERVER_HOST</p></td>
+<td><p>–server-host</p></td>
+</tr>
+<tr class="row-even"><td><p>Sever port number</p></td>
+<td><p>server</p></td>
+<td><p>port</p></td>
+<td><p>DATAFED_SERVER_PORT</p></td>
+<td><p>–server-port</p></td>
+</tr>
+<tr class="row-odd"><td><p>Client config file</p></td>
+<td><p>client</p></td>
+<td><p>config_file</p></td>
+<td><p>DATAFED_CLIENT_CFG_FILE</p></td>
+<td><p>–client-cfg-file</p></td>
+</tr>
+<tr class="row-even"><td><p>Client config directory</p></td>
+<td><p>client</p></td>
+<td><p>config_dir</p></td>
+<td><p>DATAFED_CLIENT_CFG_DIR</p></td>
+<td><p>–client-cfg-dir</p></td>
+</tr>
+<tr class="row-odd"><td><p>Client public key file</p></td>
+<td><p>client</p></td>
+<td><p>public_key_file</p></td>
+<td><p>DATAFED_CLIENT_PUB_KEY_FILE</p></td>
+<td><p>–client-pub-key-file</p></td>
+</tr>
+<tr class="row-even"><td><p>Client private key file</p></td>
+<td><p>client</p></td>
+<td><p>private_key_file</p></td>
+<td><p>DATAFED_CLIENT_PRIV_KEY_FILE</p></td>
+<td><p>–client-priv-key-file</p></td>
+</tr>
+<tr class="row-odd"><td><p>Client private key file</p></td>
+<td><p>client</p></td>
+<td><p>private_key_file</p></td>
+<td><p>DATAFED_CLIENT_PRIV_KEY_FILE</p></td>
+<td><p>–client-priv-key-file</p></td>
+</tr>
+<tr class="row-even"><td><p>Default Globus endpoint</p></td>
+<td><p>general</p></td>
+<td><p>default_endpoint</p></td>
+<td><p>DATAFED_DEFAULT_ENDPOINT</p></td>
+<td><p>–default-ep, -e</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="server-configuration-file">
+<h4>Server Configuration File</h4>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 48%" />
+<col style="width: 52%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Config File:</p></td>
+<td><p>N/A</p></td>
+</tr>
+<tr class="row-even"><td><p>Environment Variable:</p></td>
+<td><p>DATAFED_SERVER_CFG_FILE</p></td>
+</tr>
+<tr class="row-odd"><td><p>Command Line Option:</p></td>
+<td><p>–server-cfg-file</p></td>
+</tr>
+</tbody>
+</table>
+<p>The server configuration file setting specifies a full path to a server “.ini” file. This file may
+contain additional settings as specified in Configuration Settings table, above.</p>
+<p>Server Configuration Directory</p>
+<p>&lt;tr&gt;&lt;td&gt;Cfg. File&lt;/td&gt;&lt;td&gt;[server] config_dir&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Env. Var.&lt;/td&gt;&lt;td&gt;DATAFED_SERVER_CFG_DIR&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Option&lt;/td&gt;&lt;td&gt;–server-cfg-dir&lt;/td&gt;&lt;/tr&gt;</p>
+<p>The server configuration directory setting specifies a path to a directory that will be searched for
+a default server config file, “server.ini”, and the default server public key, “datafed-core-key.pub”.
+If this setting is not provided, “~/.default” will be searched if it exists.</p>
+</div>
+<div class="section" id="server-public-key-file">
+<h4>Server Public Key File</h4>
+<p>&lt;tr&gt;&lt;td&gt;Cfg. File&lt;/td&gt;&lt;td&gt;[server] public_key_file&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Env. Var.&lt;/td&gt;&lt;td&gt;DATAFED_SERVER_PUB_KEY_FILE&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Option&lt;/td&gt;&lt;td&gt;–server-pub-key-file&lt;/td&gt;&lt;/tr&gt;</p>
+<p>The server public key file setting specifies a full path to a locally accessible file containing the
+latest DataFed server public key. If this setting is not provided, the CLI will look for a default key
+file, “datafed-core-key.pub”, in the server config directory (or “~/.datafed” if no directory is
+specified). The latest DataFed server public key file must is available for download from
+<a class="reference external" href="https://datafed.ornl.gov/datafed-core-key.pub">here</a>.</p>
+<p>Note that if the server public key setting is invalid or the key is out of date, the CLI will timeout
+after being run.</p>
+</div>
+<div class="section" id="server-host">
+<h4>Server Host</h4>
+<p>&lt;tr&gt;&lt;td&gt;Cfg. File&lt;/td&gt;&lt;td&gt;[server] host&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Env. Var.&lt;/td&gt;&lt;td&gt;DATAFED_SERVER_HOST&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Option&lt;/td&gt;&lt;td&gt;–server-host, -H&lt;/td&gt;&lt;/tr&gt;</p>
+<p>The server host setting is the DataFed server name or IP address with no protocol prefix or port number
+- for example: “datafed.ornl.gov”. Note that if the server host setting is incorrect, the CLI will timeout
+after being run.</p>
+</div>
+<div class="section" id="server-port">
+<h4>Server Port</h4>
+<p>&lt;tr&gt;&lt;td&gt;Cfg. File&lt;/td&gt;&lt;td&gt;[server] port&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Env. Var.&lt;/td&gt;&lt;td&gt;DATAFED_SERVER_PORT&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Option&lt;/td&gt;&lt;td&gt;–server-port, -P&lt;/td&gt;&lt;/tr&gt;</p>
+<p>The server port setting is the TCP port number used by the DataFed server for secure client connections.
+Note that if the server port number is incorrect, the CLI will timeout after being run.</p>
+</div>
+<div class="section" id="client-configuration-file">
+<h4>Client Configuration File</h4>
+<p>&lt;tr&gt;&lt;td&gt;Cfg. File&lt;/td&gt;&lt;td&gt;[client] config_file&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Env. Var.&lt;/td&gt;&lt;td&gt;DATAFED_CLIENT_CFG_FILE&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Option&lt;/td&gt;&lt;td&gt;–client-cfg-file&lt;/td&gt;&lt;/tr&gt;</p>
+<p>The client configuration file setting specifies a full path to a client “.ini” file. This file may contain
+additional settings as specified in Table REF_REF_REF. Note that settings in the client configuration file
+will override the same settings in the server configuration file, if present.</p>
+</div>
+<div class="section" id="client-config-directory">
+<h4>Client Config Directory</h4>
+<p>&lt;tr&gt;&lt;td&gt;Cfg. File&lt;/td&gt;&lt;td&gt;[client] config_dir&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Env. Var.&lt;/td&gt;&lt;td&gt;DATAFED_CLIENT_CFG_DIR&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Option&lt;/td&gt;&lt;td&gt;–client-cfg-dir&lt;/td&gt;&lt;/tr&gt;</p>
+<p>The client configuration directory setting specifies a path to a directory that will be searched for
+a default client config file, “client.ini”, and the default client public and private keys,
+“datafed-user-key.pub” and “datafed-user-key.priv”. If this setting is not provided, “~/.default” will be
+searched if it exists.</p>
+</div>
+<div class="section" id="client-public-key-file">
+<h4>Client Public Key File</h4>
+<p>&lt;tr&gt;&lt;td&gt;Cfg. File&lt;/td&gt;&lt;td&gt;[client] public_key_file&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Env. Var.&lt;/td&gt;&lt;td&gt;DATAFED_CLIENT_PUB_KEY_FILE&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Option&lt;/td&gt;&lt;td&gt;–client-pub-key-file&lt;/td&gt;&lt;/tr&gt;</p>
+<p>The client public key file setting specifies a full path to a locally accessible file containing the DataFed
+client public key. If this setting is not provided, the CLI will look for a default key file,
+“datafed-user-key.pub”, in the client config directory (or “~/.datafed” if no directory is specified). Client
+key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).</p>
+</div>
+<div class="section" id="client-private-key-file">
+<h4>Client Private Key File</h4>
+<p>&lt;tr&gt;&lt;td&gt;Cfg. File&lt;/td&gt;&lt;td&gt;[client] private_key_file&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Env. Var.&lt;/td&gt;&lt;td&gt;DATAFED_CLIENT_PRIV_KEY_FILE&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Option&lt;/td&gt;&lt;td&gt;–client-priv-key-file&lt;/td&gt;&lt;/tr&gt;</p>
+<p>The client private key file setting specifies a full path to a locally accessible file containing the DataFed
+client private key. If this setting is not provided, the CLI will look for a default key file,
+“datafed-user-key.priv”, in the client config directory (or “~/.datafed” if no directory is specified). Client
+key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).</p>
+</div>
+<div class="section" id="default-endpoint">
+<h4>Default Endpoint</h4>
+<p>&lt;tr&gt;&lt;td&gt;Cfg. File&lt;/td&gt;&lt;td&gt;[general] default_endpoint&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Env. Var.&lt;/td&gt;&lt;td&gt;DATAFED_DEFAULT_ENDPOINT&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Option&lt;/td&gt;&lt;td&gt;–default-ep, -e&lt;/td&gt;&lt;/tr&gt;</p>
+<p>The default endpoint setting determines which Globus endpoint will be used for data “get” and “put”
+commands when a full GLobus path is not specified. The configured default end-point can be changed at
+any time within the CLI using the “ep default set” command, or it can be temporarily changed (not
+saved) using the “ep set” command.</p>
+</div>
+</div>
+<div class="section" id="configuration-files">
+<h3>Configuration Files</h3>
+<p>Both a server and a client configuration file may be used to specify CLI settings. Typically, a server
+configuration file would be maintained by a system administrator and contain server-only settings. Per-user
+client configuration files allow individuals to tailor their CLI settings by specifying additional options,
+or by overriding configured server settings (the client file takes priority over the server file).</p>
+<p>Both server and client configuration files are standard “.ini” files and follow the same format, and Table
+REF_REF_REF (above) shows the section and setting name for all available options. Below is in example
+configuration file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">server</span><span class="p">]</span>
+<span class="n">host</span> <span class="o">=</span> <span class="n">datafed</span><span class="o">.</span><span class="n">ornl</span><span class="o">.</span><span class="n">gov</span>
+<span class="n">port</span> <span class="o">=</span> <span class="mi">7512</span>
+<span class="n">config_dir</span> <span class="o">=</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">share</span><span class="o">/</span><span class="n">datafed</span>
+
+<span class="p">[</span><span class="n">client</span><span class="p">]</span>
+<span class="n">config_dir</span> <span class="o">=</span> <span class="o">~/.</span><span class="n">datafed</span>
+
+<span class="p">[</span><span class="n">general</span><span class="p">]</span>
+<span class="n">default_endpoint</span> <span class="o">=</span> <span class="n">cades</span><span class="c1">#CADES-OR</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuration-priority">
+<h3>Configuration Priority</h3>
+<p>Each mechanism for specifying settings (environment variables, files, options, etc.) has a given priority,
+and individual settings from configuration sources with higher priorities override those with lower
+priorities. The result is that various configuration settings may come from a variety of sources (defaults
+or set by system administrators, for example), but these settings can always be overridden by the user by
+using the appropriate mechanism. Configuration source priorities are shown int the table, below.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 65%" />
+<col style="width: 35%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Source</p></th>
+<th class="head"><p>Priority</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Default</p></td>
+<td><p>0 (lowest)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Environment Variable</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>Server Config File</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>Client Config File</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p>Command-Line Option</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-odd"><td><p>Programmatic</p></td>
+<td><p>5 (highest)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Note that most settings do not have default values and must be specified using one of the supported mechanisms.
+The server and client configuration files and directories are exceptions in that the CLI will search for a
+“.datafed” folder in the user home directory if these settings are not specified.</p>
+</div>
+<div class="section" id="configuring-automatic-authentication">
+<h3>Configuring Automatic Authentication</h3>
+<p>Once the DataFed CLI is installed and configured, automatic authentication can be enabled for the CLI
+by installing local client credentials (encryption key files). Automatic authentication can be considered
+a convenience feature, but it is essential for non-interactive use of the CLI (i.e. for scripting). It is
+enabled by simply running the following CLI command from the environment to be configured for
+automatic authentication:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">setup</span>
+</pre></div>
+</div>
+<p>When run the first time, the user must manually authenticate using their DataFed user ID and password.
+(A user may set or change their DataFed password from DataFed Web Portal in the application settings dialog.)
+The CLI will then install local user encryption keys (public and private) in the configured client
+configuration directory. Subsequent use of the DateFed CLI within the same environment will authenticate
+using the local client keys. These client key files must be protected and kept private. In the event of a
+security incident, automatic authentication can be disabled by deleting the local key files, or, alternatively,
+all of a user’s installed keys can be revoked from the DataFed Web Portal using the “Revoke Credentials”
+button in the application settings dialog. (This does not delete local key files, but invalidates the keys
+on the server side.)</p>
+</div>
+</div>
+<div class="section" id="command-line-interface-usage">
+<h2>Command Line Interface Usage</h2>
+<p>REF_REF_REF</p>
+</div>
+<div class="section" id="scripting-with-the-cli">
+<h2>Scripting with the CLI</h2>
+<p>The DataFed CLI can be used for scripting by using the “–script” option to produce output in JSON format;
+however, Python API modules are also available for more complex scripting and/or custom application development.
+There are two library modules, “CommandLib” and “MessageLib”, that provide high- and-low-level application
+programming interfaces (APIs), respectively, that can be used for Python scripting or custom application development.
+The high-level API is almost identical to the the DataFed command-line interface, in that it accepts textual CLI
+commands, but returns Python objects instead of text or JSON output. The low-level API, as the module name implies,
+exposes the binary message-passing interface used by DataFed and is intended for more complex applications.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../api/python.html" class="btn btn-neutral float-right" title="Python API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../web/portal.html" class="btn btn-neutral float-left" title="DataFed Web Portal" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
-</div>
-<script>$('#searchbox').show(0);</script>
+  
 
+  <hr/>
 
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Oak Ridge National Laboratories
 
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
-
-
-
+</footer>
 
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Oak Ridge National Laboratories.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/user/cli/python.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
 
-    
+    </section>
 
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
     
-  </body>
+   
+
+</body>
 </html>

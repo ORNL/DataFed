@@ -3,8 +3,15 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to DataFed's documentation!
-===================================
+DataFed - Federated Scientific Data Management
+==============================================
+
+DataFed Blurb
+
+DataFed Documentation
+=====================
+
+This site contains all user and administrative documentation for the DataFed system.
 
 .. toctree::
    :maxdepth: 2

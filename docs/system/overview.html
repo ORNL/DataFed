@@ -1,40 +1,174 @@
 
-<!DOCTYPE html>
 
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>System Overview &#8212; DataFed 1.4 documentation</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>System Overview &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Web Portal" href="../user/web/portal.html" />
-    <link rel="prev" title="Welcome to DataFed’s documentation!" href="../index.html" />
+    <link rel="next" title="DataFed Web Portal" href="../user/web/portal.html" />
+    <link rel="prev" title="DataFed - Federated Scientific Data Management" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
           
 
-          <div class="body" role="main">
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">System Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#key-concepts">Key Concepts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#identifiers-and-aliases">Identifiers and Aliases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#collective-ownership">Collective Ownership</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#metadata">Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#collection-hierarchies">Collection Hierarchies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#access-control">Access Control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storage-allocations">Storage Allocations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#registration">Registration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user/web/portal.html">DataFed Web Portal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/python.html">DataFed Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/api/python.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/scripting.html">Scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../admin/general.html">Administration</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>System Overview</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/system/overview.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <div class="section" id="system-overview">
-<h1>System Overview<a class="headerlink" href="#system-overview" title="Permalink to this headline">¶</a></h1>
+<h1>System Overview</h1>
 <p>DataFed is a federated data collaboration and management system for science. DataFed provides
 many features that ease the data management burden associated with general scientific research;
 however, the primary goal of DataFed is to improve scientific data quality by enabling precise
@@ -61,7 +195,7 @@ themselves with how Globus works from their online documentation at <a class="re
 under active development at Oak Ridge National Laboratory (ORNL) within the Oak Ridge Leadership
 Computing Facility (OLCF) and is currently deployed in an alpha-release state for early access users.</p>
 <div class="section" id="key-concepts">
-<h2>Key Concepts<a class="headerlink" href="#key-concepts" title="Permalink to this headline">¶</a></h2>
+<h2>Key Concepts</h2>
 <p>DataFed aggregates and abstracts the federation of distributed data, storage systems, facilities, users, groups,
 and projects into a single logical unit - with a common nomenclature and uniform access patterns. Some of the
 components of DataFed represent real physical systems; whereas others are purely abstract. These components are
@@ -85,7 +219,7 @@ standpoint, the physical storage location of data likely matters depending on wh
 For this reason, DataFed will support data repository caching to optimize frequently accessed data. In addition, users
 with allocations on multiple data repositories may opt to migrate data between repositories based on usage locality.</p>
 <div class="section" id="identifiers-and-aliases">
-<h3>Identifiers and Aliases<a class="headerlink" href="#identifiers-and-aliases" title="Permalink to this headline">¶</a></h3>
+<h3>Identifiers and Aliases</h3>
 <p>All records in DataFed (data, collections, user, projects, etc.) are automatically assigned a system-unique identifier
 consisting of a prefix and an alphanumeric value. For data records and collections these identifiers are numeric, so
 users may choose to assign a more human-friendly “alias” that can be used in place of identifiers. Aliases are alphanumeric
@@ -97,7 +231,7 @@ User “jsmith” can simply use “mydata”, but other users would need to use
 portal, aliases are typically shown without the prefix.</p>
 </div>
 <div class="section" id="collective-ownership">
-<h3>Collective Ownership<a class="headerlink" href="#collective-ownership" title="Permalink to this headline">¶</a></h3>
+<h3>Collective Ownership</h3>
 <p>When an individual user creates a data record or collection, that user becomes the owner and is granted full control of
 the newly created data record or collection. Collective ownership is achieved through the use of <em>projects</em>. A DataFed
 project is a distinct organizational entity that permits multiple associated users to create and manage data records and
@@ -108,26 +242,17 @@ created record. Other project members have access to project data based on proje
 project owner and administrators.</p>
 <p>Projects support specific roles for associated users:</p>
 <ul class="simple">
-<li><dl class="simple">
-<dt>Project Owner - These users have complete control over the project and contained data and collections. The user that</dt><dd><p>initially creates a project becomes an administrator by default, but a project can have multiple administrators assigned.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Administrators - These users have the ability to add and remove project members (but not administrators or other</dt><dd><p>managers), and can also configure access control rules on the projects root collection. A project can have multiple
-managers assigned by administrators.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Members - These users may create and update data records and collections based on the access control rules set by</dt><dd><p>managers or administrators. Always has administrative access to created records.</p>
-</dd>
-</dl>
-</li>
+<li><p>Project Owner - These users have complete control over the project and contained data and collections. The user that
+initially creates a project becomes an administrator by default, but a project can have multiple administrators assigned.</p></li>
+<li><p>Administrators - These users have the ability to add and remove project members (but not administrators or other
+managers), and can also configure access control rules on the projects root collection. A project can have multiple
+managers assigned by administrators.</p></li>
+<li><p>Members - These users may create and update data records and collections based on the access control rules set by
+managers or administrators. Always has administrative access to created records.</p></li>
 </ul>
 </div>
 <div class="section" id="metadata">
-<h3>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h3>
+<h3>Metadata</h3>
 <p>Data records support user-defined metadata. “Metadata” is distinct from built-on record attributes such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable and can represent
 arbitrary structured documents. When creating or updating a data record, metadata may be directly specified in textual form, or,
@@ -137,7 +262,7 @@ existing metadata will be overwritten by the new values - other existing keys ar
 <p>Note that when providing metadata, it must fully comply with the JSON specification, located at <a class="reference external" href="https://tools.ietf.org/html/rfc8259">https://tools.ietf.org/html/rfc8259</a>.</p>
 </div>
 <div class="section" id="collection-hierarchies">
-<h3>Collection Hierarchies<a class="headerlink" href="#collection-hierarchies" title="Permalink to this headline">¶</a></h3>
+<h3>Collection Hierarchies</h3>
 <p>Collection hierarchies within DataFed may resemble a file system with directories containing files and sub-directories.
 While similar structurally, there are profound functional differences between DataFed collection hierarchies and typical
 file systems:</p>
@@ -160,9 +285,9 @@ it is update, or where the associated raw data is physically stored, a record’
 </ul>
 </div>
 <div class="section" id="access-control">
-<h3>Access Control<a class="headerlink" href="#access-control" title="Permalink to this headline">¶</a></h3>
+<h3>Access Control</h3>
 <p>DataFed implements fine-grained access control through a set of permissions that can be applied to both data records and
-ollections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of
+collections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of
 these. Data records and collections share the same set of permissions; however, collections have an additional set of
 permissions specifically for permission inheritance. The individual permissions are defined as follows:</p>
 <ul class="simple">
@@ -189,7 +314,7 @@ down to all contained data records and sub-collections. Note that because data r
 the inherited permissions of <em>all</em> associated parent collections are evaluated for each users accessing a given data record.</p>
 </div>
 <div class="section" id="storage-allocations">
-<h3>Storage Allocations<a class="headerlink" href="#storage-allocations" title="Permalink to this headline">¶</a></h3>
+<h3>Storage Allocations</h3>
 <p>Having access to DataFed does not, in itself, grant users the ability to create or manage data within DataFed. This is because
 DataFed does not provide any raw data storage of its own, but instead relies on <em>federated</em> storage provided by DataFed member
 organizations. Federated storage is implemented through a network of geographically distributed “data repositories” that are
@@ -208,7 +333,7 @@ repository in relation to the point of use of data can impact initial access tim
 </div>
 </div>
 <div class="section" id="registration">
-<h2>Registration<a class="headerlink" href="#registration" title="Permalink to this headline">¶</a></h2>
+<h2>Registration</h2>
 <p>User registration is required in order to access DataFed. Registration is free and secure, but requires users to have, or obtain,
 a free <a class="reference external" href="https://www.globus.org">Globus</a> account. Many universities and research facilities, worldwide, are “member organizations”
 of Globus and typically provide Globus accounts for their students, staff, and/or users. If your home institute does not provide
@@ -227,81 +352,59 @@ institute.</p>
 </div>
 
 
+           </div>
+           
           </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../index.html">DataFed</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">System Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#key-concepts">Key Concepts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#registration">Registration</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../user/web/portal.html">Web Portal</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user/cli/python.html">Command Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user/api/python.html">Python API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user/scripting.html">Scripting</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../admin/general.html">Administration</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="../index.html" title="previous chapter">Welcome to DataFed’s documentation!</a></li>
-      <li>Next: <a href="../user/web/portal.html" title="next chapter">Web Portal</a></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../user/web/portal.html" class="btn btn-neutral float-right" title="DataFed Web Portal" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral float-left" title="DataFed - Federated Scientific Data Management" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
-</div>
-<script>$('#searchbox').show(0);</script>
+  
 
+  <hr/>
 
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Oak Ridge National Laboratories
 
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
-
-
-
+</footer>
 
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Oak Ridge National Laboratories.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../_sources/system/overview.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
 
-    
+    </section>
 
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
     
-  </body>
+   
+
+</body>
 </html>

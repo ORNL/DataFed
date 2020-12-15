@@ -87,12 +87,12 @@ project owner and administrators.
 Projects support specific roles for associated users:
 
 * Project Owner - These users have complete control over the project and contained data and collections. The user that
-    initially creates a project becomes an administrator by default, but a project can have multiple administrators assigned.
+  initially creates a project becomes an administrator by default, but a project can have multiple administrators assigned.
 * Administrators - These users have the ability to add and remove project members (but not administrators or other
-    managers), and can also configure access control rules on the projects root collection. A project can have multiple
-    managers assigned by administrators.
+  managers), and can also configure access control rules on the projects root collection. A project can have multiple
+  managers assigned by administrators.
 * Members - These users may create and update data records and collections based on the access control rules set by
-    managers or administrators. Always has administrative access to created records.
+  managers or administrators. Always has administrative access to created records.
 
 Metadata
 ========
@@ -134,7 +134,7 @@ Access Control
 ==============
 
 DataFed implements fine-grained access control through a set of permissions that can be applied to both data records and 
-ollections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of
+collections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of
 these. Data records and collections share the same set of permissions; however, collections have an additional set of
 permissions specifically for permission inheritance. The individual permissions are defined as follows:
 
