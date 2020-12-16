@@ -2,9 +2,6 @@
 DataFed Command Line Interface
 ==============================
 
-Introduction
-============
-
 The DataFed command-line-interface (CLI) provides access to basic DataFed capabilities for both
 interactive use and non-interactive scripting from a command shell. The DataFed CLI is provided
 via a Python 3 package called "datafed" available on the `PyPi <https://pypi.org>`_ site, and,
@@ -14,6 +11,51 @@ that supports Python 3. (See the installation section, below, for specifics.)
 The DataFed CLI Python package also contains an accessible API that can be used to build custom
 Python applications that directly interface with the DataFed service. For more information on the
 DataFed API, please refer to REF_REF_REF.
+
+Before the DataFed CLI can be used, it must be installed and properly configure (see the
+`Installation`_ and `Configuration`_ sections of this document for more information.
+
+Basic Usage
+===========
+
+The DataFed CLI is run using the 'datafed' script installed by the DataFed CLI packaged, as follows::
+
+    datafed [options] [command [sub-command ...]]
+
+For a list of options, the built-in help output can be viewed::
+
+    datafed --help
+
+The DataFed CLI supports three distinct modes of use: single command, interactive shell, and script
+mode. If the CLI is run without any command arguments, an interactive shell is started; otherwise,
+the specified command is run either normally (human-friendly output) or in script mode if the
+'--script' option is specified.
+
+**Single Command**
+
+This mode is used to run a single DafaFed command given as an argument to the datafed script. The
+output is in human-friendly format.
+
+**Interactive Shell**
+
+This mode provides a DataFed CLI shell and is started by running the datafed script without any
+command arguments. Commands are entered at the prompt (without the 'datafed' script prefix) and
+the shell will run until stopped with the 'exit' command, or by typing 'Ctrl-C'. Shell mode is
+stateful and convenient for browsing DataFed collection hierarchies.
+
+**Script Mode**
+
+This mode is similar to the single command mode with the exception that non-essential output is
+suppressed and command responses are returned in a strict JSON format. This mode is useful for
+integrating the CLI into non-Python scripts (i.e. bash), and is activated by specifying the
+"--script" (or "-s") command line option when the CLI is run. For Python scripting, use of the
+DataFed `Python API`_ is recommended.
+
+.. note::
+
+    The full listing of options, commands, and sub-commands are detailed in the `Usage Guide`_
+    and `Command Reference`_ sections of this document.
+
 
 Installation
 ============
@@ -39,170 +81,36 @@ Pip will install the DataFed CLI package and all dependencies, and will also ins
 "datafed" command script in the configured pip package binary, or "bin" directory. This bin directory
 must be included in the executable search path for the DataFed CLI command to be accessible.
 
-The DataFed CLI must be configured before it can be used, and this is discussed in the next section.
-
 Configuration
 =============
 
 Users would typically not need to configure the DataFed CLI from within a facility-supported
 environments; however, when installing the CLI on personal workstations or laptops, the CLI requires a
-few key settings to be configured prior to use.
+few key settings to be configured prior to use. Configuration settings may be specified using
+environment variables, configuration files, or command-line options (or any combination thereof) and
+are described in detail in following sections of this document.
 
-Configuration settings may be specified using environment variables, configuration files, or command-line
-options (or any combination thereof). The following sections list and describe the DataFed CLI settings.
+Most of the available CLI configuration settings relate to how the CLI communicates with the DataFed
+server. DataFed uses encrypted client-server communication based on a message-passing protocol over
+TCP/IP. In order for the CLI to be able to connect with the DataFed server, the hostname (or IP address)
+and port number of the server must be configured along with the DataFed server's public encryption key.
+If the CLI is being configured behind a firewall, it may be necessary to open the DataFed server port
+if out-going TCP traffic is restricted.
 
-----------------------
-Configuration Settings
-----------------------
+When the DataFed CLI is installed, default server settings are automatically configured, and the
+server public key is automatically downloaded from the DataFed server. However, for non-standard
+environments, it may be necessary to configure these settings manually. The current default server
+hostname, port, and public key download link are shown in the table below:
 
-The table below lists all of the DataFed CLI settings and how they can be set using either a configuration
-file (.ini), an environment variable, or a command-line option. Many of the listed settings relate to
-the communication channel between the CLI and the DataFed server. Because all communications across the
-channel are encrypted, the locations of public and private DataFed encryption key files must be specified.
-These keys are similar to SSH keys, but they are unique to DataFed; however, like SSH keys, access to
-private DataFed key files must be restricted to prevent unauthorized access to user accounts. Configuring
-DataFed key files, as well as other settings, are discussed in following sections.
+=================  ===================================================
+Server Hostname    datafed.ornl.gov
+Server Port        7512
+Server Public Key  `<https://datafed.ornl.gov/datafed-core-key.pub>`_ 
+=================  ===================================================
 
+Please refer to the `Configuration Settings`_ section for details on how to configure these settings.
 
-=========================  =======  ================  ============================  ======================
-                           Config File
-                           -------------------------
-Setting                    Section  Setting           Environment Variable          CLI Option(s)
-=========================  =======  ================  ============================  ======================
-Server config file         N/A      N/A               DATAFED_SERVER_CFG_FILE       --server-cfg-file
-Server config directory    server   config_dir        DATAFED_SERVER_CFG_DIR        --server-cfg-dir
-Server public key file     server   public_key_file   DATAFED_SERVER_PUB_KEY_FILE   --server-pub-key-file
-Sever hostname / IP        server   host              DATAFED_SERVER_HOST           --server-host
-Sever port number          server   port              DATAFED_SERVER_PORT           --server-port
-Client config file         client   config_file       DATAFED_CLIENT_CFG_FILE       --client-cfg-file
-Client config directory    client   config_dir        DATAFED_CLIENT_CFG_DIR        --client-cfg-dir
-Client public key file     client   public_key_file   DATAFED_CLIENT_PUB_KEY_FILE   --client-pub-key-file
-Client private key file    client   private_key_file  DATAFED_CLIENT_PRIV_KEY_FILE  --client-priv-key-file
-Client private key file    client   private_key_file  DATAFED_CLIENT_PRIV_KEY_FILE  --client-priv-key-file
-Default Globus endpoint    general  default_endpoint  DATAFED_DEFAULT_ENDPOINT      --default-ep, -e
-=========================  =======  ================  ============================  ======================
-
-
-Server Configuration File
--------------------------
-
-=====================  =======================
-Config File:           N/A
-Environment Variable:  DATAFED_SERVER_CFG_FILE
-Command Line Option:   --server-cfg-file
-=====================  =======================
-
-The server configuration file setting specifies a full path to a server ".ini" file. This file may
-contain additional settings as specified in Configuration Settings table, above.
-
-Server Configuration Directory
-
-<tr><td>Cfg. File</td><td>[server] config_dir</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_SERVER_CFG_DIR</td></tr>
-<tr><td>Option</td><td>--server-cfg-dir</td></tr>
-
-
-The server configuration directory setting specifies a path to a directory that will be searched for
-a default server config file, "server.ini", and the default server public key, "datafed-core-key.pub".
-If this setting is not provided, "~/.default" will be searched if it exists.
-
-
-Server Public Key File
-----------------------
-
-<tr><td>Cfg. File</td><td>[server] public_key_file</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_SERVER_PUB_KEY_FILE</td></tr>
-<tr><td>Option</td><td>--server-pub-key-file</td></tr>
-
-
-The server public key file setting specifies a full path to a locally accessible file containing the
-latest DataFed server public key. If this setting is not provided, the CLI will look for a default key
-file, "datafed-core-key.pub", in the server config directory (or "~/.datafed" if no directory is
-specified). The latest DataFed server public key file must is available for download from 
-`here <https://datafed.ornl.gov/datafed-core-key.pub>`_.
-
-Note that if the server public key setting is invalid or the key is out of date, the CLI will timeout
-after being run.
-
-Server Host
------------
-
-<tr><td>Cfg. File</td><td>[server] host</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_SERVER_HOST</td></tr>
-<tr><td>Option</td><td>--server-host, -H</td></tr>
-
-The server host setting is the DataFed server name or IP address with no protocol prefix or port number
-- for example: "datafed.ornl.gov". Note that if the server host setting is incorrect, the CLI will timeout
-after being run.
-
-Server Port
------------
-
-<tr><td>Cfg. File</td><td>[server] port</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_SERVER_PORT</td></tr>
-<tr><td>Option</td><td>--server-port, -P</td></tr>
-
-The server port setting is the TCP port number used by the DataFed server for secure client connections.
-Note that if the server port number is incorrect, the CLI will timeout after being run.
-
-Client Configuration File
--------------------------
-
-<tr><td>Cfg. File</td><td>[client] config_file</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_CLIENT_CFG_FILE</td></tr>
-<tr><td>Option</td><td>--client-cfg-file</td></tr>
-
-The client configuration file setting specifies a full path to a client ".ini" file. This file may contain
-additional settings as specified in Table REF_REF_REF. Note that settings in the client configuration file
-will override the same settings in the server configuration file, if present.
-
-Client Config Directory
------------------------
-
-<tr><td>Cfg. File</td><td>[client] config_dir</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_CLIENT_CFG_DIR</td></tr>
-<tr><td>Option</td><td>--client-cfg-dir</td></tr>
-
-The client configuration directory setting specifies a path to a directory that will be searched for
-a default client config file, "client.ini", and the default client public and private keys,
-"datafed-user-key.pub" and "datafed-user-key.priv". If this setting is not provided, "~/.default" will be
-searched if it exists.
-
-Client Public Key File
-----------------------
-
-<tr><td>Cfg. File</td><td>[client] public_key_file</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_CLIENT_PUB_KEY_FILE</td></tr>
-<tr><td>Option</td><td>--client-pub-key-file</td></tr>
-
-The client public key file setting specifies a full path to a locally accessible file containing the DataFed
-client public key. If this setting is not provided, the CLI will look for a default key file,
-"datafed-user-key.pub", in the client config directory (or "~/.datafed" if no directory is specified). Client
-key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).
-
-Client Private Key File
------------------------
-
-<tr><td>Cfg. File</td><td>[client] private_key_file</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_CLIENT_PRIV_KEY_FILE</td></tr>
-<tr><td>Option</td><td>--client-priv-key-file</td></tr>
-
-The client private key file setting specifies a full path to a locally accessible file containing the DataFed
-client private key. If this setting is not provided, the CLI will look for a default key file,
-"datafed-user-key.priv", in the client config directory (or "~/.datafed" if no directory is specified). Client
-key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).
-
-Default Endpoint
-----------------
-
-<tr><td>Cfg. File</td><td>[general] default_endpoint</td></tr>
-<tr><td>Env. Var.</td><td>DATAFED_DEFAULT_ENDPOINT</td></tr>
-<tr><td>Option</td><td>--default-ep, -e</td></tr>
-
-The default endpoint setting determines which Globus endpoint will be used for data "get" and "put"
-commands when a full GLobus path is not specified. The configured default end-point can be changed at
-any time within the CLI using the "ep default set" command, or it can be temporarily changed (not
-saved) using the "ep set" command.
+.. note:: The configuration settings of the DataFed CLI also apply to the DataFed Python API.
 
 -------------------
 Configuration Files
@@ -213,9 +121,9 @@ configuration file would be maintained by a system administrator and contain ser
 client configuration files allow individuals to tailor their CLI settings by specifying additional options,
 or by overriding configured server settings (the client file takes priority over the server file). 
     
-Both server and client configuration files are standard ".ini" files and follow the same format, and Table
-REF_REF_REF (above) shows the section and setting name for all available options. Below is in example
-configuration file::
+Both server and client configuration files are standard ".ini" files and follow the same format, and the
+reference table in `Settings Quick Reference`_ section indicate the .ini section and setting name for all
+available options. An example configuration file is shown below::
 
     [server]
     host = datafed.ornl.gov
@@ -227,6 +135,11 @@ configuration file::
 
     [general]
     default_endpoint = cades#CADES-OR
+
+.. note::
+    If a configuration file is not explicitly specified (i.e. via an environment variable
+    or command-line option), the CLI will search for a client configuration file in the ".datafed"
+    directory in the users home directory.
 
 ----------------------
 Configuration Priority
@@ -241,7 +154,7 @@ using the appropriate mechanism. Configuration source priorities are shown int t
 ====================  ===========
 Source                Priority
 ====================  ===========
-Default               0 (lowest)
+Default Values        0 (lowest)
 Environment Variable  1
 Server Config File    2
 Client Config File    3
@@ -275,10 +188,191 @@ all of a user's installed keys can be revoked from the DataFed Web Portal using 
 button in the application settings dialog. (This does not delete local key files, but invalidates the keys
 on the server side.)
 
-Command Line Interface Usage
-============================
 
-REF_REF_REF
+Configuration Settings
+======================
+
+------------------------
+Settings Quick Reference
+------------------------
+
+The table below lists all of the DataFed CLI settings and how they can be set using either a configuration
+file (.ini), an environment variable, or a command-line option.
+
+=========================  =======  ================  ============================  ======================
+                           Config File
+                           -------------------------
+Setting                    Section  Setting           Environment Variable          CLI Option(s)
+=========================  =======  ================  ============================  ======================
+Server config file         N/A      N/A               DATAFED_SERVER_CFG_FILE       --server-cfg-file
+Server config directory    server   config_dir        DATAFED_SERVER_CFG_DIR        --server-cfg-dir
+Server public key file     server   public_key_file   DATAFED_SERVER_PUB_KEY_FILE   --server-pub-key-file
+Sever hostname / IP        server   host              DATAFED_SERVER_HOST           --server-host
+Sever port number          server   port              DATAFED_SERVER_PORT           --server-port
+Client config file         client   config_file       DATAFED_CLIENT_CFG_FILE       --client-cfg-file
+Client config directory    client   config_dir        DATAFED_CLIENT_CFG_DIR        --client-cfg-dir
+Client public key file     client   public_key_file   DATAFED_CLIENT_PUB_KEY_FILE   --client-pub-key-file
+Client private key file    client   private_key_file  DATAFED_CLIENT_PRIV_KEY_FILE  --client-priv-key-file
+Client private key file    client   private_key_file  DATAFED_CLIENT_PRIV_KEY_FILE  --client-priv-key-file
+Default Globus endpoint    general  default_endpoint  DATAFED_DEFAULT_ENDPOINT      --default-ep, -e
+=========================  =======  ================  ============================  ======================
+
+-------------------------
+Server Configuration File
+-------------------------
+
+=======================  =======================
+Configuration File:      N/A
+Environment Variable:    DATAFED_SERVER_CFG_FILE
+Command-line Option(s):  --server-cfg-file
+=======================  =======================
+
+The server configuration file setting specifies a full path to a server ".ini" file. This file may
+contain additional settings as specified in `Configuration Settings`_ table, above.
+
+------------------------------
+Server Configuration Directory
+------------------------------
+
+=======================  ============================
+Configuration File:      [server] config_dir
+Environment Variable:    DATAFED_SERVER_CFG_DIR
+Command-line Option(s):  --server-cfg-dir
+=======================  ============================
+
+
+The server configuration directory setting specifies a path to a directory that will be searched for
+a default server config file, "server.ini", and the default server public key, "datafed-core-key.pub".
+If this setting is not provided, "~/.default" will be searched if it exists.
+
+
+----------------------
+Server Public Key File
+----------------------
+
+=======================  ============================
+Configuration File:      [server] public_key_file
+Environment Variable:    DATAFED_SERVER_PUB_KEY_FILE
+Command-line Option(s):  --server-pub-key-file
+=======================  ============================
+
+The server public key file setting specifies a full path to a locally accessible file containing the
+latest DataFed server public key. If this setting is not provided, the CLI will look for a default key
+file, "datafed-core-key.pub", in the server config directory (or "~/.datafed" if no directory is
+specified). The latest DataFed server public key file must is available for download from 
+`here <https://datafed.ornl.gov/datafed-core-key.pub>`_.
+
+Note that if the server public key setting is invalid or the key is out of date, the CLI will timeout
+after being run.
+
+-----------
+Server Host
+-----------
+
+=======================  ============================
+Configuration File:      [server] host
+Environment Variable:    DATAFED_SERVER_HOST
+Command-line Option(s):  --server-host, -H
+=======================  ============================
+
+The server host setting is the DataFed server name or IP address with no protocol prefix or port number
+- for example: "datafed.ornl.gov". Note that if the server host setting is incorrect, the CLI will timeout
+after being run.
+
+-----------
+Server Port
+-----------
+
+=======================  ============================
+Configuration File:      [server] port
+Environment Variable:    DATAFED_SERVER_PORT
+Command-line Option(s):  --server-port, -P
+=======================  ============================
+
+The server port setting is the TCP port number used by the DataFed server for secure client connections.
+Note that if the server port number is incorrect, the CLI will timeout after being run.
+
+-------------------------
+Client Configuration File
+-------------------------
+
+=======================  ============================
+Configuration File:      [client] config_file
+Environment Variable:    DATAFED_CLIENT_CFG_FILE
+Command-line Option(s):  --client-cfg-file
+=======================  ============================
+
+The client configuration file setting specifies a full path to a client ".ini" file. This file may contain
+additional settings as listed in the `Settings Quick Reference`_ section. Note that settings in the client
+configuration file will override the same settings in the server configuration file, if present.
+
+-----------------------
+Client Config Directory
+-----------------------
+
+=======================  ============================
+Configuration File:      [client] config_dir
+Environment Variable:    DATAFED_CLIENT_CFG_DIR
+Command-line Option(s):  --client-cfg-dir
+=======================  ============================
+
+The client configuration directory setting specifies a path to a directory that will be searched for
+a default client config file, "client.ini", and the default client public and private keys,
+"datafed-user-key.pub" and "datafed-user-key.priv". If this setting is not provided, "~/.default" will be
+searched if it exists.
+
+----------------------
+Client Public Key File
+----------------------
+
+=======================  ============================
+Configuration File:      [client] public_key_file
+Environment Variable:    DATAFED_CLIENT_PUB_KEY_FILE
+Command-line Option(s):  --client-pub-key-file
+=======================  ============================
+
+The client public key file setting specifies a full path to a locally accessible file containing the DataFed
+client public key. If this setting is not provided, the CLI will look for a default key file,
+"datafed-user-key.pub", in the client config directory (or "~/.datafed" if no directory is specified). Client
+key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).
+
+-----------------------
+Client Private Key File
+-----------------------
+
+=======================  ============================
+Configuration File:      [client] private_key_file
+Environment Variable:    DATAFED_CLIENT_PRIV_KEY_FILE
+Command-line Option(s):  --client-priv-key-file
+=======================  ============================
+
+The client private key file setting specifies a full path to a locally accessible file containing the DataFed
+client private key. If this setting is not provided, the CLI will look for a default key file,
+"datafed-user-key.priv", in the client config directory (or "~/.datafed" if no directory is specified). Client
+key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).
+
+----------------
+Default Endpoint
+----------------
+
+=======================  ============================
+Configuration File:      [general] default_endpoint
+Environment Variable:    DATAFED_DEFAULT_ENDPOINT
+Command-line Option(s):  --default-ep, -e
+=======================  ============================
+
+The default endpoint setting determines which Globus endpoint will be used for data "get" and "put"
+commands when a full GLobus path is not specified. The configured default end-point can be changed at
+any time within the CLI using the "ep default set" command, or it can be temporarily changed (not
+saved) using the "ep set" command.
+
+
+Usage Guide
+===========
+
+Command Reference
+=================
+
 
 
 Scripting with the CLI
