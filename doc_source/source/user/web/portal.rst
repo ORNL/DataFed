@@ -1,6 +1,10 @@
-==================
-DataFed Web Portal
-==================
+==========
+Web Portal
+==========
+
+.. attention::
+
+    This documentation is out of date due to the rapid pace of development on the DataFed Web Portal.
 
 The focal-point of the DataFed Web Portal is the "Data Browser" that allows users to navigate through
 data, collections, and projects that they own or have access to. Depending on a users role and/or

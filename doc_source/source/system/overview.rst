@@ -31,6 +31,10 @@ DataFed is an open source project hosted on GitHub at `<https://github.com/ORNL/
 under active development at Oak Ridge National Laboratory (ORNL) within the Oak Ridge Leadership
 Computing Facility (OLCF) and is currently deployed in an alpha-release state for early access users.
 
+.. attention::
+
+  This documentation is accurate but incomplete due to the rapid pace of development of the DataFed system.
+
 ************
 Key Concepts
 ************

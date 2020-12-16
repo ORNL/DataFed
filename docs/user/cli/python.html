@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>DataFed Command Line Interface &mdash; DataFed 1.4 documentation</title>
+  <title>Command Line Interface &mdash; DataFed 1.4 documentation</title>
   
 
   
@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Python API" href="../api/python.html" />
-    <link rel="prev" title="DataFed Web Portal" href="../web/portal.html" /> 
+    <link rel="prev" title="Web Portal" href="../web/portal.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -85,8 +85,8 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../system/overview.html">System Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../web/portal.html">DataFed Web Portal</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">DataFed Command Line Interface</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="../web/portal.html">Web Portal</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Command Line Interface</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
@@ -111,7 +111,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#usage-guide">Usage Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#command-reference">Command Reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#scripting-with-the-cli">Scripting with the CLI</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../api/python.html">Python API</a></li>
@@ -163,7 +162,7 @@
     
       <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>DataFed Command Line Interface</li>
+      <li>Command Line Interface</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -182,8 +181,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="datafed-command-line-interface">
-<h1>DataFed Command Line Interface</h1>
+  <div class="section" id="command-line-interface">
+<h1>Command Line Interface</h1>
 <p>The DataFed command-line-interface (CLI) provides access to basic DataFed capabilities for both
 interactive use and non-interactive scripting from a command shell. The DataFed CLI is provided
 via a Python 3 package called “datafed” available on the <a class="reference external" href="https://pypi.org">PyPi</a> site, and,
@@ -220,13 +219,15 @@ stateful and convenient for browsing DataFed collection hierarchies.</p>
 <p>This mode is similar to the single command mode with the exception that non-essential output is
 suppressed and command responses are returned in a strict JSON format. This mode is useful for
 integrating the CLI into non-Python scripts (i.e. bash), and is activated by specifying the
-“–script” (or “-s”) command line option when the CLI is run. For Python scripting, use of the
-DataFed <a href="#id1"><span class="problematic" id="id2">`Python API`_</span></a> is recommended.</p>
+“–script” (or “-s”) command line option when the CLI is run.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
+<p>For a complete guide to DataFed scripting, please refer to the <a class="reference internal" href="../scripting.html"><span class="doc">Scripting</span></a> page.
+The <a class="reference internal" href="../api/python.html"><span class="doc">Python API</span></a> page provides a detailed reference to the DataFed API for
+scripting and custom application development.</p>
+</div>
 <p>The full listing of options, commands, and sub-commands are detailed in the <a class="reference internal" href="#usage-guide">Usage Guide</a>
 and <a class="reference internal" href="#command-reference">Command Reference</a> sections of this document.</p>
-</div>
 </div>
 <div class="section" id="installation">
 <h2>Installation</h2>
@@ -710,19 +711,14 @@ saved) using the “ep set” command.</p>
 </div>
 <div class="section" id="usage-guide">
 <h2>Usage Guide</h2>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>Section not written. Will discuss use of shell-specific features (ls, cd, switching user, etc).</p>
+</div>
 </div>
 <div class="section" id="command-reference">
 <h2>Command Reference</h2>
-</div>
-<div class="section" id="scripting-with-the-cli">
-<h2>Scripting with the CLI</h2>
-<p>The DataFed CLI can be used for scripting by using the “–script” option to produce output in JSON format;
-however, Python API modules are also available for more complex scripting and/or custom application development.
-There are two library modules, “CommandLib” and “MessageLib”, that provide high- and-low-level application
-programming interfaces (APIs), respectively, that can be used for Python scripting or custom application development.
-The high-level API is almost identical to the the DataFed command-line interface, in that it accepts textual CLI
-commands, but returns Python objects instead of text or JSON output. The low-level API, as the module name implies,
-exposes the binary message-passing interface used by DataFed and is intended for more complex applications.</p>
+<p>This doc is a placeholder for the Python Command Reference.</p>
 </div>
 </div>
 
@@ -737,7 +733,7 @@ exposes the binary message-passing interface used by DataFed and is intended for
         <a href="../api/python.html" class="btn btn-neutral float-right" title="Python API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../web/portal.html" class="btn btn-neutral float-left" title="DataFed Web Portal" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../web/portal.html" class="btn btn-neutral float-left" title="Web Portal" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

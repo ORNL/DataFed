@@ -1,5 +1,5 @@
 ==============================
-DataFed Command Line Interface
+Command Line Interface
 ==============================
 
 The DataFed command-line-interface (CLI) provides access to basic DataFed capabilities for both
@@ -48,14 +48,16 @@ stateful and convenient for browsing DataFed collection hierarchies.
 This mode is similar to the single command mode with the exception that non-essential output is
 suppressed and command responses are returned in a strict JSON format. This mode is useful for
 integrating the CLI into non-Python scripts (i.e. bash), and is activated by specifying the
-"--script" (or "-s") command line option when the CLI is run. For Python scripting, use of the
-DataFed `Python API`_ is recommended.
+"--script" (or "-s") command line option when the CLI is run. 
 
 .. note::
 
-    The full listing of options, commands, and sub-commands are detailed in the `Usage Guide`_
-    and `Command Reference`_ sections of this document.
+    For a complete guide to DataFed scripting, please refer to the :doc:`/user/scripting` page.
+    The :doc:`/user/api/python` page provides a detailed reference to the DataFed API for
+    scripting and custom application development.
 
+The full listing of options, commands, and sub-commands are detailed in the `Usage Guide`_
+and `Command Reference`_ sections of this document.
 
 Installation
 ============
@@ -370,19 +372,11 @@ saved) using the "ep set" command.
 Usage Guide
 ===========
 
+.. attention::
+
+    Section not written. Will discuss use of shell-specific features (ls, cd, switching user, etc).
+
 Command Reference
 =================
 
-
-
-Scripting with the CLI
-======================
-
-The DataFed CLI can be used for scripting by using the "--script" option to produce output in JSON format;
-however, Python API modules are also available for more complex scripting and/or custom application development.
-There are two library modules, "CommandLib" and "MessageLib", that provide high- and-low-level application
-programming interfaces (APIs), respectively, that can be used for Python scripting or custom application development.
-The high-level API is almost identical to the the DataFed command-line interface, in that it accepts textual CLI
-commands, but returns Python objects instead of text or JSON output. The low-level API, as the module name implies,
-exposes the binary message-passing interface used by DataFed and is intended for more complex applications.
-
+.. include:: /_generated/cli_python_cmd_ref.rst
