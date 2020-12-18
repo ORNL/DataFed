@@ -1,59 +1,63 @@
-General Usage
--------------
+----------------
+Datafed Commands
+----------------
 
-Usage: datafed [OPTIONS] COMMAND [ARGS]...
+'datafed' is the command-line interface (CLI) for the DataFed federated data management
+service and may be used to access many of the features available via the DataFed web
+portal. This CLI may be used interactively (human-friendly output) or for scripting (JSON
+output) by specifying the -s option.
 
-  'datafed' is the command-line interface (_cli) for the DataFed federated
-  data management service. This _cli may be used to access most, but not
-  all, of the features available via the DataFed web portal. This _cli may
-  be used interactively (-i option), or for scripting (supports JSON output
-  with the -J option).
+When the datafed CLI is run without any command arguments, a interactive shell session is
+started. While in the shell, commands should be entered without specifying the 'datafed'
+prefix.
 
-  For more information about this _cli and DataFed in general, refer to
-  https://datafed.ornl.gov/ui/docs
+Usage::
+
+    datafed [OPTIONS] COMMAND [ARGS]...
 
 Options:
-  -m, --manual-auth            Force manual authentication
-  -s, --script                 Start in non-interactive scripting mode. Output
-                               is in JSON, all intermediate I/O is disabled,
-                               and certain client-side commands are
-                               unavailable.
-  --version                    Print version number and exit.
-  --server-cfg-file TEXT       Server configuration file
-  --client-pub-key-file TEXT   Client public key file
-  -e, --default-ep TEXT        Default Globus endpoint
-  --client-cfg-file TEXT       Client configuration file
-  --client-cfg-dir TEXT        Client configuration directory
-  --client-priv-key-file TEXT  Client private key file
-  -P, --server-port INTEGER    Server port number
-  -v, --verbosity INTEGER      Verbosity level (0=quiet,1=normal,2=verbose)
-                               for text-format output only.
-  -H, --server-host TEXT       Sever host name or IP address
-  --server-cfg-dir TEXT        Server configuration directory
-  --server-pub-key-file TEXT   Server public key file
-  -?, -h, --help               Show this message and exit.
 
-Commands:
-  coll       Collection subcommands.
-  data       Data subcommands.
-  ep         Endpoint commands.
-  exit       Exit an interactive session.
-  help       Show DataFed CLI help.
-  ls         List contents of a collection, or shared items of a user or...
-  project    Project subcommands.
-  query      Data query subcommands.
-  setup      Setup local credentials.
-  shares     List users and/or projects sharing data with current user.
-  task       Task management commands.
-  user       User subcommands.
-  verbosity  Set/display verbosity level.
-  wc         Set/print current working collection or path.
-  wp         Get current working path.
+-m, --manual-auth  Force manual authentication
+-s, --script  Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.
+--version  Print version number and exit.
+-v, --verbosity INTEGER  Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.
+--server-cfg-file TEXT  Server configuration file
+-P, --server-port INTEGER  Server port number
+--server-cfg-dir TEXT  Server configuration directory
+--client-pub-key-file TEXT  Client public key file
+--client-cfg-dir TEXT  Client configuration directory
+-e, --default-ep TEXT  Default Globus endpoint
+-H, --server-host TEXT  Sever host name or IP address
+--client-priv-key-file TEXT  Client private key file
+--client-cfg-file TEXT  Client configuration file
+--server-pub-key-file TEXT  Server public key file
+-h, --help  Show this message and exit.
 
+Sub-Commands:
+
+===============  ============================================================
+coll             Collection commands.
+data             Data commands.
+ep               Endpoint commands.
+exit             Exit an interactive session.
+help             Show DataFed CLI help.
+ls               List contents of a collection, or shared items.
+project          Project commands.
+query            Data query commands.
+setup            Setup local credentials.
+shares           List users and/or projects sharing data with current user.
+task             Task management commands.
+user             User commands.
+verbosity        Set/display verbosity level.
+wc               Set/print current working collection or path.
+wp               Get current working path.
+===============  ============================================================
+
+-------------
 Coll Commands
 -------------
 
-Collection subcommands.
+Collection commands.
 
 Usage::
 
@@ -61,11 +65,21 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
+Sub-Commands:
 
-Coll Add
-^^^^^^^^
+===============  ============================================================
+add              Add data records and/or collections to a collection.
+create           Create a new collection.
+delete           Delete one or more existing collections.
+remove           Remove data records and/or collections from a collection.
+update           Update an existing collection.
+view             View collection information.
+===============  ============================================================
+
+Coll Add Command
+----------------
 
 Add data records and/or collections to a collection. COLL_ID is the
 destination collection and ITEM_IDs specify one or more data records and/or
@@ -79,12 +93,12 @@ Usage::
 
 Options:
 
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -?, -h, --help    Show this message and exit.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-h, --help  Show this message and exit.
 
 
-Coll Create
-^^^^^^^^^^^
+Coll Create Command
+-------------------
 
 Create a new collection. The collection 'title' is required, but all
 other attributes are optional. On success, the ID of the created
@@ -98,18 +112,18 @@ Usage::
 
 Options:
 
-    -a, --alias TEXT    Alias
-    -p, --parent TEXT    Parent collection ID/alias (default is current working collection)
-    -d, --description TEXT    Description text
-    -T, --tags TEXT    Tags (comma separated list).
-    --topic TEXT    Publish the collection to the provided topic.
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -v, --verbosity [0|1|2]    Verbosity level of output
-    -?, -h, --help    Show this message and exit.
+-a, --alias TEXT  Alias
+-p, --parent TEXT  Parent collection ID/alias (default is current working collection)
+-d, --description TEXT  Description text
+-T, --tags TEXT  Tags (comma separated list).
+--topic TEXT  Publish the collection to the provided topic.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-v, --verbosity [0|1|2]  Verbosity level of output
+-h, --help  Show this message and exit.
 
 
-Coll Delete
-^^^^^^^^^^^
+Coll Delete Command
+-------------------
 
 Delete one or more existing collections. Multiple ID arguments can be
 provided and may be collection IDs, aliases, or index values from a
@@ -126,13 +140,13 @@ Usage::
 
 Options:
 
-    -f, --force    Delete without confirmation.
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -?, -h, --help    Show this message and exit.
+-f, --force  Delete without confirmation.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-h, --help  Show this message and exit.
 
 
-Coll Remove
-^^^^^^^^^^^
+Coll Remove Command
+-------------------
 
 Remove data records and/or collections from a collection. COLL_ID is the
 containing collection and ITEM_IDs specify one or more data records and/or
@@ -146,12 +160,12 @@ Usage::
 
 Options:
 
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -?, -h, --help    Show this message and exit.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-h, --help  Show this message and exit.
 
 
-Coll Update
-^^^^^^^^^^^
+Coll Update Command
+-------------------
 
 Update an existing collection. The collection ID is required and can be
 an ID, alias, or listing index; all other collection attributes are
@@ -163,18 +177,18 @@ Usage::
 
 Options:
 
-    -t, --title TEXT    Title
-    -a, --alias TEXT    Alias
-    -d, --description TEXT    Description text
-    -T, --tags TEXT    Tags (comma separated list).
-    --topic TEXT    Publish the collection under the provided topic.
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -v, --verbosity [0|1|2]    Verbosity level of output
-    -?, -h, --help    Show this message and exit.
+-t, --title TEXT  Title
+-a, --alias TEXT  Alias
+-d, --description TEXT  Description text
+-T, --tags TEXT  Tags (comma separated list).
+--topic TEXT  Publish the collection under the provided topic.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-v, --verbosity [0|1|2]  Verbosity level of output
+-h, --help  Show this message and exit.
 
 
-Coll View
-^^^^^^^^^
+Coll View Command
+-----------------
 
 View collection information. Displays collection title, description, and
 other administrative fields. ID may be a collection identifier, alias, or
@@ -187,15 +201,16 @@ Usage::
 
 Options:
 
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -v, --verbosity [0|1|2]    Verbosity level of output
-    -?, -h, --help    Show this message and exit.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-v, --verbosity [0|1|2]  Verbosity level of output
+-h, --help  Show this message and exit.
 
 
+-------------
 Data Commands
 -------------
 
-Data subcommands.
+Data commands.
 
 Usage::
 
@@ -203,13 +218,24 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
+Sub-Commands:
+
+===============  ============================================================
+batch            Data batch commands.
+create           Create a new data record.
+delete           Delete one or more existing data records.
+get              Get (download) raw data of data records and/or collections.
+put              Put (upload) raw data located at PATH to DataFed record ID.
+update           Update an existing data record.
+view             View data record information.
+===============  ============================================================
 
 Data Batch Commands
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
-Data batch subcommands.
+Data batch commands.
 
 Usage::
 
@@ -217,11 +243,17 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
+Sub-Commands:
 
-Data Batch Create
-,,,,,,,,,,,,,,,,,
+===============  ============================================================
+create           Batch create data records from JSON file(s).
+update           Batch update data records from JSON file(s).
+===============  ============================================================
+
+Data Batch Create Command
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Batch create data records from JSON file(s). Multiple FILE arguments may be
 specified and are absolute or relative paths to JSON inputs file on a local
@@ -235,13 +267,13 @@ Usage::
 
 Options:
 
-    -c, --collection TEXT    Optional target collection (default is root).
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -?, -h, --help    Show this message and exit.
+-c, --collection TEXT  Optional target collection (default is root).
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-h, --help  Show this message and exit.
 
 
-Data Batch Update
-,,,,,,,,,,,,,,,,,
+Data Batch Update Command
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Batch update data records from JSON file(s). Multiple FILE arguments may be
 specified and are absolute or relative paths to JSON inputs file on a local
@@ -255,11 +287,11 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Data Create
-^^^^^^^^^^^
+Data Create Command
+-------------------
 
 Create a new data record. The data record 'title' is required, but all
 other attributes are optional. On success, the ID of the created data
@@ -275,23 +307,23 @@ Usage::
 
 Options:
 
-    -a, --alias TEXT    Record alias.
-    -d, --description TEXT    Description text.
-    -T, --tags TEXT    Tags (comma separated list).
-    -r, --raw-data-file TEXT    Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.
-    -x, --extension TEXT    Override raw data file extension if provided (default is auto detect).
-    -m, --metadata TEXT    Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.
-    -f, --metadata-file TEXT    Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.
-    -p, --parent TEXT    Parent collection ID, alias, or listing index. Default is the current working collection.
-    -R, --repository TEXT    Repository ID. Uses default allocation if not specified.
-    -D, --deps <CHOICE TEXT>...    Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -v, --verbosity [0|1|2]    Verbosity level of output
-    -?, -h, --help    Show this message and exit.
+-a, --alias TEXT  Record alias.
+-d, --description TEXT  Description text.
+-T, --tags TEXT  Tags (comma separated list).
+-r, --raw-data-file TEXT  Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.
+-x, --extension TEXT  Override raw data file extension if provided (default is auto detect).
+-m, --metadata TEXT  Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.
+-f, --metadata-file TEXT  Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.
+-p, --parent TEXT  Parent collection ID, alias, or listing index. Default is the current working collection.
+-R, --repository TEXT  Repository ID. Uses default allocation if not specified.
+-D, --deps <CHOICE TEXT>...  Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-v, --verbosity [0|1|2]  Verbosity level of output
+-h, --help  Show this message and exit.
 
 
-Data Delete
-^^^^^^^^^^^
+Data Delete Command
+-------------------
 
 Delete one or more existing data records. Multiple ID arguments can be
 provided and may data record IDs, aliases, or index values from a listing.
@@ -304,13 +336,13 @@ Usage::
 
 Options:
 
-    -f, --force    Delete record(s) without confirmation.
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -?, -h, --help    Show this message and exit.
+-f, --force  Delete record(s) without confirmation.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-h, --help  Show this message and exit.
 
 
-Data Get
-^^^^^^^^
+Data Get Command
+----------------
 
 Get (download) raw data of data records and/or collections. Multiple ID
 arguments can be specified and may be data record and/or collection IDs,
@@ -335,15 +367,15 @@ Usage::
 
 Options:
 
-    -w, --wait    Block until Globus transfer is complete.
-    -e, --encrypt [0|1|2]    Encryption mode: 0 = none, 1 = if available (default), 2 = force.
-    -o, --orig_fname    Download to original filename(s).
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -?, -h, --help    Show this message and exit.
+-w, --wait  Block until Globus transfer is complete.
+-e, --encrypt [0|1|2]  Encryption mode: 0 = none, 1 = if available (default), 2 = force.
+-o, --orig_fname  Download to original filename(s).
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-h, --help  Show this message and exit.
 
 
-Data Put
-^^^^^^^^
+Data Put Command
+----------------
 
 Put (upload) raw data located at PATH to DataFed record ID.  The ID
 argument may be data record ID, alias, or index value from a listing.
@@ -358,15 +390,15 @@ Usage::
 
 Options:
 
-    -w, --wait    Block reply or further commands until transfer is complete
-    -x, --extension TEXT    Override extension for raw data file (default = auto detect).
-    -e, --encrypt [0|1|2]    Encryption mode: 0 = none, 1 = if available (default), 2 = force.
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -?, -h, --help    Show this message and exit.
+-w, --wait  Block reply or further commands until transfer is complete
+-x, --extension TEXT  Override extension for raw data file (default = auto detect).
+-e, --encrypt [0|1|2]  Encryption mode: 0 = none, 1 = if available (default), 2 = force.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-h, --help  Show this message and exit.
 
 
-Data Update
-^^^^^^^^^^^
+Data Update Command
+-------------------
 
 Update an existing data record. The data record ID is required and can be
 an ID, alias, or listing index; all other record attributes are optional.
@@ -379,24 +411,24 @@ Usage::
 
 Options:
 
-    -t, --title TEXT    Title
-    -a, --alias TEXT    Alias
-    -d, --description TEXT    Description text
-    -T, --tags TEXT    Tags (comma separated list)
-    -r, --raw-data-file TEXT    Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.
-    -x, --extension TEXT    Override extension for raw data file (default = auto detect).
-    -m, --metadata TEXT    Inline metadata in JSON format.
-    -f, --metadata-file TEXT    Path to local metadata file containing JSON.
-    -S, --metadata-set    Set (replace) existing metadata with provided instead of merging.
-    -A, --deps-add <CHOICE TEXT>...    Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.
-    -R, --deps-rem <CHOICE TEXT>...    Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -v, --verbosity [0|1|2]    Verbosity level of output
-    -?, -h, --help    Show this message and exit.
+-t, --title TEXT  Title
+-a, --alias TEXT  Alias
+-d, --description TEXT  Description text
+-T, --tags TEXT  Tags (comma separated list)
+-r, --raw-data-file TEXT  Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.
+-x, --extension TEXT  Override extension for raw data file (default = auto detect).
+-m, --metadata TEXT  Inline metadata in JSON format.
+-f, --metadata-file TEXT  Path to local metadata file containing JSON.
+-S, --metadata-set  Set (replace) existing metadata with provided instead of merging.
+-A, --deps-add <CHOICE TEXT>...  Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.
+-R, --deps-rem <CHOICE TEXT>...  Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-v, --verbosity [0|1|2]  Verbosity level of output
+-h, --help  Show this message and exit.
 
 
-Data View
-^^^^^^^^^
+Data View Command
+-----------------
 
 View data record information. Displays record title, description, tags,
 and other informational and administrative fields. ID may be a data record
@@ -410,11 +442,12 @@ Usage::
 
 Options:
 
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -v, --verbosity [0|1|2]    Verbosity level of output
-    -?, -h, --help    Show this message and exit.
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-v, --verbosity [0|1|2]  Verbosity level of output
+-h, --help  Show this message and exit.
 
 
+-----------
 Ep Commands
 -----------
 
@@ -426,11 +459,19 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
+Sub-Commands:
+
+===============  ============================================================
+default          Default endpoint commands.
+get              Get Globus endpoint for the current session.
+list             List recently used endpoints.
+set              Set endpoint for the current session.
+===============  ============================================================
 
 Ep Default Commands
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
 Default endpoint commands.
 
@@ -440,11 +481,17 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
+Sub-Commands:
 
-Ep Default Get
-,,,,,,,,,,,,,,
+===============  ============================================================
+get              Show the default Globus endpoint.
+set              Set the default Globus endpoint.
+===============  ============================================================
+
+Ep Default Get Command
+^^^^^^^^^^^^^^^^^^^^^^
 
 Show the default Globus endpoint.
 
@@ -454,11 +501,11 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Ep Default Set
-,,,,,,,,,,,,,,
+Ep Default Set Command
+^^^^^^^^^^^^^^^^^^^^^^
 
 Set the default Globus endpoint. The default endpoint will be set from the
 'endpoint' argument, or if the '--current' options is specified, from the
@@ -470,12 +517,12 @@ Usage::
 
 Options:
 
-    -c, --current    Set default endpoint to current endpoint.
-    -?, -h, --help    Show this message and exit.
+-c, --current  Set default endpoint to current endpoint.
+-h, --help  Show this message and exit.
 
 
-Ep Get
-^^^^^^
+Ep Get Command
+--------------
 
 Get Globus endpoint for the current session. At the start of a session, the
 current endpoint will be set to the default endpoint, if configured.
@@ -486,11 +533,11 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Ep List
-^^^^^^^
+Ep List Command
+---------------
 
 List recently used endpoints.
 
@@ -500,11 +547,11 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Ep Set
-^^^^^^
+Ep Set Command
+--------------
 
 Set endpoint for the current session. If no endpoint is given, the
 default endpoint will be set as the current endpoint, if configured.
@@ -515,11 +562,12 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Exit
-----
+------------
+Exit Command
+------------
 
 Exit an interactive session. Ctrl-C may also be used to exit the shell.
 
@@ -529,14 +577,15 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Help
-----
+------------
+Help Command
+------------
 
-Show DataFed CLI help. Include a subcommand name as the argument to see
-subcommand-specific help.
+Show DataFed CLI help. Include a command name as the argument to see
+command-specific help.
 
 Usage::
 
@@ -544,15 +593,18 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Ls
---
+----------
+Ls Command
+----------
 
-List contents of a collection, or shared items of a user or project.
-ID may be a collection ID or alias, a user or project ID, an index
-value from a listing, or omitted for the current working collection.
+List contents of a collection, or shared items. ID may be a collection ID
+or alias, a relative path, a user or project ID, an index value from a
+listing, or omitted for the current working collection. If the ID is a
+user or project, the ls command will list shared items associated with the
+given user or project.
 
 Usage::
 
@@ -560,16 +612,17 @@ Usage::
 
 Options:
 
-    -O, --offset INTEGER    Start list at offset
-    -C, --count INTEGER    Limit list to count results
-    -X, --context TEXT    User or project ID for command alias context. See 'alias' command help for more information.
-    -?, -h, --help    Show this message and exit.
+-O, --offset INTEGER  Start list at offset
+-C, --count INTEGER  Limit list to count results
+-X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
+-h, --help  Show this message and exit.
 
 
+----------------
 Project Commands
 ----------------
 
-Project subcommands.
+Project commands.
 
 Usage::
 
@@ -577,11 +630,17 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
+Sub-Commands:
 
-Project List
-^^^^^^^^^^^^
+===============  ============================================================
+list             List projects associated with current user.
+view             View project information.
+===============  ============================================================
+
+Project List Command
+--------------------
 
 List projects associated with current user. List projects that are owned or managed by the
 current user, as well as projects were the current user is a member.
@@ -592,16 +651,16 @@ Usage::
 
 Options:
 
-    -o, --owned    Include owned projects
-    -a, --admin    Include administered projects
-    -m, --member    Include membership projects
-    -O, --offset INTEGER    Start list at offset
-    -C, --count INTEGER    Limit list to count results
-    -?, -h, --help    Show this message and exit.
+-o, --owned  Include owned projects
+-a, --admin  Include administered projects
+-m, --member  Include membership projects
+-O, --offset INTEGER  Start list at offset
+-C, --count INTEGER  Limit list to count results
+-h, --help  Show this message and exit.
 
 
-Project View
-^^^^^^^^^^^^
+Project View Command
+--------------------
 
 View project information. Current user must have a role (owner, manager, or
 member) within the project specified by the ID argument.
@@ -612,14 +671,15 @@ Usage::
 
 Options:
 
-    -v, --verbosity [0|1|2]    Verbosity level of output
-    -?, -h, --help    Show this message and exit.
+-v, --verbosity [0|1|2]  Verbosity level of output
+-h, --help  Show this message and exit.
 
 
+--------------
 Query Commands
 --------------
 
-Data query subcommands.
+Data query commands.
 
 Usage::
 
@@ -627,11 +687,22 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
+Sub-Commands:
 
-Query Create
-^^^^^^^^^^^^
+===============  ============================================================
+create           Create a saved query.
+delete           Delete a saved query by ID.
+exec             Execute a saved query by ID.
+list             List saved queries.
+run              Run a directly entered query.
+update           Update a saved query.
+view             View a saved query by ID.
+===============  ============================================================
+
+Query Create Command
+--------------------
 
 Create a saved query.
 
@@ -641,17 +712,17 @@ Usage::
 
 Options:
 
-    -i, --id TEXT    ID/alias expression
-    -t, --text TEXT    Text expression
-    -m, --meta TEXT    Metadata expression
-    -n, --no-default    Exclude personal data and projects
-    -c, --coll TEXT    Collection(s) to search
-    -p, --proj TEXT    Project(s) to search
-    -?, -h, --help    Show this message and exit.
+-i, --id TEXT  ID/alias expression
+-t, --text TEXT  Text expression
+-m, --meta TEXT  Metadata expression
+-n, --no-default  Exclude personal data and projects
+-c, --coll TEXT  Collection(s) to search
+-p, --proj TEXT  Project(s) to search
+-h, --help  Show this message and exit.
 
 
-Query Delete
-^^^^^^^^^^^^
+Query Delete Command
+--------------------
 
 Delete a saved query by ID.
 
@@ -661,11 +732,11 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Query Exec
-^^^^^^^^^^
+Query Exec Command
+------------------
 
 Execute a saved query by ID.
 
@@ -675,13 +746,13 @@ Usage::
 
 Options:
 
-    -O, --offset INTEGER    Start results list at offset
-    -C, --count INTEGER    Limit to count results
-    -?, -h, --help    Show this message and exit.
+-O, --offset INTEGER  Start results list at offset
+-C, --count INTEGER  Limit to count results
+-h, --help  Show this message and exit.
 
 
-Query List
-^^^^^^^^^^
+Query List Command
+------------------
 
 List saved queries.
 
@@ -691,13 +762,13 @@ Usage::
 
 Options:
 
-    -O, --offset INTEGER    Start list at offset
-    -C, --count INTEGER    Limit list to count results
-    -?, -h, --help    Show this message and exit.
+-O, --offset INTEGER  Start list at offset
+-C, --count INTEGER  Limit list to count results
+-h, --help  Show this message and exit.
 
 
-Query Run
-^^^^^^^^^
+Query Run Command
+-----------------
 
 Run a directly entered query. Unless the 'no-default' option is included,
 the search scope includes all data owned by the authenticated user (in
@@ -712,19 +783,19 @@ Usage::
 
 Options:
 
-    -i, --id TEXT    ID/alias expression
-    -t, --text TEXT    Text expression
-    -m, --meta TEXT    Metadata expression
-    -n, --no-default    Exclude personal data and projects
-    -c, --coll TEXT    Collection(s) to search
-    -p, --proj TEXT    Project(s) to search
-    -O, --offset INTEGER    Start result list at offset
-    -C, --count INTEGER    Limit to count results (default = 20)
-    -?, -h, --help    Show this message and exit.
+-i, --id TEXT  ID/alias expression
+-t, --text TEXT  Text expression
+-m, --meta TEXT  Metadata expression
+-n, --no-default  Exclude personal data and projects
+-c, --coll TEXT  Collection(s) to search
+-p, --proj TEXT  Project(s) to search
+-O, --offset INTEGER  Start result list at offset
+-C, --count INTEGER  Limit to count results (default = 20)
+-h, --help  Show this message and exit.
 
 
-Query Update
-^^^^^^^^^^^^
+Query Update Command
+--------------------
 
 Update a saved query. The title and search terms of a query may be updated;
 however, search scope cannot currently be changed. To remove a term,
@@ -736,15 +807,15 @@ Usage::
 
 Options:
 
-    --title TEXT    New query title
-    -i, --id TEXT    ID/alias expression
-    -t, --text TEXT    Text expression
-    -m, --meta TEXT    Metadata expression
-    -?, -h, --help    Show this message and exit.
+--title TEXT  New query title
+-i, --id TEXT  ID/alias expression
+-t, --text TEXT  Text expression
+-m, --meta TEXT  Metadata expression
+-h, --help  Show this message and exit.
 
 
-Query View
-^^^^^^^^^^
+Query View Command
+------------------
 
 View a saved query by ID.
 
@@ -754,11 +825,12 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Setup
------
+-------------
+Setup Command
+-------------
 
 Setup local credentials. This command installs DataFed credentials for the
 current user in the configured client configuration directory. Subsequent
@@ -771,11 +843,12 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Shares
-------
+--------------
+Shares Command
+--------------
 
 List users and/or projects sharing data with current user.
 
@@ -785,11 +858,12 @@ Usage::
 
 Options:
 
-    -u, --users    Show users only
-    -p, --projects    Show projects only
-    -?, -h, --help    Show this message and exit.
+-u, --users  Show users only
+-p, --projects  Show projects only
+-h, --help  Show this message and exit.
 
 
+-------------
 Task Commands
 -------------
 
@@ -801,11 +875,17 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
+Sub-Commands:
 
-Task List
-^^^^^^^^^
+===============  ============================================================
+list             List recent tasks.
+view             Show task information.
+===============  ============================================================
+
+Task List Command
+-----------------
 
 List recent tasks. If no time or status filter options are
 provided, all tasks initiated by the current user are listed,
@@ -818,17 +898,17 @@ Usage::
 
 Options:
 
-    -s, --since TEXT    List from specified time (seconds default, suffix h = hours, d = days, w = weeks)
-    -f, --from TEXT    List from specified date/time (M/D/YYYY[,HH:MM])
-    -t, --to TEXT    List up to specified date/time (M/D/YYYY[,HH:MM])
-    -S, --status [0|1|2|3|4|queued|ready|running|succeeded|failed]    List tasks matching specified status
-    -O, --offset INTEGER    Start list at offset
-    -C, --count INTEGER    Limit list to count results
-    -?, -h, --help    Show this message and exit.
+-s, --since TEXT  List from specified time (seconds default, suffix h = hours, d = days, w = weeks)
+-f, --from TEXT  List from specified date/time (M/D/YYYY[,HH:MM])
+-t, --to TEXT  List up to specified date/time (M/D/YYYY[,HH:MM])
+-S, --status [0|1|2|3|4|queued|ready|running|succeeded|failed]  List tasks matching specified status
+-O, --offset INTEGER  Start list at offset
+-C, --count INTEGER  Limit list to count results
+-h, --help  Show this message and exit.
 
 
-Task View
-^^^^^^^^^
+Task View Command
+-----------------
 
 Show task information. Use the ID argument to view a specific task
 record, or omit to view the latest task initiated by the current user.
@@ -839,13 +919,14 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
+-------------
 User Commands
 -------------
 
-User subcommands.
+User commands.
 
 Usage::
 
@@ -853,11 +934,19 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
+Sub-Commands:
 
-User All
-^^^^^^^^
+===============  ============================================================
+all              List all users.
+collab           List all users that are collaborators.
+view             View user information.
+who              Show current authenticated user ID.
+===============  ============================================================
+
+User All Command
+----------------
 
 List all users.
 
@@ -867,13 +956,13 @@ Usage::
 
 Options:
 
-    -O, --offset INTEGER    Start list at offset
-    -C, --count INTEGER    Limit list to count results
-    -?, -h, --help    Show this message and exit.
+-O, --offset INTEGER  Start list at offset
+-C, --count INTEGER  Limit list to count results
+-h, --help  Show this message and exit.
 
 
-User Collab
-^^^^^^^^^^^
+User Collab Command
+-------------------
 
 List all users that are collaborators. Collaborators are defined as users
 that have projects in common with the current user, or that have data-
@@ -885,13 +974,13 @@ Usage::
 
 Options:
 
-    -O, --offset INTEGER    Start list at offset
-    -C, --count INTEGER    Limit list to count results
-    -?, -h, --help    Show this message and exit.
+-O, --offset INTEGER  Start list at offset
+-C, --count INTEGER  Limit list to count results
+-h, --help  Show this message and exit.
 
 
-User View
-^^^^^^^^^
+User View Command
+-----------------
 
 View user information.
 
@@ -901,11 +990,11 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-User Who
-^^^^^^^^
+User Who Command
+----------------
 
 Show current authenticated user ID.
 
@@ -915,11 +1004,12 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Verbosity
----------
+-----------------
+Verbosity Command
+-----------------
 
 Set/display verbosity level. The verbosity level argument can be 0
 (lowest), 1 (normal), or 2 (highest). If the the level is omitted, the
@@ -931,14 +1021,16 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Wc
---
+----------
+Wc Command
+----------
 
-Set/print current working collection or path. 'ID' can be a collection ID, alias, list index number, '-' (previous collection), or path. Only '..' and '/' are supported for paths. 'cd' is an alias for this command.
-    
+Set/print current working collection or path. 'ID' can be a collection ID, alias,
+list index number, '-' (previous collection), or path. Only '..' and '/' are
+supported for paths. 'cd' is an alias for this command.
 
 Usage::
 
@@ -946,11 +1038,12 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
-Wp
---
+----------
+Wp Command
+----------
 
 Get current working path. Displays the full path of the current working
 collection starting from the root collection of the associated user or
@@ -962,7 +1055,7 @@ Usage::
 
 Options:
 
-    -?, -h, --help    Show this message and exit.
+-h, --help  Show this message and exit.
 
 
 
