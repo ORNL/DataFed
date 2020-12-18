@@ -69,7 +69,7 @@ _verbosity_sticky = 1
 _verbosity = 1
 _output_mode_sticky = _OM_TEXT
 _output_mode = _OM_TEXT
-_ctxt_settings = dict(help_option_names=['-?','-h','--help'],ignore_unknown_options=True,allow_extra_args=True)
+_ctxt_settings = dict(help_option_names=['-h','--help'],ignore_unknown_options=True,allow_extra_args=True)
 _task_statuses = {0: "Queued", 1: "Ready", 2: "Running", 3: "Succeeded", 4: "Failed"}
 _task_types = { 0: "Data Get", 1: "Data Put", 2: "Data Del", 3: "Rec Chg Alloc", 4: "Rec Chg Owner", 5: "Rec Delete", 6: "Alloc Create", 7: "Alloc Del", 8: "User Del", 9: "Project Del"}
 
@@ -77,7 +77,7 @@ _task_types = { 0: "Data Get", 1: "Data Put", 2: "Data Del", 3: "Rec Chg Alloc",
 _initialized = False
 _devnull = None
 
-_hdr_lev_char = ['-','^',',']
+_hdr_lev_char = ['-','-','^',',']
 
 # =============================================================================
 # --------------------------------------- CLI Module Public Interface Functions
@@ -400,12 +400,14 @@ def _global_output_options(func):
 @click.option("--version",is_flag=True,help="Print version number and exit.")
 @click.pass_context
 def _cli(ctx,*args,**kwargs):
-    ''''datafed' is the command-line interface (_cli) for the DataFed federated data management
-    service. This _cli may be used to access most, but not all, of the features available
-    via the DataFed web portal. This _cli may be used interactively (-i option), or for
-    scripting (supports JSON output with the -J option).
+    ''''datafed' is the command-line interface (CLI) for the DataFed federated data management
+    service and may be used to access many of the features available via the DataFed web
+    portal. This CLI may be used interactively (human-friendly output) or for scripting (JSON
+    output) by specifying the -s option.
 
-    For more information about this _cli and DataFed in general, refer to https://datafed.ornl.gov/ui/docs
+    When the datafed CLI is run without any command arguments, a interactive shell session is
+    started. While in the shell, commands should be entered without specifying the 'datafed'
+    prefix.
     '''
 
     global _verbosity
@@ -426,7 +428,9 @@ def _cli(ctx,*args,**kwargs):
 @click.pass_context
 def _genDoc( ctx ):
 
-    body = _genDocHeader("General Usage",0) + "\n" + _cli.get_help( ctx.parent ) + "\n\n"
+    body = _genDocCmd( None, ctx, 0, recurse = False )
+
+    #body = _genDocHeader("General Usage",0) + "\n" + _cli.get_help( ctx.parent ) + "\n\n"
 
     for c in _cli.list_commands( ctx ):
         subcmd = _cli.get_command( _cli, c )
@@ -440,10 +444,16 @@ def _genDocHeader( cmd, level ):
     ul = ""
     ul = ul.rjust( len(cmd), _hdr_lev_char[level])
 
-    return cmd + "\n" + ul + "\n"
+    if level == 0:
+        return ul + "\n" + cmd + "\n" + ul + "\n"
+    else:
+        return cmd + "\n" + ul + "\n"
 
-def _genDocCmd( cmd, ctx, level, parname = None ):
-    if parname:
+def _genDocCmd( cmd, ctx, level, parname = None, recurse = True ):
+    if cmd == None:
+        cname = "Datafed"
+        cmd = _cli
+    elif parname:
         cname = parname + " " + cmd.name.capitalize()
     else:
         cname = cmd.name.capitalize()
@@ -453,7 +463,7 @@ def _genDocCmd( cmd, ctx, level, parname = None ):
         doc = _genDocHeader( cname + " Commands", level )
     else:
         is_group = False
-        doc = _genDocHeader( cname, level )
+        doc = _genDocHeader( cname + " Command", level )
 
     #doc += "\n" + cmd.get_help( ctx ) + "\n\n"
 
@@ -464,32 +474,43 @@ def _genDocCmd( cmd, ctx, level, parname = None ):
         if rv is not None:
             opts.append(rv)
 
-    doc +=  "\n" + cmd.help + "\n\nUsage::\n\n    " + ctx.command_path + " " + " ".join(tmp) + "\n\nOptions:\n\n"
+    doc +=  "\n" + cmd.help + "\n\nUsage::\n\n    " 
+    if cname == "Datafed":
+        doc += "datafed"
+    else:
+        doc += ctx.command_path 
+    doc += " " + " ".join(tmp) + "\n\nOptions:\n\n"
 
     for o in opts:
-        doc += "    " + o[0] + "    " + o[1] + "\n"
+        doc += o[0] + "  " + o[1] + "\n"
 
-    doc += "\n\n"
-
-    #print( "usage:", cmd.collect_usage_pieces( ctx ))
-    #print( "help:", cmd.help )
-    #print( "opts:", opts )
-
-    #cmd.format_epilog(ctx, formatter)
-
+    doc += "\n"
 
     if is_group:
+        doc += "Sub-Commands:\n\n===============  ============================================================\n"
         for c in cmd.list_commands( ctx ):
             subcmd = cmd.get_command( cmd, c )
             if not subcmd.hidden:
-                doc = doc + _genDocCmd( subcmd, click.Context( subcmd, info_name = subcmd.name, parent=ctx ), level + 1, cname )
+                doc += '{0: <15}  {1}\n'.format( subcmd.name, subcmd.get_short_help_str(limit=60))
+        doc += "===============  ============================================================\n\n"
+
+        if recurse:
+            for c in cmd.list_commands( ctx ):
+                subcmd = cmd.get_command( cmd, c )
+                if not subcmd.hidden:
+                    doc = doc + _genDocCmd( subcmd, click.Context( subcmd, info_name = subcmd.name, parent=ctx ), level + 1, cname )
+    else:
+        doc += "\n"
 
     return doc
 
 @_cli.command(name='wc')
 @click.argument("coll_id",required=False, metavar="ID")
 def _wc( coll_id ):
-    '''Set/print current working collection or path. 'ID' can be a collection ID, alias, list index number, '-' (previous collection), or path. Only '..' and '/' are supported for paths. 'cd' is an alias for this command.
+    '''
+    Set/print current working collection or path. 'ID' can be a collection ID, alias,
+    list index number, '-' (previous collection), or path. Only '..' and '/' are
+    supported for paths. 'cd' is an alias for this command.
     '''
 
     if _output_mode_sticky != _OM_RETN and not _interactive:
@@ -600,7 +621,7 @@ def _alias( context ):
 # =============================================================================
 
 
-@_cli.command(name='data',cls=_AliasedGroup,help="Data subcommands.")
+@_cli.command(name='data',cls=_AliasedGroup,help="Data commands.")
 def _data():
     pass
 
@@ -811,7 +832,7 @@ def _dataPut( data_id, path, wait, extension, encrypt, context ):
 # -------------------------------------------------------- Data-Batch Functions
 # =============================================================================
 
-@_data.command(name='batch',cls=_AliasedGroup,help="Data batch subcommands.")
+@_data.command(name='batch',cls=_AliasedGroup,help="Data batch commands.")
 def _batch():
     pass
 
@@ -862,9 +883,11 @@ def _data_batch_update( file ):
 @click.pass_context
 def _list( ctx, item_id, offset, count, context ):
     '''
-    List contents of a collection, or shared items of a user or project.
-    ID may be a collection ID or alias, a user or project ID, an index
-    value from a listing, or omitted for the current working collection.
+    List contents of a collection, or shared items. ID may be a collection ID
+    or alias, a relative path, a user or project ID, an index value from a
+    listing, or omitted for the current working collection. If the ID is a
+    user or project, the ls command will list shared items associated with the
+    given user or project.
     '''
 
     global _cur_coll
@@ -897,7 +920,7 @@ def _list( ctx, item_id, offset, count, context ):
 # =============================================================================
 
 
-@_cli.command( name='coll',cls=_AliasedGroup, help="Collection subcommands." )
+@_cli.command( name='coll',cls=_AliasedGroup, help="Collection commands." )
 def _coll():
     pass
 
@@ -1049,7 +1072,7 @@ def _coll_rem(  coll_id, item_id, context ):
 # ------------------------------------------------------------- Query Functions
 # =============================================================================
 
-@_cli.command(name='query',cls=_AliasedGroup,help="Data query subcommands.")
+@_cli.command(name='query',cls=_AliasedGroup,help="Data query commands.")
 def _query(*args,**kwargs):
     pass
 
@@ -1157,7 +1180,7 @@ def _queryRun( id, text, meta, no_default, coll, proj, offset, count ):
 # -------------------------------------------------------------- User Functions
 # =============================================================================
 
-@_cli.command(name='user',cls=_AliasedGroup,help="User subcommands.")
+@_cli.command(name='user',cls=_AliasedGroup,help="User commands.")
 def _user():
     pass
 
@@ -1220,7 +1243,7 @@ def _userWho():
 # ----------------------------------------------------------- Project Functions
 # =============================================================================
 
-@_cli.command(name='project',cls=_AliasedGroup,help="Project subcommands.")
+@_cli.command(name='project',cls=_AliasedGroup,help="Project commands.")
 def _project():
     pass
 
@@ -1548,8 +1571,8 @@ def _verbositySet(level):
 @click.pass_context
 def _help_cli(ctx,command):
     '''
-    Show DataFed CLI help. Include a subcommand name as the argument to see
-    subcommand-specific help.
+    Show DataFed CLI help. Include a command name as the argument to see
+    command-specific help.
     '''
 
     if not command:
