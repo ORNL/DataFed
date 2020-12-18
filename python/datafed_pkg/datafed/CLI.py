@@ -77,6 +77,7 @@ _task_types = { 0: "Data Get", 1: "Data Put", 2: "Data Del", 3: "Rec Chg Alloc",
 _initialized = False
 _devnull = None
 
+_hdr_lev_char = ['-','^',',']
 
 # =============================================================================
 # --------------------------------------- CLI Module Public Interface Functions
@@ -424,46 +425,66 @@ def _cli(ctx,*args,**kwargs):
 @_cli.command(name='gendoc',hidden=True)
 @click.pass_context
 def _genDoc( ctx ):
-    toc = []
 
-    #print( _cli.get_help( ctx.parent ), "\n" )
+    body = _genDocHeader("General Usage",0) + "\n" + _cli.get_help( ctx.parent ) + "\n\n"
 
-    body = "<h1 id='main'>Main</h1>\n\n<pre>" + _cli.get_help( ctx.parent ) + "</pre>\n"
-    toc.append("<a href='#main'>Main</a>")
-
-    sec = 1
     for c in _cli.list_commands( ctx ):
         subcmd = _cli.get_command( _cli, c )
         if not subcmd.hidden:
-            body = body + _genDocCmd( subcmd, click.Context( subcmd, info_name = subcmd.name, parent=ctx.parent ), str(sec), "", 2, toc )
-            sec = sec + 1
+            body = body + _genDocCmd( subcmd, click.Context( subcmd, info_name = subcmd.name, parent=ctx.parent ), 0 )
 
-    _toc = ""
-    for t in toc:
-        _toc = _toc + t + "<br>\n"
+    print(body)
 
-    print("<html><head><title>DataFed CLI Help</title></head><body style='margin:0;padding:0'><div style='display:flex;flex-direction:column;height:100%;width:100%'><div style='flex:none;background:#4040bb;color:#ffffff;padding:.5em'><span style='font-size:2em'>DataFed Command Line Interface Help</span>&nbsp&nbsp&nbsp&nbspCLI V-{}<br>This documentation is automatically generated from the latest released DataFed CLI, available as the 'datafed' package on PyPi.</div><div style='flex:1 1 auto;display:flex;flex-direction:row;min-height:0'><div style='flex:none;overflow:auto;padding:.25em;background:#bbbbbb'>{}</div><div style='flex:1 1 auto;overflow:auto;padding: 0em 2em 0em 2em'>{}</div></div></div></body></html>".format( version, _toc, body ))
+def _genDocHeader( cmd, level ):
+    global _hdr_lev_char
+    ul = ""
+    ul = ul.rjust( len(cmd), _hdr_lev_char[level])
 
+    return cmd + "\n" + ul + "\n"
 
-def _genDocCmd( cmd, ctx, section, path, hlev, toc ):
+def _genDocCmd( cmd, ctx, level, parname = None ):
+    if parname:
+        cname = parname + " " + cmd.name.capitalize()
+    else:
+        cname = cmd.name.capitalize()
+
     if hasattr( cmd, 'list_commands' ):
         is_group = True
+        doc = _genDocHeader( cname + " Commands", level )
     else:
         is_group = False
+        doc = _genDocHeader( cname, level )
 
-    cname = cmd.name.capitalize()
-    html = "\n<h{} id='s{}'>{} {}{}{}</h{}>\n\n<pre>".format(hlev,section,section,path,cname," Commands" if is_group else "",hlev) + cmd.get_help( ctx ) + "</pre>\n"
-    toc.append("<a href='#s{}'>{} {}{}{}</a>".format(section,section,path,cname," Commands" if is_group else ""))
+    #doc += "\n" + cmd.get_help( ctx ) + "\n\n"
+
+    tmp = cmd.collect_usage_pieces( ctx )
+    opts = []
+    for param in cmd.get_params(ctx):
+        rv = param.get_help_record(ctx)
+        if rv is not None:
+            opts.append(rv)
+
+    doc +=  "\n" + cmd.help + "\n\nUsage::\n\n    " + ctx.command_path + " " + " ".join(tmp) + "\n\nOptions:\n\n"
+
+    for o in opts:
+        doc += "    " + o[0] + "    " + o[1] + "\n"
+
+    doc += "\n\n"
+
+    #print( "usage:", cmd.collect_usage_pieces( ctx ))
+    #print( "help:", cmd.help )
+    #print( "opts:", opts )
+
+    #cmd.format_epilog(ctx, formatter)
+
 
     if is_group:
-        sec = 1
         for c in cmd.list_commands( ctx ):
             subcmd = cmd.get_command( cmd, c )
             if not subcmd.hidden:
-                html = html + _genDocCmd( subcmd, click.Context( subcmd, info_name = subcmd.name, parent=ctx ), section + "." + str(sec), path + cname + " ", hlev + 1, toc )
-                sec = sec + 1
+                doc = doc + _genDocCmd( subcmd, click.Context( subcmd, info_name = subcmd.name, parent=ctx ), level + 1, cname )
 
-    return html
+    return doc
 
 @_cli.command(name='wc')
 @click.argument("coll_id",required=False, metavar="ID")
