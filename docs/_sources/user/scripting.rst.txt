@@ -1,5 +1,5 @@
-=========
-Scripting
-=========
+===============
+Scripting Guide
+===============
 
-Scripting guide here.
+Placeholder for how to script with DataFed CLI and API with examples.

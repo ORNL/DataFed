@@ -1,6 +1,6 @@
-==========
-Python API
-==========
+====================
+Python API Reference
+====================
 
 The DataFed CLI can be used for scripting by using the "--script" option to produce output in JSON format;
 however, Python API modules are also available for more complex scripting and/or custom application development.
