@@ -1029,29 +1029,42 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def collectionItemsUpdate( self, coll_id, add_ids = None, rem_ids = None,
+                               context = None ):
+        """
+        Update (add/remove) items linked to a specified collection
 
-    ##
-    # @brief Update (add/remove) items linked to a collection
-    #
-    # Add and/or remove items linked to a specified collection. Note that data
-    # records may be linked to any number of collections, but collections can
-    # only be linked to one parent collection. If a collection is added to a
-    # new parent collection, it is automatically unlinked from it's current
-    # parent. An ancestor (parent, grandparent, etc) collection cannot be
-    # linked to a descendent collection.
-    #
-    # Items removed from a collection that have no other parent collections
-    # are automatically re-linked to the root collection. The return reply
-    # of this method contains any such re-linked items.
-    #
-    # @param coll_id - Collection ID or alias
-    # @param add_ids - String or list of ID/alias of record(s) and/or collection(s) to add (optional)
-    # @param rem_ids - String or list of ID/alias of record(s) and/or collection(s) to remove (optional)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A ListingReply Google protobuf message object containing re-linked items
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def collectionItemsUpdate( self, coll_id, add_ids = None, rem_ids = None, context = None ):
+        Note that data
+        records may be linked to any number of collections, but collections can
+        only be linked to one parent collection. If a collection is added to a
+        new parent collection, it is automatically unlinked from it's current
+        parent. An ancestor (parent, grandparent, etc) collection cannot be
+        linked to a descendant collection.
+
+        Items removed from a collection that have no other parent collections
+        are automatically re-linked to the root collection. The return reply
+        of this method contains any such re-linked items.
+
+        Parameters
+        ----------
+        coll_id : str
+           ID/alias of the collection
+        add_ids : str or list of str, Optional. Default = None
+            ID/alias of record(s) and/or collection(s) to add
+        rem_ids : str or list of str, Optional. Default = None
+            ID/alias of record(s) and/or collection(s) to remove
+        context
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.CollWriteRequest()
         msg.id = self._resolve_id( coll_id, context )
 
@@ -1069,102 +1082,159 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Get parents of specifies collection
-    #
-    # Gets the parents of the specified collection up to the root collection.
-    #
-    # @param coll_id - Collection ID or alias
-    # @param inclusive - Include starting collection if True
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A CollPathReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def collectionGetParents( self, coll_id, inclusive = False, context = None ):
+        """
+        Get parents of specified collection up to the root collection
+
+        Parameters
+        ----------
+        coll_id : str
+           ID/alias of the collection
+        inclusive : bool, Optional. Default = False
+            Set to True to include starting collection.
+            Otherwise, and by default, starting collection is ignored.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        CollPathReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.CollGetParentsRequest()
         msg.id = self._resolve_id( coll_id, context )
         msg.inclusive = inclusive
 
         return self._mapi.sendRecv( msg )
 
-
     # =========================================================================
     # ----------------------------------------------------------- Query Methods
     # =========================================================================
 
-    ##
-    # @brief List saved queries
-    #
-    # List saved queries.
-    #
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def queryList( self, offset = 0, count = 20 ):
+        """
+        List saved queries
+
+        Parameters
+        ----------
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.QueryListRequest()
         msg.offset = offset
         msg.count = count
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief View a saved query
-    #
-    # View specified saved query.
-    #
-    # @param query_id - ID of saved query to view
-    # @return A QueryDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def queryView( self, query_id ):
+        """
+        View a saved query
+
+        Parameters
+        ----------
+        query_id : str
+            ID of saved query to view
+
+        Returns
+        -------
+        QueryDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.QueryViewRequest()
         msg.id = query_id
 
         return self._mapi.sendRecv( msg )
 
+    def queryCreate( self, title, id = None, text = None, meta = None,
+                     no_default = None, coll = None, proj = None ):
+        """
+        Create a new saved query
 
-    ##
-    # @brief Create a new saved query
-    #
-    # Create a new saved query. Default scope inclues owned data and all data
-    # associated with owned and managed projects, as well as member projects.
-    #
-    # @param title - Title of query (required)
-    # @param id - ID/alias query text (optional)
-    # @param text - Title / description text query (optional)
-    # @param meta - Metadata query (optional)
-    # @param no_default - Omit default scopes if True (optional)
-    # @param coll - A collection ID/alias to add to scope (multiple allowed)
-    # @param proj - A project ID to add to scope (multiple allowed)
-    # @return A QueryDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def queryCreate( self, title, id = None, text = None, meta = None, no_default = None, coll = None, proj = None ):
+        Default scope for the search includes owned data and all data
+        associated with owned and managed projects, as well as member projects.
+
+        Parameters
+        ----------
+        title : str
+            Title of query
+        id : str, Optional. Default = None
+            ID/alias for query. Automatically assigned by default.
+        text : str, Optional. Default = None
+            Description of query
+        meta : str, Optional. Default = None
+            Query expression
+        no_default : bool, Optional. Default = None
+            Omit default scopes if True
+        coll : str, Optional. Default = None
+            ID(s) or alias(es) of collection(s) to add to scope
+        proj : str, Optional. Default = None
+            ID(s) or alias(es) of project(s) to add to scope
+
+        Returns
+        -------
+        QueryDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.QueryCreateRequest()
         msg.title = title
         msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
 
         return self._mapi.sendRecv( msg )
 
+    def queryUpdate( self, query_id, title = None, id = None, text = None,
+                     meta = None ):
+        """
+        Update an existing saved query
 
-    ##
-    # @brief Update an existing saved query
-    #
-    # Update an existing saved query. Can specity new title and query
-    # expressions; however scope cannot be changed.
-    #
-    # @param query_id - Query ID (required)
-    # @param id - ID/alias query text (optional)
-    # @param text - Title / description text query (optional)
-    # @param meta - Metadata query (optional)
-    # @return A QueryDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def queryUpdate( self, query_id, title = None, id = None, text = None, meta = None ):
+        Things like the title, and the query expression can be modified.
+        However, the scope may not be changed
+
+        Parameters
+        ----------
+        query_id : str
+            ID/alias for query.
+        title : str, Optional. Default = None
+            Title  of query
+        id : str, Optional. Default = None
+            ID/alias query
+        text : str, Optional. Default = None
+            Description of query
+        meta : str, Optional. Default = None
+            Query expression
+
+        Returns
+        -------
+        QueryDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.QueryViewRequest()
         msg.id = query_id
 
@@ -1204,35 +1274,51 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Delete a saved query
-    #
-    # Delete a saved query.
-    #
-    # @param query_id - Query ID to delete (required)
-    # @return An AckReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def queryDelete( self, query_id ):
+        """
+        Delete a saved query.
+
+        Parameters
+        ----------
+        query_id : str
+            ID/alias for query.
+
+        Returns
+        -------
+        AckReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.QueryDeleteRequest()
         msg.id.append( query_id )
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Execute a stored query
-    #
-    # Execute a store query and return matches.
-    #
-    # @param query_id - Query ID to execute (required)
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def queryExec( self, query_id, offset = 0, count = 20 ):
+        """
+        Execute a stored query and return matches.
+
+        Parameters
+        ----------
+        query_id : str
+            ID/alias for query.
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.QueryExecRequest()
         msg.id = query_id
         msg.offset = offset
@@ -1240,31 +1326,47 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def queryDirect( self, id = None, text = None, meta = None,
+                     no_default = None, coll = None, proj = None,
+                     offset = 0, count = 20 ):
+        """
+        Directly run a manually entered query and return matches
 
-    ##
-    # @brief Directly run a manually entered query
-    #
-    # Directly run a manually entered query and return matches.
-    #
-    # @param id - ID/alias query text (optional)
-    # @param text - Title / description text query (optional)
-    # @param meta - Metadata query (optional)
-    # @param no_default - Omit default scopes if True (optional)
-    # @param coll - A collection ID/alias to add to scope (multiple allowed)
-    # @param proj - A project ID to add to scope (multiple allowed)
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def queryDirect( self, id = None, text = None, meta = None, no_default = None, coll = None, proj = None, offset = 0, count = 20 ):
+        Parameters
+        ----------
+        id : str
+            ID/alias query text
+        text : str, Optional. Default = None
+            Description of query
+        meta : str, Optional. Default = None
+            Query expression
+        no_default : bool, Optional. Default = None
+            Omit default scopes if True
+        coll : str, Optional. Default = None
+            ID(s) or alias(es) of collection(s) to add to scope
+        proj : str, Optional. Default = None
+            ID(s) or alias(es) of project(s) to add to scope
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.RecordSearchRequest()
         msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
         msg.offset = offset
         msg.count = count
 
         return self._mapi.sendRecv( msg )
-
 
     # =========================================================================
     # ------------------------------------------------------------ User Methods
