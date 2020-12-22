@@ -1372,54 +1372,78 @@ class API:
     # ------------------------------------------------------------ User Methods
     # =========================================================================
 
-    ##
-    # @brief List collaborators
-    #
-    # List collaborators. Collaborators are defined as users that have projects
-    # in common with the current user, or that have data-sharing relationships
-    # with the current user.
-    #
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A UserDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def userListCollaborators( self, offset = 0, count = 20 ):
+        """
+        List collaborators. Collaborators are defined as users that have projects
+        in common with the current user, or that have data-sharing relationships
+        with the current user.
+
+        Parameters
+        ----------
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        UserDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.UserListCollabRequest()
         msg.offset = offset
         msg.count = count
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief List all users
-    #
-    # List all users.
-    #
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A UserDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def userListAll( self, offset = 0, count = 20 ):
+        """
+        List all users
+
+        Parameters
+        ----------
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        UserDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.UserListAllRequest()
         msg.offset = offset
         msg.count = count
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief View user information
-    #
-    # View user information.
-    #
-    # @param uid - ID of user to view
-    # @return A UserDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def userView( self, uid ):
+        """
+        View user information
+
+        Parameters
+        ----------
+        uid : str
+            ID of user to view
+
+        Returns
+        -------
+        UserDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = anon.UserViewRequest()
         msg.uid = uid
 
