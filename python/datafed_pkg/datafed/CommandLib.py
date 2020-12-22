@@ -39,6 +39,16 @@ class API:
     opts : dict, Optional
         Configuration options
 
+    Attributes
+    ----------
+    _max_md_size : int.
+        Maximum size of metadata in bytes.
+        Currently set to 102400
+    _max_payload_size : int
+        Maximum limit for the amount of data that can be sent in a single batch
+        create request.
+        Currently set to 1048576
+
     Raises
     ------
     Exception : if invalid config values are present
@@ -235,7 +245,7 @@ class API:
             Path to local JSON file containing domain-specific metadata
         parent_id : str, Optional. Default = "root"
             ID/alias of collection within which to create this record.
-            By default, the record will be creaed in the user's root collection
+            By default, the record will be created in the user's root collection
         deps : list, Optional. Default = None
             Dependencies of this data record specified as an array of
             tuples of (relation type <str>,  record ID <str>).
@@ -607,26 +617,47 @@ class API:
             # Will land here if tried to get a collection with no records
             raise Exception("Specified record(s) contain no raw data.")
 
+    def dataPut( self, data_id, path, encrypt = sdms.ENCRYPT_AVAIL,
+                 wait = False, timeout_sec = 0, extension = None,
+                 context = None ):
+        """
+        Put (upload) raw data for a data record
 
-    ##
-    # @brief Put (upload) raw data for a data record
-    #
-    # This method uploads raw data from the specified path to the specified
-    # data record. The upload involves a Globus transfer, and the path may be a
-    # full globus path, or a full or relative local file system path (the
-    # current endpoint will be prepended).
-    #
-    # @param data_id - Data record ID/alias
-    # @param path - Globus or file system source path
-    # @param encrypt - Encrypt mode (none, if avail, force)
-    # @param wait - Wait for put to complete if True
-    # @param timeout_sec - Timeout in second for polling Globus transfer status, 0 = no timeout
-    # @param extension - Override source file extension (default is autodetect)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A XfrDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def dataPut( self, data_id, path, encrypt = sdms.ENCRYPT_AVAIL, wait = False, timeout_sec = 0, extension = None, context = None ):
+        This method uploads raw data from the specified path to the specified
+        data record. The upload involves a Globus transfer, and the path may be
+        a full globus path, or a full or relative local file system path (the
+        current endpoint will be prepended).
+
+        Parameters
+        ----------
+        data_id : str
+            Data record ID or alias
+        path : str
+            Globus or local file system path to source file
+        encrypt :
+            Encrypt mode (none, if avail, force)
+        wait : bool, Optional. Default = False
+            Set to true to wait until the file transfer is complete.
+            Otherwise, and by default, the transfer will take place in the
+            background / asynchronously
+        timeout_sec : int, Optional. Default = 0
+            Timeout in seconds for polling the status of the Globus transfer.
+            By default, there is no timeout.
+        extension : str, Optional. Default = None
+            Override extension of source file.
+            By default, the extension is detected automatically.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : XfrDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error.
+        """
         msg = auth.DataPutRequest()
         msg.id = self._resolve_id( data_id, context )
         msg.path = self._resolvePathForGlobus( path, False )
@@ -663,23 +694,35 @@ class API:
 
         return reply
 
-
-    ##
-    # @brief Batch create data records
-    #
-    # Create one or more data records from JSON source files that specify all
-    # metadata for the record. The source files may contain an individual JSON
-    # object, or an array of JSON objects. There is a maximum limit to the
-    # amount of data that can be sent in a single batch create request (see
-    # _max_payload_size).
-    #
-    # @param file - An array of filenames to process
-    # @param coll_id - Parent collection ID/alias (replaces parent field in JSON)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataBatchCreate( self, file, coll_id = None, context = None ):
+        """
+        Batch create data records
+
+        Create one or more data records from JSON source files that specify all
+        metadata for the record. The source files may contain an individual JSON
+        object, or an array of JSON objects. There is a maximum limit to the
+        amount of data that can be sent in a single batch create request (see
+        ``_max_payload_size`` attribute).
+
+        Parameters
+        ----------
+        file : list or tuple
+            An array of (JSON) filenames to process
+        coll_id : str, Optional. Default = None
+            Parent collection ID/alias . Replaces parent field in JSON.
+            By default, the parent field in the JSON file will be used.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error
+        """
         payload = []
         tot_size = 0
 
@@ -711,20 +754,30 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    # @brief Batch update data records
-    #
-    # Update one or more data records from JSON source files that specify all
-    # updated metadata for the record. The source files may contain an
-    # individual JSON object, or an array of JSON objects. There is a maximum
-    # limit to the amount of data that can be sent in a single batch create
-    # request (see _max_payload_size).
-    #
-    # @param file - An array of filenames to process
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataBatchUpdate( self, file ):
+        """
+        Batch update data records
+
+        Update one or more data records from JSON source files that specify all
+        updated metadata for the record. The source files may contain an
+        individual JSON object, or an array of JSON objects. There is a maximum
+        limit to the amount of data that can be sent in a single batch create
+        request (see _max_payload_size).
+
+        Parameters
+        ----------
+        file : list or tuple
+            An array of filenames on local file system to process
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error
+        """
         payload = []
         tot_size = 0
 
@@ -755,42 +808,75 @@ class API:
     # ------------------------------------------------------ Collection Methods
     # =========================================================================
 
-    ##
-    # @brief View collection information
-    #
-    # View alias, title, and description fof a collection
-    #
-    # @param coll_id - Collection ID/alias to view
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A CollDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def collectionView( self, coll_id, context = None ):
+        """
+        View collection information
+
+        View alias, title, and description of a collection
+
+        Parameters
+        ----------
+        coll_id : str
+            ID/alias of Collection to view
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : CollDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error.
+        """
         msg = anon.CollViewRequest()
         msg.id = self._resolve_id( coll_id, context )
         #msg.id = self._resolve_coll_id( coll_id, context )
 
         return self._mapi.sendRecv( msg )
 
+    def collectionCreate( self, title, alias = None, description = None,
+                          tags = None, topic = None, parent_id = None,
+                          context = None ):
+        """
+        Create a new collection
 
-    ##
-    # @brief Create a new collection
-    #
-    # Create a new collection with title, alias, and description. Note that if
-    # topic is provided, the collection and contents become publicly readable
-    # and will be presented in DataFed catalog browser.
-    #
-    # @param title - Title of collection (required)
-    # @param alias - Alias of collection (optional)
-    # @param description - Text description (optional)
-    # @param tags - Array of tags (optional)
-    # @param topic - Topic for publishing collection
-    # @param parent_id - ID/alias of parent collection (default is root)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A CollDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def collectionCreate( self, title, alias = None, description = None, tags = None, topic = None, parent_id = None, context = None ):
+        Create a new collection with title, alias, and description. Note that if
+        topic is provided, the collection and contents become publicly readable
+        and will be presented in DataFed catalog browser.
+
+        Parameters
+        ----------
+        title : str
+            Title of collection
+        alias : str, Optional. Default = None
+            Alias of collection
+        description : str, Optional. Default = None
+            Text description of collection
+        tags : list of str, Optional. Default = None
+            Tags that describe the collection
+        topic : str
+            Scientific topics under which this collection is organized
+            in the catalog view.
+            If topic is added, the collection and contents become **publicly**
+            readable and will be presented in DataFed catalog browser.
+        parent_id : str, Optional. Default = "root"
+            ID/alias of collection within which to create this collection.
+            By default, the collection will be created in the user's root
+            collection
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : CollDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.CollCreateRequest()
         msg.title = title
 
@@ -812,24 +898,45 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def collectionUpdate( self, coll_id, title = None, alias = None,
+                          description = None, tags = None, topic = None,
+                          context = None ):
+        """
+        Update an existing collection with title, alias, and description.
 
-    # @brief Update an existing collection
-    #
-    # Update an existing collection with title, alias, and description. Note
-    # that if topic is added, the collection and contents become publicly
-    # readable and will be presented in DataFed catalog browser.
-    #
-    # @param coll_id - ID/alias of collection (required)
-    # @param title - Title of collection (optional)
-    # @param alias - Alias of collection (optional)
-    # @param description - Text description (optional)
-    # @param tags - Array of tags (optional)
-    # @param topic - Topic for publishing collection
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A CollDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def collectionUpdate( self, coll_id, title = None, alias = None, description = None, tags = None, topic = None, context = None ):
+        Note
+        that if topic is added, the collection and contents become publicly
+        readable and will be presented in DataFed catalog browser.
+
+        Parameters
+        ----------
+        coll_id : str
+           ID/alias of the collection
+        title : str, Optional. Default = None
+            Title of collection
+        alias : str, Optional. Default = None
+            Alias of collection
+        description : str, Optional. Default = None
+            Text description of collection
+        tags : list of str, Optional. Default = None
+            Tags that describe the collection
+        topic : str
+            Scientific topics under which this collection is organized
+            in the catalog view.
+            If topic is added, the collection and contents become **publicly**
+            readable and will be presented in DataFed catalog browser.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : CollDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.CollUpdateRequest()
         msg.id = self._resolve_id( coll_id, context )
 
@@ -853,21 +960,31 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Delete one or more existing collections
-    #
-    # Deletes onr or more collections and contained items. When a collection is
-    # deleted, all contained collections are also deleted; however, contained
-    # data records are only deleted if they are not linked to another
-    # collection not involved in the deletion.
-    #
-    # @param coll_id - A collection ID/alias or list of IDs/aliases (required)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return An AckReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def collectionDelete( self, coll_id, context = None ):
+        """
+        Delete one or more existing collections
+
+        Deletes one or more collections and contained items. When a collection is
+        deleted, all contained collections are also deleted. However, contained
+        data records are only deleted if they are not linked to another
+        collection not involved in the deletion.
+
+        Parameters
+        ----------
+        coll_id : str, or list of str
+           ID/alias OR list of IDs/aliases of the collection(s) to be deleted
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : AckReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.CollDeleteRequest()
 
         if isinstance( coll_id, list ):
@@ -878,20 +995,33 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def collectionItemsList( self, coll_id, offset = 0, count = 20,
+                             context = None ):
+        """
+        List items in collection
 
-    ##
-    # @brief List items in collection
-    #
-    # List items linked to the specified collection.
-    #
-    # @param coll_id - Collection ID or alias
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def collectionItemsList( self, coll_id, offset = 0, count = 20, context = None ):
+        List items linked to or contained in the specified collection.
+
+        Parameters
+        ----------
+        coll_id : str
+           ID/alias of the collection
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = anon.CollReadRequest()
         msg.count = count
         msg.offset = offset
