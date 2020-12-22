@@ -7,6 +7,8 @@ addresses the critical need for holistic and FAIR-principled "big data" handling
 scientific facilities - with the goal of enhancing the *productivity* and *reproducibility* of
 data-oriented scientific research.
 
+[WHAT IS SDMS, WHY IS IT NEEDED]
+
 While DataFed shares many features with existing data management systems, the primary difference with
 DataFed is that it provides flexible, secure, and performant data management services across any number of
 organizations by federating, rather than replacing, existing data storage and transport resources.
@@ -15,6 +17,7 @@ DataFed directly benefits both individual researchers and teams of geographicall
 who need to capture, manage, share, and access scientific data from any of the experimental, observational,
 compute, or analytics resources within the Department of Energy's national laboratory network.
 
+.. image:: /_static/simplified_architecture.png
 
 ing, or are local to, multiple user facilities
 at Department of Energy national laboratories

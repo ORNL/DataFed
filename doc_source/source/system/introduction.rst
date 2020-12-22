@@ -17,6 +17,7 @@ DataFed directly benefits both individual researchers and teams of geographicall
 who need to capture, manage, share, and access scientific data from any of the experimental, observational,
 compute, or analytics resources within the Department of Energy's national laboratory network.
 
+.. image:: /_static/simplified_architecture.png
 
 ing, or are local to, multiple user facilities
 at Department of Energy national laboratories
