@@ -23,18 +23,27 @@ from . import Config
 from . import version
 
 
-##
-# @class API
-# @brief Provides a high-level messaging interface to the DataFed core server.
-#
-# The DataFed CommandLib.API class provides a high-level interface
-# for sending requests to a DataFed server. Requests are sent via regular
-# class methods and replies are returned as Google protobuf message objects.
-# These reply messages are defined in the \*.proto files included in the
-# DataFed client package. Basic functionality of th API class mirrors the 
-# capabilities exposed in the DataFed CLI.
-#
 class API:
+    """
+    A high-level messaging interface to the DataFed core server
+
+    The DataFed CommandLib.API class provides a high-level interface
+    for sending requests to a DataFed server. Requests are sent via python
+    class methods and replies are (currently) returned as Google Protobuf message objects.
+    These reply messages are defined in the \*.proto files included in the
+    DataFed client package. Basic functionality of th API class mirrors the
+    capabilities exposed in the DataFed CLI.
+
+    Parameters
+    ----------
+    opts : dict, Optional
+        Configuration options
+
+    Raises
+    ------
+    Exception : if invalid config values are present
+    """
+
     _max_md_size = 102400
     _max_payload_size = 1048576
     _endpoint_legacy = re.compile(r'[\w\-]+#[\w\-]+')
@@ -82,41 +91,58 @@ class API:
     # -------------------------------------------------- Authentication Methods
     # =========================================================================
 
-    ##
-    # @brief Get current authenticated user, if any.
-    #
-    # If current connection is authenticated, returns current user ID; otherwise returns None.
-    #
-    # @return Authenticated user ID or None if not authenticated
-    #
     def getAuthUser( self ):
+        """
+        Get current authenticated user, if any.
+
+        Returns current user ID If current connection is authenticated,
+        otherwise returns None.
+
+        Returns
+        -------
+        str :
+            Authenticated user ID or None if not authenticated
+        """
         return self._uid
 
-    ##
-    # @brief Logout current client, if any.
-    #
-    # If connected, logs-out by reseting underlying connection and clearing current user.
-    #
-    # @return None
-    #
     def logout( self ):
+        """
+        Logout current client, if any.
+
+        If connected, logs-out by reseting underlying connection and clearing
+        current user.
+
+        Returns
+        -------
+        None
+        """
         if self._uid:
             self._mapi.logout()
             self._uid = None
             self._cur_sel = None
 
-    ##
-    # @brief Manually authenticate client by uid and password
-    #
-    # If not authenticated, this method attempts manual authentication
-    # using the supplied DataFed user ID and password.
-    #
-    # @param uid - DataFed user ID
-    # @param password - DataFed password
-    # @exception Exception: if authentication fails.
-    # @return None
-    #
     def loginByPassword( self, uid, password ):
+        """
+        Manually authenticate client by user id and password
+
+        If not authenticated, this method attempts manual authentication
+        using the supplied DataFed user ID and password.
+
+        Parameters
+        ----------
+        uid : str
+            DataFed user ID
+        password : str
+            DataFed password
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception : if authentication fails.
+        """
         self.logout()
 
         self._mapi.manualAuthByPassword( uid, password )
@@ -124,18 +150,23 @@ class API:
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
 
-    ##
-    # @brief Generate/download local user credentials
-    #
-    # Requests the DataFed server to generate and send local credentials for
-    # the current user. These credentials should be saved/loaded from a
-    # set of public/private client keys files as specified via the Config
-    # module.
-    #
-    # @exception Exception: On communication or server error
-    # @return A ???? Google protobuf message object
-    #
     def generateCredentials( self ):
+        """
+        Generate/download local user credentials
+
+        Requests the DataFed server to generate and send local credentials for
+        the current user. These credentials should be saved/loaded from a
+        set of public/private client keys files as specified via the Config
+        module.
+
+        Returns
+        -------
+        msg: Google protobuf message
+
+        Raises
+        ------
+        Exception: On communication or server error
+        """
         msg = auth.GenerateCredentialsRequest()
 
         return self._mapi.sendRecv( msg )
@@ -145,47 +176,88 @@ class API:
     # ------------------------------------------------------------ Data Methods
     # =========================================================================
 
-    ##
-    # @brief View a data record
-    #
-    # Retrieves full data record with metadata (without raw data).
-    #
-    # @param data_id - Data record ID or alias
-    # @param details - NOT USED
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On communication or server error
-    #
     def dataView( self, data_id, details = False, context = None ):
+        """
+        View a data record
+
+        Retrieves all metadata associated with record with metadata (without
+        raw data).
+
+        Parameters
+        ----------
+        data_id : str
+            Data record ID or alias
+        details : str, Optional. Default = False
+            NOT USED
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = anon.RecordViewRequest()
         msg.id = self._resolve_id( data_id, context )
         msg.details = details
 
         return self._mapi.sendRecv( msg )
 
-    ##
-    # @brief Create a new data record
-    #
-    # Create a new data record. May specify alias, containing collection,
-    # metadata, dependencies, and allocation. Raw data must be uploaded
-    # separately. Cannot use both metadata and metadata_file options.
-    #
-    # @param title - Title of record (required)
-    # @param alias - Alias of record (optional)
-    # @param description - Text description (optional)
-    # @param tags - Array of tags (optional)
-    # @param extension - Raw data file extension override (optional)
-    # @param metadata - Domain-specific metadata (JSON object, optional)
-    # @param metadata_file - Path to local file containing domain-specific metadata (JSON object, optional)
-    # @param parent_id - ID/alias of containing collection (root is default)
-    # @param deps - Dependencies (array of tuples of relation type and record ID)
-    # @param repo_id - Repository ID (use default of owner if not specified)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataCreate( self, title, alias = None, description = None, tags = None, extension = None,
         metadata = None, metadata_file = None, parent_id = "root", deps = None, repo_id = None, context = None ):
+        """
+        Create a new data record
+
+        Create a new data record. May specify alias, containing collection,
+        metadata, dependencies, and allocation. Raw data must be uploaded
+        separately. Cannot use both metadata and metadata_file options.
+
+        Parameters
+        ----------
+        title : str
+            Title of record
+        alias : str, Optional. Default = None
+            Alias of record
+        description : str, Optional. Default = None
+            Text description of record
+        tags : list of str, Optional. Default = None
+            Tags that describe the record
+        extension : str, Optional. Default = None
+            Extension for raw data file to use / override
+        metadata : JSON string, Optional. Default = None
+            Domain-specific metadata described in dictionary form.
+            This dictionary can be nested.
+        metadata_file : str, Optional. Default = None
+            Path to local JSON file containing domain-specific metadata
+        parent_id : str, Optional. Default = "root"
+            ID/alias of collection within which to create this record.
+            By default, the record will be creaed in the user's root collection
+        deps : list, Optional. Default = None
+            Dependencies of this data record specified as an array of
+            tuples of (relation type <str>,  record ID <str>).
+            Relation types currently supported are:
+            * "der" - Is derived from
+            * "comp" - Is comprised of
+            * "ver" - Is new version of
+        repo_id : str, Optional. Default = None
+            ID of data repository to create this record in.
+            By default, the default repository will be chosen.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
 
         if metadata and metadata_file:
             raise Exception( "Cannot specify both metadata and metadata-file options" )
@@ -234,32 +306,65 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-    ##
-    # @brief Update an existing data record
-    #
-    # Update an existing data record. May specify title, alias, metadata,
-    # dependencies, and allocation. Raw data must be uploaded separately.
-    # Cannot use both metadata and metadata_file options.
-    #
-    # @param data_id - Record ID/alias (required)
-    # @param title - Title of record (optional)
-    # @param alias - Alias of record (optional)
-    # @param description - Text description (optional)
-    # @param tags - Array of tags (optional)
-    # @param extension - Raw data file extension override (optional)
-    # @param metadata - Domain-specific metadata (JSON object, optional)
-    # @param metadata_file - Path to local file containing domain-specific metadata (JSON object, optional)
-    # @param metadata_set - Set (replace) existing metadata with provided (default is merge)
-    # @param deps - Set all dependencies (array of tuples of relation type and record ID)
-    # @param deps_add - Dependencies to add (array of tuples of relation type and record ID)
-    # @param deps_rem - Dependencies to remove (array of tuples of relation type and record ID)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataUpdate( self, data_id, title = None, alias = None, description = None, tags = None,
         extension = None, metadata = None, metadata_file = None, metadata_set = False, deps_add = None,
         deps_rem = None, context = None ):
+        """
+        Update an existing data record
+
+        Update an existing data record. May specify title, alias, metadata,
+        dependencies, and allocation. Raw data must be uploaded separately.
+        Cannot use both metadata and metadata_file options.
+
+        Parameters
+        ----------
+        data_id : str
+            Data record ID or alias
+        title : str
+            Title of record
+        alias : str, Optional. Default = None
+            Alias of record
+        description : str, Optional. Default = None
+            Text description of record
+        tags : list of str, Optional. Default = None
+            Tags that describe the record
+        extension : str, Optional. Default = None
+            Extension for raw data file to use / override
+        metadata : JSON string, Optional. Default = None
+            Domain-specific metadata described in dictionary form.
+            This dictionary can be nested.
+        metadata_file : str, Optional. Default = None
+            Path to local JSON file containing domain-specific metadata
+        metadata_set : bool, Optional. Default = False
+            Set to True to replace existing metadata with provided.
+            Otherwise, and by default, provided metadata will be merged with
+            existing metadata.
+        deps_add : list, Optional. Default = None
+            Dependencies of this data record to add, specified as an array of
+            tuples of (relation type <str>,  record ID <str>).
+            Relation types currently supported are:
+            * "der" - Is derived from
+            * "comp" - Is comprised of
+            * "ver" - Is new version of
+        deps_rem : list, Optional. Default = None
+            Dependencies of this data record to remove, specified as an array of
+            tuples of (relation type <str>,  record ID <str>).
+            Relation types currently supported are:
+            * "der" - Is derived from
+            * "comp" - Is comprised of
+            * "ver" - Is new version of
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
 
         if metadata and metadata_file:
             raise Exception( "Cannot specify both metadata and metadata-file options." )
@@ -327,18 +432,26 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Delete one or more data records
-    #
-    # Deletes onr or more data records and associated raw data.
-    #
-    # @param data_id - A record ID/alias or list of Ids/aliases (required)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return An AckReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataDelete( self, data_id, context = None ):
+        """
+        Deletes onr or more data records and associated raw data.
+
+        Parameters
+        ----------
+        data_id : str
+            Data record ID or alias
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error
+        """
         msg = auth.RecordDeleteRequest()
 
         if isinstance( data_id, list ):
@@ -349,30 +462,58 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL,
+                 orig_fname = False, wait = False, timeout_sec = 0,
+                 progress_bar = None, context = None ):
+        """
+        Get (download) raw data for one or more data records and/or collections
 
-    ##
-    # @brief Get (download) raw data for one or more data records and/or collections
-    #
-    # This method downloads to the specified path the raw data associated with
-    # a specified data record, or the records contained in a collection, or
-    # with a list of records and/or collections. The download may involve
-    # either a Globus transfer, or an HTTP transfer. The path may be a full
-    # globus path (only works for Globus transfers), or a full or relative
-    # local file system path (will prepend the default endpoint for Globus
-    # transfers).
-    #
-    # @param item_id - Data record or collection ID/alias, or a list of IDs/aliases
-    # @param path - Globus or file system destination path
-    # @param encrypt - Encrypt mode (none, if avail, force)
-    # @param wait - Wait for get to complete if True
-    # @param timeout_sec - Timeout in second for polling Globus transfer status, 0 = no timeout
-    # @param progress_bar - A progess bar class to display download progress (optional)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A XfrDataReply Google protobuf message object
-    # @exception Exception: If both Globus and HTTP transfers are required
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL, orig_fname = False, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
+        This method downloads to the specified path the raw data associated with
+        a specified data record, or the records contained in a collection, or
+        with a list of records and/or collections. The download may involve
+        either a Globus transfer, or an HTTP transfer. The path may be a full
+        globus path (only works for Globus transfers), or a full or relative
+        local file system path (will prepend the default endpoint for Globus
+        transfers).
+
+        Parameters
+        ----------
+        item_id : str or list or str
+            Data record or collection ID/alias, or a list of IDs/aliases
+        path : str
+            Globus or local file system destination path
+        encrypt :
+            Encrypt mode (none, if avail, force)
+        orig_fname : bool, Optional. Default = False
+            If set to True, the file(s) contained in the record(s) will be
+            downloaded with their original name(s).
+            Otherwise, and by default, the files will be named according to
+            their unique record ID followed by the original or overriden
+            extension.
+        wait : bool, Optional. Default = False
+            Set to true to wait until the file transfer is complete.
+            Otherwise, and by default, the transfer will take place in the
+            background / asynchronously
+        timeout_sec : int, Optional. Default = 0
+            Timeout in seconds for polling the status of the Globus transfer.
+            By default, there is no timeout.
+        progress_bar : callable, Optional. Default = None
+            A progress bar class to display progress for HTTP download.
+            This kwarg is passed on as the ``bar`` kwarg of wget.download().
+            By default, wget will use dots to display progress.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : XfrDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error.
+        Exception : If both Globus and HTTP transfers are required
+        """
         # Request server to map specified IDs into a list of specific record IDs.
         # This accounts for download of collections.
 
