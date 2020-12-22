@@ -1454,21 +1454,40 @@ class API:
     # --------------------------------------------------------- Project Methods
     # =========================================================================
 
-    ##
-    # @brief List projects associated with current user
-    #
-    # List projects that are owned or managed by the current user, as well as
-    # projects were the current user is a member.
-    #
-    # @param owned - Include owned projects
-    # @param admin - Include managed projects
-    # @param member - Include projects where current user is a member
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def projectList( self, owned = True, admin = True, member = True, offset = 0, count = 20 ):
+    def projectList( self, owned = True, admin = True, member = True,
+                     offset = 0, count = 20 ):
+        """
+        List projects associated with current user
+
+        List projects that are owned or managed by the current user, as well as
+        projects were the current user is a member.
+
+        Parameters
+        ----------
+        owned : bool, optional. Default = True
+            If True, includes owned projects. Otherwise, only includes projects
+            owned by others that this user is part of.
+        admin : bool, optional. Default = True
+            If True, includes projects managed by this user. Otherwise, only
+            includes projects managed by others that this user is part of.
+        member : bool, optional. Default = True
+            If True, includes projects where the current user is a member.
+            Otherwise, does not list such projects.
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ProjectListRequest()
         msg.as_owner = owned
         msg.as_admin = admin
@@ -1478,23 +1497,47 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief View project information
-    #
-    # View project information (title, description, owner, etc.)
-    #
-    # @param project_id - ID of project to view
-    # @return A ProjectDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def projectView( self, project_id ):
+        """
+        View project information (title, description, owner, etc.)
+
+        Parameters
+        ----------
+        project_id : str
+            ID of project to view
+
+        Returns
+        -------
+        ProjectDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = anon.ProjectViewRequest()
         msg.id = project_id
 
         return self._mapi.sendRecv( msg )
 
     def projectGetRole( self, project_id ):
+        """
+        Get the role that this user plays in a given project
+
+        Parameters
+        ----------
+        project_id : str
+            ID of project to view
+
+        Returns
+        -------
+        Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ProjectGetRoleRequest()
         msg.id = project_id
 
