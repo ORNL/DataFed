@@ -1,0 +1,295 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>User Guide &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Command Reference" href="reference.html" />
+    <link rel="prev" title="Installation and Configuration" href="install.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/usecases.html">Use Cases</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../web/portal.html">Web Portal</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation and Configuration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage-guide">Usage Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Command Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Scripting</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../scripting.html">Scripting Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/python.html">Python API Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin/general.html">Administration</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>User Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/user/cli/guide.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="user-guide">
+<h1>User Guide</h1>
+<p>The DataFed command-line-interface (CLI) provides access to basic DataFed capabilities for both
+interactive use and non-interactive scripting from a command shell, and is the primary means of
+utilizing DataFed services from within data, compute, and analytics environments. The DataFed
+CLI is provided via a Python 3 package and can be used on any operating system where Python 3
+is available.</p>
+<p>This document covers basic and advanced usage of the DataFed CLI with examples. Before the DataFed
+CLI can be used it must be installed and properly configured - refer to the CLI <a class="reference internal" href="install.html"><span class="doc">Installation and Configuration</span></a>
+page for details.</p>
+<div class="section" id="basic-usage">
+<h2>Basic Usage</h2>
+<p>The DataFed CLI is run using the ‘datafed’ script installed by the DataFed CLI package, as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">command</span> <span class="p">[</span><span class="n">sub</span><span class="o">-</span><span class="n">command</span> <span class="o">...</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>For a list of options, the built-in help output can be viewed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="o">--</span><span class="n">help</span>
+</pre></div>
+</div>
+<p>The DataFed CLI supports three distinct modes of use: single command, interactive shell, and script
+mode. If the CLI is run without any command arguments, an interactive shell is started; otherwise,
+the specified command is run either normally (human-friendly output) or in script mode if the
+‘–script’ option is specified.</p>
+<p><strong>Single Command</strong></p>
+<p>This mode is used to run a single DafaFed command given as an argument to the datafed script. The
+output is in human-friendly format.</p>
+<p><strong>Interactive Shell</strong></p>
+<p>This mode provides a DataFed CLI shell and is started by running the datafed script without any
+command arguments. Commands are entered at the prompt (without the ‘datafed’ script prefix) and
+the shell will run until stopped with the ‘exit’ command, or by typing ‘Ctrl-C’. Shell mode is
+stateful and convenient for browsing DataFed collection hierarchies.</p>
+<p><strong>Script Mode</strong></p>
+<p>This mode is similar to the single command mode with the exception that non-essential output is
+suppressed and command responses are returned in a strict JSON format. This mode is useful for
+integrating the CLI into non-Python scripts (i.e. bash), and is activated by specifying the
+“–script” (or “-s”) command line option when the CLI is run.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For a complete guide to DataFed scripting, please refer to the <a class="reference internal" href="../scripting.html"><span class="doc">Scripting Guide</span></a> page.
+The <a class="reference internal" href="../api/python.html"><span class="doc">Python API Reference</span></a> page provides a detailed reference to the DataFed API for
+scripting and custom application development.</p>
+</div>
+</div>
+<div class="section" id="usage-guide">
+<h2>Usage Guide</h2>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>Section not written. Will discuss use of shell-specific features (ls, cd, switching user, etc).</p>
+</div>
+<p>Topics to be covered:</p>
+<ul class="simple">
+<li><p>Command abbreviations and aliases</p></li>
+<li><p>Basics of the interactive shell</p></li>
+<li><p>Navigating collections</p></li>
+<li><p>Accessing project and shared data and collections</p></li>
+<li><p>Data transfers (asynch, monitoring)</p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="reference.html" class="btn btn-neutral float-right" title="Command Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="install.html" class="btn btn-neutral float-left" title="Installation and Configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Oak Ridge National Laboratories
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
