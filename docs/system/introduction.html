@@ -84,7 +84,18 @@
             
               <p class="caption"><span class="caption-text">About DataFed</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#rationale">Rationale</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#existing-systems">Existing Systems</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sdms-lims">SDMS / LIMS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cataloging-systems">Cataloging Systems</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#datafed-benefits">DataFed Benefits</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="overview.html">System Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
 </ul>
@@ -177,11 +188,76 @@
 addresses the critical need for holistic and FAIR-principled “big data” handling within, and across,
 scientific domains and facilities - with the goal of enhancing the <em>productivity</em> and <em>reproducibility</em>
 of data-oriented scientific research.</p>
-<p>[WHAT IS SDMS, WHY IS IT NEEDED]</p>
-<p>DataFed provides many of the same benefits of typical scientific data management systems such as
-storage and access to structured and unstructured heterogeneous raw data with access control,
-metadata and provenance capture, and metadata indexing and search; however, DataFed differs from
-these systems in several significant areas:</p>
+<p>[WHAT IS SDMS, WHY IS IT NEEDED - reproducibility crisis - data management burden - lack of good solution]</p>
+<p>DataFed provides a combination of the typical features and benefits of scientific data management systems
+(SDMS), laboratory information management systems (LIMS), and data cataloging services. For example,
+DataFed provides storage and access to structured and unstructured heterogeneous raw data with access
+controls, metadata and provenance capture, and metadata indexing and search; however, DataFed differs
+from these other systems in a number of significant ways in order to better serve the needs of open
+and collaborative scientific research - especially regarding “big data” and data-oriented research.</p>
+<p>Briefly, DataFed provides the following unique blend of capabilities and benefits:</p>
+<ul class="simple">
+<li><p>Presents a uniform and concise logical view of widely distributed data.</p></li>
+<li><p>Supports both general- and domain-specific use cases.</p></li>
+<li><p>Manages “living data” throughout critical pre-publication data lifecycle stages.</p></li>
+<li><p>Encourages FAIR-principled data through user- and community-defined schemas.</p></li>
+<li><p>Enhances data awareness via automatic notification of “data events”.</p></li>
+<li><p>Scales out and up to enable efficient big data research across organizations/facilities.</p></li>
+<li><p>Provides high-quality data management foundation for use by other applications and services.</p></li>
+</ul>
+<p>DataFed is the enabling technology for the full lifecycle of scientific data - from creation through
+publication and eventual reuse. The figure below illustrates how DataFed supports this lifecycle:</p>
+<img alt="../_images/data_lifecycle.png" src="../_images/data_lifecycle.png" />
+<p>[DESCRIBE LIFE CYCLE AND HOW DATAFED ENABLES IT]</p>
+<div class="section" id="rationale">
+<h2>Rationale</h2>
+<p>There are data management systems that currently exist that help to address some of the data-related
+aspects of the reproducibility crisis; however, none of these systems are ideally suited for application
+to general scientific research. Laboratory information management systems (LIMS) improve laboratory
+efficiency and quality by narrowly focusing on specific domains and data handling processes; however, they
+are too rigid and burdensome for general research.</p>
+<div class="section" id="existing-systems">
+<h3>Existing Systems</h3>
+<div class="section" id="sdms-lims">
+<h4>SDMS / LIMS</h4>
+<p>SDMS/LIMS PROS:</p>
+<ul class="simple">
+<li><p>Capture and cataloging of data, metadata, and provenance</p></li>
+<li><p>Reduction of data handling errors</p></li>
+<li><p>Full life cycle</p></li>
+<li><p>Enhanced scientific reproducibility</p></li>
+<li><p>Integration with instruments / analytics</p></li>
+</ul>
+<p>SDMS/LIMS CONS:</p>
+<ul class="simple">
+<li><p>No data access outside of organization/VO</p></li>
+<li><p>Domain- and process-specific (too rigid for general research)</p></li>
+<li><p>Complex, steep learning curve</p></li>
+<li><p>Usually don’t support Globus</p></li>
+<li><p>Single vendor, closed source</p></li>
+</ul>
+</div>
+<div class="section" id="cataloging-systems">
+<h4>Cataloging Systems</h4>
+<p>Catalog PROS:</p>
+<ul class="simple">
+<li><p>Capture and cataloging of data and metadata (sometimes provenance)</p></li>
+<li><p>Support public data access (HTTP only)</p></li>
+<li><p>Easy to access as data consumer</p></li>
+<li><p>Easy to stand-up for small data collections</p></li>
+<li><p>Open source</p></li>
+</ul>
+<p>Catalog CONS:</p>
+<ul class="simple">
+<li><p>Not FAIR compliant (poor search, no structure/schema, requires a prior knowledge to use)</p></li>
+<li><p>Not full-life cycle - static / post-publication data only</p></li>
+<li><p>Single organization / VO (for non-public data)</p></li>
+<li><p>Usually don’t support Globus</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="datafed-benefits">
+<h3>DataFed Benefits</h3>
 <ul class="simple">
 <li><p>DataFed is <strong>general purpose</strong>. DataFed is domain- and methodology-neutral in that it does not require
 users to utilize pre-defined data formats or processes - yet, despite this, DataFed provides powerful
@@ -222,6 +298,8 @@ at Department of Energy national laboratories</p>
 <p>Database View (logical vs physical)</p>
 <p>Metadata and Provenance</p>
 <p>Big Data Support</p>
+</div>
+</div>
 </div>
 
 

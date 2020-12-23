@@ -26,7 +26,12 @@ Briefly, DataFed provides the following unique blend of capabilities and benefit
 - Scales out and up to enable efficient big data research across organizations/facilities.
 - Provides high-quality data management foundation for use by other applications and services.
 
+DataFed is the enabling technology for the full lifecycle of scientific data - from creation through
+publication and eventual reuse. The figure below illustrates how DataFed supports this lifecycle:
 
+.. image:: /_static/data_lifecycle.png
+
+[DESCRIBE LIFE CYCLE AND HOW DATAFED ENABLES IT]
 
 Rationale
 =========
