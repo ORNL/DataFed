@@ -175,12 +175,35 @@
 <h1>Introduction</h1>
 <p>DataFed is a <em>federated</em> and <em>scalable</em> scientific data management and collaboration system that
 addresses the critical need for holistic and FAIR-principled “big data” handling within, and across,
-scientific facilities - with the goal of enhancing the <em>productivity</em> and <em>reproducibility</em> of
-data-oriented scientific research.</p>
+scientific domains and facilities - with the goal of enhancing the <em>productivity</em> and <em>reproducibility</em>
+of data-oriented scientific research.</p>
 <p>[WHAT IS SDMS, WHY IS IT NEEDED]</p>
-<p>While DataFed shares many features with existing data management systems, the primary difference with
-DataFed is that it provides flexible, secure, and performant data management services across any number of
-organizations by federating, rather than replacing, existing data storage and transport resources.</p>
+<p>DataFed provides many of the same benefits of typical scientific data management systems such as
+storage and access to structured and unstructured heterogeneous raw data with access control,
+metadata and provenance capture, and metadata indexing and search; however, DataFed differs from
+these systems in several significant areas:</p>
+<ul class="simple">
+<li><p>DataFed is <strong>general purpose</strong>. DataFed is domain- and methodology-neutral in that it does not require
+users to utilize pre-defined data formats or processes - yet, despite this, DataFed provides powerful
+domain-specific metadata indexing and query capabilities augmented by user/community defined schemas.</p></li>
+<li><p>DataFed supports the <strong>pre-publication data lifecycle</strong>.</p></li>
+<li><p>DataFed is <strong>Scalable</strong>. Datafed was designed to easily scale-out across multiple/many organizations
+and facilities by relying on federated identity technology and a common access control mechanism;
+however, individual organizations are still able to manage their own data storage resources and policies.
+In contrast, most existing SDMS products either cannot span organizations at all, or rely on virtual
+organization (VO) technologies that are highly labor-intensive to scale beyond a few organizations.</p></li>
+<li><p>DataFed <strong>understands big data</strong>. DataFed was design from the start to support “big data” and
+the often complex environments in which such data is created and processed. Many existing SDMS products
+rely on tightly-coupled file systems or HTTP/S for moving data; however, DataFed utilizes Globus (GridFTP)
+for data transfer between facilities because it is the defacto standard for high performance movement
+of very large data sets (Petabyte scale) between government-funded user facilities (DoE), research
+universities, and commercial cloud computing services.</p></li>
+<li><p>DataFed focuses on providing high quality, uniform, and easy-to-use data management services
+and does not overreach by bundling complementary features such as instrument control, workflow
+processing, or data analytics that are better served by dedicated application-specific tools. However,
+DataFed does provide application programming interfaces (APIs) to allow other services or applications
+to be utilize DataFed’s data management capabilities.</p></li>
+</ul>
 <p>DataFed directly benefits both individual researchers and teams of geographically dispersed collaborators
 who need to capture, manage, share, and access scientific data from any of the experimental, observational,
 compute, or analytics resources within the Department of Energy’s national laboratory network.</p>
