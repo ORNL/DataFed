@@ -1902,17 +1902,24 @@ class API:
     # --------------------------------------------------- Miscellaneous Methods
     # =========================================================================
 
-    ##
-    # @brief Setup local credentials
-    #
-    # This command installs DataFed credentials for the current user in the
-    # configured client configuration directory. Subsequent use of the DataFed
-    # API will read these credentials instead of requiring manual authentication.
-    #
-    # @exception Exception: On configuration or communication/server error
-    # @return None
-    #
     def setupCredentials( self ):
+        """
+        Setup local credentials
+
+        This command installs DataFed credentials for the current user in the
+        configured client configuration directory. Subsequent use of the
+        DataFed API will read these credentials instead of requiring manual
+        authentication.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         cfg_dir = self.cfg.get("client_cfg_dir")
         pub_file = self.cfg.get("client_pub_key_file")
         priv_file = self.cfg.get("client_priv_key_file")
@@ -1938,16 +1945,25 @@ class API:
         keyf.write( reply[0].priv_key )
         keyf.close()
 
-    ##
-    # @brief Set current user/project context
-    #
-    # Set current context which is used to resolve relative aliases.
-    #
-    # @param item_id - A user or project ID
-    # @exception Exception: On invalid options or communication/server error
-    # @return None
-    #
     def setContext( self, item_id = None ):
+        """
+        Set current context which is used to resolve relative aliases
+
+        Parameters
+        ----------
+        item_id : str, optional. Default = None
+            A user or project ID. By default, this user's ID will be used as
+            the context
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         if item_id == None:
             if self._cur_sel == self._uid:
                 return
@@ -1980,35 +1996,48 @@ class API:
                 #self._cur_coll = "c/p_" + self._cur_sel[2:] + "_root"
                 self._cur_alias_prefix = "p:" + self._cur_sel[2:] + ":"
 
-
-    ##
-    # @brief Get current context
-    #
-    # Gets the current context which is used to resolve relative aliases.
-    #
-    # @return The current user or project ID context string
-    #
     def getContext( self ):
+        """
+        Gets the current context which is used to resolve relative aliases
+
+        Returns
+        -------
+        str
+            The current user or project ID context string
+        """
         return self._cur_sel
 
-
-    ##
-    # @brief Convert timestamp into standard string format
-    #
-    # @param ts - Timestamp in local time
-    # @return A string representation of the timestamp in local time
-    #
     def timestampToStr( self, ts ):
+        """
+        Convert timestamp into standard string format
+
+        Parameters
+        ----------
+        ts : time.struct_time
+            Timestamp in local time
+
+        Returns
+        -------
+        str
+            A string representation of the timestamp in local time
+        """
         return time.strftime("%m/%d/%Y,%H:%M", time.localtime( ts ))
 
-
-    ##
-    # @brief Convert a date/time string into a timestamp
-    #
-    # @param time_str - Date/time in %m/%d/%Y[,%H:%M[:%S]] format
-    # @return The integer timestamp representation of the time string in local time
-    #
     def strToTimestamp( self, time_str ):
+        """
+        Convert a date/time string into the integer value of the
+        represented timestamp (in local time)
+
+        Parameters
+        ----------
+        time_str : str
+            Date/time in %m/%d/%Y[,%H:%M[:%S]] format
+
+        Returns
+        -------
+        int
+            The integer timestamp representation of the time string
+        """
         try:
             return int( time_str )
         except:
@@ -2031,28 +2060,37 @@ class API:
 
         return None
 
-    ##
-    # @brief Convert integer size to string
-    #
-    # Convert integer size to human readable size string with metric units.
-    #
-    # @param size - Size value to convert
-    # @param precision - Precision of converted value
-    # @return The size as a string with byte units
-    #
     def sizeToStr( self, size, precision = 1 ):
+        """
+        Convert integer size of data sizes to human readable size string with
+        metric units
+
+        Parameters
+        ----------
+        size : int
+            size of data file
+        precision : int, optional. defaut = 1
+            Precision of converted value
+
+        Returns
+        -------
+        str
+            The size as a string with byte units
+        """
+        if not isinstance(size, int):
+            raise TypeError('size must be a integer')
         if size == 0:
             return "0"
         elif size < 1024:
             return str(size) + " B"
         elif size < 1048576:
-            denom = 1024
+            denom = 1024  # 2 ** 10
             unit = "KB"
         elif size < 1073741824:
-            denom = 1048576
+            denom = 1048576  # 2 ** 20
             unit = "MB"
         elif size < 1099511627776:
-            denom = 1073741824
+            denom = 1073741824  # 2 ** 30
             unit = "GB"
         else:
             denom = 1099511627776
