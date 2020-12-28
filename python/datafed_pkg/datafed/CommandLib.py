@@ -1831,62 +1831,69 @@ class API:
     # -------------------------------------------------------- Endpoint Methods
     # =========================================================================
 
-    ##
-    # @brief List recent endpoints
-    #
-    # List recently used Globus endpoints
-    #
-    # @return A UserGetRecentEPReply Google protobuf message object
-    # @exception Exception: On communication/server error
-    #
     def endpointListRecent( self ):
+        """
+        List recently used Globus endpoints
+
+        Returns
+        -------
+        UserGetRecentEPReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.UserGetRecentEPRequest()
 
         return self._mapi.sendRecv( msg )
 
-    ##
-    # @brief Get default endpoint
-    #
-    # Get configured default endpoint
-    #
-    # @return The default endpoint string, or None if not configured
-    #
     def endpointDefaultGet( self ):
+        """
+        Get configured default endpoint
+
+        Returns
+        -------
+        str
+            default endpoint string, or None if not configured
+        """
         return self.cfg.get( "default_ep" )
 
-    ##
-    # @brief Set the default endpoint
-    #
-    # Set the default Globus endpoint (used to set initial current endpoint).
-    #
-    # @param endpoint - New default endpoint
-    # @return None
-    #
     def endpointDefaultSet( self, endpoint ):
+        """
+        Set the default Globus endpoint (used to set initial current endpoint)
+
+        Parameters
+        ----------
+        endpoint : str
+            New default endpoint
+        """
         # TODO validate ep is UUID or legacy (not an ID)
         self.cfg.set( "default_ep", endpoint, True )
         if not self._cur_ep:
             self._cur_ep = endpoint
 
-    ##
-    # @brief Get current endpoint
-    #
-    # Get current Globus endpoint
-    #
-    # @return The current endpoint string, or None if not set
-    #
     def endpointGet( self ):
+        """
+        Get current Globus endpoint
+
+        Returns
+        -------
+        str
+            current endpoint string, or None if not set
+        """
+        # TODO: Consider making self._cur_ep more private via self.__cur_ep
         return self._cur_ep
 
-    ##
-    # @brief Set current endpoint
-    #
-    # Set current Globus endpoint (added to partial get/put paths)
-    #
-    # @param endpoint - New current Globus endpoint
-    # @return None
-    #
     def endpointSet( self, endpoint ):
+        """
+        Set current Globus endpoint (added to partial get/put paths)
+
+        Parameters
+        ----------
+        endpoint : str
+            New current Globus endpoint
+        """
         # TODO validate ep is UUID or legacy (not an ID)
         self._cur_ep = endpoint
 
