@@ -1,6 +1,6 @@
-=========
-Scripting
-=========
+===============
+Scripting Guide
+===============
 
 Before scripting
 ~~~~~~~~~~~~~~~~
