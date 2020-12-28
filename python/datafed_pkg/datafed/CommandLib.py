@@ -1666,24 +1666,41 @@ class API:
     # --------------------------------------------------- Data Transfer Methods
     # =========================================================================
 
-    ##
-    # @brief List recent tasks
-    #
-    # List recent Globus transfers. If no time or status filter options are
-    # provided, all Globus transfers initiated by the current user are listed,
-    # most recent first. Note that the DataFed server periodically purges
-    # transfer history such that only up to 30 days of history are retained.
-    #
-    # @param time_from - List from specified date/time (M/D/YYYY[,HH:MM])
-    # @param time_to - List to specified date/time (M/D/YYYY[,HH:MM])
-    # @param since - List from specified time string (second default, suffix h = hours, d = days, w = weeks)
-    # @param status - List matching status (0 to 4)
-    # @param offset - Offset of matches
-    # @param count - Count of matches
-    # @return A XfrDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def taskList( self, time_from = None, time_to = None, since = None, status = None, offset = 0, count = 20 ):
+    def taskList( self, time_from = None, time_to = None, since = None,
+                  status = None, offset = 0, count = 20 ):
+        """
+        List recent Globus data transfer tasks
+
+        If no time or status filter options are provided, all Globus transfers
+        initiated by the current user are listed, arranged by
+        most recent first. Note that the DataFed server periodically purges
+        transfer history such that only up to 30 days of history are retained.
+
+        Parameters
+        ----------
+        time_from : str, Optional. Default = None
+            Start date/time for listing specified as M/D/YYYY[,HH:MM]
+        time_to : str, Optional. Default = None
+            End date/time for listing specified as M/D/YYYY[,HH:MM]
+        since: str, Optional. Default = None
+            List from specified time string (second default, suffix
+            h = hours, d = days, w = weeks)
+        status : list of str and/or int. Default = None
+        offset : int, Optional. Default = 0
+            Offset of matching results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of matching results for (cleaner) paging
+
+        Returns
+        -------
+        XfrDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         if since != None and (time_from != None or time_to != None):
             raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
@@ -1729,7 +1746,13 @@ class API:
 
         if status != None:
             for s in status:
-                stat = s.lower()
+                if isinstance(s, str):
+                    stat = s.lower()
+                elif isinstance(s, int):
+                    stat = str(s)
+                else:
+                    # raise TypeError('status should be a list of str or int')
+                    stat = str(s)
                 if stat in ["0","1","2","3","4"]:
                     msg.status.append( int( stat ))
                 elif stat == "queued":
@@ -1767,18 +1790,29 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief View task information
-    #
-    # Show task information. Use the ID argument to view a specific task
-    # record, or omit to view the latest task initiated by the current user.
-    #
-    # @param task_id - Task ID to view (optional)
-    # @return A TaskDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def taskView( self, task_id = None ):
+        """
+        View information regarding a (Globus data transfer) task
+
+
+        Parameters
+        ----------
+        task_id : str, Optional. Default = None
+            Task ID to view.
+            If specified, information regarding the requested task is returned.
+            Otherwise and by default, information regarding the latest task
+            initiated by the current user is returned.
+
+        Returns
+        -------
+        TaskDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         if task_id:
             msg = auth.TaskViewRequest()
             msg.task_id = task_id
