@@ -2102,9 +2102,30 @@ class API:
     # --------------------------------------------------------- Private Methods
     # =========================================================================
 
-
-    # @brief Compose query parameters into a query string
     def _makeQueryString( self, id, text, meta, no_default, coll, proj ):
+        """
+        Compose query parameters into a query string
+
+        Parameters
+        ----------
+        id : str
+            portion of ID or alias of data of interest
+        text : str
+            plain text to search
+        meta : str
+            metadata search query in AQL format
+        no_default : bool
+            Whether or not to use default values
+        coll : list of str
+            IDs or aliases of the collections to search over
+        proj : list of str
+            IDs or aliases of the projects to search over
+
+        Returns
+        -------
+        str
+            Final search query
+        """
         if id is None and text is None and meta is None:
             raise Exception("No search terms provided.")
 
@@ -2148,8 +2169,21 @@ class API:
 
         return qry + "\"scopes\":[" + scopes + "]}"
 
-    # If specified filename exists, a new unique filename will be generated.
     def _uniquifyFilename( self, path ):
+        """
+        Ensures that the provided file name is unique by generating a new
+        unique file name if the specified file name already exists.
+
+        Parameters
+        ----------
+        path : str or Pathlib path
+            path to file of interest
+
+        Returns
+        -------
+        str
+            Unique file path
+        """
         filepath = pathlib.Path(path)
         while filepath.exists():
             stem = filepath.stem #string
@@ -2174,8 +2208,20 @@ class API:
 
         return str(filepath)
 
-    # Resolve relative local path
     def _resolvePathForHTTP( self, path ):
+        """
+        Resolve relative local path
+
+        Parameters
+        ----------
+        path : str
+            User specified relative path
+
+        Returns
+        -------
+        str
+            Path ready for HTTP
+        """
         if path[0] == "~":
             res = pathlib.Path(path).expanduser().resolve()
         elif path[0] == "." or path[0] != '/':
@@ -2186,9 +2232,22 @@ class API:
 
         return str(res)
 
-
-    # Resolve relative paths and prefix with current endpoint if needed
     def _resolvePathForGlobus( self, path, must_exist ):
+        """
+        Resolve relative paths and prefix with current endpoint if needed
+
+        Parameters
+        ----------
+        path : str
+            file path
+        must_exist : bool
+            Whether or not the path must exist
+
+        Returns
+        -------
+        str
+            Path with globus endpoint UUID or alias prefixed.
+        """
         # Check if this is a full Globus path with either a UUID or legacy endpoint prefix
         if re.match( API._endpoint_legacy, path ) or re.match( API._endpoint_uuid, path ):
             return path
@@ -2253,9 +2312,23 @@ class API:
 
         return self._cur_ep + _path
 
-
-    # Resolve ID by prefixing relative aliases with current or specifies context
     def _resolve_id( self, item_id, context = None ):
+        """
+        Resolve ID by prefixing relative aliases with current or specifies
+        context
+
+        Parameters
+        ----------
+        item_id : str
+            ID of record, project, user or collection
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        str
+            resolved ID
+        """
         if ( len( item_id ) > 2 and item_id[1] == "/" ) or ( item_id.find(":") > 0 ):
             return item_id
 
@@ -2269,9 +2342,15 @@ class API:
         else:
             return self._cur_alias_prefix + item_id
 
-
-    # Set any missing config options to sane defaults
     def _setSaneDefaultOptions( self ):
+        """
+        Set any missing config options to sane defaults
+
+        Returns
+        -------
+        opts : dict
+            Automatically determined save configuration options
+        """
         opts = self.cfg.getOpts()
 
         # Examine initial configuration options and set & save defaults where needed
