@@ -1021,6 +1021,7 @@ class API:
         Raises
         ------
         Exception : On communication or server error
+        Exception : On invalid options
         """
         msg = anon.CollReadRequest()
         msg.count = count
@@ -1549,15 +1550,29 @@ class API:
     # ----------------------------------------------------- Shared Data Methods
     # =========================================================================
 
-    ##
-    # @brief List users/projects with shared data
-    #
-    # List users and/or that have shared data with client/subject.
-    #
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def sharesListOwners( self, inc_users = None, inc_projects = None, subject = None ):
+    def sharesListOwners( self, inc_users = None, inc_projects = None,
+                          subject = None ):
+        """
+        List users and/or that have shared data with client/subject.
+
+        Parameters
+        ----------
+        inc_users : list of str, Optional. Default
+            Include a list of specified users
+        inc_projects : list of str, Optional. Default
+            Include a list of specified projects
+        subject : list of str, Optional. Default
+            Include a list of specified subjects
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ACLBySubjectRequest()
 
         if inc_users != None:
@@ -1572,46 +1587,71 @@ class API:
         return self._mapi.sendRecv( msg )
 
     '''
-    ##
-    # @brief List users with shared data
-    #
-    # List users that have shared data. Only users that have shared data with
-    # the current user are listed, not users that the current user has shared
-    # data with.
-    #
-    # @return A UserDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def sharedUsersList( self ):
+        """
+        List users who have shared data the with current user
+        
+        Users that the current user has shared data with are not listed.
+        
+        Returns
+        -------
+        UserDataReply Google protobuf message
+            Response from DataFed
+        
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ACLByUserRequest()
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief List projects with shared data
-    #
-    # List projects that have shared data with the current user.
-    #
-    # @return A ProjectDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def sharedProjectsList( self ):
+        """
+        List projects that have shared data with the current user
+        
+        Returns
+        -------
+        ProjectDataReply Google protobuf message
+            Response from DataFed
+            
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ACLByProjRequest()
 
         return self._mapi.sendRecv( msg )
     '''
 
-    ##
-    # @brief List shared data records and collections
-    #
-    # List shared data records and collections by user/project ID.
-    #
-    # @param owner_id - User or project ID
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def sharesListItems( self, owner_id, context = None, offset = None, count = None ):
+    def sharesListItems( self, owner_id, context = None,
+                         offset = None, count = None ):
+        """
+        List shared data records and collections by user/project ID
+
+        Parameters
+        ----------
+        owner_id : str
+            User or project ID
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         # TODO add support for offset & count
 
         msg = auth.ACLListItemsBySubjectRequest()
