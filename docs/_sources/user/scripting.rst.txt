@@ -1,6 +1,6 @@
-=========
-Scripting
-=========
+===============
+Scripting Guide
+===============
 
 In this document, we walk the reader through the process of getting necessary accounts,
 data allocations etc. so that the reader may begin to use DataFed's CLI and/or Python package

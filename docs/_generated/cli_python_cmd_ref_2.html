@@ -1,0 +1,1110 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>General Usage &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system/usecases.html">Use Cases</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/web/portal.html">Web Portal</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/install.html">Installation and Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/reference.html">Command Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Scripting</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/scripting.html">Scripting Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/api/python.html">Python API Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin/general.html">Administration</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>General Usage</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/_generated/cli_python_cmd_ref_2.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="general-usage">
+<h1>General Usage</h1>
+<p>Usage: datafed [OPTIONS] COMMAND [ARGS]…</p>
+<blockquote>
+<div><p>‘datafed’ is the command-line interface (_cli) for the DataFed federated
+data management service. This _cli may be used to access most, but not
+all, of the features available via the DataFed web portal. This _cli may
+be used interactively (-i option), or for scripting (supports JSON output
+with the -J option).</p>
+<p>For more information about this _cli and DataFed in general, refer to
+<a class="reference external" href="https://datafed.ornl.gov/ui/docs">https://datafed.ornl.gov/ui/docs</a></p>
+</div></blockquote>
+<dl>
+<dt>Options:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-m</span>, <span class="option">--manual-auth</span></kbd></dt>
+<dd><p>Force manual authentication</p>
+</dd>
+<dt><kbd><span class="option">-s</span>, <span class="option">--script</span></kbd></dt>
+<dd><p>Start in non-interactive scripting mode. Output
+is in JSON, all intermediate I/O is disabled,
+and certain client-side commands are
+unavailable.</p>
+</dd>
+<dt><kbd><span class="option">--version</span></kbd></dt>
+<dd><p>Print version number and exit.</p>
+</dd>
+<dt><kbd><span class="option">-e</span>, <span class="option">--default-ep <var>TEXT</var></span></kbd></dt>
+<dd><p>Default Globus endpoint</p>
+</dd>
+<dt><kbd><span class="option">--server-cfg-file <var>TEXT</var></span></kbd></dt>
+<dd><p>Server configuration file</p>
+</dd>
+<dt><kbd><span class="option">-H</span>, <span class="option">--server-host <var>TEXT</var></span></kbd></dt>
+<dd><p>Sever host name or IP address</p>
+</dd>
+<dt><kbd><span class="option">--client-cfg-file <var>TEXT</var></span></kbd></dt>
+<dd><p>Client configuration file</p>
+</dd>
+<dt><kbd><span class="option">--client-cfg-dir <var>TEXT</var></span></kbd></dt>
+<dd><p>Client configuration directory</p>
+</dd>
+<dt><kbd><span class="option">--server-cfg-dir <var>TEXT</var></span></kbd></dt>
+<dd><p>Server configuration directory</p>
+</dd>
+<dt><kbd><span class="option">-P</span>, <span class="option">--server-port <var>INTEGER</var></span></kbd></dt>
+<dd><p>Server port number</p>
+</dd>
+<dt><kbd><span class="option">--server-pub-key-file <var>TEXT</var></span></kbd></dt>
+<dd><p>Server public key file</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbosity <var>INTEGER</var></span></kbd></dt>
+<dd><p>Verbosity level (0=quiet,1=normal,2=verbose)
+for text-format output only.</p>
+</dd>
+<dt><kbd><span class="option">--client-pub-key-file <var>TEXT</var></span></kbd></dt>
+<dd><p>Client public key file</p>
+</dd>
+<dt><kbd><span class="option">--client-priv-key-file <var>TEXT</var></span></kbd></dt>
+<dd><p>Client private key file</p>
+</dd>
+</dl>
+<p>-?, -h, –help               Show this message and exit.</p>
+</dd>
+<dt>Commands:</dt><dd><p>coll       Collection subcommands.
+data       Data subcommands.
+ep         Endpoint commands.
+exit       Exit an interactive session.
+help       Show DataFed CLI help.
+ls         List contents of a collection, or shared items of a user or…
+project    Project subcommands.
+query      Data query subcommands.
+setup      Setup local credentials.
+shares     List users and/or projects sharing data with current user.
+task       Task management commands.
+user       User subcommands.
+verbosity  Set/display verbosity level.
+wc         Set/print current working collection or path.
+wp         Get current working path.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="coll-commands">
+<h1>Coll Commands</h1>
+<p>Collection subcommands.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">coll</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+<div class="section" id="coll-add">
+<h2>Coll Add</h2>
+<p>Add data records and/or collections to a collection. COLL_ID is the
+destination collection and ITEM_IDs specify one or more data records and/or
+collections to add to the destination collection. COLL_ID and ITEM_IDs may
+be IDs, aliases, or index values from a listing. COLL_ID may also be a
+relative collection path (‘.’, ‘..’, or ‘/’).</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">coll</span> <span class="n">add</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COLL_ID</span> <span class="n">ITEM_ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="coll-create">
+<h2>Coll Create</h2>
+<p>Create a new collection. The collection ‘title’ is required, but all
+other attributes are optional. On success, the ID of the created
+collection is returned. Note that if a parent collection is specified, and
+that collection belongs to a project or other collaborator, the creating
+user must have permission to write to that collection.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">coll</span> <span class="n">create</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">TITLE</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-a, --alias TEXT    Alias
+-p, --parent TEXT    Parent collection ID/alias (default is current working collection)
+-d, --description TEXT    Description text
+-T, --tags TEXT    Tags (comma separated list).
+--topic TEXT    Publish the collection to the provided topic.
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-v, --verbosity [0|1|2]    Verbosity level of output
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="coll-delete">
+<h2>Coll Delete</h2>
+<p>Delete one or more existing collections. Multiple ID arguments can be
+provided and may be collection IDs, aliases, or index values from a
+listing. By default, a confirmation prompt is used, but this can be
+bypassed with the ‘–force’ option.</p>
+<p>When a collection is deleted, all contained collections are also deleted;
+however, contained data records are only deleted if they are not linked to
+another collection not involved in the deletion.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">coll</span> <span class="n">delete</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-f, --force    Delete without confirmation.
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="coll-remove">
+<h2>Coll Remove</h2>
+<p>Remove data records and/or collections from a collection. COLL_ID is the
+containing collection and ITEM_IDs specify one or more data records and/or
+collections to remove from the containing collection. COLL_ID and ITEM_IDs
+may be IDs, aliases, or index values from a listing. COLL_ID may also be a
+relative collection path (‘.’, ‘..’, or ‘/’).</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">coll</span> <span class="n">remove</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COLL_ID</span> <span class="n">ITEM_ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="coll-update">
+<h2>Coll Update</h2>
+<p>Update an existing collection. The collection ID is required and can be
+an ID, alias, or listing index; all other collection attributes are
+optional.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">coll</span> <span class="n">update</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-t, --title TEXT    Title
+-a, --alias TEXT    Alias
+-d, --description TEXT    Description text
+-T, --tags TEXT    Tags (comma separated list).
+--topic TEXT    Publish the collection under the provided topic.
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-v, --verbosity [0|1|2]    Verbosity level of output
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="coll-view">
+<h2>Coll View</h2>
+<p>View collection information. Displays collection title, description, and
+other administrative fields. ID may be a collection identifier, alias, or
+index value from a listing. Use ‘coll list’ command to see items contained
+in a collection.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">coll</span> <span class="n">view</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-v, --verbosity [0|1|2]    Verbosity level of output
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="data-commands">
+<h1>Data Commands</h1>
+<p>Data subcommands.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+<div class="section" id="data-batch-commands">
+<h2>Data Batch Commands</h2>
+<p>Data batch subcommands.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">batch</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+<div class="section" id="data-batch-create">
+<h3>Data Batch Create</h3>
+<p>Batch create data records from JSON file(s). Multiple FILE arguments may be
+specified and are absolute or relative paths to JSON inputs file on a local
+filesystem. JSON input files may contain individual JSON objects, or arrays
+of JSON objects. Each JSON object represents a new data record and the JSON
+must comply with the DataFed record input schema (see online documentation).</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">batch</span> <span class="n">create</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">FILE</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-c, --collection TEXT    Optional target collection (default is root).
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-batch-update">
+<h3>Data Batch Update</h3>
+<p>Batch update data records from JSON file(s). Multiple FILE arguments may be
+specified and are absolute or relative paths to JSON inputs file on a local
+filesystem. JSON input files may contain individual JSON objects, or arrays
+of JSON objects. Each JSON object represents a new data record and the JSON
+must comply with the DataFed record input schema (see online documentation).</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">batch</span> <span class="n">update</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">FILE</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="data-create">
+<h2>Data Create</h2>
+<p>Create a new data record. The data record ‘title’ is required, but all
+other attributes are optional. On success, the ID of the created data
+record is returned. Note that if a parent collection is specified, and
+that collection belongs to a project or other collaborator, the creating
+user must have permission to write to that collection. The raw-data-file
+option is only supported in interactive mode and is provided as a
+convenience to avoid a separate dataPut() call.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">create</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">TITLE</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-a, --alias TEXT    Record alias.
+-d, --description TEXT    Description text.
+-T, --tags TEXT    Tags (comma separated list).
+-r, --raw-data-file TEXT    Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.
+-x, --extension TEXT    Override raw data file extension if provided (default is auto detect).
+-m, --metadata TEXT    Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.
+-f, --metadata-file TEXT    Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.
+-p, --parent TEXT    Parent collection ID, alias, or listing index. Default is the current working collection.
+-R, --repository TEXT    Repository ID. Uses default allocation if not specified.
+-D, --deps &lt;CHOICE TEXT&gt;...    Dependencies (provenance). Use one &#39;--deps&#39; option per dependency and specify with a string consisting of the type of relationship (&#39;der&#39;, &#39;comp&#39;, &#39;ver&#39;) follwed by ID/alias of the referenced record. Relationship types are: &#39;der&#39; for &#39;derived from&#39;, &#39;comp&#39; for &#39;a component of&#39;, and &#39;ver&#39; for &#39;a new version of&#39;.
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-v, --verbosity [0|1|2]    Verbosity level of output
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-delete">
+<h2>Data Delete</h2>
+<p>Delete one or more existing data records. Multiple ID arguments can be
+provided and may data record IDs, aliases, or index values from a listing.
+By default, a confirmation prompt is used, but this can be bypassed with
+the ‘–force’ option.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">delete</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-f, --force    Delete record(s) without confirmation.
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-get">
+<h2>Data Get</h2>
+<p>Get (download) raw data of data records and/or collections. Multiple ID
+arguments can be specified and may be data record and/or collection IDs,
+aliases, or index values from s listing. The PATH argument is the
+destination for the download and can be either a full Globus path (with
+endpoint), or a local file system path (absolute or relative).</p>
+<p>Downloads will involve either Globus transfers or HTTP transfers depending
+on the source data for the selected records, and the two source types may
+not be mixed. For Globus transfers, if no endpoint is specified in the PATH
+argument, the current endpoint will be used. For HTTP transfers, the PATH
+argument may be an absolute or relative path within the local filesystem.
+For both cases, if the destination PATH doesn’t exist, it will be created
+given sufficient filesystem permissions.</p>
+<p>Because HTTP downloads are performed directly by the CLI, they are always
+blocking calls; thus the ‘wait’ option only applies to Globus transfers.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">get</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span> <span class="n">PATH</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-w, --wait    Block until Globus transfer is complete.
+-e, --encrypt [0|1|2]    Encryption mode: 0 = none, 1 = if available (default), 2 = force.
+-o, --orig_fname    Download to original filename(s).
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-put">
+<h2>Data Put</h2>
+<p>Put (upload) raw data located at PATH to DataFed record ID.  The ID
+argument may be data record ID, alias, or index value from a listing.
+The PATH argument specifies the source file for the upload and can be
+either a full Globus path (with endpoint), or a local file system path
+(absolute or relative). If no endpoint is specified in the PATH
+argument, the current endpoint will be used.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">put</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span> <span class="n">PATH</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-w, --wait    Block reply or further commands until transfer is complete
+-x, --extension TEXT    Override extension for raw data file (default = auto detect).
+-e, --encrypt [0|1|2]    Encryption mode: 0 = none, 1 = if available (default), 2 = force.
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-update">
+<h2>Data Update</h2>
+<p>Update an existing data record. The data record ID is required and can be
+an ID, alias, or listing index; all other record attributes are optional.
+The raw-data-file option is only supported in interactive mode and is
+provided as a convenience to avoid a separate dataPut() call.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">update</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-t, --title TEXT    Title
+-a, --alias TEXT    Alias
+-d, --description TEXT    Description text
+-T, --tags TEXT    Tags (comma separated list)
+-r, --raw-data-file TEXT    Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.
+-x, --extension TEXT    Override extension for raw data file (default = auto detect).
+-m, --metadata TEXT    Inline metadata in JSON format.
+-f, --metadata-file TEXT    Path to local metadata file containing JSON.
+-S, --metadata-set    Set (replace) existing metadata with provided instead of merging.
+-A, --deps-add &lt;CHOICE TEXT&gt;...    Specify dependencies to add by listing first the type of relationship (&#39;der&#39;, &#39;comp&#39;, or &#39;ver&#39;) follwed by ID/alias of the target record. Can be specified multiple times.
+-R, --deps-rem &lt;CHOICE TEXT&gt;...    Specify dependencies to remove by listing first the type of relationship (&#39;der&#39;, &#39;comp&#39;, or &#39;ver&#39;) followed by ID/alias of the target record. Can be specified multiple times.
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-v, --verbosity [0|1|2]    Verbosity level of output
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-view">
+<h2>Data View</h2>
+<p>View data record information. Displays record title, description, tags,
+and other informational and administrative fields. ID may be a data record
+identifier, alias, or index value from a listing. By default, description
+text is truncated and metadata is not shown unless the verbosity is as
+level 2.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">view</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-v, --verbosity [0|1|2]    Verbosity level of output
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="ep-commands">
+<h1>Ep Commands</h1>
+<p>Endpoint commands.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+<div class="section" id="ep-default-commands">
+<h2>Ep Default Commands</h2>
+<p>Default endpoint commands.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="n">default</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+<div class="section" id="ep-default-get">
+<h3>Ep Default Get</h3>
+<p>Show the default Globus endpoint.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="n">default</span> <span class="n">get</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="ep-default-set">
+<h3>Ep Default Set</h3>
+<p>Set the default Globus endpoint. The default endpoint will be set from the
+‘endpoint’ argument, or if the ‘–current’ options is specified, from the
+currently active endpoint.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="n">default</span> <span class="nb">set</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="p">[</span><span class="n">ENDPOINT</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-c, --current    Set default endpoint to current endpoint.
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="ep-get">
+<h2>Ep Get</h2>
+<p>Get Globus endpoint for the current session. At the start of a session, the
+current endpoint will be set to the default endpoint, if configured.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="n">get</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="ep-list">
+<h2>Ep List</h2>
+<p>List recently used endpoints.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="nb">list</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="ep-set">
+<h2>Ep Set</h2>
+<p>Set endpoint for the current session. If no endpoint is given, the
+default endpoint will be set as the current endpoint, if configured.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="nb">set</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="p">[</span><span class="n">ENDPOINT</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="exit">
+<h1>Exit</h1>
+<p>Exit an interactive session. Ctrl-C may also be used to exit the shell.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">exit</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="help">
+<h1>Help</h1>
+<p>Show DataFed CLI help. Include a subcommand name as the argument to see
+subcommand-specific help.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">help</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="p">[</span><span class="n">COMMAND</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="ls">
+<h1>Ls</h1>
+<p>List contents of a collection, or shared items of a user or project.
+ID may be a collection ID or alias, a user or project ID, an index
+value from a listing, or omitted for the current working collection.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ls</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-O, --offset INTEGER    Start list at offset
+-C, --count INTEGER    Limit list to count results
+-X, --context TEXT    User or project ID for command alias context. See &#39;alias&#39; command help for more information.
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="project-commands">
+<h1>Project Commands</h1>
+<p>Project subcommands.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">project</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+<div class="section" id="project-list">
+<h2>Project List</h2>
+<p>List projects associated with current user. List projects that are owned or managed by the
+current user, as well as projects were the current user is a member.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">project</span> <span class="nb">list</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-o, --owned    Include owned projects
+-a, --admin    Include administered projects
+-m, --member    Include membership projects
+-O, --offset INTEGER    Start list at offset
+-C, --count INTEGER    Limit list to count results
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="project-view">
+<h2>Project View</h2>
+<p>View project information. Current user must have a role (owner, manager, or
+member) within the project specified by the ID argument.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">project</span> <span class="n">view</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-v, --verbosity [0|1|2]    Verbosity level of output
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="query-commands">
+<h1>Query Commands</h1>
+<p>Data query subcommands.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+<div class="section" id="query-create">
+<h2>Query Create</h2>
+<p>Create a saved query.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">create</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">TITLE</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-i, --id TEXT    ID/alias expression
+-t, --text TEXT    Text expression
+-m, --meta TEXT    Metadata expression
+-n, --no-default    Exclude personal data and projects
+-c, --coll TEXT    Collection(s) to search
+-p, --proj TEXT    Project(s) to search
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-delete">
+<h2>Query Delete</h2>
+<p>Delete a saved query by ID.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">delete</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-exec">
+<h2>Query Exec</h2>
+<p>Execute a saved query by ID.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">exec</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-O, --offset INTEGER    Start results list at offset
+-C, --count INTEGER    Limit to count results
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-list">
+<h2>Query List</h2>
+<p>List saved queries.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="nb">list</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-O, --offset INTEGER    Start list at offset
+-C, --count INTEGER    Limit list to count results
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-run">
+<h2>Query Run</h2>
+<p>Run a directly entered query. Unless the ‘no-default’ option is included,
+the search scope includes all data owned by the authenticated user (in
+their root collection and projects that are owned or managed, or where the
+user is a member of the project. Projects and collections that are not part
+of the default scope may be added using the –proj and –coll options
+respectively.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">run</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-i, --id TEXT    ID/alias expression
+-t, --text TEXT    Text expression
+-m, --meta TEXT    Metadata expression
+-n, --no-default    Exclude personal data and projects
+-c, --coll TEXT    Collection(s) to search
+-p, --proj TEXT    Project(s) to search
+-O, --offset INTEGER    Start result list at offset
+-C, --count INTEGER    Limit to count results (default = 20)
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-update">
+<h2>Query Update</h2>
+<p>Update a saved query. The title and search terms of a query may be updated;
+however, search scope cannot currently be changed. To remove a term,
+specify an empty string (“”) for the associated option.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">update</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>--title TEXT    New query title
+-i, --id TEXT    ID/alias expression
+-t, --text TEXT    Text expression
+-m, --meta TEXT    Metadata expression
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="query-view">
+<h2>Query View</h2>
+<p>View a saved query by ID.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">view</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="setup">
+<h1>Setup</h1>
+<p>Setup local credentials. This command installs DataFed credentials for the
+current user in the configured client configuration directory. Subsequent
+use of the DataFed CLI will read these credentials instead of requiring
+manual authentication.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">setup</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="shares">
+<h1>Shares</h1>
+<p>List users and/or projects sharing data with current user.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">shares</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-u, --users    Show users only
+-p, --projects    Show projects only
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="task-commands">
+<h1>Task Commands</h1>
+<p>Task management commands.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">task</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+<div class="section" id="task-list">
+<h2>Task List</h2>
+<p>List recent tasks. If no time or status filter options are
+provided, all tasks initiated by the current user are listed,
+most recent first. Note that the DataFed server periodically purges
+tasks history such that only up to 30 days of history are retained.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">task</span> <span class="nb">list</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-s, --since TEXT    List from specified time (seconds default, suffix h = hours, d = days, w = weeks)
+-f, --from TEXT    List from specified date/time (M/D/YYYY[,HH:MM])
+-t, --to TEXT    List up to specified date/time (M/D/YYYY[,HH:MM])
+-S, --status [0|1|2|3|4|queued|ready|running|succeeded|failed]    List tasks matching specified status
+-O, --offset INTEGER    Start list at offset
+-C, --count INTEGER    Limit list to count results
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="task-view">
+<h2>Task View</h2>
+<p>Show task information. Use the ID argument to view a specific task
+record, or omit to view the latest task initiated by the current user.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">task</span> <span class="n">view</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="user-commands">
+<h1>User Commands</h1>
+<p>User subcommands.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">user</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+<div class="section" id="user-all">
+<h2>User All</h2>
+<p>List all users.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">user</span> <span class="nb">all</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-O, --offset INTEGER    Start list at offset
+-C, --count INTEGER    Limit list to count results
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="user-collab">
+<h2>User Collab</h2>
+<p>List all users that are collaborators. Collaborators are defined as users
+that have projects in common with the current user, or that have data-
+sharing relationships with the current user.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">user</span> <span class="n">collab</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-O, --offset INTEGER    Start list at offset
+-C, --count INTEGER    Limit list to count results
+-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="user-view">
+<h2>User View</h2>
+<p>View user information.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">user</span> <span class="n">view</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">UID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="user-who">
+<h2>User Who</h2>
+<p>Show current authenticated user ID.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">user</span> <span class="n">who</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="verbosity">
+<h1>Verbosity</h1>
+<p>Set/display verbosity level. The verbosity level argument can be 0
+(lowest), 1 (normal), or 2 (highest). If the the level is omitted, the
+current verbosity level is returned.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">verbosity</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="p">[</span><span class="n">LEVEL</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="wc">
+<h1>Wc</h1>
+<p>Set/print current working collection or path. ‘ID’ can be a collection ID, alias, list index number, ‘-‘ (previous collection), or path. Only ‘..’ and ‘/’ are supported for paths. ‘cd’ is an alias for this command.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">wc</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+<div class="section" id="wp">
+<h1>Wp</h1>
+<p>Get current working path. Displays the full path of the current working
+collection starting from the root collection of the associated user or
+project.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">wp</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>-?, -h, --help    Show this message and exit.
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Oak Ridge National Laboratories
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
