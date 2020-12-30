@@ -34,6 +34,14 @@ class API:
     DataFed client package. Basic functionality of th API class mirrors the
     capabilities exposed in the DataFed CLI.
 
+    The Config class is used to load configuration settings, but settings
+    (all or some) may also be supplied as an argument to the constructor.
+    On success, a secure connection is established to the configured DataFed
+    core server. If user credentials are installed, the associated user
+    will be authenticated; otherwise an anonymous connection will be
+    created. Use the getAuthUser() method to check is authentication is
+    required after constructing an API instance.
+
     Parameters
     ----------
     opts : dict, Optional
@@ -59,20 +67,6 @@ class API:
     _endpoint_legacy = re.compile(r'[\w\-]+#[\w\-]+')
     _endpoint_uuid = re.compile( r'[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}', re.I )
 
-    ##
-    # @brief Commandlib API constructor
-    #
-    # The Config class is used to load configuration settings, but settings
-    # (all or some) may also be supplied as an argument to the constructor.
-    # On success, a secure connection is established to the configured DataFed
-    # core server. If user credentials are installed, the associated user
-    # will be authenticated; otherwise an anonymous connection will be
-    # created. Use the getAuthUser() method to check is authentication is
-    # required after constructing an API instance.
-    #
-    # @param opts - Configuration options (optional)
-    # @exception Exception: if invalid config values are present
-    #
     def __init__( self, opts = {} ):
         #print("CommandLib Init")
 

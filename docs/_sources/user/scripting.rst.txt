@@ -58,7 +58,7 @@ You may use the interactive DataFed CLI or the Python package at this point.
 
 5. Getting data allocations
 ---------------------------
-Though you can start to use DataFed at this point, it would not be possible to create, manipulate data of your own
+Though you can start to use DataFed at this point, it would not be possible to create or manipulate data of your own
 unless you have a data allocation in a DataFed data repository. It would still be possible to get and view data that are publicly shared via DataFed though.
 As the name suggests, a data allocation is just the data storage space that users and projects can use to store and share data of their own.
 

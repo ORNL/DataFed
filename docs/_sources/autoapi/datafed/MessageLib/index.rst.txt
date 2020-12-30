@@ -1,0 +1,60 @@
+:mod:`datafed.MessageLib`
+=========================
+
+.. py:module:: datafed.MessageLib
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   datafed.MessageLib.API
+
+
+
+.. py:class:: API(server_host=None, server_port=None, server_pub_key_file=None, server_pub_key=None, client_pub_key_file=None, client_pub_key=None, client_priv_key_file=None, client_priv_key=None, client_token=None, manual_auth=None, **kwargs)
+
+   .. method:: keysLoaded(self)
+
+
+   .. method:: keysValid(self)
+
+
+   .. method:: getAuthStatus(self)
+
+
+   .. method:: manualAuthByPassword(self, uid, password)
+
+
+   .. method:: manualAuthByToken(self, token)
+
+
+   .. method:: logout(self)
+
+
+   .. method:: getNackExceptionEnabled(self)
+
+
+   .. method:: setNackExceptionEnabled(self, enabled)
+
+
+   .. method:: setDefaultTimeout(self, timeout)
+
+
+   .. method:: getDefaultTimeout(self)
+
+
+   .. method:: sendRecv(self, msg, timeout=None, nack_except=None)
+
+
+   .. method:: send(self, msg)
+
+
+   .. method:: recv(self, timeout=None, nack_except=None)
+
+
+
