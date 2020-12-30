@@ -42,6 +42,8 @@ This site contains all user and administrative documentation for the DataFed sys
    user/scripting
    user/api/python
 
+.. autoclass:: CommandLib
+    :members:
 
 .. toctree::
    :maxdepth: 2
