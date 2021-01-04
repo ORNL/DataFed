@@ -17,15 +17,24 @@ export const OPR_FAL     = "false";
 export const OPR_CON     = "contains";
 
 export class QueryBuilder extends HTMLElement {
-    /*static get observedAttributes(){
-        return ['schema','query'];
-    }*/
-    //static _top_html = "<button class='btn-opr-group qb-btn-icon' title='Change operator to combine contained items'>AND</button><button class='btn-add-field qb-btn-icon' title='Add new field'><span class='ui-icon ui-icon-input'></span></button><button class='btn-add-group qb-btn-icon' title='Add new sub-group'>( )</button>";
-    //static _grp_html = "<button class='btn-opr-group qb-btn-icon' title='Change operator to combine contained items'>AND</button><button class='btn-add-field qb-btn-icon' title='Add new field'><span class='ui-icon ui-icon-input'></span></button><button class='btn-add-group qb-btn-icon' title='Add new sub-group'>( )</button><div style='float:right'><button class='btn-rem-group qb-btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>";
-    static _top_html = "<button class='btn-opr-group qb-btn-icon'>AND</button><button class='btn-add-field qb-btn-icon'><span class='ui-icon ui-icon-input'></span></button><button class='btn-add-group qb-btn-icon'>( )</button>";
-    static _grp_html = "<button class='btn-opr-group qb-btn-icon'>AND</button><button class='btn-add-field qb-btn-icon'><span class='ui-icon ui-icon-input'></span></button><button class='btn-add-group qb-btn-icon'>( )</button><div style='float:right'><button class='btn-rem-group qb-btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>";
-    static _fld_html = "<button class='btn-sel-field'>Select Field...</button><select class='sel-opr-field' disabled></select><input class='inp-val-field'></input><div style='float:right'><button class='btn-rem-field qb-btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>";
-    //static _fld_html = "<select class='sel-field'><option>AAA</option><option>BBBBB</option><option>CCCCCCCCCCCCCCCCCC</option><option>DDD</option><option>EEE</option><option>FFF</option></select><div style='float:right'><button class='btn-rem-field qb-btn-icon'><span class='ui-icon ui-icon-close'></span></button></div>";
+    static _top_html = "<button class='btn-opr-group qb-btn-icon' title='Set group combination operator'>AND</button>\
+        <button class='btn-add-field qb-btn-icon' title='Add field'><span class='ui-icon ui-icon-input'></span></button>\
+        <button class='btn-add-group qb-btn-icon' title='Add sub-group'>( )</button>";
+    static _grp_html = "<button class='btn-opr-group qb-btn-icon' title='Set sub-group combination operator'>AND</button>\
+        <button class='btn-add-field qb-btn-icon' title='Add field'><span class='ui-icon ui-icon-input'></span></button>\
+        <button class='btn-add-group qb-btn-icon' title='Add sub-group'>( )</button>\
+        <div style='float:right'><button class='btn-rem-group qb-btn-icon' title='Remove this sub-group'><span class='ui-icon ui-icon-close'></span></button></div>";
+    static _fld_html = "<div class='qb-row-flex'>\
+        <div style='flex:1 1 auto'>\
+            <button class='btn-sel-field' title='Select field from schema'>Select Field...</button>\
+            <span class='field-type-label'></span>\
+            <span style='display:inline-block' class='qb-indent-wrap'>\
+                <select class='sel-opr-field' disabled title='Choose field comparison operator'></select>\
+                <input class='inp-val-field'></input>\
+            </span>\
+        </div><div style='flex:none'>\
+            <button class='btn-rem-field qb-btn-icon' title='Remove this field'><span class='ui-icon ui-icon-close'></span></button>\
+        </div></div>";
 
     static _FLD_STR     = 1;
     static _FLD_NUM     = 2;
@@ -34,13 +43,15 @@ export class QueryBuilder extends HTMLElement {
     static _FLD_OBJ     = 5;
 
     static _fld_cfg = {
-        "string": {opr:[OPR_EQ,OPR_NEQ,OPR_RGX,OPR_WLD,OPR_DF,OPR_NDF]},
-        "number": {opr:[OPR_EQ,OPR_NEQ,OPR_LT,OPR_LTE,OPR_GTE,OPR_GT,OPR_DF,OPR_NDF]},
-        "integer": {opr:[OPR_EQ,OPR_NEQ,OPR_LT,OPR_LTE,OPR_GTE,OPR_GT,OPR_DF,OPR_NDF]},
-        "bool"  : {opr:[OPR_TRU,OPR_FAL,OPR_EQ,OPR_NEQ,OPR_DF,OPR_NDF]},
-        "array" : {opr:[OPR_CON,OPR_DF,OPR_NDF]},
-        "object": {opr:[OPR_DF,OPR_NDF]}
+        "string": {label:"[str]",opr:[OPR_EQ,OPR_NEQ,OPR_RGX,OPR_WLD,OPR_DF,OPR_NDF]},
+        "number": {label:"[num]",opr:[OPR_EQ,OPR_NEQ,OPR_LT,OPR_LTE,OPR_GTE,OPR_GT,OPR_DF,OPR_NDF]},
+        "integer": {label:"[int]",opr:[OPR_EQ,OPR_NEQ,OPR_LT,OPR_LTE,OPR_GTE,OPR_GT,OPR_DF,OPR_NDF]},
+        "bool"  : {label:"[bool]",opr:[OPR_TRU,OPR_FAL,OPR_EQ,OPR_NEQ,OPR_DF,OPR_NDF]},
+        "array" : {label:"[arr]",opr:[OPR_CON,OPR_DF,OPR_NDF]},
+        "object": {label:"[obj]",opr:[OPR_DF,OPR_NDF]}
     }
+
+    static _fld_no_input = [OPR_TRU,OPR_FAL,OPR_DF,OPR_NDF];
 
     constructor(){
         super();
@@ -91,8 +102,12 @@ export class QueryBuilder extends HTMLElement {
         grp.style.margin = "0";
         grp.innerHTML = QueryBuilder._top_html;
         $("button",grp).button();
+        this._top_grp = $(grp)
+        util.tooltipTheme( this._top_grp );
 
         this.append( grp );
+
+        this._front = grp.closest(".ui-front");
     }
 
     getSchema(){
@@ -118,7 +133,19 @@ export class QueryBuilder extends HTMLElement {
         fld.innerHTML = QueryBuilder._fld_html;
         a_container.append( fld );
         $("button",fld).button();
-        $("select",fld).selectmenu({width:false});
+        $("select",fld).selectmenu({
+            width:false,
+            change: function( ev, ui ){
+                console.log("sel",ui.item);
+                if ( QueryBuilder._fld_no_input.indexOf( ui.item.value ) == -1 ){
+                    // Show input
+                    $(".inp-val-field",fld).show();
+                }else{
+                    // Hide input
+                    $(".inp-val-field",fld).hide();
+                }
+            }
+        });
     }
 
     _groupAddBtnClick( ev ){
@@ -130,8 +157,11 @@ export class QueryBuilder extends HTMLElement {
     _groupRemBtnClick( ev ){
         console.log("group rem");
         var div = ev.currentTarget.closest("div.query-builder-group");
-        if ( div )
+        if ( div ){
+            // Work around close bug in jquery-ui tooltip
+            $(".ui-tooltip",this._front).remove();
             div.remove();
+        }
     }
 
     _groupOpBtnClick( ev ){
@@ -153,7 +183,11 @@ export class QueryBuilder extends HTMLElement {
     _fieldRemBtnClick( ev ){
         console.log("field rem");
         var div = ev.currentTarget.closest("div.query-builder-field");
-        div.remove();
+        if ( div ){
+            // Work around close bug in jquery-ui tooltip
+            $(".ui-tooltip",this._front).remove();
+            div.remove();
+        }
     }
 
     _fieldSelectBtnClick( ev ){
@@ -169,6 +203,8 @@ export class QueryBuilder extends HTMLElement {
             btn.button("option","label", field.label.length > 20?"..." + field.label.substr(field.label.length-20):field.label );
             btn.attr("title", field.label + " : " + field.desc );
             util.tooltipTheme( btn );
+
+            $(".field-type-label",div).text(QueryBuilder._fld_cfg[field.type].label);
 
             var oper = QueryBuilder._fld_cfg[field.type].opr,
                 html = "";

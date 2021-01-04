@@ -20,6 +20,11 @@ query-builder{
     border-radius: 6px;
 }
 
+.query-builder-group .btn-opr-group
+{
+    width: 4em;
+}
+
 .query-builder-field{
     background:#004080;
     padding:0.5em 0 0.5em 1em;
@@ -31,6 +36,17 @@ button.qb-btn-icon + button.qb-btn-icon{
 
 .qb-btn-icon{
     padding:0.1em 0.25em 0.25em 0.25em!important;
+}
+
+.qb-row-flex{
+    display:flex;
+    flex-direction:row;
+}
+
+.qb-indent-wrap{
+    display:inline-block;
+    padding-left: 0.5em;
+    /*text-indent: -2em;*/
 }
 
 .qb-field-sel-dlg .ui-dialog-titlebar,
@@ -74,15 +90,23 @@ button.qb-btn-icon + button.qb-btn-icon{
 
 .btn-sel-field{
     width:20ch!important;
+    margin-bottom: .2em;
 }
 
 .sel-opr-field + span{
     width:12ch!important;
+    margin-bottom: .2em;
+}
+
+.field-type-label{
+    display:inline-block;
+    width:3em;
 }
 
 .inp-val-field{
     display:none;
 }
+
 
 /*div.query-builder-field ul.ui-menu{
     max-height: 1em!important;

@@ -13,7 +13,7 @@ export function inputTheme( a_objs ){
 
 export function tooltipTheme( a_objs ){
     a_objs.tooltip({
-        show: { effect: "fade", delay: 1000 },
+        show: { effect: "fade", duration: 100, delay: 1500 },
         classes:{ "ui-tooltip": "note ui-corner-all tooltip-style" },
         position: {my: "left+15 top+15", at: "left bottom", collision: "flipfit" }
     });
