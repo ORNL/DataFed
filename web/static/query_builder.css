@@ -20,7 +20,7 @@ query-builder{
     border-radius: 6px;
 }
 
-.query-builder-group .btn-opr-group
+.query-builder-group .group-btn-opr
 {
     width: 4em;
 }
@@ -88,14 +88,19 @@ button.qb-btn-icon + button.qb-btn-icon{
     background: #000040;
 }
 
-.btn-sel-field{
+.field-btn-sel-lh{
     width:20ch!important;
     margin-bottom: .2em;
 }
 
-.sel-opr-field + span{
+.field-sel-opr + span{
     width:12ch!important;
     margin-bottom: .2em;
+}
+
+.field-btn-val-type
+{
+    width:3em;
 }
 
 .field-type-label{
@@ -103,7 +108,7 @@ button.qb-btn-icon + button.qb-btn-icon{
     width:3em;
 }
 
-.inp-val-field{
+.field-inp-val{
     display:none;
 }
 

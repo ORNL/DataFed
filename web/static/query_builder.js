@@ -8,32 +8,34 @@ export const OPR_EQ      = "==";
 export const OPR_NEQ     = "!=";
 export const OPR_GTE     = ">=";
 export const OPR_GT      = ">";
-export const OPR_DF      = "defined";
-export const OPR_NDF     = "omitted";
+export const OPR_DF      = "is defined";
+export const OPR_NDF     = "is omitted";
 export const OPR_RGX     = "regex";
-export const OPR_WLD     = "wild";
-export const OPR_TRU     = "true";
-export const OPR_FAL     = "false";
+export const OPR_WLD     = "pattern";
+export const OPR_TRU     = "is true";
+export const OPR_FAL     = "is false";
 export const OPR_CON     = "contains";
 
 export class QueryBuilder extends HTMLElement {
-    static _top_html = "<button class='btn-opr-group qb-btn-icon' title='Set group combination operator'>AND</button>\
-        <button class='btn-add-field qb-btn-icon' title='Add field'><span class='ui-icon ui-icon-input'></span></button>\
-        <button class='btn-add-group qb-btn-icon' title='Add sub-group'>( )</button>";
-    static _grp_html = "<button class='btn-opr-group qb-btn-icon' title='Set sub-group combination operator'>AND</button>\
-        <button class='btn-add-field qb-btn-icon' title='Add field'><span class='ui-icon ui-icon-input'></span></button>\
-        <button class='btn-add-group qb-btn-icon' title='Add sub-group'>( )</button>\
-        <div style='float:right'><button class='btn-rem-group qb-btn-icon' title='Remove this sub-group'><span class='ui-icon ui-icon-close'></span></button></div>";
+    static _top_html = "<button class='group-btn-opr qb-btn-icon' title='Set group combination operator'>AND</button>\
+        <button class='field-btn-add qb-btn-icon'><span class='ui-icon ui-icon-input' title='Add field'></span></button>\
+        <button class='group-btn-add qb-btn-icon' title='Add sub-group'>( )</button>";
+    static _grp_html = "<button class='group-btn-opr qb-btn-icon' title='Set sub-group combination operator'>AND</button>\
+        <button class='field-btn-add qb-btn-icon'><span class='ui-icon ui-icon-input' title='Add field'></span></button>\
+        <button class='group-btn-add qb-btn-icon' title='Add sub-group'>( )</button>\
+        <div style='float:right'><button class='group-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this sub-group'></span></button></div>";
     static _fld_html = "<div class='qb-row-flex'>\
         <div style='flex:1 1 auto'>\
-            <button class='btn-sel-field' title='Select field from schema'>Select Field...</button>\
+            <button class='field-btn-sel-lh'>Select Field...</button>\
             <span class='field-type-label'></span>\
-            <span style='display:inline-block' class='qb-indent-wrap'>\
-                <select class='sel-opr-field' disabled title='Choose field comparison operator'></select>\
-                <input class='inp-val-field'></input>\
+            <span style='display:inline-block;display:none' class='qb-indent-wrap'>\
+                <select class='field-sel-opr' disabled title='Choose field comparison operator'></select>\
+                <button class='field-btn-val-type'>VAL</button>\
+                <input class='field-inp-val'></input>\
+                <button class='field-btn-sel-rh qb-btn-icon' disabled><span class='ui-icon ui-icon-list' title='Select field to compare to'></span></button>\
             </span>\
         </div><div style='flex:none'>\
-            <button class='btn-rem-field qb-btn-icon' title='Remove this field'><span class='ui-icon ui-icon-close'></span></button>\
+            <button class='field-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this field'></span></button>\
         </div></div>";
 
     static _FLD_STR     = 1;
@@ -76,12 +78,14 @@ export class QueryBuilder extends HTMLElement {
 
         this._ui_front = $(this).closest(".ui-front");
 
-        $(this).on( "click", ".btn-add-group", ev => this._groupAddBtnClick( ev ));
-        $(this).on( "click", ".btn-rem-group", ev => this._groupRemBtnClick( ev ));
-        $(this).on( "click", ".btn-opr-group", ev => this._groupOpBtnClick( ev ));
-        $(this).on( "click", ".btn-add-field", ev => this._fieldAddBtnClick( ev ));
-        $(this).on( "click", ".btn-rem-field", ev => this._fieldRemBtnClick( ev ));
-        $(this).on( "click", ".btn-sel-field", ev => this._fieldSelectBtnClick( ev ));
+        $(this).on( "click", ".group-btn-add", ev => this._groupAddBtnClick( ev ));
+        $(this).on( "click", ".group-btn-rem", ev => this._groupRemBtnClick( ev ));
+        $(this).on( "click", ".group-btn-opr", ev => this._groupOpBtnClick( ev ));
+        $(this).on( "click", ".field-btn-add", ev => this._fieldAddBtnClick( ev ));
+        $(this).on( "click", ".field-btn-rem", ev => this._fieldRemBtnClick( ev ));
+        $(this).on( "click", ".field-btn-sel-lh", ev => this._fieldSelectBtnClick( ev ));
+        $(this).on( "click", ".field-btn-val-type", ev => this._fieldInpTypeBtnClick( ev ));
+        $(this).on( "click", ".field-btn-sel-rh", ev => this._fieldSelRHBtnClick( ev ));
     }
 
     disconnectedCallback(){
@@ -133,16 +137,19 @@ export class QueryBuilder extends HTMLElement {
         fld.innerHTML = QueryBuilder._fld_html;
         a_container.append( fld );
         $("button",fld).button();
+        util.inputTheme( $(".field-inp-val",fld));
+
         $("select",fld).selectmenu({
             width:false,
             change: function( ev, ui ){
                 console.log("sel",ui.item);
                 if ( QueryBuilder._fld_no_input.indexOf( ui.item.value ) == -1 ){
                     // Show input
-                    $(".inp-val-field",fld).show();
+                    $(".field-inp-val, .field-btn-val-type, .field-btn-sel-rh",fld).show();
+                    
                 }else{
                     // Hide input
-                    $(".inp-val-field",fld).hide();
+                    $(".field-inp-val, .field-btn-val-type, .field-btn-sel-rh",fld).hide();
                 }
             }
         });
@@ -191,14 +198,13 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _fieldSelectBtnClick( ev ){
-        console.log("field select");
         this._selectSchemaField( ev.currentTarget, function( field ){
             console.log("selected:", field );
 
             var btn = $(ev.currentTarget),
                 div = btn.closest(".query-builder-field"),
-                sel = $(".sel-opr-field",div),
-                val = $(".inp-val-field",div);
+                sel = $(".field-sel-opr",div),
+                val = $(".field-inp-val",div);
 
             btn.button("option","label", field.label.length > 20?"..." + field.label.substr(field.label.length-20):field.label );
             btn.attr("title", field.label + " : " + field.desc );
@@ -218,6 +224,51 @@ export class QueryBuilder extends HTMLElement {
             sel.selectmenu("refresh");
 
             val.show();
+            $(".qb-indent-wrap",div).show();
+        })
+    }
+
+    _fieldInpTypeBtnClick( ev ){
+        var div = ev.currentTarget.closest(".query-builder-field");
+        if ( ev.currentTarget.innerText == "VAL" ){
+            $(ev.currentTarget).button('option', 'label', 'FLD');
+            $(".field-btn-sel-rh",div).button("enable");
+        }else{
+            $(ev.currentTarget).button('option', 'label', 'VAL');
+            $(".field-btn-sel-rh",div).button("disable");
+        }
+    }
+
+    _fieldSelRHBtnClick( ev ){
+        this._selectSchemaField( ev.currentTarget, function( field ){
+            console.log("selected:", field );
+
+            var btn = $(ev.currentTarget),
+                div = btn.closest(".query-builder-field"),
+                val = $(".field-inp-val",div);
+
+            val.val( field.label );
+
+            //btn.button("option","label", field.label.length > 20?"..." + field.label.substr(field.label.length-20):field.label );
+            //btn.attr("title", field.label + " : " + field.desc );
+            //util.tooltipTheme( btn );
+
+            //$(".field-type-label",div).text(QueryBuilder._fld_cfg[field.type].label);
+
+            /*var oper = QueryBuilder._fld_cfg[field.type].opr,
+                html = "";
+
+            for ( var i in oper ){
+                html += "<option>" + oper[i] + "</option>";
+            }
+            console.log("sel opt:",html);
+            sel.html( html );
+            sel.selectmenu("enable");
+            sel.selectmenu("refresh");
+
+            val.show();
+            $(".qb-indent-wrap",div).show();
+            */
         })
     }
 

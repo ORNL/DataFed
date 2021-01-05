@@ -13,9 +13,11 @@ export function inputTheme( a_objs ){
 
 export function tooltipTheme( a_objs ){
     a_objs.tooltip({
+        items: ":hover",
+        //items: ".tooltip:not(:focus)",
         show: { effect: "fade", duration: 100, delay: 1500 },
         classes:{ "ui-tooltip": "note ui-corner-all tooltip-style" },
-        position: {my: "left+15 top+15", at: "left bottom", collision: "flipfit" }
+        position: {my: "left+5 top+5", at: "left bottom", collision: "flipfit" }
     });
 }
 
