@@ -17,26 +17,28 @@ export const OPR_FAL     = "is false";
 export const OPR_CON     = "contains";
 
 export class QueryBuilder extends HTMLElement {
-    static _top_html = "<button class='group-btn-opr qb-btn-icon' title='Set group combination operator'>AND</button>\
+    static _top_html = "<div class='group-div-header'><button class='group-btn-opr qb-btn-icon' title='Set group combination operator'>AND</button>\
         <button class='field-btn-add qb-btn-icon'><span class='ui-icon ui-icon-input' title='Add field'></span></button>\
-        <button class='group-btn-add qb-btn-icon' title='Add sub-group'>( )</button>";
-    static _grp_html = "<button class='group-btn-opr qb-btn-icon' title='Set sub-group combination operator'>AND</button>\
+        <button class='group-btn-add qb-btn-icon' title='Add sub-group'>( )</button></div>";
+    static _grp_html = "<div class='group-div-header' style='cursor:move' draggable=true><button class='group-btn-opr qb-btn-icon' title='Set sub-group combination operator'>AND</button>\
         <button class='field-btn-add qb-btn-icon'><span class='ui-icon ui-icon-input' title='Add field'></span></button>\
         <button class='group-btn-add qb-btn-icon' title='Add sub-group'>( )</button>\
-        <div style='float:right'><button class='group-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this sub-group'></span></button></div>";
+        <div style='float:right'><button class='group-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this sub-group'></span></button></div></div>";
     static _fld_html = "<div class='qb-row-flex'>\
         <div style='flex:1 1 auto'>\
-            <button class='field-btn-sel-lh'>Select Field...</button>\
-            <span class='field-type-label'></span>\
+            <input class='field-inp-lh'></input>\
+            <button class='field-btn-sel-lh qb-btn-icon'><span class='ui-icon ui-icon-list' title='Select field to evaluate'></button>\
             <span style='display:inline-block;display:none' class='qb-indent-wrap'>\
                 <select class='field-sel-opr' disabled title='Choose field comparison operator'></select>\
-                <button class='field-btn-val-type'>VAL</button>\
-                <input class='field-inp-val'></input>\
-                <button class='field-btn-sel-rh qb-btn-icon' disabled><span class='ui-icon ui-icon-list' title='Select field to compare to'></span></button>\
+                <input class='field-inp-rh'></input>\
+                <button class='field-btn-val-type'>V</button><button class='field-btn-sel-rh qb-btn-icon' disabled><span class='ui-icon ui-icon-list' title='Select field to compare to'></span></button>\
             </span>\
         </div><div style='flex:none'>\
             <button class='field-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this field'></span></button>\
         </div></div>";
+
+    //<span class='field-type-label'></span>\
+    //<button class='field-btn-sel-lh'>Select Field...</button>\
 
     static _FLD_STR     = 1;
     static _FLD_NUM     = 2;
@@ -86,6 +88,9 @@ export class QueryBuilder extends HTMLElement {
         $(this).on( "click", ".field-btn-sel-lh", ev => this._fieldSelectBtnClick( ev ));
         $(this).on( "click", ".field-btn-val-type", ev => this._fieldInpTypeBtnClick( ev ));
         $(this).on( "click", ".field-btn-sel-rh", ev => this._fieldSelRHBtnClick( ev ));
+        $(this).on( "dragstart", ".query-builder-group,.query-builder-field", ev => this._handleDragStart( ev ));
+        $(this).on( "dragover", ".query-builder-group,.query-builder-field", ev => this._handleDragOver( ev ));
+        $(this).on( "drop", ".query-builder-group,.query-builder-field", ev => this._handleDragDrop( ev ));
     }
 
     disconnectedCallback(){
@@ -103,6 +108,7 @@ export class QueryBuilder extends HTMLElement {
 
         var grp = document.createElement('div');
         grp.setAttribute('class','query-builder-group');
+        //grp.setAttribute('draggable','true');
         grp.style.margin = "0";
         grp.innerHTML = QueryBuilder._top_html;
         $("button",grp).button();
@@ -122,6 +128,45 @@ export class QueryBuilder extends HTMLElement {
         return this._qry;
     }
 
+    _handleDragStart( ev ){
+        console.log( "drag start", ev );
+
+        ev.originalEvent.dataTransfer.effectAllowed = 'move';
+        this._drag_src = ev.currentTarget;
+        //ev.originalEvent.dataTransfer.setData( "src", ev.currentTarget );
+
+        ev.stopPropagation();
+    }
+
+    _handleDragOver( ev ){
+        console.log("drag over");
+        ev.stopPropagation();
+        return false;
+    }
+
+    _handleDragDrop( ev ){
+        console.log( "dropped", ev );
+        //var node = ev.originalEvent.dataTransfer.getData( "src" );
+        //console.log( "source", this._drag_src );
+
+        if ( ev.currentTarget.className == "query-builder-group" ){
+            ev.currentTarget.insertBefore( this._drag_src, ev.currentTarget.firstChild.nextSibling );
+        }else{
+            var h2 = ev.currentTarget.offsetHeight / 2;
+
+            if ( ev.offsetY > h2 ){
+                ev.currentTarget.parentNode.insertBefore( this._drag_src, ev.currentTarget.nextSibling );
+            }else{
+                ev.currentTarget.parentNode.insertBefore( this._drag_src, ev.currentTarget );
+            }
+            console.log("y:",ev.offsetY,"h2:",h2);
+        }
+
+        this._drag_src = null;
+        ev.stopPropagation();
+        return false;
+    }
+
     _groupAdd( a_container ){
         var grp = document.createElement('div');
         grp.setAttribute('class','query-builder-group');
@@ -134,10 +179,11 @@ export class QueryBuilder extends HTMLElement {
     _fieldAdd( a_container ){
         var fld = document.createElement('div');
         fld.setAttribute('class','query-builder-field');
+        fld.setAttribute('draggable','true');
         fld.innerHTML = QueryBuilder._fld_html;
         a_container.append( fld );
         $("button",fld).button();
-        util.inputTheme( $(".field-inp-val",fld));
+        util.inputTheme( $(".field-inp-lh, .field-inp-rh",fld));
 
         $("select",fld).selectmenu({
             width:false,
@@ -145,11 +191,11 @@ export class QueryBuilder extends HTMLElement {
                 console.log("sel",ui.item);
                 if ( QueryBuilder._fld_no_input.indexOf( ui.item.value ) == -1 ){
                     // Show input
-                    $(".field-inp-val, .field-btn-val-type, .field-btn-sel-rh",fld).show();
+                    $(".field-inp-rh, .field-btn-val-type, .field-btn-sel-rh",fld).show();
                     
                 }else{
                     // Hide input
-                    $(".field-inp-val, .field-btn-val-type, .field-btn-sel-rh",fld).hide();
+                    $(".field-inp-rh, .field-btn-val-type, .field-btn-sel-rh",fld).hide();
                 }
             }
         });
@@ -203,14 +249,17 @@ export class QueryBuilder extends HTMLElement {
 
             var btn = $(ev.currentTarget),
                 div = btn.closest(".query-builder-field"),
+                inp = $(".field-inp-lh",div),
                 sel = $(".field-sel-opr",div),
-                val = $(".field-inp-val",div);
+                val = $(".field-inp-rh",div);
 
-            btn.button("option","label", field.label.length > 20?"..." + field.label.substr(field.label.length-20):field.label );
-            btn.attr("title", field.label + " : " + field.desc );
-            util.tooltipTheme( btn );
+            inp.val( field.label );
+            inp.attr("title", field.label + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.desc );
+            //btn.button("option","label", field.label.length > 20?"..." + field.label.substr(field.label.length-20):field.label );
+            //btn.attr("title", field.label + " : " + field.desc );
+            util.tooltipTheme( inp );
 
-            $(".field-type-label",div).text(QueryBuilder._fld_cfg[field.type].label);
+            //$(".field-type-label",div).text(QueryBuilder._fld_cfg[field.type].label);
 
             var oper = QueryBuilder._fld_cfg[field.type].opr,
                 html = "";
@@ -230,11 +279,11 @@ export class QueryBuilder extends HTMLElement {
 
     _fieldInpTypeBtnClick( ev ){
         var div = ev.currentTarget.closest(".query-builder-field");
-        if ( ev.currentTarget.innerText == "VAL" ){
-            $(ev.currentTarget).button('option', 'label', 'FLD');
+        if ( ev.currentTarget.innerText == "V" ){
+            $(ev.currentTarget).button('option', 'label', 'F');
             $(".field-btn-sel-rh",div).button("enable");
         }else{
-            $(ev.currentTarget).button('option', 'label', 'VAL');
+            $(ev.currentTarget).button('option', 'label', 'V');
             $(".field-btn-sel-rh",div).button("disable");
         }
     }
@@ -245,7 +294,7 @@ export class QueryBuilder extends HTMLElement {
 
             var btn = $(ev.currentTarget),
                 div = btn.closest(".query-builder-field"),
-                val = $(".field-inp-val",div);
+                val = $(".field-inp-rh",div);
 
             val.val( field.label );
 

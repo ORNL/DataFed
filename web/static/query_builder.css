@@ -1,23 +1,18 @@
 query-builder{
     display:block;
-    background:#000040;
     height:100%;
     width:100%;
 }
 
-/*.query-builder-container{
-    background:#400000;
-    height:100%;
-    width:100%;
-    overflow:auto;
-}*/
-
 .query-builder-group{
-    background:#004040;
-    padding: 0.5em;
-    margin: 0.5em 0 0 1em;
+    padding: 0.5em 0.5em 0 0.5em;
+    margin: 0 0 0.5em 1em;
     border: 1px solid black;
     border-radius: 6px;
+}
+
+.group-div-header{
+    padding-bottom:0.5em;
 }
 
 .query-builder-group .group-btn-opr
@@ -26,8 +21,18 @@ query-builder{
 }
 
 .query-builder-field{
-    background:#004080;
-    padding:0.5em 0 0.5em 1em;
+    margin-left: 1em;
+    padding:0.5em 0 0.3em 0;
+    cursor: move;
+}
+
+.group-div-header + .query-builder-field{
+    padding-top: 0;
+}
+
+.query-builder-field + .query-builder-field
+{
+    border-top: 1px solid black;
 }
 
 button.qb-btn-icon + button.qb-btn-icon{
@@ -56,17 +61,7 @@ button.qb-btn-icon + button.qb-btn-icon{
 
 .qb-field-sel-dlg .ui-dialog-content{
     padding:0 0.25em!important;
-    /*min-height:2em!important;
-    max-height:12em!important;
-    max-width:400px!important;*/
 }
-
-/*.qb-field-sel-dlg .ui-dialog{
-    min-height:2em!important;
-    max-height:6em!important;
-    min-width:6em!important;
-    max-width:400px!important;
-}*/
 
 .qb-field-sel-container{
     padding: 0;
@@ -84,23 +79,25 @@ button.qb-btn-icon + button.qb-btn-icon{
     padding: 0.125em 0 0.125em 0;
 }
 
-.qb-field-sel:hover{
-    background: #000040;
+.field-inp-lh
+{
+    width:15em;
+    margin-bottom: .2em;
 }
 
 .field-btn-sel-lh{
-    width:20ch!important;
     margin-bottom: .2em;
 }
 
 .field-sel-opr + span{
     width:12ch!important;
-    margin-bottom: .2em;
+    margin-right: 0.5em;
+    margin-bottom: 0.2em;
 }
 
 .field-btn-val-type
 {
-    width:3em;
+    margin-bottom: .2em;
 }
 
 .field-type-label{
@@ -108,11 +105,12 @@ button.qb-btn-icon + button.qb-btn-icon{
     width:3em;
 }
 
-.field-inp-val{
+.field-inp-rh{
+    width:15em;
     display:none;
 }
 
-
-/*div.query-builder-field ul.ui-menu{
-    max-height: 1em!important;
-}*/
+.field-btn-sel-rh
+{
+    margin-bottom: .2em;
+}

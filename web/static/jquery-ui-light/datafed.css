@@ -34,6 +34,18 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     color: #a0a0a0;
 }
 
+/* QueryBuilder overrides */
+
+.query-builder-field + .query-builder-field
+{
+    border-top: 1px solid #a0a0a0!important;
+}
+
+.query-builder-group{
+    border: 1px solid #a0a0a0!important;
+}
+/* DataFed Theme */
+
 body
 {
     color:#000;

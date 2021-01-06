@@ -29,7 +29,7 @@ export function show( a_schema, a_cb ){
     var options = {
         title: "Metadata Query Builder",
         modal: true,
-        width: 600,
+        width: 835,
         height: 500,
         resizable: true,
         buttons: [{
