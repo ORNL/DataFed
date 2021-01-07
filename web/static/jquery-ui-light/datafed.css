@@ -44,6 +44,11 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 .query-builder-group{
     border: 1px solid #a0a0a0!important;
 }
+
+.qb-drop-target{
+    background: #e0e0e0;
+}
+
 /* DataFed Theme */
 
 body

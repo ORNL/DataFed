@@ -5,13 +5,14 @@ query-builder{
 }
 
 .query-builder-group{
-    padding: 0.5em 0.5em 0 0.5em;
+    padding: 0 0.5em 0 0.5em;
     margin: 0 0 0.5em 1em;
     border: 1px solid black;
     border-radius: 6px;
 }
 
 .group-div-header{
+    padding-top:0.5em;
     padding-bottom:0.5em;
 }
 
@@ -24,6 +25,15 @@ query-builder{
     margin-left: 1em;
     padding:0.5em 0 0.3em 0;
     cursor: move;
+}
+
+/*.query-builder-field * {*/
+.qb-no-ptr-ev{
+    pointer-events: none;
+}
+
+.qb-error{
+    background:#600000!important;
 }
 
 .group-div-header + .query-builder-field{

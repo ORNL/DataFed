@@ -37,9 +37,6 @@ export class QueryBuilder extends HTMLElement {
             <button class='field-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this field'></span></button>\
         </div></div>";
 
-    //<span class='field-type-label'></span>\
-    //<button class='field-btn-sel-lh'>Select Field...</button>\
-
     static _FLD_STR     = 1;
     static _FLD_NUM     = 2;
     static _FLD_BOOL    = 3;
@@ -59,20 +56,11 @@ export class QueryBuilder extends HTMLElement {
 
     constructor(){
         super();
-        //var shadowRoot = this.attachShadow({mode: 'open'});
-        //shadowRoot.innerHTML = 'Query Builder with styling';
-        //const wrapper = document.createElement('div');
-        //wrapper.setAttribute('class','query-builder');
-
-        //this._cont = document.createElement('div');
-        //this._cont.setAttribute('class','query-builder-container');
-        //this._cont.innerHTML = "some text in wrapper";
-        //shadowRoot.append( this._cont );
-        
-        //this.innerHTML = "<div class='query-builder-container'></div>";
 
         this._sch = null;
         this._qry = {};
+        this._id = 1;
+        this._state = {};
     }
 
     connectedCallback(){
@@ -89,8 +77,11 @@ export class QueryBuilder extends HTMLElement {
         $(this).on( "click", ".field-btn-val-type", ev => this._fieldInpTypeBtnClick( ev ));
         $(this).on( "click", ".field-btn-sel-rh", ev => this._fieldSelRHBtnClick( ev ));
         $(this).on( "dragstart", ".query-builder-group,.query-builder-field", ev => this._handleDragStart( ev ));
+        $(this).on( "dragenter", ".query-builder-group,.query-builder-field", ev => this._handleDragEnter( ev ));
+        $(this).on( "dragleave", ".query-builder-group,.query-builder-field", ev => this._handleDragLeave( ev ));
         $(this).on( "dragover", ".query-builder-group,.query-builder-field", ev => this._handleDragOver( ev ));
         $(this).on( "drop", ".query-builder-group,.query-builder-field", ev => this._handleDragDrop( ev ));
+        $(this).on( "input", ".field-inp-lh", ev => this._fieldValidateLH( ev ));
     }
 
     disconnectedCallback(){
@@ -108,13 +99,13 @@ export class QueryBuilder extends HTMLElement {
 
         var grp = document.createElement('div');
         grp.setAttribute('class','query-builder-group');
-        //grp.setAttribute('draggable','true');
         grp.style.margin = "0";
         grp.innerHTML = QueryBuilder._top_html;
         $("button",grp).button();
         this._top_grp = $(grp)
         util.tooltipTheme( this._top_grp );
 
+        this._fieldAdd( grp );
         this.append( grp );
 
         this._front = grp.closest(".ui-front");
@@ -129,55 +120,85 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _handleDragStart( ev ){
-        console.log( "drag start", ev );
+        $(".query-builder-field *", this._top_grp ).addClass("qb-no-ptr-ev");
+        $(".group-div-header *", this._top_grp ).addClass("qb-no-ptr-ev");
 
         ev.originalEvent.dataTransfer.effectAllowed = 'move';
         this._drag_src = ev.currentTarget;
-        //ev.originalEvent.dataTransfer.setData( "src", ev.currentTarget );
 
         ev.stopPropagation();
+    }
+
+    _handleDragEnter( ev ){
+        if ( ev.target.classList.contains( "query-builder-field" ) || ev.target.classList.contains( "group-div-header" )){
+            ev.target.classList.add( "qb-drop-target" );
+            ev.stopPropagation();
+        }
+    }
+
+    _handleDragLeave( ev ){
+        //if ( ev.target.classList.contains( "query-builder-field" )){
+        if ( ev.target.classList.contains( "query-builder-field" ) || ev.target.classList.contains( "group-div-header" )){
+            ev.target.classList.remove( "qb-drop-target" );
+            ev.stopPropagation();
+        }
     }
 
     _handleDragOver( ev ){
-        console.log("drag over");
-        ev.stopPropagation();
-        return false;
+        //console.log("drag over");
+        if ( ev.target.classList.contains( "query-builder-field" ) || ev.target.classList.contains( "group-div-header" )){
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
+        //return false;
     }
 
     _handleDragDrop( ev ){
-        console.log( "dropped", ev );
+        //console.log( "dropped", ev );
         //var node = ev.originalEvent.dataTransfer.getData( "src" );
         //console.log( "source", this._drag_src );
 
-        if ( ev.currentTarget.className == "query-builder-group" ){
+        $(".query-builder-field *", this._top_grp ).removeClass("qb-no-ptr-ev");
+        $(".group-div-header *", this._top_grp ).removeClass("qb-no-ptr-ev");
+
+        if ( ev.currentTarget.classList.contains( "query-builder-group" )){
+            ev.currentTarget.firstChild.classList.remove( "qb-drop-target" );
             ev.currentTarget.insertBefore( this._drag_src, ev.currentTarget.firstChild.nextSibling );
         }else{
-            var h2 = ev.currentTarget.offsetHeight / 2;
+            ev.currentTarget.classList.remove( "qb-drop-target" );
 
-            if ( ev.offsetY > h2 ){
+            var y = ev.pageY - $(ev.currentTarget).offset().top;
+
+            if ( y > ev.currentTarget.clientHeight / 2 ){
                 ev.currentTarget.parentNode.insertBefore( this._drag_src, ev.currentTarget.nextSibling );
             }else{
                 ev.currentTarget.parentNode.insertBefore( this._drag_src, ev.currentTarget );
             }
-            console.log("y:",ev.offsetY,"h2:",h2);
         }
 
         this._drag_src = null;
         ev.stopPropagation();
+        ev.preventDefault();
         return false;
     }
 
     _groupAdd( a_container ){
         var grp = document.createElement('div');
+        grp.id = "qb-grp-" + this._id++;
+
         grp.setAttribute('class','query-builder-group');
         grp.innerHTML = QueryBuilder._grp_html;
         $("button",grp).button();
+
+        this._fieldAdd( grp );
 
         a_container.append( grp );
     }
 
     _fieldAdd( a_container ){
         var fld = document.createElement('div');
+        fld.id = "qb-fld-" + this._id++;
+
         fld.setAttribute('class','query-builder-field');
         fld.setAttribute('draggable','true');
         fld.innerHTML = QueryBuilder._fld_html;
@@ -244,37 +265,51 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _fieldSelectBtnClick( ev ){
-        this._selectSchemaField( ev.currentTarget, function( field ){
-            console.log("selected:", field );
+        var inst = this;
+        this._selectSchemaField( ev.currentTarget, null, null, function( field ){
+            //console.log("selected:", field );
 
             var btn = $(ev.currentTarget),
                 div = btn.closest(".query-builder-field"),
-                inp = $(".field-inp-lh",div),
-                sel = $(".field-sel-opr",div),
-                val = $(".field-inp-rh",div);
+                id = div[0].id,
+                inp = $(".field-inp-lh",div);
+
+            if ( id in inst._state ){
+                var st = inst._state[id];
+
+                st.lh = field;
+                if ( st.rh && !inst._typeCompat( st.lh.type, st.rh.type )){
+                    $(".field-inp-rh",div).val("");
+                    st.rh = null;
+                }
+            }else{
+                inst._state[id] = { lh: field, rh: null };
+            }
 
             inp.val( field.label );
             inp.attr("title", field.label + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.desc );
-            //btn.button("option","label", field.label.length > 20?"..." + field.label.substr(field.label.length-20):field.label );
-            //btn.attr("title", field.label + " : " + field.desc );
             util.tooltipTheme( inp );
 
-            //$(".field-type-label",div).text(QueryBuilder._fld_cfg[field.type].label);
-
-            var oper = QueryBuilder._fld_cfg[field.type].opr,
-                html = "";
-
-            for ( var i in oper ){
-                html += "<option>" + oper[i] + "</option>";
-            }
-            console.log("sel opt:",html);
-            sel.html( html );
-            sel.selectmenu("enable");
-            sel.selectmenu("refresh");
-
-            val.show();
-            $(".qb-indent-wrap",div).show();
+            inst._setupFieldLH( div, field );
         })
+    }
+
+    _setupFieldLH( div, field ){
+        var oper = QueryBuilder._fld_cfg[field.type].opr,
+            sel = $(".field-sel-opr",div),
+            val = $(".field-inp-rh",div),
+            html = "";
+
+        for ( var i in oper ){
+            html += "<option>" + oper[i] + "</option>";
+        }
+
+        sel.html( html );
+        sel.selectmenu("enable");
+        sel.selectmenu("refresh");
+
+        val.show();
+        $(".qb-indent-wrap",div).show();
     }
 
     _fieldInpTypeBtnClick( ev ){
@@ -289,41 +324,88 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _fieldSelRHBtnClick( ev ){
-        this._selectSchemaField( ev.currentTarget, function( field ){
+        var inst = this;
+        this._selectSchemaField( ev.currentTarget, null, null, function( field ){
             console.log("selected:", field );
 
             var btn = $(ev.currentTarget),
                 div = btn.closest(".query-builder-field"),
+                id = div[0].id,
                 val = $(".field-inp-rh",div);
 
             val.val( field.label );
+            val.attr("title", field.label + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.desc );
 
-            //btn.button("option","label", field.label.length > 20?"..." + field.label.substr(field.label.length-20):field.label );
-            //btn.attr("title", field.label + " : " + field.desc );
-            //util.tooltipTheme( btn );
-
-            //$(".field-type-label",div).text(QueryBuilder._fld_cfg[field.type].label);
-
-            /*var oper = QueryBuilder._fld_cfg[field.type].opr,
-                html = "";
-
-            for ( var i in oper ){
-                html += "<option>" + oper[i] + "</option>";
-            }
-            console.log("sel opt:",html);
-            sel.html( html );
-            sel.selectmenu("enable");
-            sel.selectmenu("refresh");
-
-            val.show();
-            $(".qb-indent-wrap",div).show();
-            */
+            inst._state[id].rh = field;
         })
     }
 
-    _selectSchemaField( a_target, a_cb ){
+    _fieldValidateLH( ev ){
+        var inp = $(ev.currentTarget),
+            div = inp.closest(".query-builder-field"),
+            id = div[0].id,
+            st;
+
+        if ( id in this._state ){
+            st = this._state[id];
+        }else{
+            st = { inp_tm: null };
+            this._state[id] = st;
+        }
+
+        if ( st.inp_tm ){
+            clearTimeout( st.inp_tm );
+            st.inp_tm = null;
+        }
+
+        var inst = this;
+
+        st.inp_tm = setTimeout( function(){
+            st.inp_tm = null;
+
+            var val = inp.val().trim(),
+                path = val.split("."),
+                flds = inst._sch_fields;
+
+            //console.log("path",path, "flds:",flds);
+
+            if ( !val.length ){
+                inp.removeClass("qb-error");
+                inp.attr("title", "" );
+                return;
+            }
+
+            for ( var i in path ){
+                console.log("p",path[i], "flds:",flds);
+
+                if ( typeof flds === "object" && path[i] in flds ){
+                    flds = flds[path[i]];
+                }else{
+                    inp.addClass("qb-error");
+                    inp.attr("title", "Invalid schema field." );
+                    return;
+                }
+            }
+
+            inp.removeClass("qb-error");
+
+            // TODO Move into setup func
+            inp.attr("title", val + " : " + QueryBuilder._fld_cfg[flds.type].label + " " + flds.description );
+
+            inst._setupFieldLH( div, flds );
+        }, 2000 );
+    }
+
+    _typeCompat( a, b ){
+        if ( a == b || ( a == "integer" && b == "number" ) || ( b == "integer" && a == "number" )){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    _selectSchemaField( a_target, a_type, a_excl, a_cb ){
         var frame = $(document.createElement('div')),
-            frame_outer,
             dlg_inst;
 
         frame.html("<div class='qb-field-sel-tree no-border'></div>");
@@ -424,7 +506,7 @@ export class QueryBuilder extends HTMLElement {
                 dlg_inst = $(this);
                 $(".btn",frame).button();
                 $('input',frame).addClass("ui-widget ui-widget-content");
-                frame_outer = frame.closest(".ui-dialog");
+                //frame_outer = frame.closest(".ui-dialog");
                 $(".qb-field-sel-tree",frame).fancytree( tree_opts ).on("mouseenter", ".fancytree-title", function(ev){
                     var node = $.ui.fancytree.getNode(ev);
                     node.setActive(true);
