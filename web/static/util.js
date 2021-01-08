@@ -133,6 +133,30 @@ export function parseSize( a_size_str ){
     return result;
 }
 
+export function strToIntStrict( value ) {
+    if ( typeof value === "string" ){
+        var inp = value.trim();
+        if ( inp.length ){
+            var res = Number( value );
+            if ( Number.isInteger( res ))
+                return res;
+        }
+    }
+
+    return NaN;
+}
+
+export function strToNumStrict( value ) {
+    if ( typeof value === "string" ){
+        var inp = value.trim();
+        if ( inp.length ){
+            return Number( value );
+        }
+    }
+
+    return NaN;
+}
+
 var escapeMap = {
     '&': '&amp;',
     '<': '&lt;',

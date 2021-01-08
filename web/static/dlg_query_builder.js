@@ -55,7 +55,7 @@ export function show( a_schema, a_cb ){
             if ( a_schema ){
                 // TODO validate schema?
                 _schema = a_schema;
-                console.log("schema:",_schema);
+                //console.log("schema:",_schema);
                 $("#dlg_qry_bld_sch_id",frame).val( _schema.id );
                 $("#dlg_qry_bld_sch_ver",frame).val( _schema.ver );
                 $("#dlg_qry_bld_msg",frame).hide();
