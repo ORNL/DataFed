@@ -32,8 +32,9 @@ release = '1.4'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-]
+
+#extensions = ['sphinx.ext.autodoc','autoapi.extension']
+extensions = ['autoapi.extension']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -58,3 +59,11 @@ html_static_path = ['_static']
 
 html_add_permalinks = ''
 
+source_suffix = ['.rst']
+
+master_doc = 'index'
+
+autoapi_type = 'python'
+autoapi_dirs = ['../../python/datafed_pkg/datafed']
+#autoapi_generate_api_docs = False
+autoapi_add_toctree_entry = True

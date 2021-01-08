@@ -1,6 +1,6 @@
-==========
-Python API
-==========
+====================
+Python API Reference
+====================
 
 The DataFed CLI can be used for scripting by using the "--script" option to produce output in JSON format;
 however, Python API modules are also available for more complex scripting and/or custom application development.
@@ -11,3 +11,4 @@ commands, but returns Python objects instead of text or JSON output. The low-lev
 exposes the binary message-passing interface used by DataFed and is intended for more complex applications.
 
 This is a placeholder for auto-generated DataFed API documentation.
+

@@ -7,12 +7,13 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Command Line Interface &mdash; DataFed 1.4 documentation</title>
+  <title>Command Reference &mdash; DataFed 1.4 documentation</title>
   
 
   
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
 
   
   
@@ -29,15 +30,14 @@
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Python API" href="../api/python.html" />
-    <link rel="prev" title="Web Portal" href="../web/portal.html" /> 
+    <link rel="next" title="Scripting Guide" href="../scripting.html" />
+    <link rel="prev" title="User Guide" href="guide.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -82,103 +82,101 @@
               
             
             
-              <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul class="current">
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../system/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/usecases.html">Use Cases</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../web/portal.html">Web Portal</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Command Line Interface</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#configuration-files">Configuration Files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#configuration-priority">Configuration Priority</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#configuring-automatic-authentication">Configuring Automatic Authentication</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation and Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide.html">User Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Command Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#datafed-commands">Datafed Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#coll-commands">Coll Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#coll-add-command">Coll Add Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coll-create-command">Coll Create Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coll-delete-command">Coll Delete Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coll-remove-command">Coll Remove Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coll-update-command">Coll Update Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coll-view-command">Coll View Command</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#configuration-settings">Configuration Settings</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#settings-quick-reference">Settings Quick Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#server-configuration-file">Server Configuration File</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#server-configuration-directory">Server Configuration Directory</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#server-public-key-file">Server Public Key File</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#server-host">Server Host</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#server-port">Server Port</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#client-configuration-file">Client Configuration File</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#client-config-directory">Client Config Directory</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#client-public-key-file">Client Public Key File</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#client-private-key-file">Client Private Key File</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#default-endpoint">Default Endpoint</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-commands">Data Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-batch-commands">Data Batch Commands</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#data-batch-create-command">Data Batch Create Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#data-batch-update-command">Data Batch Update Command</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#usage-guide">Usage Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#command-reference">Command Reference</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#datafed-commands">Datafed Commands</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#coll-commands">Coll Commands</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#coll-add-command">Coll Add Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#coll-create-command">Coll Create Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#coll-delete-command">Coll Delete Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#coll-remove-command">Coll Remove Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#coll-update-command">Coll Update Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#coll-view-command">Coll View Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-create-command">Data Create Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-delete-command">Data Delete Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-get-command">Data Get Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-put-command">Data Put Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-update-command">Data Update Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-view-command">Data View Command</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#data-commands">Data Commands</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#data-batch-commands">Data Batch Commands</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#data-create-command">Data Create Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#data-delete-command">Data Delete Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#data-get-command">Data Get Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#data-put-command">Data Put Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#data-update-command">Data Update Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#data-view-command">Data View Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ep-commands">Ep Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ep-default-commands">Ep Default Commands</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ep-default-get-command">Ep Default Get Command</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ep-default-set-command">Ep Default Set Command</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#ep-commands">Ep Commands</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#ep-default-commands">Ep Default Commands</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#ep-get-command">Ep Get Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#ep-list-command">Ep List Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#ep-set-command">Ep Set Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ep-get-command">Ep Get Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ep-list-command">Ep List Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ep-set-command">Ep Set Command</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#exit-command">Exit Command</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#help-command">Help Command</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#ls-command">Ls Command</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#project-commands">Project Commands</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#project-list-command">Project List Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#project-view-command">Project View Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exit-command">Exit Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#help-command">Help Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ls-command">Ls Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#project-commands">Project Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#project-list-command">Project List Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#project-view-command">Project View Command</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#query-commands">Query Commands</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#query-create-command">Query Create Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#query-delete-command">Query Delete Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#query-exec-command">Query Exec Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#query-list-command">Query List Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#query-run-command">Query Run Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#query-update-command">Query Update Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#query-view-command">Query View Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#query-commands">Query Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#query-create-command">Query Create Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#query-delete-command">Query Delete Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#query-exec-command">Query Exec Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#query-list-command">Query List Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#query-run-command">Query Run Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#query-update-command">Query Update Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#query-view-command">Query View Command</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#setup-command">Setup Command</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#shares-command">Shares Command</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#task-commands">Task Commands</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#task-list-command">Task List Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#task-view-command">Task View Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#setup-command">Setup Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#shares-command">Shares Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#task-commands">Task Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#task-list-command">Task List Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#task-view-command">Task View Command</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#user-commands">User Commands</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#user-all-command">User All Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#user-collab-command">User Collab Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#user-view-command">User View Command</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#user-who-command">User Who Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#user-commands">User Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#user-all-command">User All Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-collab-command">User Collab Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-view-command">User View Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-who-command">User Who Command</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#verbosity-command">Verbosity Command</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#wc-command">Wc Command</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#wp-command">Wp Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#verbosity-command">Verbosity Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wc-command">Wc Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wp-command">Wp Command</a></li>
 </ul>
 </li>
 </ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../api/python.html">Python API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../scripting.html">Scripting</a></li>
+<p class="caption"><span class="caption-text">Scripting</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../scripting.html">Scripting Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../autoapi/index.html">API Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../../admin/general.html">Administration</a></li>
 </ul>
 
@@ -226,13 +224,13 @@
     
       <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Command Line Interface</li>
+      <li>Command Reference</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../../_sources/user/cli/python.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/user/cli/reference.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -245,545 +243,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="command-line-interface">
-<h1>Command Line Interface</h1>
+  <div class="section" id="command-reference">
+<h1>Command Reference</h1>
 <p>The DataFed command-line-interface (CLI) provides access to basic DataFed capabilities for both
-interactive use and non-interactive scripting from a command shell. The DataFed CLI is provided
-via a Python 3 package called “datafed” available on the <a class="reference external" href="https://pypi.org">PyPi</a> site, and,
-because the DataFed CLI is based on Python, it can be installed and used on any operating system
-that supports Python 3. (See the installation section, below, for specifics.)</p>
-<p>The DataFed CLI Python package also contains an accessible API that can be used to build custom
-Python applications that directly interface with the DataFed service. For more information on the
-DataFed API, please refer to REF_REF_REF.</p>
-<p>Before the DataFed CLI can be used, it must be installed and properly configure (see the
-<a class="reference internal" href="#installation">Installation</a> and <a class="reference internal" href="#configuration">Configuration</a> sections of this document for more information.</p>
-<div class="section" id="basic-usage">
-<h2>Basic Usage</h2>
-<p>The DataFed CLI is run using the ‘datafed’ script installed by the DataFed CLI packaged, as follows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">command</span> <span class="p">[</span><span class="n">sub</span><span class="o">-</span><span class="n">command</span> <span class="o">...</span><span class="p">]]</span>
-</pre></div>
-</div>
-<p>For a list of options, the built-in help output can be viewed:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="o">--</span><span class="n">help</span>
-</pre></div>
-</div>
-<p>The DataFed CLI supports three distinct modes of use: single command, interactive shell, and script
-mode. If the CLI is run without any command arguments, an interactive shell is started; otherwise,
-the specified command is run either normally (human-friendly output) or in script mode if the
-‘–script’ option is specified.</p>
-<p><strong>Single Command</strong></p>
-<p>This mode is used to run a single DafaFed command given as an argument to the datafed script. The
-output is in human-friendly format.</p>
-<p><strong>Interactive Shell</strong></p>
-<p>This mode provides a DataFed CLI shell and is started by running the datafed script without any
-command arguments. Commands are entered at the prompt (without the ‘datafed’ script prefix) and
-the shell will run until stopped with the ‘exit’ command, or by typing ‘Ctrl-C’. Shell mode is
-stateful and convenient for browsing DataFed collection hierarchies.</p>
-<p><strong>Script Mode</strong></p>
-<p>This mode is similar to the single command mode with the exception that non-essential output is
-suppressed and command responses are returned in a strict JSON format. This mode is useful for
-integrating the CLI into non-Python scripts (i.e. bash), and is activated by specifying the
-“–script” (or “-s”) command line option when the CLI is run.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>For a complete guide to DataFed scripting, please refer to the <a class="reference internal" href="../scripting.html"><span class="doc">Scripting</span></a> page.
-The <a class="reference internal" href="../api/python.html"><span class="doc">Python API</span></a> page provides a detailed reference to the DataFed API for
-scripting and custom application development.</p>
-</div>
-<p>The full listing of options, commands, and sub-commands are detailed in the <a class="reference internal" href="#usage-guide">Usage Guide</a>
-and <a class="reference internal" href="#command-reference">Command Reference</a> sections of this document.</p>
-</div>
-<div class="section" id="installation">
-<h2>Installation</h2>
-<p>The DataFed CLI requires Python 3 to be installed and properly configured. Within supported
-facilities, both Python 3 and the DataFed CLI is may already be installed and ready to use;
-however, if you need to use the DataFed CLI from a non-supported facility, or on an external
-workstation or laptop, then you will need to ensure that Python 3 is available, then install and
-configure the DataFed CLI manually. In some cases, <a class="reference external" href="https://www.globus.org/globus-connect-personal">Globus Personal Connect</a> may also need to be installed if access to
-locally stored files is desired.</p>
-<p>Like many Python packages, the DataFed CLI is easy to install using Python’s “pip” tool. For Linux
-and Mac OS, the command is as follows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="n">datafed</span>
-</pre></div>
-</div>
-<p>And for Windows, the command is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">datafed</span>
-</pre></div>
-</div>
-<p>Pip will install the DataFed CLI package and all dependencies, and will also install an executable
-“datafed” command script in the configured pip package binary, or “bin” directory. This bin directory
-must be included in the executable search path for the DataFed CLI command to be accessible.</p>
-</div>
-<div class="section" id="configuration">
-<h2>Configuration</h2>
-<p>Users would typically not need to configure the DataFed CLI from within a facility-supported
-environments; however, when installing the CLI on personal workstations or laptops, the CLI requires a
-few key settings to be configured prior to use. Configuration settings may be specified using
-environment variables, configuration files, or command-line options (or any combination thereof) and
-are described in detail in following sections of this document.</p>
-<p>Most of the available CLI configuration settings relate to how the CLI communicates with the DataFed
-server. DataFed uses encrypted client-server communication based on a message-passing protocol over
-TCP/IP. In order for the CLI to be able to connect with the DataFed server, the hostname (or IP address)
-and port number of the server must be configured along with the DataFed server’s public encryption key.
-If the CLI is being configured behind a firewall, it may be necessary to open the DataFed server port
-if out-going TCP traffic is restricted.</p>
-<p>When the DataFed CLI is installed, default server settings are automatically configured, and the
-server public key is automatically downloaded from the DataFed server. However, for non-standard
-environments, it may be necessary to configure these settings manually. The current default server
-hostname, port, and public key download link are shown in the table below:</p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 25%" />
-<col style="width: 75%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Server Hostname</p></td>
-<td><p>datafed.ornl.gov</p></td>
-</tr>
-<tr class="row-even"><td><p>Server Port</p></td>
-<td><p>7512</p></td>
-</tr>
-<tr class="row-odd"><td><p>Server Public Key</p></td>
-<td><p><a class="reference external" href="https://datafed.ornl.gov/datafed-core-key.pub">https://datafed.ornl.gov/datafed-core-key.pub</a></p></td>
-</tr>
-</tbody>
-</table>
-<p>Please refer to the <a class="reference internal" href="#configuration-settings">Configuration Settings</a> section for details on how to configure these settings.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The configuration settings of the DataFed CLI also apply to the DataFed Python API.</p>
-</div>
-<div class="section" id="configuration-files">
-<h3>Configuration Files</h3>
-<p>Both a server and a client configuration file may be used to specify CLI settings. Typically, a server
-configuration file would be maintained by a system administrator and contain server-only settings. Per-user
-client configuration files allow individuals to tailor their CLI settings by specifying additional options,
-or by overriding configured server settings (the client file takes priority over the server file).</p>
-<p>Both server and client configuration files are standard “.ini” files and follow the same format, and the
-reference table in <a class="reference internal" href="#settings-quick-reference">Settings Quick Reference</a> section indicate the .ini section and setting name for all
-available options. An example configuration file is shown below:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">server</span><span class="p">]</span>
-<span class="n">host</span> <span class="o">=</span> <span class="n">datafed</span><span class="o">.</span><span class="n">ornl</span><span class="o">.</span><span class="n">gov</span>
-<span class="n">port</span> <span class="o">=</span> <span class="mi">7512</span>
-<span class="n">config_dir</span> <span class="o">=</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">share</span><span class="o">/</span><span class="n">datafed</span>
-
-<span class="p">[</span><span class="n">client</span><span class="p">]</span>
-<span class="n">config_dir</span> <span class="o">=</span> <span class="o">~/.</span><span class="n">datafed</span>
-
-<span class="p">[</span><span class="n">general</span><span class="p">]</span>
-<span class="n">default_endpoint</span> <span class="o">=</span> <span class="n">cades</span><span class="c1">#CADES-OR</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If a configuration file is not explicitly specified (i.e. via an environment variable
-or command-line option), the CLI will search for a client configuration file in the “.datafed”
-directory in the users home directory.</p>
-</div>
-</div>
-<div class="section" id="configuration-priority">
-<h3>Configuration Priority</h3>
-<p>Each mechanism for specifying settings (environment variables, files, options, etc.) has a given priority,
-and individual settings from configuration sources with higher priorities override those with lower
-priorities. The result is that various configuration settings may come from a variety of sources (defaults
-or set by system administrators, for example), but these settings can always be overridden by the user by
-using the appropriate mechanism. Configuration source priorities are shown int the table, below.</p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 65%" />
-<col style="width: 35%" />
-</colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Source</p></th>
-<th class="head"><p>Priority</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>Default Values</p></td>
-<td><p>0 (lowest)</p></td>
-</tr>
-<tr class="row-odd"><td><p>Environment Variable</p></td>
-<td><p>1</p></td>
-</tr>
-<tr class="row-even"><td><p>Server Config File</p></td>
-<td><p>2</p></td>
-</tr>
-<tr class="row-odd"><td><p>Client Config File</p></td>
-<td><p>3</p></td>
-</tr>
-<tr class="row-even"><td><p>Command-Line Option</p></td>
-<td><p>4</p></td>
-</tr>
-<tr class="row-odd"><td><p>Programmatic</p></td>
-<td><p>5 (highest)</p></td>
-</tr>
-</tbody>
-</table>
-<p>Note that most settings do not have default values and must be specified using one of the supported mechanisms.
-The server and client configuration files and directories are exceptions in that the CLI will search for a
-“.datafed” folder in the user home directory if these settings are not specified.</p>
-</div>
-<div class="section" id="configuring-automatic-authentication">
-<h3>Configuring Automatic Authentication</h3>
-<p>Once the DataFed CLI is installed and configured, automatic authentication can be enabled for the CLI
-by installing local client credentials (encryption key files). Automatic authentication can be considered
-a convenience feature, but it is essential for non-interactive use of the CLI (i.e. for scripting). It is
-enabled by simply running the following CLI command from the environment to be configured for
-automatic authentication:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">setup</span>
-</pre></div>
-</div>
-<p>When run the first time, the user must manually authenticate using their DataFed user ID and password.
-(A user may set or change their DataFed password from DataFed Web Portal in the application settings dialog.)
-The CLI will then install local user encryption keys (public and private) in the configured client
-configuration directory. Subsequent use of the DateFed CLI within the same environment will authenticate
-using the local client keys. These client key files must be protected and kept private. In the event of a
-security incident, automatic authentication can be disabled by deleting the local key files, or, alternatively,
-all of a user’s installed keys can be revoked from the DataFed Web Portal using the “Revoke Credentials”
-button in the application settings dialog. (This does not delete local key files, but invalidates the keys
-on the server side.)</p>
-</div>
-</div>
-<div class="section" id="configuration-settings">
-<h2>Configuration Settings</h2>
-<div class="section" id="settings-quick-reference">
-<h3>Settings Quick Reference</h3>
-<p>The table below lists all of the DataFed CLI settings and how they can be set using either a configuration
-file (.ini), an environment variable, or a command-line option.</p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 26%" />
-<col style="width: 7%" />
-<col style="width: 16%" />
-<col style="width: 29%" />
-<col style="width: 22%" />
-</colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Setting</p></th>
-<th class="head"><p>Section</p></th>
-<th class="head"><p>Setting</p></th>
-<th class="head"><p>Environment Variable</p></th>
-<th class="head"><p>CLI Option(s)</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>Server config file</p></td>
-<td><p>N/A</p></td>
-<td><p>N/A</p></td>
-<td><p>DATAFED_SERVER_CFG_FILE</p></td>
-<td><p>–server-cfg-file</p></td>
-</tr>
-<tr class="row-odd"><td><p>Server config directory</p></td>
-<td><p>server</p></td>
-<td><p>config_dir</p></td>
-<td><p>DATAFED_SERVER_CFG_DIR</p></td>
-<td><p>–server-cfg-dir</p></td>
-</tr>
-<tr class="row-even"><td><p>Server public key file</p></td>
-<td><p>server</p></td>
-<td><p>public_key_file</p></td>
-<td><p>DATAFED_SERVER_PUB_KEY_FILE</p></td>
-<td><p>–server-pub-key-file</p></td>
-</tr>
-<tr class="row-odd"><td><p>Sever hostname / IP</p></td>
-<td><p>server</p></td>
-<td><p>host</p></td>
-<td><p>DATAFED_SERVER_HOST</p></td>
-<td><p>–server-host</p></td>
-</tr>
-<tr class="row-even"><td><p>Sever port number</p></td>
-<td><p>server</p></td>
-<td><p>port</p></td>
-<td><p>DATAFED_SERVER_PORT</p></td>
-<td><p>–server-port</p></td>
-</tr>
-<tr class="row-odd"><td><p>Client config file</p></td>
-<td><p>client</p></td>
-<td><p>config_file</p></td>
-<td><p>DATAFED_CLIENT_CFG_FILE</p></td>
-<td><p>–client-cfg-file</p></td>
-</tr>
-<tr class="row-even"><td><p>Client config directory</p></td>
-<td><p>client</p></td>
-<td><p>config_dir</p></td>
-<td><p>DATAFED_CLIENT_CFG_DIR</p></td>
-<td><p>–client-cfg-dir</p></td>
-</tr>
-<tr class="row-odd"><td><p>Client public key file</p></td>
-<td><p>client</p></td>
-<td><p>public_key_file</p></td>
-<td><p>DATAFED_CLIENT_PUB_KEY_FILE</p></td>
-<td><p>–client-pub-key-file</p></td>
-</tr>
-<tr class="row-even"><td><p>Client private key file</p></td>
-<td><p>client</p></td>
-<td><p>private_key_file</p></td>
-<td><p>DATAFED_CLIENT_PRIV_KEY_FILE</p></td>
-<td><p>–client-priv-key-file</p></td>
-</tr>
-<tr class="row-odd"><td><p>Client private key file</p></td>
-<td><p>client</p></td>
-<td><p>private_key_file</p></td>
-<td><p>DATAFED_CLIENT_PRIV_KEY_FILE</p></td>
-<td><p>–client-priv-key-file</p></td>
-</tr>
-<tr class="row-even"><td><p>Default Globus endpoint</p></td>
-<td><p>general</p></td>
-<td><p>default_endpoint</p></td>
-<td><p>DATAFED_DEFAULT_ENDPOINT</p></td>
-<td><p>–default-ep, -e</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="server-configuration-file">
-<h3>Server Configuration File</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 50%" />
-<col style="width: 50%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>N/A</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_SERVER_CFG_FILE</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–server-cfg-file</p></td>
-</tr>
-</tbody>
-</table>
-<p>The server configuration file setting specifies a full path to a server “.ini” file. This file may
-contain additional settings as specified in <a class="reference internal" href="#configuration-settings">Configuration Settings</a> table, above.</p>
-</div>
-<div class="section" id="server-configuration-directory">
-<h3>Server Configuration Directory</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 45%" />
-<col style="width: 55%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>[server] config_dir</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_SERVER_CFG_DIR</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–server-cfg-dir</p></td>
-</tr>
-</tbody>
-</table>
-<p>The server configuration directory setting specifies a path to a directory that will be searched for
-a default server config file, “server.ini”, and the default server public key, “datafed-core-key.pub”.
-If this setting is not provided, “~/.default” will be searched if it exists.</p>
-</div>
-<div class="section" id="server-public-key-file">
-<h3>Server Public Key File</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 45%" />
-<col style="width: 55%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>[server] public_key_file</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_SERVER_PUB_KEY_FILE</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–server-pub-key-file</p></td>
-</tr>
-</tbody>
-</table>
-<p>The server public key file setting specifies a full path to a locally accessible file containing the
-latest DataFed server public key. If this setting is not provided, the CLI will look for a default key
-file, “datafed-core-key.pub”, in the server config directory (or “~/.datafed” if no directory is
-specified). The latest DataFed server public key file must is available for download from
-<a class="reference external" href="https://datafed.ornl.gov/datafed-core-key.pub">here</a>.</p>
-<p>Note that if the server public key setting is invalid or the key is out of date, the CLI will timeout
-after being run.</p>
-</div>
-<div class="section" id="server-host">
-<h3>Server Host</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 45%" />
-<col style="width: 55%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>[server] host</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_SERVER_HOST</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–server-host, -H</p></td>
-</tr>
-</tbody>
-</table>
-<p>The server host setting is the DataFed server name or IP address with no protocol prefix or port number
-- for example: “datafed.ornl.gov”. Note that if the server host setting is incorrect, the CLI will timeout
-after being run.</p>
-</div>
-<div class="section" id="server-port">
-<h3>Server Port</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 45%" />
-<col style="width: 55%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>[server] port</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_SERVER_PORT</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–server-port, -P</p></td>
-</tr>
-</tbody>
-</table>
-<p>The server port setting is the TCP port number used by the DataFed server for secure client connections.
-Note that if the server port number is incorrect, the CLI will timeout after being run.</p>
-</div>
-<div class="section" id="client-configuration-file">
-<h3>Client Configuration File</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 45%" />
-<col style="width: 55%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>[client] config_file</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_CLIENT_CFG_FILE</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–client-cfg-file</p></td>
-</tr>
-</tbody>
-</table>
-<p>The client configuration file setting specifies a full path to a client “.ini” file. This file may contain
-additional settings as listed in the <a class="reference internal" href="#settings-quick-reference">Settings Quick Reference</a> section. Note that settings in the client
-configuration file will override the same settings in the server configuration file, if present.</p>
-</div>
-<div class="section" id="client-config-directory">
-<h3>Client Config Directory</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 45%" />
-<col style="width: 55%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>[client] config_dir</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_CLIENT_CFG_DIR</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–client-cfg-dir</p></td>
-</tr>
-</tbody>
-</table>
-<p>The client configuration directory setting specifies a path to a directory that will be searched for
-a default client config file, “client.ini”, and the default client public and private keys,
-“datafed-user-key.pub” and “datafed-user-key.priv”. If this setting is not provided, “~/.default” will be
-searched if it exists.</p>
-</div>
-<div class="section" id="client-public-key-file">
-<h3>Client Public Key File</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 45%" />
-<col style="width: 55%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>[client] public_key_file</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_CLIENT_PUB_KEY_FILE</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–client-pub-key-file</p></td>
-</tr>
-</tbody>
-</table>
-<p>The client public key file setting specifies a full path to a locally accessible file containing the DataFed
-client public key. If this setting is not provided, the CLI will look for a default key file,
-“datafed-user-key.pub”, in the client config directory (or “~/.datafed” if no directory is specified). Client
-key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).</p>
-</div>
-<div class="section" id="client-private-key-file">
-<h3>Client Private Key File</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 45%" />
-<col style="width: 55%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>[client] private_key_file</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_CLIENT_PRIV_KEY_FILE</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–client-priv-key-file</p></td>
-</tr>
-</tbody>
-</table>
-<p>The client private key file setting specifies a full path to a locally accessible file containing the DataFed
-client private key. If this setting is not provided, the CLI will look for a default key file,
-“datafed-user-key.priv”, in the client config directory (or “~/.datafed” if no directory is specified). Client
-key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).</p>
-</div>
-<div class="section" id="default-endpoint">
-<h3>Default Endpoint</h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 45%" />
-<col style="width: 55%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>Configuration File:</p></td>
-<td><p>[general] default_endpoint</p></td>
-</tr>
-<tr class="row-even"><td><p>Environment Variable:</p></td>
-<td><p>DATAFED_DEFAULT_ENDPOINT</p></td>
-</tr>
-<tr class="row-odd"><td><p>Command-line Option(s):</p></td>
-<td><p>–default-ep, -e</p></td>
-</tr>
-</tbody>
-</table>
-<p>The default endpoint setting determines which Globus endpoint will be used for data “get” and “put”
-commands when a full GLobus path is not specified. The configured default end-point can be changed at
-any time within the CLI using the “ep default set” command, or it can be temporarily changed (not
-saved) using the “ep set” command.</p>
-</div>
-</div>
-<div class="section" id="usage-guide">
-<h2>Usage Guide</h2>
-<div class="admonition attention">
-<p class="admonition-title">Attention</p>
-<p>Section not written. Will discuss use of shell-specific features (ls, cd, switching user, etc).</p>
-</div>
-</div>
-<div class="section" id="command-reference">
-<h2>Command Reference</h2>
+interactive use and non-interactive scripting from a command shell, and is the primary means of
+utilizing DataFed services from within data, compute, and analytics environments. The DataFed
+CLI is provided via a Python 3 package and can be used on any operating system where Python 3
+is available.</p>
+<p>This document provides detailed information about the commands and sub-commands of the DataFed CLI.
+For general CLI usage information, see the CLI <a class="reference internal" href="guide.html"><span class="doc">User Guide</span></a> page. Also, before the DataFed
+CLI can be used it must be installed and properly configured - the CLI <a class="reference internal" href="install.html"><span class="doc">Installation and Configuration</span></a> page
+provides details.</p>
 <div class="section" id="datafed-commands">
-<h3>Datafed Commands</h3>
+<h2>Datafed Commands</h2>
 <p>‘datafed’ is the command-line interface (CLI) for the DataFed federated data management
 service and may be used to access many of the features available via the DataFed web
 portal. This CLI may be used interactively (human-friendly output) or for scripting (JSON
@@ -899,7 +371,7 @@ prefix.</p>
 </table>
 </div>
 <div class="section" id="coll-commands">
-<h3>Coll Commands</h3>
+<h2>Coll Commands</h2>
 <p>Collection commands.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">coll</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
@@ -939,7 +411,7 @@ prefix.</p>
 </tbody>
 </table>
 <div class="section" id="coll-add-command">
-<h4>Coll Add Command</h4>
+<h3>Coll Add Command</h3>
 <p>Add data records and/or collections to a collection. COLL_ID is the
 destination collection and ITEM_IDs specify one or more data records and/or
 collections to add to the destination collection. COLL_ID and ITEM_IDs may
@@ -960,7 +432,7 @@ relative collection path (‘.’, ‘..’, or ‘/’).</p>
 </dl>
 </div>
 <div class="section" id="coll-create-command">
-<h4>Coll Create Command</h4>
+<h3>Coll Create Command</h3>
 <p>Create a new collection. The collection ‘title’ is required, but all
 other attributes are optional. On success, the ID of the created
 collection is returned. Note that if a parent collection is specified, and
@@ -995,7 +467,7 @@ user must have permission to write to that collection.</p>
 -h, –help  Show this message and exit.</p>
 </div>
 <div class="section" id="coll-delete-command">
-<h4>Coll Delete Command</h4>
+<h3>Coll Delete Command</h3>
 <p>Delete one or more existing collections. Multiple ID arguments can be
 provided and may be collection IDs, aliases, or index values from a
 listing. By default, a confirmation prompt is used, but this can be
@@ -1021,7 +493,7 @@ another collection not involved in the deletion.</p>
 </dl>
 </div>
 <div class="section" id="coll-remove-command">
-<h4>Coll Remove Command</h4>
+<h3>Coll Remove Command</h3>
 <p>Remove data records and/or collections from a collection. COLL_ID is the
 containing collection and ITEM_IDs specify one or more data records and/or
 collections to remove from the containing collection. COLL_ID and ITEM_IDs
@@ -1042,7 +514,7 @@ relative collection path (‘.’, ‘..’, or ‘/’).</p>
 </dl>
 </div>
 <div class="section" id="coll-update-command">
-<h4>Coll Update Command</h4>
+<h3>Coll Update Command</h3>
 <p>Update an existing collection. The collection ID is required and can be
 an ID, alias, or listing index; all other collection attributes are
 optional.</p>
@@ -1075,7 +547,7 @@ optional.</p>
 -h, –help  Show this message and exit.</p>
 </div>
 <div class="section" id="coll-view-command">
-<h4>Coll View Command</h4>
+<h3>Coll View Command</h3>
 <p>View collection information. Displays collection title, description, and
 other administrative fields. ID may be a collection identifier, alias, or
 index value from a listing. Use ‘coll list’ command to see items contained
@@ -1095,7 +567,7 @@ in a collection.</p>
 </div>
 </div>
 <div class="section" id="data-commands">
-<h3>Data Commands</h3>
+<h2>Data Commands</h2>
 <p>Data commands.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
@@ -1138,7 +610,7 @@ in a collection.</p>
 </tbody>
 </table>
 <div class="section" id="data-batch-commands">
-<h4>Data Batch Commands</h4>
+<h3>Data Batch Commands</h3>
 <p>Data batch commands.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">batch</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
@@ -1166,7 +638,7 @@ in a collection.</p>
 </tbody>
 </table>
 <div class="section" id="data-batch-create-command">
-<h5>Data Batch Create Command</h5>
+<h4>Data Batch Create Command</h4>
 <p>Batch create data records from JSON file(s). Multiple FILE arguments may be
 specified and are absolute or relative paths to JSON inputs file on a local
 filesystem. JSON input files may contain individual JSON objects, or arrays
@@ -1190,7 +662,7 @@ must comply with the DataFed record input schema (see online documentation).</p>
 </dl>
 </div>
 <div class="section" id="data-batch-update-command">
-<h5>Data Batch Update Command</h5>
+<h4>Data Batch Update Command</h4>
 <p>Batch update data records from JSON file(s). Multiple FILE arguments may be
 specified and are absolute or relative paths to JSON inputs file on a local
 filesystem. JSON input files may contain individual JSON objects, or arrays
@@ -1209,7 +681,7 @@ must comply with the DataFed record input schema (see online documentation).</p>
 </div>
 </div>
 <div class="section" id="data-create-command">
-<h4>Data Create Command</h4>
+<h3>Data Create Command</h3>
 <p>Create a new data record. The data record ‘title’ is required, but all
 other attributes are optional. On success, the ID of the created data
 record is returned. Note that if a parent collection is specified, and
@@ -1257,7 +729,7 @@ convenience to avoid a separate dataPut() call.</p>
 -h, –help  Show this message and exit.</p>
 </div>
 <div class="section" id="data-delete-command">
-<h4>Data Delete Command</h4>
+<h3>Data Delete Command</h3>
 <p>Delete one or more existing data records. Multiple ID arguments can be
 provided and may data record IDs, aliases, or index values from a listing.
 By default, a confirmation prompt is used, but this can be bypassed with
@@ -1280,7 +752,7 @@ the ‘–force’ option.</p>
 </dl>
 </div>
 <div class="section" id="data-get-command">
-<h4>Data Get Command</h4>
+<h3>Data Get Command</h3>
 <p>Get (download) raw data of data records and/or collections. Multiple ID
 arguments can be specified and may be data record and/or collection IDs,
 aliases, or index values from s listing. The PATH argument is the
@@ -1311,7 +783,7 @@ blocking calls; thus the ‘wait’ option only applies to Globus transfers.</p>
 -h, –help  Show this message and exit.</p>
 </div>
 <div class="section" id="data-put-command">
-<h4>Data Put Command</h4>
+<h3>Data Put Command</h3>
 <p>Put (upload) raw data located at PATH to DataFed record ID.  The ID
 argument may be data record ID, alias, or index value from a listing.
 The PATH argument specifies the source file for the upload and can be
@@ -1336,7 +808,7 @@ argument, the current endpoint will be used.</p>
 -h, –help  Show this message and exit.</p>
 </div>
 <div class="section" id="data-update-command">
-<h4>Data Update Command</h4>
+<h3>Data Update Command</h3>
 <p>Update an existing data record. The data record ID is required and can be
 an ID, alias, or listing index; all other record attributes are optional.
 The raw-data-file option is only supported in interactive mode and is
@@ -1382,7 +854,7 @@ provided as a convenience to avoid a separate dataPut() call.</p>
 -h, –help  Show this message and exit.</p>
 </div>
 <div class="section" id="data-view-command">
-<h4>Data View Command</h4>
+<h3>Data View Command</h3>
 <p>View data record information. Displays record title, description, tags,
 and other informational and administrative fields. ID may be a data record
 identifier, alias, or index value from a listing. By default, description
@@ -1403,7 +875,7 @@ level 2.</p>
 </div>
 </div>
 <div class="section" id="ep-commands">
-<h3>Ep Commands</h3>
+<h2>Ep Commands</h2>
 <p>Endpoint commands.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
@@ -1437,7 +909,7 @@ level 2.</p>
 </tbody>
 </table>
 <div class="section" id="ep-default-commands">
-<h4>Ep Default Commands</h4>
+<h3>Ep Default Commands</h3>
 <p>Default endpoint commands.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="n">default</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
@@ -1465,7 +937,7 @@ level 2.</p>
 </tbody>
 </table>
 <div class="section" id="ep-default-get-command">
-<h5>Ep Default Get Command</h5>
+<h4>Ep Default Get Command</h4>
 <p>Show the default Globus endpoint.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="n">default</span> <span class="n">get</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
@@ -1479,7 +951,7 @@ level 2.</p>
 </dl>
 </div>
 <div class="section" id="ep-default-set-command">
-<h5>Ep Default Set Command</h5>
+<h4>Ep Default Set Command</h4>
 <p>Set the default Globus endpoint. The default endpoint will be set from the
 ‘endpoint’ argument, or if the ‘–current’ options is specified, from the
 currently active endpoint.</p>
@@ -1499,7 +971,7 @@ currently active endpoint.</p>
 </div>
 </div>
 <div class="section" id="ep-get-command">
-<h4>Ep Get Command</h4>
+<h3>Ep Get Command</h3>
 <p>Get Globus endpoint for the current session. At the start of a session, the
 current endpoint will be set to the default endpoint, if configured.</p>
 <p>Usage:</p>
@@ -1514,7 +986,7 @@ current endpoint will be set to the default endpoint, if configured.</p>
 </dl>
 </div>
 <div class="section" id="ep-list-command">
-<h4>Ep List Command</h4>
+<h3>Ep List Command</h3>
 <p>List recently used endpoints.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ep</span> <span class="nb">list</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
@@ -1528,7 +1000,7 @@ current endpoint will be set to the default endpoint, if configured.</p>
 </dl>
 </div>
 <div class="section" id="ep-set-command">
-<h4>Ep Set Command</h4>
+<h3>Ep Set Command</h3>
 <p>Set endpoint for the current session. If no endpoint is given, the
 default endpoint will be set as the current endpoint, if configured.</p>
 <p>Usage:</p>
@@ -1544,7 +1016,7 @@ default endpoint will be set as the current endpoint, if configured.</p>
 </div>
 </div>
 <div class="section" id="exit-command">
-<h3>Exit Command</h3>
+<h2>Exit Command</h2>
 <p>Exit an interactive session. Ctrl-C may also be used to exit the shell.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">exit</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
@@ -1558,7 +1030,7 @@ default endpoint will be set as the current endpoint, if configured.</p>
 </dl>
 </div>
 <div class="section" id="help-command">
-<h3>Help Command</h3>
+<h2>Help Command</h2>
 <p>Show DataFed CLI help. Include a command name as the argument to see
 command-specific help.</p>
 <p>Usage:</p>
@@ -1573,7 +1045,7 @@ command-specific help.</p>
 </dl>
 </div>
 <div class="section" id="ls-command">
-<h3>Ls Command</h3>
+<h2>Ls Command</h2>
 <p>List contents of a collection, or shared items. ID may be a collection ID
 or alias, a relative path, a user or project ID, an index value from a
 listing, or omitted for the current working collection. If the ID is a
@@ -1600,7 +1072,7 @@ given user or project.</p>
 </dl>
 </div>
 <div class="section" id="project-commands">
-<h3>Project Commands</h3>
+<h2>Project Commands</h2>
 <p>Project commands.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">project</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
@@ -1628,7 +1100,7 @@ given user or project.</p>
 </tbody>
 </table>
 <div class="section" id="project-list-command">
-<h4>Project List Command</h4>
+<h3>Project List Command</h3>
 <p>List projects associated with current user. List projects that are owned or managed by the
 current user, as well as projects were the current user is a member.</p>
 <p>Usage:</p>
@@ -1658,7 +1130,7 @@ current user, as well as projects were the current user is a member.</p>
 </dl>
 </div>
 <div class="section" id="project-view-command">
-<h4>Project View Command</h4>
+<h3>Project View Command</h3>
 <p>View project information. Current user must have a role (owner, manager, or
 member) within the project specified by the ID argument.</p>
 <p>Usage:</p>
@@ -1671,7 +1143,7 @@ member) within the project specified by the ID argument.</p>
 </div>
 </div>
 <div class="section" id="query-commands">
-<h3>Query Commands</h3>
+<h2>Query Commands</h2>
 <p>Data query commands.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
@@ -1714,7 +1186,7 @@ member) within the project specified by the ID argument.</p>
 </tbody>
 </table>
 <div class="section" id="query-create-command">
-<h4>Query Create Command</h4>
+<h3>Query Create Command</h3>
 <p>Create a saved query.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">create</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">TITLE</span>
@@ -1746,7 +1218,7 @@ member) within the project specified by the ID argument.</p>
 </dl>
 </div>
 <div class="section" id="query-delete-command">
-<h4>Query Delete Command</h4>
+<h3>Query Delete Command</h3>
 <p>Delete a saved query by ID.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">delete</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
@@ -1760,7 +1232,7 @@ member) within the project specified by the ID argument.</p>
 </dl>
 </div>
 <div class="section" id="query-exec-command">
-<h4>Query Exec Command</h4>
+<h3>Query Exec Command</h3>
 <p>Execute a saved query by ID.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">exec</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
@@ -1780,7 +1252,7 @@ member) within the project specified by the ID argument.</p>
 </dl>
 </div>
 <div class="section" id="query-list-command">
-<h4>Query List Command</h4>
+<h3>Query List Command</h3>
 <p>List saved queries.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="nb">list</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
@@ -1800,7 +1272,7 @@ member) within the project specified by the ID argument.</p>
 </dl>
 </div>
 <div class="section" id="query-run-command">
-<h4>Query Run Command</h4>
+<h3>Query Run Command</h3>
 <p>Run a directly entered query. Unless the ‘no-default’ option is included,
 the search scope includes all data owned by the authenticated user (in
 their root collection and projects that are owned or managed, or where the
@@ -1843,7 +1315,7 @@ respectively.</p>
 </dl>
 </div>
 <div class="section" id="query-update-command">
-<h4>Query Update Command</h4>
+<h3>Query Update Command</h3>
 <p>Update a saved query. The title and search terms of a query may be updated;
 however, search scope cannot currently be changed. To remove a term,
 specify an empty string (“”) for the associated option.</p>
@@ -1871,7 +1343,7 @@ specify an empty string (“”) for the associated option.</p>
 </dl>
 </div>
 <div class="section" id="query-view-command">
-<h4>Query View Command</h4>
+<h3>Query View Command</h3>
 <p>View a saved query by ID.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">view</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
@@ -1886,7 +1358,7 @@ specify an empty string (“”) for the associated option.</p>
 </div>
 </div>
 <div class="section" id="setup-command">
-<h3>Setup Command</h3>
+<h2>Setup Command</h2>
 <p>Setup local credentials. This command installs DataFed credentials for the
 current user in the configured client configuration directory. Subsequent
 use of the DataFed CLI will read these credentials instead of requiring
@@ -1903,7 +1375,7 @@ manual authentication.</p>
 </dl>
 </div>
 <div class="section" id="shares-command">
-<h3>Shares Command</h3>
+<h2>Shares Command</h2>
 <p>List users and/or projects sharing data with current user.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">shares</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
@@ -1923,7 +1395,7 @@ manual authentication.</p>
 </dl>
 </div>
 <div class="section" id="task-commands">
-<h3>Task Commands</h3>
+<h2>Task Commands</h2>
 <p>Task management commands.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">task</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
@@ -1951,7 +1423,7 @@ manual authentication.</p>
 </tbody>
 </table>
 <div class="section" id="task-list-command">
-<h4>Task List Command</h4>
+<h3>Task List Command</h3>
 <p>List recent tasks. If no time or status filter options are
 provided, all tasks initiated by the current user are listed,
 most recent first. Note that the DataFed server periodically purges
@@ -1978,7 +1450,7 @@ tasks history such that only up to 30 days of history are retained.</p>
 -h, –help  Show this message and exit.</p>
 </div>
 <div class="section" id="task-view-command">
-<h4>Task View Command</h4>
+<h3>Task View Command</h3>
 <p>Show task information. Use the ID argument to view a specific task
 record, or omit to view the latest task initiated by the current user.</p>
 <p>Usage:</p>
@@ -1994,7 +1466,7 @@ record, or omit to view the latest task initiated by the current user.</p>
 </div>
 </div>
 <div class="section" id="user-commands">
-<h3>User Commands</h3>
+<h2>User Commands</h2>
 <p>User commands.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">user</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">ARGS</span><span class="p">]</span><span class="o">...</span>
@@ -2028,7 +1500,7 @@ record, or omit to view the latest task initiated by the current user.</p>
 </tbody>
 </table>
 <div class="section" id="user-all-command">
-<h4>User All Command</h4>
+<h3>User All Command</h3>
 <p>List all users.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">user</span> <span class="nb">all</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
@@ -2048,7 +1520,7 @@ record, or omit to view the latest task initiated by the current user.</p>
 </dl>
 </div>
 <div class="section" id="user-collab-command">
-<h4>User Collab Command</h4>
+<h3>User Collab Command</h3>
 <p>List all users that are collaborators. Collaborators are defined as users
 that have projects in common with the current user, or that have data-
 sharing relationships with the current user.</p>
@@ -2070,7 +1542,7 @@ sharing relationships with the current user.</p>
 </dl>
 </div>
 <div class="section" id="user-view-command">
-<h4>User View Command</h4>
+<h3>User View Command</h3>
 <p>View user information.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">user</span> <span class="n">view</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">UID</span>
@@ -2084,7 +1556,7 @@ sharing relationships with the current user.</p>
 </dl>
 </div>
 <div class="section" id="user-who-command">
-<h4>User Who Command</h4>
+<h3>User Who Command</h3>
 <p>Show current authenticated user ID.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">user</span> <span class="n">who</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
@@ -2099,7 +1571,7 @@ sharing relationships with the current user.</p>
 </div>
 </div>
 <div class="section" id="verbosity-command">
-<h3>Verbosity Command</h3>
+<h2>Verbosity Command</h2>
 <p>Set/display verbosity level. The verbosity level argument can be 0
 (lowest), 1 (normal), or 2 (highest). If the the level is omitted, the
 current verbosity level is returned.</p>
@@ -2115,7 +1587,7 @@ current verbosity level is returned.</p>
 </dl>
 </div>
 <div class="section" id="wc-command">
-<h3>Wc Command</h3>
+<h2>Wc Command</h2>
 <p>Set/print current working collection or path. ‘ID’ can be a collection ID, alias,
 list index number, ‘-‘ (previous collection), or path. Only ‘..’ and ‘/’ are
 supported for paths. ‘cd’ is an alias for this command.</p>
@@ -2131,7 +1603,7 @@ supported for paths. ‘cd’ is an alias for this command.</p>
 </dl>
 </div>
 <div class="section" id="wp-command">
-<h3>Wp Command</h3>
+<h2>Wp Command</h2>
 <p>Get current working path. Displays the full path of the current working
 collection starting from the root collection of the associated user or
 project.</p>
@@ -2147,7 +1619,6 @@ project.</p>
 </dl>
 </div>
 </div>
-</div>
 
 
            </div>
@@ -2157,10 +1628,10 @@ project.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../api/python.html" class="btn btn-neutral float-right" title="Python API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="../scripting.html" class="btn btn-neutral float-right" title="Scripting Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../web/portal.html" class="btn btn-neutral float-left" title="Web Portal" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="guide.html" class="btn btn-neutral float-left" title="User Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

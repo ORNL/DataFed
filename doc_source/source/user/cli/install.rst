@@ -1,63 +1,8 @@
 ==============================
-Command Line Interface
+Installation and Configuration
 ==============================
 
-The DataFed command-line-interface (CLI) provides access to basic DataFed capabilities for both
-interactive use and non-interactive scripting from a command shell. The DataFed CLI is provided
-via a Python 3 package called "datafed" available on the `PyPi <https://pypi.org>`_ site, and,
-because the DataFed CLI is based on Python, it can be installed and used on any operating system
-that supports Python 3. (See the installation section, below, for specifics.)
-
-The DataFed CLI Python package also contains an accessible API that can be used to build custom
-Python applications that directly interface with the DataFed service. For more information on the
-DataFed API, please refer to REF_REF_REF.
-
-Before the DataFed CLI can be used, it must be installed and properly configure (see the
-`Installation`_ and `Configuration`_ sections of this document for more information.
-
-Basic Usage
-===========
-
-The DataFed CLI is run using the 'datafed' script installed by the DataFed CLI packaged, as follows::
-
-    datafed [options] [command [sub-command ...]]
-
-For a list of options, the built-in help output can be viewed::
-
-    datafed --help
-
-The DataFed CLI supports three distinct modes of use: single command, interactive shell, and script
-mode. If the CLI is run without any command arguments, an interactive shell is started; otherwise,
-the specified command is run either normally (human-friendly output) or in script mode if the
-'--script' option is specified.
-
-**Single Command**
-
-This mode is used to run a single DafaFed command given as an argument to the datafed script. The
-output is in human-friendly format.
-
-**Interactive Shell**
-
-This mode provides a DataFed CLI shell and is started by running the datafed script without any
-command arguments. Commands are entered at the prompt (without the 'datafed' script prefix) and
-the shell will run until stopped with the 'exit' command, or by typing 'Ctrl-C'. Shell mode is
-stateful and convenient for browsing DataFed collection hierarchies.
-
-**Script Mode**
-
-This mode is similar to the single command mode with the exception that non-essential output is
-suppressed and command responses are returned in a strict JSON format. This mode is useful for
-integrating the CLI into non-Python scripts (i.e. bash), and is activated by specifying the
-"--script" (or "-s") command line option when the CLI is run. 
-
-.. note::
-
-    For a complete guide to DataFed scripting, please refer to the :doc:`/user/scripting` page.
-    The :doc:`/user/api/python` page provides a detailed reference to the DataFed API for
-    scripting and custom application development.
-
-The full listing of options, commands, and sub-commands are detailed in the `Usage Guide`_
-and `Command Reference`_ sections of this document.
+.. include:: header.rst
 
 Installation
 ============
@@ -368,15 +313,3 @@ commands when a full GLobus path is not specified. The configured default end-po
 any time within the CLI using the "ep default set" command, or it can be temporarily changed (not
 saved) using the "ep set" command.
 
-
-Usage Guide
-===========
-
-.. attention::
-
-    Section not written. Will discuss use of shell-specific features (ls, cd, switching user, etc).
-
-Command Reference
-=================
-
-.. include:: /_generated/cli_python_cmd_ref.rst

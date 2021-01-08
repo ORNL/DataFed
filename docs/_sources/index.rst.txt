@@ -15,13 +15,37 @@ This site contains all user and administrative documentation for the DataFed sys
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: About DataFed
 
+   system/introduction
    system/overview
+   system/usecases
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Web Portal
+
    user/web/portal
-   user/cli/python
-   user/api/python
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Command Line Interface
+
+   user/cli/install
+   user/cli/guide
+   user/cli/reference
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Scripting
+
    user/scripting
+   autoapi/index.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Administration
+
    admin/general
 
 Indices and tables
