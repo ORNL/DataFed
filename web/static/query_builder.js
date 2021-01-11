@@ -37,22 +37,20 @@ export class QueryBuilder extends HTMLElement {
             <button class='field-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this field'></span></button>\
         </div></div>";
 
-    static _FLD_STR     = 1;
-    static _FLD_NUM     = 2;
-    static _FLD_BOOL    = 3;
-    static _FLD_ARR     = 4;
-    static _FLD_OBJ     = 5;
+    static _RH_VAL     = 1;
+    static _RH_FLD     = 2;
 
     static _fld_cfg = {
-        "string": {label:"[str]",opr:[OPR_EQ,OPR_NEQ,OPR_RGX,OPR_WLD,OPR_DF,OPR_NDF]},
-        "number": {label:"[num]",opr:[OPR_EQ,OPR_NEQ,OPR_LT,OPR_LTE,OPR_GTE,OPR_GT,OPR_DF,OPR_NDF]},
-        "integer": {label:"[int]",opr:[OPR_EQ,OPR_NEQ,OPR_LT,OPR_LTE,OPR_GTE,OPR_GT,OPR_DF,OPR_NDF]},
-        "bool"  : {label:"[bool]",opr:[OPR_TRU,OPR_FAL,OPR_EQ,OPR_NEQ,OPR_DF,OPR_NDF]},
-        "array" : {label:"[arr]",opr:[OPR_CON,OPR_DF,OPR_NDF]},
-        "object": {label:"[obj]",opr:[OPR_DF,OPR_NDF]}
+        "string" : {label:"[str]", opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_RGX,1],[OPR_WLD,1],[OPR_DF,0],[OPR_NDF,0]]},
+        "number" : {label:"[num]", opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_LT,3],[OPR_LTE,3],[OPR_GTE,3],[OPR_GT,3],[OPR_DF,0],[OPR_NDF,0]]},
+        "integer": {label:"[int]", opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_LT,3],[OPR_LTE,3],[OPR_GTE,3],[OPR_GT,3],[OPR_DF,0],[OPR_NDF,0]]},
+        "enum"   : {label:"[enum]",opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_DF,0],[OPR_NDF,0]]},
+        "bool"   : {label:"[bool]",opr:[[OPR_TRU,0],[OPR_FAL,0],[OPR_EQ,2],[OPR_NEQ,2],[OPR_DF,0],[OPR_NDF,0]]},
+        "array"  : {label:"[arr]", opr:[[OPR_CON,1],[OPR_DF,0],[OPR_NDF,0]]},
+        "object" : {label:"[obj]", opr:[[OPR_DF,0],[OPR_NDF,0]]}
     }
 
-    static _fld_no_input = [OPR_TRU,OPR_FAL,OPR_DF,OPR_NDF];
+    //static _fld_no_input = [OPR_TRU,OPR_FAL,OPR_DF,OPR_NDF];
 
     constructor(){
         super();
@@ -75,20 +73,22 @@ export class QueryBuilder extends HTMLElement {
         qb.on( "click", ".group-btn-opr", ev => this._groupOpBtnClick( ev ));
         qb.on( "click", ".field-btn-add", ev => this._fieldAddBtnClick( ev ));
         qb.on( "click", ".field-btn-rem", ev => this._fieldRemBtnClick( ev ));
-        qb.on( "click", ".field-btn-sel-lh", ev => this._fieldSelectBtnClick( ev ));
+        qb.on( "click", ".field-btn-sel-lh", ev => this._fieldInputLHSelected( ev ));
         qb.on( "click", ".field-btn-val-type", ev => this._fieldInpTypeBtnClick( ev ));
-        qb.on( "click", ".field-btn-sel-rh", ev => this._fieldSelRHBtnClick( ev ));
+        qb.on( "click", ".field-btn-sel-rh", ev => this._fieldInputRHSelected( ev ));
+        qb.on( "selectmenuchange", ".field-sel-opr", (ev, ui) => this._fieldSelOperChangeEv( ev, ui ));
+
         qb.on( "dragstart", ".query-builder-group,.query-builder-field", ev => this._handleDragStart( ev ));
         qb.on( "dragenter", ".query-builder-group,.query-builder-field", ev => this._handleDragEnter( ev ));
         qb.on( "dragleave", ".query-builder-group,.query-builder-field", ev => this._handleDragLeave( ev ));
         qb.on( "dragover", ".query-builder-group,.query-builder-field", ev => this._handleDragOver( ev ));
         qb.on( "drop", ".query-builder-group,.query-builder-field", ev => this._handleDragDrop( ev ));
 
-        qb.on( "input", ".field-inp-lh", ev => this._fieldValidateLH( $(ev.currentTarget), true ));
-        qb.on( "blur", ".field-inp-lh", ev => this._fieldValidateLH( $(ev.currentTarget), false ));
+        qb.on( "input", ".field-inp-lh", ev => this._fieldInputLHChanged( ev.currentTarget, true ));
+        qb.on( "blur", ".field-inp-lh", ev => this._fieldInputLHChanged( ev.currentTarget, false ));
         qb.on( "keydown", ".field-inp-lh", function( ev ){
             if ( ev.keyCode == 13 ){
-                inst._fieldValidateLH( $(ev.currentTarget), false );
+                inst._fieldInputLHChanged( ev.currentTarget, false );
             }
         });
 
@@ -221,11 +221,12 @@ export class QueryBuilder extends HTMLElement {
         a_container.append( fld );
         $("button",fld).button();
         util.inputTheme( $(".field-inp-lh, .field-inp-rh",fld));
-
         $("select",fld).selectmenu({
-            width:false,
+            width:false
+            /*
             change: function( ev, ui ){
                 console.log("sel",ui.item);
+                
                 if ( QueryBuilder._fld_no_input.indexOf( ui.item.value ) == -1 ){
                     // Show input
                     $(".field-inp-rh, .field-btn-val-type, .field-btn-sel-rh",fld).show();
@@ -234,7 +235,7 @@ export class QueryBuilder extends HTMLElement {
                     // Hide input
                     $(".field-inp-rh, .field-btn-val-type, .field-btn-sel-rh",fld).hide();
                 }
-            }
+            }*/
         });
     }
 
@@ -280,11 +281,16 @@ export class QueryBuilder extends HTMLElement {
         }
     }
 
-    _fieldSelectBtnClick( ev ){
+    _fieldInputLHSelected( ev ){
         var inst = this;
         this._selectSchemaField( ev.currentTarget, null, null, function( field ){
             //console.log("selected:", field );
 
+            var div = ev.currentTarget.closest(".query-builder-field");
+
+            inst._fieldInputLHValidate( div, field );
+
+            /*
             var btn = $(ev.currentTarget),
                 div = btn.closest(".query-builder-field"),
                 id = div[0].id,
@@ -307,62 +313,13 @@ export class QueryBuilder extends HTMLElement {
             util.tooltipTheme( inp );
 
             inst._setupFieldLH( div, field );
+            */
         })
     }
 
-    _setupFieldLH( div, field ){
-        var oper = QueryBuilder._fld_cfg[field.type].opr,
-            sel = $(".field-sel-opr",div),
-            val = $(".field-inp-rh",div),
-            html = "";
-
-        for ( var i in oper ){
-            html += "<option>" + oper[i] + "</option>";
-        }
-
-        sel.html( html );
-        sel.selectmenu("enable");
-        sel.selectmenu("refresh");
-
-        val.show();
-        $(".qb-indent-wrap",div).show();
-
-        this._fieldValidateRH( $(".field-inp-rh",div), false );
-    }
-
-    _fieldInpTypeBtnClick( ev ){
-        var div = ev.currentTarget.closest(".query-builder-field");
-        if ( ev.currentTarget.innerText == "V" ){
-            $(ev.currentTarget).button('option', 'label', 'F');
-            $(".field-btn-sel-rh",div).button("enable");
-        }else{
-            $(ev.currentTarget).button('option', 'label', 'V');
-            $(".field-btn-sel-rh",div).button("disable");
-        }
-        this._fieldValidateRH( $(".field-inp-rh",div), false );
-    }
-
-    _fieldSelRHBtnClick( ev ){
-        var inst = this;
-        this._selectSchemaField( ev.currentTarget, null, null, function( field ){
-            console.log("selected:", field );
-
-            var btn = $(ev.currentTarget),
-                div = btn.closest(".query-builder-field"),
-                id = div[0].id,
-                inp = $(".field-inp-rh",div);
-
-            inp.val( field.label );
-            inp.removeClass( "qb-error" );
-            inp.attr("title", field.label + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.desc );
-
-            inst._state[id].rh = field;
-        })
-    }
-
-    _fieldValidateLH( inp, delay ){
-        var div = inp.closest(".query-builder-field"),
-            id = div[0].id,
+    _fieldInputLHChanged( target, delay ){
+        var div = target.closest(".query-builder-field"),
+            id = div.id,
             st;
 
         if ( id in this._state ){
@@ -379,10 +336,13 @@ export class QueryBuilder extends HTMLElement {
 
         if ( delay ){
             var inst = this;
-            st.inp_tm = setTimeout( function(){ inst._fieldValidateLH( inp, false ); }, 2000 );
+            st.inp_tm = setTimeout( function(){ inst._fieldInputLHChanged( target, false ); }, 2000 );
         }else{
             st.inp_tm = null;
 
+            this._fieldInputLHValidate( div );
+
+            /*
             var val = inp.val().trim(),
                 path = val.split("."),
                 flds = this._sch_fields;
@@ -412,11 +372,208 @@ export class QueryBuilder extends HTMLElement {
 
             console.log("valLH", val, flds );
 
+            // Save new LH state
+
             // TODO Move into setup func
             inp.attr("title", val + " : " + QueryBuilder._fld_cfg[flds.type].label + " " + flds.description );
 
             this._setupFieldLH( div, flds );
+            */
         }
+    }
+
+    _fieldInputLHValidate( div, field ){
+
+        //var btn = $(ev.currentTarget),
+        //div = btn.closest(".query-builder-field"),
+
+        var i, target = $(".field-inp-lh",div);
+
+        if ( !field ){
+            var val = target.val().trim();
+
+            console.log("inp val",val);
+
+            if ( !val.length ){
+                target.addClass( "qb-error" );
+                target.attr( "title", "Input or select a schema field." );
+            }else{
+                var path = val.split( "." ),
+                    flds = this._sch_fields;
+
+                for ( i in path ){
+                    //console.log("p",path[i], "flds:",flds);
+
+                    if ( typeof flds === "object" && path[i] in flds ){
+                        flds = flds[path[i]];
+                    }else{
+                        target.addClass( "qb-error" );
+                        target.attr( "title", "Invalid schema field." );
+                        //$(".qb-indent-wrap",div).hide();
+                        flds = null;
+                        break;
+                    }
+                }
+
+                field = flds;
+                if ( field ){
+                    field.path = val;
+                }
+            }
+            
+            //target.removeClass("qb-error");
+        }
+
+        var st;
+
+        if ( div.id in this._state ){
+            st = this._state[div.id];
+        }else{
+            st = {}
+            this._state[div.id] = st;
+        }
+
+        console.log("field:",field);
+
+        // No valid field selected, remove RH inputs, reset field state (not inpt timer)
+        if ( !field ){
+            st.lh = null;
+            st.rh = null;
+            $(".qb-indent-wrap",div).hide();
+        }else{
+            st.lh = field;
+            target.val( field.path );
+            target.removeClass( "qb-error" );
+            target.attr( "title", field.path + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.description );
+            //util.tooltipTheme( target );
+
+            // Update select menu items
+            var oper = QueryBuilder._fld_cfg[field.type].opr,
+                sel = $(".field-sel-opr",div),
+                html = "";
+
+            for ( i in oper ){
+                html += "<option>" + oper[i][0] + "</option>";
+            }
+
+            sel.html( html );
+            sel.selectmenu("enable");
+            sel.selectmenu("refresh");
+
+            /*if ( st.rh && !this._typeCompat( st.lh.type, st.rh.type )){
+                $(".field-inp-rh",div).val("");
+                st.rh = null;
+            }*/
+
+            this._fieldSelOperChange( div, oper[0][0] );
+            this._fieldValidateRH( $(".field-inp-rh",div), false );
+    
+            $(".qb-indent-wrap",div).show();
+        }
+
+        //inp.val( field.label );
+        //inp.attr("title", field.label + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.desc );
+        //util.tooltipTheme( inp );
+
+        //inst._setupFieldLH( div, field );
+    }
+
+    /*
+    _setupFieldLH( div, field ){
+        var oper = QueryBuilder._fld_cfg[field.type].opr,
+            sel = $(".field-sel-opr",div),
+            //val = $(".field-inp-rh",div),
+            html = "";
+
+        for ( var i in oper ){
+            html += "<option>" + oper[i][0] + "</option>";
+        }
+
+        sel.html( html );
+        sel.selectmenu("enable");
+        sel.selectmenu("refresh");
+
+        //val.show();
+
+        this._fieldSelOperChange( div, oper[0][0] );
+        this._fieldValidateRH( $(".field-inp-rh",div), false );
+
+        $(".qb-indent-wrap",div).show();
+    }
+    */
+
+    _fieldSelOperChangeEv( ev, ui ){
+        var div = ev.currentTarget.closest(".query-builder-field");
+
+        this._fieldSelOperChange( div, ui.item.value );
+    }
+
+    _fieldSelOperChange( div, value ){
+        //console.log("select change",ev,"div:",ev.currentTarget.closest(".query-builder-field"));
+
+        //var div = ev.currentTarget.closest(".query-builder-field"),
+        var id = div.id;
+
+        if ( id in this._state ){
+            var st = this._state[id],
+                fc = QueryBuilder._fld_cfg[st.lh.type];
+
+            for ( var i in fc.opr ){
+                if ( value == fc.opr[i][0] ){
+                    st.opr = fc.opr[i];
+                    if ( st.opr[1] ){
+                        if ( st.opr[1] & QueryBuilder._RH_VAL ){
+                            $(".field-btn-val-type",div).button("enable");
+                        }else{
+                            $(".field-btn-val-type",div).button("disable").button('option', 'label', 'F');
+                        }
+                        
+                        if ( st.opr[1] & QueryBuilder._RH_FLD ){
+                            $(".field-btn-sel-rh",div).button("enable");
+                        }else{
+                            $(".field-btn-val-type",div).button("disable").button('option', 'label', 'V');
+                            $(".field-btn-sel-rh",div).button("disable");
+                        }
+
+                        $(".field-inp-rh, .field-btn-val-type, .field-btn-sel-rh",div).show();
+                    }else{
+                        $(".field-inp-rh, .field-btn-val-type, .field-btn-sel-rh",div).hide();
+                    }
+                    return;
+                }
+            }
+            console.log("oops, not found:", fc.opr );
+        }
+    }
+
+    _fieldInpTypeBtnClick( ev ){
+        var div = ev.currentTarget.closest(".query-builder-field");
+        if ( ev.currentTarget.innerText == "V" ){
+            $(ev.currentTarget).button('option', 'label', 'F');
+            $(".field-btn-sel-rh",div).button("enable");
+        }else{
+            $(ev.currentTarget).button('option', 'label', 'V');
+            $(".field-btn-sel-rh",div).button("disable");
+        }
+        this._fieldValidateRH( $(".field-inp-rh",div), false );
+    }
+
+    _fieldInputRHSelected( ev ){
+        var inst = this;
+        this._selectSchemaField( ev.currentTarget, null, null, function( field ){
+            console.log("selected:", field );
+
+            var btn = $(ev.currentTarget),
+                div = btn.closest(".query-builder-field"),
+                id = div[0].id,
+                inp = $(".field-inp-rh",div);
+
+            inp.val( field.path );
+            inp.removeClass( "qb-error" );
+            inp.attr("title", field.path + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.description );
+
+            inst._state[id].rh = field;
+        })
     }
 
     _fieldValidateRH( inp, delay ){
@@ -449,7 +606,11 @@ export class QueryBuilder extends HTMLElement {
                 vt = $(".field-btn-val-type",div).text();
 
             if ( vt == "V" ){
-                if( st.lh.type == "integer" ){
+                if ( !val.length ){
+                    inp.addClass("qb-error");
+                    inp.attr("title", "A value must specified." );
+                    return;
+                }else if( st.lh.type == "integer" ){
                     if ( isNaN( util.strToIntStrict( val )) ){
                         inp.addClass("qb-error");
                         inp.attr("title", "Value must be an integer." );
@@ -462,6 +623,7 @@ export class QueryBuilder extends HTMLElement {
                         return;
                     }
                 }
+
                 inp.attr("title", "" );
             }else{
                 var path = val.split("."),
@@ -519,18 +681,19 @@ export class QueryBuilder extends HTMLElement {
         function dlgSubmit( a_node ){
             if ( a_cb ){
                 var node = a_node?a_node:tree.getSelectedNodes()[0],
-                    path = [node.key],
-                    label = node.key,
+                    //path = [node.key],
+                    path = node.key,
                     desc = node.data.desc,
                     val_ty = node.data.val_type;
 
                 while ( node.parent.parent ){
                     node = node.parent;
-                    path.unshift( node.key );
-                    label = node.key + "." + label;
+                    //path.unshift( node.key );
+                    path = node.key + "." + path;
                 }
                 //console.log("node:",a_node);
-                a_cb({ path: path, label: label, desc: desc, type: val_ty });
+                //a_cb({ path: path, label: label, description: desc, type: val_ty });
+                a_cb({ path: path, description: desc, type: val_ty });
             }
 
             dlg_inst.dialog('close');
