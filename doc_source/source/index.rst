@@ -35,13 +35,14 @@ This site contains all user and administrative documentation for the DataFed sys
    user/cli/install
    user/cli/guide
    user/cli/reference
+   user/cli/shell_scripting
 
 .. toctree::
    :maxdepth: 2
    :caption: Scripting
 
    user/scripting
-   user/shell_scripting
+
    user/python_scripting
    autoapi/index.rst
 
