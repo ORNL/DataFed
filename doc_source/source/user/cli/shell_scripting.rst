@@ -8,7 +8,7 @@ as well as download the raw data from records.
 
 .. note::
 
-   Users are highly encouraged to use the `python interface <./python_scripting.html>`_ for non-trivial scripting needs
+   Users are highly encouraged to use the `python interface <../python_scripting.html>`_ for non-trivial scripting needs
    since it is easier to use returned information (especially errors) from DataFed in Python.
 
 Users can choose to use the CLI interactively or in a scripting environment. The commands would all look and function in the same manner with few exceptions.
