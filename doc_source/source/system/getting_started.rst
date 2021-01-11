@@ -129,6 +129,7 @@ Please follow the following steps to get started with the scripting interfaces:
 
 3. Try typing ``datafed`` to access the DataFed CLI.
    If you encounter errors stating that datafed was an unknown command, you would need to add DataFed to your path.
+
    a. First, you would need to find where datafed was installed. Here are some examples of where we found datafed installed on a few machines:
 
       i. NERSC's Cori - datafed was installed at ``~/.local/cori/3.7-anaconda-2019.10/bin``.
@@ -154,11 +155,20 @@ Please follow the following steps to get started with the scripting interfaces:
 
 3. Set up DataFed
 -----------------
-1. Type ``datafed setup`` into the shell. It will prompt you for your username and password.
+1. Type the following command into shell:
+
+   .. code:: bash
+
+       datafed setup
+
+   It will prompt you for your username and password.
 2. Enter the credentials you set up when registering for an account on DataFed
    (not your institutional credentials you use to log into the machine)
 3. Add the Globus endpoint specific to this machine / file-system as the default endpoint via:
-   ``datafed ep default set endpoint_name_here``
+
+   .. code:: bash
+
+      datafed ep default set endpoint_name_here
 
 This concludes the one-time setup necessary to get started with scripting using DataFed.
 You may use the interactive DataFed CLI or the Python package at this point.
