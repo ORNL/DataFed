@@ -9,61 +9,6 @@ to script data orchestration tasks using DataFed.
 Before scripting
 ~~~~~~~~~~~~~~~~
 
-1. Get Globus ID
-----------------
-1. Follow only step 1 of `instructions here <https://docs.globus.org/how-to/get-started/>`_ to get a Globus account.
-2. Ensure that your ``globus ID`` is linked with your institutional ID in your globus account:
-    a. Log into `globus.org <www.globus.org>`_
-    b. Click on ``Account`` on the left hand pane
-    c. Select the ``Identities`` tab in the window that opens up
-    d. You should see (at least these) two identities:
-
-       i. One from your home institution (that is listed as ``primary`` with a crown)
-       ii. Globus ID (your_username@globusid.org)
-
-    e. If you do not see the ``Globus ID``, click on ``Link another identity``. Select ``Globus ID`` and link this ID.
-
-2. Register at DataFed
-----------------------
-1. Once you have a Globus ID, visit the `DataFed web portal <https://datafed.ornl.gov>`_.
-2. Click on the ``Log in / Register`` button on the top right of the page.
-3. Follow the steps to register yourself with DataFed.
-4. Though you can log into the DataFed web portal with your institution's credentials, you will need the username and password you set up during your registration for scripting.
-
-3. Installing DataFed
----------------------
-For this section, we will assume that you intend to use the Client CLI on a
-remote machine such as an institutional cluster or HPC and that this machine has one or more Globus endpoints that can be used by all uesrs.
-
-1. Load any python 3.5+ module or any conda environment that you intend to use.
-2. Install the datafed client package via:
-   ``pip install --user datafed``
-3. Try typing ``datafed`` to access the DataFed CLI.
-   If you encounter errors stating that datafed was an unknown command, you would need to add DataFed to your path.
-   a. First, you would need to find where datafed was installed. For example, in the case of NERSC's Cori machine, datafed was installed at ``~/.local/cori/3.7-anaconda-2019.10/bin``.
-   b. Next, add DataFed to the path via ``PATH=$PATH:path/to/datafed/here``. Though this works, this addition to the path is only valid for this shell session.
-   It is recommended to add the path to your ``bashrc`` or ``rc`` such that datafed is loaded everytime you log in.
-
-4. Setting up DataFed
----------------------
-1. Type ``datafed setup`` into the shell. It will prompt you for your username and password.
-2. Enter the credentials you set up when registering for an account on DataFed
-3. Identify the Globus endpoint(s) attached to this machine from the user guide for the machine you are using.
-   For example, the following endpoint can be used when using OLCF's Summit supercomputer: ``olcf#dtn``
-4. Now, add this end point as your default endpoint via:
-   ``datafed ep default set endpoint_name_here``
-
-This concludes the one-time setup necessary to get started with scripting using DataFed.
-You may use the interactive DataFed CLI or the Python package at this point.
-
-5. Getting data allocations
----------------------------
-Though you can start to use DataFed at this point, it would not be possible to create or manipulate data of your own
-unless you have a data allocation in a DataFed data repository. It would still be possible to get and view data that are publicly shared via DataFed though.
-As the name suggests, a data allocation is just the data storage space that users and projects can use to store and share data of their own.
-
-Users are recommended to request an allocation from the principle investigator of the project and/or the IT administrator of facilities using DataFed.
-Make sure to communicate your Globus user ID with administrators or collaborators so that you can be added onto projects, be provided data allocations, etc.
 
 
 Shell scripting
