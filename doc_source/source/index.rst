@@ -39,12 +39,11 @@ This site contains all user and administrative documentation for the DataFed sys
 
 .. toctree::
    :maxdepth: 2
-   :caption: Scripting
+   :caption: Python Interface
 
-   user/scripting
-
-   user/python_scripting
    autoapi/index.rst
+   user/scripting
+   user/python_scripting
 
 .. toctree::
    :maxdepth: 2
