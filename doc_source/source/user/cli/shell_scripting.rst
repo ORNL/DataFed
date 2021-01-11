@@ -141,7 +141,7 @@ Furthermore, there are several options to add other contextual information and e
 ~~~~~~~~~~~~~~~~~~~~~
 
 The majority of DataFed's benefits can be accrued only when data is paired with metadata and provenance information.
-The documentation above shows that (scientific) metadata can be specified using JSON files or simply via the contents of a valid JSON file.
+The documentation above shows that (scientific) metadata can be specified using a JSON file or via a valid JSON string (same content as JSON file).
 In realistic scientific expeditions, we expect that volume of scientific metadata that should be associated with given raw data may be
 non-trivial in length.
 
