@@ -83,6 +83,7 @@ export class QueryBuilder extends HTMLElement {
         qb.on( "dragleave", ".query-builder-group,.query-builder-field", ev => this._handleDragLeave( ev ));
         qb.on( "dragover", ".query-builder-group,.query-builder-field", ev => this._handleDragOver( ev ));
         qb.on( "drop", ".query-builder-group,.query-builder-field", ev => this._handleDragDrop( ev ));
+        qb.on( "dragend", ".query-builder-group,.query-builder-field", ev => this._handleDragEnd( ev ));
 
         qb.on( "input", ".field-inp-lh", ev => this._fieldInputLHChanged( ev.currentTarget, true ));
         qb.on( "blur", ".field-inp-lh", ev => this._fieldInputLHChanged( ev.currentTarget, false ));
@@ -174,9 +175,6 @@ export class QueryBuilder extends HTMLElement {
         //var node = ev.originalEvent.dataTransfer.getData( "src" );
         //console.log( "source", this._drag_src );
 
-        $(".query-builder-field *", this._top_grp ).removeClass("qb-no-ptr-ev");
-        $(".group-div-header *", this._top_grp ).removeClass("qb-no-ptr-ev");
-
         if ( ev.currentTarget.classList.contains( "query-builder-group" )){
             ev.currentTarget.firstChild.classList.remove( "qb-drop-target" );
             ev.currentTarget.insertBefore( this._drag_src, ev.currentTarget.firstChild.nextSibling );
@@ -192,10 +190,16 @@ export class QueryBuilder extends HTMLElement {
             }
         }
 
-        this._drag_src = null;
         ev.stopPropagation();
         ev.preventDefault();
         return false;
+    }
+
+    _handleDragEnd(){
+        //console.log( "drag end" );
+        $(".query-builder-field *", this._top_grp ).removeClass("qb-no-ptr-ev");
+        $(".group-div-header *", this._top_grp ).removeClass("qb-no-ptr-ev");
+        this._drag_src = null;
     }
 
     _groupAdd( a_container ){
@@ -415,9 +419,15 @@ export class QueryBuilder extends HTMLElement {
                     }
                 }
 
+                console.log("input val/field",val,field );
                 field = flds;
                 if ( field ){
                     field.path = val;
+                    // TODO This is not right - need to handle arrays, enums?
+                    if ( !field.type ){
+                        field.type = "object";
+                        field.description = "(no description)";
+                    }
                 }
             }
             
