@@ -293,31 +293,6 @@ export class QueryBuilder extends HTMLElement {
             var div = ev.currentTarget.closest(".query-builder-field");
 
             inst._fieldInputLHValidate( div, field );
-
-            /*
-            var btn = $(ev.currentTarget),
-                div = btn.closest(".query-builder-field"),
-                id = div[0].id,
-                inp = $(".field-inp-lh",div);
-
-            if ( id in inst._state ){
-                var st = inst._state[id];
-
-                st.lh = field;
-                if ( st.rh && !inst._typeCompat( st.lh.type, st.rh.type )){
-                    $(".field-inp-rh",div).val("");
-                    st.rh = null;
-                }
-            }else{
-                inst._state[id] = { lh: field, rh: null };
-            }
-
-            inp.val( field.label );
-            inp.attr("title", field.label + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.desc );
-            util.tooltipTheme( inp );
-
-            inst._setupFieldLH( div, field );
-            */
         })
     }
 
@@ -345,49 +320,10 @@ export class QueryBuilder extends HTMLElement {
             st.inp_tm = null;
 
             this._fieldInputLHValidate( div );
-
-            /*
-            var val = inp.val().trim(),
-                path = val.split("."),
-                flds = this._sch_fields;
-
-            //console.log("path",path, "flds:",flds);
-
-            if ( !val.length ){
-                inp.removeClass("qb-error");
-                inp.attr("title", "" );
-                return;
-            }
-
-            for ( var i in path ){
-                //console.log("p",path[i], "flds:",flds);
-
-                if ( typeof flds === "object" && path[i] in flds ){
-                    flds = flds[path[i]];
-                }else{
-                    inp.addClass("qb-error");
-                    inp.attr("title", "Invalid schema field." );
-                    $(".qb-indent-wrap",div).hide();
-                    return;
-                }
-            }
-
-            inp.removeClass("qb-error");
-
-            console.log("valLH", val, flds );
-
-            // Save new LH state
-
-            // TODO Move into setup func
-            inp.attr("title", val + " : " + QueryBuilder._fld_cfg[flds.type].label + " " + flds.description );
-
-            this._setupFieldLH( div, flds );
-            */
         }
     }
 
     _fieldInputLHValidate( div, field ){
-
         //var btn = $(ev.currentTarget),
         //div = btn.closest(".query-builder-field"),
 
@@ -480,37 +416,8 @@ export class QueryBuilder extends HTMLElement {
     
             $(".qb-indent-wrap",div).show();
         }
-
-        //inp.val( field.label );
-        //inp.attr("title", field.label + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.desc );
-        //util.tooltipTheme( inp );
-
-        //inst._setupFieldLH( div, field );
     }
 
-    /*
-    _setupFieldLH( div, field ){
-        var oper = QueryBuilder._fld_cfg[field.type].opr,
-            sel = $(".field-sel-opr",div),
-            //val = $(".field-inp-rh",div),
-            html = "";
-
-        for ( var i in oper ){
-            html += "<option>" + oper[i][0] + "</option>";
-        }
-
-        sel.html( html );
-        sel.selectmenu("enable");
-        sel.selectmenu("refresh");
-
-        //val.show();
-
-        this._fieldSelOperChange( div, oper[0][0] );
-        this._fieldValidateRH( $(".field-inp-rh",div), false );
-
-        $(".qb-indent-wrap",div).show();
-    }
-    */
 
     _fieldSelOperChangeEv( ev, ui ){
         var div = ev.currentTarget.closest(".query-builder-field");
@@ -532,16 +439,22 @@ export class QueryBuilder extends HTMLElement {
                 if ( value == fc.opr[i][0] ){
                     st.opr = fc.opr[i];
                     if ( st.opr[1] ){
+                        var btn_vt = $(".field-btn-val-type",div);
+
                         if ( st.opr[1] & QueryBuilder._RH_VAL ){
-                            $(".field-btn-val-type",div).button("enable");
+                            btn_vt.button("enable");
                         }else{
-                            $(".field-btn-val-type",div).button("disable").button('option', 'label', 'F');
+                            btn_vt.button("disable").button('option', 'label', 'F');
                         }
                         
                         if ( st.opr[1] & QueryBuilder._RH_FLD ){
-                            $(".field-btn-sel-rh",div).button("enable");
+                            if ( btn_vt.button( "option", "label" ) == "F" ){
+                                $(".field-btn-sel-rh",div).button("enable");
+                            }else{
+                                $(".field-btn-sel-rh",div).button("disable");
+                            }
                         }else{
-                            $(".field-btn-val-type",div).button("disable").button('option', 'label', 'V');
+                            btn_vt.button("disable").button('option', 'label', 'V');
                             $(".field-btn-sel-rh",div).button("disable");
                         }
 
@@ -675,6 +588,7 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _typeCompat( a, b ){
+        //console.log("type compat",a,b);
         if ( a == b || ( a == "integer" && b == "number" ) || ( b == "integer" && a == "number" )){
             return true;
         }else{
