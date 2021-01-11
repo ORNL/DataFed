@@ -11,6 +11,14 @@ as well as download the raw data from records.
    Users are highly encouraged to use the `python interface <../python_scripting.html>`_ for non-trivial scripting needs
    since it is easier to use returned information (especially errors) from DataFed in Python.
 
+Getting Started
+---------------
+Users are recommended to follow our `getting-started guide <https://ornl.github.io/DataFed/system/getting_started.html>`_ to install DataFed on the machine(s) they intend to use DataFed on
+
+.. note::
+
+   Ensure that the Globus endpoint associated with the machine where you use DataFed is active.
+
 Interactive vs. Scripting
 -------------------------
 
