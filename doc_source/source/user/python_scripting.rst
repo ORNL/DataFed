@@ -1,22 +1,62 @@
 ================
 Python Scripting
 ================
+Below, we show simple examples of how one could use DataFed's Python interface to
+create data records in DataFed data repositories, put raw data into those records,
+as well as download the raw data from records.
 
-Import necessary packages
+Help and documentation
+----------------------
+Users are encouraged to refer to the extensive `documentation of DataFed's CLI class <https://ornl.github.io/DataFed/autoapi/datafed/CommandLib/index.html>`_
+for complete information on how to interact with DataFed using the Python interface.
+
+Getting Started
+---------------
+Users are recommended to follow our `getting-started guide <https://ornl.github.io/DataFed/system/getting_started.html>`_ to install DataFed on the machine(s) they intend to use DataFed on
+
+.. note::
+
+   Ensure that the Globus endpoint associated with the machine where you use DataFed is active.
+
+Import package
+~~~~~~~~~~~~~~
+We start by importing just the ``API`` class within ``datafed.CommandLib`` as shown below.
+We also import json to simplify the process of communicating metadata with DataFed.
 
 .. code:: python
 
     >>> import json
     >>> from datafed.CommandLib import API
 
-Create an instance of the DataFed API:
+Create instance
+~~~~~~~~~~~~~~~
+Finally, we create an instance of the DataFed API class via:
 
 .. code:: python
 
     >>> df_api = API()
 
-By default, one would need to get metadata from the simulation / measurement files.
-Here, we use fake metadata in place of the real metadata:
+We can now use ``df_api`` to communicate with DataFed
+
+Create Data Record
+------------------
+
+Prepare (scientific) metadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Users can derive a lot more value from DataFed if they provide more contextual information about their data which can be mined or queried later on.
+Therefore, users are highly encouraged to provide contextual information such as scientific metadata along with raw data.
+This metadata could by any supporting information that would help the user in identifying, searching for, and organizing data.
+
+For example, if one were performing simulations, this could be the exact combination of parameters relevant to the simulation.
+Alternatively, if one were performing measurements on an instrument, the metadata could include information about the sample / system being interroaged,
+measurement parameters such as resolution, speeds, spectroscopic parameters, etc.
+
+By default, one would need to get metadata from the simulation's input parameters file or output log files.
+Similarly users may need to extract header information from measurement files as the metadata for DataFed.
+
+DataFed can accept metadata as dictionaries in python or as a JSON file.
+
+Here, we simply create a dictionary with fake metadata in place of the real metadata:
 
 .. code:: python
 
@@ -27,8 +67,9 @@ Here, we use fake metadata in place of the real metadata:
                       'd': {'x': 14, 'y': -19} # Can use nested dictionaries
                       }
 
-Creating the record:
-Until the next version of DataFed, which can accept a python dictionary itself instead
+Create the record
+~~~~~~~~~~~~~~~~~
+Until a future version of DataFed, which can accept a python dictionary itself instead
 of a JSON file or a JSON string for the metadata, we will need to use ``json.dumps()``
 or write the dictionary to a JSON file:
 
@@ -40,8 +81,23 @@ or write the dictionary to a JSON file:
                                      parent_id='root', # parent collection
                                     )
 
+.. note::
+
+   Use the ``parent_id`` keyword argument to create the record within a
+   specific collection, for example within a project.
+
+Here, the ``parent_id`` was set to the default value of ``root`` which means that
+the Data Record would be created within the user's private collection.
+
+We encourage users to create a variable in the very beginning of the script
+capturing information about the starting location where DataFed Records
+would be created and operated on. This variable could be used for the ``parent_id``.
+
+Reading DataFed response
+~~~~~~~~~~~~~~~~~~~~~~~~
 DataFed returns Google Protobuf messages in response to commands (both success and failure).
-Let us take a look at an example response:
+
+Here is the response form the above ``dataCreate()`` command:
 
 .. code:: python
 
@@ -62,8 +118,12 @@ Let us take a look at an example response:
        parent_id: "c/u_somnaths_root"
      }, 'RecordDataReply')
 
-Though the content in these message objects are clearly laid out,
-getting at specific components of the messages requires a tiny bit of extra work.
+We would get the same response if we viewed basic information about a Data Record
+using the ``dataView()`` command.
+
+Though the content in these message objects are clearly laid out for humans to read and understand,
+getting the specific components of the messages requires a tiny bit of extra indexing work.
+
 For example, if we wanted to get the record ID to be used for later transactions,
 here's how we could go about it:
 
@@ -74,21 +134,34 @@ here's how we could go about it:
 
     'd/30224875'
 
-Let's put the raw data into this record.
-For the sake of simplicity, I'll just use the metadata as the data itself:
+Upload raw data
+---------------
+So far, the Data Record created above only contains simple text information
+along with the scientific metadata. It does not have the raw data that we
+colloquially refer to as "data" in science.
+
+For the sake of demonstration, we will just use the metadata as the data itself:
 
 .. code:: python
 
     >>> with open('parameters.json', mode='w') as file_handle:
             json.dump(parameters, file_handle)
 
-Putting the data file into record:
-Note that this file must be located such that it is visible to the (default) globus endpoint
+With the data file created, we are ready to put this raw data into the record we created above.
+
+.. note::
+
+   The raw data file must be located such that it is visible to the (default) Globus endpoint
+
+.. note::
+
+   Ensure that the Globus endpoint that will be used for uploading data is active.
 
 .. code:: python
 
     >>> put_resp = df_api.dataPut(record_id,
-                                  './parameters.json')
+                                  './parameters.json', # raw data file
+                                  )
     >>> print(put_resp)
 
     (item {
@@ -111,8 +184,28 @@ Note that this file must be located such that it is visible to the (default) glo
        dest: "d/30224875"
      }, 'DataPutReply')
 
-Viewing the record:
-Clearly, you will notice the source and file extension have been updated:
+The ``dataPut()`` method initiates a Globus transfer on our behalf
+from the machine where the command was entered to wherever the default data repository is located.
+
+In addition, the ``dataPut()`` method prints out the status of the Globus transfer as shown under the ``task`` section of the response.
+The ``task`` ``msg`` shows that the Globus transfer was pending and was not yet complete at the time when the response was printed.
+
+If it is important that the code not proceed until the transfer is complete,
+users are recommended to set the ``wait`` keyword argument in the ``dataPut()`` method to ``True``
+and instead use:
+
+.. code:: python
+
+    >>> put_resp = df_api.dataPut(record_id,
+                                  './parameters.json',
+                                  wait=True, # Waits until transfer completes.
+                                  )
+
+View Data Record
+----------------
+We can get all information regarding a Data Record, except for the raw data itself, using the ``dataView()`` method.
+
+Here we try to view the Data Record we have been working on so far:
 
 .. code:: python
 
@@ -137,7 +230,14 @@ Clearly, you will notice the source and file extension have been updated:
        notes: 0
      }, 'RecordDataReply')
 
-By default, the metadata in the response is a JSON string:
+Comparing this response against the response we got from the ``dataCreate()`` call,
+you will notice the source and file extension have been updated.
+
+Extract metadata
+~~~~~~~~~~~~~~~~
+As the response above shows, the metadata is also part of the response we got from ``dataView()``.
+
+By default, the metadata in the response is formatted as a JSON string:
 
 .. code:: python
 
@@ -155,3 +255,16 @@ In order to get back a python dictionary, use ``json.loads()``
      'b': [1, 2, -4, 7.123],
      'c': 'Something important',
      'd': {'x': 14, 'y': -19}}
+
+Download Data
+-------------
+* Display contents of current director
+* Get data
+* Show task information
+* Display contents of current directory
+
+.. note::
+
+    Users are recommended to perform data orchestration (especially large data movement - upload / download) operations
+    outside the scope of heavy / parallel computation operations in order to avoid wasting precious wall time on compute clusters.
+
