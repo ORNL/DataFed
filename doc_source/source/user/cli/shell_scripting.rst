@@ -11,6 +11,9 @@ as well as download the raw data from records.
    Users are highly encouraged to use the `python interface <../python_scripting.html>`_ for non-trivial scripting needs
    since it is easier to use returned information (especially errors) from DataFed in Python.
 
+Interactive vs. Scripting
+-------------------------
+
 Users can choose to use the CLI interactively or in a scripting environment. The commands would all look and function in the same manner with few exceptions.
 
 In order to enter the interactive mode, just type ``datafed`` into the terminal
@@ -48,7 +51,8 @@ It would be possible to interleave bash and DataFed operations in the non-intera
 
 In this guide, we will demonstrate DataFed in the interactive mode.
 
-**Help and documentation:**
+Help and documentation
+----------------------
 
 Readers are encouraged to refer to the extensive `documentation of DataFed's CLI <https://ornl.github.io/DataFed/user/cli/reference.html>`_ for complete information on how to interact with DataFed using its CLI.
 Alternative the same documentation available online is also available via help commands within DataFed.
@@ -78,6 +82,9 @@ For example, if we knew that we wanted to perform some data related operations, 
       put     Put (upload) raw data located at PATH to DataFed record ID.
       update  Update an existing data record.
       view    View data record information.
+
+Create Data Records
+-------------------
 
 After identifying the commands we need, we can look up more information about a specific command (``data create`` in this case) as:
 
@@ -130,7 +137,8 @@ After identifying the commands we need, we can look up more information about a 
 From the documentation above, it is clear that the ``data create`` command must be issued with at least the title for the record.
 Furthermore, there are several options to add other contextual information and even scientific metadata.
 
-**(Scientific) metadata:**
+(Scientific) metadata
+~~~~~~~~~~~~~~~~~~~~~
 
 The majority of DataFed's benefits can be accrued only when data is paired with metadata and provenance information.
 The documentation above shows that (scientific) metadata can be specified using JSON files or simply via the contents of a valid JSON file.
@@ -143,7 +151,8 @@ In order to simulate the process of associating data with metadata, we will crea
 
     {'a': True, 'b': 14}
 
-**Creating a data record:**
+Create record
+~~~~~~~~~~~~~
 
 Now that we have some metadata and we know how to use the ``data create`` function, we can create a record as shown below:
 
@@ -170,7 +179,8 @@ Now that we have some metadata and we know how to use the ``data create`` functi
 Note that the record was created in the user's ``root`` collection rather than in another specific collection such as within a project
 since the ``--parent`` flag was not specified.
 
-**Checking to make sure record was created:**
+Verify record creation
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
 
@@ -184,6 +194,9 @@ Clearly, the second record within the (user's) ``root`` collection is the record
 
 Note that we have  created a data record only with metadata and not with any actual data.
 For demonstration purposes, we will use a small text file as the data file.
+
+Upload raw data
+---------------
 
 Here is how we would put raw data into record (via Globus):
 
@@ -232,6 +245,9 @@ The output of the ``data view`` command reveals that this record indeed contains
 
 Now, we will demonstrate how one could download the data associated with a data record.
 
+View Data Record
+----------------
+
 For the purposes of this demonstration, we will be using data that was created elsewhere as the ``data view`` command shows:
 
 .. code:: bash
@@ -251,6 +267,9 @@ For the purposes of this demonstration, we will be using data that was created e
     Created:       11/01/2019,19:54
     Updated:       11/15/2019,20:31
     Description:   (none)
+
+Download raw data
+-----------------
 
 We list the contents of the local directory using the shell ``ls`` command to show that the file we want to download / ``get`` doesn't already exist:
 
@@ -289,3 +308,12 @@ We can download the data associated with a data record using the ``data get`` co
     -rw-rw---- 1 somnaths somnaths   37 Nov  3 11:41 nersc_data.txt
 
 As the listing of the local directory shows, we got the ``10314975.h5`` file from the ``data get`` command.
+
+Comments
+--------
+
+.. note::
+
+    Users are recommended to perform data orchestration (especially large data movement - upload / download) operations
+    outside the scope of heavy / parallel computation operations in order to avoid wasting precious wall time on compute clusters.
+
