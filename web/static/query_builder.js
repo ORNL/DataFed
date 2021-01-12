@@ -103,7 +103,6 @@ export class QueryBuilder extends HTMLElement {
     }
 
     disconnectedCallback(){
-        //console.log("query builder has been removed")
     }
 
     init( a_schema, a_query ){
@@ -154,7 +153,6 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _handleDragLeave( ev ){
-        //if ( ev.target.classList.contains( "query-builder-field" )){
         if ( ev.target.classList.contains( "query-builder-field" ) || ev.target.classList.contains( "group-div-header" )){
             ev.target.classList.remove( "qb-drop-target" );
             ev.stopPropagation();
@@ -162,19 +160,13 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _handleDragOver( ev ){
-        //console.log("drag over");
         if ( ev.target.classList.contains( "query-builder-field" ) || ev.target.classList.contains( "group-div-header" )){
             ev.stopPropagation();
             ev.preventDefault();
         }
-        //return false;
     }
 
     _handleDragDrop( ev ){
-        //console.log( "dropped", ev );
-        //var node = ev.originalEvent.dataTransfer.getData( "src" );
-        //console.log( "source", this._drag_src );
-
         if ( ev.currentTarget.classList.contains( "query-builder-group" )){
             ev.currentTarget.firstChild.classList.remove( "qb-drop-target" );
             ev.currentTarget.insertBefore( this._drag_src, ev.currentTarget.firstChild.nextSibling );
@@ -196,7 +188,6 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _handleDragEnd(){
-        //console.log( "drag end" );
         $(".query-builder-field *", this._top_grp ).removeClass("qb-no-ptr-ev");
         $(".group-div-header *", this._top_grp ).removeClass("qb-no-ptr-ev");
         this._drag_src = null;
@@ -225,32 +216,17 @@ export class QueryBuilder extends HTMLElement {
         a_container.append( fld );
         $("button",fld).button();
         util.inputTheme( $(".field-inp-lh, .field-inp-rh",fld));
-        $("select",fld).selectmenu({
-            width:false
-            /*
-            change: function( ev, ui ){
-                console.log("sel",ui.item);
-                
-                if ( QueryBuilder._fld_no_input.indexOf( ui.item.value ) == -1 ){
-                    // Show input
-                    $(".field-inp-rh, .field-btn-val-type, .field-btn-sel-rh",fld).show();
-                    
-                }else{
-                    // Hide input
-                    $(".field-inp-rh, .field-btn-val-type, .field-btn-sel-rh",fld).hide();
-                }
-            }*/
-        });
+        $("select",fld).selectmenu({ width: false });
+
+        this._fieldInputLHValidate( fld );
     }
 
     _groupAddBtnClick( ev ){
-        console.log("group add");
         var div = ev.currentTarget.closest("div.query-builder-group");
         this._groupAdd( div );
     }
 
     _groupRemBtnClick( ev ){
-        console.log("group rem");
         var div = ev.currentTarget.closest("div.query-builder-group");
         if ( div ){
             // Work around close bug in jquery-ui tooltip
@@ -260,7 +236,6 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _groupOpBtnClick( ev ){
-        console.log("group oper", ev.currentTarget );
         if ( ev.currentTarget.innerText == "AND" ){
             $(ev.currentTarget).button('option', 'label', 'OR');
         }else{
@@ -269,14 +244,12 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _fieldAddBtnClick( ev ){
-        console.log("field add", ev );
         var div = ev.currentTarget.closest("div.query-builder-group");
 
         this._fieldAdd( div );
     }
 
     _fieldRemBtnClick( ev ){
-        console.log("field rem");
         var div = ev.currentTarget.closest("div.query-builder-field");
         if ( div ){
             // Work around close bug in jquery-ui tooltip
@@ -288,8 +261,6 @@ export class QueryBuilder extends HTMLElement {
     _fieldInputLHSelected( ev ){
         var inst = this;
         this._selectSchemaField( ev.currentTarget, null, null, function( field ){
-            //console.log("selected:", field );
-
             var div = ev.currentTarget.closest(".query-builder-field");
 
             inst._fieldInputLHValidate( div, field );
@@ -324,9 +295,6 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _fieldInputLHValidate( div, field ){
-        //var btn = $(ev.currentTarget),
-        //div = btn.closest(".query-builder-field"),
-
         var i, target = $(".field-inp-lh",div);
 
         if ( !field ){
@@ -342,14 +310,11 @@ export class QueryBuilder extends HTMLElement {
                     flds = this._sch_fields;
 
                 for ( i in path ){
-                    //console.log("p",path[i], "flds:",flds);
-
                     if ( typeof flds === "object" && path[i] in flds ){
                         flds = flds[path[i]];
                     }else{
                         target.addClass( "qb-error" );
                         target.attr( "title", "Invalid schema field." );
-                        //$(".qb-indent-wrap",div).hide();
                         flds = null;
                         break;
                     }
@@ -366,8 +331,6 @@ export class QueryBuilder extends HTMLElement {
                     }
                 }
             }
-            
-            //target.removeClass("qb-error");
         }
 
         var st;
@@ -391,7 +354,6 @@ export class QueryBuilder extends HTMLElement {
             target.val( field.path );
             target.removeClass( "qb-error" );
             target.attr( "title", field.path + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.description );
-            //util.tooltipTheme( target );
 
             // Update select menu items
             var oper = QueryBuilder._fld_cfg[field.type].opr,
@@ -405,11 +367,6 @@ export class QueryBuilder extends HTMLElement {
             sel.html( html );
             sel.selectmenu("enable");
             sel.selectmenu("refresh");
-
-            /*if ( st.rh && !this._typeCompat( st.lh.type, st.rh.type )){
-                $(".field-inp-rh",div).val("");
-                st.rh = null;
-            }*/
 
             this._fieldSelOperChange( div, oper[0][0] );
             this._fieldValidateRH( $(".field-inp-rh",div), false );
@@ -426,9 +383,6 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _fieldSelOperChange( div, value ){
-        //console.log("select change",ev,"div:",ev.currentTarget.closest(".query-builder-field"));
-
-        //var div = ev.currentTarget.closest(".query-builder-field"),
         var id = div.id;
 
         if ( id in this._state ){
@@ -482,20 +436,20 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _fieldInputRHSelected( ev ){
-        var inst = this;
-        this._selectSchemaField( ev.currentTarget, null, null, function( field ){
+        var inst = this,
+            div = ev.currentTarget.closest(".query-builder-field"),
+            st = this._state[div.id];
+
+        this._selectSchemaField( ev.currentTarget, st.lh.type, st.lh.path, function( field ){
             console.log("selected:", field );
 
-            var btn = $(ev.currentTarget),
-                div = btn.closest(".query-builder-field"),
-                id = div[0].id,
-                inp = $(".field-inp-rh",div);
+            var inp = $(".field-inp-rh",div);
 
             inp.val( field.path );
             inp.removeClass( "qb-error" );
             inp.attr("title", field.path + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.description );
 
-            inst._state[id].rh = field;
+            inst._state[div.id].rh = field;
         })
     }
 
@@ -552,8 +506,6 @@ export class QueryBuilder extends HTMLElement {
                 var path = val.split("."),
                     flds = this._sch_fields;
 
-                //console.log("path",path, "flds:",flds);
-
                 if ( !val.length ){
                     inp.removeClass("qb-error");
                     inp.attr("title", "" );
@@ -561,8 +513,6 @@ export class QueryBuilder extends HTMLElement {
                 }
 
                 for ( var i in path ){
-                    //console.log("p",path[i], "flds:",flds);
-
                     if ( typeof flds === "object" && path[i] in flds ){
                         flds = flds[path[i]];
                     }else{
@@ -588,7 +538,6 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _typeCompat( a, b ){
-        //console.log("type compat",a,b);
         if ( a == b || ( a == "integer" && b == "number" ) || ( b == "integer" && a == "number" )){
             return true;
         }else{
@@ -598,26 +547,16 @@ export class QueryBuilder extends HTMLElement {
 
     _selectSchemaField( a_target, a_type, a_excl, a_cb ){
         var frame = $(document.createElement('div')),
-            dlg_inst;
+            dlg_inst,
+            inst = this;
 
         frame.html("<div class='qb-field-sel-tree no-border'></div>");
 
         function dlgSubmit( a_node ){
             if ( a_cb ){
-                var node = a_node?a_node:tree.getSelectedNodes()[0],
-                    //path = [node.key],
-                    path = node.key,
-                    desc = node.data.desc,
-                    val_ty = node.data.val_type;
+                var node = a_node?a_node:tree.getSelectedNodes()[0];
 
-                while ( node.parent.parent ){
-                    node = node.parent;
-                    //path.unshift( node.key );
-                    path = node.key + "." + path;
-                }
-                //console.log("node:",a_node);
-                //a_cb({ path: path, label: label, description: desc, type: val_ty });
-                a_cb({ path: path, description: desc, type: val_ty });
+                a_cb({ path: node.key, description: node.data.desc, type: node.data.val_type });
             }
 
             dlg_inst.dialog('close');
@@ -652,15 +591,33 @@ export class QueryBuilder extends HTMLElement {
                 }
             },
             click:function( ev, data ) {
-                console.log("click",ev,data);
-                //if ( !data.node.isFolder() ){
                 if ( data.targetType == "expander" && data.node.isFolder() ){
                     data.node.toggleExpanded();
-                }else{
+                }else if ( !data.node.unselectable ){
                     dlgSubmit( data.node );
                 }
             },
             init: function( ev, data ){
+                if ( a_type ){
+                    data.tree.rootNode.visit( function( node ){
+                        //console.log("node:",node,"ty:",a_type);
+                        if ( a_type && !inst._typeCompat( node.data.val_type, a_type )){
+                            //console.log("unselect",node.data.val_type );
+                            node.unselectable = true;
+                            node.addClass("qb-tree-disabled");
+                        }
+                    });
+                }
+
+                if ( a_excl ){
+                    var nd = data.tree.getNodeByKey( a_excl );
+
+                    if ( nd ){
+                        nd.unselectable = true;
+                        nd.addClass("qb-tree-disabled");
+                    }
+                }
+
                 data.tree.rootNode.children[0].setActive( true );
             }
         };
@@ -668,7 +625,6 @@ export class QueryBuilder extends HTMLElement {
         var options = {
             title: "Select Schema Field",
             modal: true,
-            //width: 'auto',
             resizable: true,
             minWidth: 0,
             minHeight: 0,
@@ -732,20 +688,21 @@ export class QueryBuilder extends HTMLElement {
 
     _buildFieldHTML(){
         this.sch_field_src = [];
-        this._buildFieldHTMLRecurse( this._sch_fields, this.sch_field_src );
+        this._buildFieldHTMLRecurse( this._sch_fields, null, this.sch_field_src );
     }
 
-    _buildFieldHTMLRecurse( a_fields, a_src ){
-        var f;
+    _buildFieldHTMLRecurse( a_fields, a_path, a_src ){
+        var f, p;
         for ( var k in a_fields ){
             f = a_fields[k];
-            console.log("field", k, f);
+            p = (a_path?a_path + ".":"") + k;
+            //console.log("field", k, f);
             if ( !f.type ){
                 var chld = [];
-                this._buildFieldHTMLRecurse( f, chld );
-                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", folder: true, children: chld, key: k, val_type: "object", desc: (f.description?f.description:"(no description)") });
+                this._buildFieldHTMLRecurse( f, p, chld );
+                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", folder: true, children: chld, key: p, val_type: "object", desc: (f.description?f.description:"(no description)") });
             }else{
-                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", key: k, val_type: f.type, desc: (f.description?f.description:"(no description)") });
+                a_src.push({ title: "<span title='"+(f.description?f.description:"(no description)")+"'>" + k + "</span>", key: p, val_type: f.type, desc: (f.description?f.description:"(no description)") });
             }
         }
     }
