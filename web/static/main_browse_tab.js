@@ -2161,10 +2161,16 @@ $("#btn_srch_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_refresh",frame).on('click', actionRefresh );
 //$("#btn_schemas",frame).on('click', actionSchemaList );
+
+var last_qry = null;
+
 $("#btn_schemas",frame).on('click', function(){
     api.schemaView( "ugly", 0, true, function( ok, sch ){
         console.log("resolved schema:", sch.schema[0]);
-        dlgQueryBuild.show( ok?sch.schema[0]:null );
+        dlgQueryBuild.show( ok?sch.schema[0]:null, last_qry, function( qry ){
+            last_qry = qry;
+            console.log("last query:",last_qry);
+        });
     });
 });
 

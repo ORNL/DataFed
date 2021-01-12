@@ -3,7 +3,7 @@ import * as util from "./util.js";
 import * as api from "./api.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
 
-export function show( a_schema, a_cb ){
+export function show( a_schema, a_query, a_cb ){
     console.log("show query builder dialog");
 
     var frame = $(document.createElement('div'));
@@ -61,7 +61,7 @@ export function show( a_schema, a_cb ){
                 $("#dlg_qry_bld_sch_ver",frame).val( _schema.ver );
                 $("#dlg_qry_bld_msg",frame).hide();
                 $("query-builder",frame).show();
-                qb.init( _schema );
+                qb.init( _schema, a_query );
             }
         },
         close: function( ev, ui ) {

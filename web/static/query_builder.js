@@ -120,9 +120,13 @@ export class QueryBuilder extends HTMLElement {
         this._top_grp = $(grp)
         util.tooltipTheme( this._top_grp );
         this.append( grp );
-        this._fieldAdd( grp );
-
         this._front = grp.closest(".ui-front");
+
+        if ( a_query ){
+            this._setQueryGroupRecurse( grp, a_query );
+        }else{
+            this._fieldAdd( grp );
+        }
     }
 
     getSchema(){
@@ -172,6 +176,26 @@ export class QueryBuilder extends HTMLElement {
             return qry;
         }
     }
+
+    _setQueryGroupRecurse( div, qry ){
+        var c, d;
+
+        for ( var i = 0; i < qry.children.length; i++ ){
+            c = qry.children[i];
+
+            if ( c.type == "group" ){
+                d = this._groupAdd( div, false );
+                this._setQueryGroupRecurse( d, c );
+            }else if ( c.type == "field" ){
+                d = this._fieldAdd( div );
+                $(".field-inp-lh", d ).val( c.lh );
+                this._fieldInputLHValidate( d );
+            }else{
+                throw "Invalid query";
+            }
+        }
+    }
+
 
     _handleDragStart( ev ){
         $(".query-builder-field *", this._top_grp ).addClass("qb-no-ptr-ev");
@@ -231,7 +255,7 @@ export class QueryBuilder extends HTMLElement {
         this._drag_src = null;
     }
 
-    _groupAdd( a_container ){
+    _groupAdd( a_container, def_fld = true ){
         var grp = document.createElement('div');
         grp.id = "qb-grp-" + this._id++;
 
@@ -240,7 +264,11 @@ export class QueryBuilder extends HTMLElement {
         $("button",grp).button();
 
         a_container.append( grp );
-        this._fieldAdd( grp );
+        if ( def_fld ){
+            this._fieldAdd( grp );
+        }
+
+        return grp;
     }
 
     _fieldAdd( a_container ){
@@ -256,6 +284,8 @@ export class QueryBuilder extends HTMLElement {
         $("select",fld).selectmenu({ width: false });
 
         this._fieldInputLHValidate( fld );
+
+        return fld;
     }
 
     _groupAddBtnClick( ev ){
@@ -337,7 +367,7 @@ export class QueryBuilder extends HTMLElement {
         if ( !field ){
             var val = target.val().trim();
 
-            console.log("inp val",val);
+            //console.log("inp val",val);
 
             if ( !val.length ){
                 target.addClass( "qb-error" );
