@@ -41,8 +41,12 @@ export function show( a_schema, a_cb ){
             id:"ok_btn",
             text: "Save",
             click: function() {
+                var qry = qb.getQuery();
+
+                console.log("query:",qry);
+
                 if ( a_cb )
-                    a_cb();
+                    a_cb( qry );
 
                 $(this).dialog('close');
             }
@@ -50,12 +54,9 @@ export function show( a_schema, a_cb ){
         open: function(event,ui){
             $(".btn",frame).button();
             util.inputTheme( $('input',frame));
-            console.log("query builder dialog open");
 
             if ( a_schema ){
-                // TODO validate schema?
                 _schema = a_schema;
-                //console.log("schema:",_schema);
                 $("#dlg_qry_bld_sch_id",frame).val( _schema.id );
                 $("#dlg_qry_bld_sch_ver",frame).val( _schema.ver );
                 $("#dlg_qry_bld_msg",frame).hide();

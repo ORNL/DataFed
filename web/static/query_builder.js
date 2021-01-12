@@ -56,7 +56,6 @@ export class QueryBuilder extends HTMLElement {
         super();
 
         this._sch = null;
-        this._qry = {};
         this._id = 1;
         this._state = {};
     }
@@ -107,7 +106,6 @@ export class QueryBuilder extends HTMLElement {
 
     init( a_schema, a_query ){
         this._sch = a_schema;
-        this._qry = a_query;
         this._sch_fields = {};
         this._sch.def = JSON.parse( this._sch.def );
 
@@ -131,8 +129,48 @@ export class QueryBuilder extends HTMLElement {
         return this._sch;
     }
 
+    hasErrors(){
+        return $( ".qb-error", this._top_grp ).length?true:false;
+    }
+
     getQuery(){
-        return this._qry;
+        if ( this.hasErrors() ){
+            return;
+        }
+
+        return this._getQueryRecurse( this._top_grp[0] );
+    }
+
+    _getQueryRecurse( div ){
+        if ( div.classList.contains("query-builder-group")){
+            var ch = [], q;
+
+            for ( var i = 0; i < div.children.length; i++ ){
+                q = this._getQueryRecurse( div.children[i] );
+                if ( q ){
+                    ch.push( q );
+                }
+            }
+
+            return {
+                type: "group",
+                op: $(".group-btn-opr", div ).button('option', 'label').toLowerCase(),
+                children: ch
+            };
+        }else if ( div.classList.contains("query-builder-field")){
+            var qry = {
+                type: "field",
+                lh: $(".field-inp-lh", div ).val(),
+                op: $(".field-sel-opr", div ).val()
+            };
+
+            if ( this._state[div.id].opr[1] ){
+                qry.rh = $(".field-inp-rh", div ).val();
+                qry.rh_is_field = ($(".field-btn-val-type",div).button( "option", "label" ) == "F"?true:false);
+            }
+
+            return qry;
+        }
     }
 
     _handleDragStart( ev ){
@@ -201,9 +239,8 @@ export class QueryBuilder extends HTMLElement {
         grp.innerHTML = QueryBuilder._grp_html;
         $("button",grp).button();
 
-        this._fieldAdd( grp );
-
         a_container.append( grp );
+        this._fieldAdd( grp );
     }
 
     _fieldAdd( a_container ){
