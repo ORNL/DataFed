@@ -24,7 +24,22 @@ query-builder{
 .query-builder-field{
     margin-left: 1em;
     padding:0.5em 0 0.3em 0;
+}
+
+.qb-drag-handle-grp{
+    color: #000;
     cursor: move;
+    font-size:130%;
+    margin-top:-.1em!important;
+    margin-left:-.26em!important;
+}
+
+.qb-drag-handle-fld{
+    color: #000;
+    cursor: move;
+    font-size:130%;
+    margin-top:-.26em!important;
+    margin-left:-.26em!important;
 }
 
 .qb-tree-disabled{

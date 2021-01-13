@@ -1,4 +1,4 @@
-//import * as settings from "./settings.js";
+import * as dialogs from "./dialogs.js";
 import * as util from "./util.js";
 import * as api from "./api.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
@@ -10,15 +10,11 @@ export function show( a_schema, a_query, a_cb ){
 
     frame.html(
         "<div class='col-flex' style='height:100%'>\
-            <div class='row-flex input-row' style='flex:none'>\
-                <div style='flex:none'>Schema ID:</div>\
-                <div style='flex:1 1 auto'><input id='dlg_qry_bld_sch_id' style='width:100%'></input></div>\
-                <div style='flex:none'>Ver:</div>\
-                <div style='flex:none'><input id='dlg_qry_bld_sch_ver' style='width:8ch'></input></div>\
-                <div style='flex:none'><button id='dlg_qry_bld_sch_pick' class='btn btn-icon'><span class='ui-icon ui-icon-structure'></span></button></div>\
+            <div class='row-flex input-row'><div>Schema ID: </div><div style='flex: 1 1 auto'><input id='dlg_qry_bld_sch_id' type='text' readonly style='width:100%'></input></div>\
+                <div><button id='dlg_qry_bld_sch_pick' class='btn btn-icon'><span class='ui-icon ui-icon-structure'></span></button></div>\
             </div>\
             <div style='flex:1 1 100%;padding-top:0.5em;overflow:auto'>\
-                <div id='dlg_qry_bld_msg'><br><br><center>Specify or select a schema to begin building a query.</center></div>\
+                <div id='dlg_qry_bld_msg'><br><br><center>Select a schema to begin building a query.</center></div>\
                 <query-builder style='display:none'></query-builder>\
             </div>\
         </div>");
@@ -41,6 +37,11 @@ export function show( a_schema, a_query, a_cb ){
             id:"ok_btn",
             text: "Save",
             click: function() {
+                if ( qb.hasErrors() ){
+                    dialogs.dlgAlert( "Query Builder Error", "Query errors must be resolved before saving." );
+                    return;
+                }
+
                 var qry = qb.getQuery();
 
                 console.log("query:",qry);
@@ -57,8 +58,7 @@ export function show( a_schema, a_query, a_cb ){
 
             if ( a_schema ){
                 _schema = a_schema;
-                $("#dlg_qry_bld_sch_id",frame).val( _schema.id );
-                $("#dlg_qry_bld_sch_ver",frame).val( _schema.ver );
+                $("#dlg_qry_bld_sch_id",frame).val( _schema.id + "-" + _schema.ver );
                 $("#dlg_qry_bld_msg",frame).hide();
                 $("query-builder",frame).show();
                 qb.init( _schema, a_query );
@@ -72,8 +72,7 @@ export function show( a_schema, a_query, a_cb ){
     $("#dlg_qry_bld_sch_pick",frame).on( "click", function(){
         dlgSchemaList.show( true, true, function( schema ){
             _schema = schema;
-            $("#dlg_qry_bld_sch_id",frame).val( _schema.id );
-            $("#dlg_qry_bld_sch_ver",frame).val( _schema.ver );
+            $("#dlg_qry_bld_sch_id",frame).val( _schema.id + "-" + _schema.ver );
             $("#dlg_qry_bld_msg",frame).hide();
             $("query-builder",frame).show();
             qb.init( _schema );
