@@ -20,6 +20,7 @@ This site contains all user and administrative documentation for the DataFed sys
    system/introduction
    system/overview
    system/usecases
+   system/getting_started
 
 .. toctree::
    :maxdepth: 2
@@ -34,13 +35,15 @@ This site contains all user and administrative documentation for the DataFed sys
    user/cli/install
    user/cli/guide
    user/cli/reference
+   user/cli/shell_scripting
 
 .. toctree::
    :maxdepth: 2
-   :caption: Scripting
+   :caption: Python Interface
 
-   user/scripting
    autoapi/index.rst
+   user/scripting
+   user/python_scripting
 
 .. toctree::
    :maxdepth: 2

@@ -1,0 +1,453 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Getting Started &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Web Portal" href="../user/web/portal.html" />
+    <link rel="prev" title="Use Cases" href="usecases.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#universal-setup">Universal setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#get-globus-id">1. Get Globus ID</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#register-at-datafed">2. Register at DataFed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#getting-data-allocations">3. Getting data allocations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#install-identify-globus-endpoint">4. Install / identify Globus Endpoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#activate-globus-endpoint">5. Activate Globus Endpoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#scripting-setup">Scripting setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#install-datafed-client">1. Install DataFed client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#set-up-datafed">3. Set up DataFed</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/web/portal.html">Web Portal</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/install.html">Installation and Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/reference.html">Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/shell_scripting.html">Shell Scripting</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/scripting.html">Scripting Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/python_scripting.html">Python Scripting</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin/general.html">Administration</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Getting Started</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/system/getting_started.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="getting-started">
+<h1>Getting Started</h1>
+<p>Please follow this guide to get started with DataFed</p>
+<div class="section" id="universal-setup">
+<h2>Universal setup</h2>
+<div class="section" id="get-globus-id">
+<h3>1. Get Globus ID</h3>
+<ol class="arabic simple">
+<li><p>Follow only step 1 of <a class="reference external" href="https://docs.globus.org/how-to/get-started/">instructions here</a> to get a Globus account.</p></li>
+<li><dl class="simple">
+<dt>Ensure that your <code class="docutils literal notranslate"><span class="pre">globus</span> <span class="pre">ID</span></code> is linked with your institutional ID in your globus account:</dt><dd><ol class="loweralpha simple">
+<li><p>Log into <a class="reference external" href="www.globus.org">globus.org</a></p></li>
+<li><p>Click on <code class="docutils literal notranslate"><span class="pre">Account</span></code> on the left hand pane</p></li>
+<li><p>Select the <code class="docutils literal notranslate"><span class="pre">Identities</span></code> tab in the window that opens up</p></li>
+<li><p>You should see (at least these) two identities:</p>
+<ol class="lowerroman simple">
+<li><p>One from your home institution (that is listed as <code class="docutils literal notranslate"><span class="pre">primary</span></code> with a crown)</p></li>
+<li><p>Globus ID (<a class="reference external" href="mailto:your_username&#37;&#52;&#48;globusid&#46;org">your_username<span>&#64;</span>globusid<span>&#46;</span>org</a>)</p></li>
+</ol>
+</li>
+<li><p>If you do not see the <code class="docutils literal notranslate"><span class="pre">Globus</span> <span class="pre">ID</span></code>, click on <code class="docutils literal notranslate"><span class="pre">Link</span> <span class="pre">another</span> <span class="pre">identity</span></code>. Select <code class="docutils literal notranslate"><span class="pre">Globus</span> <span class="pre">ID</span></code> and link this ID.</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+<div class="section" id="register-at-datafed">
+<h3>2. Register at DataFed</h3>
+<ol class="arabic simple">
+<li><p>Once you have a Globus ID, visit the <a class="reference external" href="https://datafed.ornl.gov">DataFed web portal</a>.</p></li>
+<li><p>Click on the <code class="docutils literal notranslate"><span class="pre">Log</span> <span class="pre">in</span> <span class="pre">/</span> <span class="pre">Register</span></code> button on the top right of the page.</p></li>
+<li><p>Follow the steps to register yourself with DataFed.</p></li>
+<li><p>Though you can log into the DataFed web portal with your institution’s credentials,
+you will need the username and password you set up during your registration for scripting.</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Your institutional credentials are not the same as your DataFed credentials.
+The latter is only required for using DataFed via python / CLI.</p>
+</div>
+</div>
+<div class="section" id="getting-data-allocations">
+<h3>3. Getting data allocations</h3>
+<p>As the name suggests, a data allocation is just the data storage space that users and projects can use to store and share data of their own.
+Though you can start to use DataFed at this point to view and get publicly shared data, it would not be possible to create or manipulate data of your own
+unless you have a data allocation in a DataFed data repository.</p>
+<p>Users are recommended to request an allocation from the principle investigator of the project and/or the IT administrator of facility using DataFed.
+Make sure to communicate your Globus user ID with administrators or collaborators so that you can be added onto projects, be provided data allocations, etc.</p>
+</div>
+<div class="section" id="install-identify-globus-endpoint">
+<h3>4. Install / identify Globus Endpoint</h3>
+<p>You will need a <a class="reference external" href="https://docs.cades.ornl.gov/#data-transfer-storage/globus-endpoints/">Globus endpoint</a> on every machine where you intend to download / upload data.</p>
+<p><strong>High Performance Compute clusters:</strong></p>
+<p>Most high performance computing clusters will already have at-least one endpoint already configured. See the table below for some popular examples:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 25%" />
+<col style="width: 68%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Facility</p></th>
+<th class="head"><p>Machine(s)</p></th>
+<th class="head"><p>Endpoint</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>OLCF</p></td>
+<td><p>Summit, Andes, JupyterHub</p></td>
+<td><p><a class="reference external" href="https://docs.olcf.ornl.gov/data/transferring.html">olcf#dtn</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>ALCF</p></td>
+<td><p>Theta</p></td>
+<td><p><a class="reference external" href="https://www.alcf.anl.gov/support-center/theta/using-globus-theta">alcf#dtn_theta</a></p></td>
+</tr>
+<tr class="row-even"><td><p>ALCF</p></td>
+<td><p>Mira, Cooley</p></td>
+<td><p><a class="reference external" href="https://www.alcf.anl.gov/support-center/cooley/globus-cooley">alcf#dtn_mira</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>NERSC</p></td>
+<td><p>Cori</p></td>
+<td><p><a class="reference external" href="https://docs.nersc.gov/services/globus/">nersc#dtn</a></p></td>
+</tr>
+<tr class="row-even"><td><p>CADES</p></td>
+<td><p>CADES Open Research</p></td>
+<td><p><a class="reference external" href="https://docs.cades.ornl.gov/#data-transfer-storage/globus-endpoints/">CADES-OR</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>CADES</p></td>
+<td><p>CADES Moderate Research</p></td>
+<td><p><a class="reference external" href="https://docs.cades.ornl.gov/#data-transfer-storage/globus-endpoints/">CADES-MOD</a></p></td>
+</tr>
+</tbody>
+</table>
+<p>If your cluster is not listed above, you may need to identify the endpoint(s) from the cluster’s documentation or
+by searching on the Globus data transfer web interface as shown below:</p>
+<ol class="arabic">
+<li><p>Log into Globus’ <a class="reference external" href="https://globus.org">web portal</a></p></li>
+<li><p>Select <code class="docutils literal notranslate"><span class="pre">File</span> <span class="pre">Manager</span></code> on the left hand pane if it is not already selected.</p>
+<img alt="../_images/finding_endpoint_01.png" src="../_images/finding_endpoint_01.png" />
+</li>
+<li><p>Start typing the name of the machine or compute facility in the search box</p>
+<img alt="../_images/finding_endpoint_02.png" src="../_images/finding_endpoint_02.png" />
+</li>
+<li><p>Select the option that seems most reasonable (avoid endpoints named as <code class="docutils literal notranslate"><span class="pre">test</span></code> or those that seem project specific)</p></li>
+<li><p>If the endpoint name is not clearly listed in the short description, click on the three dots signifying the options to view details about the endpoint</p></li>
+<li><p>Scroll down the page till you find <code class="docutils literal notranslate"><span class="pre">Legacy</span> <span class="pre">name</span></code>. This is the short-hand identifier for the endpoint</p>
+<img alt="../_images/finding_endpoint_03.png" src="../_images/finding_endpoint_03.png" />
+</li>
+</ol>
+<p><strong>Personal Computers and Workstations:</strong></p>
+<p>If you plan on using DataFed to upload and download data from your own computer,
+you will need to <a class="reference external" href="https://docs.olcf.ornl.gov/data/transferring.html#using-globus-from-your-local-machine">follow these instructions</a>
+to install Globus Connect Personal and set up your own Globus endpoint on your computer.</p>
+</div>
+<div class="section" id="activate-globus-endpoint">
+<h3>5. Activate Globus Endpoint</h3>
+<p>In order to transfer from or to the Globus endpoint attached to the cluster’s file system or your personal computer,
+you would need to activate the Globus endpoint identified in the previous step.
+Just clicking on the endpoint in the Globus web portal will prompt you to authenticate yourself with the institution-specific credentials.
+Here are <a class="reference external" href="https://docs.cades.ornl.gov/#data-transfer-storage/globus-endpoints/#activating-endpoints">example instructions</a> for activating CADES’ endpoints.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Globus endpoints are active only for a short period of time and must be reactivated if they expire.</p>
+</div>
+<p>Once the endpoint is activated, it will be active for data transfers for (typically) 3 days or so.
+It is typically possible to renew / extend the endpoint activation before it expires.
+Once the activation has expired, you would need to visit Globus’ web portal to activate the endpoint again.</p>
+</div>
+</div>
+<div class="section" id="scripting-setup">
+<h2>Scripting setup</h2>
+<p>Though it is indeed possible to use the web interface exclusively for managing data in DataFed,
+DataFed’s python interface and CLI are very handy tools for automating data orchestration and accessing DataFed
+when a web interface is not available (e.g. terminal).</p>
+<p>Please follow the following steps to get started with the scripting interfaces:</p>
+<div class="section" id="install-datafed-client">
+<h3>1. Install DataFed client</h3>
+<ol class="arabic">
+<li><p>Load any python 3.5+ module (if you are on a compute cluster) or any python virtual environment / conda environment that you intend to use.
+If you do not have any python environment available, consider <a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">installing miniconda</a>.</p></li>
+<li><p>Install the datafed client package via pip:</p>
+<ol class="lowerroman">
+<li><p>If you are using a python environment where you do not have write access to the environment (e.g. module made available in a compute cluster):</p>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--user</span> <span class="pre">datafed</span></code></p>
+</li>
+<li><p>If you have write access to the python environment (e.g. your own local environment):</p>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">datafed</span></code></p>
+</li>
+</ol>
+</li>
+<li><p>Try typing <code class="docutils literal notranslate"><span class="pre">datafed</span></code> to access the DataFed CLI.
+If you encounter errors stating that datafed was an unknown command, you would need to add DataFed to your path.</p>
+<ol class="loweralpha">
+<li><p>First, you would need to find where datafed was installed. Here are some examples of where we found datafed installed on a few machines:</p>
+<ol class="lowerroman simple">
+<li><p>NERSC’s Cori - datafed was installed at <code class="docutils literal notranslate"><span class="pre">~/.local/cori/3.7-anaconda-2019.10/bin</span></code>.</p></li>
+<li><p>OLCF’s Summit - datafed was installed at <code class="docutils literal notranslate"><span class="pre">~/.local/summit/anaconda3/5.3.0/3.7/bin</span></code></p></li>
+</ol>
+</li>
+<li><p>Next, add DataFed to the PATH variable via one of the following methods:</p>
+<ol class="lowerroman">
+<li><p>Type <code class="docutils literal notranslate"><span class="pre">PATH=$PATH:path/to/datafed/here</span></code> to add DataFed only for this shell session.
+You would need to type this command each time you log into the machine.</p></li>
+<li><p>If you intend to use the same python environment every time and you prefer
+that DataFed is automatically loaded each time you log into the machine,
+consider adding the following lines to your <code class="docutils literal notranslate"><span class="pre">bashrc</span></code> or <code class="docutils literal notranslate"><span class="pre">rc</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module load my-python-module/1.2.3
+<span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:path/to/datafed/here
+</pre></div>
+</div>
+</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This only adds DataFed to the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> at the login node of the cluster and not in the compute nodes.</p>
+</div>
+</li>
+</ol>
+</li>
+</ol>
+</div>
+<div class="section" id="set-up-datafed">
+<h3>3. Set up DataFed</h3>
+<ol class="arabic">
+<li><p>Type the following command into shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>datafed setup
+</pre></div>
+</div>
+<p>It will prompt you for your username and password.</p>
+</li>
+<li><p>Enter the credentials you set up when registering for an account on DataFed
+(not your institutional credentials you use to log into the machine)</p></li>
+<li><p>Add the Globus endpoint specific to this machine / file-system as the default endpoint via:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>datafed ep default <span class="nb">set</span> endpoint_name_here
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This concludes the one-time setup necessary to get started with scripting using DataFed.
+You may use the interactive DataFed CLI or the Python package at this point.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../user/web/portal.html" class="btn btn-neutral float-right" title="Web Portal" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="usecases.html" class="btn btn-neutral float-left" title="Use Cases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Oak Ridge National Laboratories
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
