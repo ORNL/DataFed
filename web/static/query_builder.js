@@ -1,20 +1,20 @@
 import * as util from "./util.js";
 
-export const OPR_AND     = "and";
-export const OPR_OR      = "or";
+export const OPR_AND     = "AND";
+export const OPR_OR      = "OR";
 export const OPR_LT      = "<";
 export const OPR_LTE     = "<=";
 export const OPR_EQ      = "==";
 export const OPR_NEQ     = "!=";
 export const OPR_GTE     = ">=";
 export const OPR_GT      = ">";
-export const OPR_DF      = "is defined";
-export const OPR_NDF     = "is omitted";
-export const OPR_RGX     = "regex";
-export const OPR_WLD     = "pattern";
-export const OPR_TRU     = "is true";
-export const OPR_FAL     = "is false";
-export const OPR_CON     = "contains";
+export const OPR_DF      = "DEF";
+export const OPR_NDF     = "NDEF";
+export const OPR_RGX     = "RGX";
+export const OPR_WLD     = "PAT";
+export const OPR_TRU     = "TRUE";
+export const OPR_FAL     = "FALSE";
+export const OPR_CON     = "HAS";
 
 export class QueryBuilder extends HTMLElement {
     static _top_html = "<div class='group-div-header'><button class='group-btn-opr qb-btn-icon' title='Set group combination operator'>AND</button>\
@@ -25,21 +25,15 @@ export class QueryBuilder extends HTMLElement {
         <button class='field-btn-add qb-btn-icon'><span class='ui-icon ui-icon-input' title='Add field'></span></button>\
         <button class='group-btn-add qb-btn-icon' title='Add sub-group'>( )</button>\
         <div style='float:right'><button class='group-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this sub-group'></span></button></div></div>";
-    static _fld_html = "<div class='qb-row-flex' style='flex-wrap:wrap'>\
+    static _fld_html = "<div class='qb-row-flex'><div class='qb-row-flex' style='flex:1 1 auto;flex-wrap:wrap'>\
         <div><span class='ui-icon ui-icon-grip-dotted-vertical qb-drag-handle-fld' draggable='true'></span></div>\
-        <div style='flex:1 1 auto'><input class='field-inp-lh' style='width:100%'></input></div>\
-        <div>&nbsp;<button class='field-btn-sel-lh qb-btn-icon'><span class='ui-icon ui-icon-list' title='Select field to evaluate'></button></div>\
-        <div style='flex: 1 1 auto;flex-wrap:nowrap' class='qb-row-flex'>\
-            <div style='flex:none'><select class='field-sel-opr' disabled title='Choose field comparison operator'></select></div>\
-            <div style='flex:1 1 auto'><input class='field-inp-rh' style='width:100%'></input></div>\
-            <div style='flex:none'>&nbsp;<button class='field-btn-val-type'>V</button><button class='field-btn-sel-rh qb-btn-icon' disabled><span class='ui-icon ui-icon-list' title='Select field to compare to'></span></button><button class='field-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this field'></span></button></div>\
-        </div></div>";
-
-    //<div style='display:none;flex: 1 1 auto' class='qb-indent-wrap'>
-
-    //<div style='flex:none'>\
-    //<button class='field-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this field'></span></button>\
-    //</div></div>";
+        <div style='flex:1 1 30%'><input class='field-inp-lh' style='width:100%'></input></div>\
+        <div style='flex:none;padding-left:0.25em'><button class='field-btn-sel-lh qb-btn-icon'><span class='ui-icon ui-icon-list' title='Select field to evaluate'></button></div>\
+        <div style='flex:1 1 60%;flex-wrap:nowrap' class='qb-row-flex field-rh-ctrls'>\
+            <div style='flex:none;padding-left:1em'><select class='field-sel-opr' disabled title='Choose field comparison operator'></select></div>\
+            <div style='flex:1 1 auto;padding-left:1em'><input class='field-inp-rh' style='width:100%'></input></div>\
+            <div style='flex:none;padding-left:0.25em'><button class='field-btn-val-type'>V</button><button class='field-btn-sel-rh qb-btn-icon' disabled><span class='ui-icon ui-icon-list' title='Select field to compare to'></span></button></div>\
+        </div></div><div style='flex:none;padding-left:1em'><button class='field-btn-rem qb-btn-icon'><span class='ui-icon ui-icon-close' title='Remove this field'></span></button></div></div>";
 
     static _RH_VAL     = 1;
     static _RH_FLD     = 2;
@@ -222,6 +216,9 @@ export class QueryBuilder extends HTMLElement {
                     }
 
                     this._fieldValidateRH( $(".field-inp-rh", d ), false );
+                }else{
+                    $(".field-inp-rh",d).removeClass("qb-error");
+                    $(".field-inp-rh, .field-btn-val-type, .field-btn-sel-rh",d).hide();
                 }
             }else{
                 throw "Invalid query";
@@ -450,7 +447,7 @@ export class QueryBuilder extends HTMLElement {
         if ( !field ){
             st.lh = null;
             st.rh = null;
-            $(".qb-indent-wrap",div).hide();
+            $(".field-rh-ctrls",div).css('visibility', 'hidden');
         }else{
             st.lh = field;
             target.val( field.path );
@@ -471,9 +468,9 @@ export class QueryBuilder extends HTMLElement {
             sel.selectmenu("refresh");
 
             this._fieldSelOperChange( div, oper[0][0] );
-            this._fieldValidateRH( $(".field-inp-rh",div), false );
+            //this._fieldValidateRH( $(".field-inp-rh",div), false );
     
-            $(".qb-indent-wrap",div).show();
+            $(".field-rh-ctrls",div).css('visibility', 'visible');
         }
     }
 

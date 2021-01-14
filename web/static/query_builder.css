@@ -30,7 +30,7 @@ query-builder{
     color: #000;
     cursor: move;
     font-size:130%;
-    margin-top:-.1em!important;
+    margin-top:-.05em!important;
     margin-left:-.26em!important;
 }
 
@@ -38,7 +38,6 @@ query-builder{
     color: #000;
     cursor: move;
     font-size:130%;
-    margin-top:-.26em!important;
     margin-left:-.26em!important;
 }
 
@@ -110,7 +109,7 @@ button.qb-btn-icon + button.qb-btn-icon{
 
 .field-inp-lh
 {
-    width:15em;
+    min-width:20ch;
     margin-bottom: .2em;
 }
 
@@ -119,9 +118,8 @@ button.qb-btn-icon + button.qb-btn-icon{
 }
 
 .field-sel-opr + span{
-    width:12ch!important;
-    margin-right: 0.5em;
-    margin-bottom: 0.2em;
+    width:9ch!important;
+    /*margin-bottom: 0.2em;*/
 }
 
 .field-btn-val-type
@@ -135,7 +133,8 @@ button.qb-btn-icon + button.qb-btn-icon{
 }
 
 .field-inp-rh{
-    width:15em;
+    /*width:15em;*/
+    min-width:20ch;
     display:none;
 }
 
