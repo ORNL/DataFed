@@ -8,7 +8,7 @@ Installation
 ============
 
 The DataFed CLI requires Python 3 to be installed and properly configured. Within supported
-facilities, both Python 3 and the DataFed CLI is may already be installed and ready to use;
+facilities, both Python 3 and the DataFed CLI may already be installed and ready to use;
 however, if you need to use the DataFed CLI from a non-supported facility, or on an external
 workstation or laptop, then you will need to ensure that Python 3 is available, then install and
 configure the DataFed CLI manually. In some cases, `Globus Personal Connect
@@ -25,8 +25,11 @@ And for Windows, the command is::
     pip install -U datafed
 
 Pip will install the DataFed CLI package and all dependencies, and will also install an executable
-"datafed" command script in the configured pip package binary, or "bin" directory. This bin directory
-must be included in the executable search path for the DataFed CLI command to be accessible.
+"datafed" command script in the configured pip package binary, or "bin" directory. 
+
+.. note::
+    The Python bin directory must be included in the executable search path for the DataFed CLI
+    command to be accessible.
 
 Configuration
 =============

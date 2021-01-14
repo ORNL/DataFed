@@ -207,7 +207,7 @@ is available.</p>
 <div class="section" id="installation">
 <h2>Installation</h2>
 <p>The DataFed CLI requires Python 3 to be installed and properly configured. Within supported
-facilities, both Python 3 and the DataFed CLI is may already be installed and ready to use;
+facilities, both Python 3 and the DataFed CLI may already be installed and ready to use;
 however, if you need to use the DataFed CLI from a non-supported facility, or on an external
 workstation or laptop, then you will need to ensure that Python 3 is available, then install and
 configure the DataFed CLI manually. In some cases, <a class="reference external" href="https://www.globus.org/globus-connect-personal">Globus Personal Connect</a> may also need to be installed if access to
@@ -222,8 +222,12 @@ and Mac OS, the command is as follows:</p>
 </pre></div>
 </div>
 <p>Pip will install the DataFed CLI package and all dependencies, and will also install an executable
-“datafed” command script in the configured pip package binary, or “bin” directory. This bin directory
-must be included in the executable search path for the DataFed CLI command to be accessible.</p>
+“datafed” command script in the configured pip package binary, or “bin” directory.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Python bin directory must be included in the executable search path for the DataFed CLI
+command to be accessible.</p>
+</div>
 </div>
 <div class="section" id="configuration">
 <h2>Configuration</h2>

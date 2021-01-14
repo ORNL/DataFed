@@ -19,6 +19,10 @@ For a list of options, the built-in help output can be viewed::
 
     datafed --help
 
+.. note::
+    If the "datafed" command is not found after installing the DataFed Python package, please verify that
+    the Python bin directory is included in the executable search path.
+
 The DataFed CLI supports three distinct modes of use: single command, interactive shell, and script
 mode. If the CLI is run without any command arguments, an interactive shell is started; otherwise,
 the specified command is run either normally (human-friendly output) or in script mode if the
