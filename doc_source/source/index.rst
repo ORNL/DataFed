@@ -30,16 +30,21 @@ This site contains all user and administrative documentation for the DataFed sys
 
 .. toctree::
    :maxdepth: 2
+   :caption: Client Package
+
+   user/client/install
+
+.. toctree::
+   :maxdepth: 2
    :caption: Command Line Interface
 
-   user/cli/install
    user/cli/guide
    user/cli/reference
    user/cli/shell_scripting
 
 .. toctree::
    :maxdepth: 2
-   :caption: Python Interface
+   :caption: Python Scripting
 
    autoapi/index.rst
    user/scripting
