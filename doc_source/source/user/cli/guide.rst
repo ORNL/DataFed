@@ -6,7 +6,7 @@ User Guide
 
 This document covers basic and advanced usage of the DataFed CLI, with examples. Before the DataFed CLI
 can be used the DataFed Python client package must be locally installed and configured - refer to the
-CLI :doc:`/user/cli/install` page for details. Reading both the DataFed `getting-started guide </system/getting_started>`_ 
+CLI :doc:`/user/client/install` page for details. Reading both the DataFed `getting-started guide </system/getting_started>`_ 
 and the `overview </system/overview>`_ are recommended to understand DataFed prerequisites and basic concepts,
 respectively.
 
