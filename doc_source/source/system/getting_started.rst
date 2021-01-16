@@ -35,8 +35,8 @@ e. If you do not see the ``Globus ID``, click on ``Link another identity``. Sele
     Your institutional credentials are not the same as your DataFed credentials.
     The latter is only required for using DataFed via python / CLI.
 
-4. Getting data allocations
----------------------------
+4. Get data allocations
+-----------------------
 As the name suggests, a data allocation is just the data storage space that users and projects can use to store and share data of their own.
 Though you can start to use DataFed at this point to view and get publicly shared data, it would not be possible to create or manipulate data of your own
 unless you have a data allocation in a DataFed data repository.
