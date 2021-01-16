@@ -55,7 +55,8 @@ Make sure to communicate your Globus user ID with administrators or collaborator
 -------------------------------------
 You will need a `Globus endpoint <https://docs.cades.ornl.gov/#data-transfer-storage/globus-endpoints/>`_ on **every machine** where you intend to download / upload data.
 
-**High Performance Compute clusters:**
+High Performance Compute clusters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Most high performance computing clusters will already have at-least one endpoint already configured. See the table below for some popular examples:
 
@@ -91,7 +92,8 @@ by searching on the Globus data transfer web interface as shown below:
 
    .. image:: ../_static/globus_endpoints/finding_endpoint_03.png
 
-**Personal Computers and Workstations:**
+Personal Computers and Workstations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you plan on using DataFed to upload and download data from your own computer,
 you will need to `follow these instructions <https://docs.olcf.ornl.gov/data/transferring.html#using-globus-from-your-local-machine>`_
