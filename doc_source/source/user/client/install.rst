@@ -5,34 +5,102 @@ Installation and Configuration
 .. include:: header.rst
 
 Installation
-============
+~~~~~~~~~~~~
+DataFed will be available natively within supported facilities and no installation or configuration should be necessary.
 
-The DataFed CLI requires Python 3 to be installed and properly configured. Within supported
-facilities, both Python 3 and the DataFed CLI may already be installed and ready to use;
-however, if you need to use the DataFed CLI from a non-supported facility, or on an external
-workstation or laptop, then you will need to ensure that Python 3 is available, then install and
-configure the DataFed CLI manually. In some cases, `Globus Personal Connect
-<https://www.globus.org/globus-connect-personal>`_ may also need to be installed if access to
-locally stored files is desired.
+However, if you need to use the DataFed CLI from a non-supported facility,
+or on a personal computer such as workstation or laptop, please follow this guide:
 
+
+0. Prerequisites
+----------------
+
+1. **Python 3**:
+
+   * The default python environment on most clusters is likely to be python 2.7.
+     Therefore, users are recommended to either load a module that provides python 3.
+   * Users on personal computers are encouraged to download and install python
+     (e.g. via `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_)
+     if an environment is not already available.
+2. **Globus Endpoint**: This is necessary if the user needs to upload locally stored files / download data from DataFed repositories.
+
+   * Nearly all high performance computing clusters should already have Globus endpoint already configured.
+     Users need not do anything for this prerequisite.
+   * Users intending to use the DataFed client to  from other machines would need to install and configure
+     `Globus Personal Connect <https://www.globus.org/globus-connect-personal>`_ as described in the
+     `Getting Started page <../system/getting_started.html#install-identify-globus-endpoint>`_.
+
+1. Install python package
+-------------------------
 Like many Python packages, the DataFed CLI is easy to install using Python's "pip" tool. For Linux
-and Mac OS, the command is as follows::
+and Mac OS, the command is as follows:
+
+.. code:: bash
 
     pip install --user datafed
 
-And for Windows, the command is::
+And for Windows, the command is:
+
+.. code:: bash
 
     pip install -U datafed
 
 Pip will install the DataFed CLI package and all dependencies, and will also install an executable
-"datafed" command script in the configured pip package binary, or "bin" directory. 
+``datafed`` command script in the configured pip package binary, or ``bin`` directory.
 
+2. Ensure bin directory is in Path
+----------------------------------
 .. note::
+
     The Python bin directory must be included in the executable search path for the DataFed CLI
     command to be accessible.
 
-Configuration
-=============
+If you do not see an error when you type ``datafed`` in your terminal, you may skip this step.
+
+If you encounter errors stating that datafed was an unknown command, you would need to add DataFed to your path.
+
+1. First, you would need to find where datafed was installed.
+   For example, on some compute clusters, datafed was installed into directories such as ``~/.local/MACHINE_NAME/PREFIXES-anaconda-SUFFIXES/bin``
+
+2. Next, add DataFed to the ``PATH`` variable.
+
+   .. note::
+
+      You may need to add DataFed to the ``PATH`` in your job scripts
+
+
+.. tip::
+
+   If you have write access to the virtual / conda python environment:
+
+   * You would likely not need to use the ``--user`` flag when pip installing DataFed
+   * You would also not need to specifically add DataFed to your ``PATH`` as long
+     as you load the python environment itself.
+
+3. Basic Configuration
+----------------------
+1. Type the following command into shell:
+
+   .. code:: bash
+
+       datafed setup
+
+   It will prompt you for your username and password.
+2. Enter the credentials you set up when registering for an account on DataFed
+   (not your institutional credentials you use to log into the machine)
+3. Add the Globus endpoint specific to this machine / file-system as the default endpoint via:
+
+   .. code:: bash
+
+      datafed ep default set endpoint_name_here
+
+.. note::
+
+    This concludes the one-time setup necessary to get started with scripting using DataFed.
+    You may use the interactive DataFed CLI or the Python package at this point.
+
+Advanced Configuration
+~~~~~~~~~~~~~~~~~~~~~~
 
 Users would typically not need to configure the DataFed CLI from within a facility-supported
 environments; however, when installing the CLI on personal workstations or laptops, the CLI requires a
@@ -62,7 +130,6 @@ Please refer to the `Configuration Settings`_ section for details on how to conf
 
 .. note:: The configuration settings of the DataFed CLI also apply to the DataFed Python API.
 
--------------------
 Configuration Files
 -------------------
     
@@ -91,7 +158,6 @@ available options. An example configuration file is shown below::
     or command-line option), the CLI will search for a client configuration file in the ".datafed"
     directory in the users home directory.
 
-----------------------
 Configuration Priority
 ----------------------
 
@@ -116,7 +182,6 @@ Note that most settings do not have default values and must be specified using o
 The server and client configuration files and directories are exceptions in that the CLI will search for a
 ".datafed" folder in the user home directory if these settings are not specified.
 
-------------------------------------
 Configuring Automatic Authentication
 ------------------------------------
 
@@ -140,9 +205,8 @@ on the server side.)
 
 
 Configuration Settings
-======================
+~~~~~~~~~~~~~~~~~~~~~~
 
-------------------------
 Settings Quick Reference
 ------------------------
 
@@ -167,7 +231,6 @@ Client private key file    client   private_key_file  DATAFED_CLIENT_PRIV_KEY_FI
 Default Globus endpoint    general  default_endpoint  DATAFED_DEFAULT_ENDPOINT      --default-ep, -e
 =========================  =======  ================  ============================  ======================
 
--------------------------
 Server Configuration File
 -------------------------
 
@@ -180,7 +243,6 @@ Command-line Option(s):  --server-cfg-file
 The server configuration file setting specifies a full path to a server ".ini" file. This file may
 contain additional settings as specified in `Configuration Settings`_ table, above.
 
-------------------------------
 Server Configuration Directory
 ------------------------------
 
@@ -195,8 +257,6 @@ The server configuration directory setting specifies a path to a directory that 
 a default server config file, "server.ini", and the default server public key, "datafed-core-key.pub".
 If this setting is not provided, "~/.default" will be searched if it exists.
 
-
-----------------------
 Server Public Key File
 ----------------------
 
@@ -215,7 +275,6 @@ specified). The latest DataFed server public key file must is available for down
 Note that if the server public key setting is invalid or the key is out of date, the CLI will timeout
 after being run.
 
------------
 Server Host
 -----------
 
@@ -229,7 +288,6 @@ The server host setting is the DataFed server name or IP address with no protoco
 - for example: "datafed.ornl.gov". Note that if the server host setting is incorrect, the CLI will timeout
 after being run.
 
------------
 Server Port
 -----------
 
@@ -242,7 +300,6 @@ Command-line Option(s):  --server-port, -P
 The server port setting is the TCP port number used by the DataFed server for secure client connections.
 Note that if the server port number is incorrect, the CLI will timeout after being run.
 
--------------------------
 Client Configuration File
 -------------------------
 
@@ -256,7 +313,6 @@ The client configuration file setting specifies a full path to a client ".ini" f
 additional settings as listed in the `Settings Quick Reference`_ section. Note that settings in the client
 configuration file will override the same settings in the server configuration file, if present.
 
------------------------
 Client Config Directory
 -----------------------
 
@@ -271,7 +327,6 @@ a default client config file, "client.ini", and the default client public and pr
 "datafed-user-key.pub" and "datafed-user-key.priv". If this setting is not provided, "~/.default" will be
 searched if it exists.
 
-----------------------
 Client Public Key File
 ----------------------
 
@@ -286,7 +341,6 @@ client public key. If this setting is not provided, the CLI will look for a defa
 "datafed-user-key.pub", in the client config directory (or "~/.datafed" if no directory is specified). Client
 key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).
 
------------------------
 Client Private Key File
 -----------------------
 
@@ -301,7 +355,6 @@ client private key. If this setting is not provided, the CLI will look for a def
 "datafed-user-key.priv", in the client config directory (or "~/.datafed" if no directory is specified). Client
 key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).
 
-----------------
 Default Endpoint
 ----------------
 
