@@ -4,8 +4,6 @@ Getting Started
 
 Please follow this guide to get started with DataFed
 
-Universal setup
-~~~~~~~~~~~~~~~
 1. Get a Globus account
 -----------------------
 Follow **only step 1** of `instructions here <https://docs.globus.org/how-to/get-started/>`_ to get a Globus account.
