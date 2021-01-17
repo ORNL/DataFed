@@ -1,6 +1,6 @@
-================
-Python Scripting
-================
+=================
+Python User Guide
+=================
 Below, we show simple examples of how one could use DataFed's Python interface to
 create data records in DataFed data repositories, put raw data into those records,
 as well as download the raw data from records.
