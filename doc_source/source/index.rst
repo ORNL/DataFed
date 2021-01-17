@@ -46,7 +46,7 @@ This site contains all user and administrative documentation for the DataFed sys
    :maxdepth: 2
    :caption: Python Interface
 
-   user/python/header
+   user/api/python
    user/python/high_level_guide
    autoapi/index.rst
 
