@@ -20,6 +20,7 @@ This site contains all user and administrative documentation for the DataFed sys
    system/introduction
    system/overview
    system/usecases
+   system/papers
    system/getting_started
 
 .. toctree::
