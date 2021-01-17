@@ -76,7 +76,7 @@ or write the dictionary to a JSON file:
 .. code:: python
 
     >>> response = df_api.dataCreate('my important data',
-                                     alias='my_cool_alias', # optional
+                                     alias='my_alias', # optional
                                      metadata=json.dumps(parameters), # also optional
                                      parent_id='root', # parent collection
                                     )
@@ -106,7 +106,7 @@ Here is the response form the above ``dataCreate()`` command:
     (data {
        id: "d/30224875"
        title: "my important data"
-       alias: "my_cool_alias"
+       alias: "my_alias"
        metadata: "{\"a\":4,\"b\":[1,2,-4,7.123],\"c\":\"Something important\",\"d\":{\"x\":14,\"y\":-19}}"
        repo_id: "repo/cades-cnms"
        size: 0.0
@@ -215,7 +215,7 @@ Here we try to view the Data Record we have been working on so far:
     (data {
        id: "d/30224875"
        title: "my important data"
-       alias: "my_cool_alias"
+       alias: "my_alias"
        metadata: "{\"a\":4,\"b\":[1,2,-4,7.123],\"c\":\"Something important\",\"d\":{\"x\":14,\"y\":-19}}"
        repo_id: "repo/cades-cnms"
        size: 86.0
@@ -258,10 +258,22 @@ In order to get back a python dictionary, use ``json.loads()``
 
 Download Data
 -------------
+For the purposes of this demonstration, we will be using data that was created elsewhere as the ``data view`` command shows:
+
 * Display contents of current director
 * Get data
 * Show task information
 * Display contents of current directory
+
+Create a collection to hold two new records
+
+Create provenance links between the collection and the source dataset
+
+Error detection
+
+Ideas from DataFed Helper
+
+Create a new record with very large data and track status of task async
 
 .. note::
 
