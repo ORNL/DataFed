@@ -90,12 +90,19 @@ by searching on the Globus data transfer web interface as shown below:
 
    .. image:: ../_static/globus_endpoints/finding_endpoint_03.png
 
+   The ``Endpoint UUID`` could also be used in place of the ``Legacy Name`` in the DataFed context.
+
 Personal Computers and Workstations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you plan on using DataFed to upload and download data from your own computer,
 you will need to `follow these instructions <https://docs.olcf.ornl.gov/data/transferring.html#using-globus-from-your-local-machine>`_
 to install Globus Connect Personal and set up your own Globus endpoint on your computer.
+
+
+Just as in the High performance computing clusters scenario,
+you would need to look up information regarding your endpoint on Globus' web portal.
+You would need to note down either the ``Endpoint UUID`` or the ``Legacy Name`` for your endpoint.
 
 6. Activate Globus Endpoint
 ---------------------------
