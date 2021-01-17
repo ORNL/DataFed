@@ -47,7 +47,7 @@ This site contains all user and administrative documentation for the DataFed sys
    :caption: Python Interface
 
    user/python/header
-   user/python/commandlib_guide
+   user/python/high_level_guide
    autoapi/index.rst
 
 .. toctree::
