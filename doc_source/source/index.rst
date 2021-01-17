@@ -46,8 +46,8 @@ This site contains all user and administrative documentation for the DataFed sys
    :maxdepth: 2
    :caption: Python Interface
 
-   autoapi/index.rst
    user/python/python_user_guide
+   autoapi/index.rst
 
 .. toctree::
    :maxdepth: 2
