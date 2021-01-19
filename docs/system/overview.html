@@ -215,6 +215,7 @@ reproducibility.</p>
 DataFed services and several connected facilities. The enclosing gray boxes represent the physical boundaries
 of geographically distributed, but networked, facilities. The wide blue arrows represent high-speed raw data
 transfers between facilities, and the green arrows show DataFed client communication with DataFed services.</p>
+<img alt="../_images/simplified_architecture.png" src="../_images/simplified_architecture.png" />
 <p>In this example, there is an observational facility and a compute facility that each have a local DataFed
 data repository (cylinder labeled with an ‘R’). Any facility in the system can read or write data from or to
 the data repositories in the observational or compute facilities (assuming proper access permissions); however,
@@ -241,22 +242,22 @@ facility would store and retrieve data using a DataFed allocation granted by the
 perspective, all DataFed interactions would look the same as if the repository were local. The only noticeable
 difference would be increased latency associated with DataFed data transfers.</p>
 <p>Many cross-facility and collaborative research scenarios are supported by DataFed, and specific examples are discussed
-in the DataFed :doc: <a href="#id1"><span class="problematic" id="id2">`Use Cases`_</span></a> document.</p>
+in the DataFed <a class="reference internal" href="usecases.html"><span class="doc">Use Cases</span></a> document.</p>
 </div>
 <div class="section" id="interfaces">
 <h2>Interfaces</h2>
 <p>Users are able to interact with DataFed through several available interfaces including a graphical web application,
 a command-line interface (CLI), and both high- and low-level application programming interfaces (APIs). The easiest
-way to interact with DataFed is through the web application (see <a href="#id3"><span class="problematic" id="id4">`/user/web/portal`_</span></a>), and the web application is
+way to interact with DataFed is through the web application (see <a href="#id1"><span class="problematic" id="id2">`/user/web/portal`_</span></a>), and the web application is
 where users initially register for DataFed accounts.</p>
 <p>The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged available on PyPi. For
-information on installing the DataFed client, please refer to <a href="#id5"><span class="problematic" id="id6">`/user/client/install`_</span></a>, and for the CLI and APIs, refer to
-<a href="#id7"><span class="problematic" id="id8">`/user/cli/guide`_</span></a> and <a href="#id9"><span class="problematic" id="id10">`/user/api/python`_</span></a>, respectively.</p>
+information on installing the DataFed client, please refer to <a class="reference internal" href="../user/client/install.html"><span class="doc">Installation and Configuration</span></a>, and for the CLI and APIs, refer to
+<a class="reference internal" href="../user/cli/guide.html"><span class="doc">User Guide</span></a> and <a class="reference internal" href="../user/api/python.html"><span class="doc">Python API Reference</span></a>, respectively.</p>
 <p>DataFed’s interfaces can be used from any workstation, laptop, or compute node; however, these interfaces only provide
 users with the ability to issue commands to the DataFed central service. If users need to be able to also transfer raw
 data to or from a given host machine, the local file system of the host machine must be connected to a Globus endpoint.
 Typically, research facilities will already provide Globus endpoints to access specific local file systems; however, for
-individual workstations and laptops, users will need to install Globus Personal Connect. See the <a href="#id11"><span class="problematic" id="id12">`/user/client/install`_</span></a>
+individual workstations and laptops, users will need to install Globus Personal Connect. See the <a href="#id3"><span class="problematic" id="id4">`/user/client/install`_</span></a>
 for more information.</p>
 </div>
 <div class="section" id="key-concepts">

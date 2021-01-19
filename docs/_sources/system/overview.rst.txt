@@ -33,8 +33,6 @@ transfers between facilities, and the green arrows show DataFed client communica
 
 .. image:: /_static/simplified_architecture.png
 
-  Simplified DataFed System Architecture
-
 In this example, there is an observational facility and a compute facility that each have a local DataFed
 data repository (cylinder labeled with an 'R'). Any facility in the system can read or write data from or to
 the data repositories in the observational or compute facilities (assuming proper access permissions); however,
@@ -64,7 +62,7 @@ perspective, all DataFed interactions would look the same as if the repository w
 difference would be increased latency associated with DataFed data transfers.
 
 Many cross-facility and collaborative research scenarios are supported by DataFed, and specific examples are discussed
-in the DataFed :doc: `Use Cases`_ document.
+in the DataFed :doc:`Use Cases </system/usecases>` document.
 
 Interfaces
 ==========
@@ -75,8 +73,8 @@ way to interact with DataFed is through the web application (see `/user/web/port
 where users initially register for DataFed accounts.
 
 The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged available on PyPi. For
-information on installing the DataFed client, please refer to `/user/client/install`_, and for the CLI and APIs, refer to
-`/user/cli/guide`_ and `/user/api/python`_, respectively.
+information on installing the DataFed client, please refer to :doc:`/user/client/install`, and for the CLI and APIs, refer to
+:doc:`/user/cli/guide` and :doc:`/user/api/python`, respectively.
 
 DataFed's interfaces can be used from any workstation, laptop, or compute node; however, these interfaces only provide
 users with the ability to issue commands to the DataFed central service. If users need to be able to also transfer raw
