@@ -42,6 +42,9 @@ Finally, we create an instance of the DataFed API class via:
 
 We can now use ``df_api`` to communicate with DataFed
 
+Projects
+--------
+
 DataFed functions and responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Typically, users would be working in the context of a DataFed ``Project``
@@ -901,3 +904,544 @@ Asynchronous transfers
     Users are recommended to perform data orchestration (especially large data movement - upload / download) operations
     outside the scope of heavy / parallel computation operations in order to avoid wasting precious wall time on compute clusters.
 
+Collections
+-----------
+
+Create collection
+~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    coll_alias = 'cat_dog_train'
+    ​
+    coll_resp = df_api.collectionCreate('Image classification training data',
+                                        alias=coll_alias,
+                                        parent_id=username,
+                                        context=context)
+    print(coll_resp)
+
+    (coll {
+      id: "c/34683877"
+      title: "Image classification training data"
+      alias: "cat_dog_train"
+      owner: "p/trn001"
+      ct: 1611078472
+      ut: 1611078472
+      parent_id: "c/34558900"
+    }
+    , 'CollDataReply')
+
+Populate with Records
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    import random
+    [46]:
+
+    def generate_animal_data(parent_coll, proj, is_dog=True):
+        this_animal = 'cat'
+        if is_dog:
+            this_animal = 'dog'
+        rec_resp = df_api.dataCreate(this_animal + '_' + str(random.randint(1, 100)),
+                                     metadata=json.dumps({'animal': this_animal}),
+                                     parent_id=parent_coll,
+                                     context=proj)
+        this_rec_id = rec_resp[0].data[0].id
+        put_resp = df_api.dataPut(this_rec_id, 'esnet#newy-dtn/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat')
+        return this_rec_id
+    [47]:
+
+    cat_records = list()
+    dog_records = list()
+    for _ in range(5):
+        dog_records.append(generate_animal_data(coll_alias, context, is_dog=True))
+    for _ in range(5):
+        cat_records.append(generate_animal_data(coll_alias, context, is_dog=False))
+    print(cat_records, dog_records)
+    ['d/34684011', 'd/34684035', 'd/34684059', 'd/34684083', 'd/34684107'] ['d/34683891', 'd/34683915', 'd/34683939', 'd/34683963', 'd/34683987']
+    [48]:
+
+    coll_list_resp = df_api.collectionItemsList(coll_alias, context=context)
+    print(coll_list_resp)
+    (item {
+      id: "d/34684107"
+      title: "cat_22"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    item {
+      id: "d/34684011"
+      title: "cat_32"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    item {
+      id: "d/34684035"
+      title: "cat_6"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    item {
+      id: "d/34684083"
+      title: "cat_93"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    item {
+      id: "d/34684059"
+      title: "cat_96"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    item {
+      id: "d/34683939"
+      title: "dog_3"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    item {
+      id: "d/34683915"
+      title: "dog_63"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    item {
+      id: "d/34683891"
+      title: "dog_70"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    item {
+      id: "d/34683987"
+      title: "dog_71"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    item {
+      id: "d/34683963"
+      title: "dog_8"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+    }
+    offset: 0
+    count: 20
+    total: 10
+    , 'ListingReply')
+
+Create query
+~~~~~~~~~~~~
+
+See screenshots
+
+.. note::
+
+    query language is likely to change in the future
+
+List, view and execute query
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    ql_resp = df_api.queryList()
+    ql_resp
+    [56]:
+    (item {
+       id: "q/34684970"
+       title: "find_all_cats"
+     }
+     offset: 0
+     count: 20
+     total: 1, 'ListingReply')
+    [58]:
+
+    query_id = ql_resp[0].item[0].id
+    query_id
+    [58]:
+    'q/34684970'
+    [59]:
+
+    df_api.queryView(query_id)
+    [59]:
+    (query {
+       id: "q/34684970"
+       title: "find_all_cats"
+       query: "{\"meta\":\"animal == \\\"cat\\\"\",\"scopes\":[{\"scope\":4,\"id\":\"c/34683877\",\"recurse\":true}]}"
+       owner: "u/somnaths"
+       ct: 1611078781
+       ut: 1611078781
+     }, 'QueryDataReply')
+    [60]:
+
+    query_resp = df_api.queryExec(query_id)
+    print(query_resp)
+    (item {
+      id: "d/34684011"
+      title: "cat_32"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 1000.0
+      notes: 0
+    }
+    item {
+      id: "d/34684035"
+      title: "cat_6"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 1000.0
+      notes: 0
+    }
+    item {
+      id: "d/34684059"
+      title: "cat_96"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 1000.0
+      notes: 0
+    }
+    item {
+      id: "d/34684083"
+      title: "cat_93"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 1000.0
+      notes: 0
+    }
+    item {
+      id: "d/34684107"
+      title: "cat_22"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 1000.0
+      notes: 0
+    }
+    , 'ListingReply')
+
+
+.. code:: python
+
+    cat_rec_ids = [record.id for record in query_resp[0].item]
+    [62]:
+
+    set(cat_rec_ids) == set(cat_records)
+    [62]:
+    True
+
+Organize with Collections
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    coll_resp = df_api.collectionCreate('Cats', alias='cats', parent_id=coll_alias, context=context)
+    print(coll_resp)
+    (coll {
+      id: "c/34685092"
+      title: "Cats"
+      alias: "cats"
+      owner: "p/trn001"
+      ct: 1611078867
+      ut: 1611078867
+      parent_id: "c/34683877"
+    }
+    , 'CollDataReply')
+
+.. note::
+
+    DO NOT simply list the collection, look into the metadata of each record, and then call Get
+    [64]:
+
+.. code:: python
+
+    cat_coll_id = coll_resp[0].coll[0].id
+    cat_coll_id
+    [64]:
+    'c/34685092'
+
+Add and remove from Collections
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    cup_resp = df_api.collectionItemsUpdate(cat_coll_id, add_ids=cat_rec_ids)
+    print(cup_resp)
+    (, 'ListingReply')
+    [66]:
+
+    df_api.collectionItemsList(cat_coll_id)
+    [66]:
+    (item {
+       id: "d/34684107"
+       title: "cat_22"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34684011"
+       title: "cat_32"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34684035"
+       title: "cat_6"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34684083"
+       title: "cat_93"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34684059"
+       title: "cat_96"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     offset: 0
+     count: 20
+     total: 5, 'ListingReply')
+    [68]:
+
+    df_api.collectionItemsList(coll_alias, context=context)
+    [68]:
+    (item {
+       id: "c/34685092"
+       title: "Cats"
+       alias: "cats"
+       owner: "p/trn001"
+       notes: 0
+     }
+     item {
+       id: "d/34684107"
+       title: "cat_22"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34684011"
+       title: "cat_32"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34684035"
+       title: "cat_6"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34684083"
+       title: "cat_93"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34684059"
+       title: "cat_96"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34683939"
+       title: "dog_3"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34683915"
+       title: "dog_63"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34683891"
+       title: "dog_70"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34683987"
+       title: "dog_71"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34683963"
+       title: "dog_8"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     offset: 0
+     count: 20
+     total: 11, 'ListingReply')
+    [69]:
+
+    cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids, context=context)
+    print(cup_resp)
+    (, 'ListingReply')
+    [70]:
+
+    df_api.collectionItemsList(coll_alias, context=context)
+    [70]:
+    (item {
+       id: "c/34685092"
+       title: "Cats"
+       alias: "cats"
+       owner: "p/trn001"
+       notes: 0
+     }
+     item {
+       id: "d/34683939"
+       title: "dog_3"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34683915"
+       title: "dog_63"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34683891"
+       title: "dog_70"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34683987"
+       title: "dog_71"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     item {
+       id: "d/34683963"
+       title: "dog_8"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 1000.0
+       notes: 0
+     }
+     offset: 0
+     count: 20
+     total: 6, 'ListingReply')
+
+Download Collection
+~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    df_api.dataGet([cat_coll_id], './cat_data')
+    [71]:
+    (item {
+       id: "d/34684011"
+       title: "cat_32"
+       owner: "p/trn001"
+       size: 1000.0
+     }
+     item {
+       id: "d/34684035"
+       title: "cat_6"
+       owner: "p/trn001"
+       size: 1000.0
+     }
+     item {
+       id: "d/34684059"
+       title: "cat_96"
+       owner: "p/trn001"
+       size: 1000.0
+     }
+     item {
+       id: "d/34684083"
+       title: "cat_93"
+       owner: "p/trn001"
+       size: 1000.0
+     }
+     item {
+       id: "d/34684107"
+       title: "cat_22"
+       owner: "p/trn001"
+       size: 1000.0
+     }
+     task {
+       id: "task/34685359"
+       type: TT_DATA_GET
+       status: TS_READY
+       client: "u/somnaths"
+       step: 0
+       steps: 2
+       msg: "Pending"
+       ct: 1611079028
+       ut: 1611079028
+       source: "d/34684011, d/34684035, d/34684059, d/34684083, d/34684107, ..."
+       dest: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Dropbox (ORNL)/Projects/DataFed_User_Engagements/Tutorial/cat_data"
+     }, 'DataGetReply')
+    [72]:
+
+    os.listdir('./cat_data')
+    [72]:
+    ['34684107.dat',
+     '34684059.dat',
+     '34684011.dat',
+     '34684035.dat',
+     '34684083.dat']
