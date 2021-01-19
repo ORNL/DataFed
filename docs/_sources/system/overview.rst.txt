@@ -28,24 +28,25 @@ reproducibility.
 
 The figure below shows a simplified representation of an example DataFed network consisting of the central
 DataFed services and several connected facilities. The enclosing gray boxes represent the physical boundaries
-of geographically distributed, but networked, facilities. The wide blue arrows represent high-speed raw data
-transfers between facilities, and the green arrows show DataFed client communication with DataFed services.
+of geographically distributed facilities. The wide blue arrows represent the DataFed high-speed raw data
+transfer "bus" (i.e. GridFTP) that is used to move data between facilities, and the green arrows represent the
+DataFed control "bus" use by clients to send requests to DataFed.
 
 .. image:: /_static/simplified_architecture.png
 
 In this example, there is an observational facility and a compute facility that each have a local DataFed
-data repository (cylinder labeled with an 'R'). Any facility in the system can read or write data from or to
+data repository (a cylinder labeled with an 'R'). Any facility in the system can read or write data from or to
 the data repositories in the observational or compute facilities (assuming proper access permissions); however,
-users within these two facilities will have lower latency access to the data stored in the local repositories.
-In addition, independent workstations can also access data in these repositories - also assuming proper access
-permissions are granted.
+users within these two facilities will have lower latency access to the data stored there. In addition,
+independent workstations can also access data in these repositories - also assuming proper access permissions
+are granted.
 
 When data is stored to a DataFed repository, Globus is used to transfer a user-specified source file (as a Globus
 path) into the repository where it becomes associated with a DataFed data record. Likewise, when data is retrieved
-from a DataFed repository, Globus is used to transfer raw data of a DataFed record from the repository to a user-
+from a DataFed repository, Globus is used to transfer the raw data of a DataFed record from the repository to a user-
 specified Globus destination; however, note that the raw data is simply copied - not moved - from the DataFed
 repository. The central DataFed service maintains data record tracking information and orchestrates raw data
-transfers, but never directly handles raw data.
+transfers, but never directly processes raw data.
 
 .. note::
 
@@ -54,11 +55,11 @@ transfers, but never directly handles raw data.
   local system administrators. Local administrators are able to maintain and enforce data policies
   on local DataFed repositories without disrupting remote DataFed facilities or users in any way.
 
-Continuing with the example architecture, the experimental facility does not have a local DataFed repository
+Continuing with the previous example, the experimental facility shown does not have a local DataFed repository
 and, instead, could use allocations on the DataFed repository within the compute facility (if, for example, these
 facilities were collaborating or were managed by the same organization). In this scenario, users at the experimental
 facility would store and retrieve data using a DataFed allocation granted by the compute facility, but from the users
-perspective, all DataFed interactions would look the same as if the repository were local. The only noticeable
+perspective, all DataFed interactions would behave as if the repository were local. The only noticeable
 difference would be increased latency associated with DataFed data transfers.
 
 Many cross-facility and collaborative research scenarios are supported by DataFed, and specific examples are discussed
@@ -69,38 +70,77 @@ Interfaces
 
 Users are able to interact with DataFed through several available interfaces including a graphical web application,
 a command-line interface (CLI), and both high- and low-level application programming interfaces (APIs). The easiest
-way to interact with DataFed is through the web application (see `/user/web/portal`_), and the web application is
-where users initially register for DataFed accounts.
+way to interact with DataFed is through the web application (see :doc:`DataFed Web Portal </user/web/portal>`), and
+the web application is where users initially register for DataFed accounts.
 
-The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged available on PyPi. For
-information on installing the DataFed client, please refer to :doc:`/user/client/install`, and for the CLI and APIs, refer to
-:doc:`/user/cli/guide` and :doc:`/user/api/python`, respectively.
+The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged available on PyPi. Refer
+to the :doc:`Client Installation </user/client/install>`, :doc:`CLI User Guide </user/cli/guide>`, and
+:doc:`Python Scripting Guide </user/python_scripting>` for more information.
 
 DataFed's interfaces can be used from any workstation, laptop, or compute node; however, these interfaces only provide
 users with the ability to issue commands to the DataFed central service. If users need to be able to also transfer raw
 data to or from a given host machine, the local file system of the host machine must be connected to a Globus endpoint.
 Typically, research facilities will already provide Globus endpoints to access specific local file systems; however, for
-individual workstations and laptops, users will need to install Globus Personal Connect. See the `/user/client/install`_
+individual workstations and laptops, users will need to install Globus Personal Connect. See `DataFed Client Installation </user/client/install>`
 for more information.
 
 Key Concepts
 ============
 
-DataFed aggregates and abstracts the federation of distributed data, storage systems, facilities, users, groups,
-and projects into a single logical unit - with a common nomenclature and uniform access patterns. Some of the
-components of DataFed represent real physical systems; whereas others are purely abstract. These components are
-defined as follows:
+DataFed provides a uniform, holistic, and logical view of the data, users, and various organizational structures associated
+with the federation of organizations and data storage resources that make up the DataFed network. From a users perspective,
+all data operations look and feel the same from within DataFed regardless of where DataFed is being accessed or where
+data is physically stored. In order to understand the features and capabilities of DataFed, as a whole, it is first necessary
+to understand the underlying terminology and concepts and these are defined in this section.
 
-* Data Record - A single unit of data with associated unique identity, attributes, metadata, and raw data.
-* Collection - An organizational unit with a unique identity and attributes that aggregates data records and/or subordinate collections.
-* Root Collection - A special collection associated with all users and projects that serves as a default parent container.
-* User - A person that is identified by a unique Globus account, with optionally linked facility accounts.
-* Group - A set of users with a unique identity and attributes used for project membership and access control purposes.
-* Project - An abstract unit with a unique identity and attributes composed of one or more member users and providing collective ownership of data.
-* Access Control - A set of inheritable permissions associated with a data record or collection that applies to specific users and/or groups, or, optionally, to users that are not explicitly specified.
-* Facility - A physical location that houses one or more data storage systems or compute resources that is federated into DataFed network.
-* Data Repository - A logical unit with associated unique identity and attributes that represents a federated storage system located at a given facility.
-* Storage Allocation - A logical relationship between a user or project and a data repository specifying an allowed storage capacity.
+---------------
+Quick Reference
+---------------
+
+This quick reference provides a list of the important concepts and user roles associated DataFed and Globus. It is important
+to understand the basics of Globus as it the basis for DataFed data transfers. More detailed information is provided about
+these topics in subsequent sections of this document.
+
+DataFed Concepts:
+
+- **Data Record** - A single unit of data with associated unique identity, attributes, metadata, and raw data.
+- **Collection** - An organizational unit with a unique identity and attributes that aggregates data records and/or subordinate collections.
+- **Root Collection** - A special collection associated with all users and projects that serves as a default parent container.
+- **Aliases** -
+- **Metadata** -
+- **Provenance** - 
+- **Tags** - 
+- **Project** - An abstract unit with a unique identity and attributes composed of one or more member users and providing collective ownership of data.
+- **Access Control** - A set of inheritable permissions associated with a data record or collection that applies to specific users and/or groups, or, optionally, to users that are not explicitly specified.
+- **Group** - A set of users with a unique identity and attributes used for project membership and access control purposes.
+- **Catalog** - 
+- **Annotation** - 
+- **Shared Data** - 
+- **Saved Query** - 
+- **Task** - 
+- **Repository** - A logical unit with associated unique identity and attributes that represents a federated storage system located at a given facility.
+- **Allocation** - A logical relationship between a user or project and a data repository specifying an allowed storage capacity.
+- **Organization** - A physical location that houses one or more data storage systems or compute resources that is federated into DataFed network.
+
+DataFed User Roles:
+
+- **User** - Any person with a DataFed account. Users are identified by their unique Globus ID account name, with optionally linked facility accounts.
+- **Project Owner** - Any user that creates a DataFed Project is the owner, with full access rights, of the project.
+- **Project Administrator** - A user designated by a Project Owner to have managerial access to a specified project.
+- **Project Member** - A user designated by either a Project Owner or Administrator to have member access to a specified project.
+- **Data Owner** - The user or project that originally creates a Data Record becomes the owner of the record and has full access
+  to the given record. Ownership can be transferred to another user or project.
+- **Data Creator** - The user that originally creates a Data Record becomes the owner (and creator) of the record and has full irrevocable access to the given record.
+- **Administrator** - A user designated by DOE/ORNL to have full access to DataFed administrative functions.
+- **Repository Administrator** - A user designated by a DataFed Administrator to have managerial access to a data repository.
+
+Globus Concepts:
+
+- **Globus ID** - 
+- **Endpoint** - 
+- **Endpoint UUID** - 
+- **Endpoint Legacy Name** - 
+- **Endpoint Activation** - 
 
 A key idea of DataFed is the presentation of data in an location-agnostic manner. From a logical viewpoint,
 users do not need to know where data is physically stored within DataFed - data can be accessed from any supported
