@@ -86,16 +86,19 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">System Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#key-concepts">Key Concepts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#identifiers-and-aliases">Identifiers and Aliases</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#collective-ownership">Collective Ownership</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#metadata">Metadata</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#collection-hierarchies">Collection Hierarchies</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#access-control">Access Control</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#storage-allocations">Storage Allocations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#architecture">Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#key-concepts">Key Concepts</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#registration">Registration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#identifiers-and-aliases">Identifiers and Aliases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#collective-ownership">Collective Ownership</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metadata">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#collection-hierarchies">Collection Hierarchies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#access-control">Access Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#storage-allocations">Storage Allocations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#registration">Registration</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
@@ -115,7 +118,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../user/cli/reference.html">Command Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user/cli/shell_scripting.html">Shell Scripting</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Python Scripting</span></p>
+<p class="caption"><span class="caption-text">Python Interface</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user/scripting.html">Scripting Guide</a></li>
@@ -191,17 +194,18 @@
             
   <div class="section" id="system-overview">
 <h1>System Overview</h1>
-<p>DataFed is a federated data collaboration and management system for science. DataFed provides
-many features that ease the data management burden associated with general scientific research;
-however, the primary goal of DataFed is to improve scientific data quality by enabling precise
-full-life-cycle control over data artifacts, with the ability to uniformly share and access data
-across geographically distributed facilities. The combined capabilities of DataFed directly support
-the concept of “repeatable science” by unambiguously identifying data, capturing context and
-metadata, and by providing the means to access and utilize data globally.</p>
-<p>DataFed can be thought of as a “Tier 2+” distributed data storage system - meaning it is intended
+<p>DataFed is a federated scientific data management and collaboration system for open research that
+eases the data handling burden associated with research activities within and across scientific
+domains and facilities. The primary goal of DataFed is to improve scientific data quality by enabling
+precise full-lifecycle control over data artifacts, with the ability to uniformly share and access data
+across geographically distributed facilities. The combined capabilities of DataFed help to support
+the concept of “repeatable science” through the unambiguous identification and tracking of data artifacts,
+by capturing and maintaining scientific metadata and provenance, and by providing the means to locate,
+access, and share data globally.</p>
+<p>DataFed can be thought of as a “tier 2+” distributed data storage system - meaning it is intended
 for creating and working with data that is of medium- to long-term significance to the owner and/or
-collaborators. Unlike a Tier 1 storage system (i.e. a local file system), DataFed compromises raw
-access performance in favor of FAIR data principles. While DataFed shares many features with Tier 3
+collaborators. Unlike a tier 1 storage system (i.e. a local file system), DataFed compromises raw
+access performance in favor of FAIR data principles. While DataFed shares many features with tier 3
 storage systems (i.e. data archives), DataFed allows data and metadata to be updated and specifically
 includes features for disseminating any changes to downstream dependents (via provenance) and/or data
 subscribers. DataFed also provides additional collaboration features to enable precise “in-band”
@@ -212,7 +216,7 @@ between Globus “endpoints” - which are Globus services that enable access to
 hosted by member organizations. DataFed adds a data management layer on top of Globus that permits data
 to be located and accessed without needing to know where the data is physically stored within the Globus
 network. Because DataFed relies heavily on Globus, it is recommended that DataFed users familiarize
-themselves with how Globus works from their online documentation at <a class="reference external" href="https://www.globus.org/what-we-do">https://www.globus.org/what-we-do</a>.</p>
+themselves with <a class="reference external" href="https://www.globus.org/what-we-do">how Globus works</a>.</p>
 <p>DataFed is an open source project hosted on GitHub at <a class="reference external" href="https://github.com/ORNL/DataFed">https://github.com/ORNL/DataFed</a>. DataFed is
 under active development at Oak Ridge National Laboratory (ORNL) within the Oak Ridge Leadership
 Computing Facility (OLCF) and is currently deployed in an alpha-release state for early access users.</p>
@@ -220,8 +224,11 @@ Computing Facility (OLCF) and is currently deployed in an alpha-release state fo
 <p class="admonition-title">Attention</p>
 <p>This documentation is accurate but incomplete due to the rapid pace of development of the DataFed system.</p>
 </div>
+<div class="section" id="architecture">
+<h2>Architecture</h2>
+<img alt="../_images/simplified_architecture.png" src="../_images/simplified_architecture.png" />
 <div class="section" id="key-concepts">
-<h2>Key Concepts</h2>
+<h3>Key Concepts</h3>
 <p>DataFed aggregates and abstracts the federation of distributed data, storage systems, facilities, users, groups,
 and projects into a single logical unit - with a common nomenclature and uniform access patterns. Some of the
 components of DataFed represent real physical systems; whereas others are purely abstract. These components are
@@ -244,8 +251,10 @@ facility, or the web portal, by using assigned data record identifiers or user-d
 standpoint, the physical storage location of data likely matters depending on where the data is being accessed from.
 For this reason, DataFed will support data repository caching to optimize frequently accessed data. In addition, users
 with allocations on multiple data repositories may opt to migrate data between repositories based on usage locality.</p>
+</div>
+</div>
 <div class="section" id="identifiers-and-aliases">
-<h3>Identifiers and Aliases</h3>
+<h2>Identifiers and Aliases</h2>
 <p>All records in DataFed (data, collections, user, projects, etc.) are automatically assigned a system-unique identifier
 consisting of a prefix and an alphanumeric value. For data records and collections these identifiers are numeric, so
 users may choose to assign a more human-friendly “alias” that can be used in place of identifiers. Aliases are alphanumeric
@@ -257,7 +266,7 @@ User “jsmith” can simply use “mydata”, but other users would need to use
 portal, aliases are typically shown without the prefix.</p>
 </div>
 <div class="section" id="collective-ownership">
-<h3>Collective Ownership</h3>
+<h2>Collective Ownership</h2>
 <p>When an individual user creates a data record or collection, that user becomes the owner and is granted full control of
 the newly created data record or collection. Collective ownership is achieved through the use of <em>projects</em>. A DataFed
 project is a distinct organizational entity that permits multiple associated users to create and manage data records and
@@ -278,7 +287,7 @@ managers or administrators. Always has administrative access to created records.
 </ul>
 </div>
 <div class="section" id="metadata">
-<h3>Metadata</h3>
+<h2>Metadata</h2>
 <p>Data records support user-defined metadata. “Metadata” is distinct from built-on record attributes such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable and can represent
 arbitrary structured documents. When creating or updating a data record, metadata may be directly specified in textual form, or,
@@ -288,7 +297,7 @@ existing metadata will be overwritten by the new values - other existing keys ar
 <p>Note that when providing metadata, it must fully comply with the JSON specification, located at <a class="reference external" href="https://tools.ietf.org/html/rfc8259">https://tools.ietf.org/html/rfc8259</a>.</p>
 </div>
 <div class="section" id="collection-hierarchies">
-<h3>Collection Hierarchies</h3>
+<h2>Collection Hierarchies</h2>
 <p>Collection hierarchies within DataFed may resemble a file system with directories containing files and sub-directories.
 While similar structurally, there are profound functional differences between DataFed collection hierarchies and typical
 file systems:</p>
@@ -311,7 +320,7 @@ it is update, or where the associated raw data is physically stored, a record’
 </ul>
 </div>
 <div class="section" id="access-control">
-<h3>Access Control</h3>
+<h2>Access Control</h2>
 <p>DataFed implements fine-grained access control through a set of permissions that can be applied to both data records and
 collections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of
 these. Data records and collections share the same set of permissions; however, collections have an additional set of
@@ -340,7 +349,7 @@ down to all contained data records and sub-collections. Note that because data r
 the inherited permissions of <em>all</em> associated parent collections are evaluated for each users accessing a given data record.</p>
 </div>
 <div class="section" id="storage-allocations">
-<h3>Storage Allocations</h3>
+<h2>Storage Allocations</h2>
 <p>Having access to DataFed does not, in itself, grant users the ability to create or manage data within DataFed. This is because
 DataFed does not provide any raw data storage of its own, but instead relies on <em>federated</em> storage provided by DataFed member
 organizations. Federated storage is implemented through a network of geographically distributed “data repositories” that are
@@ -356,10 +365,8 @@ their own data, DataFed is still allows these users to locate, access, and monit
 storage allocation may be specified, or a specific storage allocation selected when creating new DataFed data records. Data can
 be accessed in a consistent manner no matter which data repository it is stored on; however, the physical location of a data
 repository in relation to the point of use of data can impact initial access time.</p>
-</div>
-</div>
 <div class="section" id="registration">
-<h2>Registration</h2>
+<h3>Registration</h3>
 <p>User registration is required in order to access DataFed. Registration is free and secure, but requires users to have, or obtain,
 a free <a class="reference external" href="https://www.globus.org">Globus</a> account. Many universities and research facilities, worldwide, are “member organizations”
 of Globus and typically provide Globus accounts for their students, staff, and/or users. If your home institute does not provide
@@ -374,6 +381,7 @@ time.</p>
 DataFed data transfers are constrained to be between DataFed data storage repositories and Globus endpoints that you have pre-authorized
 (or “activated”) for access. Globus end-point activation is transient and access will expire within a period determined by the host
 institute.</p>
+</div>
 </div>
 </div>
 
