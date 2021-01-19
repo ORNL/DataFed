@@ -1,18 +1,19 @@
 =============================
 Guide to High Level Interface
 =============================
-Below, we show simple examples of how one could use DataFed's Python interface to
-create data records in DataFed data repositories, put raw data into those records,
-as well as download the raw data from records.
+This is a brief user guide that illustrates the usage of the high-level ``CommandLib`` Python API.
+It is **not** meant to be an exhaustive tutorial on using ``CommandLib``.
+Instead, we cover functions in ``CommandLib`` that would be used in most data orchestration scripts and custom software based on DataFed.
 
-Help and documentation
-----------------------
-Users are encouraged to refer to the extensive `documentation of DataFed's CLI class <https://ornl.github.io/DataFed/autoapi/datafed/CommandLib/index.html>`_
-for complete information on how to interact with DataFed using the Python interface.
+Users are encouraged to refer to the extensive `documentation of DataFed's CommandLib.CLI class <https://ornl.github.io/DataFed/autoapi/datafed/CommandLib/index.html>`_
+for comprehensive information on all functions in the ``CommandLib.CLI`` class.
 
 Getting Started
 ---------------
-Users are recommended to follow our `getting-started guide <https://ornl.github.io/DataFed/system/getting_started.html>`_ to install DataFed on the machine(s) they intend to use DataFed on
+Users are recommended to follow the:
+
+* `getting-started guide <../system/getting_started.html>`_ to get accounts, and allocations on DataFed
+* `installation instructions <../client/install.html>`_ to install the DataFed Python package on the machine(s) where they intend to use DataFed
 
 .. note::
 
@@ -25,7 +26,10 @@ We also import json to simplify the process of communicating metadata with DataF
 
 .. code:: python
 
-    >>> import json
+    >>> import json # For dealing with metadata
+    >>> import os # For file level operations
+    >>> import time # For timing demonstrations
+    >>> import datetime # To demonstrate conversion between date and time formats
     >>> from datafed.CommandLib import API
 
 Create instance
@@ -38,22 +42,211 @@ Finally, we create an instance of the DataFed API class via:
 
 We can now use ``df_api`` to communicate with DataFed
 
+DataFed functions and responses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Typically, users would be working in the context of a DataFed ``Project``
+, which would have been created by the project's principle investigator(s) or other administrators,
+rather than the user's own personal ``root`` collection.
+
+First, let's try to find projects we are part of using the ``projectList()`` function in DataFed:
+
+.. code:: python
+
+    >>> plist_resp = df_api.projectList()
+    >>> print(plist_resp)
+
+    (item {
+      id: "p/trn001"
+      title: "TRN001 : DataFed Training"
+      owner: "u/somnaths"
+    }
+    offset: 0
+    count: 20
+    total: 1
+    , 'ListingReply')
+
+DataFed typically responds to functions or messages.
+
+It is important to get comfortable with these messages and extracting information from them
+if one is interested in using this interface to automate data orchestration.
+
+Let's dig into this object layer-by-layer:
+
+The first layer is typically a tuple of size 2:
+
+.. code:: python
+
+    >>> print(type(pl_resp), len(pl_resp))
+
+    (tuple, 2)
+
+The first object, that we need to dig into is the core Google ``protobuf`` message:
+
+.. code:: python
+
+    >>> type(pl_resp[0])
+    google.protobuf.internal.python_message.ListingReply
+
+``ListingReply`` is one of the handful of different kinds of messages DataFed replies with across all its many functions.
+We will be encountering most of the different message types in this user guide.
+
+Besides the main information about the different projects, this ``ListingReply`` also provides some contextual information
+such as the:
+
+* ``count`` - Maximum number of items that could be listed in this message,
+* ``total`` - Number of items listed in this message
+* ``offset`` - The number of items in past listings - this denotes the concept of page numbers
+
+Though we won't be needing the information in this case, here is how we might get the ``offset``:
+
+.. code:: python
+
+    >>> print(pl_resp[0].offset)
+    0
+
+Accessing the ``item`` component produces the actual listing of project in the message:
+
+.. code:: python
+
+    >>> len(pl_resp[0].item)
+    1
+
+Now, if we wanted to get the ``title`` field of the sole project in the listing, we would access it as:
+
+.. code:: python
+
+    >>> pl_resp[0].item[0].title
+    "TRN001 : DataFed Training"
+
+.. note::
+
+    We will be accessing many fields in messages going forward.
+    Users are recommended to revisit this section to remind themselves how to peel each layer of the message to get to the desired field
+    since we will jump straight into the single line to access the desired information henceforth in the interest of brevity.
+
+Set Project context
+~~~~~~~~~~~~~~~~~~~
+
+In this user guide, we will work within the context of the training project.
+In order to ensure that we continue to work within this context -
+create data records, collections, etc. within this space,
+we will define (and later use) the first of two contextual variables:
+
+.. code:: python
+
+    >>> context = 'p/trn001' # Name of the DataFed training project
+
+.. note::
+
+    Please change the ``context`` variable to suit your own project.
+    If you want to work within your own ``root`` collection,
+    set ``context`` to ``None``.
+
+Exploring projects
+~~~~~~~~~~~~~~~~~~
+We can take a look at basic information about a project using the ``projectView()`` function:
+
+.. code:: python
+
+    >>> print(df_api.projectView(context))
+
+    (proj {
+      id: "p/trn001"
+      title: "TRN001 : DataFed Training"
+      desc: "DataFed Training project"
+      owner: "u/somnaths"
+      ct: 1610905375
+      ut: 1610912585
+      admin: "u/stansberrydv"
+      admin: "u/breetju"
+      alloc {
+        repo: "cades-cnms"
+        data_limit: 1073741824
+        data_size: 0
+        rec_limit: 1000
+        rec_count: 0
+        path: "/data10t/cades-cnms/project/trn001/"
+      }
+    }
+    , 'ProjectDataReply')
+
+Note that we got a different kind of reply from DataFed - a ``ProjectDataReply`` object.
+The methodology to access information in these objects is identical to that described above.
+Nonetheless, this response provides some useful information such as the administrators, creation date, etc.
+that might be useful for those administrating or part of several projects.
+
+We can take a look at the contents of a project by listing everything in the project's
+``root`` collection using the ``collectionItemList()`` function as shown below:
+
+.. code:: python
+
+    >>> df_api.collectionItemsList('root', context=context)
+
+    (item {
+       id: "c/34559341"
+       title: "breetju"
+       alias: "breetju"
+       owner: "p/trn001"
+       notes: 0
+     }
+     item {
+       id: "c/34559108"
+       title: "PROJSHARE"
+       alias: "projshare"
+       owner: "p/trn001"
+       notes: 0
+     }
+     item {
+       id: "c/34558900"
+       title: "somnaths"
+       alias: "somnaths"
+       owner: "p/trn001"
+       notes: 0
+     }
+     item {
+       id: "c/34559268"
+       title: "stansberrydv"
+       alias: "stansberrydv"
+       owner: "p/trn001"
+       notes: 0
+     }
+     offset: 0
+     count: 20
+     total: 4, 'ListingReply')
+
+Just as in the ``projectList()`` function, this function too returns a ``ListingReply`` message.
+Here, we see that the administrator of the project has created some collections for the private
+use of project members and a collaborative space called ``PROJSHARE``
+
+.. note::
+
+    Not all projects would be structured in this manner.
+
+Set User context
+~~~~~~~~~~~~~~~~
+Now, that we see that a collection does indeed exist for each user in the project,
+we can set the second portion of our context such that any data we want to create in our
+private space is created in our own collection (``somnaths`` in this case) rather than
+creating clutter in the ``root`` collection of the project:
+
+.. code:: python
+
+    >>> username = 'somnaths' # Name of this user
+
+.. note::
+
+    Please change the ``username`` variable to suit your own project.
+    If you want to work within your own ``root`` collection,
+    set ``username`` to ``root``.
+
+Here ``username`` will be used to ensure that all records and collections are created
+within this parent collection.
+
 Create Data Record
 ------------------
 
 Prepare (scientific) metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Users can derive a lot more value from DataFed if they provide more contextual information about their data which can be mined or queried later on.
-Therefore, users are highly encouraged to provide contextual information such as scientific metadata along with raw data.
-This metadata could by any supporting information that would help the user in identifying, searching for, and organizing data.
-
-For example, if one were performing simulations, this could be the exact combination of parameters relevant to the simulation.
-Alternatively, if one were performing measurements on an instrument, the metadata could include information about the sample / system being interroaged,
-measurement parameters such as resolution, speeds, spectroscopic parameters, etc.
-
-By default, one would need to get metadata from the simulation's input parameters file or output log files.
-Similarly users may need to extract header information from measurement files as the metadata for DataFed.
-
 DataFed can accept metadata as dictionaries in python or as a JSON file.
 
 Here, we simply create a dictionary with fake metadata in place of the real metadata:
@@ -258,22 +451,6 @@ In order to get back a python dictionary, use ``json.loads()``
 
 Download Data
 -------------
-For the purposes of this demonstration, we will be using data that was created elsewhere as the ``data view`` command shows:
-
-* Display contents of current director
-* Get data
-* Show task information
-* Display contents of current directory
-
-Create a collection to hold two new records
-
-Create provenance links between the collection and the source dataset
-
-Error detection
-
-Ideas from DataFed Helper
-
-Create a new record with very large data and track status of task async
 
 .. note::
 
