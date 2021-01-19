@@ -15,28 +15,28 @@ raw data storage resources along with centralized metadata indexing, data discov
 services that combine to form a virtual "data backplane" connecting otherwise disjoint systems into a
 uniform data environment.
 
-While DataFed relies on Globus services (for user authentication and efficient raw data movement),
-DataFed presents data as a managed *logical* view (similar to a database) rather than a direct physical view
-of files in hierarchical directories on a particular file system. This is a critical aspect of reducing the
-confusion and thrash that can lead to data misidentification, mishandling, and an eventual loss of
+Unlike other data management systems that are installed and managed locally, DataFed has a single central
+orchestration service that ties all of the independent DataFed repositories together into a single network.
+This approach prevents data siloing yet is also scalable since data storage and transfer loading is distributed
+across individual repositories.
+
+While DataFed relies on Globus services (for user authentication and high-performance raw data movement via GridFTP),
+DataFed presents managed data using a *logical* view (similar to a database) rather than a direct physical view
+of files in directories on a particular file system. This is a critical aspect of simplifying access control and
+reducing the confusion and thrash that can lead to data misidentification, mishandling, and an eventual loss of
 reproducibility.
 
-DataFed provides a universal data storage allocation mechanism as well as fine-grained data access controls to
-enable users at disjoint organizations to easily share and access data with each other without undue burden on
-local system administrators. Additionally, local administrators are able to maintain and enforce data policies
-on local DataFed repositories without disrupting remote DataFed facilities or users in any way.
-
 The figure below shows a simplified representation of an example DataFed network consisting of the central
-DataFed services and several connected facilities.
+DataFed services and several connected facilities. The enclosing gray boxes represent the physical boundaries
+of geographically distributed, but networked, facilities. The wide blue arrows represent high-speed raw data
+transfers between facilities, and the green arrows show DataFed client communication with DataFed services.
 
 .. image:: /_static/simplified_architecture.png
 
-In the above example, all of the enclosing gray boxes represent the physical boundaries of geographically
-distributed, but networked, facilities. The wide blue arrows represent high-speed raw data transfers between
-facilities and the green arrows show DataFed client communication with DataFed services.
+  Simplified DataFed System Architecture
 
 In this example, there is an observational facility and a compute facility that each have a local DataFed
-data repository (cylinder labeled with an 'R'). Any facility in the diagram can read or write data from or to
+data repository (cylinder labeled with an 'R'). Any facility in the system can read or write data from or to
 the data repositories in the observational or compute facilities (assuming proper access permissions); however,
 users within these two facilities will have lower latency access to the data stored in the local repositories.
 In addition, independent workstations can also access data in these repositories - also assuming proper access
@@ -49,9 +49,41 @@ specified Globus destination; however, note that the raw data is simply copied -
 repository. The central DataFed service maintains data record tracking information and orchestrates raw data
 transfers, but never directly handles raw data.
 
+.. note::
+
+  DataFed provides a universal storage allocation and fine-grained access control mechanisms to
+  enable users at disjoint organizations to share and access data with each other without undue burden on
+  local system administrators. Local administrators are able to maintain and enforce data policies
+  on local DataFed repositories without disrupting remote DataFed facilities or users in any way.
+
+Continuing with the example architecture, the experimental facility does not have a local DataFed repository
+and, instead, could use allocations on the DataFed repository within the compute facility (if, for example, these
+facilities were collaborating or were managed by the same organization). In this scenario, users at the experimental
+facility would store and retrieve data using a DataFed allocation granted by the compute facility, but from the users
+perspective, all DataFed interactions would look the same as if the repository were local. The only noticeable
+difference would be increased latency associated with DataFed data transfers.
+
+Many cross-facility and collaborative research scenarios are supported by DataFed, and specific examples are discussed
+in the DataFed :doc: `Use Cases`_ document.
+
 Interfaces
 ==========
 
+Users are able to interact with DataFed through several available interfaces including a graphical web application,
+a command-line interface (CLI), and both high- and low-level application programming interfaces (APIs). The easiest
+way to interact with DataFed is through the web application (see `/user/web/portal`_), and the web application is
+where users initially register for DataFed accounts.
+
+The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged available on PyPi. For
+information on installing the DataFed client, please refer to `/user/client/install`_, and for the CLI and APIs, refer to
+`/user/cli/guide`_ and `/user/api/python`_, respectively.
+
+DataFed's interfaces can be used from any workstation, laptop, or compute node; however, these interfaces only provide
+users with the ability to issue commands to the DataFed central service. If users need to be able to also transfer raw
+data to or from a given host machine, the local file system of the host machine must be connected to a Globus endpoint.
+Typically, research facilities will already provide Globus endpoints to access specific local file systems; however, for
+individual workstations and laptops, users will need to install Globus Personal Connect. See the `/user/client/install`_
+for more information.
 
 Key Concepts
 ============
