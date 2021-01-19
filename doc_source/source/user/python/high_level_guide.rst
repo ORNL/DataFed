@@ -80,7 +80,7 @@ The first layer is typically a tuple of size 2:
 
     (tuple, 2)
 
-The first object, that we need to dig into is the core Google ``protobuf`` message:
+The first object, that we need to dig into is the core `Google Protocol Buffer <https://developers.google.com/protocol-buffers>`_ message:
 
 .. code:: python
 
@@ -89,6 +89,8 @@ The first object, that we need to dig into is the core Google ``protobuf`` messa
 
 ``ListingReply`` is one of the handful of different kinds of messages DataFed replies with across all its many functions.
 We will be encountering most of the different message types in this user guide.
+
+Interested users are encouraged to read official documentation and `examples about Google Protobuf <https://developers.google.com/protocol-buffers/docs/pythontutorial#where-to-find-the-example-code>`_.
 
 Besides the main information about the different projects, this ``ListingReply`` also provides some contextual information
 such as the:
@@ -242,8 +244,8 @@ creating clutter in the ``root`` collection of the project:
 Here ``username`` will be used to ensure that all records and collections are created
 within this parent collection.
 
-Create Data Record
-------------------
+Data Records
+------------
 
 Prepare (scientific) metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -260,75 +262,359 @@ Here, we simply create a dictionary with fake metadata in place of the real meta
                       'd': {'x': 14, 'y': -19} # Can use nested dictionaries
                       }
 
-Create the record
-~~~~~~~~~~~~~~~~~
+Create Data Record
+~~~~~~~~~~~~~~~~~~
 Until a future version of DataFed, which can accept a python dictionary itself instead
 of a JSON file or a JSON string for the metadata, we will need to use ``json.dumps()``
 or write the dictionary to a JSON file:
 
 .. code:: python
 
-    >>> response = df_api.dataCreate('my important data',
-                                     alias='my_alias', # optional
-                                     metadata=json.dumps(parameters), # also optional
-                                     parent_id='root', # parent collection
+    >>> dc_resp = df_api.dataCreate('my important data',
+                                    metadata=json.dumps(parameters),
+                                    parent_id=username, # parent collection
+                                    context=context, # this project
                                     )
 
-.. note::
+Here, the ``parent_id`` was set to the ``username`` variable which would cause the
+data record to be created within the user's personal collection within the project.
+Leaving this unspecified is equivalent to the default value of ``root`` which means that
+the Data Record would be created within the ``root`` collection of the project.
 
-   Use the ``parent_id`` keyword argument to create the record within a
-   specific collection, for example within a project.
+Leaving both the ``parent_id`` and ``context`` unspecified would have caused the
+Data Record to be created within ``root`` collection in the user's ``Personal Data``
 
-Here, the ``parent_id`` was set to the default value of ``root`` which means that
-the Data Record would be created within the user's private collection.
+Extract Record ID
+~~~~~~~~~~~~~~~~~
 
-We encourage users to create a variable in the very beginning of the script
-capturing information about the starting location where DataFed Records
-would be created and operated on. This variable could be used for the ``parent_id``.
-
-Reading DataFed response
-~~~~~~~~~~~~~~~~~~~~~~~~
-DataFed returns Google Protobuf messages in response to commands (both success and failure).
-
-Here is the response form the above ``dataCreate()`` command:
+Let's look at the response we got for the ``dataCreate()`` function call:
 
 .. code:: python
 
     >>> print(response)
 
     (data {
-       id: "d/30224875"
+       id: "d/34682319"
        title: "my important data"
-       alias: "my_alias"
        metadata: "{\"a\":4,\"b\":[1,2,-4,7.123],\"c\":\"Something important\",\"d\":{\"x\":14,\"y\":-19}}"
        repo_id: "repo/cades-cnms"
        size: 0.0
        ext_auto: true
-       ct: 1605133166
-       ut: 1605133166
-       owner: "u/somnaths"
+       ct: 1611077217
+       ut: 1611077217
+       owner: "p/trn001"
        creator: "u/somnaths"
-       parent_id: "c/u_somnaths_root"
+       parent_id: "c/34558900"
      }, 'RecordDataReply')
 
-We would get the same response if we viewed basic information about a Data Record
-using the ``dataView()`` command.
+DataFed returned a ``RecordDataReply`` object, which contains crucial pieces of information regarding the record.
 
-Though the content in these message objects are clearly laid out for humans to read and understand,
-getting the specific components of the messages requires a tiny bit of extra indexing work.
+.. note::
 
-For example, if we wanted to get the record ID to be used for later transactions,
-here's how we could go about it:
+    In the future, the ``dataCreate()`` function would by default return only the ``ID`` of the record
+    instead of such a verbose response if it successfully created the Data Record.
+    We expect to be able to continue to get this verbose response through an optional argument.
+
+    Such detailed information regarding the record can always be obtained via the ``dataView()`` function
+
+Similar to getting the title from the project information, if we wanted to get the
+record ID to be used for later operations, here's how we could go about it:
 
 .. code:: python
 
     >>> record_id = response[0].data[0].id
     >>> print(record_id)
 
-    'd/30224875'
+    'd/34682319'
 
+Edit Record information
+~~~~~~~~~~~~~~~~~~~~~~~
+All information about Data Records, besides the unique ``ID``, can be edited later on using the
+``dataUpdate()`` command. For example, if we wanted to change the title, add a human-readable
+unique ``alias``, and **add** to the scientific metadata, we could as:
+
+.. code:: python
+
+    >>> du_resp = df_api.dataUpdate(record_id,
+                                    title='Some new title for the data',
+                                    alias='my_first_dataset',
+                                    metadata=json.dumps({'appended_metadata': True})
+                                    )
+    print(du_resp)
+
+    (data {
+      id: "d/34682319"
+      title: "Some new title for the data"
+      alias: "my_first_dataset"
+      repo_id: "repo/cades-cnms"
+      size: 0.0
+      ext_auto: true
+      ct: 1611077217
+      ut: 1611077220
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      notes: 0
+    }
+    update {
+      id: "d/34682319"
+      title: "Some new title for the data"
+      alias: "my_first_dataset"
+      owner: "p/trn001"
+      creator: "u/somnaths"
+      size: 0.0
+      notes: 0
+      deps_avail: true
+    }
+    , 'RecordDataReply')
+
+.. note::
+
+    In the future, the ``dataUpdate()`` command would return only an acknowledgement
+    of the successful execution of the data update.
+
+View Record information
+~~~~~~~~~~~~~~~~~~~~~~~
+Since the response from the ``dataCreate()`` and ``dataUpdate()`` functions does not include the
+metadata, we can always get the most comprehensive information about Data Records via the ``dataView()`` function:
+
+.. code:: python
+
+    >>> dv_resp = df_api.dataView(record_id)
+    >>> print(dv_resp)
+
+    (data {
+       id: "d/34682319"
+       title: "Some new title for the data"
+       alias: "my_first_dataset"
+       metadata: "{\"a\":4,\"appended_metadata\":true,\"b\":[1,2,-4,7.123],\"c\":\"Something important\",\"d\":{\"x\":14,\"y\":-19}}"
+       repo_id: "repo/cades-cnms"
+       size: 0.0
+       ext_auto: true
+       ct: 1611077217
+       ut: 1611077220
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       notes: 0
+     }, 'RecordDataReply')
+
+The date and time in the Data Records are encoded according to the Unix time format and
+can be converted to familiar python ``datetime`` objects via ``fromtimestamp()``:
+
+.. code:: python
+
+    >>> datetime.datetime.fromtimestamp(dv_resp[0].data[0].ct)
+
+    datetime.datetime(2021, 1, 19, 12, 26, 57)
+
+
+Extract metadata
+~~~~~~~~~~~~~~~~
+As the response above shows, the metadata is also part of the response we got from ``dataView()``.
+
+By default, the metadata in the response is formatted as a JSON string:
+
+.. code:: python
+
+    >>> dv_resp[0].data[0].metadata
+
+    "{\"a\":4,\"appended_metadata\":true,\"b\":[1,2,-4,7.123],\"c\":\"Something important\",\"d\":{\"x\":14,\"y\":-19}}"
+
+
+In order to get back a python dictionary, use ``json.loads()``
+
+.. code:: python
+
+    >>> print(json.loads(dv_resp[0].data[0].metadata))
+
+    {'a': 4,
+     'appended_metadata': True,
+     'b': [1, 2, -4, 7.123],
+     'c': 'Something important',
+     'd': {'x': 14, 'y': -19}}
+
+We can clearly observe that both the original and the new metadata are present in the record.
+
+Replace metadata
+~~~~~~~~~~~~~~~~
+In the example above, we appended metadata to existing metadata, which is the default manner in which ``dataUpdate()`` operates.
+If desired, we could completely replace the metadata by setting ``metadata_set`` to ``True`` as in:
+
+.. code:: python
+
+    >>> du_resp = df_api.dataUpdate(record_id,
+                                    metadata=json.dumps({'p': 14, 'q': 'Hello', 'r': [1, 2, 3]}),
+                                    metadata_set=True,
+                                    )
+    >>> dv_resp = df_api.dataView(record_id)
+    >>> print(json.loads(dv_resp[0].data[0].metadata))
+    {'p': 14, 'q': 'Hello', 'r': [1, 2, 3]}
+
+Clearly, the previous metadata keys such as ``a``, ``b``, ``c``, etc. have all been replaced by the new metadata fields.
+
+Aliases vs. IDs
+~~~~~~~~~~~~~~~
+So far, we have been operating and accessing information about the Data Record we just created using its
+unique ID via the variable - ``record_id``.
+
+However, DataFed also allows Data Records and Collections to be addressed via their ``alias``, which we set
+when demonstrating the ``dataUpdate()`` function. Let us try to view the Record using its alias instead of its ID:
+
+.. code:: python
+
+    >>> dv_resp = df_api.dataView('my_first_dataset')
+    >>> dv_resp
+
+    ---------------------------------------------------------------------------
+    Exception                                 Traceback (most recent call last)
+    <ipython-input-15-c3238222ad56> in <module>
+    ----> 1 dv_resp = df_api.dataView('my_first_dataset')
+          2 dv_resp
+
+    //anaconda/lib/python3.5/site-packages/datafed/CommandLib.py in dataView(self, data_id, details, context)
+        162         msg.details = details
+        163
+    --> 164         return self._mapi.sendRecv( msg )
+        165
+        166     ##
+
+    //anaconda/lib/python3.5/site-packages/datafed/MessageLib.py in sendRecv(self, msg, timeout, nack_except)
+        299         self.send( msg )
+        300         _timeout = (timeout if timeout != None else self._timeout)
+    --> 301         reply, mt, ctxt = self.recv( _timeout, nack_except )
+        302         if reply == None:
+        303             return None, None
+
+    //anaconda/lib/python3.5/site-packages/datafed/MessageLib.py in recv(self, timeout, nack_except)
+        343         if msg_type == "NackReply" and _nack_except:
+        344             if reply.err_msg:
+    --> 345                 raise Exception(reply.err_msg)
+        346             else:
+        347                 raise Exception("Server error {}".format( reply.err_code ))
+
+    Exception: Alias 'my_first_dataset' does not exist
+    (source: dbGet:126 code:1)
+
+The exception above reveals a few important nuances about DataFed:
+
+* IDs are unique across DataFed and the ``context`` need not be specified
+* aliases are unique only within a project or a user's ``Personal Data`` space.
+  Therefore the ``context`` must be specified whenever using aliases
+
+The above function call failed since it looked for a Data Record in the user's ``Personal Data`` with the specified alias,
+which indeed does not exist.
+
+.. note::
+
+    In the future, DataFed will throw more meaningful Exceptions.
+    For example, the above function call may result in a ``KeyError`` rather than a generic ``Exception`` object
+
+We can still view the Data Record using the alis in place of the ID.
+However, we would need to also provide ``context`` that the Record actually exists within the training Project.
+
+Here is how we would amend the function call:
+
+.. code:: python
+
+    >>> dv_resp = df_api.dataView('my_first_dataset', context=context)
+    >>> dv_resp
+
+    (data {
+       id: "d/34682319"
+       title: "Some new title for the data"
+       alias: "my_first_dataset"
+       metadata: "{\"p\":14,\"q\":\"Hello\",\"r\":[1,2,3]}"
+       repo_id: "repo/cades-cnms"
+       size: 0.0
+       ext_auto: true
+       ct: 1611077217
+       ut: 1611077226
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       notes: 0
+     }, 'RecordDataReply')
+
+Relationships and provenance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    dc2_resp = df_api.dataCreate('cleaned data',
+                                  metadata=json.dumps({'cleaning_algorithm': 'gaussian_blur', 'size': 20}),
+                                  parent_id=username, # parent collection
+                                  context=context, # project
+                                 )
+    ​
+    dc2_resp
+    [31]:
+    (data {
+       id: "d/34682715"
+       title: "cleaned data"
+       metadata: "{\"cleaning_algorithm\":\"gaussian_blur\",\"size\":20}"
+       repo_id: "repo/cades-cnms"
+       size: 0.0
+       ext_auto: true
+       ct: 1611077405
+       ut: 1611077405
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       parent_id: "c/34558900"
+     }, 'RecordDataReply')
+    [39]:
+
+.. code:: python
+
+    clean_rec_id = dc2_resp[0].data[0].id
+    clean_rec_id
+    [39]:
+    'd/34682715'
+
+.. note::
+
+    Must past lst of list not List of tuples
+    [40]:
+
+.. code:: python
+
+    df_api.dataUpdate(clean_rec_id, deps_add=[["der", record_id]])
+    [40]:
+    (data {
+       id: "d/34682715"
+       title: "cleaned data"
+       repo_id: "repo/cades-cnms"
+       size: 0.0
+       ext_auto: true
+       ct: 1611077405
+       ut: 1611078386
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       deps {
+         id: "d/34682319"
+         alias: "my_first_dataset"
+         type: DEP_IS_DERIVED_FROM
+         dir: DEP_OUT
+       }
+       notes: 0
+     }
+     update {
+       id: "d/34682715"
+       title: "cleaned data"
+       owner: "p/trn001"
+       creator: "u/somnaths"
+       size: 0.0
+       notes: 0
+       deps_avail: true
+       dep {
+         id: "d/34682319"
+         alias: "my_first_dataset"
+         type: DEP_IS_DERIVED_FROM
+         dir: DEP_OUT
+       }
+     }, 'RecordDataReply')
+
+Data Transfer
+-------------
 Upload raw data
----------------
+~~~~~~~~~~~~~~~
 So far, the Data Record created above only contains simple text information
 along with the scientific metadata. It does not have the raw data that we
 colloquially refer to as "data" in science.
@@ -358,23 +644,23 @@ With the data file created, we are ready to put this raw data into the record we
     >>> print(put_resp)
 
     (item {
-       id: "d/30224875"
-       title: "my important data"
+       id: "d/34682319"
+       title: "Some new title for the data"
        size: 0.0
-       owner: "u/somnaths"
+       owner: "p/trn001"
      }
      task {
-       id: "task/30225166"
+       id: "task/34682474"
        type: TT_DATA_PUT
        status: TS_READY
        client: "u/somnaths"
        step: 0
        steps: 2
        msg: "Pending"
-       ct: 1605133526
-       ut: 1605133526
-       source: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Desktop/parameters.json"
-       dest: "d/30224875"
+       ct: 1611077280
+       ut: 1611077280
+       source: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Dropbox (ORNL)/Projects/DataFed_User_Engagements/Tutorial/parameters.json"
+       dest: "d/34682319"
      }, 'DataPutReply')
 
 The ``dataPut()`` method initiates a Globus transfer on our behalf
@@ -394,11 +680,7 @@ and instead use:
                                   wait=True, # Waits until transfer completes.
                                   )
 
-View Data Record
-----------------
-We can get all information regarding a Data Record, except for the raw data itself, using the ``dataView()`` method.
-
-Here we try to view the Data Record we have been working on so far:
+Let's view the Data Record we have been working on so far:
 
 .. code:: python
 
@@ -406,51 +688,115 @@ Here we try to view the Data Record we have been working on so far:
     >>> prit(dv_resp)
 
     (data {
-       id: "d/30224875"
-       title: "my important data"
-       alias: "my_alias"
-       metadata: "{\"a\":4,\"b\":[1,2,-4,7.123],\"c\":\"Something important\",\"d\":{\"x\":14,\"y\":-19}}"
+       id: "d/34682319"
+       title: "Some new title for the data"
+       alias: "my_first_dataset"
+       metadata: "{\"p\":14,\"q\":\"Hello\",\"r\":[1,2,3]}"
        repo_id: "repo/cades-cnms"
        size: 86.0
-       source: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Desktop/parameters.json"
+       source: "olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial/parameters.json"
        ext: ".json"
        ext_auto: true
-       ct: 1605133166
-       ut: 1605133539
-       dt: 1605133539
-       owner: "u/somnaths"
+       ct: 1611077217
+       ut: 1611077286
+       dt: 1611077286
+       owner: "p/trn001"
        creator: "u/somnaths"
        notes: 0
      }, 'RecordDataReply')
 
-Comparing this response against the response we got from the ``dataCreate()`` call,
-you will notice the source and file extension have been updated.
+Comparing this response against the response we got from the last ``dataView()`` call,
+you will notice the ``source`` and ``file extension`` have been updated.
 
-Extract metadata
-~~~~~~~~~~~~~~~~
-As the response above shows, the metadata is also part of the response we got from ``dataView()``.
-
-By default, the metadata in the response is formatted as a JSON string:
+Download raw data
+~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
-    >>> dv_resp[0].data[0].metadata
+    expected_file_name = os.path.join('.', record_id.split('d/')[-1]) + '.json'
+    print(expected_file_name)
+    ./34682319.json
 
-    '{"a":4,"b":[1,2,-4,7.123],"c":"Something important","d":{"x":14,"y":-19}}'
+    print(os.path.exists(expected_file_name))
+    False
 
-In order to get back a python dictionary, use ``json.loads()``
+.. note::
+
+    Must pass list of record ids:
 
 .. code:: python
 
-    >>> json.loads(dv_resp[0].data[0].metadata)
+    get_resp = df_api.dataGet([record_id], # currently only accepts a list of IDs / aliases
+                              '.', # directory where data should be downloaded
+                              orig_fname=False,
+                              wait=True,
+                             )
+    print(get_resp)
+    (task {
+      id: "task/34682556"
+      type: TT_DATA_GET
+      status: TS_SUCCEEDED
+      client: "u/somnaths"
+      step: 2
+      steps: 3
+      msg: "Finished"
+      ct: 1611077310
+      ut: 1611077320
+      source: "d/34682319"
+      dest: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Dropbox (ORNL)/Projects/DataFed_User_Engagements/Tutorial"
+    }
+    , 'TaskDataReply')
 
-    {'a': 4,
-     'b': [1, 2, -4, 7.123],
-     'c': 'Something important',
-     'd': {'x': 14, 'y': -19}}
+Response had two components - the item and the task
 
-Download Data
--------------
+.. code:: python
+
+    print(os.path.exists(expected_file_name))
+    True
+
+.. code:: python
+
+    os.rename(expected_file_name, 'duplicate_parameters.json')
+    [28]:
+
+Tasks
+~~~~~
+
+.. code:: python
+
+    task_id = get_resp[0].task[0].id
+    print(task_id)
+    task/34682556
+    [29]:
+
+.. code:: python
+
+    task_resp = df_api.taskView(task_id)
+    print(task_resp)
+    (task {
+      id: "task/34682556"
+      type: TT_DATA_GET
+      status: TS_SUCCEEDED
+      client: "u/somnaths"
+      step: 2
+      steps: 3
+      msg: "Finished"
+      ct: 1611077310
+      ut: 1611077320
+      source: "d/34682319"
+      dest: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Dropbox (ORNL)/Projects/DataFed_User_Engagements/Tutorial"
+    }
+    , 'TaskDataReply')
+
+.. note::
+
+    Don't dig too deep since stuff can change
+
+.. code:: python
+
+    task_resp[0].task[0].status
+    [30]:
+    3
 
 .. note::
 
