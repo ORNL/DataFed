@@ -2,50 +2,59 @@
 System Overview
 ===============
 
-DataFed is a federated scientific data management and collaboration system for open research that
-eases the data handling burden associated with research activities within and across scientific
-domains and facilities. The primary goal of DataFed is to improve scientific data quality by enabling
-precise full-lifecycle control over data artifacts, with the ability to uniformly share and access data
-across geographically distributed facilities. The combined capabilities of DataFed help to support
-the concept of "repeatable science" through the unambiguous identification and tracking of data artifacts,
-by capturing and maintaining scientific metadata and provenance, and by providing the means to locate,
-access, and share data globally.
-
-DataFed can be thought of as a "tier 2+" distributed data storage system - meaning it is intended
-for creating and working with data that is of medium- to long-term significance to the owner and/or
-collaborators. Unlike a tier 1 storage system (i.e. a local file system), DataFed compromises raw
-access performance in favor of FAIR data principles. While DataFed shares many features with tier 3
-storage systems (i.e. data archives), DataFed allows data and metadata to be updated and specifically
-includes features for disseminating any changes to downstream dependents (via provenance) and/or data
-subscribers. DataFed also provides additional collaboration features to enable precise "in-band"
-communication regarding data and collections of data (as opposed to ad hoc methods such as email).
-
-DataFed utilizes `Globus <https://www.globus.org>`_ for efficient and secure data transfers, as well as
-for user authentication. Globus can be thought of as a "data network" where data transfers take place
-between Globus "endpoints" - which are Globus services that enable access to underlying file systems
-hosted by member organizations. DataFed adds a data management layer on top of Globus that permits data
-to be located and accessed without needing to know where the data is physically stored within the Globus
-network. Because DataFed relies heavily on Globus, it is recommended that DataFed users familiarize
-themselves with `how Globus works <https://www.globus.org/what-we-do>`_.
-
-DataFed is an open source project hosted on GitHub at `<https://github.com/ORNL/DataFed>`_. DataFed is
-under active development at Oak Ridge National Laboratory (ORNL) within the Oak Ridge Leadership
-Computing Facility (OLCF) and is currently deployed in an alpha-release state for early access users.
-
-.. attention::
-
-  This documentation is accurate but incomplete due to the rapid pace of development of the DataFed system.
-
+This document provides a high-level overview and description of the DataFed system and defines terminology and
+key concepts that are prerequisites for subsequent DataFed documentation.
 
 Architecture
 ============
 
+The DataFed system is a network of distributed services and data storage repositories that enable users
+to create, locate, share, and access living scientific data from any organization, facility, or workstation that
+has access to Globus data services. DataFed provides a software framework for the federation of distributed
+raw data storage resources along with centralized metadata indexing, data discovery, and collaboration
+services that combine to form a virtual "data backplane" connecting otherwise disjoint systems into a
+uniform data environment.
+
+While DataFed relies on Globus services (for user authentication and efficient raw data movement),
+DataFed presents data as a managed *logical* view (similar to a database) rather than a direct physical view
+of files in hierarchical directories on a particular file system. This is a critical aspect of reducing the
+confusion and thrash that can lead to data misidentification, mishandling, and an eventual loss of
+reproducibility.
+
+DataFed provides a universal data storage allocation mechanism as well as fine-grained data access controls to
+enable users at disjoint organizations to easily share and access data with each other without undue burden on
+local system administrators. Additionally, local administrators are able to maintain and enforce data policies
+on local DataFed repositories without disrupting remote DataFed facilities or users in any way.
+
+The figure below shows a simplified representation of an example DataFed network consisting of the central
+DataFed services and several connected facilities.
+
 .. image:: /_static/simplified_architecture.png
 
+In the above example, all of the enclosing gray boxes represent the physical boundaries of geographically
+distributed, but networked, facilities. The wide blue arrows represent high-speed raw data transfers between
+facilities and the green arrows show DataFed client communication with DataFed services.
 
-************
+In this example, there is an observational facility and a compute facility that each have a local DataFed
+data repository (cylinder labeled with an 'R'). Any facility in the diagram can read or write data from or to
+the data repositories in the observational or compute facilities (assuming proper access permissions); however,
+users within these two facilities will have lower latency access to the data stored in the local repositories.
+In addition, independent workstations can also access data in these repositories - also assuming proper access
+permissions are granted.
+
+When data is stored to a DataFed repository, Globus is used to transfer a user-specified source file (as a Globus
+path) into the repository where it becomes associated with a DataFed data record. Likewise, when data is retrieved
+from a DataFed repository, Globus is used to transfer raw data of a DataFed record from the repository to a user-
+specified Globus destination; however, note that the raw data is simply copied - not moved - from the DataFed
+repository. The central DataFed service maintains data record tracking information and orchestrates raw data
+transfers, but never directly handles raw data.
+
+Interfaces
+==========
+
+
 Key Concepts
-************
+============
 
 DataFed aggregates and abstracts the federation of distributed data, storage systems, facilities, users, groups,
 and projects into a single logical unit - with a common nomenclature and uniform access patterns. Some of the
@@ -70,8 +79,9 @@ standpoint, the physical storage location of data likely matters depending on wh
 For this reason, DataFed will support data repository caching to optimize frequently accessed data. In addition, users
 with allocations on multiple data repositories may opt to migrate data between repositories based on usage locality.
 
+-----------------------
 Identifiers and Aliases
-=======================
+-----------------------
 
 All records in DataFed (data, collections, user, projects, etc.) are automatically assigned a system-unique identifier
 consisting of a prefix and an alphanumeric value. For data records and collections these identifiers are numeric, so
@@ -84,8 +94,9 @@ For example, if a user with an ID of "u/jsmith" creates an alias "mydata", then 
 User "jsmith" can simply use "mydata", but other users would need to use the full alias instead. Note that in DataFed web
 portal, aliases are typically shown without the prefix.
 
+--------------------
 Collective Ownership
-====================
+--------------------
 
 When an individual user creates a data record or collection, that user becomes the owner and is granted full control of
 the newly created data record or collection. Collective ownership is achieved through the use of *projects*. A DataFed
@@ -106,8 +117,9 @@ Projects support specific roles for associated users:
 * Members - These users may create and update data records and collections based on the access control rules set by
   managers or administrators. Always has administrative access to created records.
 
+--------
 Metadata
-========
+--------
 
 Data records support user-defined metadata. "Metadata" is distinct from built-on record attributes such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable and can represent
