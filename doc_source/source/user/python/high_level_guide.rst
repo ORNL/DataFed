@@ -778,23 +778,27 @@ At this point, we are free to rename the downloaded file to whatever name we wan
 
 .. code:: python
 
-    os.rename(expected_file_name, 'duplicate_parameters.json')
-    [28]:
+    >>> os.rename(expected_file_name, 'duplicate_parameters.json')
 
 Tasks
 ~~~~~
+DataFed makes it possible to check on the status of transfer tasks in an easy and programmatic manner.
+
+From the earlier ``dataGet()`` function call's response, we can extract the ``task id`` as:
 
 .. code:: python
 
-    task_id = get_resp[0].task[0].id
-    print(task_id)
+    >>> task_id = get_resp[0].task[0].id
+    >>> print(task_id)
     task/34682556
-    [29]:
+
+Using the task ID, we can check on the status of the ``task`` via the ``taskView()`` function:
 
 .. code:: python
 
-    task_resp = df_api.taskView(task_id)
-    print(task_resp)
+    >>> task_resp = df_api.taskView(task_id)
+    >>> print(task_resp)
+
     (task {
       id: "task/34682556"
       type: TT_DATA_GET
@@ -810,18 +814,139 @@ Tasks
     }
     , 'TaskDataReply')
 
+The ``TaskDataReply`` shows that the ``status`` is indeed a success and the ``msg`` is ``"Finished"``.
+
+This specific example by itself was trivial since we had already requested that the ``dataGet()`` function call
+not complete till the transfer was complete.
+Furthermore, the nature of the transfer was also trivial in that it was a single file located in a single DataFed
+repository being delivered to a single destination.
+
 .. note::
 
-    Don't dig too deep since stuff can change
+    A DataFed ``task`` may itself contain / be responsible for several Globus file transfers.
+
+As the structure of the ``dataGet()`` function call suggests, one could request several Data Records or
+Data Collections (themselves containing thousands of Data Records or even Collections) be downloaded,
+regardless of their location (several DataFed data repositories spread across the world in multiple institutions / continents).
+In this case, the ``task`` would be a composite of several Globus data transfers.
+
+We can also extract the status of the ``task`` as:
 
 .. code:: python
 
-    task_resp[0].task[0].status
-    [30]:
+    >>> task_resp[0].task[0].status
     3
+
+Note that though the status was marked as ``TS_SUCCEEDED`` in the Google Protobuf object,
+we got an integer value for the status.
+For now, we will use the numeric value of ``3`` to denote the successful completion of a file transfer task.
+
+.. note::
+
+    A future version of DataFed may change the nature of the output / type for the ``status``
+    property. In general, the exact return object types and nomenclature may evolve with DataFed.
 
 Asynchronous transfers
 ~~~~~~~~~~~~~~~~~~~~~~
+So far we have been requesting that all transfers be completed before the next line of
+python code is executed. This is certainly acceptable for small data file but is perhaps not
+ideal for large files.
+
+Here are some scenarios:
+
+* We are performing an array of simulations and want data transfers for a completed
+  simulation to take place in the background while the subsequent simulation is being
+  computed.
+* We may want to get multiple Data Records or Collections which may
+  actually be spread over multiple DataFed data repositories or Projects, etc.
+* One could conceivably need to launch a child process to perform some operations
+  while transfers took place asynchronously.
+
+Before we demonstrate a simple example, let us define some handy functions:
+
+The first is our fake, computationally expensive simulation denoted by ``expensive_simulation()`` that just sleeps for 3 seconds.
+It generates results that are written to a ``.dat`` file and it returns the path to this
+results data file. Though comically oversimplified, it is sufficiently accurate for demonstration purposes.
+
+.. code:: python
+
+    >>> def expensive_simulation():
+            time.sleep(3)
+            # Yes, this simulation is deterministic and always results in the same result:
+            path_to_results = 'esnet#cern-diskpt1/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat'
+            return path_to_results
+
+The next handy function is ``check_xfer_status()`` that looks up the instantaneous status of the transfer
+of each task it is provided and returns only the statuses:
+
+.. code:: python
+
+    >>> def check_xfer_status(task_ids):
+            statuses = list()
+            for this_task_id in task_ids:
+                task_resp = df_api.taskView(this_task_id)
+                statuses.append(task_resp[0].task[0].status)
+            return statuses
+
+In the following demonstration, we perform a series of "computationally expensive" simulations.
+
+Following our aim to mimic realistic scenarios, we also create a DataFed collection to hold
+all the simulation results:
+
+.. code:: python
+
+    >>> coll_resp = df_api.collectionCreate('Simulations', parent_id=username, context=context)
+    >>> sim_coll_id = coll_resp[0].coll[0].id
+
+Knowing that the simulations take a while to complete,
+we create a Data Record to hold each simulation's resulting data file and then call ``dataPut()``
+to asynchronously upload the data in the background without impeding the following simulation
+or, importantly - wasting precious wall time on the supercomputer.
+
+.. code:: python
+
+    >>> xfer_tasks = list()
+    >>> print('~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~')
+    >>> for ind in range(3):
+            print('Starting simulation #{}'.format(ind))
+            results_file = expensive_simulation()
+            rec_resp = df_api.dataCreate('Simulation_' + str(ind),
+                                         metadata=json.dumps({'parameter_1': ind}),
+                                         parent_id=sim_coll_id,
+                                         context=context)
+            this_rec_id = rec_resp[0].data[0].id
+            print('Uploading data from simulation #{}'.format(ind))
+            put_resp = df_api.dataPut(this_rec_id, results_file, wait=False)
+            xfer_tasks.append(put_resp[0].task.id)
+            print('Transfer status(es): {}'.format(check_xfer_status(xfer_tasks)))
+            print('')
+
+    >>> print('Simulations complete')
+
+    ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+    Starting simulation #0
+    Uploading data from simulation #0
+    Transfer status(es): [2]
+
+    Starting simulation #1
+    Uploading data from simulation #1
+    Transfer status(es): [3, 2]
+
+    Starting simulation #2
+    Uploading data from simulation #2
+    Transfer status(es): [3, 3, 2]
+
+    Simulations complete
+
+What we observe is that the data upload transfer task for all previous simulations are complete while the current simulation is in progress.
+Of course, the sequence and competing speeds of the simulation and the data transfer task will vary from one workload to another and
+this is just an illustration. However, it does illustrate a popular use-case for asynchronous file transfers.
+
+Task-based triggers
+~~~~~~~~~~~~~~~~~~~
+
+Here we demonstrate a simple example where we wait till 3 separate ``dataGet()``
+functions
 
 .. code:: python
 
