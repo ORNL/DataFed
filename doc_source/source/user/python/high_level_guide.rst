@@ -1050,9 +1050,14 @@ functions
 
 Collections
 -----------
+Collections are a great tool to organize Data Records and other Collections within DataFed.
+Besides organization, they have other benefits such as facilitating the download of vast numbers of Data Records they may contain,
+regardless of where (DataFed data repositories, various projects, etc.) the individual Data Records are physically located.
 
 Create collection
 ~~~~~~~~~~~~~~~~~
+The process to create a Collection is very similar to that for the Data Record.
+We would use the ``collectionCreate()`` function as:
 
 .. code:: python
 
@@ -1075,39 +1080,95 @@ Create collection
     }
     , 'CollDataReply')
 
+Much like Data Records, Collections could be addressed using aliases instead of IDs.
+However, as mentioned earlier, we would always need to specify the ``context`` for the ``alias``.
+
+What we get in response to the ``collectionCreate()`` function is a ``CollDataReply`` object.
+It contains some high-level identification information such as the ``id``, ``alias``, ``parent_id``, etc.
+It does not contain other information such as the number of Data Records within the collection itself.
+
+We could peel the ``id`` of this newly created Collection out of the message reply if we wanted to,
+just as we did for the Data Record. However, we will just use the ``alias`` for now.
+
+.. note::
+
+    Collections have IDs starting with ``c/`` just like Data Record IDs start with ``d/``
+    and Project IDs start with ``p/``.
+
 Populate with Records
 ~~~~~~~~~~~~~~~~~~~~~
+Let's say that we wanted to put training data for a machine learning application into this collection.
+We could go ahead and populate the Collection with Data Records by using the ``dataCreate()`` function
+for each Data Record in the Collection.
+
+In our example, we are interested in gathering examples of cats and dogs to train a machine learning model.
+For simplicity, we will use the same tiny dataset for both cats and dogs.
+The Data Records would be distinguishable via the ``animal`` key or field in the ``metadata``.
+Since we need to create several Data Records for dogs and cats, we will define a quick function:
 
 .. code:: python
 
-    import random
-    [46]:
+    >>> import random
 
-    def generate_animal_data(parent_coll, proj, is_dog=True):
-        this_animal = 'cat'
-        if is_dog:
-            this_animal = 'dog'
-        rec_resp = df_api.dataCreate(this_animal + '_' + str(random.randint(1, 100)),
-                                     metadata=json.dumps({'animal': this_animal}),
-                                     parent_id=parent_coll,
-                                     context=proj)
-        this_rec_id = rec_resp[0].data[0].id
-        put_resp = df_api.dataPut(this_rec_id, 'esnet#newy-dtn/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat')
-        return this_rec_id
-    [47]:
+    >>> def generate_animal_data(is_dog=True):
+            this_animal = 'cat'
+            if is_dog:
+                this_animal = 'dog'
+            # To mimic a real-life scenario, we append a number to the animal type to denote
+            # the N-th example of a cat or dog. In this case, we use a random integer.
+            rec_resp = df_api.dataCreate(this_animal + '_' + str(random.randint(1, 100)),
+                                         metadata=json.dumps({'animal': this_animal}),
+                                         parent_id=coll_alias,
+                                         context=context)
+            # Parse the dataCreate response to tease out the ID of the Record
+            this_rec_id = rec_resp[0].data[0].id
+            # path to the file containing the raw data
+            raw_data_path = 'esnet#newy-dtn/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat'
+            # Putting the raw data into the record
+            put_resp = df_api.dataPut(this_rec_id, raw_data_path)
+            # Only returning the ID of the Data Record we created:
+            return this_rec_id
 
-    cat_records = list()
-    dog_records = list()
-    for _ in range(5):
-        dog_records.append(generate_animal_data(coll_alias, context, is_dog=True))
-    for _ in range(5):
-        cat_records.append(generate_animal_data(coll_alias, context, is_dog=False))
-    print(cat_records, dog_records)
-    ['d/34684011', 'd/34684035', 'd/34684059', 'd/34684083', 'd/34684107'] ['d/34683891', 'd/34683915', 'd/34683939', 'd/34683963', 'd/34683987']
-    [48]:
+In the above function, we use a tiny dataset from ESNet's read-only Globus endpoint: ``esnet#newy-dtn``.
+The actual data itself is of little relevance to this example and will not really be used.
 
-    coll_list_resp = df_api.collectionItemsList(coll_alias, context=context)
-    print(coll_list_resp)
+.. tip::
+
+    So far, we have only been providing the relative path to data when we use ``dataCreate()``.
+    ``dataCreate()`` automatically gets the absolute path of the path in the local file system
+    and takes the UUID / legacy name of the Globus endpoint we set as default for this local file system.
+
+    However, we can also provide the name of the Globus endpoint followed by the absolute path of the
+    desired file (or directory) from that Globus endpoint.
+
+Now, we simply call the ``generate_animal_data()`` function to generate data.
+We will generate 5 examples each of cats and dogs:
+
+.. code:: python
+
+    >>> cat_records = list()
+    >>> dog_records = list()
+    >>> for _ in range(5):
+            dog_records.append(generate_animal_data(is_dog=True))
+    >>> for _ in range(5):
+            cat_records.append(generate_animal_data(is_dog=False))
+    >>> print(cat_records)
+    ['d/34684011', 'd/34684035', 'd/34684059', 'd/34684083', 'd/34684107']
+    >>> print(dog_records)
+    ['d/34683891', 'd/34683915', 'd/34683939', 'd/34683963', 'd/34683987']
+
+List items in Collection
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Now that we have generated the data into our Collection, we can list the contents of the Collection
+simply via ``collectionItemList()`` as shown below. Again, since we are using the ``alias`` as the
+identifier, we do need to specify the ``context`` as well:
+
+.. code:: python
+
+    >>> coll_list_resp = df_api.collectionItemsList(coll_alias, context=context)
+    >>>  print(coll_list_resp)
+
     (item {
       id: "d/34684107"
       title: "cat_22"
@@ -1192,6 +1253,9 @@ Populate with Records
     count: 20
     total: 10
     , 'ListingReply')
+
+From the above response, it is clear that we have 5 examples each for dogs and cats and that
+this Collection does not contain any other Collections or Data Records.
 
 Create query
 ~~~~~~~~~~~~
