@@ -242,7 +242,7 @@ class API:
             By default, the record will be created in the user's root collection
         deps : list, Optional. Default = None
             Dependencies of this data record specified as an array of
-            tuples of (relation type <str>,  record ID <str>).
+            lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
             Relation types currently supported are:
             * "der" - Is derived from
             * "comp" - Is comprised of
@@ -345,14 +345,14 @@ class API:
             existing metadata.
         deps_add : list, Optional. Default = None
             Dependencies of this data record to add, specified as an array of
-            tuples of (relation type <str>,  record ID <str>).
+            lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
             Relation types currently supported are:
             * "der" - Is derived from
             * "comp" - Is comprised of
             * "ver" - Is new version of
         deps_rem : list, Optional. Default = None
             Dependencies of this data record to remove, specified as an array of
-            tuples of (relation type <str>,  record ID <str>).
+            lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
             Relation types currently supported are:
             * "der" - Is derived from
             * "comp" - Is comprised of
