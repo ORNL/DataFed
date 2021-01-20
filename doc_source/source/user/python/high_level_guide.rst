@@ -1332,6 +1332,7 @@ Let's verify that the results from the query match our expectation
     >>> # First get IDs from query result
     >>> cat_rec_ids = [record.id for record in query_resp[0].item]
     >>> print(set(cat_rec_ids) == set(cat_records))
+
     True
 
 Collections continued
@@ -1351,6 +1352,7 @@ We could segregate all cat data into a new, separate collection just for cats vi
     >>> coll_resp = df_api.collectionCreate('Cats', alias='cats', parent_id=coll_alias, context=context)
     >>> cat_coll_id = coll_resp[0].coll[0].id
     >>> print(cat_coll_id)
+
     'c/34685092'
 
 Add and remove from Collections
@@ -1366,6 +1368,7 @@ This function accepts a list of IDs to add via the ``add_ids`` keyword argument:
 
     >>> cup_resp = df_api.collectionItemsUpdate(cat_coll_id, add_ids=cat_rec_ids)
     >>> print(cup_resp)
+
     (, 'ListingReply')
 
 Unlike most other functions, ``collectionItemsUpdate()`` does not return much that we can work with.
@@ -1379,6 +1382,7 @@ In the interest of brevity, we capture the response and only print out ID and ti
 
     >>> ls_resp = df_api.collectionItemsList(cat_coll_id)
     >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+
     [('d/34684107', 'cat_22'),
      ('d/34684011', 'cat_32'),
      ('d/34684035', 'cat_6'),
@@ -1392,6 +1396,7 @@ However, let us list the contents of the original / outer collection:
 
     >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
     >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+
     [('c/34685092', 'Cats'),
      ('d/34684107', 'cat_22'),
      ('d/34684011', 'cat_32'),
@@ -1415,6 +1420,7 @@ rather than the ``add_ids`` keyword argument:
 
     >>> cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids, context=context)
     >>> print(cup_resp)
+
     (, 'ListingReply')
 
 Finally, let us verify that the original / outer Collection now does not
@@ -1424,6 +1430,7 @@ contain cat Records:
 
     >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
     >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+
     [('c/34685092', 'Cats'),
      ('d/34683939', 'dog_3'),
      ('d/34683915', 'dog_63'),
