@@ -91,61 +91,83 @@ DataFed provides a uniform, holistic, and logical view of the data, users, and v
 with the federation of organizations and data storage resources that make up the DataFed network. From a users perspective,
 all data operations look and feel the same from within DataFed regardless of where DataFed is being accessed or where
 data is physically stored. In order to understand the features and capabilities of DataFed, as a whole, it is first necessary
-to understand the underlying terminology and concepts and these are defined in this section. Below is a brief list of these
-terms and concepts associated with both DataFed and Globus. It is important to understand the basics of Globus as it the
-basis for DataFed user accounting and data transfers.
+to understand the underlying terminology and concepts and these are defined in this section.
 
-DataFed General Concepts:
+Below is a brief, alphabetical list of DataFed and Globus terms and concepts.
 
-- **Data Record** - A data record is the most basic unit of data within DataFed and consists of a unique identifier, attributes,
-  and, optionally, raw data and domain-specific metadata.
-- **Collection** - A collection is a logical (or virtual) folder with a unique identifier and attributes that can be used to
-  hierarchically organize, share, and download groups of data records and/or other collections.
-- **Root Collection** - The root collection is a reserved collection that acts as the parent for all other (top-level) collections
-  and data records. Each user and project has their own root collection.
-- **Identifier** - Identifiers are system-unique alphanumeric strings that are automatically assigned to all entities within DataFed.
-- **Aliases** - An alias is an optional, human-friendly alternate identifier for data records and collections.
-- **Attributes** - Attributes are searchable system-defined (fixed) metadata fields associated with certain entities (data records, collections,
-  etc.) within DataFed. Textual attributes of data records and collections (ie. title, description) are full-text indexed. The term
-  "attributes" is used to avoid confusion with optional user-defined "metadata".
-- **Metadata** - The term "metadata" refers to optional searchable user-defined (domain-specific) structured metadata associated with data
-  records. Required top-level metadata is referred to as "attributes" to avoid confusion.
-- **Provenance** - Provenance is a form of metadata associated with data records that captures relationships with other data records.
-  Provenance is maintained by DataFed using direct links between records rather than identifier references in record attributes or metadata.
-- **Tags** - Tags are searchable, user-defined words that may be associated with data records and collections. Tags use is tallied internally
-  to allow popular tags to be identified by users.
-- **Project** - A DataFed project is a logical grouping of users to enable collective ownership of data and to simplify collaboration.
-  Projects have their own data storage allocations.
 - **Access Control** - Access controls are sets of fine-grained permissions associated with data records and/or collections that may be
   applied to specific users or groups of users.
-- **Group** - A group is a user-defined set of users for applying access controls to data records or collections. Groups are not the same as projects.
-- **Catalog** - The DataFed catalog is a categorized searchable index of internally "published" DataFed collections. All included
-  collections and contained data records are readable by any DataFed user. The catalog system is intended for sharing working, rather than static, datasets.
-- **Annotation** - Annotations are a mechanism for opening and tracking issues associated with data records and collections. Depending on
-  the severity and outcome of an issue, DataFed may propagate issues to downstream data records for further impact assessment.
-- **Shared Data** - When a user grants permission to access data records and/or collections to other users, those records and collections
-  become visible to the referred users as "shared data".
-- **Saved Query** - A saved query is a data search expression that is stored in a query object such that it can be subsequently
-  run by referencing the associated query identifier. The results of saved queries are dynamic (i.e. matches from when the query
-  is run, rather than when it was saved).
-- **Task** - Tasks are trackable background processes that run on the DataFed server for specific longer-running operations such as data
-  transfers and allocation changes.
-- **Repository** - A repository is a federated storage system located at a specific facility that stores the raw data associated with DataFed
-  data records. Users and projects may be granted allocations on repositories to enable data storage.
+
+- **Administrator** - A user designated by DOE/ORNL to have full access to DataFed administrative functions.
+
+- **Aliases** - An alias is an optional, human-friendly alternate identifier for data records and collections.
+
 - **Allocation** - An allocation is a storage allowance on a specific DataFed repository. One or more allocations are required
   in order to create DataFed data records.
 
-DataFed User Roles:
+- **Annotation** - Annotations are a mechanism for opening and tracking issues associated with data records and collections. Depending on
+  the severity and outcome of an issue, DataFed may propagate issues to downstream data records for further impact assessment.
+
+- **Attributes** - Attributes are searchable system-defined (fixed) metadata fields associated with certain entities (data records, collections,
+  etc.) within DataFed. Textual attributes of data records and collections (ie. title, description) are full-text indexed. The term
+  "attributes" is used to avoid confusion with optional user-defined "metadata".
+
+- **Catalog** - The DataFed catalog is a categorized searchable index of internally "published" DataFed collections. All included
+  collections and contained data records are readable by any DataFed user. The catalog system is intended for sharing working, rather than static, datasets.
+
+- **Collection** - A collection is a logical (or virtual) folder with a unique identifier and attributes that can be used to
+  hierarchically organize, share, and download groups of data records and/or other collections.
+
+- **Creator** - The user that originally creates a Data Record becomes the owner (and creator) of the record and has full irrevocable access to the given record.
+
+- **Data Record** - A data record is the most basic unit of data within DataFed and consists of a unique identifier, attributes,
+  and, optionally, raw data and domain-specific metadata.
+
+- **Group** - A group is a user-defined set of users for applying access controls to data records or collections. Groups are not the same as projects.
+
+- **Identifier** - Identifiers are system-unique alphanumeric strings that are automatically assigned to all entities within DataFed.
+
+- **Metadata** - The term "metadata" refers to optional searchable user-defined (domain-specific) structured metadata associated with data
+  records. Required top-level metadata is referred to as "attributes" to avoid confusion.
+
+- **Owner** - The user or project that originally creates a Data Record becomes the owner of the record and has full access
+  to the given record. Ownership can be transferred to another user or project.
+
+- **Project** - A DataFed project is a logical grouping of users to enable collective ownership of data and to simplify collaboration.
+  Projects have their own data storage allocations.
+
+- **Project Administrator** - A user designated by a Project Owner to have managerial access to a specified project.
+
+- **Project Owner** - Any user that creates a DataFed Project is the owner, with full access rights, of the project.
+
+- **Project Member** - A user designated by either a Project Owner or Administrator to have member access to a specified project.
+
+- **Provenance** - Provenance is a form of metadata associated with data records that captures relationships with other data records.
+  Provenance is maintained by DataFed using direct links between records rather than identifier references in record attributes or metadata.
+
+- **Repository** - A repository is a federated storage system located at a specific facility that stores the raw data associated with DataFed
+  data records. Users and projects may be granted allocations on repositories to enable data storage.
+
+- **Repository Administrator** - A user designated by a DataFed Administrator to have managerial access to a data repository.
+
+- **Root Collection** - The root collection is a reserved collection that acts as the parent for all other (top-level) collections
+  and data records. Each user and project has their own root collection.
+
+- **Saved Query** - A saved query is a data search expression that is stored in a query object such that it can be subsequently
+  run by referencing the associated query identifier. The results of saved queries are dynamic (i.e. matches from when the query
+  is run, rather than when it was saved).
+
+- **Shared Data** - When a user grants permission to access data records and/or collections to other users, those records and collections
+  become visible to the referred users as "shared data".
+
+- **Tags** - Tags are searchable, user-defined words that may be associated with data records and collections. Tags use is tallied internally
+  to allow popular tags to be identified by users.
+
+- **Task** - Tasks are trackable background processes that run on the DataFed server for specific longer-running operations such as data
+  transfers and allocation changes.
 
 - **User** - Any person with a DataFed account. Users are identified by their unique Globus ID account name, with optionally linked organizational accounts.
-- **Project Owner** - Any user that creates a DataFed Project is the owner, with full access rights, of the project.
-- **Project Administrator** - A user designated by a Project Owner to have managerial access to a specified project.
-- **Project Member** - A user designated by either a Project Owner or Administrator to have member access to a specified project.
-- **Data Owner** - The user or project that originally creates a Data Record becomes the owner of the record and has full access
-  to the given record. Ownership can be transferred to another user or project.
-- **Data Creator** - The user that originally creates a Data Record becomes the owner (and creator) of the record and has full irrevocable access to the given record.
-- **Administrator** - A user designated by DOE/ORNL to have full access to DataFed administrative functions.
-- **Repository Administrator** - A user designated by a DataFed Administrator to have managerial access to a data repository.
+
 
 Globus Concepts:
 
