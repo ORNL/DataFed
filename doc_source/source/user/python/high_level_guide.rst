@@ -1279,26 +1279,52 @@ The ideal solution is to use the search capability in DataFed.
 
 Create query
 ~~~~~~~~~~~~
-While it is technically possible to construct queries using hte c
-
-.. image:: ../../_static/python_high_level/search_01.png
-
-.. image:: ../../_static/python_high_level/search_02.png
-
-.. image:: ../../_static/python_high_level/search_03.png
+While it is technically possible to construct queries using the ``queryCreate()`` function in ``CommandLib``,
+we will construct the query via the web interface since the query language will be changed soon, as of this writing.
 
 .. note::
 
-    query language is likely to change in the future
+    The query language is likely to change in a future version of DataFed.
 
-List, view and execute query
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In order to create the query, we will follow the subsequent steps and the
+screenshot of the interface below should help guide you through this process:
+
+1. visit https://datafed.ornl.gov
+2. Click on the ``Data Search`` tab in the bottom left of the page to expand the search tab.
+3. Uncheck all boxes in the ``Scope`` and only check the ``Select``. This should reveal checkboxes in the  left navigation panel.
+4. Now select the ``Image Classification and Training data`` collection
+5. Finally, enter ``animal == "cat"`` in the ``Metadata`` field in the ``Data Search`` tab in the bottom of the window
+
+Your window should look something like this:
+
+.. image:: ../../_static/python_high_level/search_01.png
+
+Now when we click the yellow colored right arrow / "play" button in the bottom right of the ``Data Search`` tab,
+we are taken to the search results page as shown below:
+
+.. image:: ../../_static/python_high_level/search_02.png
+
+Click on the ``Save`` button that looks like a floppy drive in the bottom right of the ``Data Search`` tab.
+This should reveal a pop up window that will let you name and save this search query as shown below:
+
+.. image:: ../../_static/python_high_level/search_03.png
+
+We can give this search a title such as ``find_all_cats`` and click on the ``Save`` button now.
+
+.. note::
+
+    Saved queries are visible at the very bottom of the navigation / left pane below ``Project Data`` and ``Shared Data``.
+
+List saved queries
+~~~~~~~~~~~~~~~~~~
+Much like listing the Projects this user is part of or the contents of a Collection, one can also list the
+saved queries via ``queryList()`` function as:
 
 .. code:: python
 
-    ql_resp = df_api.queryList()
-    ql_resp
-    [56]:
+    >>> ql_resp = df_api.queryList()
+    >>> print(ql_resp)
+
     (item {
        id: "q/34684970"
        title: "find_all_cats"
@@ -1306,16 +1332,26 @@ List, view and execute query
      offset: 0
      count: 20
      total: 1, 'ListingReply')
-    [58]:
 
-    query_id = ql_resp[0].item[0].id
-    query_id
-    [58]:
+We again get a ``ListingReply`` object which can be parsed if need be.
+Importantly, we see our newly created query listed here.
+
+We can extract the query ID as:
+
+.. code:: python
+
+    >>> query_id = ql_resp[0].item[0].id
+    >>> print(query_id)
     'q/34684970'
-    [59]:
 
-    df_api.queryView(query_id)
-    [59]:
+View query
+~~~~~~~~~~
+Just like ``dataView()``, we can view use ``queryView()`` to view this query as well:
+
+.. code:: python
+
+    >>> df_api.queryView(query_id)
+
     (query {
        id: "q/34684970"
        title: "find_all_cats"
@@ -1324,10 +1360,22 @@ List, view and execute query
        ct: 1611078781
        ut: 1611078781
      }, 'QueryDataReply')
-    [60]:
 
-    query_resp = df_api.queryExec(query_id)
-    print(query_resp)
+The ``query`` string in the response reveals that:
+
+1. we did search for data whose metadata lists their ``animal`` as ``cat``.
+2. we limited our ``scope`` to just one collection
+3. (by default) the query recursively searches all collections inside the collection we pointed out.
+
+Execute query
+~~~~~~~~~~~~~
+Finally, we can run the desired query using ``queryExec()`` as shown below:
+
+.. code:: python
+
+    >>> query_resp = df_api.queryExec(query_id)
+    >>> print(query_resp)
+
     (item {
       id: "d/34684011"
       title: "cat_32"
@@ -1370,14 +1418,21 @@ List, view and execute query
     }
     , 'ListingReply')
 
+The response to this function call is also a ``ListingReply`` object.
+
+.. note::
+
+    In the current version of DataFed, the search query limits the number of records (to 50?) it returns from queries.
+    This behavior will be changed in a subsequent version of DataFed.
+
+Let's verify that the results from the query match our expectation
+(the list of cat IDs we collected when the records were created):
 
 .. code:: python
 
-    cat_rec_ids = [record.id for record in query_resp[0].item]
-    [62]:
-
-    set(cat_rec_ids) == set(cat_records)
-    [62]:
+    >>> # First get IDs from query result
+    >>> cat_rec_ids = [record.id for record in query_resp[0].item]
+    >>> print(set(cat_rec_ids) == set(cat_records))
     True
 
 Collections again
@@ -1388,239 +1443,60 @@ Organize with Collections
 
 .. code:: python
 
-    coll_resp = df_api.collectionCreate('Cats', alias='cats', parent_id=coll_alias, context=context)
-    print(coll_resp)
-    (coll {
-      id: "c/34685092"
-      title: "Cats"
-      alias: "cats"
-      owner: "p/trn001"
-      ct: 1611078867
-      ut: 1611078867
-      parent_id: "c/34683877"
-    }
-    , 'CollDataReply')
+    >>> coll_resp = df_api.collectionCreate('Cats', alias='cats', parent_id=coll_alias, context=context)
+    >>> cat_coll_id = coll_resp[0].coll[0].id
+    >>> print(cat_coll_id)
+    'c/34685092'
 
 .. note::
 
     DO NOT simply list the collection, look into the metadata of each record, and then call Get
     [64]:
 
-.. code:: python
-
-    cat_coll_id = coll_resp[0].coll[0].id
-    cat_coll_id
-    [64]:
-    'c/34685092'
-
 Add and remove from Collections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
 
-    cup_resp = df_api.collectionItemsUpdate(cat_coll_id, add_ids=cat_rec_ids)
-    print(cup_resp)
+    >>> cup_resp = df_api.collectionItemsUpdate(cat_coll_id, add_ids=cat_rec_ids)
+    >>> print(cup_resp)
     (, 'ListingReply')
-    [66]:
 
-    df_api.collectionItemsList(cat_coll_id)
-    [66]:
-    (item {
-       id: "d/34684107"
-       title: "cat_22"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34684011"
-       title: "cat_32"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34684035"
-       title: "cat_6"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34684083"
-       title: "cat_93"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34684059"
-       title: "cat_96"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     offset: 0
-     count: 20
-     total: 5, 'ListingReply')
-    [68]:
 
-    df_api.collectionItemsList(coll_alias, context=context)
-    [68]:
-    (item {
-       id: "c/34685092"
-       title: "Cats"
-       alias: "cats"
-       owner: "p/trn001"
-       notes: 0
-     }
-     item {
-       id: "d/34684107"
-       title: "cat_22"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34684011"
-       title: "cat_32"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34684035"
-       title: "cat_6"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34684083"
-       title: "cat_93"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34684059"
-       title: "cat_96"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34683939"
-       title: "dog_3"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34683915"
-       title: "dog_63"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34683891"
-       title: "dog_70"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34683987"
-       title: "dog_71"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34683963"
-       title: "dog_8"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     offset: 0
-     count: 20
-     total: 11, 'ListingReply')
-    [69]:
+    >>> ls_resp = df_api.collectionItemsList(cat_coll_id)
+    >>> print([obj.title for obj in ls_resp[0].item])
+    [('d/34684107', 'cat_22'),
+     ('d/34684011', 'cat_32'),
+     ('d/34684035', 'cat_6'),
+     ('d/34684083', 'cat_93'),
+     ('d/34684059', 'cat_96')]
 
-    cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids, context=context)
-    print(cup_resp)
+    >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
+    >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+    [('c/34685092', 'Cats'),
+     ('d/34684107', 'cat_22'),
+     ('d/34684011', 'cat_32'),
+     ('d/34684035', 'cat_6'),
+     ('d/34684083', 'cat_93'),
+     ('d/34684059', 'cat_96')
+     ('d/34683939', 'dog_3'),
+     ('d/34683915', 'dog_63'),
+     ('d/34683891', 'dog_70'),
+     ('d/34683987', 'dog_71'),
+     ('d/34683963', 'dog_8')]
+
+    >>> cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids, context=context)
+    >>> print(cup_resp)
     (, 'ListingReply')
-    [70]:
 
-    df_api.collectionItemsList(coll_alias, context=context)
-    [70]:
-    (item {
-       id: "c/34685092"
-       title: "Cats"
-       alias: "cats"
-       owner: "p/trn001"
-       notes: 0
-     }
-     item {
-       id: "d/34683939"
-       title: "dog_3"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34683915"
-       title: "dog_63"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34683891"
-       title: "dog_70"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34683987"
-       title: "dog_71"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     item {
-       id: "d/34683963"
-       title: "dog_8"
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       size: 1000.0
-       notes: 0
-     }
-     offset: 0
-     count: 20
-     total: 6, 'ListingReply')
+    >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
+    >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+    [('c/34685092', 'Cats'),
+     ('d/34683939', 'dog_3'),
+     ('d/34683915', 'dog_63'),
+     ('d/34683891', 'dog_70'),
+     ('d/34683987', 'dog_71'),
+     ('d/34683963', 'dog_8')]
 
 Download Collection
 ~~~~~~~~~~~~~~~~~~~
