@@ -649,7 +649,8 @@ With the data file created, we are ready to put this raw data into the record we
 .. code:: python
 
     >>> put_resp = df_api.dataPut(record_id,
-                                  './parameters.json', # raw data file
+                                  './parameters.json',
+                                  wait=True, # Waits until transfer completes.
                                   )
     >>> print(put_resp)
 
@@ -659,16 +660,16 @@ With the data file created, we are ready to put this raw data into the record we
        size: 0.0
        owner: "p/trn001"
      }
-     task {
-       id: "task/34682474"
+    task {
+       id: "task/34702491"
        type: TT_DATA_PUT
-       status: TS_READY
+       status: TS_SUCCEEDED
        client: "u/somnaths"
-       step: 0
-       steps: 2
-       msg: "Pending"
-       ct: 1611077280
-       ut: 1611077280
+       step: 3
+       steps: 4
+       msg: "Finished"
+       ct: 1611102437
+       ut: 1611102444
        source: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Dropbox (ORNL)/Projects/DataFed_User_Engagements/Tutorial/parameters.json"
        dest: "d/34682319"
      }, 'DataPutReply')
@@ -677,18 +678,12 @@ The ``dataPut()`` method initiates a Globus transfer on our behalf
 from the machine where the command was entered to wherever the default data repository is located.
 
 In addition, the ``dataPut()`` method prints out the status of the Globus transfer as shown under the ``task`` section of the response.
-The ``task`` ``msg`` shows that the Globus transfer was pending and was not yet complete at the time when the response was printed.
+The ``task`` ``msg`` shows that the Globus transfer had succeeded. The transfer succeeded before the message was returned because
+the ``wait`` keyword argument in the ``dataPut()`` method was set to ``True``, meaning that we requested DataFed to not proceed
+until the Globus transfer completed.
 
-If it is important that the code not proceed until the transfer is complete,
-users are recommended to set the ``wait`` keyword argument in the ``dataPut()`` method to ``True``
-and instead use:
-
-.. code:: python
-
-    >>> put_resp = df_api.dataPut(record_id,
-                                  './parameters.json',
-                                  wait=True, # Waits until transfer completes.
-                                  )
+This is not the default behavior of ``dataPut()`` or ``dataGet()``.
+In a later section, we will go over an example usecase when asynchronous transfers may be preferred.
 
 Let's view the Data Record we have been working on so far:
 
