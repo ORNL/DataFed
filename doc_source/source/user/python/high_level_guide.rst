@@ -715,28 +715,42 @@ you will notice the ``source`` and ``file extension`` have been updated.
 
 Download raw data
 ~~~~~~~~~~~~~~~~~
+DataFed is also capable of getting data stored in a DataFed repository and placing it in the
+local or other Globus-visible filesystem via the ``dataGet()`` function.
+
+For demonstration purposes, we will simply download the raw data (.JSON file) that was placed into the first Data Record.
+
+In order to avoid clashes in file-naming, ``dataGet()`` names the downloaded file by the unique ID of the Data Record
+that contains the raw data. We already have a ``parameters.json`` file in our local folder and setting the ``orig_fname``
+keyword argument to ``True`` would result in a clash in the file name.
+
+Just to prove that the file download is indeed taking place, let's check to make sure that there is no other JSON file
+whose name matches that of the record ID.
 
 .. code:: python
 
-    expected_file_name = os.path.join('.', record_id.split('d/')[-1]) + '.json'
-    print(expected_file_name)
+    >>> expected_file_name = os.path.join('.', record_id.split('d/')[-1]) + '.json'
+    >>> print(expected_file_name)
     ./34682319.json
 
-    print(os.path.exists(expected_file_name))
+    >>> print(os.path.exists(expected_file_name))
     False
+
+Now that we know that we will not be having a file name clash, let us proceed with the ``dataGet()`` function call.
 
 .. note::
 
-    Must pass list of record ids:
+    The current version of DataFed has a bug where ``dataGet()`` **only** accepts a ``list`` of Data Record or Collection IDs.
+    Until the next version, users are recommended to put their singular ID into a ``list`` for ``dataGet()``.
 
 .. code:: python
 
-    get_resp = df_api.dataGet([record_id], # currently only accepts a list of IDs / aliases
-                              '.', # directory where data should be downloaded
-                              orig_fname=False,
-                              wait=True,
-                             )
-    print(get_resp)
+    >>> get_resp = df_api.dataGet([record_id], # currently only accepts a list of IDs / aliases
+                                  '.', # directory where data should be downloaded
+                                  orig_fname=False, # do not name file by its original name
+                                  wait=True, # Wait until Globus transfer completes
+                                 )
+    >>> print(get_resp)
     (task {
       id: "task/34682556"
       type: TT_DATA_GET
@@ -748,16 +762,19 @@ Download raw data
       ct: 1611077310
       ut: 1611077320
       source: "d/34682319"
-      dest: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Dropbox (ORNL)/Projects/DataFed_User_Engagements/Tutorial"
+      dest: "olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial"
     }
     , 'TaskDataReply')
 
-Response had two components - the item and the task
+The response shows that the Globus file transfer to the local file system did indeed complete successfully.
+Now, let us verify that the file does indeed exist as it should:
 
 .. code:: python
 
-    print(os.path.exists(expected_file_name))
+    >>> print(os.path.exists(expected_file_name))
     True
+
+At this point, we are free to rename the downloaded file to whatever name we want using familiar python functions:
 
 .. code:: python
 
