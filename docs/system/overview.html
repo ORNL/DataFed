@@ -89,7 +89,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#architecture">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#interfaces">Interfaces</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#key-concepts">Key Concepts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#quick-reference">Quick Reference</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#identifiers-and-aliases">Identifiers and Aliases</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#collective-ownership">Collective Ownership</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#metadata">Metadata</a></li>
@@ -268,36 +267,52 @@ for more information.</p>
 with the federation of organizations and data storage resources that make up the DataFed network. From a users perspective,
 all data operations look and feel the same from within DataFed regardless of where DataFed is being accessed or where
 data is physically stored. In order to understand the features and capabilities of DataFed, as a whole, it is first necessary
-to understand the underlying terminology and concepts and these are defined in this section.</p>
-<div class="section" id="quick-reference">
-<h3>Quick Reference</h3>
-<p>This quick reference provides a list of the important concepts and user roles associated DataFed and Globus. It is important
-to understand the basics of Globus as it the basis for DataFed data transfers. More detailed information is provided about
-these topics in subsequent sections of this document.</p>
-<p>DataFed Concepts:</p>
+to understand the underlying terminology and concepts and these are defined in this section. Below is a brief list of these
+terms and concepts associated with both DataFed and Globus. It is important to understand the basics of Globus as it the
+basis for DataFed user accounting and data transfers.</p>
+<p>DataFed General Concepts:</p>
 <ul class="simple">
-<li><p><strong>Data Record</strong> - A single unit of data with associated unique identity, attributes, metadata, and raw data.</p></li>
-<li><p><strong>Collection</strong> - An organizational unit with a unique identity and attributes that aggregates data records and/or subordinate collections.</p></li>
-<li><p><strong>Root Collection</strong> - A special collection associated with all users and projects that serves as a default parent container.</p></li>
-<li><p><strong>Aliases</strong> -</p></li>
-<li><p><strong>Metadata</strong> -</p></li>
-<li><p><strong>Provenance</strong> -</p></li>
-<li><p><strong>Tags</strong> -</p></li>
-<li><p><strong>Project</strong> - An abstract unit with a unique identity and attributes composed of one or more member users and providing collective ownership of data.</p></li>
-<li><p><strong>Access Control</strong> - A set of inheritable permissions associated with a data record or collection that applies to specific users and/or groups, or, optionally, to users that are not explicitly specified.</p></li>
-<li><p><strong>Group</strong> - A set of users with a unique identity and attributes used for project membership and access control purposes.</p></li>
-<li><p><strong>Catalog</strong> -</p></li>
-<li><p><strong>Annotation</strong> -</p></li>
-<li><p><strong>Shared Data</strong> -</p></li>
-<li><p><strong>Saved Query</strong> -</p></li>
-<li><p><strong>Task</strong> -</p></li>
-<li><p><strong>Repository</strong> - A logical unit with associated unique identity and attributes that represents a federated storage system located at a given facility.</p></li>
-<li><p><strong>Allocation</strong> - A logical relationship between a user or project and a data repository specifying an allowed storage capacity.</p></li>
-<li><p><strong>Organization</strong> - A physical location that houses one or more data storage systems or compute resources that is federated into DataFed network.</p></li>
+<li><p><strong>Data Record</strong> - A data record is the most basic unit of data within DataFed and consists of a unique identifier, attributes,
+and, optionally, raw data and domain-specific metadata.</p></li>
+<li><p><strong>Collection</strong> - A collection is a logical (or virtual) folder with a unique identifier and attributes that can be used to
+hierarchically organize, share, and download groups of data records and/or other collections.</p></li>
+<li><p><strong>Root Collection</strong> - The root collection is a reserved collection that acts as the parent for all other (top-level) collections
+and data records. Each user and project has their own root collection.</p></li>
+<li><p><strong>Identifier</strong> - Identifiers are system-unique alphanumeric strings that are automatically assigned to all entities within DataFed.</p></li>
+<li><p><strong>Aliases</strong> - An alias is an optional, human-friendly alternate identifier for data records and collections.</p></li>
+<li><p><strong>Attributes</strong> - Attributes are searchable system-defined (fixed) metadata fields associated with certain entities (data records, collections,
+etc.) within DataFed. Textual attributes of data records and collections (ie. title, description) are full-text indexed. The term
+“attributes” is used to avoid confusion with optional user-defined “metadata”.</p></li>
+<li><p><strong>Metadata</strong> - The term “metadata” refers to optional searchable user-defined (domain-specific) structured metadata associated with data
+records. Required top-level metadata is referred to as “attributes” to avoid confusion.</p></li>
+<li><p><strong>Provenance</strong> - Provenance is a form of metadata associated with data records that captures relationships with other data records.
+Provenance is maintained by DataFed using direct links between records rather than identifier references in record attributes or metadata.</p></li>
+<li><p><strong>Tags</strong> - Tags are searchable, user-defined words that may be associated with data records and collections. Tags use is tallied internally
+to allow popular tags to be identified by users.</p></li>
+<li><p><strong>Project</strong> - A DataFed project is a logical grouping of users to enable collective ownership of data and to simplify collaboration.
+Projects have their own data storage allocations.</p></li>
+<li><p><strong>Access Control</strong> - Access controls are sets of fine-grained permissions associated with data records and/or collections that may be
+applied to specific users or groups of users.</p></li>
+<li><p><strong>Group</strong> - A group is a user-defined set of users for applying access controls to data records or collections. Groups are not the same as projects.</p></li>
+<li><p><strong>Catalog</strong> - The DataFed catalog is a categorized searchable index of internally “published” DataFed collections. All included
+collections and contained data records are readable by any DataFed user. The catalog system is intended for sharing working, rather than static, datasets.</p></li>
+<li><p><strong>Annotation</strong> - Annotations are a mechanism for opening and tracking issues associated with data records and collections. Depending on
+the severity and outcome of an issue, DataFed may propagate issues to downstream data records for further impact assessment.</p></li>
+<li><p><strong>Shared Data</strong> - When a user grants permission to access data records and/or collections to other users, those records and collections
+become visible to the referred users as “shared data”.</p></li>
+<li><p><strong>Saved Query</strong> - A saved query is a data search expression that is stored in a query object such that it can be subsequently
+run by referencing the associated query identifier. The results of saved queries are dynamic (i.e. matches from when the query
+is run, rather than when it was saved).</p></li>
+<li><p><strong>Task</strong> - Tasks are trackable background processes that run on the DataFed server for specific longer-running operations such as data
+transfers and allocation changes.</p></li>
+<li><p><strong>Repository</strong> - A repository is a federated storage system located at a specific facility that stores the raw data associated with DataFed
+data records. Users and projects may be granted allocations on repositories to enable data storage.</p></li>
+<li><p><strong>Allocation</strong> - An allocation is a storage allowance on a specific DataFed repository. One or more allocations are required
+in order to create DataFed data records.</p></li>
 </ul>
 <p>DataFed User Roles:</p>
 <ul class="simple">
-<li><p><strong>User</strong> - Any person with a DataFed account. Users are identified by their unique Globus ID account name, with optionally linked facility accounts.</p></li>
+<li><p><strong>User</strong> - Any person with a DataFed account. Users are identified by their unique Globus ID account name, with optionally linked organizational accounts.</p></li>
 <li><p><strong>Project Owner</strong> - Any user that creates a DataFed Project is the owner, with full access rights, of the project.</p></li>
 <li><p><strong>Project Administrator</strong> - A user designated by a Project Owner to have managerial access to a specified project.</p></li>
 <li><p><strong>Project Member</strong> - A user designated by either a Project Owner or Administrator to have member access to a specified project.</p></li>
@@ -321,7 +336,6 @@ facility, or the web portal, by using assigned data record identifiers or user-d
 standpoint, the physical storage location of data likely matters depending on where the data is being accessed from.
 For this reason, DataFed will support data repository caching to optimize frequently accessed data. In addition, users
 with allocations on multiple data repositories may opt to migrate data between repositories based on usage locality.</p>
-</div>
 <div class="section" id="identifiers-and-aliases">
 <h3>Identifiers and Aliases</h3>
 <p>All records in DataFed (data, collections, user, projects, etc.) are automatically assigned a system-unique identifier
