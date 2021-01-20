@@ -1257,10 +1257,35 @@ identifier, we do need to specify the ``context`` as well:
 From the above response, it is clear that we have 5 examples each for dogs and cats and that
 this Collection does not contain any other Collections or Data Records.
 
+.. note::
+
+    If we had several dozens, hundreds, or even thousands of items in a Collection,
+    we would need to call ``collectionItemsList()`` multiple times
+    by stepping up the ``offset`` keyword argument each time to get the next "page" of results.
+
+Queries
+-------
+Let's say that we want to segregate the cat data from the dog data and that
+we did not already have the record IDs separated in the ``dog_records`` and ``cat_records`` variables.
+
+One way to do this with the tools we have demonstrated so far might be to
+use ``collectionItemsList()`` to enumerate all the records, extract the ``title`` of each of the Records
+and then parse the information to separate cats from dogs.
+If we did not have meaningful titles, we would have had to call ``dataView()`` to get the ``metadata``
+of each of the Records to separate cats from dogs.
+
+Obviously, these are highly sub-optimal solutions to the problem.
+The ideal solution is to use the search capability in DataFed.
+
 Create query
 ~~~~~~~~~~~~
+While it is technically possible to construct queries using hte c
 
-See screenshots
+.. image:: ../../_static/python_high_level/search_01.png
+
+.. image:: ../../_static/python_high_level/search_02.png
+
+.. image:: ../../_static/python_high_level/search_03.png
 
 .. note::
 
@@ -1354,6 +1379,9 @@ List, view and execute query
     set(cat_rec_ids) == set(cat_records)
     [62]:
     True
+
+Collections again
+-----------------
 
 Organize with Collections
 ~~~~~~~~~~~~~~~~~~~~~~~~~
