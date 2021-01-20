@@ -1435,11 +1435,17 @@ Let's verify that the results from the query match our expectation
     >>> print(set(cat_rec_ids) == set(cat_records))
     True
 
-Collections again
------------------
+Collections continued
+---------------------
+Let us continue with our original aim of segregating the cats from the dogs.
+We now know the IDs of all the cats from the response to a saved query.
+
+Now, we will demonstrate ways in which we can organize data in DataFed
 
 Organize with Collections
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+The simplest and most powerful tool to organize information is through Collections.
+We could segregate all cat data into a new, separate collection just for cats via the ``collectionCreate()`` function:
 
 .. code:: python
 
@@ -1448,13 +1454,14 @@ Organize with Collections
     >>> print(cat_coll_id)
     'c/34685092'
 
-.. note::
-
-    DO NOT simply list the collection, look into the metadata of each record, and then call Get
-    [64]:
-
 Add and remove from Collections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unlike before when we created the cat and dog records into a specific Collection,
+we now already have the cat Records into the incorrect Collection.
+
+The first step towards organization is to add these existing records into the newly created
+``Cats`` Collection via the ``collectionItemsUpdate()`` function as shown below.
+This function accepts a list of IDs to add via the ``add_ids`` keyword argument:
 
 .. code:: python
 
@@ -1462,14 +1469,27 @@ Add and remove from Collections
     >>> print(cup_resp)
     (, 'ListingReply')
 
+Unlike most other functions, ``collectionItemsUpdate()`` does not return much that we can work with.
+However, this is acceptable since we knew the IDs being added into the Collection.
+
+We can verify that the cat Records do indeed exist in the ``Cats`` Collection using
+the familiar ``collectionItemsList()`` function as shown below.
+In the interest of brevity, we capture the response and only print out ID and title of the items in the collection:
+
+.. code:: python
 
     >>> ls_resp = df_api.collectionItemsList(cat_coll_id)
-    >>> print([obj.title for obj in ls_resp[0].item])
+    >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
     [('d/34684107', 'cat_22'),
      ('d/34684011', 'cat_32'),
      ('d/34684035', 'cat_6'),
      ('d/34684083', 'cat_93'),
      ('d/34684059', 'cat_96')]
+
+We have indeed ensured that the cat Records are part of the ``Cats`` Collection.
+However, let us list the contents of the original / outer collection:
+
+.. code:: python
 
     >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
     >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
@@ -1485,9 +1505,23 @@ Add and remove from Collections
      ('d/34683987', 'dog_71'),
      ('d/34683963', 'dog_8')]
 
+We observe that the original collection continues to also contain the cat Records,
+in addition to the newly created ``Cats`` collection and all the doc Records.
+To complete the move, we would need to de-link the cat Records from the original Collection.
+We do this again via the ``collectionsItemsUpdate()`` function.
+However, this time, we would need to pass the same cat Record IDs with the ``rem_ids`` keyword argument
+rather than the ``add_ids`` keyword argument:
+
+.. code:: python
+
     >>> cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids, context=context)
     >>> print(cup_resp)
     (, 'ListingReply')
+
+Finally, let us verify that the original / outer Collection now does not
+contain cat Records:
+
+.. code:: python
 
     >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
     >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
@@ -1500,11 +1534,19 @@ Add and remove from Collections
 
 Download Collection
 ~~~~~~~~~~~~~~~~~~~
+Finally, let us assume that we are interested in only downloading the data from all
+cat Records.
+A naive and suboptimal way to accomplish this is to perform 5 separate ``dataGet()`` function calls - one per cat Record.
+
+Fortunately, the ``dataGet()`` function allows multiple Records or entire Collections to be downloaded with a single function call
+as shown below.
+Though we could provide the list of cat Record IDs, we will only provide the ``Cat`` Collection ID instead.
+We will ask ``dataGet()`` to create a new directory called ``cat_data`` and put all the data within this directory:
 
 .. code:: python
 
-    df_api.dataGet([cat_coll_id], './cat_data')
-    [71]:
+    >>> df_api.dataGet([cat_coll_id], './cat_data')
+
     (item {
        id: "d/34684011"
        title: "cat_32"
@@ -1546,14 +1588,23 @@ Download Collection
        ct: 1611079028
        ut: 1611079028
        source: "d/34684011, d/34684035, d/34684059, d/34684083, d/34684107, ..."
-       dest: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Dropbox (ORNL)/Projects/DataFed_User_Engagements/Tutorial/cat_data"
+       dest: "olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial/cat_data"
      }, 'DataGetReply')
-    [72]:
 
-    os.listdir('./cat_data')
-    [72]:
+Now, let us verify that all the data does in fact exist in this newly created directory in the local file system:
+
+.. code:: python
+
+    >>> os.listdir('./cat_data')
+
     ['34684107.dat',
      '34684059.dat',
      '34684011.dat',
      '34684035.dat',
      '34684083.dat']
+
+Closing remarks
+---------------
+This user guide only provides an overview of some functions in DataFed that would be used most popularly.
+The interested user is encouraged to go over the complete documentation of all the functions in ``CommandLib.CLI``
+`here <https://ornl.github.io/DataFed/autoapi/datafed/CommandLib/index.html>`_.
