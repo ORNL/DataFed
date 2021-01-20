@@ -538,48 +538,47 @@ Here is how we would amend the function call:
 
 Relationships and provenance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: python
-
-    dc2_resp = df_api.dataCreate('cleaned data',
-                                  metadata=json.dumps({'cleaning_algorithm': 'gaussian_blur', 'size': 20}),
-                                  parent_id=username, # parent collection
-                                  context=context, # project
-                                 )
-    ​
-    dc2_resp
-    [31]:
-    (data {
-       id: "d/34682715"
-       title: "cleaned data"
-       metadata: "{\"cleaning_algorithm\":\"gaussian_blur\",\"size\":20}"
-       repo_id: "repo/cades-cnms"
-       size: 0.0
-       ext_auto: true
-       ct: 1611077405
-       ut: 1611077405
-       owner: "p/trn001"
-       creator: "u/somnaths"
-       parent_id: "c/34558900"
-     }, 'RecordDataReply')
-    [39]:
-
-.. code:: python
-
-    clean_rec_id = dc2_resp[0].data[0].id
-    clean_rec_id
-    [39]:
-    'd/34682715'
+Let's say that this first dataset went through some processing step which resulted in one or more new datasets.
+This processing step could be something as simple as a data cleaning operation or as complex as a multi-institutional
+cross-facility workflow.
+We could not only track the resultant new datasets as Data Records in DataFed but the relationships between the datasets.
 
 .. note::
 
-    Must past lst of list not List of tuples
-    [40]:
+    We will cover topics related to associating raw data to Data Records in the very next section.
+
+First, we create Data Records as we have done earlier for the new datasets using the ``dataCreate()`` function:
 
 .. code:: python
 
-    df_api.dataUpdate(clean_rec_id, deps_add=[["der", record_id]])
-    [40]:
+    >>> dc2_resp = df_api.dataCreate('cleaned data',
+                                      metadata=json.dumps({'cleaning_algorithm': 'gaussian_blur', 'size': 20}),
+                                      parent_id=username, # parent collection
+                                      context=context, # project
+                                     )
+    >>> clean_rec_id = dc2_resp[0].data[0].id
+    >>> print(clean_rec_id)
+    'd/34682715'
+
+Next, we can establish a relationship or ``dependency`` between the original / source Data Record and the subsequent Data Record
+via several methods such as within the ``dataCreate()`` function call or via a subsequent ``dataUpdate()`` call.
+
+Dependencies in DataFed are specified as a ``list`` of relationships, themselves specified as ``list`` objects,
+wherein the first item in the list is the relationship type and the second item is the identifier of the related Data Record.
+
+As of this writing, DataFed supports the following relationships:
+
+* ``der`` - Is derived from
+* ``comp`` - Is comprised of
+* ``ver`` - Is new version of
+
+For our example, we will say that our new Record is derived from our original record via the ``dataUpdate()`` function:
+
+.. code:: python
+
+    >>> dep_resp = df_api.dataUpdate(clean_rec_id, deps_add=[["der", record_id]])
+    >>> print(dep_resp)
+
     (data {
        id: "d/34682715"
        title: "cleaned data"
@@ -613,6 +612,14 @@ Relationships and provenance
          dir: DEP_OUT
        }
      }, 'RecordDataReply')
+
+The response shows that we did in fact manage to establish the ``DEP_IS_DERIVED_FROM`` relationship.
+
+In the DataFed web interface, when one selects either the original or derived Records and
+clicks on the ``Provenance`` view, we will observe that there is an
+arrow originating from the original Data Record and terminating into the newly created Data Record:
+
+.. image:: ../../_static/python_high_level/provenance.png
 
 Data Transfer
 -------------
