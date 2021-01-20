@@ -1591,6 +1591,11 @@ We will ask ``dataGet()`` to create a new directory called ``cat_data`` and put 
        dest: "olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial/cat_data"
      }, 'DataGetReply')
 
+.. note::
+
+    Recall that ``dataGet()`` can download arbitrarily large number of Records
+    regardless of the physical locations of the DataFed repositories containing the data.
+
 Now, let us verify that all the data does in fact exist in this newly created directory in the local file system:
 
 .. code:: python
