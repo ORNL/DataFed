@@ -81,7 +81,7 @@ The first layer is typically a tuple of size 2:
 
 .. code-block:: python
 
-    >>> print(type(pl_resp), len(pl_resp))
+    >>> type(pl_resp), len(pl_resp)
 
 .. code-block::
 
@@ -116,7 +116,7 @@ Though we won't be needing the information in this case, here is how we might ge
 
 .. code-block:: python
 
-    >>> print(pl_resp[0].offset)
+    >>> pl_resp[0].offset
 
 .. code-block::
 
@@ -172,7 +172,7 @@ We can take a look at basic information about a project using the ``projectView(
 
 .. code-block:: python
 
-    >>> print(df_api.projectView(context))
+    >>> df_api.projectView(context)
 
 .. code-block::
 
@@ -206,7 +206,7 @@ We can take a look at the contents of a project by listing everything in the pro
 
 .. code-block:: python
 
-    >>> print(df_api.collectionItemsList('root', context=context))
+    >>> df_api.collectionItemsList('root', context=context)
 
 .. code-block::
 
@@ -508,7 +508,7 @@ when demonstrating the ``dataUpdate()`` function. Let us try to view the Record 
     >>> dv_resp = df_api.dataView('my_first_dataset')
     >>> dv_resp
 
- .. code-block:: python
+.. code-block:: python
 
     ---------------------------------------------------------------------------
     Exception                                 Traceback (most recent call last)
@@ -723,7 +723,7 @@ With the data file created, we are ready to put this raw data into the record we
        msg: "Finished"
        ct: 1611102437
        ut: 1611102444
-       source: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Dropbox (ORNL)/Projects/DataFed_User_Engagements/Tutorial/parameters.json"
+       source: "olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial/parameters.json"
        dest: "d/34682319"
      }, 'DataPutReply')
 
@@ -891,7 +891,7 @@ Using the task ID, we can check on the status of the ``task`` via the ``taskView
       ct: 1611077310
       ut: 1611077320
       source: "d/34682319"
-      dest: "1646e89e-f4f0-11e9-9944-0a8c187e8c12/Users/syz/Dropbox (ORNL)/Projects/DataFed_User_Engagements/Tutorial"
+      dest: "olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial"
     }
     , 'TaskDataReply')
 
@@ -1044,13 +1044,13 @@ We would use the ``collectionCreate()`` function as:
 
 .. code-block:: python
 
-    coll_alias = 'cat_dog_train'
+    >>> coll_alias = 'cat_dog_train'
     ​
-    coll_resp = df_api.collectionCreate('Image classification training data',
-                                        alias=coll_alias,
-                                        parent_id=username,
-                                        context=context)
-    print(coll_resp)
+    >>> coll_resp = df_api.collectionCreate('Image classification training data',
+                                            alias=coll_alias,
+                                            parent_id=username,
+                                            context=context)
+    >>> print(coll_resp)
 
 .. code-block::
 
