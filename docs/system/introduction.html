@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="System Overview" href="overview.html" />
-    <link rel="prev" title="DataFed - Federated Scientific Data Management" href="../index.html" /> 
+    <link rel="prev" title="DataFed - A Scientific Data Federation" href="../index.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -85,15 +85,10 @@
               <p class="caption"><span class="caption-text">About DataFed</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#rationale">Rationale</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#existing-systems">Existing Systems</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#sdms-lims">SDMS / LIMS</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#cataloging-systems">Cataloging Systems</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#datafed-benefits">DataFed Benefits</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scientific-data-management">Scientific Data Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-lifecycle">Data Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-datafed">Why DataFed?</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="overview.html">System Overview</a></li>
@@ -114,7 +109,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../user/cli/reference.html">Command Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user/cli/shell_scripting.html">Shell Scripting</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Python Scripting</span></p>
+<p class="caption"><span class="caption-text">Python Interface</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user/scripting.html">Scripting Guide</a></li>
@@ -192,119 +187,101 @@
 <h1>Introduction</h1>
 <p>DataFed is a <em>federated</em> and <em>scalable</em> scientific data management and collaboration system that
 addresses the critical need for holistic and FAIR-principled “big data” handling within, and across,
-scientific domains and facilities - with the goal of enhancing the <em>productivity</em> and <em>reproducibility</em>
-of data-oriented scientific research.</p>
-<p>[WHAT IS SDMS, WHY IS IT NEEDED - reproducibility crisis - data management burden - lack of good solution]</p>
+scientific domains and facilities with the goal of enhancing the <em>productivity</em> and <em>reproducibility</em>
+of data-oriented scientific research. DataFed supports the early lifecycle stages of “working”
+scientific data and serves as a tool to ease the burden associated with capturing, organizing, and
+sharing potentially large volumes of heterogeneous scientific data. DataFed provides an environment
+in which scientific data can be precisely controlled and refined in preparation for eventual data
+publishing.</p>
+<div class="section" id="background">
+<h2>Background</h2>
+<p>DataFed is a federated scientific data management and collaboration system for open research that
+eases the data handling burden associated with research activities within and across scientific
+domains and facilities. The primary goal of DataFed is to improve scientific data quality by enabling
+precise full-lifecycle control over data artifacts, with the ability to uniformly share and access data
+across geographically distributed facilities. The combined capabilities of DataFed help to support
+the concept of “repeatable science” through the unambiguous identification and tracking of data artifacts,
+by capturing and maintaining scientific metadata and provenance, and by providing the means to locate,
+access, and share data globally.</p>
+<p>DataFed can be thought of as a “tier 2+” distributed data storage system - meaning it is intended
+for creating and working with data that is of medium- to long-term significance to the owner and/or
+collaborators. Unlike a tier 1 storage system (i.e. a local file system), DataFed compromises raw data
+access performance in favor of FAIR data principles. While DataFed shares many features with tier 3
+storage systems (i.e. data archival systems), DataFed allows data and metadata to be modified after it
+is ingested and specifically includes features for disseminating subsequent changes to downstream
+data consumers via automatic provenance-based alerts as well as opt-in data subscriptions. DataFed
+also provides powerful and easy to use collaboration features to encourage precise “in-band” data-related
+communication instead of ad hoc and error-prone methods, such as email.</p>
+<p>DataFed utilizes <a class="reference external" href="https://www.globus.org">Globus</a> for efficient and secure data transfers, as well as
+for user authentication. Globus can be thought of as a “data network” where data transfers take place
+between Globus “endpoints” - which are Globus services that enable access to underlying file systems
+hosted by member organizations. DataFed adds a data management layer on top of Globus that permits data
+to be located and accessed without needing to know where the data is physically stored within the Globus
+network. Because DataFed relies heavily on Globus, it is recommended that DataFed users familiarize
+themselves with <a class="reference external" href="https://www.globus.org/what-we-do">how Globus works</a>.</p>
+<p>DataFed is an open source project hosted on GitHub at <a class="reference external" href="https://github.com/ORNL/DataFed">https://github.com/ORNL/DataFed</a>. DataFed is
+under active development at Oak Ridge National Laboratory (ORNL) within the Oak Ridge Leadership
+Computing Facility (OLCF) and is currently deployed in an alpha-release state for early access users.</p>
+</div>
+<div class="section" id="scientific-data-management">
+<h2>Scientific Data Management</h2>
+<p>Traditional scientific data management systems are restricted to individual organizations or a small number of
+organizations connected via a “virtual organization” (VO) configuration. These systems typically support
+domain-specific and predetermined data workflows that cannot be readily applied to other domains or applications.</p>
+<p>[MORE HERE]</p>
 <p>DataFed provides a combination of the typical features and benefits of scientific data management systems
 (SDMS), laboratory information management systems (LIMS), and data cataloging services. For example,
 DataFed provides storage and access to structured and unstructured heterogeneous raw data with access
-controls, metadata and provenance capture, and metadata indexing and search; however, DataFed differs
-from these other systems in a number of significant ways in order to better serve the needs of open
-and collaborative scientific research - especially regarding “big data” and data-oriented research.</p>
+controls, metadata and provenance capture, and metadata indexing and search; however, DataFed diverges
+significantly from these systems in a number of ways to better serve the needs of open and collaborative
+scientific research - especially regarding “big data” and data-oriented research.</p>
 <p>Briefly, DataFed provides the following unique blend of capabilities and benefits:</p>
 <ul class="simple">
 <li><p>Presents a uniform and concise logical view of widely distributed data.</p></li>
 <li><p>Supports both general- and domain-specific use cases.</p></li>
 <li><p>Manages “living data” throughout critical pre-publication data lifecycle stages.</p></li>
-<li><p>Encourages FAIR-principled data through user- and community-defined schemas.</p></li>
-<li><p>Enhances data awareness via automatic notification of “data events”.</p></li>
+<li><p>Encourages FAIR-principled data practices via user- and community-defined schemas.</p></li>
+<li><p>Enhances data awareness with automatic notification of “data events”.</p></li>
 <li><p>Scales out and up to enable efficient big data research across organizations/facilities.</p></li>
 <li><p>Provides high-quality data management foundation for use by other applications and services.</p></li>
 </ul>
-<p>DataFed is the enabling technology for the full lifecycle of scientific data - from creation through
+</div>
+<div class="section" id="data-lifecycle">
+<h2>Data Lifecycle</h2>
+<p>DataFed is an enabling technology for the full lifecycle of scientific data - from creation through
 publication and eventual reuse. The figure below illustrates how DataFed supports this lifecycle:</p>
 <img alt="../_images/data_lifecycle.png" src="../_images/data_lifecycle.png" />
-<p>[DESCRIBE LIFE CYCLE AND HOW DATAFED ENABLES IT]</p>
-<div class="section" id="rationale">
-<h2>Rationale</h2>
-<p>There are data management systems that currently exist that help to address some of the data-related
-aspects of the reproducibility crisis; however, none of these systems are ideally suited for application
-to general scientific research. Laboratory information management systems (LIMS) improve laboratory
-efficiency and quality by narrowly focusing on specific domains and data handling processes; however, they
-are too rigid and burdensome for general research.</p>
-<div class="section" id="existing-systems">
-<h3>Existing Systems</h3>
-<div class="section" id="sdms-lims">
-<h4>SDMS / LIMS</h4>
-<p>SDMS/LIMS PROS:</p>
-<ul class="simple">
-<li><p>Capture and cataloging of data, metadata, and provenance</p></li>
-<li><p>Reduction of data handling errors</p></li>
-<li><p>Full life cycle</p></li>
-<li><p>Enhanced scientific reproducibility</p></li>
-<li><p>Integration with instruments / analytics</p></li>
-</ul>
-<p>SDMS/LIMS CONS:</p>
-<ul class="simple">
-<li><p>No data access outside of organization/VO</p></li>
-<li><p>Domain- and process-specific (too rigid for general research)</p></li>
-<li><p>Complex, steep learning curve</p></li>
-<li><p>Usually don’t support Globus</p></li>
-<li><p>Single vendor, closed source</p></li>
-</ul>
 </div>
-<div class="section" id="cataloging-systems">
-<h4>Cataloging Systems</h4>
-<p>Catalog PROS:</p>
-<ul class="simple">
-<li><p>Capture and cataloging of data and metadata (sometimes provenance)</p></li>
-<li><p>Support public data access (HTTP only)</p></li>
-<li><p>Easy to access as data consumer</p></li>
-<li><p>Easy to stand-up for small data collections</p></li>
-<li><p>Open source</p></li>
-</ul>
-<p>Catalog CONS:</p>
-<ul class="simple">
-<li><p>Not FAIR compliant (poor search, no structure/schema, requires a prior knowledge to use)</p></li>
-<li><p>Not full-life cycle - static / post-publication data only</p></li>
-<li><p>Single organization / VO (for non-public data)</p></li>
-<li><p>Usually don’t support Globus</p></li>
-</ul>
-</div>
-</div>
-<div class="section" id="datafed-benefits">
-<h3>DataFed Benefits</h3>
-<ul class="simple">
-<li><p>DataFed is <strong>general purpose</strong>. DataFed is domain- and methodology-neutral in that it does not require
+<div class="section" id="why-datafed">
+<h2>Why DataFed?</h2>
+<p>DataFed directly benefits both individual researchers and teams of geographically dispersed collaborators
+who need to capture, manage, share, and access scientific data from within, or across, any of the experimental,
+observational, compute, or analytics resources within the Department of Energy’s national laboratory network.</p>
+<p><strong>Domain Agnosticism</strong></p>
+<p>DataFed is <strong>general purpose</strong>. DataFed is domain- and methodology-neutral in that it does not require
 users to utilize pre-defined data formats or processes - yet, despite this, DataFed provides powerful
-domain-specific metadata indexing and query capabilities augmented by user/community defined schemas.</p></li>
-<li><p>DataFed supports the <strong>pre-publication data lifecycle</strong>.</p></li>
-<li><p>DataFed is <strong>Scalable</strong>. Datafed was designed to easily scale-out across multiple/many organizations
+domain-specific metadata indexing and query capabilities augmented by user/community defined schemas.</p>
+<p><strong>Working Data Support</strong></p>
+<p>DataFed supports the <strong>pre-publication data lifecycle</strong>.</p>
+<p><strong>Scalability</strong></p>
+<p>DataFed is <strong>Scalable</strong>. Datafed was designed to easily scale-out across multiple/many organizations
 and facilities by relying on federated identity technology and a common access control mechanism;
 however, individual organizations are still able to manage their own data storage resources and policies.
 In contrast, most existing SDMS products either cannot span organizations at all, or rely on virtual
-organization (VO) technologies that are highly labor-intensive to scale beyond a few organizations.</p></li>
-<li><p>DataFed <strong>understands big data</strong>. DataFed was design from the start to support “big data” and
+organization (VO) technologies that are highly labor-intensive to scale beyond a few organizations.</p>
+<p><strong>Big Data Support</strong></p>
+<p>DataFed <strong>understands big data</strong>. DataFed was design from the start to support “big data” and
 the often complex environments in which such data is created and processed. Many existing SDMS products
 rely on tightly-coupled file systems or HTTP/S for moving data; however, DataFed utilizes Globus (GridFTP)
 for data transfer between facilities because it is the defacto standard for high performance movement
 of very large data sets (Petabyte scale) between government-funded user facilities (DoE), research
-universities, and commercial cloud computing services.</p></li>
-<li><p>DataFed focuses on providing high quality, uniform, and easy-to-use data management services
+universities, and commercial cloud computing services.</p>
+<p><strong>Foundation for Data Applications</strong></p>
+<p>DataFed focuses on providing high quality, uniform, and easy-to-use data management services
 and does not overreach by bundling complementary features such as instrument control, workflow
 processing, or data analytics that are better served by dedicated application-specific tools. However,
 DataFed does provide application programming interfaces (APIs) to allow other services or applications
-to be utilize DataFed’s data management capabilities.</p></li>
-</ul>
-<p>DataFed directly benefits both individual researchers and teams of geographically dispersed collaborators
-who need to capture, manage, share, and access scientific data from any of the experimental, observational,
-compute, or analytics resources within the Department of Energy’s national laboratory network.</p>
-<img alt="../_images/simplified_architecture.png" src="../_images/simplified_architecture.png" />
-<p>ing, or are local to, multiple user facilities
-at Department of Energy national laboratories</p>
-<p>(experimental, observational, compute, or analytics),</p>
-<p>The key benefits of DataFed for</p>
-<p>discovery, access, and sharing</p>
-<p>FAIR</p>
-<p>Data Backplane</p>
-<p>Scientific Data Life Cycle</p>
-<p>Domain Agnostic</p>
-<p>Foundation for Domain-Specific Applications</p>
-<p>Cross-Facility Research</p>
-<p>Database View (logical vs physical)</p>
-<p>Metadata and Provenance</p>
-<p>Big Data Support</p>
-</div>
+to be utilize DataFed’s data management capabilities.</p>
 </div>
 </div>
 
@@ -319,7 +296,7 @@ at Department of Energy national laboratories</p>
         <a href="overview.html" class="btn btn-neutral float-right" title="System Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../index.html" class="btn btn-neutral float-left" title="DataFed - Federated Scientific Data Management" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../index.html" class="btn btn-neutral float-left" title="DataFed - A Scientific Data Federation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
