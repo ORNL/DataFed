@@ -1460,9 +1460,11 @@ as shown below.
 Though we could provide the list of cat Record IDs, we will only provide the ``Cat`` Collection ID instead.
 We will ask ``dataGet()`` to create a new directory called ``cat_data`` and put all the data within this directory:
 
-.. code:: python
+.. code-block:: python
 
-    >>> df_api.dataGet([cat_coll_id], './cat_data')
+    df_api.dataGet([cat_coll_id], './cat_data')
+
+.. code-block::
 
     (item {
        id: "d/34684011"
@@ -1515,9 +1517,11 @@ We will ask ``dataGet()`` to create a new directory called ``cat_data`` and put 
 
 Now, let us verify that all the data does in fact exist in this newly created directory in the local file system:
 
-.. code:: python
+.. code-block:: python
 
-    >>> os.listdir('./cat_data')
+    os.listdir('./cat_data')
+
+.. code-block::
 
     ['34684107.dat',
      '34684059.dat',
