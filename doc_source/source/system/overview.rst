@@ -32,13 +32,16 @@ loss of scientific reproducibility.
 Cross-Facility Data Management
 ==============================
 
-The figure below shows a simplified representation of an example DataFed network consisting of the central
+Figure 1, below, shows a simplified representation of an example DataFed network consisting of the central
 DataFed services and several connected facilities and DataFed repositories. The enclosing gray boxes
 represent the physical boundaries of geographically distributed facilities. The wide blue arrows represent
 the DataFed high-speed raw data transfer "bus" (i.e. GridFTP) that is used to move data between facilities,
 and the green arrows represent the DataFed communication "bus" use by clients to send requests to DataFed.
 
-.. image:: /_static/simplified_architecture.png
+..  figure:: /_static/simplified_architecture.png
+    :align: center
+
+    Figure 1 - An Example DataFed Network
 
 In this example, there is an observational facility and a compute facility that each have a local DataFed
 data repository (a cylinder labeled with an 'R'). Any facility in the system can read or write data from or to
@@ -75,10 +78,13 @@ System Architecture
 ===================
 
 The DataFed system is composed of a number of system components and interfaces that are deployed across
-the DataFed network to implement scalable distributed data storage and indexing, as shown in the figure, below.
+the DataFed network to implement scalable distributed data storage and indexing, as shown in the figure 2, below.
 
 ..  figure:: /_static/system_components.png
     :scale: 50%
+    :align: center
+
+    Figure 2: DataFed System Components
 
 Interfaces
 ==========
