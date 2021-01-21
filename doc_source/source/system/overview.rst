@@ -77,8 +77,8 @@ System Architecture
 The DataFed system is composed of a number of system components and interfaces that are deployed across
 the DataFed network to implement scalable distributed data storage and indexing, as shown in the figure, below.
 
-.. image:: /_static/system_components.png
-
+..  figure:: /_static/system_components.png
+    :scale: 50%
 
 Interfaces
 ==========
