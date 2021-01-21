@@ -24,7 +24,7 @@ Import package
 We start by importing just the ``API`` class within ``datafed.CommandLib`` as shown below.
 We also import json to simplify the process of communicating metadata with DataFed.
 
-.. code:: python
+.. code-block:: python
 
     >>> import json # For dealing with metadata
     >>> import os # For file level operations
@@ -36,7 +36,7 @@ Create instance
 ~~~~~~~~~~~~~~~
 Finally, we create an instance of the DataFed API class via:
 
-.. code:: python
+.. code-block:: python
 
     >>> df_api = API()
 
@@ -53,10 +53,12 @@ rather than the user's own personal ``root`` collection.
 
 First, let's try to find projects we are part of using the ``projectList()`` function in DataFed:
 
-.. code:: python
+.. code-block:: python
 
     >>> plist_resp = df_api.projectList()
     >>> print(plist_resp)
+
+.. code-block::
 
     (item {
       id: "p/trn001"
@@ -77,9 +79,11 @@ Let's dig into this object layer-by-layer:
 
 The first layer is typically a tuple of size 2:
 
-.. code:: python
+.. code-block:: python
 
     >>> print(type(pl_resp), len(pl_resp))
+
+.. code-block::
 
     (tuple, 2)
 
@@ -87,9 +91,12 @@ This tuple usually contains two key objects: (1) a message containing the inform
 
 A simple check of the object type will confirm the type of our core `Google Protocol Buffer <https://developers.google.com/protocol-buffers>`_ message:
 
-.. code:: python
+.. code-block:: python
 
     >>> type(pl_resp[0])
+
+.. code-block::
+
     google.protobuf.internal.python_message.ListingReply
 
 ``ListingReply`` is one of a handful of different message types that DataFed replies with across all its many functions.
@@ -97,7 +104,7 @@ We will be encountering most of the different types of messages in this user gui
 
 Interested users are encouraged to read official documentation and `examples about Google Protobuf <https://developers.google.com/protocol-buffers/docs/pythontutorial#where-to-find-the-example-code>`_.
 
-Protobuf messages are powerful objects that not only allow quick access to the information stored in their defined fields, but are also nominally subscriptable and iterable in Python!
+Protobuf messages are powerful objects that not only allow quick access to the information stored in their defined fields, but are also nominally subscriptable and iterable in Python.
 Besides the main information about the different projects, this ``ListingReply`` also provides some contextual information
 such as the:
 
@@ -107,23 +114,32 @@ such as the:
 
 Though we won't be needing the information in this case, here is how we might get the ``offset``:
 
-.. code:: python
+.. code-block:: python
 
     >>> print(pl_resp[0].offset)
+
+.. code-block::
+
     0
 
 Accessing the ``item`` component produces the actual listing of projects in the message:
 
-.. code:: python
+.. code-block:: python
 
     >>> len(pl_resp[0].item)
+
+.. code-block::
+
     1
 
 Now, if we wanted to get the ``title`` field of the sole project in the listing, we would access it as:
 
-.. code:: python
+.. code-block:: python
 
     >>> pl_resp[0].item[0].title
+
+.. code-block::
+
     "TRN001 : DataFed Training"
 
 .. note::
@@ -140,7 +156,7 @@ In order to ensure that we continue to work within this context -
 create data records, collections, etc. within this space,
 we will define (and later use) the first of two contextual variables:
 
-.. code:: python
+.. code-block:: python
 
     >>> context = 'p/trn001' # DataFed ID for the training project
 
@@ -154,9 +170,11 @@ Exploring projects
 ~~~~~~~~~~~~~~~~~~
 We can take a look at basic information about a project using the ``projectView()`` function:
 
-.. code:: python
+.. code-block:: python
 
     >>> print(df_api.projectView(context))
+
+.. code-block::
 
     (proj {
       id: "p/trn001"
@@ -186,9 +204,11 @@ that might be useful for those members or administrators of several projects.
 We can take a look at the contents of a project by listing everything in the project's
 ``root`` collection using the ``collectionItemsList()`` function as shown below:
 
-.. code:: python
+.. code-block:: python
 
-    >>> df_api.collectionItemsList('root', context=context)
+    >>> print(df_api.collectionItemsList('root', context=context))
+
+.. code-block::
 
     (item {
        id: "c/34559341"
@@ -237,7 +257,7 @@ we can set the second portion of our context such that any data we want to creat
 private space is created within our own collection (``somnaths`` in this case) rather than
 creating clutter in the ``root`` collection of the project:
 
-.. code:: python
+.. code-block:: python
 
     >>> username = 'somnaths' # Name of this user
 
@@ -259,7 +279,7 @@ DataFed can accept metadata as dictionaries in python or as a JSON file.
 
 Here, we simply create a dictionary with fake metadata in place of the real metadata:
 
-.. code:: python
+.. code-block:: python
 
     >>> parameters = {
                       'a': 4,
@@ -275,7 +295,7 @@ of a JSON file or a JSON string for the metadata, we will need to use ``json.dum
 function to turn our python metadata dictionary ``parameters`` into a JSON string, or
 write the dictionary to a JSON file:
 
-.. code:: python
+.. code-block:: python
 
     >>> dc_resp = df_api.dataCreate('my important data',
                                     metadata=json.dumps(parameters),
@@ -296,9 +316,11 @@ Extract Record ID
 
 Let's look at the response we got for the ``dataCreate()`` function call:
 
-.. code:: python
+.. code-block:: python
 
     >>> print(response)
+
+.. code-block::
 
     (data {
        id: "d/34682319"
@@ -327,10 +349,12 @@ DataFed returned a ``RecordDataReply`` object, which contains crucial pieces of 
 Similar to getting the title from the project information, if we wanted to get the
 record ID to be used for later operations, here's how we could go about it:
 
-.. code:: python
+.. code-block:: python
 
     >>> record_id = response[0].data[0].id
     >>> print(record_id)
+
+.. code-block::
 
     'd/34682319'
 
@@ -340,14 +364,16 @@ All information about Data Records, besides the unique ``ID``, can be edited usi
 ``dataUpdate()`` command. For example, if we wanted to change the title, add a human-readable
 unique ``alias``, and **add** to the scientific metadata, we would as follows:
 
-.. code:: python
+.. code-block:: python
 
     >>> du_resp = df_api.dataUpdate(record_id,
                                     title='Some new title for the data',
                                     alias='my_first_dataset',
                                     metadata=json.dumps({'appended_metadata': True})
                                     )
-    print(du_resp)
+    >>> print(du_resp)
+
+.. code-block::
 
     (data {
       id: "d/34682319"
@@ -384,10 +410,12 @@ View Record information
 Since the response from the ``dataCreate()`` and ``dataUpdate()`` functions does not include the
 metadata, we can always get the most comprehensive information about Data Records via the ``dataView()`` function:
 
-.. code:: python
+.. code-block:: python
 
     >>> dv_resp = df_api.dataView(record_id)
     >>> print(dv_resp)
+
+.. code-block::
 
     (data {
        id: "d/34682319"
@@ -407,9 +435,11 @@ metadata, we can always get the most comprehensive information about Data Record
 The date and time in the Data Records are encoded according to the Unix time format and
 can be converted to familiar python ``datetime`` objects via ``fromtimestamp()``:
 
-.. code:: python
+.. code-block:: python
 
     >>> datetime.datetime.fromtimestamp(dv_resp[0].data[0].ct)
+
+.. code-block::
 
     datetime.datetime(2021, 1, 19, 12, 26, 57)
 
@@ -420,18 +450,22 @@ As the response above shows, the metadata is also part of the response we got fr
 
 By default, the metadata in the response is formatted as a JSON string:
 
-.. code:: python
+.. code-block:: python
 
-    >>> dv_resp[0].data[0].metadata
+    >>> print(dv_resp[0].data[0].metadata)
+
+.. code-block::
 
     "{\"a\":4,\"appended_metadata\":true,\"b\":[1,2,-4,7.123],\"c\":\"Something important\",\"d\":{\"x\":14,\"y\":-19}}"
 
 
 In order to get back a python dictionary, use ``json.loads()``
 
-.. code:: python
+.. code-block:: python
 
     >>> print(json.loads(dv_resp[0].data[0].metadata))
+
+.. code-block::
 
     {'a': 4,
      'appended_metadata': True,
@@ -446,7 +480,7 @@ Replace metadata
 In the example above, we appended metadata to existing metadata, which is the default manner in which ``dataUpdate()`` operates.
 If desired, we could completely replace the metadata by setting ``metadata_set`` to ``True`` as in:
 
-.. code:: python
+.. code-block:: python
 
     >>> du_resp = df_api.dataUpdate(record_id,
                                     metadata=json.dumps({'p': 14, 'q': 'Hello', 'r': [1, 2, 3]}),
@@ -454,6 +488,9 @@ If desired, we could completely replace the metadata by setting ``metadata_set``
                                     )
     >>> dv_resp = df_api.dataView(record_id)
     >>> print(json.loads(dv_resp[0].data[0].metadata))
+
+.. code-block::
+
     {'p': 14, 'q': 'Hello', 'r': [1, 2, 3]}
 
 The previous metadata keys such as ``a``, ``b``, ``c``, etc. have all been replaced by the new metadata fields.
@@ -466,10 +503,12 @@ unique ID via the variable - ``record_id``.
 However, DataFed also allows Data Records and Collections to be addressed via their ``alias``, which we set
 when demonstrating the ``dataUpdate()`` function. Let us try to view the Record using its alias instead of its ID:
 
-.. code:: python
+.. code-block:: python
 
     >>> dv_resp = df_api.dataView('my_first_dataset')
     >>> dv_resp
+
+ .. code-block:: python
 
     ---------------------------------------------------------------------------
     Exception                                 Traceback (most recent call last)
@@ -520,10 +559,12 @@ However, we would need to also provide ``context`` to specify that the Record ac
 
 Here is how we would amend the function call:
 
-.. code:: python
+.. code-block:: python
 
     >>> dv_resp = df_api.dataView('my_first_dataset', context=context)
     >>> dv_resp
+
+.. code-block::
 
     (data {
        id: "d/34682319"
@@ -553,7 +594,7 @@ We could not only track the resultant new datasets as Data Records in DataFed bu
 
 First, we create Data Records as we have done earlier for the new datasets using the ``dataCreate()`` function:
 
-.. code:: python
+.. code-block:: python
 
     >>> dc2_resp = df_api.dataCreate('cleaned data',
                                       metadata=json.dumps({'cleaning_algorithm': 'gaussian_blur', 'size': 20}),
@@ -562,6 +603,9 @@ First, we create Data Records as we have done earlier for the new datasets using
                                      )
     >>> clean_rec_id = dc2_resp[0].data[0].id
     >>> print(clean_rec_id)
+
+.. code-block::
+
     'd/34682715'
 
 We can establish a relationship or ``dependency`` between the original / source Data Record and the subsequent Data Record
@@ -578,10 +622,12 @@ As of this writing, DataFed supports the following relationships:
 
 For our example, we will say that our new Record is derived from our original record via the ``dataUpdate()`` function:
 
-.. code:: python
+.. code-block:: python
 
     >>> dep_resp = df_api.dataUpdate(clean_rec_id, deps_add=[["der", record_id]])
     >>> print(dep_resp)
+
+.. code-block::
 
     (data {
        id: "d/34682715"
@@ -635,7 +681,7 @@ colloquially refer to as "data" in science.
 
 For the sake of demonstration, we will just use the metadata as the data itself:
 
-.. code:: python
+.. code-block:: python
 
     >>> with open('parameters.json', mode='w') as file_handle:
             json.dump(parameters, file_handle)
@@ -651,13 +697,15 @@ With the data file created, we are ready to put this raw data into the record we
 
    Ensure that the Globus endpoint that will be used for uploading data is active.
 
-.. code:: python
+.. code-block:: python
 
     >>> put_resp = df_api.dataPut(record_id,
                                   './parameters.json',
                                   wait=True, # Waits until transfer completes.
                                   )
     >>> print(put_resp)
+
+.. code-block::
 
     (item {
        id: "d/34682319"
@@ -699,10 +747,12 @@ In a later section, we will go over an example usecase wherein asynchronous tran
 
 Let's view the Data Record we have been working on so far:
 
-.. code:: python
+.. code-block:: python
 
     >>> dv_resp = df_api.dataView(record_id)
     >>> print(dv_resp)
+
+.. code-block::
 
     (data {
        id: "d/34682319"
@@ -739,13 +789,21 @@ keyword argument to ``True`` would result in a clash in the file name.
 Just to prove that the file download is indeed taking place, let's check to make sure that there is no other JSON file
 whose name matches that of the record ID.
 
-.. code:: python
+.. code-block:: python
 
     >>> expected_file_name = os.path.join('.', record_id.split('d/')[-1]) + '.json'
     >>> print(expected_file_name)
+
+.. code-block::
+
     ./34682319.json
 
+.. code-block:: python
+
     >>> print(os.path.exists(expected_file_name))
+
+.. code-block::
+
     False
 
 Now that we know that we will not be having a file name clash, let us proceed with the ``dataGet()`` function call.
@@ -755,7 +813,7 @@ Now that we know that we will not be having a file name clash, let us proceed wi
     The current version of DataFed has a bug where ``dataGet()`` **only** accepts a ``list`` of Data Record or Collection IDs.
     Until the next version, users are recommended to put their singular ID into a ``list`` for ``dataGet()``.
 
-.. code:: python
+.. code-block:: python
 
     >>> get_resp = df_api.dataGet([record_id], # currently only accepts a list of IDs / aliases
                                   '.', # directory where data should be downloaded
@@ -763,6 +821,9 @@ Now that we know that we will not be having a file name clash, let us proceed wi
                                   wait=True, # Wait until Globus transfer completes
                                  )
     >>> print(get_resp)
+
+.. code-block::
+
     (task {
       id: "task/34682556"
       type: TT_DATA_GET
@@ -781,14 +842,17 @@ Now that we know that we will not be having a file name clash, let us proceed wi
 The response shows that the Globus file transfer to the local file system did indeed complete successfully.
 Now, let us verify that the file does indeed exist as it should:
 
-.. code:: python
+.. code-block:: python
 
     >>> print(os.path.exists(expected_file_name))
+
+.. code-block::
+
     True
 
 At this point, we are free to rename the downloaded file to whatever name we want using familiar python functions:
 
-.. code:: python
+.. code-block:: python
 
     >>> os.rename(expected_file_name, 'duplicate_parameters.json')
 
@@ -798,18 +862,23 @@ DataFed makes it possible to check on the status of transfer tasks in an easy an
 
 From the earlier ``dataGet()`` function call's response, we can extract the ``task id`` as:
 
-.. code:: python
+.. code-block:: python
 
     >>> task_id = get_resp[0].task[0].id
     >>> print(task_id)
+
+.. code-block::
+
     task/34682556
 
 Using the task ID, we can check on the status of the ``task`` via the ``taskView()`` function:
 
-.. code:: python
+.. code-block:: python
 
     >>> task_resp = df_api.taskView(task_id)
     >>> print(task_resp)
+
+.. code-block::
 
     (task {
       id: "task/34682556"
@@ -844,9 +913,12 @@ In this case, the ``task`` would be a composite of several Globus data transfers
 
 We can also extract the status of the ``task`` as:
 
-.. code:: python
+.. code-block:: python
 
     >>> task_resp[0].task[0].status
+
+.. code-block::
+
     3
 
 Note that though the status was marked as ``TS_SUCCEEDED`` in the Google Protobuf object,
@@ -880,7 +952,7 @@ The first is our fake, computationally expensive simulation denoted by ``expensi
 It generates results that are written to a ``.dat`` file and it returns the path to this
 results data file. Though comically oversimplified, it is sufficiently accurate for demonstration purposes.
 
-.. code:: python
+.. code-block:: python
 
     >>> def expensive_simulation():
             time.sleep(3)
@@ -891,7 +963,7 @@ results data file. Though comically oversimplified, it is sufficiently accurate 
 The next handy function is ``check_xfer_status()`` that looks up the instantaneous status of the transfer
 of each task it is provided and returns only the statuses:
 
-.. code:: python
+.. code-block:: python
 
     >>> def check_xfer_status(task_ids):
             statuses = list()
@@ -905,7 +977,7 @@ In the following demonstration, we perform a series of "computationally expensiv
 Following our aim to mimic realistic scenarios, we also create a DataFed collection to hold
 all the simulation results:
 
-.. code:: python
+.. code-block:: python
 
     >>> coll_resp = df_api.collectionCreate('Simulations', parent_id=username, context=context)
     >>> sim_coll_id = coll_resp[0].coll[0].id
@@ -915,10 +987,9 @@ we create a Data Record to hold each simulation's resulting data file and then c
 to asynchronously upload the data in the background without impeding the following simulation
 or, importantly - wasting precious wall time on the supercomputer.
 
-.. code:: python
+.. code-block:: python
 
     >>> xfer_tasks = list()
-    >>> print('~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~')
     >>> for ind in range(3):
             print('Starting simulation #{}'.format(ind))
             results_file = expensive_simulation()
@@ -935,7 +1006,8 @@ or, importantly - wasting precious wall time on the supercomputer.
 
     >>> print('Simulations complete')
 
-    ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+.. code-block::
+
     Starting simulation #0
     Uploading data from simulation #0
     Transfer status(es): [2]
@@ -970,7 +1042,7 @@ Create collection
 The process to create a Collection is very similar to that for the Data Record.
 We would use the ``collectionCreate()`` function as:
 
-.. code:: python
+.. code-block:: python
 
     coll_alias = 'cat_dog_train'
     ​
@@ -979,6 +1051,8 @@ We would use the ``collectionCreate()`` function as:
                                         parent_id=username,
                                         context=context)
     print(coll_resp)
+
+.. code-block::
 
     (coll {
       id: "c/34683877"
@@ -1017,7 +1091,7 @@ For simplicity, we will use the same tiny dataset for both cats and dogs.
 The Data Records would be distinguishable via the ``animal`` key or field in the ``metadata``.
 Since we need to create several Data Records for dogs and cats, we will define a quick function:
 
-.. code:: python
+.. code-block:: python
 
     >>> import random
 
@@ -1055,7 +1129,7 @@ The actual data itself is of little relevance to this example and will not reall
 Now, we simply call the ``generate_animal_data()`` function to generate data.
 We will generate 5 examples each of cats and dogs:
 
-.. code:: python
+.. code-block:: python
 
     >>> cat_records = list()
     >>> dog_records = list()
@@ -1064,8 +1138,17 @@ We will generate 5 examples each of cats and dogs:
     >>> for _ in range(5):
             cat_records.append(generate_animal_data(is_dog=False))
     >>> print(cat_records)
+
+.. code-block::
+
     ['d/34684011', 'd/34684035', 'd/34684059', 'd/34684083', 'd/34684107']
+
+.. code-block:: python
+
     >>> print(dog_records)
+
+.. code-block::
+
     ['d/34683891', 'd/34683915', 'd/34683939', 'd/34683963', 'd/34683987']
 
 List items in Collection
@@ -1075,10 +1158,12 @@ Now that we have generated the data into our Collection, we can list the content
 simply via ``collectionItemList()`` as shown below. Again, since we are using the ``alias`` as the
 identifier, we do need to specify the ``context`` as well:
 
-.. code:: python
+.. code-block:: python
 
     >>> coll_list_resp = df_api.collectionItemsList(coll_alias, context=context)
     >>>  print(coll_list_resp)
+
+.. code-block::
 
     (item {
       id: "d/34684107"
@@ -1231,10 +1316,12 @@ List saved queries
 Much like listing the Projects this user is part of or the contents of a Collection, one can also list the
 saved queries via the ``queryList()`` function as:
 
-.. code:: python
+.. code-block:: python
 
     >>> ql_resp = df_api.queryList()
     >>> print(ql_resp)
+
+.. code-block::
 
     (item {
        id: "q/34684970"
@@ -1249,19 +1336,24 @@ Importantly, we see our newly created query listed here.
 
 We can extract the query ID as:
 
-.. code:: python
+.. code-block:: python
 
     >>> query_id = ql_resp[0].item[0].id
     >>> print(query_id)
+
+.. code-block::
+
     'q/34684970'
 
 View query
 ~~~~~~~~~~
 Just like ``dataView()``, we can view use ``queryView()`` to view this query as well:
 
-.. code:: python
+.. code-block:: python
 
     >>> df_api.queryView(query_id)
+
+.. code-block::
 
     (query {
        id: "q/34684970"
@@ -1282,10 +1374,12 @@ Execute query
 ~~~~~~~~~~~~~
 Finally, we can run the desired query using ``queryExec()`` as shown below:
 
-.. code:: python
+.. code-block:: python
 
     >>> query_resp = df_api.queryExec(query_id)
     >>> print(query_resp)
+
+.. code-block::
 
     (item {
       id: "d/34684011"
@@ -1339,11 +1433,13 @@ The response to this function call is also a ``ListingReply`` object.
 Let's verify that the results from the query match our expectation
 (the list of cat IDs we collected when the records were created):
 
-.. code:: python
+.. code-block:: python
 
     >>> # First get IDs from query result
     >>> cat_rec_ids = [record.id for record in query_resp[0].item]
     >>> print(set(cat_rec_ids) == set(cat_records))
+
+.. code-block::
 
     True
 
@@ -1359,11 +1455,13 @@ Organize with Collections
 The simplest and most powerful way to organize information is using Collections.
 We could segregate all cat data into a new, separate collection just for cats via the ``collectionCreate()`` function:
 
-.. code:: python
+.. code-block:: python
 
     >>> coll_resp = df_api.collectionCreate('Cats', alias='cats', parent_id=coll_alias, context=context)
     >>> cat_coll_id = coll_resp[0].coll[0].id
     >>> print(cat_coll_id)
+
+.. code-block::
 
     'c/34685092'
 
@@ -1376,10 +1474,12 @@ The first step towards organization is to add these existing records into the ne
 ``Cats`` Collection via the ``collectionItemsUpdate()`` function as shown below.
 This function accepts a list of IDs to add via the ``add_ids`` keyword argument:
 
-.. code:: python
+.. code-block:: python
 
     >>> cup_resp = df_api.collectionItemsUpdate(cat_coll_id, add_ids=cat_rec_ids)
     >>> print(cup_resp)
+
+.. code-block::
 
     (, 'ListingReply')
 
@@ -1390,10 +1490,12 @@ We can verify that the cat Records do indeed exist in the ``Cats`` Collection us
 the familiar ``collectionItemsList()`` function as shown below.
 In the interest of brevity, we capture the response and only print out ID and title of the items in the collection:
 
-.. code:: python
+.. code-block:: python
 
     >>> ls_resp = df_api.collectionItemsList(cat_coll_id)
     >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+
+.. code-block::
 
     [('d/34684107', 'cat_22'),
      ('d/34684011', 'cat_32'),
@@ -1404,10 +1506,12 @@ In the interest of brevity, we capture the response and only print out ID and ti
 We have indeed ensured that the cat Records are part of the ``Cats`` Collection.
 However, let us list the contents of the original / outer collection:
 
-.. code:: python
+.. code-block:: python
 
     >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
     >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+
+.. code-block::
 
     [('c/34685092', 'Cats'),
      ('d/34684107', 'cat_22'),
@@ -1428,19 +1532,23 @@ We do this again via the ``collectionsItemsUpdate()`` function.
 However, this time, we would need to pass the same cat Record IDs with the ``rem_ids`` keyword argument
 rather than the ``add_ids`` keyword argument:
 
-.. code:: python
+.. code-block:: python
 
     >>> cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids, context=context)
     >>> print(cup_resp)
+    
+.. code-block::
 
     (, 'ListingReply')
 
 Let us verify that the original / outer Collection no longer contains cat Records:
 
-.. code:: python
+.. code-block:: python
 
     >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
     >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+    
+.. code-block::
 
     [('c/34685092', 'Cats'),
      ('d/34683939', 'dog_3'),
@@ -1462,7 +1570,7 @@ We will ask ``dataGet()`` to create a new directory called ``cat_data`` and put 
 
 .. code-block:: python
 
-    df_api.dataGet([cat_coll_id], './cat_data')
+    >>> df_api.dataGet([cat_coll_id], './cat_data')
 
 .. code-block::
 
@@ -1519,7 +1627,7 @@ Now, let us verify that all the data does in fact exist in this newly created di
 
 .. code-block:: python
 
-    os.listdir('./cat_data')
+    >>> os.listdir('./cat_data')
 
 .. code-block::
 
