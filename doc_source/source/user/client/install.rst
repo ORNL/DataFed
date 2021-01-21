@@ -2,7 +2,11 @@
 Installation and Configuration
 ==============================
 
-.. include:: header.rst
+The DataFed client is a Python package that provides both the DataFed command-line-interface (CLI)
+and the DataFed Python application programming interface (API) for advanced scripting. The DataFed
+client is provided via a Python 3 package and can be used on any operating system where Python 3
+is available.
+
 
 Installation
 ~~~~~~~~~~~~
@@ -10,7 +14,6 @@ DataFed will be available natively within supported facilities and no installati
 
 However, if you need to use the DataFed CLI from a non-supported facility,
 or on a personal computer such as workstation or laptop, please follow this guide:
-
 
 0. Prerequisites
 ----------------
@@ -32,21 +35,17 @@ or on a personal computer such as workstation or laptop, please follow this guid
 
 1. Install python package
 -------------------------
-Like many Python packages, the DataFed CLI is easy to install using Python's "pip" tool. For Linux
-and Mac OS, the command is as follows:
-
-.. code:: bash
+Like many Python packages, the DataFed CLI is easy to install using Python's ``pip`` tool. For Linux
+and Mac OS, the command is as follows::
 
     pip install --user datafed
 
-And for Windows, the command is:
-
-.. code:: bash
+And for Windows, the command is::
 
     pip install -U datafed
 
-Pip will install the DataFed CLI package and all dependencies, and will also install an executable
-``datafed`` command script in the configured pip package binary, or ``bin`` directory.
+Pip will install the DataFed client package and all dependencies, and will also install an executable
+``datafed`` command script (to access the CLI) in the configured pip package binary, or "bin" directory.
 
 2. Ensure bin directory is in Path
 ----------------------------------
@@ -71,7 +70,7 @@ If you encounter errors stating that datafed was an unknown command, you would n
 
 .. tip::
 
-   If you have write access to the virtual / conda python environment:
+   On Mac / Linux, if you have write access to the virtual / conda python environment:
 
    * You would likely not need to use the ``--user`` flag when pip installing DataFed
    * You would also not need to specifically add DataFed to your ``PATH`` as long
@@ -102,20 +101,20 @@ If you encounter errors stating that datafed was an unknown command, you would n
 Advanced Configuration
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Users would typically not need to configure the DataFed CLI from within a facility-supported
-environments; however, when installing the CLI on personal workstations or laptops, the CLI requires a
+Users would typically not need to configure the DataFed client from within a facility-supported
+environments; however, when installing the client on personal workstations or laptops, the client requires a
 few key settings to be configured prior to use. Configuration settings may be specified using
 environment variables, configuration files, or command-line options (or any combination thereof) and
 are described in detail in following sections of this document.
 
-Most of the available CLI configuration settings relate to how the CLI communicates with the DataFed
+Most of the available client configuration settings relate to how the client communicates with the DataFed
 server. DataFed uses encrypted client-server communication based on a message-passing protocol over
-TCP/IP. In order for the CLI to be able to connect with the DataFed server, the hostname (or IP address)
+TCP/IP. In order for the client to be able to connect with the DataFed server, the hostname (or IP address)
 and port number of the server must be configured along with the DataFed server's public encryption key.
-If the CLI is being configured behind a firewall, it may be necessary to open the DataFed server port
+If the client is being configured behind a firewall, it may be necessary to open the DataFed server port
 if out-going TCP traffic is restricted.
 
-When the DataFed CLI is installed, default server settings are automatically configured, and the
+When the DataFed client is installed, default server settings are automatically configured, and the
 server public key is automatically downloaded from the DataFed server. However, for non-standard
 environments, it may be necessary to configure these settings manually. The current default server
 hostname, port, and public key download link are shown in the table below:
@@ -128,14 +127,13 @@ Server Public Key  `<https://datafed.ornl.gov/datafed-core-key.pub>`_
 
 Please refer to the `Configuration Settings`_ section for details on how to configure these settings.
 
-.. note:: The configuration settings of the DataFed CLI also apply to the DataFed Python API.
 
 Configuration Files
 -------------------
     
-Both a server and a client configuration file may be used to specify CLI settings. Typically, a server
+Both a server and a client configuration file may be used to specify settings. Typically, a server
 configuration file would be maintained by a system administrator and contain server-only settings. Per-user
-client configuration files allow individuals to tailor their CLI settings by specifying additional options,
+client configuration files allow individuals to tailor their settings by specifying additional options,
 or by overriding configured server settings (the client file takes priority over the server file). 
     
 Both server and client configuration files are standard ".ini" files and follow the same format, and the
@@ -155,7 +153,7 @@ available options. An example configuration file is shown below::
 
 .. note::
     If a configuration file is not explicitly specified (i.e. via an environment variable
-    or command-line option), the CLI will search for a client configuration file in the ".datafed"
+    or command-line option), the DataFed client will search for a client configuration file in the ".datafed"
     directory in the users home directory.
 
 Configuration Priority
@@ -179,16 +177,16 @@ Programmatic          5 (highest)
 ====================  ===========
 
 Note that most settings do not have default values and must be specified using one of the supported mechanisms.
-The server and client configuration files and directories are exceptions in that the CLI will search for a
+The server and client configuration files and directories are exceptions in that the DataFec client will search for a
 ".datafed" folder in the user home directory if these settings are not specified.
 
 Configuring Automatic Authentication
 ------------------------------------
 
-Once the DataFed CLI is installed and configured, automatic authentication can be enabled for the CLI
-by installing local client credentials (encryption key files). Automatic authentication can be considered
-a convenience feature, but it is essential for non-interactive use of the CLI (i.e. for scripting). It is
-enabled by simply running the following CLI command from the environment to be configured for
+Once the DataFed client is installed and configured, automatic authentication can be enabled for the DataFed
+client by installing local client credentials (encryption key files). Automatic authentication can be considered
+a convenience feature, but it is essential for non-interactive use of the Python API (i.e. for scripting). It is
+enabled by simply running the following DataFed CLI command from the environment to be configured for
 automatic authentication::
 
     datafed setup
@@ -196,8 +194,8 @@ automatic authentication::
 When run the first time, the user must manually authenticate using their DataFed user ID and password.
 (A user may set or change their DataFed password from DataFed Web Portal in the application settings dialog.)
 The CLI will then install local user encryption keys (public and private) in the configured client
-configuration directory. Subsequent use of the DateFed CLI within the same environment will authenticate
-using the local client keys. These client key files must be protected and kept private. In the event of a
+configuration directory. Subsequent use of the DateFed CLI or Python API within the same environment will
+authenticate using the local client keys. These client key files must be protected and kept private. In the event of a
 security incident, automatic authentication can be disabled by deleting the local key files, or, alternatively,
 all of a user's installed keys can be revoked from the DataFed Web Portal using the "Revoke Credentials"
 button in the application settings dialog. (This does not delete local key files, but invalidates the keys
@@ -210,7 +208,7 @@ Configuration Settings
 Settings Quick Reference
 ------------------------
 
-The table below lists all of the DataFed CLI settings and how they can be set using either a configuration
+The table below lists all of the DataFed client settings and how they can be set using either a configuration
 file (.ini), an environment variable, or a command-line option.
 
 =========================  =======  ================  ============================  ======================
@@ -252,7 +250,6 @@ Environment Variable:    DATAFED_SERVER_CFG_DIR
 Command-line Option(s):  --server-cfg-dir
 =======================  ============================
 
-
 The server configuration directory setting specifies a path to a directory that will be searched for
 a default server config file, "server.ini", and the default server public key, "datafed-core-key.pub".
 If this setting is not provided, "~/.default" will be searched if it exists.
@@ -267,13 +264,15 @@ Command-line Option(s):  --server-pub-key-file
 =======================  ============================
 
 The server public key file setting specifies a full path to a locally accessible file containing the
-latest DataFed server public key. If this setting is not provided, the CLI will look for a default key
-file, "datafed-core-key.pub", in the server config directory (or "~/.datafed" if no directory is
+latest DataFed server public key. If this setting is not provided, the DataFed client will look for a
+default key file, "datafed-core-key.pub", in the server config directory (or "~/.datafed" if no directory is
 specified). The latest DataFed server public key file must is available for download from 
 `here <https://datafed.ornl.gov/datafed-core-key.pub>`_.
 
-Note that if the server public key setting is invalid or the key is out of date, the CLI will timeout
-after being run.
+.. note::
+
+    Note that if the server public key setting is invalid or the key is out of date, the DataFed client will
+    timeout after being run.
 
 Server Host
 -----------
@@ -285,7 +284,7 @@ Command-line Option(s):  --server-host, -H
 =======================  ============================
 
 The server host setting is the DataFed server name or IP address with no protocol prefix or port number
-- for example: "datafed.ornl.gov". Note that if the server host setting is incorrect, the CLI will timeout
+- for example: "datafed.ornl.gov". Note that if the server host setting is incorrect, the client will timeout
 after being run.
 
 Server Port
@@ -298,7 +297,7 @@ Command-line Option(s):  --server-port, -P
 =======================  ============================
 
 The server port setting is the TCP port number used by the DataFed server for secure client connections.
-Note that if the server port number is incorrect, the CLI will timeout after being run.
+Note that if the server port number is incorrect, the client will timeout after being run.
 
 Client Configuration File
 -------------------------
@@ -337,9 +336,9 @@ Command-line Option(s):  --client-pub-key-file
 =======================  ============================
 
 The client public key file setting specifies a full path to a locally accessible file containing the DataFed
-client public key. If this setting is not provided, the CLI will look for a default key file,
+client public key. If this setting is not provided, the DataFed client will look for a default key file,
 "datafed-user-key.pub", in the client config directory (or "~/.datafed" if no directory is specified). Client
-key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).
+key files are automatically created in the specified location by the CLI. (See `Configuring Automatic Authentication`_).
 
 Client Private Key File
 -----------------------
@@ -351,9 +350,9 @@ Command-line Option(s):  --client-priv-key-file
 =======================  ============================
 
 The client private key file setting specifies a full path to a locally accessible file containing the DataFed
-client private key. If this setting is not provided, the CLI will look for a default key file,
+client private key. If this setting is not provided, the DataFed client will look for a default key file,
 "datafed-user-key.priv", in the client config directory (or "~/.datafed" if no directory is specified). Client
-key files are automatically created in the specified location by the CLI. (See Configuring Automatic Authentication, below).
+key files are automatically created in the specified location by the CLI. (See `Configuring Automatic Authentication`_).
 
 Default Endpoint
 ----------------
