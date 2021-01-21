@@ -29,6 +29,9 @@ towards unifying and simplifying data discovery, access, and sharing - as well a
 entropy of traditional file systems that can lead to data misidentification, mishandling, and an eventual
 loss of scientific reproducibility.
 
+Cross-Facility Data Management
+==============================
+
 The figure below shows a simplified representation of an example DataFed network consisting of the central
 DataFed services and several connected facilities and DataFed repositories. The enclosing gray boxes
 represent the physical boundaries of geographically distributed facilities. The wide blue arrows represent
@@ -67,6 +70,15 @@ difference would be increased latency associated with DataFed data transfers.
 
 Many cross-facility and collaborative research scenarios are supported by DataFed, and specific examples are discussed
 in the DataFed :doc:`Use Cases </system/usecases>` document.
+
+System Architecture
+===================
+
+The DataFed system is composed of a number of system components and interfaces that are deployed across
+the DataFed network to implement scalable distributed data storage and indexing, as shown in the figure, below.
+
+.. image:: /_static/system_components.png
+
 
 Interfaces
 ==========
