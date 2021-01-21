@@ -13,7 +13,7 @@ Getting Started
 Users are recommended to follow the:
 
 * `getting-started guide <../system/getting_started.html>`_ to get accounts, and allocations on DataFed
-* `installation instructions <../client/install.html>`_ to install the DataFed Python package on the machine(s) where they intend to use DataFed
+* `installation instructions <../client/install.html>`_ to install and configure the DataFed Python package on the machine(s) where they intend to use DataFed
 
 .. note::
 
@@ -40,7 +40,7 @@ Finally, we create an instance of the DataFed API class via:
 
     >>> df_api = API()
 
-We can now use ``df_api`` to communicate with DataFed
+Assuming that DataFed has been installed and our default GlobusID configured correctly, we can now use ``df_api`` to communicate with DataFed as an authenticated user. If not, refer back to the `installation instructions <../client/install.html>`_.
 
 Projects
 --------
@@ -68,7 +68,7 @@ First, let's try to find projects we are part of using the ``projectList()`` fun
     total: 1
     , 'ListingReply')
 
-DataFed typically responds to functions or messages.
+DataFed typically responds to functions with messages.
 
 It is important to get comfortable with these messages and extracting information from them
 if one is interested in using this interface to automate data orchestration.
@@ -83,18 +83,21 @@ The first layer is typically a tuple of size 2:
 
     (tuple, 2)
 
-The first object, that we need to dig into is the core `Google Protocol Buffer <https://developers.google.com/protocol-buffers>`_ message:
+This tuple usually contains two key objects: (1) a message containing the information requested from DataFed, and (2) the *type* of that  message, which allows us to interpret the reply and parse its fields correctly -- in this case, our message is in the form of a ``'ListingReply'``.
+
+A simple check of the object type will confirm the type of our core `Google Protocol Buffer <https://developers.google.com/protocol-buffers>`_ message:
 
 .. code:: python
 
     >>> type(pl_resp[0])
     google.protobuf.internal.python_message.ListingReply
 
-``ListingReply`` is one of the handful of different kinds of messages DataFed replies with across all its many functions.
-We will be encountering most of the different message types in this user guide.
+``ListingReply`` is one of a handful of different message types that DataFed replies with across all its many functions.
+We will be encountering most of the different types of messages in this user guide.
 
 Interested users are encouraged to read official documentation and `examples about Google Protobuf <https://developers.google.com/protocol-buffers/docs/pythontutorial#where-to-find-the-example-code>`_.
 
+Protobuf messages are powerful objects that not only allow quick access to the information stored in their defined fields, but are also nominally subscriptable and iterable in Python!
 Besides the main information about the different projects, this ``ListingReply`` also provides some contextual information
 such as the:
 
@@ -109,7 +112,7 @@ Though we won't be needing the information in this case, here is how we might ge
     >>> print(pl_resp[0].offset)
     0
 
-Accessing the ``item`` component produces the actual listing of project in the message:
+Accessing the ``item`` component produces the actual listing of projects in the message:
 
 .. code:: python
 
@@ -127,7 +130,7 @@ Now, if we wanted to get the ``title`` field of the sole project in the listing,
 
     We will be accessing many fields in messages going forward.
     Users are recommended to revisit this section to remind themselves how to peel each layer of the message to get to the desired field
-    since we will jump straight into the single line to access the desired information henceforth in the interest of brevity.
+    since we will jump straight into using a single line of code to access the desired information henceforth in the interest of brevity.
 
 Set Project context
 ~~~~~~~~~~~~~~~~~~~
@@ -139,7 +142,7 @@ we will define (and later use) the first of two contextual variables:
 
 .. code:: python
 
-    >>> context = 'p/trn001' # Name of the DataFed training project
+    >>> context = 'p/trn001' # DataFed ID for the training project
 
 .. note::
 
@@ -178,10 +181,10 @@ We can take a look at basic information about a project using the ``projectView(
 Note that we got a different kind of reply from DataFed - a ``ProjectDataReply`` object.
 The methodology to access information in these objects is identical to that described above.
 Nonetheless, this response provides some useful information such as the administrators, creation date, etc.
-that might be useful for those administrating or part of several projects.
+that might be useful for those members or administrators of several projects.
 
 We can take a look at the contents of a project by listing everything in the project's
-``root`` collection using the ``collectionItemList()`` function as shown below:
+``root`` collection using the ``collectionItemsList()`` function as shown below:
 
 .. code:: python
 
@@ -229,9 +232,9 @@ use of project members and a collaborative space called ``PROJSHARE``
 
 Set User context
 ~~~~~~~~~~~~~~~~
-Now, that we see that a collection does indeed exist for each user in the project,
+Now that we see that a collection does indeed exist for each user in the project,
 we can set the second portion of our context such that any data we want to create in our
-private space is created in our own collection (``somnaths`` in this case) rather than
+private space is created within our own collection (``somnaths`` in this case) rather than
 creating clutter in the ``root`` collection of the project:
 
 .. code:: python
@@ -269,7 +272,8 @@ Create Data Record
 ~~~~~~~~~~~~~~~~~~
 Until a future version of DataFed, which can accept a python dictionary itself instead
 of a JSON file or a JSON string for the metadata, we will need to use ``json.dumps()``
-or write the dictionary to a JSON file:
+function to turn our python metadata dictionary ``parameters`` into a JSON string, or
+write the dictionary to a JSON file:
 
 .. code:: python
 
@@ -279,13 +283,13 @@ or write the dictionary to a JSON file:
                                     context=context, # this project
                                     )
 
-Here, the ``parent_id`` was set to the ``username`` variable which would cause the
-data record to be created within the user's personal collection within the project.
+Here, the ``parent_id`` was set to the ``username`` variable, as this is the alias of our
+personal collection within the project, in which our data record will be created.
 Leaving this unspecified is equivalent to the default value of ``root`` which means that
 the Data Record would be created within the ``root`` collection of the project.
 
 Leaving both the ``parent_id`` and ``context`` unspecified would have caused the
-Data Record to be created within ``root`` collection in the user's ``Personal Data``
+Data Record to be created within ``root`` collection in the user's ``Personal Data`` rather than the project.
 
 Extract Record ID
 ~~~~~~~~~~~~~~~~~
@@ -318,7 +322,7 @@ DataFed returned a ``RecordDataReply`` object, which contains crucial pieces of 
     instead of such a verbose response if it successfully created the Data Record.
     We expect to be able to continue to get this verbose response through an optional argument.
 
-    Such detailed information regarding the record can always be obtained via the ``dataView()`` function
+    Such detailed information regarding the record can always be obtained via the ``dataView()`` function.
 
 Similar to getting the title from the project information, if we wanted to get the
 record ID to be used for later operations, here's how we could go about it:
@@ -332,9 +336,9 @@ record ID to be used for later operations, here's how we could go about it:
 
 Edit Record information
 ~~~~~~~~~~~~~~~~~~~~~~~
-All information about Data Records, besides the unique ``ID``, can be edited later on using the
+All information about Data Records, besides the unique ``ID``, can be edited using the
 ``dataUpdate()`` command. For example, if we wanted to change the title, add a human-readable
-unique ``alias``, and **add** to the scientific metadata, we could as:
+unique ``alias``, and **add** to the scientific metadata, we would as follows:
 
 .. code:: python
 
@@ -452,7 +456,7 @@ If desired, we could completely replace the metadata by setting ``metadata_set``
     >>> print(json.loads(dv_resp[0].data[0].metadata))
     {'p': 14, 'q': 'Hello', 'r': [1, 2, 3]}
 
-Clearly, the previous metadata keys such as ``a``, ``b``, ``c``, etc. have all been replaced by the new metadata fields.
+The previous metadata keys such as ``a``, ``b``, ``c``, etc. have all been replaced by the new metadata fields.
 
 Aliases vs. IDs
 ~~~~~~~~~~~~~~~
@@ -499,7 +503,7 @@ when demonstrating the ``dataUpdate()`` function. Let us try to view the Record 
 
 The exception above reveals a few important nuances about DataFed:
 
-* IDs are unique across DataFed and the ``context`` need not be specified
+* IDs are unique across DataFed and the ``context`` does not need to be specified
 * aliases are unique only within a project or a user's ``Personal Data`` space.
   Therefore the ``context`` must be specified whenever using aliases
 
@@ -511,8 +515,8 @@ which indeed does not exist.
     In the future, DataFed will throw more meaningful Exceptions.
     For example, the above function call may result in a ``KeyError`` rather than a generic ``Exception`` object
 
-We can still view the Data Record using the alis in place of the ID.
-However, we would need to also provide ``context`` that the Record actually exists within the training Project.
+We can still view the Data Record using the alias in place of the ID.
+However, we would need to also provide ``context`` to specify that the Record actually exists within the training Project.
 
 Here is how we would amend the function call:
 
@@ -541,11 +545,11 @@ Relationships and provenance
 Let's say that this first dataset went through some processing step which resulted in one or more new datasets.
 This processing step could be something as simple as a data cleaning operation or as complex as a multi-institutional
 cross-facility workflow.
-We could not only track the resultant new datasets as Data Records in DataFed but the relationships between the datasets.
+We could not only track the resultant new datasets as Data Records in DataFed but also the relationships between the datasets.
 
 .. note::
 
-    We will cover topics related to associating raw data to Data Records in the very next section.
+    We will cover topics related to associating raw data to Data Records in the next section.
 
 First, we create Data Records as we have done earlier for the new datasets using the ``dataCreate()`` function:
 
@@ -560,7 +564,7 @@ First, we create Data Records as we have done earlier for the new datasets using
     >>> print(clean_rec_id)
     'd/34682715'
 
-Next, we can establish a relationship or ``dependency`` between the original / source Data Record and the subsequent Data Record
+We can establish a relationship or ``dependency`` between the original / source Data Record and the subsequent Data Record
 via several methods such as within the ``dataCreate()`` function call or via a subsequent ``dataUpdate()`` call.
 
 Dependencies in DataFed are specified as a ``list`` of relationships, themselves specified as ``list`` objects,
@@ -640,7 +644,8 @@ With the data file created, we are ready to put this raw data into the record we
 
 .. note::
 
-   The raw data file must be located such that it is visible to the (default) Globus endpoint
+   The raw data file must be located such that it is visible to the (default) Globus endpoint. To configure the default endpoint,
+   follow the steps detailed towards the end of the `installation instructions <../client/install.html>`_.
 
 .. note::
 
@@ -677,20 +682,27 @@ With the data file created, we are ready to put this raw data into the record we
 The ``dataPut()`` method initiates a Globus transfer on our behalf
 from the machine where the command was entered to wherever the default data repository is located.
 
+.. note::
+
+   The above data file was specified by its relative local path, so DataFed used our pre-configured default Globus endpoint to find
+   the data file. As long as we have the id for any *active* Globus endpoint that we have authenticated access to, we can transfer
+   data from that endpoint with its full absolute file path -- even if the file system is not attached ot the local machine. Look for
+   more information on this in later examples.
+
 In addition, the ``dataPut()`` method prints out the status of the Globus transfer as shown under the ``task`` section of the response.
-The ``task`` ``msg`` shows that the Globus transfer had succeeded. The transfer succeeded before the message was returned because
-the ``wait`` keyword argument in the ``dataPut()`` method was set to ``True``, meaning that we requested DataFed to not proceed
-until the Globus transfer completed.
+The ``task`` ``msg`` shows that the Globus transfer succeeded. The transfer succeeded before the message was returned because
+the ``wait`` keyword argument in the ``dataPut()`` method was set to ``True``, meaning that we requested that DataFed not proceed
+until the Globus transfer was completed.
 
 This is not the default behavior of ``dataPut()`` or ``dataGet()``.
-In a later section, we will go over an example usecase when asynchronous transfers may be preferred.
+In a later section, we will go over an example usecase wherein asynchronous transfers may be preferred.
 
 Let's view the Data Record we have been working on so far:
 
 .. code:: python
 
     >>> dv_resp = df_api.dataView(record_id)
-    >>> prit(dv_resp)
+    >>> print(dv_resp)
 
     (data {
        id: "d/34682319"
@@ -816,8 +828,8 @@ Using the task ID, we can check on the status of the ``task`` via the ``taskView
 
 The ``TaskDataReply`` shows that the ``status`` is indeed a success and the ``msg`` is ``"Finished"``.
 
-This specific example by itself was trivial since we had already requested that the ``dataGet()`` function call
-not complete till the transfer was complete.
+This specific example by itself was trivial since we had set the ``wait`` keyword argument to ``True`` in the ``dataGet()`` function
+call, which meant that DataFed would not proceed until the transfer was complete.
 Furthermore, the nature of the transfer was also trivial in that it was a single file located in a single DataFed
 repository being delivered to a single destination.
 
@@ -825,7 +837,7 @@ repository being delivered to a single destination.
 
     A DataFed ``task`` may itself contain / be responsible for several Globus file transfers.
 
-As the structure of the ``dataGet()`` function call suggests, one could request several Data Records or
+As the structure of the ``dataGet()`` function call suggests, one could request that several Data Records or
 Data Collections (themselves containing thousands of Data Records or even Collections) be downloaded,
 regardless of their location (several DataFed data repositories spread across the world in multiple institutions / continents).
 In this case, the ``task`` would be a composite of several Globus data transfers.
@@ -849,7 +861,7 @@ For now, we will use the numeric value of ``3`` to denote the successful complet
 Asynchronous transfers
 ~~~~~~~~~~~~~~~~~~~~~~
 So far we have been requesting that all transfers be completed before the next line of
-python code is executed. This is certainly acceptable for small data file but is perhaps not
+python code is executed. This is certainly acceptable for small data files but is perhaps not
 ideal for large files.
 
 Here are some scenarios:
@@ -939,7 +951,7 @@ or, importantly - wasting precious wall time on the supercomputer.
     Simulations complete
 
 What we observe is that the data upload transfer task for all previous simulations are complete while the current simulation is in progress.
-Of course, the sequence and competing speeds of the simulation and the data transfer task will vary from one workload to another and
+Of course, the sequence and competing speeds of the simulation and the data transfer tasks will vary from one workload to another and
 this is just an illustration. However, it does illustrate a popular use-case for asynchronous file transfers.
 
 .. note::
@@ -949,7 +961,7 @@ this is just an illustration. However, it does illustrate a popular use-case for
 
 Collections
 -----------
-Collections are a great tool to organize Data Records and other Collections within DataFed.
+Collections are a great tool for organizing Data Records and other Collections within DataFed.
 Besides organization, they have other benefits such as facilitating the download of vast numbers of Data Records they may contain,
 regardless of where (DataFed data repositories, various projects, etc.) the individual Data Records are physically located.
 
@@ -979,7 +991,7 @@ We would use the ``collectionCreate()`` function as:
     }
     , 'CollDataReply')
 
-Much like Data Records, Collections could be addressed using aliases instead of IDs.
+Much like Data Records, Collections can be addressed using aliases instead of IDs.
 However, as mentioned earlier, we would always need to specify the ``context`` for the ``alias``.
 
 What we get in response to the ``collectionCreate()`` function is a ``CollDataReply`` object.
@@ -1190,7 +1202,7 @@ screenshot of the interface below should help guide you through this process:
 
 1. visit https://datafed.ornl.gov
 2. Click on the ``Data Search`` tab in the bottom left of the page to expand the search tab.
-3. Uncheck all boxes in the ``Scope`` and only check the ``Select``. This should reveal checkboxes in the  left navigation panel.
+3. Uncheck all boxes in the ``Scope`` and only check the ``Select``. This should reveal checkboxes in the left navigation panel.
 4. Now select the ``Image Classification and Training data`` collection
 5. Finally, enter ``animal == "cat"`` in the ``Metadata`` field in the ``Data Search`` tab in the bottom of the window
 
@@ -1217,7 +1229,7 @@ We can give this search a title such as ``find_all_cats`` and click on the ``Sav
 List saved queries
 ~~~~~~~~~~~~~~~~~~
 Much like listing the Projects this user is part of or the contents of a Collection, one can also list the
-saved queries via ``queryList()`` function as:
+saved queries via the ``queryList()`` function as:
 
 .. code:: python
 
@@ -1321,7 +1333,7 @@ The response to this function call is also a ``ListingReply`` object.
 
 .. note::
 
-    In the current version of DataFed, the search query limits the number of records (to 50?) it returns from queries.
+    In the current version of DataFed, the search query limits the number of results it returns from queries to 50.
     This behavior will be changed in a subsequent version of DataFed.
 
 Let's verify that the results from the query match our expectation
@@ -1340,11 +1352,11 @@ Collections continued
 Let us continue with our original aim of segregating the cats from the dogs.
 We now know the IDs of all the cats from the response to a saved query.
 
-Now, we will demonstrate ways in which we can organize data in DataFed
+Now, we will demonstrate ways in which we can organize data in DataFed.
 
 Organize with Collections
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-The simplest and most powerful tool to organize information is through Collections.
+The simplest and most powerful way to organize information is using Collections.
 We could segregate all cat data into a new, separate collection just for cats via the ``collectionCreate()`` function:
 
 .. code:: python
@@ -1358,7 +1370,7 @@ We could segregate all cat data into a new, separate collection just for cats vi
 Add and remove from Collections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Unlike before when we created the cat and dog records into a specific Collection,
-we now already have the cat Records into the incorrect Collection.
+we now already have the cat Records in the incorrect Collection.
 
 The first step towards organization is to add these existing records into the newly created
 ``Cats`` Collection via the ``collectionItemsUpdate()`` function as shown below.
@@ -1409,9 +1421,9 @@ However, let us list the contents of the original / outer collection:
      ('d/34683987', 'dog_71'),
      ('d/34683963', 'dog_8')]
 
-We observe that the original collection continues to also contain the cat Records,
-in addition to the newly created ``Cats`` collection and all the doc Records.
-To complete the move, we would need to de-link the cat Records from the original Collection.
+We observe that the original collection continues to contain the cat Records, as well as the newly
+created ``Cats`` collection, and all the dog Records.
+To complete the move, we need to de-link the cat Records from the original Collection.
 We do this again via the ``collectionsItemsUpdate()`` function.
 However, this time, we would need to pass the same cat Record IDs with the ``rem_ids`` keyword argument
 rather than the ``add_ids`` keyword argument:
@@ -1423,8 +1435,7 @@ rather than the ``add_ids`` keyword argument:
 
     (, 'ListingReply')
 
-Finally, let us verify that the original / outer Collection now does not
-contain cat Records:
+Let us verify that the original / outer Collection no longer contains cat Records:
 
 .. code:: python
 
