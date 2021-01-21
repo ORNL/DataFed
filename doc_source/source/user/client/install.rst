@@ -67,6 +67,7 @@ If you encounter errors stating that datafed was an unknown command, you would n
 
       You may need to add DataFed to the ``PATH`` in your job scripts
 
+Here is an `external guide <https://www.makeuseof.com/python-windows-path/>`_ on adding Python to the ``PATH`` on Windows machines
 
 .. tip::
 
