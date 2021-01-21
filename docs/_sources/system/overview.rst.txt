@@ -2,35 +2,38 @@
 System Overview
 ===============
 
-This document provides a high-level overview and description of the DataFed system and defines terminology and
-key concepts that are prerequisites for subsequent DataFed documentation.
+DataFed is a scientific data federation formed from a network of distributed services and data storage
+repositories that enable users to create, locate, share, and access working scientific data from any
+organization, facility, or workstation within the DataFed network. DataFed provides a software framework
+for the federation of distributed raw data storage resources along with centralized metadata indexing,
+data discovery, and collaboration services that combine to form a virtual "data backplane" connecting
+otherwise disjoint systems into a uniform data environment. Conceptually, DataFed is a modern and domain-
+agnostic "data grid" application with a host of advanced data management and collaboration features
+aimed at the open science and HPC communities.
 
-Architecture
-============
+DataFed features a robust and scalable centralized data indexing and orchestration service that ties
+potentially large numbers of independent DataFed data storage repositories together with high-performance
+data transfer protocols and federated identity technologies. This approach prevents the formation of
+independent "data silos" that suppress data discovery and access from outside of specific host organizations
+or domains - yet this architecture is scalable since data storage and transfer loading is distributed across
+many independently managed data repositories. Currently, DataFed's central services are hosted within the
+Oak Ridge Leadership Computing Facility (OLCF) at the Department of Energy's Oak Ridge National Laboratory
+(ORNL).
 
-The DataFed system is a network of distributed services and data storage repositories that enable users
-to create, locate, share, and access living scientific data from any organization, facility, or workstation that
-has access to Globus data services. DataFed provides a software framework for the federation of distributed
-raw data storage resources along with centralized metadata indexing, data discovery, and collaboration
-services that combine to form a virtual "data backplane" connecting otherwise disjoint systems into a
-uniform data environment.
-
-Unlike other data management systems that are installed and managed locally, DataFed has a single central
-orchestration service that ties all of the independent DataFed repositories together into a single network.
-This approach prevents data siloing yet is also scalable since data storage and transfer loading is distributed
-across individual repositories.
-
-While DataFed relies on Globus services (for user authentication and high-performance raw data movement via GridFTP),
-DataFed presents managed data using a *logical* view (similar to a database) rather than a direct physical view
-of files in directories on a particular file system. This is a critical aspect of simplifying access control and
-reducing the confusion and thrash that can lead to data misidentification, mishandling, and an eventual loss of
-reproducibility.
+DataFed presents managed data using a *logical* view (similar to a database) rather than a direct physical
+view of files in directories on a particular file system. Data that is managed by a DataFed repository is
+maintained in system-controlled storage with no user-level file system access. This is to both protect the
+managed data from inadvertent changes or deletions, and to ensure that all data read/write operations go
+through a DataFed interface for proper system-wide coordination and access control. This approach is a step
+towards unifying and simplifying data discovery, access, and sharing - as well as avoiding the inherent
+entropy of traditional file systems that can lead to data misidentification, mishandling, and an eventual
+loss of scientific reproducibility.
 
 The figure below shows a simplified representation of an example DataFed network consisting of the central
-DataFed services and several connected facilities. The enclosing gray boxes represent the physical boundaries
-of geographically distributed facilities. The wide blue arrows represent the DataFed high-speed raw data
-transfer "bus" (i.e. GridFTP) that is used to move data between facilities, and the green arrows represent the
-DataFed control "bus" use by clients to send requests to DataFed.
+DataFed services and several connected facilities and DataFed repositories. The enclosing gray boxes
+represent the physical boundaries of geographically distributed facilities. The wide blue arrows represent
+the DataFed high-speed raw data transfer "bus" (i.e. GridFTP) that is used to move data between facilities,
+and the green arrows represent the DataFed communication "bus" use by clients to send requests to DataFed.
 
 .. image:: /_static/simplified_architecture.png
 

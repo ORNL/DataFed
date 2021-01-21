@@ -5,7 +5,11 @@ Introduction
 DataFed is a *federated* and *scalable* scientific data management and collaboration system that
 addresses the critical need for holistic and FAIR-principled "big data" handling within, and across,
 scientific domains and facilities with the goal of enhancing the *productivity* and *reproducibility*
-of data-oriented scientific research.
+of data-oriented scientific research. DataFed supports the early lifecycle stages of "working"
+scientific data and serves as a tool to ease the burden associated with capturing, organizing, and
+sharing potentially large volumes of heterogeneous scientific data. DataFed provides an environment
+in which scientific data can be precisely controlled and refined in preparation for eventual data
+publishing.
 
 Background
 ==========
@@ -44,6 +48,12 @@ Computing Facility (OLCF) and is currently deployed in an alpha-release state fo
 
 Scientific Data Management
 ==========================
+
+Traditional scientific data management systems are restricted to individual organizations or a small number of
+organizations connected via a "virtual organization" (VO) configuration. These systems typically support
+domain-specific and predetermined data workflows that cannot be readily applied to other domains or applications.
+
+[MORE HERE]
 
 DataFed provides a combination of the typical features and benefits of scientific data management systems
 (SDMS), laboratory information management systems (LIMS), and data cataloging services. For example,
