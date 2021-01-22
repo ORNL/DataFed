@@ -1,6 +1,17 @@
 =============================
 Guide to High Level Interface
 =============================
+
+There are two library modules, ``CommandLib`` and ``MessageLib``, that provide high- and-low-level application
+programming interfaces (APIs), respectively, that can be used for Python scripting or custom application development.
+
+The high-level API is almost identical to the the DataFed command-line interface (CLI), in that it accepts text-based CLI
+commands, but returns Python objects instead of text or JSON output.
+
+The low-level API, as the module name implies,
+exposes the binary message-passing interface used by DataFed and is intended for more complex applications.
+A user guide to the low-level API currently does not exist but will be provided in the future.
+
 This is a brief user guide that illustrates the usage of the high-level ``CommandLib`` Python API.
 It is **not** meant to be an exhaustive tutorial on using ``CommandLib``.
 Instead, we cover functions in ``CommandLib`` that would be used in most data orchestration scripts and custom software based on DataFed.
