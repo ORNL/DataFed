@@ -53,13 +53,11 @@ by subsequent documents on this site.
 
    user/cli/guide
    user/cli/reference
-   user/cli/shell_scripting
 
 .. toctree::
    :maxdepth: 2
    :caption: Python Interface
 
-   user/api/python
    user/python/high_level_guide
    autoapi/index.rst
 
