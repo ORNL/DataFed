@@ -78,16 +78,46 @@ System Architecture
 ===================
 
 The DataFed system is composed of a number of system components and interfaces that are deployed across
-the DataFed network to implement scalable distributed data storage and indexing, as shown in the figure 2, below.
+the DataFed network to implement scalable distributed data storage and indexing. A simplified system architecture
+is shown in Figure 2, below, and shows only the central DataFed services, one DataFed data repository, and
+supporting interfaces.
 
 ..  figure:: /_static/system_components.png
-    :scale: 50%
+    :scale: 75%
     :align: center
 
-    Figure 2: DataFed System Components
+    Figure 2 - DataFed System Components
 
+DataFed's central services include the "Core" service which is essentially the "brains" of DataFed. The core
+service manages the metadata associated with managed raw data and also implements access control, orchestration,
+and concurrency controls for data movements across the DataFed network. The core service, however, is not directly
+involved in the transfer of raw data - this function is delegated to Globus services, or more specifically, to the
+GridFTP servers (managed by GLobus) located at DataFed data repositories and other facilities. (The blue lines in
+Figure 2 indicate high-performance raw data transfer pathways.)
+
+The raw data storage resources within a DataFed data repository can be any form of physical storage hardware, so long
+as the interface to this storage is supported by Globus. Currently this includes POSIX file systems and S3 object
+stores. The inherit reliability of the physical storage of a repository is determined by the host facility and
+could range from inexpensive magnetic disks to high-speed solid state drives or even archival-quality geographically
+distribute storage systems. Local administrators control repository policies and determine which DataFed users can
+utilize a repository by granting (or revoking) repository allocations. These local administrative policies and actions
+have impact no DataFed on repositories at other facilities.
+
+Figure 2 shows a DataFed repository in isolation; however, a host facility would typically integrate their DataFed
+repositories with their own local storage and compute resources. For example, a facility would likely have additional
+Globus endpoints that would mount the primary file system(s) of the facility, and they would install high-speed
+interconnects between the DataFed repository endpoint and the facility endpoint(s) to increase data transfer speeds
+between the two storage systems.
+
+The web services within the DataFed central services primarily support a web portal that allows users to easily organize
+and share data from a web browser; however, the web services also play a critical role in authenticating DataFed users
+through Globus' federated identity system (which is based on OAuth2). New DataFed users must register through the
+DataFed data portal and grant certain permission to DataFed through Globus' authorization system. These permissions
+relate to user identification and enabling automatic data transfers on behalf of DataFed users.
+
+----------
 Interfaces
-==========
+----------
 
 Users are able to interact with DataFed through several available interfaces including a graphical web application,
 a command-line interface (CLI), and both high- and low-level application programming interfaces (APIs). The easiest
@@ -105,16 +135,31 @@ Typically, research facilities will already provide Globus endpoints to access s
 individual workstations and laptops, users will need to install Globus Personal Connect. See `DataFed Client Installation </user/client/install>`
 for more information.
 
-Key Concepts
-============
+User Accounts
+=============
+
+------------
+Registration
+------------
+
+[BRIEF HOW TO USE FOR JOBS, WORKFLOWS, INSTRUMENTS]
+
+System Concepts
+===============
 
 DataFed provides a uniform, holistic, and logical view of the data, users, and various organizational structures associated
-with the federation of organizations and data storage resources that make up the DataFed network. From a users perspective,
-all data operations look and feel the same from within DataFed regardless of where DataFed is being accessed or where
-data is physically stored. In order to understand the features and capabilities of DataFed, as a whole, it is first necessary
-to understand the underlying terminology and concepts and these are defined in this section.
+with the federation of facilities and data storage resources that make up the DataFed network. From a users perspective,
+all data operations look and feel the same from within DataFed regardless of where DataFed is being accessed, where data is
+physically stored, or which DataFed interface is being utilized. In order to understand the features and capabilities of
+DataFed, as a whole, it is necessary to understand the underlying terminology and concepts, and these are discussed in this
+section.
 
-Below is a brief, alphabetical list of DataFed and Globus terms and concepts.
+---------------
+Quick Reference
+---------------
+
+Below is a brief, alphabetical list of the most common DataFed and Globus terms and concepts. These topics are discussed in
+greater detail in following sections of this document.
 
 - **Access Control** - Access controls are sets of fine-grained permissions associated with data records and/or collections that may be
   applied to specific users or groups of users.
@@ -198,12 +243,7 @@ Globus Concepts:
 - **Endpoint Legacy Name** - 
 - **Endpoint Activation** - 
 
-A key idea of DataFed is the presentation of data in an location-agnostic manner. From a logical viewpoint,
-users do not need to know where data is physically stored within DataFed - data can be accessed from any supported
-facility, or the web portal, by using assigned data record identifiers or user-defined aliases. From a performance
-standpoint, the physical storage location of data likely matters depending on where the data is being accessed from.
-For this reason, DataFed will support data repository caching to optimize frequently accessed data. In addition, users
-with allocations on multiple data repositories may opt to migrate data between repositories based on usage locality.
+[GENERAL STUFF]
 
 -----------------------
 Identifiers and Aliases
@@ -220,9 +260,46 @@ For example, if a user with an ID of "u/jsmith" creates an alias "mydata", then 
 User "jsmith" can simply use "mydata", but other users would need to use the full alias instead. Note that in DataFed web
 portal, aliases are typically shown without the prefix.
 
+
+------------
+Data Records
+------------
+
+Identifiers
+-----------
+ID, Alias
+
+Attributes
+----------
+owner, creator, title, description, tags, ct, ut
+
+Metadata
+--------
+json, replace / merge
+
+Provenance
+----------
+
+Raw Data
+--------
+repo, source, extension
+
+
+-----------
+Collections
+-----------
+
+
+------------
+Sharing Data
+------------
+
 --------------------
 Collective Ownership
 --------------------
+
+
+
 
 When an individual user creates a data record or collection, that user becomes the owner and is granted full control of
 the newly created data record or collection. Collective ownership is achieved through the use of *projects*. A DataFed

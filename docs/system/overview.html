@@ -87,12 +87,29 @@
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">System Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#cross-facility-data-management">Cross-Facility Data Management</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#system-architecture">System Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#interfaces">Interfaces</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#key-concepts">Key Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#system-architecture">System Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#interfaces">Interfaces</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#user-accounts">User Accounts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#registration">Registration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#system-concepts">System Concepts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#quick-reference">Quick Reference</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#identifiers-and-aliases">Identifiers and Aliases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-records">Data Records</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#identifiers">Identifiers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#attributes">Attributes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#metadata">Metadata</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#provenance">Provenance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#raw-data">Raw Data</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#collections">Collections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sharing-data">Sharing Data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#collective-ownership">Collective Ownership</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#metadata">Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Metadata</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#collection-hierarchies">Collection Hierarchies</a></li>
@@ -101,6 +118,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="papers.html">Papers and Presentations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Web Portal</span></p>
@@ -119,9 +137,9 @@
 </ul>
 <p class="caption"><span class="caption-text">Python Interface</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/api/python.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/python/high_level_guide.html">Guide to High Level Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user/scripting.html">Scripting Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user/python_scripting.html">Python Scripting</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Administration</span></p>
 <ul>
@@ -224,7 +242,7 @@ DataFed services and several connected facilities and DataFed repositories. The 
 represent the physical boundaries of geographically distributed facilities. The wide blue arrows represent
 the DataFed high-speed raw data transfer “bus” (i.e. GridFTP) that is used to move data between facilities,
 and the green arrows represent the DataFed communication “bus” use by clients to send requests to DataFed.</p>
-<div class="figure align-center" id="id1">
+<div class="figure align-center" id="id2">
 <img alt="../_images/simplified_architecture.png" src="../_images/simplified_architecture.png" />
 <p class="caption"><span class="caption-text">Figure 1 - An Example DataFed Network</span></p>
 </div>
@@ -259,21 +277,45 @@ in the DataFed <a class="reference internal" href="usecases.html"><span class="d
 <div class="section" id="system-architecture">
 <h2>System Architecture</h2>
 <p>The DataFed system is composed of a number of system components and interfaces that are deployed across
-the DataFed network to implement scalable distributed data storage and indexing, as shown in the figure 2, below.</p>
-<div class="figure align-center" id="id2">
-<a class="reference internal image-reference" href="../_images/system_components.png"><img alt="../_images/system_components.png" src="../_images/system_components.png" style="width: 380.5px; height: 289.0px;" /></a>
-<p class="caption"><span class="caption-text">Figure 2: DataFed System Components</span></p>
+the DataFed network to implement scalable distributed data storage and indexing. A simplified system architecture
+is shown in Figure 2, below, and shows only the central DataFed services, one DataFed data repository, and
+supporting interfaces.</p>
+<div class="figure align-center" id="id3">
+<a class="reference internal image-reference" href="../_images/system_components.png"><img alt="../_images/system_components.png" src="../_images/system_components.png" style="width: 570.75px; height: 433.5px;" /></a>
+<p class="caption"><span class="caption-text">Figure 2 - DataFed System Components</span></p>
 </div>
-</div>
+<p>DataFed’s central services include the “Core” service which is essentially the “brains” of DataFed. The core
+service manages the metadata associated with managed raw data and also implements access control, orchestration,
+and concurrency controls for data movements across the DataFed network. The core service, however, is not directly
+involved in the transfer of raw data - this function is delegated to Globus services, or more specifically, to the
+GridFTP servers (managed by GLobus) located at DataFed data repositories and other facilities. (The blue lines in
+Figure 2 indicate high-performance raw data transfer pathways.)</p>
+<p>The raw data storage resources within a DataFed data repository can be any form of physical storage hardware, so long
+as the interface to this storage is supported by Globus. Currently this includes POSIX file systems and S3 object
+stores. The inherit reliability of the physical storage of a repository is determined by the host facility and
+could range from inexpensive magnetic disks to high-speed solid state drives or even archival-quality geographically
+distribute storage systems. Local administrators control repository policies and determine which DataFed users can
+utilize a repository by granting (or revoking) repository allocations. These local administrative policies and actions
+have impact no DataFed on repositories at other facilities.</p>
+<p>Figure 2 shows a DataFed repository in isolation; however, a host facility would typically integrate their DataFed
+repositories with their own local storage and compute resources. For example, a facility would likely have additional
+Globus endpoints that would mount the primary file system(s) of the facility, and they would install high-speed
+interconnects between the DataFed repository endpoint and the facility endpoint(s) to increase data transfer speeds
+between the two storage systems.</p>
+<p>The web services within the DataFed central services primarily support a web portal that allows users to easily organize
+and share data from a web browser; however, the web services also play a critical role in authenticating DataFed users
+through Globus’ federated identity system (which is based on OAuth2). New DataFed users must register through the
+DataFed data portal and grant certain permission to DataFed through Globus’ authorization system. These permissions
+relate to user identification and enabling automatic data transfers on behalf of DataFed users.</p>
 <div class="section" id="interfaces">
-<h2>Interfaces</h2>
+<h3>Interfaces</h3>
 <p>Users are able to interact with DataFed through several available interfaces including a graphical web application,
 a command-line interface (CLI), and both high- and low-level application programming interfaces (APIs). The easiest
 way to interact with DataFed is through the web application (see <a class="reference internal" href="../user/web/portal.html"><span class="doc">DataFed Web Portal</span></a>), and
 the web application is where users initially register for DataFed accounts.</p>
 <p>The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged available on PyPi. Refer
 to the <a class="reference internal" href="../user/client/install.html"><span class="doc">Client Installation</span></a>, <a class="reference internal" href="../user/cli/guide.html"><span class="doc">CLI User Guide</span></a>, and
-<a class="reference internal" href="../user/python_scripting.html"><span class="doc">Python Scripting Guide</span></a> for more information.</p>
+<span class="xref std std-doc">Python Scripting Guide</span> for more information.</p>
 <p>DataFed’s interfaces can be used from any workstation, laptop, or compute node; however, these interfaces only provide
 users with the ability to issue commands to the DataFed central service. If users need to be able to also transfer raw
 data to or from a given host machine, the local file system of the host machine must be connected to a Globus endpoint.
@@ -281,14 +323,26 @@ Typically, research facilities will already provide Globus endpoints to access s
 individual workstations and laptops, users will need to install Globus Personal Connect. See <cite>DataFed Client Installation &lt;/user/client/install&gt;</cite>
 for more information.</p>
 </div>
-<div class="section" id="key-concepts">
-<h2>Key Concepts</h2>
+</div>
+<div class="section" id="user-accounts">
+<h2>User Accounts</h2>
+<div class="section" id="registration">
+<h3>Registration</h3>
+<p>[BRIEF HOW TO USE FOR JOBS, WORKFLOWS, INSTRUMENTS]</p>
+</div>
+</div>
+<div class="section" id="system-concepts">
+<h2>System Concepts</h2>
 <p>DataFed provides a uniform, holistic, and logical view of the data, users, and various organizational structures associated
-with the federation of organizations and data storage resources that make up the DataFed network. From a users perspective,
-all data operations look and feel the same from within DataFed regardless of where DataFed is being accessed or where
-data is physically stored. In order to understand the features and capabilities of DataFed, as a whole, it is first necessary
-to understand the underlying terminology and concepts and these are defined in this section.</p>
-<p>Below is a brief, alphabetical list of DataFed and Globus terms and concepts.</p>
+with the federation of facilities and data storage resources that make up the DataFed network. From a users perspective,
+all data operations look and feel the same from within DataFed regardless of where DataFed is being accessed, where data is
+physically stored, or which DataFed interface is being utilized. In order to understand the features and capabilities of
+DataFed, as a whole, it is necessary to understand the underlying terminology and concepts, and these are discussed in this
+section.</p>
+<div class="section" id="quick-reference">
+<h3>Quick Reference</h3>
+<p>Below is a brief, alphabetical list of the most common DataFed and Globus terms and concepts. These topics are discussed in
+greater detail in following sections of this document.</p>
 <ul class="simple">
 <li><p><strong>Access Control</strong> - Access controls are sets of fine-grained permissions associated with data records and/or collections that may be
 applied to specific users or groups of users.</p></li>
@@ -345,12 +399,8 @@ transfers and allocation changes.</p></li>
 <li><p><strong>Endpoint Legacy Name</strong> -</p></li>
 <li><p><strong>Endpoint Activation</strong> -</p></li>
 </ul>
-<p>A key idea of DataFed is the presentation of data in an location-agnostic manner. From a logical viewpoint,
-users do not need to know where data is physically stored within DataFed - data can be accessed from any supported
-facility, or the web portal, by using assigned data record identifiers or user-defined aliases. From a performance
-standpoint, the physical storage location of data likely matters depending on where the data is being accessed from.
-For this reason, DataFed will support data repository caching to optimize frequently accessed data. In addition, users
-with allocations on multiple data repositories may opt to migrate data between repositories based on usage locality.</p>
+<p>[GENERAL STUFF]</p>
+</div>
 <div class="section" id="identifiers-and-aliases">
 <h3>Identifiers and Aliases</h3>
 <p>All records in DataFed (data, collections, user, projects, etc.) are automatically assigned a system-unique identifier
@@ -362,6 +412,34 @@ owner, the alias prefix may be omitted.</p>
 <p>For example, if a user with an ID of “u/jsmith” creates an alias “mydata”, then the full alias would be “u:jsmith:mydata”.
 User “jsmith” can simply use “mydata”, but other users would need to use the full alias instead. Note that in DataFed web
 portal, aliases are typically shown without the prefix.</p>
+</div>
+<div class="section" id="data-records">
+<h3>Data Records</h3>
+<div class="section" id="identifiers">
+<h4>Identifiers</h4>
+<p>ID, Alias</p>
+</div>
+<div class="section" id="attributes">
+<h4>Attributes</h4>
+<p>owner, creator, title, description, tags, ct, ut</p>
+</div>
+<div class="section" id="metadata">
+<h4>Metadata</h4>
+<p>json, replace / merge</p>
+</div>
+<div class="section" id="provenance">
+<h4>Provenance</h4>
+</div>
+<div class="section" id="raw-data">
+<h4>Raw Data</h4>
+<p>repo, source, extension</p>
+</div>
+</div>
+<div class="section" id="collections">
+<h3>Collections</h3>
+</div>
+<div class="section" id="sharing-data">
+<h3>Sharing Data</h3>
 </div>
 <div class="section" id="collective-ownership">
 <h3>Collective Ownership</h3>
@@ -384,7 +462,7 @@ managers assigned by administrators.</p></li>
 managers or administrators. Always has administrative access to created records.</p></li>
 </ul>
 </div>
-<div class="section" id="metadata">
+<div class="section" id="id1">
 <h3>Metadata</h3>
 <p>Data records support user-defined metadata. “Metadata” is distinct from built-on record attributes such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable and can represent

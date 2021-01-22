@@ -33,6 +33,7 @@ by subsequent documents on this site.
    system/introduction
    system/overview
    system/usecases
+   system/papers
    system/getting_started
 
 .. toctree::
@@ -59,9 +60,9 @@ by subsequent documents on this site.
    :maxdepth: 2
    :caption: Python Interface
 
+   user/api/python
+   user/python/high_level_guide
    autoapi/index.rst
-   user/scripting
-   user/python_scripting
 
 .. toctree::
    :maxdepth: 2

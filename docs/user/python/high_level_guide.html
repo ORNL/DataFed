@@ -1,0 +1,1729 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Guide to High Level Interface &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="API Reference" href="../../autoapi/index.html" />
+    <link rel="prev" title="Python API Reference" href="../api/python.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../web/portal.html">Web Portal</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli/reference.html">Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli/shell_scripting.html">Shell Scripting</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../api/python.html">Python API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Guide to High Level Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#import-package">Import package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-instance">Create instance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#projects">Projects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#datafed-functions-and-responses">DataFed functions and responses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#set-project-context">Set Project context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exploring-projects">Exploring projects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#set-user-context">Set User context</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#data-records">Data Records</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prepare-scientific-metadata">Prepare (scientific) metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-data-record">Create Data Record</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extract-record-id">Extract Record ID</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#edit-record-information">Edit Record information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#view-record-information">View Record information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extract-metadata">Extract metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#replace-metadata">Replace metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#aliases-vs-ids">Aliases vs. IDs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#relationships-and-provenance">Relationships and provenance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#data-transfer">Data Transfer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#upload-raw-data">Upload raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#download-raw-data">Download raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tasks">Tasks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#asynchronous-transfers">Asynchronous transfers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#collections">Collections</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#create-collection">Create collection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#populate-with-records">Populate with Records</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-items-in-collection">List items in Collection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#queries">Queries</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#create-query">Create query</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-saved-queries">List saved queries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#view-query">View query</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#execute-query">Execute query</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#collections-continued">Collections continued</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#organize-with-collections">Organize with Collections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#add-and-remove-from-collections">Add and remove from Collections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#download-collection">Download Collection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#closing-remarks">Closing remarks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../autoapi/index.html">API Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin/general.html">Administration</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Guide to High Level Interface</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/user/python/high_level_guide.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="guide-to-high-level-interface">
+<h1>Guide to High Level Interface</h1>
+<p>This is a brief user guide that illustrates the usage of the high-level <code class="docutils literal notranslate"><span class="pre">CommandLib</span></code> Python API.
+It is <strong>not</strong> meant to be an exhaustive tutorial on using <code class="docutils literal notranslate"><span class="pre">CommandLib</span></code>.
+Instead, we cover functions in <code class="docutils literal notranslate"><span class="pre">CommandLib</span></code> that would be used in most data orchestration scripts and custom software based on DataFed.</p>
+<p>Users are encouraged to refer to the extensive <a class="reference external" href="https://ornl.github.io/DataFed/autoapi/datafed/CommandLib/index.html">documentation of DataFed’s CommandLib.CLI class</a>
+for comprehensive information on all functions in the <code class="docutils literal notranslate"><span class="pre">CommandLib.CLI</span></code> class.</p>
+<div class="section" id="getting-started">
+<h2>Getting Started</h2>
+<p>Users are recommended to follow the:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="../system/getting_started.html">getting-started guide</a> to get accounts, and allocations on DataFed</p></li>
+<li><p><a class="reference external" href="../client/install.html">installation instructions</a> to install and configure the DataFed Python package on the machine(s) where they intend to use DataFed</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Ensure that the Globus endpoint associated with the machine where you use DataFed is active.</p>
+</div>
+<div class="section" id="import-package">
+<h3>Import package</h3>
+<p>We start by importing just the <code class="docutils literal notranslate"><span class="pre">API</span></code> class within <code class="docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code> as shown below.
+We also import json to simplify the process of communicating metadata with DataFed.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">json</span> <span class="c1"># For dealing with metadata</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">os</span> <span class="c1"># For file level operations</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">time</span> <span class="c1"># For timing demonstrations</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">datetime</span> <span class="c1"># To demonstrate conversion between date and time formats</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">datafed.CommandLib</span> <span class="kn">import</span> <span class="n">API</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="create-instance">
+<h3>Create instance</h3>
+<p>Finally, we create an instance of the DataFed API class via:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df_api</span> <span class="o">=</span> <span class="n">API</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Assuming that DataFed has been installed and our default GlobusID configured correctly, we can now use <code class="docutils literal notranslate"><span class="pre">df_api</span></code> to communicate with DataFed as an authenticated user. If not, refer back to the <a class="reference external" href="../client/install.html">installation instructions</a>.</p>
+</div>
+</div>
+<div class="section" id="projects">
+<h2>Projects</h2>
+<div class="section" id="datafed-functions-and-responses">
+<h3>DataFed functions and responses</h3>
+<p>Typically, users would be working in the context of a DataFed <code class="docutils literal notranslate"><span class="pre">Project</span></code>
+, which would have been created by the project’s principle investigator(s) or other administrators,
+rather than the user’s own personal <code class="docutils literal notranslate"><span class="pre">root</span></code> collection.</p>
+<p>First, let’s try to find projects we are part of using the <code class="docutils literal notranslate"><span class="pre">projectList()</span></code> function in DataFed:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">plist_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">projectList</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">plist_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;TRN001 : DataFed Training&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+<span class="p">}</span>
+<span class="n">offset</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">count</span><span class="p">:</span> <span class="mi">20</span>
+<span class="n">total</span><span class="p">:</span> <span class="mi">1</span>
+<span class="p">,</span> <span class="s1">&#39;ListingReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>DataFed typically responds to functions with messages.</p>
+<p>It is important to get comfortable with these messages and extracting information from them
+if one is interested in using this interface to automate data orchestration.</p>
+<p>Let’s dig into this object layer-by-layer:</p>
+<p>The first layer is typically a tuple of size 2:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">pl_resp</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">pl_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This tuple usually contains two key objects: (1) a message containing the information requested from DataFed, and (2) the <em>type</em> of that  message, which allows us to interpret the reply and parse its fields correctly – in this case, our message is in the form of a <code class="docutils literal notranslate"><span class="pre">'ListingReply'</span></code>.</p>
+<p>A simple check of the object type will confirm the type of our core <a class="reference external" href="https://developers.google.com/protocol-buffers">Google Protocol Buffer</a> message:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">pl_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">google</span><span class="o">.</span><span class="n">protobuf</span><span class="o">.</span><span class="n">internal</span><span class="o">.</span><span class="n">python_message</span><span class="o">.</span><span class="n">ListingReply</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ListingReply</span></code> is one of a handful of different message types that DataFed replies with across all its many functions.
+We will be encountering most of the different types of messages in this user guide.</p>
+<p>Interested users are encouraged to read official documentation and <a class="reference external" href="https://developers.google.com/protocol-buffers/docs/pythontutorial#where-to-find-the-example-code">examples about Google Protobuf</a>.</p>
+<p>Protobuf messages are powerful objects that not only allow quick access to the information stored in their defined fields, but are also nominally subscriptable and iterable in Python.
+Besides the main information about the different projects, this <code class="docutils literal notranslate"><span class="pre">ListingReply</span></code> also provides some contextual information
+such as the:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">count</span></code> - Maximum number of items that could be listed in this message,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">total</span></code> - Number of items listed in this message</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">offset</span></code> - The number of items in past listings - this denotes the concept of page numbers</p></li>
+</ul>
+<p>Though we won’t be needing the information in this case, here is how we might get the <code class="docutils literal notranslate"><span class="pre">offset</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pl_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">offset</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span>
+</pre></div>
+</div>
+<p>Accessing the <code class="docutils literal notranslate"><span class="pre">item</span></code> component produces the actual listing of projects in the message:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">pl_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span>
+</pre></div>
+</div>
+<p>Now, if we wanted to get the <code class="docutils literal notranslate"><span class="pre">title</span></code> field of the sole project in the listing, we would access it as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pl_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;TRN001 : DataFed Training&quot;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We will be accessing many fields in messages going forward.
+Users are recommended to revisit this section to remind themselves how to peel each layer of the message to get to the desired field
+since we will jump straight into using a single line of code to access the desired information henceforth in the interest of brevity.</p>
+</div>
+</div>
+<div class="section" id="set-project-context">
+<h3>Set Project context</h3>
+<p>In this user guide, we will work within the context of the training project.
+In order to ensure that we continue to work within this context -
+create data records, collections, etc. within this space,
+we will define (and later use) the first of two contextual variables:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">context</span> <span class="o">=</span> <span class="s1">&#39;p/trn001&#39;</span> <span class="c1"># DataFed ID for the training project</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Please change the <code class="docutils literal notranslate"><span class="pre">context</span></code> variable to suit your own project.
+If you want to work within your own <code class="docutils literal notranslate"><span class="pre">root</span></code> collection,
+set <code class="docutils literal notranslate"><span class="pre">context</span></code> to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</div>
+</div>
+<div class="section" id="exploring-projects">
+<h3>Exploring projects</h3>
+<p>We can take a look at basic information about a project using the <code class="docutils literal notranslate"><span class="pre">projectView()</span></code> function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df_api</span><span class="o">.</span><span class="n">projectView</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">proj</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;TRN001 : DataFed Training&quot;</span>
+  <span class="n">desc</span><span class="p">:</span> <span class="s2">&quot;DataFed Training project&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">ct</span><span class="p">:</span> <span class="mi">1610905375</span>
+  <span class="n">ut</span><span class="p">:</span> <span class="mi">1610912585</span>
+  <span class="n">admin</span><span class="p">:</span> <span class="s2">&quot;u/stansberrydv&quot;</span>
+  <span class="n">admin</span><span class="p">:</span> <span class="s2">&quot;u/breetju&quot;</span>
+  <span class="n">alloc</span> <span class="p">{</span>
+    <span class="n">repo</span><span class="p">:</span> <span class="s2">&quot;cades-cnms&quot;</span>
+    <span class="n">data_limit</span><span class="p">:</span> <span class="mi">1073741824</span>
+    <span class="n">data_size</span><span class="p">:</span> <span class="mi">0</span>
+    <span class="n">rec_limit</span><span class="p">:</span> <span class="mi">1000</span>
+    <span class="n">rec_count</span><span class="p">:</span> <span class="mi">0</span>
+    <span class="n">path</span><span class="p">:</span> <span class="s2">&quot;/data10t/cades-cnms/project/trn001/&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="p">,</span> <span class="s1">&#39;ProjectDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that we got a different kind of reply from DataFed - a <code class="docutils literal notranslate"><span class="pre">ProjectDataReply</span></code> object.
+The methodology to access information in these objects is identical to that described above.
+Nonetheless, this response provides some useful information such as the administrators, creation date, etc.
+that might be useful for those members or administrators of several projects.</p>
+<p>We can take a look at the contents of a project by listing everything in the project’s
+<code class="docutils literal notranslate"><span class="pre">root</span></code> collection using the <code class="docutils literal notranslate"><span class="pre">collectionItemsList()</span></code> function as shown below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;c/34559341&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;breetju&quot;</span>
+   <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;breetju&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="p">}</span>
+ <span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;c/34559108&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;PROJSHARE&quot;</span>
+   <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;projshare&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="p">}</span>
+ <span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;c/34558900&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;somnaths&quot;</span>
+   <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;somnaths&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="p">}</span>
+ <span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;c/34559268&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;stansberrydv&quot;</span>
+   <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;stansberrydv&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="p">}</span>
+ <span class="n">offset</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="n">count</span><span class="p">:</span> <span class="mi">20</span>
+ <span class="n">total</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;ListingReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Just as in the <code class="docutils literal notranslate"><span class="pre">projectList()</span></code> function, this function too returns a <code class="docutils literal notranslate"><span class="pre">ListingReply</span></code> message.
+Here, we see that the administrator of the project has created some collections for the private
+use of project members and a collaborative space called <code class="docutils literal notranslate"><span class="pre">PROJSHARE</span></code></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Not all projects would be structured in this manner.</p>
+</div>
+</div>
+<div class="section" id="set-user-context">
+<h3>Set User context</h3>
+<p>Now that we see that a collection does indeed exist for each user in the project,
+we can set the second portion of our context such that any data we want to create in our
+private space is created within our own collection (<code class="docutils literal notranslate"><span class="pre">somnaths</span></code> in this case) rather than
+creating clutter in the <code class="docutils literal notranslate"><span class="pre">root</span></code> collection of the project:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">username</span> <span class="o">=</span> <span class="s1">&#39;somnaths&#39;</span> <span class="c1"># Name of this user</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Please change the <code class="docutils literal notranslate"><span class="pre">username</span></code> variable to suit your own project.
+If you want to work within your own <code class="docutils literal notranslate"><span class="pre">root</span></code> collection,
+set <code class="docutils literal notranslate"><span class="pre">username</span></code> to <code class="docutils literal notranslate"><span class="pre">root</span></code>.</p>
+</div>
+<p>Here <code class="docutils literal notranslate"><span class="pre">username</span></code> will be used to ensure that all records and collections are created
+within this parent collection.</p>
+</div>
+</div>
+<div class="section" id="data-records">
+<h2>Data Records</h2>
+<div class="section" id="prepare-scientific-metadata">
+<h3>Prepare (scientific) metadata</h3>
+<p>DataFed can accept metadata as dictionaries in python or as a JSON file.</p>
+<p>Here, we simply create a dictionary with fake metadata in place of the real metadata:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
+<span class="go">                  &#39;a&#39;: 4,</span>
+<span class="go">                  &#39;b&#39;: [1, 2, -4, 7.123],</span>
+<span class="go">                  &#39;c&#39;: &#39;Something important&#39;,</span>
+<span class="go">                  &#39;d&#39;: {&#39;x&#39;: 14, &#39;y&#39;: -19} # Can use nested dictionaries</span>
+<span class="go">                  }</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="create-data-record">
+<h3>Create Data Record</h3>
+<p>Until a future version of DataFed, which can accept a python dictionary itself instead
+of a JSON file or a JSON string for the metadata, we will need to use <code class="docutils literal notranslate"><span class="pre">json.dumps()</span></code>
+function to turn our python metadata dictionary <code class="docutils literal notranslate"><span class="pre">parameters</span></code> into a JSON string, or
+write the dictionary to a JSON file:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dc_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataCreate</span><span class="p">(</span><span class="s1">&#39;my important data&#39;</span><span class="p">,</span>
+<span class="go">                                metadata=json.dumps(parameters),</span>
+<span class="go">                                parent_id=username, # parent collection</span>
+<span class="go">                                context=context, # this project</span>
+<span class="go">                                )</span>
+</pre></div>
+</div>
+<p>Here, the <code class="docutils literal notranslate"><span class="pre">parent_id</span></code> was set to the <code class="docutils literal notranslate"><span class="pre">username</span></code> variable, as this is the alias of our
+personal collection within the project, in which our data record will be created.
+Leaving this unspecified is equivalent to the default value of <code class="docutils literal notranslate"><span class="pre">root</span></code> which means that
+the Data Record would be created within the <code class="docutils literal notranslate"><span class="pre">root</span></code> collection of the project.</p>
+<p>Leaving both the <code class="docutils literal notranslate"><span class="pre">parent_id</span></code> and <code class="docutils literal notranslate"><span class="pre">context</span></code> unspecified would have caused the
+Data Record to be created within <code class="docutils literal notranslate"><span class="pre">root</span></code> collection in the user’s <code class="docutils literal notranslate"><span class="pre">Personal</span> <span class="pre">Data</span></code> rather than the project.</p>
+</div>
+<div class="section" id="extract-record-id">
+<h3>Extract Record ID</h3>
+<p>Let’s look at the response we got for the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> function call:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">data</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;my important data&quot;</span>
+   <span class="n">metadata</span><span class="p">:</span> <span class="s2">&quot;{</span><span class="se">\&quot;</span><span class="s2">a</span><span class="se">\&quot;</span><span class="s2">:4,</span><span class="se">\&quot;</span><span class="s2">b</span><span class="se">\&quot;</span><span class="s2">:[1,2,-4,7.123],</span><span class="se">\&quot;</span><span class="s2">c</span><span class="se">\&quot;</span><span class="s2">:</span><span class="se">\&quot;</span><span class="s2">Something important</span><span class="se">\&quot;</span><span class="s2">,</span><span class="se">\&quot;</span><span class="s2">d</span><span class="se">\&quot;</span><span class="s2">:{</span><span class="se">\&quot;</span><span class="s2">x</span><span class="se">\&quot;</span><span class="s2">:14,</span><span class="se">\&quot;</span><span class="s2">y</span><span class="se">\&quot;</span><span class="s2">:-19}}&quot;</span>
+   <span class="n">repo_id</span><span class="p">:</span> <span class="s2">&quot;repo/cades-cnms&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+   <span class="n">ext_auto</span><span class="p">:</span> <span class="n">true</span>
+   <span class="n">ct</span><span class="p">:</span> <span class="mi">1611077217</span>
+   <span class="n">ut</span><span class="p">:</span> <span class="mi">1611077217</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+   <span class="n">parent_id</span><span class="p">:</span> <span class="s2">&quot;c/34558900&quot;</span>
+ <span class="p">},</span> <span class="s1">&#39;RecordDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>DataFed returned a <code class="docutils literal notranslate"><span class="pre">RecordDataReply</span></code> object, which contains crucial pieces of information regarding the record.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In the future, the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> function would by default return only the <code class="docutils literal notranslate"><span class="pre">ID</span></code> of the record
+instead of such a verbose response if it successfully created the Data Record.
+We expect to be able to continue to get this verbose response through an optional argument.</p>
+<p>Such detailed information regarding the record can always be obtained via the <code class="docutils literal notranslate"><span class="pre">dataView()</span></code> function.</p>
+</div>
+<p>Similar to getting the title from the project information, if we wanted to get the
+record ID to be used for later operations, here’s how we could go about it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">record_id</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;d/34682319&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="edit-record-information">
+<h3>Edit Record information</h3>
+<p>All information about Data Records, besides the unique <code class="docutils literal notranslate"><span class="pre">ID</span></code>, can be edited using the
+<code class="docutils literal notranslate"><span class="pre">dataUpdate()</span></code> command. For example, if we wanted to change the title, add a human-readable
+unique <code class="docutils literal notranslate"><span class="pre">alias</span></code>, and <strong>add</strong> to the scientific metadata, we would as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">du_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataUpdate</span><span class="p">(</span><span class="n">record_id</span><span class="p">,</span>
+<span class="go">                                title=&#39;Some new title for the data&#39;,</span>
+<span class="go">                                alias=&#39;my_first_dataset&#39;,</span>
+<span class="go">                                metadata=json.dumps({&#39;appended_metadata&#39;: True})</span>
+<span class="go">                                )</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">du_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">data</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;Some new title for the data&quot;</span>
+  <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;my_first_dataset&quot;</span>
+  <span class="n">repo_id</span><span class="p">:</span> <span class="s2">&quot;repo/cades-cnms&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">ext_auto</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">ct</span><span class="p">:</span> <span class="mi">1611077217</span>
+  <span class="n">ut</span><span class="p">:</span> <span class="mi">1611077220</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">update</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;Some new title for the data&quot;</span>
+  <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;my_first_dataset&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+  <span class="n">deps_avail</span><span class="p">:</span> <span class="n">true</span>
+<span class="p">}</span>
+<span class="p">,</span> <span class="s1">&#39;RecordDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In the future, the <code class="docutils literal notranslate"><span class="pre">dataUpdate()</span></code> command would return only an acknowledgement
+of the successful execution of the data update.</p>
+</div>
+</div>
+<div class="section" id="view-record-information">
+<h3>View Record information</h3>
+<p>Since the response from the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> and <code class="docutils literal notranslate"><span class="pre">dataUpdate()</span></code> functions does not include the
+metadata, we can always get the most comprehensive information about Data Records via the <code class="docutils literal notranslate"><span class="pre">dataView()</span></code> function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dv_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataView</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">data</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;Some new title for the data&quot;</span>
+   <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;my_first_dataset&quot;</span>
+   <span class="n">metadata</span><span class="p">:</span> <span class="s2">&quot;{</span><span class="se">\&quot;</span><span class="s2">a</span><span class="se">\&quot;</span><span class="s2">:4,</span><span class="se">\&quot;</span><span class="s2">appended_metadata</span><span class="se">\&quot;</span><span class="s2">:true,</span><span class="se">\&quot;</span><span class="s2">b</span><span class="se">\&quot;</span><span class="s2">:[1,2,-4,7.123],</span><span class="se">\&quot;</span><span class="s2">c</span><span class="se">\&quot;</span><span class="s2">:</span><span class="se">\&quot;</span><span class="s2">Something important</span><span class="se">\&quot;</span><span class="s2">,</span><span class="se">\&quot;</span><span class="s2">d</span><span class="se">\&quot;</span><span class="s2">:{</span><span class="se">\&quot;</span><span class="s2">x</span><span class="se">\&quot;</span><span class="s2">:14,</span><span class="se">\&quot;</span><span class="s2">y</span><span class="se">\&quot;</span><span class="s2">:-19}}&quot;</span>
+   <span class="n">repo_id</span><span class="p">:</span> <span class="s2">&quot;repo/cades-cnms&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+   <span class="n">ext_auto</span><span class="p">:</span> <span class="n">true</span>
+   <span class="n">ct</span><span class="p">:</span> <span class="mi">1611077217</span>
+   <span class="n">ut</span><span class="p">:</span> <span class="mi">1611077220</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+   <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="p">},</span> <span class="s1">&#39;RecordDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The date and time in the Data Records are encoded according to the Unix time format and
+can be converted to familiar python <code class="docutils literal notranslate"><span class="pre">datetime</span></code> objects via <code class="docutils literal notranslate"><span class="pre">fromtimestamp()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ct</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">57</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="extract-metadata">
+<h3>Extract metadata</h3>
+<p>As the response above shows, the metadata is also part of the response we got from <code class="docutils literal notranslate"><span class="pre">dataView()</span></code>.</p>
+<p>By default, the metadata in the response is formatted as a JSON string:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;{</span><span class="se">\&quot;</span><span class="s2">a</span><span class="se">\&quot;</span><span class="s2">:4,</span><span class="se">\&quot;</span><span class="s2">appended_metadata</span><span class="se">\&quot;</span><span class="s2">:true,</span><span class="se">\&quot;</span><span class="s2">b</span><span class="se">\&quot;</span><span class="s2">:[1,2,-4,7.123],</span><span class="se">\&quot;</span><span class="s2">c</span><span class="se">\&quot;</span><span class="s2">:</span><span class="se">\&quot;</span><span class="s2">Something important</span><span class="se">\&quot;</span><span class="s2">,</span><span class="se">\&quot;</span><span class="s2">d</span><span class="se">\&quot;</span><span class="s2">:{</span><span class="se">\&quot;</span><span class="s2">x</span><span class="se">\&quot;</span><span class="s2">:14,</span><span class="se">\&quot;</span><span class="s2">y</span><span class="se">\&quot;</span><span class="s2">:-19}}&quot;</span>
+</pre></div>
+</div>
+<p>In order to get back a python dictionary, use <code class="docutils literal notranslate"><span class="pre">json.loads()</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+ <span class="s1">&#39;appended_metadata&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+ <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mf">7.123</span><span class="p">],</span>
+ <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;Something important&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">19</span><span class="p">}}</span>
+</pre></div>
+</div>
+<p>We can clearly observe that both the original and the new metadata are present in the record.</p>
+</div>
+<div class="section" id="replace-metadata">
+<h3>Replace metadata</h3>
+<p>In the example above, we appended metadata to existing metadata, which is the default manner in which <code class="docutils literal notranslate"><span class="pre">dataUpdate()</span></code> operates.
+If desired, we could completely replace the metadata by setting <code class="docutils literal notranslate"><span class="pre">metadata_set</span></code> to <code class="docutils literal notranslate"><span class="pre">True</span></code> as in:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">du_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataUpdate</span><span class="p">(</span><span class="n">record_id</span><span class="p">,</span>
+<span class="go">                                metadata=json.dumps({&#39;p&#39;: 14, &#39;q&#39;: &#39;Hello&#39;, &#39;r&#39;: [1, 2, 3]}),</span>
+<span class="go">                                metadata_set=True,</span>
+<span class="go">                                )</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dv_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataView</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="s1">&#39;Hello&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]}</span>
+</pre></div>
+</div>
+<p>The previous metadata keys such as <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span></code>, <code class="docutils literal notranslate"><span class="pre">c</span></code>, etc. have all been replaced by the new metadata fields.</p>
+</div>
+<div class="section" id="aliases-vs-ids">
+<h3>Aliases vs. IDs</h3>
+<p>So far, we have been operating and accessing information about the Data Record we just created using its
+unique ID via the variable - <code class="docutils literal notranslate"><span class="pre">record_id</span></code>.</p>
+<p>However, DataFed also allows Data Records and Collections to be addressed via their <code class="docutils literal notranslate"><span class="pre">alias</span></code>, which we set
+when demonstrating the <code class="docutils literal notranslate"><span class="pre">dataUpdate()</span></code> function. Let us try to view the Record using its alias instead of its ID:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dv_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataView</span><span class="p">(</span><span class="s1">&#39;my_first_dataset&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dv_resp</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">---------------------------------------------------------------------------</span>
+<span class="ne">Exception</span>                                 <span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">15</span><span class="o">-</span><span class="n">c3238222ad56</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+<span class="o">----&gt;</span> <span class="mi">1</span> <span class="n">dv_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataView</span><span class="p">(</span><span class="s1">&#39;my_first_dataset&#39;</span><span class="p">)</span>
+      <span class="mi">2</span> <span class="n">dv_resp</span>
+
+<span class="o">//</span><span class="n">anaconda</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="o">.</span><span class="mi">5</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">datafed</span><span class="o">/</span><span class="n">CommandLib</span><span class="o">.</span><span class="n">py</span> <span class="ow">in</span> <span class="n">dataView</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_id</span><span class="p">,</span> <span class="n">details</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+    <span class="mi">162</span>         <span class="n">msg</span><span class="o">.</span><span class="n">details</span> <span class="o">=</span> <span class="n">details</span>
+    <span class="mi">163</span>
+<span class="o">--&gt;</span> <span class="mi">164</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapi</span><span class="o">.</span><span class="n">sendRecv</span><span class="p">(</span> <span class="n">msg</span> <span class="p">)</span>
+    <span class="mi">165</span>
+    <span class="mi">166</span>     <span class="c1">##</span>
+
+<span class="o">//</span><span class="n">anaconda</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="o">.</span><span class="mi">5</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">datafed</span><span class="o">/</span><span class="n">MessageLib</span><span class="o">.</span><span class="n">py</span> <span class="ow">in</span> <span class="n">sendRecv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">nack_except</span><span class="p">)</span>
+    <span class="mi">299</span>         <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span> <span class="n">msg</span> <span class="p">)</span>
+    <span class="mi">300</span>         <span class="n">_timeout</span> <span class="o">=</span> <span class="p">(</span><span class="n">timeout</span> <span class="k">if</span> <span class="n">timeout</span> <span class="o">!=</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">)</span>
+<span class="o">--&gt;</span> <span class="mi">301</span>         <span class="n">reply</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">ctxt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span> <span class="n">_timeout</span><span class="p">,</span> <span class="n">nack_except</span> <span class="p">)</span>
+    <span class="mi">302</span>         <span class="k">if</span> <span class="n">reply</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="mi">303</span>             <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+<span class="o">//</span><span class="n">anaconda</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="o">.</span><span class="mi">5</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">datafed</span><span class="o">/</span><span class="n">MessageLib</span><span class="o">.</span><span class="n">py</span> <span class="ow">in</span> <span class="n">recv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">nack_except</span><span class="p">)</span>
+    <span class="mi">343</span>         <span class="k">if</span> <span class="n">msg_type</span> <span class="o">==</span> <span class="s2">&quot;NackReply&quot;</span> <span class="ow">and</span> <span class="n">_nack_except</span><span class="p">:</span>
+    <span class="mi">344</span>             <span class="k">if</span> <span class="n">reply</span><span class="o">.</span><span class="n">err_msg</span><span class="p">:</span>
+<span class="o">--&gt;</span> <span class="mi">345</span>                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">reply</span><span class="o">.</span><span class="n">err_msg</span><span class="p">)</span>
+    <span class="mi">346</span>             <span class="k">else</span><span class="p">:</span>
+    <span class="mi">347</span>                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Server error </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span> <span class="n">reply</span><span class="o">.</span><span class="n">err_code</span> <span class="p">))</span>
+
+<span class="ne">Exception</span><span class="p">:</span> <span class="n">Alias</span> <span class="s1">&#39;my_first_dataset&#39;</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">exist</span>
+<span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">dbGet</span><span class="p">:</span><span class="mi">126</span> <span class="n">code</span><span class="p">:</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The exception above reveals a few important nuances about DataFed:</p>
+<ul class="simple">
+<li><p>IDs are unique across DataFed and the <code class="docutils literal notranslate"><span class="pre">context</span></code> does not need to be specified</p></li>
+<li><p>aliases are unique only within a project or a user’s <code class="docutils literal notranslate"><span class="pre">Personal</span> <span class="pre">Data</span></code> space.
+Therefore the <code class="docutils literal notranslate"><span class="pre">context</span></code> must be specified whenever using aliases</p></li>
+</ul>
+<p>The above function call failed since it looked for a Data Record in the user’s <code class="docutils literal notranslate"><span class="pre">Personal</span> <span class="pre">Data</span></code> with the specified alias,
+which indeed does not exist.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In the future, DataFed will throw more meaningful Exceptions.
+For example, the above function call may result in a <code class="docutils literal notranslate"><span class="pre">KeyError</span></code> rather than a generic <code class="docutils literal notranslate"><span class="pre">Exception</span></code> object</p>
+</div>
+<p>We can still view the Data Record using the alias in place of the ID.
+However, we would need to also provide <code class="docutils literal notranslate"><span class="pre">context</span></code> to specify that the Record actually exists within the training Project.</p>
+<p>Here is how we would amend the function call:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dv_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataView</span><span class="p">(</span><span class="s1">&#39;my_first_dataset&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dv_resp</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">data</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;Some new title for the data&quot;</span>
+   <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;my_first_dataset&quot;</span>
+   <span class="n">metadata</span><span class="p">:</span> <span class="s2">&quot;{</span><span class="se">\&quot;</span><span class="s2">p</span><span class="se">\&quot;</span><span class="s2">:14,</span><span class="se">\&quot;</span><span class="s2">q</span><span class="se">\&quot;</span><span class="s2">:</span><span class="se">\&quot;</span><span class="s2">Hello</span><span class="se">\&quot;</span><span class="s2">,</span><span class="se">\&quot;</span><span class="s2">r</span><span class="se">\&quot;</span><span class="s2">:[1,2,3]}&quot;</span>
+   <span class="n">repo_id</span><span class="p">:</span> <span class="s2">&quot;repo/cades-cnms&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+   <span class="n">ext_auto</span><span class="p">:</span> <span class="n">true</span>
+   <span class="n">ct</span><span class="p">:</span> <span class="mi">1611077217</span>
+   <span class="n">ut</span><span class="p">:</span> <span class="mi">1611077226</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+   <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="p">},</span> <span class="s1">&#39;RecordDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="relationships-and-provenance">
+<h3>Relationships and provenance</h3>
+<p>Let’s say that this first dataset went through some processing step which resulted in one or more new datasets.
+This processing step could be something as simple as a data cleaning operation or as complex as a multi-institutional
+cross-facility workflow.
+We could not only track the resultant new datasets as Data Records in DataFed but also the relationships between the datasets.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We will cover topics related to associating raw data to Data Records in the next section.</p>
+</div>
+<p>First, we create Data Records as we have done earlier for the new datasets using the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dc2_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataCreate</span><span class="p">(</span><span class="s1">&#39;cleaned data&#39;</span><span class="p">,</span>
+<span class="go">                                  metadata=json.dumps({&#39;cleaning_algorithm&#39;: &#39;gaussian_blur&#39;, &#39;size&#39;: 20}),</span>
+<span class="go">                                  parent_id=username, # parent collection</span>
+<span class="go">                                  context=context, # project</span>
+<span class="go">                                 )</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">clean_rec_id</span> <span class="o">=</span> <span class="n">dc2_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">clean_rec_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;d/34682715&#39;</span>
+</pre></div>
+</div>
+<p>We can establish a relationship or <code class="docutils literal notranslate"><span class="pre">dependency</span></code> between the original / source Data Record and the subsequent Data Record
+via several methods such as within the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> function call or via a subsequent <code class="docutils literal notranslate"><span class="pre">dataUpdate()</span></code> call.</p>
+<p>Dependencies in DataFed are specified as a <code class="docutils literal notranslate"><span class="pre">list</span></code> of relationships, themselves specified as <code class="docutils literal notranslate"><span class="pre">list</span></code> objects,
+wherein the first item in the list is the relationship type and the second item is the identifier of the related Data Record.</p>
+<p>As of this writing, DataFed supports the following relationships:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">der</span></code> - Is derived from</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">comp</span></code> - Is comprised of</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ver</span></code> - Is new version of</p></li>
+</ul>
+<p>For our example, we will say that our new Record is derived from our original record via the <code class="docutils literal notranslate"><span class="pre">dataUpdate()</span></code> function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dep_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataUpdate</span><span class="p">(</span><span class="n">clean_rec_id</span><span class="p">,</span> <span class="n">deps_add</span><span class="o">=</span><span class="p">[[</span><span class="s2">&quot;der&quot;</span><span class="p">,</span> <span class="n">record_id</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">dep_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">data</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682715&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cleaned data&quot;</span>
+   <span class="n">repo_id</span><span class="p">:</span> <span class="s2">&quot;repo/cades-cnms&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+   <span class="n">ext_auto</span><span class="p">:</span> <span class="n">true</span>
+   <span class="n">ct</span><span class="p">:</span> <span class="mi">1611077405</span>
+   <span class="n">ut</span><span class="p">:</span> <span class="mi">1611078386</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+   <span class="n">deps</span> <span class="p">{</span>
+     <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+     <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;my_first_dataset&quot;</span>
+     <span class="nb">type</span><span class="p">:</span> <span class="n">DEP_IS_DERIVED_FROM</span>
+     <span class="nb">dir</span><span class="p">:</span> <span class="n">DEP_OUT</span>
+   <span class="p">}</span>
+   <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="p">}</span>
+ <span class="n">update</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682715&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cleaned data&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+   <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+   <span class="n">deps_avail</span><span class="p">:</span> <span class="n">true</span>
+   <span class="n">dep</span> <span class="p">{</span>
+     <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+     <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;my_first_dataset&quot;</span>
+     <span class="nb">type</span><span class="p">:</span> <span class="n">DEP_IS_DERIVED_FROM</span>
+     <span class="nb">dir</span><span class="p">:</span> <span class="n">DEP_OUT</span>
+   <span class="p">}</span>
+ <span class="p">},</span> <span class="s1">&#39;RecordDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The response shows that we did in fact manage to establish the <code class="docutils literal notranslate"><span class="pre">DEP_IS_DERIVED_FROM</span></code> relationship.</p>
+<p>In the DataFed web interface, when one selects either the original or derived Records and
+clicks on the <code class="docutils literal notranslate"><span class="pre">Provenance</span></code> view, we will observe that there is an
+arrow originating from the original Data Record and terminating into the newly created Data Record:</p>
+<img alt="../../_images/provenance.png" src="../../_images/provenance.png" />
+</div>
+</div>
+<div class="section" id="data-transfer">
+<h2>Data Transfer</h2>
+<div class="section" id="upload-raw-data">
+<h3>Upload raw data</h3>
+<p>So far, the Data Record created above only contains simple text information
+along with the scientific metadata. It does not have the raw data that we
+colloquially refer to as “data” in science.</p>
+<p>For the sake of demonstration, we will just use the metadata as the data itself:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;parameters.json&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+<span class="go">        json.dump(parameters, file_handle)</span>
+</pre></div>
+</div>
+<p>With the data file created, we are ready to put this raw data into the record we created above.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The raw data file must be located such that it is visible to the (default) Globus endpoint. To configure the default endpoint,
+follow the steps detailed towards the end of the <a class="reference external" href="../client/install.html">installation instructions</a>.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Ensure that the Globus endpoint that will be used for uploading data is active.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">put_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataPut</span><span class="p">(</span><span class="n">record_id</span><span class="p">,</span>
+<span class="go">                              &#39;./parameters.json&#39;,</span>
+<span class="go">                              wait=True, # Waits until transfer completes.</span>
+<span class="go">                              )</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">put_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;Some new title for the data&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+ <span class="p">}</span>
+<span class="n">task</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;task/34702491&quot;</span>
+   <span class="nb">type</span><span class="p">:</span> <span class="n">TT_DATA_PUT</span>
+   <span class="n">status</span><span class="p">:</span> <span class="n">TS_SUCCEEDED</span>
+   <span class="n">client</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+   <span class="n">step</span><span class="p">:</span> <span class="mi">3</span>
+   <span class="n">steps</span><span class="p">:</span> <span class="mi">4</span>
+   <span class="n">msg</span><span class="p">:</span> <span class="s2">&quot;Finished&quot;</span>
+   <span class="n">ct</span><span class="p">:</span> <span class="mi">1611102437</span>
+   <span class="n">ut</span><span class="p">:</span> <span class="mi">1611102444</span>
+   <span class="n">source</span><span class="p">:</span> <span class="s2">&quot;olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial/parameters.json&quot;</span>
+   <span class="n">dest</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+ <span class="p">},</span> <span class="s1">&#39;DataPutReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">dataPut()</span></code> method initiates a Globus transfer on our behalf
+from the machine where the command was entered to wherever the default data repository is located.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The above data file was specified by its relative local path, so DataFed used our pre-configured default Globus endpoint to find
+the data file. As long as we have the id for any <em>active</em> Globus endpoint that we have authenticated access to, we can transfer
+data from that endpoint with its full absolute file path – even if the file system is not attached ot the local machine. Look for
+more information on this in later examples.</p>
+</div>
+<p>In addition, the <code class="docutils literal notranslate"><span class="pre">dataPut()</span></code> method prints out the status of the Globus transfer as shown under the <code class="docutils literal notranslate"><span class="pre">task</span></code> section of the response.
+The <code class="docutils literal notranslate"><span class="pre">task</span></code> <code class="docutils literal notranslate"><span class="pre">msg</span></code> shows that the Globus transfer succeeded. The transfer succeeded before the message was returned because
+the <code class="docutils literal notranslate"><span class="pre">wait</span></code> keyword argument in the <code class="docutils literal notranslate"><span class="pre">dataPut()</span></code> method was set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, meaning that we requested that DataFed not proceed
+until the Globus transfer was completed.</p>
+<p>This is not the default behavior of <code class="docutils literal notranslate"><span class="pre">dataPut()</span></code> or <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code>.
+In a later section, we will go over an example usecase wherein asynchronous transfers may be preferred.</p>
+<p>Let’s view the Data Record we have been working on so far:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dv_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataView</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">data</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;Some new title for the data&quot;</span>
+   <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;my_first_dataset&quot;</span>
+   <span class="n">metadata</span><span class="p">:</span> <span class="s2">&quot;{</span><span class="se">\&quot;</span><span class="s2">p</span><span class="se">\&quot;</span><span class="s2">:14,</span><span class="se">\&quot;</span><span class="s2">q</span><span class="se">\&quot;</span><span class="s2">:</span><span class="se">\&quot;</span><span class="s2">Hello</span><span class="se">\&quot;</span><span class="s2">,</span><span class="se">\&quot;</span><span class="s2">r</span><span class="se">\&quot;</span><span class="s2">:[1,2,3]}&quot;</span>
+   <span class="n">repo_id</span><span class="p">:</span> <span class="s2">&quot;repo/cades-cnms&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">86.0</span>
+   <span class="n">source</span><span class="p">:</span> <span class="s2">&quot;olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial/parameters.json&quot;</span>
+   <span class="n">ext</span><span class="p">:</span> <span class="s2">&quot;.json&quot;</span>
+   <span class="n">ext_auto</span><span class="p">:</span> <span class="n">true</span>
+   <span class="n">ct</span><span class="p">:</span> <span class="mi">1611077217</span>
+   <span class="n">ut</span><span class="p">:</span> <span class="mi">1611077286</span>
+   <span class="n">dt</span><span class="p">:</span> <span class="mi">1611077286</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+   <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="p">},</span> <span class="s1">&#39;RecordDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Comparing this response against the response we got from the last <code class="docutils literal notranslate"><span class="pre">dataView()</span></code> call,
+you will notice the <code class="docutils literal notranslate"><span class="pre">source</span></code> and <code class="docutils literal notranslate"><span class="pre">file</span> <span class="pre">extension</span></code> have been updated.</p>
+</div>
+<div class="section" id="download-raw-data">
+<h3>Download raw data</h3>
+<p>DataFed is also capable of getting data stored in a DataFed repository and placing it in the
+local or other Globus-visible filesystem via the <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> function.</p>
+<p>For demonstration purposes, we will simply download the raw data (.JSON file) that was placed into the first Data Record.</p>
+<p>In order to avoid clashes in file-naming, <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> names the downloaded file by the unique ID of the Data Record
+that contains the raw data. We already have a <code class="docutils literal notranslate"><span class="pre">parameters.json</span></code> file in our local folder and setting the <code class="docutils literal notranslate"><span class="pre">orig_fname</span></code>
+keyword argument to <code class="docutils literal notranslate"><span class="pre">True</span></code> would result in a clash in the file name.</p>
+<p>Just to prove that the file download is indeed taking place, let’s check to make sure that there is no other JSON file
+whose name matches that of the record ID.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">expected_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">record_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;d/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="mf">34682319.</span><span class="n">json</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">False</span>
+</pre></div>
+</div>
+<p>Now that we know that we will not be having a file name clash, let us proceed with the <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> function call.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The current version of DataFed has a bug where <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> <strong>only</strong> accepts a <code class="docutils literal notranslate"><span class="pre">list</span></code> of Data Record or Collection IDs.
+Until the next version, users are recommended to put their singular ID into a <code class="docutils literal notranslate"><span class="pre">list</span></code> for <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code>.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataGet</span><span class="p">([</span><span class="n">record_id</span><span class="p">],</span> <span class="c1"># currently only accepts a list of IDs / aliases</span>
+<span class="go">                              &#39;.&#39;, # directory where data should be downloaded</span>
+<span class="go">                              orig_fname=False, # do not name file by its original name</span>
+<span class="go">                              wait=True, # Wait until Globus transfer completes</span>
+<span class="go">                             )</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">get_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">task</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;task/34682556&quot;</span>
+  <span class="nb">type</span><span class="p">:</span> <span class="n">TT_DATA_GET</span>
+  <span class="n">status</span><span class="p">:</span> <span class="n">TS_SUCCEEDED</span>
+  <span class="n">client</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">step</span><span class="p">:</span> <span class="mi">2</span>
+  <span class="n">steps</span><span class="p">:</span> <span class="mi">3</span>
+  <span class="n">msg</span><span class="p">:</span> <span class="s2">&quot;Finished&quot;</span>
+  <span class="n">ct</span><span class="p">:</span> <span class="mi">1611077310</span>
+  <span class="n">ut</span><span class="p">:</span> <span class="mi">1611077320</span>
+  <span class="n">source</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+  <span class="n">dest</span><span class="p">:</span> <span class="s2">&quot;olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial&quot;</span>
+<span class="p">}</span>
+<span class="p">,</span> <span class="s1">&#39;TaskDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The response shows that the Globus file transfer to the local file system did indeed complete successfully.
+Now, let us verify that the file does indeed exist as it should:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">True</span>
+</pre></div>
+</div>
+<p>At this point, we are free to rename the downloaded file to whatever name we want using familiar python functions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">,</span> <span class="s1">&#39;duplicate_parameters.json&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="tasks">
+<h3>Tasks</h3>
+<p>DataFed makes it possible to check on the status of transfer tasks in an easy and programmatic manner.</p>
+<p>From the earlier <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> function call’s response, we can extract the <code class="docutils literal notranslate"><span class="pre">task</span> <span class="pre">id</span></code> as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">task_id</span> <span class="o">=</span> <span class="n">get_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">task</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">task</span><span class="o">/</span><span class="mi">34682556</span>
+</pre></div>
+</div>
+<p>Using the task ID, we can check on the status of the <code class="docutils literal notranslate"><span class="pre">task</span></code> via the <code class="docutils literal notranslate"><span class="pre">taskView()</span></code> function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">task_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">taskView</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">task_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">task</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;task/34682556&quot;</span>
+  <span class="nb">type</span><span class="p">:</span> <span class="n">TT_DATA_GET</span>
+  <span class="n">status</span><span class="p">:</span> <span class="n">TS_SUCCEEDED</span>
+  <span class="n">client</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">step</span><span class="p">:</span> <span class="mi">2</span>
+  <span class="n">steps</span><span class="p">:</span> <span class="mi">3</span>
+  <span class="n">msg</span><span class="p">:</span> <span class="s2">&quot;Finished&quot;</span>
+  <span class="n">ct</span><span class="p">:</span> <span class="mi">1611077310</span>
+  <span class="n">ut</span><span class="p">:</span> <span class="mi">1611077320</span>
+  <span class="n">source</span><span class="p">:</span> <span class="s2">&quot;d/34682319&quot;</span>
+  <span class="n">dest</span><span class="p">:</span> <span class="s2">&quot;olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial&quot;</span>
+<span class="p">}</span>
+<span class="p">,</span> <span class="s1">&#39;TaskDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">TaskDataReply</span></code> shows that the <code class="docutils literal notranslate"><span class="pre">status</span></code> is indeed a success and the <code class="docutils literal notranslate"><span class="pre">msg</span></code> is <code class="docutils literal notranslate"><span class="pre">&quot;Finished&quot;</span></code>.</p>
+<p>This specific example by itself was trivial since we had set the <code class="docutils literal notranslate"><span class="pre">wait</span></code> keyword argument to <code class="docutils literal notranslate"><span class="pre">True</span></code> in the <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> function
+call, which meant that DataFed would not proceed until the transfer was complete.
+Furthermore, the nature of the transfer was also trivial in that it was a single file located in a single DataFed
+repository being delivered to a single destination.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A DataFed <code class="docutils literal notranslate"><span class="pre">task</span></code> may itself contain / be responsible for several Globus file transfers.</p>
+</div>
+<p>As the structure of the <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> function call suggests, one could request that several Data Records or
+Data Collections (themselves containing thousands of Data Records or even Collections) be downloaded,
+regardless of their location (several DataFed data repositories spread across the world in multiple institutions / continents).
+In this case, the <code class="docutils literal notranslate"><span class="pre">task</span></code> would be a composite of several Globus data transfers.</p>
+<p>We can also extract the status of the <code class="docutils literal notranslate"><span class="pre">task</span></code> as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">task_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">task</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">status</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">3</span>
+</pre></div>
+</div>
+<p>Note that though the status was marked as <code class="docutils literal notranslate"><span class="pre">TS_SUCCEEDED</span></code> in the Google Protobuf object,
+we got an integer value for the status.
+For now, we will use the numeric value of <code class="docutils literal notranslate"><span class="pre">3</span></code> to denote the successful completion of a file transfer task.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A future version of DataFed may change the nature of the output / type for the <code class="docutils literal notranslate"><span class="pre">status</span></code>
+property. In general, the exact return object types and nomenclature may evolve with DataFed.</p>
+</div>
+</div>
+<div class="section" id="asynchronous-transfers">
+<h3>Asynchronous transfers</h3>
+<p>So far we have been requesting that all transfers be completed before the next line of
+python code is executed. This is certainly acceptable for small data files but is perhaps not
+ideal for large files.</p>
+<p>Here are some scenarios:</p>
+<ul class="simple">
+<li><p>We are performing an array of simulations and want data transfers for a completed
+simulation to take place in the background while the subsequent simulation is being
+computed.</p></li>
+<li><p>We may want to get multiple Data Records or Collections which may
+actually be spread over multiple DataFed data repositories or Projects, etc.</p></li>
+<li><p>One could conceivably need to launch a child process to perform some operations
+while transfers took place asynchronously.</p></li>
+</ul>
+<p>Before we demonstrate a simple example, let us define some handy functions:</p>
+<p>The first is our fake, computationally expensive simulation denoted by <code class="docutils literal notranslate"><span class="pre">expensive_simulation()</span></code> that just sleeps for 3 seconds.
+It generates results that are written to a <code class="docutils literal notranslate"><span class="pre">.dat</span></code> file and it returns the path to this
+results data file. Though comically oversimplified, it is sufficiently accurate for demonstration purposes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">expensive_simulation</span><span class="p">():</span>
+<span class="go">        time.sleep(3)</span>
+<span class="go">        # Yes, this simulation is deterministic and always results in the same result:</span>
+<span class="go">        path_to_results = &#39;esnet#cern-diskpt1/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat&#39;</span>
+<span class="go">        return path_to_results</span>
+</pre></div>
+</div>
+<p>The next handy function is <code class="docutils literal notranslate"><span class="pre">check_xfer_status()</span></code> that looks up the instantaneous status of the transfer
+of each task it is provided and returns only the statuses:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">check_xfer_status</span><span class="p">(</span><span class="n">task_ids</span><span class="p">):</span>
+<span class="go">        statuses = list()</span>
+<span class="go">        for this_task_id in task_ids:</span>
+<span class="go">            task_resp = df_api.taskView(this_task_id)</span>
+<span class="go">            statuses.append(task_resp[0].task[0].status)</span>
+<span class="go">        return statuses</span>
+</pre></div>
+</div>
+<p>In the following demonstration, we perform a series of “computationally expensive” simulations.</p>
+<p>Following our aim to mimic realistic scenarios, we also create a DataFed collection to hold
+all the simulation results:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">coll_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionCreate</span><span class="p">(</span><span class="s1">&#39;Simulations&#39;</span><span class="p">,</span> <span class="n">parent_id</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sim_coll_id</span> <span class="o">=</span> <span class="n">coll_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coll</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+</pre></div>
+</div>
+<p>Knowing that the simulations take a while to complete,
+we create a Data Record to hold each simulation’s resulting data file and then call <code class="docutils literal notranslate"><span class="pre">dataPut()</span></code>
+to asynchronously upload the data in the background without impeding the following simulation
+or, importantly - wasting precious wall time on the supercomputer.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">xfer_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+<span class="go">        print(&#39;Starting simulation #{}&#39;.format(ind))</span>
+<span class="go">        results_file = expensive_simulation()</span>
+<span class="go">        rec_resp = df_api.dataCreate(&#39;Simulation_&#39; + str(ind),</span>
+<span class="go">                                     metadata=json.dumps({&#39;parameter_1&#39;: ind}),</span>
+<span class="go">                                     parent_id=sim_coll_id,</span>
+<span class="go">                                     context=context)</span>
+<span class="go">        this_rec_id = rec_resp[0].data[0].id</span>
+<span class="go">        print(&#39;Uploading data from simulation #{}&#39;.format(ind))</span>
+<span class="go">        put_resp = df_api.dataPut(this_rec_id, results_file, wait=False)</span>
+<span class="go">        xfer_tasks.append(put_resp[0].task.id)</span>
+<span class="go">        print(&#39;Transfer status(es): {}&#39;.format(check_xfer_status(xfer_tasks)))</span>
+<span class="go">        print(&#39;&#39;)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Simulations complete&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Starting</span> <span class="n">simulation</span> <span class="c1">#0</span>
+<span class="n">Uploading</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">simulation</span> <span class="c1">#0</span>
+<span class="n">Transfer</span> <span class="n">status</span><span class="p">(</span><span class="n">es</span><span class="p">):</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+<span class="n">Starting</span> <span class="n">simulation</span> <span class="c1">#1</span>
+<span class="n">Uploading</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">simulation</span> <span class="c1">#1</span>
+<span class="n">Transfer</span> <span class="n">status</span><span class="p">(</span><span class="n">es</span><span class="p">):</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+
+<span class="n">Starting</span> <span class="n">simulation</span> <span class="c1">#2</span>
+<span class="n">Uploading</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">simulation</span> <span class="c1">#2</span>
+<span class="n">Transfer</span> <span class="n">status</span><span class="p">(</span><span class="n">es</span><span class="p">):</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+
+<span class="n">Simulations</span> <span class="n">complete</span>
+</pre></div>
+</div>
+<p>What we observe is that the data upload transfer task for all previous simulations are complete while the current simulation is in progress.
+Of course, the sequence and competing speeds of the simulation and the data transfer tasks will vary from one workload to another and
+this is just an illustration. However, it does illustrate a popular use-case for asynchronous file transfers.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Users are recommended to perform data orchestration (especially large data movement - upload / download) operations
+outside the scope of heavy / parallel computation operations in order to avoid wasting precious wall time on compute clusters.</p>
+</div>
+</div>
+</div>
+<div class="section" id="collections">
+<h2>Collections</h2>
+<p>Collections are a great tool for organizing Data Records and other Collections within DataFed.
+Besides organization, they have other benefits such as facilitating the download of vast numbers of Data Records they may contain,
+regardless of where (DataFed data repositories, various projects, etc.) the individual Data Records are physically located.</p>
+<div class="section" id="create-collection">
+<h3>Create collection</h3>
+<p>The process to create a Collection is very similar to that for the Data Record.
+We would use the <code class="docutils literal notranslate"><span class="pre">collectionCreate()</span></code> function as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">coll_alias</span> <span class="o">=</span> <span class="s1">&#39;cat_dog_train&#39;</span>
+<span class="go">​</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">coll_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionCreate</span><span class="p">(</span><span class="s1">&#39;Image classification training data&#39;</span><span class="p">,</span>
+<span class="go">                                        alias=coll_alias,</span>
+<span class="go">                                        parent_id=username,</span>
+<span class="go">                                        context=context)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">coll_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">coll</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;c/34683877&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;Image classification training data&quot;</span>
+  <span class="n">alias</span><span class="p">:</span> <span class="s2">&quot;cat_dog_train&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">ct</span><span class="p">:</span> <span class="mi">1611078472</span>
+  <span class="n">ut</span><span class="p">:</span> <span class="mi">1611078472</span>
+  <span class="n">parent_id</span><span class="p">:</span> <span class="s2">&quot;c/34558900&quot;</span>
+<span class="p">}</span>
+<span class="p">,</span> <span class="s1">&#39;CollDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Much like Data Records, Collections can be addressed using aliases instead of IDs.
+However, as mentioned earlier, we would always need to specify the <code class="docutils literal notranslate"><span class="pre">context</span></code> for the <code class="docutils literal notranslate"><span class="pre">alias</span></code>.</p>
+<p>What we get in response to the <code class="docutils literal notranslate"><span class="pre">collectionCreate()</span></code> function is a <code class="docutils literal notranslate"><span class="pre">CollDataReply</span></code> object.
+It contains some high-level identification information such as the <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">alias</span></code>, <code class="docutils literal notranslate"><span class="pre">parent_id</span></code>, etc.
+It does not contain other information such as the number of Data Records within the collection itself.</p>
+<p>We could peel the <code class="docutils literal notranslate"><span class="pre">id</span></code> of this newly created Collection out of the message reply if we wanted to,
+just as we did for the Data Record. However, we will just use the <code class="docutils literal notranslate"><span class="pre">alias</span></code> for now.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Collections have IDs starting with <code class="docutils literal notranslate"><span class="pre">c/</span></code> just like Data Record IDs start with <code class="docutils literal notranslate"><span class="pre">d/</span></code>
+and Project IDs start with <code class="docutils literal notranslate"><span class="pre">p/</span></code>.</p>
+</div>
+</div>
+<div class="section" id="populate-with-records">
+<h3>Populate with Records</h3>
+<p>Let’s say that we wanted to put training data for a machine learning application into this collection.
+We could go ahead and populate the Collection with Data Records by using the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> function
+for each Data Record in the Collection.</p>
+<p>In our example, we are interested in gathering examples of cats and dogs to train a machine learning model.
+For simplicity, we will use the same tiny dataset for both cats and dogs.
+The Data Records would be distinguishable via the <code class="docutils literal notranslate"><span class="pre">animal</span></code> key or field in the <code class="docutils literal notranslate"><span class="pre">metadata</span></code>.
+Since we need to create several Data Records for dogs and cats, we will define a quick function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">random</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">generate_animal_data</span><span class="p">(</span><span class="n">is_dog</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="go">        this_animal = &#39;cat&#39;</span>
+<span class="go">        if is_dog:</span>
+<span class="go">            this_animal = &#39;dog&#39;</span>
+<span class="go">        # To mimic a real-life scenario, we append a number to the animal type to denote</span>
+<span class="go">        # the N-th example of a cat or dog. In this case, we use a random integer.</span>
+<span class="go">        rec_resp = df_api.dataCreate(this_animal + &#39;_&#39; + str(random.randint(1, 100)),</span>
+<span class="go">                                     metadata=json.dumps({&#39;animal&#39;: this_animal}),</span>
+<span class="go">                                     parent_id=coll_alias,</span>
+<span class="go">                                     context=context)</span>
+<span class="go">        # Parse the dataCreate response to tease out the ID of the Record</span>
+<span class="go">        this_rec_id = rec_resp[0].data[0].id</span>
+<span class="go">        # path to the file containing the raw data</span>
+<span class="go">        raw_data_path = &#39;esnet#newy-dtn/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat&#39;</span>
+<span class="go">        # Putting the raw data into the record</span>
+<span class="go">        put_resp = df_api.dataPut(this_rec_id, raw_data_path)</span>
+<span class="go">        # Only returning the ID of the Data Record we created:</span>
+<span class="go">        return this_rec_id</span>
+</pre></div>
+</div>
+<p>In the above function, we use a tiny dataset from ESNet’s read-only Globus endpoint: <code class="docutils literal notranslate"><span class="pre">esnet#newy-dtn</span></code>.
+The actual data itself is of little relevance to this example and will not really be used.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>So far, we have only been providing the relative path to data when we use <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code>.
+<code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> automatically gets the absolute path of the path in the local file system
+and takes the UUID / legacy name of the Globus endpoint we set as default for this local file system.</p>
+<p>However, we can also provide the name of the Globus endpoint followed by the absolute path of the
+desired file (or directory) from that Globus endpoint.</p>
+</div>
+<p>Now, we simply call the <code class="docutils literal notranslate"><span class="pre">generate_animal_data()</span></code> function to generate data.
+We will generate 5 examples each of cats and dogs:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cat_records</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dog_records</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+<span class="go">        dog_records.append(generate_animal_data(is_dog=True))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+<span class="go">        cat_records.append(generate_animal_data(is_dog=False))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cat_records</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;d/34684011&#39;</span><span class="p">,</span> <span class="s1">&#39;d/34684035&#39;</span><span class="p">,</span> <span class="s1">&#39;d/34684059&#39;</span><span class="p">,</span> <span class="s1">&#39;d/34684083&#39;</span><span class="p">,</span> <span class="s1">&#39;d/34684107&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">dog_records</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;d/34683891&#39;</span><span class="p">,</span> <span class="s1">&#39;d/34683915&#39;</span><span class="p">,</span> <span class="s1">&#39;d/34683939&#39;</span><span class="p">,</span> <span class="s1">&#39;d/34683963&#39;</span><span class="p">,</span> <span class="s1">&#39;d/34683987&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="list-items-in-collection">
+<h3>List items in Collection</h3>
+<p>Now that we have generated the data into our Collection, we can list the contents of the Collection
+simply via <code class="docutils literal notranslate"><span class="pre">collectionItemList()</span></code> as shown below. Again, since we are using the <code class="docutils literal notranslate"><span class="pre">alias</span></code> as the
+identifier, we do need to specify the <code class="docutils literal notranslate"><span class="pre">context</span></code> as well:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">coll_list_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="n">coll_alias</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span> <span class="nb">print</span><span class="p">(</span><span class="n">coll_list_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684107&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_22&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684011&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_32&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684035&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_6&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684083&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_93&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684059&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_96&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34683939&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;dog_3&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34683915&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;dog_63&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34683891&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;dog_70&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34683987&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;dog_71&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34683963&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;dog_8&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">offset</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">count</span><span class="p">:</span> <span class="mi">20</span>
+<span class="n">total</span><span class="p">:</span> <span class="mi">10</span>
+<span class="p">,</span> <span class="s1">&#39;ListingReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>From the above response, it is clear that we have 5 examples each for dogs and cats and that
+this Collection does not contain any other Collections or Data Records.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If we had several dozens, hundreds, or even thousands of items in a Collection,
+we would need to call <code class="docutils literal notranslate"><span class="pre">collectionItemsList()</span></code> multiple times
+by stepping up the <code class="docutils literal notranslate"><span class="pre">offset</span></code> keyword argument each time to get the next “page” of results.</p>
+</div>
+</div>
+</div>
+<div class="section" id="queries">
+<h2>Queries</h2>
+<p>Let’s say that we want to segregate the cat data from the dog data and that
+we did not already have the record IDs separated in the <code class="docutils literal notranslate"><span class="pre">dog_records</span></code> and <code class="docutils literal notranslate"><span class="pre">cat_records</span></code> variables.</p>
+<p>One way to do this with the tools we have demonstrated so far might be to
+use <code class="docutils literal notranslate"><span class="pre">collectionItemsList()</span></code> to enumerate all the records, extract the <code class="docutils literal notranslate"><span class="pre">title</span></code> of each of the Records
+and then parse the information to separate cats from dogs.
+If we did not have meaningful titles, we would have had to call <code class="docutils literal notranslate"><span class="pre">dataView()</span></code> to get the <code class="docutils literal notranslate"><span class="pre">metadata</span></code>
+of each of the Records to separate cats from dogs.</p>
+<p>Obviously, these are highly sub-optimal solutions to the problem.
+The ideal solution is to use the search capability in DataFed.</p>
+<div class="section" id="create-query">
+<h3>Create query</h3>
+<p>While it is technically possible to construct queries using the <code class="docutils literal notranslate"><span class="pre">queryCreate()</span></code> function in <code class="docutils literal notranslate"><span class="pre">CommandLib</span></code>,
+we will construct the query via the web interface since the query language will be changed soon, as of this writing.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The query language is likely to change in a future version of DataFed.</p>
+</div>
+<p>In order to create the query, we will follow the subsequent steps and the
+screenshot of the interface below should help guide you through this process:</p>
+<ol class="arabic simple">
+<li><p>visit <a class="reference external" href="https://datafed.ornl.gov">https://datafed.ornl.gov</a></p></li>
+<li><p>Click on the <code class="docutils literal notranslate"><span class="pre">Data</span> <span class="pre">Search</span></code> tab in the bottom left of the page to expand the search tab.</p></li>
+<li><p>Uncheck all boxes in the <code class="docutils literal notranslate"><span class="pre">Scope</span></code> and only check the <code class="docutils literal notranslate"><span class="pre">Select</span></code>. This should reveal checkboxes in the left navigation panel.</p></li>
+<li><p>Now select the <code class="docutils literal notranslate"><span class="pre">Image</span> <span class="pre">Classification</span> <span class="pre">and</span> <span class="pre">Training</span> <span class="pre">data</span></code> collection</p></li>
+<li><p>Finally, enter <code class="docutils literal notranslate"><span class="pre">animal</span> <span class="pre">==</span> <span class="pre">&quot;cat&quot;</span></code> in the <code class="docutils literal notranslate"><span class="pre">Metadata</span></code> field in the <code class="docutils literal notranslate"><span class="pre">Data</span> <span class="pre">Search</span></code> tab in the bottom of the window</p></li>
+</ol>
+<p>Your window should look something like this:</p>
+<img alt="../../_images/search_01.png" src="../../_images/search_01.png" />
+<p>Now when we click the yellow colored right arrow / “play” button in the bottom right of the <code class="docutils literal notranslate"><span class="pre">Data</span> <span class="pre">Search</span></code> tab,
+we are taken to the search results page as shown below:</p>
+<img alt="../../_images/search_02.png" src="../../_images/search_02.png" />
+<p>Click on the <code class="docutils literal notranslate"><span class="pre">Save</span></code> button that looks like a floppy drive in the bottom right of the <code class="docutils literal notranslate"><span class="pre">Data</span> <span class="pre">Search</span></code> tab.
+This should reveal a pop up window that will let you name and save this search query as shown below:</p>
+<img alt="../../_images/search_03.png" src="../../_images/search_03.png" />
+<p>We can give this search a title such as <code class="docutils literal notranslate"><span class="pre">find_all_cats</span></code> and click on the <code class="docutils literal notranslate"><span class="pre">Save</span></code> button now.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Saved queries are visible at the very bottom of the navigation / left pane below <code class="docutils literal notranslate"><span class="pre">Project</span> <span class="pre">Data</span></code> and <code class="docutils literal notranslate"><span class="pre">Shared</span> <span class="pre">Data</span></code>.</p>
+</div>
+</div>
+<div class="section" id="list-saved-queries">
+<h3>List saved queries</h3>
+<p>Much like listing the Projects this user is part of or the contents of a Collection, one can also list the
+saved queries via the <code class="docutils literal notranslate"><span class="pre">queryList()</span></code> function as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ql_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">queryList</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ql_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;q/34684970&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;find_all_cats&quot;</span>
+ <span class="p">}</span>
+ <span class="n">offset</span><span class="p">:</span> <span class="mi">0</span>
+ <span class="n">count</span><span class="p">:</span> <span class="mi">20</span>
+ <span class="n">total</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;ListingReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We again get a <code class="docutils literal notranslate"><span class="pre">ListingReply</span></code> object which can be parsed if need be.
+Importantly, we see our newly created query listed here.</p>
+<p>We can extract the query ID as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">query_id</span> <span class="o">=</span> <span class="n">ql_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">query_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;q/34684970&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="view-query">
+<h3>View query</h3>
+<p>Just like <code class="docutils literal notranslate"><span class="pre">dataView()</span></code>, we can view use <code class="docutils literal notranslate"><span class="pre">queryView()</span></code> to view this query as well:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df_api</span><span class="o">.</span><span class="n">queryView</span><span class="p">(</span><span class="n">query_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">query</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;q/34684970&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;find_all_cats&quot;</span>
+   <span class="n">query</span><span class="p">:</span> <span class="s2">&quot;{</span><span class="se">\&quot;</span><span class="s2">meta</span><span class="se">\&quot;</span><span class="s2">:</span><span class="se">\&quot;</span><span class="s2">animal == </span><span class="se">\\\&quot;</span><span class="s2">cat</span><span class="se">\\\&quot;\&quot;</span><span class="s2">,</span><span class="se">\&quot;</span><span class="s2">scopes</span><span class="se">\&quot;</span><span class="s2">:[{</span><span class="se">\&quot;</span><span class="s2">scope</span><span class="se">\&quot;</span><span class="s2">:4,</span><span class="se">\&quot;</span><span class="s2">id</span><span class="se">\&quot;</span><span class="s2">:</span><span class="se">\&quot;</span><span class="s2">c/34683877</span><span class="se">\&quot;</span><span class="s2">,</span><span class="se">\&quot;</span><span class="s2">recurse</span><span class="se">\&quot;</span><span class="s2">:true}]}&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+   <span class="n">ct</span><span class="p">:</span> <span class="mi">1611078781</span>
+   <span class="n">ut</span><span class="p">:</span> <span class="mi">1611078781</span>
+ <span class="p">},</span> <span class="s1">&#39;QueryDataReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">query</span></code> string in the response reveals that:</p>
+<ol class="arabic simple">
+<li><p>we did search for data whose metadata lists their <code class="docutils literal notranslate"><span class="pre">animal</span></code> as <code class="docutils literal notranslate"><span class="pre">cat</span></code>.</p></li>
+<li><p>we limited our <code class="docutils literal notranslate"><span class="pre">scope</span></code> to just one collection</p></li>
+<li><p>(by default) the query recursively searches all collections inside the collection we pointed out.</p></li>
+</ol>
+</div>
+<div class="section" id="execute-query">
+<h3>Execute query</h3>
+<p>Finally, we can run the desired query using <code class="docutils literal notranslate"><span class="pre">queryExec()</span></code> as shown below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">query_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">queryExec</span><span class="p">(</span><span class="n">query_id</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">query_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684011&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_32&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684035&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_6&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684059&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_96&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684083&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_93&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="n">item</span> <span class="p">{</span>
+  <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684107&quot;</span>
+  <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_22&quot;</span>
+  <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+  <span class="n">creator</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+  <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+  <span class="n">notes</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+<span class="p">,</span> <span class="s1">&#39;ListingReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The response to this function call is also a <code class="docutils literal notranslate"><span class="pre">ListingReply</span></code> object.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In the current version of DataFed, the search query limits the number of results it returns from queries to 50.
+This behavior will be changed in a subsequent version of DataFed.</p>
+</div>
+<p>Let’s verify that the results from the query match our expectation
+(the list of cat IDs we collected when the records were created):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># First get IDs from query result</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cat_rec_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">query_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cat_rec_ids</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">cat_records</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">True</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="collections-continued">
+<h2>Collections continued</h2>
+<p>Let us continue with our original aim of segregating the cats from the dogs.
+We now know the IDs of all the cats from the response to a saved query.</p>
+<p>Now, we will demonstrate ways in which we can organize data in DataFed.</p>
+<div class="section" id="organize-with-collections">
+<h3>Organize with Collections</h3>
+<p>The simplest and most powerful way to organize information is using Collections.
+We could segregate all cat data into a new, separate collection just for cats via the <code class="docutils literal notranslate"><span class="pre">collectionCreate()</span></code> function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">coll_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionCreate</span><span class="p">(</span><span class="s1">&#39;Cats&#39;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s1">&#39;cats&#39;</span><span class="p">,</span> <span class="n">parent_id</span><span class="o">=</span><span class="n">coll_alias</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cat_coll_id</span> <span class="o">=</span> <span class="n">coll_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coll</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cat_coll_id</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;c/34685092&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="add-and-remove-from-collections">
+<h3>Add and remove from Collections</h3>
+<p>Unlike before when we created the cat and dog records into a specific Collection,
+we now already have the cat Records in the incorrect Collection.</p>
+<p>The first step towards organization is to add these existing records into the newly created
+<code class="docutils literal notranslate"><span class="pre">Cats</span></code> Collection via the <code class="docutils literal notranslate"><span class="pre">collectionItemsUpdate()</span></code> function as shown below.
+This function accepts a list of IDs to add via the <code class="docutils literal notranslate"><span class="pre">add_ids</span></code> keyword argument:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cup_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsUpdate</span><span class="p">(</span><span class="n">cat_coll_id</span><span class="p">,</span> <span class="n">add_ids</span><span class="o">=</span><span class="n">cat_rec_ids</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cup_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(,</span> <span class="s1">&#39;ListingReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Unlike most other functions, <code class="docutils literal notranslate"><span class="pre">collectionItemsUpdate()</span></code> does not return much that we can work with.
+However, this is acceptable since we knew the IDs being added into the Collection.</p>
+<p>We can verify that the cat Records do indeed exist in the <code class="docutils literal notranslate"><span class="pre">Cats</span></code> Collection using
+the familiar <code class="docutils literal notranslate"><span class="pre">collectionItemsList()</span></code> function as shown below.
+In the interest of brevity, we capture the response and only print out ID and title of the items in the collection:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ls_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="n">cat_coll_id</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">([(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ls_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[(</span><span class="s1">&#39;d/34684107&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_22&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34684011&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_32&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34684035&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_6&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34684083&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_93&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34684059&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_96&#39;</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>We have indeed ensured that the cat Records are part of the <code class="docutils literal notranslate"><span class="pre">Cats</span></code> Collection.
+However, let us list the contents of the original / outer collection:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ls_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="n">coll_alias</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">([(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ls_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[(</span><span class="s1">&#39;c/34685092&#39;</span><span class="p">,</span> <span class="s1">&#39;Cats&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34684107&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_22&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34684011&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_32&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34684035&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_6&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34684083&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_93&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34684059&#39;</span><span class="p">,</span> <span class="s1">&#39;cat_96&#39;</span><span class="p">)</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683939&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_3&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683915&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_63&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683891&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_70&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683987&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_71&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683963&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_8&#39;</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>We observe that the original collection continues to contain the cat Records, as well as the newly
+created <code class="docutils literal notranslate"><span class="pre">Cats</span></code> collection, and all the dog Records.
+To complete the move, we need to de-link the cat Records from the original Collection.
+We do this again via the <code class="docutils literal notranslate"><span class="pre">collectionsItemsUpdate()</span></code> function.
+However, this time, we would need to pass the same cat Record IDs with the <code class="docutils literal notranslate"><span class="pre">rem_ids</span></code> keyword argument
+rather than the <code class="docutils literal notranslate"><span class="pre">add_ids</span></code> keyword argument:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cup_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsUpdate</span><span class="p">(</span><span class="n">coll_alias</span><span class="p">,</span> <span class="n">rem_ids</span><span class="o">=</span><span class="n">cat_rec_ids</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">cup_resp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(,</span> <span class="s1">&#39;ListingReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let us verify that the original / outer Collection no longer contains cat Records:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ls_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="n">coll_alias</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">([(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ls_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[(</span><span class="s1">&#39;c/34685092&#39;</span><span class="p">,</span> <span class="s1">&#39;Cats&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683939&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_3&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683915&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_63&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683891&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_70&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683987&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_71&#39;</span><span class="p">),</span>
+ <span class="p">(</span><span class="s1">&#39;d/34683963&#39;</span><span class="p">,</span> <span class="s1">&#39;dog_8&#39;</span><span class="p">)]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="download-collection">
+<h3>Download Collection</h3>
+<p>Finally, let us assume that we are interested in only downloading the data from all
+cat Records.
+A naive and suboptimal way to accomplish this is to perform 5 separate <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> function calls - one per cat Record.</p>
+<p>Fortunately, the <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> function allows multiple Records or entire Collections to be downloaded with a single function call
+as shown below.
+Though we could provide the list of cat Record IDs, we will only provide the <code class="docutils literal notranslate"><span class="pre">Cat</span></code> Collection ID instead.
+We will ask <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> to create a new directory called <code class="docutils literal notranslate"><span class="pre">cat_data</span></code> and put all the data within this directory:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df_api</span><span class="o">.</span><span class="n">dataGet</span><span class="p">([</span><span class="n">cat_coll_id</span><span class="p">],</span> <span class="s1">&#39;./cat_data&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684011&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_32&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+ <span class="p">}</span>
+ <span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684035&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_6&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+ <span class="p">}</span>
+ <span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684059&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_96&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+ <span class="p">}</span>
+ <span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684083&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_93&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+ <span class="p">}</span>
+ <span class="n">item</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;d/34684107&quot;</span>
+   <span class="n">title</span><span class="p">:</span> <span class="s2">&quot;cat_22&quot;</span>
+   <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;p/trn001&quot;</span>
+   <span class="n">size</span><span class="p">:</span> <span class="mf">1000.0</span>
+ <span class="p">}</span>
+ <span class="n">task</span> <span class="p">{</span>
+   <span class="nb">id</span><span class="p">:</span> <span class="s2">&quot;task/34685359&quot;</span>
+   <span class="nb">type</span><span class="p">:</span> <span class="n">TT_DATA_GET</span>
+   <span class="n">status</span><span class="p">:</span> <span class="n">TS_READY</span>
+   <span class="n">client</span><span class="p">:</span> <span class="s2">&quot;u/somnaths&quot;</span>
+   <span class="n">step</span><span class="p">:</span> <span class="mi">0</span>
+   <span class="n">steps</span><span class="p">:</span> <span class="mi">2</span>
+   <span class="n">msg</span><span class="p">:</span> <span class="s2">&quot;Pending&quot;</span>
+   <span class="n">ct</span><span class="p">:</span> <span class="mi">1611079028</span>
+   <span class="n">ut</span><span class="p">:</span> <span class="mi">1611079028</span>
+   <span class="n">source</span><span class="p">:</span> <span class="s2">&quot;d/34684011, d/34684035, d/34684059, d/34684083, d/34684107, ...&quot;</span>
+   <span class="n">dest</span><span class="p">:</span> <span class="s2">&quot;olcf#dtn/gpfs/alpine/stf011/scratch/somnaths/DataFed_Tutorial/cat_data&quot;</span>
+ <span class="p">},</span> <span class="s1">&#39;DataGetReply&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Recall that <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> can download arbitrarily large number of Records
+regardless of the physical locations of the DataFed repositories containing the data.</p>
+</div>
+<p>Now, let us verify that all the data does in fact exist in this newly created directory in the local file system:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s1">&#39;./cat_data&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;34684107.dat&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;34684059.dat&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;34684011.dat&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;34684035.dat&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;34684083.dat&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="closing-remarks">
+<h2>Closing remarks</h2>
+<p>This user guide only provides an overview of some functions in DataFed that would be used most popularly.
+The interested user is encouraged to go over the complete documentation of all the functions in <code class="docutils literal notranslate"><span class="pre">CommandLib.CLI</span></code>
+<a class="reference external" href="https://ornl.github.io/DataFed/autoapi/datafed/CommandLib/index.html">here</a>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../../autoapi/index.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../api/python.html" class="btn btn-neutral float-left" title="Python API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Oak Ridge National Laboratories
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
