@@ -138,11 +138,17 @@ for more information.
 User Accounts
 =============
 
-------------
-Registration
-------------
+User must register with DataFed in order to access public or shared data records and collections; however, registration
+is free and only requires a Globus account. (Refer to the `/system/getting_started` document for help with the
+registration process.) Once registered, users are tracked internally by their Globus identity but can also be searched for
+using their proper names. In order for users to be able to create their own data records, an allocation on one or more DataFed
+data repositories is required. Please contact the IT department at a DataFed-enabled facility for assistance with
+acquiring a DataFed repository allocation.
 
-[BRIEF HOW TO USE FOR JOBS, WORKFLOWS, INSTRUMENTS]
+.. note::
+
+  In a future release of DataFed, a searchable directory of available data repositories will be made available and allow
+  users to request allocations directly from within DataFed.
 
 System Concepts
 ===============
@@ -154,11 +160,14 @@ physically stored, or which DataFed interface is being utilized. In order to und
 DataFed, as a whole, it is necessary to understand the underlying terminology and concepts, and these are discussed in this
 section.
 
+Because DataFed relies heavily upon Globus for data transfers, it is helpful to understand the basics of how Globus works and
+how to use it to move data between Globus endpoints. A good starting point for understanding Globus can be found `here <https://www.globus.org/data-transfer>`_.
+
 ---------------
 Quick Reference
 ---------------
 
-Below is a brief, alphabetical list of the most common DataFed and Globus terms and concepts. These topics are discussed in
+Below is a brief, alphabetical list of the most common DataFed terms and concepts. These topics are discussed in
 greater detail in following sections of this document.
 
 - **Access Control** - Access controls are sets of fine-grained permissions associated with data records and/or collections that may be
@@ -235,31 +244,43 @@ greater detail in following sections of this document.
 - **User** - Any person with a DataFed account. Users are identified by their unique Globus ID account name, with optionally linked organizational accounts.
 
 
-Globus Concepts:
-
-- **Globus ID** - 
-- **Endpoint** - 
-- **Endpoint UUID** - 
-- **Endpoint Legacy Name** - 
-- **Endpoint Activation** - 
-
-[GENERAL STUFF]
-
 -----------------------
 Identifiers and Aliases
 -----------------------
 
-All records in DataFed (data, collections, user, projects, etc.) are automatically assigned a system-unique identifier
-consisting of a prefix and an alphanumeric value. For data records and collections these identifiers are numeric, so
-users may choose to assign a more human-friendly "alias" that can be used in place of identifiers. Aliases are alphanumeric
-(with certain restrictions) and case sensitive, and, to avoid collisions, are automatically prefixed with the type ("u" or
-"p") and value portion of the identifier of the owning user or project, delimited with colons. When aliases are used by the
-owner, the alias prefix may be omitted.
+All system "entities" in DataFed (data, collections, user, projects, etc.) are automatically assigned system-unique identifiers (IDs)
+consisting of a prefix (that determines entity type) followed by an alphanumeric value. For example, "d/12345678" would be
+an ID for data record, and "c/87654321" would be a collection. The numeric portion of these IDs is not in any particular order
+and can be considered essentially random, but unique for a given entity type. System IDs are not easy for humans to remember and
+use, thus for data records and collections (which are referenced frequently) users may opt to assign a human-friendly "alias"
+that can be used in place of the system identifier.
 
-For example, if a user with an ID of "u/jsmith" creates an alias "mydata", then the full alias would be "u:jsmith:mydata".
-User "jsmith" can simply use "mydata", but other users would need to use the full alias instead. Note that in DataFed web
-portal, aliases are typically shown without the prefix.
+Aliases are lowercase alphanumeric strings that can contain the letters 'a' through 'z', the numbers '0' through '9', and the
+special characters '-','_', and '.'. Aliases can be considered to be the equivalent of a file or directory name in a file
+system. A scoping prefix is automatically attached to aliases in order to ensure aliases are unique across all users
+(and projects) in DataFed. These prefixes consist of the type of the alias owner ("u" for users, and "p" for projects),
+followed by the user or project ID, separated by colons. For example::
 
+  The alias "my.data" for user "u/user123" becomes "u:user123:my.data"
+
+  and
+
+  The alias "simulation.run.1" within project "p/stf123" becomes "p:stf123:simulation.run.1"
+
+.. note::
+
+  In both the DataFeb web portal and the command-line interfaces, aliases are not required to be entered, nor are they
+  displayed, with the scoping prefix unless necessary to avoid confusion.
+
+In general, aliases are intended to support interactive data browsing and sharing and, thus, should be easy to use and understand.
+Aliases should *not* be used to encode parameters or other information that is more appropriately placed in a data record's searchable
+metadata. This is especially true when sharing data with users that may not be familiar with an ad hoc name-based parameter
+encoding scheme.
+
+.. note::
+
+  Capturing and storing scientific parameters and other context as searchable, schema-based metadata results in data that
+  is far more *findable* and *interoperable* than encoding this information in aliases.
 
 ------------
 Data Records
