@@ -105,7 +105,7 @@ by the DataFed Python API for reply objects returned from commands.
 
 .. note::
 
-   Users are highly encouraged to use the :doc:`python API  </user/python_scripting>` for non-trivial
+   Users are highly encouraged to use the :doc:`python API  </user/python/high_level_guide>` for non-trivial
    scripting needs since it is easier to use and returned information from DataFed commands are Python
    objects rather than JSON.
 

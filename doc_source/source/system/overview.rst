@@ -126,7 +126,7 @@ the web application is where users initially register for DataFed accounts.
 
 The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged available on PyPi. Refer
 to the :doc:`Client Installation </user/client/install>`, :doc:`CLI User Guide </user/cli/guide>`, and
-:doc:`Python Scripting Guide </user/python_scripting>` for more information.
+:doc:`Python Scripting Guide </user/python/high_level_guide>` for more information.
 
 DataFed's interfaces can be used from any workstation, laptop, or compute node; however, these interfaces only provide
 users with the ability to issue commands to the DataFed central service. If users need to be able to also transfer raw
