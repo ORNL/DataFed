@@ -847,6 +847,15 @@ arrow originating from the original Data Record and terminating into the newly c
 
 .. image:: ../../_static/python_high_level/provenance.png
 
+Batch operations
+~~~~~~~~~~~~~~~~
+DataFed has the ``dataBatchCreate()`` and ``dataBatchUpdate()`` functions to facilitate
+the creation and editing of multiple Data Records in one shot.
+
+Other functions
+~~~~~~~~~~~~~~~
+DataFed also offers the ``dataDelete()`` function for the deletion of one or more Data Records
+
 Data Transfer
 -------------
 Upload raw data
@@ -1640,6 +1649,42 @@ We could segregate all cat data into a new, separate collection just for cats vi
 
     'c/34685092'
 
+Collection Parents
+~~~~~~~~~~~~~~~~~~
+If we wanted to get an idea about where the newly created ``Cats`` Collection is
+with respect to the ``root`` Collection of the current ``context`` (the Training project),
+we could use the ``collectionGetParents()`` function as:
+
+.. code-block:: python
+
+    path_resp = df_api.collectionGetParents(cat_coll_id)
+    print(path_reps)
+
+.. code-block:: none
+
+    (path {
+       item {
+         id: "c/34683877"
+         title: "Image classification training data"
+         alias: "cat_dog_train"
+       }
+       item {
+         id: "c/34558900"
+         title: "somnaths"
+         alias: "somnaths"
+       }
+       item {
+         id: "c/p_trn001_root"
+         title: "Root Collection"
+         alias: "root"
+       }
+     }, 'CollPathReply')
+
+What we get in return is a ``CollPathReply`` message which essentially shows a
+``path`` illustrating that the ``Cats`` Collection is within the ``cat_dog_train`` Collection,
+which itself is within the user's private collection - ``somnaths``, which in turn
+is within the ``root`` Collection of the Training Project.
+
 Add and remove from Collections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Unlike before when we created the cat and dog records into a specific Collection,
@@ -1811,6 +1856,12 @@ Now, let us verify that all the data does in fact exist in this newly created di
      '34684011.dat',
      '34684035.dat',
      '34684083.dat']
+
+Other functions
+~~~~~~~~~~~~~~~
+Besides the above functions, DataFed offers the ``collectionDelete()`` function,
+which, as the name suggests, facilitates in deleting one or more collections and all other
+objects within the collection (So long as the items do not also belong to other collections elsewhere).
 
 Closing remarks
 ---------------
