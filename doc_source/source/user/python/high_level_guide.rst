@@ -37,11 +37,11 @@ We also import json to simplify the process of communicating metadata with DataF
 
 .. code-block:: python
 
-    >>> import json # For dealing with metadata
-    >>> import os # For file level operations
-    >>> import time # For timing demonstrations
-    >>> import datetime # To demonstrate conversion between date and time formats
-    >>> from datafed.CommandLib import API
+    import json # For dealing with metadata
+    import os # For file level operations
+    import time # For timing demonstrations
+    import datetime # To demonstrate conversion between date and time formats
+    from datafed.CommandLib import API
 
 Create instance
 ~~~~~~~~~~~~~~~
@@ -49,12 +49,12 @@ Finally, we create an instance of the DataFed API class via:
 
 .. code-block:: python
 
-    >>> df_api = API()
+    df_api = API()
 
 Assuming that DataFed has been installed and our default GlobusID configured correctly, we can now use ``df_api`` to communicate with DataFed as an authenticated user. If not, refer back to the `installation instructions <../client/install.html>`_.
 
-Projects
---------
+Projects & DataFed responses
+----------------------------
 
 DataFed functions and responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,10 +66,10 @@ First, let's try to find projects we are part of using the ``projectList()`` fun
 
 .. code-block:: python
 
-    >>> plist_resp = df_api.projectList()
-    >>> print(plist_resp)
+    plist_resp = df_api.projectList()
+    print(plist_resp)
 
-.. code-block::
+.. code-block:: none
 
     (item {
       id: "p/trn001"
@@ -92,9 +92,9 @@ The first layer is typically a tuple of size 2:
 
 .. code-block:: python
 
-    >>> type(pl_resp), len(pl_resp)
+    type(pl_resp), len(pl_resp)
 
-.. code-block::
+.. code-block:: none
 
     (tuple, 2)
 
@@ -104,9 +104,9 @@ A simple check of the object type will confirm the type of our core `Google Prot
 
 .. code-block:: python
 
-    >>> type(pl_resp[0])
+    type(pl_resp[0])
 
-.. code-block::
+.. code-block:: none
 
     google.protobuf.internal.python_message.ListingReply
 
@@ -127,9 +127,9 @@ Though we won't be needing the information in this case, here is how we might ge
 
 .. code-block:: python
 
-    >>> pl_resp[0].offset
+    pl_resp[0].offset
 
-.. code-block::
+.. code-block:: none
 
     0
 
@@ -137,7 +137,7 @@ Accessing the ``item`` component produces the actual listing of projects in the 
 
 .. code-block:: python
 
-    >>> len(pl_resp[0].item)
+    len(pl_resp[0].item)
 
 .. code-block::
 
@@ -147,9 +147,9 @@ Now, if we wanted to get the ``title`` field of the sole project in the listing,
 
 .. code-block:: python
 
-    >>> pl_resp[0].item[0].title
+    pl_resp[0].item[0].title
 
-.. code-block::
+.. code-block:: none
 
     "TRN001 : DataFed Training"
 
@@ -169,7 +169,7 @@ we will define (and later use) the first of two contextual variables:
 
 .. code-block:: python
 
-    >>> context = 'p/trn001' # DataFed ID for the training project
+    context = 'p/trn001' # DataFed ID for the training project
 
 .. note::
 
@@ -183,9 +183,9 @@ We can take a look at basic information about a project using the ``projectView(
 
 .. code-block:: python
 
-    >>> df_api.projectView(context)
+    df_api.projectView(context)
 
-.. code-block::
+.. code-block:: none
 
     (proj {
       id: "p/trn001"
@@ -212,14 +212,17 @@ The methodology to access information in these objects is identical to that desc
 Nonetheless, this response provides some useful information such as the administrators, creation date, etc.
 that might be useful for those members or administrators of several projects.
 
+Iterate through items in response
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 We can take a look at the contents of a project by listing everything in the project's
 ``root`` collection using the ``collectionItemsList()`` function as shown below:
 
 .. code-block:: python
 
-    >>> df_api.collectionItemsList('root', context=context)
+    df_api.collectionItemsList('root', context=context)
 
-.. code-block::
+.. code-block:: none
 
     (item {
        id: "c/34559341"
@@ -270,7 +273,7 @@ creating clutter in the ``root`` collection of the project:
 
 .. code-block:: python
 
-    >>> username = 'somnaths' # Name of this user
+    username = 'somnaths' # Name of this user
 
 .. note::
 
@@ -292,12 +295,12 @@ Here, we simply create a dictionary with fake metadata in place of the real meta
 
 .. code-block:: python
 
-    >>> parameters = {
-                      'a': 4,
-                      'b': [1, 2, -4, 7.123],
-                      'c': 'Something important',
-                      'd': {'x': 14, 'y': -19} # Can use nested dictionaries
-                      }
+    parameters = {
+                  'a': 4,
+                  'b': [1, 2, -4, 7.123],
+                  'c': 'Something important',
+                  'd': {'x': 14, 'y': -19} # Can use nested dictionaries
+                  }
 
 Create Data Record
 ~~~~~~~~~~~~~~~~~~
@@ -308,11 +311,11 @@ write the dictionary to a JSON file:
 
 .. code-block:: python
 
-    >>> dc_resp = df_api.dataCreate('my important data',
-                                    metadata=json.dumps(parameters),
-                                    parent_id=username, # parent collection
-                                    context=context, # this project
-                                    )
+    dc_resp = df_api.dataCreate('my important data',
+                                metadata=json.dumps(parameters),
+                                parent_id=username, # parent collection
+                                context=context, # this project
+                                )
 
 Here, the ``parent_id`` was set to the ``username`` variable, as this is the alias of our
 personal collection within the project, in which our data record will be created.
@@ -329,9 +332,9 @@ Let's look at the response we got for the ``dataCreate()`` function call:
 
 .. code-block:: python
 
-    >>> print(response)
+    print(response)
 
-.. code-block::
+.. code-block:: none
 
     (data {
        id: "d/34682319"
@@ -362,10 +365,10 @@ record ID to be used for later operations, here's how we could go about it:
 
 .. code-block:: python
 
-    >>> record_id = response[0].data[0].id
-    >>> print(record_id)
+    record_id = response[0].data[0].id
+    print(record_id)
 
-.. code-block::
+.. code-block:: none
 
     'd/34682319'
 
@@ -377,14 +380,14 @@ unique ``alias``, and **add** to the scientific metadata, we would as follows:
 
 .. code-block:: python
 
-    >>> du_resp = df_api.dataUpdate(record_id,
-                                    title='Some new title for the data',
-                                    alias='my_first_dataset',
-                                    metadata=json.dumps({'appended_metadata': True})
-                                    )
-    >>> print(du_resp)
+    du_resp = df_api.dataUpdate(record_id,
+                                title='Some new title for the data',
+                                alias='my_first_dataset',
+                                metadata=json.dumps({'appended_metadata': True})
+                                )
+    print(du_resp)
 
-.. code-block::
+.. code-block:: none
 
     (data {
       id: "d/34682319"
@@ -423,10 +426,10 @@ metadata, we can always get the most comprehensive information about Data Record
 
 .. code-block:: python
 
-    >>> dv_resp = df_api.dataView(record_id)
-    >>> print(dv_resp)
+    dv_resp = df_api.dataView(record_id)
+    print(dv_resp)
 
-.. code-block::
+.. code-block:: none
 
     (data {
        id: "d/34682319"
@@ -448,9 +451,9 @@ can be converted to familiar python ``datetime`` objects via ``fromtimestamp()``
 
 .. code-block:: python
 
-    >>> datetime.datetime.fromtimestamp(dv_resp[0].data[0].ct)
+    datetime.datetime.fromtimestamp(dv_resp[0].data[0].ct)
 
-.. code-block::
+.. code-block:: none
 
     datetime.datetime(2021, 1, 19, 12, 26, 57)
 
@@ -463,9 +466,9 @@ By default, the metadata in the response is formatted as a JSON string:
 
 .. code-block:: python
 
-    >>> print(dv_resp[0].data[0].metadata)
+    print(dv_resp[0].data[0].metadata)
 
-.. code-block::
+.. code-block:: none
 
     "{\"a\":4,\"appended_metadata\":true,\"b\":[1,2,-4,7.123],\"c\":\"Something important\",\"d\":{\"x\":14,\"y\":-19}}"
 
@@ -474,9 +477,9 @@ In order to get back a python dictionary, use ``json.loads()``
 
 .. code-block:: python
 
-    >>> print(json.loads(dv_resp[0].data[0].metadata))
+    print(json.loads(dv_resp[0].data[0].metadata))
 
-.. code-block::
+.. code-block:: none
 
     {'a': 4,
      'appended_metadata': True,
@@ -493,14 +496,14 @@ If desired, we could completely replace the metadata by setting ``metadata_set``
 
 .. code-block:: python
 
-    >>> du_resp = df_api.dataUpdate(record_id,
-                                    metadata=json.dumps({'p': 14, 'q': 'Hello', 'r': [1, 2, 3]}),
-                                    metadata_set=True,
-                                    )
-    >>> dv_resp = df_api.dataView(record_id)
-    >>> print(json.loads(dv_resp[0].data[0].metadata))
+    du_resp = df_api.dataUpdate(record_id,
+                                metadata=json.dumps({'p': 14, 'q': 'Hello', 'r': [1, 2, 3]}),
+                                metadata_set=True,
+                                )
+    dv_resp = df_api.dataView(record_id)
+    print(json.loads(dv_resp[0].data[0].metadata))
 
-.. code-block::
+.. code-block:: none
 
     {'p': 14, 'q': 'Hello', 'r': [1, 2, 3]}
 
@@ -516,10 +519,10 @@ when demonstrating the ``dataUpdate()`` function. Let us try to view the Record 
 
 .. code-block:: python
 
-    >>> dv_resp = df_api.dataView('my_first_dataset')
-    >>> dv_resp
+    dv_resp = df_api.dataView('my_first_dataset')
+    dv_resp
 
-.. code-block:: python
+.. code-block:: pytb
 
     ---------------------------------------------------------------------------
     Exception                                 Traceback (most recent call last)
@@ -572,10 +575,10 @@ Here is how we would amend the function call:
 
 .. code-block:: python
 
-    >>> dv_resp = df_api.dataView('my_first_dataset', context=context)
-    >>> dv_resp
+    dv_resp = df_api.dataView('my_first_dataset', context=context)
+    dv_resp
 
-.. code-block::
+.. code-block:: none
 
     (data {
        id: "d/34682319"
@@ -607,15 +610,15 @@ First, we create Data Records as we have done earlier for the new datasets using
 
 .. code-block:: python
 
-    >>> dc2_resp = df_api.dataCreate('cleaned data',
-                                      metadata=json.dumps({'cleaning_algorithm': 'gaussian_blur', 'size': 20}),
-                                      parent_id=username, # parent collection
-                                      context=context, # project
-                                     )
-    >>> clean_rec_id = dc2_resp[0].data[0].id
-    >>> print(clean_rec_id)
+    dc2_resp = df_api.dataCreate('cleaned data',
+                                  metadata=json.dumps({'cleaning_algorithm': 'gaussian_blur', 'size': 20}),
+                                  parent_id=username, # parent collection
+                                  context=context, # project
+                                 )
+    clean_rec_id = dc2_resp[0].data[0].id
+    print(clean_rec_id)
 
-.. code-block::
+.. code-block:: none
 
     'd/34682715'
 
@@ -635,10 +638,10 @@ For our example, we will say that our new Record is derived from our original re
 
 .. code-block:: python
 
-    >>> dep_resp = df_api.dataUpdate(clean_rec_id, deps_add=[["der", record_id]])
-    >>> print(dep_resp)
+    dep_resp = df_api.dataUpdate(clean_rec_id, deps_add=[["der", record_id]])
+    print(dep_resp)
 
-.. code-block::
+.. code-block:: none
 
     (data {
        id: "d/34682715"
@@ -694,8 +697,8 @@ For the sake of demonstration, we will just use the metadata as the data itself:
 
 .. code-block:: python
 
-    >>> with open('parameters.json', mode='w') as file_handle:
-            json.dump(parameters, file_handle)
+    with open('parameters.json', mode='w') as file_handle:
+        json.dump(parameters, file_handle)
 
 With the data file created, we are ready to put this raw data into the record we created above.
 
@@ -710,13 +713,13 @@ With the data file created, we are ready to put this raw data into the record we
 
 .. code-block:: python
 
-    >>> put_resp = df_api.dataPut(record_id,
-                                  './parameters.json',
-                                  wait=True, # Waits until transfer completes.
-                                  )
-    >>> print(put_resp)
+    put_resp = df_api.dataPut(record_id,
+                              './parameters.json',
+                              wait=True, # Waits until transfer completes.
+                              )
+    print(put_resp)
 
-.. code-block::
+.. code-block:: none
 
     (item {
        id: "d/34682319"
@@ -760,10 +763,10 @@ Let's view the Data Record we have been working on so far:
 
 .. code-block:: python
 
-    >>> dv_resp = df_api.dataView(record_id)
-    >>> print(dv_resp)
+    dv_resp = df_api.dataView(record_id)
+    print(dv_resp)
 
-.. code-block::
+.. code-block:: none
 
     (data {
        id: "d/34682319"
@@ -802,18 +805,18 @@ whose name matches that of the record ID.
 
 .. code-block:: python
 
-    >>> expected_file_name = os.path.join('.', record_id.split('d/')[-1]) + '.json'
-    >>> print(expected_file_name)
+    expected_file_name = os.path.join('.', record_id.split('d/')[-1]) + '.json'
+    print(expected_file_name)
 
-.. code-block::
+.. code-block:: none
 
     ./34682319.json
 
 .. code-block:: python
 
-    >>> print(os.path.exists(expected_file_name))
+    print(os.path.exists(expected_file_name))
 
-.. code-block::
+.. code-block:: none
 
     False
 
@@ -826,14 +829,14 @@ Now that we know that we will not be having a file name clash, let us proceed wi
 
 .. code-block:: python
 
-    >>> get_resp = df_api.dataGet([record_id], # currently only accepts a list of IDs / aliases
-                                  '.', # directory where data should be downloaded
-                                  orig_fname=False, # do not name file by its original name
-                                  wait=True, # Wait until Globus transfer completes
-                                 )
-    >>> print(get_resp)
+    get_resp = df_api.dataGet([record_id], # currently only accepts a list of IDs / aliases
+                              '.', # directory where data should be downloaded
+                              orig_fname=False, # do not name file by its original name
+                              wait=True, # Wait until Globus transfer completes
+                             )
+    print(get_resp)
 
-.. code-block::
+.. code-block:: none
 
     (task {
       id: "task/34682556"
@@ -855,9 +858,9 @@ Now, let us verify that the file does indeed exist as it should:
 
 .. code-block:: python
 
-    >>> print(os.path.exists(expected_file_name))
+    print(os.path.exists(expected_file_name))
 
-.. code-block::
+.. code-block:: none
 
     True
 
@@ -865,7 +868,7 @@ At this point, we are free to rename the downloaded file to whatever name we wan
 
 .. code-block:: python
 
-    >>> os.rename(expected_file_name, 'duplicate_parameters.json')
+    os.rename(expected_file_name, 'duplicate_parameters.json')
 
 Tasks
 ~~~~~
@@ -875,10 +878,10 @@ From the earlier ``dataGet()`` function call's response, we can extract the ``ta
 
 .. code-block:: python
 
-    >>> task_id = get_resp[0].task[0].id
-    >>> print(task_id)
+    task_id = get_resp[0].task[0].id
+    print(task_id)
 
-.. code-block::
+.. code-block:: none
 
     task/34682556
 
@@ -886,10 +889,10 @@ Using the task ID, we can check on the status of the ``task`` via the ``taskView
 
 .. code-block:: python
 
-    >>> task_resp = df_api.taskView(task_id)
-    >>> print(task_resp)
+    task_resp = df_api.taskView(task_id)
+    print(task_resp)
 
-.. code-block::
+.. code-block:: none
 
     (task {
       id: "task/34682556"
@@ -926,9 +929,9 @@ We can also extract the status of the ``task`` as:
 
 .. code-block:: python
 
-    >>> task_resp[0].task[0].status
+    task_resp[0].task[0].status
 
-.. code-block::
+.. code-block:: none
 
     3
 
@@ -965,23 +968,23 @@ results data file. Though comically oversimplified, it is sufficiently accurate 
 
 .. code-block:: python
 
-    >>> def expensive_simulation():
-            time.sleep(3)
-            # Yes, this simulation is deterministic and always results in the same result:
-            path_to_results = 'esnet#cern-diskpt1/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat'
-            return path_to_results
+    def expensive_simulation():
+        time.sleep(3)
+        # Yes, this simulation is deterministic and always results in the same result:
+        path_to_results = 'esnet#cern-diskpt1/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat'
+        return path_to_results
 
 The next handy function is ``check_xfer_status()`` that looks up the instantaneous status of the transfer
 of each task it is provided and returns only the statuses:
 
 .. code-block:: python
 
-    >>> def check_xfer_status(task_ids):
-            statuses = list()
-            for this_task_id in task_ids:
-                task_resp = df_api.taskView(this_task_id)
-                statuses.append(task_resp[0].task[0].status)
-            return statuses
+    def check_xfer_status(task_ids):
+        statuses = list()
+        for this_task_id in task_ids:
+            task_resp = df_api.taskView(this_task_id)
+            statuses.append(task_resp[0].task[0].status)
+        return statuses
 
 In the following demonstration, we perform a series of "computationally expensive" simulations.
 
@@ -990,8 +993,8 @@ all the simulation results:
 
 .. code-block:: python
 
-    >>> coll_resp = df_api.collectionCreate('Simulations', parent_id=username, context=context)
-    >>> sim_coll_id = coll_resp[0].coll[0].id
+    coll_resp = df_api.collectionCreate('Simulations', parent_id=username, context=context)
+    sim_coll_id = coll_resp[0].coll[0].id
 
 Knowing that the simulations take a while to complete,
 we create a Data Record to hold each simulation's resulting data file and then call ``dataPut()``
@@ -1000,24 +1003,24 @@ or, importantly - wasting precious wall time on the supercomputer.
 
 .. code-block:: python
 
-    >>> xfer_tasks = list()
-    >>> for ind in range(3):
-            print('Starting simulation #{}'.format(ind))
-            results_file = expensive_simulation()
-            rec_resp = df_api.dataCreate('Simulation_' + str(ind),
-                                         metadata=json.dumps({'parameter_1': ind}),
-                                         parent_id=sim_coll_id,
-                                         context=context)
-            this_rec_id = rec_resp[0].data[0].id
-            print('Uploading data from simulation #{}'.format(ind))
-            put_resp = df_api.dataPut(this_rec_id, results_file, wait=False)
-            xfer_tasks.append(put_resp[0].task.id)
-            print('Transfer status(es): {}'.format(check_xfer_status(xfer_tasks)))
-            print('')
+    xfer_tasks = list()
+    for ind in range(3):
+        print('Starting simulation #{}'.format(ind))
+        results_file = expensive_simulation()
+        rec_resp = df_api.dataCreate('Simulation_' + str(ind),
+                                     metadata=json.dumps({'parameter_1': ind}),
+                                     parent_id=sim_coll_id,
+                                     context=context)
+        this_rec_id = rec_resp[0].data[0].id
+        print('Uploading data from simulation #{}'.format(ind))
+        put_resp = df_api.dataPut(this_rec_id, results_file, wait=False)
+        xfer_tasks.append(put_resp[0].task.id)
+        print('Transfer status(es): {}'.format(check_xfer_status(xfer_tasks)))
+        print('')
 
-    >>> print('Simulations complete')
+    print('Simulations complete')
 
-.. code-block::
+.. code-block:: none
 
     Starting simulation #0
     Uploading data from simulation #0
@@ -1055,15 +1058,15 @@ We would use the ``collectionCreate()`` function as:
 
 .. code-block:: python
 
-    >>> coll_alias = 'cat_dog_train'
+    coll_alias = 'cat_dog_train'
     ​
-    >>> coll_resp = df_api.collectionCreate('Image classification training data',
-                                            alias=coll_alias,
-                                            parent_id=username,
-                                            context=context)
-    >>> print(coll_resp)
+    coll_resp = df_api.collectionCreate('Image classification training data',
+                                        alias=coll_alias,
+                                        parent_id=username,
+                                        context=context)
+    print(coll_resp)
 
-.. code-block::
+.. code-block:: none
 
     (coll {
       id: "c/34683877"
@@ -1104,26 +1107,26 @@ Since we need to create several Data Records for dogs and cats, we will define a
 
 .. code-block:: python
 
-    >>> import random
+    import random
 
-    >>> def generate_animal_data(is_dog=True):
-            this_animal = 'cat'
-            if is_dog:
-                this_animal = 'dog'
-            # To mimic a real-life scenario, we append a number to the animal type to denote
-            # the N-th example of a cat or dog. In this case, we use a random integer.
-            rec_resp = df_api.dataCreate(this_animal + '_' + str(random.randint(1, 100)),
-                                         metadata=json.dumps({'animal': this_animal}),
-                                         parent_id=coll_alias,
-                                         context=context)
-            # Parse the dataCreate response to tease out the ID of the Record
-            this_rec_id = rec_resp[0].data[0].id
-            # path to the file containing the raw data
-            raw_data_path = 'esnet#newy-dtn/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat'
-            # Putting the raw data into the record
-            put_resp = df_api.dataPut(this_rec_id, raw_data_path)
-            # Only returning the ID of the Data Record we created:
-            return this_rec_id
+    def generate_animal_data(is_dog=True):
+        this_animal = 'cat'
+        if is_dog:
+            this_animal = 'dog'
+        # To mimic a real-life scenario, we append a number to the animal type to denote
+        # the N-th example of a cat or dog. In this case, we use a random integer.
+        rec_resp = df_api.dataCreate(this_animal + '_' + str(random.randint(1, 100)),
+                                     metadata=json.dumps({'animal': this_animal}),
+                                     parent_id=coll_alias,
+                                     context=context)
+        # Parse the dataCreate response to tease out the ID of the Record
+        this_rec_id = rec_resp[0].data[0].id
+        # path to the file containing the raw data
+        raw_data_path = 'esnet#newy-dtn/data1/5MB-in-tiny-files/a/a/a-a-1KB.dat'
+        # Putting the raw data into the record
+        put_resp = df_api.dataPut(this_rec_id, raw_data_path)
+        # Only returning the ID of the Data Record we created:
+        return this_rec_id
 
 In the above function, we use a tiny dataset from ESNet's read-only Globus endpoint: ``esnet#newy-dtn``.
 The actual data itself is of little relevance to this example and will not really be used.
@@ -1142,23 +1145,23 @@ We will generate 5 examples each of cats and dogs:
 
 .. code-block:: python
 
-    >>> cat_records = list()
-    >>> dog_records = list()
-    >>> for _ in range(5):
-            dog_records.append(generate_animal_data(is_dog=True))
-    >>> for _ in range(5):
-            cat_records.append(generate_animal_data(is_dog=False))
-    >>> print(cat_records)
+    cat_records = list()
+    dog_records = list()
+    for _ in range(5):
+        dog_records.append(generate_animal_data(is_dog=True))
+    for _ in range(5):
+        cat_records.append(generate_animal_data(is_dog=False))
+    print(cat_records)
 
-.. code-block::
+.. code-block:: none
 
     ['d/34684011', 'd/34684035', 'd/34684059', 'd/34684083', 'd/34684107']
 
 .. code-block:: python
 
-    >>> print(dog_records)
+    print(dog_records)
 
-.. code-block::
+.. code-block:: none
 
     ['d/34683891', 'd/34683915', 'd/34683939', 'd/34683963', 'd/34683987']
 
@@ -1171,10 +1174,10 @@ identifier, we do need to specify the ``context`` as well:
 
 .. code-block:: python
 
-    >>> coll_list_resp = df_api.collectionItemsList(coll_alias, context=context)
-    >>>  print(coll_list_resp)
+    coll_list_resp = df_api.collectionItemsList(coll_alias, context=context)
+     print(coll_list_resp)
 
-.. code-block::
+.. code-block:: none
 
     (item {
       id: "d/34684107"
@@ -1329,10 +1332,10 @@ saved queries via the ``queryList()`` function as:
 
 .. code-block:: python
 
-    >>> ql_resp = df_api.queryList()
-    >>> print(ql_resp)
+    ql_resp = df_api.queryList()
+    print(ql_resp)
 
-.. code-block::
+.. code-block:: none
 
     (item {
        id: "q/34684970"
@@ -1349,10 +1352,10 @@ We can extract the query ID as:
 
 .. code-block:: python
 
-    >>> query_id = ql_resp[0].item[0].id
-    >>> print(query_id)
+    query_id = ql_resp[0].item[0].id
+    print(query_id)
 
-.. code-block::
+.. code-block:: none
 
     'q/34684970'
 
@@ -1362,9 +1365,9 @@ Just like ``dataView()``, we can view use ``queryView()`` to view this query as 
 
 .. code-block:: python
 
-    >>> df_api.queryView(query_id)
+    df_api.queryView(query_id)
 
-.. code-block::
+.. code-block:: none
 
     (query {
        id: "q/34684970"
@@ -1387,10 +1390,10 @@ Finally, we can run the desired query using ``queryExec()`` as shown below:
 
 .. code-block:: python
 
-    >>> query_resp = df_api.queryExec(query_id)
-    >>> print(query_resp)
+    query_resp = df_api.queryExec(query_id)
+    print(query_resp)
 
-.. code-block::
+.. code-block:: none
 
     (item {
       id: "d/34684011"
@@ -1446,11 +1449,11 @@ Let's verify that the results from the query match our expectation
 
 .. code-block:: python
 
-    >>> # First get IDs from query result
-    >>> cat_rec_ids = [record.id for record in query_resp[0].item]
-    >>> print(set(cat_rec_ids) == set(cat_records))
+    # First get IDs from query result
+    cat_rec_ids = [record.id for record in query_resp[0].item]
+    print(set(cat_rec_ids) == set(cat_records))
 
-.. code-block::
+.. code-block:: none
 
     True
 
@@ -1468,11 +1471,11 @@ We could segregate all cat data into a new, separate collection just for cats vi
 
 .. code-block:: python
 
-    >>> coll_resp = df_api.collectionCreate('Cats', alias='cats', parent_id=coll_alias, context=context)
-    >>> cat_coll_id = coll_resp[0].coll[0].id
-    >>> print(cat_coll_id)
+    coll_resp = df_api.collectionCreate('Cats', alias='cats', parent_id=coll_alias, context=context)
+    cat_coll_id = coll_resp[0].coll[0].id
+    print(cat_coll_id)
 
-.. code-block::
+.. code-block:: none
 
     'c/34685092'
 
@@ -1487,10 +1490,10 @@ This function accepts a list of IDs to add via the ``add_ids`` keyword argument:
 
 .. code-block:: python
 
-    >>> cup_resp = df_api.collectionItemsUpdate(cat_coll_id, add_ids=cat_rec_ids)
-    >>> print(cup_resp)
+    cup_resp = df_api.collectionItemsUpdate(cat_coll_id, add_ids=cat_rec_ids)
+    print(cup_resp)
 
-.. code-block::
+.. code-block:: none
 
     (, 'ListingReply')
 
@@ -1503,10 +1506,10 @@ In the interest of brevity, we capture the response and only print out ID and ti
 
 .. code-block:: python
 
-    >>> ls_resp = df_api.collectionItemsList(cat_coll_id)
-    >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+    ls_resp = df_api.collectionItemsList(cat_coll_id)
+    print([(obj.id, obj.title) for obj in ls_resp[0].item])
 
-.. code-block::
+.. code-block:: none
 
     [('d/34684107', 'cat_22'),
      ('d/34684011', 'cat_32'),
@@ -1519,10 +1522,10 @@ However, let us list the contents of the original / outer collection:
 
 .. code-block:: python
 
-    >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
-    >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+    ls_resp = df_api.collectionItemsList(coll_alias, context=context)
+    print([(obj.id, obj.title) for obj in ls_resp[0].item])
 
-.. code-block::
+.. code-block:: none
 
     [('c/34685092', 'Cats'),
      ('d/34684107', 'cat_22'),
@@ -1545,10 +1548,10 @@ rather than the ``add_ids`` keyword argument:
 
 .. code-block:: python
 
-    >>> cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids, context=context)
-    >>> print(cup_resp)
+    cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids, context=context)
+    print(cup_resp)
     
-.. code-block::
+.. code-block:: none
 
     (, 'ListingReply')
 
@@ -1556,10 +1559,10 @@ Let us verify that the original / outer Collection no longer contains cat Record
 
 .. code-block:: python
 
-    >>> ls_resp = df_api.collectionItemsList(coll_alias, context=context)
-    >>> print([(obj.id, obj.title) for obj in ls_resp[0].item])
+    ls_resp = df_api.collectionItemsList(coll_alias, context=context)
+    print([(obj.id, obj.title) for obj in ls_resp[0].item])
     
-.. code-block::
+.. code-block:: none
 
     [('c/34685092', 'Cats'),
      ('d/34683939', 'dog_3'),
@@ -1581,9 +1584,9 @@ We will ask ``dataGet()`` to create a new directory called ``cat_data`` and put 
 
 .. code-block:: python
 
-    >>> df_api.dataGet([cat_coll_id], './cat_data')
+    df_api.dataGet([cat_coll_id], './cat_data')
 
-.. code-block::
+.. code-block:: none
 
     (item {
        id: "d/34684011"
@@ -1638,9 +1641,9 @@ Now, let us verify that all the data does in fact exist in this newly created di
 
 .. code-block:: python
 
-    >>> os.listdir('./cat_data')
+    os.listdir('./cat_data')
 
-.. code-block::
+.. code-block:: none
 
     ['34684107.dat',
      '34684059.dat',
