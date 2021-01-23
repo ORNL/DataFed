@@ -72,13 +72,23 @@ First, let's try to find projects we are part of using the ``projectList()`` fun
 .. code-block:: none
 
     (item {
+       id: "p/abc123"
+       title: "ABC123: Important Project"
+       owner: "u/breetju"
+     }
+     item {
+       id: "p/sns.dvs.1"
+       title: "SNS BL-11A"
+       owner: "u/stansberrydv"
+     }
+     item {
       id: "p/trn001"
       title: "TRN001 : DataFed Training"
       owner: "u/somnaths"
     }
     offset: 0
     count: 20
-    total: 1
+    total: 3
     , 'ListingReply')
 
 DataFed typically responds to functions with messages.
@@ -98,7 +108,10 @@ The first layer is typically a tuple of size 2:
 
     (tuple, 2)
 
-This tuple usually contains two key objects: (1) a message containing the information requested from DataFed, and (2) the *type* of that  message, which allows us to interpret the reply and parse its fields correctly -- in this case, our message is in the form of a ``'ListingReply'``.
+This tuple usually contains two key objects:
+
+1. a message containing the information requested from DataFed
+2. the *type* of that  message, which allows us to interpret the reply and parse its fields correctly -- in this case, our message is in the form of a ``'ListingReply'``.
 
 A simple check of the object type will confirm the type of our core `Google Protocol Buffer <https://developers.google.com/protocol-buffers>`_ message:
 
@@ -116,6 +129,9 @@ We will be encountering most of the different types of messages in this user gui
 Interested users are encouraged to read official documentation and `examples about Google Protobuf <https://developers.google.com/protocol-buffers/docs/pythontutorial#where-to-find-the-example-code>`_.
 
 Protobuf messages are powerful objects that not only allow quick access to the information stored in their defined fields, but are also nominally subscriptable and iterable in Python.
+
+Subcripting message objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Besides the main information about the different projects, this ``ListingReply`` also provides some contextual information
 such as the:
 
@@ -141,13 +157,13 @@ Accessing the ``item`` component produces the actual listing of projects in the 
 
 .. code-block::
 
-    1
+    3
 
-Now, if we wanted to get the ``title`` field of the sole project in the listing, we would access it as:
+Now, if we wanted to get the ``title`` field of the third project in the listing, we would access it as:
 
 .. code-block:: python
 
-    pl_resp[0].item[0].title
+    pl_resp[0].item[2].title
 
 .. code-block:: none
 
@@ -158,6 +174,21 @@ Now, if we wanted to get the ``title`` field of the sole project in the listing,
     We will be accessing many fields in messages going forward.
     Users are recommended to revisit this section to remind themselves how to peel each layer of the message to get to the desired field
     since we will jump straight into using a single line of code to access the desired information henceforth in the interest of brevity.
+
+Iterating through message items
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Let's say we wanted to print out ID and owner of each of the projects in the listing, we could iterate through the items as:
+
+.. code-block:: python
+
+    for proj in pl_resp[0].item:
+        print(proj.id, '\t', proj.owner)
+
+.. code-block:: none
+
+    p/abc123        u/breetju
+    p/sns.dvs.1     u/stansberrydv
+    p/trn001 	    u/somnaths
 
 Exploring projects
 ~~~~~~~~~~~~~~~~~~
@@ -194,8 +225,8 @@ The methodology to access information in these objects is identical to that desc
 Nonetheless, this response provides some useful information such as the administrators, creation date, etc.
 that might be useful for those members or administrators of several projects.
 
-Contexts
---------
+Contexts, aliases & IDs
+-----------------------
 Just as people have various facets within their own life such as their personal and professional lives,
 DataFed too offers similar capabilities via contexts.
 Users in DataFed have their own ``Personal Data`` context as well as other contexts in the form of
@@ -233,7 +264,7 @@ within the User's ``Personal Data``.
 
 There are ways to set the context, one can set the context only within the scope of a function or simply reset the default scope.
 
-Context for function
+Context per function
 ~~~~~~~~~~~~~~~~~~~~
 Every space in DataFed, regardless of whether it is a ``Project`` or the user's own ``Personal Data``
 contains a Collection called ``root``, which contains all other Data Records and Collections within this space.
@@ -288,10 +319,8 @@ Let's see what would have happened if we did not specify the ``context`` via the
 From the ``desc`` field in the above output, we observe that simply asking for ``root`` Collection returns information about the
 user's ``Personal data`` rather than the ``root`` Collection in Training project.
 
-
-
-Iterate through items in response
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Contents of contexts
+~~~~~~~~~~~~~~~~~~~~
 Now that we know how to get to the correct ``root`` Collection,
 we can take a look at the contents of the project by listing everything in the project's
 ``root`` collection using the ``collectionItemsList()`` function as shown below:
@@ -342,34 +371,6 @@ use of project members and a collaborative space called ``PROJSHARE``
 .. note::
 
     Not all projects would be structured in this manner.
-
-Unlike the listing of Projects earlier, we do have multiple items in this ``ListingReply`` as seen below:
-
-.. code-block:: python
-
-    len(ls_resp[0].item)
-
-.. code-block:: none
-
-    5
-
-If we wanted to iterate through each of the 5 objects in this listing and perform some operation on each
-individual item, such as only print the ``id`` and ``alias`` fields for each Collection,
-we could do the following:
-
-.. code-block:: python
-
-    for coll_obj in ls_resp[0].item:
-        print(coll_obj.id, coll_obj.alias)
-
-.. code-block:: none
-
-    c/34559341 breetju
-    c/34559108 projshare
-    c/34558900 somnaths
-    c/34559268 stansberrydv
-    c/34559171 worldshare
-
 
 Alias vs ID
 ~~~~~~~~~~~
@@ -452,12 +453,15 @@ We observe that we can successfully get information about an entity in DataFed u
 However, one would need to carefully extract the (automatically generated) ID of the Collection or Data Record of interest
 from the DataFed response in order to use it in subsequent code within a script.
 
-Set Project context
-~~~~~~~~~~~~~~~~~~~
+Manual context management
+~~~~~~~~~~~~~~~~~~~~~~~~~
 In this user guide, we will work within the context of the training project.
 In order to ensure that we continue to work within this context -
 create data records, collections, etc. within this space,
-we will define (and later use) the first of two contextual variables:
+we need to ensure that we minimize ambiguity about the context.
+
+A naive approach is to simply define a python variable and use it in every function call
+instead of manually specifying it as we have done above:
 
 .. code-block:: python
 
@@ -469,12 +473,57 @@ we will define (and later use) the first of two contextual variables:
     If you want to work within your own ``Personal Data`` space,
     set ``context`` to ``None``.
 
+.. caution::
 
+    Accidentally forgetting to specify the ``context`` keyword argument in functions could
+    result in incorrect data management operations.
 
-Set User context
-~~~~~~~~~~~~~~~~
-Now that we see that a collection does indeed exist for each user in the project,
-we can set the second portion of our context such that any data we want to create in our
+Set default context
+~~~~~~~~~~~~~~~~~~~
+Keeping track of and remembering to specify the ``context`` keyword argument for all
+function calls can be tedious if one is surely going to be working within a single context.
+
+In such cases, DataFed provides the ``setContext()`` function that allows the user to
+specify the default context going forward:
+
+.. code-block:: python
+
+    df_api.setContext('p/trn001')
+
+.. note::
+
+    ``setContext()`` is valid within the scope of a single python process.
+    The user would need to call the function each time they instantiate the DataFed ``CommandLib.API`` class
+
+Now, one could operate on items within the project without having to specify the ``context``
+keyword argument. For example, running the same ``collectionView()`` function that failed earlier
+would work now:
+
+.. code-block:: python
+
+    df_api.collectionView('somnaths')
+
+.. code-block:: none
+
+    (coll {
+       id: "c/34558900"
+       title: "somnaths"
+       alias: "somnaths"
+       owner: "p/trn001"
+       ct: 1610905632
+       ut: 1610905667
+       notes: 0
+     }, 'CollDataReply')
+
+If we wanted to temporarily operate on a different context such as the user's ``Personal Data``,
+we would need to specify the ``context`` keyword argument explicitly for those function calls.
+
+Set working collection
+~~~~~~~~~~~~~~~~~~~~~~
+In this specific case, the Project has been organized to provide each user with their own
+private collection.
+
+We can use a python variable to help ensure that any Data Records or Collections we want to create in our
 private space is created within our own collection (``somnaths`` in this case) rather than
 creating clutter in the ``root`` collection of the project:
 
@@ -487,9 +536,6 @@ creating clutter in the ``root`` collection of the project:
     Please change the ``username`` variable to suit your own project.
     If you want to work within your own ``root`` collection,
     set ``username`` to ``root``.
-
-Here ``username`` will be used to ensure that all records and collections are created
-within this parent collection.
 
 Data Records
 ------------
@@ -521,16 +567,12 @@ write the dictionary to a JSON file:
     dc_resp = df_api.dataCreate('my important data',
                                 metadata=json.dumps(parameters),
                                 parent_id=username, # parent collection
-                                context=context, # this project
                                 )
 
 Here, the ``parent_id`` was set to the ``username`` variable, as this is the alias of our
 personal collection within the project, in which our data record will be created.
 Leaving this unspecified is equivalent to the default value of ``root`` which means that
 the Data Record would be created within the ``root`` collection of the project.
-
-Leaving both the ``parent_id`` and ``context`` unspecified would have caused the
-Data Record to be created within ``root`` collection in the user's ``Personal Data`` rather than the project.
 
 Extract Record ID
 ~~~~~~~~~~~~~~~~~
