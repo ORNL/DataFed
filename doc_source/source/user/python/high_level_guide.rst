@@ -1215,6 +1215,13 @@ this is just an illustration. However, it does illustrate a popular use-case for
     Users are recommended to perform data orchestration (especially large data movement - upload / download) operations
     outside the scope of heavy / parallel computation operations in order to avoid wasting precious wall time on compute clusters.
 
+Task list
+~~~~~~~~~
+DataFed also provides the ``taskList()`` function that displays a list of all
+data upload or download tasks in descending order of time since creation.
+This may be useful for those who are developing applications where one needs ot check on
+and manage tasks initiated, for example, from different python sessions (either in the past or running elsewhere)
+
 Collections
 -----------
 Collections are a great tool for organizing Data Records and other Collections within DataFed.
