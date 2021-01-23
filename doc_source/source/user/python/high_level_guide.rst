@@ -53,8 +53,8 @@ Finally, we create an instance of the DataFed API class via:
 
 Assuming that DataFed has been installed and our default GlobusID configured correctly, we can now use ``df_api`` to communicate with DataFed as an authenticated user. If not, refer back to the `installation instructions <../client/install.html>`_.
 
-DataFed Basics & Projects
--------------------------
+DataFed Responses & Projects
+----------------------------
 
 DataFed functions and responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -195,38 +195,58 @@ Nonetheless, this response provides some useful information such as the administ
 that might be useful for those members or administrators of several projects.
 
 Contexts
-~~~~~~~~
-Every space in DataFed, regardless of whether it is a ``Project`` or the user's own ``Personal Data``
-contains a Collection called ``root``, which contains all other Data Records and Collections within this space.
+--------
+Just as people have various facets within their own life such as their personal and professional lives,
+DataFed too offers similar capabilities via contexts.
+Users in DataFed have their own ``Personal Data`` context as well as other contexts in the form of
+``Projects`` as we have seen above.
 
-Let us attempt to take a look at the ``root`` Collection in the Training project.
-In order to look at the ``root`` Collection in the project, we will be using the
-``collectionView()`` function. We will be going over this specific function later in greater detail,
-but will use it here to illustrate another concept.
+Default context
+~~~~~~~~~~~~~~~
+
+We can always ask DataFed what ``context`` it is using via the ``getContext()`` function:
 
 .. code-block:: python
 
-    print(df_api.collectionView('root'))
+    print(df_api.getContext())
 
 .. code-block:: none
 
-    (coll {
-       id: "c/u_somnaths_root"
-       title: "root"
-       desc: "Root collection for user Suhas Somnath (somnaths)"
-       owner: "u/somnaths"
-       notes: 0
-     }, 'CollDataReply')
+    'u/somnaths'
 
-This function returns a different, yet somewhat similar response - a ``CollDataReply`` object.
+As mentioned earlier, DataFed typically replies with a Google Protobuf message object.
+However, ``getContext()`` is among the few functions where DataFed returns a simple string.
 
-From the ``desc`` field in the above output, we observe that simply asking for ``root`` Collection returns information about the
-user's ``Personal data`` rather than the ``root`` Collection in Training project.
-We got such a response because DataFed by default assumes that it must operate within the ``context`` of
-the the user's ``Personal Data`` space.
+The return value from ``getContext()`` reveals that DataFed is assuming that we intend to work
+within the User's ``Personal Data``.
 
-In order to get information about the ``root`` collection within
-the project we are interested in, we would need to provide information regarding the ``context`` as:
+.. note::
+
+    DataFed starts with its context set by default to the User's ``Personal Data``
+    rather than any project
+
+.. caution::
+
+    Though the CommandLib interface of DataFed sets the default context to the User's
+    ``Personal Data``, it is not necessary that the user have a valid data allocation
+    to create and store data in their ``Personal Data``.
+
+There are ways to set the context, one can set the context only within the scope of a function or simply reset the default scope.
+
+Context for function
+~~~~~~~~~~~~~~~~~~~~
+Every space in DataFed, regardless of whether it is a ``Project`` or the user's own ``Personal Data``
+contains a Collection called ``root``, which contains all other Data Records and Collections within this space.
+
+Let us take a look at the ``root`` Collection in the Training project.
+
+In order to look at the Collection, we will be using the ``collectionView()`` function.
+We will be going over this specific function later in greater detail,
+but will use it here to illustrate another concept.
+
+Since we are interested in the ``root`` Collection within the ``context`` of the Training ``Project``,
+and not the ``User`` ``Personal Data`` which is the current (default) ``context``,
+we can specify the context for this function call using the ``context`` keyword argument as:
 
 .. code-block:: python
 
@@ -243,8 +263,32 @@ the project we are interested in, we would need to provide information regarding
        notes: 0
      }, 'CollDataReply')
 
-The ``desc`` field in the above response illustrates that, this time,
+This function returns a different, yet somewhat similar response to that from the ``projectView()`` function - a ``CollDataReply`` object.
+
+The ``desc`` field in the above response illustrates that,
 we did in fact get information regarding the ``root`` Collection belonging to the Training project and not the user's ``Personal Data`` space.
+
+Let's see what would have happened if we did not specify the ``context`` via the keyword argument:
+
+.. code-block:: python
+
+    print(df_api.collectionView('root'))
+
+.. code-block:: none
+
+    (coll {
+       id: "c/u_somnaths_root"
+       title: "root"
+       desc: "Root collection for user Suhas Somnath (somnaths)"
+       owner: "u/somnaths"
+       notes: 0
+     }, 'CollDataReply')
+
+
+From the ``desc`` field in the above output, we observe that simply asking for ``root`` Collection returns information about the
+user's ``Personal data`` rather than the ``root`` Collection in Training project.
+
+
 
 Iterate through items in response
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -334,53 +378,82 @@ Though aliases are indeed a convenient way to address items in DataFed, there ar
 
 .. note::
 
-    The ``alias`` for a Data Record or Collection is unrque only within a user's ``Personal Data`` or ``Project`` context.
+    The ``alias`` for a Data Record or Collection is unique only within a user's ``Personal Data`` or ``Project`` context.
     One would need to supply the ``context`` when addressing a Record or Collection via its ``alias``
 
 Not supplying the ``context`` when addressing via an ``alias`` would result in an error:
 
-df_api.collectionView('somnaths')
+.. code-block:: python
 
----------------------------------------------------------------------------
-Exception                                 Traceback (most recent call last)
-<ipython-input-20-acb948617f34> in <module>
-----> 1 df_api.collectionItemsList('somnaths')
+    df_api.collectionView('somnaths')
 
-//anaconda/lib/python3.5/site-packages/datafed/CommandLib.py in collectionItemsList(self, coll_id, offset, count, context)
-    757         msg.id = self._resolve_id( coll_id, context )
-    758
---> 759         return self._mapi.sendRecv( msg )
-    760
-    761
+.. code-block:: pytb
 
-//anaconda/lib/python3.5/site-packages/datafed/MessageLib.py in sendRecv(self, msg, timeout, nack_except)
-    299         self.send( msg )
-    300         _timeout = (timeout if timeout != None else self._timeout)
---> 301         reply, mt, ctxt = self.recv( _timeout, nack_except )
-    302         if reply == None:
-    303             return None, None
+    ---------------------------------------------------------------------------
+    Exception                                 Traceback (most recent call last)
+    <ipython-input-20-acb948617f34> in <module>
+    ----> 1 df_api.collectionItemsList('somnaths')
 
-//anaconda/lib/python3.5/site-packages/datafed/MessageLib.py in recv(self, timeout, nack_except)
-    343         if msg_type == "NackReply" and _nack_except:
-    344             if reply.err_msg:
---> 345                 raise Exception(reply.err_msg)
-    346             else:
-    347                 raise Exception("Server error {}".format( reply.err_code ))
+    //anaconda/lib/python3.5/site-packages/datafed/CommandLib.py in collectionItemsList(self, coll_id, offset, count, context)
+        757         msg.id = self._resolve_id( coll_id, context )
+        758
+    --> 759         return self._mapi.sendRecv( msg )
+        760
+        761
 
-Exception: Alias 'somnaths' does not exist
-(source: dbGet:126 code:1)
+    //anaconda/lib/python3.5/site-packages/datafed/MessageLib.py in sendRecv(self, msg, timeout, nack_except)
+        299         self.send( msg )
+        300         _timeout = (timeout if timeout != None else self._timeout)
+    --> 301         reply, mt, ctxt = self.recv( _timeout, nack_except )
+        302         if reply == None:
+        303             return None, None
 
+    //anaconda/lib/python3.5/site-packages/datafed/MessageLib.py in recv(self, timeout, nack_except)
+        343         if msg_type == "NackReply" and _nack_except:
+        344             if reply.err_msg:
+    --> 345                 raise Exception(reply.err_msg)
+        346             else:
+        347                 raise Exception("Server error {}".format( reply.err_code ))
 
+    Exception: Alias 'somnaths' does not exist
+    (source: dbGet:126 code:1)
 
-operating and accessing information about the Data Record we just created using its
-unique ID via the variable - ``record_id``.
+.. note::
 
-However, DataFed also allows Data Records and Collections to be addressed via their ``alias``, which we set
-when demonstrating the ``dataUpdate()`` function. Let us try to view the Record using its alias instead of its ID:
+    All Data Records and Collections always have a unique alphanumeric identifier or ``ID`` even if the
+    user did not specify a human-friendly ``alias``
+
+An alternate way to address a Data Record or Collection is via its ``ID``:
+
+.. code-block:: python
+
+    df_api.collectionView('c/34558900')
+
+.. code-block:: none
+
+    (coll {
+       id: "c/34558900"
+       title: "somnaths"
+       alias: "somnaths"
+       owner: "p/trn001"
+       ct: 1610905632
+       ut: 1610905667
+       notes: 0
+     }, 'CollDataReply')
+
+We observe that we can successfully get information about an entity in DataFed using its ID.
+
+.. note::
+
+    ``ID`` for Records, Collections, etc. in projects are unique across all of DataFed, and are not just
+    unique within a narrow scope such as within that of a Project or User's space.
+    It is therefore unnecessary to provide the ``context`` when addressing an item via its unique ID.
+
+However, one would need to carefully extract the (automatically generated) ID of the Collection or Data Record of interest
+from the DataFed response in order to use it in subsequent code within a script.
 
 Set Project context
 ~~~~~~~~~~~~~~~~~~~
-
 In this user guide, we will work within the context of the training project.
 In order to ensure that we continue to work within this context -
 create data records, collections, etc. within this space,
@@ -395,6 +468,8 @@ we will define (and later use) the first of two contextual variables:
     Please change the ``context`` variable to suit your own project.
     If you want to work within your own ``Personal Data`` space,
     set ``context`` to ``None``.
+
+
 
 Set User context
 ~~~~~~~~~~~~~~~~
