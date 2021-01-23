@@ -53,8 +53,8 @@ Finally, we create an instance of the DataFed API class via:
 
 Assuming that DataFed has been installed and our default GlobusID configured correctly, we can now use ``df_api`` to communicate with DataFed as an authenticated user. If not, refer back to the `installation instructions <../client/install.html>`_.
 
-Projects & DataFed responses
-----------------------------
+DataFed Basics & Projects
+-------------------------
 
 DataFed functions and responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,31 +159,13 @@ Now, if we wanted to get the ``title`` field of the sole project in the listing,
     Users are recommended to revisit this section to remind themselves how to peel each layer of the message to get to the desired field
     since we will jump straight into using a single line of code to access the desired information henceforth in the interest of brevity.
 
-Set Project context
-~~~~~~~~~~~~~~~~~~~
-
-In this user guide, we will work within the context of the training project.
-In order to ensure that we continue to work within this context -
-create data records, collections, etc. within this space,
-we will define (and later use) the first of two contextual variables:
-
-.. code-block:: python
-
-    context = 'p/trn001' # DataFed ID for the training project
-
-.. note::
-
-    Please change the ``context`` variable to suit your own project.
-    If you want to work within your own ``root`` collection,
-    set ``context`` to ``None``.
-
 Exploring projects
 ~~~~~~~~~~~~~~~~~~
 We can take a look at basic information about a project using the ``projectView()`` function:
 
 .. code-block:: python
 
-    df_api.projectView(context)
+    df_api.projectView('p/trn001')
 
 .. code-block:: none
 
@@ -212,15 +194,68 @@ The methodology to access information in these objects is identical to that desc
 Nonetheless, this response provides some useful information such as the administrators, creation date, etc.
 that might be useful for those members or administrators of several projects.
 
+Contexts
+~~~~~~~~
+Every space in DataFed, regardless of whether it is a ``Project`` or the user's own ``Personal Data``
+contains a Collection called ``root``, which contains all other Data Records and Collections within this space.
+
+Let us attempt to take a look at the ``root`` Collection in the Training project.
+In order to look at the ``root`` Collection in the project, we will be using the
+``collectionView()`` function. We will be going over this specific function later in greater detail,
+but will use it here to illustrate another concept.
+
+.. code-block:: python
+
+    print(df_api.collectionView('root'))
+
+.. code-block:: none
+
+    (coll {
+       id: "c/u_somnaths_root"
+       title: "root"
+       desc: "Root collection for user Suhas Somnath (somnaths)"
+       owner: "u/somnaths"
+       notes: 0
+     }, 'CollDataReply')
+
+This function returns a different, yet somewhat similar response - a ``CollDataReply`` object.
+
+From the ``desc`` field in the above output, we observe that simply asking for ``root`` Collection returns information about the
+user's ``Personal data`` rather than the ``root`` Collection in Training project.
+We got such a response because DataFed by default assumes that it must operate within the ``context`` of
+the the user's ``Personal Data`` space.
+
+In order to get information about the ``root`` collection within
+the project we are interested in, we would need to provide information regarding the ``context`` as:
+
+.. code-block:: python
+
+    print(df_api.collectionView('root', context='p/trn001'))
+
+.. code-block:: none
+
+    (coll {
+       id: "c/p_trn001_root"
+       title: "Root Collection"
+       alias: "root"
+       desc: "Root collection for project trn001"
+       owner: "p/trn001"
+       notes: 0
+     }, 'CollDataReply')
+
+The ``desc`` field in the above response illustrates that, this time,
+we did in fact get information regarding the ``root`` Collection belonging to the Training project and not the user's ``Personal Data`` space.
+
 Iterate through items in response
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-We can take a look at the contents of a project by listing everything in the project's
+Now that we know how to get to the correct ``root`` Collection,
+we can take a look at the contents of the project by listing everything in the project's
 ``root`` collection using the ``collectionItemsList()`` function as shown below:
 
 .. code-block:: python
 
-    df_api.collectionItemsList('root', context=context)
+    ls_resp = df_api.collectionItemsList('root', context='p/trn001')
+    print(ls_resp)
 
 .. code-block:: none
 
@@ -263,6 +298,103 @@ use of project members and a collaborative space called ``PROJSHARE``
 .. note::
 
     Not all projects would be structured in this manner.
+
+Unlike the listing of Projects earlier, we do have multiple items in this ``ListingReply`` as seen below:
+
+.. code-block:: python
+
+    len(ls_resp[0].item)
+
+.. code-block:: none
+
+    5
+
+If we wanted to iterate through each of the 5 objects in this listing and perform some operation on each
+individual item, such as only print the ``id`` and ``alias`` fields for each Collection,
+we could do the following:
+
+.. code-block:: python
+
+    for coll_obj in ls_resp[0].item:
+        print(coll_obj.id, coll_obj.alias)
+
+.. code-block:: none
+
+    c/34559341 breetju
+    c/34559108 projshare
+    c/34558900 somnaths
+    c/34559268 stansberrydv
+    c/34559171 worldshare
+
+
+Alias vs ID
+~~~~~~~~~~~
+So far, we have been addressing the Collections via their ``alias`` - a human readable unique identifier.
+Though aliases are indeed a convenient way to address items in DataFed, there are a few things to keep in mind:
+
+.. note::
+
+    The ``alias`` for a Data Record or Collection is unrque only within a user's ``Personal Data`` or ``Project`` context.
+    One would need to supply the ``context`` when addressing a Record or Collection via its ``alias``
+
+Not supplying the ``context`` when addressing via an ``alias`` would result in an error:
+
+df_api.collectionView('somnaths')
+
+---------------------------------------------------------------------------
+Exception                                 Traceback (most recent call last)
+<ipython-input-20-acb948617f34> in <module>
+----> 1 df_api.collectionItemsList('somnaths')
+
+//anaconda/lib/python3.5/site-packages/datafed/CommandLib.py in collectionItemsList(self, coll_id, offset, count, context)
+    757         msg.id = self._resolve_id( coll_id, context )
+    758
+--> 759         return self._mapi.sendRecv( msg )
+    760
+    761
+
+//anaconda/lib/python3.5/site-packages/datafed/MessageLib.py in sendRecv(self, msg, timeout, nack_except)
+    299         self.send( msg )
+    300         _timeout = (timeout if timeout != None else self._timeout)
+--> 301         reply, mt, ctxt = self.recv( _timeout, nack_except )
+    302         if reply == None:
+    303             return None, None
+
+//anaconda/lib/python3.5/site-packages/datafed/MessageLib.py in recv(self, timeout, nack_except)
+    343         if msg_type == "NackReply" and _nack_except:
+    344             if reply.err_msg:
+--> 345                 raise Exception(reply.err_msg)
+    346             else:
+    347                 raise Exception("Server error {}".format( reply.err_code ))
+
+Exception: Alias 'somnaths' does not exist
+(source: dbGet:126 code:1)
+
+
+
+operating and accessing information about the Data Record we just created using its
+unique ID via the variable - ``record_id``.
+
+However, DataFed also allows Data Records and Collections to be addressed via their ``alias``, which we set
+when demonstrating the ``dataUpdate()`` function. Let us try to view the Record using its alias instead of its ID:
+
+Set Project context
+~~~~~~~~~~~~~~~~~~~
+
+In this user guide, we will work within the context of the training project.
+In order to ensure that we continue to work within this context -
+create data records, collections, etc. within this space,
+we will define (and later use) the first of two contextual variables:
+
+.. code-block:: python
+
+    context = 'p/trn001' # DataFed ID for the training project
+
+.. note::
+
+    Please change the ``context`` variable to suit your own project.
+    If you want to work within your own ``Personal Data`` space,
+    set ``context`` to ``None``.
 
 Set User context
 ~~~~~~~~~~~~~~~~
