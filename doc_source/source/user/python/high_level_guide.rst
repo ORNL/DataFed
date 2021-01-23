@@ -776,7 +776,6 @@ First, we create Data Records as we have done earlier for the new datasets using
     dc2_resp = df_api.dataCreate('cleaned data',
                                   metadata=json.dumps({'cleaning_algorithm': 'gaussian_blur', 'size': 20}),
                                   parent_id=username, # parent collection
-                                  context=context, # project
                                  )
     clean_rec_id = dc2_resp[0].data[0].id
     print(clean_rec_id)
@@ -1156,7 +1155,7 @@ all the simulation results:
 
 .. code-block:: python
 
-    coll_resp = df_api.collectionCreate('Simulations', parent_id=username, context=context)
+    coll_resp = df_api.collectionCreate('Simulations', parent_id=username)
     sim_coll_id = coll_resp[0].coll[0].id
 
 Knowing that the simulations take a while to complete,
@@ -1172,8 +1171,7 @@ or, importantly - wasting precious wall time on the supercomputer.
         results_file = expensive_simulation()
         rec_resp = df_api.dataCreate('Simulation_' + str(ind),
                                      metadata=json.dumps({'parameter_1': ind}),
-                                     parent_id=sim_coll_id,
-                                     context=context)
+                                     parent_id=sim_coll_id)
         this_rec_id = rec_resp[0].data[0].id
         print('Uploading data from simulation #{}'.format(ind))
         put_resp = df_api.dataPut(this_rec_id, results_file, wait=False)
@@ -1225,8 +1223,7 @@ We would use the ``collectionCreate()`` function as:
     ​
     coll_resp = df_api.collectionCreate('Image classification training data',
                                         alias=coll_alias,
-                                        parent_id=username,
-                                        context=context)
+                                        parent_id=username)
     print(coll_resp)
 
 .. code-block:: none
@@ -1280,8 +1277,7 @@ Since we need to create several Data Records for dogs and cats, we will define a
         # the N-th example of a cat or dog. In this case, we use a random integer.
         rec_resp = df_api.dataCreate(this_animal + '_' + str(random.randint(1, 100)),
                                      metadata=json.dumps({'animal': this_animal}),
-                                     parent_id=coll_alias,
-                                     context=context)
+                                     parent_id=coll_alias)
         # Parse the dataCreate response to tease out the ID of the Record
         this_rec_id = rec_resp[0].data[0].id
         # path to the file containing the raw data
@@ -1332,12 +1328,14 @@ List items in Collection
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now that we have generated the data into our Collection, we can list the contents of the Collection
-simply via ``collectionItemList()`` as shown below. Again, since we are using the ``alias`` as the
-identifier, we do need to specify the ``context`` as well:
+simply via ``collectionItemList()`` as shown below.
+
+Since we set the context earlier in the guide, we do not need to specify the ``context``
+keyword argument though we are using the ``alias`` as the identifier:
 
 .. code-block:: python
 
-    coll_list_resp = df_api.collectionItemsList(coll_alias, context=context)
+    coll_list_resp = df_api.collectionItemsList(coll_alias)
      print(coll_list_resp)
 
 .. code-block:: none
@@ -1634,7 +1632,7 @@ We could segregate all cat data into a new, separate collection just for cats vi
 
 .. code-block:: python
 
-    coll_resp = df_api.collectionCreate('Cats', alias='cats', parent_id=coll_alias, context=context)
+    coll_resp = df_api.collectionCreate('Cats', alias='cats', parent_id=coll_alias)
     cat_coll_id = coll_resp[0].coll[0].id
     print(cat_coll_id)
 
@@ -1685,7 +1683,7 @@ However, let us list the contents of the original / outer collection:
 
 .. code-block:: python
 
-    ls_resp = df_api.collectionItemsList(coll_alias, context=context)
+    ls_resp = df_api.collectionItemsList(coll_alias)
     print([(obj.id, obj.title) for obj in ls_resp[0].item])
 
 .. code-block:: none
@@ -1711,7 +1709,7 @@ rather than the ``add_ids`` keyword argument:
 
 .. code-block:: python
 
-    cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids, context=context)
+    cup_resp = df_api.collectionItemsUpdate(coll_alias, rem_ids=cat_rec_ids)
     print(cup_resp)
     
 .. code-block:: none
@@ -1722,7 +1720,7 @@ Let us verify that the original / outer Collection no longer contains cat Record
 
 .. code-block:: python
 
-    ls_resp = df_api.collectionItemsList(coll_alias, context=context)
+    ls_resp = df_api.collectionItemsList(coll_alias)
     print([(obj.id, obj.title) for obj in ls_resp[0].item])
     
 .. code-block:: none
