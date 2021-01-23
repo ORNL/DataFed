@@ -23,7 +23,7 @@ Getting Started
 ---------------
 Users are recommended to follow the:
 
-* `getting-started guide <../system/getting_started.html>`_ to get accounts, and allocations on DataFed
+* `getting-started guide <../../system/getting_started.html>`_ to get accounts, and allocations on DataFed
 * `installation instructions <../client/install.html>`_ to install and configure the DataFed Python package on the machine(s) where they intend to use DataFed
 
 .. note::
