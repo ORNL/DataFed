@@ -302,42 +302,36 @@ Data Records
 ------------
 
 A data record is the basic unit of data storage within DataFed and consist of, at a minimum, an identifier and a title. A number
-of additional optional information can be specified including an alias, a textual description, structured metadata, provenance
-relationships, and tags. All of these data record fields and attributes are maintained centrally within DataFed and do not count
-against a users storage allocation(s). 
-
-==============  ========  =========================================
-Attribute       Type      Description
-==============  ========  =========================================
-ID              Auto      Auto-assigned system-unique identifier
-Alias           Optional  Human-friendly alternative identifier
-Title           Required  Title of record
-Description     Optional  Description of record (markdown allowed)
-Tags            Optional  Tag list
-Allocation      Default   Data repository ID of allocation
-Owner           Auto      User ID of current record owner
-Creator         Auto      User ID of original record creator
-Create Time     Auto      Record creation timestamp (Unix)
-Update Time     Auto      Record update timestamp (Unix)
-==============  ========  =========================================
+of additional optional informational fields can be specified including an alias, a textual description, structured metadata,
+provenance relationships, and tags. All of these data record fields are maintained centrally within DataFed and do not count
+against a users storage allocation(s). Refer to the `Field Summary`, below, for a full list of data record fields.
 
 While metadata-only data records can be useful for specific use cases, it is likely some form of source data will need to be
 associated with a given data record. This data is referred to as "raw data" because DataFed treats it as an oblique attachment to a
 data record (i.e. DataFed cannot "see" inside this raw data for purposes of indexing or searching). Raw data can be any format
-and any size so long as a user has sufficient allocation space to store it.
+and any size so long as a user has sufficient allocation space to store it. See the `Raw Data` section, below, for further details.
 
+When creating a data record, a storage allocation on a DataFed repository must be available. If a user has multiple allocations,
+then a specific allocation can be specified, or the default allocation will be used. The default allocation can be viewed and set
+in the DataFed web portal. After creation, it is possible to move a record to an allocation on a different repository, and if raw
+data has been uploaded it will be relocated automatically. Similarly, data record ownership can be transferred to another DataFed
+user or project, and again, raw data will be relocated.
 
+.. note::
+
+  If large collections of data records are moved between allocations, or to new owners, the server-side background task associated
+  with moving the raw data may take a significant time to complete. Progress can be monitored via the web portal or the CLI.
 
 Metadata
 --------
 
-The metadata of a data record is distinct from the built-in record attributes such as title and description,
+The metadata of a data record is distinct from the built-in record fields such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable, can represent
 arbitrary structured documents, and is easily validated using JSON-based schemas (see `<https://json-schema.org/>`_). Like
-attributes, metadata is searchable using the powerful built-in query language descibed in the `Data Search`_ section of
+other fields, metadata is searchable using the powerful built-in query language described in the `Data Search`_ section of
 this document.
 
-When creating or updating a data record, metadata may be directly specified or a JSON file may be specified as the metadata source.
+When creating or updating a data record, metadata may be directly specified or a JSON file may be referenced as the metadata source.
 When updating the metadata associated with an existing data record, the user has the option to either replace all of the existing
 metadata or to merge new metadata with existing metadata. In the case of merging, any keys that are present both the new and
 existing metadata will be overwritten by the new values - other existing keys are left unchanged and new keys are inserted.
@@ -349,9 +343,69 @@ existing metadata will be overwritten by the new values - other existing keys ar
 Provenance
 ----------
 
+Provenance information in DataFed is maintained as direct links between any two data records, and includes a direction
+and a type. Currently three types of provenance relationships are supported, as shown in the table below. The direction of
+provenance relationships is implicitly defined by setting relationship information on "dependent" data records only.
+
+======================
+Relationship
+======================
+Is Derived From
+Is a Component Of
+Is a Newer Version Of
+======================
+
+It is easy to understand how provenance direction by thinking of the dependent record as the subject of the relationship. For
+example, if data record "xyz" "is derived from" data record "pqr", then data record "xyz" is the dependent and the provenance
+relationship with record "pqr" should be set on record "xyz".
+
 Raw Data
 --------
-repo, source, extension
+
+Raw data is associated with a DataFed data record by uploading a source file from a Globus endpoint, and, once uploaded, it
+can then be downloaded to any other Globus endpoint. Users uploading and/or downloading raw data must have appropriate
+permissions both on the source/destination Globus endpoints and on the DataFed record itself. When data is uploaded to a
+data record, the source path, extension, and data size is captured in the data record. When downloading, users can request
+either the original filename or the record identifier be used as the name for the downloaded file.
+
+As with all Globus transfers, it is the users responsibility to ensure that the source or destination endpoints are activated
+prior to initiating a raw data transfer in DataFed. This restriction is due to the inherent security design of Globus, which
+prohibits agent processes, like DataFed, from activating endpoints on behalf of users. Note, however, that DataFed data
+repositories never require activation.
+
+When a raw data transfer is initiated from DataFed, the transfer can be monitored in DataFed using the "task ID" of the transfer
+request. In the DataFed CLI and Python API, the task ID is provided in the output of the request. In the DataFed web portal,
+the most recent tasks will be shown and periodically updated under the "Tasks" tab. When a transfer completes without errors,
+the task status will become "SUCCESS"; otherwise an error message will be provided. Common problems include forgetting to
+activate an endpoint, endpoint activation expiring, or referencing an invalid path or filename.
+
+Field Summary
+-------------
+
+The table below lists all of the fields of a data record. Most of these fields are searchable using simple
+equality tests (i.e. == and !=); however the title and description fields are full- text indexed - enabling root-word and phrase
+searches as well. When composing search expressions, the field names as shown in the third column of the table must be used.
+User-specified metadata fields can be searched by prefixing the field names in the associated JSON document with "md.".
+
+==============  ========  ========  =========================================
+Field           Type      Name      Description
+==============  ========  ========  =========================================
+ID              Auto      id        Auto-assigned system-unique identifier
+Alias           Optional  alias     Human-friendly alternative identifier
+Title           Required  title     Title of record
+Description     Optional  desc      Description of record (markdown allowed)
+Tags            Optional  ---       Tag list
+Metadata        Optional  md.*      User-specified JSON document
+Provenance      Optional  ---       Relationship(s) with other data records
+Allocation      Default   ---       Data repository ID of allocation used
+Owner           Auto      owner     User ID of current record owner
+Creator         Auto      creator   User ID of original record creator
+Source          Auto      source    Globus path of source raw data
+Size            Auto      size      Size of raw data, in bytes
+Ext             Optional  ext       Extension of raw data file
+Create Time     Auto      ct        creation timestamp (Unix)
+Update Time     Auto      ut        update timestamp (Unix)
+==============  ========  ========  =========================================
 
 
 -----------
@@ -416,9 +470,9 @@ Projects support specific roles for associated users:
 
 
 
-
-Access Control
-==============
+---------------
+Access Controls
+---------------
 
 DataFed implements fine-grained access control through a set of permissions that can be applied to both data records and 
 collections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of
