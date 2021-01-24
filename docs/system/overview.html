@@ -98,13 +98,23 @@
 <li class="toctree-l3"><a class="reference internal" href="#data-records">Data Records</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#metadata">Metadata</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#provenance">Provenance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#raw-data">Raw Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#field-summary">Field Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#collections">Collections</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#attributes">Attributes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#sharing-data">Sharing Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#collective-ownership">Collective Ownership</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#access-controls">Access Controls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#repository-allocations">Repository Allocations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-search">Data Search</a></li>
 </ul>
 </li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="#relationship">Relationship</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="papers.html">Papers and Presentations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
@@ -455,7 +465,7 @@ with moving the raw data may take a significant time to complete. Progress can b
 <p>The metadata of a data record is distinct from the built-in record fields such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable, can represent
 arbitrary structured documents, and is easily validated using JSON-based schemas (see <a class="reference external" href="https://json-schema.org/">https://json-schema.org/</a>). Like
-other fields, metadata is searchable using the powerful built-in query language described in the <a href="#id3"><span class="problematic" id="id4">`Data Search`_</span></a> section of
+other fields, metadata is searchable using the powerful built-in query language described in the <a class="reference internal" href="#data-search">Data Search</a> section of
 this document.</p>
 <p>When creating or updating a data record, metadata may be directly specified or a JSON file may be referenced as the metadata source.
 When updating the metadata associated with an existing data record, the user has the option to either replace all of the existing
@@ -471,19 +481,27 @@ existing metadata will be overwritten by the new values - other existing keys ar
 <p>Provenance information in DataFed is maintained as direct links between any two data records, and includes a direction
 and a type. Currently three types of provenance relationships are supported, as shown in the table below. The direction of
 provenance relationships is implicitly defined by setting relationship information on “dependent” data records only.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="section" id="relationship">
-<h1>Relationship</h1>
-<p>Is Derived From
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Relationship</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Is Derived From
 Is a Component Of
-Is a Newer Version Of
-======================</p>
+Is a Newer Version Of</p></td>
+</tr>
+</tbody>
+</table>
 <p>It is easy to understand how provenance direction by thinking of the dependent record as the subject of the relationship. For
 example, if data record “xyz” “is derived from” data record “pqr”, then data record “xyz” is the dependent and the provenance
 relationship with record “pqr” should be set on record “xyz”.</p>
+</div>
+<div class="section" id="raw-data">
+<h4>Raw Data</h4>
 <p>Raw data is associated with a DataFed data record by uploading a source file from a Globus endpoint, and, once uploaded, it
 can then be downloaded to any other Globus endpoint. Users uploading and/or downloading raw data must have appropriate
 permissions both on the source/destination Globus endpoints and on the DataFed record itself. When data is uploaded to a
@@ -498,6 +516,9 @@ request. In the DataFed CLI and Python API, the task ID is provided in the outpu
 the most recent tasks will be shown and periodically updated under the “Tasks” tab. When a transfer completes without errors,
 the task status will become “SUCCESS”; otherwise an error message will be provided. Common problems include forgetting to
 activate an endpoint, endpoint activation expiring, or referencing an invalid path or filename.</p>
+</div>
+<div class="section" id="field-summary">
+<h4>Field Summary</h4>
 <p>The table below lists all of the fields of a data record. Most of these fields are searchable using simple
 equality tests (i.e. == and !=); however the title and description fields are full- text indexed - enabling root-word and phrase
 searches as well. When composing search expressions, the field names as shown in the third column of the table must be used.
@@ -594,6 +615,10 @@ User-specified metadata fields can be searched by prefixing the field names in t
 </tr>
 </tbody>
 </table>
+</div>
+</div>
+<div class="section" id="collections">
+<h3>Collections</h3>
 <p>Collection hierarchies within DataFed may resemble a file system with directories containing files and sub-directories.
 While similar structurally, there are profound functional differences between DataFed collection hierarchies and typical
 file systems:</p>
@@ -614,6 +639,15 @@ has the identity of a previous file, but may be entirely unrelated. DataFed asso
 recyclable identifier with data records and collections. No matter which collections it is placed in, or how many times
 it is update, or where the associated raw data is physically stored, a record’s identity is always the same.</p></li>
 </ul>
+<div class="section" id="attributes">
+<h4>Attributes</h4>
+</div>
+</div>
+<div class="section" id="sharing-data">
+<h3>Sharing Data</h3>
+</div>
+<div class="section" id="collective-ownership">
+<h3>Collective Ownership</h3>
 <p>When an individual user creates a data record or collection, that user becomes the owner and is granted full control of
 the newly created data record or collection. Collective ownership is achieved through the use of <em>projects</em>. A DataFed
 project is a distinct organizational entity that permits multiple associated users to create and manage data records and
@@ -632,6 +666,9 @@ managers assigned by administrators.</p></li>
 <li><p>Members - These users may create and update data records and collections based on the access control rules set by
 managers or administrators. Always has administrative access to created records.</p></li>
 </ul>
+</div>
+<div class="section" id="access-controls">
+<h3>Access Controls</h3>
 <p>DataFed implements fine-grained access control through a set of permissions that can be applied to both data records and
 collections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of
 these. Data records and collections share the same set of permissions; however, collections have an additional set of
@@ -658,6 +695,9 @@ inherit the permissions defined by the top-level parent. Collections have both �
 local permissions control access to the collection record itself, and “inherited” permissions are the permissions passed
 down to all contained data records and sub-collections. Note that because data records can be placed into multiple collections,
 the inherited permissions of <em>all</em> associated parent collections are evaluated for each users accessing a given data record.</p>
+</div>
+<div class="section" id="repository-allocations">
+<h3>Repository Allocations</h3>
 <p>Having access to DataFed does not, in itself, grant users the ability to create or manage data within DataFed. This is because
 DataFed does not provide any raw data storage on its own, but instead relies on <em>federated</em> storage provided by DataFed member
 organization and/or facilities. Federated storage is implemented through a network of geographically distributed “data repositories”
@@ -673,6 +713,11 @@ by other DataFed users or projects.</p>
 storage allocation may be specified, or a specific storage allocation selected when creating new DataFed data records. Data can
 be accessed in a consistent manner no matter which data repository it is stored on; however, the physical proximity of a data
 repository in relation to the point of use of data can impact access latency.</p>
+</div>
+<div class="section" id="data-search">
+<h3>Data Search</h3>
+</div>
+</div>
 </div>
 
 

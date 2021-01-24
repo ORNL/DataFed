@@ -347,13 +347,14 @@ Provenance information in DataFed is maintained as direct links between any two 
 and a type. Currently three types of provenance relationships are supported, as shown in the table below. The direction of
 provenance relationships is implicitly defined by setting relationship information on "dependent" data records only.
 
-======================
-Relationship
-======================
-Is Derived From
-Is a Component Of
-Is a Newer Version Of
-======================
++----------------------+
+|Relationship          |
++======================+
+|Is Derived From       |
+|Is a Component Of     |
+|Is a Newer Version Of |
++----------------------+
+
 
 It is easy to understand how provenance direction by thinking of the dependent record as the subject of the relationship. For
 example, if data record "xyz" "is derived from" data record "pqr", then data record "xyz" is the dependent and the provenance
