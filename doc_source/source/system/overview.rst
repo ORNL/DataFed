@@ -351,7 +351,9 @@ provenance relationships is implicitly defined by setting relationship informati
 |Relationship          |
 +======================+
 |Is Derived From       |
++----------------------+
 |Is a Component Of     |
++----------------------+
 |Is a Newer Version Of |
 +----------------------+
 
