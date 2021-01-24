@@ -150,6 +150,19 @@ acquiring a DataFed repository allocation.
   In a future release of DataFed, a searchable directory of available data repositories will be made available and allow
   users to request allocations directly from within DataFed.
 
+DataFed registration utilizes a standard Globus authentication and authorization process. When you begine the registration
+process from the DataFed welcome page, you will be redirected to Globus for authentication (log-in) using your Globus account.
+Globus will then ask you to authorize DataFed to access your Globus identity and to allow DataFed to transfer data on your behalf.
+Once this process is complete, you will be redirected to a DataFed post-registration page where you will create a DataFed password.
+This password is only used when manually authenticating from the DataFed command-line interface, and it can be updated from
+DataFed Web Portal at any time.
+
+Note that DataFed will only initiate data transfers when you (or a process running as you) explicitly request it to. Further,
+DataFed data transfers are constrained to be between DataFed data storage repositories and Globus endpoints that you have pre-authorized
+(or "activated") for access. Globus end-point activation is transient and access will expire within a period determined by the
+policies of the host facility.
+
+
 System Concepts
 ===============
 
@@ -259,7 +272,9 @@ Aliases are lowercase alphanumeric strings that can contain the letters 'a' thro
 special characters '-','_', and '.'. Aliases can be considered to be the equivalent of a file or directory name in a file
 system. A scoping prefix is automatically attached to aliases in order to ensure aliases are unique across all users
 (and projects) in DataFed. These prefixes consist of the type of the alias owner ("u" for users, and "p" for projects),
-followed by the user or project ID, separated by colons. For example::
+followed by the user or project ID, separated by colons. For example:
+
+.. code-block:: text
 
   The alias "my.data" for user "u/user123" becomes "u:user123:my.data"
 
@@ -269,12 +284,12 @@ followed by the user or project ID, separated by colons. For example::
 
 .. note::
 
-  In both the DataFeb web portal and the command-line interfaces, aliases are not required to be entered, nor are they
-  displayed, with the scoping prefix unless necessary to avoid confusion.
+  In both the DataFeb web portal and the command-line interface, scoping prefixes are not required to be entered for aliases
+  (nor are they displayed) except when referencing data owned by another user or project.
 
 In general, aliases are intended to support interactive data browsing and sharing and, thus, should be easy to use and understand.
-Aliases should *not* be used to encode parameters or other information that is more appropriately placed in a data record's searchable
-metadata. This is especially true when sharing data with users that may not be familiar with an ad hoc name-based parameter
+Aliases should *not* be used to encode complex parameters or other information that is more appropriately placed in a data record's
+searchable metadata. This is especially true when sharing data with users that may not be familiar with an ad hoc name-based parameter
 encoding scheme.
 
 .. note::
@@ -286,17 +301,50 @@ encoding scheme.
 Data Records
 ------------
 
-Identifiers
------------
-ID, Alias
+A data record is the basic unit of data storage within DataFed and consist of, at a minimum, an identifier and a title. A number
+of additional optional information can be specified including an alias, a textual description, structured metadata, provenance
+relationships, and tags. All of these data record fields and attributes are maintained centrally within DataFed and do not count
+against a users storage allocation(s). 
 
-Attributes
-----------
-owner, creator, title, description, tags, ct, ut
+==============  ========  =========================================
+Attribute       Type      Description
+==============  ========  =========================================
+ID              Auto      Auto-assigned system-unique identifier
+Alias           Optional  Human-friendly alternative identifier
+Title           Required  Title of record
+Description     Optional  Description of record (markdown allowed)
+Tags            Optional  Tag list
+Allocation      Default   Data repository ID of allocation
+Owner           Auto      User ID of current record owner
+Creator         Auto      User ID of original record creator
+Create Time     Auto      Record creation timestamp (Unix)
+Update Time     Auto      Record update timestamp (Unix)
+==============  ========  =========================================
+
+While metadata-only data records can be useful for specific use cases, it is likely some form of source data will need to be
+associated with a given data record. This data is referred to as "raw data" because DataFed treats it as an oblique attachment to a
+data record (i.e. DataFed cannot "see" inside this raw data for purposes of indexing or searching). Raw data can be any format
+and any size so long as a user has sufficient allocation space to store it.
+
+
 
 Metadata
 --------
-json, replace / merge
+
+The metadata of a data record is distinct from the built-in record attributes such as title and description,
+and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable, can represent
+arbitrary structured documents, and is easily validated using JSON-based schemas (see `<https://json-schema.org/>`_). Like
+attributes, metadata is searchable using the powerful built-in query language descibed in the `Data Search`_ section of
+this document.
+
+When creating or updating a data record, metadata may be directly specified or a JSON file may be specified as the metadata source.
+When updating the metadata associated with an existing data record, the user has the option to either replace all of the existing
+metadata or to merge new metadata with existing metadata. In the case of merging, any keys that are present both the new and
+existing metadata will be overwritten by the new values - other existing keys are left unchanged and new keys are inserted.
+
+.. note::
+
+  When providing metadata, it must fully comply with the JSON specification, located at `<https://tools.ietf.org/html/rfc8259>`_.
 
 Provenance
 ----------
@@ -309,6 +357,29 @@ repo, source, extension
 -----------
 Collections
 -----------
+
+Collection hierarchies within DataFed may resemble a file system with directories containing files and sub-directories.
+While similar structurally, there are profound functional differences between DataFed collection hierarchies and typical
+file systems:
+
+* In a file system, a file cannot be accessed without *traversing* the directory structure in which it is contained
+  (the file's path). The path of the file determines who can access the file through permissions set on
+  the individual directories of the path and the file itself. In DataFed, a data record or collection can be accessed
+  directly by its unique identifier or alias, and permissions are either inherited from the containing hierarchy, set
+  directly on the data record, or both.
+* In a file system, a file typically resides in a single directory. Some file systems support linking, which allows file
+  contents to be shared by multiple file instances, but the linked files may have different filenames. DataFed allows
+  data records (but not collections) to be contained in multiple collection hierarchies. This is achieved by a mechanism
+  similar to linking in a file system; except that there is always only one instance of the data record.
+* In a file system, there is no way to consistently and unambiguously identify a specific file instance over time. Because
+  a file's identity is defined only by it path, if the file is moved, it essentially has a new identity. On the other hand,
+  a file could be overwritten by a new file with the same path but entirely different contents - in this case the new file
+  has the identity of a previous file, but may be entirely unrelated. DataFed associates a unique, immutable, and non-
+  recyclable identifier with data records and collections. No matter which collections it is placed in, or how many times
+  it is update, or where the associated raw data is physically stored, a record's identity is always the same.
+
+Attributes
+----------
 
 
 ------------
@@ -341,41 +412,9 @@ Projects support specific roles for associated users:
 * Members - These users may create and update data records and collections based on the access control rules set by
   managers or administrators. Always has administrative access to created records.
 
---------
-Metadata
---------
 
-Data records support user-defined metadata. "Metadata" is distinct from built-on record attributes such as title and description,
-and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable and can represent
-arbitrary structured documents. When creating or updating a data record, metadata may be directly specified in textual form, or,
-with DataFed CLI, a JSON file may be used as the metadata source. When updating, the user has the option to either replace existing
-metadata or to merge new metadata with existing metadata. In the case of merging, any keys that are present both the new and
-existing metadata will be overwritten by the new values - other existing keys are left unchanged and new keys are inserted.
 
-Note that when providing metadata, it must fully comply with the JSON specification, located at `<https://tools.ietf.org/html/rfc8259>`_.
 
-Collection Hierarchies
-======================
-
-Collection hierarchies within DataFed may resemble a file system with directories containing files and sub-directories.
-While similar structurally, there are profound functional differences between DataFed collection hierarchies and typical
-file systems:
-
-* In a file system, a file cannot be accessed without *traversing* the directory structure in which it is contained
-  (the file's path). The path of the file determines who can access the file through permissions set on
-  the individual directories of the path and the file itself. In DataFed, a data record or collection can be accessed
-  directly by its unique identifier or alias, and permissions are either inherited from the containing hierarchy, set
-  directly on the data record, or both.
-* In a file system, a file typically resides in a single directory. Some file systems support linking, which allows file
-  contents to be shared by multiple file instances, but the linked files may have different filenames. DataFed allows
-  data records (but not collections) to be contained in multiple collection hierarchies. This is achieved by a mechanism
-  similar to linking in a file system; except that there is always only one instance of the data record.
-* In a file system, there is no way to consistently and unambiguously identify a specific file instance over time. Because
-  a file's identity is defined only by it path, if the file is moved, it essentially has a new identity. On the other hand,
-  a file could be overwritten by a new file with the same path but entirely different contents - in this case the new file
-  has the identity of a previous file, but may be entirely unrelated. DataFed associates a unique, immutable, and non-
-  recyclable identifier with data records and collections. No matter which collections it is placed in, or how many times
-  it is update, or where the associated raw data is physically stored, a record's identity is always the same.
 
 
 Access Control
@@ -409,45 +448,29 @@ local permissions control access to the collection record itself, and "inherited
 down to all contained data records and sub-collections. Note that because data records can be placed into multiple collections,
 the inherited permissions of *all* associated parent collections are evaluated for each users accessing a given data record.
 
-Storage Allocations
-===================
+----------------------
+Repository Allocations
+----------------------
 
 Having access to DataFed does not, in itself, grant users the ability to create or manage data within DataFed. This is because
-DataFed does not provide any raw data storage of its own, but instead relies on *federated* storage provided by DataFed member
-organizations. Federated storage is implemented through a network of geographically distributed "data repositories" that are
-owned and maintained by specific DataFed member organizations, yet potentially accessible by all DataFed users. It is DataFed
-member organizations that individually determine how storage allocations are assigned to specific users.
+DataFed does not provide any raw data storage on its own, but instead relies on *federated* storage provided by DataFed member
+organization and/or facilities. Federated storage is implemented through a network of geographically distributed "data repositories"
+that are owned and maintained by specific member organizations, yet are potentially accessible by any DataFed user.
 
-Typically, DataFed users with an account at one or more DataFed member organizations will be automatically granted storage
-allocations on data repositories managed by those organizations. For unaffiliated users, storage allocations may be explicitly
-requested from a DataFed member organizations. DataFed member organizations are free to define and enact their own data storage
-policies; therefore, users wishing to acquire storage a specific allocation must contact the associated organization for
-information on how to proceed. Even though unaffiliated users with no storage allocation cannot use DataFed to create and manage
-their own data, DataFed is still allows these users to locate, access, and monitor data owned by other DataFed users or projects.
+Typically, DataFed users with an account at one or more DataFed member facilities will be automatically granted storage
+allocations on data repositories managed by the organization that operates the facilities. For unaffiliated users, storage
+allocations may be explicitly requested from a DataFed member organizations. DataFed member organizations are free to define
+and enforce their own data storage policies; therefore, users wishing to acquire storage a specific allocation must contact the
+associated organization for information on how to gain access. Even though unaffiliated users with no storage allocation cannot
+use DataFed to create and manage their own data, DataFed is still allows these users to locate, access, and monitor data owned
+by other DataFed users or projects.
 
-It is typical for DataFed users to have multiple storage allocations on different data repositories. In this case, a default
+It is likely that DataFed users may have multiple storage allocations on different data repositories. In this case, a default
 storage allocation may be specified, or a specific storage allocation selected when creating new DataFed data records. Data can
-be accessed in a consistent manner no matter which data repository it is stored on; however, the physical location of a data
-repository in relation to the point of use of data can impact initial access time.
+be accessed in a consistent manner no matter which data repository it is stored on; however, the physical proximity of a data
+repository in relation to the point of use of data can impact access latency.
 
-************
-Registration
-************
 
-User registration is required in order to access DataFed. Registration is free and secure, but requires users to have, or obtain,
-a free `Globus <https://www.globus.org>`_ account. Many universities and research facilities, worldwide, are "member organizations"
-of Globus and typically provide Globus accounts for their students, staff, and/or users. If your home institute does not provide
-Globus accounts, you can obtain a personal Globus account through Globus ID, located `here <https://www.globusid.org>`_.
-
-DataFed registration utilizes a standard Globus authentication and authorization process. When you click the "register" button on
-DataFed welcome page, you will be redirected to Globus for authentication (log-in) based on your Globus account. Globus will then
-ask you to authorize DataFed to access your Globus identity and to allow DataFed to transfer data on your behalf. Once this process
-is complete, you will be redirected to a DataFed post-registration page where you will create a DataFed password. This password is
-only used when manually authenticating from DataFed command-line interface, and it can be updated from DataFed Web Portal at any
-time.
-
-Note that DataFed will only initiate data transfers when you (or a process running as you) explicitly request it to. Further,
-DataFed data transfers are constrained to be between DataFed data storage repositories and Globus endpoints that you have pre-authorized
-(or "activated") for access. Globus end-point activation is transient and access will expire within a period determined by the host
-institute.
-
+-----------
+Data Search
+-----------
