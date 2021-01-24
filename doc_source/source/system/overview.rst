@@ -304,15 +304,15 @@ Data Records
 A data record is the basic unit of data storage within DataFed and consist of, at a minimum, an identifier and a title. A number
 of additional optional informational fields can be specified including an alias, a textual description, structured metadata,
 provenance relationships, and tags. All of these data record fields are maintained centrally within DataFed and do not count
-against a users storage allocation(s). Refer to the `Field Summary`, below, for a full list of data record fields.
+against a users storage allocation(s). Refer to the :ref:`Field Summary`, below, for a full list of data record fields.
 
 While metadata-only data records can be useful for specific use cases, it is likely some form of source data will need to be
 associated with a given data record. This data is referred to as "raw data" because DataFed treats it as an oblique attachment to a
 data record (i.e. DataFed cannot "see" inside this raw data for purposes of indexing or searching). Raw data can be any format
-and any size so long as a user has sufficient allocation space to store it. See the `Raw Data` section, below, for further details.
+and any size so long as a user has sufficient allocation space to store it. See the :ref:`Raw Data` section, below, for further details.
 
 When creating a data record, a storage allocation on a DataFed repository must be available. If a user has multiple allocations,
-then a specific allocation can be specified, or the default allocation will be used. The default allocation can be viewed and set
+then an allocation can be specified or the default allocation will be used instead. The default allocation can be viewed and set
 in the DataFed web portal. After creation, it is possible to move a record to an allocation on a different repository, and if raw
 data has been uploaded it will be relocated automatically. Similarly, data record ownership can be transferred to another DataFed
 user or project, and again, raw data will be relocated.
@@ -320,7 +320,7 @@ user or project, and again, raw data will be relocated.
 .. note::
 
   If large collections of data records are moved between allocations, or to new owners, the server-side background task associated
-  with moving the raw data may take a significant time to complete. Progress can be monitored via the web portal or the CLI.
+  with moving the raw data may take a significant amount of time to complete. Progress can be monitored via the web portal or the CLI.
 
 Metadata
 --------
@@ -328,7 +328,7 @@ Metadata
 The metadata of a data record is distinct from the built-in record fields such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable, can represent
 arbitrary structured documents, and is easily validated using JSON-based schemas (see `<https://json-schema.org/>`_). Like
-other fields, metadata is searchable using the powerful built-in query language described in the `Data Search`_ section of
+other fields, metadata is searchable using the powerful built-in query language described in the :ref:`Data Search` section of
 this document.
 
 When creating or updating a data record, metadata may be directly specified or a JSON file may be referenced as the metadata source.
@@ -358,25 +358,27 @@ provenance relationships is implicitly defined by setting relationship informati
 +----------------------+
 
 
-It is easy to understand how provenance direction by thinking of the dependent record as the subject of the relationship. For
-example, if data record "xyz" "is derived from" data record "pqr", then data record "xyz" is the dependent and the provenance
-relationship with record "pqr" should be set on record "xyz".
+It is easy to understand provenance direction by thinking of the dependent record as the subject of the relationship statement.
+For example, if data record "xyz" "is derived from" data record "pqr", then data record "xyz" is the dependent and the provenance
+relationship to record "pqr" should be set on record "xyz".
 
 Raw Data
 --------
 
 Raw data is associated with a DataFed data record by uploading a source file from a Globus endpoint, and, once uploaded, it
-can then be downloaded to any other Globus endpoint. Users uploading and/or downloading raw data must have appropriate
+can be downloaded to any other Globus endpoint. Users uploading and/or downloading raw data must have appropriate
 permissions both on the source/destination Globus endpoints and on the DataFed record itself. When data is uploaded to a
 data record, the source path, extension, and data size is captured in the data record. When downloading, users can request
 either the original filename or the record identifier be used as the name for the downloaded file.
 
-As with all Globus transfers, it is the users responsibility to ensure that the source or destination endpoints are activated
-prior to initiating a raw data transfer in DataFed. This restriction is due to the inherent security design of Globus, which
-prohibits agent processes, like DataFed, from activating endpoints on behalf of users. Note, however, that DataFed data
-repositories never require activation.
+.. note::
 
-When a raw data transfer is initiated from DataFed, the transfer can be monitored in DataFed using the "task ID" of the transfer
+  As with all Globus transfers, it is the users responsibility to ensure that the source or destination endpoints are activated
+  prior to initiating a raw data transfer in DataFed. This restriction is due to the inherent security design of Globus, which
+  prohibits agent processes, like DataFed, from activating endpoints on behalf of users. Note, however, that DataFed data
+  repositories never require activation.
+
+When a raw data transfer is initiated from DataFed, the transfer can be monitored in DataFed using the "Task ID" of the transfer
 request. In the DataFed CLI and Python API, the task ID is provided in the output of the request. In the DataFed web portal,
 the most recent tasks will be shown and periodically updated under the "Tasks" tab. When a transfer completes without errors,
 the task status will become "SUCCESS"; otherwise an error message will be provided. Common problems include forgetting to
@@ -386,7 +388,7 @@ Field Summary
 -------------
 
 The table below lists all of the fields of a data record. Most of these fields are searchable using simple
-equality tests (i.e. == and !=); however the title and description fields are full- text indexed - enabling root-word and phrase
+equality tests (i.e. == and !=); however the title and description fields are full-text indexed - enabling root-word and phrase
 searches as well. When composing search expressions, the field names as shown in the third column of the table must be used.
 User-specified metadata fields can be searched by prefixing the field names in the associated JSON document with "md.".
 
