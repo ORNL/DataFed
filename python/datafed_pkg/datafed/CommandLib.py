@@ -2296,7 +2296,7 @@ class API:
                     winp = pathlib.PurePosixPath('/' + drive_name)
                     for item in parts:
                         winp = winp / str(item)  # adds each part
-                    _path = str(_path)
+                    _path = str(winp)
                 elif not winp.drive:
                     _path = winp.as_posix()
                     if _path[0] != '/':
