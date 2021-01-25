@@ -1468,7 +1468,7 @@ module.exports = ( function() {
     obj.getPermissionsLocal = function( a_client_id, a_object, a_get_inherited, a_req_perm ) {
         var perm={grant:0,inhgrant:0,inherited:0},acl,acls,i;
 
-        //console.log("getPermissionsLocal",a_object._id);
+        console.log("getPermissionsLocal",a_object._id);
 
         if ( a_object.topic ){
             //console.log("has topic 1");
@@ -1477,6 +1477,8 @@ module.exports = ( function() {
         }
 
         if ( a_object.acls & 1 ){
+            console.log("chk local user acls");
+
             acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client_id } ).toArray();
 
             for ( i in acls ) {
@@ -1488,6 +1490,8 @@ module.exports = ( function() {
 
         // Evaluate group permissions on object
         if ( a_object.acls & 2 ){
+            console.log("chk local group acls");
+
             acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client_id } ).toArray();
             for ( i in acls ) {
                 acl = acls[i];
@@ -1497,7 +1501,8 @@ module.exports = ( function() {
         }
 
         if ( a_get_inherited ){
-            //console.log("chk inherited");
+            console.log("chk inherited");
+
             var children = [a_object];
             var parents,parent;
 
@@ -1506,7 +1511,7 @@ module.exports = ( function() {
 
                 parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", { children : children }).toArray();
 
-                //console.log("parents",parents);
+                console.log("parents",parents);
 
                 if ( parents.length == 0 )
                     break;
@@ -1525,6 +1530,8 @@ module.exports = ( function() {
 
                     // User ACL
                     if ( parent.acls && (( parent.acls & 1 ) != 0 )){
+                        console.log("chk par user acls");
+
                         acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client_id } ).toArray();
                         if ( acls.length ){
                             for ( i in acls ) {
@@ -1539,6 +1546,8 @@ module.exports = ( function() {
 
                     // Group ACL
                     if ( parent.acls && (( parent.acls & 2 ) != 0 )){
+                        console.log("chk par group acls");
+
                         acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client_id } ).toArray();
                         if ( acls.length ){
                             for ( i in acls ) {

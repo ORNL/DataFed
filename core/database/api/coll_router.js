@@ -363,8 +363,10 @@ router.get('/view', function (req, res) {
             admin = g_lib.hasAdminPermObject( client, coll_id );
 
             if ( !admin) {
-                if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC ))
+                if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC )){
+                    console.log("perm denied");
                     throw g_lib.ERR_PERM_DENIED;
+                }
             }
         }else if ( !g_lib.hasPublicRead( coll_id )){
             throw g_lib.ERR_PERM_DENIED;
