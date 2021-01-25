@@ -457,8 +457,14 @@ from the DataFed response in order to use it in subsequent code within a script.
 
     When working within the ``context`` of a Project with several collaborators,
     there is a possibility that two users may use the same ``alias`` for a Record or a Collection.
-    Consider using aliases for collaboratively used data rather than data in
-    the personal Collections of users to avoid accidental namespace clashes.
+
+**Managing aliases within Projects:**
+
+There is no single solution to this problem. However, here are some suggestions:
+
+* Team members of the project should coordinate and collaboratively assign aliases
+* Individual members elect to avoid using aliases within the context of their personal Collections
+* Individual members manually prefix aliases for items within their personal Collections with their initials (hopefully unique within the Project)
 
 Manual context management
 ~~~~~~~~~~~~~~~~~~~~~~~~~
