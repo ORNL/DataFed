@@ -1371,7 +1371,7 @@ keyword argument though we are using the ``alias`` as the identifier:
 .. code-block:: python
 
     coll_list_resp = df_api.collectionItemsList(coll_alias)
-     print(coll_list_resp)
+    print(coll_list_resp)
 
 .. code-block:: none
 
