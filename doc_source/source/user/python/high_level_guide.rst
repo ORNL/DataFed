@@ -30,6 +30,11 @@ Users are recommended to follow the:
 
    Ensure that the Globus endpoint associated with the machine where you use DataFed is active.
 
+.. caution::
+
+    Ensure that all DataFed Get and Put operations are within a directory that Globus has write access to.
+    Otherwise, you will notice a ``Permission Denied`` error in your data transfer task messages.
+
 Import package
 ~~~~~~~~~~~~~~
 We start by importing just the ``API`` class within ``datafed.CommandLib`` as shown below.
