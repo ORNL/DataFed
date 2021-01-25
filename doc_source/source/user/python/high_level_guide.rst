@@ -581,7 +581,7 @@ Let's look at the response we got for the ``dataCreate()`` function call:
 
 .. code-block:: python
 
-    print(response)
+    print(dc_resp)
 
 .. code-block:: none
 
@@ -614,7 +614,7 @@ record ID to be used for later operations, here's how we could go about it:
 
 .. code-block:: python
 
-    record_id = response[0].data[0].id
+    record_id = dc_resp[0].data[0].id
     print(record_id)
 
 .. code-block:: none
