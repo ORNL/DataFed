@@ -1684,7 +1684,7 @@ we could use the ``collectionGetParents()`` function as:
 .. code-block:: python
 
     path_resp = df_api.collectionGetParents(cat_coll_id)
-    print(path_reps)
+    print(path_resp)
 
 .. code-block:: none
 
