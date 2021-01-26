@@ -266,6 +266,11 @@ for comprehensive information on all functions in the <code class="docutils lite
 <p class="admonition-title">Note</p>
 <p>Ensure that the Globus endpoint associated with the machine where you use DataFed is active.</p>
 </div>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Ensure that all DataFed Get and Put operations are within a directory that Globus has write access to.
+Otherwise, you will notice a <code class="docutils literal notranslate"><span class="pre">Permission</span> <span class="pre">Denied</span></code> error in your data transfer task messages.</p>
+</div>
 <div class="section" id="import-package">
 <h3>Import package</h3>
 <p>We start by importing just the <code class="docutils literal notranslate"><span class="pre">API</span></code> class within <code class="docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code> as shown below.
@@ -628,6 +633,18 @@ It is therefore unnecessary to provide the <code class="docutils literal notrans
 </div>
 <p>However, one would need to carefully extract the (automatically generated) ID of the Collection or Data Record of interest
 from the DataFed response in order to use it in subsequent code within a script.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>When working within the <code class="docutils literal notranslate"><span class="pre">context</span></code> of a Project with several collaborators,
+there is a possibility that two users may use the same <code class="docutils literal notranslate"><span class="pre">alias</span></code> for a Record or a Collection.</p>
+</div>
+<p><strong>Managing aliases within Projects:</strong></p>
+<p>There is no single solution to this problem. However, here are some suggestions:</p>
+<ul class="simple">
+<li><p>Team members of the project should coordinate and collaboratively assign aliases</p></li>
+<li><p>Individual members elect to avoid using aliases within the context of their personal Collections</p></li>
+<li><p>Individual members manually prefix aliases for items within their personal Collections with their initials (hopefully unique within the Project)</p></li>
+</ul>
 </div>
 <div class="section" id="manual-context-management">
 <h3>Manual context management</h3>
@@ -739,7 +756,7 @@ the Data Record would be created within the <code class="docutils literal notran
 <div class="section" id="extract-record-id">
 <h3>Extract Record ID</h3>
 <p>Let’s look at the response we got for the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> function call:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">dc_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(data {
@@ -767,7 +784,7 @@ We expect to be able to continue to get this verbose response through an optiona
 </div>
 <p>Similar to getting the title from the project information, if we wanted to get the
 record ID to be used for later operations, here’s how we could go about it:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">record_id</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">record_id</span> <span class="o">=</span> <span class="n">dc_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1229,9 +1246,14 @@ results data file. Though comically oversimplified, it is sufficiently accurate 
 <p>The next handy function is <code class="docutils literal notranslate"><span class="pre">check_xfer_status()</span></code> that looks up the instantaneous status of the transfer
 of each task it is provided and returns only the statuses:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">check_xfer_status</span><span class="p">(</span><span class="n">task_ids</span><span class="p">):</span>
+    <span class="c1"># Create a list to hold all statuses</span>
     <span class="n">statuses</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="c1"># iterate over each of the task IDs in the input argument</span>
     <span class="k">for</span> <span class="n">this_task_id</span> <span class="ow">in</span> <span class="n">task_ids</span><span class="p">:</span>
+        <span class="c1"># First ask DataFed for information about this task</span>
         <span class="n">task_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">taskView</span><span class="p">(</span><span class="n">this_task_id</span><span class="p">)</span>
+        <span class="c1"># Extract the status field from the response</span>
+        <span class="c1"># Add just the status to the list</span>
         <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">task</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">statuses</span>
 </pre></div>
@@ -1250,14 +1272,21 @@ or, importantly - wasting precious wall time on the supercomputer.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">xfer_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Starting simulation #</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ind</span><span class="p">))</span>
+    <span class="c1"># Run the simulation and make sure to get the path to the results</span>
     <span class="n">results_file</span> <span class="o">=</span> <span class="n">expensive_simulation</span><span class="p">()</span>
+    <span class="c1"># Create a unique Data Record for this simulation</span>
     <span class="n">rec_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataCreate</span><span class="p">(</span><span class="s1">&#39;Simulation_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">),</span>
                                  <span class="n">metadata</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;parameter_1&#39;</span><span class="p">:</span> <span class="n">ind</span><span class="p">}),</span>
                                  <span class="n">parent_id</span><span class="o">=</span><span class="n">sim_coll_id</span><span class="p">)</span>
+    <span class="c1"># Extract the ID for this record from the response</span>
     <span class="n">this_rec_id</span> <span class="o">=</span> <span class="n">rec_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Uploading data from simulation #</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ind</span><span class="p">))</span>
+    <span class="c1"># Put the raw data into this record</span>
     <span class="n">put_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataPut</span><span class="p">(</span><span class="n">this_rec_id</span><span class="p">,</span> <span class="n">results_file</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># Extract the task ID from the put response as we have done before</span>
+    <span class="c1"># Add that task ID to the list of tasks we need to track</span>
     <span class="n">xfer_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">put_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="c1"># Print instantaneous transfer statuses of all data put tasks so far</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Transfer status(es): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">check_xfer_status</span><span class="p">(</span><span class="n">xfer_tasks</span><span class="p">)))</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
 
@@ -1406,7 +1435,7 @@ simply via <code class="docutils literal notranslate"><span class="pre">collecti
 <p>Since we set the context earlier in the guide, we do not need to specify the <code class="docutils literal notranslate"><span class="pre">context</span></code>
 keyword argument though we are using the <code class="docutils literal notranslate"><span class="pre">alias</span></code> as the identifier:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">coll_list_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="n">coll_alias</span><span class="p">)</span>
- <span class="nb">print</span><span class="p">(</span><span class="n">coll_list_resp</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">coll_list_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(item {
@@ -1690,7 +1719,7 @@ We could segregate all cat data into a new, separate collection just for cats vi
 with respect to the <code class="docutils literal notranslate"><span class="pre">root</span></code> Collection of the current <code class="docutils literal notranslate"><span class="pre">context</span></code> (the Training project),
 we could use the <code class="docutils literal notranslate"><span class="pre">collectionGetParents()</span></code> function as:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">path_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionGetParents</span><span class="p">(</span><span class="n">cat_coll_id</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">path_reps</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">path_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(path {
