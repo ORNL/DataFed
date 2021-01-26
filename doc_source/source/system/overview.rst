@@ -408,8 +408,8 @@ Creator         Auto      creator   User ID of original record creator
 Source          Auto      source    Globus path of source raw data
 Size            Auto      size      Size of raw data, in bytes
 Ext             Optional  ext       Extension of raw data file
-Create Time     Auto      ct        creation timestamp (Unix)
-Update Time     Auto      ut        update timestamp (Unix)
+Create Time     Auto      ct        Creation timestamp (Unix)
+Update Time     Auto      ut        Update timestamp (Unix)
 ==============  ========  ========  =========================================
 
 
@@ -417,37 +417,62 @@ Update Time     Auto      ut        update timestamp (Unix)
 Collections
 -----------
 
-Collection hierarchies within DataFed may resemble a file system with directories containing files and sub-directories.
-While similar structurally, there are profound functional differences between DataFed collection hierarchies and typical
-file systems:
+Collections in DataFed are a logical mechanism for organizing, sharing, and downloading sets of data records. Data records
+may be placed in multiple collections (as links) and child collections may be created to further organize contained
+records. Like data records, collections have, at a minimum, an identifier and a title, but additional optional fields may
+be defined - including an alias, a description, public access, and tags. Collections do not support user-specified metadata.
 
-* In a file system, a file cannot be accessed without *traversing* the directory structure in which it is contained
-  (the file's path). The path of the file determines who can access the file through permissions set on
-  the individual directories of the path and the file itself. In DataFed, a data record or collection can be accessed
-  directly by its unique identifier or alias, and permissions are either inherited from the containing hierarchy, set
-  directly on the data record, or both.
-* In a file system, a file typically resides in a single directory. Some file systems support linking, which allows file
-  contents to be shared by multiple file instances, but the linked files may have different filenames. DataFed allows
-  data records (but not collections) to be contained in multiple collection hierarchies. This is achieved by a mechanism
-  similar to linking in a file system; except that there is always only one instance of the data record.
-* In a file system, there is no way to consistently and unambiguously identify a specific file instance over time. Because
-  a file's identity is defined only by it path, if the file is moved, it essentially has a new identity. On the other hand,
-  a file could be overwritten by a new file with the same path but entirely different contents - in this case the new file
-  has the identity of a previous file, but may be entirely unrelated. DataFed associates a unique, immutable, and non-
-  recyclable identifier with data records and collections. No matter which collections it is placed in, or how many times
-  it is update, or where the associated raw data is physically stored, a record's identity is always the same.
+Collections do not exclusively "own" the data records contained within them, but certain collection operations will directly
+impact the records (and child collections) within them. There are also constraints on which data records can be placed in a
+collection. These operations and constraints are as follows:
 
-Attributes
-----------
+- **Permissions** - Collections allow inheritable permissions to be set that apply to all contained data records and child
+  collections. This is generally the preferred way to share data other users and to control data access within a project.
+- **Single Owner** - It is not currently possible to mix data records owned by multiple users in a single collection. Only data
+  records owned by the user that also owns the collection can be linked (this applies to project collections as well). However, this
+  restriction does not apply to record "creators".
+- **Deletion** - If a collection is deleted, all child collections, as well as all data records that exist *only* within the deleted
+  collection hierarchy, will be deleted.
+- **Downloads** - Downloading a collection will download all raw data associated with contained data records - including those in
+  child collections. Downloaded raw data will all be placed in the same user-specified destination path (without subdirectories).
+  The DataFed web portal will display download dialog with a selectable list of which data records to download
+  from the collection.
+- **Allocation Change** - Collections can be used to change the repository allocations of all contained data records. Any
+  contained data record that is not already on a specified target allocation will be scheduled to be moved. Those that are already
+  on the target allocation will be ignored. Currently, this operation can only be done in the DataFed web portal.
+- **Ownership Change** - Collections can be used to change the ownership of contained data records. All records are moved to
+  a specified target collection owned by the new owner, and the all associated raw data will be scheduled to be moved to the new
+  owner's default allocation. Currently, this operation can only be done in the DataFed web portal.
 
+Field Summary
+-------------
+
+The table below lists all of the fields of a collection. Currently, only public collections in the DataFed catalog can be
+searched, and only through the DataFed web portal. In a future release, direct queries will be supported.
+
+==============  ========  ========  =========================================
+Field           Type      Name      Description
+==============  ========  ========  =========================================
+ID              Auto      id        Auto-assigned system-unique identifier
+Alias           Optional  alias     Human-friendly alternative identifier
+Title           Required  title     Title of record
+Description     Optional  desc      Description of record (markdown allowed)
+Tags            Optional  ---       Tag list
+Access          Default   ---       Public or private (default) access
+Category        Optional  ---       Catalog category for public access
+Owner           Auto      owner     User ID of current collection owner
+Creator         Auto      creator   User ID of original collection creator
+Create Time     Auto      ct        Creation timestamp (Unix)
+Update Time     Auto      ut        Update timestamp (Unix)
+==============  ========  ========  =========================================
 
 ------------
 Sharing Data
 ------------
 
---------------------
-Collective Ownership
---------------------
+--------
+Projects
+--------
 
 
 

@@ -103,11 +103,11 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#collections">Collections</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#attributes">Attributes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Field Summary</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#sharing-data">Sharing Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#collective-ownership">Collective Ownership</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#projects">Projects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#access-controls">Access Controls</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#repository-allocations">Repository Allocations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#data-search">Data Search</a></li>
@@ -236,7 +236,7 @@ DataFed services and several connected facilities and DataFed repositories. The 
 represent the physical boundaries of geographically distributed facilities. The wide blue arrows represent
 the DataFed high-speed raw data transfer “bus” (i.e. GridFTP) that is used to move data between facilities,
 and the green arrows represent the DataFed communication “bus” use by clients to send requests to DataFed.</p>
-<div class="figure align-center" id="id1">
+<div class="figure align-center" id="id2">
 <img alt="../_images/simplified_architecture.png" src="../_images/simplified_architecture.png" />
 <p class="caption"><span class="caption-text">Figure 1 - An Example DataFed Network</span></p>
 </div>
@@ -274,7 +274,7 @@ in the DataFed <a class="reference internal" href="usecases.html"><span class="d
 the DataFed network to implement scalable distributed data storage and indexing. A simplified system architecture
 is shown in Figure 2, below, and shows only the central DataFed services, one DataFed data repository, and
 supporting interfaces.</p>
-<div class="figure align-center" id="id2">
+<div class="figure align-center" id="id3">
 <a class="reference internal image-reference" href="../_images/system_components.png"><img alt="../_images/system_components.png" src="../_images/system_components.png" style="width: 570.75px; height: 433.5px;" /></a>
 <p class="caption"><span class="caption-text">Figure 2 - DataFed System Components</span></p>
 </div>
@@ -611,12 +611,12 @@ User-specified metadata fields can be searched by prefixing the field names in t
 <tr class="row-odd"><td><p>Create Time</p></td>
 <td><p>Auto</p></td>
 <td><p>ct</p></td>
-<td><p>creation timestamp (Unix)</p></td>
+<td><p>Creation timestamp (Unix)</p></td>
 </tr>
 <tr class="row-even"><td><p>Update Time</p></td>
 <td><p>Auto</p></td>
 <td><p>ut</p></td>
-<td><p>update timestamp (Unix)</p></td>
+<td><p>Update timestamp (Unix)</p></td>
 </tr>
 </tbody>
 </table>
@@ -624,35 +624,115 @@ User-specified metadata fields can be searched by prefixing the field names in t
 </div>
 <div class="section" id="collections">
 <h3>Collections</h3>
-<p>Collection hierarchies within DataFed may resemble a file system with directories containing files and sub-directories.
-While similar structurally, there are profound functional differences between DataFed collection hierarchies and typical
-file systems:</p>
+<p>Collections in DataFed are a logical mechanism for organizing, sharing, and downloading sets of data records. Data records
+may be placed in multiple collections (as links) and child collections may be created to further organize contained
+records. Like data records, collections have, at a minimum, an identifier and a title, but additional optional fields may
+be defined - including an alias, a description, public access, and tags. Collections do not support user-specified metadata.</p>
+<p>Collections do not exclusively “own” the data records contained within them, but certain collection operations will directly
+impact the records (and child collections) within them. There are also constraints on which data records can be placed in a
+collection. These operations and constraints are as follows:</p>
 <ul class="simple">
-<li><p>In a file system, a file cannot be accessed without <em>traversing</em> the directory structure in which it is contained
-(the file’s path). The path of the file determines who can access the file through permissions set on
-the individual directories of the path and the file itself. In DataFed, a data record or collection can be accessed
-directly by its unique identifier or alias, and permissions are either inherited from the containing hierarchy, set
-directly on the data record, or both.</p></li>
-<li><p>In a file system, a file typically resides in a single directory. Some file systems support linking, which allows file
-contents to be shared by multiple file instances, but the linked files may have different filenames. DataFed allows
-data records (but not collections) to be contained in multiple collection hierarchies. This is achieved by a mechanism
-similar to linking in a file system; except that there is always only one instance of the data record.</p></li>
-<li><p>In a file system, there is no way to consistently and unambiguously identify a specific file instance over time. Because
-a file’s identity is defined only by it path, if the file is moved, it essentially has a new identity. On the other hand,
-a file could be overwritten by a new file with the same path but entirely different contents - in this case the new file
-has the identity of a previous file, but may be entirely unrelated. DataFed associates a unique, immutable, and non-
-recyclable identifier with data records and collections. No matter which collections it is placed in, or how many times
-it is update, or where the associated raw data is physically stored, a record’s identity is always the same.</p></li>
+<li><p><strong>Permissions</strong> - Collections allow inheritable permissions to be set that apply to all contained data records and child
+collections. This is generally the preferred way to share data other users and to control data access within a project.</p></li>
+<li><p><strong>Single Owner</strong> - It is not currently possible to mix data records owned by multiple users in a single collection. Only data
+records owned by the user that also owns the collection can be linked (this applies to project collections as well). However, this
+restriction does not apply to record “creators”.</p></li>
+<li><p><strong>Deletion</strong> - If a collection is deleted, all child collections, as well as all data records that exist <em>only</em> within the deleted
+collection hierarchy, will be deleted.</p></li>
+<li><p><strong>Downloads</strong> - Downloading a collection will download all raw data associated with contained data records - including those in
+child collections. Downloaded raw data will all be placed in the same user-specified destination path (without subdirectories).
+The DataFed web portal will display download dialog with a selectable list of which data records to download
+from the collection.</p></li>
+<li><p><strong>Allocation Change</strong> - Collections can be used to change the repository allocations of all contained data records. Any
+contained data record that is not already on a specified target allocation will be scheduled to be moved. Those that are already
+on the target allocation will be ignored. Currently, this operation can only be done in the DataFed web portal.</p></li>
+<li><p><strong>Ownership Change</strong> - Collections can be used to change the ownership of contained data records. All records are moved to
+a specified target collection owned by the new owner, and the all associated raw data will be scheduled to be moved to the new
+owner’s default allocation. Currently, this operation can only be done in the DataFed web portal.</p></li>
 </ul>
-<div class="section" id="attributes">
-<h4>Attributes</h4>
+<div class="section" id="id1">
+<h4>Field Summary</h4>
+<p>The table below lists all of the fields of a collection. Currently, only public collections in the DataFed catalog can be
+searched, and only through the DataFed web portal. In a future release, direct queries will be supported.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 58%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ID</p></td>
+<td><p>Auto</p></td>
+<td><p>id</p></td>
+<td><p>Auto-assigned system-unique identifier</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alias</p></td>
+<td><p>Optional</p></td>
+<td><p>alias</p></td>
+<td><p>Human-friendly alternative identifier</p></td>
+</tr>
+<tr class="row-even"><td><p>Title</p></td>
+<td><p>Required</p></td>
+<td><p>title</p></td>
+<td><p>Title of record</p></td>
+</tr>
+<tr class="row-odd"><td><p>Description</p></td>
+<td><p>Optional</p></td>
+<td><p>desc</p></td>
+<td><p>Description of record (markdown allowed)</p></td>
+</tr>
+<tr class="row-even"><td><p>Tags</p></td>
+<td><p>Optional</p></td>
+<td><p>—</p></td>
+<td><p>Tag list</p></td>
+</tr>
+<tr class="row-odd"><td><p>Access</p></td>
+<td><p>Default</p></td>
+<td><p>—</p></td>
+<td><p>Public or private (default) access</p></td>
+</tr>
+<tr class="row-even"><td><p>Category</p></td>
+<td><p>Optional</p></td>
+<td><p>—</p></td>
+<td><p>Catalog category for public access</p></td>
+</tr>
+<tr class="row-odd"><td><p>Owner</p></td>
+<td><p>Auto</p></td>
+<td><p>owner</p></td>
+<td><p>User ID of current collection owner</p></td>
+</tr>
+<tr class="row-even"><td><p>Creator</p></td>
+<td><p>Auto</p></td>
+<td><p>creator</p></td>
+<td><p>User ID of original collection creator</p></td>
+</tr>
+<tr class="row-odd"><td><p>Create Time</p></td>
+<td><p>Auto</p></td>
+<td><p>ct</p></td>
+<td><p>Creation timestamp (Unix)</p></td>
+</tr>
+<tr class="row-even"><td><p>Update Time</p></td>
+<td><p>Auto</p></td>
+<td><p>ut</p></td>
+<td><p>Update timestamp (Unix)</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="sharing-data">
 <h3>Sharing Data</h3>
 </div>
-<div class="section" id="collective-ownership">
-<h3>Collective Ownership</h3>
+<div class="section" id="projects">
+<h3>Projects</h3>
 <p>When an individual user creates a data record or collection, that user becomes the owner and is granted full control of
 the newly created data record or collection. Collective ownership is achieved through the use of <em>projects</em>. A DataFed
 project is a distinct organizational entity that permits multiple associated users to create and manage data records and
