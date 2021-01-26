@@ -30,6 +30,11 @@ Users are recommended to follow the:
 
    Ensure that the Globus endpoint associated with the machine where you use DataFed is active.
 
+.. caution::
+
+    Ensure that all DataFed Get and Put operations are within a directory that Globus has write access to.
+    Otherwise, you will notice a ``Permission Denied`` error in your data transfer task messages.
+
 Import package
 ~~~~~~~~~~~~~~
 We start by importing just the ``API`` class within ``datafed.CommandLib`` as shown below.
@@ -453,6 +458,19 @@ We observe that we can successfully get information about an entity in DataFed u
 However, one would need to carefully extract the (automatically generated) ID of the Collection or Data Record of interest
 from the DataFed response in order to use it in subsequent code within a script.
 
+.. caution::
+
+    When working within the ``context`` of a Project with several collaborators,
+    there is a possibility that two users may use the same ``alias`` for a Record or a Collection.
+
+**Managing aliases within Projects:**
+
+There is no single solution to this problem. However, here are some suggestions:
+
+* Team members of the project should coordinate and collaboratively assign aliases
+* Individual members elect to avoid using aliases within the context of their personal Collections
+* Individual members manually prefix aliases for items within their personal Collections with their initials (hopefully unique within the Project)
+
 Manual context management
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 In this user guide, we will work within the context of the training project.
@@ -581,7 +599,7 @@ Let's look at the response we got for the ``dataCreate()`` function call:
 
 .. code-block:: python
 
-    print(response)
+    print(dc_resp)
 
 .. code-block:: none
 
@@ -614,7 +632,7 @@ record ID to be used for later operations, here's how we could go about it:
 
 .. code-block:: python
 
-    record_id = response[0].data[0].id
+    record_id = dc_resp[0].data[0].id
     print(record_id)
 
 .. code-block:: none
@@ -1151,9 +1169,14 @@ of each task it is provided and returns only the statuses:
 .. code-block:: python
 
     def check_xfer_status(task_ids):
+        # Create a list to hold all statuses
         statuses = list()
+        # iterate over each of the task IDs in the input argument
         for this_task_id in task_ids:
+            # First ask DataFed for information about this task
             task_resp = df_api.taskView(this_task_id)
+            # Extract the status field from the response
+            # Add just the status to the list
             statuses.append(task_resp[0].task[0].status)
         return statuses
 
@@ -1177,14 +1200,21 @@ or, importantly - wasting precious wall time on the supercomputer.
     xfer_tasks = list()
     for ind in range(3):
         print('Starting simulation #{}'.format(ind))
+        # Run the simulation and make sure to get the path to the results
         results_file = expensive_simulation()
+        # Create a unique Data Record for this simulation
         rec_resp = df_api.dataCreate('Simulation_' + str(ind),
                                      metadata=json.dumps({'parameter_1': ind}),
                                      parent_id=sim_coll_id)
+        # Extract the ID for this record from the response
         this_rec_id = rec_resp[0].data[0].id
         print('Uploading data from simulation #{}'.format(ind))
+        # Put the raw data into this record
         put_resp = df_api.dataPut(this_rec_id, results_file, wait=False)
+        # Extract the task ID from the put response as we have done before
+        # Add that task ID to the list of tasks we need to track
         xfer_tasks.append(put_resp[0].task.id)
+        # Print instantaneous transfer statuses of all data put tasks so far
         print('Transfer status(es): {}'.format(check_xfer_status(xfer_tasks)))
         print('')
 
@@ -1352,7 +1382,7 @@ keyword argument though we are using the ``alias`` as the identifier:
 .. code-block:: python
 
     coll_list_resp = df_api.collectionItemsList(coll_alias)
-     print(coll_list_resp)
+    print(coll_list_resp)
 
 .. code-block:: none
 
@@ -1665,7 +1695,7 @@ we could use the ``collectionGetParents()`` function as:
 .. code-block:: python
 
     path_resp = df_api.collectionGetParents(cat_coll_id)
-    print(path_reps)
+    print(path_resp)
 
 .. code-block:: none
 

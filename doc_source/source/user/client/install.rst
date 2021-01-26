@@ -94,10 +94,12 @@ Here is an `external guide <https://www.makeuseof.com/python-windows-path/>`_ on
 
       datafed ep default set endpoint_name_here
 
-.. note::
+4. (Optional) If you are using Globus Connect Personal, visit the Settings or Preferences
+   of the application to inspect which folders Globus has write access to.
+   Consider adding or removing directories to suit your needs.
 
-    This concludes the one-time setup necessary to get started with scripting using DataFed.
-    You may use the interactive DataFed CLI or the Python package at this point.
+This concludes the one-time setup necessary to get started with scripting using DataFed.
+You may use the interactive DataFed CLI or the Python package at this point.
 
 Advanced Configuration
 ~~~~~~~~~~~~~~~~~~~~~~
