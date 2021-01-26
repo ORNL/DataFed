@@ -420,7 +420,8 @@ Collections
 Collections in DataFed are a logical mechanism for organizing, sharing, and downloading sets of data records. Data records
 may be placed in multiple collections (as links) and child collections may be created to further organize contained
 records. Like data records, collections have, at a minimum, an identifier and a title, but additional optional fields may
-be defined - including an alias, a description, public access, and tags. Collections do not support user-specified metadata.
+be defined including an alias, a description, public access, and tags. Unlike data records, collections do not support
+user-specified structured metadata.
 
 Collections do not exclusively "own" the data records contained within them, but certain collection operations will directly
 impact the records (and child collections) within them. There are also constraints on which data records can be placed in a
@@ -444,6 +445,26 @@ collection. These operations and constraints are as follows:
   a specified target collection owned by the new owner, and the all associated raw data will be scheduled to be moved to the new
   owner's default allocation. Currently, this operation can only be done in the DataFed web portal.
 
+Root Collection
+---------------
+
+All users and projects own a special "root" collection that acts as the parent for all other (top-level) collections and/or
+data records. The root collections behaves like a normal collection except that it cannot be edited or deleted. The root
+collection also has a special identifier and alias which are derived from the type and owner identifier, as follows:
+
+.. code-block:: text
+
+    For a user with an ID of "user123", the root collection ID is "c/u_user123_root" and the alias is "u:user123:root"
+
+    For a project with an ID of "proj123", the root collection ID is "c/p_proj123_root" and the alias is "p:proj123:root"
+
+Public Collections
+------------------
+
+Collections can be set to public access, in which case the collection and all of its contents will become discoverable and
+readable by any DataFed user. Public access is implemented through a DataFed catalog system which allows users to browse
+and search for public collections and datasets. Please refer to the :ref:`Catalog` section for more information.
+
 Field Summary
 -------------
 
@@ -466,38 +487,27 @@ Create Time     Auto      ct        Creation timestamp (Unix)
 Update Time     Auto      ut        Update timestamp (Unix)
 ==============  ========  ========  =========================================
 
-------------
-Sharing Data
-------------
-
 --------
 Projects
 --------
 
+A DataFed project is a distinct organizational unit that permits multiple users to create and manage data records and
+collections as a team - without requiring project members to maintain their own complex access control rules. Projects
+can be created by any DataFed user, but a DataFed repository allocation is required for the project before any data
+records can be created within, or transferred to, the project. Projects have specific user roles with distinct
+permissions, as follows:
 
+- **Project Owner** - The user that initially creates a project becomes the owner and has complete control over the
+  project and contained data and collections. The owner can add and remove project members and administrators.
+- **Administrators** - These users have the ability to add and remove project members (but not other administrators), and
+  can also configure access control rules on the projects root collection.
+- **Members** - These users may create and update data records and collections based on the access control rules set by
+  the project owner or administrators. Members always have administrative access to records they create.
 
-
-When an individual user creates a data record or collection, that user becomes the owner and is granted full control of
-the newly created data record or collection. Collective ownership is achieved through the use of *projects*. A DataFed
-project is a distinct organizational entity that permits multiple associated users to create and manage data records and
-collections as a team - without requiring member users to configure individual access control rules. When a project member
-creates a data record or collection, the project becomes the owner of the new record, rather than the creating user;
-however, both the project (project owner and administrators) as well as the creating user have administrative rights to the
-created record. Other project members have access to project data based on project-wide access control lists managed by the
-project owner and administrators.
-
-Projects support specific roles for associated users:
-
-* Project Owner - These users have complete control over the project and contained data and collections. The user that
-  initially creates a project becomes an administrator by default, but a project can have multiple administrators assigned.
-* Administrators - These users have the ability to add and remove project members (but not administrators or other
-  managers), and can also configure access control rules on the projects root collection. A project can have multiple
-  managers assigned by administrators.
-* Members - These users may create and update data records and collections based on the access control rules set by
-  managers or administrators. Always has administrative access to created records.
-
-
-
+When any user associated with a project creates a data record or collection inside a project, the project, rather than
+the creating user, becomes the owner of the new record or collection. While users still have administrative control over
+records and collections they create within a project, the allocation of the project is used to store and manage any raw
+data associated with these records.
 
 
 ---------------
@@ -554,7 +564,17 @@ storage allocation may be specified, or a specific storage allocation selected w
 be accessed in a consistent manner no matter which data repository it is stored on; however, the physical proximity of a data
 repository in relation to the point of use of data can impact access latency.
 
+-------
+Catalog
+-------
+
+The DataFed catalog allows collections and data records to be is internally published for use by any DataFed user. The catalog
+allows users to browse collections through hierarchical categories and to search for collections and datasets directly by
+filtering field values.
+
 
 -----------
 Data Search
 -----------
+
+TBD

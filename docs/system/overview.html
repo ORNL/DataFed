@@ -103,13 +103,15 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#collections">Collections</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#root-collection">Root Collection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#public-collections">Public Collections</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id1">Field Summary</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#sharing-data">Sharing Data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#projects">Projects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#access-controls">Access Controls</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#repository-allocations">Repository Allocations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#catalog">Catalog</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#data-search">Data Search</a></li>
 </ul>
 </li>
@@ -627,7 +629,8 @@ User-specified metadata fields can be searched by prefixing the field names in t
 <p>Collections in DataFed are a logical mechanism for organizing, sharing, and downloading sets of data records. Data records
 may be placed in multiple collections (as links) and child collections may be created to further organize contained
 records. Like data records, collections have, at a minimum, an identifier and a title, but additional optional fields may
-be defined - including an alias, a description, public access, and tags. Collections do not support user-specified metadata.</p>
+be defined including an alias, a description, public access, and tags. Unlike data records, collections do not support
+user-specified structured metadata.</p>
 <p>Collections do not exclusively “own” the data records contained within them, but certain collection operations will directly
 impact the records (and child collections) within them. There are also constraints on which data records can be placed in a
 collection. These operations and constraints are as follows:</p>
@@ -650,6 +653,23 @@ on the target allocation will be ignored. Currently, this operation can only be 
 a specified target collection owned by the new owner, and the all associated raw data will be scheduled to be moved to the new
 owner’s default allocation. Currently, this operation can only be done in the DataFed web portal.</p></li>
 </ul>
+<div class="section" id="root-collection">
+<h4>Root Collection</h4>
+<p>All users and projects own a special “root” collection that acts as the parent for all other (top-level) collections and/or
+data records. The root collections behaves like a normal collection except that it cannot be edited or deleted. The root
+collection also has a special identifier and alias which are derived from the type and owner identifier, as follows:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>For a user with an ID of &quot;user123&quot;, the root collection ID is &quot;c/u_user123_root&quot; and the alias is &quot;u:user123:root&quot;
+
+For a project with an ID of &quot;proj123&quot;, the root collection ID is &quot;c/p_proj123_root&quot; and the alias is &quot;p:proj123:root&quot;
+</pre></div>
+</div>
+</div>
+<div class="section" id="public-collections">
+<h4>Public Collections</h4>
+<p>Collections can be set to public access, in which case the collection and all of its contents will become discoverable and
+readable by any DataFed user. Public access is implemented through a DataFed catalog system which allows users to browse
+and search for public collections and datasets. Please refer to the <span class="xref std std-ref">Catalog</span> section for more information.</p>
+</div>
 <div class="section" id="id1">
 <h4>Field Summary</h4>
 <p>The table below lists all of the fields of a collection. Currently, only public collections in the DataFed catalog can be
@@ -728,29 +748,25 @@ searched, and only through the DataFed web portal. In a future release, direct q
 </table>
 </div>
 </div>
-<div class="section" id="sharing-data">
-<h3>Sharing Data</h3>
-</div>
 <div class="section" id="projects">
 <h3>Projects</h3>
-<p>When an individual user creates a data record or collection, that user becomes the owner and is granted full control of
-the newly created data record or collection. Collective ownership is achieved through the use of <em>projects</em>. A DataFed
-project is a distinct organizational entity that permits multiple associated users to create and manage data records and
-collections as a team - without requiring member users to configure individual access control rules. When a project member
-creates a data record or collection, the project becomes the owner of the new record, rather than the creating user;
-however, both the project (project owner and administrators) as well as the creating user have administrative rights to the
-created record. Other project members have access to project data based on project-wide access control lists managed by the
-project owner and administrators.</p>
-<p>Projects support specific roles for associated users:</p>
+<p>A DataFed project is a distinct organizational unit that permits multiple users to create and manage data records and
+collections as a team - without requiring project members to maintain their own complex access control rules. Projects
+can be created by any DataFed user, but a DataFed repository allocation is required for the project before any data
+records can be created within, or transferred to, the project. Projects have specific user roles with distinct
+permissions, as follows:</p>
 <ul class="simple">
-<li><p>Project Owner - These users have complete control over the project and contained data and collections. The user that
-initially creates a project becomes an administrator by default, but a project can have multiple administrators assigned.</p></li>
-<li><p>Administrators - These users have the ability to add and remove project members (but not administrators or other
-managers), and can also configure access control rules on the projects root collection. A project can have multiple
-managers assigned by administrators.</p></li>
-<li><p>Members - These users may create and update data records and collections based on the access control rules set by
-managers or administrators. Always has administrative access to created records.</p></li>
+<li><p><strong>Project Owner</strong> - The user that initially creates a project becomes the owner and has complete control over the
+project and contained data and collections. The owner can add and remove project members and administrators.</p></li>
+<li><p><strong>Administrators</strong> - These users have the ability to add and remove project members (but not other administrators), and
+can also configure access control rules on the projects root collection.</p></li>
+<li><p><strong>Members</strong> - These users may create and update data records and collections based on the access control rules set by
+the project owner or administrators. Members always have administrative access to records they create.</p></li>
 </ul>
+<p>When any user associated with a project creates a data record or collection inside a project, the project, rather than
+the creating user, becomes the owner of the new record or collection. While users still have administrative control over
+records and collections they create within a project, the allocation of the project is used to store and manage any raw
+data associated with these records.</p>
 </div>
 <div class="section" id="access-controls">
 <h3>Access Controls</h3>
@@ -799,8 +815,15 @@ storage allocation may be specified, or a specific storage allocation selected w
 be accessed in a consistent manner no matter which data repository it is stored on; however, the physical proximity of a data
 repository in relation to the point of use of data can impact access latency.</p>
 </div>
+<div class="section" id="catalog">
+<h3>Catalog</h3>
+<p>The DataFed catalog allows collections and data records to be is internally published for use by any DataFed user. The catalog
+allows users to browse collections through hierarchical categories and to search for collections and datasets directly by
+filtering field values.</p>
+</div>
 <div class="section" id="data-search">
 <h3>Data Search</h3>
+<p>TBD</p>
 </div>
 </div>
 </div>
