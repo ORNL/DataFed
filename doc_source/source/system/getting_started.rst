@@ -12,7 +12,7 @@ Follow **only step 1** of `instructions here <https://docs.globus.org/how-to/get
 ------------------
 Ensure that your ``globus ID`` is linked with your institutional ID in your globus account:
 
-1. Log into `globus.org <www.globus.org>`_
+1. Log into `globus.org <https://www.globus.org>`_
 2. Click on ``Account`` on the left hand pane
 3. Select the ``Identities`` tab in the window that opens up
 4. You should see (at least these) two identities:
@@ -77,7 +77,7 @@ Most high performance computing clusters will already have at-least one endpoint
 If your cluster is not listed above, you may need to identify the endpoint(s) from the cluster's documentation or
 by searching on the Globus data transfer web interface as shown below:
 
-1. Log into Globus' `web portal <https://globus.org>`_
+1. Log into Globus' `web portal <https://www.globus.org>`_
 2. Select ``File Manager`` on the left hand pane if it is not already selected.
 
    .. image:: ../_static/globus_endpoints/finding_endpoint_01.png
