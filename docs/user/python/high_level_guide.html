@@ -245,11 +245,17 @@
 <h1>Guide to High Level Interface</h1>
 <p>There are two library modules, <code class="docutils literal notranslate"><span class="pre">CommandLib</span></code> and <code class="docutils literal notranslate"><span class="pre">MessageLib</span></code>, that provide high- and-low-level application
 programming interfaces (APIs), respectively, that can be used for Python scripting or custom application development.</p>
-<p>The high-level API is almost identical to the the DataFed command-line interface (CLI), in that it accepts text-based CLI
-commands, but returns Python objects instead of text or JSON output.</p>
-<p>The low-level API, as the module name implies,
-exposes the binary message-passing interface used by DataFed and is intended for more complex applications.
+<p>The high-level API is provided through an API class with methods that are very similar to the commands available in the
+DataFed command-line interface (CLI). Unlike the CLI, the API methods are functions that accept Python parameters and
+return reply messages (as Python objects) instead of text or JSON.</p>
+<p>The low-level API, as the module name implies, exposes the binary message-passing interface used by DataFed and is intended for more complex applications.
 A user guide to the low-level API currently does not exist but will be provided in the future.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>While not not recommended for general use, there is a <code class="docutils literal notranslate"><span class="pre">CLI</span></code> library module in the DataFed client package that implements
+the DataFed CLI but also provides an accessible “command” function that allows text-based CLI commands to be executed directly
+from a Python script (without requiring a system call).</p>
+</div>
 <p>This is a brief user guide that illustrates the usage of the high-level <code class="docutils literal notranslate"><span class="pre">CommandLib</span></code> Python API.
 It is <strong>not</strong> meant to be an exhaustive tutorial on using <code class="docutils literal notranslate"><span class="pre">CommandLib</span></code>.
 Instead, we cover functions in <code class="docutils literal notranslate"><span class="pre">CommandLib</span></code> that would be used in most data orchestration scripts and custom software based on DataFed.</p>
