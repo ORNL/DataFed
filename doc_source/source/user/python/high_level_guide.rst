@@ -62,7 +62,14 @@ Finally, we create an instance of the DataFed API class via:
 
     df_api = API()
 
-Assuming that DataFed has been installed and our default GlobusID configured correctly, we can now use ``df_api`` to communicate with DataFed as an authenticated user. If not, refer back to the `installation instructions <../client/install.html>`_.
+Assuming that the DataFed client has been installed and setup with local user credentials, and our default GlobusID has been
+configured correctly, we can now use ``df_api`` to communicate with DataFed as an authenticated user. If not, refer back to
+the `installation instructions <../client/install.html>`_.
+
+.. note::
+
+    In addition to supporting local user credentials for automatic log-in, the DataFed high level interface also provides functions
+    for checking user authentication status and for logging users in or out using password credentials.
 
 DataFed Responses & Projects
 ----------------------------
@@ -270,10 +277,10 @@ within the User's ``Personal Data``.
 .. caution::
 
     Though the CommandLib interface of DataFed sets the default context to the User's
-    ``Personal Data``, it is not necessary that the user have a valid data allocation
-    to create and store data in their ``Personal Data``.
+    ``Personal Data``, it is necessary that the user have a valid data allocation
+    to create and store data in their ``Personal Data`` context.
 
-There are ways to set the context, one can set the context only within the scope of a function or simply reset the default scope.
+There are two ways to set the context, one can set the context only within the scope of a function or simply reset the default scope.
 
 Context per function
 ~~~~~~~~~~~~~~~~~~~~
@@ -553,13 +560,13 @@ creating clutter in the ``root`` collection of the project:
 
 .. code-block:: python
 
-    username = 'somnaths' # Name of this user
+    dest_collection = 'somnaths' # Name of this user
 
 .. note::
 
-    Please change the ``username`` variable to suit your own project.
+    Please change the ``dest_collection`` variable to suit your own project.
     If you want to work within your own ``root`` collection,
-    set ``username`` to ``root``.
+    set ``dest_collection`` to ``root``.
 
 Data Records
 ------------
@@ -590,10 +597,10 @@ write the dictionary to a JSON file:
 
     dc_resp = df_api.dataCreate('my important data',
                                 metadata=json.dumps(parameters),
-                                parent_id=username, # parent collection
+                                parent_id=dest_collection, # parent collection
                                 )
 
-Here, the ``parent_id`` was set to the ``username`` variable, as this is the alias of our
+Here, the ``parent_id`` was set to the ``dest_collection`` variable, as this variable contains the alias of our
 personal collection within the project, in which our data record will be created.
 Leaving this unspecified is equivalent to the default value of ``root`` which means that
 the Data Record would be created within the ``root`` collection of the project.
@@ -799,7 +806,7 @@ First, we create Data Records as we have done earlier for the new datasets using
 
     dc2_resp = df_api.dataCreate('cleaned data',
                                   metadata=json.dumps({'cleaning_algorithm': 'gaussian_blur', 'size': 20}),
-                                  parent_id=username, # parent collection
+                                  parent_id=dest_collection, # parent collection
                                  )
     clean_rec_id = dc2_resp[0].data[0].id
     print(clean_rec_id)
@@ -1193,7 +1200,7 @@ all the simulation results:
 
 .. code-block:: python
 
-    coll_resp = df_api.collectionCreate('Simulations', parent_id=username)
+    coll_resp = df_api.collectionCreate('Simulations', parent_id=dest_collection)
     sim_coll_id = coll_resp[0].coll[0].id
 
 Knowing that the simulations take a while to complete,
@@ -1275,7 +1282,7 @@ We would use the ``collectionCreate()`` function as:
     ​
     coll_resp = df_api.collectionCreate('Image classification training data',
                                         alias=coll_alias,
-                                        parent_id=username)
+                                        parent_id=dest_collection)
     print(coll_resp)
 
 .. code-block:: none

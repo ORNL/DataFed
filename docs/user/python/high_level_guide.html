@@ -295,7 +295,14 @@ We also import json to simplify the process of communicating metadata with DataF
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">df_api</span> <span class="o">=</span> <span class="n">API</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Assuming that DataFed has been installed and our default GlobusID configured correctly, we can now use <code class="docutils literal notranslate"><span class="pre">df_api</span></code> to communicate with DataFed as an authenticated user. If not, refer back to the <a class="reference external" href="../client/install.html">installation instructions</a>.</p>
+<p>Assuming that the DataFed client has been installed and setup with local user credentials, and our default GlobusID has been
+configured correctly, we can now use <code class="docutils literal notranslate"><span class="pre">df_api</span></code> to communicate with DataFed as an authenticated user. If not, refer back to
+the <a class="reference external" href="../client/install.html">installation instructions</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In addition to supporting local user credentials for automatic log-in, the DataFed high level interface also provides functions
+for checking user authentication status and for logging users in or out using password credentials.</p>
+</div>
 </div>
 </div>
 <div class="section" id="datafed-responses-projects">
@@ -469,10 +476,10 @@ rather than any project</p>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>
 <p>Though the CommandLib interface of DataFed sets the default context to the User’s
-<code class="docutils literal notranslate"><span class="pre">Personal</span> <span class="pre">Data</span></code>, it is not necessary that the user have a valid data allocation
-to create and store data in their <code class="docutils literal notranslate"><span class="pre">Personal</span> <span class="pre">Data</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">Personal</span> <span class="pre">Data</span></code>, it is necessary that the user have a valid data allocation
+to create and store data in their <code class="docutils literal notranslate"><span class="pre">Personal</span> <span class="pre">Data</span></code> context.</p>
 </div>
-<p>There are ways to set the context, one can set the context only within the scope of a function or simply reset the default scope.</p>
+<p>There are two ways to set the context, one can set the context only within the scope of a function or simply reset the default scope.</p>
 </div>
 <div class="section" id="context-per-function">
 <h3>Context per function</h3>
@@ -716,14 +723,14 @@ private collection.</p>
 <p>We can use a python variable to help ensure that any Data Records or Collections we want to create in our
 private space is created within our own collection (<code class="docutils literal notranslate"><span class="pre">somnaths</span></code> in this case) rather than
 creating clutter in the <code class="docutils literal notranslate"><span class="pre">root</span></code> collection of the project:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">username</span> <span class="o">=</span> <span class="s1">&#39;somnaths&#39;</span> <span class="c1"># Name of this user</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dest_collection</span> <span class="o">=</span> <span class="s1">&#39;somnaths&#39;</span> <span class="c1"># Name of this user</span>
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Please change the <code class="docutils literal notranslate"><span class="pre">username</span></code> variable to suit your own project.
+<p>Please change the <code class="docutils literal notranslate"><span class="pre">dest_collection</span></code> variable to suit your own project.
 If you want to work within your own <code class="docutils literal notranslate"><span class="pre">root</span></code> collection,
-set <code class="docutils literal notranslate"><span class="pre">username</span></code> to <code class="docutils literal notranslate"><span class="pre">root</span></code>.</p>
+set <code class="docutils literal notranslate"><span class="pre">dest_collection</span></code> to <code class="docutils literal notranslate"><span class="pre">root</span></code>.</p>
 </div>
 </div>
 </div>
@@ -750,11 +757,11 @@ function to turn our python metadata dictionary <code class="docutils literal no
 write the dictionary to a JSON file:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dc_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataCreate</span><span class="p">(</span><span class="s1">&#39;my important data&#39;</span><span class="p">,</span>
                             <span class="n">metadata</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">parameters</span><span class="p">),</span>
-                            <span class="n">parent_id</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="c1"># parent collection</span>
+                            <span class="n">parent_id</span><span class="o">=</span><span class="n">dest_collection</span><span class="p">,</span> <span class="c1"># parent collection</span>
                             <span class="p">)</span>
 </pre></div>
 </div>
-<p>Here, the <code class="docutils literal notranslate"><span class="pre">parent_id</span></code> was set to the <code class="docutils literal notranslate"><span class="pre">username</span></code> variable, as this is the alias of our
+<p>Here, the <code class="docutils literal notranslate"><span class="pre">parent_id</span></code> was set to the <code class="docutils literal notranslate"><span class="pre">dest_collection</span></code> variable, as this variable contains the alias of our
 personal collection within the project, in which our data record will be created.
 Leaving this unspecified is equivalent to the default value of <code class="docutils literal notranslate"><span class="pre">root</span></code> which means that
 the Data Record would be created within the <code class="docutils literal notranslate"><span class="pre">root</span></code> collection of the project.</p>
@@ -929,7 +936,7 @@ We could not only track the resultant new datasets as Data Records in DataFed bu
 <p>First, we create Data Records as we have done earlier for the new datasets using the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dc2_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataCreate</span><span class="p">(</span><span class="s1">&#39;cleaned data&#39;</span><span class="p">,</span>
                               <span class="n">metadata</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;cleaning_algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;gaussian_blur&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">}),</span>
-                              <span class="n">parent_id</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="c1"># parent collection</span>
+                              <span class="n">parent_id</span><span class="o">=</span><span class="n">dest_collection</span><span class="p">,</span> <span class="c1"># parent collection</span>
                              <span class="p">)</span>
 <span class="n">clean_rec_id</span> <span class="o">=</span> <span class="n">dc2_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">clean_rec_id</span><span class="p">)</span>
@@ -1267,7 +1274,7 @@ of each task it is provided and returns only the statuses:</p>
 <p>In the following demonstration, we perform a series of “computationally expensive” simulations.</p>
 <p>Following our aim to mimic realistic scenarios, we also create a DataFed collection to hold
 all the simulation results:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">coll_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionCreate</span><span class="p">(</span><span class="s1">&#39;Simulations&#39;</span><span class="p">,</span> <span class="n">parent_id</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">coll_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionCreate</span><span class="p">(</span><span class="s1">&#39;Simulations&#39;</span><span class="p">,</span> <span class="n">parent_id</span><span class="o">=</span><span class="n">dest_collection</span><span class="p">)</span>
 <span class="n">sim_coll_id</span> <span class="o">=</span> <span class="n">coll_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coll</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
 </pre></div>
 </div>
@@ -1344,7 +1351,7 @@ We would use the <code class="docutils literal notranslate"><span class="pre">co
 ​
 coll_resp = df_api.collectionCreate(&#39;Image classification training data&#39;,
                                     alias=coll_alias,
-                                    parent_id=username)
+                                    parent_id=dest_collection)
 print(coll_resp)
 </pre></div>
 </div>
