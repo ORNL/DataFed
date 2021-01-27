@@ -523,6 +523,10 @@ class API:
 
         msg = auth.DataGetRequest()
         msg.check = True
+
+        if isinstance(item_id, str):
+            item_id = [item_id]
+
         for ids in item_id:
             msg.id.append( self._resolve_id( ids, context ))
 
