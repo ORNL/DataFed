@@ -560,13 +560,12 @@ creating clutter in the ``root`` collection of the project:
 
 .. code-block:: python
 
-    dest_collection = 'somnaths' # Name of this user
+    dest_collection = 'somnaths' # Destination collection
 
 .. note::
 
     Please change the ``dest_collection`` variable to suit your own project.
-    If you want to work within your own ``root`` collection,
-    set ``dest_collection`` to ``root``.
+    If you want to work within the project's ``root`` collection, set ``dest_collection`` to ``root``.
 
 Data Records
 ------------
