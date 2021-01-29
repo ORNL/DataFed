@@ -179,6 +179,12 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../admin/general.html">Administration</a></li>
 </ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
 
             
           
@@ -723,14 +729,13 @@ private collection.</p>
 <p>We can use a python variable to help ensure that any Data Records or Collections we want to create in our
 private space is created within our own collection (<code class="docutils literal notranslate"><span class="pre">somnaths</span></code> in this case) rather than
 creating clutter in the <code class="docutils literal notranslate"><span class="pre">root</span></code> collection of the project:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dest_collection</span> <span class="o">=</span> <span class="s1">&#39;somnaths&#39;</span> <span class="c1"># Name of this user</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dest_collection</span> <span class="o">=</span> <span class="s1">&#39;somnaths&#39;</span> <span class="c1"># Destination collection</span>
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Please change the <code class="docutils literal notranslate"><span class="pre">dest_collection</span></code> variable to suit your own project.
-If you want to work within your own <code class="docutils literal notranslate"><span class="pre">root</span></code> collection,
-set <code class="docutils literal notranslate"><span class="pre">dest_collection</span></code> to <code class="docutils literal notranslate"><span class="pre">root</span></code>.</p>
+If you want to work within the project’s <code class="docutils literal notranslate"><span class="pre">root</span></code> collection, set <code class="docutils literal notranslate"><span class="pre">dest_collection</span></code> to <code class="docutils literal notranslate"><span class="pre">root</span></code>.</p>
 </div>
 </div>
 </div>
