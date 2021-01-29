@@ -68,6 +68,15 @@ by subsequent documents on this site.
 
    admin/general
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Development
+
+   dev/project
+   dev/design
+   dev/roadmap
+
+
 Indices and tables
 ==================
 
