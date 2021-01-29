@@ -60,6 +60,7 @@ by subsequent documents on this site.
    :caption: Python Interface
 
    user/python/high_level_guide
+   user/python/notebooks
    autoapi/index.rst
 
 .. toctree::
