@@ -1458,7 +1458,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
     //    console.log("sendMsg alloc ctx", a_msg_name );
     allocRequestContext( a_resp, function( ctx ){
-        console.log("sendMsg", a_msg_name, ctx );
+        //console.log("sendMsg", a_msg_name, ctx );
 
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
@@ -1516,7 +1516,7 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         throw "Invalid message type: " + a_msg_name;
 
     allocRequestContext( null, function( ctx ){
-        console.log("sendMsgDir", a_msg_name, ctx );
+        //console.log("sendMsgDir", a_msg_name, ctx );
 
         var msg_buf = msg.encode(a_msg_data).finish();
         //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
@@ -1651,7 +1651,7 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
     var f = g_ctx[ctx];
     if ( f ) {
         g_ctx[ctx] = null;
-        console.log("freed ctx",ctx,"for msg",msg_class.name);
+        //console.log("freed ctx",ctx,"for msg",msg_class.name);
         g_ctx_next = ctx;
         f( msg );
     } else {
