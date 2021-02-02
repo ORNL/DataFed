@@ -291,18 +291,32 @@ TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
     const string &                  repo_id = obj.getString( "repo_id" );
     const string &                  path = obj.getString( "repo_path" );
     const Value::Array &            ids = obj.getArray( "ids" );
+    Value::ArrayConstIter           id = ids.begin();
+    size_t                          i = 0, j, sz = ids.size();
+    size_t                          chunk = Config::getInstance().repo_chunk_size;
 
-    for ( Value::ArrayConstIter id = ids.begin(); id != ids.end(); id++ )
+    // Issue #603 - break large requests into chunks to reduce likelihood of timeouts
+
+
+    while ( i < sz )
     {
-        loc = del_req.add_loc();
-        loc->set_id( id->asString() );
-        loc->set_path( path + id->asString().substr(2) );
+        j = min( i + chunk, sz );
+
+        for ( ; i < j; i++, id++ )
+        {
+            loc = del_req.add_loc();
+            loc->set_id( id->asString() );
+            loc->set_path( path + id->asString().substr(2) );
+        }
+
+        if ( repoSendRecv( repo_id, del_req, reply ))
+        {
+            return true;
+        }
+
+        delete reply;
+        del_req.loc_clear();
     }
-
-    if ( repoSendRecv( repo_id, del_req, reply ))
-        return true;
-
-    delete reply;
 
     return false;
 }
@@ -445,7 +459,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
 
     MsgBuf buffer;
 
-    if ( !comm.recv( buffer, false, 10000 ))
+    if ( !comm.recv( buffer, false, config.repo_timeout ))
     {
         DL_ERROR( "Timeout waiting for size response from repo " << a_repo_id );
         cerr.flush();

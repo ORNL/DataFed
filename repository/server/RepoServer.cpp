@@ -358,7 +358,7 @@ Server::procDataDeleteRequest()
     for ( int i = 0; i < request->loc_size(); i++ )
     {
         boost::filesystem::path data_path( request->loc(i).path() );
-        DL_DEBUG( "Data delete for " << data_path );
+        DL_DEBUG( "Delete " << data_path );
         boost::filesystem::remove( data_path );
     }
 
