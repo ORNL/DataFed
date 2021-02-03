@@ -315,7 +315,7 @@ TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
         }
 
         delete reply;
-        del_req.loc_clear();
+        del_req.clear_loc();
     }
 
     return false;
