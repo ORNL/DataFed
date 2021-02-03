@@ -103,6 +103,7 @@ RequestWorker::workerThread()
             {
                 msg_type = m_msg_buf.getMsgType();
 
+                #if 0
                 // DEBUG - Inject random delay in message processing
                 if ( m_tid & 1 )
                 {
@@ -111,18 +112,19 @@ RequestWorker::workerThread()
                     DL_DEBUG( "W" << m_tid << " sleeping" );
                     sleep( 30 );
                 }
+                #endif
 
-                DL_DEBUG( "W" << m_tid << " recvd msg type: " << msg_type );
+                DL_TRACE( "W" << m_tid << " recvd msg type: " << msg_type );
 
                 handler = m_msg_handlers.find( msg_type );
                 if ( handler != m_msg_handlers.end() )
                 {
-                    DL_DEBUG( "W"<<m_tid<<" calling handler" );
+                    DL_TRACE( "W"<<m_tid<<" calling handler" );
 
                     (this->*handler->second)();
                     comm.send( m_msg_buf );
 
-                    DL_DEBUG( "W" << m_tid << " reply sent." );
+                    DL_TRACE( "W" << m_tid << " reply sent." );
                 }
                 else
                 {
@@ -234,11 +236,15 @@ RequestWorker::procDataDeleteRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoDataDeleteRequest, Anon::AckReply )
 
-    for ( int i = 0; i < request->loc_size(); i++ )
+    if ( request->loc_size() )
     {
-        boost::filesystem::path data_path( request->loc(i).path() );
-        DL_DEBUG( "Delete " << data_path );
-        boost::filesystem::remove( data_path );
+        DL_DEBUG( "Delete " << request->loc_size() << " file(s), path: " << request->loc(0).path() );
+
+        for ( int i = 0; i < request->loc_size(); i++ )
+        {
+            boost::filesystem::path data_path( request->loc(i).path() );
+            boost::filesystem::remove( data_path );
+        }
     }
 
     PROC_MSG_END
