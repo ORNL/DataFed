@@ -9,7 +9,8 @@ DataFed includes a suite of services that are built from code housed in this rep
 - Web Portal Application - The primary point-of-presence and user interface for DataFed
 - Command Line Interface - Utility for accessing data from compute and data environments (interactive and scriptable)
 
-Please refer to the "docs" directory for papers and presentations describing the architecture and use cases of DataFed.
+
+Please refer to the [DataFed homepage](https://ornl.github.io/DataFed) for full documentation, papers, and presentations describing the architecture and use cases of DataFed.
 
 Refer to the "BUILD.md" file for instructions on how to configure and build DataFed.
 

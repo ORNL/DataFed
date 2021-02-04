@@ -29,13 +29,19 @@ towards unifying and simplifying data discovery, access, and sharing - as well a
 entropy of traditional file systems that can lead to data misidentification, mishandling, and an eventual
 loss of scientific reproducibility.
 
-The figure below shows a simplified representation of an example DataFed network consisting of the central
+Cross-Facility Data Management
+==============================
+
+Figure 1, below, shows a simplified representation of an example DataFed network consisting of the central
 DataFed services and several connected facilities and DataFed repositories. The enclosing gray boxes
 represent the physical boundaries of geographically distributed facilities. The wide blue arrows represent
 the DataFed high-speed raw data transfer "bus" (i.e. GridFTP) that is used to move data between facilities,
 and the green arrows represent the DataFed communication "bus" use by clients to send requests to DataFed.
 
-.. image:: /_static/simplified_architecture.png
+..  figure:: /_static/simplified_architecture.png
+    :align: center
+
+    Figure 1 - An Example DataFed Network
 
 In this example, there is an observational facility and a compute facility that each have a local DataFed
 data repository (a cylinder labeled with an 'R'). Any facility in the system can read or write data from or to
@@ -68,8 +74,50 @@ difference would be increased latency associated with DataFed data transfers.
 Many cross-facility and collaborative research scenarios are supported by DataFed, and specific examples are discussed
 in the DataFed :doc:`Use Cases </system/usecases>` document.
 
+System Architecture
+===================
+
+The DataFed system is composed of a number of system components and interfaces that are deployed across
+the DataFed network to implement scalable distributed data storage and indexing. A simplified system architecture
+is shown in Figure 2, below, and shows only the central DataFed services, one DataFed data repository, and
+supporting interfaces.
+
+..  figure:: /_static/system_components.png
+    :scale: 75%
+    :align: center
+
+    Figure 2 - DataFed System Components
+
+DataFed's central services include the "Core" service which is essentially the "brains" of DataFed. The core
+service manages the metadata associated with managed raw data and also implements access control, orchestration,
+and concurrency controls for data movements across the DataFed network. The core service, however, is not directly
+involved in the transfer of raw data - this function is delegated to Globus services, or more specifically, to the
+GridFTP servers (managed by GLobus) located at DataFed data repositories and other facilities. (The blue lines in
+Figure 2 indicate high-performance raw data transfer pathways.)
+
+The raw data storage resources within a DataFed data repository can be any form of physical storage hardware, so long
+as the interface to this storage is supported by Globus. Currently this includes POSIX file systems and S3 object
+stores. The inherit reliability of the physical storage of a repository is determined by the host facility and
+could range from inexpensive magnetic disks to high-speed solid state drives or even archival-quality geographically
+distribute storage systems. Local administrators control repository policies and determine which DataFed users can
+utilize a repository by granting (or revoking) repository allocations. These local administrative policies and actions
+have impact no DataFed on repositories at other facilities.
+
+Figure 2 shows a DataFed repository in isolation; however, a host facility would typically integrate their DataFed
+repositories with their own local storage and compute resources. For example, a facility would likely have additional
+Globus endpoints that would mount the primary file system(s) of the facility, and they would install high-speed
+interconnects between the DataFed repository endpoint and the facility endpoint(s) to increase data transfer speeds
+between the two storage systems.
+
+The web services within the DataFed central services primarily support a web portal that allows users to easily organize
+and share data from a web browser; however, the web services also play a critical role in authenticating DataFed users
+through Globus' federated identity system (which is based on OAuth2). New DataFed users must register through the
+DataFed data portal and grant certain permission to DataFed through Globus' authorization system. These permissions
+relate to user identification and enabling automatic data transfers on behalf of DataFed users.
+
+----------
 Interfaces
-==========
+----------
 
 Users are able to interact with DataFed through several available interfaces including a graphical web application,
 a command-line interface (CLI), and both high- and low-level application programming interfaces (APIs). The easiest
@@ -78,7 +126,7 @@ the web application is where users initially register for DataFed accounts.
 
 The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged available on PyPi. Refer
 to the :doc:`Client Installation </user/client/install>`, :doc:`CLI User Guide </user/cli/guide>`, and
-:doc:`Python Scripting Guide </user/python_scripting>` for more information.
+:doc:`Python Scripting Guide </user/python/high_level_guide>` for more information.
 
 DataFed's interfaces can be used from any workstation, laptop, or compute node; however, these interfaces only provide
 users with the ability to issue commands to the DataFed central service. If users need to be able to also transfer raw
@@ -87,16 +135,53 @@ Typically, research facilities will already provide Globus endpoints to access s
 individual workstations and laptops, users will need to install Globus Personal Connect. See `DataFed Client Installation </user/client/install>`
 for more information.
 
-Key Concepts
-============
+User Accounts
+=============
+
+User must register with DataFed in order to access public or shared data records and collections; however, registration
+is free and only requires a Globus account. (Refer to the `/system/getting_started` document for help with the
+registration process.) Once registered, users are tracked internally by their Globus identity but can also be searched for
+using their proper names. In order for users to be able to create their own data records, an allocation on one or more DataFed
+data repositories is required. Please contact the IT department at a DataFed-enabled facility for assistance with
+acquiring a DataFed repository allocation.
+
+.. note::
+
+  In a future release of DataFed, a searchable directory of available data repositories will be made available and allow
+  users to request allocations directly from within DataFed.
+
+DataFed registration utilizes a standard Globus authentication and authorization process. When you begine the registration
+process from the DataFed welcome page, you will be redirected to Globus for authentication (log-in) using your Globus account.
+Globus will then ask you to authorize DataFed to access your Globus identity and to allow DataFed to transfer data on your behalf.
+Once this process is complete, you will be redirected to a DataFed post-registration page where you will create a DataFed password.
+This password is only used when manually authenticating from the DataFed command-line interface, and it can be updated from
+DataFed Web Portal at any time.
+
+Note that DataFed will only initiate data transfers when you (or a process running as you) explicitly request it to. Further,
+DataFed data transfers are constrained to be between DataFed data storage repositories and Globus endpoints that you have pre-authorized
+(or "activated") for access. Globus end-point activation is transient and access will expire within a period determined by the
+policies of the host facility.
+
+
+System Concepts
+===============
 
 DataFed provides a uniform, holistic, and logical view of the data, users, and various organizational structures associated
-with the federation of organizations and data storage resources that make up the DataFed network. From a users perspective,
-all data operations look and feel the same from within DataFed regardless of where DataFed is being accessed or where
-data is physically stored. In order to understand the features and capabilities of DataFed, as a whole, it is first necessary
-to understand the underlying terminology and concepts and these are defined in this section.
+with the federation of facilities and data storage resources that make up the DataFed network. From a users perspective,
+all data operations look and feel the same from within DataFed regardless of where DataFed is being accessed, where data is
+physically stored, or which DataFed interface is being utilized. In order to understand the features and capabilities of
+DataFed, as a whole, it is necessary to understand the underlying terminology and concepts, and these are discussed in this
+section.
 
-Below is a brief, alphabetical list of DataFed and Globus terms and concepts.
+Because DataFed relies heavily upon Globus for data transfers, it is helpful to understand the basics of how Globus works and
+how to use it to move data between Globus endpoints. A good starting point for understanding Globus can be found `here <https://www.globus.org/data-transfer>`_.
+
+---------------
+Quick Reference
+---------------
+
+Below is a brief, alphabetical list of the most common DataFed terms and concepts. These topics are discussed in
+greater detail in following sections of this document.
 
 - **Access Control** - Access controls are sets of fine-grained permissions associated with data records and/or collections that may be
   applied to specific users or groups of users.
@@ -172,98 +257,262 @@ Below is a brief, alphabetical list of DataFed and Globus terms and concepts.
 - **User** - Any person with a DataFed account. Users are identified by their unique Globus ID account name, with optionally linked organizational accounts.
 
 
-Globus Concepts:
-
-- **Globus ID** - 
-- **Endpoint** - 
-- **Endpoint UUID** - 
-- **Endpoint Legacy Name** - 
-- **Endpoint Activation** - 
-
-A key idea of DataFed is the presentation of data in an location-agnostic manner. From a logical viewpoint,
-users do not need to know where data is physically stored within DataFed - data can be accessed from any supported
-facility, or the web portal, by using assigned data record identifiers or user-defined aliases. From a performance
-standpoint, the physical storage location of data likely matters depending on where the data is being accessed from.
-For this reason, DataFed will support data repository caching to optimize frequently accessed data. In addition, users
-with allocations on multiple data repositories may opt to migrate data between repositories based on usage locality.
-
 -----------------------
 Identifiers and Aliases
 -----------------------
 
-All records in DataFed (data, collections, user, projects, etc.) are automatically assigned a system-unique identifier
-consisting of a prefix and an alphanumeric value. For data records and collections these identifiers are numeric, so
-users may choose to assign a more human-friendly "alias" that can be used in place of identifiers. Aliases are alphanumeric
-(with certain restrictions) and case sensitive, and, to avoid collisions, are automatically prefixed with the type ("u" or
-"p") and value portion of the identifier of the owning user or project, delimited with colons. When aliases are used by the
-owner, the alias prefix may be omitted.
+All system "entities" in DataFed (data, collections, user, projects, etc.) are automatically assigned system-unique identifiers (IDs)
+consisting of a prefix (that determines entity type) followed by an alphanumeric value. For example, "d/12345678" would be
+an ID for data record, and "c/87654321" would be a collection. The numeric portion of these IDs is not in any particular order
+and can be considered essentially random, but unique for a given entity type. System IDs are not easy for humans to remember and
+use, thus for data records and collections (which are referenced frequently) users may opt to assign a human-friendly "alias"
+that can be used in place of the system identifier.
 
-For example, if a user with an ID of "u/jsmith" creates an alias "mydata", then the full alias would be "u:jsmith:mydata".
-User "jsmith" can simply use "mydata", but other users would need to use the full alias instead. Note that in DataFed web
-portal, aliases are typically shown without the prefix.
+Aliases are lowercase alphanumeric strings that can contain the letters 'a' through 'z', the numbers '0' through '9', and the
+special characters '-','_', and '.'. Aliases can be considered to be the equivalent of a file or directory name in a file
+system. A scoping prefix is automatically attached to aliases in order to ensure aliases are unique across all users
+(and projects) in DataFed. These prefixes consist of the type of the alias owner ("u" for users, and "p" for projects),
+followed by the user or project ID, separated by colons. For example:
 
---------------------
-Collective Ownership
---------------------
+.. code-block:: text
 
-When an individual user creates a data record or collection, that user becomes the owner and is granted full control of
-the newly created data record or collection. Collective ownership is achieved through the use of *projects*. A DataFed
-project is a distinct organizational entity that permits multiple associated users to create and manage data records and
-collections as a team - without requiring member users to configure individual access control rules. When a project member
-creates a data record or collection, the project becomes the owner of the new record, rather than the creating user;
-however, both the project (project owner and administrators) as well as the creating user have administrative rights to the
-created record. Other project members have access to project data based on project-wide access control lists managed by the
-project owner and administrators.
+  The alias "my.data" for user "u/user123" becomes "u:user123:my.data"
 
-Projects support specific roles for associated users:
+  and
 
-* Project Owner - These users have complete control over the project and contained data and collections. The user that
-  initially creates a project becomes an administrator by default, but a project can have multiple administrators assigned.
-* Administrators - These users have the ability to add and remove project members (but not administrators or other
-  managers), and can also configure access control rules on the projects root collection. A project can have multiple
-  managers assigned by administrators.
-* Members - These users may create and update data records and collections based on the access control rules set by
-  managers or administrators. Always has administrative access to created records.
+  The alias "simulation.run.1" within project "p/stf123" becomes "p:stf123:simulation.run.1"
 
---------
+.. note::
+
+  In both the DataFeb web portal and the command-line interface, scoping prefixes are not required to be entered for aliases
+  (nor are they displayed) except when referencing data owned by another user or project.
+
+In general, aliases are intended to support interactive data browsing and sharing and, thus, should be easy to use and understand.
+Aliases should *not* be used to encode complex parameters or other information that is more appropriately placed in a data record's
+searchable metadata. This is especially true when sharing data with users that may not be familiar with an ad hoc name-based parameter
+encoding scheme.
+
+.. note::
+
+  Capturing and storing scientific parameters and other context as searchable, schema-based metadata results in data that
+  is far more *findable* and *interoperable* than encoding this information in aliases.
+
+------------
+Data Records
+------------
+
+A data record is the basic unit of data storage within DataFed and consist of, at a minimum, an identifier and a title. A number
+of additional optional informational fields can be specified including an alias, a textual description, structured metadata,
+provenance relationships, and tags. All of these data record fields are maintained centrally within DataFed and do not count
+against a users storage allocation(s). Refer to the :ref:`Field Summary`, below, for a full list of data record fields.
+
+While metadata-only data records can be useful for specific use cases, it is likely some form of source data will need to be
+associated with a given data record. This data is referred to as "raw data" because DataFed treats it as an oblique attachment to a
+data record (i.e. DataFed cannot "see" inside this raw data for purposes of indexing or searching). Raw data can be any format
+and any size so long as a user has sufficient allocation space to store it. See the :ref:`Raw Data` section, below, for further details.
+
+When creating a data record, a storage allocation on a DataFed repository must be available. If a user has multiple allocations,
+then an allocation can be specified or the default allocation will be used instead. The default allocation can be viewed and set
+in the DataFed web portal. After creation, it is possible to move a record to an allocation on a different repository, and if raw
+data has been uploaded it will be relocated automatically. Similarly, data record ownership can be transferred to another DataFed
+user or project, and again, raw data will be relocated.
+
+.. note::
+
+  If large collections of data records are moved between allocations, or to new owners, the server-side background task associated
+  with moving the raw data may take a significant amount of time to complete. Progress can be monitored via the web portal or the CLI.
+
 Metadata
 --------
 
-Data records support user-defined metadata. "Metadata" is distinct from built-on record attributes such as title and description,
-and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable and can represent
-arbitrary structured documents. When creating or updating a data record, metadata may be directly specified in textual form, or,
-with DataFed CLI, a JSON file may be used as the metadata source. When updating, the user has the option to either replace existing
+The metadata of a data record is distinct from the built-in record fields such as title and description,
+and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable, can represent
+arbitrary structured documents, and is easily validated using JSON-based schemas (see `<https://json-schema.org/>`_). Like
+other fields, metadata is searchable using the powerful built-in query language described in the :ref:`Data Search` section of
+this document.
+
+When creating or updating a data record, metadata may be directly specified or a JSON file may be referenced as the metadata source.
+When updating the metadata associated with an existing data record, the user has the option to either replace all of the existing
 metadata or to merge new metadata with existing metadata. In the case of merging, any keys that are present both the new and
 existing metadata will be overwritten by the new values - other existing keys are left unchanged and new keys are inserted.
 
-Note that when providing metadata, it must fully comply with the JSON specification, located at `<https://tools.ietf.org/html/rfc8259>`_.
+.. note::
 
-Collection Hierarchies
-======================
+  When providing metadata, it must fully comply with the JSON specification, located at `<https://tools.ietf.org/html/rfc8259>`_.
 
-Collection hierarchies within DataFed may resemble a file system with directories containing files and sub-directories.
-While similar structurally, there are profound functional differences between DataFed collection hierarchies and typical
-file systems:
+Provenance
+----------
 
-* In a file system, a file cannot be accessed without *traversing* the directory structure in which it is contained
-  (the file's path). The path of the file determines who can access the file through permissions set on
-  the individual directories of the path and the file itself. In DataFed, a data record or collection can be accessed
-  directly by its unique identifier or alias, and permissions are either inherited from the containing hierarchy, set
-  directly on the data record, or both.
-* In a file system, a file typically resides in a single directory. Some file systems support linking, which allows file
-  contents to be shared by multiple file instances, but the linked files may have different filenames. DataFed allows
-  data records (but not collections) to be contained in multiple collection hierarchies. This is achieved by a mechanism
-  similar to linking in a file system; except that there is always only one instance of the data record.
-* In a file system, there is no way to consistently and unambiguously identify a specific file instance over time. Because
-  a file's identity is defined only by it path, if the file is moved, it essentially has a new identity. On the other hand,
-  a file could be overwritten by a new file with the same path but entirely different contents - in this case the new file
-  has the identity of a previous file, but may be entirely unrelated. DataFed associates a unique, immutable, and non-
-  recyclable identifier with data records and collections. No matter which collections it is placed in, or how many times
-  it is update, or where the associated raw data is physically stored, a record's identity is always the same.
+Provenance information in DataFed is maintained as direct links between any two data records, and includes a direction
+and a type. Currently three types of provenance relationships are supported, as shown in the table below. The direction of
+provenance relationships is implicitly defined by setting relationship information on "dependent" data records only.
+
++----------------------+
+|Relationship          |
++======================+
+|Is Derived From       |
++----------------------+
+|Is a Component Of     |
++----------------------+
+|Is a Newer Version Of |
++----------------------+
 
 
-Access Control
-==============
+It is easy to understand provenance direction by thinking of the dependent record as the subject of the relationship statement.
+For example, if data record "xyz" "is derived from" data record "pqr", then data record "xyz" is the dependent and the provenance
+relationship to record "pqr" should be set on record "xyz".
+
+Raw Data
+--------
+
+Raw data is associated with a DataFed data record by uploading a source file from a Globus endpoint, and, once uploaded, it
+can be downloaded to any other Globus endpoint. Users uploading and/or downloading raw data must have appropriate
+permissions both on the source/destination Globus endpoints and on the DataFed record itself. When data is uploaded to a
+data record, the source path, extension, and data size is captured in the data record. When downloading, users can request
+either the original filename or the record identifier be used as the name for the downloaded file.
+
+.. note::
+
+  As with all Globus transfers, it is the users responsibility to ensure that the source or destination endpoints are activated
+  prior to initiating a raw data transfer in DataFed. This restriction is due to the inherent security design of Globus, which
+  prohibits agent processes, like DataFed, from activating endpoints on behalf of users. Note, however, that DataFed data
+  repositories never require activation.
+
+When a raw data transfer is initiated from DataFed, the transfer can be monitored in DataFed using the "Task ID" of the transfer
+request. In the DataFed CLI and Python API, the task ID is provided in the output of the request. In the DataFed web portal,
+the most recent tasks will be shown and periodically updated under the "Tasks" tab. When a transfer completes without errors,
+the task status will become "SUCCESS"; otherwise an error message will be provided. Common problems include forgetting to
+activate an endpoint, endpoint activation expiring, or referencing an invalid path or filename.
+
+Field Summary
+-------------
+
+The table below lists all of the fields of a data record. Most of these fields are searchable using simple
+equality tests (i.e. == and !=); however the title and description fields are full-text indexed - enabling root-word and phrase
+searches as well. When composing search expressions, the field names as shown in the third column of the table must be used.
+User-specified metadata fields can be searched by prefixing the field names in the associated JSON document with "md.".
+
+==============  ========  ========  =========================================
+Field           Type      Name      Description
+==============  ========  ========  =========================================
+ID              Auto      id        Auto-assigned system-unique identifier
+Alias           Optional  alias     Human-friendly alternative identifier
+Title           Required  title     Title of record
+Description     Optional  desc      Description of record (markdown allowed)
+Tags            Optional  ---       Tag list
+Metadata        Optional  md.*      User-specified JSON document
+Provenance      Optional  ---       Relationship(s) with other data records
+Allocation      Default   ---       Data repository ID of allocation used
+Owner           Auto      owner     User ID of current record owner
+Creator         Auto      creator   User ID of original record creator
+Source          Auto      source    Globus path of source raw data
+Size            Auto      size      Size of raw data, in bytes
+Ext             Optional  ext       Extension of raw data file
+Create Time     Auto      ct        Creation timestamp (Unix)
+Update Time     Auto      ut        Update timestamp (Unix)
+==============  ========  ========  =========================================
+
+
+-----------
+Collections
+-----------
+
+Collections in DataFed are a logical mechanism for organizing, sharing, and downloading sets of data records. Data records
+may be placed in multiple collections (as links) and child collections may be created to further organize contained
+records. Like data records, collections have, at a minimum, an identifier and a title, but additional optional fields may
+be defined including an alias, a description, public access, and tags. Unlike data records, collections do not support
+user-specified structured metadata.
+
+Collections do not exclusively "own" the data records contained within them, but certain collection operations will directly
+impact the records (and child collections) within them. There are also constraints on which data records can be placed in a
+collection. These operations and constraints are as follows:
+
+- **Permissions** - Collections allow inheritable permissions to be set that apply to all contained data records and child
+  collections. This is generally the preferred way to share data other users and to control data access within a project.
+- **Single Owner** - It is not currently possible to mix data records owned by multiple users in a single collection. Only data
+  records owned by the user that also owns the collection can be linked (this applies to project collections as well). However, this
+  restriction does not apply to record "creators".
+- **Deletion** - If a collection is deleted, all child collections, as well as all data records that exist *only* within the deleted
+  collection hierarchy, will be deleted.
+- **Downloads** - Downloading a collection will download all raw data associated with contained data records - including those in
+  child collections. Downloaded raw data will all be placed in the same user-specified destination path (without subdirectories).
+  The DataFed web portal will display download dialog with a selectable list of which data records to download
+  from the collection.
+- **Allocation Change** - Collections can be used to change the repository allocations of all contained data records. Any
+  contained data record that is not already on a specified target allocation will be scheduled to be moved. Those that are already
+  on the target allocation will be ignored. Currently, this operation can only be done in the DataFed web portal.
+- **Ownership Change** - Collections can be used to change the ownership of contained data records. All records are moved to
+  a specified target collection owned by the new owner, and the all associated raw data will be scheduled to be moved to the new
+  owner's default allocation. Currently, this operation can only be done in the DataFed web portal.
+
+Root Collection
+---------------
+
+All users and projects own a special "root" collection that acts as the parent for all other (top-level) collections and/or
+data records. The root collections behaves like a normal collection except that it cannot be edited or deleted. The root
+collection also has a special identifier and alias which are derived from the type and owner identifier, as follows:
+
+.. code-block:: text
+
+    For a user with an ID of "user123", the root collection ID is "c/u_user123_root" and the alias is "u:user123:root"
+
+    For a project with an ID of "proj123", the root collection ID is "c/p_proj123_root" and the alias is "p:proj123:root"
+
+Public Collections
+------------------
+
+Collections can be set to public access, in which case the collection and all of its contents will become discoverable and
+readable by any DataFed user. Public access is implemented through a DataFed catalog system which allows users to browse
+and search for public collections and datasets. Please refer to the :ref:`Catalog` section for more information.
+
+Field Summary
+-------------
+
+The table below lists all of the fields of a collection. Currently, only public collections in the DataFed catalog can be
+searched, and only through the DataFed web portal. In a future release, direct queries will be supported.
+
+==============  ========  ========  =========================================
+Field           Type      Name      Description
+==============  ========  ========  =========================================
+ID              Auto      id        Auto-assigned system-unique identifier
+Alias           Optional  alias     Human-friendly alternative identifier
+Title           Required  title     Title of record
+Description     Optional  desc      Description of record (markdown allowed)
+Tags            Optional  ---       Tag list
+Access          Default   ---       Public or private (default) access
+Category        Optional  ---       Catalog category for public access
+Owner           Auto      owner     User ID of current collection owner
+Creator         Auto      creator   User ID of original collection creator
+Create Time     Auto      ct        Creation timestamp (Unix)
+Update Time     Auto      ut        Update timestamp (Unix)
+==============  ========  ========  =========================================
+
+--------
+Projects
+--------
+
+A DataFed project is a distinct organizational unit that permits multiple users to create and manage data records and
+collections as a team - without requiring project members to maintain their own complex access control rules. Projects
+can be created by any DataFed user, but a DataFed repository allocation is required for the project before any data
+records can be created within, or transferred to, the project. Projects have specific user roles with distinct
+permissions, as follows:
+
+- **Project Owner** - The user that initially creates a project becomes the owner and has complete control over the
+  project and contained data and collections. The owner can add and remove project members and administrators.
+- **Administrators** - These users have the ability to add and remove project members (but not other administrators), and
+  can also configure access control rules on the projects root collection.
+- **Members** - These users may create and update data records and collections based on the access control rules set by
+  the project owner or administrators. Members always have administrative access to records they create.
+
+When any user associated with a project creates a data record or collection inside a project, the project, rather than
+the creating user, becomes the owner of the new record or collection. While users still have administrative control over
+records and collections they create within a project, the allocation of the project is used to store and manage any raw
+data associated with these records.
+
+
+---------------
+Access Controls
+---------------
 
 DataFed implements fine-grained access control through a set of permissions that can be applied to both data records and 
 collections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of
@@ -293,45 +542,39 @@ local permissions control access to the collection record itself, and "inherited
 down to all contained data records and sub-collections. Note that because data records can be placed into multiple collections,
 the inherited permissions of *all* associated parent collections are evaluated for each users accessing a given data record.
 
-Storage Allocations
-===================
+----------------------
+Repository Allocations
+----------------------
 
 Having access to DataFed does not, in itself, grant users the ability to create or manage data within DataFed. This is because
-DataFed does not provide any raw data storage of its own, but instead relies on *federated* storage provided by DataFed member
-organizations. Federated storage is implemented through a network of geographically distributed "data repositories" that are
-owned and maintained by specific DataFed member organizations, yet potentially accessible by all DataFed users. It is DataFed
-member organizations that individually determine how storage allocations are assigned to specific users.
+DataFed does not provide any raw data storage on its own, but instead relies on *federated* storage provided by DataFed member
+organization and/or facilities. Federated storage is implemented through a network of geographically distributed "data repositories"
+that are owned and maintained by specific member organizations, yet are potentially accessible by any DataFed user.
 
-Typically, DataFed users with an account at one or more DataFed member organizations will be automatically granted storage
-allocations on data repositories managed by those organizations. For unaffiliated users, storage allocations may be explicitly
-requested from a DataFed member organizations. DataFed member organizations are free to define and enact their own data storage
-policies; therefore, users wishing to acquire storage a specific allocation must contact the associated organization for
-information on how to proceed. Even though unaffiliated users with no storage allocation cannot use DataFed to create and manage
-their own data, DataFed is still allows these users to locate, access, and monitor data owned by other DataFed users or projects.
+Typically, DataFed users with an account at one or more DataFed member facilities will be automatically granted storage
+allocations on data repositories managed by the organization that operates the facilities. For unaffiliated users, storage
+allocations may be explicitly requested from a DataFed member organizations. DataFed member organizations are free to define
+and enforce their own data storage policies; therefore, users wishing to acquire storage a specific allocation must contact the
+associated organization for information on how to gain access. Even though unaffiliated users with no storage allocation cannot
+use DataFed to create and manage their own data, DataFed is still allows these users to locate, access, and monitor data owned
+by other DataFed users or projects.
 
-It is typical for DataFed users to have multiple storage allocations on different data repositories. In this case, a default
+It is likely that DataFed users may have multiple storage allocations on different data repositories. In this case, a default
 storage allocation may be specified, or a specific storage allocation selected when creating new DataFed data records. Data can
-be accessed in a consistent manner no matter which data repository it is stored on; however, the physical location of a data
-repository in relation to the point of use of data can impact initial access time.
+be accessed in a consistent manner no matter which data repository it is stored on; however, the physical proximity of a data
+repository in relation to the point of use of data can impact access latency.
 
-************
-Registration
-************
+-------
+Catalog
+-------
 
-User registration is required in order to access DataFed. Registration is free and secure, but requires users to have, or obtain,
-a free `Globus <https://www.globus.org>`_ account. Many universities and research facilities, worldwide, are "member organizations"
-of Globus and typically provide Globus accounts for their students, staff, and/or users. If your home institute does not provide
-Globus accounts, you can obtain a personal Globus account through Globus ID, located `here <https://www.globusid.org>`_.
+The DataFed catalog allows collections and data records to be is internally published for use by any DataFed user. The catalog
+allows users to browse collections through hierarchical categories and to search for collections and datasets directly by
+filtering field values.
 
-DataFed registration utilizes a standard Globus authentication and authorization process. When you click the "register" button on
-DataFed welcome page, you will be redirected to Globus for authentication (log-in) based on your Globus account. Globus will then
-ask you to authorize DataFed to access your Globus identity and to allow DataFed to transfer data on your behalf. Once this process
-is complete, you will be redirected to a DataFed post-registration page where you will create a DataFed password. This password is
-only used when manually authenticating from DataFed command-line interface, and it can be updated from DataFed Web Portal at any
-time.
 
-Note that DataFed will only initiate data transfers when you (or a process running as you) explicitly request it to. Further,
-DataFed data transfers are constrained to be between DataFed data storage repositories and Globus endpoints that you have pre-authorized
-(or "activated") for access. Globus end-point activation is transient and access will expire within a period determined by the host
-institute.
+-----------
+Data Search
+-----------
 
+TBD

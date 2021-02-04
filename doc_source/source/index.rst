@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+======================================
 DataFed - A Scientific Data Federation
 ======================================
 
@@ -59,6 +60,7 @@ by subsequent documents on this site.
    :caption: Python Interface
 
    user/python/high_level_guide
+   user/python/notebooks
    autoapi/index.rst
 
 .. toctree::
@@ -66,6 +68,15 @@ by subsequent documents on this site.
    :caption: Administration
 
    admin/general
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development
+
+   dev/project
+   dev/design
+   dev/roadmap
+
 
 Indices and tables
 ==================

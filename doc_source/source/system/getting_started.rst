@@ -41,12 +41,12 @@ As the name suggests, a data allocation is just the data storage space that user
 Though you can start to use DataFed at this point to view and get publicly shared data, it would not be possible to create or manipulate data of your own
 unless you have a data allocation in a DataFed data repository.
 
-Users are recommended to request an allocation from the principle investigator of the project and/or the IT administrator of facility using DataFed.
-Make sure to communicate your Globus user ID with administrators or collaborators so that you can be added onto projects, be provided data allocations, etc.
+Users are recommended to request an allocation from the principle investigator of the project and/or the IT administrator of the facility using DataFed.
+Make sure to communicate your DataFed user ID with administrators or collaborators so that you can be added to projects, be provided data allocations, etc.
 
 .. note ::
 
-    The completion of steps so far should be sufficient for users to view, edit, and manage data on DataFed.
+    The completion of these steps so far should be sufficient for users to view, edit, and manage data on DataFed.
     In order to upload and download data, users are recommended to complete the next few steps.
 
 5. Install / identify Globus Endpoint
@@ -92,6 +92,12 @@ by searching on the Globus data transfer web interface as shown below:
 
    The ``Endpoint UUID`` could also be used in place of the ``Legacy Name`` in the DataFed context.
 
+.. note::
+
+   The DataFed web portal features a built-in endpoint search capability in the data upload and download dialogs. Simply enter a
+   portion of an endpoint title or legacy ID in the source or destination path input field, and after a short delay DataFed will show
+   any matching endpoints in the source or destination endpoint input list.
+
 Personal Computers and Workstations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -115,14 +121,16 @@ Here are `example instructions <https://docs.cades.ornl.gov/#data-transfer-stora
 
    Globus endpoints are active only for a short period of time and must be reactivated if they expire.
 
-Once the endpoint is activated, it will be active for data transfers for (typically) 3 days or so.
-It is typically possible to renew / extend the endpoint activation before it expires.
-Once the activation has expired, you would need to visit Globus' web portal to activate the endpoint again.
+Once the endpoint is activated, it will be active for data transfers for a period determined by the hosting facility - typically 2 or 3 days.
+It is possible to renew an endpoints activation before it expires from the Globus `endpoint
+management page <https://app.globus.org/endpoints>`_. DataFed data repositories use internal Globus endpoints
+for data uploads and downloads; however, these endpoints are managed by DataFed and do not need to be activated by users.
+
 
 Programming interfaces to DataFed
 ---------------------------------
 Though it is indeed possible to use the web interface exclusively for managing data in DataFed,
 DataFed's python interface and CLI are very handy tools for automating data orchestration and accessing DataFed
-when a web interface is not available (e.g. terminal).
+when a web interface is not available (i.e. when using a terminal).
 
 Please follow the `installation and configuration guide <https://ornl.github.io/DataFed/user/client/install.html>`_ for the client package to get started with the python and command line interfaces to DataFed.
