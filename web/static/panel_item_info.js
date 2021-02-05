@@ -14,7 +14,7 @@ var form = $("#sel_info_form"),
     note_details = $("#note-details"),
     data_md_tree = null,
     data_md_empty = true,
-    tree_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}],
+    tree_empty_src = [{title:"(none)", icon:false}],
     data_md_exp = {},
     note_active_tree = null,
     note_open_tree = null,
@@ -128,7 +128,7 @@ export function showSelectedInfo( node, cb ){
 export function showSelectedItemInfo( item ){
     var disabled = [];
 
-    console.log("show info",item);
+    //console.log("show info",item);
 
     if ( item && item.id ){
         if ( !tabs_parent_vis ){
@@ -253,7 +253,7 @@ var tree_opts1 = {
                 entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> ";
             }
 
-            entry.title += note.title;
+            entry.title += util.escapeHTML( note.title );
 
             data.result.push( entry );
         }
