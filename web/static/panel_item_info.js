@@ -146,7 +146,7 @@ export function showSelectedItemInfo( item ){
         cur_item_id = item.id;
 
         if ( item.desc ){
-            desc_div.html( marked( item.desc ));
+            desc_div.html( marked( util.escapeHTML( item.desc )));
             desc_div.show();
         }else{
             //disabled.push(0);
@@ -183,6 +183,7 @@ export function getActiveItemID(){
 
 function showGeneralInfo( a_key, a_title ){
     $("#sel_info_icon").removeClass().addClass( "ui-icon ui-icon-" + (a_key?util.getKeyIcon( a_key ):"circle-help"));
+    // SEC: title does NOT need to be escaped - built in strings only
     title_div.html(a_title);
     if ( tabs_parent_vis ){
         tabs_parent.hide();
@@ -356,6 +357,8 @@ function showSelectedNoteInfo( node ){
 
             date_ct.setTime(note.ct*1000);
             date_ut.setTime(note.ut*1000);
+
+            // >>>>>>>>>>>>>>>> CYBERSEC: ALL user-sourced data MUST be escaped <<<<<<<<<<<<<<<<
 
             html = "<div style='height:100%;overflow:auto'>";
 
@@ -579,7 +582,7 @@ function showSelectedItemForm( item ){
 
     $("#sel_info_icon").removeClass().addClass( item.id.startsWith("d/")?util.getDataIcon( item ):"ui-icon ui-icon-" + util.getKeyIcon( item.id ));
 
-    title_div.html( title );
+    title_div.text( title );
 
     //$("#sel_info_desc",form).text( item.desc );
 

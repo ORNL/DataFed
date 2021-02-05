@@ -121,9 +121,9 @@ export function show(){
                             data.result = [];
                             var repo = data.response[0];
                             if ( repo.title )
-                                data.result.push( { title:"title: "+repo.title,icon:false } );
+                                data.result.push( { title:"title: "+util.escapeHTML(repo.title),icon:false } );
                             if ( repo.desc )
-                                data.result.push( { title:"desc: "+repo.desc,icon:false } );
+                                data.result.push( { title:"desc: "+util.escapeHTML(repo.desc),icon:false } );
                             if ( repo.capacity )
                                 data.result.push( { title:"capacity: "+util.sizeToString(repo.capacity),icon:false } );
                             //var adm;

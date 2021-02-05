@@ -105,7 +105,7 @@ export function show( a_uid, a_excl, cb, select ){
                 for ( var i in data ){
                     group = data[i];
                     if ( a_excl.indexOf( "g/" + group.gid ) == -1 )
-                        src.push({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
+                        src.push({title: util.escapeHTML(group.title) + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
                 }
 
                 $("#dlg_group_tree",frame).fancytree({
@@ -126,7 +126,7 @@ export function show( a_uid, a_excl, cb, select ){
                         if ( data.node.lazy ){
                             data.result = [];
                             if ( data.response.desc )
-                                data.result.push( { title:"["+data.response.desc+"]", icon: false, checkbox: false,key:"desc" } );
+                                data.result.push( { title:"["+util.escapeHTML(data.response.desc)+"]", icon: false, checkbox: false,key:"desc" } );
                             var mem;
                             for ( var i in data.response.member ) {
                                 mem = data.response.member[i];
@@ -135,7 +135,7 @@ export function show( a_uid, a_excl, cb, select ){
                         }
                     },
                     activate: function( event, data ) {
-                        console.log( data.node.key );
+                        //console.log( data.node.key );
                         if ( data.node.key.startsWith("g/")){
                             $("#dlg_edit_grp",frame).button("enable" );
                             $("#dlg_rem_grp",frame).button("enable" );

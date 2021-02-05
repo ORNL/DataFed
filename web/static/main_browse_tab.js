@@ -1779,8 +1779,8 @@ function setupRepoTab(){
                 var repo;
                 for ( var i in data ){
                     repo = data[i];
-                    html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+
-                        util.sizeToString( repo.capacity )+"</td><td>"+repo.path+"</td><td><button class='btn small repo_adm' repo='"+
+                    html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+util.escapeHTML(repo.title)+"</td><td>"+util.escapeHTML(repo.address)+"</td><td>"+
+                        util.sizeToString( repo.capacity )+"</td><td>"+util.escapeHTML(repo.path)+"</td><td><button class='btn small repo_adm' repo='"+
                         repo.id+"'>Admin</button></td></tr>";
                 }
                 html += "</table>";
