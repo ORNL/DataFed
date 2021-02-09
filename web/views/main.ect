@@ -76,12 +76,10 @@
         import * as settings from "/settings.js";
         import * as dialogs from "/dialogs.js";
 
-        settings.loadUser();
-        if ( !settings.user || !settings.user.active )
-            window.location.replace("/ui");
+        var user_uid = "<%- @user_uid %>";
+        //settings.setUser( "<%- @user_uid %>", "<%- @user_name %>", "<%- @user_email %>" );
 
         window.name = 'sdms_target';
-        document.getElementById("uname").innerHTML = settings.user.name;
 
         $(".btn").button();
 
@@ -118,22 +116,29 @@
             $("#mode_label").show();
         }
 
-        api.userView( settings.user.uid, true, function( ok, user ){
+        api.userView( user_uid, true, function( ok, user ){
             if ( ok && user ){
+                //console.log("user from db:",user);
+
+                settings.setUser( user );
+
                 //console.log("user from settings:",settings.user);
 
                 api.epRecentLoad();
 
-                settings.setUserAdmin( user.isAdmin );
-                settings.setUserRepoAdmin( user.isRepoAdmin );
+                //settings.setUserAdmin( user.isAdmin );
+                //settings.setUserRepoAdmin( user.isRepoAdmin );
 
-                if ( user.options ){
-                    settings.setOptions( user.options );
-                }
+                //if ( user.options ){
+                //    settings.setOptions( user.options );
+                //}
 
-                if ( settings.user.isAdmin ){
-                    $("#is_admin").show();
-                }
+                //document.getElementById("uname").innerHTML = settings.user.name;
+                $( "#uname" ).text( settings.user.nameFirst + " " + settings.user.nameLast );
+
+                //if ( settings.user.isAdmin ){
+                //    $("#is_admin").show();
+                //}
 
                 browser_tab.init();
 

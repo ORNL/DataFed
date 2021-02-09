@@ -45,7 +45,8 @@ var g_host,
     g_ctx_next = 0,
     g_client_id,
     g_client_secret,
-    g_cookie_maxage = 604800000, // 1 week in msec
+    g_cookie_opts = { httpOnly: true, maxAge: 604800000, secure: true, sameSite: "lax" },
+    g_cookie_ui_opts = { httpOnly: true, maxAge: 604800000, secure: true, sameSite: "lax", path: "/ui" },
     g_ready_start = 4,
     g_version,
     g_ver_major,
@@ -68,15 +69,15 @@ function defaultSettings(){
 }
 
 function startServer(){
-    console.log( "Host:", g_host );
-    console.log( "Port:", g_port );
-    console.log( "Server key file:", g_server_key_file );
-    console.log( "Server cert file:", g_server_cert_file );
-    console.log( "Server chain file:", g_server_chain_file );
-    console.log( "Core server addr:", g_core_serv_addr );
-    console.log( "Client ID:", g_client_id );
-    console.log( "Client Secret:", g_client_secret );
-    console.log( "Test mode:", g_test );
+    console.log( "  Host:", g_host );
+    console.log( "  Port:", g_port );
+    console.log( "  Server key file:", g_server_key_file );
+    console.log( "  Server cert file:", g_server_cert_file );
+    console.log( "  Server chain file:", g_server_chain_file );
+    console.log( "  Core server addr:", g_core_serv_addr );
+    console.log( "  Client ID:", g_client_id );
+    console.log( "  Client Secret:", g_client_secret );
+    console.log( "  Test mode:", g_test );
 
     g_core_sock.connect( g_core_serv_addr );
 
@@ -124,8 +125,8 @@ app.use( express.static( __dirname + '/static' ));
 app.use( bodyParser.json({ type: 'application/json', limit: '1048576'}));
 app.use( bodyParser.text({ type: 'text/plain', limit: '1048576'}));
 app.use( cookieParser() );
-app.use( helmet({hsts:{maxAge:31536000}}) );
-app.use(function(req, res, next) {
+app.use( helmet({ hsts: { maxAge: 31536000 }}));
+app.use( function( req, res, next ){
     res.setHeader('Content-Language','en-US');
     next();
 });
@@ -134,10 +135,10 @@ app.engine( 'ect', ectRenderer.render );
 
 
 app.get('/', (a_request, a_response) => {
-    if ( a_request.cookies['datafed-id'] && a_request.cookies['datafed-user'] )
+    if ( a_request.cookies['datafed-id'] )
         a_response.redirect( '/ui/main' );
     else{
-        console.log("Load index - unknown user from ", a_request.connection.remoteAddress );
+        console.log("Site access (unknown) from", a_request.connection.remoteAddress );
 
         var theme = a_request.cookies['datafed-theme']|| "light";
         a_response.render('index',{theme:theme,version:g_version,test_mode:g_test});
@@ -146,13 +147,16 @@ app.get('/', (a_request, a_response) => {
 
 app.get('/ui/main', (a_request, a_response) => {
     var uid = a_request.cookies['datafed-id'];
+    //console.log( "/ui/main", uid, a_request.cookies['datafed-user'] );
 
     if ( a_request.cookies['datafed-user'] && uid ){
-        console.log( "Load main - known user:", uid, "from", a_request.connection.remoteAddress );
+        console.log( "Site access (", uid, ") from", a_request.connection.remoteAddress );
 
         var theme = a_request.cookies['datafed-theme'] || "light";
-        a_response.render( 'main',{theme:theme,version:g_version,test_mode:g_test});
+        a_response.render( 'main',{user_uid:uid,theme:theme,version:g_version,test_mode:g_test});
     }else{
+        // datafed-user cookie not set, so clear datafed-id before redirect
+        a_response.clearCookie( 'datafed-id' );
         a_response.redirect( '/' );
     }
 });
@@ -160,8 +164,12 @@ app.get('/ui/main', (a_request, a_response) => {
 /* This is the post-Globus registration page where user may enter a password before continuing to main
 */
 app.get('/ui/register', (a_request, a_response) => {
-    if ( !a_request.cookies['datafed-user'] )
+    var ck = a_request.cookies['datafed-user'];
+    if ( !ck ){
         a_response.redirect( '/' );
+    }+
+
+    console.log( "Registration access (", ck.uid, ") from", a_request.connection.remoteAddress );
 
     var theme = a_request.cookies['datafed-theme'] || "light";
 
@@ -172,7 +180,8 @@ app.get('/ui/register', (a_request, a_response) => {
 
 
 app.get('/ui/login', (a_request, a_response) => {
-    //console.log("get /ui/login");
+    var uid = a_request.cookies['datafed-id'];
+    console.log( "User (", uid, ") from", a_request.connection.remoteAddress, "log-in" );
 
     var uri = g_globus_auth.code.getUri();
     a_response.redirect(uri);
@@ -180,7 +189,8 @@ app.get('/ui/login', (a_request, a_response) => {
 
 
 app.get('/ui/login/retry', (a_request, a_response) => {
-    //console.log("get /ui/login");
+    var uid = a_request.cookies['datafed-id'];
+    console.log( "User (", uid, ") from", a_request.connection.remoteAddress, "retry log-in" );
 
     a_response.clearCookie( 'datafed-id' );
     a_response.clearCookie( 'datafed-user', { path: "/ui" } );
@@ -191,7 +201,8 @@ app.get('/ui/login/retry', (a_request, a_response) => {
 
 
 app.get('/ui/logout', (a_request, a_response) => {
-    //console.log("get /ui/logout");
+    var uid = a_request.cookies['datafed-id'];
+    console.log( "User (", uid, ") from", a_request.connection.remoteAddress, "logout" );
 
     a_response.clearCookie( 'datafed-id' );
     a_response.clearCookie( 'datafed-user', { path: "/ui" } );
@@ -234,36 +245,43 @@ function doLogin( a_request, a_response, a_auth, a_redirect_url ){
             });
 
             res.on('end', () => {
-                console.log('tok introspect done');
+                //console.log('tok introspect done, data:', data );
 
                 if ( res.statusCode >= 200 && res.statusCode < 300 ){
-                    var userinfo = JSON.parse( data );
-                    userinfo.uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+                    var userinfo = JSON.parse( data ),
+                        user_ck = {
+                            uid: userinfo.username.substr( 0, userinfo.username.indexOf( "@" )),
+                            name: userinfo.name,
+                            email: userinfo.email,
+                            uuids: userinfo.identities_set
+                        };
 
-                    console.log( 'user authenticated:', userinfo, ', verifying SDMS account' );
+                    // Verify datafed is in audience
 
-                    sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: userinfo.identities_set }, function( reply ) {
-                        //console.log( "UserFindByUUIDsRequest reply:", reply );
+                    console.log( 'User', user_ck.uid, 'authenticated, verifying DataFed account' );
 
+                    sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: user_ck.uuids }, function( reply ) {
                         if ( !reply  ) {
-                            console.log("User find error." );
+                            console.log( "Error - Find user call failed." );
+                            a_response.clearCookie( 'datafed-id' );
+                            a_response.clearCookie( 'datafed-user', { path: "/ui" } );
                             a_response.redirect( "/ui/error" );
                         } else if ( !reply.user || !reply.user.length ) {
                             // Not registered
-                            console.log("User not registered", userinfo );
-                            a_response.cookie( 'datafed-user', JSON.stringify( userinfo ), { httpOnly: true, path: "/ui", maxAge: g_cookie_maxage });
+                            console.log( "User", user_ck.uid, "not registered" );
+                            a_response.cookie( 'datafed-user', JSON.stringify( user_ck ), g_cookie_ui_opts );
                             a_response.redirect( "/ui/register?acc_tok=" + encodeURIComponent( xfr_token.access_token ) + "&ref_tok=" + encodeURIComponent( xfr_token.refresh_token ) + "&acc_tok_ttl=" + encodeURIComponent( xfr_token.expires_in ) + "&uid=" + encodeURIComponent( userinfo.uid ) + "&uname=" + encodeURIComponent( userinfo.name ) + "&redir=" + encodeURIComponent( a_redirect_url ));
                         } else {
-                            console.log( 'user', userinfo.uid, 'verified' );
+                            console.log( 'User', user_ck.uid, 'verified' );
                             // Registered, save access & refresh tokens in cookie and in DB
-                            userinfo.acc_tok = xfr_token.access_token;
-                            userinfo.ref_tok = xfr_token.refresh_token;
-                            setAccessToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
+                            user_ck.acc_tok = xfr_token.access_token;
+                            user_ck.ref_tok = xfr_token.refresh_token;
+                            setAccessToken( user_ck.uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
 
                             // TODO Account may be disable from SDMS (active = false)
-                            a_response.cookie( 'datafed-id', userinfo.uid, { httpOnly: true, maxAge: g_cookie_maxage });
-                            a_response.cookie( 'datafed-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: g_cookie_maxage });
-                            console.log("auth redir",a_redirect_url);
+                            a_response.cookie( 'datafed-id', user_ck.uid, g_cookie_opts );
+                            a_response.cookie( 'datafed-user', JSON.stringify( user_ck ), g_cookie_ui_opts );
+                            //console.log("auth redir",a_redirect_url);
                             a_response.redirect( a_redirect_url );
                         }
                     });
@@ -304,30 +322,30 @@ app.get('/ui/authn', ( a_request, a_response ) => {
 
 
 app.get('/ui/do_register', ( a_req, a_resp ) => {
-    console.log( 'get /ui/do_register' );
+    //console.log( 'get /ui/do_register' );
     var userinfo = JSON.parse( a_req.cookies[ 'datafed-user' ] );
-    console.log( 'userinfo', userinfo );
+    //console.log( 'userinfo', userinfo );
     //var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
-    sendMessageDirect( "UserCreateRequest", "sdms", { uid: userinfo.uid, password: a_req.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.identities_set }, function( reply ) {
+    sendMessageDirect( "UserCreateRequest", "sdms", { uid: userinfo.uid, password: a_req.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.uuids }, function( reply ) {
         if ( !reply ) {
-            console.log("empty reply");
-            a_resp.status(500).send( "Empty reply" );
+            console.log( "Error - User create failed: empty reply" );
+            a_resp.status(500).send( "Error - User create failed (server did not respond)" );
         } else if ( reply.errCode ) {
             if ( reply.errMsg ) {
-                console.log("error", reply.errMsg);
-                a_resp.status(500).send( reply.errMsg );
+                console.log( "Error - User create failed:", reply.errMsg );
+                a_resp.status(500).send( "Error - User create failed: " + reply.errMsg );
             } else {
-                a_resp.status(500).send( "error code: " + reply.errCode );
-                console.log("error", reply.errCode);
+                a_resp.status(500).send( "Error - User create failed: " + reply.errCode );
+                console.log("Error - User create failed: ", reply.errCode);
             }
         } else {
             // Save access token
             setAccessToken( userinfo.uid, a_req.query.acc_tok, a_req.query.ref_tok, a_req.query.acc_tok_ttl );
             userinfo.acc_tok = a_req.query.acc_tok;
             userinfo.ref_tok = a_req.query.ref_tok;
-            a_resp.cookie( 'datafed-id', userinfo.uid, { httpOnly: true, maxAge: g_cookie_maxage });
-            a_resp.cookie( 'datafed-user', JSON.stringify( userinfo ), { httpOnly: true, path:"/ui", maxAge: g_cookie_maxage });
+            a_resp.cookie( 'datafed-id', userinfo.uid, g_cookie_opts );
+            a_resp.cookie( 'datafed-user', JSON.stringify( userinfo ), g_cookie_ui_opts );
             a_resp.redirect( a_req.query.redir );
         }
     });
@@ -597,9 +615,10 @@ app.post('/api/dat/search', ( a_req, a_resp ) => {
 });
 
 app.post('/api/dat/create', ( a_req, a_resp ) => {
-    //console.log( "dat create", a_req.body );
-
     sendMessage( "RecordCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        if ( reply.data && reply.data.length ){
+            console.log( "User", a_req.cookies['datafed-id'], "- data create, id:", reply.data[0].id );
+        }
         a_resp.send(reply);
     });
 });
@@ -614,7 +633,9 @@ app.post('/api/dat/create/batch', ( a_req, a_resp ) => {
 app.post('/api/dat/update', ( a_req, a_resp ) => {
     //console.log( "dat update", a_req.body );
     sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
-        //console.log("rec update:",reply);
+        if ( reply.data && reply.data.length ){
+            console.log( "User", a_req.cookies['datafed-id'], "- data update, id:", reply.data[0].id );
+        }
         a_resp.send(reply);
     });
 });
@@ -809,6 +830,9 @@ app.get('/api/acl/view', ( a_req, a_resp ) => {
 
 app.get('/api/acl/update', ( a_req, a_resp ) => {
     sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules }, a_req, a_resp, function( reply ) {
+        if ( reply.rule && reply.rule.length ){
+            console.log( "User", a_req.cookies['datafed-id'], "- ACL update, id:", a_req.query.id, a_req.query.rules );
+        }
         a_resp.send(reply);
     });
 });
@@ -979,7 +1003,7 @@ app.post('/api/col/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/col/update', ( a_req, a_resp ) => {
-    console.log("col update:",a_req.body);
+    //console.log("col update:",a_req.body);
     sendMessage( "CollUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1220,7 +1244,7 @@ app.get('/api/top/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/top/search', ( a_req, a_resp ) => {
-    console.log("top srch",a_req.query.phrase);
+    //console.log("top srch",a_req.query.phrase);
     sendMessage( "TopicSearchRequest", {phrase:a_req.query.phrase}, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
@@ -1446,15 +1470,15 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
         g_ctx[ctx] = function( a_reply ) {
             if ( !a_reply ) {
-                console.log("empty reply");
+                console.log("Error - reply handler: empty reply");
                 a_resp.status(500).send( "Empty reply" );
             } else if ( a_reply.errCode ) {
                 if ( a_reply.errMsg ) {
-                    console.log("error", a_reply.errMsg);
+                    console.log("Error - reply handler:", a_reply.errMsg);
                     a_resp.status(500).send( a_reply.errMsg );
                 } else {
                     a_resp.status(500).send( "error code: " + a_reply.errCode );
-                    console.log("error", a_reply.errCode);
+                    console.log("Error - reply handler:", a_reply.errCode);
                 }
             } else {
                 a_cb( a_reply );
@@ -1576,7 +1600,7 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
 });
 
 process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    console.log( 'Error - unhandled rejection at: Promise', p, 'reason:', reason );
 });
 
 g_core_sock.on('message', function( delim, frame, msg_buf ) {
