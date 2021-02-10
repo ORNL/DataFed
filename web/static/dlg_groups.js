@@ -1,9 +1,9 @@
 import * as api from "./api.js";
+import * as util from "./util.js";
 import * as dialogs from "./dialogs.js";
 import * as dlgGroupEdit from "./dlg_group_edit.js";
 
 export function show( a_uid, a_excl, cb, select ){
-    console.log("groups UID:", a_uid );
     const content =
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none;padding:.5rem 0 0 0'>Groups:</div>\
@@ -44,7 +44,6 @@ export function show( a_uid, a_excl, cb, select ){
         var node = group_tree.getActiveNode();
         if ( node ){
             dialogs.dlgConfirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Cancel","Delete"], function( choice ) {
-                console.log( choice );
                 if ( choice == 1 ) {
                     api.groupDelete( a_uid, node.key.substr(2), function( ok, data ) {
                         if ( ok ){
@@ -99,7 +98,6 @@ export function show( a_uid, a_excl, cb, select ){
         }],
         open: function( ev, ui ){
             api.groupList( a_uid, function( ok, data ){
-                console.log( "group list:", ok, data );
                 var src = [];
                 var group;
                 for ( var i in data ){
@@ -135,7 +133,6 @@ export function show( a_uid, a_excl, cb, select ){
                         }
                     },
                     activate: function( event, data ) {
-                        //console.log( data.node.key );
                         if ( data.node.key.startsWith("g/")){
                             $("#dlg_edit_grp",frame).button("enable" );
                             $("#dlg_rem_grp",frame).button("enable" );
