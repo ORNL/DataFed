@@ -39,7 +39,7 @@ message GenerateCredentialsReply
 message CheckPermsRequest
 {
     required string             id          = 1;
-    optional uint32             perms       = 2;
+    required uint32             perms       = 2;
 }
 
 message CheckPermsReply

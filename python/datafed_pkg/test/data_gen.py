@@ -17,6 +17,9 @@ parser.add_argument('start', type=int,
 parser.add_argument('end', type=int,
                     help='Collection end index (included)')
 
+parser.add_argument('--ctx', metavar='ID',
+                   help='Parent / user ID for context (aliases)')
+
 parser.add_argument('-p', metavar='COLL', default='test',
                    help='Parent collection id/alias')
 
@@ -61,6 +64,7 @@ if args.alloc:
 else:
     repo = None
 
+ctx = args.ctx
 par_coll = args.p
 alias_pfx = args.A
 title_pfx = args.T
@@ -115,9 +119,9 @@ topics = [
 api = datafed.CommandLib.API()
 
 try:
-    api.collectionView( par_coll )
+    api.collectionView( par_coll, context = ctx )
 except Exception:
-    api.collectionCreate( par_coll, par_coll, parent_id = "root" )
+    api.collectionCreate( par_coll, par_coll, parent_id = "root", context = ctx )
 
 
 _topic = None
@@ -129,11 +133,11 @@ for i in range( start, end + 1 ):
 
     if do_del:
         if pub:
-            if api.collectionUpdate( alias, topic = "" )[0] == None:
+            if api.collectionUpdate( alias, topic = "", context = ctx )[0] == None:
                 print("Timeout on collectionUpdate, coll {}".format(i))
                 exit()
         
-        if api.collectionDelete( alias )[0] == None:
+        if api.collectionDelete( alias, context = ctx )[0] == None:
             print("Timeout on collectionDelete, coll {}".format(i))
             exit()
 
@@ -154,7 +158,7 @@ for i in range( start, end + 1 ):
 
     #print("c",i)
 
-    if api.collectionCreate( name, alias = alias, parent_id = par_coll, description = _desc, tags = _tags )[0] == None:
+    if api.collectionCreate( name, alias = alias, parent_id = par_coll, description = _desc, tags = _tags, context = ctx )[0] == None:
         print("Timeout on collectionCreate, coll {}".format(i))
         exit()
 
@@ -185,12 +189,12 @@ for i in range( start, end + 1 ):
             "keyword": keywords[selectRand(1, 1, len( keywords ))[0]]
         }
 
-        if api.dataCreate( name, alias=data_alias, metadata = json.dumps(md), parent_id = alias, description = _desc, tags = _tags, repo_id = repo )[0] == None:
+        if api.dataCreate( name, alias=data_alias, metadata = json.dumps(md), parent_id = alias, description = _desc, tags = _tags, repo_id = repo, context = ctx )[0] == None:
             print("Timeout on dataCreate, coll {}, rec {}".format(i,j))
             exit()
 
         if do_up:
-            if api.dataPut( data_alias, "u_eiiq2lgi7fd7jfaggqdmnijiya#SDMS-Dev/data/files/small" )[0] == None:
+            if api.dataPut( data_alias, "u_eiiq2lgi7fd7jfaggqdmnijiya#SDMS-Dev/data/files/small", context = ctx )[0] == None:
                 print("Timeout on dataPut, coll {}, rec {}".format(i,j))
                 exit()
 
@@ -198,7 +202,7 @@ for i in range( start, end + 1 ):
         sel = random.randint(0,len(topics)-1)
         _topic = topics[sel]
 
-    if api.collectionUpdate( alias, topic = _topic )[0] == None:
+    if api.collectionUpdate( alias, topic = _topic, context = ctx )[0] == None:
         print("Timeout on collectionUpdate, coll {}".format(i))
         exit()
 

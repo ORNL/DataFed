@@ -2594,12 +2594,8 @@ void
 DatabaseAPI::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
 {
     Value result;
-    vector<pair<string,string>> params;
-    params.push_back({ "id", a_request.id()});
-    if ( a_request.has_perms() )
-        params.push_back({ "perms", to_string( a_request.perms()) });
 
-    dbGet( "authz/perm/check", params, result );
+    dbGet( "authz/perm/check", {{ "id", a_request.id()},{ "perms", to_string( a_request.perms()) }}, result );
 
     TRANSLATE_BEGIN()
 
