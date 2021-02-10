@@ -31,7 +31,7 @@ export function setUser( a_user ){
         nameLast: a_user.nameLast,
         email: a_user.email,
         isAdmin: a_user.isAdmin,
-        isRepoAdmin: a_user.isRepoRdmin
+        isRepoAdmin: a_user.isRepoAdmin
     }
     if ( a_user.options ){
        user.opts = JSON.parse( a_user.options );
