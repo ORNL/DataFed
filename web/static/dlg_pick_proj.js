@@ -1,5 +1,6 @@
 import * as settings from "./settings.js";
 import * as api from "./api.js";
+import * as util from "./util.js";
 import * as model from "./model.js";
 
 var tree;
