@@ -121,7 +121,7 @@ api = datafed.CommandLib.API()
 try:
     api.collectionView( par_coll, context = ctx )
 except Exception:
-    api.collectionCreate( par_coll, par_coll, parent_id = "root", context = ctx )
+    api.collectionCreate( par_coll, par_coll, context = ctx )
 
 
 _topic = None
