@@ -24,6 +24,7 @@ router.get('/create', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
+                // Check max number of saved queries
                 if ( client.max_sav_qry >= 0 ){
                     var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('q',i._from) RETURN 1)",{id:client._id}).next();
 

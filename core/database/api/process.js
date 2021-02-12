@@ -147,9 +147,6 @@ module.exports = ( function() {
 
             doc = g_db._document( id );
 
-            if ( doc.deleted )
-                throw [g_lib.ERR_INVALID_PARAM, "Operation refers to deleted data record " + id];
-
             if ( doc.public )
                 a_ctxt.has_pub = true;
 

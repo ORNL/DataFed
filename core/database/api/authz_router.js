@@ -99,8 +99,9 @@ router.get('/perm/check', function (req, res) {
         var perms = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
         var obj,result = true,id = g_lib.resolveID( req.queryParams.id, client ), ty = id[0];
 
-        if ( id[1] != "/" )
+        if ( id[1] != "/" ){
             throw [g_lib.ERR_INVALID_PARAM,"Invalid ID, "+req.queryParams.id];
+        }
 
         if ( ty == "p" ){
             var role = g_lib.getProjectRole( client._id, id );
@@ -122,13 +123,22 @@ router.get('/perm/check', function (req, res) {
                 else
                     result = g_lib.hasPermissions( client, obj, perms );
             }
-        }else if ( ty == "c" ){
+        }else if ( ty = "c" ) {
+            // If create perm is requested, ensure owner of collection has at least one allocation
+            if ( perms & g_lib.PERM_CREATE ){
+                var owner = g_db.owner.firstExample({ _from: id });
+                if ( !g_db.alloc.firstExample({ _from: owner._to })){
+                    throw [g_lib.ERR_PERM_DENIED,"An allocation is required to create a collection."];
+                }
+            }
+
             if ( !g_lib.hasAdminPermObject( client, id )){
                 obj = g_db.c.document( id );
                 result = g_lib.hasPermissions( client, obj, perms );
             }
-        }else
+        }else{
             throw [g_lib.ERR_INVALID_PARAM,"Invalid ID, "+req.queryParams.id];
+        }
 
         res.send({ granted: result });
     } catch( e ) {
@@ -137,7 +147,7 @@ router.get('/perm/check', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('id', joi.string().required(), "Object ID or alias")
-.queryParam('perms', joi.number().optional(), "Permission bit mask to check (default = ALL)")
+.queryParam('perms', joi.number().required(), "Permission bit mask to check")
 .summary('Checks client permissions for object')
 .description('Checks client permissions for object (projects, data, collections');
 

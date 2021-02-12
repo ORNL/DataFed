@@ -25,9 +25,10 @@ router.get('/create', function (req, res) {
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-                // Must have at least one allocation to create collections
-                if ( !g_db.alloc.firstExample({_from: client._id }) )
-                    throw [g_lib.ERR_NO_ALLOCATION,"Allocation required to create projects"];
+                // Must be a repo admin to create a project
+                var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) limit 1 return v._key", { user: client._id } ).toArray();
+                if ( repos.length == 0 )
+                    throw [g_lib.ERR_PERM_DENIED,"Projects can only be created by repository administrators."];
 
                 // Enforce project limit if set
                 if ( client.max_proj >= 0 ){

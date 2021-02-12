@@ -126,7 +126,7 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('uid', joi.string().required(), "SDMS user ID (globus) for new user")
-.queryParam('password', joi.string().required(), "SDMS account password")
+.queryParam('password', joi.string().optional().allow(""), "SDMS account password")
 .queryParam('name', joi.string().required(), "Name")
 .queryParam('email', joi.string().optional(), "Email")
 .queryParam('options', joi.string().optional(), "Application options (JSON string)")
@@ -524,7 +524,7 @@ router.get('/view', function (req, res) {
         }
 
         if ( det_ok ){
-            var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) return v._key", { user: user._id } ).toArray();
+            var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) limit 1 return v._key", { user: user._id } ).toArray();
             if ( repos.length )
                 user.is_repo_admin = true;
 
