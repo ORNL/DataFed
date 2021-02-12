@@ -80,7 +80,7 @@ message UserAccessTokenReply
 message UserCreateRequest
 {
     required string             uid         = 1;
-    required string             password    = 2;
+    optional string             password    = 2;
     required string             name        = 3;
     required string             email       = 4;
     repeated string             uuid        = 5;

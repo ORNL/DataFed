@@ -433,9 +433,10 @@ DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Anon::UserDa
 {
     vector<pair<string,string>> params;
     params.push_back({"uid",a_request.uid()});
-    params.push_back({"password",a_request.password()});
     params.push_back({"name",a_request.name()});
     params.push_back({"email",a_request.email()});
+    if ( a_request.has_password() )
+        params.push_back({"password",a_request.password()});
     if ( a_request.has_options() )
         params.push_back({"options",a_request.options()});
     string uuids = "[";
