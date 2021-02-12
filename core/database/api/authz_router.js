@@ -123,7 +123,7 @@ router.get('/perm/check', function (req, res) {
                 else
                     result = g_lib.hasPermissions( client, obj, perms );
             }
-        }else if ( ty = "c" ) {
+        }else if ( ty == "c" ) {
             // If create perm is requested, ensure owner of collection has at least one allocation
             if ( perms & g_lib.PERM_CREATE ){
                 var owner = g_db.owner.firstExample({ _from: id });
