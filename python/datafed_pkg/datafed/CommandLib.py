@@ -835,7 +835,7 @@ class API:
         return self._mapi.sendRecv( msg )
 
     def collectionCreate( self, title, alias = None, description = None,
-                          tags = None, topic = None, parent_id = None,
+                          tags = None, topic = None, parent_id = "root",
                           context = None ):
         """
         Create a new collection
@@ -892,7 +892,6 @@ class API:
 
         if parent_id:
             msg.parent_id = self._resolve_id( parent_id, context )
-            #msg.parent_id = self._resolve_coll_id( parent_id, context )
 
         return self._mapi.sendRecv( msg )
 

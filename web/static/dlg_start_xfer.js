@@ -105,7 +105,7 @@ export function show( a_mode, a_ids, a_cb ) {
         item = a_ids[0];
         console.log("item:",item);
 
-        var html = item.id + "&nbsp&nbsp" + util.sizeToString( item.size ) + "&nbsp&nbsp" + item.title;
+        var html = item.id + "&nbsp&nbsp" + util.sizeToString( item.size ) + "&nbsp&nbsp" + util.escapeHTML( item.title );
         $("#title",frame).html( html );
         if ( a_mode == model.TT_DATA_PUT && item.source ){
             console.log("source:",item.source);
@@ -235,7 +235,7 @@ export function show( a_mode, a_ids, a_cb ) {
                     //path_in.val( cur_ep.name + (cur_ep.default_directory?cur_ep.default_directory:"/"));
                     updateEndpointOptions( cur_ep );
 
-                    var html = "<option title='" + (cur_ep.description?cur_ep.description:"(no info)") + "'>" + (cur_ep.display_name || cur_ep.name) + " (";
+                    var html = "<option title='" + (cur_ep.description?util.escapeHTML(cur_ep.description):"(no info)") + "'>" + util.escapeHTML(cur_ep.display_name || cur_ep.name) + " (";
 
                     if ( cur_ep.activated )
                         html += Math.floor( cur_ep.expires_in/3600 ) + " hrs";
@@ -261,7 +261,7 @@ export function show( a_mode, a_ids, a_cb ) {
                                 for ( var i in data.DATA ){
                                     ep = data.DATA[i];
                                     ep.name = ep.canonical_name || ep.id;
-                                    html += "<option title='" + ep.description + "'>" + (ep.display_name || ep.name) + " (";
+                                    html += "<option title='" + util.escapeHTML(ep.description) + "'>" + util.escapeHTML(ep.display_name || ep.name) + " (";
                                     if ( !ep.activated && ep.expires_in == -1 )
                                         html += "active)</option>";
                                     else

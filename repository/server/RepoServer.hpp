@@ -9,52 +9,43 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "Config.hpp"
 #include "MsgBuf.hpp"
 #include "MsgComm.hpp"
+#include "RequestWorker.hpp"
 
 namespace SDMS {
 namespace Repo {
 
+/** @brief RepoServer connects with CoreServer and starts request processing workers
+ *
+ * The ReposServer class deals with configuration, setting up external interface, and
+ * starting request processing workers. An internal 0MQ proxy thread is used to pass received
+ * messages to any available worker via in-proc 0MQ queue. Once the server is started, it
+ * will not exit (unless a critical error causes an abort).
+ */
+
 class Server
 {
 public:
-    Server( const std::string & a_cred_dir, uint32_t a_server_port, const std::string & a_core_server );
+    Server();
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
 
-    void        run( bool a_async );
-    void        stop( bool a_wait );
-    void        wait();
+    void        run();
 
 private:
-    void        ioRun();
-    void        loadKeys( const std::string & a_cred_dir );
+    void        loadKeys();
     void        checkServerVersion();
+    void        ioSecure();
 
-    std::string getDataPath( const std::string & a_data_id );
-    void        procStatusRequest();
-    void        procVersionRequest();
-    void        procDataDeleteRequest();
-    void        procDataGetSizeRequest();
-    void        procPathCreateRequest();
-    void        procPathDeleteRequest();
-
-    typedef void (Server::*msg_fun_t)();
-
-    uint32_t                        m_port;
-    std::string                     m_core_server;
+    Config &                        m_config;
     std::thread *                   m_io_thread;
-    std::mutex                      m_api_mutex;
-    std::mutex                      m_data_mutex;
-    bool                            m_io_running;
-    std::condition_variable         m_router_cvar;
-    MsgBuf                          m_msg_buf;
     std::string                     m_pub_key;
     std::string                     m_priv_key;
     std::string                     m_core_key;
-
-    std::map<uint16_t,msg_fun_t>    m_msg_handlers;
+    std::vector<RequestWorker*>     m_req_workers;
 };
 
 

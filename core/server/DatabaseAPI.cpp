@@ -433,9 +433,10 @@ DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Anon::UserDa
 {
     vector<pair<string,string>> params;
     params.push_back({"uid",a_request.uid()});
-    params.push_back({"password",a_request.password()});
     params.push_back({"name",a_request.name()});
     params.push_back({"email",a_request.email()});
+    if ( a_request.has_password() )
+        params.push_back({"password",a_request.password()});
     if ( a_request.has_options() )
         params.push_back({"options",a_request.options()});
     string uuids = "[";
@@ -2594,12 +2595,8 @@ void
 DatabaseAPI::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
 {
     Value result;
-    vector<pair<string,string>> params;
-    params.push_back({ "id", a_request.id()});
-    if ( a_request.has_perms() )
-        params.push_back({ "perms", to_string( a_request.perms()) });
 
-    dbGet( "authz/perm/check", params, result );
+    dbGet( "authz/perm/check", {{ "id", a_request.id()},{ "perms", to_string( a_request.perms()) }}, result );
 
     TRANSLATE_BEGIN()
 

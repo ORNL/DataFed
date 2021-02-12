@@ -25,20 +25,19 @@ int main( int a_argc, char ** a_argv )
 
         DL_INFO( "DataFed repo server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_SERVER );
 
-        uint16_t    port = 9000;
-        string      cfg_file;
-        bool        gen_keys = false;
-        string      cred_dir = "/etc/datafed/";
-        string      core_server;
+        Repo::Config &  config = Repo::Config::getInstance();
+        string          cfg_file;
+        bool            gen_keys = false;
 
         po::options_description opts( "Options" );
 
         opts.add_options()
             ("help,?", "Show help")
             ("version,v", "Show version number")
-            ("cred-dir,c",po::value<string>( &cred_dir ),"Server credentials directory")
-            ("port,p",po::value<uint16_t>( &port ),"Service port")
-            ("server,s",po::value<string>( &core_server ),"Core server address")
+            ("cred-dir,c",po::value<string>( &config.cred_dir ),"Server credentials directory")
+            ("port,p",po::value<uint16_t>( &config.port ),"Service port")
+            ("server,s",po::value<string>( &config.core_server ),"Core server address")
+            ("threads,t",po::value<uint32_t>( &config.num_req_worker_threads ),"Number of worker threads")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
             ("gen-keys",po::bool_switch( &gen_keys ),"Generate new server keys then exit")
             ;
@@ -75,22 +74,22 @@ int main( int a_argc, char ** a_argv )
                 optfile.close();
             }
 
-            if ( cred_dir.size() && cred_dir.back() != '/' )
-                cred_dir += "/";
+            if ( config.cred_dir.size() && config.cred_dir.back() != '/' )
+                config.cred_dir += "/";
 
             if ( gen_keys )
             {
                 string pub_key, priv_key;
                 generateKeys( pub_key, priv_key );
 
-                string fname = cred_dir + "datafed-repo-key.pub";
+                string fname = config.cred_dir + "datafed-repo-key.pub";
                 ofstream outf( fname.c_str() );
                 if ( !outf.is_open() || !outf.good() )
                     EXCEPT_PARAM( 1, "Could not open file: " << fname );
                 outf << pub_key;
                 outf.close();
 
-                fname = cred_dir + "datafed-repo-key.priv";
+                fname = config.cred_dir + "datafed-repo-key.priv";
                 outf.open( fname.c_str() );
                 if ( !outf.is_open() || !outf.good() )
                     EXCEPT_PARAM( 1, "Could not open file: " << fname );
@@ -106,9 +105,9 @@ int main( int a_argc, char ** a_argv )
             return 1;
         }
 
-        Repo::Server server( cred_dir, port, core_server );
+        Repo::Server server;
 
-        server.run( false );
+        server.run();
 
         DL_INFO( "DataFed repo server exiting" );
     }

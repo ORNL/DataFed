@@ -1,6 +1,5 @@
 #include <fstream>
 #include <time.h>
-#include <boost/filesystem.hpp>
 #include "DynaLog.hpp"
 #include "RepoServer.hpp"
 #include "Util.hpp"
@@ -16,10 +15,6 @@
 #define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
 #define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
 
-#define MAINT_POLL_INTERVAL 5
-#define CLIENT_IDLE_TIMEOUT 300
-#define INIT_POLL_PERIOD 1
-#define MAX_BACKOFF 10
 
 using namespace std;
 using namespace SDMS::Anon;
@@ -31,24 +26,20 @@ namespace Repo {
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
 
 
-Server::Server( const std::string & a_cred_dir, uint32_t a_port, const std::string & a_core_server ) :
-    m_port( a_port ),
-    m_core_server( a_core_server ),
-    m_io_running( false )
+Server::Server() :
+    m_config(Config::getInstance())
 {
-    loadKeys( a_cred_dir );
+    // Register use of anon MAPI (for version check)
+    REG_PROTO( SDMS::Anon );
 
-    uint8_t proto_id = REG_PROTO( SDMS::Anon );
+    // Load keys from credential directory
+    loadKeys();
 
-    SET_MSG_HANDLER( proto_id, StatusRequest, &Server::procStatusRequest );
-    SET_MSG_HANDLER( proto_id, StatusRequest, &Server::procVersionRequest );
-
-    proto_id = REG_PROTO( SDMS::Auth );
-
-    SET_MSG_HANDLER( proto_id, RepoDataDeleteRequest, &Server::procDataDeleteRequest );
-    SET_MSG_HANDLER( proto_id, RepoDataGetSizeRequest, &Server::procDataGetSizeRequest );
-    SET_MSG_HANDLER( proto_id, RepoPathCreateRequest, &Server::procPathCreateRequest );
-    SET_MSG_HANDLER( proto_id, RepoPathDeleteRequest, &Server::procPathDeleteRequest );
+    // Setup ZMQ security context
+    m_config.sec_ctx.is_server = false;
+    m_config.sec_ctx.public_key = m_pub_key;
+    m_config.sec_ctx.private_key = m_priv_key;
+    m_config.sec_ctx.server_key = m_core_key;
 }
 
 
@@ -56,31 +47,29 @@ Server::~Server()
 {
 }
 
-
 void
-Server::run( bool a_async )
+Server::run()
 {
-    unique_lock<mutex> lock(m_api_mutex);
+    checkServerVersion();
 
-    if ( m_io_running )
-        throw runtime_error( "Only one worker router instance allowed" );
+    DL_INFO( "Public/private MAPI starting on ports " << m_config.port << "/" << ( m_config.port + 1))
 
-    m_io_running = true;
+    // Create worker threads
+    for ( uint16_t t = 0; t < m_config.num_req_worker_threads; ++t )
+        m_req_workers.push_back( new RequestWorker( t+1 ));
 
-    if ( a_async )
-    {
-        checkServerVersion();
-        m_io_thread = new thread( &Server::ioRun, this );
-    }
-    else
-    {
-        lock.unlock();
-        checkServerVersion();
-        ioRun();
-        lock.lock();
-        m_io_running = false;
-        m_router_cvar.notify_all();
-    }
+    // Create secure interface and run message pump
+    // NOTE: Normally ioSecure will not return
+    ioSecure();
+
+    // Clean-up workers
+    vector<RequestWorker*>::iterator iwrk;
+
+    for ( iwrk = m_req_workers.begin(); iwrk != m_req_workers.end(); ++iwrk )
+        (*iwrk)->stop();
+
+    for ( iwrk = m_req_workers.begin(); iwrk != m_req_workers.end(); ++iwrk )
+        delete *iwrk;
 }
 
 
@@ -92,6 +81,8 @@ Server::checkServerVersion()
     VersionRequest      msg;
     MsgBuf::Message *   reply;
     MsgComm::SecurityContext sec_ctx;
+
+    // Generate random security keys for anon version request to core server
 
     char pub_key[41];
     char priv_key[41];
@@ -107,14 +98,14 @@ Server::checkServerVersion()
 
     for( int i = 0; i < 10; i++ )
     {
-        MsgComm comm( m_core_server, MsgComm::DEALER, false, &sec_ctx );
+        MsgComm comm( m_config.core_server, MsgComm::DEALER, false, &sec_ctx );
         MsgBuf buffer;
 
         comm.send( msg );
 
         if ( !comm.recv( buffer, false, 20000 ))
         {
-            DL_ERROR( "Timeout waiting for response from core server " << m_core_server );
+            DL_ERROR( "Timeout waiting for response from core server: " << m_config.core_server );
             cerr.flush();
         }
         else
@@ -123,7 +114,7 @@ Server::checkServerVersion()
 
             VersionReply * ver_reply = dynamic_cast<VersionReply*>( reply );
             if ( ver_reply == 0 )
-                EXCEPT_PARAM( 1, "Invalid response from core server " << m_core_server );
+                EXCEPT_PARAM( 1, "Invalid response from core server: " << m_config.core_server );
             
             if ( ver_reply->major() != VER_MAJOR || ver_reply->mapi_major() != VER_MAPI_MAJOR ||
                 VER_MAPI_MINOR > (int)ver_reply->mapi_minor() || ver_reply->mapi_minor() > VER_MAPI_MINOR + 9 )
@@ -134,80 +125,29 @@ Server::checkServerVersion()
         }
     }
 
-    EXCEPT_PARAM( 1, "Could not connect with core server " << m_core_server );
-}
-
-void
-Server::stop( bool a_wait )
-{
-    unique_lock<mutex> lock(m_api_mutex);
-
-    if ( m_io_running )
-    {
-        // TODO Need another way to terminate ZMQ threads
-        //zmq_ctx_term( m_zmq_ctx );
-
-        if ( a_wait )
-        {
-            if ( m_io_thread )
-            {
-                m_io_thread->join();
-                delete m_io_thread;
-
-                m_io_thread = 0;
-                m_io_running = false;
-            }
-            else
-            {
-                while( m_io_running )
-                    m_router_cvar.wait( lock );
-            }
-        }
-    }
+    EXCEPT_PARAM( 1, "Could not connect with core server: " << m_config.core_server );
 }
 
 
-void
-Server::wait()
-{
-    unique_lock<mutex> lock(m_api_mutex);
-
-    if ( m_io_running )
-    {
-        if ( m_io_thread )
-        {
-            m_io_thread->join();
-            delete m_io_thread;
-
-            m_io_thread = 0;
-            m_io_running = false;
-        }
-        else
-        {
-            while( m_io_running )
-                m_router_cvar.wait( lock );
-        }
-    }
-}
 
 void
-Server::loadKeys( const std::string & a_cred_dir )
+Server::loadKeys()
 {
-    string fname = a_cred_dir + "datafed-repo-key.pub";
+    string fname =  m_config.cred_dir + "datafed-repo-key.pub";
     ifstream inf( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT_PARAM( 1, "Could not open file: " << fname );
     inf >> m_pub_key;
     inf.close();
 
-    fname = a_cred_dir + "datafed-repo-key.priv";
+    fname = m_config.cred_dir + "datafed-repo-key.priv";
     inf.open( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT_PARAM( 1, "Could not open file: " << fname );
     inf >> m_priv_key;
     inf.close();
 
-    fname = a_cred_dir + "datafed-core-key.pub";
+    fname = m_config.cred_dir + "datafed-core-key.pub";
     inf.open( fname.c_str() );
     if ( !inf.is_open() || !inf.good() )
         EXCEPT_PARAM( 1, "Could not open file: " << fname );
@@ -215,221 +155,21 @@ Server::loadKeys( const std::string & a_cred_dir )
     inf.close();
 }
 
+
 void
-Server::ioRun()
+Server::ioSecure()
 {
-    DL_INFO( "I/O thread started, listening on port " << m_port );
-
-    MsgComm::SecurityContext sec_ctx;
-    sec_ctx.is_server = false;
-    sec_ctx.public_key = m_pub_key;
-    sec_ctx.private_key = m_priv_key;
-    sec_ctx.server_key = m_core_key;
-
-    MsgComm sysComm( string("tcp://*:") + to_string(m_port), MsgComm::ROUTER, true, &sec_ctx );
-
-    uint16_t msg_type;
-    map<uint16_t,msg_fun_t>::iterator handler;
-
-    while ( 1 )
+    try
     {
-        try
-        {
-            if ( sysComm.recv( m_msg_buf, false, 2000 ))
-            {
-                msg_type = m_msg_buf.getMsgType();
+        MsgComm frontend( "tcp://*:" + to_string(m_config.port), MsgComm::ROUTER, true, &m_config.sec_ctx );
+        MsgComm backend( "inproc://workers", MsgComm::DEALER, true );
 
-                DL_TRACE( "Got msg type: " << msg_type );
-
-                handler = m_msg_handlers.find( msg_type );
-                if ( handler != m_msg_handlers.end() )
-                {
-                    (this->*handler->second)();
-                    sysComm.send( m_msg_buf );
-                }
-                else
-                {
-                    DL_ERROR( "Recv unregistered msg type: " << msg_type );
-                }
-            }
-        }
-        catch( TraceException &e )
-        {
-            DL_ERROR( "Exception in ioRun: " << e.toString() );
-        }
-        catch( exception &e )
-        {
-            DL_ERROR( "Exception in ioRun: " << e.what() );
-        }
-        catch( ... )
-        {
-            DL_ERROR( "Unhandled exception in ioRun" );
-        }
+        frontend.proxy( backend );
     }
-
-    DL_INFO( "I/O thread stopped" );
-}
-
-
-#define PROC_MSG_BEGIN( msgclass, replyclass ) \
-msgclass *request = 0; \
-::google::protobuf::Message *base_msg = m_msg_buf.unserialize(); \
-if ( base_msg ) \
-{ \
-    request = dynamic_cast<msgclass*>( base_msg ); \
-    if ( request ) \
-    { \
-        DL_TRACE( "Rcvd: " << request->DebugString()); \
-        replyclass reply; \
-        try \
-        {
-
-#define PROC_MSG_END \
-            m_msg_buf.serialize( reply ); \
-        } \
-        catch( TraceException &e ) \
-        { \
-            DL_WARN( e.toString() ); \
-            NackReply nack; \
-            nack.set_err_code( (ErrorCode) e.getErrorCode() ); \
-            nack.set_err_msg( e.toString() ); \
-            m_msg_buf.serialize( nack ); \
-        } \
-        catch( exception &e ) \
-        { \
-            DL_WARN( e.what() ); \
-            NackReply nack; \
-            nack.set_err_code( ID_INTERNAL_ERROR ); \
-            nack.set_err_msg( e.what() ); \
-            m_msg_buf.serialize( nack ); \
-        } \
-        catch(...) \
-        { \
-            DL_WARN( "unkown exception while processing message!" ); \
-            NackReply nack; \
-            nack.set_err_code( ID_INTERNAL_ERROR ); \
-            nack.set_err_msg( "Unknown exception type" ); \
-            m_msg_buf.serialize( nack ); \
-        } \
-    } \
-    else { \
-        DL_ERROR( "dynamic cast of msg buffer failed!" );\
-    } \
-    delete base_msg; \
-} \
-else { \
-    DL_ERROR( "buffer parse failed due to unregistered msg type." ); \
-}
-
-
-void
-Server::procStatusRequest()
-{
-    PROC_MSG_BEGIN( Anon::StatusRequest, Anon::StatusReply )
-
-    DL_DEBUG( "Status request" );
-
-    reply.set_status( SS_NORMAL );
-
-    PROC_MSG_END
-}
-
-void
-Server::procVersionRequest()
-{
-    PROC_MSG_BEGIN( VersionRequest, VersionReply )
-
-    DL_DEBUG( "Version request" );
-
-    reply.set_major( VER_MAJOR );
-    reply.set_mapi_major( VER_MAPI_MAJOR );
-    reply.set_mapi_minor( VER_MAPI_MINOR );
-    reply.set_server( VER_SERVER );
-    reply.set_client( VER_CLIENT );
-
-    PROC_MSG_END
-}
-
-void
-Server::procDataDeleteRequest()
-{
-    PROC_MSG_BEGIN( Auth::RepoDataDeleteRequest, Anon::AckReply )
-
-    for ( int i = 0; i < request->loc_size(); i++ )
+    catch( exception & e)
     {
-        boost::filesystem::path data_path( request->loc(i).path() );
-        DL_DEBUG( "Delete " << data_path );
-        boost::filesystem::remove( data_path );
+        DL_ERROR( "Exception in secure interface: " << e.what() )
     }
-
-    PROC_MSG_END
 }
-
-
-void
-Server::procDataGetSizeRequest()
-{
-    PROC_MSG_BEGIN( Auth::RepoDataGetSizeRequest, Auth::RepoDataSizeReply )
-
-    DL_DEBUG( "Data get size" );
-
-    RecordDataSize * data_sz;
-
-    for ( int i = 0; i < request->loc_size(); i++ )
-    {
-        const RecordDataLocation & item = request->loc(i);
-        boost::filesystem::path data_path( item.path() );
-
-        data_sz = reply.add_size();
-        data_sz->set_id( item.id() );
-
-        if ( boost::filesystem::exists( data_path ))
-        {
-            data_sz->set_size( boost::filesystem::file_size( data_path ));
-        }
-        else
-        {
-            data_sz->set_size( 0 );
-            DL_ERROR( "DataGetSizeReq - path does not exist: "  << item.path() );
-        }
-    }
-
-    PROC_MSG_END
-}
-
-
-void
-Server::procPathCreateRequest()
-{
-    PROC_MSG_BEGIN( Auth::RepoPathCreateRequest, Anon::AckReply )
-
-    DL_DEBUG( "Path create request " << request->path() );
-
-    boost::filesystem::path data_path( request->path() );
-    if ( !boost::filesystem::exists( data_path ))
-    {
-        boost::filesystem::create_directory( data_path );
-    }
-
-    PROC_MSG_END
-}
-
-
-void
-Server::procPathDeleteRequest()
-{
-    PROC_MSG_BEGIN( Auth::RepoPathDeleteRequest, Anon::AckReply )
-
-    DL_DEBUG( "Path delete request " << request->path() );
-
-    boost::filesystem::path data_path( request->path() );
-    if ( boost::filesystem::exists( data_path ))
-    {
-        boost::filesystem::remove_all( data_path );
-    }
-
-    PROC_MSG_END
-}
-
 
 }}

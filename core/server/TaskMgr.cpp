@@ -373,7 +373,9 @@ TaskMgr::retryTask( Task * a_task )
         DL_DEBUG( "Retry num " << a_task->retry_count );
 
         a_task->retry_count++;
-        a_task->retry_time = now + chrono::seconds( m_config.task_retry_time_init * exp2( min( m_config.task_retry_backoff_max, a_task->retry_count )));
+        
+        a_task->retry_time = now + chrono::seconds( (uint32_t)(
+            m_config.task_retry_time_init * exp2( min( m_config.task_retry_backoff_max, a_task->retry_count ))));
 
         DL_DEBUG( "Next retry time " << chrono::duration_cast<chrono::seconds>( a_task->retry_time.time_since_epoch()).count() );
 

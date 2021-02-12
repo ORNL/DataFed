@@ -29,7 +29,7 @@ export function show( a_cb ){
 
     api.topicListTopics( null, 0, null, function( ok, a_data ){
         if ( ok ){
-            var top;
+            var top,title;
 
             $("#dlg_topic_tree", frame).fancytree({
                 extensions: ["themeroller"],
@@ -63,8 +63,9 @@ export function show( a_cb ){
 
                     for ( var i in data.response.topic ) {
                         top = data.response.topic[i];
+                        title = util.escapeHTML(top.title);
                         //if ( top.id.startsWith("t/"))
-                        data.result.push({ title: top.title.charAt(0).toUpperCase() + top.title.substr(1), folder:true, icon:false, lazy: true, key: top.id, offset: 0 } );
+                        data.result.push({ title: title.charAt(0).toUpperCase() + title.substr(1), folder:true, icon:false, lazy: true, key: top.id, offset: 0 } );
                     }
 
                     //if ( !data.result.length )

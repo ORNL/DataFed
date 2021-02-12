@@ -393,14 +393,15 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     function setTopics( data ){
         var html = "";
         if ( data.topic && data.topic.length ){
-            var topic;
+            var topic, title;
             for ( var i in data.topic ){
                 topic = data.topic[i];
                 //ui-button cat-topic
-                html += "<div class='cat-topic' id='" + topic.id + "' data='" + topic.title + "'>\
+                title = util.escapeHTML(topic.title);
+                html += "<div class='cat-topic' id='" + topic.id + "' data='" + title + "'>\
                     <div class='cat-topic-div ui-button ui-corner-all"+(loading?" ui-button-disabled ui-state-disabled":"")+"' style='display:block;text-align:left'>\
                         <div class='row-flex'>\
-                            <div style='flex:1 1 none;padding-top:2px'>" + topic.title.charAt(0).toUpperCase() + topic.title.substr(1) + "</div>\
+                            <div style='flex:1 1 none;padding-top:2px'>" + title.charAt(0).toUpperCase() + title.substr(1) + "</div>\
                             <div style='flex:1 1 auto'><div class='cat-topic-cnt'>" + util.countToString(topic.collCnt) + "</div></div>\
                             <div class='cat-topic-btn-div' style='flex:none'><button class='btn btn-icon btn-cat-topic-open'" +
                             (loading?"disabled":"") +
@@ -420,13 +421,14 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     function setSearchTopics( data ){
         var html = "";
         if ( data.topic && data.topic.length ){
-            var topic;
+            var topic,title;
             topic_search_path = {};
             for ( var i in data.topic ){
                 topic = data.topic[i];
                 topic_search_path[topic.id] = topic.path;
+                title = util.escapeHTML(topic.title);
                 //html += "<div class='cat-topic-result ui-button ui-corner-all' id='" + topic.id + "'>" + topic.title + "</div>";
-                html += "<button class='cat-topic-result btn' id='" + topic.id + "'>" + topic.title + "</button>";
+                html += "<button class='cat-topic-result btn' id='" + topic.id + "'>" + title + "</button>";
             }
             top_res_div.html( html );
             $(".btn",top_res_div).button();
@@ -446,12 +448,12 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             return "<div class='cat-coll-title-div'>\
                         <div class='row-flex'>\
                             <div class='cat-coll-icon'><span class='ui-icon ui-icon-"+util.getItemIcon(item)+"'></span></div>\
-                            <div class='cat-coll-title'>" + item.title + "</div>\
+                            <div class='cat-coll-title'>" + util.escapeHTML(item.title) + "</div>\
                             <div class='cat-coll-notes'>" + (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") + "</div>"+
                             (cur_mode==0?"<div class='cat-coll-btn-div'><button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button></div>":"") +
                         "</div>\
                         <div class='cat-coll-info-div'>\
-                            <div class='cat-coll-info-brief'>"+ (item.brief?item.brief:"(no description)") + "</div>\
+                            <div class='cat-coll-info-brief'>"+ (item.brief?util.escapeHTML(item.brief):"(no description)") + "</div>\
                             <div><table class='cat-coll-info-table'><tr><td>" + (item.ownerId.startsWith("u/")
                                 ?"Owner:</td><td>" + item.ownerName
                                 :"Project:</td><td>"+ item.ownerId.substr(2)) + "</td></tr>\
