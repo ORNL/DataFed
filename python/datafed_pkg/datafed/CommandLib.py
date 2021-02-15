@@ -2074,8 +2074,8 @@ class API:
         str
             The size as a string with byte units
         """
-        if not isinstance(size, int):
-            raise TypeError('size must be a integer')
+        #if not isinstance(size, int):
+        #    raise TypeError('size must be a integer')
         if size == 0:
             return "0"
         elif size < 1024:
