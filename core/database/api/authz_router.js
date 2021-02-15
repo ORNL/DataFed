@@ -128,7 +128,7 @@ router.get('/perm/check', function (req, res) {
             if ( perms & g_lib.PERM_CREATE ){
                 var owner = g_db.owner.firstExample({ _from: id });
                 if ( !g_db.alloc.firstExample({ _from: owner._to })){
-                    throw [g_lib.ERR_PERM_DENIED,"An allocation is required to create a collection."];
+                    throw [g_lib.ERR_NO_ALLOCATION,"An allocation is required to create a collection."];
                 }
             }
 
