@@ -13,7 +13,7 @@ export function show( a_ep, a_path, a_mode, a_cb ) {
                         </div>\
                     </div>\
                     <div style='flex:none;padding:.25em'></div>\
-                    <div class='ui-widget-content' style='flex:1 1 100%;min-height:0;overflow:auto'>\
+                    <div class='ui-widget-content content' style='flex:1 1 100%;min-height:0;overflow:auto'>\
                         <table id='file_tree'>\
                             <colgroup><col width='*'></col><col></col><col></col></colgroup>\
                             <tbody><tr><td style='white-space: nowrap;padding: 0 2em 0 0'></td><td style='white-space: nowrap;padding: 0 2em 0 0'></td><td style='white-space: nowrap'></td></tr></tbody>\
@@ -74,7 +74,7 @@ export function show( a_ep, a_path, a_mode, a_cb ) {
 
         api.epDirList( a_ep.id, a_new_path, false, function(data){
             if( data ){
-                console.log("got result:",data);
+                //console.log("got result:",data);
 
                 var tree_source = [];
                 if ( data.code ){
@@ -91,7 +91,7 @@ export function show( a_ep, a_path, a_mode, a_cb ) {
                         } else if ( entry.type == "file" ){
                             //vals = entry.last_modified.split(/[-: +]/);
                             tstr = entry.last_modified.replace(" ", "T" );
-                            console.log("date:",tstr);
+                            //console.log("date:",tstr);
                             dt = (new Date( tstr )).toLocaleString();
                             tree_source.push({ title: entry.name, size: util.sizeToString( entry.size ), date: dt, icon: "ui-icon ui-icon-file", key: entry.name });
                         }
@@ -164,14 +164,13 @@ export function show( a_ep, a_path, a_mode, a_cb ) {
                 selectMode: 1,
                 nodata: false,
                 activate: function( ev, data ){
-                    console.log("activate");
+                    data.node.setSelected( true );
                     if (( data.node.data.is_dir && a_mode == "dir" && data.node.key != ".." ) || ( !data.node.data.is_dir && a_mode == "file" ))
                         $("#sel_btn").button("enable");
                     else
                         $("#sel_btn").button("disable");
                 },
                 dblclick: function( event, data ) {
-                    console.log("activate", data );
                     if ( data.node.data.is_dir && !loading ){
                         chdir( data.node.key );
                     }
@@ -181,7 +180,6 @@ export function show( a_ep, a_path, a_mode, a_cb ) {
             reloadTree( a_path );
 
             $("#path",frame).on('input', function(){
-                console.log("path manually changed");
                 clearTimeout( path_in_timer );
                 path_in_timer = setTimeout( function(){
                     path = $("#path",frame).val();
