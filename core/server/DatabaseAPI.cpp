@@ -380,6 +380,7 @@ DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_to
 void
 DatabaseAPI::userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok )
 {
+    DL_DEBUG("userSetAccessToken: " << a_acc_tok  << " : " << a_ref_tok << " : " << a_expires_in );
     string result;
     dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok},{"expires_in",to_string(a_expires_in)}}, result );
 }
@@ -2980,10 +2981,10 @@ DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_rep
 {
     vector<pair<string,string>> params;
     params.push_back({"task_id",a_task_id});
-    if ( a_step )
-        params.push_back({ "step", to_string( *a_step )});
     if ( a_err_msg )
         params.push_back({ "err_msg", *a_err_msg });
+    else if ( a_step )
+        params.push_back({ "step", to_string( *a_step )});
 
     dbGet( "task/run", params, a_task_reply );
 }

@@ -49,7 +49,7 @@ Server::Server() :
     m_zap_thread = new thread( &Server::zapHandler, this );
     m_db_maint_thread = new thread( &Server::dbMaintenance, this );
 
-    // Create task mgr
+    // Create task mgr (starts it's own threads)
     TaskMgr::getInstance();
 }
 

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <time.h>
+#include <unistd.h>
 #include "GlobusAPI.hpp"
 #include "Util.hpp"
 #include "TraceException.hpp"
@@ -14,23 +15,38 @@ namespace Core {
 GlobusAPI::GlobusAPI():
     m_config( Config::getInstance() )
 {
-    m_curl = curl_easy_init();
-    if ( !m_curl )
+    // NOTE: TWO libcurl handles are used due to a bug in version 7.43 - Reusing TLS connections
+    // causes a segfault. Have not yet verified
+
+    m_curl_xfr = curl_easy_init();
+    if ( !m_curl_xfr )
         EXCEPT( 1, "libcurl init failed" );
 
-    curl_easy_setopt( m_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
-    curl_easy_setopt( m_curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
-    curl_easy_setopt( m_curl, CURLOPT_SSL_VERIFYPEER, 0 );
-    curl_easy_setopt( m_curl, CURLOPT_TCP_NODELAY, 1 );
+    curl_easy_setopt( m_curl_xfr, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
+    curl_easy_setopt( m_curl_xfr, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
+    curl_easy_setopt( m_curl_xfr, CURLOPT_SSL_VERIFYPEER, 0 );
+    curl_easy_setopt( m_curl_xfr, CURLOPT_TCP_NODELAY, 1 );
+
+    m_curl_auth = curl_easy_init();
+    if ( !m_curl_auth )
+        EXCEPT( 1, "libcurl init failed" );
+
+    curl_easy_setopt( m_curl_auth, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
+    curl_easy_setopt( m_curl_auth, CURLOPT_WRITEFUNCTION, curlResponseWriteCB );
+    curl_easy_setopt( m_curl_auth, CURLOPT_SSL_VERIFYPEER, 0 );
+    curl_easy_setopt( m_curl_auth, CURLOPT_TCP_NODELAY, 1 );
 }
+
+
 
 GlobusAPI::~GlobusAPI()
 {
-    curl_easy_cleanup( m_curl );
+    curl_easy_cleanup( m_curl_auth );
+    curl_easy_cleanup( m_curl_xfr );
 }
 
 long
-GlobusAPI::get( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const vector<pair<string,string>> &a_params, string & a_result )
+GlobusAPI::get( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const vector<pair<string,string>> &a_params, string & a_result )
 {
     string  url;
     char    error[CURL_ERROR_SIZE];
@@ -40,7 +56,7 @@ GlobusAPI::get( const std::string & a_base_url, const std::string & a_url_path, 
     url.reserve( 512 );
     url.append( a_base_url );
 
-    esc_txt = curl_easy_escape( m_curl, a_url_path.c_str(), 0 );
+    esc_txt = curl_easy_escape( a_curl, a_url_path.c_str(), 0 );
     url.append( esc_txt );
     curl_free( esc_txt );
 
@@ -52,15 +68,15 @@ GlobusAPI::get( const std::string & a_base_url, const std::string & a_url_path, 
         url.append( "&" );
         url.append( iparam->first.c_str() );
         url.append( "=" );
-        esc_txt = curl_easy_escape( m_curl, iparam->second.c_str(), 0 );
+        esc_txt = curl_easy_escape( a_curl, iparam->second.c_str(), 0 );
         url.append( esc_txt );
         curl_free( esc_txt );
     }
 
-    curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
-    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
-    curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
-    curl_easy_setopt( m_curl, CURLOPT_HTTPGET, 1 );
+    curl_easy_setopt( a_curl, CURLOPT_URL, url.c_str() );
+    curl_easy_setopt( a_curl, CURLOPT_WRITEDATA, &a_result );
+    curl_easy_setopt( a_curl, CURLOPT_ERRORBUFFER, error );
+    curl_easy_setopt( a_curl, CURLOPT_HTTPGET, 1 );
 
     struct curl_slist *list = 0;
 
@@ -69,22 +85,22 @@ GlobusAPI::get( const std::string & a_base_url, const std::string & a_url_path, 
         string auth_hdr = "Authorization: Bearer ";
         auth_hdr += a_token;
         list = curl_slist_append( list, auth_hdr.c_str() );
-        curl_easy_setopt( m_curl, CURLOPT_HTTPHEADER, list );
+        curl_easy_setopt( a_curl, CURLOPT_HTTPHEADER, list );
     }
     else
     {
-        curl_easy_setopt( m_curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
-        curl_easy_setopt( m_curl, CURLOPT_USERNAME, m_config.client_id.c_str() );
-        curl_easy_setopt( m_curl, CURLOPT_PASSWORD, m_config.client_secret.c_str() );
+        curl_easy_setopt( a_curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
+        curl_easy_setopt( a_curl, CURLOPT_USERNAME, m_config.client_id.c_str() );
+        curl_easy_setopt( a_curl, CURLOPT_PASSWORD, m_config.client_secret.c_str() );
     }
 
-    CURLcode res = curl_easy_perform( m_curl );
+    CURLcode res = curl_easy_perform( a_curl );
 
     if ( list )
         curl_slist_free_all(list);
 
     long http_code = 0;
-    curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
+    curl_easy_getinfo( a_curl, CURLINFO_RESPONSE_CODE, &http_code );
 
     if ( res != CURLE_OK )
     {
@@ -96,8 +112,10 @@ GlobusAPI::get( const std::string & a_base_url, const std::string & a_url_path, 
 }
 
 long
-GlobusAPI::post( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, string & a_result )
+GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, string & a_result )
 {
+    DL_DEBUG("GlobusAPI::post token [" << a_token << "]" );
+
     string  url;
     char    error[CURL_ERROR_SIZE];
     char *  esc_txt;
@@ -106,28 +124,35 @@ GlobusAPI::post( const std::string & a_base_url, const std::string & a_url_path,
     url.reserve( 512 );
     url.append( a_base_url );
 
-    esc_txt = curl_easy_escape( m_curl, a_url_path.c_str(), 0 );
+    esc_txt = curl_easy_escape( a_curl, a_url_path.c_str(), 0 );
     url.append( esc_txt );
     curl_free( esc_txt );
 
-    if ( a_params.size() > 0 )
-        url.append( "?" );
-
     for ( vector<pair<string,string>>::const_iterator iparam = a_params.begin(); iparam != a_params.end(); ++iparam )
     {
-        url.append( "&" );
+        if ( iparam == a_params.begin() )
+        {
+            url.append( "?" );
+        }
+        else
+        {
+            url.append( "&" );
+        }
+
         url.append( iparam->first.c_str() );
         url.append( "=" );
-        esc_txt = curl_easy_escape( m_curl, iparam->second.c_str(), 0 );
+        esc_txt = curl_easy_escape( a_curl, iparam->second.c_str(), 0 );
         url.append( esc_txt );
         curl_free( esc_txt );
     }
 
+    DL_DEBUG( "url: " << url );
+
     //curl_easy_setopt( m_curl, CURLOPT_VERBOSE, 1 );
-    curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
-    curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
-    curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
-    curl_easy_setopt( m_curl, CURLOPT_POST, 1 );
+    curl_easy_setopt( a_curl, CURLOPT_URL, url.c_str() );
+    curl_easy_setopt( a_curl, CURLOPT_WRITEDATA, &a_result );
+    curl_easy_setopt( a_curl, CURLOPT_ERRORBUFFER, error );
+    curl_easy_setopt( a_curl, CURLOPT_POST, 1 );
 
     string tmp;
 
@@ -135,10 +160,10 @@ GlobusAPI::post( const std::string & a_base_url, const std::string & a_url_path,
     {
         tmp = a_body->toString();
         DL_DEBUG( "POST BODY:[" << tmp << "]" );
-        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, tmp.c_str() );
+        curl_easy_setopt( a_curl, CURLOPT_POSTFIELDS, tmp.c_str() );
     }
     else
-        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, "");
+        curl_easy_setopt( a_curl, CURLOPT_POSTFIELDS, "");
 
     struct curl_slist *list = 0;
 
@@ -150,9 +175,9 @@ GlobusAPI::post( const std::string & a_base_url, const std::string & a_url_path,
     }
     else
     {
-        curl_easy_setopt( m_curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
-        curl_easy_setopt( m_curl, CURLOPT_USERNAME, m_config.client_id.c_str() );
-        curl_easy_setopt( m_curl, CURLOPT_PASSWORD, m_config.client_secret.c_str() );
+        curl_easy_setopt( a_curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
+        curl_easy_setopt( a_curl, CURLOPT_USERNAME, m_config.client_id.c_str() );
+        curl_easy_setopt( a_curl, CURLOPT_PASSWORD, m_config.client_secret.c_str() );
     }
 
     if ( a_body )
@@ -161,15 +186,17 @@ GlobusAPI::post( const std::string & a_base_url, const std::string & a_url_path,
     }
 
     if ( list )
-        curl_easy_setopt( m_curl, CURLOPT_HTTPHEADER, list );
+    {
+        curl_easy_setopt( a_curl, CURLOPT_HTTPHEADER, list );
+    }
 
-    CURLcode res = curl_easy_perform( m_curl );
+    CURLcode res = curl_easy_perform( a_curl );
 
     if ( list )
         curl_slist_free_all(list);
 
     long http_code = 0;
-    curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
+    curl_easy_getinfo( a_curl, CURLINFO_RESPONSE_CODE, &http_code );
 
     if ( res != CURLE_OK )
     {
@@ -187,7 +214,7 @@ GlobusAPI::getSubmissionID( const std::string & a_acc_token )
     DL_DEBUG( "GlobusAPI::getSubmissionID" );
 
     string raw_result;
-    long code = get( m_config.glob_xfr_url + "submission_id", "", a_acc_token, {}, raw_result );
+    long code = get( m_curl_xfr, m_config.glob_xfr_url + "submission_id", "", a_acc_token, {}, raw_result );
 
     try
     {
@@ -264,7 +291,7 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
     }
 
     string raw_result;
-    long code = post( m_config.glob_xfr_url + "transfer", "", a_acc_token, {}, &body, raw_result );
+    long code = post( m_curl_xfr, m_config.glob_xfr_url + "transfer", "", a_acc_token, {}, &body, raw_result );
 
     try
     {
@@ -320,7 +347,7 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
     a_err_msg.clear();
     string raw_result;
 
-    long code = get( m_config.glob_xfr_url + "task/", a_task_id + "/event_list", a_acc_tok, {}, raw_result );
+    long code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id + "/event_list", a_acc_tok, {}, raw_result );
 
     try
     {
@@ -388,7 +415,7 @@ GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_
 
     string raw_result;
 
-    long code = post( m_config.glob_xfr_url + "task/", a_task_id + "/cancel", a_acc_tok, {}, 0, raw_result );
+    long code = post( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id + "/cancel", a_acc_tok, {}, 0, raw_result );
 
     try
     {
@@ -481,7 +508,7 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
     DL_DEBUG( "GlobusAPI::getEndpointInfo" );
 
     string raw_result;
-    long code = get( m_config.glob_xfr_url + "endpoint/", a_ep_id, a_acc_token, {}, raw_result );
+    long code = get( m_curl_xfr, m_config.glob_xfr_url + "endpoint/", a_ep_id, a_acc_token, {}, raw_result );
 
     try
     {
@@ -556,21 +583,42 @@ GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_ne
 {
     DL_DEBUG( "GlobusAPI::refreshAccessToken" );
 
+    //DL_DEBUG( "ref_tok: " << a_ref_tok );
+
     string raw_result;
-    long code = post( m_config.glob_oauth_url + "token", "", "", {{"refresh_token",a_ref_tok},{"grant_type","refresh_token"}}, 0, raw_result );
+    long code = post( m_curl_auth, m_config.glob_oauth_url + "token", "", "", {{"refresh_token",a_ref_tok},{"grant_type","refresh_token"}}, 0, raw_result );
+
+    //DL_DEBUG( "wait" );
+    //usleep( 1000 );
 
     if ( !raw_result.size() )
+    {
+        DL_DEBUG( "Globus token API call returned empty response." );
+
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus token API call returned empty response. Code: " << code );
+    }
 
     try
     {
         Value result;
 
+        DL_DEBUG( "Parsing response" );
+    //DL_DEBUG( "wait" );
+    //usleep( 1000 );
+
         result.fromString( raw_result );
 
         Value::Object & resp_obj = result.asObject();
 
+        DL_DEBUG( "Check response" );
+    //DL_DEBUG( "wait" );
+    //usleep( 1000 );
+
         checkResponsCode( code, resp_obj );
+
+        DL_DEBUG( "set tokens" );
+    //DL_DEBUG( "wait" );
+    //usleep( 1000 );
 
         a_new_acc_tok = resp_obj.getString( "access_token" );
         a_expires_in = (uint32_t)resp_obj.getNumber( "expires_in" );

@@ -315,7 +315,7 @@ function doLogin( a_req, a_resp, a_auth, a_redirect_url ){
 
                             a_resp.redirect( "/ui/register" );
                         } else {
-                            console.log( 'User', uid, 'verified' );
+                            console.log( 'User', uid, 'verified, acc:', xfr_token.access_token, ", ref:", xfr_token.refresh_token, ", exp:", xfr_token.expires_in );
 
                             // Store only data needed for active session
                             a_req.session.uid = uid;
@@ -1447,9 +1447,10 @@ app.get('/ui/theme/save', ( a_req, a_resp ) => {
 
 
 function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
-    //var ts = (Date.now()/1000) + a_expires_sec;
-    sendMessageDirect( "UserSetAccessTokenRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expires_in: a_expires_sec }, function( reply ){
-
+    console.log( "setAccessToken",a_uid, a_acc_tok, a_ref_tok, a_expires_sec);
+    sendMessageDirect( "UserSetAccessTokenRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec }, function( reply ){
+        // Should be an AckReply
+        console.log("reply:",reply.$type);
     });
 }
 
@@ -1483,7 +1484,8 @@ function allocRequestContext( a_resp, a_callback ) {
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
     var client = a_req.session.uid;
     if ( !client ){
-        throw "Authentication required";
+        console.log("NO AUTH :", a_msg_name, ":", a_req.connection.remoteAddress );
+        throw "Not Authenticated";
     }
 
     a_resp.setHeader('Content-Type', 'application/json');
