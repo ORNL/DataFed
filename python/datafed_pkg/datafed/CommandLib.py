@@ -242,7 +242,7 @@ class API:
             By default, the record will be created in the user's root collection
         deps : list, Optional. Default = None
             Dependencies of this data record specified as an array of
-            tuples of (relation type <str>,  record ID <str>).
+            lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
             Relation types currently supported are:
             * "der" - Is derived from
             * "comp" - Is comprised of
@@ -345,14 +345,14 @@ class API:
             existing metadata.
         deps_add : list, Optional. Default = None
             Dependencies of this data record to add, specified as an array of
-            tuples of (relation type <str>,  record ID <str>).
+            lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
             Relation types currently supported are:
             * "der" - Is derived from
             * "comp" - Is comprised of
             * "ver" - Is new version of
         deps_rem : list, Optional. Default = None
             Dependencies of this data record to remove, specified as an array of
-            tuples of (relation type <str>,  record ID <str>).
+            lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
             Relation types currently supported are:
             * "der" - Is derived from
             * "comp" - Is comprised of
@@ -523,6 +523,10 @@ class API:
 
         msg = auth.DataGetRequest()
         msg.check = True
+
+        if isinstance(item_id, str):
+            item_id = [item_id]
+
         for ids in item_id:
             msg.id.append( self._resolve_id( ids, context ))
 
@@ -831,7 +835,7 @@ class API:
         return self._mapi.sendRecv( msg )
 
     def collectionCreate( self, title, alias = None, description = None,
-                          tags = None, topic = None, parent_id = None,
+                          tags = None, topic = None, parent_id = "root",
                           context = None ):
         """
         Create a new collection
@@ -888,7 +892,6 @@ class API:
 
         if parent_id:
             msg.parent_id = self._resolve_id( parent_id, context )
-            #msg.parent_id = self._resolve_coll_id( parent_id, context )
 
         return self._mapi.sendRecv( msg )
 
@@ -2071,8 +2074,8 @@ class API:
         str
             The size as a string with byte units
         """
-        if not isinstance(size, int):
-            raise TypeError('size must be a integer')
+        #if not isinstance(size, int):
+        #    raise TypeError('size must be a integer')
         if size == 0:
             return "0"
         elif size < 1024:
@@ -2296,7 +2299,7 @@ class API:
                     winp = pathlib.PurePosixPath('/' + drive_name)
                     for item in parts:
                         winp = winp / str(item)  # adds each part
-                    _path = str(_path)
+                    _path = str(winp)
                 elif not winp.drive:
                     _path = winp.as_posix()
                     if _path[0] != '/':

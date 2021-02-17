@@ -752,13 +752,18 @@ function actionNewData() {
         }
     }
 
-    api.checkPerms( parent, model.PERM_CREATE, function( granted ){
-        if ( !granted ){
+    api.checkPerms( parent, model.PERM_CREATE, function( ok, data ){
+        if ( !ok ){
+            dialogs.dlgAlert( "Permission Denied", data );
+            return;
+        }
+
+        if ( !data ){
             dialogs.dlgAlertPermDenied();
             return;
         }
 
-        dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_NEW,null,parent,0,function(data,parent_id){
+        dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_NEW,null,parent,0,function(data_new,parent_id){
             resetTaskPoll();
             var node = data_tree.getNodeByKey( parent_id );
             if ( node )
@@ -779,11 +784,17 @@ function actionDupData(){
         }
     }
 
-    api.checkPerms( parent, model.PERM_CREATE, function( granted ){
-        if ( !granted ){
+    api.checkPerms( parent, model.PERM_CREATE, function( ok, data ){
+        if ( !ok ){
+            dialogs.dlgAlert( "Permission Denied", data );
+            return;
+        }
+
+        if ( !data ){
             dialogs.dlgAlertPermDenied();
             return;
         }
+
         api.dataView( node.key, function( data ){
             dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_DUP, data, parent, 0, function(data2,parent_id){
                 console.log("back from dup",parent_id);
@@ -813,14 +824,20 @@ function actionNewColl(){
         }
     }
 
-    api.checkPerms( parent, model.PERM_CREATE, function( granted ){
-        if ( !granted ){
+    api.checkPerms( parent, model.PERM_CREATE, function( ok, data ){
+        console.log("coll create", ok, data );
+        if ( !ok ){
+            dialogs.dlgAlert( "Permission Denied", data );
+            return
+        }
+
+        if ( !data ){
             dialogs.dlgAlertPermDenied();
             return;
         }
 
-        dlgCollNewEdit.show(null,parent,0,function(data){
-            var node = data_tree.getNodeByKey( data.parentId );
+        dlgCollNewEdit.show(null,parent,0,function(data_new){
+            var node = data_tree.getNodeByKey( data_new.parentId );
             if ( node )
                 util.reloadNode( node );
         });
@@ -1126,10 +1143,14 @@ function actionShareSelected() {
 
     var id = ids[0];
 
-    api.checkPerms( id, model.PERM_SHARE, function( granted ){
-        if ( !granted ){
-            //dialogs.dlgAlertPermDenied();
-            util.setStatusText("Sharing Error: Permission Denied.", 1);
+    api.checkPerms( id, model.PERM_SHARE, function( ok, data ){
+        if ( !ok ){
+            dialogs.dlgAlert( "Permission Denied", data );
+            return
+        }
+
+        if ( !data ){
+            dialogs.dlgAlertPermDenied();
             return;
         }
 
@@ -1779,8 +1800,8 @@ function setupRepoTab(){
                 var repo;
                 for ( var i in data ){
                     repo = data[i];
-                    html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+repo.title+"</td><td>"+repo.address+"</td><td>"+
-                        util.sizeToString( repo.capacity )+"</td><td>"+repo.path+"</td><td><button class='btn small repo_adm' repo='"+
+                    html += "<tr><td>"+repo.id.substr(5)+"</td><td>"+util.escapeHTML(repo.title)+"</td><td>"+util.escapeHTML(repo.address)+"</td><td>"+
+                        util.sizeToString( repo.capacity )+"</td><td>"+util.escapeHTML(repo.path)+"</td><td><button class='btn small repo_adm' repo='"+
                         repo.id+"'>Admin</button></td></tr>";
                 }
                 html += "</table>";
@@ -1949,9 +1970,8 @@ var ctxt_menu_opts = {
             {title: "Delete", action: actionDeleteSelected, cmd: "del" }
             ]},
         {title: "New", cmd:"new",children: [
-            {title: "Data", action: actionNewData, cmd: "newd" },
+            {title: "Data Record", action: actionNewData, cmd: "newd" },
             {title: "Collection", action: actionNewColl, cmd: "newc" },
-            {title: "Project", action: actionNewProj, cmd: "newp" }
             ]},
         {title: "----"},
         {title: "Cut", action: actionCutSelected, cmd: "cut" },
@@ -2481,7 +2501,7 @@ export function init(){
             }else if ( data.node.key.startsWith("p/")){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
-                    {title: util.generateTitle( data.response ),folder:true,lazy:true,key:"c/p_"+prj_id+"_root",scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
+                    {title: util.generateTitle( data.response ),folder:true,lazy:true,key:"c/p_"+prj_id+"_root",offset:0,scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-book"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
@@ -2721,6 +2741,7 @@ export function init(){
     util.tooltipTheme( data_tree_div );
 
     if ( settings.user.isRepoAdmin ){
+        $("#btn_new_proj").show();
         setupRepoTab();
         $('[href="#tab-repo"]').closest('li').show();
     }

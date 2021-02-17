@@ -457,10 +457,7 @@ export function aclByProjectList( a_proj_id, a_cb ) {
 export function checkPerms( a_id, a_perms, a_cb ){
     _asyncGet( "/api/perms/check?id="+encodeURIComponent(a_id)+(a_perms?("&perms="+a_perms):""), null, function(ok,data){
         //console.log("checkPerm",a_id,a_perms,ok,data);
-        if ( ok )
-            a_cb( data.granted );
-        else
-            a_cb( false );
+        a_cb( ok, ok?data.granted:data );
     });
 }
 

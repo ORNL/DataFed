@@ -18,7 +18,21 @@ module.exports = ( function() {
      */
     obj.preprocessItems = function( a_client, a_new_owner_id, a_ids, a_mode ){
         console.log( "preprocessItems start" );
-        var ctxt = { client: { _id: a_client._id, is_admin: a_client.is_admin }, new_owner: a_new_owner_id, mode: a_mode, has_pub: false, coll: [], glob_data: [], http_data: [], visited: {} };
+        var ctxt = {
+            client: {
+                _id: a_client._id,
+                is_admin: a_client.is_admin
+            },
+            new_owner: a_new_owner_id,
+            mode: a_mode,
+            has_pub: false,
+            coll_perm: 0,
+            data_perm: 0,
+            coll: [],
+            glob_data: [],
+            http_data: [],
+            visited: {}
+        };
 
         switch( a_mode ){
             case g_lib.TT_DATA_GET:
@@ -89,7 +103,7 @@ module.exports = ( function() {
      * @param a_ids - Current list of data/collection IDs to process
      * @param a_perm - Inherited permission (undefined initially)
      * 
-     * This function preprocesses with optimized permission verification by
+     * This function pre-processes with optimized permission verification by
      * using a depth-first analysis of collections. If the required permission
      * is satisfied via inherited ACLs, then no further permission checks are
      * required below that point. The end result is a flat list of collections
@@ -97,9 +111,7 @@ module.exports = ( function() {
      * size) and those with HTTP data.
      */
     obj._preprocessItemsRecursive = function( a_ctxt, a_ids, a_data_perm, a_coll_perm ){
-        var i, id, ids, is_coll, doc, perm, ok,
-            data_perm = (a_data_perm==null?0:a_data_perm),
-            coll_perm = (a_coll_perm==null?0:a_coll_perm);
+        var i, id, ids, is_coll, doc, perm, ok, data_perm, coll_perm;
 
         for ( i in a_ids ){
             id = a_ids[i];
@@ -124,6 +136,8 @@ module.exports = ( function() {
                     }
                     continue;
                 }else{
+                    // NOTE: a_data_perm is null, then this indicates a record has been specified explicitly, which
+                    // is indicated with a cnt of -1 (and will be deleted regardless of other collection links)
                     a_ctxt.visited[id] = (a_data_perm==null?-1:1);
                 }
             }
@@ -133,15 +147,15 @@ module.exports = ( function() {
 
             doc = g_db._document( id );
 
-            if ( doc.deleted )
-                throw [g_lib.ERR_INVALID_PARAM, "Operation refers to deleted data record " + id];
-
             if ( doc.public )
                 a_ctxt.has_pub = true;
 
             // Check permissions
 
             if ( is_coll ){
+                data_perm = (a_data_perm==null?0:a_data_perm);
+                coll_perm = (a_coll_perm==null?0:a_coll_perm);
+
                 // Make sure user isn't trying to delete root
                 if ( doc.is_root && a_ctxt.mode == g_lib.TT_REC_DEL )
                     throw [g_lib.ERR_PERM_DENIED,"Cannot delete root collection " + id];
@@ -151,28 +165,44 @@ module.exports = ( function() {
                 permissions. Local ACLs could apply additional inherited
                 permissions.*/
 
-                if ((( coll_perm & a_ctxt.coll_perm ) != a_ctxt.coll_perm ) || (( data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm )){
+                if ((( coll_perm & a_ctxt.coll_perm ) != a_ctxt.coll_perm ) ||
+                    (( data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm )){
+                    console.log("chk coll perms");
                     if ( !g_lib.hasAdminPermObjectLoaded( a_ctxt.client, doc )){
-                        if ( coll_perm != null ) // Already have inherited permission, don't ask again
+                        console.log("not admin");
+
+                        if ( a_coll_perm != null ) // Already have inherited permission, don't ask again
                             perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc );
                         else
                             perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.comb_perm );
 
+                        /* Note: collection inherit-grant permissions do not apply to the collection itself - only to
+                        items linked beneath the collection. Thus permission checks at this point should only
+                        be against granted permissions and permissions inherited from parent collections (which
+                        is available in perm.inherited)
+                        */
+
+                       console.log("req perm:",a_ctxt.coll_perm,",act perm:",perm);
+
+                        if ((( perm.grant | perm.inherited ) & a_ctxt.coll_perm ) != a_ctxt.coll_perm ){
+                            throw [g_lib.ERR_PERM_DENIED,"Permission denied for collection " + id];
+                        }
+
                         // inherited and inhgrant perms only apply to recursion
                         data_perm |= ( perm.inhgrant | perm.inherited );
                         coll_perm |= ( perm.inhgrant | perm.inherited );
-
-                        //console.log("req perm:",a_ctxt.comb_perm,",act perm:",perm);
-
-                        if ((( coll_perm | perm.grant | perm.inherited ) & a_ctxt.coll_perm ) != a_ctxt.coll_perm )
-                            throw [g_lib.ERR_PERM_DENIED,"Permission denied for collection " + id];
-
                     }else{
                         data_perm = a_ctxt.data_perm;
                         coll_perm = a_ctxt.coll_perm;
                     }
                 }
+
+                a_ctxt.coll.push( id );
+                ids = g_db._query( "for v in 1..1 outbound @coll item return v._id", { coll: id }).toArray();
+                obj._preprocessItemsRecursive( a_ctxt, ids, data_perm, coll_perm );
             }else{
+                // Data record
+
                 if ( a_ctxt.mode == g_lib.TT_REC_ALLOC_CHG ){
                     // Must be data owner or project admin
                     if ( doc.owner != a_ctxt.client._id ){
@@ -207,20 +237,20 @@ module.exports = ( function() {
                             }
                         }
 
-                        if ( !ok && ( data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm ){
+                        if ( !ok && ( a_data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm ){
                             if ( a_data_perm != null ) // Already have inherited permission, don't ask again
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc );
                             else
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
 
-                            console.log( "pp 4" );
+                            //console.log( "pp 4" );
 
                             if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm )
                                 throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
                         }
                     }
                 }else{
-                    if (( data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm ){
+                    if (( a_data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm ){
                         if ( !g_lib.hasAdminPermObjectLoaded( a_ctxt.client, doc )){
                             if ( a_data_perm != null ) // Already have inherited permission, don't ask again
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc );
@@ -234,10 +264,19 @@ module.exports = ( function() {
                         }
                     }
                 }
+
+                if ( doc.data_url ){
+                    if ( a_ctxt.mode == g_lib.TT_DATA_PUT )
+                        throw [ g_lib.ERR_INVALID_PARAM, "Cannot put data to published record '" + doc.id + "'." ];
+
+                    a_ctxt.http_data.push({ _id: id, id: id, title: doc.title, owner: doc.owner, size: 0, url: doc.data_url, ext: doc.ext });
+                }else if ( a_ctxt.mode != g_lib.TT_DATA_GET || doc.size ){
+                    a_ctxt.glob_data.push({ _id: id, id: id, title: doc.title, owner: doc.owner, size: doc.size, source: doc.source, ext: doc.ext });
+                }
             }
 
-            // Permission OK, process item
-            //console.log("preproc perm ok");
+            /*
+            console.log("perms ok! start perms:", a_data_perm, a_coll_perm, "end perms:", data_perm, coll_perm );
 
             if ( is_coll ){
                 a_ctxt.coll.push( id );
@@ -253,6 +292,7 @@ module.exports = ( function() {
                     a_ctxt.glob_data.push({ _id: id, id: id, title: doc.title, owner: doc.owner, size: doc.size, source: doc.source, ext: doc.ext });
                 }
             }
+            */
         }
     };
 

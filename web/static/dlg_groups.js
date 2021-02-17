@@ -1,9 +1,9 @@
 import * as api from "./api.js";
+import * as util from "./util.js";
 import * as dialogs from "./dialogs.js";
 import * as dlgGroupEdit from "./dlg_group_edit.js";
 
 export function show( a_uid, a_excl, cb, select ){
-    console.log("groups UID:", a_uid );
     const content =
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none;padding:.5rem 0 0 0'>Groups:</div>\
@@ -44,7 +44,6 @@ export function show( a_uid, a_excl, cb, select ){
         var node = group_tree.getActiveNode();
         if ( node ){
             dialogs.dlgConfirmChoice( "Confirm Delete", "Delete group '" + node.key.substr(2) + "'?", ["Cancel","Delete"], function( choice ) {
-                console.log( choice );
                 if ( choice == 1 ) {
                     api.groupDelete( a_uid, node.key.substr(2), function( ok, data ) {
                         if ( ok ){
@@ -99,13 +98,12 @@ export function show( a_uid, a_excl, cb, select ){
         }],
         open: function( ev, ui ){
             api.groupList( a_uid, function( ok, data ){
-                console.log( "group list:", ok, data );
                 var src = [];
                 var group;
                 for ( var i in data ){
                     group = data[i];
                     if ( a_excl.indexOf( "g/" + group.gid ) == -1 )
-                        src.push({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
+                        src.push({title: util.escapeHTML(group.title) + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
                 }
 
                 $("#dlg_group_tree",frame).fancytree({
@@ -126,7 +124,7 @@ export function show( a_uid, a_excl, cb, select ){
                         if ( data.node.lazy ){
                             data.result = [];
                             if ( data.response.desc )
-                                data.result.push( { title:"["+data.response.desc+"]", icon: false, checkbox: false,key:"desc" } );
+                                data.result.push( { title:"["+util.escapeHTML(data.response.desc)+"]", icon: false, checkbox: false,key:"desc" } );
                             var mem;
                             for ( var i in data.response.member ) {
                                 mem = data.response.member[i];
@@ -135,7 +133,6 @@ export function show( a_uid, a_excl, cb, select ){
                         }
                     },
                     activate: function( event, data ) {
-                        console.log( data.node.key );
                         if ( data.node.key.startsWith("g/")){
                             $("#dlg_edit_grp",frame).button("enable" );
                             $("#dlg_rem_grp",frame).button("enable" );

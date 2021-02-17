@@ -1744,6 +1744,8 @@ def _print_endpoints( message ):
 
 def _print_data( message ):
     for dr in message.data:
+        print("data:",dr)
+
         click.echo( "{:<15}{:<50}".format('ID: ', dr.id))
         click.echo( "{:<15}{:<50}".format('Alias: ', dr.alias if dr.alias else "(none)" ))
         _wrap_text( dr.title, "Title:", 15 )

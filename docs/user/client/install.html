@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="User Guide" href="../cli/guide.html" />
-    <link rel="prev" title="Web Portal" href="../web/portal.html" /> 
+    <link rel="prev" title="Web Portal Guide" href="../web/portal.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -87,17 +87,24 @@
 <li class="toctree-l1"><a class="reference internal" href="../../system/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../system/overview.html">System Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/papers.html">Papers and Presentations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../system/getting_started.html">Getting Started</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Web Portal</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../web/portal.html">Web Portal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../web/portal.html">Web Portal Guide</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Client Package</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation and Configuration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites">0. Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#install-python-package">1. Install python package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ensure-bin-directory-is-in-path">2. Ensure bin directory is in Path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-configuration">3. Basic Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-configuration">Advanced Configuration</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#configuration-files">Configuration Files</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#configuration-priority">Configuration Priority</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#configuring-automatic-authentication">Configuring Automatic Authentication</a></li>
@@ -124,17 +131,22 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../cli/guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cli/reference.html">Command Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../cli/shell_scripting.html">Shell Scripting</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Interface</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/notebooks.html">Jupyter Notebooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../autoapi/index.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../scripting.html">Scripting Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../python_scripting.html">Python Scripting</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Administration</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../admin/general.html">Administration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/roadmap.html">Feature Road Map</a></li>
 </ul>
 
             
@@ -187,8 +199,6 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../../_sources/user/client/install.rst.txt" rel="nofollow"> View page source</a>
-          
         
       </li>
     
@@ -208,14 +218,35 @@ client is provided via a Python 3 package and can be used on any operating syste
 is available.</p>
 <div class="section" id="installation">
 <h2>Installation</h2>
-<p>The DataFed client requires Python 3 to be installed and properly configured. Within supported
-facilities, both Python 3 and the DataFed client may already be installed and ready to use;
-however, installation and configuration will be required if you intend to use the DataFed
-client from a non-supported facility, an external workstation, or a laptop. In addition,
-if there is a need to upload and/or download raw data from/to a personal system, it will be
-necessary to install <a class="reference external" href="https://www.globus.org/globus-connect-personal">Globus Personal Connect</a>
-to setup a local Globus endpoint.</p>
-<p>Like many Python packages, the DataFed client is easy to install using Python’s “pip” tool. For Linux
+<p>DataFed will be available natively within supported facilities and no installation or configuration should be necessary.</p>
+<p>However, if you need to use the DataFed CLI from a non-supported facility,
+or on a personal computer such as workstation or laptop, please follow this guide:</p>
+<div class="section" id="prerequisites">
+<h3>0. Prerequisites</h3>
+<ol class="arabic simple">
+<li><p><strong>Python 3</strong>:</p>
+<ul class="simple">
+<li><p>The default python environment on most clusters is likely to be python 2.7.
+Therefore, users are recommended to either load a module that provides python 3.</p></li>
+<li><p>Users on personal computers are encouraged to download and install python
+(e.g. via <a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a>)
+if an environment is not already available.</p></li>
+</ul>
+</li>
+<li><p><strong>Globus Endpoint</strong>: This is necessary if the user needs to upload locally stored files / download data from DataFed repositories.</p>
+<ul class="simple">
+<li><p>Nearly all high performance computing clusters should already have Globus endpoint already configured.
+Users need not do anything for this prerequisite.</p></li>
+<li><p>Users intending to use the DataFed client to  from other machines would need to install and configure
+<a class="reference external" href="https://www.globus.org/globus-connect-personal">Globus Personal Connect</a> as described in the
+<a class="reference external" href="../system/getting_started.html#install-identify-globus-endpoint">Getting Started page</a>.</p></li>
+</ul>
+</li>
+</ol>
+</div>
+<div class="section" id="install-python-package">
+<h3>1. Install python package</h3>
+<p>Like many Python packages, the DataFed CLI is easy to install using Python’s <code class="docutils literal notranslate"><span class="pre">pip</span></code> tool. For Linux
 and Mac OS, the command is as follows:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="n">datafed</span>
 </pre></div>
@@ -225,15 +256,64 @@ and Mac OS, the command is as follows:</p>
 </pre></div>
 </div>
 <p>Pip will install the DataFed client package and all dependencies, and will also install an executable
-“datafed” command script (to access the CLI) in the configured pip package binary, or “bin” directory.</p>
+<code class="docutils literal notranslate"><span class="pre">datafed</span></code> command script (to access the CLI) in the configured pip package binary, or “bin” directory.</p>
+</div>
+<div class="section" id="ensure-bin-directory-is-in-path">
+<h3>2. Ensure bin directory is in Path</h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The Python bin directory must be included in the executable search path for the DataFed CLI
 command to be accessible.</p>
 </div>
+<p>If you do not see an error when you type <code class="docutils literal notranslate"><span class="pre">datafed</span></code> in your terminal, you may skip this step.</p>
+<p>If you encounter errors stating that datafed was an unknown command, you would need to add DataFed to your path.</p>
+<ol class="arabic">
+<li><p>First, you would need to find where datafed was installed.
+For example, on some compute clusters, datafed was installed into directories such as <code class="docutils literal notranslate"><span class="pre">~/.local/MACHINE_NAME/PREFIXES-anaconda-SUFFIXES/bin</span></code></p></li>
+<li><p>Next, add DataFed to the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> variable.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You may need to add DataFed to the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> in your job scripts</p>
 </div>
-<div class="section" id="configuration">
-<h2>Configuration</h2>
+</li>
+</ol>
+<p>Here is an <a class="reference external" href="https://www.makeuseof.com/python-windows-path/">external guide</a> on adding Python to the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> on Windows machines</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>On Mac / Linux, if you have write access to the virtual / conda python environment:</p>
+<ul class="simple">
+<li><p>You would likely not need to use the <code class="docutils literal notranslate"><span class="pre">--user</span></code> flag when pip installing DataFed</p></li>
+<li><p>You would also not need to specifically add DataFed to your <code class="docutils literal notranslate"><span class="pre">PATH</span></code> as long
+as you load the python environment itself.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="basic-configuration">
+<h3>3. Basic Configuration</h3>
+<ol class="arabic">
+<li><p>Type the following command into shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>datafed setup
+</pre></div>
+</div>
+<p>It will prompt you for your username and password.</p>
+</li>
+<li><p>Enter the credentials you set up when registering for an account on DataFed
+(not your institutional credentials you use to log into the machine)</p></li>
+<li><p>Add the Globus endpoint specific to this machine / file-system as the default endpoint via:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>datafed ep default <span class="nb">set</span> endpoint_name_here
+</pre></div>
+</div>
+</li>
+<li><p>(Optional) If you are using Globus Connect Personal, visit the Settings or Preferences
+of the application to inspect which folders Globus has write access to.
+Consider adding or removing directories to suit your needs.</p></li>
+</ol>
+<p>This concludes the one-time setup necessary to get started with scripting using DataFed.
+You may use the interactive DataFed CLI or the Python package at this point.</p>
+</div>
+</div>
+<div class="section" id="advanced-configuration">
+<h2>Advanced Configuration</h2>
 <p>Users would typically not need to configure the DataFed client from within a facility-supported
 environments; however, when installing the client on personal workstations or laptops, the client requires a
 few key settings to be configured prior to use. Configuration settings may be specified using
@@ -703,7 +783,7 @@ saved) using the “ep set” command.</p>
         <a href="../cli/guide.html" class="btn btn-neutral float-right" title="User Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../web/portal.html" class="btn btn-neutral float-left" title="Web Portal" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../web/portal.html" class="btn btn-neutral float-left" title="Web Portal Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

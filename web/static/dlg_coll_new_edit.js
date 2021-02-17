@@ -84,10 +84,15 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
 
                     // TODO Only assign tags if changed
                     obj.tags = tag_el.tagit("assignedTags");
-
                     if (( !obj.tags || obj.tags.length == 0 ) && a_data.tags && a_data.tags.length ){
                         obj.tagsClear = true;
                     }
+                    
+                    /*else{
+                        for ( var i in obj.tags ){
+                            obj.tags[i] = util.escapeJSON( obj.tags[i] );
+                        }
+                    }*/
 
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
@@ -95,7 +100,6 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     }
 
                     obj.id = a_data.id;
-
                     api.collUpdate( obj, callback );
                 }else{
                     obj.parentId = $("#coll",frame).val().trim();
@@ -111,7 +115,6 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                     }
 
                     obj.tags = tag_el.tagit("assignedTags");
-
                     api.collCreate( obj, callback );
                 }
             }
@@ -150,7 +153,7 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
             });
 
             if ( a_data ){
-                console.log("coll data:",a_data);
+                //console.log("coll data:",a_data);
                 $("#title",frame).val(a_data.title);
                 if ( a_data.alias ){
                     var idx =  a_data.alias.lastIndexOf(":");

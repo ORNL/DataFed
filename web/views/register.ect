@@ -10,31 +10,33 @@
             <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
                 <div style="flex:1 1 100%;font-size:2em;">Scientific Data Federation</div>
                 <div style="flex:none">
-                    <button class="btn" onclick="window.open('/ui/docs','sdms-docs')">Help</button>&nbsp
+                    <button class="btn" onclick="window.open('https://ornl.github.io/DataFed/index.html','datafed-docs')">Help</button>&nbsp
                     <button class="btn" onclick="location.href='/ui'">Home</button>
                 </div>
             </div>
-            <div id="content" class="ui-widget-content" style="flex:1 1 100%;font-size:1.2em;margin:15% 25%">
-                <p>Your DataFed user ID is "<%- @uid %>".</p>
+            <div style="flex:auto;overflow:auto">
+            <div id="content" class="ui-widget-content" style="text-align: justify;text-justify: inter-word;margin:2em auto 1em auto;width:40em">
+                <div style='font-size:250%;margin-bottom:1em'>DataFed Registration</div>
+                <p>Your DataFed user ID will be "<%- @uid %>".</p>
                 <br>
                 <div id='uid_ok' style='display:none'>
-                    <p>Please enter a DataFed command-line interface (CLI) password for your new DataFed account.
-                        This password is needed for manual CLI authentication. Cached user credentials may be
-                        configured via the CLI for non-interactive use. This password may be changed at any time
-                        via the DataFed web application, under 'Settings'.</p>
+                    <p>If you plan on using the DataFed command-line interface, a CLI password is needed for one-time setup
+                        and manual authentication. If you do not plan on using the CLI, or don't want to set a password right
+                        now, you may set the CLI password later in the DataFed web portal settings.</p>
                     <br>
                     <table style="margin:1em auto;border-spacing:0.5em">
-                    <tr><td>Password:</td><td><input type="password" id="pw1"></td></tr>
+                    <tr><td>CLI Password:</td><td><input type="password" id="pw1"></td></tr>
                     <tr><td>Re-enter:</td><td><input type="password" id="pw2"></td></tr>
                     </table>
                     <br><br>
-                    <div style='text-align:center'><button class="btn" onclick="register()" type="button">Register</button></div>
+                    <div style='text-align:center'><button class="btn btn-welcome" onclick="register()" type="button">Continue Registration</button></div>
                 </div>
                 <div id='uid_bad' style='display:none'>
                     <p class='note'>Invalid Globus user name. Please update your Globus account profile with your full name (first and last), then retry DataFed login.</p>
                     <br><br>
                     <div style='text-align:center'><button class="btn" onclick="retry()" type="button">Retry Login</button></div>
                 </div>
+            </div>
             </div>
             <div class="ui-widget-header" style="flex:none;padding:.25em">
                 User: <%- @uname %>
@@ -67,12 +69,11 @@
         window.register = function() {
             var pw1 = document.getElementById('pw1').value;
             var pw2 = document.getElementById('pw2').value;
-            if ( pw1.length == 0 )
-                dialogs.dlgAlert( "Password Error", "Password cannot be empty." );
-            else if ( pw1 != pw2 )
+
+            if ( pw1 != pw2 )
                 dialogs.dlgAlert( "Password Error", "Passwords do not match." );
             else
-                window.location = "/ui/do_register?pw="+pw1+"&acc_tok=<%- @acc_tok %>&ref_tok=<%- @ref_tok %>&expires=<%- @acc_tok_ttl %>&redir=<%- @redir %>";
+                window.location = "/ui/do_register?pw="+pw1;
         }
     </script>
 </html>

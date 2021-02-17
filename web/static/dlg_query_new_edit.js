@@ -90,10 +90,10 @@ export function show( a_data, a_cb ) {
             text: "Test",
             click: function() {
                 var qry = parseSearchDialog();
-                console.log("qry:",qry);
+                //console.log("qry:",qry);
                 api.dataFind( qry, function( ok, reply ){
                     if ( ok ){
-                        console.log("items:",reply);
+                        //console.log("items:",reply);
                         var html;
                         if ( reply.item && reply.item.length > 0 ){
                             html = "<table style='width:100%;text-align:left;'>";

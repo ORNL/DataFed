@@ -86,11 +86,12 @@
 <li class="toctree-l1"><a class="reference internal" href="system/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="system/overview.html">System Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="system/papers.html">Papers and Presentations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="system/getting_started.html">Getting Started</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Web Portal</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="user/web/portal.html">Web Portal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/web/portal.html">Web Portal Guide</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Client Package</span></p>
 <ul>
@@ -100,17 +101,22 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="user/cli/guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/cli/reference.html">Command Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user/cli/shell_scripting.html">Shell Scripting</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Python Interface</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="user/python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/python/notebooks.html">Jupyter Notebooks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user/scripting.html">Scripting Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user/python_scripting.html">Python Scripting</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Administration</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="admin/general.html">Administration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev/roadmap.html">Feature Road Map</a></li>
 </ul>
 
             
@@ -163,8 +169,6 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
-          
         
       </li>
     
@@ -186,9 +190,8 @@ scientific data and serves as a tool to ease the burden associated with capturin
 sharing potentially large volumes of heterogeneous scientific data. DataFed provides an environment
 in which scientific data can be precisely controlled and refined in preparation for eventual data
 publishing.</p>
-</div>
 <div class="section" id="datafed-documentation">
-<h1>DataFed Documentation</h1>
+<h2>DataFed Documentation</h2>
 <p>This site contains all user and administrative documentation for the DataFed system - including
 client interfaces and application programming interfaces. The system introduction and
 overview documents introduce DataFed-specific terminology and key concepts that are references
@@ -204,17 +207,22 @@ by subsequent documents on this site.</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="system/overview.html">System Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="system/overview.html#interfaces">Interfaces</a></li>
-<li class="toctree-l2"><a class="reference internal" href="system/overview.html#key-concepts">Key Concepts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="system/overview.html#collection-hierarchies">Collection Hierarchies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="system/overview.html#access-control">Access Control</a></li>
-<li class="toctree-l2"><a class="reference internal" href="system/overview.html#storage-allocations">Storage Allocations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/overview.html#cross-facility-data-management">Cross-Facility Data Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/overview.html#system-architecture">System Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/overview.html#user-accounts">User Accounts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/overview.html#system-concepts">System Concepts</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="system/papers.html">Papers and Presentations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="system/getting_started.html">Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="system/getting_started.html#universal-setup">Universal setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="system/getting_started.html#scripting-setup">Scripting setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/getting_started.html#get-a-globus-account">1. Get a Globus account</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/getting_started.html#get-a-globus-id">2. Get a Globus ID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/getting_started.html#register-at-datafed">3. Register at DataFed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/getting_started.html#get-data-allocations">4. Get data allocations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/getting_started.html#install-identify-globus-endpoint">5. Install / identify Globus Endpoint</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/getting_started.html#activate-globus-endpoint">6. Activate Globus Endpoint</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system/getting_started.html#programming-interfaces-to-datafed">Programming interfaces to DataFed</a></li>
 </ul>
 </li>
 </ul>
@@ -222,7 +230,7 @@ by subsequent documents on this site.</p>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Web Portal</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="user/web/portal.html">Web Portal</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="user/web/portal.html">Web Portal Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="user/web/portal.html#drag-and-drop">Drag and Drop</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user/web/portal.html#personal-data">Personal Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user/web/portal.html#project-data">Project Data</a></li>
@@ -243,7 +251,7 @@ by subsequent documents on this site.</p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="user/client/install.html">Installation and Configuration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="user/client/install.html#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/client/install.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/client/install.html#advanced-configuration">Advanced Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user/client/install.html#configuration-settings">Configuration Settings</a></li>
 </ul>
 </li>
@@ -284,34 +292,26 @@ by subsequent documents on this site.</p>
 <li class="toctree-l2"><a class="reference internal" href="user/cli/reference.html#wp-command">Wp Command</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="user/cli/shell_scripting.html">Shell Scripting</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user/cli/shell_scripting.html#getting-started">Getting Started</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/cli/shell_scripting.html#interactive-vs-scripting">Interactive vs. Scripting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/cli/shell_scripting.html#help-and-documentation">Help and documentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/cli/shell_scripting.html#create-data-records">Create Data Records</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/cli/shell_scripting.html#upload-raw-data">Upload raw data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/cli/shell_scripting.html#view-data-record">View Data Record</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/cli/shell_scripting.html#download-raw-data">Download raw data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/cli/shell_scripting.html#comments">Comments</a></li>
-</ul>
-</li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Python Interface</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="autoapi/datafed/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/python/high_level_guide.html">Guide to High Level Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user/python/high_level_guide.html#getting-started">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/python/high_level_guide.html#datafed-responses-projects">DataFed Responses &amp; Projects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/python/high_level_guide.html#contexts-aliases-ids">Contexts, aliases &amp; IDs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/python/high_level_guide.html#data-records">Data Records</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/python/high_level_guide.html#data-transfer">Data Transfer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/python/high_level_guide.html#collections">Collections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/python/high_level_guide.html#queries">Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/python/high_level_guide.html#collections-continued">Collections continued</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/python/high_level_guide.html#closing-remarks">Closing remarks</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="user/scripting.html">Scripting Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user/python_scripting.html">Python Scripting</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user/python_scripting.html#help-and-documentation">Help and documentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/python_scripting.html#getting-started">Getting Started</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/python_scripting.html#create-data-record">Create Data Record</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/python_scripting.html#upload-raw-data">Upload raw data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/python_scripting.html#view-data-record">View Data Record</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/python_scripting.html#download-data">Download Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/datafed/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -322,14 +322,32 @@ by subsequent documents on this site.</p>
 <li class="toctree-l1"><a class="reference internal" href="admin/general.html">Administration</a></li>
 </ul>
 </div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev/project.html">Project Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev/project.html#personnel">Personnel</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev/roadmap.html">Feature Road Map</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev/roadmap.html#planned-features">Planned Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev/roadmap.html#new-user-features">New User Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev/roadmap.html#production-related-changes">Production-Related Changes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev/roadmap.html#potential-features-changes">Potential Features / Changes</a></li>
+</ul>
+</li>
+</ul>
+</div>
 </div>
 <div class="section" id="indices-and-tables">
-<h1>Indices and tables</h1>
+<h2>Indices and tables</h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
+</div>
 </div>
 
 

@@ -29,8 +29,10 @@ struct Config
         task_purge_age( 14*24*3600 ),
         task_purge_period( 6*3600 ),
         task_retry_time_fail( 3600 ),
-        task_retry_time_init( 20 ), // Doubles every retry until max
-        task_retry_backoff_max( 3 ),
+        task_retry_time_init( 30 ), // Double every retry until max backoff
+        task_retry_backoff_max( 4 ),
+        repo_chunk_size( 100 ),
+        repo_timeout( 60000 ),
         note_purge_age( 7*24*3600 ),
         note_purge_period( 6*3600 )
     {}
@@ -52,6 +54,8 @@ struct Config
     uint32_t        task_retry_time_fail;
     uint32_t        task_retry_time_init;
     uint32_t        task_retry_backoff_max;
+    uint32_t        repo_chunk_size;
+    uint32_t        repo_timeout;
     uint32_t        note_purge_age;
     uint32_t        note_purge_period;
 
