@@ -22,7 +22,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         ref_rows = 1,
         orig_deps = [],
         encrypt_mode = 1,
-        is_published,
+        //is_published,
         parent_coll;
     
     console.log("data:",a_data);
@@ -57,7 +57,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 </div>\
             </div>\
             <div id='tab-dlg-data' style='padding:1em'>\
-                <span title='Set data mode to published.' style='display:inline-block;white-space:nowrap'><label for='published'>Published Data</label><input id='published' type='checkbox'></input> <span id='pub_del_warn_ast' style='display:none' class='note'>**</span></span><br><br>\
+                <!-- span title='Set data mode to published.' style='display:inline-block;white-space:nowrap'><label for='published'>Published Data</label><input id='published' type='checkbox'></input> <span id='pub_del_warn_ast' style='display:none' class='note'>**</span></span><br><br -->\
                 <div id='working_data'>\
                     <table class='form-table'>\
                         <tr id='dlg_alloc_row'><td>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
@@ -65,7 +65,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
                     </table>\
                 </div>\
-                <div id='published_data' style='display:none'>\
+                <!-- div id='published_data' style='display:none'>\
                     <table class='form-table'>\
                         <tr><td>DOI:</td><td colspan='3'><input title='DOI number (optional)' type='text' id='doi' style='width:100%'></input></td></tr>\
                         <tr><td>Data&nbspURL:</td><td colspan='3'><input title='Data URL (optional)' type='text' id='data_url' style='width:100%'></input></td></tr>\
@@ -73,7 +73,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 </div><br><br>\
                 <div id='pub_del_warn' style='display:none;width:100%' class='note'>\
                     ** Setting record to published will delete associated DataFed-managed raw data.\
-                </div>\
+                </div -->\
                 <div id='pub_upd_warn' style='display:none' class='note'>\
                     Note: Editing data source information of published records is not recommended due to potential impact on data subscribers.\
                 </div>\
@@ -212,7 +212,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         if ( ok ) {
             // Start transfer if source changed
             var tmp = $("#source_file").val().trim();
-            if ( !is_published && tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
+            if ( /*!is_published &&*/ tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
                 api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, reply2 ){
                     if ( ok2 ){
                         util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
@@ -270,10 +270,11 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
                 });
 
-                if ( $("#published",frame).prop("checked") )
+                /*if ( $("#published",frame).prop("checked") )
                     is_published = true;
                 else
                     is_published = false;
+                    */
 
 
                 if ( a_data && a_mode == DLG_DATA_MODE_EDIT ){
@@ -289,7 +290,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         obj.tagsClear = true;
                     }
 
-                    if ( is_published ){
+                    /*if ( is_published ){
                         var doi = $("#doi",frame).val(),
                             data_url = $("#data_url",frame).val();
 
@@ -299,7 +300,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         }
                         util.getUpdatedValue( doi, a_data, obj, "doi" );
                         util.getUpdatedValue( data_url, a_data, obj, "dataUrl" );
-                    }else{
+                    }else{*/
                         if ( a_data.doi ){
                             obj.doi="";
                             obj.dataUrl="";
@@ -314,7 +315,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                             util.getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
                         }
-                    }
+                    //}
 
                     if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
                         obj.mdset = true;
@@ -381,20 +382,20 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     //util.getUpdatedValue( $("#tags",frame).val(), {}, obj, "tags" );
 
-                    if ( is_published ){
+                    /*if ( is_published ){
                         util.getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
                         util.getUpdatedValue( $("#data_url",frame).val(), {}, obj, "dataUrl" );
                         if ( !obj.doi || !obj.dataUrl ){
                             dialogs.dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
                             return;
                         }
-                    }else{
+                    }else{*/
                         if ( $("#ext_auto",frame).prop("checked") ){
                             obj.extAuto = true;
                         }else{
                             util.getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
                         }
-                    }
+                    //}
 
                     var tmp = jsoned.getValue();
                     if ( tmp )
@@ -522,17 +523,17 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }else{
                         $("#extension",frame).val(a_data.ext?a_data.ext:"");
                     }
-                    $("#doi",frame).val(a_data.doi);
-                    $("#data_url",frame).val(a_data.dataUrl);
-                    if ( a_data.dataUrl ){
+                    //$("#doi",frame).val(a_data.doi);
+                    //$("#data_url",frame).val(a_data.dataUrl);
+                    /*if ( a_data.dataUrl ){
                         $("#published",frame).prop("checked",true);
                         $("#working_data",frame).hide();
                         $("#published_data",frame).show();
                         $("#pub_upd_warn",frame).show();
                         util.inputDisable( $("#alias", frame ));
-                    }else if ( a_data.size > 0 ){
-                        $("#pub_del_warn,#pub_del_warn_ast",frame).show();
-                    }
+                    }else if ( a_data.size > 0 ){*/
+                        //$("#pub_del_warn,#pub_del_warn_ast",frame).show();
+                    //}
                 }else{
                     $("#dlg_md_row2",frame).css("display","none");
                     if ( a_parent )
@@ -553,7 +554,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 $("#extension",frame).val("(auto)").prop("disabled",true);
             }
 
-            $("#published",frame).checkboxradio().on( "change",function(ev){
+            /*$("#published",frame).checkboxradio().on( "change",function(ev){
                 var pub = $("#published",frame).prop("checked");
                 if ( pub ){
                     $("#working_data",frame).hide();
@@ -565,7 +566,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     $("#published_data",frame).hide();
                     util.inputEnable( $("#alias", frame ));
                 }
-            });
+            });*/
 
             $("#ext_auto",frame).checkboxradio().on( "change",function(ev){
                 var auto = $("#ext_auto",frame).prop("checked");
