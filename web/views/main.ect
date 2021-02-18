@@ -136,9 +136,9 @@
                 //document.getElementById("uname").innerHTML = settings.user.name;
                 $( "#uname" ).text( settings.user.nameFirst + " " + settings.user.nameLast );
 
-                //if ( settings.user.isAdmin ){
-                //    $("#is_admin").show();
-                //}
+                if ( settings.user.isAdmin ){
+                    $("#is_admin").show();
+                }
 
                 browser_tab.init();
 
