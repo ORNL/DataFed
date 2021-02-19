@@ -413,7 +413,7 @@ router.get('/token/set', function (req, res) {
                 else {
                     user_id = client._id;
                 }
-                console.log("updating tokens for", user_id, req.queryParams.access, req.queryParams.expires_in );
+                console.log("updating tokens for", user_id, "acc:", req.queryParams.access, "exp:", req.queryParams.expires_in );
                 var obj = { access: req.queryParams.access, refresh: req.queryParams.refresh, expiration: Math.floor(Date.now()/1000) + req.queryParams.expires_in };
                 g_db._update( user_id, obj, { keepNull: false });
             }
@@ -450,9 +450,12 @@ router.get('/token/get', function( req, res ) {
             result.refresh = user.refresh;
         if ( user.expiration ){
             var exp = user.expiration - Math.floor(Date.now()/1000);
-            result.expires_in = exp > 0 ? exp : 0;
-        }else
+            console.log("tok/get",Math.floor(Date.now()/1000),user.expiration,exp);
+            result.expires_in = ( exp > 0 ? exp : 0 );
+        }else{
+            console.log("tok/get - no expiration");
             result.expires_in = 0;
+        }
 
         res.send(result);
     } catch( e ) {
