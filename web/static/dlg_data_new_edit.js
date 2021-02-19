@@ -25,7 +25,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         //is_published,
         parent_coll;
     
-    console.log("data:",a_data);
+    //console.log("data:",a_data);
 
     //<tr><td>Tags:</td><td colspan='3'><input title='Tags (optional, space delimited)' type='text' id='tags' style='width:100%'></input></td></tr>
 
@@ -257,7 +257,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     return;
                 }
 
-                var obj = {},
+                var i,
+                    obj = {},
                     id,
                     type,
                     deps = [];
@@ -281,13 +282,25 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
-                    util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
+                    util.getUpdatedValueJSON( jsoned.getValue(), a_data, obj, "metadata" );
 
-                    // TODO Only assign tags if changed
                     obj.tags = tag_el.tagit("assignedTags");
 
                     if (( !obj.tags || obj.tags.length == 0 ) && a_data.tags && a_data.tags.length ){
                         obj.tagsClear = true;
+                    }else if ( obj.tags && a_data.tags && obj.tags.length == a_data.tags.length ){
+                        // TODO Only send tags if changed
+
+                        var same = true;
+                        for ( i in obj.tags ){
+                            if ( a_data.tags.indexOf( obj.tags[i] ) == -1 ){
+                                same = false;
+                                break;
+                            }
+                        }
+                        if ( same ){
+                            delete obj.tags;
+                        }
                     }
 
                     /*if ( is_published ){
@@ -322,7 +335,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                     // Analyze changes to dependencies to generate add/rem lists
 
-                    var i, dep;
+                    var dep;
 
                     obj.depAdd = [];
                     obj.depRem = [];
@@ -364,9 +377,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         }
                     }
 
-                    //console.log("dep add:",obj.depAdd);
-                    //console.log("dep rem:",obj.depRem);
-
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
                         return;
@@ -380,7 +390,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
-                    //util.getUpdatedValue( $("#tags",frame).val(), {}, obj, "tags" );
 
                     /*if ( is_published ){
                         util.getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
@@ -440,7 +449,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     minLength: 3,
                     source: "/api/tag/autocomp"
                 },
-                caseSensitive: false
+                caseSensitive: false,
+                readOnly: ( a_mode == DLG_DATA_MODE_EDIT && ( a_upd_perms & model.PERM_WR_REC ) == 0 )?true:false
             });
         
             jsoned = ace.edit( $("#md",frame).get(0), {
@@ -507,6 +517,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         util.inputDisable( $("#title,#desc,#alias", frame ));
                         util.inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
                         $(".ref-row select", frame ).selectmenu("disable");
+                        // Apply disable style to tag input
+                        $('.ui-widget-content', tag_el ).addClass("ui-state-disabled"); 
                     }
 
                     if (( a_upd_perms & model.PERM_WR_DATA ) == 0 ){
