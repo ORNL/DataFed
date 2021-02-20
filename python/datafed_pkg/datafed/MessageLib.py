@@ -163,7 +163,7 @@ class API:
             raise Exception( "Incompatible server version {}.{}.{}:{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client))
 
         if reply.client > Version_pb2.VER_CLIENT:
-            self.new_client_avail = True
+            self.new_client_avail = "{}.{}.{}:{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client)
         else:
             self.new_client_avail = False
 
