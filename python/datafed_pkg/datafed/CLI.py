@@ -2264,7 +2264,7 @@ def _initialize( opts ):
         _capi = CommandLib.API( opts )
 
         if _interactive and _capi._mapi.new_client_avail:
-            click.echo(">>>> A newer DataFed client ({}) is available <<<<".format( _mapi.new_client_avail ))
+            click.echo(">>>> A newer DataFed client ({}) is available <<<<".format( _capi._mapi.new_client_avail ))
 
         if man_auth or _capi.getAuthUser() == None:
             if not man_auth:
