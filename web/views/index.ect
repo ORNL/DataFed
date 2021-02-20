@@ -60,7 +60,7 @@
             </div>
             <div class="ui-widget-header" style="flex:none;padding:.25em">
                 User: Not Logged In
-                <div style='float:right'><span id='mode_label' class='ui-state-error'></span></div>
+                <div id='devmode' style='float:right;display:none'><span class='ui-state-error'>DEV-MODE</span></div>
             </div>
         </div>
     </body>
@@ -69,9 +69,9 @@
         $(".btn").button();
 
 
-        var g_test_mode = "<%- @test_mode %>";
+        var g_test_mode = ("<%- @test_mode %>" == "true");
         if ( g_test_mode ){
-            $("#mode_label").html("<b>DEV MODE</b>");
+            $("#devmode").show();
         }
 
     </script>
