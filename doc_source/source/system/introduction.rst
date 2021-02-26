@@ -11,26 +11,25 @@ sharing potentially large volumes of heterogeneous scientific data. DataFed prov
 in which scientific data can be precisely controlled and refined in preparation for eventual data
 publishing.
 
+DataFed is an open source project hosted on GitHub at `<https://github.com/ORNL/DataFed>`_. DataFed is
+under active development at Oak Ridge National Laboratory (ORNL) within the Oak Ridge Leadership
+Computing Facility (OLCF) and is currently deployed in an alpha-release state for early access users.
+
 Background
 ==========
 
-DataFed is a federated scientific data management and collaboration system for open research that
-eases the data handling burden associated with research activities within and across scientific
-domains and facilities. The primary goal of DataFed is to improve scientific data quality by enabling
-precise full-lifecycle control over data artifacts, with the ability to uniformly share and access data
-across geographically distributed facilities. The combined capabilities of DataFed help to support
-the concept of "repeatable science" through the unambiguous identification and tracking of data artifacts,
-by capturing and maintaining scientific metadata and provenance, and by providing the means to locate,
-access, and share data globally.
-
-DataFed can be thought of as a "tier 2+" distributed data storage system - meaning it is intended
+The primary goal of DataFed is to improve scientific data quality by enabling
+precise early-lifecycle control over data artifacts, with the ability to uniformly share and access data
+across geographically distributed facilities. DataFed can be thought of as a "tier 2+" distributed data storage system - meaning it is intended
 for creating and working with data that is of medium- to long-term significance to the owner and/or
 collaborators. Unlike a tier 1 storage system (i.e. a local file system), DataFed compromises raw data
-access performance in favor of FAIR data principles. While DataFed shares many features with tier 3
+access performance in favor of FAIR data principles.
+
+While DataFed shares many features with tier 3
 storage systems (i.e. data archival systems), DataFed allows data and metadata to be modified after it
 is ingested and specifically includes features for disseminating subsequent changes to downstream
 data consumers via automatic provenance-based alerts as well as opt-in data subscriptions. DataFed
-also provides powerful and easy to use collaboration features to encourage precise "in-band" data-related
+also provides powerful and easy to use collaboration features to encourage "in-band" data-related
 communication instead of ad hoc and error-prone methods, such as email.
 
 DataFed utilizes `Globus <https://www.globus.org>`_ for efficient and secure data transfers, as well as
@@ -41,26 +40,21 @@ to be located and accessed without needing to know where the data is physically 
 network. Because DataFed relies heavily on Globus, it is recommended that DataFed users familiarize
 themselves with `how Globus works <https://www.globus.org/what-we-do>`_.
 
-DataFed is an open source project hosted on GitHub at `<https://github.com/ORNL/DataFed>`_. DataFed is
-under active development at Oak Ridge National Laboratory (ORNL) within the Oak Ridge Leadership
-Computing Facility (OLCF) and is currently deployed in an alpha-release state for early access users.
-
 
 Scientific Data Management
 ==========================
 
-Traditional scientific data management systems are restricted to individual organizations or a small number of
+Traditional scientific data management systems (SDMS) are restricted to individual organizations or a small number of
 organizations connected via a "virtual organization" (VO) configuration. These systems typically support
 domain-specific and predetermined data workflows that cannot be readily applied to other domains or applications.
+Unlike SDMSs, data cataloging systems provide access to static datasets and usually only support HTTP
+data transfers - limiting the size of datasets that can be served.
 
-[MORE HERE]
-
-DataFed provides a combination of the typical features and benefits of scientific data management systems
-(SDMS), laboratory information management systems (LIMS), and data cataloging services. For example,
-DataFed provides storage and access to structured and unstructured heterogeneous raw data with access
-controls, metadata and provenance capture, and metadata indexing and search; however, DataFed diverges
-significantly from these systems in a number of ways to better serve the needs of open and collaborative
-scientific research - especially regarding "big data" and data-oriented research.
+DataFed provides a combination of the features and benefits of both SDMSs and data cataloging services while
+also supporting big data. For example, DataFed provides storage and access to structured and unstructured
+heterogeneous raw data with access controls, metadata and provenance capture, and metadata indexing and search;
+however, DataFed diverges significantly from these systems in a number of ways to better serve the needs of
+open and collaborative scientific research.
 
 Briefly, DataFed provides the following unique blend of capabilities and benefits:
 
@@ -75,12 +69,18 @@ Briefly, DataFed provides the following unique blend of capabilities and benefit
 Data Lifecycle
 ==============
 
-DataFed is an enabling technology for the full lifecycle of scientific data - from creation through
-publication and eventual reuse. The figure below illustrates how DataFed supports this lifecycle:
+DataFed is an enabling technology for the early lifecycle stages of scientific data - from data ingest
+to pre-publication. The figure below illustrates how DataFed supports the lifecycle stages:
 
 .. image:: /_static/data_lifecycle.png
 
-
+DataFed fully supports the management stage of data and provides interfaces that can be used from the
+data ingest and tha analysis stages to capture initial context and to subsequently enrich that context
+after analysis, respectively. Pre-publication is supported by providing powerful data organization
+and data handling capabilities to help ensure that the right data is being published and that it contains
+proper metadata and provenance information. Note that data publishing systems may have additional metadata
+requirements that are not available from the data records themselves (i.e. contract numbers, sponsoring
+organizations, etc.)
 
 Why DataFed?
 ============

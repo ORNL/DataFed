@@ -515,21 +515,22 @@ Access Controls
 ---------------
 
 DataFed implements fine-grained access control through a set of permissions that can be applied to both data records and 
-collections. Permissions can be configured to apply to anyone, specific users, groups of users, or a combination of any of
-these. Data records and collections share the same set of permissions; however, collections have an additional set of
-permissions specifically for permission inheritance. The individual permissions are defined as follows:
+collections. Permissions can be configured to apply to specific users, groups of users, or a combination of
+these, and define what specific actions users can take. Collections also allow specification of inherited permissions that
+are applied to items linked within it. The individual permissions are as follows:
 
-* VIEW - Allows users to list a data record or collection and view basic information.
-* READ_META - Allows users to read any metadata associated with a data record.
-* READ_DATA - Allows users to read raw data associated with a data record, or to list the contents of a collection.
-* WRITE_META - Allows users to create or update metadata associated with a data record.
-* WRITE_DATA - Allows users to create or update raw data associated with a data record, or to add or remove items within a collection.
-* ADMIN - Allows users to edit basic information, set access controls, move, and/or delete a data record or collection.
-
-The above permissions may be combined and applied to a data record or collection using one of the following permission scopes:
-
-* User - Permission apply to a specified user.
-* Group - Permission apply to a specific group.
+* READ REC - Allows reading basic information about a data record or collection.
+* READ META - Allows reading structured metadata of a data record.
+* READ DATA - Allows downloading raw data from a data record.
+* WRITE REC - Allows updating basic information of a data record or collection.
+* WRITE META - Allows updating structured metadata of a data record.
+* WRITE DATA - Allows uploading raw data to a data record.
+* LIST - Allows listing of items linked within a collection (does not imply reading these items)
+* LINK - Allows linking an unlinking items to/from a collection
+* CREATE - Allows new items to be created within a collection
+* DELETE - Allows deletion of records and collections
+* SHARE - Allows setting access controls on records and collections
+* LOCK - Allows locking a record or collection to temporarily suppress all permissions
 
 Multiple user- and group- scoped permission may be applied. Permissions for a given user are evaluated by combining all
 permission set for all scopes that apply - including permissions that may be inherited from parent collection hierarchies.
