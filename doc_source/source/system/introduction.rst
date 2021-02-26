@@ -47,8 +47,9 @@ Scientific Data Management
 Traditional scientific data management systems (SDMS) are restricted to individual organizations or a small number of
 organizations connected via a "virtual organization" (VO) configuration. These systems typically support
 domain-specific and predetermined data workflows that cannot be readily applied to other domains or applications.
-Unlike SDMSs, data cataloging systems provide access to static datasets and usually only support HTTP
-data transfers - limiting the size of datasets that can be served.
+On the other hand, data cataloging systems are typically single-site and provide access to static datasets. Also catalogs
+usually only support HTTP data transfers, thus limiting the size of datasets that can be served. Neither
+SDMSs nor cataloging systems can easily scale-out to accommodate large numbers of users across multiple organizations.
 
 DataFed provides a combination of the features and benefits of both SDMSs and data cataloging services while
 also supporting big data. For example, DataFed provides storage and access to structured and unstructured
@@ -74,9 +75,9 @@ to pre-publication. The figure below illustrates how DataFed supports the lifecy
 
 .. image:: /_static/data_lifecycle.png
 
-DataFed fully supports the management stage of data and provides interfaces that can be used from the
-data ingest and tha analysis stages to capture initial context and to subsequently enrich that context
-after analysis, respectively. Pre-publication is supported by providing powerful data organization
+DataFed provides interfaces that can be used to capture metadata, provenance, and raw data from the creation
+stage; whereas during analysis, new records may be created and linked to input records or dedicated context
+records. Pre-publication is supported by providing powerful data organization
 and data handling capabilities to help ensure that the right data is being published and that it contains
 proper metadata and provenance information. Note that data publishing systems may have additional metadata
 requirements that are not available from the data records themselves (i.e. contract numbers, sponsoring
@@ -97,7 +98,8 @@ domain-specific metadata indexing and query capabilities augmented by user/commu
 
 **Working Data Support**
 
-DataFed supports the **pre-publication data lifecycle**.
+DataFed supports the **pre-publication data lifecycle** which is both critical and complex in 
+collaborative scientific research - yet is under served by existing data management systems.
 
 **Scalability**
 
