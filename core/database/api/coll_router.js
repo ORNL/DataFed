@@ -477,14 +477,10 @@ router.get('/write', function (req, res) {
                     chk_perm = true;
                 }
 
-                console.log("write to coll",coll_id);
-
                 var i, obj, cres,
                     loose, have_loose = false,
                     visited = {},
                     coll_ctx = g_lib.catalogCalcParCtxt( coll, visited );
-
-                console.log("coll ctx", coll_ctx);
 
                 // Enforce following link/unlink rules:
                 // 1. Root collection may not be linked
@@ -496,8 +492,6 @@ router.get('/write', function (req, res) {
                 // 7. All records and collections must have at least one parent (except root)
 
                 if ( req.queryParams.remove ) {
-                    console.log("remove items");
-
                     loose = {};
 
                     for ( i in req.queryParams.remove ) {
@@ -531,8 +525,6 @@ router.get('/write', function (req, res) {
                 }
 
                 if ( req.queryParams.add ) {
-                    console.log("add items");
-
                     // Limit number of items in collection
                     cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:coll_id});
                     //console.log("coll item count:",cres.count());
@@ -592,8 +584,6 @@ router.get('/write', function (req, res) {
                     }
                 }
 
-                console.log("check loose stuff");
-
                 // 7. Re-link loose items to root
                 if ( have_loose ){
                     var root_id = g_lib.getRootID(owner_id),
@@ -601,7 +591,6 @@ router.get('/write', function (req, res) {
                         loose_res = [],
                         cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
 
-                    //console.log("root item count:",cres.count());
                     if ( cres.count() + (req.queryParams.add?req.queryParams.add.length:0) > g_lib.MAX_COLL_ITEMS )
                         throw [g_lib.ERR_INPUT_TOO_LONG,"Root collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 

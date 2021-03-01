@@ -17,6 +17,8 @@ function recordCreate( client, record, result ){
 
     //console.log("Create new data:",record.title);
 
+    // TODO Need to verify parent exists
+
     if ( record.parent ) {
         parent_id = g_lib.resolveCollID( record.parent, client );
         owner_id = g_db.owner.firstExample({_from:parent_id})._to;
@@ -34,6 +36,11 @@ function recordCreate( client, record, result ){
     }
 
     // TODO This need to be updated when allocations can be assigned to collections
+
+    // Enforce collection item limit
+    var cnt_res = g_db._query("for v in 1..1 outbound @coll item collect with count into n return n",{coll:parent_id});
+    if ( cnt_res.next() >= g_lib.MAX_COLL_ITEMS )
+        throw [g_lib.ERR_INPUT_TOO_LONG,"Parent collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 
     // If repo is specified, verify it; otherwise assign one (aware of default)
     if ( record.repo ) {
