@@ -26,6 +26,10 @@ class AuthzWorker
 public:
     AuthzWorker() : m_timeout( 10000 )
     {
+        // IMPORTANT: The DATAFED_AUTHZ_CFG_FILE env variable must be set in the gridFTP service
+        // script (usually /etc/init.d/globus-gridftp-server). This variable points to the
+        // configuration file used for DataFed comm settings
+
         const char * cfg_file = getenv( "DATAFED_AUTHZ_CFG_FILE" );
 
         if ( !cfg_file )
