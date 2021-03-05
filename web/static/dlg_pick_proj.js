@@ -1,5 +1,6 @@
 import * as settings from "./settings.js";
 import * as api from "./api.js";
+import * as util from "./util.js";
 import * as model from "./model.js";
 
 var tree;
@@ -93,12 +94,12 @@ export function show( a_excl, a_single_sel, cb ){
                 if ( data.node.key == "all-title" ){
                     for ( i in data.response.item ) {
                         proj = data.response.item[i];
-                        data.result.push({ title: "\"" + proj.title + "\"  ("+proj.id +")",icon:"ui-icon ui-icon-box",key: proj.id, unselectable: (a_excl.indexOf( proj.id ) != -1) });
+                        data.result.push({ title: "\"" + util.escapeHTML(proj.title) + "\"  ("+proj.id +")",icon:"ui-icon ui-icon-box",key: proj.id, unselectable: (a_excl.indexOf( proj.id ) != -1) });
                     }
                 } else {
                     for ( i in data.response.item ) {
                         proj = data.response.item[i];
-                        data.result.push({ title: proj.id + "  (\"" + proj.title + ")\"",icon:"ui-icon ui-icon-box",key: proj.id, unselectable: (a_excl.indexOf( proj.id ) != -1) });
+                        data.result.push({ title: proj.id + "  (\"" + util.escapeHTML(proj.title) + ")\"",icon:"ui-icon ui-icon-box",key: proj.id, unselectable: (a_excl.indexOf( proj.id ) != -1) });
                     }
                 }
 

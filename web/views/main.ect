@@ -60,10 +60,10 @@
         <!-- div class="main-header row-flex" style="flex:none;align-items:center;padding:0 .5em" -->
         <div class="ui-widget-header" style="border:none;flex:none;padding:0.2em .5em">
             <span class='ui-icon ui-icon-box' style='vertical-align:middle;color:white;font-size:1.6em'></span>
-            <span style="font-size:1.8em;vertical-align:middle">&nbsp;Scientific Data Federation</span>
+            <span style="font-size:1.8em;vertical-align:middle">&nbsp;DataFed - Scientific Data Federation</span>
             <div style='float:right;padding:.2em 0 0 0'>
                 <button id='btn_settings' class='btn btn-icon' title='Application and account settings'><span class='ui-icon ui-icon-gear'></span></button>&nbsp;
-                <button class="btn btn-icon" onclick="window.open('/ui/docs','sdms-docs')" title='DataFed on-line documentation.'><span class='ui-icon ui-icon-circle-help'></span></button>&nbsp;
+                <button class="btn btn-icon" onclick="window.open('https://ornl.github.io/DataFed/index.html','datafed-docs')" title='DataFed on-line documentation.'><span class='ui-icon ui-icon-circle-help'></span></button>&nbsp;
                 <button class="btn btn-icon" onclick="logout()"><span class='ui-icon ui-icon-logout'></span></button>
             </div>
         </div>
@@ -82,12 +82,10 @@
         import * as settings from "/settings.js";
         import * as dialogs from "/dialogs.js";
 
-        settings.loadUser();
-        if ( !settings.user || !settings.user.active )
-            window.location.replace("/ui");
+        var user_uid = "<%- @user_uid %>";
+        //settings.setUser( "<%- @user_uid %>", "<%- @user_name %>", "<%- @user_email %>" );
 
         window.name = 'sdms_target';
-        document.getElementById("uname").innerHTML = settings.user.name;
 
         $(".btn").button();
 
@@ -124,18 +122,25 @@
             $("#mode_label").show();
         }
 
-        api.userView( settings.user.uid, true, function( ok, user ){
+        api.userView( user_uid, true, function( ok, user ){
             if ( ok && user ){
+                //console.log("user from db:",user);
+
+                settings.setUser( user );
+
                 //console.log("user from settings:",settings.user);
 
                 api.epRecentLoad();
 
-                settings.setUserAdmin( user.isAdmin );
-                settings.setUserRepoAdmin( user.isRepoAdmin );
+                //settings.setUserAdmin( user.isAdmin );
+                //settings.setUserRepoAdmin( user.isRepoAdmin );
 
-                if ( user.options ){
-                    settings.setOptions( user.options );
-                }
+                //if ( user.options ){
+                //    settings.setOptions( user.options );
+                //}
+
+                //document.getElementById("uname").innerHTML = settings.user.name;
+                $( "#uname" ).text( settings.user.nameFirst + " " + settings.user.nameLast );
 
                 if ( settings.user.isAdmin ){
                     $("#is_admin").show();

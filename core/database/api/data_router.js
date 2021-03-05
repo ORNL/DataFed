@@ -17,6 +17,8 @@ function recordCreate( client, record, result ){
 
     //console.log("Create new data:",record.title);
 
+    // TODO Need to verify parent exists
+
     if ( record.parent ) {
         parent_id = g_lib.resolveCollID( record.parent, client );
         owner_id = g_db.owner.firstExample({_from:parent_id})._to;
@@ -34,6 +36,11 @@ function recordCreate( client, record, result ){
     }
 
     // TODO This need to be updated when allocations can be assigned to collections
+
+    // Enforce collection item limit
+    var cnt_res = g_db._query("for v in 1..1 outbound @coll item collect with count into n return n",{coll:parent_id});
+    if ( cnt_res.next() >= g_lib.MAX_COLL_ITEMS )
+        throw [g_lib.ERR_INPUT_TOO_LONG,"Parent collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 
     // If repo is specified, verify it; otherwise assign one (aware of default)
     if ( record.repo ) {
@@ -1459,49 +1466,5 @@ router.post('/delete', function (req, res) {
 }).required(), 'Parameters')
 .summary('Delete collections, data records and raw data')
 .description('Delete collections, data records and associated raw data. IDs may be data IDs or aliases.');
-
-
-router.post('/trash/delete', function (req, res) {
-    try {
-        g_db._executeTransaction({
-            collections: {
-                read: ["u","uuid","accn","d"],
-                write: ["d","c","a","alias","owner","item","acl","loc","alloc","p","t","top","dep"],
-                exclusive: ["lock"]
-            },
-            action: function() {
-                //const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var id, data, alloc_adj = {};
-
-                // NOTE: This operation must be idempotent - it's OK if records have
-                // already been deleted; however, it is an error if they are not
-                // marked for deletion.
-
-                for ( var i in req.body.ids ){
-                    id = req.body.ids[i];
-                    if ( g_db.d.exists( id )){
-                        data = g_db.d.document( id );
-
-                        if ( !data.deleted )
-                            throw [g_lib.ERR_INVALID_PARAM,"Record ID: '" + id + "' not marked for deletion."];
-
-                        g_proc.deleteTrashedRecord( data, alloc_adj );
-                    }
-                }
-
-                g_proc.updateAllocations( alloc_adj );
-            }
-        });
-
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().optional(), "Client ID")
-.body(joi.object({
-    ids: joi.array().items(joi.string()).required(),
-}).required(), 'Parameters')
-.summary('Delete trashed data records')
-.description('Delete trashed data records after raw data has been deleted.');
 
 

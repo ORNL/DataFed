@@ -106,7 +106,7 @@ router.post('/update', function (req, res) {
 
                 // Subject admins can do anything
                 // Creators cannot edit if state is active
-                // Other with read permission on subject can only comment
+                // Others can not update
 
                 if ( !g_lib.hasAdminPermObject( client, ne._from )){
                     if ( client._id == note.creator ){
@@ -115,8 +115,7 @@ router.post('/update', function (req, res) {
                             req.queryParams.new_state == g_lib.NOTE_ACTIVE ){
                             throw g_lib.ERR_PERM_DENIED;
                         }
-                    }else if ( g_lib.getPermissions( client, doc, g_lib.PERM_RD_ALL ) != g_lib.PERM_RD_ALL ||
-                        ( req.queryParams.new_state != undefined || req.queryParams.new_type != undefined || req.queryParams.title != undefined )){
+                    }else {
                         throw g_lib.ERR_PERM_DENIED;
                     }
                 }

@@ -28,6 +28,28 @@ TaskMgr::TaskMgr():
 
     unique_lock<mutex>   lock( m_worker_mutex );
 
+
+    /*
+    OpenSSL currently is thread-NOT-safe by default. In order to make it thread-safe the
+    caller has to provide various callbacks for locking, atomic integer addition, and thread ID
+    determination (this last has reasonable defaults). This makes it difficult to use OpenSSL
+    from multiple distinct objects in one multi-threaded process: one of them had better provide
+    these callbacks, but only one of them should.
+
+    Currently the only moderately safe way for libraries using OpenSSL to handle thread safety is
+    to do the following as early as possible, possible in .init or DllMain:
+
+        Check if the locking callback has been set, then set it if not;
+        CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK), set the remaining callbacks (threadid, dynlock, and add_lock) if not already set, then CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
+
+    In the future we hope that OpenSSL will self-initialize thread-safely to use native threading where available. 
+    */
+/*
+    CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
+    
+    CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
+*/
+
     DL_DEBUG("TaskMgr creating " << m_config.num_task_worker_threads << " task worker threads." );
 
     for ( uint32_t i = 0; i < m_config.num_task_worker_threads; i++ )
@@ -46,6 +68,8 @@ TaskMgr::TaskMgr():
     lock.unlock();
 
     // Load ready & running tasks and schedule workers
+    // TODO This will break if there are too many tasks - must implement a paging system
+    // to load chunks of tasks.
     DatabaseAPI  db( m_config.db_url, m_config.db_user, m_config.db_pass );
     libjson::Value tasks;
     db.taskLoadReady( tasks );
@@ -103,6 +127,9 @@ TaskMgr::maintenanceThread()
         }
 
         DL_INFO( "MAINT: timeout: " << chrono::duration_cast<chrono::seconds>( timeout.time_since_epoch()).count() );
+
+        // TODO - WHY are we using a mutex here that is used nowhere else? Is this left over from
+        // previous design where worker threads needed be to excluded? ANALYZE AND FIX
 
         if ( timeout > now )
         {
@@ -171,7 +198,7 @@ TaskMgr::purgeTaskHistory() const
 
 /**
  * @brief Public method to add a new task to the "ready" queue
- * @param a_task - JSON task descriptor for NEW and READY task
+ * @param a_task_id - Task ID for NEW or READY task
  *
  * Adds task to ready queue and schedules a worker if available. Called by
  * ClientWorkers or other external entities.
@@ -183,6 +210,10 @@ TaskMgr::newTask( const std::string & a_task_id )
 {
     DL_DEBUG("TaskMgr scheduling 1 new task");
 
+    // TODO BREAKS FAIR SCHEDULING - under heavy loading, this method will allow new tasks
+    // to take priority over older tasks that may not be loaded. When off-loading is 
+    // added, need to check here for overflow and only schedule if system is below
+    // capacity.
     lock_guard<mutex> lock( m_worker_mutex );
 
     addNewTaskAndScheduleWorker( a_task_id );
@@ -191,12 +222,10 @@ TaskMgr::newTask( const std::string & a_task_id )
 /**
  * @brief Internal method to add one or more new tasks
  * 
- * @param a_tasks JSON array of task descriptors for NEW and READY tasks
+ * @param a_tasks JSON array of task IDs for NEW and READY tasks
  *
  * Adds task(s) to ready queue and schedules workers if available. Called by
  * TaskWorkers after finalizing a task returns new and/or unblocked tasks.
- *
- * NOTE: Takes ownership of JSON values leaving NULL values in place.
  */
 void
 TaskMgr::newTasks( const libjson::Value & a_tasks )
@@ -228,7 +257,6 @@ TaskMgr::newTasks( const libjson::Value & a_tasks )
  * @param a_task - JSON task descriptor
  *
  * NOTE: must be called with m_worker_mutex held by caller
- * NOTE: Takes ownership of JSON values leaving NULL values in place.
  */
 void
 TaskMgr::addNewTaskAndScheduleWorker( const std::string & a_task_id )
@@ -264,9 +292,10 @@ TaskMgr::retryTaskAndScheduleWorker( Task * a_task )
 void
 TaskMgr::cancelTask( const std::string & a_task_id )
 {
-    DL_DEBUG("TaskMgr cancel task " << a_task_id );
+    DL_DEBUG("TaskMgr cancel task (NOT IMPLEMENTED) " << a_task_id );
 
     // TODO Implement task cancel
+    // The old implementation below was insufficient to cancel running tasks
 
 /*
     unique_lock<mutex> lock( m_worker_mutex );
@@ -325,8 +354,6 @@ TaskMgr::getNextTask( ITaskWorker * a_worker )
         // Sleep until work available, run flag suppresses spurious wakes
         while ( m_tasks_ready.empty() || !a_worker->m_run )
             a_worker->m_cvar.wait( lock );
-
-        // No need to remove worker from ready queue, TaskMgr does that when worker is scheduled
     }
 
     // Pop next task from ready queue and place in running map
@@ -373,9 +400,11 @@ TaskMgr::retryTask( Task * a_task )
         DL_DEBUG( "Retry num " << a_task->retry_count );
 
         a_task->retry_count++;
-        a_task->retry_time = now + chrono::seconds( m_config.task_retry_time_init * min( m_config.task_retry_backoff_max, a_task->retry_count ));
+        
+        a_task->retry_time = now + chrono::seconds( (uint32_t)(
+            m_config.task_retry_time_init * exp2( min( m_config.task_retry_backoff_max, a_task->retry_count ))));
 
-        DL_DEBUG( "New retry time " << chrono::duration_cast<chrono::seconds>( a_task->retry_time.time_since_epoch()).count() );
+        DL_DEBUG( "Next retry time " << chrono::duration_cast<chrono::seconds>( a_task->retry_time.time_since_epoch()).count() );
 
         lock_guard<mutex> lock(m_maint_mutex);
 
@@ -384,7 +413,7 @@ TaskMgr::retryTask( Task * a_task )
     }
     else
     {
-        DL_DEBUG( "Stopping retries" );
+        DL_DEBUG( "Max retries" );
         return true;
     }
 

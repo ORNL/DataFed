@@ -1,0 +1,908 @@
+<html><head><title>DataFed CLI Help</title></head><body style='margin:0;padding:0'><div style='display:flex;flex-direction:column;height:100%;width:100%'><div style='flex:none;background:#4040bb;color:#ffffff;padding:.5em'><span style='font-size:2em'>DataFed Command Line Interface Help</span>&nbsp&nbsp&nbsp&nbspCLI V-0.8.4<br>This documentation is automatically generated from the latest released DataFed CLI, available as the 'datafed' package on PyPi.</div><div style='flex:1 1 auto;display:flex;flex-direction:row;min-height:0'><div style='flex:none;overflow:auto;padding:.25em;background:#bbbbbb'><a href='#main'>Main</a><br>
+<a href='#s1'>1 Coll Commands</a><br>
+<a href='#s1.1'>1.1 Coll Add</a><br>
+<a href='#s1.2'>1.2 Coll Create</a><br>
+<a href='#s1.3'>1.3 Coll Delete</a><br>
+<a href='#s1.4'>1.4 Coll List</a><br>
+<a href='#s1.5'>1.5 Coll Remove</a><br>
+<a href='#s1.6'>1.6 Coll Update</a><br>
+<a href='#s1.7'>1.7 Coll View</a><br>
+<a href='#s2'>2 Data Commands</a><br>
+<a href='#s2.1'>2.1 Data Batch Commands</a><br>
+<a href='#s2.1.1'>2.1.1 Data Batch Create</a><br>
+<a href='#s2.1.2'>2.1.2 Data Batch Update</a><br>
+<a href='#s2.2'>2.2 Data Create</a><br>
+<a href='#s2.3'>2.3 Data Delete</a><br>
+<a href='#s2.4'>2.4 Data Get</a><br>
+<a href='#s2.5'>2.5 Data Put</a><br>
+<a href='#s2.6'>2.6 Data Update</a><br>
+<a href='#s2.7'>2.7 Data View</a><br>
+<a href='#s3'>3 Ep Commands</a><br>
+<a href='#s3.1'>3.1 Ep Default Commands</a><br>
+<a href='#s3.1.1'>3.1.1 Ep Default Get</a><br>
+<a href='#s3.1.2'>3.1.2 Ep Default Set</a><br>
+<a href='#s3.2'>3.2 Ep Get</a><br>
+<a href='#s3.3'>3.3 Ep List</a><br>
+<a href='#s3.4'>3.4 Ep Set</a><br>
+<a href='#s4'>4 Exit</a><br>
+<a href='#s5'>5 Help</a><br>
+<a href='#s6'>6 Project Commands</a><br>
+<a href='#s6.1'>6.1 Project List</a><br>
+<a href='#s6.2'>6.2 Project View</a><br>
+<a href='#s7'>7 Query Commands</a><br>
+<a href='#s7.1'>7.1 Query Create</a><br>
+<a href='#s7.2'>7.2 Query Delete</a><br>
+<a href='#s7.3'>7.3 Query Exec</a><br>
+<a href='#s7.4'>7.4 Query List</a><br>
+<a href='#s7.5'>7.5 Query Run</a><br>
+<a href='#s7.6'>7.6 Query Update</a><br>
+<a href='#s7.7'>7.7 Query View</a><br>
+<a href='#s8'>8 Setup</a><br>
+<a href='#s9'>9 Shared Commands</a><br>
+<a href='#s9.1'>9.1 Shared List</a><br>
+<a href='#s9.2'>9.2 Shared Projects</a><br>
+<a href='#s9.3'>9.3 Shared Users</a><br>
+<a href='#s10'>10 User Commands</a><br>
+<a href='#s10.1'>10.1 User All</a><br>
+<a href='#s10.2'>10.2 User Collab</a><br>
+<a href='#s10.3'>10.3 User View</a><br>
+<a href='#s10.4'>10.4 User Who</a><br>
+<a href='#s11'>11 Verbosity</a><br>
+<a href='#s12'>12 Wc</a><br>
+<a href='#s13'>13 Wp</a><br>
+<a href='#s14'>14 Xfr Commands</a><br>
+<a href='#s14.1'>14.1 Xfr List</a><br>
+<a href='#s14.2'>14.2 Xfr View</a><br>
+</div><div style='flex:1 1 auto;overflow:auto;padding: 0em 2em 0em 2em'><h1 id='main'>Main</h1>
+
+<pre>Usage: datafed [OPTIONS] COMMAND [ARGS]...
+
+  'datafed' is the command-line interface (_cli) for the DataFed federated
+  data management service. This _cli may be used to access most, but not
+  all, of the features available via the DataFed web portal. This _cli may
+  be used interactively (-i option), or for scripting (supports JSON output
+  with the -J option).
+
+  For more information about this _cli and DataFed in general, refer to
+  https://datafed.ornl.gov/ui/docs
+
+Options:
+  -m, --manual-auth            Force manual authentication
+  -s, --script                 Start in non-interactive scripting mode. Output
+                               is in JSON, all intermediate I/O is disabled,
+                               and certain client-side commands are
+                               unavailable.
+  --version                    Print version number and exit.
+  -v, --verbosity INTEGER      Verbosity level (0=quiet,1=normal,2=verbose)
+                               for text-format output only.
+  -e, --default-ep TEXT        Default Globus endpoint
+  --client-pub-key-file TEXT   Client public key file
+  --server-cfg-dir TEXT        Server configuration directory
+  --server-pub-key-file TEXT   Server public key file
+  -P, --server-port INTEGER    Server port number
+  --server-cfg-file TEXT       Server configuration file
+  --client-cfg-dir TEXT        Client configuration directory
+  --client-priv-key-file TEXT  Client private key file
+  --client-cfg-file TEXT       Client configuration file
+  -H, --server-host TEXT       Sever host name or IP address
+  -?, -h, --help               Show this message and exit.
+
+Commands:
+  coll       Collection subcommands.
+  data       Data subcommands.
+  ep         Endpoint commands.
+  exit       Exit an interactive session.
+  help       Show DataFed CLI help.
+  project    Project subcommands.
+  query      Data query subcommands.
+  setup      Setup local credentials.
+  shared     Shared data subcommands.
+  user       User subcommands.
+  verbosity  Set/display verbosity level.
+  wc         Set/print current working collection or path.
+  wp         Get current working path.
+  xfr        Globus data transfer management commands.</pre>
+
+<h2 id='s1'>1 Coll Commands</h2>
+
+<pre>Usage: datafed coll [OPTIONS] COMMAND [ARGS]...
+
+  Collection subcommands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  add     Add data records and/or collections to a collection.
+  create  Create a new collection.
+  delete  Delete one or more existing collections.
+  list    List items in collection.
+  remove  Remove data records and/or collections from a collection.
+  update  Update an existing collection.
+  view    View collection information.</pre>
+
+<h3 id='s1.1'>1.1 Coll Add</h3>
+
+<pre>Usage: datafed coll add [OPTIONS] COLL_ID ITEM_ID
+
+  Add data records and/or collections to a collection. COLL_ID is the
+  destination collection and ITEM_IDs specify one or more data records
+  and/or collections to add to the destination collection. COLL_ID and
+  ITEM_IDs may be IDs, aliases, or index values from a listing. COLL_ID may
+  also be a relative collection path ('.', '..', or '/').
+
+Options:
+  -x, --context TEXT  User or project ID for command alias context. See
+                      'alias' command help for more information.
+  -?, -h, --help      Show this message and exit.</pre>
+
+<h3 id='s1.2'>1.2 Coll Create</h3>
+
+<pre>Usage: datafed coll create [OPTIONS] TITLE
+
+  Create a new collection. The collection 'title' is required, but all other
+  attributes are optional. On success, the ID of the created collection is
+  returned. Note that if a parent collection is specified, and that
+  collection belongs to a project or other collaborator, the creating user
+  must have permission to write to that collection.
+
+Options:
+  -a, --alias TEXT        Alias
+  -p, --parent TEXT       Parent collection ID/alias (default is current
+                          working collection)
+  -d, --description TEXT  Description text
+  --topic TEXT            Publish the collection to the provided topic.
+  -x, --context TEXT      User or project ID for command alias context. See
+                          'alias' command help for more information.
+  -?, -h, --help          Show this message and exit.</pre>
+
+<h3 id='s1.3'>1.3 Coll Delete</h3>
+
+<pre>Usage: datafed coll delete [OPTIONS] ID
+
+  Delete one or more existing collections. Multiple ID arguments can be
+  provided and may be collection IDs, aliases, or index values from a
+  listing. By default, a confirmation prompt is used, but this can be
+  bypassed with the '--force' option.
+
+  When a collection is deleted, all contained collections are also deleted;
+  however, contained data records are only deleted if they are not linked to
+  another collection not involved in the deletion.
+
+Options:
+  -f, --force         Delete without confirmation.
+  -x, --context TEXT  User or project ID for command alias context. See
+                      'alias' command help for more information.
+  -?, -h, --help      Show this message and exit.</pre>
+
+<h3 id='s1.4'>1.4 Coll List</h3>
+
+<pre>Usage: datafed coll list [OPTIONS] ID
+
+  List items in collection. ID may be a collection ID or alias, an index
+  value from a listing, or omitted for the current working collection.
+
+Options:
+  -O, --offset INTEGER  Start list at offset
+  -C, --count INTEGER   Limit list to count results
+  -x, --context TEXT    User or project ID for command alias context. See
+                        'alias' command help for more information.
+  -?, -h, --help        Show this message and exit.</pre>
+
+<h3 id='s1.5'>1.5 Coll Remove</h3>
+
+<pre>Usage: datafed coll remove [OPTIONS] COLL_ID ITEM_ID
+
+  Remove data records and/or collections from a collection. COLL_ID is the
+  containing collection and ITEM_IDs specify one or more data records and/or
+  collections to remove from the containing collection. COLL_ID and ITEM_IDs
+  may be IDs, aliases, or index values from a listing. COLL_ID may also be a
+  relative collection path ('.', '..', or '/').
+
+Options:
+  -x, --context TEXT  User or project ID for command alias context. See
+                      'alias' command help for more information.
+  -?, -h, --help      Show this message and exit.</pre>
+
+<h3 id='s1.6'>1.6 Coll Update</h3>
+
+<pre>Usage: datafed coll update [OPTIONS] ID
+
+  Update an existing collection. The collection ID is required and can be an
+  ID, alias, or listing index; all other collection attributes are optional.
+
+Options:
+  -t, --title TEXT        Title
+  -a, --alias TEXT        Alias
+  -d, --description TEXT  Description text
+  --topic TEXT            Publish the collection under the provided topic.
+  -x, --context TEXT      User or project ID for command alias context. See
+                          'alias' command help for more information.
+  -?, -h, --help          Show this message and exit.</pre>
+
+<h3 id='s1.7'>1.7 Coll View</h3>
+
+<pre>Usage: datafed coll view [OPTIONS] ID
+
+  View collection information. Displays collection title, description, and
+  other administrative fields. ID may be a collection identifier, alias, or
+  index value from a listing. Use 'coll list' command to see items contained
+  in a collection.
+
+Options:
+  -x, --context TEXT  User or project ID for command alias context. See
+                      'alias' command help for more information.
+  -?, -h, --help      Show this message and exit.</pre>
+
+<h2 id='s2'>2 Data Commands</h2>
+
+<pre>Usage: datafed data [OPTIONS] COMMAND [ARGS]...
+
+  Data subcommands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  batch   Data batch subcommands.
+  create  Create a new data record.
+  delete  Delete one or more existing data records.
+  get     Get (download) raw data of data records and/or collections.
+  put     Put (upload) raw data located at PATH to DataFed record ID.
+  update  Update an existing data record.
+  view    View data record information.</pre>
+
+<h3 id='s2.1'>2.1 Data Batch Commands</h3>
+
+<pre>Usage: datafed data batch [OPTIONS] COMMAND [ARGS]...
+
+  Data batch subcommands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  create  Batch create data records from JSON file(s).
+  update  Batch update data records from JSON file(s).</pre>
+
+<h4 id='s2.1.1'>2.1.1 Data Batch Create</h4>
+
+<pre>Usage: datafed data batch create [OPTIONS] FILE
+
+  Batch create data records from JSON file(s). Multiple FILE arguments may
+  be specified and are absolute or relative paths to JSON inputs file on a
+  local filesystem. JSON input files may contain individual JSON objects, or
+  arrays of JSON objects. Each JSON object represents a new data record and
+  the JSON must comply with the DataFed record input schema (see online
+  documentation).
+
+Options:
+  -c, --collection TEXT  Optional target collection (default is root).
+  -x, --context TEXT     User or project ID for command alias context. See
+                         'alias' command help for more information.
+  -?, -h, --help         Show this message and exit.</pre>
+
+<h4 id='s2.1.2'>2.1.2 Data Batch Update</h4>
+
+<pre>Usage: datafed data batch update [OPTIONS] FILE...
+
+  Batch update data records from JSON file(s). Multiple FILE arguments may
+  be specified and are absolute or relative paths to JSON inputs file on a
+  local filesystem. JSON input files may contain individual JSON objects, or
+  arrays of JSON objects. Each JSON object represents a new data record and
+  the JSON must comply with the DataFed record input schema (see online
+  documentation).
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h3 id='s2.2'>2.2 Data Create</h3>
+
+<pre>Usage: datafed data create [OPTIONS] TITLE
+
+  Create a new data record. The data record 'title' is required, but all
+  other attributes are optional. On success, the ID of the created data
+  record is returned. Note that if a parent collection is specified, and
+  that collection belongs to a project or other collaborator, the creating
+  user must have permission to write to that collection. The raw-data-file
+  option is only supported in interactive mode and is provided as a
+  convenience to avoid a separate dataPut() call.
+
+Options:
+  -a, --alias TEXT             Record alias.
+  -d, --description TEXT       Description text.
+  -k, --keywords TEXT          Keywords (comma separated list).
+  -r, --raw-data-file TEXT     Globus path to raw data file (local or remote)
+                               to upload to new record. Default endpoint is
+                               used if none provided.
+  -e, --extension TEXT         Override raw data file extension if provided
+                               (default is auto detect).
+  -m, --metadata TEXT          Inline metadata in JSON format. JSON must
+                               define an object type. Cannot be specified with
+                               --metadata-file option.
+  -f, --metadata-file TEXT     Path to local metadata file containing JSON.
+                               JSON must define an object type. Cannot be
+                               specified with --metadata option.
+  -p, --parent TEXT            Parent collection ID, alias, or listing index.
+                               Default is the current working collection.
+  -R, --repository TEXT        Repository ID. Uses default allocation if not
+                               specified.
+  -D, --deps <CHOICE TEXT>...  Dependencies (provenance). Use one '--deps'
+                               option per dependency and specify with a string
+                               consisting of the type of relationship ('der',
+                               'comp', 'ver') follwed by ID/alias of the
+                               referenced record. Relationship types are:
+                               'der' for 'derived from', 'comp' for 'a
+                               component of', and 'ver' for 'a new version
+                               of'.
+  -x, --context TEXT           User or project ID for command alias context.
+                               See 'alias' command help for more information.
+  -v, --verbosity [0|1|2]      Verbosity level of output
+  -?, -h, --help               Show this message and exit.</pre>
+
+<h3 id='s2.3'>2.3 Data Delete</h3>
+
+<pre>Usage: datafed data delete [OPTIONS] ID
+
+  Delete one or more existing data records. Multiple ID arguments can be
+  provided and may data record IDs, aliases, or index values from a listing.
+  By default, a confirmation prompt is used, but this can be bypassed with
+  the '--force' option.
+
+Options:
+  -f, --force         Delete record(s) without confirmation.
+  -x, --context TEXT  User or project ID for command alias context. See
+                      'alias' command help for more information.
+  -?, -h, --help      Show this message and exit.</pre>
+
+<h3 id='s2.4'>2.4 Data Get</h3>
+
+<pre>Usage: datafed data get [OPTIONS] ID PATH
+
+  Get (download) raw data of data records and/or collections. Multiple ID
+  arguments can be specified and may be data record and/or collection IDs,
+  aliases, or index values from s listing. The PATH argument is the
+  destination for the download and can be either a full Globus path (with
+  endpoint), or a local file system path (absolute or relative).
+
+  Downloads will involve either Globus transfers or HTTP transfers depending
+  on the source data for the selected records, and the two source types may
+  not be mixed. For Globus transfers, if no endpoint is specified in the
+  PATH argument, the current endpoint will be used. For HTTP transfers, the
+  PATH argument may be an absolute or relative path within the local
+  filesystem. For both cases, if the destination PATH doesn't exist, it will
+  be created given sufficient filesystem permissions.
+
+  Because HTTP downloads are performed directly by the CLI, they are always
+  blocking calls; thus the 'wait' option only applies to Globus transfers.
+
+Options:
+  -w, --wait          Block until Globus transfer is complete.
+  -x, --context TEXT  User or project ID for command alias context. See
+                      'alias' command help for more information.
+  -?, -h, --help      Show this message and exit.</pre>
+
+<h3 id='s2.5'>2.5 Data Put</h3>
+
+<pre>Usage: datafed data put [OPTIONS] ID PATH
+
+  Put (upload) raw data located at PATH to DataFed record ID.  The ID
+  argument may be data record ID, alias, or index value from a listing. The
+  PATH argument specifies the source file for the upload and can be either a
+  full Globus path (with endpoint), or a local file system path (absolute or
+  relative). If no endpoint is specified in the PATH argument, the current
+  endpoint will be used.
+
+Options:
+  -w, --wait            Block reply or further commands until transfer is
+                        complete
+  -e, --extension TEXT  Override extension for raw data file (default = auto
+                        detect).
+  -x, --context TEXT    User or project ID for command alias context. See
+                        'alias' command help for more information.
+  -?, -h, --help        Show this message and exit.</pre>
+
+<h3 id='s2.6'>2.6 Data Update</h3>
+
+<pre>Usage: datafed data update [OPTIONS] ID
+
+  Update an existing data record. The data record ID is required and can be
+  an ID, alias, or listing index; all other record attributes are optional.
+  The raw-data-file option is only supported in interactive mode and is
+  provided as a convenience to avoid a separate dataPut() call.
+
+Options:
+  -t, --title TEXT                Title
+  -a, --alias TEXT                Alias
+  -d, --description TEXT          Description text
+  -k, --keywords TEXT             Keywords (comma separated list)
+  -r, --raw-data-file TEXT        Globus path to raw data file (local or
+                                  remote) to upload with record. Default
+                                  endpoint used if none provided.
+  -e, --extension TEXT            Override extension for raw data file
+                                  (default = auto detect).
+  -m, --metadata TEXT             Inline metadata in JSON format.
+  -f, --metadata-file TEXT        Path to local metadata file containing JSON.
+  -S, --metadata-set              Set (replace) existing metadata with
+                                  provided instead of merging.
+  -C, --dep-clear                 Clear all dependencies on record. May be
+                                  used in conjunction with --dep-add to
+                                  replace existing dependencies.
+  -A, --dep-add <CHOICE TEXT>...  Specify new dependencies by listing first
+                                  the type of relationship ('der', 'comp', or
+                                  'ver') follwed by ID/alias of the target
+                                  record. Can be specified multiple times.
+  -R, --dep-rem <CHOICE TEXT>...  Specify dependencies to remove by listing
+                                  first the type of relationship ('der',
+                                  'comp', or 'ver') followed by ID/alias of
+                                  the target record. Can be specified multiple
+                                  times.
+  -x, --context TEXT              User or project ID for command alias
+                                  context. See 'alias' command help for more
+                                  information.
+  -v, --verbosity [0|1|2]         Verbosity level of output
+  -?, -h, --help                  Show this message and exit.</pre>
+
+<h3 id='s2.7'>2.7 Data View</h3>
+
+<pre>Usage: datafed data view [OPTIONS] ID
+
+  View data record information. Displays record title, description,
+  keywords, and other informational and administrative fields. ID may be a
+  data record identifier, alias, or index value from a listing. By default,
+  description text is truncated and metadata is not shown unless the
+  verbosity is as level 2.
+
+Options:
+  -x, --context TEXT       User or project ID for command alias context. See
+                           'alias' command help for more information.
+  -v, --verbosity [0|1|2]  Verbosity level of output
+  -?, -h, --help           Show this message and exit.</pre>
+
+<h2 id='s3'>3 Ep Commands</h2>
+
+<pre>Usage: datafed ep [OPTIONS] COMMAND [ARGS]...
+
+  Endpoint commands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  default  Default endpoint commands.
+  get      Get Globus endpoint for the current session.
+  list     List recently used endpoints.
+  set      Set endpoint for the current session.</pre>
+
+<h3 id='s3.1'>3.1 Ep Default Commands</h3>
+
+<pre>Usage: datafed ep default [OPTIONS] COMMAND [ARGS]...
+
+  Default endpoint commands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  get  Show the default Globus endpoint.
+  set  Set the default Globus endpoint.</pre>
+
+<h4 id='s3.1.1'>3.1.1 Ep Default Get</h4>
+
+<pre>Usage: datafed ep default get [OPTIONS]
+
+  Show the default Globus endpoint.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h4 id='s3.1.2'>3.1.2 Ep Default Set</h4>
+
+<pre>Usage: datafed ep default set [OPTIONS] [ENDPOINT]
+
+  Set the default Globus endpoint. The default endpoint will be set from the
+  'endpoint' argument, or if the '--current' options is specified, from the
+  currently active endpoint.
+
+Options:
+  -c, --current   Set default endpoint to current endpoint.
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h3 id='s3.2'>3.2 Ep Get</h3>
+
+<pre>Usage: datafed ep get [OPTIONS]
+
+  Get Globus endpoint for the current session. At the start of a session,
+  the current endpoint will be set to the default endpoint, if configured.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h3 id='s3.3'>3.3 Ep List</h3>
+
+<pre>Usage: datafed ep list [OPTIONS]
+
+  List recently used endpoints.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h3 id='s3.4'>3.4 Ep Set</h3>
+
+<pre>Usage: datafed ep set [OPTIONS] [ENDPOINT]
+
+  Set endpoint for the current session. If no endpoint is given, the default
+  endpoint will be set as the current endpoint, if configured.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s4'>4 Exit</h2>
+
+<pre>Usage: datafed exit [OPTIONS]
+
+  Exit an interactive session. Ctrl-C may also be used to exit the shell.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s5'>5 Help</h2>
+
+<pre>Usage: datafed help [OPTIONS] [COMMAND]...
+
+  Show DataFed CLI help. Include a subcommand name as the argument to see
+  subcommand-specific help.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s6'>6 Project Commands</h2>
+
+<pre>Usage: datafed project [OPTIONS] COMMAND [ARGS]...
+
+  Project subcommands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  list  List associated projects.
+  view  View project information.</pre>
+
+<h3 id='s6.1'>6.1 Project List</h3>
+
+<pre>Usage: datafed project list [OPTIONS]
+
+  List associated projects. List projects that are owned or managed by the
+  current user, as well as projects were the current user is a member.
+
+Options:
+  -o, --owned           Include owned projects
+  -a, --admin           Include administered projects
+  -m, --member          Include membership projects
+  -O, --offset INTEGER  Start list at offset
+  -C, --count INTEGER   Limit list to count results
+  -?, -h, --help        Show this message and exit.</pre>
+
+<h3 id='s6.2'>6.2 Project View</h3>
+
+<pre>Usage: datafed project view [OPTIONS] ID
+
+  View project information. Current user must have a role (owner, manager,
+  or member) within the project specified by the ID argument.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s7'>7 Query Commands</h2>
+
+<pre>Usage: datafed query [OPTIONS] COMMAND [ARGS]...
+
+  Data query subcommands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  create  Create a saved query.
+  delete  Delete a saved query by ID.
+  exec    Execute a saved query by ID.
+  list    List saved queries.
+  run     Run a directly entered query.
+  update  Update a saved query.
+  view    View a saved query by ID.</pre>
+
+<h3 id='s7.1'>7.1 Query Create</h3>
+
+<pre>Usage: datafed query create [OPTIONS] TITLE
+
+  Create a saved query.
+
+Options:
+  -i, --id TEXT     ID/alias expression
+  -t, --text TEXT   Text expression
+  -m, --meta TEXT   Metadata expression
+  -n, --no-default  Exclude personal data and projects
+  -c, --coll TEXT   Collection(s) to search
+  -p, --proj TEXT   Project(s) to search
+  -?, -h, --help    Show this message and exit.</pre>
+
+<h3 id='s7.2'>7.2 Query Delete</h3>
+
+<pre>Usage: datafed query delete [OPTIONS] ID
+
+  Delete a saved query by ID.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h3 id='s7.3'>7.3 Query Exec</h3>
+
+<pre>Usage: datafed query exec [OPTIONS] ID
+
+  Execute a saved query by ID.
+
+Options:
+  -O, --offset INTEGER  Start results list at offset
+  -C, --count INTEGER   Limit to count results
+  -?, -h, --help        Show this message and exit.</pre>
+
+<h3 id='s7.4'>7.4 Query List</h3>
+
+<pre>Usage: datafed query list [OPTIONS]
+
+  List saved queries.
+
+Options:
+  -O, --offset INTEGER  Start list at offset
+  -C, --count INTEGER   Limit list to count results
+  -?, -h, --help        Show this message and exit.</pre>
+
+<h3 id='s7.5'>7.5 Query Run</h3>
+
+<pre>Usage: datafed query run [OPTIONS]
+
+  Run a directly entered query. Unless the 'no-default' option is included,
+  the search scope includes all data owned by the authenticated user (in
+  their root collection and projects that are owned or managed, or where the
+  user is a member of the project. Projects and collections that are not
+  part of the default scope may be added using the --proj and --coll options
+  respectively.
+
+Options:
+  -i, --id TEXT         ID/alias expression
+  -t, --text TEXT       Text expression
+  -m, --meta TEXT       Metadata expression
+  -n, --no-default      Exclude personal data and projects
+  -c, --coll TEXT       Collection(s) to search
+  -p, --proj TEXT       Project(s) to search
+  -O, --offset INTEGER  Start result list at offset
+  -C, --count INTEGER   Limit to count results (default = 20)
+  -?, -h, --help        Show this message and exit.</pre>
+
+<h3 id='s7.6'>7.6 Query Update</h3>
+
+<pre>Usage: datafed query update [OPTIONS] ID
+
+  Update a saved query. The title and search terms of a query may be
+  updated; however, search scope cannot currently be changed. To remove a
+  term, specify an empty string ("") for the associated option.
+
+Options:
+  --title TEXT     New query title
+  -i, --id TEXT    ID/alias expression
+  -t, --text TEXT  Text expression
+  -m, --meta TEXT  Metadata expression
+  -?, -h, --help   Show this message and exit.</pre>
+
+<h3 id='s7.7'>7.7 Query View</h3>
+
+<pre>Usage: datafed query view [OPTIONS] ID
+
+  View a saved query by ID.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s8'>8 Setup</h2>
+
+<pre>Usage: datafed setup [OPTIONS]
+
+  Setup local credentials. This command installs DataFed credentials for the
+  current user in the configured client configuration directory. Subsequent
+  use of the DataFed CLI will read these credentials instead of requiring
+  manual authentication.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s9'>9 Shared Commands</h2>
+
+<pre>Usage: datafed shared [OPTIONS] COMMAND [ARGS]...
+
+  Shared data subcommands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  list      List shared data records and collections by user/project ID.
+  projects  List projects with shared data
+  users     List users that have shared data.</pre>
+
+<h3 id='s9.1'>9.1 Shared List</h3>
+
+<pre>Usage: datafed shared list [OPTIONS] ID
+
+  List shared data records and collections by user/project ID. ID may be a
+  user or project ID, or an index value from a listing.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h3 id='s9.2'>9.2 Shared Projects</h3>
+
+<pre>Usage: datafed shared projects [OPTIONS]
+
+  List projects with shared data
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h3 id='s9.3'>9.3 Shared Users</h3>
+
+<pre>Usage: datafed shared users [OPTIONS]
+
+  List users that have shared data. Only users that have shared data with
+  the current user are listed, not users that the current user has shared
+  data with.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s10'>10 User Commands</h2>
+
+<pre>Usage: datafed user [OPTIONS] COMMAND [ARGS]...
+
+  User subcommands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  all     List all users.
+  collab  List all users that are collaborators.
+  view    View user information.
+  who     Show current authenticated user ID.</pre>
+
+<h3 id='s10.1'>10.1 User All</h3>
+
+<pre>Usage: datafed user all [OPTIONS]
+
+  List all users.
+
+Options:
+  -O, --offset INTEGER  Start list at offset
+  -C, --count INTEGER   Limit list to count results
+  -?, -h, --help        Show this message and exit.</pre>
+
+<h3 id='s10.2'>10.2 User Collab</h3>
+
+<pre>Usage: datafed user collab [OPTIONS]
+
+  List all users that are collaborators. Collaborators are defined as users
+  that have projects in common with the current user, or that have data-
+  sharing relationships with the current user.
+
+Options:
+  -O, --offset INTEGER  Start list at offset
+  -C, --count INTEGER   Limit list to count results
+  -?, -h, --help        Show this message and exit.</pre>
+
+<h3 id='s10.3'>10.3 User View</h3>
+
+<pre>Usage: datafed user view [OPTIONS] UID
+
+  View user information.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h3 id='s10.4'>10.4 User Who</h3>
+
+<pre>Usage: datafed user who [OPTIONS]
+
+  Show current authenticated user ID.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s11'>11 Verbosity</h2>
+
+<pre>Usage: datafed verbosity [OPTIONS] [LEVEL]
+
+  Set/display verbosity level. The verbosity level argument can be 0
+  (lowest), 1 (normal), or 2 (highest). If the the level is omitted, the
+  current verbosity level is returned.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s12'>12 Wc</h2>
+
+<pre>Usage: datafed wc [OPTIONS] ID
+
+  Set/print current working collection or path. 'ID' can be a collection ID,
+  alias, list index number, '-' (previous collection), or path. Only '..'
+  and '/' are supported for paths. 'cd' is an alias for this command.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s13'>13 Wp</h2>
+
+<pre>Usage: datafed wp [OPTIONS]
+
+  Get current working path. Displays the full path of the current working
+  collection starting from the root collection of the associated user or
+  project.
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+
+<h2 id='s14'>14 Xfr Commands</h2>
+
+<pre>Usage: datafed xfr [OPTIONS] COMMAND [ARGS]...
+
+  Globus data transfer management commands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  list  List recent Globus transfers.
+  view  Show transfer information.</pre>
+
+<h3 id='s14.1'>14.1 Xfr List</h3>
+
+<pre>Usage: datafed xfr list [OPTIONS]
+
+  List recent Globus transfers. If no time or status filter options are
+  provided, all Globus transfers initiated by the current user are listed,
+  most recent first. Note that the DataFed server periodically purges
+  transfer history such that only up to 30 days of history are retained.
+
+  The status option indicates the current stage of a transfer: * INITIAL -
+  Transfer has been requested but not started * ACTIVE - Transfer is in
+  progress * INACTIVE - Transfer is paused * SUCCEEDED - Transfer has
+  completed successfully * FAILED - Transfer has failed and has been stopped
+
+Options:
+  -s, --since TEXT                List from specified time (seconds default,
+                                  suffix h = hours, d = days, w = weeks)
+  -f, --from TEXT                 List from specified date/time
+                                  (M/D/YYYY[,HH:MM])
+  -t, --to TEXT                   List up to specified date/time
+                                  (M/D/YYYY[,HH:MM])
+  -S, --status [0|1|2|3|4|init|initial|active|inactive|succeeded|failed]
+                                  List transfers matching specified status
+  -l, --limit INTEGER             Limit to 'n' most recent transfers
+  -?, -h, --help                  Show this message and exit.</pre>
+
+<h3 id='s14.2'>14.2 Xfr View</h3>
+
+<pre>Usage: datafed xfr view [OPTIONS] ID
+
+  Show transfer information. Use the ID argument to view a specific transfer
+  record, or omit to view the latest transfer initiated by the current user.
+  Information include status, source, destination, and other administrative
+  attributes.
+
+  The status field indicates the current stage of a transfer: * INITIAL -
+  Transfer has been requested but not started * ACTIVE - Transfer is in
+  progress * INACTIVE - Transfer is paused * SUCCEEDED - Transfer has
+  completed successfully * FAILED - Transfer has failed and has been stopped
+
+Options:
+  -?, -h, --help  Show this message and exit.</pre>
+</div></div></div></body></html>

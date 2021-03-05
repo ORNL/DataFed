@@ -23,37 +23,50 @@ from . import Config
 from . import version
 
 
-##
-# @class API
-# @brief Provides a high-level messaging interface to the DataFed core server.
-#
-# The DataFed CommandLib.API class provides a high-level interface
-# for sending requests to a DataFed server. Requests are sent via regular
-# class methods and replies are returned as Google protobuf message objects.
-# These reply messages are defined in the \*.proto files included in the
-# DataFed client package. Basic functionality of th API class mirrors the 
-# capabilities exposed in the DataFed CLI.
-#
 class API:
+    """
+    A high-level messaging interface to the DataFed core server
+
+    The DataFed CommandLib.API class provides a high-level interface
+    for sending requests to a DataFed server. Requests are sent via python
+    class methods and replies are (currently) returned as Google Protobuf message objects.
+    These reply messages are defined in the \*.proto files included in the
+    DataFed client package. Basic functionality of th API class mirrors the
+    capabilities exposed in the DataFed CLI.
+
+    The Config class is used to load configuration settings, but settings
+    (all or some) may also be supplied as an argument to the constructor.
+    On success, a secure connection is established to the configured DataFed
+    core server. If user credentials are installed, the associated user
+    will be authenticated; otherwise an anonymous connection will be
+    created. Use the getAuthUser() method to check is authentication is
+    required after constructing an API instance.
+
+    Parameters
+    ----------
+    opts : dict, Optional
+        Configuration options
+
+    Attributes
+    ----------
+    _max_md_size : int.
+        Maximum size of metadata in bytes.
+        Currently set to 102400
+    _max_payload_size : int
+        Maximum limit for the amount of data that can be sent in a single batch
+        create request.
+        Currently set to 1048576
+
+    Raises
+    ------
+    Exception : if invalid config values are present
+    """
+
     _max_md_size = 102400
     _max_payload_size = 1048576
     _endpoint_legacy = re.compile(r'[\w\-]+#[\w\-]+')
     _endpoint_uuid = re.compile( r'[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}', re.I )
 
-    ##
-    # @brief Commandlib API constructor
-    #
-    # The Config class is used to load configuration settings, but settings
-    # (all or some) may also be supplied as an argument to the constructor.
-    # On success, a secure connection is established to the configured DataFed
-    # core server. If user credentials are installed, the associated user
-    # will be authenticated; otherwise an anonymous connection will be
-    # created. Use the getAuthUser() method to check is authentication is
-    # required after constructing an API instance.
-    #
-    # @param opts - Configuration options (optional)
-    # @exception Exception: if invalid config values are present
-    #
     def __init__( self, opts = {} ):
         #print("CommandLib Init")
 
@@ -82,41 +95,58 @@ class API:
     # -------------------------------------------------- Authentication Methods
     # =========================================================================
 
-    ##
-    # @brief Get current authenticated user, if any.
-    #
-    # If current connection is authenticated, returns current user ID; otherwise returns None.
-    #
-    # @return Authenticated user ID or None if not authenticated
-    #
     def getAuthUser( self ):
+        """
+        Get current authenticated user, if any.
+
+        Returns current user ID If current connection is authenticated,
+        otherwise returns None.
+
+        Returns
+        -------
+        str :
+            Authenticated user ID or None if not authenticated
+        """
         return self._uid
 
-    ##
-    # @brief Logout current client, if any.
-    #
-    # If connected, logs-out by reseting underlying connection and clearing current user.
-    #
-    # @return None
-    #
     def logout( self ):
+        """
+        Logout current client, if any.
+
+        If connected, logs-out by reseting underlying connection and clearing
+        current user.
+
+        Returns
+        -------
+        None
+        """
         if self._uid:
             self._mapi.logout()
             self._uid = None
             self._cur_sel = None
 
-    ##
-    # @brief Manually authenticate client by uid and password
-    #
-    # If not authenticated, this method attempts manual authentication
-    # using the supplied DataFed user ID and password.
-    #
-    # @param uid - DataFed user ID
-    # @param password - DataFed password
-    # @exception Exception: if authentication fails.
-    # @return None
-    #
     def loginByPassword( self, uid, password ):
+        """
+        Manually authenticate client by user id and password
+
+        If not authenticated, this method attempts manual authentication
+        using the supplied DataFed user ID and password.
+
+        Parameters
+        ----------
+        uid : str
+            DataFed user ID
+        password : str
+            DataFed password
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception : if authentication fails.
+        """
         self.logout()
 
         self._mapi.manualAuthByPassword( uid, password )
@@ -124,18 +154,23 @@ class API:
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
 
-    ##
-    # @brief Generate/download local user credentials
-    #
-    # Requests the DataFed server to generate and send local credentials for
-    # the current user. These credentials should be saved/loaded from a
-    # set of public/private client keys files as specified via the Config
-    # module.
-    #
-    # @exception Exception: On communication or server error
-    # @return A ???? Google protobuf message object
-    #
     def generateCredentials( self ):
+        """
+        Generate/download local user credentials
+
+        Requests the DataFed server to generate and send local credentials for
+        the current user. These credentials should be saved/loaded from a
+        set of public/private client keys files as specified via the Config
+        module.
+
+        Returns
+        -------
+        msg: Google protobuf message
+
+        Raises
+        ------
+        Exception: On communication or server error
+        """
         msg = auth.GenerateCredentialsRequest()
 
         return self._mapi.sendRecv( msg )
@@ -145,47 +180,88 @@ class API:
     # ------------------------------------------------------------ Data Methods
     # =========================================================================
 
-    ##
-    # @brief View a data record
-    #
-    # Retrieves full data record with metadata (without raw data).
-    #
-    # @param data_id - Data record ID or alias
-    # @param details - NOT USED
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On communication or server error
-    #
     def dataView( self, data_id, details = False, context = None ):
+        """
+        View a data record
+
+        Retrieves all metadata associated with record with metadata (without
+        raw data).
+
+        Parameters
+        ----------
+        data_id : str
+            Data record ID or alias
+        details : str, Optional. Default = False
+            NOT USED
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = anon.RecordViewRequest()
         msg.id = self._resolve_id( data_id, context )
         msg.details = details
 
         return self._mapi.sendRecv( msg )
 
-    ##
-    # @brief Create a new data record
-    #
-    # Create a new data record. May specify alias, containing collection,
-    # metadata, dependencies, and allocation. Raw data must be uploaded
-    # separately. Cannot use both metadata and metadata_file options.
-    #
-    # @param title - Title of record (required)
-    # @param alias - Alias of record (optional)
-    # @param description - Text description (optional)
-    # @param tags - Array of tags (optional)
-    # @param extension - Raw data file extension override (optional)
-    # @param metadata - Domain-specific metadata (JSON object, optional)
-    # @param metadata_file - Path to local file containing domain-specific metadata (JSON object, optional)
-    # @param parent_id - ID/alias of containing collection (root is default)
-    # @param deps - Dependencies (array of tuples of relation type and record ID)
-    # @param repo_id - Repository ID (use default of owner if not specified)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataCreate( self, title, alias = None, description = None, tags = None, extension = None,
         metadata = None, metadata_file = None, parent_id = "root", deps = None, repo_id = None, context = None ):
+        """
+        Create a new data record
+
+        Create a new data record. May specify alias, containing collection,
+        metadata, dependencies, and allocation. Raw data must be uploaded
+        separately. Cannot use both metadata and metadata_file options.
+
+        Parameters
+        ----------
+        title : str
+            Title of record
+        alias : str, Optional. Default = None
+            Alias of record
+        description : str, Optional. Default = None
+            Text description of record
+        tags : list of str, Optional. Default = None
+            Tags that describe the record
+        extension : str, Optional. Default = None
+            Extension for raw data file to use / override
+        metadata : JSON string, Optional. Default = None
+            Domain-specific metadata described in dictionary form.
+            This dictionary can be nested.
+        metadata_file : str, Optional. Default = None
+            Path to local JSON file containing domain-specific metadata
+        parent_id : str, Optional. Default = "root"
+            ID/alias of collection within which to create this record.
+            By default, the record will be created in the user's root collection
+        deps : list, Optional. Default = None
+            Dependencies of this data record specified as an array of
+            lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
+            Relation types currently supported are:
+            * "der" - Is derived from
+            * "comp" - Is comprised of
+            * "ver" - Is new version of
+        repo_id : str, Optional. Default = None
+            ID of data repository to create this record in.
+            By default, the default repository will be chosen.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
 
         if metadata and metadata_file:
             raise Exception( "Cannot specify both metadata and metadata-file options" )
@@ -234,32 +310,65 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-    ##
-    # @brief Update an existing data record
-    #
-    # Update an existing data record. May specify title, alias, metadata,
-    # dependencies, and allocation. Raw data must be uploaded separately.
-    # Cannot use both metadata and metadata_file options.
-    #
-    # @param data_id - Record ID/alias (required)
-    # @param title - Title of record (optional)
-    # @param alias - Alias of record (optional)
-    # @param description - Text description (optional)
-    # @param tags - Array of tags (optional)
-    # @param extension - Raw data file extension override (optional)
-    # @param metadata - Domain-specific metadata (JSON object, optional)
-    # @param metadata_file - Path to local file containing domain-specific metadata (JSON object, optional)
-    # @param metadata_set - Set (replace) existing metadata with provided (default is merge)
-    # @param deps - Set all dependencies (array of tuples of relation type and record ID)
-    # @param deps_add - Dependencies to add (array of tuples of relation type and record ID)
-    # @param deps_rem - Dependencies to remove (array of tuples of relation type and record ID)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataUpdate( self, data_id, title = None, alias = None, description = None, tags = None,
         extension = None, metadata = None, metadata_file = None, metadata_set = False, deps_add = None,
         deps_rem = None, context = None ):
+        """
+        Update an existing data record
+
+        Update an existing data record. May specify title, alias, metadata,
+        dependencies, and allocation. Raw data must be uploaded separately.
+        Cannot use both metadata and metadata_file options.
+
+        Parameters
+        ----------
+        data_id : str
+            Data record ID or alias
+        title : str
+            Title of record
+        alias : str, Optional. Default = None
+            Alias of record
+        description : str, Optional. Default = None
+            Text description of record
+        tags : list of str, Optional. Default = None
+            Tags that describe the record
+        extension : str, Optional. Default = None
+            Extension for raw data file to use / override
+        metadata : JSON string, Optional. Default = None
+            Domain-specific metadata described in dictionary form.
+            This dictionary can be nested.
+        metadata_file : str, Optional. Default = None
+            Path to local JSON file containing domain-specific metadata
+        metadata_set : bool, Optional. Default = False
+            Set to True to replace existing metadata with provided.
+            Otherwise, and by default, provided metadata will be merged with
+            existing metadata.
+        deps_add : list, Optional. Default = None
+            Dependencies of this data record to add, specified as an array of
+            lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
+            Relation types currently supported are:
+            * "der" - Is derived from
+            * "comp" - Is comprised of
+            * "ver" - Is new version of
+        deps_rem : list, Optional. Default = None
+            Dependencies of this data record to remove, specified as an array of
+            lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
+            Relation types currently supported are:
+            * "der" - Is derived from
+            * "comp" - Is comprised of
+            * "ver" - Is new version of
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
 
         if metadata and metadata_file:
             raise Exception( "Cannot specify both metadata and metadata-file options." )
@@ -327,18 +436,26 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Delete one or more data records
-    #
-    # Deletes onr or more data records and associated raw data.
-    #
-    # @param data_id - A record ID/alias or list of Ids/aliases (required)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return An AckReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataDelete( self, data_id, context = None ):
+        """
+        Deletes onr or more data records and associated raw data.
+
+        Parameters
+        ----------
+        data_id : str
+            Data record ID or alias
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error
+        """
         msg = auth.RecordDeleteRequest()
 
         if isinstance( data_id, list ):
@@ -349,35 +466,67 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL,
+                 orig_fname = False, wait = False, timeout_sec = 0,
+                 progress_bar = None, context = None ):
+        """
+        Get (download) raw data for one or more data records and/or collections
 
-    ##
-    # @brief Get (download) raw data for one or more data records and/or collections
-    #
-    # This method downloads to the specified path the raw data associated with
-    # a specified data record, or the records contained in a collection, or
-    # with a list of records and/or collections. The download may involve
-    # either a Globus transfer, or an HTTP transfer. The path may be a full
-    # globus path (only works for Globus transfers), or a full or relative
-    # local file system path (will prepend the default endpoint for Globus
-    # transfers).
-    #
-    # @param item_id - Data record or collection ID/alias, or a list of IDs/aliases
-    # @param path - Globus or file system destination path
-    # @param encrypt - Encrypt mode (none, if avail, force)
-    # @param wait - Wait for get to complete if True
-    # @param timeout_sec - Timeout in second for polling Globus transfer status, 0 = no timeout
-    # @param progress_bar - A progess bar class to display download progress (optional)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A XfrDataReply Google protobuf message object
-    # @exception Exception: If both Globus and HTTP transfers are required
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL, orig_fname = False, wait = False, timeout_sec = 0, progress_bar = None, context = None ):
+        This method downloads to the specified path the raw data associated with
+        a specified data record, or the records contained in a collection, or
+        with a list of records and/or collections. The download may involve
+        either a Globus transfer, or an HTTP transfer. The path may be a full
+        globus path (only works for Globus transfers), or a full or relative
+        local file system path (will prepend the default endpoint for Globus
+        transfers).
+
+        Parameters
+        ----------
+        item_id : str or list or str
+            Data record or collection ID/alias, or a list of IDs/aliases
+        path : str
+            Globus or local file system destination path
+        encrypt :
+            Encrypt mode (none, if avail, force)
+        orig_fname : bool, Optional. Default = False
+            If set to True, the file(s) contained in the record(s) will be
+            downloaded with their original name(s).
+            Otherwise, and by default, the files will be named according to
+            their unique record ID followed by the original or overriden
+            extension.
+        wait : bool, Optional. Default = False
+            Set to true to wait until the file transfer is complete.
+            Otherwise, and by default, the transfer will take place in the
+            background / asynchronously
+        timeout_sec : int, Optional. Default = 0
+            Timeout in seconds for polling the status of the Globus transfer.
+            By default, there is no timeout.
+        progress_bar : callable, Optional. Default = None
+            A progress bar class to display progress for HTTP download.
+            This kwarg is passed on as the ``bar`` kwarg of wget.download().
+            By default, wget will use dots to display progress.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : XfrDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error.
+        Exception : If both Globus and HTTP transfers are required
+        """
         # Request server to map specified IDs into a list of specific record IDs.
         # This accounts for download of collections.
 
         msg = auth.DataGetRequest()
         msg.check = True
+
+        if isinstance(item_id, str):
+            item_id = [item_id]
+
         for ids in item_id:
             msg.id.append( self._resolve_id( ids, context ))
 
@@ -466,26 +615,47 @@ class API:
             # Will land here if tried to get a collection with no records
             raise Exception("Specified record(s) contain no raw data.")
 
+    def dataPut( self, data_id, path, encrypt = sdms.ENCRYPT_AVAIL,
+                 wait = False, timeout_sec = 0, extension = None,
+                 context = None ):
+        """
+        Put (upload) raw data for a data record
 
-    ##
-    # @brief Put (upload) raw data for a data record
-    #
-    # This method uploads raw data from the specified path to the specified
-    # data record. The upload involves a Globus transfer, and the path may be a
-    # full globus path, or a full or relative local file system path (the
-    # current endpoint will be prepended).
-    #
-    # @param data_id - Data record ID/alias
-    # @param path - Globus or file system source path
-    # @param encrypt - Encrypt mode (none, if avail, force)
-    # @param wait - Wait for put to complete if True
-    # @param timeout_sec - Timeout in second for polling Globus transfer status, 0 = no timeout
-    # @param extension - Override source file extension (default is autodetect)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A XfrDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def dataPut( self, data_id, path, encrypt = sdms.ENCRYPT_AVAIL, wait = False, timeout_sec = 0, extension = None, context = None ):
+        This method uploads raw data from the specified path to the specified
+        data record. The upload involves a Globus transfer, and the path may be
+        a full globus path, or a full or relative local file system path (the
+        current endpoint will be prepended).
+
+        Parameters
+        ----------
+        data_id : str
+            Data record ID or alias
+        path : str
+            Globus or local file system path to source file
+        encrypt :
+            Encrypt mode (none, if avail, force)
+        wait : bool, Optional. Default = False
+            Set to true to wait until the file transfer is complete.
+            Otherwise, and by default, the transfer will take place in the
+            background / asynchronously
+        timeout_sec : int, Optional. Default = 0
+            Timeout in seconds for polling the status of the Globus transfer.
+            By default, there is no timeout.
+        extension : str, Optional. Default = None
+            Override extension of source file.
+            By default, the extension is detected automatically.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : XfrDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error.
+        """
         msg = auth.DataPutRequest()
         msg.id = self._resolve_id( data_id, context )
         msg.path = self._resolvePathForGlobus( path, False )
@@ -522,23 +692,35 @@ class API:
 
         return reply
 
-
-    ##
-    # @brief Batch create data records
-    #
-    # Create one or more data records from JSON source files that specify all
-    # metadata for the record. The source files may contain an individual JSON
-    # object, or an array of JSON objects. There is a maximum limit to the
-    # amount of data that can be sent in a single batch create request (see
-    # _max_payload_size).
-    #
-    # @param file - An array of filenames to process
-    # @param coll_id - Parent collection ID/alias (replaces parent field in JSON)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataBatchCreate( self, file, coll_id = None, context = None ):
+        """
+        Batch create data records
+
+        Create one or more data records from JSON source files that specify all
+        metadata for the record. The source files may contain an individual JSON
+        object, or an array of JSON objects. There is a maximum limit to the
+        amount of data that can be sent in a single batch create request (see
+        ``_max_payload_size`` attribute).
+
+        Parameters
+        ----------
+        file : list or tuple
+            An array of (JSON) filenames to process
+        coll_id : str, Optional. Default = None
+            Parent collection ID/alias . Replaces parent field in JSON.
+            By default, the parent field in the JSON file will be used.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error
+        """
         payload = []
         tot_size = 0
 
@@ -570,20 +752,30 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    # @brief Batch update data records
-    #
-    # Update one or more data records from JSON source files that specify all
-    # updated metadata for the record. The source files may contain an
-    # individual JSON object, or an array of JSON objects. There is a maximum
-    # limit to the amount of data that can be sent in a single batch create
-    # request (see _max_payload_size).
-    #
-    # @param file - An array of filenames to process
-    # @return A RecordDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def dataBatchUpdate( self, file ):
+        """
+        Batch update data records
+
+        Update one or more data records from JSON source files that specify all
+        updated metadata for the record. The source files may contain an
+        individual JSON object, or an array of JSON objects. There is a maximum
+        limit to the amount of data that can be sent in a single batch create
+        request (see _max_payload_size).
+
+        Parameters
+        ----------
+        file : list or tuple
+            An array of filenames on local file system to process
+
+        Returns
+        -------
+        msg : RecordDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error
+        """
         payload = []
         tot_size = 0
 
@@ -614,42 +806,75 @@ class API:
     # ------------------------------------------------------ Collection Methods
     # =========================================================================
 
-    ##
-    # @brief View collection information
-    #
-    # View alias, title, and description fof a collection
-    #
-    # @param coll_id - Collection ID/alias to view
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A CollDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def collectionView( self, coll_id, context = None ):
+        """
+        View collection information
+
+        View alias, title, and description of a collection
+
+        Parameters
+        ----------
+        coll_id : str
+            ID/alias of Collection to view
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : CollDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On invalid options or communication / server error.
+        """
         msg = anon.CollViewRequest()
         msg.id = self._resolve_id( coll_id, context )
         #msg.id = self._resolve_coll_id( coll_id, context )
 
         return self._mapi.sendRecv( msg )
 
+    def collectionCreate( self, title, alias = None, description = None,
+                          tags = None, topic = None, parent_id = "root",
+                          context = None ):
+        """
+        Create a new collection
 
-    ##
-    # @brief Create a new collection
-    #
-    # Create a new collection with title, alias, and description. Note that if
-    # topic is provided, the collection and contents become publicly readable
-    # and will be presented in DataFed catalog browser.
-    #
-    # @param title - Title of collection (required)
-    # @param alias - Alias of collection (optional)
-    # @param description - Text description (optional)
-    # @param tags - Array of tags (optional)
-    # @param topic - Topic for publishing collection
-    # @param parent_id - ID/alias of parent collection (default is root)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A CollDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def collectionCreate( self, title, alias = None, description = None, tags = None, topic = None, parent_id = None, context = None ):
+        Create a new collection with title, alias, and description. Note that if
+        topic is provided, the collection and contents become publicly readable
+        and will be presented in DataFed catalog browser.
+
+        Parameters
+        ----------
+        title : str
+            Title of collection
+        alias : str, Optional. Default = None
+            Alias of collection
+        description : str, Optional. Default = None
+            Text description of collection
+        tags : list of str, Optional. Default = None
+            Tags that describe the collection
+        topic : str
+            Scientific topics under which this collection is organized
+            in the catalog view.
+            If topic is added, the collection and contents become **publicly**
+            readable and will be presented in DataFed catalog browser.
+        parent_id : str, Optional. Default = "root"
+            ID/alias of collection within which to create this collection.
+            By default, the collection will be created in the user's root
+            collection
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : CollDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.CollCreateRequest()
         msg.title = title
 
@@ -667,28 +892,48 @@ class API:
 
         if parent_id:
             msg.parent_id = self._resolve_id( parent_id, context )
-            #msg.parent_id = self._resolve_coll_id( parent_id, context )
 
         return self._mapi.sendRecv( msg )
 
+    def collectionUpdate( self, coll_id, title = None, alias = None,
+                          description = None, tags = None, topic = None,
+                          context = None ):
+        """
+        Update an existing collection with title, alias, and description.
 
-    # @brief Update an existing collection
-    #
-    # Update an existing collection with title, alias, and description. Note
-    # that if topic is added, the collection and contents become publicly
-    # readable and will be presented in DataFed catalog browser.
-    #
-    # @param coll_id - ID/alias of collection (required)
-    # @param title - Title of collection (optional)
-    # @param alias - Alias of collection (optional)
-    # @param description - Text description (optional)
-    # @param tags - Array of tags (optional)
-    # @param topic - Topic for publishing collection
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A CollDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def collectionUpdate( self, coll_id, title = None, alias = None, description = None, tags = None, topic = None, context = None ):
+        Note
+        that if topic is added, the collection and contents become publicly
+        readable and will be presented in DataFed catalog browser.
+
+        Parameters
+        ----------
+        coll_id : str
+           ID/alias of the collection
+        title : str, Optional. Default = None
+            Title of collection
+        alias : str, Optional. Default = None
+            Alias of collection
+        description : str, Optional. Default = None
+            Text description of collection
+        tags : list of str, Optional. Default = None
+            Tags that describe the collection
+        topic : str
+            Scientific topics under which this collection is organized
+            in the catalog view.
+            If topic is added, the collection and contents become **publicly**
+            readable and will be presented in DataFed catalog browser.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : CollDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.CollUpdateRequest()
         msg.id = self._resolve_id( coll_id, context )
 
@@ -712,21 +957,31 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Delete one or more existing collections
-    #
-    # Deletes onr or more collections and contained items. When a collection is
-    # deleted, all contained collections are also deleted; however, contained
-    # data records are only deleted if they are not linked to another
-    # collection not involved in the deletion.
-    #
-    # @param coll_id - A collection ID/alias or list of IDs/aliases (required)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return An AckReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def collectionDelete( self, coll_id, context = None ):
+        """
+        Delete one or more existing collections
+
+        Deletes one or more collections and contained items. When a collection is
+        deleted, all contained collections are also deleted. However, contained
+        data records are only deleted if they are not linked to another
+        collection not involved in the deletion.
+
+        Parameters
+        ----------
+        coll_id : str, or list of str
+           ID/alias OR list of IDs/aliases of the collection(s) to be deleted
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        msg : AckReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.CollDeleteRequest()
 
         if isinstance( coll_id, list ):
@@ -737,20 +992,34 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def collectionItemsList( self, coll_id, offset = 0, count = 20,
+                             context = None ):
+        """
+        List items in collection
 
-    ##
-    # @brief List items in collection
-    #
-    # List items linked to the specified collection.
-    #
-    # @param coll_id - Collection ID or alias
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def collectionItemsList( self, coll_id, offset = 0, count = 20, context = None ):
+        List items linked to or contained in the specified collection.
+
+        Parameters
+        ----------
+        coll_id : str
+           ID/alias of the collection
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = anon.CollReadRequest()
         msg.count = count
         msg.offset = offset
@@ -758,29 +1027,42 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def collectionItemsUpdate( self, coll_id, add_ids = None, rem_ids = None,
+                               context = None ):
+        """
+        Update (add/remove) items linked to a specified collection
 
-    ##
-    # @brief Update (add/remove) items linked to a collection
-    #
-    # Add and/or remove items linked to a specified collection. Note that data
-    # records may be linked to any number of collections, but collections can
-    # only be linked to one parent collection. If a collection is added to a
-    # new parent collection, it is automatically unlinked from it's current
-    # parent. An ancestor (parent, grandparent, etc) collection cannot be
-    # linked to a descendent collection.
-    #
-    # Items removed from a collection that have no other parent collections
-    # are automatically re-linked to the root collection. The return reply
-    # of this method contains any such re-linked items.
-    #
-    # @param coll_id - Collection ID or alias
-    # @param add_ids - String or list of ID/alias of record(s) and/or collection(s) to add (optional)
-    # @param rem_ids - String or list of ID/alias of record(s) and/or collection(s) to remove (optional)
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A ListingReply Google protobuf message object containing re-linked items
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def collectionItemsUpdate( self, coll_id, add_ids = None, rem_ids = None, context = None ):
+        Note that data
+        records may be linked to any number of collections, but collections can
+        only be linked to one parent collection. If a collection is added to a
+        new parent collection, it is automatically unlinked from it's current
+        parent. An ancestor (parent, grandparent, etc) collection cannot be
+        linked to a descendant collection.
+
+        Items removed from a collection that have no other parent collections
+        are automatically re-linked to the root collection. The return reply
+        of this method contains any such re-linked items.
+
+        Parameters
+        ----------
+        coll_id : str
+           ID/alias of the collection
+        add_ids : str or list of str, Optional. Default = None
+            ID/alias of record(s) and/or collection(s) to add
+        rem_ids : str or list of str, Optional. Default = None
+            ID/alias of record(s) and/or collection(s) to remove
+        context
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.CollWriteRequest()
         msg.id = self._resolve_id( coll_id, context )
 
@@ -798,102 +1080,159 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Get parents of specifies collection
-    #
-    # Gets the parents of the specified collection up to the root collection.
-    #
-    # @param coll_id - Collection ID or alias
-    # @param inclusive - Include starting collection if True
-    # @param context - User or project ID to use for alias resolution (optional)
-    # @return A CollPathReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def collectionGetParents( self, coll_id, inclusive = False, context = None ):
+        """
+        Get parents of specified collection up to the root collection
+
+        Parameters
+        ----------
+        coll_id : str
+           ID/alias of the collection
+        inclusive : bool, Optional. Default = False
+            Set to True to include starting collection.
+            Otherwise, and by default, starting collection is ignored.
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        CollPathReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.CollGetParentsRequest()
         msg.id = self._resolve_id( coll_id, context )
         msg.inclusive = inclusive
 
         return self._mapi.sendRecv( msg )
 
-
     # =========================================================================
     # ----------------------------------------------------------- Query Methods
     # =========================================================================
 
-    ##
-    # @brief List saved queries
-    #
-    # List saved queries.
-    #
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def queryList( self, offset = 0, count = 20 ):
+        """
+        List saved queries
+
+        Parameters
+        ----------
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.QueryListRequest()
         msg.offset = offset
         msg.count = count
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief View a saved query
-    #
-    # View specified saved query.
-    #
-    # @param query_id - ID of saved query to view
-    # @return A QueryDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def queryView( self, query_id ):
+        """
+        View a saved query
+
+        Parameters
+        ----------
+        query_id : str
+            ID of saved query to view
+
+        Returns
+        -------
+        QueryDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.QueryViewRequest()
         msg.id = query_id
 
         return self._mapi.sendRecv( msg )
 
+    def queryCreate( self, title, id = None, text = None, meta = None,
+                     no_default = None, coll = None, proj = None ):
+        """
+        Create a new saved query
 
-    ##
-    # @brief Create a new saved query
-    #
-    # Create a new saved query. Default scope inclues owned data and all data
-    # associated with owned and managed projects, as well as member projects.
-    #
-    # @param title - Title of query (required)
-    # @param id - ID/alias query text (optional)
-    # @param text - Title / description text query (optional)
-    # @param meta - Metadata query (optional)
-    # @param no_default - Omit default scopes if True (optional)
-    # @param coll - A collection ID/alias to add to scope (multiple allowed)
-    # @param proj - A project ID to add to scope (multiple allowed)
-    # @return A QueryDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def queryCreate( self, title, id = None, text = None, meta = None, no_default = None, coll = None, proj = None ):
+        Default scope for the search includes owned data and all data
+        associated with owned and managed projects, as well as member projects.
+
+        Parameters
+        ----------
+        title : str
+            Title of query
+        id : str, Optional. Default = None
+            ID/alias for query. Automatically assigned by default.
+        text : str, Optional. Default = None
+            Description of query
+        meta : str, Optional. Default = None
+            Query expression
+        no_default : bool, Optional. Default = None
+            Omit default scopes if True
+        coll : str, Optional. Default = None
+            ID(s) or alias(es) of collection(s) to add to scope
+        proj : str, Optional. Default = None
+            ID(s) or alias(es) of project(s) to add to scope
+
+        Returns
+        -------
+        QueryDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.QueryCreateRequest()
         msg.title = title
         msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
 
         return self._mapi.sendRecv( msg )
 
+    def queryUpdate( self, query_id, title = None, id = None, text = None,
+                     meta = None ):
+        """
+        Update an existing saved query
 
-    ##
-    # @brief Update an existing saved query
-    #
-    # Update an existing saved query. Can specity new title and query
-    # expressions; however scope cannot be changed.
-    #
-    # @param query_id - Query ID (required)
-    # @param id - ID/alias query text (optional)
-    # @param text - Title / description text query (optional)
-    # @param meta - Metadata query (optional)
-    # @return A QueryDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def queryUpdate( self, query_id, title = None, id = None, text = None, meta = None ):
+        Things like the title, and the query expression can be modified.
+        However, the scope may not be changed
+
+        Parameters
+        ----------
+        query_id : str
+            ID/alias for query.
+        title : str, Optional. Default = None
+            Title  of query
+        id : str, Optional. Default = None
+            ID/alias query
+        text : str, Optional. Default = None
+            Description of query
+        meta : str, Optional. Default = None
+            Query expression
+
+        Returns
+        -------
+        QueryDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.QueryViewRequest()
         msg.id = query_id
 
@@ -933,35 +1272,51 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Delete a saved query
-    #
-    # Delete a saved query.
-    #
-    # @param query_id - Query ID to delete (required)
-    # @return An AckReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def queryDelete( self, query_id ):
+        """
+        Delete a saved query.
+
+        Parameters
+        ----------
+        query_id : str
+            ID/alias for query.
+
+        Returns
+        -------
+        AckReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.QueryDeleteRequest()
         msg.id.append( query_id )
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief Execute a stored query
-    #
-    # Execute a store query and return matches.
-    #
-    # @param query_id - Query ID to execute (required)
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def queryExec( self, query_id, offset = 0, count = 20 ):
+        """
+        Execute a stored query and return matches.
+
+        Parameters
+        ----------
+        query_id : str
+            ID/alias for query.
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.QueryExecRequest()
         msg.id = query_id
         msg.offset = offset
@@ -969,24 +1324,41 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    def queryDirect( self, id = None, text = None, meta = None,
+                     no_default = None, coll = None, proj = None,
+                     offset = 0, count = 20 ):
+        """
+        Directly run a manually entered query and return matches
 
-    ##
-    # @brief Directly run a manually entered query
-    #
-    # Directly run a manually entered query and return matches.
-    #
-    # @param id - ID/alias query text (optional)
-    # @param text - Title / description text query (optional)
-    # @param meta - Metadata query (optional)
-    # @param no_default - Omit default scopes if True (optional)
-    # @param coll - A collection ID/alias to add to scope (multiple allowed)
-    # @param proj - A project ID to add to scope (multiple allowed)
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def queryDirect( self, id = None, text = None, meta = None, no_default = None, coll = None, proj = None, offset = 0, count = 20 ):
+        Parameters
+        ----------
+        id : str
+            ID/alias query text
+        text : str, Optional. Default = None
+            Description of query
+        meta : str, Optional. Default = None
+            Query expression
+        no_default : bool, Optional. Default = None
+            Omit default scopes if True
+        coll : str, Optional. Default = None
+            ID(s) or alias(es) of collection(s) to add to scope
+        proj : str, Optional. Default = None
+            ID(s) or alias(es) of project(s) to add to scope
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.RecordSearchRequest()
         msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
         msg.offset = offset
@@ -994,59 +1366,82 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
     # =========================================================================
     # ------------------------------------------------------------ User Methods
     # =========================================================================
 
-    ##
-    # @brief List collaborators
-    #
-    # List collaborators. Collaborators are defined as users that have projects
-    # in common with the current user, or that have data-sharing relationships
-    # with the current user.
-    #
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A UserDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def userListCollaborators( self, offset = 0, count = 20 ):
+        """
+        List collaborators. Collaborators are defined as users that have projects
+        in common with the current user, or that have data-sharing relationships
+        with the current user.
+
+        Parameters
+        ----------
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        UserDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.UserListCollabRequest()
         msg.offset = offset
         msg.count = count
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief List all users
-    #
-    # List all users.
-    #
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A UserDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def userListAll( self, offset = 0, count = 20 ):
+        """
+        List all users
+
+        Parameters
+        ----------
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        UserDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.UserListAllRequest()
         msg.offset = offset
         msg.count = count
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief View user information
-    #
-    # View user information.
-    #
-    # @param uid - ID of user to view
-    # @return A UserDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def userView( self, uid ):
+        """
+        View user information
+
+        Parameters
+        ----------
+        uid : str
+            ID of user to view
+
+        Returns
+        -------
+        UserDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = anon.UserViewRequest()
         msg.uid = uid
 
@@ -1057,21 +1452,40 @@ class API:
     # --------------------------------------------------------- Project Methods
     # =========================================================================
 
-    ##
-    # @brief List projects associated with current user
-    #
-    # List projects that are owned or managed by the current user, as well as
-    # projects were the current user is a member.
-    #
-    # @param owned - Include owned projects
-    # @param admin - Include managed projects
-    # @param member - Include projects where current user is a member
-    # @param offset - Offset of listing results for paging (optional)
-    # @param count - Count (limit) of listing results for paging (optional)
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def projectList( self, owned = True, admin = True, member = True, offset = 0, count = 20 ):
+    def projectList( self, owned = True, admin = True, member = True,
+                     offset = 0, count = 20 ):
+        """
+        List projects associated with current user
+
+        List projects that are owned or managed by the current user, as well as
+        projects were the current user is a member.
+
+        Parameters
+        ----------
+        owned : bool, optional. Default = True
+            If True, includes owned projects. Otherwise, only includes projects
+            owned by others that this user is part of.
+        admin : bool, optional. Default = True
+            If True, includes projects managed by this user. Otherwise, only
+            includes projects managed by others that this user is part of.
+        member : bool, optional. Default = True
+            If True, includes projects where the current user is a member.
+            Otherwise, does not list such projects.
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ProjectListRequest()
         msg.as_owner = owned
         msg.as_admin = admin
@@ -1081,23 +1495,47 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief View project information
-    #
-    # View project information (title, description, owner, etc.)
-    #
-    # @param project_id - ID of project to view
-    # @return A ProjectDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def projectView( self, project_id ):
+        """
+        View project information (title, description, owner, etc.)
+
+        Parameters
+        ----------
+        project_id : str
+            ID of project to view
+
+        Returns
+        -------
+        ProjectDataReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = anon.ProjectViewRequest()
         msg.id = project_id
 
         return self._mapi.sendRecv( msg )
 
     def projectGetRole( self, project_id ):
+        """
+        Get the role that this user plays in a given project
+
+        Parameters
+        ----------
+        project_id : str
+            ID of project to view
+
+        Returns
+        -------
+        Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ProjectGetRoleRequest()
         msg.id = project_id
 
@@ -1109,15 +1547,29 @@ class API:
     # ----------------------------------------------------- Shared Data Methods
     # =========================================================================
 
-    ##
-    # @brief List users/projects with shared data
-    #
-    # List users and/or that have shared data with client/subject.
-    #
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def sharesListOwners( self, inc_users = None, inc_projects = None, subject = None ):
+    def sharesListOwners( self, inc_users = None, inc_projects = None,
+                          subject = None ):
+        """
+        List users and/or that have shared data with client/subject.
+
+        Parameters
+        ----------
+        inc_users : list of str, Optional. Default
+            Include a list of specified users
+        inc_projects : list of str, Optional. Default
+            Include a list of specified projects
+        subject : list of str, Optional. Default
+            Include a list of specified subjects
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ACLBySubjectRequest()
 
         if inc_users != None:
@@ -1132,46 +1584,71 @@ class API:
         return self._mapi.sendRecv( msg )
 
     '''
-    ##
-    # @brief List users with shared data
-    #
-    # List users that have shared data. Only users that have shared data with
-    # the current user are listed, not users that the current user has shared
-    # data with.
-    #
-    # @return A UserDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def sharedUsersList( self ):
+        """
+        List users who have shared data the with current user
+        
+        Users that the current user has shared data with are not listed.
+        
+        Returns
+        -------
+        UserDataReply Google protobuf message
+            Response from DataFed
+        
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ACLByUserRequest()
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief List projects with shared data
-    #
-    # List projects that have shared data with the current user.
-    #
-    # @return A ProjectDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def sharedProjectsList( self ):
+        """
+        List projects that have shared data with the current user
+        
+        Returns
+        -------
+        ProjectDataReply Google protobuf message
+            Response from DataFed
+            
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         msg = auth.ACLByProjRequest()
 
         return self._mapi.sendRecv( msg )
     '''
 
-    ##
-    # @brief List shared data records and collections
-    #
-    # List shared data records and collections by user/project ID.
-    #
-    # @param owner_id - User or project ID
-    # @return A ListingReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def sharesListItems( self, owner_id, context = None, offset = None, count = None ):
+    def sharesListItems( self, owner_id, context = None,
+                         offset = None, count = None ):
+        """
+        List shared data records and collections by user/project ID
+
+        Parameters
+        ----------
+        owner_id : str
+            User or project ID
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for (cleaner) paging
+
+        Returns
+        -------
+        ListingReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         # TODO add support for offset & count
 
         msg = auth.ACLListItemsBySubjectRequest()
@@ -1186,24 +1663,41 @@ class API:
     # --------------------------------------------------- Data Transfer Methods
     # =========================================================================
 
-    ##
-    # @brief List recent tasks
-    #
-    # List recent Globus transfers. If no time or status filter options are
-    # provided, all Globus transfers initiated by the current user are listed,
-    # most recent first. Note that the DataFed server periodically purges
-    # transfer history such that only up to 30 days of history are retained.
-    #
-    # @param time_from - List from specified date/time (M/D/YYYY[,HH:MM])
-    # @param time_to - List to specified date/time (M/D/YYYY[,HH:MM])
-    # @param since - List from specified time string (second default, suffix h = hours, d = days, w = weeks)
-    # @param status - List matching status (0 to 4)
-    # @param offset - Offset of matches
-    # @param count - Count of matches
-    # @return A XfrDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
-    def taskList( self, time_from = None, time_to = None, since = None, status = None, offset = 0, count = 20 ):
+    def taskList( self, time_from = None, time_to = None, since = None,
+                  status = None, offset = 0, count = 20 ):
+        """
+        List recent Globus data transfer tasks
+
+        If no time or status filter options are provided, all Globus transfers
+        initiated by the current user are listed, arranged by
+        most recent first. Note that the DataFed server periodically purges
+        transfer history such that only up to 30 days of history are retained.
+
+        Parameters
+        ----------
+        time_from : str, Optional. Default = None
+            Start date/time for listing specified as M/D/YYYY[,HH:MM]
+        time_to : str, Optional. Default = None
+            End date/time for listing specified as M/D/YYYY[,HH:MM]
+        since: str, Optional. Default = None
+            List from specified time string (second default, suffix
+            h = hours, d = days, w = weeks)
+        status : list of str and/or int. Default = None
+        offset : int, Optional. Default = 0
+            Offset of matching results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of matching results for (cleaner) paging
+
+        Returns
+        -------
+        XfrDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         if since != None and (time_from != None or time_to != None):
             raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
@@ -1249,7 +1743,13 @@ class API:
 
         if status != None:
             for s in status:
-                stat = s.lower()
+                if isinstance(s, str):
+                    stat = s.lower()
+                elif isinstance(s, int):
+                    stat = str(s)
+                else:
+                    # raise TypeError('status should be a list of str or int')
+                    stat = str(s)
                 if stat in ["0","1","2","3","4"]:
                     msg.status.append( int( stat ))
                 elif stat == "queued":
@@ -1287,18 +1787,29 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-
-    ##
-    # @brief View task information
-    #
-    # Show task information. Use the ID argument to view a specific task
-    # record, or omit to view the latest task initiated by the current user.
-    #
-    # @param task_id - Task ID to view (optional)
-    # @return A TaskDataReply Google protobuf message object
-    # @exception Exception: On invalid options or communication/server error
-    #
     def taskView( self, task_id = None ):
+        """
+        View information regarding a (Globus data transfer) task
+
+
+        Parameters
+        ----------
+        task_id : str, Optional. Default = None
+            Task ID to view.
+            If specified, information regarding the requested task is returned.
+            Otherwise and by default, information regarding the latest task
+            initiated by the current user is returned.
+
+        Returns
+        -------
+        TaskDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         if task_id:
             msg = auth.TaskViewRequest()
             msg.task_id = task_id
@@ -1317,62 +1828,69 @@ class API:
     # -------------------------------------------------------- Endpoint Methods
     # =========================================================================
 
-    ##
-    # @brief List recent endpoints
-    #
-    # List recently used Globus endpoints
-    #
-    # @return A UserGetRecentEPReply Google protobuf message object
-    # @exception Exception: On communication/server error
-    #
     def endpointListRecent( self ):
+        """
+        List recently used Globus endpoints
+
+        Returns
+        -------
+        UserGetRecentEPReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
         msg = auth.UserGetRecentEPRequest()
 
         return self._mapi.sendRecv( msg )
 
-    ##
-    # @brief Get default endpoint
-    #
-    # Get configured default endpoint
-    #
-    # @return The default endpoint string, or None if not configured
-    #
     def endpointDefaultGet( self ):
+        """
+        Get configured default endpoint
+
+        Returns
+        -------
+        str
+            default endpoint string, or None if not configured
+        """
         return self.cfg.get( "default_ep" )
 
-    ##
-    # @brief Set the default endpoint
-    #
-    # Set the default Globus endpoint (used to set initial current endpoint).
-    #
-    # @param endpoint - New default endpoint
-    # @return None
-    #
     def endpointDefaultSet( self, endpoint ):
+        """
+        Set the default Globus endpoint (used to set initial current endpoint)
+
+        Parameters
+        ----------
+        endpoint : str
+            New default endpoint
+        """
         # TODO validate ep is UUID or legacy (not an ID)
         self.cfg.set( "default_ep", endpoint, True )
         if not self._cur_ep:
             self._cur_ep = endpoint
 
-    ##
-    # @brief Get current endpoint
-    #
-    # Get current Globus endpoint
-    #
-    # @return The current endpoint string, or None if not set
-    #
     def endpointGet( self ):
+        """
+        Get current Globus endpoint
+
+        Returns
+        -------
+        str
+            current endpoint string, or None if not set
+        """
+        # TODO: Consider making self._cur_ep more private via self.__cur_ep
         return self._cur_ep
 
-    ##
-    # @brief Set current endpoint
-    #
-    # Set current Globus endpoint (added to partial get/put paths)
-    #
-    # @param endpoint - New current Globus endpoint
-    # @return None
-    #
     def endpointSet( self, endpoint ):
+        """
+        Set current Globus endpoint (added to partial get/put paths)
+
+        Parameters
+        ----------
+        endpoint : str
+            New current Globus endpoint
+        """
         # TODO validate ep is UUID or legacy (not an ID)
         self._cur_ep = endpoint
 
@@ -1381,17 +1899,24 @@ class API:
     # --------------------------------------------------- Miscellaneous Methods
     # =========================================================================
 
-    ##
-    # @brief Setup local credentials
-    #
-    # This command installs DataFed credentials for the current user in the
-    # configured client configuration directory. Subsequent use of the DataFed
-    # API will read these credentials instead of requiring manual authentication.
-    #
-    # @exception Exception: On configuration or communication/server error
-    # @return None
-    #
     def setupCredentials( self ):
+        """
+        Setup local credentials
+
+        This command installs DataFed credentials for the current user in the
+        configured client configuration directory. Subsequent use of the
+        DataFed API will read these credentials instead of requiring manual
+        authentication.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         cfg_dir = self.cfg.get("client_cfg_dir")
         pub_file = self.cfg.get("client_pub_key_file")
         priv_file = self.cfg.get("client_priv_key_file")
@@ -1417,16 +1942,25 @@ class API:
         keyf.write( reply[0].priv_key )
         keyf.close()
 
-    ##
-    # @brief Set current user/project context
-    #
-    # Set current context which is used to resolve relative aliases.
-    #
-    # @param item_id - A user or project ID
-    # @exception Exception: On invalid options or communication/server error
-    # @return None
-    #
     def setContext( self, item_id = None ):
+        """
+        Set current context which is used to resolve relative aliases
+
+        Parameters
+        ----------
+        item_id : str, optional. Default = None
+            A user or project ID. By default, this user's ID will be used as
+            the context
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception : On communication or server error
+        Exception : On invalid options
+        """
         if item_id == None:
             if self._cur_sel == self._uid:
                 return
@@ -1459,35 +1993,48 @@ class API:
                 #self._cur_coll = "c/p_" + self._cur_sel[2:] + "_root"
                 self._cur_alias_prefix = "p:" + self._cur_sel[2:] + ":"
 
-
-    ##
-    # @brief Get current context
-    #
-    # Gets the current context which is used to resolve relative aliases.
-    #
-    # @return The current user or project ID context string
-    #
     def getContext( self ):
+        """
+        Gets the current context which is used to resolve relative aliases
+
+        Returns
+        -------
+        str
+            The current user or project ID context string
+        """
         return self._cur_sel
 
-
-    ##
-    # @brief Convert timestamp into standard string format
-    #
-    # @param ts - Timestamp in local time
-    # @return A string representation of the timestamp in local time
-    #
     def timestampToStr( self, ts ):
+        """
+        Convert timestamp into standard string format
+
+        Parameters
+        ----------
+        ts : time.struct_time
+            Timestamp in local time
+
+        Returns
+        -------
+        str
+            A string representation of the timestamp in local time
+        """
         return time.strftime("%m/%d/%Y,%H:%M", time.localtime( ts ))
 
-
-    ##
-    # @brief Convert a date/time string into a timestamp
-    #
-    # @param time_str - Date/time in %m/%d/%Y[,%H:%M[:%S]] format
-    # @return The integer timestamp representation of the time string in local time
-    #
     def strToTimestamp( self, time_str ):
+        """
+        Convert a date/time string into the integer value of the
+        represented timestamp (in local time)
+
+        Parameters
+        ----------
+        time_str : str
+            Date/time in %m/%d/%Y[,%H:%M[:%S]] format
+
+        Returns
+        -------
+        int
+            The integer timestamp representation of the time string
+        """
         try:
             return int( time_str )
         except:
@@ -1510,28 +2057,37 @@ class API:
 
         return None
 
-    ##
-    # @brief Convert integer size to string
-    #
-    # Convert integer size to human readable size string with metric units.
-    #
-    # @param size - Size value to convert
-    # @param precision - Precision of converted value
-    # @return The size as a string with byte units
-    #
     def sizeToStr( self, size, precision = 1 ):
+        """
+        Convert integer size of data sizes to human readable size string with
+        metric units
+
+        Parameters
+        ----------
+        size : int
+            size of data file
+        precision : int, optional. defaut = 1
+            Precision of converted value
+
+        Returns
+        -------
+        str
+            The size as a string with byte units
+        """
+        #if not isinstance(size, int):
+        #    raise TypeError('size must be a integer')
         if size == 0:
             return "0"
         elif size < 1024:
             return str(size) + " B"
         elif size < 1048576:
-            denom = 1024
+            denom = 1024  # 2 ** 10
             unit = "KB"
         elif size < 1073741824:
-            denom = 1048576
+            denom = 1048576  # 2 ** 20
             unit = "MB"
         elif size < 1099511627776:
-            denom = 1073741824
+            denom = 1073741824  # 2 ** 30
             unit = "GB"
         else:
             denom = 1099511627776
@@ -1543,9 +2099,30 @@ class API:
     # --------------------------------------------------------- Private Methods
     # =========================================================================
 
-
-    # @brief Compose query parameters into a query string
     def _makeQueryString( self, id, text, meta, no_default, coll, proj ):
+        """
+        Compose query parameters into a query string
+
+        Parameters
+        ----------
+        id : str
+            portion of ID or alias of data of interest
+        text : str
+            plain text to search
+        meta : str
+            metadata search query in AQL format
+        no_default : bool
+            Whether or not to use default values
+        coll : list of str
+            IDs or aliases of the collections to search over
+        proj : list of str
+            IDs or aliases of the projects to search over
+
+        Returns
+        -------
+        str
+            Final search query
+        """
         if id is None and text is None and meta is None:
             raise Exception("No search terms provided.")
 
@@ -1589,8 +2166,21 @@ class API:
 
         return qry + "\"scopes\":[" + scopes + "]}"
 
-    # If specified filename exists, a new unique filename will be generated.
     def _uniquifyFilename( self, path ):
+        """
+        Ensures that the provided file name is unique by generating a new
+        unique file name if the specified file name already exists.
+
+        Parameters
+        ----------
+        path : str or Pathlib path
+            path to file of interest
+
+        Returns
+        -------
+        str
+            Unique file path
+        """
         filepath = pathlib.Path(path)
         while filepath.exists():
             stem = filepath.stem #string
@@ -1615,8 +2205,20 @@ class API:
 
         return str(filepath)
 
-    # Resolve relative local path
     def _resolvePathForHTTP( self, path ):
+        """
+        Resolve relative local path
+
+        Parameters
+        ----------
+        path : str
+            User specified relative path
+
+        Returns
+        -------
+        str
+            Path ready for HTTP
+        """
         if path[0] == "~":
             res = pathlib.Path(path).expanduser().resolve()
         elif path[0] == "." or path[0] != '/':
@@ -1627,9 +2229,22 @@ class API:
 
         return str(res)
 
-
-    # Resolve relative paths and prefix with current endpoint if needed
     def _resolvePathForGlobus( self, path, must_exist ):
+        """
+        Resolve relative paths and prefix with current endpoint if needed
+
+        Parameters
+        ----------
+        path : str
+            file path
+        must_exist : bool
+            Whether or not the path must exist
+
+        Returns
+        -------
+        str
+            Path with globus endpoint UUID or alias prefixed.
+        """
         # Check if this is a full Globus path with either a UUID or legacy endpoint prefix
         if re.match( API._endpoint_legacy, path ) or re.match( API._endpoint_uuid, path ):
             return path
@@ -1684,7 +2299,7 @@ class API:
                     winp = pathlib.PurePosixPath('/' + drive_name)
                     for item in parts:
                         winp = winp / str(item)  # adds each part
-                    _path = str(_path)
+                    _path = str(winp)
                 elif not winp.drive:
                     _path = winp.as_posix()
                     if _path[0] != '/':
@@ -1694,9 +2309,23 @@ class API:
 
         return self._cur_ep + _path
 
-
-    # Resolve ID by prefixing relative aliases with current or specifies context
     def _resolve_id( self, item_id, context = None ):
+        """
+        Resolve ID by prefixing relative aliases with current or specifies
+        context
+
+        Parameters
+        ----------
+        item_id : str
+            ID of record, project, user or collection
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+
+        Returns
+        -------
+        str
+            resolved ID
+        """
         if ( len( item_id ) > 2 and item_id[1] == "/" ) or ( item_id.find(":") > 0 ):
             return item_id
 
@@ -1710,9 +2339,15 @@ class API:
         else:
             return self._cur_alias_prefix + item_id
 
-
-    # Set any missing config options to sane defaults
     def _setSaneDefaultOptions( self ):
+        """
+        Set any missing config options to sane defaults
+
+        Returns
+        -------
+        opts : dict
+            Automatically determined save configuration options
+        """
         opts = self.cfg.getOpts()
 
         # Examine initial configuration options and set & save defaults where needed

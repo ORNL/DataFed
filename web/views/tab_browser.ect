@@ -15,14 +15,14 @@
                             <div id="data_tree" class="content no-border" style="display:inline-block"></div>
                         </div>
                         <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
-                            <button class="btn btn-icon" id="btn_new_data" disabled><span class="ui-icon ui-icon-file" title='Create new data record'></span></button>
-                            <button class="btn btn-icon" id="btn_dup_data" disabled><span class="ui-icon ui-icon-files" title='Create new duplicate data record'></span></button>
-                            <button class="btn btn-icon" id="btn_new_coll" disabled><span class="ui-icon ui-icon-folder" title='Create new collection'></span></button>
-                            <button class="btn btn-icon" id="btn_new_proj"><span class="ui-icon ui-icon-box" title='Create new project'></span></button>
-                            <button class="btn btn-icon" id="btn_file_menu"><span class="ui-icon ui-icon-disk" title='Batch import/update menu'></span></button>
-                            <button class="btn btn-icon" id="btn_prev_coll" disabled><span class="ui-icon ui-icon-arrowthick-1-w" title='Go to previous containing collection'></span></button>
-                            <button class="btn btn-icon" id="btn_next_coll" disabled><span class="ui-icon ui-icon-arrowthick-1-e" title='Go to next containing collection'></span></button>
-                            <button class="btn btn-icon" id="btn_refresh"><span class="ui-icon ui-icon-reload" title='Refresh selected item'></span></button>
+                            <button class="btn btn-icon" id="btn_new_data" title='Create new data record' disabled><span class="ui-icon ui-icon-file"></span></button>
+                            <button class="btn btn-icon" id="btn_dup_data" title='Create new duplicate data record' disabled><span class="ui-icon ui-icon-files"></span></button>
+                            <button class="btn btn-icon" id="btn_new_coll" title='Create new collection' disabled><span class="ui-icon ui-icon-folder"></span></button>
+                            <button class="btn btn-icon" id="btn_new_proj" title='Create new project' style='display:none'><span class="ui-icon ui-icon-box"></span></button>
+                            <button class="btn btn-icon" id="btn_file_menu" title='Batch import/update menu'><span class="ui-icon ui-icon-disk"></span></button>
+                            <button class="btn btn-icon" id="btn_prev_coll" title='Go to previous containing collection' disabled><span class="ui-icon ui-icon-arrowthick-1-w"></span></button>
+                            <button class="btn btn-icon" id="btn_next_coll" title='Go to next containing collection' disabled><span class="ui-icon ui-icon-arrowthick-1-e"></span></button>
+                            <button class="btn btn-icon" id="btn_refresh" title='Refresh selected item'><span class="ui-icon ui-icon-reload"></span></button>
                             <input type="file" id="input_files" name="files[]" multiple style='display:none'/>
                             <output id="import_list"></output>
                         </div>
@@ -200,8 +200,8 @@
                 <li style='display:none'><a href="#tab-admin">Administration</a></li>
                 <span style='float:right;padding:.1em 0 0 0'>
                     <span id='uname'></span>&nbsp;
-                    <span id='mode_label' class='ui-state-error' style='display:none'>&nbsp;<b>TEST</b>&nbsp;</span>&nbsp;
                     <span id='is_admin' class='ui-state-error' style='display:none'>&nbsp;<b>ADMIN</b>&nbsp;</span>&nbsp;
+                    <span id='mode_label' class='ui-state-error' style='display:none'>&nbsp;<b>DEV-MODE</b>&nbsp;</span>&nbsp;
                     <span style='font-weight:normal'>V-<%- @version %></span>
                 </span>
             </ul>

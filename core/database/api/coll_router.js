@@ -24,7 +24,7 @@ router.post('/create', function (req, res) {
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn"],
+                read: ["u","uuid","accn","alloc"],
                 write: ["c","a","alias","owner","item","t","top","tag"]
             },
             action: function() {
@@ -48,9 +48,14 @@ router.post('/create', function (req, res) {
                     parent_id = g_lib.getRootID(client._id);
                 }
 
+                // Ensure owner of collection has at least one allocation
+                if ( !g_db.alloc.firstExample({ _from: owner_id })){
+                    throw [g_lib.ERR_NO_ALLOCATION,"An allocation is required to create a collection."];
+                }
+
                 // Enforce collection limit if set
                 if ( owner.max_coll >= 0 ){
-                    var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('c',i._from) RETURN 1)",{id:owner._id}).next();
+                    var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('c',i._from) RETURN 1)",{id:owner_id}).next();
                     if ( count >= owner.max_coll )
                         throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Collection limit reached ("+client.max_coll+"). Contact system administrator to increase limit."];
                 }
@@ -82,7 +87,7 @@ router.post('/create', function (req, res) {
                     g_lib.addTags( req.body.tags );
                     obj.tags = req.body.tags;
                 }
-            
+
                 var coll = g_db.c.save( obj, { returnNew: true });
                 g_db.owner.save({ _from: coll._id, _to: owner._id });
 
@@ -363,8 +368,10 @@ router.get('/view', function (req, res) {
             admin = g_lib.hasAdminPermObject( client, coll_id );
 
             if ( !admin) {
-                if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC ))
+                if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC )){
+                    console.log("perm denied");
                     throw g_lib.ERR_PERM_DENIED;
+                }
             }
         }else if ( !g_lib.hasPublicRead( coll_id )){
             throw g_lib.ERR_PERM_DENIED;
@@ -471,14 +478,10 @@ router.get('/write', function (req, res) {
                     chk_perm = true;
                 }
 
-                console.log("write to coll",coll_id);
-
                 var i, obj, cres,
                     loose, have_loose = false,
                     visited = {},
                     coll_ctx = g_lib.catalogCalcParCtxt( coll, visited );
-
-                console.log("coll ctx", coll_ctx);
 
                 // Enforce following link/unlink rules:
                 // 1. Root collection may not be linked
@@ -490,8 +493,6 @@ router.get('/write', function (req, res) {
                 // 7. All records and collections must have at least one parent (except root)
 
                 if ( req.queryParams.remove ) {
-                    console.log("remove items");
-
                     loose = {};
 
                     for ( i in req.queryParams.remove ) {
@@ -525,8 +526,6 @@ router.get('/write', function (req, res) {
                 }
 
                 if ( req.queryParams.add ) {
-                    console.log("add items");
-
                     // Limit number of items in collection
                     cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:coll_id});
                     //console.log("coll item count:",cres.count());
@@ -586,8 +585,6 @@ router.get('/write', function (req, res) {
                     }
                 }
 
-                console.log("check loose stuff");
-
                 // 7. Re-link loose items to root
                 if ( have_loose ){
                     var root_id = g_lib.getRootID(owner_id),
@@ -595,7 +592,6 @@ router.get('/write', function (req, res) {
                         loose_res = [],
                         cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
 
-                    //console.log("root item count:",cres.count());
                     if ( cres.count() + (req.queryParams.add?req.queryParams.add.length:0) > g_lib.MAX_COLL_ITEMS )
                         throw [g_lib.ERR_INPUT_TOO_LONG,"Root collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 

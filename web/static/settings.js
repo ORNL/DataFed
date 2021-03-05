@@ -8,6 +8,7 @@ export var opts = {
 
 export var date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false, second: '2-digit' };
 
+/*
 export function loadUser() {
     //console.log( "settings.loadUser" );
 
@@ -21,6 +22,20 @@ export function loadUser() {
     }
 
     //console.log( "user: ", g_user );
+}*/
+
+export function setUser( a_user ){
+    user = {
+        uid: a_user.uid.substr(2),
+        nameFirst: a_user.nameFirst,
+        nameLast: a_user.nameLast,
+        email: a_user.email,
+        isAdmin: a_user.isAdmin,
+        isRepoAdmin: a_user.isRepoAdmin
+    }
+    if ( a_user.options ){
+       user.opts = JSON.parse( a_user.options );
+    }
 }
 
 export function clearUser(){

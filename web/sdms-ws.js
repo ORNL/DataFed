@@ -2,13 +2,26 @@
 
 'use strict';
 
+/*
+This is the DataFed web server that provides both the web portal application (/ui) and the web API (/api).
+User authentication is provided by Globus Auth API, and session information is stored in TWO cookies:
+
+- 'connect.sid' - The session cookie itself
+- 'datafed-theme' - User's preferred theme
+
+*/
+
+if ( process.argv.length != 3 ){
+    throw "Invalid arguments, usage: sdms-ws config-file";
+}
+
 const express = require('express'); // For REST api
+var session = require('express-session');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser'); // cookies for user state
 var https = require('https');
 const constants = require('crypto');
 const helmet = require('helmet');
-//var request = require('request');
 const fs = require('fs');
 const ini = require('ini');
 var protobuf = require("protobufjs");
@@ -20,24 +33,27 @@ const ClientOAuth2 = require('client-oauth2');
 
 const MAX_CTX = 50;
 
-var g_host;
-var g_port;
-var g_server_key_file;
-var g_server_cert_file;
-var g_server_chain_file;
-var g_test;
-var g_msg_by_id = {};
-var g_msg_by_name = {};
-var g_core_sock = zmq.socket('dealer');
-var g_core_serv_addr;
-var g_globus_auth, g_globus_auth_cat;
-var g_oauth_credentials, g_oauth_credentials_cat;
-var g_ctx = new Array( MAX_CTX );
-var g_ctx_next = 0;
-var g_client_id;
-var g_client_secret;
-var ready_start = 4;
-var g_version,
+var g_host,
+    g_port,
+    g_server_key_file,
+    g_server_cert_file,
+    g_server_chain_file,
+    g_server_secret,
+    g_test,
+    g_msg_by_id = {},
+    g_msg_by_name = {},
+    g_core_sock = zmq.socket('dealer'),
+    g_core_serv_addr,
+    g_globus_auth,
+    g_oauth_credentials,
+    g_ctx = new Array( MAX_CTX ),
+    g_ctx_next = 0,
+    g_client_id,
+    g_client_secret,
+    //g_cookie_opts = { httpOnly: true, maxAge: 604800000, secure: true, sameSite: "lax" },
+    //g_cookie_ui_opts = { httpOnly: true, maxAge: 604800000, secure: true, sameSite: "lax", path: "/ui" },
+    g_ready_start = 4,
+    g_version,
     g_ver_major,
     g_ver_mapi_major,
     g_ver_mapi_minor,
@@ -47,26 +63,18 @@ const nullfr = Buffer.from([]);
 
 g_ctx.fill(null);
 
-function defaultSettings(){
-    g_host = "sdms.ornl.gov";
-    g_port = 443;
-    g_server_key_file = '/etc/datafed/datafed-web-key.pem';
-    g_server_cert_file = '/etc/datafed/datafed-web-cert.pem';
-    g_server_chain_file = '/etc/datafed/DigiCertSHA2SecureServerCA.pem';
-    g_core_serv_addr = 'tcp://sdms.ornl.gov:7513';
-    g_test = false;
-}
 
 function startServer(){
-    console.log( "Host:", g_host );
-    console.log( "Port:", g_port );
-    console.log( "Server key file:", g_server_key_file );
-    console.log( "Server cert file:", g_server_cert_file );
-    console.log( "Server chain file:", g_server_chain_file );
-    console.log( "Core server addr:", g_core_serv_addr );
-    console.log( "Client ID:", g_client_id );
-    console.log( "Client Secret:", g_client_secret );
-    console.log( "Test mode:", g_test );
+    console.log( "  Host:", g_host );
+    console.log( "  Port:", g_port );
+    console.log( "  Server key file:", g_server_key_file );
+    console.log( "  Server cert file:", g_server_cert_file );
+    console.log( "  Server chain file:", g_server_chain_file );
+    console.log( "  Server secret:", g_server_secret );
+    console.log( "  Core server addr:", g_core_serv_addr );
+    console.log( "  Client ID:", g_client_id );
+    console.log( "  Client Secret:", g_client_secret );
+    console.log( "  Test mode:", g_test );
 
     g_core_sock.connect( g_core_serv_addr );
 
@@ -92,17 +100,6 @@ function startServer(){
         
             g_globus_auth = new ClientOAuth2( g_oauth_credentials );
 
-            g_oauth_credentials_cat = {
-                clientId: g_client_id,
-                clientSecret: g_client_secret,
-                authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
-                accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
-                redirectUri: 'https://'+g_host+':'+g_port+'/ui/catalog/authn',
-                scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
-            };
-        
-            g_globus_auth_cat = new ClientOAuth2( g_oauth_credentials_cat );
-
             var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
             var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
             var chain = fs.readFileSync( g_server_chain_file, 'utf8');
@@ -118,15 +115,31 @@ function startServer(){
     });
 }
 
+loadSettings();
+
 express.static.mime.define({'application/javascript': ['js']});
 
 app.use( express.static( __dirname + '/static' ));
 // body size limit = 100*max metadata size, which is 100 Kb
 app.use( bodyParser.json({ type: 'application/json', limit: '1048576'}));
 app.use( bodyParser.text({ type: 'text/plain', limit: '1048576'}));
-app.use( cookieParser() );
-app.use( helmet({hsts:{maxAge:31536000}}) );
-app.use(function(req, res, next) {
+// Setup session management and cookie settings
+app.use( session({
+    secret: g_server_secret,
+    resave: false,
+    rolling: true,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        maxAge: 604800000,
+        secure: true,
+        sameSite: "lax"
+    }
+}));
+
+app.use( cookieParser( g_server_secret ));
+app.use( helmet({ hsts: { maxAge: 31536000 }}));
+app.use( function( req, res, next ){
     res.setHeader('Content-Language','en-US');
     next();
 });
@@ -134,125 +147,113 @@ app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
 
 
-app.get('/', (a_request, a_response) => {
-    console.log("Initial site access from ", a_request.connection.remoteAddress );
-
-    if ( a_request.cookies['sdms'] && a_request.cookies['sdms-user'])
-    a_response.redirect( '/ui/main' );
-        else
-        a_response.redirect('/ui');
-});
-
-
-app.get('/ui/doi/:doiNum*', (a_request, a_response) => {
-    console.log("get /doi");
-
-    var theme = a_request.cookies['sdms-theme']|| "light";
-    var doi = (a_request.params.doiNum + a_request.params[0]).toLowerCase();
-    a_response.render('doi',{doi: doi,theme:theme,version:g_version,test_mode:g_test});
-});
-
-app.get('/ui/catalog', (a_request, a_response) => {
-    console.log("get /catalog");
-
-    var theme = a_request.cookies['sdms-theme']|| "light";
-    a_response.render('catalog',{theme:theme,version:g_version,test_mode:g_test});
-});
-
-app.get('/ui', (a_request, a_response) => {
-    console.log("get /ui");
-    //console.log( "sdms cookie:", a_request.cookies['sdms'] );
-
-    if ( a_request.cookies['sdms'] && a_request.cookies['sdms-user'] )
-        a_response.redirect( '/ui/main' );
+app.get('/', (a_req, a_resp) => {
+    if ( a_req.session.uid && a_req.session.reg )
+        a_resp.redirect( '/ui/main' );
     else{
-        var theme = a_request.cookies['sdms-theme']|| "light";
-        a_response.render('index',{theme:theme,version:g_version,test_mode:g_test});
+        a_resp.redirect( '/ui/welcome' );
     }
 });
 
-app.get('/ui/main', (a_request, a_response) => {
-    console.log("get /ui/main");
-    //console.log( "sdms cookie:", a_request.cookies['sdms'] );
+app.get('/ui/welcome', (a_req, a_resp) => {
+    if ( a_req.session.uid && a_req.session.reg )
+        a_resp.redirect( '/ui/main' );
+    else{
+        console.log("Access welcome from", a_req.connection.remoteAddress );
 
-    if ( a_request.cookies['sdms'] ){
-        var theme = a_request.cookies['sdms-theme'] || "light";
-        a_response.render( 'main',{theme:theme,version:g_version,test_mode:g_test});
-    }else
-        a_response.redirect( '/ui' );
+        var theme = a_req.cookies['datafed-theme']|| "light";
+        console.log("Theme:",theme);
+        a_resp.render('index',{theme:theme,version:g_version,test_mode:g_test});
+    }
 });
 
-app.get('/ui/docs', (a_request, a_response) => {
-    var theme = a_request.cookies['sdms-theme'] || "light";
-    a_response.render( 'docs',{theme:theme,version:g_version,test_mode:g_test});
+app.get('/ui/main', (a_req, a_resp) => {
+    if ( a_req.session.uid && a_req.session.reg ){
+        console.log( "Access main (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
+
+        var theme = a_req.cookies['datafed-theme'] || "light";
+        a_resp.render( 'main',{user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test});
+    }else{
+        // datafed-user cookie not set, so clear datafed-id before redirect
+        //a_resp.clearCookie( 'datafed-id' );
+        a_resp.redirect( '/' );
+    }
 });
 
-app.get('/ui/docs/api', (a_request, a_response) => {
-    var theme = a_request.cookies['sdms-theme'] || "light";
-    a_response.render( 'docs_api',{theme:theme,version:g_version,test_mode:g_test});
+/* This is the post-Globus registration page where user may enter a password before continuing to main
+*/
+app.get('/ui/register', (a_req, a_resp) => {
+    if ( !a_req.session.uid ){
+        a_resp.redirect( '/' );
+    } else if ( a_req.session.reg ){
+        a_resp.redirect( '/ui/main' );
+    } else {
+        console.log( "Registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
+
+        var theme = a_req.cookies['datafed-theme'] || "light";
+        //a_req.session.name = userinfo.name;
+        //a_req.session.email = userinfo.email;
+        //a_req.session.uuids = userinfo.identities_set;
+        //a_req.session.acc_tok = xfr_token.access_token;
+        //a_req.session.ref_tok = xfr_token.refresh_token;
+        //a_req.session.redirect = a_redirect_url;
+
+        a_resp.render('register', { uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
+    }
 });
 
-app.get('/ui/register', (a_request, a_response) => {
-    //console.log("get /ui/register", a_request.query.acc_tok, a_request.query.ref_tok );
-    if ( !a_request.cookies['sdms-user'] )
-        a_response.redirect( '/' );
+/* This is the "login/register" URL from welcome page.
+User should be unknown at this point (if session were valid, would be redirected to /ui/main).
+This is the beginning of the OAuth loop through Globus Auth and will redirect to /ui/authn
+*/
+app.get('/ui/login', (a_req, a_resp) => {
+    if ( a_req.session.uid && a_req.session.reg ){
+        a_resp.redirect( '/ui/main' );
+    } else {
+        console.log( "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "log-in" );
 
-    var theme = a_request.cookies['sdms-theme'] || "light";
-
-    a_response.render('register', { acc_tok: a_request.query.acc_tok, ref_tok: a_request.query.ref_tok,
-        acc_tok_ttl: a_request.query.acc_tok_ttl, uid: a_request.query.uid, uname: a_request.query.uname,
-        redir: a_request.query.redir, theme: theme, version: g_version, test_mode: g_test });
+        var uri = g_globus_auth.code.getUri();
+        a_resp.redirect(uri);
+    }
 });
 
-app.get('/ui/login', (a_request, a_response) => {
-    console.log("get /ui/login");
 
-    var uri = g_globus_auth.code.getUri();
-    a_response.redirect(uri);
+app.get('/ui/logout', (a_req, a_resp) => {
+    console.log( "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "logout" );
+
+    //a_resp.clearCookie( 'datafed-id' );
+    //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
+    a_req.session.destroy( function(){
+        a_resp.clearCookie( 'connect.sid' );
+        a_resp.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=https://"+g_host);
+    });
 });
 
-app.get('/ui/login/retry', (a_request, a_response) => {
-    console.log("get /ui/login");
-
-    a_response.clearCookie( 'sdms' );
-    a_response.clearCookie( 'sdms-user', { path: "/ui" } );
-
-    var uri = g_globus_auth.code.getUri();
-    a_response.redirect(uri);
+app.get('/ui/error', (a_req, a_resp) => {
+    a_resp.render('error',{theme:"light",version:g_version,test_mode:g_test});
 });
 
-app.get('/ui/catalog/login', (a_request, a_response) => {
-    console.log("get /ui/catalog/login");
+/* This is the OAuth redirect URL after a user authenticates with Globus
+*/
+app.get('/ui/authn', ( a_req, a_resp ) => {
+    if ( a_req.session.uid && a_req.session.reg ){
+        a_resp.redirect( '/ui/main' );
+    } else {
+        console.log( "Globus authenticated - log in to DataFed" );
 
-    var uri = g_globus_auth_cat.code.getUri();
-    a_response.redirect(uri);
+        doLogin( a_req, a_resp, g_globus_auth, "/ui/main" );
+    }
 });
 
-app.get('/ui/logout', (a_request, a_response) => {
-    console.log("get /ui/logout");
 
-    a_response.clearCookie( 'sdms' );
-    a_response.clearCookie( 'sdms-user', { path: "/ui" } );
-    a_response.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=https://"+g_host);
-});
-
-app.get('/ui/error', (a_request, a_response) => {
-    //console.log("get /ui/error");
-    var theme = a_request.cookies['sdms-theme'] || "light";
-    a_response.render('error',{theme:theme,version:g_version,test_mode:g_test});
-});
-
-function doLogin( a_request, a_response, a_auth, a_redirect_url ){
-    console.log( 'doLogin', a_redirect_url );
-
-    // TODO Need to understand error flow here - there doesn't seem to be anhy error handling
-    
-    a_auth.code.getToken( a_request.originalUrl ).then( function( client_token ) {
-        //console.log( 'client token:', client_token );
-        console.log( 'got client token' );
-
+/* This function is called after Globus authentication and loads Globus tokens and identity information.
+The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
+the registration page.
+*/
+function doLogin( a_req, a_resp, a_auth, a_redirect_url ){
+    // Ask Globus for client token (Globus knows user somehow - cookies?)
+    a_auth.code.getToken( a_req.originalUrl ).then( function( client_token ) {
         var xfr_token = client_token.data.other_tokens[0];
-        //console.log( 'xfr token:', xfr_token );
 
         const opts = {
             hostname: 'auth.globus.org',
@@ -266,6 +267,7 @@ function doLogin( a_request, a_response, a_auth, a_redirect_url ){
             }
         };
 
+        // Request user info from token
         const req = https.request( opts, (res) => {
             var data = '';
 
@@ -274,100 +276,125 @@ function doLogin( a_request, a_response, a_auth, a_redirect_url ){
             });
 
             res.on('end', () => {
-                console.log('tok introspect done');
+                //console.log('tok introspect done, data:', data );
 
                 if ( res.statusCode >= 200 && res.statusCode < 300 ){
-                    var userinfo = JSON.parse( data );
-                    userinfo.uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+                    var userinfo = JSON.parse( data ),
+                        uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+                        /*user_ck = {
+                            uid: userinfo.username.substr( 0, userinfo.username.indexOf( "@" )),
+                            name: userinfo.name,
+                            email: userinfo.email,
+                            uuids: userinfo.identities_set
+                        };*/
 
-                    console.log( 'user', userinfo.uid, 'authenticated, verifying SDMS account' );
+                    // Verify datafed is in audience
 
-                    sendMessageDirect( "UserFindByUUIDsRequest", "sdms", { uuid: userinfo.identities_set }, function( reply ) {
-                        //console.log( "UserFindByUUIDsRequest reply:", reply );
+                    console.log( 'User', uid, 'authenticated, verifying DataFed account' );
 
+
+                    sendMessageDirect( "UserFindByUUIDsRequest", "sdms-ws", { uuid: userinfo.identities_set }, function( reply ) {
                         if ( !reply  ) {
-                            console.log("User find error." );
-                            a_response.redirect( "/ui/error" );
+                            console.log( "Error - Find user call failed." );
+                            //a_resp.clearCookie( 'datafed-id' );
+                            //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
+                            a_resp.redirect( "/ui/error" );
                         } else if ( !reply.user || !reply.user.length ) {
                             // Not registered
-                            console.log("User not registered", userinfo );
-                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-                            a_response.redirect( "/ui/register?acc_tok=" + encodeURIComponent( xfr_token.access_token ) + "&ref_tok=" + encodeURIComponent( xfr_token.refresh_token ) + "&acc_tok_ttl=" + encodeURIComponent( xfr_token.expires_in ) + "&uid=" + encodeURIComponent( userinfo.uid ) + "&uname=" + encodeURIComponent( userinfo.name ) + "&redir=" + encodeURIComponent( a_redirect_url ));
+                            console.log( "User", uid, "not registered" );
+
+                            // Store all data need for registration in session (temporarily)
+                            a_req.session.uid = uid;
+                            a_req.session.name = userinfo.name;
+                            a_req.session.email = userinfo.email;
+                            a_req.session.uuids = userinfo.identities_set;
+                            a_req.session.acc_tok = xfr_token.access_token;
+                            a_req.session.acc_tok_ttl = xfr_token.expires_in;
+                            a_req.session.ref_tok = xfr_token.refresh_token;
+                            a_req.session.redirect = a_redirect_url;
+
+                            a_resp.redirect( "/ui/register" );
                         } else {
-                            console.log( 'user', userinfo.uid, 'verified' );
-                            // Registered, save access token
-                            userinfo.acc_tok = xfr_token.access_token;
-                            userinfo.ref_tok = xfr_token.refresh_token;
-                            setAccessToken( userinfo.uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
+                            console.log( 'User', uid, 'verified, acc:', xfr_token.access_token, ", ref:", xfr_token.refresh_token, ", exp:", xfr_token.expires_in );
+
+                            // Store only data needed for active session
+                            a_req.session.uid = uid;
+                            a_req.session.reg = true;
+
+                            // Refresh Globus access & refresh tokens to Core/DB
+                            setAccessToken( uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
 
                             // TODO Account may be disable from SDMS (active = false)
-                            a_response.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
-                            a_response.cookie( 'sdms-user', JSON.stringify( userinfo ), { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
-                            console.log("auth redir",a_redirect_url);
-                            a_response.redirect( a_redirect_url );
+
+                            a_resp.redirect( a_redirect_url );
                         }
                     });
                 }else{
-                    a_response.clearCookie( 'sdms' );
-                    a_response.clearCookie( 'sdms-user', { path: "/ui" } );
-                    a_response.redirect( "/ui/error" );
+                    // TODO - Not sure this is required - req.on('error'...) should catch this?
+                    console.log("Error: Globus introspection failed. User token:", xfr_token );
+                    //a_resp.clearCookie( 'datafed-id' );
+                    //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
+                    a_resp.redirect( "/ui/error" );
                 }
             });
         });
           
         req.on('error', (e) => {
-            a_response.clearCookie( 'sdms' );
-            a_response.clearCookie( 'sdms-user', { path: "/ui" } );
-            a_response.redirect( "/ui/error" );
+            console.log("Error: Globus introspection failed. User token:", xfr_token );
+            //a_resp.clearCookie( 'datafed-id' );
+            //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
+            a_resp.redirect( "/ui/error" );
         });
 
         req.write( 'token=' + client_token.accessToken + '&include=identities_set' );
         req.end();
     }, function( reason ){
-        console.log( "getToken failed:", reason );
+        console.log("Error: Globus get token failed. Reason:", reason );
+        //a_resp.clearCookie( 'datafed-id' );
+        //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
+        a_resp.redirect( "/ui/error" );
     });
 }
 
-app.get('/ui/authn', ( a_request, a_response ) => {
-    console.log( '/ui/authn', a_request.originalUrl );
-
-    doLogin( a_request, a_response, g_globus_auth, "/ui/main" );
-});
-
-app.get('/ui/catalog/authn', ( a_request, a_response ) => {
-    console.log( '/ui/catalog/authn', g_globus_auth_cat, a_request.originalUrl );
-
-    doLogin( a_request, a_response, g_globus_auth_cat, "/ui/catalog" );
-});
 
 app.get('/ui/do_register', ( a_req, a_resp ) => {
-    console.log( 'get /ui/do_register' );
-    var userinfo = JSON.parse( a_req.cookies[ 'sdms-user' ] );
-    console.log( 'userinfo', userinfo );
-    //var uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+    if ( a_req.session.uid && a_req.session.reg ){
+        a_resp.redirect( '/ui/main' );
+    } else {
+        console.log( 'Registering user', a_req.session.uid );
 
-    sendMessageDirect( "UserCreateRequest", "sdms", { uid: userinfo.uid, password: a_req.query.pw, name: userinfo.name, email: userinfo.email, uuid: userinfo.identities_set }, function( reply ) {
-        if ( !reply ) {
-            console.log("empty reply");
-            a_resp.status(500).send( "Empty reply" );
-        } else if ( reply.errCode ) {
-            if ( reply.errMsg ) {
-                console.log("error", reply.errMsg);
-                a_resp.status(500).send( reply.errMsg );
+        sendMessageDirect( "UserCreateRequest", "sdms", { uid: a_req.session.uid, password: a_req.query.pw, name: a_req.session.name, email: a_req.session.email, uuid: a_req.session.uuids }, function( reply ) {
+            if ( !reply ) {
+                console.log( "Error - User create failed: empty reply" );
+                a_resp.status(500).send( "Error - User create failed (server did not respond)" );
+            } else if ( reply.errCode ) {
+                if ( reply.errMsg ) {
+                    console.log( "Error - User create failed:", reply.errMsg );
+                    a_resp.status(500).send( "Error - User create failed: " + reply.errMsg );
+                } else {
+                    a_resp.status(500).send( "Error - User create failed: " + reply.errCode );
+                    console.log("Error - User create failed: ", reply.errCode);
+                }
             } else {
-                a_resp.status(500).send( "error code: " + reply.errCode );
-                console.log("error", reply.errCode);
+                // Save access token
+                setAccessToken( a_req.session.uid, a_req.session.acc_tok, a_req.session.ref_tok, a_req.session.acc_tok_ttl );
+
+                // Set session as registered user
+                a_req.session.reg = true;
+
+                // Remove data not needed for active session
+                delete a_req.session.name;
+                delete a_req.session.email;
+                delete a_req.session.uuids;
+                delete a_req.session.acc_tok;
+                delete a_req.session.acc_tok_ttl;
+                delete a_req.session.ref_tok;
+                delete a_req.session.uuids;
+    
+                a_resp.redirect( a_req.session.redirect );
             }
-        } else {
-            // Save access token
-            setAccessToken( userinfo.uid, a_req.query.acc_tok, a_req.query.ref_tok, a_req.query.acc_tok_ttl );
-            userinfo.acc_tok = a_req.query.acc_tok;
-            userinfo.ref_tok = a_req.query.ref_tok;
-            a_resp.cookie( 'sdms', userinfo.uid, { httpOnly: true, maxAge: 31536000000 /*1 year in msec */ });
-            a_resp.cookie( 'sdms-user', JSON.stringify( userinfo ), { path:"/ui", maxAge: 31536000000 /*1 year in msec */ });
-            a_resp.redirect( a_req.query.redir );
-        }
-    });
+        });
+    }
 });
 
 app.get('/api/usr/find/by_uuids', ( a_req, a_resp ) => {
@@ -634,9 +661,10 @@ app.post('/api/dat/search', ( a_req, a_resp ) => {
 });
 
 app.post('/api/dat/create', ( a_req, a_resp ) => {
-    //console.log( "dat create", a_req.body );
-
     sendMessage( "RecordCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        if ( reply.data && reply.data.length ){
+            console.log( "User", a_req.session.uid, "- data create, id:", reply.data[0].id );
+        }
         a_resp.send(reply);
     });
 });
@@ -651,7 +679,9 @@ app.post('/api/dat/create/batch', ( a_req, a_resp ) => {
 app.post('/api/dat/update', ( a_req, a_resp ) => {
     //console.log( "dat update", a_req.body );
     sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
-        //console.log("rec update:",reply);
+        if ( reply.data && reply.data.length ){
+            console.log( "User", a_req.session.uid, "- data update, id:", reply.data[0].id );
+        }
         a_resp.send(reply);
     });
 });
@@ -854,6 +884,9 @@ app.get('/api/acl/view', ( a_req, a_resp ) => {
 
 app.get('/api/acl/update', ( a_req, a_resp ) => {
     sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules }, a_req, a_resp, function( reply ) {
+        if ( reply.rule && reply.rule.length ){
+            console.log( "User", a_req.session.uid, "- ACL update, id:", a_req.query.id, a_req.query.rules );
+        }
         a_resp.send(reply);
     });
 });
@@ -1265,7 +1298,7 @@ app.get('/api/top/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/top/search', ( a_req, a_resp ) => {
-    console.log("top srch",a_req.query.phrase);
+    //console.log("top srch",a_req.query.phrase);
     sendMessage( "TopicSearchRequest", {phrase:a_req.query.phrase}, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
@@ -1310,7 +1343,7 @@ app.post('/api/sch/delete', ( a_req, a_resp ) => {
 app.get('/ui/ep/view', ( a_req, a_resp ) => {
     //console.log("/ui/ep/view", a_req.query.ep );
 
-    //var userinfo = JSON.parse(a_req.cookies['sdms-user']);
+    //var userinfo = JSON.parse(a_req.cookies['datafed-user']);
 
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
         //console.log("token reply:", reply );
@@ -1447,25 +1480,26 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
 
 
 app.get('/ui/theme/load', ( a_req, a_resp ) => {
-    var theme = a_req.cookies['sdms-theme'];
+    var theme = a_req.cookies['datafed-theme'];
     a_resp.send( theme );
 });
 
 app.get('/ui/theme/save', ( a_req, a_resp ) => {
-    a_resp.cookie( 'sdms-theme', a_req.query.theme, { path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
+    a_resp.cookie( 'datafed-theme', a_req.query.theme, { httpOnly: true, path: "/ui", maxAge: 31536000000 /*1 year in msec */ });
     a_resp.send("{\"ok\":true}");
 });
 
 
 function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
-    //var ts = (Date.now()/1000) + a_expires_sec;
-    sendMessageDirect( "UserSetAccessTokenRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expires_in: a_expires_sec }, function( reply ){
-
+    console.log( "setAccessToken",a_uid, a_acc_tok, a_ref_tok, a_expires_sec);
+    sendMessageDirect( "UserSetAccessTokenRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec }, function( reply ){
+        // Should be an AckReply
+        console.log("reply:",reply.$type);
     });
 }
 
 
-function allocRequestContext( a_response, a_callback ) {
+function allocRequestContext( a_resp, a_callback ) {
     var ctx = g_ctx_next;
 
     // At max ctx, must search for first free slot
@@ -1473,10 +1507,10 @@ function allocRequestContext( a_response, a_callback ) {
         ctx = g_ctx.indexOf( null );
         if ( ctx == -1 ) {
             console.log("ERROR: out of msg contexts!!!");
-            if ( a_response ) {
+            if ( a_resp ) {
                 console.log("SEND FAIL");
-                a_response.status( 503 );
-                a_response.send( "Server too busy" );
+                a_resp.status( 503 );
+                a_resp.send( "DataFed server busy." );
             }
         }
     }
@@ -1492,9 +1526,11 @@ function allocRequestContext( a_response, a_callback ) {
 
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
-    var client = a_req.cookies[ 'sdms' ];
-    if ( !client )
-        client = "anon_";
+    var client = a_req.session.uid;
+    if ( !client ){
+        console.log("NO AUTH :", a_msg_name, ":", a_req.connection.remoteAddress );
+        throw "Not Authenticated";
+    }
 
     a_resp.setHeader('Content-Type', 'application/json');
 
@@ -1527,15 +1563,15 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
         g_ctx[ctx] = function( a_reply ) {
             if ( !a_reply ) {
-                console.log("empty reply");
+                console.log("Error - reply handler: empty reply");
                 a_resp.status(500).send( "Empty reply" );
             } else if ( a_reply.errCode ) {
                 if ( a_reply.errMsg ) {
-                    console.log("error", a_reply.errMsg);
+                    console.log("Error - reply handler:", a_reply.errMsg);
                     a_resp.status(500).send( a_reply.errMsg );
                 } else {
                     a_resp.status(500).send( "error code: " + a_reply.errCode );
-                    console.log("error", a_reply.errCode);
+                    console.log("Error - reply handler:", a_reply.errCode);
                 }
             } else {
                 a_cb( a_reply );
@@ -1560,7 +1596,7 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         throw "Invalid message type: " + a_msg_name;
 
     allocRequestContext( null, function( ctx ){
-        console.log("sendMsgDir", a_msg_name, ctx );
+        //console.log("sendMsgDir", a_msg_name, ctx );
 
         var msg_buf = msg.encode(a_msg_data).finish();
         //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
@@ -1622,7 +1658,7 @@ protobuf.load("Version.proto", function(err, root) {
     g_version = g_ver_major + "." + g_ver_mapi_major + "." + g_ver_mapi_minor + ":" + g_ver_server;
 
     console.log('Running Version',g_version);
-    if ( --ready_start == 0 )
+    if ( --g_ready_start == 0 )
         startServer();
 });
 
@@ -1637,7 +1673,7 @@ protobuf.load("SDMS_Anon.proto", function(err, root) {
         throw "Missing Protocol enum in SDMS.Anon proto file";
 
     processProtoFile( msg );
-    if ( --ready_start == 0 )
+    if ( --g_ready_start == 0 )
         startServer();
 });
 
@@ -1652,12 +1688,12 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
         throw "Missing Protocol enum in SDMS.Auth proto file";
 
     processProtoFile( msg );
-    if ( --ready_start == 0 )
+    if ( --g_ready_start == 0 )
         startServer();
 });
 
 process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    console.log( 'Error - unhandled rejection at: Promise', p, 'reason:', reason );
 });
 
 g_core_sock.on('message', function( delim, frame, msg_buf ) {
@@ -1703,11 +1739,17 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
     }
 });
 
-defaultSettings();
+function loadSettings(){
+    g_host = "sdms.ornl.gov";
+    g_port = 443;
+    g_server_key_file = '/etc/datafed/datafed-web-key.pem';
+    g_server_cert_file = '/etc/datafed/datafed-web-cert.pem';
+    g_server_chain_file = '/etc/datafed/DigiCertSHA2SecureServerCA.pem';
+    g_core_serv_addr = 'tcp://sdms.ornl.gov:7513';
+    g_test = false;
 
-if ( process.argv.length > 2 ){
-    // Only argument supported is path to a configuration file
     console.log( "Reading configuration from file", process.argv[2] );
+
     try{
         var config = ini.parse(fs.readFileSync(process.argv[2],'utf-8'));
         if ( config.server ){
@@ -1716,6 +1758,7 @@ if ( process.argv.length > 2 ){
             g_server_key_file = config.server.key_file || g_server_key_file;
             g_server_cert_file = config.server.cert_file || g_server_cert_file;
             g_server_chain_file = config.server.chain_file || g_server_chain_file;
+            g_server_secret = config.server.secret;
             g_test = config.server.test || g_test;
         }
         if ( config.oauth ){
@@ -1728,10 +1771,14 @@ if ( process.argv.length > 2 ){
     }catch( e ){
         console.log( "Could not open/parse configuration file", process.argv[2] );
         console.log( e.message );
+        throw e;
     }
-    if ( --ready_start == 0 )
-        startServer();
-}else{
-    if ( --ready_start == 0 )
-        startServer();
+
+    if ( !g_server_secret ){
+        throw "Server session secret not set.";
+    }
 }
+
+
+if ( --g_ready_start == 0 )
+    startServer();

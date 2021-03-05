@@ -26,7 +26,14 @@ TaskWorker::~TaskWorker()
 {
 }
 
-
+/**
+ * @brief Thread method for TaskWorker task processing.
+ *
+ * Basic loop of getting a task from TaskMgr, processing, then reporting back to TaskMgr.
+ * All steps of a task are processed unless a non-permanent failure occurs. Task control
+ * objects (Task*) are released by the TaskMgr when either retryTask or getNextTask are
+ * called.
+ */
 void
 TaskWorker::workerThread()
 {
@@ -101,9 +108,8 @@ TaskWorker::workerThread()
                 default:
                     EXCEPT_PARAM(1,"Invalid task command: " << cmd );
                 }
-                //DL_DEBUG("sleep");
-                //sleep(10);
 
+                // Done processing - exit inner while loop
                 if ( cmd == TC_STOP )
                     break;
 
@@ -112,11 +118,16 @@ TaskWorker::workerThread()
                     if ( m_mgr.retryTask( m_task ))
                     {
                         DL_DEBUG("Task worker " << id() << " aborting task " << m_task->task_id );
-                        //abortTask( "Maximum task retry period exceeded." );
                         err_msg = "Maximum task retry period exceeded.";
+                        // We give up, exit inner while loop and delete task
+                        break;
                     }
-
-                    break;
+                    else
+                    {
+                        // Done for now - TaskMgr owns task, so clear ptr to prevent deletion, then exit inner while loop
+                        m_task = 0;
+                        break;
+                    }
                 }
             }
             catch( TraceException & e )
@@ -131,36 +142,16 @@ TaskWorker::workerThread()
             }
 
             task_cmd.clear();
+        } // End of inner while loop
+
+        // Free task only if set
+        if ( m_task )
+        {
+            delete m_task;
+            m_task = 0;
         }
-    }
-}
 
-
-void
-TaskWorker::abortTask( const std::string & a_msg )
-{
-    DL_DEBUG("Task worker " << id() << " aborting task " << m_task->task_id );
-
-    try
-    {
-        libjson::Value reply;
-
-        m_db.taskAbort( m_task->task_id, a_msg, reply );
-
-        m_mgr.newTasks( reply );
-    }
-    catch( TraceException & e )
-    {
-        DL_ERROR("TaskWorker::abortTask - EXCEPTION: " << e.toString() );
-    }
-    catch( exception & e )
-    {
-        DL_ERROR("TaskWorker::abortTask - EXCEPTION: " << e.what() );
-    }
-    catch(...)
-    {
-        DL_ERROR("TaskWorker::abortTask - EXCEPTION!");
-    }
+    } // End of outer while loop
 }
 
 
@@ -168,7 +159,7 @@ bool
 TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 {
     DL_INFO( "Task " << m_task->task_id << " cmdRawDataTransfer" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "params: " << a_task_params.toString() );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -207,11 +198,14 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
     string ref_tok = obj.getString( "ref_tok" );
     uint32_t expires_in = obj.getNumber( "acc_tok_exp_in" );
 
-    if ( expires_in < 300 )
+    DL_INFO( ">>>> Token Expires in: " << expires_in );
+
+    if ( expires_in < 3600 )
     {
-        DL_INFO( "Refreshing access token for " << uid );
+        DL_INFO( "Refreshing access token for " << uid << " (expires in " << expires_in << ")" );
 
         m_glob.refreshAccessToken( ref_tok, acc_tok, expires_in );
+        DL_INFO( "Save user access token to DB");
         m_db.setClient( uid );
         m_db.userSetAccessToken( acc_tok, expires_in, ref_tok );
     }
@@ -268,7 +262,8 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 
         if ( xfr_status == GlobusAPI::XS_FAILED )
             EXCEPT( 1, err_msg );
-    }else
+    }
+    else
     {
         DL_DEBUG( "No files to transfer" );
     }
@@ -291,18 +286,32 @@ TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
     const string &                  repo_id = obj.getString( "repo_id" );
     const string &                  path = obj.getString( "repo_path" );
     const Value::Array &            ids = obj.getArray( "ids" );
+    Value::ArrayConstIter           id = ids.begin();
+    size_t                          i = 0, j, sz = ids.size();
+    size_t                          chunk = Config::getInstance().repo_chunk_size;
 
-    for ( Value::ArrayConstIter id = ids.begin(); id != ids.end(); id++ )
+    // Issue #603 - break large requests into chunks to reduce likelihood of timeouts
+
+
+    while ( i < sz )
     {
-        loc = del_req.add_loc();
-        loc->set_id( id->asString() );
-        loc->set_path( path + id->asString().substr(2) );
+        j = min( i + chunk, sz );
+
+        for ( ; i < j; i++, id++ )
+        {
+            loc = del_req.add_loc();
+            loc->set_id( id->asString() );
+            loc->set_path( path + id->asString().substr(2) );
+        }
+
+        if ( repoSendRecv( repo_id, del_req, reply ))
+        {
+            return true;
+        }
+
+        delete reply;
+        del_req.clear_loc();
     }
-
-    if ( repoSendRecv( repo_id, del_req, reply ))
-        return true;
-
-    delete reply;
 
     return false;
 }
@@ -445,7 +454,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
 
     MsgBuf buffer;
 
-    if ( !comm.recv( buffer, false, 10000 ))
+    if ( !comm.recv( buffer, false, config.repo_timeout ))
     {
         DL_ERROR( "Timeout waiting for size response from repo " << a_repo_id );
         cerr.flush();

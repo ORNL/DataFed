@@ -1,0 +1,21 @@
+[{
+    "id":"import-rec-1",
+    "title":"Import Record #1 (updated)",
+    "desc":"Nominal JSON file for testing record import. (updated)",
+    "keyw":"import,nominal,test,updated",
+    "md":{
+        "update":true
+    },
+    "doi":"doi/fake",
+    "data_url":"http://ipv4.download.thinkbroadband.com/5MB.zip"
+},{
+    "id":"import-rec-2",
+    "title":"Import Record #2 (updated)",
+    "desc":"Nominal JSON file for testing record import. (updated)",
+    "keyw":"import,nominal,test,updated",
+    "md":{
+        "update":true
+    },
+    "doi":"doi/fake2",
+    "data_url":"http://ipv4.download.thinkbroadband.com/5MB.zip"
+}]

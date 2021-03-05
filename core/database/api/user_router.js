@@ -126,7 +126,7 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('uid', joi.string().required(), "SDMS user ID (globus) for new user")
-.queryParam('password', joi.string().required(), "SDMS account password")
+.queryParam('password', joi.string().optional().allow(""), "SDMS account password")
 .queryParam('name', joi.string().required(), "Name")
 .queryParam('email', joi.string().optional(), "Email")
 .queryParam('options', joi.string().optional(), "Application options (JSON string)")
@@ -413,7 +413,7 @@ router.get('/token/set', function (req, res) {
                 else {
                     user_id = client._id;
                 }
-                console.log("updating tokens for", user_id, req.queryParams.access, req.queryParams.expires_in );
+                console.log("updating tokens for", user_id, "acc:", req.queryParams.access, "exp:", req.queryParams.expires_in );
                 var obj = { access: req.queryParams.access, refresh: req.queryParams.refresh, expiration: Math.floor(Date.now()/1000) + req.queryParams.expires_in };
                 g_db._update( user_id, obj, { keepNull: false });
             }
@@ -450,9 +450,12 @@ router.get('/token/get', function( req, res ) {
             result.refresh = user.refresh;
         if ( user.expiration ){
             var exp = user.expiration - Math.floor(Date.now()/1000);
-            result.expires_in = exp > 0 ? exp : 0;
-        }else
+            console.log("tok/get",Math.floor(Date.now()/1000),user.expiration,exp);
+            result.expires_in = ( exp > 0 ? exp : 0 );
+        }else{
+            console.log("tok/get - no expiration");
             result.expires_in = 0;
+        }
 
         res.send(result);
     } catch( e ) {
@@ -524,7 +527,7 @@ router.get('/view', function (req, res) {
         }
 
         if ( det_ok ){
-            var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) return v._key", { user: user._id } ).toArray();
+            var repos = g_db._query("for v in 1..1 inbound @user admin filter is_same_collection('repo',v) limit 1 return v._key", { user: user._id } ).toArray();
             if ( repos.length )
                 user.is_repo_admin = true;
 

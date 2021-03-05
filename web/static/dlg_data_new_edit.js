@@ -25,8 +25,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         encrypt_mode = 1,
         parent_coll;
     
-    //console.log("data:",a_data);
-
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
             <ul>\
@@ -243,6 +241,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             // Start transfer if source changed
             var tmp = $("#source_file").val().trim();
             if ( tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
+
                 api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, reply2 ){
                     if ( ok2 ){
                         util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
@@ -287,7 +286,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     return;
                 }
 
-                var obj = {},
+                var i,
+                    obj = {},
                     id,
                     type,
                     deps = [];
@@ -304,15 +304,27 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
-                    util.getUpdatedValue( jsoned.getValue(), a_data, obj, "metadata" );
+                    util.getUpdatedValueJSON( jsoned.getValue(), a_data, obj, "metadata" );
                     util.getUpdatedValue( $("#sch_id",frame).val(), a_data, obj, "schId" );
                     util.getUpdatedValue( $("#sch_ver",frame).val(), a_data, obj, "schVer" );
 
-                    // TODO Only assign tags if changed
                     obj.tags = tag_el.tagit("assignedTags");
 
                     if (( !obj.tags || obj.tags.length == 0 ) && a_data.tags && a_data.tags.length ){
                         obj.tagsClear = true;
+                    }else if ( obj.tags && a_data.tags && obj.tags.length == a_data.tags.length ){
+                        // TODO Only send tags if changed
+
+                        var same = true;
+                        for ( i in obj.tags ){
+                            if ( a_data.tags.indexOf( obj.tags[i] ) == -1 ){
+                                same = false;
+                                break;
+                            }
+                        }
+                        if ( same ){
+                            delete obj.tags;
+                        }
                     }
 
                     if ( a_data.doi ){
@@ -335,7 +347,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                     // Analyze changes to dependencies to generate add/rem lists
 
-                    var i, dep;
+                    var dep;
 
                     obj.depAdd = [];
                     obj.depRem = [];
@@ -376,10 +388,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                             return;
                         }
                     }
-
-                    //console.log("dep add:",obj.depAdd);
-                    //console.log("dep rem:",obj.depRem);
-                    console.log("upd:",obj);
 
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
@@ -446,7 +454,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     minLength: 3,
                     source: "/api/tag/autocomp"
                 },
-                caseSensitive: false
+                caseSensitive: false,
+                readOnly: ( a_mode == DLG_DATA_MODE_EDIT && ( a_upd_perms & model.PERM_WR_REC ) == 0 )?true:false
             });
         
             jsoned = ace.edit( $("#md",frame).get(0), {
@@ -525,6 +534,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         util.inputDisable( $("#title,#desc,#alias", frame ));
                         util.inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
                         $(".ref-row select", frame ).selectmenu("disable");
+                        // Apply disable style to tag input
+                        $('.ui-widget-content', tag_el ).addClass("ui-state-disabled"); 
                     }
 
                     if (( a_upd_perms & model.PERM_WR_DATA ) == 0 ){
@@ -541,9 +552,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }else{
                         $("#extension",frame).val(a_data.ext?a_data.ext:"");
                     }
-                    $("#doi",frame).val(a_data.doi);
-                    $("#data_url",frame).val(a_data.dataUrl);
-                    
+                    //$("#doi",frame).val(a_data.doi);
+                    //$("#data_url",frame).val(a_data.dataUrl);
                     /*if ( a_data.dataUrl ){
                         $("#published",frame).prop("checked",true);
                         $("#working_data",frame).hide();
@@ -573,7 +583,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 $("#extension",frame).val("(auto)").prop("disabled",true);
             }
 
-            $("#published",frame).checkboxradio().on( "change",function(ev){
+            /*$("#published",frame).checkboxradio().on( "change",function(ev){
                 var pub = $("#published",frame).prop("checked");
                 if ( pub ){
                     $("#working_data",frame).hide();
@@ -585,7 +595,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     $("#published_data",frame).hide();
                     util.inputEnable( $("#alias", frame ));
                 }
-            });
+            });*/
 
             $("#ext_auto",frame).checkboxradio().on( "change",function(ev){
                 var auto = $("#ext_auto",frame).prop("checked");

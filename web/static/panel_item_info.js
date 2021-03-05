@@ -16,7 +16,7 @@ var form = $("#sel_info_form"),
     schema_val_err = $("#schema_val_err"),
     data_md_tree = null,
     data_md_empty = true,
-    tree_empty_src = [{title:"<span style='color:#808080;margin-left:-1.4em;margin-top:-.5em'>(none)</span>", icon:false}],
+    tree_empty_src = [{title:"(none)", icon:false}],
     data_md_exp = {},
     note_active_tree = null,
     note_open_tree = null,
@@ -130,7 +130,7 @@ export function showSelectedInfo( node, cb ){
 export function showSelectedItemInfo( item ){
     var disabled = [];
 
-    console.log("show info",item);
+    //console.log("show info",item);
 
     if ( item && item.id ){
         if ( !tabs_parent_vis ){
@@ -148,7 +148,7 @@ export function showSelectedItemInfo( item ){
         cur_item_id = item.id;
 
         if ( item.desc ){
-            desc_div.html( marked( item.desc ) + "<hr>");
+            desc_div.html( marked( util.escapeHTML( item.desc )));
             desc_div.show();
         }else{
             //disabled.push(0);
@@ -185,6 +185,7 @@ export function getActiveItemID(){
 
 function showGeneralInfo( a_key, a_title ){
     $("#sel_info_icon").removeClass().addClass( "ui-icon ui-icon-" + (a_key?util.getKeyIcon( a_key ):"circle-help"));
+    // SEC: title does NOT need to be escaped - built in strings only
     title_div.html(a_title);
     if ( tabs_parent_vis ){
         tabs_parent.hide();
@@ -254,7 +255,7 @@ var tree_opts1 = {
                 entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> ";
             }
 
-            entry.title += note.title;
+            entry.title += util.escapeHTML( note.title );
 
             data.result.push( entry );
         }
@@ -358,6 +359,8 @@ function showSelectedNoteInfo( node ){
 
             date_ct.setTime(note.ct*1000);
             date_ut.setTime(note.ut*1000);
+
+            // >>>>>>>>>>>>>>>> CYBERSEC: ALL user-sourced data MUST be escaped <<<<<<<<<<<<<<<<
 
             html = "<div style='height:100%;overflow:auto'>";
 
@@ -581,7 +584,7 @@ function showSelectedItemForm( item ){
 
     $("#sel_info_icon").removeClass().addClass( item.id.startsWith("d/")?util.getDataIcon( item ):"ui-icon ui-icon-" + util.getKeyIcon( item.id ));
 
-    title_div.html( title );
+    title_div.text( title );
 
     //$("#sel_info_desc",form).text( item.desc );
 

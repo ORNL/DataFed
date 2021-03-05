@@ -38,7 +38,12 @@ size_t curlResponseWriteCB( char *ptr, size_t size, size_t nmemb, void *userdata
         return 0;
 
     size_t len = size*nmemb;
+    //cout << "curl app:" << len << ", ptr: " <<  userdata << endl;
+
     ((string*)userdata)->append( ptr, len );
+
+    //cout << "curl app OK" << endl;
+
     return len;
 }
 
