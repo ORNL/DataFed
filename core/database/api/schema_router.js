@@ -460,7 +460,7 @@ function updateSchemaRefs( a_sch ){
     // Schema has been created, revised, or updated
     // Find and update dependencies to other schemas (not versions)
 
-    // TODO This does not catch circular references
+    // TODO This does not catch circular references (issue #563)
 
     g_db.sch_dep.removeByExample({ _from: a_sch._id });
 
@@ -469,24 +469,29 @@ function updateSchemaRefs( a_sch ){
     parseProps( a_sch.def.properties, refs );
 
     refs.forEach( function( v ){
-        idx = v.indexOf(":");
+        // Ignore internal references
+        if ( v.charAt(0) != "#" ){
+            idx = v.indexOf(":");
 
-        if ( idx < 0 )
-            throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference ID '" + v + "' in schema (expected id:ver)." ];
+            if ( idx < 0 )
+                throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference ID '" + v + "' in schema (expected id:ver)." ];
 
-        id = v.substr(0,idx);
-        ver = parseInt( v.substr(idx+1) );
-        console.log("ref",id,ver);
+            // TODO handle json pointer past #
 
-        r = g_db.sch.firstExample({ id: id, ver: ver });
+            id = v.substr(0,idx);
+            ver = parseInt( v.substr(idx+1) );
+            //console.log("ref",id,ver);
 
-        if ( !r )
-            throw [ g_lib.ERR_INVALID_PARAM, "Referenced schema '" + v + "' does not exist." ];
+            r = g_db.sch.firstExample({ id: id, ver: ver });
 
-        if ( r._id == a_sch._id )
-            throw [ g_lib.ERR_INVALID_PARAM, "Schema references self." ];
+            if ( !r )
+                throw [ g_lib.ERR_INVALID_PARAM, "Referenced schema '" + v + "' does not exist." ];
 
-        g_graph.sch_dep.save({_from: a_sch._id, _to: r._id });
+            if ( r._id == a_sch._id )
+                throw [ g_lib.ERR_INVALID_PARAM, "Schema references self." ];
+
+            g_graph.sch_dep.save({_from: a_sch._id, _to: r._id });
+        }
     });
 }
 
