@@ -1957,4 +1957,27 @@ ClientWorker::parseProjectQuery( const string & a_text_query, const vector<strin
     return result;
 }
 
+void
+ClientWorker::schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value )
+{
+    DL_INFO( "Load schema, scheme: " << a_uri.scheme() << ", path: " << a_uri.path() << ", auth: " << a_uri.authority() << ", id: " << a_uri.identifier() );
+
+    libjson::Value sch;
+    std::string id = a_uri.path();
+    uint32_t ver;
+    size_t d = id.find_last_of(":");
+
+    if ( d == std::string::npos )
+        EXCEPT_PARAM( 1, "Reference schema '" << id << "' is missing version number suffix." );
+
+    if ( to_uint32( id.substr( d + 1 ).c_str(), ver ))
+        EXCEPT_PARAM( 1, "Reference schema '" << id << "' has invalid version number suffix." );
+
+    id = id.substr( 1, d - 1 ); // Skip leading "/"
+    m_db_client.schemaView( id, ver, sch );
+
+    a_value = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+    DL_INFO( "Loaded schema: " << a_value );
+}
+
 }}

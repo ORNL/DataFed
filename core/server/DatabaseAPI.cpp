@@ -3161,7 +3161,7 @@ DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request )
 
     body.append("}");
 
-    DL_INFO("sch upd " << body );
+    //DL_INFO("sch upd " << body );
 
     dbPost( "schema/update", {{"id",a_request.id()},{"ver",to_string(a_request.ver())}}, &body, result );
 }
