@@ -385,8 +385,10 @@ router.get('/search', function (req, res) {
 
         qry = "for i in schemaview search ";
 
-        if ( req.queryParams.owner && req.queryParams.owner != client._id ){
-            if ( req.queryParams.owner.startsWith("u/")){
+        if ( req.queryParams.owner ){
+            if ( req.queryParams.owner == client._id ){
+                qry += "(i.own_id == @owner)";
+            }else if ( req.queryParams.owner.startsWith("u/")){
                 qry += "(i.pub == true && i.own_id == @owner)";
             }else{
                 qry += "(i.pub == true && analyzer(i.own_nm in tokens(@owner,'user_name'), 'user_name'))";
