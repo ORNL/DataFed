@@ -564,7 +564,7 @@ ClientWorker::procSchemaCreateRequest( const std::string & a_uid )
 
         validator.set_root_schema( schema );
 
-        m_db_client.schemaCreate( *request, reply );
+        m_db_client.schemaCreate( *request );
     }
     catch( exception & e )
     {
@@ -604,7 +604,7 @@ ClientWorker::procSchemaReviseRequest( const std::string & a_uid )
         }
     }
 
-    m_db_client.schemaRevise( *request, reply );
+    m_db_client.schemaRevise( *request );
 
     PROC_MSG_END
 }
@@ -637,7 +637,7 @@ ClientWorker::procSchemaUpdateRequest( const std::string & a_uid )
         }
     }
 
-    m_db_client.schemaUpdate( *request, reply );
+    m_db_client.schemaUpdate( *request );
 
     PROC_MSG_END
 }

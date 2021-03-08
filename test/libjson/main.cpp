@@ -377,6 +377,9 @@ void perfTest()
 
 int main( int argc, char** argv )
 {
+    (void) argc;
+    (void) argv;
+
     cout << "LibJSON Test\n";
 
     try

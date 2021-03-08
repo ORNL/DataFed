@@ -456,7 +456,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
 
     if ( !comm.recv( buffer, false, config.repo_timeout ))
     {
-        DL_ERROR( "Timeout waiting for size response from repo " << a_repo_id );
+        DL_ERROR( "Timeout waiting for response from " << a_repo_id );
         cerr.flush();
         return true;
     }

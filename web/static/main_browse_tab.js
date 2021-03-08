@@ -2180,10 +2180,11 @@ $("#btn_refresh",frame).on('click', actionRefresh );
 $("#btn_srch_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_refresh",frame).on('click', actionRefresh );
-//$("#btn_schemas",frame).on('click', actionSchemaList );
+$("#btn_schemas",frame).on('click', actionSchemaList );
 
 var last_qry = null;
 
+/*
 $("#btn_schemas",frame).on('click', function(){
     api.schemaView( "ugly", 0, true, function( ok, sch ){
         console.log("resolved schema:", sch.schema[0]);
@@ -2193,7 +2194,7 @@ $("#btn_schemas",frame).on('click', function(){
         });
     });
 });
-
+*/
 
 $("#btn_exp_node",frame).on('click', function(){
     graph_panel.expandNode();

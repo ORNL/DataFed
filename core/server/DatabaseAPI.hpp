@@ -177,9 +177,9 @@ public:
     void schemaSearch( const Anon::SchemaSearchRequest & a_request, Anon::SchemaDataReply & a_reply );
     void schemaView( const Anon::SchemaViewRequest & a_request, Anon::SchemaDataReply & a_reply );
     void schemaView( const std::string & a_id, uint32_t a_ver, libjson::Value & a_result );
-    void schemaCreate( const Auth::SchemaCreateRequest & a_request, Anon::AckReply & a_reply );
-    void schemaRevise( const Auth::SchemaReviseRequest & a_request, Anon::AckReply & a_reply );
-    void schemaUpdate( const Auth::SchemaUpdateRequest & a_request, Anon::AckReply & a_reply );
+    void schemaCreate( const Auth::SchemaCreateRequest & a_request );
+    void schemaRevise( const Auth::SchemaReviseRequest & a_request );
+    void schemaUpdate( const Auth::SchemaUpdateRequest & a_request );
     void schemaDelete( const Auth::SchemaDeleteRequest & a_request, Anon::AckReply & a_reply );
 
 private:

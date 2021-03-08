@@ -57,6 +57,8 @@ DatabaseAPI::setClient( const std::string & a_client )
 long
 DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, libjson::Value & a_result, bool a_log )
 {
+    (void)a_log;
+
     a_result.clear();
 
     string  url;
@@ -3040,7 +3042,7 @@ DatabaseAPI::schemaView( const Anon::SchemaViewRequest & a_request, Anon::Schema
 }
 
 void
-DatabaseAPI::schemaCreate( const Auth::SchemaCreateRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::schemaCreate( const Auth::SchemaCreateRequest & a_request )
 {
     libjson::Value result;
     string body = "{\"id\":\"";
@@ -3059,7 +3061,7 @@ DatabaseAPI::schemaCreate( const Auth::SchemaCreateRequest & a_request, Anon::Ac
 }
 
 void
-DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request )
 {
     libjson::Value result;
     string body = "{";
@@ -3105,7 +3107,7 @@ DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request, Anon::Ac
 
 
 void
-DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request )
 {
     libjson::Value result;
     string body = "{";
@@ -3167,6 +3169,7 @@ DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request, Anon::Ac
 void
 DatabaseAPI::schemaDelete( const Auth::SchemaDeleteRequest & a_request, Anon::AckReply & a_reply )
 {
+    (void) a_reply;
     libjson::Value result;
 
     dbPost( "schema/delete", {{"id",a_request.id()},{"ver",to_string(a_request.ver())}}, 0, result );

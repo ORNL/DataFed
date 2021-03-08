@@ -51,7 +51,7 @@ function loadSchemas(){
                 for ( var i in data.schema ){
                     sch = data.schema[i];
                     //src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ownNm?" " + sch.ownNm:"") + (sch.ownId?" (" + sch.ownId +")":""), key: sch.id + ":" + sch.ver });
-                    src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":""), own_nm: sch.ownNm, own_id: sch.ownId, id: sch.id, ver: sch.ver, key: sch.id + ":" + sch.ver });
+                    src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":""), own_nm: sch.ownNm, own_id: sch.ownId.substr(2), id: sch.id, ver: sch.ver, cnt: sch.cnt, key: sch.id + ":" + sch.ver });
                 }
             }else{
                 src.push({ title: "(no matches)" });
@@ -89,17 +89,17 @@ export function show( a_select, a_resolve, a_cb ){
             </div>\
             <div style='flex:none;padding-top:0.5em'>\
                 <button id='sch_new' class='btn' title='Create new schema'>New</button>\
-                <button id='sch_view' class='btn btn-sel' title='View schema details' disabled>View</button>\
-                <button id='sch_edit' class='btn btn-sel' title='Edit schema' disabled>Edit</button>\
-                <button id='sch_rev' class='btn btn-sel' title='Create new revision of schema' disabled>Revise</button>\
-                <button id='sch_del' class='btn btn-sel' title='Delete schema' disabled>Delete</button>\
+                <button id='sch_view' class='btn btn-any' title='View schema details' disabled>View</button>\
+                <button id='sch_edit' class='btn btn-own-unused' title='Edit schema' disabled>Edit</button>\
+                <button id='sch_rev' class='btn btn-own' title='Create new revision of schema' disabled>Revise</button>\
+                <button id='sch_del' class='btn btn-own-unused' title='Delete schema' disabled>Delete</button>\
             </div>\
             <div style='flex:none;padding-top:0.5em'>Search Options:</div>\
             <div style='flex:none;padding:0.5em 0 0 0.5em'>\
                 <table style='width:100%'>\
-                    <tr><td>ID:</td><td colspan='4'><input id='srch_id' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
-                    <tr><td>Text:</td><td colspan='4'><input id='srch_txt' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
-                    <tr><td>Owner:</td><td colspan='3'><input id='srch_owner' type='text' style='width:100%;box-sizing:border-box'></input></td>\
+                    <tr><td>ID:</td><td colspan='5'><input id='srch_id' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
+                    <tr><td>Text:</td><td colspan='5'><input id='srch_txt' type='text' style='width:100%;box-sizing:border-box'></input></td></tr>\
+                    <tr><td>Owner:</td><td colspan='4'><input id='srch_owner' type='text' style='width:100%;box-sizing:border-box'></input></td>\
                         <td style='width:0'><button title='Select user' id='pick_user' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-person'></span></button></td></tr>\
                     <tr>\
                         <td>Sort&nbsp;By:</td><td colspan='2' style='width:100%'>\
@@ -110,6 +110,9 @@ export function show( a_select, a_resolve, a_cb ){
                                 <option value='-"+ (model.SORT_OWNER + 1) +"'>Owner (reverse)</option>\
                                 <option value='"+ (model.SORT_RELEVANCE + 1) +"'>Relevance</option>\
                             </select>\
+                        </td>\
+                        <td>\
+                            <button class='btn' id='reset_btn'>Reset</button>\
                         </td>\
                         <td colspan='2'>\
                             <button class='btn' id='srch_btn'>Search</button>\
@@ -185,7 +188,14 @@ export function show( a_select, a_resolve, a_cb ){
         checkbox: false,
         activate: function( ev, data ){
             data.node.setSelected( true );
-            $(".btn-sel",frame).button("enable");
+            $(".btn-any",frame).button("enable");
+            if ( data.node.data.own_id == settings.user.uid ){
+                $(".btn-own",frame).button("enable");
+                $(".btn-own-unused",frame).button(data.node.data.cnt == 0?"enable":"disable");
+            }else{
+                $(".btn-own,.btn-own-unused",frame).button("disable");
+            }
+
             if ( a_select ){
                 $("#dlg_sch_list_ok_btn").button("enable");
             }
@@ -195,7 +205,7 @@ export function show( a_select, a_resolve, a_cb ){
 
             //$tdList.eq(1).text(node.data.own_nm);
             if ( node.data.own_nm ){
-                $tdList.eq(1).html("<span title='"+node.data.own_id.substr(2)+"'>"+node.data.own_nm+"</span>");
+                $tdList.eq(1).html("<span title='"+node.data.own_id+"'>"+node.data.own_nm+"</span>");
             }
             //$tdList.eq(2).text(node.data.own_id?"("+node.data.own_id+")":"");
 
@@ -204,12 +214,14 @@ export function show( a_select, a_resolve, a_cb ){
 
     tree = $.ui.fancytree.getTree($("#sch_tree",frame));
 
-    loadSchemas();
+    $("#srch_owner",frame).val( "u/" + settings.user.uid );
 
+    loadSchemas();
 
     $("#pick_user",frame).click(function(){
         dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
             $("#srch_owner",frame).val( users );
+            loadSchemas();
         });
     });
 
@@ -258,7 +270,12 @@ export function show( a_select, a_resolve, a_cb ){
             });
         });
     });
-    
+
+    $("#reset_btn",frame).on("click",function(){
+        $("#srch_txt,#srch_id,#srch_owner",frame).val( "" );
+        loadSchemas();
+    });
+
     $("#srch_btn",frame).on("click",function(){
         loadSchemas();
     });
