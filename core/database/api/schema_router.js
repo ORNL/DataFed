@@ -137,11 +137,19 @@ router.post('/update', function (req, res) {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
                 var sch_old = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
 
-                if ( !sch_old )
+                if ( !sch_old ){
                     throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
+                }
 
-                if ( sch_old.cnt )
-                    throw [ g_lib.ERR_PERM_DENIED, "Schema is in use - cannot update." ];
+                // Cannot modify schemas that are in use
+                if ( sch_old.cnt ){
+                    throw [ g_lib.ERR_PERM_DENIED, "Schema is associated with data records - cannot update." ];
+                }
+
+                // Cannot modify schemas that are referenced by other schemas
+                if ( g_db.sch_dep.firstExample({ _to: sch_old._id })){
+                    throw [ g_lib.ERR_PERM_DENIED, "Schema is referenced by another schema - cannot update." ];
+                }
 
                 if ( sch_old.own_id != client._id && !client.is_admin )
                     throw g_lib.ERR_PERM_DENIED;
@@ -309,16 +317,20 @@ router.post('/delete', function (req, res) {
         if ( sch_old.own_id != client._id && !client.is_admin )
             throw g_lib.ERR_PERM_DENIED;
 
-        if ( sch_old.cnt )
-            throw [ g_lib.ERR_PERM_DENIED, "Schema in use on data records - cannot delete." ];
+        // Cannot delete schemas that are in use
+        if ( sch_old.cnt ){
+            throw [ g_lib.ERR_PERM_DENIED, "Schema is associated with data records - cannot update." ];
+        }
 
         // Cannot delete schemas references by other schemas
-        if ( g_db.sch_dep.firstExample({ _to: sch_old._id }))
-            throw [ g_lib.ERR_PERM_DENIED, "Schema referenced by other schemas - cannot delete." ];
+        if ( g_db.sch_dep.firstExample({ _to: sch_old._id })){
+            throw [ g_lib.ERR_PERM_DENIED, "Schema is referenced by another schema - cannot update." ];
+        }
 
         // Only allow deletion of oldest and newest revisions of schemas
-        if ( g_db.sch_ver.firstExample({ _from: sch_old._id }) && g_db.sch_ver.firstExample({ _to: sch_old._id }))
+        if ( g_db.sch_ver.firstExample({ _from: sch_old._id }) && g_db.sch_ver.firstExample({ _to: sch_old._id })){
             throw [ g_lib.ERR_PERM_DENIED, "Cannot delete intermediate schema revisions." ];
+        }
 
         g_graph.sch.remove( sch_old._id );
     } catch( e ) {
@@ -375,7 +387,7 @@ router.get('/view', function (req, res) {
 router.get('/search', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var qry, par = {}, result, off = 0, cnt = 50, comb = false;
+        var qry, par = {}, result, off = 0, cnt = 50, doc;
 
         if ( req.queryParams.offset != undefined )
             off = req.queryParams.offset;
@@ -391,7 +403,9 @@ router.get('/search', function (req, res) {
             }else if ( req.queryParams.owner.startsWith("u/")){
                 qry += "(i.pub == true && i.own_id == @owner)";
             }else{
-                qry += "(i.pub == true && analyzer(i.own_nm in tokens(@owner,'user_name'), 'user_name'))";
+                //qry += "(i.pub == true && analyzer(i.own_nm in tokens(@owner,'user_name'), 'user_name'))";
+                qry += "(analyzer(i.own_nm in tokens(@owner,'user_name'), 'user_name') && (i.pub == true || i.own_id == @client_id))";
+                par.client_id = client._id;
             }
 
             par.owner = req.queryParams.owner.toLowerCase();
@@ -424,17 +438,21 @@ router.get('/search', function (req, res) {
             //qry += (req.queryParams.sort_rev?" desc":"");
         }
 
-        qry += " limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
+        qry += " limit " + off + "," + cnt + " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
 
         //qry += " filter (i.pub == true || i.own_id == @uid) sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
 
         result = g_db._query( qry, par, {}, { fullCount: true });
-        var tot = result.getExtra().stats.fullCount;
+        var res, tot = result.getExtra().stats.fullCount;
         result = result.toArray();
 
-        /*for ( var i in result ){
-            console.log("id:",result[i].id,", score:",result[i].s);
-        }*/
+        for ( var i in result ){
+            doc = result[i];
+            //console.log("id:",result[i].id,", score:",result[i].s);
+            if ( g_db.sch_dep.firstExample({ _to: doc._id })){
+                doc.ref = true;
+            }
+        }
 
         fixSchOwnNmAr( result );
 
@@ -466,47 +484,57 @@ function updateSchemaRefs( a_sch ){
 
     var idx,id,ver,r,refs = new Set();
 
-    parseProps( a_sch.def.properties, refs );
+    gatherRefs( a_sch.def.properties, refs );
 
     refs.forEach( function( v ){
-        // Ignore internal references
-        if ( v.charAt(0) != "#" ){
-            idx = v.indexOf(":");
+        idx = v.indexOf( ":" );
 
-            if ( idx < 0 )
-                throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference ID '" + v + "' in schema (expected id:ver)." ];
+        if ( idx < 0 )
+            throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference ID '" + v + "' in schema (expected id:ver)." ];
 
-            // TODO handle json pointer past #
+        // TODO handle json pointer past #
 
-            id = v.substr(0,idx);
-            ver = parseInt( v.substr(idx+1) );
-            //console.log("ref",id,ver);
+        id = v.substr(0,idx);
+        ver = parseInt( v.substr(idx+1) );
+        //console.log("ref",id,ver);
 
-            r = g_db.sch.firstExample({ id: id, ver: ver });
+        r = g_db.sch.firstExample({ id: id, ver: ver });
 
-            if ( !r )
-                throw [ g_lib.ERR_INVALID_PARAM, "Referenced schema '" + v + "' does not exist." ];
+        if ( !r )
+            throw [ g_lib.ERR_INVALID_PARAM, "Referenced schema '" + v + "' does not exist." ];
 
-            if ( r._id == a_sch._id )
-                throw [ g_lib.ERR_INVALID_PARAM, "Schema references self." ];
+        if ( r._id == a_sch._id )
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema references self." ];
 
-            g_graph.sch_dep.save({_from: a_sch._id, _to: r._id });
-        }
+        g_graph.sch_dep.save({_from: a_sch._id, _to: r._id });
     });
 }
 
-function parseProps( a_doc, a_refs ){
-    var v;
+function gatherRefs( a_doc, a_refs ){
+    var v, i;
+
     for ( var k in a_doc ){
         v = a_doc[k];
 
         if (  v !== null && typeof v === 'object' && Array.isArray( v ) === false ){
-            parseProps( v, a_refs )
+            gatherRefs( v, a_refs )
         }else if ( k == "$ref" ){
             if ( typeof v !== 'string' )
                 throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference type in schema." ];
 
-            a_refs.add( v );
+            // Add dependencies to external schemas, only once
+            i = v.indexOf("#");
+
+            // Ignore internal references
+            if ( i != 0 ){
+                if ( i > 0 ){
+                    v = v.substr( 0, i );
+                }
+
+                if ( !a_refs.has( v )){
+                    a_refs.add( v );
+                }
+            }
         }
     }
 }
