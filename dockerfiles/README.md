@@ -37,13 +37,85 @@ These are to build DataFed using one of the respective kickstarts with paired OS
 
 ## Example for entire build for Centos7
 
-Run following to:
-  - Build Kickstart image from Centos7 image
-  - Build DataFed image from Kickstart image
-  - Drop into interactive session with built DataFed container
-
+To build the kickstart, run:
 ```
-docker build -f dockerfiles/Dockerfile.kickstart-centos7 -t datafed/kickstart:centos7 . \
-&& docker build -f dockerfiles/Dockerfile.datafed-centos7 -t datafed/datafed:centos7 . \
-&& docker run -it datafed/datafed:centos7
+docker build -f dockerfiles/Dockerfile.kickstart-centos7 -t datafed/kickstart:centos7 .
+```
+
+To then build the application, run:
+```
+docker build -f dockerfiles/Dockerfile.datafed-centos7 -t datafed/datafed:centos7 .
+```
+
+And then to spin up the container w/ the compiled application, run:
+```
+docker run -it -p 9000:9000 -v $(pwd)/creds:/etc/datafed datafed/datafed:centos7
+```
+
+## Data repository setup
+
+Pre-requisite stes for the data repository are:
+
+1.) Select a port that the core DataFed will communicate to the data repository
+server over. The default is port `9000` and used in the below instructions.
+Also, since this is an ingress communcation channel, if running in a cloud
+environment, add this security rule for ingress to the port in the security
+group.
+
+2.) Install a Globus Connect Server endpoint.
+
+
+To setup a data repository, the steps are:
+1.) Start up a container:
+```
+docker run -it -p 9000:9000 -v $(pwd)/creds:/etc/datafed -v $(pwd)/collection:/collection datafed/datafed:centos7
+```
+
+2.) Navigate to the "build" directory and then the repository server directory
+```
+cd ./build
+cd ./repository/server/
+```
+
+4.) Generate repository keys:
+```
+./sdms-repo --gen-keys
+```
+
+These will default to saving in the credentials directory `/etc/datafed/`,
+which is the volume we mounted to the docker container above.
+You can change the credentials directory as below but to persist the keys
+generated after the container is stopped, ensure this is a volume directory
+saved on the host machine:
+```
+./sdms-repo --gen-keys --cred-dir <credentials directory>
+```
+
+5.) Get the DataFed core public key:
+```
+wget -O /etc/datafed/datafed-core-key.pub https://datafed.ornl.gov/datafed-core-key.pub
+``` 
+
+6.) For the Globus endpoint directory that will be used for the data repository,
+create the sub-directories with the same permissions as the endpoint directory:
+ - `./user`
+ - `./project`
+
+This will be the `collection` volume directory in step (1)
+
+7.) To register the data repository, pass the following information to DataFed developers:
+ - Hostname of the data repository server
+ - Port from pre-requisite step (1), default is 9000
+ - Public key generated from step (4), NOT the private key
+ - Globus endpoint UUID for the GCS in pre-requisite step (2)
+ - Directory that was used for the GCS (in GCSv5, this will be the ["collection"](https://docs.globus.org/globus-connect-server/v5/data-access-guide/#collections))
+
+8.) Start the data repository server:
+```
+./sdms-repo --server tcp://<address of core datafed server:port>
+```
+
+Example for DEV server:
+```
+./sdms-repo --server tcp://sdms.ornl.gov:7512
 ```
