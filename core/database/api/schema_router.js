@@ -516,7 +516,7 @@ function gatherRefs( a_doc, a_refs ){
     for ( var k in a_doc ){
         v = a_doc[k];
 
-        if (  v !== null && typeof v === 'object' && Array.isArray( v ) === false ){
+        if (  v !== null && ( typeof v === 'object' || Array.isArray( v ))){
             gatherRefs( v, a_refs )
         }else if ( k == "$ref" ){
             if ( typeof v !== 'string' )
