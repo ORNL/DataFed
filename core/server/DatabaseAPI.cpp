@@ -3230,6 +3230,9 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
     if ( a_obj.has( "depr" ))
         a_schema->set_depr( a_obj.asBool() );
 
+    if ( a_obj.has( "ref" ))
+        a_schema->set_ref( a_obj.asBool() );
+
     if ( a_obj.has( "def" ))
         a_schema->set_def( a_obj.value().toString() );
 

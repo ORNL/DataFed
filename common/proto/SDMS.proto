@@ -437,12 +437,13 @@ message SchemaData
     required uint32             ver         = 2;
     optional bool               depr        = 3;
     optional uint32             cnt         = 4;
-    optional string             own_id      = 5;
-    optional string             own_nm      = 6;
-    optional string             desc        = 7;
-    optional bool               pub         = 8;
-    optional string             def         = 9;
-    repeated SchemaData         uses        = 10;
-    repeated SchemaData         used_by     = 11;
+    optional bool               ref         = 5;
+    optional string             own_id      = 6;
+    optional string             own_nm      = 7;
+    optional string             desc        = 8;
+    optional bool               pub         = 9;
+    optional string             def         = 10;
+    repeated SchemaData         uses        = 11;
+    repeated SchemaData         used_by     = 12;
     // Add topics?
 }

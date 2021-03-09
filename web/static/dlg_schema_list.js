@@ -51,7 +51,7 @@ function loadSchemas(){
                 for ( var i in data.schema ){
                     sch = data.schema[i];
                     //src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ownNm?" " + sch.ownNm:"") + (sch.ownId?" (" + sch.ownId +")":""), key: sch.id + ":" + sch.ver });
-                    src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":""), own_nm: sch.ownNm, own_id: sch.ownId.substr(2), id: sch.id, ver: sch.ver, cnt: sch.cnt, key: sch.id + ":" + sch.ver });
+                    src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ref?" (R)":""), own_nm: sch.ownNm, own_id: sch.ownId.substr(2), id: sch.id, ver: sch.ver, cnt: sch.cnt, ref: sch.ref, key: sch.id + ":" + sch.ver });
                 }
             }else{
                 src.push({ title: "(no matches)" });
@@ -191,7 +191,7 @@ export function show( a_select, a_resolve, a_cb ){
             $(".btn-any",frame).button("enable");
             if ( data.node.data.own_id == settings.user.uid ){
                 $(".btn-own",frame).button("enable");
-                $(".btn-own-unused",frame).button(data.node.data.cnt == 0?"enable":"disable");
+                $(".btn-own-unused",frame).button( data.node.data.cnt == 0 && !data.node.data.ref?"enable":"disable");
             }else{
                 $(".btn-own,.btn-own-unused",frame).button("disable");
             }
