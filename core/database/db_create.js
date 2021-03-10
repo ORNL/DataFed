@@ -155,6 +155,7 @@ view.properties({
           "tags": { analyzers: ["identity"] },
           "title": { analyzers: ["text_en"] },
           "desc": { analyzers: ["text_en"] },
+          "md_err": { analyzers: ["identity"] },
           "owner": { analyzers: ["identity"] },
           "ut": { analyzers: ["identity"] },
           "sch_id": { analyzers: ["identity"] },

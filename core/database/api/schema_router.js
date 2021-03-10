@@ -48,8 +48,6 @@ function fixSchOwnNmAr( a_sch ){
 // Find all references (internal and external), load them, then place in refs param (object)
 // This allows preloading schema dependencies for schema processing on client side
 function _resolveDeps( a_sch_id, a_refs ){
-    console.log("_resolveDeps",a_sch_id);
-
     var res, dep, id, cur = new Set(), nxt;
 
     cur.add( a_sch_id );
@@ -72,27 +70,6 @@ function _resolveDeps( a_sch_id, a_refs ){
 
         cur = nxt;
     }
-
-/*    var v, p, s, tmp, id, vr;
-    for ( var k in a_props ){
-        v = a_props[k];
-
-        if ( "$ref" in v ){
-            s = v["$ref"];
-            if ( !(s in a_refs )){
-                tmp = s.indexOf(":");
-                id = s.substr(0,tmp);
-                vr = parseInt( s.substr(tmp+1) );
-                tmp = g_db.sch.firstExample({ id: id, ver: vr });
-                //delete tmp._id;
-                a_refs[s] = tmp.def;
-                _resolveRefs( tmp.def.properties, a_refs );
-            }
-        }else if (( p = v.properties ) != undefined ) {
-            _resolveRefs( p, a_refs );
-        }
-    }
-*/
 }
 
 
@@ -108,6 +85,10 @@ router.post('/create', function (req, res) {
             waitForSync: true,
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
+
+                // Schema validator has already been run at this point; however, DataFed further restricts
+                // the allowed character set for keys and this must be applied at this point.
+                validateProperties( req.body.def.properties );
 
                 var obj = { cnt: 0, ver: 0, pub: req.body.pub, def: req.body.def };
         
@@ -206,8 +187,10 @@ router.post('/update', function (req, res) {
 
                 g_lib.procInputParam( req.body, "desc", true, obj );
 
-                if ( req.body.def )
+                if ( req.body.def ){
+                    validateProperties( req.body.def.properties );
                     obj.def = req.body.def;
+                }
 
                 var sch_new = g_db.sch.update( sch_old._id, obj, { returnNew: true, mergeObjects: false, keepNull: false }).new;
 
@@ -286,24 +269,26 @@ router.post('/revise', function (req, res) {
 
                 g_lib.procInputParam( req.body, "desc", true, sch );
 
-                if ( req.body.def != undefined )
+                if ( req.body.def != undefined ){
+                    validateProperties( req.body.def.properties );
                     sch.def = req.body.def;
+                }
 
                 var old_id = sch._id;
                 delete sch._id;
                 delete sch._key;
                 delete sch._rev;
 
-                console.log("sch rev",sch);
+                //console.log("sch rev",sch);
 
                 var sch_new = g_db.sch.save( sch, { returnNew: true }).new;
-                console.log("sch rev 1");
+                // /console.log("sch rev 1");
 
                 g_db.sch_ver.save({ _from: old_id, _to: sch_new._id });
-                console.log("sch rev 2");
+                //console.log("sch rev 2");
 
                 updateSchemaRefs( sch_new );
-                console.log("sch rev 3");
+                //console.log("sch rev 3");
 
                 fixSchOwnNm( sch_new );
 
@@ -311,7 +296,7 @@ router.post('/revise', function (req, res) {
                 delete sch_new._key;
                 delete sch_new._rev;
 
-                console.log("sch rev 4");
+                //console.log("sch rev 4");
 
                 res.send([ sch_new ]);
             }
@@ -501,11 +486,72 @@ router.get('/search', function (req, res) {
 .summary('Search schemas')
 .description('Search schema');
 
+/* AQL rules:
+    - Only a-z, A-Z, 0-9, and "_" are allowed
+    - Cannot start with a number
+    - Must contain at least one character a-z, A-Z
+    - Can start with any number of "_", but must be followed by a-z, A-Z - not a number
+*/
+function validateKey( val ){
+    var code, i = 0, len = val.length;
+
+    // Skip leading "_"
+    while( i < len && val.charCodeAt(i) == 95 ){
+        i++;
+    }
+
+    if ( i == len ){
+        throw [g_lib.ERR_INVALID_CHAR,"Malformed property '" + val + "'."];
+    }
+
+    code = val.charCodeAt(i);
+
+    // Fist char after prefix must be a letter
+    if (( code > 96 && code < 123 ) || // lower alpha (a-z)
+        ( code > 64 && code < 91 )){ // upper alpha (A-Z)
+        i++;
+    }else{
+        throw [g_lib.ERR_INVALID_CHAR,"Malformed property '" + val + "'."];
+    }
+
+    // Check remaining chars
+    for ( ; i < len; i++) {
+        code = val.charCodeAt(i);
+
+        if (!(code > 47 && code < 58) && // numeric (0-9)
+            !(code > 64 && code < 91) && // upper alpha (A-Z)
+            !(code > 96 && code < 123) && // lower alpha (a-z)
+            code != 95 ) { // _
+                throw [g_lib.ERR_INVALID_CHAR,"Illegal character(s) in property '" + val + "'."];
+        }
+    }
+}
+
+function validateProperties( a_props ){
+    console.log("valProps",a_props);
+    var v, v2;
+    for ( var k in a_props ){
+        validateKey( k );
+        v = a_props[k];
+
+        if ( typeof v === 'object' ){
+            if ( v.type === "object" ){
+                validateProperties( v.properties );
+            } else if ( v.type == "array" && Array.isArray( v.items )){
+                for ( var j in v.items ){
+                    v2 = v.items[j];
+                    if ( typeof v2 === "object" && v2.type == "object" ){
+                        validateProperties( v2.properties );
+                    }
+                }
+            }
+        }
+    }
+}
+
 function updateSchemaRefs( a_sch ){
     // Schema has been created, revised, or updated
     // Find and update dependencies to other schemas (not versions)
-
-    // TODO This does not catch circular references (issue #563)
 
     g_db.sch_dep.removeByExample({ _from: a_sch._id });
 
