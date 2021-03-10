@@ -1606,7 +1606,7 @@ DatabaseAPI::catalogSearch( const Anon::CatalogSearchRequest & a_request, Anon::
 
     string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
 
-    //DL_INFO("Coll Search Pub Req: [" << body << "]");
+    DL_INFO("Coll Search Pub Req: [" << body << "]");
 
     dbPost( "col/pub/search", {}, &body, result );
 
@@ -3904,10 +3904,16 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
         a_params += ",\"utto\":" + to_string( a_request.to() );
     }
 
-    if ( a_request.mode() == 1 && a_request.has_meta() )
-    {
-        a_query += " filter first(for j in d filter j._id ==  i._id and (" + parseSearchMetadata( a_request.meta() ) + ") return true)";
-        //a_query += " and (" + parseSearchMetadata( a_request.meta() ) + ")";
+    if ( a_request.mode() == 1 ){
+        if ( a_request.has_meta_err() )
+        {
+            a_query += " and i.md_err == true";
+        }
+
+        if ( a_request.has_meta() )
+        {
+            a_query += " filter first(for j in d filter j._id == i._id and (" + parseSearchMetadata( a_request.meta() ) + ") return true)";
+        }
     }
 
     if ( !a_partial )

@@ -706,6 +706,12 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             delete coll_qry.meta;
         }
 
+        if ( $( "#cat_qry_meta_err", cat_panel ).prop("checked")){
+            coll_qry.metaErr = true;
+        }else{
+            delete coll_qry.metaErr;
+        }
+
         tmp = $("#cat_qry_owner",cat_panel).val().trim();
         if ( tmp ){
             coll_qry.owner = tmp;
@@ -844,6 +850,13 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         if ( textTimer )
             clearTimeout( textTimer );
         $("#cat_meta_qry",cat_panel).val("");
+        coll_off = 0;
+        loadCollections();
+    });
+
+    $( "#cat_qry_meta_err", cat_panel ).change( function(){
+        if ( textTimer )
+            clearTimeout( textTimer );
         coll_off = 0;
         loadCollections();
     });
