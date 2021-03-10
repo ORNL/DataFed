@@ -45,9 +45,35 @@ function fixSchOwnNmAr( a_sch ){
     }
 }
 
-// This function only works on schemas that have already been validated
-function _resolveRefs( a_props, a_refs ){
-    var v, p, s, tmp, id, vr;
+// Find all references (internal and external), load them, then place in refs param (object)
+// This allows preloading schema dependencies for schema processing on client side
+function _resolveDeps( a_sch_id, a_refs ){
+    console.log("_resolveDeps",a_sch_id);
+
+    var res, dep, id, cur = new Set(), nxt;
+
+    cur.add( a_sch_id );
+
+    while ( cur.size ){
+        nxt = new Set();
+
+        cur.forEach( function( a_id ){
+            res = g_db._query( "for v in 1..1 outbound @id sch_dep return v", { id : a_id });
+
+            while ( res.hasNext() ){
+                dep = res.next();
+                id = dep.id + ":" + dep.ver;
+                if ( !( id in a_refs )){
+                    a_refs[id] = dep.def;
+                    nxt.add( dep._id );
+                }
+            }
+        });
+
+        cur = nxt;
+    }
+
+/*    var v, p, s, tmp, id, vr;
     for ( var k in a_props ){
         v = a_props[k];
 
@@ -66,6 +92,7 @@ function _resolveRefs( a_props, a_refs ){
             _resolveRefs( p, a_refs );
         }
     }
+*/
 }
 
 
@@ -357,7 +384,7 @@ router.get('/view', function (req, res) {
 
         if ( req.queryParams.resolve ){
             var refs = {};
-            _resolveRefs( sch.def.properties, refs );
+            _resolveDeps( sch._id, refs );
             sch.def._refs = refs;
         }
 
