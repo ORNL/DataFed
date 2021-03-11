@@ -92,6 +92,10 @@ private:
         (void) a_ptr;
         (void) a_inst;
         const std::string & path = a_ptr.to_string();
+
+        if ( m_validator_err.size() == 0 )
+            m_validator_err = "Schema Validation Error(s):\n";
+
         m_validator_err += "At " + (path.size()?path:"top-level") + ": " + a_err_msg + "\n";
         //std::cerr << "ERROR: '" << pointer << "' - '" << instance << "': " << message << "\n";
     }

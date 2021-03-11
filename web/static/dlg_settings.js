@@ -4,6 +4,8 @@ import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
 
 export function show( a_cb ){
+    console.log("user from settings:",settings.user);
+
     var content = "\
         User Interface<hr>\
         <table class='setting-table'>\
@@ -23,6 +25,10 @@ export function show( a_cb ){
             <tr><td>App. Theme:</td><td><select id='theme-sel'>\
                 <option value='light'>Light</option>\
                 <option value='dark'>Dark</option>\
+                </select></td></tr>\
+            <tr><td>Meta. Validation:</td><td><select id='meta-val'>\
+                <option value='0'>Warn</option>\
+                <option value='1'>Error</option>\
                 </select></td></tr>\
         </table>\
         <br>Account Settings<hr>\
@@ -97,16 +103,22 @@ export function show( a_cb ){
 
                 var save_opts = false, opts = settings.opts;
 
-                tmp = $("#page-size",frame).val();
+                tmp = parseInt($("#page-size",frame).val());
                 if ( tmp != opts.page_sz ){
-                    opts.page_sz = parseInt(tmp);
+                    opts.page_sz = tmp;
                     save_opts = true;
                     reload = true;
                 }
 
-                tmp = $("#task-poll-hours",frame).val();
+                tmp = parseInt($("#task-poll-hours",frame).val());
                 if ( tmp != opts.task_hist ){
-                    opts.task_hist = parseInt(tmp);
+                    opts.task_hist = tmp;
+                    save_opts = true;
+                }
+
+                tmp = parseInt($("#meta-val",frame).val());
+                if ( tmp != settings.meta_val ){
+                    opts.meta_val = tmp;
                     save_opts = true;
                 }
 
@@ -175,6 +187,7 @@ export function show( a_cb ){
         open: function(event,ui){
             $("#page-size",frame).val(settings.opts.page_sz).selectmenu({width:150});
             $("#theme-sel",frame).val(settings.theme).selectmenu({width:150});
+            $("#meta-val",frame).val(settings.opts.meta_val).selectmenu({width:150});
             $("#task-poll-hours",frame).val(settings.opts.task_hist).selectmenu({width:150});
             $("#def-alloc",frame).selectmenu({width:225});
             $("#new_email",frame).val(settings.user.email );

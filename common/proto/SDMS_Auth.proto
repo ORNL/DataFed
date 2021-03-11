@@ -166,6 +166,7 @@ message RecordCreateRequest
     repeated DependencySpecData deps        = 12;
     optional string             sch_id      = 13;
     optional uint32             sch_ver     = 14;
+    optional bool               sch_validate = 15;
 }
 
 message RecordCreateBatchRequest
@@ -187,13 +188,14 @@ message RecordUpdateRequest
     optional bool               mdset       = 10;
     optional string             sch_id      = 11;
     optional uint32             sch_ver     = 12;
-    optional string             source      = 13;
-    optional string             ext         = 14;
-    optional bool               ext_auto    = 15;
-    optional uint64             size        = 16;
-    optional uint32             dt          = 17;
-    repeated DependencySpecData dep_add     = 18;
-    repeated DependencySpecData dep_rem     = 19;
+    optional bool               sch_validate = 13;
+    optional string             source      = 14;
+    optional string             ext         = 15;
+    optional bool               ext_auto    = 16;
+    optional uint64             size        = 17;
+    optional uint32             dt          = 18;
+    repeated DependencySpecData dep_add     = 19;
+    repeated DependencySpecData dep_rem     = 20;
 }
 
 message RecordUpdateBatchRequest

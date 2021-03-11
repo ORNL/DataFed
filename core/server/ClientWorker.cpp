@@ -717,61 +717,64 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
 
     DL_INFO("Creating record");
 
-    m_db_client.recordCreate( *request, reply );
+    m_validator_err.clear();
 
     if ( request->has_metadata() && request->has_sch_id() )
     {
         //DL_INFO("Has metadata/schema");
+        //DL_INFO( "Must validate JSON, schema " << s->second.asString() );
 
-            //DL_INFO( "Must validate JSON, schema " << s->second.asString() );
+        nlohmann::json schema;
 
-            nlohmann::json schema;
+        try
+        {
+            libjson::Value sch;
+            m_db_client.schemaView( request->sch_id(), request->sch_ver(), sch );
+            schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
 
             try
             {
-                libjson::Value sch;
-                m_db_client.schemaView( request->sch_id(), request->sch_ver(), sch );
-                schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+                //DL_INFO( "Setting root schema" );
+                validator.set_root_schema( schema );
+                //DL_INFO( "Validating" );
 
-                nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+                nlohmann::json md = nlohmann::json::parse( request->metadata() );
 
-                try
-                {
-                    //DL_INFO( "Setting root schema" );
-                    validator.set_root_schema( schema );
-                    //DL_INFO( "Validating" );
-
-                    nlohmann::json md = nlohmann::json::parse( request->metadata() );
-
-                    m_validator_err.clear();
-                    validator.validate( md, *this );
-                    //validator.validate( md.value(), *this );
-                }
-                catch( exception & e )
-                {
-                    m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
-                    DL_ERROR( "Invalid metadata schema: " << e.what() );
-                }
+                m_validator_err.clear();
+                validator.validate( md, *this );
             }
             catch( exception & e )
             {
-                m_validator_err = string( "Metadata schema error: ") + e.what() + "\n";
-                DL_ERROR( "Could not load metadata schema: " << e.what() );
+                m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
+                DL_ERROR( "Invalid metadata schema: " << e.what() );
             }
+        }
+        catch( exception & e )
+        {
+            m_validator_err = string( "Metadata schema error: ") + e.what() + "\n";
+            DL_ERROR( "Could not load metadata schema: " << e.what() );
+        }
 
+        if ( request->has_sch_validate() && request->sch_validate() && m_validator_err.size() )
+        {
+            EXCEPT( 1, m_validator_err );
+        }
+    }
 
-            if ( m_validator_err.size() )
-            {
-                DL_ERROR( "Validation error - update record" );
+    m_db_client.recordCreate( *request, reply );
 
-                //const string & id = obj.getString("id");
-                RecordData * data = reply.mutable_data(0);
+    if ( m_validator_err.size() )
+    {
+        DL_ERROR( "Validation error - update record" );
 
-                m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
-                // TODO need a def for md_err mask
-                data->set_notes( data->notes() | 0x1000 );
-            }
+        //const string & id = obj.getString("id");
+        RecordData * data = reply.mutable_data(0);
 
+        m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
+        // TODO need a def for md_err mask
+        data->set_notes( data->notes() | 0x1000 );
     }
 
     PROC_MSG_END
@@ -791,79 +794,93 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     DL_INFO("Updating record");
 
-    m_db_client.recordUpdate( *request, reply, result );
+    m_validator_err.clear();
 
     if ( request->has_metadata() || request->has_sch_id() || request->has_sch_ver() )
     {
         //DL_INFO("Has metadata/schema");
+        string metadata = request->has_metadata()?request->metadata():"";
+        string sch_id = request->has_sch_id()?request->sch_id():"";
+        uint32_t sch_ver = request->has_sch_ver()?request->sch_ver():0;
 
-        const libjson::Value::Object & obj = result.asObject().getArray("results").begin()->asObject();
-        libjson::Value::ObjectConstIter m = obj.find("md"), s = obj.find("sch_id"), v = obj.find("sch_ver");
-
-        if ( m != obj.end() && s != obj.end() )
+        // If update does not include metadata AND schema, then we must load the missing parts from DB before we can validate here
+        if ( !metadata.size() || !sch_id.size() || !request->has_sch_ver() )
         {
-            DL_INFO( "Must validate JSON, schema " << s->second.asString() );
+            RecordViewRequest view_request;
+            RecordDataReply view_reply;
 
-            libjson::Value sch;
-            m_db_client.schemaView( s->second.asString(), v->second.asNumber(), sch );
+            view_request.set_id( request->id() );
 
-            DL_INFO( "Schema record JSON:" << sch.toString() );
-            //DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
+            m_db_client.recordView( view_request, view_reply );
 
-            nlohmann::json schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+            if ( !metadata.size() )
+                metadata = view_reply.data(0).metadata();
 
-            DL_INFO( "Schema nlohmann: " << schema );
+            if ( !sch_id.size() )
+                sch_id = view_reply.data(0).sch_id();
 
-            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+            if ( !request->has_sch_ver() )
+                sch_ver = view_reply.data(0).sch_ver();
+        }
 
-            try
+        DL_INFO( "Must validate JSON, schema " << sch_id << ":" << sch_ver );
+
+        libjson::Value sch;
+        m_db_client.schemaView( sch_id, sch_ver, sch );
+
+        DL_INFO( "Schema record JSON:" << sch.toString() );
+        //DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
+
+        nlohmann::json schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+
+        DL_INFO( "Schema nlohmann: " << schema );
+
+        nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+        try
+        {
+            DL_INFO( "Setting root schema" );
+            validator.set_root_schema( schema );
+
+            // TODO This is a hacky way to convert between JSON implementations...
+            DL_INFO( "Parse md" );
+
+            nlohmann::json md = nlohmann::json::parse( metadata );
+
+            DL_INFO( "Validating" );
+
+            validator.validate( md, *this );
+        }
+        catch( exception & e )
+        {
+            m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
+            DL_ERROR( "Invalid metadata schema: " << e.what() );
+        }
+
+        if ( request->has_sch_validate() && request->sch_validate() && m_validator_err.size() )
+        {
+            EXCEPT( 1, m_validator_err );
+        }
+    }
+
+    m_db_client.recordUpdate( *request, reply, result );
+
+    if ( m_validator_err.size() )
+    {
+        DL_ERROR( "Validation error - update record" );
+
+        m_db_client.recordUpdateSchemaError( request->id(), m_validator_err );
+        // Must find and update md_err flag in reply (always 1 data entry)
+        RecordData * data = reply.mutable_data(0);
+        data->set_notes( data->notes() | 0x1000 );
+
+        for ( int i = 0; i < reply.update_size(); i++ )
+        {
+            ListingData * data = reply.mutable_update(i);
+            if ( data->id() == request->id() )
             {
-                DL_INFO( "Setting root schema" );
-                validator.set_root_schema( schema );
-
-                // TODO This is a hacky way to convert between JSON implementations...
-                DL_INFO( "Parse md" );
-
-                nlohmann::json md = nlohmann::json::parse( m->second.toString() );
-
-                DL_INFO( "Validating" );
-
-                m_validator_err.clear();
-                validator.validate( md, *this );
-                //validator.validate( md.value(), *this );
-            }
-            catch( exception & e )
-            {
-                m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
-                DL_ERROR( "Invalid metadata schema: " << e.what() );
-            }
-
-            if ( m_validator_err.size() )
-            {
-                DL_ERROR( "Validation error - update record" );
-
-                const string & id = obj.getString("id");
-
-                m_db_client.recordUpdateSchemaError( id, m_validator_err );
-                // Must find and update md_err flag in reply
-                for ( int i = 0; i < reply.data_size(); i++ )
-                {
-                    RecordData * data = reply.mutable_data(i);
-                    if ( data->id() == id )
-                    {
-                        // TODO need a def for md_err mask
-                        data->set_notes( data->notes() | 0x1000 );
-                    }
-                }
-                for ( int i = 0; i < reply.update_size(); i++ )
-                {
-                    ListingData * data = reply.mutable_update(i);
-                    if ( data->id() == id )
-                    {
-                        // TODO need a def for md_err mask
-                        data->set_notes( data->notes() | 0x1000 );
-                    }
-                }
+                // TODO need a def for md_err mask
+                data->set_notes( data->notes() | 0x1000 );
             }
         }
     }
