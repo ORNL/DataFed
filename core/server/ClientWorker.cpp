@@ -656,9 +656,9 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
     try
     {
         libjson::Value sch;
-        DL_INFO( "Schema " << request->sch_id() << ", ver " << request->sch_ver() );
+        DL_INFO( "Schema " << request->sch_id() );
 
-        m_db_client.schemaView( request->sch_id(), request->sch_ver(), sch );
+        m_db_client.schemaView( request->sch_id(), sch );
 
         DL_INFO( "Schema: " << sch.asArray().begin()->asObject().getValue("def").toString() );
 
@@ -729,7 +729,7 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
         try
         {
             libjson::Value sch;
-            m_db_client.schemaView( request->sch_id(), request->sch_ver(), sch );
+            m_db_client.schemaView( request->sch_id(), sch );
             schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
 
             nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
@@ -757,7 +757,7 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
             DL_ERROR( "Could not load metadata schema: " << e.what() );
         }
 
-        if ( request->has_sch_validate() && request->sch_validate() && m_validator_err.size() )
+        if ( request->has_sch_enforce() && request->sch_enforce() && m_validator_err.size() )
         {
             EXCEPT( 1, m_validator_err );
         }
@@ -796,15 +796,14 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     m_validator_err.clear();
 
-    if ( request->has_metadata() || request->has_sch_id() || request->has_sch_ver() )
+    if ( request->has_metadata() || request->has_sch_id() )
     {
         //DL_INFO("Has metadata/schema");
         string metadata = request->has_metadata()?request->metadata():"";
         string sch_id = request->has_sch_id()?request->sch_id():"";
-        uint32_t sch_ver = request->has_sch_ver()?request->sch_ver():0;
 
         // If update does not include metadata AND schema, then we must load the missing parts from DB before we can validate here
-        if ( !metadata.size() || !sch_id.size() || !request->has_sch_ver() )
+        if ( !metadata.size() || !sch_id.size() )
         {
             RecordViewRequest view_request;
             RecordDataReply view_reply;
@@ -818,15 +817,12 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
             if ( !sch_id.size() )
                 sch_id = view_reply.data(0).sch_id();
-
-            if ( !request->has_sch_ver() )
-                sch_ver = view_reply.data(0).sch_ver();
         }
 
-        DL_INFO( "Must validate JSON, schema " << sch_id << ":" << sch_ver );
+        DL_INFO( "Must validate JSON, schema " << sch_id );
 
         libjson::Value sch;
-        m_db_client.schemaView( sch_id, sch_ver, sch );
+        m_db_client.schemaView( sch_id, sch );
 
         DL_INFO( "Schema record JSON:" << sch.toString() );
         //DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
@@ -857,7 +853,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
             DL_ERROR( "Invalid metadata schema: " << e.what() );
         }
 
-        if ( request->has_sch_validate() && request->sch_validate() && m_validator_err.size() )
+        if ( request->has_sch_enforce() && request->sch_enforce() && m_validator_err.size() )
         {
             EXCEPT( 1, m_validator_err );
         }
@@ -1981,17 +1977,9 @@ ClientWorker::schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a
 
     libjson::Value sch;
     std::string id = a_uri.path();
-    uint32_t ver;
-    size_t d = id.find_last_of(":");
 
-    if ( d == std::string::npos )
-        EXCEPT_PARAM( 1, "Reference schema '" << id << "' is missing version number suffix." );
-
-    if ( to_uint32( id.substr( d + 1 ).c_str(), ver ))
-        EXCEPT_PARAM( 1, "Reference schema '" << id << "' has invalid version number suffix." );
-
-    id = id.substr( 1, d - 1 ); // Skip leading "/"
-    m_db_client.schemaView( id, ver, sch );
+    id = id.substr( 1 ); // Skip leading "/"
+    m_db_client.schemaView( id, sch );
 
     a_value = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
     DL_INFO( "Loaded schema: " << a_value );

@@ -212,7 +212,8 @@ class API:
         return self._mapi.sendRecv( msg )
 
     def dataCreate( self, title, alias = None, description = None, tags = None, extension = None,
-        metadata = None, metadata_file = None, parent_id = "root", deps = None, repo_id = None, context = None ):
+        metadata = None, metadata_file = None, schema_id = None, schema_ver = None, schema_enforce = False,
+        parent_id = "root", deps = None, repo_id = None, context = None ):
         """
         Create a new data record
 
@@ -237,6 +238,12 @@ class API:
             This dictionary can be nested.
         metadata_file : str, Optional. Default = None
             Path to local JSON file containing domain-specific metadata
+        schema_id: str, Optional. Default = None
+            Set schema ID for metadata validation
+        schema_ver: int, Optional. Default = None
+            Set schema version for metadata validation
+        schema_enforce: bool, Optional, Default = False
+            Set to true to enforce metadata schema validation (i.e. fail if does not comply).
         parent_id : str, Optional. Default = "root"
             ID/alias of collection within which to create this record.
             By default, the record will be created in the user's root collection
@@ -265,6 +272,12 @@ class API:
 
         if metadata and metadata_file:
             raise Exception( "Cannot specify both metadata and metadata-file options" )
+
+        if schema_id and not schema_ver:
+            raise Exception( "Schema version must be specified with schema ID" )
+            
+        if schema_ver and not schema_id:
+            raise Exception( "Schema ID must be specified with schema version" )
 
         msg = auth.RecordCreateRequest()
         msg.title = title
@@ -297,6 +310,13 @@ class API:
         if metadata:
             msg.metadata = metadata
 
+        if schema_id:
+            msg.sch_id = schema_id
+            msg.sch_ver = schema_ver
+
+        if schema_id or metadata or metadata_file:
+            msg.sch_enforce = schema_enforce
+
         if deps:
             for d in deps:
                 dp = msg.deps.add()
@@ -311,8 +331,9 @@ class API:
         return self._mapi.sendRecv( msg )
 
     def dataUpdate( self, data_id, title = None, alias = None, description = None, tags = None,
-        extension = None, metadata = None, metadata_file = None, metadata_set = False, deps_add = None,
-        deps_rem = None, context = None ):
+        extension = None, metadata = None, metadata_file = None, metadata_set = False,
+        schema_id = None, schema_ver = None, schema_enforce = False,
+        deps_add = None, deps_rem = None, context = None ):
         """
         Update an existing data record
 
@@ -343,6 +364,12 @@ class API:
             Set to True to replace existing metadata with provided.
             Otherwise, and by default, provided metadata will be merged with
             existing metadata.
+        schema_id: str, Optional. Default = None
+            Set schema ID for metadata validation
+        schema_ver: int, Optional. Default = None
+            Set schema version for metadata validation
+        schema_enforce: bool, Optional, Default = False
+            Set to true to enforce metadata schema validation (i.e. fail if does not comply).
         deps_add : list, Optional. Default = None
             Dependencies of this data record to add, specified as an array of
             lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
@@ -372,6 +399,12 @@ class API:
 
         if metadata and metadata_file:
             raise Exception( "Cannot specify both metadata and metadata-file options." )
+
+        if schema_id and not schema_ver:
+            raise Exception( "Schema version must be specified with schema ID" )
+            
+        if schema_ver and not schema_id:
+            raise Exception( "Schema ID must be specified with schema version" )
 
         msg = auth.RecordUpdateRequest()
         msg.id = self._resolve_id( data_id, context )
@@ -411,6 +444,13 @@ class API:
 
         if metadata_set:
             msg.mdset = True
+
+        if schema_id:
+            msg.sch_id = schema_id
+            msg.sch_ver = schema_ver
+
+        if schema_id or metadata or metadata_file:
+            msg.sch_enforce = schema_enforce
 
         if deps_add:
             for d in deps_add:

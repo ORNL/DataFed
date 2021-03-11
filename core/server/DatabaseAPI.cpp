@@ -965,8 +965,6 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::Re
         body += ",\"md\":" + a_request.metadata();
     if ( a_request.has_sch_id() )
         body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
-    if ( a_request.has_sch_ver() )
-        body += string(",\"sch_ver\":\"") + to_string( a_request.sch_ver() ) + "\"";
     if ( a_request.has_doi() )
         body += string(",\"doi\":\"") + a_request.doi() + "\"";
     if ( a_request.has_data_url() )
@@ -1040,8 +1038,6 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
     }
     if ( a_request.has_sch_id() )
         body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
-    if ( a_request.has_sch_ver() )
-        body += string(",\"sch_ver\":\"") + to_string( a_request.sch_ver() ) + "\"";
     if ( a_request.has_doi() )
         body += string(",\"doi\":\"") + a_request.doi() + "\"";
     if ( a_request.has_data_url() )
@@ -1281,9 +1277,6 @@ DatabaseAPI::setRecordData( Anon::RecordDataReply & a_reply, const Value & a_res
 
             if ( obj.has( "sch_id" ))
                 rec->set_sch_id( obj.asString() );
-
-            if ( obj.has( "sch_ver" ))
-                rec->set_sch_ver( obj.asNumber() );
 
             if ( obj.has( "repo_id" ))
                 rec->set_repo_id( obj.asString() );
@@ -3033,7 +3026,6 @@ DatabaseAPI::schemaView( const Anon::SchemaViewRequest & a_request, Anon::Schema
     vector<pair<string,string>> params;
 
     params.push_back({ "id", a_request.id() });
-    params.push_back({ "ver", to_string( a_request.ver() )});
     if ( a_request.has_resolve() && a_request.resolve() )
         params.push_back({ "resolve", "true" });
 
@@ -3102,7 +3094,7 @@ DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request )
 
     body.append("}");
 
-    dbPost( "schema/revise", {{ "id", a_request.id() },{ "ver", to_string( a_request.ver() )}}, &body, result );
+    dbPost( "schema/revise", {{ "id", a_request.id() }}, &body, result );
 }
 
 
@@ -3163,7 +3155,7 @@ DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request )
 
     //DL_INFO("sch upd " << body );
 
-    dbPost( "schema/update", {{"id",a_request.id()},{"ver",to_string(a_request.ver())}}, &body, result );
+    dbPost( "schema/update", {{"id",a_request.id()}}, &body, result );
 }
 
 void
@@ -3172,7 +3164,7 @@ DatabaseAPI::schemaDelete( const Auth::SchemaDeleteRequest & a_request, Anon::Ac
     (void) a_reply;
     libjson::Value result;
 
-    dbPost( "schema/delete", {{"id",a_request.id()},{"ver",to_string(a_request.ver())}}, 0, result );
+    dbPost( "schema/delete", {{"id",a_request.id()}}, 0, result );
 }
 
 void
@@ -3210,7 +3202,6 @@ void
 DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object & a_obj )
 {
     a_schema->set_id( a_obj.getString( "id" ));
-    a_schema->set_ver( a_obj.getNumber( "ver" ));
 
     if ( a_obj.has( "cnt" ))
         a_schema->set_cnt( a_obj.asNumber() );
@@ -3249,7 +3240,6 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
             dep = a_schema->add_uses();
             
             dep->set_id( obj.getString( "id" ));
-            dep->set_ver( obj.getNumber( "ver" ));
         }
     }
 
@@ -3263,16 +3253,15 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
             dep = a_schema->add_used_by();
             
             dep->set_id( obj.getString( "id" ));
-            dep->set_ver( obj.getNumber( "ver" ));
         }
     }
 }
 
 
 void
-DatabaseAPI::schemaView( const std::string & a_id, uint32_t a_ver, libjson::Value & a_result )
+DatabaseAPI::schemaView( const std::string & a_id, libjson::Value & a_result )
 {
-    dbGet( "schema/view", {{ "id", a_id }, { "ver", to_string( a_ver ) }}, a_result );
+    dbGet( "schema/view", {{ "id", a_id }}, a_result );
 }
 
 
@@ -3845,7 +3834,7 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
     if ( a_request.mode() == 1 && a_request.has_sch_id() > 0 )
     {
         a_query += " and i.sch_id == @sch";
-        a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\",\"sch_ver\":" + to_string(a_request.has_sch_ver()?a_request.sch_ver():0);
+        a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\"";
     }
 
     if ( a_request.has_text() > 0 )
