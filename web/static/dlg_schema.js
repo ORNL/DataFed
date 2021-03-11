@@ -13,8 +13,10 @@ const dlg_title = ["View","Edit","Create New","Create Revision of "];
 const btn_title = ["Close","Save","Create","Create"];
 
 export function show( a_mode, a_schema, a_cb ){
-    var frame = $(document.createElement('div')),
-        dlg_inst, json_val;
+    var ele = document.createElement('div');
+    ele.id = "dlg_schema_" + (a_schema?a_schema.id + "_" + a_schema.ver:"new");
+
+    var frame = $( ele ), dlg_inst, json_val;
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
@@ -88,7 +90,7 @@ export function show( a_mode, a_schema, a_cb ){
 
     var dlg_opts = {
         title: dlg_title[a_mode] + " Schema",
-        modal: true,
+        modal: false,
         width: 600,
         height: 500,
         resizable: true,

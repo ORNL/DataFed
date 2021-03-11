@@ -77,7 +77,10 @@ function getSelSchema( a_cb, a_resolve ){
 
 
 export function show( a_select, a_resolve, a_cb ){
-    frame = $(document.createElement('div'));
+    var ele = document.createElement('div');
+    ele.id = "dlg_schema_list";
+
+    frame = $( ele );
 
     frame.html(
         "<div class='col-flex' style='height:100%'>\
@@ -124,7 +127,7 @@ export function show( a_select, a_resolve, a_cb ){
 
     var dlg_opts = {
         title: (a_select?"Select Schema":"Manage Schemas"),
-        modal: true,
+        modal: false,
         width: 600,
         height: 500,
         resizable: true,
@@ -227,12 +230,18 @@ export function show( a_select, a_resolve, a_cb ){
 
     $("#sch_view",frame).on("click",function(){
         getSelSchema( function( schema ){
+            if ( util.checkDlgOpen( "dlg_schema_" + schema.id + "_" + schema.ver ))
+                return;
+
             dlgSchema.show( dlgSchema.mode_view, schema );
         });
     });
 
     $("#sch_edit",frame).on("click",function(){
         getSelSchema( function( schema ){
+            if ( util.checkDlgOpen( "dlg_schema_" + schema.id + "_" + schema.ver ))
+                return;
+
             dlgSchema.show( dlgSchema.mode_edit, schema, function(){
                 setTimeout( function(){
                     loadSchemas();
@@ -242,6 +251,9 @@ export function show( a_select, a_resolve, a_cb ){
     });
 
     $("#sch_new",frame).on("click",function(){
+        if ( util.checkDlgOpen( "dlg_schema_new" ))
+            return;
+
         dlgSchema.show( dlgSchema.mode_new, null, function(){
             setTimeout( function(){
                 loadSchemas();
@@ -251,6 +263,9 @@ export function show( a_select, a_resolve, a_cb ){
 
     $("#sch_rev",frame).on("click",function(){
         getSelSchema( function( schema ){
+            if ( util.checkDlgOpen( "dlg_schema_" + schema.id + "_" + schema.ver ))
+                return;
+
             dlgSchema.show( dlgSchema.mode_rev, schema, function(){
                 setTimeout( function(){
                     loadSchemas();
@@ -261,6 +276,9 @@ export function show( a_select, a_resolve, a_cb ){
 
     $("#sch_del",frame).on("click",function(){
         getSelSchema( function( schema ){
+            if ( util.checkDlgOpen( "dlg_schema_" + schema.id + "_" + schema.ver ))
+                return;
+
             api.schemaDelete( schema.id, schema.ver, function( ok, reply ){
                 if ( ok ){
                     loadSchemas();

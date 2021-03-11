@@ -1078,8 +1078,6 @@ function actionEditSelected() {
     //if ( async_guard )
     //    return;
 
-    console.log("actionEditSelected");
-
     var ids = getSelectedIDs();
 
     if ( ids.length != 1 )
@@ -1089,7 +1087,6 @@ function actionEditSelected() {
 
     if ( util.checkDlgOpen( id + "_edit" ))
         return;
-    console.log("id", id);
 
     switch( id.charAt(0) ){
         case "p":
@@ -1281,6 +1278,9 @@ function actionDataPut() {
 }*/
 
 function actionSchemaList() {
+    if ( util.checkDlgOpen( "dlg_schema_list" ))
+        return;
+
     dlgSchemaList.show();
 }
 
