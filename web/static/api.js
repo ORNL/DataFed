@@ -284,8 +284,8 @@ export function sendDataLock( a_ids, a_lock, a_cb ){
     _asyncGet( "/api/dat/lock?lock="+a_lock+"&ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
-export function metadataValidate( a_sch_id, a_sch_ver, a_metadata, a_cb ){
-    var doc = { schId: a_sch_id, schVer: a_sch_ver, metadata: a_metadata };
+export function metadataValidate( a_sch_id, a_metadata, a_cb ){
+    var doc = { schId: a_sch_id, metadata: a_metadata };
     _asyncPost( "/api/metadata/validate", doc, a_cb );
 }
 

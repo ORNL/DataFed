@@ -275,7 +275,6 @@ message MetadataValidateRequest
 {
     required string             metadata    = 1;
     required string             sch_id      = 2;
-    required uint32             sch_ver     = 3;
 }
 
 message MetadataValidateReply
@@ -286,8 +285,7 @@ message MetadataValidateReply
 message SchemaViewRequest
 {
     required string             id          = 1;
-    required uint32             ver         = 2;
-    optional bool               resolve     = 3;
+    optional bool               resolve     = 2;
 }
 
 message SchemaSearchRequest

@@ -64,9 +64,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                             <tr>\
                                 <td>Schema:&nbsp</td>\
                                 <td><input id='sch_id' type='text' style='width:100%'></input></td>\
-                                <td>&nbsp;Ver:&nbsp;</td>\
-                                <td><input id='sch_ver' type='text' style='width:5ch'></input></td>\
-                                <td>&nbsp;</td>\
+                                <td><button title='Reset schema' id='sch_reset' class='btn btn-icon-tiny' style='margin-left:0.25em'><span class='ui-icon ui-icon-close'></span></button></td>\
                                 <td><button title='Browse schemas' id='sch_pick' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></td>\
                                 <td><button title='Validate with specified schemas' id='md_validate' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-refresh'></span></button></td>\
                             </tr>\
@@ -115,10 +113,15 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         remRef(ev);
     });
     
+    $("#sch_reset",frame).on("click",function(ev){
+        $("#sch_id",frame).val("");
+        $("#md_err_msg",frame).text("").hide();
+    });
+
     $("#sch_pick",frame).on("click",function(ev){
         dlgSchList.show( true, false, function( schema ){
-            $("#sch_id",frame).val( schema.id );
-            $("#sch_ver",frame).val( schema.ver );
+            $("#sch_id",frame).val( schema.id + ":" + schema.ver );
+            $("#md_err_msg",frame).text("").hide();
         });
     });
 
@@ -130,16 +133,15 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             return;
         }
 
-        var sch_id = $("#sch_id",frame).val().trim(),
-            sch_ver = $("#sch_ver",frame).val().trim();
+        var sch_id = $("#sch_id",frame).val().trim();
 
-        if ( !sch_id || !sch_ver ){
-            dialogs.dlgAlert( "Validation Error", "Schema ID or version not specified.");
+        if ( !sch_id ){
+            dialogs.dlgAlert( "Validation Error", "Schema ID not specified.");
             return;
         }
 
-        api.metadataValidate( sch_id, sch_ver, jsoned.getValue(), function( ok, data ){
-            console.log("val res:", ok, data );
+        api.metadataValidate( sch_id, jsoned.getValue(), function( ok, data ){
+            //console.log("val res:", ok, data );
             if ( ok ){
                 if ( data.errors ){
                     $("#md_err_msg",frame).text(data.errors).show();
@@ -300,13 +302,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
                 });
 
-                var sch_id = $("#sch_id",frame).val().trim(),
-                    sch_ver = $("#sch_ver",frame).val().trim();
-
-                if (( sch_id && !sch_ver ) || ( !sch_id && sch_ver )){
-                    dialogs.dlgAlert( "Input Error", "Schema ID and version must both be specified or omitted.");
-                    return;
-                }
+                var sch_id = $("#sch_id",frame).val().trim();
 
                 if ( sch_id && settings.opts.meta_val ){
                     obj.schValidate = true;
@@ -318,9 +314,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     util.getUpdatedValueJSON( jsoned.getValue(), a_data, obj, "metadata" );
                     util.getUpdatedValue( sch_id, a_data, obj, "schId" );
-                    util.getUpdatedValue( sch_ver, a_data, obj, "schVer" );
-
-                    console.log("schVer new:", obj.schID, typeof obj.schID );
 
                     obj.tags = tag_el.tagit("assignedTags");
 
@@ -417,7 +410,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     util.getUpdatedValue( sch_id, {}, obj, "schId" );
-                    util.getUpdatedValue( sch_ver, {}, obj, "schVer" );
 
                     if ( $("#ext_auto",frame).prop("checked") ){
                         obj.extAuto = true;
@@ -503,7 +495,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                 if ( a_data.schId ){
                     $("#sch_id",frame).val(a_data.schId);
-                    $("#sch_ver",frame).val(a_data.schVer);
                 }
 
                 if ( a_data.metadata ){

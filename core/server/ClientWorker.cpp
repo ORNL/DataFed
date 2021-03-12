@@ -796,6 +796,8 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     m_validator_err.clear();
 
+    // TODO - This code is broken - making assumptions that schema / metadata are present
+
     if ( request->has_metadata() || request->has_sch_id() )
     {
         //DL_INFO("Has metadata/schema");

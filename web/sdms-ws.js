@@ -842,7 +842,7 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
 });
 
 app.post('/api/metadata/validate', ( a_req, a_resp ) => {
-    console.log( "md val", a_req.body );
+    //console.log( "md val", a_req.body );
     sendMessage( "MetadataValidateRequest", a_req.body, a_req, a_resp, function( reply ) {
         //console.log("rec update:",reply);
         a_resp.send(reply);
