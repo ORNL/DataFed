@@ -143,7 +143,13 @@ router.post('/update', function (req, res) {
             waitForSync: true,
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var sch_old = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
+                var idx = req.queryParams.id.indexOf(":");
+                if ( idx < 0 ){
+                    throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+                }
+                var sch_id = req.queryParams.id.substr( 0, idx ),
+                    sch_ver = parseInt( req.queryParams.id.substr( idx + 1 )),
+                    sch_old = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
 
                 if ( !sch_old ){
                     throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
@@ -209,8 +215,7 @@ router.post('/update', function (req, res) {
     }
 })
 .queryParam('client', joi.string().optional(), "Client ID")
-.queryParam('id', joi.string().required(), "Schema ID")
-.queryParam('ver', joi.number().integer().min(0).required(), "Schema Version")
+.queryParam('id', joi.string().required(), "Schema ID (with version suffix)")
 .body(joi.object({
     id: joi.string().optional(),
     desc: joi.string().optional(),
@@ -231,7 +236,13 @@ router.post('/revise', function (req, res) {
             waitForSync: true,
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var sch = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
+                var idx = req.queryParams.id.indexOf(":");
+                if ( idx < 0 ){
+                    throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+                }
+                var sch_id = req.queryParams.id.substr( 0, idx ),
+                    sch_ver = parseInt( req.queryParams.id.substr( idx + 1 )),
+                    sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
 
                 if ( !sch )
                     throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
@@ -240,7 +251,7 @@ router.post('/revise', function (req, res) {
                     throw g_lib.ERR_PERM_DENIED;
 
                 if ( g_db.sch_ver.firstExample({ _from: sch._id }) )
-                    throw [ g_lib.ERR_PERM_DENIED, "A revision of schema '" + req.queryParams.id + "' ver " + req.queryParams.ver + " already exists." ];
+                    throw [ g_lib.ERR_PERM_DENIED, "A revision of schema '" + req.queryParams.id + "' already exists." ];
 
                 if ( !sch.own_id && !client.is_admin )
                     throw [ g_lib.ERR_PERM_DENIED, "Revising a system schema requires admin privileges."];
@@ -307,7 +318,6 @@ router.post('/revise', function (req, res) {
 })
 .queryParam('client', joi.string().optional(), "Client ID")
 .queryParam('id', joi.string().required(), "Schema ID")
-.queryParam('ver', joi.number().integer().min(0).required(), "Schema Version")
 .body(joi.object({
     desc: joi.string().optional(),
     def: joi.object().optional(),
@@ -320,8 +330,13 @@ router.post('/revise', function (req, res) {
 router.post('/delete', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-
-        var sch_old = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
+        var idx = req.queryParams.id.indexOf(":");
+        if ( idx < 0 ){
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+        }
+        var sch_id = req.queryParams.id.substr( 0, idx ),
+            sch_ver = parseInt( req.queryParams.id.substr( idx + 1 )),
+            sch_old = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
 
         if ( !sch_old )
             throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found." ];
@@ -351,7 +366,6 @@ router.post('/delete', function (req, res) {
 })
 .queryParam('client', joi.string().optional(), "Client ID")
 .queryParam('id', joi.string().required(), "Schema ID")
-.queryParam('ver', joi.number().integer().min(0).required(), "Schema Version")
 .summary('Delete schema')
 .description('Delete schema');
 
@@ -359,10 +373,16 @@ router.post('/delete', function (req, res) {
 router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var sch = g_db.sch.firstExample({ id: req.queryParams.id, ver: req.queryParams.ver });
+        var idx = req.queryParams.id.indexOf(":");
+        if ( idx < 0 ){
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+        }
+        var sch_id = req.queryParams.id.substr( 0, idx ),
+            sch_ver = parseInt( req.queryParams.id.substr( idx + 1 )),
+            sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
 
         if ( !sch )
-            throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + (req.queryParams.ver?"-"+req.queryParams.ver:"") + "' not found."];
+            throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
 
         if ( !( sch.pub || sch.own_id == client._id || client.is_admin ))
             throw g_lib.ERR_PERM_DENIED;
@@ -390,7 +410,6 @@ router.get('/view', function (req, res) {
 })
 .queryParam('client', joi.string().optional(), "Client ID")
 .queryParam('id', joi.string().required(), "ID of schema")
-.queryParam('ver', joi.number().integer().min(0).required(), "Schema Version")
 .queryParam('resolve', joi.bool().optional(), "Resolve references")
 .summary('View schema')
 .description('View schema');
