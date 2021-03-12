@@ -758,11 +758,11 @@ export function topicView( a_id, a_cb ){
     });
 }
 
-export function schemaView( a_id, a_ver, a_res, a_cb ){
+export function schemaView( a_id, a_res, a_cb ){
     if ( !a_cb )
         return;
 
-    _asyncGet( "/api/sch/view?id=" + encodeURIComponent(a_id) + "&ver=" + encodeURIComponent(a_ver) + (a_res?"&resolve=true":""), null, function( ok, reply ){
+    _asyncGet( "/api/sch/view?id=" + encodeURIComponent(a_id) + (a_res?"&resolve=true":""), null, function( ok, reply ){
         a_cb( ok, reply );
     });
 }
@@ -795,8 +795,8 @@ export function schemaRevise( a_req, a_cb ){
     });
 }
 
-export function schemaDelete( a_id, a_ver, a_cb ){
-    _asyncPost( "/api/sch/delete?id=" + a_id + "&ver=" + a_ver, {}, function( ok, reply ){
+export function schemaDelete( a_id, a_cb ){
+    _asyncPost( "/api/sch/delete?id=" + a_id, {}, function( ok, reply ){
         if ( a_cb )
             a_cb( ok, reply );
     });

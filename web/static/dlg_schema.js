@@ -240,14 +240,12 @@ export function show( a_mode, a_schema, a_cb ){
                 console.log("new",obj);
                 api.schemaCreate( obj, handleSubmit );
             }else if ( a_mode == mode_rev ){
-                obj.id = a_schema.id;
-                obj.ver = a_schema.ver;
+                obj.id = a_schema.id + ":" + a_schema.ver;
 
                 console.log("rev",obj);
                 api.schemaRevise( obj, handleSubmit );
             }else{ // edit mode
-                obj.id = a_schema.id;
-                obj.ver = a_schema.ver;
+                obj.id = a_schema.id + ":" + a_schema.ver;
 
                 var tmp = $("#sch_id",frame).val().trim();
                 if ( tmp != a_schema.id )

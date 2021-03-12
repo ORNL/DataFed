@@ -3202,6 +3202,7 @@ void
 DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object & a_obj )
 {
     a_schema->set_id( a_obj.getString( "id" ));
+    a_schema->set_ver( a_obj.getNumber( "ver" ));
 
     if ( a_obj.has( "cnt" ))
         a_schema->set_cnt( a_obj.asNumber() );
@@ -3240,6 +3241,7 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
             dep = a_schema->add_uses();
             
             dep->set_id( obj.getString( "id" ));
+            dep->set_ver( obj.getNumber( "ver" ));
         }
     }
 
@@ -3253,6 +3255,7 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
             dep = a_schema->add_used_by();
             
             dep->set_id( obj.getString( "id" ));
+            dep->set_ver( obj.getNumber( "ver" ));
         }
     }
 }

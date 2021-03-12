@@ -51,7 +51,7 @@ function loadSchemas(){
                 for ( var i in data.schema ){
                     sch = data.schema[i];
                     //src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ownNm?" " + sch.ownNm:"") + (sch.ownId?" (" + sch.ownId +")":""), key: sch.id + ":" + sch.ver });
-                    src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ref?" (R)":""), own_nm: sch.ownNm, own_id: sch.ownId.substr(2), id: sch.id, ver: sch.ver, cnt: sch.cnt, ref: sch.ref, key: sch.id + ":" + sch.ver });
+                    src.push({ title: sch.id + ":" + sch.ver + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ref?" (R)":""), own_nm: sch.ownNm, own_id: sch.ownId.substr(2), id: sch.id, ver: sch.ver, cnt: sch.cnt, ref: sch.ref, key: sch.id + ":" + sch.ver });
                 }
             }else{
                 src.push({ title: "(no matches)" });
@@ -65,7 +65,7 @@ function loadSchemas(){
 
 function getSelSchema( a_cb, a_resolve ){
     var data = tree.getSelectedNodes()[0].data;
-    api.schemaView( data.id, data.ver, a_resolve, function( ok, reply ){
+    api.schemaView( data.id + ":" + data.ver, a_resolve, function( ok, reply ){
         //console.log("schema",reply);
         if ( ok && reply.schema ){
             a_cb( reply.schema[0] );
@@ -279,7 +279,7 @@ export function show( a_select, a_resolve, a_cb ){
             if ( util.checkDlgOpen( "dlg_schema_" + schema.id + "_" + schema.ver ))
                 return;
 
-            api.schemaDelete( schema.id, schema.ver, function( ok, reply ){
+            api.schemaDelete( schema.id + ":" + schema.ver, function( ok, reply ){
                 if ( ok ){
                     loadSchemas();
                 }else{

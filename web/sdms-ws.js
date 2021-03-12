@@ -1305,7 +1305,7 @@ app.get('/api/top/search', ( a_req, a_resp ) => {
 });
 
 app.get('/api/sch/view', ( a_req, a_resp ) => {
-    sendMessage( "SchemaViewRequest", { id: a_req.query.id, ver: a_req.query.ver, resolve: a_req.query.resolve }, a_req, a_resp, function( reply ) {
+    sendMessage( "SchemaViewRequest", { id: a_req.query.id, resolve: a_req.query.resolve }, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
 });
@@ -1335,7 +1335,7 @@ app.post('/api/sch/update', ( a_req, a_resp ) => {
 });
 
 app.post('/api/sch/delete', ( a_req, a_resp ) => {
-    sendMessage( "SchemaDeleteRequest", { id: a_req.query.id, ver: a_req.query.ver }, a_req, a_resp, function( reply ) {
+    sendMessage( "SchemaDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
 });
