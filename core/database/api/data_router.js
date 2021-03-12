@@ -52,8 +52,9 @@ function recordCreate( client, record, result ){
     if ( !repo_alloc )
         throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
 
-    var time = Math.floor( Date.now()/1000 );
-    var obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id };
+    var time = Math.floor( Date.now()/1000 ),
+        obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id },
+        sch_id, sch_ver;
 
     g_lib.procInputParam( record, "title", false, obj );
     g_lib.procInputParam( record, "desc", false, obj );
@@ -103,16 +104,20 @@ function recordCreate( client, record, result ){
         obj.public = true;
     }
 
-    // Note: sch_id function param is the "id" field of sch, not "_id", must convert to "_id" before processing
+    // Note: sch_id function param is the "id:ver" of sch, not "_id", must convert to "_id" before processing
     // sch_id stored in record is sch "_id" field.
 
     if ( obj.sch_id ) {
-        if ( record.sch_ver === undefined )
-            throw [g_lib.ERR_MISSING_REQ_PARAM,"Schema version must be specified in addition to ID."];
+        var idx = obj.sch_id.indexOf(":");
+        if ( idx < 0 ){
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+        }
+        sch_id = obj.sch_id.substr( 0, idx ),
+        sch_ver = parseInt( obj.sch_id.substr( idx + 1 ));
+        var sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
 
-        var sch = g_db.sch.firstExample({ id: obj.sch_id, ver: record.sch_ver });
         if ( !sch )
-            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' ver. " + record.sch_ver + " does not exist" ];
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist" ];
 
         obj.sch_id = sch._id;
         g_db._update( sch._id, { cnt: sch.cnt + 1 });
@@ -165,9 +170,9 @@ function recordCreate( client, record, result ){
 
     g_db.item.save({ _from: parent_id, _to: data._id });
 
-    if ( record.sch_id ){
-        data.sch_id = record.id;
-        data.sch_ver = record.ver;
+    // Replace internal sch_id with user-facing sch_id + sch_ver
+    if ( sch_id ){
+        data.sch_id = sch_id + ":" + sch_ver;
     }
     
     data.id = data._id;
@@ -220,7 +225,6 @@ router.post('/create', function (req, res) {
     repo: joi.string().allow('').optional(),
     md: joi.any().optional(),
     sch_id: joi.string().allow('').optional(),
-    sch_ver: joi.number().integer().min(0).optional(),
     ext: joi.string().allow('').optional(),
     ext_auto: joi.boolean().optional(),
     deps: joi.array().items(joi.object({
@@ -276,7 +280,6 @@ router.post('/create/batch', function (req, res) {
         repo: joi.string().allow('').optional(),
         md: joi.any().optional(),
         sch_id: joi.string().allow('').optional(),
-        sch_ver: joi.number().integer().min(0).optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
         deps: joi.array().items(joi.object({
@@ -350,17 +353,24 @@ function recordUpdate( client, record, result ){
     // sch_id stored in record is sch "_id" field.
 
     if ( obj.sch_id === null ){
+        // If there was a schema set before, deref count it and clear any metadata errors
         if ( data.sch_id ){
             sch = g_db.sch.document( data.sch_id );
             g_db._update( sch._id, { cnt: sch.cnt - 1 });
+            obj.md_err_msg = null;
+            obj.md_err = false;
         }
     }else if ( obj.sch_id ) {
-        if ( record.sch_ver === undefined )
-            throw [g_lib.ERR_MISSING_REQ_PARAM,"Schema version must be specified in addition to ID."];
+        var idx = obj.sch_id.indexOf(":");
+        if ( idx < 0 ){
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+        }
+        var sch_id = obj.sch_id.substr( 0, idx ),
+            sch_ver = parseInt( obj.sch_id.substr( idx + 1 )),
+            sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
 
-        var sch = g_db.sch.firstExample({ id: obj.sch_id, ver: record.sch_ver });
         if ( !sch )
-            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' ver. " + record.sch_ver + " does not exist" ];
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist" ];
 
         obj.sch_id = sch._id;
         g_db._update( sch._id, { cnt: sch.cnt + 1 });
@@ -521,11 +531,10 @@ function recordUpdate( client, record, result ){
         g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, result.updates );
     }
 
-    // Convert DB _id to user-assigned id
+    // Convert DB schema _id to user-facing id + ver
     if ( data.sch_id ){
         var sch = g_db.sch.document( data.sch_id );
-        data.sch_id = sch.id;
-        data.sch_ver = sch.ver;
+        data.sch_id = sch.id + ":" + sch.ver;
     }
 
     data.notes = g_lib.annotationGetMask( client, data._id );
@@ -603,7 +612,6 @@ router.post('/update', function (req, res) {
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
     sch_id: joi.string().allow('').optional(),
-    sch_ver: joi.number().integer().min(0).optional(),
     size: joi.number().optional(),
     source: joi.string().allow('').optional(),
     ext: joi.string().allow('').optional(),
@@ -679,7 +687,6 @@ router.post('/update/batch', function (req, res) {
         md: joi.any().optional(),
         mdset: joi.boolean().optional().default(false),
         sch_id: joi.string().allow('').optional(),
-        sch_ver: joi.number().integer().min(0).optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
         dep_add: joi.array().items(joi.object({
@@ -815,8 +822,7 @@ router.get('/view', function (req, res) {
 
         if ( data.sch_id ){
             var sch = g_db.sch.document( data.sch_id );
-            data.sch_id = sch.id;
-            data.sch_ver = sch.ver;
+            data.sch_id = sch.id + ":" + sch.ver;
         }
         
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
