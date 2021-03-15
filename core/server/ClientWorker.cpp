@@ -757,10 +757,14 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
             DL_ERROR( "Could not load metadata schema: " << e.what() );
         }
 
-        if ( request->has_sch_enforce() && request->sch_enforce() && m_validator_err.size() )
+        if ( request->has_sch_enforce() && m_validator_err.size() )
         {
             EXCEPT( 1, m_validator_err );
         }
+    }
+    else if ( request->has_sch_enforce() )
+    {
+        EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
     }
 
     m_db_client.recordCreate( *request, reply );
@@ -796,7 +800,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     m_validator_err.clear();
 
-    if ( request->has_metadata() || ( request->has_sch_id() && request->sch_id().size() ))
+    if ( request->has_metadata() || ( request->has_sch_id() && request->sch_id().size() ) || request->has_sch_enforce() )
     {
         //DL_INFO("Has metadata/schema");
         string metadata = request->has_metadata()?request->metadata():"";
@@ -855,10 +859,14 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
                 DL_ERROR( "Invalid metadata schema: " << e.what() );
             }
 
-            if ( request->has_sch_enforce() && request->sch_enforce() && m_validator_err.size() )
+            if ( request->has_sch_enforce() && m_validator_err.size() )
             {
                 EXCEPT( 1, m_validator_err );
             }
+        }
+        else if ( request->has_sch_enforce() )
+        {
+            EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
         }
     }
 

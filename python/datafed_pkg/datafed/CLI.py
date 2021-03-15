@@ -652,13 +652,14 @@ def _dataView( data_id, context ):
 @click.option("-x","--extension",type=str,required=False,help="Override raw data file extension if provided (default is auto detect).")
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.")
 @click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.") 
-@click.option("--schema-id",type=str,required=False,help="Schema ID.") 
+@click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version") 
+@click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors") 
 @click.option("-p","--parent",type=str,required=False, help="Parent collection ID, alias, or listing index. Default is the current working collection.")
 @click.option("-R","--repository",type=str,required=False,help="Repository ID. Uses default allocation if not specified.")
 @click.option("-D","--deps",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.")
 @_global_context_options
 @_global_output_options
-def _dataCreate( title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, parent, repository, deps, context ):
+def _dataCreate( title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, schema, schema_enforce, parent, repository, deps, context ):
     '''
     Create a new data record. The data record 'title' is required, but all
     other attributes are optional. On success, the ID of the created data
@@ -684,7 +685,8 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, meta
         parent_id = _cur_coll
 
     reply = _capi.dataCreate( title, alias = alias, description = description, tags = tags, extension = extension,
-        metadata = metadata, metadata_file = metadata_file, parent_id = parent_id, deps = deps, repo_id = repository, context = context )
+        metadata = metadata, metadata_file = metadata_file, schema = schema, schema_enforce = schema_enforce,
+        parent_id = parent_id, deps = deps, repo_id = repository, context = context )
     _generic_reply_handler( reply, _print_data )
 
     if raw_data_file:
@@ -704,11 +706,13 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, meta
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format.")
 @click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON.")
 @click.option("-S","--metadata-set",is_flag=True,required=False,help="Set (replace) existing metadata with provided instead of merging.")
+@click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version") 
+@click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors") 
 @click.option("-A","--deps-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
 @click.option("-R","--deps-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
 @_global_context_options
 @_global_output_options
-def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, metadata_set, deps_add, deps_rem, context ):
+def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, metadata_set, schema, schema_enforce, deps_add, deps_rem, context ):
     '''
     Update an existing data record. The data record ID is required and can be
     an ID, alias, or listing index; all other record attributes are optional.
@@ -726,7 +730,8 @@ def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extens
         tags = tags.split(",")
 
     reply = _capi.dataUpdate( _resolve_id( data_id ), title = title, alias = alias, description = description, tags = tags, extension = extension,
-        metadata = metadata, metadata_file = metadata_file, metadata_set = metadata_set, deps_add = deps_add, deps_rem = deps_rem, context = context )
+        metadata = metadata, metadata_file = metadata_file, metadata_set = metadata_set, schema = schema, schema_enforce = schema_enforce,
+        deps_add = deps_add, deps_rem = deps_rem, context = context )
     _generic_reply_handler( reply, _print_data )
 
     if raw_data_file:
