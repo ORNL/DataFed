@@ -859,13 +859,20 @@ router.post('/pub/search', function (req, res) {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
         if ( req.body.params.sch_id ){
-            req.body.params.sch = g_db.sch.firstExample({id:req.body.params.sch_id,ver:req.body.params.sch_ver});
+            // sch_id is id:ver
+            var idx = req.body.params.sch_id.indexOf(":");
+            if ( idx < 0 ){
+                throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+            }
+            var sch_id = req.body.params.sch_id.substr( 0, idx ),
+                sch_ver = parseInt( req.body.params.sch_id.substr( idx + 1 ));
+    
+            req.body.params.sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
             if ( !req.body.params.sch )
-                throw [ g_lib.ERR_NOT_FOUND, "Schema '" + req.body.params.sch_id + "-" + req.body.params.sch_ver + "' does not exist." ];
+                throw [ g_lib.ERR_NOT_FOUND, "Schema '" + sch_id + "-" + sch_ver + "' does not exist." ];
 
             req.body.params.sch = req.body.params.sch._id;
             delete req.body.params.sch_id;
-            delete req.body.params.sch_ver;
         }
 
         //console.log("pu/src",req.body.query, req.body.params);
