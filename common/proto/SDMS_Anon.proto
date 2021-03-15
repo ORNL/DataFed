@@ -176,7 +176,6 @@ message CatalogSearchRequest
     optional string             meta        = 13;
     optional bool               meta_err    = 14;
     optional string             sch_id      = 15;
-    optional uint32             sch_ver     = 16;
 }
 
 message CatalogSearchReply

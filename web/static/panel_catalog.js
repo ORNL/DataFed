@@ -692,11 +692,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         tmp = $("#cat_qry_sch_id",cat_panel).val().trim();
         if ( tmp ){
             coll_qry.schId = tmp;
-            tmp = $("#cat_qry_sch_ver",cat_panel).val();
-            coll_qry.schVer = tmp?tmp:0;
         }else{
             delete coll_qry.schId;
-            delete coll_qry.schVer;
         }
 
         tmp = $("#cat_meta_qry",cat_panel).val().trim();
@@ -795,7 +792,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     var textTimer = null;
 
-    $("#cat_text_qry,#cat_qry_owner,#cat_meta_qry,#cat_qry_sch_id,#cat_qry_sch_ver",cat_panel).on("keypress",function( ev ){
+    $("#cat_text_qry,#cat_qry_owner,#cat_meta_qry,#cat_qry_sch_id",cat_panel).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
             if ( textTimer )
                 clearTimeout( textTimer );
@@ -826,8 +823,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     $("#cat_qry_sch_pick",cat_panel).on("click",function(){
         dlgSchemaList.show( true, false, function( schema ){
-            $("#cat_qry_sch_id",cat_panel).val( schema.id );
-            $("#cat_qry_sch_ver",cat_panel).val( schema.ver );
+            $("#cat_qry_sch_id",cat_panel).val( schema.id + ":" + schema.ver );
             coll_off = 0;
             loadCollections();
         });
@@ -836,7 +832,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     $("#cat_qry_sch_clear",cat_panel).on("click",function(){
         if ( textTimer )
             clearTimeout( textTimer );
-        $("#cat_qry_sch_id,#cat_qry_sch_ver",cat_panel).val("");
+        $("#cat_qry_sch_id",cat_panel).val("");
         coll_off = 0;
         loadCollections();
     });
