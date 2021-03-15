@@ -796,16 +796,14 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     m_validator_err.clear();
 
-    // TODO - This code is broken - making assumptions that schema / metadata are present
-
-    if ( request->has_metadata() || request->has_sch_id() )
+    if ( request->has_metadata() || ( request->has_sch_id() && request->sch_id().size() ))
     {
         //DL_INFO("Has metadata/schema");
         string metadata = request->has_metadata()?request->metadata():"";
         string sch_id = request->has_sch_id()?request->sch_id():"";
 
         // If update does not include metadata AND schema, then we must load the missing parts from DB before we can validate here
-        if ( !metadata.size() || !sch_id.size() )
+        if ( !request->has_metadata() || !request->has_sch_id() )
         {
             RecordViewRequest view_request;
             RecordDataReply view_reply;
@@ -814,50 +812,53 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
             m_db_client.recordView( view_request, view_reply );
 
-            if ( !metadata.size() )
+            if ( !request->has_metadata() )
                 metadata = view_reply.data(0).metadata();
 
-            if ( !sch_id.size() )
+            if ( !request->has_sch_id() )
                 sch_id = view_reply.data(0).sch_id();
         }
 
-        DL_INFO( "Must validate JSON, schema " << sch_id );
-
-        libjson::Value sch;
-        m_db_client.schemaView( sch_id, sch );
-
-        DL_INFO( "Schema record JSON:" << sch.toString() );
-        //DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
-
-        nlohmann::json schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
-
-        DL_INFO( "Schema nlohmann: " << schema );
-
-        nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
-
-        try
+        if ( metadata.size() && sch_id.size() )
         {
-            DL_INFO( "Setting root schema" );
-            validator.set_root_schema( schema );
+            DL_INFO( "Must validate JSON, schema " << sch_id );
 
-            // TODO This is a hacky way to convert between JSON implementations...
-            DL_INFO( "Parse md" );
+            libjson::Value sch;
+            m_db_client.schemaView( sch_id, sch );
 
-            nlohmann::json md = nlohmann::json::parse( metadata );
+            DL_INFO( "Schema record JSON:" << sch.toString() );
+            //DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
 
-            DL_INFO( "Validating" );
+            nlohmann::json schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
 
-            validator.validate( md, *this );
-        }
-        catch( exception & e )
-        {
-            m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
-            DL_ERROR( "Invalid metadata schema: " << e.what() );
-        }
+            DL_INFO( "Schema nlohmann: " << schema );
 
-        if ( request->has_sch_enforce() && request->sch_enforce() && m_validator_err.size() )
-        {
-            EXCEPT( 1, m_validator_err );
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+            try
+            {
+                DL_INFO( "Setting root schema" );
+                validator.set_root_schema( schema );
+
+                // TODO This is a hacky way to convert between JSON implementations...
+                DL_INFO( "Parse md" );
+
+                nlohmann::json md = nlohmann::json::parse( metadata );
+
+                DL_INFO( "Validating" );
+
+                validator.validate( md, *this );
+            }
+            catch( exception & e )
+            {
+                m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
+                DL_ERROR( "Invalid metadata schema: " << e.what() );
+            }
+
+            if ( request->has_sch_enforce() && request->sch_enforce() && m_validator_err.size() )
+            {
+                EXCEPT( 1, m_validator_err );
+            }
         }
     }
 
