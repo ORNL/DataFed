@@ -715,13 +715,14 @@ router.post('/update/md_err_msg', function (req, res) {
                 write: ["d"]
             },
             action: function() {
-                console.log("update val_err", req.queryParams.id );
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var data_id = g_lib.resolveDataID( req.queryParams.id, client );
 
-                if ( !g_db.d.exists({ _id: req.queryParams.id }))
-                    throw [g_lib.ERR_INVALID_PARAM,"Record, "+req.queryParams.id+", does not exist."];
+                if ( !g_db.d.exists({ _id: data_id }))
+                    throw [g_lib.ERR_INVALID_PARAM,"Record, " + data_id + ", does not exist."];
 
                 // TODO Update schema validation error flag
-                g_db._update( req.queryParams.id, { md_err_msg: req.body, md_err: true }, { keepNull: false });
+                g_db._update( data_id, { md_err_msg: req.body, md_err: true }, { keepNull: false });
             }
         });
     } catch( e ) {
@@ -796,7 +797,7 @@ router.get('/view', function (req, res) {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
         var data_id = g_lib.resolveDataID( req.queryParams.id, client );
-        console.log("id:",data_id);
+
         var data = g_db.d.document( data_id ),
             i,dep,rem_md = false, admin = false;
 
