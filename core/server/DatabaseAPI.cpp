@@ -871,6 +871,7 @@ DatabaseAPI::setProjectData( Auth::ProjectDataReply & a_reply, const Value & a_r
     TRANSLATE_END( a_result )
 }
 
+/*
 void
 DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, Auth::ListingReply & a_reply )
 {
@@ -888,7 +889,7 @@ DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, Auth::ListingR
     dbGet( "/dat/search", params, result );
 
     setListingDataReply( a_reply, result );
-}
+}*/
 
 /*
 void
@@ -1357,6 +1358,34 @@ DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathRe
     const Value::Object & obj = result.asObject();
 
     a_reply.set_path( obj.getString( "path" ));
+}
+
+/**
+ * @brief Search for private or public data or collections
+ *
+ * This is the entry point for all data/collection searches across all search scopes. It
+ * supports searching private data (personal, project, shared) and public (catalog). The
+ * SearchRequest message contains search parameters that apply conditionally based on
+ * scope and other search options. The search message is parsed and a query is composed
+ * and then sent to the database. While the query syntax is stable, the main query is
+ * prefixed differently depending on scope. The DB relies on either tha "dataview" or
+ * "collview" Arango search views for execution of the query.
+ */
+void
+DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::ListingReply & a_reply )
+{
+    Value result;
+    string query, params;
+
+    uint32_t cnt = parseSearchRequest( a_request, query, params );
+
+    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
+
+    DL_INFO("General search: [" << body << "]");
+
+    dbPost( "col/pub/search", {}, &body, result );
+
+    setListingDataReply( a_reply, result );
 }
 
 
@@ -3831,6 +3860,175 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
 
     dbGet( "task/purge", {{"age_sec",to_string( a_age_sec )}}, result );
 }
+
+uint32_t
+DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_query, std::string & a_params )
+{
+    string view = (a_request.mode()==SM_DATA?"dataview":"collview");
+
+    switch ( a_request.scope() )
+    {
+        case SS_PERSONAL:
+            a_query = string("for i in ") + view + " search owner == @client";
+            a_params += ",\"client\":\"" + m_client_uid + "\"";
+            break;
+        case SS_PROJECT:
+            // TODO - This won't work - must gather all top-level project collections that client has read access to each time query is run
+            a_query = string("let cols = (for i in minus("
+                "(for v in 2..2 inbound @client member, acl, outbound owner filter is_same_collection('p',v) return v._id),"
+                "(for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and is_same_collection('p',v) return v._id)) return i)");
+
+            break;
+        case SS_SHARED:
+            break;
+        case SS_PUBLIC:
+            a_query = string("for i in ") + view + " search i.public == true";
+
+            if ( a_request.has_owner() )
+            {
+                a_query += " and i.owner == @owner";
+                a_params += ",\"owner\":\"" + a_request.owner() + "\"";
+            }
+
+            break;
+        case SS_COLLECTION:
+            break;
+    }
+
+
+    if ( a_request.mode() == 1 && a_request.has_sch_id() > 0 )
+    {
+        a_query += " and i.sch_id == @sch";
+        a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\"";
+    }
+
+    if ( a_request.has_text() > 0 )
+    {
+        a_query += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
+    }
+
+    if ( a_request.cat_tags_size() > 0 )
+    {
+        a_query += " and @ctags all in i.cat_tags";
+
+        a_params += ",\"ctags\":[";
+        for ( int i = 0; i < a_request.cat_tags_size(); ++i )
+        {
+            if ( i > 0 )
+                a_params += ",";
+            a_params += "\"" + a_request.cat_tags(i) + "\"";
+        }
+        a_params += "]";
+    }
+
+    if ( a_request.tags_size() > 0 )
+    {
+        a_query += " and @tags all in i.tags";
+
+        a_params += ",\"tags\":[";
+        for ( int i = 0; i < a_request.tags_size(); ++i )
+        {
+            if ( i > 0 )
+                a_params += ",";
+            a_params += "\"" + a_request.tags(i) + "\"";
+        }
+        a_params += "]";
+    }
+
+    if ( a_request.has_id() )
+    {
+        a_query += " and " + parseSearchIdAlias( a_request.id(), "i" );
+    }
+
+    if ( a_request.has_from() )
+    {
+        a_query += " and i.ut >= @utfr";
+        a_params += ",\"utfr\":" + to_string( a_request.from() );
+    }
+
+    if ( a_request.has_to() )
+    {
+        a_query += " and i.ut <= @utto";
+        a_params += ",\"utto\":" + to_string( a_request.to() );
+    }
+
+    if ( a_request.mode() == 1 ){
+        if ( a_request.has_meta_err() )
+        {
+            a_query += " and i.md_err == true";
+        }
+
+        if ( a_request.has_meta() )
+        {
+            a_query += " filter first(for j in d filter j._id == i._id and (" + parseSearchMetadata( a_request.meta() ) + ") return true)";
+        }
+    }
+
+    bool sort_relevance = false;
+
+    a_query += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first)) sort ";
+
+    if ( a_request.has_sort() )
+    {
+        switch( a_request.sort() )
+        {
+            case SORT_OWNER:
+                a_query += "i.name";
+                break;
+            case SORT_TIME_CREATE:
+                a_query += "i.ct";
+                break;
+            case SORT_TIME_UPDATE:
+                a_query += "i.ut";
+                break;
+            case SORT_RELEVANCE:
+                if ( a_request.has_text() )
+                {
+                    a_query += "BM25(i) DESC";
+                    sort_relevance = true;
+                }
+                else
+                {
+                    a_query += "i.title";
+                }
+                break;
+            case SORT_TITLE:
+            default:
+                a_query += "i.title";
+                break;
+        }
+
+        if ( a_request.has_sort_rev() && a_request.sort_rev() && !sort_relevance )
+        {
+            a_query += " DESC";
+        }
+    }
+    else
+    {
+        a_query += " i.title";
+    }
+
+    a_query += " limit @off,@cnt";
+
+    uint32_t cnt = min(a_request.has_count()?a_request.count():50,100U),
+             off = a_request.has_offset()?a_request.offset():0;
+
+    if ( off + cnt >= 1000 ){
+        off = 999 - cnt;
+    }
+
+    a_params += ",\"off\":" + to_string( off );
+    a_params += ",\"cnt\":" + to_string( cnt + 1 ); // Add one to detect more results (truncated by DB)
+
+    // Get rid of leading delimiter
+    a_params[0] = ' ';
+
+    a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size,md_err:i.md_err":"")+"}";
+    a_query = escapeJSON( a_query );
+
+    return cnt;
+}
+
 
 /*
 uint32_t

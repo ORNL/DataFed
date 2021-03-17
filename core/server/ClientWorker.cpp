@@ -94,7 +94,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &ClientWorker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordAllocChangeRequest, &ClientWorker::procRecordAllocChangeRequest );
         SET_MSG_HANDLER( proto_id, RecordOwnerChangeRequest, &ClientWorker::procRecordOwnerChangeRequest );
-        //SET_MSG_HANDLER( proto_id, RecordSearchRequest, &ClientWorker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &ClientWorker::procProjectSearchRequest );
         SET_MSG_HANDLER( proto_id, QueryCreateRequest, &ClientWorker::procQueryCreateRequest );
         SET_MSG_HANDLER( proto_id, QueryUpdateRequest, &ClientWorker::procQueryUpdateRequest );
@@ -135,7 +134,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
         //SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependencyGraphRequest, ListingReply, recordGetDependencyGraph );
-        SET_MSG_HANDLER_DB( proto_id, RecordSearchRequest, ListingReply, recordSearch );
+        SET_MSG_HANDLER_DB( proto_id, SearchRequest, ListingReply, generalSearch );
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
         SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );

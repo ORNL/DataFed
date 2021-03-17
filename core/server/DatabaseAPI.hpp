@@ -72,7 +72,7 @@ public:
     void recordUpdateSchemaError( const std::string & a_rec_id, const std::string & a_err_msg );
     void recordExport( const Auth::RecordExportRequest & a_request, Auth::RecordExportReply & a_reply );
     void recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply );
-    void recordSearch( const Auth::RecordSearchRequest & a_request, Auth::ListingReply & a_reply );
+    //void recordSearch( const Auth::RecordSearchRequest & a_request, Auth::ListingReply & a_reply );
     //void recordSearchPublished( const Auth::RecordSearchPublishedRequest & a_request, Auth::ListingReply & a_reply );
     void recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply );
     //void recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply );
@@ -80,6 +80,8 @@ public:
     //void recordUpdateDataMoveInit( const libjson::Value & a_rec_ids, const std::string & a_new_repo_id, const std::string & a_new_owner_id, const std::string & a_new_coll_id );
     //void recordUpdateDataMoveRevert( const libjson::Value & a_rec_ids );
     //void recordUpdateDataMoveFinalize( const libjson::Value & a_rec_ids );
+
+    void generalSearch( const Auth::SearchRequest & a_request, Auth::ListingReply & a_reply );
 
     //void doiView( const Auth::DOIViewRequest & a_request, Auth::RecordDataReply & a_reply );
 

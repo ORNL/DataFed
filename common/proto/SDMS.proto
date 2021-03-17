@@ -43,6 +43,12 @@ enum CollDelMode
     CDM_OWNED       = 1;
 }
 
+enum SearchMode
+{
+    SM_DATA         = 1;
+    SM_COLLECTION   = 2;
+}
+
 enum SearchScope
 {
     SS_PERSONAL     = 1;
