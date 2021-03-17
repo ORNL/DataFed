@@ -664,7 +664,7 @@ DatabaseAPI::setUserData( Anon::UserDataReply & a_reply, const Value & a_result 
 }
 
 void
-DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Anon::ProjectDataReply & a_reply )
+DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -707,7 +707,7 @@ DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Anon::Pro
 }
 
 void
-DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Anon::ProjectDataReply & a_reply )
+DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -752,7 +752,7 @@ DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Anon::Pro
 }
 
 void
-DatabaseAPI::projView( const Anon::ProjectViewRequest & a_request, Anon::ProjectDataReply & a_reply )
+DatabaseAPI::projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
     Value result;
     dbGet( "prj/view", {{"id",a_request.id()}}, result );
@@ -761,7 +761,7 @@ DatabaseAPI::projView( const Anon::ProjectViewRequest & a_request, Anon::Project
 }
 
 void
-DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -803,7 +803,7 @@ DatabaseAPI::projGetRole( const Auth::ProjectGetRoleRequest & a_request, Auth::P
 }
 
 void
-DatabaseAPI::projSearch( const std::string & a_query, Anon::ProjectDataReply & a_reply )
+DatabaseAPI::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply )
 {
     Value result;
 
@@ -814,7 +814,7 @@ DatabaseAPI::projSearch( const std::string & a_query, Anon::ProjectDataReply & a
 
 
 void
-DatabaseAPI::setProjectData( Anon::ProjectDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setProjectData( Auth::ProjectDataReply & a_reply, const Value & a_result )
 {
     ProjectData*            proj;
     Value::ArrayConstIter   k;
@@ -872,7 +872,7 @@ DatabaseAPI::setProjectData( Anon::ProjectDataReply & a_reply, const Value & a_r
 }
 
 void
-DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -890,8 +890,9 @@ DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, Anon::ListingR
     setListingDataReply( a_reply, result );
 }
 
+/*
 void
-DatabaseAPI::recordSearchPublished( const Anon::RecordSearchPublishedRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::recordSearchPublished( const Auth::RecordSearchPublishedRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     string query, params;
@@ -909,9 +910,10 @@ DatabaseAPI::recordSearchPublished( const Anon::RecordSearchPublishedRequest & a
 
     setListingDataReply( a_reply, result );
 }
+*/
 
 void
-DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -929,7 +931,7 @@ DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request
 
 
 void
-DatabaseAPI::recordView( const Anon::RecordViewRequest & a_request, Anon::RecordDataReply & a_reply )
+DatabaseAPI::recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply )
 {
     Value result;
 
@@ -939,7 +941,7 @@ DatabaseAPI::recordView( const Anon::RecordViewRequest & a_request, Anon::Record
 }
 
 void
-DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::RecordDataReply & a_reply )
+DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply )
 {
     Value result;
 
@@ -991,7 +993,7 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::Re
 }
 
 void
-DatabaseAPI::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Anon::RecordDataReply & a_reply )
+DatabaseAPI::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply )
 {
     Value result;
 
@@ -1001,7 +1003,7 @@ DatabaseAPI::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request
 }
 
 void
-DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result )
+DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
 {
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
@@ -1084,7 +1086,7 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
 
 
 void
-DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result )
+DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
 {
     // "records" field is a JSON document - send directly to DB
     dbPost( "dat/update/batch", {}, &a_request.records(), result );
@@ -1149,7 +1151,7 @@ DatabaseAPI::recordExport( const Auth::RecordExportRequest & a_request, Auth::Re
 }
 
 void
-DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     string ids;
@@ -1175,7 +1177,7 @@ DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Anon::Listin
 }
 
 /*void
-DatabaseAPI::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
 
@@ -1196,7 +1198,7 @@ DatabaseAPI::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a
 
 
 void
-DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
 
@@ -1206,6 +1208,7 @@ DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphReque
 }
 
 
+/*
 void
 DatabaseAPI::doiView( const Anon::DOIViewRequest & a_request, Anon::RecordDataReply & a_reply )
 {
@@ -1215,10 +1218,10 @@ DatabaseAPI::doiView( const Anon::DOIViewRequest & a_request, Anon::RecordDataRe
 
     setRecordData( a_reply, result );
 }
-
+*/
 
 void
-DatabaseAPI::setRecordData( Anon::RecordDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setRecordData( Auth::RecordDataReply & a_reply, const Value & a_result )
 {
     RecordData *        rec;
     DependencyData *    deps;
@@ -1358,7 +1361,7 @@ DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathRe
 
 
 void
-DatabaseAPI::collList( const CollListRequest & a_request, Anon::CollDataReply & a_reply )
+DatabaseAPI::collList( const CollListRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
 
@@ -1371,7 +1374,7 @@ DatabaseAPI::collList( const CollListRequest & a_request, Anon::CollDataReply & 
 }
 
 void
-DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1389,7 +1392,7 @@ DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request
 }
 
 void
-DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Anon::CollDataReply & a_reply )
+DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
     string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
@@ -1426,7 +1429,7 @@ DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Anon::CollDa
 }
 
 void
-DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Anon::CollDataReply & a_reply )
+DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
     string body = "{\"id\":\"" + a_request.id() + "\"";
@@ -1468,7 +1471,7 @@ DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Anon::CollDa
 
 
 void
-DatabaseAPI::collView( const Anon::CollViewRequest & a_request, Anon::CollDataReply & a_reply )
+DatabaseAPI::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
 
@@ -1478,7 +1481,7 @@ DatabaseAPI::collView( const Anon::CollViewRequest & a_request, Anon::CollDataRe
 }
 
 void
-DatabaseAPI::collRead( const Anon::CollReadRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1494,7 +1497,7 @@ DatabaseAPI::collRead( const Anon::CollReadRequest & a_request, Anon::ListingRep
 }
 
 void
-DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply )
 {
     string add_list, rem_list;
     vector<pair<string,string>> params;
@@ -1586,8 +1589,9 @@ DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::
     a_reply.set_offset( result.asObject().getNumber( "offset" ));
 }
 
+/*
 void
-DatabaseAPI::catalogSearch( const Anon::CatalogSearchRequest & a_request, Anon::CatalogSearchReply & a_reply )
+DatabaseAPI::catalogSearch( const Auth::CatalogSearchRequest & a_request, Auth::CatalogSearchReply & a_reply )
 {
     Value result;
     string query, params;
@@ -1607,7 +1611,7 @@ DatabaseAPI::catalogSearch( const Anon::CatalogSearchRequest & a_request, Anon::
 }
 
 void
-DatabaseAPI::setCatalogSearchReply( Anon::CatalogSearchReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setCatalogSearchReply( Auth::CatalogSearchReply & a_reply, const libjson::Value & a_result )
 {
     Value::ObjectConstIter   j;
 
@@ -1663,11 +1667,11 @@ DatabaseAPI::setCatItemInfoData( CatItemInfoData * a_item, const Value::Object &
     if ( a_obj.has( "size" ))
         a_item->set_size( a_obj.asNumber() );
 }
-
+*/
 
 
 void
-DatabaseAPI::setCollData( Anon::CollDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setCollData( Auth::CollDataReply & a_reply, const libjson::Value & a_result )
 {
     CollData* coll;
     Value::ObjectConstIter j;
@@ -1774,7 +1778,7 @@ DatabaseAPI::setCollPathData( CollPathReply & a_reply, const libjson::Value & a_
 }
 
 void
-DatabaseAPI::setListingDataReply( Anon::ListingReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setListingDataReply( Auth::ListingReply & a_reply, const libjson::Value & a_result )
 {
     Value::ObjectConstIter   j;
 
@@ -1866,7 +1870,7 @@ DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
 }
 
 void
-DatabaseAPI::queryList( const Auth::QueryListRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1945,7 +1949,7 @@ DatabaseAPI::queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDat
 }
 
 void
-DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2028,7 +2032,7 @@ DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataR
 }
 
 void
-DatabaseAPI::aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Anon::ListingReply & a_reply )
+DatabaseAPI::aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2046,7 +2050,7 @@ DatabaseAPI::aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Anon::L
 }
 
 void
-DatabaseAPI::aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Anon::ListingReply & a_reply )
+DatabaseAPI::aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2657,7 +2661,7 @@ DatabaseAPI::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply
 }
 
 void
-DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, Anon::TopicDataReply  & a_reply )
+DatabaseAPI::topicListTopics( const Auth::TopicListTopicsRequest & a_request, Auth::TopicDataReply  & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2676,7 +2680,7 @@ DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, An
 }
 
 void
-DatabaseAPI::topicView( const Anon::TopicViewRequest  & a_request, Anon::TopicDataReply & a_reply )
+DatabaseAPI::topicView( const Auth::TopicViewRequest  & a_request, Auth::TopicDataReply & a_reply )
 {
     Value result;
 
@@ -2686,7 +2690,7 @@ DatabaseAPI::topicView( const Anon::TopicViewRequest  & a_request, Anon::TopicDa
 }
 
 /*void
-DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply )
+DatabaseAPI::topicListCollections( const Auth::TopicListCollectionsRequest & a_request, Auth::TopicListCollectionsReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2703,7 +2707,7 @@ DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_r
 }*/
 
 void
-DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::TopicDataReply & a_reply )
+DatabaseAPI::topicSearch( const Auth::TopicSearchRequest & a_request, Auth::TopicDataReply & a_reply )
 {
     Value result;
 
@@ -2717,7 +2721,7 @@ DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::Topi
 }
 
 void
-DatabaseAPI::setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setTopicDataReply( Auth::TopicDataReply & a_reply, const libjson::Value & a_result )
 {
     TRANSLATE_BEGIN()
 
@@ -2772,7 +2776,7 @@ DatabaseAPI::setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::V
 }
 
 void
-DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2788,7 +2792,7 @@ DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Anon::
 }
 
 void
-DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2807,7 +2811,7 @@ DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Anon::
 }
 
 void
-DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2821,7 +2825,7 @@ DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a
 }
 
 void
-DatabaseAPI::annotationView( const Anon::AnnotationViewRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationView( const Auth::AnnotationViewRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
     Value result;
 
@@ -2831,7 +2835,7 @@ DatabaseAPI::annotationView( const Anon::AnnotationViewRequest & a_request, Anon
 }
 
 void
-DatabaseAPI::annotationListBySubject( const Anon::AnnotationListBySubjectRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
     Value result;
 
@@ -2849,7 +2853,7 @@ DatabaseAPI::annotationPurge( uint32_t a_age_sec )
 }
 
 void
-DatabaseAPI::setNoteDataReply( Anon::AnnotationDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, const libjson::Value & a_result )
 {
     Value::ArrayConstIter    i;
 
@@ -2918,7 +2922,7 @@ DatabaseAPI::setNoteData( NoteData * a_note, const libjson::Value::Object & a_ob
 
 
 void
-DatabaseAPI::tagSearch( const Anon::TagSearchRequest & a_request, Anon::TagDataReply & a_reply )
+DatabaseAPI::tagSearch( const Auth::TagSearchRequest & a_request, Auth::TagDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2938,7 +2942,7 @@ DatabaseAPI::tagSearch( const Anon::TagSearchRequest & a_request, Anon::TagDataR
 
 
 void
-DatabaseAPI::tagListByCount( const Anon::TagListByCountRequest & a_request, Anon::TagDataReply & a_reply )
+DatabaseAPI::tagListByCount( const Auth::TagListByCountRequest & a_request, Auth::TagDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2955,7 +2959,7 @@ DatabaseAPI::tagListByCount( const Anon::TagListByCountRequest & a_request, Anon
 }
 
 void
-DatabaseAPI::setTagDataReply( Anon::TagDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setTagDataReply( Auth::TagDataReply & a_reply, const Value & a_result )
 {
     Value::ObjectConstIter   j;
 
@@ -2994,7 +2998,7 @@ DatabaseAPI::setTagData( TagData * a_tag, const libjson::Value::Object & a_obj )
 
 
 void
-DatabaseAPI::schemaSearch( const Anon::SchemaSearchRequest & a_request, Anon::SchemaDataReply & a_reply )
+DatabaseAPI::schemaSearch( const Auth::SchemaSearchRequest & a_request, Auth::SchemaDataReply & a_reply )
 {
     libjson::Value result;
     vector<pair<string,string>> params;
@@ -3020,7 +3024,7 @@ DatabaseAPI::schemaSearch( const Anon::SchemaSearchRequest & a_request, Anon::Sc
 
 
 void
-DatabaseAPI::schemaView( const Anon::SchemaViewRequest & a_request, Anon::SchemaDataReply & a_reply )
+DatabaseAPI::schemaView( const Auth::SchemaViewRequest & a_request, Auth::SchemaDataReply & a_reply )
 {
     libjson::Value result;
     vector<pair<string,string>> params;
@@ -3168,7 +3172,7 @@ DatabaseAPI::schemaDelete( const Auth::SchemaDeleteRequest & a_request, Anon::Ac
 }
 
 void
-DatabaseAPI::setSchemaDataReply( Anon::SchemaDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setSchemaDataReply( Auth::SchemaDataReply & a_reply, const libjson::Value & a_result )
 {
     Value::ObjectConstIter   j;
 
@@ -3828,9 +3832,9 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
     dbGet( "task/purge", {{"age_sec",to_string( a_age_sec )}}, result );
 }
 
-
+/*
 uint32_t
-DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial )
+DatabaseAPI::parseCatalogSearchRequest( const Auth::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial )
 {
     a_query = string("for i in ") + (a_request.mode()==0?"collview":"dataview") + " search i.public == true";
 
@@ -3979,7 +3983,7 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
 
 
 void
-DatabaseAPI::parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params )
+DatabaseAPI::parseRecordSearchPublishedRequest( const Auth::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params )
 {
     parseCatalogSearchRequest( a_request.coll(), a_query, a_params, true );
 
@@ -4036,7 +4040,7 @@ DatabaseAPI::parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishe
 
     a_query += " limit 0,100 sort v.title return { _id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size }";
 }
-
+*/
 
 string
 DatabaseAPI::parseSearchTextPhrase( const string & a_phrase, const string & a_iter )

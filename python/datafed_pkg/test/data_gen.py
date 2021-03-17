@@ -94,7 +94,7 @@ def selectRand( a, b, cnt ):
 
 aliases = []
 ref_ty = ["der","ver","comp"]
-adjectives = ["synthetic","organic","regenerative","distributed","centralized","advanced","distopian"]
+adjectives = ["synthetic","organic","regenerative","distributed","centralized","advanced","dystopian"]
 subjects = ["photosynthesis","culture","society","technology","computing","transportation","power generation","process optimization"]
 tags = ["apple","orange","banana","red","blue","green","night","day","future","past","present","good","bad","up","down","left","right"]
 topics = [

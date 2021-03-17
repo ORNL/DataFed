@@ -45,16 +45,11 @@ enum CollDelMode
 
 enum SearchScope
 {
-    SS_USER                     = 1;
-    SS_PROJECT                  = 2;
-    SS_PROJECTS                 = 3;
-    SS_COLLECTION               = 4;
-    SS_TOPIC                    = 5;
-    SS_SHARED_BY_USER           = 6;
-    SS_SHARED_BY_ANY_USER       = 7;
-    SS_SHARED_BY_PROJECT        = 8;
-    SS_SHARED_BY_ANY_PROJECT    = 9;
-    SS_VIEW                     = 10;
+    SS_PERSONAL     = 1;
+    SS_PROJECT      = 2;
+    SS_SHARED       = 3;
+    SS_PUBLIC       = 4;
+    SS_COLLECTION   = 5;
 }
 
 enum DependencyType
@@ -164,15 +159,20 @@ message ListingData
     optional bool               locked      = 4;
     optional string             owner       = 5;
     optional string             creator     = 6;
-    optional int32              gen         = 7;
-    optional double             size        = 8;
-    optional uint32             notes       = 9;
-    optional string             doi         = 10;
-    optional string             url         = 11;
+    optional double             size        = 7;
+    optional uint32             notes       = 8;
+    optional string             doi         = 9;
+    optional string             url         = 10;
+    // Needed for provenance graphing
+    optional int32              gen         = 11;
     optional bool               deps_avail  = 12;
     repeated DependencyData     dep         = 13;
+    // Needed for catalog view
+    optional string             owner_name  = 14;
+    optional string             brief       = 15;
 }
 
+/*
 message CatItemInfoData
 {
     required string             id          = 1;
@@ -184,6 +184,7 @@ message CatItemInfoData
     optional string             brief       = 7;
     optional double             size        = 8;
 }
+*/
 
 message TagData
 {

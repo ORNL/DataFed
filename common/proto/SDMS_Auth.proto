@@ -134,6 +134,16 @@ message UserSetRecentEPRequest
     repeated string             ep          = 1;
 }
 
+// ============================ General Data/Collection Messages
+
+message ListingReply
+{
+    repeated ListingData        item        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
 // ============================ Data Record Messages
 
 message RecordListRequest
@@ -148,6 +158,19 @@ message RecordListByAllocRequest
     optional string             subject     = 2;
     optional uint32             offset      = 3;
     optional uint32             count       = 4;
+}
+
+
+message RecordViewRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 2;
+}
+
+message RecordDataReply
+{
+    repeated SDMS.RecordData    data        = 1;
+    repeated SDMS.ListingData   update      = 2;
 }
 
 message RecordCreateRequest
@@ -333,7 +356,104 @@ message DataPathReply
     required string             path        = 1;
 }
 
+// ============================ Search Messages
+
+// Returns ListingReply
+message SearchRequest
+{
+    required SDMS.SearchScope   scope       = 1;
+
+    // Data and Collections
+    optional string             id          = 2;
+    optional string             text        = 3;
+    repeated string             tags        = 4;
+    repeated string             cat_tags    = 5;
+    optional uint32             from        = 6;
+    optional uint32             to          = 7;
+    optional string             creator     = 8;
+    
+    // Data scope only
+    optional string             sch_id      = 9;
+    optional string             meta        = 10;
+    optional bool               meta_err    = 11;
+
+    // Public scope only
+    optional string             owner       = 12;
+
+    optional SDMS.SortOption    sort        = 13;
+    optional bool               sort_rev    = 14;
+    optional uint32             offset      = 15;
+    optional uint32             count       = 16;
+}
+
+/*
+message CatalogSearchRequest
+{
+    optional uint32             mode        = 1;
+    optional string             id          = 2;
+    optional string             text        = 3;
+    repeated string             cat_tags    = 4;
+    repeated string             tags        = 5;
+    optional string             owner       = 6;
+    optional uint32             from        = 7;
+    optional uint32             to          = 8;
+    optional uint32             offset      = 9;
+    optional uint32             count       = 10;
+    optional SDMS.SortOption    sort        = 11;
+    optional bool               sort_rev    = 12;
+    optional string             meta        = 13;
+    optional bool               meta_err    = 14;
+    optional string             sch_id      = 15;
+}
+
+
+message CatalogSearchReply
+{
+    repeated CatItemInfoData    item        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+
+// Returns ListingReply
+message RecordSearchPublishedRequest
+{
+    required CatalogSearchRequest           coll        = 1;
+    optional string                         id          = 2;
+    optional string                         text        = 3;
+    repeated string                         tags        = 4;
+    optional string                         md          = 5;
+    optional uint32                         from        = 6;
+    optional uint32                         to          = 7;
+    optional SDMS.SortOption                sort        = 8;
+    optional bool                           sort_rev    = 9;
+}
+
+*/
+
+
 // ============================ Collection Messages
+
+message CollViewRequest
+{
+    required string             id          = 1;
+}
+
+message CollDataReply
+{
+    repeated SDMS.CollData      coll        = 1;
+    repeated SDMS.ListingData   update      = 2;    
+}
+
+// Returns ListingReply
+message CollReadRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 3;
+    optional uint32             offset      = 4;
+    optional uint32             count       = 5;
+}
 
 message CollCreateRequest
 {
@@ -491,6 +611,16 @@ message ACLDataReply
 }
 
 // ============================ Project Messages
+
+message ProjectViewRequest
+{
+    required string             id          = 1;
+}
+
+message ProjectDataReply
+{
+    repeated ProjectData        proj        = 1;
+}
 
 message ProjectCreateRequest
 {
@@ -781,6 +911,22 @@ message QueryDataReply
 
 // ============================ Annotation Messages
 
+message AnnotationListBySubjectRequest
+{
+    required string             subject     = 1;
+}
+
+message AnnotationViewRequest
+{
+    required string             id          = 1;
+}
+
+message AnnotationDataReply
+{
+    repeated SDMS.NoteData      note    = 1;
+    repeated SDMS.ListingData   update  = 2;
+}
+
 message AnnotationCreateRequest
 {
     required SDMS.NoteType      type        = 1;
@@ -829,7 +975,71 @@ message TaskDataReply
     repeated SDMS.TaskData      task        = 1;
 }
 
-// ============================ Schema Messages
+
+// ============================ Tag Messages
+
+
+// Returns TagDataReply
+message TagSearchRequest
+{
+    optional string             name        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
+// Returns TagDataReply
+message TagListByCountRequest
+{
+    optional uint32             offset      = 1;
+    optional uint32             count       = 2;
+}
+
+message TagDataReply
+{
+    repeated SDMS.TagData       tag         = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+
+// ============================ Schema / Validation Messages
+
+message MetadataValidateRequest
+{
+    required string             metadata    = 1;
+    required string             sch_id      = 2;
+}
+
+message MetadataValidateReply
+{
+    optional string             errors      = 1;
+}
+
+message SchemaViewRequest
+{
+    required string             id          = 1;
+    optional bool               resolve     = 2;
+}
+
+message SchemaSearchRequest
+{
+    optional string             id          = 1;
+    optional string             text        = 2;
+    optional string             owner       = 3;
+    optional SDMS.SortOption    sort        = 4;
+    optional bool               sort_rev    = 5;
+    optional uint32             offset      = 6;
+    optional uint32             count       = 7;
+}
+
+message SchemaDataReply
+{
+    repeated SDMS.SchemaData    schema      = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
 
 message SchemaCreateRequest
 {
@@ -863,3 +1073,37 @@ message SchemaDeleteRequest
 {
     required string             id          = 1;
 }
+
+
+// ============================ Catalog / Topic Messages
+
+
+
+// Returns TopicDataReply
+message TopicListTopicsRequest
+{
+    optional string             topic_id    = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
+// Returns TopicDataReply
+message TopicViewRequest
+{
+    required string             id          = 1;
+}
+
+// Returns TopicDataReply
+message TopicSearchRequest
+{
+    optional string             phrase      = 1;
+}
+
+message TopicDataReply
+{
+    repeated TopicData          topic       = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+

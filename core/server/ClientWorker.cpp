@@ -75,25 +75,11 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
-        SET_MSG_HANDLER( proto_id, MetadataValidateRequest, &ClientWorker::procMetadataValidateRequest );
-        SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
-        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
-        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
-        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
-        SET_MSG_HANDLER_DB( proto_id, CatalogSearchRequest, CatalogSearchReply, catalogSearch );
-        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
-        SET_MSG_HANDLER_DB( proto_id, RecordSearchPublishedRequest, ListingReply, recordSearchPublished );
-        SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, TopicDataReply, topicListTopics );
-        SET_MSG_HANDLER_DB( proto_id, TopicViewRequest, TopicDataReply, topicView );
-        //SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
-        SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, TopicDataReply, topicSearch );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
-        SET_MSG_HANDLER_DB( proto_id, TagSearchRequest, TagDataReply, tagSearch );
-        SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
-        SET_MSG_HANDLER_DB( proto_id, SchemaSearchRequest, SchemaDataReply, schemaSearch );
-        SET_MSG_HANDLER_DB( proto_id, SchemaViewRequest, SchemaDataReply, schemaView );
+
+        //SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
+        //SET_MSG_HANDLER_DB( proto_id, CatalogSearchRequest, CatalogSearchReply, catalogSearch );
+        //SET_MSG_HANDLER_DB( proto_id, RecordSearchPublishedRequest, ListingReply, recordSearchPublished );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
@@ -108,7 +94,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &ClientWorker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordAllocChangeRequest, &ClientWorker::procRecordAllocChangeRequest );
         SET_MSG_HANDLER( proto_id, RecordOwnerChangeRequest, &ClientWorker::procRecordOwnerChangeRequest );
-        SET_MSG_HANDLER( proto_id, RecordSearchRequest, &ClientWorker::procRecordSearchRequest );
+        //SET_MSG_HANDLER( proto_id, RecordSearchRequest, &ClientWorker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &ClientWorker::procProjectSearchRequest );
         SET_MSG_HANDLER( proto_id, QueryCreateRequest, &ClientWorker::procQueryCreateRequest );
         SET_MSG_HANDLER( proto_id, QueryUpdateRequest, &ClientWorker::procQueryUpdateRequest );
@@ -122,6 +108,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, SchemaCreateRequest, &ClientWorker::procSchemaCreateRequest );
         SET_MSG_HANDLER( proto_id, SchemaReviseRequest, &ClientWorker::procSchemaReviseRequest );
         SET_MSG_HANDLER( proto_id, SchemaUpdateRequest, &ClientWorker::procSchemaUpdateRequest );
+        SET_MSG_HANDLER( proto_id, MetadataValidateRequest, &ClientWorker::procMetadataValidateRequest );
 
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
@@ -135,18 +122,23 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, UserFindByNameUIDRequest, UserDataReply, userFindByNameUID );
         SET_MSG_HANDLER_DB( proto_id, UserGetRecentEPRequest, UserGetRecentEPReply, userGetRecentEP );
         SET_MSG_HANDLER_DB( proto_id, UserSetRecentEPRequest, AckReply, userSetRecentEP );
+        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
         SET_MSG_HANDLER_DB( proto_id, ProjectCreateRequest, ProjectDataReply, projCreate );
         SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ListingReply, projList );
         SET_MSG_HANDLER_DB( proto_id, ProjectGetRoleRequest, ProjectGetRoleReply, projGetRole );
         //SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
+        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordExportRequest, RecordExportReply, recordExport );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
         //SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependencyGraphRequest, ListingReply, recordGetDependencyGraph );
+        SET_MSG_HANDLER_DB( proto_id, RecordSearchRequest, ListingReply, recordSearch );
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
+        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
+        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollListPublishedRequest, ListingReply, collListPublished );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
@@ -158,6 +150,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryListRequest, ListingReply, queryList );
         SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
         SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
         SET_MSG_HANDLER_DB( proto_id, AnnotationCreateRequest, AnnotationDataReply, annotationCreate );
         SET_MSG_HANDLER_DB( proto_id, AnnotationUpdateRequest, AnnotationDataReply, annotationUpdate );
         SET_MSG_HANDLER_DB( proto_id, AnnotationCommentEditRequest, AnnotationDataReply, annotationCommentEdit );
@@ -189,7 +183,16 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetDefaultRequest, AckReply, repoAllocationSetDefault );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
+        SET_MSG_HANDLER_DB( proto_id, SchemaSearchRequest, SchemaDataReply, schemaSearch );
+        SET_MSG_HANDLER_DB( proto_id, SchemaViewRequest, SchemaDataReply, schemaView );
         SET_MSG_HANDLER_DB( proto_id, SchemaDeleteRequest, AckReply, schemaDelete );
+        SET_MSG_HANDLER_DB( proto_id, TagSearchRequest, TagDataReply, tagSearch );
+        SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
+        SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, TopicDataReply, topicListTopics );
+        SET_MSG_HANDLER_DB( proto_id, TopicViewRequest, TopicDataReply, topicView );
+        //SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
+        SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, TopicDataReply, topicSearch );
+
     }
     catch( TraceException & e)
     {
@@ -1061,6 +1064,7 @@ ClientWorker::procQueryDeleteRequest( const std::string & a_uid )
 }
 
 
+/*
 bool
 ClientWorker::procRecordSearchRequest( const std::string & a_uid )
 {
@@ -1089,13 +1093,16 @@ ClientWorker::procRecordSearchRequest( const std::string & a_uid )
 
     PROC_MSG_END
 }
-
+*/
 
 bool
 ClientWorker::procProjectSearchRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( ProjectSearchRequest, ProjectDataReply )
 
+    EXCEPT( 1, "Not implemented" );
+
+/*
     m_db_client.setClient( a_uid );
     DL_INFO("about to parse query[" << request->text_query() << "]" );
     vector<string> scope;
@@ -1104,6 +1111,7 @@ ClientWorker::procProjectSearchRequest( const std::string & a_uid )
     string q = parseProjectQuery( request->text_query(), scope );
     DL_INFO("parsed query[" << q << "]" );
     m_db_client.projSearch( q, reply );
+*/
 
     PROC_MSG_END
 }
@@ -1116,6 +1124,8 @@ ClientWorker::procQueryCreateRequest( const std::string & a_uid )
 
     m_db_client.setClient( a_uid );
 
+    EXCEPT(1,"Not implemented");
+/*
     QueryCreateRequest req2;
     bool use_owner = false;
     bool use_sh_usr = false;
@@ -1135,6 +1145,7 @@ ClientWorker::procQueryCreateRequest( const std::string & a_uid )
     req2.set_use_sh_prj( use_sh_prj );
 
     m_db_client.queryCreate( req2, reply );
+*/
 
     PROC_MSG_END
 }
@@ -1145,6 +1156,9 @@ ClientWorker::procQueryUpdateRequest( const std::string & a_uid )
     PROC_MSG_BEGIN( QueryUpdateRequest, QueryDataReply )
 
     m_db_client.setClient( a_uid );
+
+    EXCEPT(1,"Not implemented");
+    /*
     if ( request->has_query() )
     {
         QueryUpdateRequest req2;
@@ -1174,6 +1188,7 @@ ClientWorker::procQueryUpdateRequest( const std::string & a_uid )
     {
         m_db_client.queryUpdate( *request, reply );
     }
+    */
 
     PROC_MSG_END
 }
@@ -1234,6 +1249,7 @@ ClientWorker::handleTaskResponse( libjson::Value & a_result )
     }
 }
 
+#if 0
 
 string
 ClientWorker::parseSearchTerms( const string & a_key, const vector<string> & a_terms )
@@ -1316,6 +1332,7 @@ ClientWorker::parseSearchPhrase( const char * key, const string & a_phrase )
 
     return parseSearchTerms( key, terms );
 }
+
 
 string
 ClientWorker::parseSearchTextPhrase( const string & a_phrase )
@@ -1937,7 +1954,9 @@ ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_
     return result;
 }
 
+#endif
 
+/*
 string
 ClientWorker::parseProjectQuery( const string & a_text_query, const vector<string> & a_scope )
 {
@@ -1980,6 +1999,7 @@ ClientWorker::parseProjectQuery( const string & a_text_query, const vector<strin
 
     return result;
 }
+*/
 
 void
 ClientWorker::schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value )
