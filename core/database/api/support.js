@@ -36,6 +36,15 @@ module.exports = ( function() {
     obj.MAX_COLL_ITEMS      = 1000;
     obj.MAX_MD_SIZE         = 102400;
 
+    obj.SM_DATA             = 0;
+    obj.SM_COLLECTION       = 1;
+
+    obj.SS_PERSONAL         = 0;
+    obj.SS_PROJECT          = 1;
+    obj.SS_SHARED           = 2;
+    obj.SS_PUBLIC           = 3;
+    obj.SS_COLLECTION       = 4;
+
     obj.TT_DATA_GET         = 0;
     obj.TT_DATA_PUT         = 1;
     obj.TT_DATA_DEL         = 2;

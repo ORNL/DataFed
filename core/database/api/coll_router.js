@@ -918,3 +918,77 @@ router.post('/pub/search', function (req, res) {
 }).required(), 'Collection fields')
 .summary('Execute published data search query')
 .description('Execute published data search query');
+
+router.post('/pub/search2', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
+        console.log("search scope:",req.queryParams.scope);
+
+        if ( req.queryParams.scope == g_lib.SS_PROJECT ){
+            // Add collections from owned/administered projects
+            var cols = g_db._query("for v,e,p in 2..2 inbound @client owner, admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('c',v) return v._id",{client:client._id});
+            req.body.params.cols = cols.toArray();
+        }
+
+        if ( req.body.params.sch_id ){
+            // sch_id is id:ver
+            var idx = req.body.params.sch_id.indexOf(":");
+            if ( idx < 0 ){
+                throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+            }
+            var sch_id = req.body.params.sch_id.substr( 0, idx ),
+                sch_ver = parseInt( req.body.params.sch_id.substr( idx + 1 ));
+    
+            req.body.params.sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
+            if ( !req.body.params.sch )
+                throw [ g_lib.ERR_NOT_FOUND, "Schema '" + sch_id + "-" + sch_ver + "' does not exist." ];
+
+            req.body.params.sch = req.body.params.sch._id;
+            delete req.body.params.sch_id;
+        }
+
+        //console.log("pu/src",req.body.query, req.body.params);
+
+        var item, count, result = g_db._query( req.body.query, req.body.params, {}, { fullCount: true }).toArray();
+
+        if ( result.length > req.body.limit ){
+            result.length = req.body.limit;
+            count = req.body.limit + 1;
+        }else{
+            count = result.length;
+        }
+
+        for ( var i in result ){
+            item = result[i];
+
+            if ( item.owner_name && item.owner_name.length )
+                item.owner_name = item.owner_name[0];
+            else
+                item.owner_name = null;
+
+            if ( item.desc && item.desc.length > 120 ){
+                item.desc = item.desc.slice(0,120) + " ...";
+            }
+
+            item.notes = g_lib.annotationGetMask( client, item._id );
+            if ( item.md_err )
+                item.notes |= g_lib.NOTE_MASK_MD_ERR;
+        }
+
+        result.push({ paging: { off: req.body.params.off, cnt: result.length, tot: req.body.params.off + count }});
+
+        res.send( result );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.queryParam('scope', joi.number().integer().required(), "Scope")
+.body(joi.object({
+    query: joi.string().required(),
+    params: joi.object().required(),
+    limit: joi.number().integer().required()
+}).required(), 'Collection fields')
+.summary('Execute published data search query')
+.description('Execute published data search query');
