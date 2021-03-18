@@ -654,8 +654,13 @@ app.get('/api/query/exec', ( a_req, a_resp ) => {
 
 
 app.post('/api/dat/search', ( a_req, a_resp ) => {
-    //console.log("search:",a_req.body);
-    sendMessage( "RecordSearchRequest", { query: JSON.stringify( a_req.body ) }, a_req, a_resp, function( reply ) {
+    console.log("search:",a_req.body);
+    //var msg = g_msg_by_name["SearchRequest"];
+    //var msg_buf = msg.encode(JSON.stringify( a_req.body )).finish();
+    //var msg2 = msg.decode( msg_buf );
+    //console.log("msg2",msg2);
+
+    sendMessage( "SearchRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -1695,6 +1700,7 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
 process.on('unhandledRejection', (reason, p) => {
     console.log( 'Error - unhandled rejection at: Promise', p, 'reason:', reason );
 });
+
 
 g_core_sock.on('message', function( delim, frame, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );

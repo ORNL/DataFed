@@ -242,7 +242,7 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         {
             try
             {
-                DL_DEBUG( "PARSE [" << res_json << "]" );
+                //DL_DEBUG( "PARSE [" << res_json << "]" );
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )
@@ -1383,7 +1383,7 @@ DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::Listing
 
     DL_INFO("General search: [" << body << "]");
 
-    dbPost( "col/pub/search", {}, &body, result );
+    dbPost( "col/pub/search2", {{"scope",to_string(a_request.scope())}}, &body, result );
 
     setListingDataReply( a_reply, result );
 }
@@ -1852,8 +1852,14 @@ DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
     if ( a_obj.has( "owner" ) && !a_obj.value().isNull( ))
         a_item->set_owner( a_obj.asString() );
 
+    if ( a_obj.has( "owner_name" ) && !a_obj.value().isNull( ))
+        a_item->set_owner_name( a_obj.asString() );
+
     if ( a_obj.has( "creator" ) && !a_obj.value().isNull( ))
         a_item->set_creator( a_obj.asString() );
+
+    if ( a_obj.has( "desc" ) && !a_obj.value().isNull( ))
+        a_item->set_desc( a_obj.asString() );
 
     if ( a_obj.has( "doi" ) && !a_obj.value().isNull( ))
         a_item->set_doi( a_obj.asString() );
@@ -3865,51 +3871,17 @@ uint32_t
 DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_query, std::string & a_params )
 {
     string view = (a_request.mode()==SM_DATA?"dataview":"collview");
-
-    switch ( a_request.scope() )
-    {
-        case SS_PERSONAL:
-            a_query = string("for i in ") + view + " search owner == @client";
-            a_params += ",\"client\":\"" + m_client_uid + "\"";
-            break;
-        case SS_PROJECT:
-            // TODO - This won't work - must gather all top-level project collections that client has read access to each time query is run
-            a_query = string("let cols = (for i in minus("
-                "(for v in 2..2 inbound @client member, acl, outbound owner filter is_same_collection('p',v) return v._id),"
-                "(for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and is_same_collection('p',v) return v._id)) return i)");
-
-            break;
-        case SS_SHARED:
-            break;
-        case SS_PUBLIC:
-            a_query = string("for i in ") + view + " search i.public == true";
-
-            if ( a_request.has_owner() )
-            {
-                a_query += " and i.owner == @owner";
-                a_params += ",\"owner\":\"" + a_request.owner() + "\"";
-            }
-
-            break;
-        case SS_COLLECTION:
-            break;
-    }
-
-
-    if ( a_request.mode() == 1 && a_request.has_sch_id() > 0 )
-    {
-        a_query += " and i.sch_id == @sch";
-        a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\"";
-    }
+    string query = "";
+    string filter;
 
     if ( a_request.has_text() > 0 )
     {
-        a_query += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
+        query += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
     }
 
     if ( a_request.cat_tags_size() > 0 )
     {
-        a_query += " and @ctags all in i.cat_tags";
+        query += " and @ctags all in i.cat_tags";
 
         a_params += ",\"ctags\":[";
         for ( int i = 0; i < a_request.cat_tags_size(); ++i )
@@ -3923,7 +3895,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
 
     if ( a_request.tags_size() > 0 )
     {
-        a_query += " and @tags all in i.tags";
+        query += " and @tags all in i.tags";
 
         a_params += ",\"tags\":[";
         for ( int i = 0; i < a_request.tags_size(); ++i )
@@ -3937,31 +3909,85 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
 
     if ( a_request.has_id() )
     {
-        a_query += " and " + parseSearchIdAlias( a_request.id(), "i" );
+        query += " and " + parseSearchIdAlias( a_request.id(), "i" );
     }
 
     if ( a_request.has_from() )
     {
-        a_query += " and i.ut >= @utfr";
+        query += " and i.ut >= @utfr";
         a_params += ",\"utfr\":" + to_string( a_request.from() );
     }
 
     if ( a_request.has_to() )
     {
-        a_query += " and i.ut <= @utto";
+        query += " and i.ut <= @utto";
         a_params += ",\"utto\":" + to_string( a_request.to() );
     }
 
-    if ( a_request.mode() == 1 ){
+    // Data-only search options
+    if ( a_request.mode() == SM_DATA )
+    {
+        if ( a_request.has_sch_id() > 0 )
+        {
+            query += " and i.sch_id == @sch";
+            a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\"";
+        }
+
         if ( a_request.has_meta_err() )
         {
-            a_query += " and i.md_err == true";
+            query += " and i.md_err == true";
         }
 
         if ( a_request.has_meta() )
         {
-            a_query += " filter first(for j in d filter j._id == i._id and (" + parseSearchMetadata( a_request.meta() ) + ") return true)";
+            filter = parseSearchMetadata( a_request.meta() );
         }
+    }
+
+    switch ( a_request.scope() )
+    {
+        case SS_PERSONAL:
+            a_query = string("for i in ") + view + " search i.owner == @client" + query;
+
+            if ( filter.size() )
+                a_query += " filter " + filter;
+
+            a_params += ",\"client\":\"" + m_client_uid + "\"";
+            break;
+        case SS_PROJECT:
+            // Note: searching projects requires dynamic pre-search processing to gather the projects and candidate 
+            // collections and records that the client has at least read acccess to. This cannot be implemented as
+            // a simple AQL query, so a query parameter is set to have the DB code perform this processing for this
+            // search scope. The result will be the '@coll' (readable/listable collections) bound parameters, which
+            // is used in the query here.
+            a_query = string("for i in ") + view;
+            if ( query.size() )
+                a_query +=  " search " + query.substr(4);
+            // TODO This only works for data not collections, instead test if collection is in cols (not an item)
+            a_query += " for e in item filter e._to == i._id and e._from in @cols ";
+            if ( filter.size() )
+                a_query += " filter " + filter;
+
+            break;
+        case SS_SHARED:
+            // Note: like project scope, shared collections must be computed prior to query execution in DB. Results
+            // will be placed in @coll param.
+            a_query = string("for i in ") + view + " search";
+            break;
+        case SS_PUBLIC:
+            if ( a_request.has_owner() )
+            {
+                query += " and i.owner == @owner";
+                a_params += ",\"owner\":\"" + a_request.owner() + "\"";
+            }
+
+            a_query = string("for i in ") + view + " search i.public == true" + query;
+            if ( filter.size() )
+                a_query += " filter " + filter;
+
+            break;
+        case SS_COLLECTION:
+            break;
     }
 
     bool sort_relevance = false;
@@ -4023,7 +4049,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
     // Get rid of leading delimiter
     a_params[0] = ' ';
 
-    a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size,md_err:i.md_err":"")+"}";
+    a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size,md_err:i.md_err":"")+"}";
     a_query = escapeJSON( a_query );
 
     return cnt;

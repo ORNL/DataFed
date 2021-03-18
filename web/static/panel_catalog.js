@@ -415,7 +415,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 </div>";
             }
         }else{
-            html = "<div class='cat-topic-empty'>No Categories</div>";
+            html = "<div class='cat-topic-empty'>No sub-categories</div>";
         }
 
         topics_div.html( html );
@@ -457,10 +457,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                             (cur_mode==0?"<div class='cat-coll-btn-div'><button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button></div>":"") +
                         "</div>\
                         <div class='cat-coll-info-div'>\
-                            <div class='cat-coll-info-brief'>"+ (item.brief?util.escapeHTML(item.brief):"(no description)") + "</div>\
-                            <div><table class='cat-coll-info-table'><tr><td>" + (item.ownerId.startsWith("u/")
+                            <div class='cat-coll-info-brief'>"+ (item.desc?util.escapeHTML(item.desc):"(no description)") + "</div>\
+                            <div><table class='cat-coll-info-table'><tr><td>" + (item.owner.startsWith("u/")
                                 ?"Owner:</td><td>" + item.ownerName
-                                :"Project:</td><td>"+ item.ownerId.substr(2)) + "</td></tr>\
+                                :"Project:</td><td>"+ item.owner.substr(2)) + "</td></tr>\
                                 <tr><td>Collection ID:</td><td>" + item.id + (item.alias?" ("+item.alias+")":"") + "</td></tr>" +
                             "</table></div>\
                         </div>\
@@ -730,7 +730,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         console.log("cat qry", coll_qry );
 
-        api.catalogSearch( coll_qry, function( ok, data ){
+        api.dataSearch( coll_qry, function( ok, data ){
             loading &= 1;
 
             if ( ok ){

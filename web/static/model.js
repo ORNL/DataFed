@@ -20,16 +20,15 @@ export const PERM_ALL            = 0x0FFF;
 export const MD_MAX_SIZE                 = 102400; // Max metadata size = 100 Kb
 export const PAYLOAD_MAX_SIZE            = 1048576; // Max server payload size = 10 MB
 
-export const SS_USER                     = 1;
-export const SS_PROJECT                  = 2;
-export const SS_PROJECTS                 = 3;
-export const SS_COLLECTION               = 4;
-export const SS_TOPIC                    = 5;
-export const SS_SHARED_BY_USER           = 6;
-export const SS_SHARED_BY_ANY_USER       = 7;
-export const SS_SHARED_BY_PROJECT        = 8;
-export const SS_SHARED_BY_ANY_PROJECT    = 9;
-export const SS_VIEW                     = 10;
+export const SM_DATA         = 0;
+export const SM_COLLECTION   = 1;
+
+export const SS_PERSONAL     = 0;
+export const SS_PROJECT      = 1;
+export const SS_SHARED       = 2;
+export const SS_PUBLIC       = 3;
+export const SS_COLLECTION   = 4;
+
 
 export const TT_DATA_GET         = 0;
 export const TT_DATA_PUT         = 1;

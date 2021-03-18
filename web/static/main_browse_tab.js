@@ -1524,7 +1524,7 @@ function handleQueryResults( data ){
 
 function execQuery( query ){
     util.setStatusText("Executing search query...");
-    api.dataFind( query, function( ok, data ){
+    api.dataSearch( query, function( ok, data ){
         console.log( "qry res:", ok, data );
         if ( ok ){
             //var srch_node = data_tree.getNodeByKey("search");
@@ -1557,11 +1557,15 @@ function parseQuickSearch( a_noscope ){
     if ( tmp.length )
         query.tags = tmp;
 
-    if ( !a_noscope ){
-        query.scopes = [];
+    query.mode = model.SM_DATA;
+    //query.scope = model.SS_PERSONAL;
+    query.scope = model.SS_PROJECT;
 
+    if ( !a_noscope ){
+        
+
+        /*
         if ( $("#scope_selected",frame).prop("checked")){
-            //console.log("select mode");
             var i, key, nodes = data_tree.getSelectedNodes();
             for ( i in nodes ){
                 key = nodes[i].key;
@@ -1586,16 +1590,7 @@ function parseQuickSearch( a_noscope ){
                     query.scopes.push({scope:model.SS_COLLECTION,id:key,recurse:true});
                 else if ( key.startsWith("p/") )
                     query.scopes.push({scope:model.SS_PROJECT,id:key});
-                //else if ( key.startsWith("t/") ){
-                //    query.scopes.push({scope:SS_TOPIC,id:key,recurse:true});
-                //}
             }
-            /*nodes = cat_panel.tree.getSelectedNodes();
-            //console.log("cat tree nodes:",nodes.length);
-            for ( i in nodes ){
-                key = nodes[i].key;
-                query.scopes.push({scope:model.SS_TOPIC,id:key,recurse:true});
-            }*/
         }else{
             if ( $("#scope_mydat",frame).prop("checked"))
                 query.scopes.push({scope:model.SS_USER});
@@ -1605,7 +1600,7 @@ function parseQuickSearch( a_noscope ){
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
                 query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
             }
-        }
+        }*/
     }
 
     //console.log("query:", query);
@@ -1617,7 +1612,7 @@ function parseQuickSearch( a_noscope ){
 function searchDirect(){
     $("#run_qry_btn").removeClass("ui-state-error");
 
-    if ( select_source == SS_CAT ){
+    /*if ( select_source == SS_CAT ){
         var qry = parseQuickSearch( true );
         // TODO Fix this when data search is updated
         if ( qry.meta ){
@@ -1637,12 +1632,12 @@ function searchDirect(){
                 dialogs.dlgAlert("Search Error",data);
             }
         });
-    }else{
+    }else{*/
         var query = parseQuickSearch();
 
         //if ( query.scopes.length && ( query.text || query.meta || query.id ))
         execQuery( query );
-    }
+    //}
 }
 
 function querySave(){

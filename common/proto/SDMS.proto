@@ -45,17 +45,17 @@ enum CollDelMode
 
 enum SearchMode
 {
-    SM_DATA         = 1;
-    SM_COLLECTION   = 2;
+    SM_DATA         = 0;
+    SM_COLLECTION   = 1;
 }
 
 enum SearchScope
 {
-    SS_PERSONAL     = 1;
-    SS_PROJECT      = 2;
-    SS_SHARED       = 3;
-    SS_PUBLIC       = 4;
-    SS_COLLECTION   = 5;
+    SS_PERSONAL     = 0;
+    SS_PROJECT      = 1;
+    SS_SHARED       = 2;
+    SS_PUBLIC       = 3;
+    SS_COLLECTION   = 4;
 }
 
 enum DependencyType
@@ -175,7 +175,7 @@ message ListingData
     repeated DependencyData     dep         = 13;
     // Needed for catalog view
     optional string             owner_name  = 14;
-    optional string             brief       = 15;
+    optional string             desc        = 15;
 }
 
 /*

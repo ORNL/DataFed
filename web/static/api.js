@@ -271,7 +271,7 @@ export function copyData( a_src_id, a_dst_id, a_cb ){
     _asyncGet( "/api/dat/copy?src=" + encodeURIComponent(a_src_id) + "&dst=" + encodeURIComponent(a_dst_id), null, a_cb);
 }
 
-export function dataFind( a_query, a_callback ) {
+export function dataSearch( a_query, a_callback ) {
     //_asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
     _asyncPost("/api/dat/search",a_query,a_callback);
 }
