@@ -57,7 +57,7 @@ router.post('/create', function (req, res) {
                 if ( owner.max_coll >= 0 ){
                     var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('c',i._from) RETURN 1)",{id:owner_id}).next();
                     if ( count >= owner.max_coll )
-                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Collection limit reached ("+client.max_coll+"). Contact system administrator to increase limit."];
+                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Collection limit reached ("+owner.max_coll+"). Contact system administrator to increase limit."];
                 }
 
                 var time = Math.floor( Date.now()/1000 );
