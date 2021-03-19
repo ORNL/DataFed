@@ -205,14 +205,14 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = anon.RecordViewRequest()
+        msg = auth.RecordViewRequest()
         msg.id = self._resolve_id( data_id, context )
         msg.details = details
 
         return self._mapi.sendRecv( msg )
 
     def dataCreate( self, title, alias = None, description = None, tags = None, extension = None,
-        metadata = None, metadata_file = None, schema = None, schema_enforce = False,
+        metadata = None, metadata_file = None, schema = None, schema_enforce = None,
         parent_id = "root", deps = None, repo_id = None, context = None ):
         """
         Create a new data record
@@ -240,7 +240,7 @@ class API:
             Path to local JSON file containing domain-specific metadata
         schema: str, Optional. Default = None
             Set schema ID:ver for metadata validation
-        schema_enforce: bool, Optional, Default = False
+        schema_enforce: bool, Optional, Default = None
             Set to true to enforce metadata schema validation (i.e. fail if does not comply).
         parent_id : str, Optional. Default = "root"
             ID/alias of collection within which to create this record.
@@ -305,7 +305,8 @@ class API:
         if schema:
             msg.sch_id = schema
 
-        msg.sch_enforce = schema_enforce
+        if schema_enforce:
+            msg.sch_enforce = schema_enforce
 
         if deps:
             for d in deps:
@@ -322,7 +323,7 @@ class API:
 
     def dataUpdate( self, data_id, title = None, alias = None, description = None, tags = None,
         extension = None, metadata = None, metadata_file = None, metadata_set = False,
-        schema = None, schema_enforce = False, deps_add = None, deps_rem = None, context = None ):
+        schema = None, schema_enforce = None, deps_add = None, deps_rem = None, context = None ):
         """
         Update an existing data record
 
@@ -355,7 +356,7 @@ class API:
             existing metadata.
         schema: str, Optional. Default = None
             Set schema ID:ver for metadata validation
-        schema_enforce: bool, Optional, Default = False
+        schema_enforce: bool, Optional, Default = None
             Set to true to enforce metadata schema validation (i.e. fail if does not comply).
         deps_add : list, Optional. Default = None
             Dependencies of this data record to add, specified as an array of
@@ -429,7 +430,8 @@ class API:
         if schema is not None:
             msg.sch_id = schema
 
-        msg.sch_enforce = schema_enforce
+        if schema_enforce:
+            msg.sch_enforce = schema_enforce
 
         if deps_add:
             for d in deps_add:
@@ -847,7 +849,7 @@ class API:
         ------
         Exception : On invalid options or communication / server error.
         """
-        msg = anon.CollViewRequest()
+        msg = auth.CollViewRequest()
         msg.id = self._resolve_id( coll_id, context )
         #msg.id = self._resolve_coll_id( coll_id, context )
 
@@ -1039,7 +1041,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = anon.CollReadRequest()
+        msg = auth.CollReadRequest()
         msg.count = count
         msg.offset = offset
         msg.id = self._resolve_id( coll_id, context )
@@ -1532,7 +1534,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = anon.ProjectViewRequest()
+        msg = auth.ProjectViewRequest()
         msg.id = project_id
 
         return self._mapi.sendRecv( msg )
@@ -1990,7 +1992,7 @@ class API:
             id2 = item_id
 
             if id2[0:2] == "p/":
-                msg = anon.ProjectViewRequest()
+                msg = auth.ProjectViewRequest()
                 msg.id = id2
             else:
                 if id2[0:2] != "u/":

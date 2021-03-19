@@ -245,18 +245,6 @@ message RecordDeleteRequest
     repeated string             id          = 1;
 }
 
-/*
-message RecordSearchRequest
-{
-    required string             query       = 1;
-    optional bool               use_client  = 2;
-    optional bool               use_shared_users  = 3;
-    optional bool               use_shared_projects  = 4;
-    optional uint32             offset      = 5;
-    optional uint32             count       = 6;
-}
-*/
-
 message RecordGetDependencyGraphRequest
 {
     required string             id          = 1;
@@ -388,53 +376,6 @@ message SearchRequest
     optional uint32             offset      = 16;
     optional uint32             count       = 17;
 }
-
-/*
-message CatalogSearchRequest
-{
-    optional uint32             mode        = 1;
-    optional string             id          = 2;
-    optional string             text        = 3;
-    repeated string             cat_tags    = 4;
-    repeated string             tags        = 5;
-    optional string             owner       = 6;
-    optional uint32             from        = 7;
-    optional uint32             to          = 8;
-    optional uint32             offset      = 9;
-    optional uint32             count       = 10;
-    optional SDMS.SortOption    sort        = 11;
-    optional bool               sort_rev    = 12;
-    optional string             meta        = 13;
-    optional bool               meta_err    = 14;
-    optional string             sch_id      = 15;
-}
-
-
-message CatalogSearchReply
-{
-    repeated CatItemInfoData    item        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
-}
-
-
-// Returns ListingReply
-message RecordSearchPublishedRequest
-{
-    required CatalogSearchRequest           coll        = 1;
-    optional string                         id          = 2;
-    optional string                         text        = 3;
-    repeated string                         tags        = 4;
-    optional string                         md          = 5;
-    optional uint32                         from        = 6;
-    optional uint32                         to          = 7;
-    optional SDMS.SortOption                sort        = 8;
-    optional bool                           sort_rev    = 9;
-}
-
-*/
-
 
 // ============================ Collection Messages
 
