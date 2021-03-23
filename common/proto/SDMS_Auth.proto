@@ -353,28 +353,27 @@ message SearchRequest
 {
     required SDMS.SearchMode    mode        = 1;
     required SDMS.SearchScope   scope       = 2;
+    optional string             owner       = 3; // Required for all scopes except public
 
     // Data and Collections
-    optional string             id          = 3;
-    optional string             text        = 4;
-    repeated string             tags        = 5;
-    repeated string             cat_tags    = 6;
-    optional uint32             from        = 7;
-    optional uint32             to          = 8;
-    optional string             creator     = 9;
-    
+    optional string             id          = 4;
+    optional string             text        = 5;
+    repeated string             tags        = 6;
+    repeated string             cat_tags    = 7;
+    optional uint32             from        = 8;
+    optional uint32             to          = 9;
+    optional string             creator     = 10;
+    repeated string             coll        = 11;
+
     // Data scope only
-    optional string             sch_id      = 10;
-    optional string             meta        = 11;
-    optional bool               meta_err    = 12;
+    optional string             sch_id      = 12;
+    optional string             meta        = 13;
+    optional bool               meta_err    = 14;
 
-    // Public scope only
-    optional string             owner       = 13;
-
-    optional SDMS.SortOption    sort        = 14;
-    optional bool               sort_rev    = 15;
-    optional uint32             offset      = 16;
-    optional uint32             count       = 17;
+    optional SDMS.SortOption    sort        = 15;
+    optional bool               sort_rev    = 16;
+    optional uint32             offset      = 17;
+    optional uint32             count       = 18;
 }
 
 // ============================ Collection Messages

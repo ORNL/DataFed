@@ -55,7 +55,6 @@ enum SearchScope
     SS_PROJECT      = 1;
     SS_SHARED       = 2;
     SS_PUBLIC       = 3;
-    SS_COLLECTION   = 4;
 }
 
 enum DependencyType
