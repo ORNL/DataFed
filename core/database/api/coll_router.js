@@ -922,13 +922,80 @@ router.post('/pub/search', function (req, res) {
 router.post('/pub/search2', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+        var col_chk = true;
 
         console.log("search scope:",req.queryParams.scope);
 
-        if ( req.queryParams.scope == g_lib.SS_PROJECT ){
-            // Add collections from owned/administered projects
-            var cols = g_db._query("for v,e,p in 2..2 inbound @client owner, admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('c',v) return v._id",{client:client._id});
-            req.body.params.cols = cols.toArray();
+        switch ( req.queryParams.scope ){
+            case g_lib.SS_PROJECT:
+                    if ( !req.body.owner )
+                    throw [g_lib.ERR_MISSING_REQ_PARAM, "Project ID not specified." ];
+
+                if ( !req.body.owner.startsWith( "p/" ))
+                    throw [g_lib.ERR_INVALID_PARAM, "Invalid project ID: " + req.body.owner ];
+
+                if ( !g_db.p.exists( req.body.owner ))
+                    throw [g_lib.ERR_NOT_FOUND,"Project " + req.body.owner + " not found"];
+
+                var role = g_lib.getProjectRole( req.body.owner );
+                if( role == g_lib.PROJ_MEMBER ){
+                    // If no collections specified, add project root
+                    if ( !req.body.params.cols ){
+                        req.body.params.cols = ["c/p_" + req.body.owner.substr(2) + "_root"];
+                        col_chk = false;
+                    }
+                }else if ( role != g_lib.PROJ_ADMIN && role != g_lib.PROJ_MANAGER ){
+                    throw g_lib.ERR_PERM_DENIED;
+                }
+                break;
+            case g_lib.SS_SHARED:
+                // Get collections shared by owner (user/project)
+                if ( !req.body.owner )
+                    throw [g_lib.ERR_MISSING_REQ_PARAM, "Project / user ID not specified." ];
+
+                if ( req.body.owner.startsWith( "p/" )){
+                    if ( !g_db.p.exists( req.body.owner ))
+                        throw [g_lib.ERR_NOT_FOUND,"Project " + req.body.owner + " not found"];
+                }else if ( req.body.owner.startsWith( "u/" )){
+                    if ( !g_db.u.exists( req.body.owner ))
+                        throw [g_lib.ERR_NOT_FOUND,"user " + req.body.owner + " not found"];
+
+                }else{
+                    throw [g_lib.ERR_INVALID_PARAM, "Invalid project / user ID: " + req.body.owner ];
+                }
+
+                if ( !req.body.params.cols ){
+                    req.body.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: req.body.owner }).toArray();
+                    col_chk = false;
+                }
+
+                break;
+        }
+
+        // If user-specified collections given, must verify scope and access, then expand to include all sub-collections
+        if ( req.body.params.cols ){
+            if ( col_chk ){
+                var col;
+                for ( var c in req.body.params.cols ){
+                    col = req.body.params.cols[c];
+
+                    if ( !col.startsWith( "c/" )){
+                        throw [g_lib.ERR_INVALID_PARAM, "Invalid collection ID: " + col ];
+                    }
+
+                    if ( !g_db.c.exists( col )){
+                        throw [g_lib.ERR_NOT_FOUND,"Collection '" + col + "' not found"];
+                    }
+                    
+                    if ( req.body.owner ){
+                        if ( g_db.owner.firstExample({ _from: col })._to != req.body.owner ){
+                            throw [ g_lib.ERR_INVALID_PARAM, "Collection '" + col + "' not in search scope." ];
+                        }
+                    }
+                }
+            }
+
+            req.body.params.cols = expandSearchCollections( client, req.body.params.cols );
         }
 
         if ( req.body.params.sch_id ){

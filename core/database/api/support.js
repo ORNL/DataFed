@@ -43,7 +43,6 @@ module.exports = ( function() {
     obj.SS_PROJECT          = 1;
     obj.SS_SHARED           = 2;
     obj.SS_PUBLIC           = 3;
-    obj.SS_COLLECTION       = 4;
 
     obj.TT_DATA_GET         = 0;
     obj.TT_DATA_PUT         = 1;
@@ -1483,7 +1482,7 @@ module.exports = ( function() {
     obj.getPermissionsLocal = function( a_client_id, a_object, a_get_inherited, a_req_perm ) {
         var perm={grant:0,inhgrant:0,inherited:0},acl,acls,i;
 
-        console.log("getPermissionsLocal",a_object._id);
+        //console.log("getPermissionsLocal",a_object._id);
 
         if ( a_object.topic ){
             //console.log("has topic 1");
@@ -1492,7 +1491,7 @@ module.exports = ( function() {
         }
 
         if ( a_object.acls & 1 ){
-            console.log("chk local user acls");
+            //console.log("chk local user acls");
 
             acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client_id } ).toArray();
 
@@ -1505,7 +1504,7 @@ module.exports = ( function() {
 
         // Evaluate group permissions on object
         if ( a_object.acls & 2 ){
-            console.log("chk local group acls");
+            //console.log("chk local group acls");
 
             acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client_id } ).toArray();
             for ( i in acls ) {
@@ -1516,7 +1515,7 @@ module.exports = ( function() {
         }
 
         if ( a_get_inherited ){
-            console.log("chk inherited");
+            //console.log("chk inherited");
 
             var children = [a_object];
             var parents,parent;
@@ -1526,7 +1525,7 @@ module.exports = ( function() {
 
                 parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", { children : children }).toArray();
 
-                console.log("parents",parents);
+                //console.log("parents",parents);
 
                 if ( parents.length == 0 )
                     break;
@@ -1545,7 +1544,7 @@ module.exports = ( function() {
 
                     // User ACL
                     if ( parent.acls && (( parent.acls & 1 ) != 0 )){
-                        console.log("chk par user acls");
+                        //console.log("chk par user acls");
 
                         acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: parent._id, client: a_client_id } ).toArray();
                         if ( acls.length ){
@@ -1561,7 +1560,7 @@ module.exports = ( function() {
 
                     // Group ACL
                     if ( parent.acls && (( parent.acls & 2 ) != 0 )){
-                        console.log("chk par group acls");
+                        //console.log("chk par group acls");
 
                         acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", { object: parent._id, client: a_client_id } ).toArray();
                         if ( acls.length ){
@@ -2012,6 +2011,64 @@ module.exports = ( function() {
 
         obj.db._update( a_client._id, { eps: a_client.eps });
     };
+
+    // All col IDs are from same scope (owner), exapnd to include all readable sub-collections
+    // Collections must exist
+    // TODO This would be more efficient as a recursive function
+    obj.expandSearchCollections = function( a_client, a_col_ids ){
+        var cols = new Set( a_col_ids ), c, col, cur, next = a_col_ids, perm;
+
+        while ( next ){
+            cur = next;
+            next = [];
+
+            for ( c in cur ){
+                col = obj.db.c.document(cur[c]);
+
+                if ( obj.hasAdminPermObject( a_client, col )){
+                    child = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
+
+                    if ( !cols.has( col._id )){
+                        cols.add( col._id );
+                    }
+
+                    while( child.hasNext()){
+                        col = child.next();
+                        if ( !cols.has( col )){
+                            cols.add( col );
+                        }
+                    }    
+                }else{
+                    perm = obj.getPermissionsLocal( a_client, col, true, obj.PERM_RD_REC | obj.PERM_LIST );
+
+                    if ( perm.grant & (obj.PERM_RD_REC | obj.PERM_LIST) != ( obj.PERM_RD_REC | obj.PERM_LIST )){
+                        throw [obj.ERR_PERM_DENIED,"Permission denied for collection '" + col._id + "'"];
+                    }
+
+                    if ( !cols.has( col._id )){
+                        cols.add( col._id );
+                    }
+
+                    if ( perm.inhgrant & (obj.PERM_RD_REC | obj.PERM_LIST) == ( obj.PERM_RD_REC | obj.PERM_LIST )){
+                        child = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
+                        while( child.hasNext()){
+                            col = child.next();
+                            if ( !cols.has( col )){
+                                cols.add( col );
+                            }
+                        }    
+                    }else{
+                        child = obj.db._query("for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
+                        while( child.hasNext()){
+                            next.push( child.next() );
+                        }    
+                    }
+                }
+            }
+        }
+
+        return Array.from( cols );
+    }
 
     return obj;
 }() );
