@@ -2015,8 +2015,8 @@ module.exports = ( function() {
     // All col IDs are from same scope (owner), exapnd to include all readable sub-collections
     // Collections must exist
     // TODO This would be more efficient as a recursive function
-    obj.expandSearchCollections = function( a_client, a_col_ids ){
-        var cols = new Set( a_col_ids ), c, col, cur, next = a_col_ids, perm;
+    obj.expandSearchCollections2 = function( a_client, a_col_ids ){
+        var cols = new Set( a_col_ids ), c, col, cur, next = a_col_ids, perm,child;
 
         while ( next ){
             cur = next;
@@ -2025,7 +2025,7 @@ module.exports = ( function() {
             for ( c in cur ){
                 col = obj.db.c.document(cur[c]);
 
-                if ( obj.hasAdminPermObject( a_client, col )){
+                if ( obj.hasAdminPermObject( a_client, col._id )){
                     child = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
 
                     if ( !cols.has( col._id )){
@@ -2039,7 +2039,7 @@ module.exports = ( function() {
                         }
                     }    
                 }else{
-                    perm = obj.getPermissionsLocal( a_client, col, true, obj.PERM_RD_REC | obj.PERM_LIST );
+                    perm = obj.getPermissionsLocal( a_client._id, col, true, obj.PERM_RD_REC | obj.PERM_LIST );
 
                     if ( perm.grant & (obj.PERM_RD_REC | obj.PERM_LIST) != ( obj.PERM_RD_REC | obj.PERM_LIST )){
                         throw [obj.ERR_PERM_DENIED,"Permission denied for collection '" + col._id + "'"];
@@ -2061,13 +2061,70 @@ module.exports = ( function() {
                         child = obj.db._query("for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
                         while( child.hasNext()){
                             next.push( child.next() );
-                        }    
+                        }
                     }
                 }
             }
         }
 
         return Array.from( cols );
+    }
+
+    obj.expandSearchCollections = function( a_client, a_col_ids ){
+        var cols = new Set();
+        for ( var c in a_col_ids ){
+            obj.expandSearchCollections_recurse( a_client, cols, a_col_ids[c] );
+        }
+        return Array.from( cols );
+    }
+
+    obj.expandSearchCollections_recurse = function( a_client, a_cols, a_col_id, a_inh_perm ){
+        if ( !a_cols.has( a_col_id )){
+            var col, res;
+            if ( obj.hasAdminPermObject( a_client, a_col_id )){
+                a_cols.add( a_col_id );
+
+                res = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",{ col: a_col_id });
+                while( res.hasNext()){
+                    col = res.next();
+                    if ( !a_cols.has( col )){
+                        a_cols.add( col );
+                    }
+                }    
+            }else{
+                col = obj.db.c.document(a_col_id);
+
+                var perm = obj.getPermissionsLocal( a_client._id, col, a_inh_perm == undefined?true:false, obj.PERM_RD_REC | obj.PERM_LIST );
+
+                if (( perm.grant | perm.inherited | a_inh_perm ) & (obj.PERM_RD_REC | obj.PERM_LIST) != ( obj.PERM_RD_REC | obj.PERM_LIST )){
+                    if ( a_inh_perm == undefined ){
+                        // Only throw a PERM_DENIED error if this is one of the user-specified collections (not a child)
+                        throw [obj.ERR_PERM_DENIED,"Permission denied for collection '" + col._id + "'"];
+                    }else{
+                        // Don't have access - skip
+                        return;
+                    }
+                }
+
+                a_cols.add( a_col_id );
+
+                if (( perm.inhgrant | perm.inherited | a_inh_perm ) & (obj.PERM_RD_REC | obj.PERM_LIST) == ( obj.PERM_RD_REC | obj.PERM_LIST )){
+                    res = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",{ col: a_col_id });
+                    while( res.hasNext()){
+                        col = res.next();
+                        if ( !a_cols.has( col )){
+                            a_cols.add( col );
+                        }
+                    }    
+                }else{
+                    res = obj.db._query("for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
+                    perm = perm.inhgrant | perm.inherited | a_inh_perm;
+                    while( res.hasNext()){
+                        obj.expandSearchCollections_recurse( a_client, a_cols, child.next(), perm );
+                    }
+                }
+            }
+        }
     }
 
     return obj;

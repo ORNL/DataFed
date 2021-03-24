@@ -925,23 +925,29 @@ router.post('/pub/search2', function (req, res) {
         var col_chk = true;
 
         console.log("search scope:",req.queryParams.scope);
+        console.log("body:",req.body);
 
         switch ( req.queryParams.scope ){
             case g_lib.SS_PROJECT:
-                    if ( !req.body.owner )
+                if ( !req.body.params.owner )
                     throw [g_lib.ERR_MISSING_REQ_PARAM, "Project ID not specified." ];
 
-                if ( !req.body.owner.startsWith( "p/" ))
-                    throw [g_lib.ERR_INVALID_PARAM, "Invalid project ID: " + req.body.owner ];
+                if ( !req.body.params.owner.startsWith( "p/" ))
+                    throw [g_lib.ERR_INVALID_PARAM, "Invalid project ID: " + req.body.params.owner ];
 
-                if ( !g_db.p.exists( req.body.owner ))
-                    throw [g_lib.ERR_NOT_FOUND,"Project " + req.body.owner + " not found"];
+                if ( !g_db.p.exists( req.body.params.owner ))
+                    throw [g_lib.ERR_NOT_FOUND,"Project " + req.body.params.owner + " not found"];
 
-                var role = g_lib.getProjectRole( req.body.owner );
+                console.log("chk 1");
+
+                var role = g_lib.getProjectRole( client._id, req.body.params.owner );
+
+                console.log("chk 2");
+
                 if( role == g_lib.PROJ_MEMBER ){
                     // If no collections specified, add project root
                     if ( !req.body.params.cols ){
-                        req.body.params.cols = ["c/p_" + req.body.owner.substr(2) + "_root"];
+                        req.body.params.cols = ["c/p_" + req.body.params.owner.substr(2) + "_root"];
                         col_chk = false;
                     }
                 }else if ( role != g_lib.PROJ_ADMIN && role != g_lib.PROJ_MANAGER ){
@@ -950,19 +956,20 @@ router.post('/pub/search2', function (req, res) {
                 break;
             case g_lib.SS_SHARED:
                 // Get collections shared by owner (user/project)
-                if ( !req.body.owner )
+                if ( !req.body.params.owner )
                     throw [g_lib.ERR_MISSING_REQ_PARAM, "Project / user ID not specified." ];
 
-                if ( req.body.owner.startsWith( "p/" )){
-                    if ( !g_db.p.exists( req.body.owner ))
-                        throw [g_lib.ERR_NOT_FOUND,"Project " + req.body.owner + " not found"];
-                }else if ( req.body.owner.startsWith( "u/" )){
+                if ( req.body.params.owner.startsWith( "p/" )){
+                    if ( !g_db.p.exists( req.body.params.owner ))
+                        throw [g_lib.ERR_NOT_FOUND,"Project " + req.body.params.owner + " not found"];
+                }else if ( req.body.params.owner.startsWith( "u/" )){
                     if ( !g_db.u.exists( req.body.owner ))
-                        throw [g_lib.ERR_NOT_FOUND,"user " + req.body.owner + " not found"];
-
+                        throw [g_lib.ERR_NOT_FOUND,"user " + req.body.params.owner + " not found"];
                 }else{
-                    throw [g_lib.ERR_INVALID_PARAM, "Invalid project / user ID: " + req.body.owner ];
+                    throw [g_lib.ERR_INVALID_PARAM, "Invalid project / user ID: " + req.body.params.owner ];
                 }
+
+                console.log("chk 3");
 
                 if ( !req.body.params.cols ){
                     req.body.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: req.body.owner }).toArray();
@@ -972,8 +979,11 @@ router.post('/pub/search2', function (req, res) {
                 break;
         }
 
+        console.log("chk 4");
+
         // If user-specified collections given, must verify scope and access, then expand to include all sub-collections
         if ( req.body.params.cols ){
+            console.log("proc cols");
             if ( col_chk ){
                 var col;
                 for ( var c in req.body.params.cols ){
@@ -987,16 +997,19 @@ router.post('/pub/search2', function (req, res) {
                         throw [g_lib.ERR_NOT_FOUND,"Collection '" + col + "' not found"];
                     }
                     
-                    if ( req.body.owner ){
-                        if ( g_db.owner.firstExample({ _from: col })._to != req.body.owner ){
+                    if ( req.body.params.owner ){
+                        if ( g_db.owner.firstExample({ _from: col })._to != req.body.params.owner ){
                             throw [ g_lib.ERR_INVALID_PARAM, "Collection '" + col + "' not in search scope." ];
                         }
                     }
                 }
             }
 
-            req.body.params.cols = expandSearchCollections( client, req.body.params.cols );
+            req.body.params.cols = g_lib.expandSearchCollections( client, req.body.params.cols );
+            console.log("exp cols:",req.body.params.cols);
         }
+
+        console.log("chk 5");
 
         if ( req.body.params.sch_id ){
             // sch_id is id:ver
