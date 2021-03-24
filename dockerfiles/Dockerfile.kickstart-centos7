@@ -8,12 +8,18 @@ ARG PBUF_DIR="protobuf-${PBUF_VERSION}"
 ARG PBUF_ARCHIVE="protobuf-python-${PBUF_VERSION}.tar.gz"
 ARG PBUF_DOWNLOAD_LINK="https://github.com/protocolbuffers/protobuf/releases/download/v${PBUF_VERSION}/${PBUF_ARCHIVE}"
 
+# JSON - Build-time only variables
+ARG JSON_VERSION="3.9.1"
+ARG JSON_SCHEMA_VALIDATOR_VERSION="2.1.0"
+
 # ZeroMQ, Protobuf, and pyenv - Runtime variables
 ENV ZMQ_INC_DIR="/usr/include"
 ENV PBUF_INC_DIR="/usr/local/include/google/protobuf"
 
 ENV ZMQ_LIB_DIR="/usr/lib64"
 ENV PBUF_LIB_DIR="/usr/local/lib"
+
+# JSON
 
 # Change to working directory for installing "extra" software
 WORKDIR /opt
@@ -56,6 +62,24 @@ RUN mkdir globus-connect-server \
     && yum install globus-connect-server-repo-latest.noarch.rpm yum-plugin-priorities -y \
     && yum install globus-connect-server globus-common-devel -y \
     && cd ..
+
+# Install C++ JSON library
+RUN git clone --depth 1 --branch "v${JSON_VERSION}" https://github.com/nlohmann/json.git \
+    && cd json \
+    && mkdir build \
+    && cd build \
+    && cmake3 ../ \
+    && make \
+    && make install
+
+# Install C++ JSON Schema library
+RUN git clone --depth 1 --branch "${JSON_SCHEMA_VALIDATOR_VERSION}" https://github.com/pboettch/json-schema-validator.git \
+    && cd json-schema-validator \
+    && mkdir build \
+    && cd build \
+    && cmake3 ../ \
+    && make \
+    && make install
 
 # Install extra dependencies:
 RUN yum install -y \
