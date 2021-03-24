@@ -1375,11 +1375,12 @@ void
 DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
-    string query, params;
+    string qry_begin, qry_col, qry_end, params;
 
-    uint32_t cnt = parseSearchRequest( a_request, query, params );
+    uint32_t cnt = parseSearchRequest( a_request, qry_begin, qry_col, qry_end, params );
 
-    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
+    string body = "{\"qry_begin\":\"" + qry_begin + "\",\"qry_col\":\"" + qry_col + "\",\"qry_end\":\"" + qry_end +
+        "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
 
     DL_INFO("General search: [" << body << "]");
 
@@ -3868,7 +3869,7 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
 }
 
 uint32_t
-DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_query, std::string & a_params )
+DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_qry_begin, std::string & a_qry_col, std::string & a_qry_end, std::string & a_params )
 {
     string view = (a_request.mode()==SM_DATA?"dataview":"collview");
     string query = "";
@@ -3954,7 +3955,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
             if ( !a_request.has_owner() )
                 EXCEPT( 1, "Owner parameter missing for project scope." );
 
-            a_query = string("for i in ") + view + "search owner == @owner" + query;
+            a_query = string("for i in ") + view + " search owner == @owner" + query;
             a_params += ",\"owner\":\"" + a_request.owner() + "\"";
             break;
         case SS_SHARED:
@@ -3977,6 +3978,14 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
 
     if ( a_request.coll_size() > 0 )
     {
+        a_params += ",\"cols\":[";
+        for ( int i = 0; i < a_request.coll_size(); i++ ){
+            if ( i > 0 )
+                a_params += ",";
+            a_params += "\"" + a_request.coll(i) + "\"";
+        }
+        a_params += "]";
+
         if ( a_request.mode() == SM_DATA )
             a_query += " for e in item filter e._to == i._id and e._from in @cols";
         else
