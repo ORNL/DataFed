@@ -1375,16 +1375,16 @@ void
 DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
-    string qry_begin, qry_col, qry_end, params;
+    string qry_begin, qry_end, qry_filter, params;
 
-    uint32_t cnt = parseSearchRequest( a_request, qry_begin, qry_col, qry_end, params );
+    uint32_t cnt = parseSearchRequest( a_request, qry_begin, qry_end, qry_filter, params );
 
-    string body = "{\"qry_begin\":\"" + qry_begin + "\",\"qry_col\":\"" + qry_col + "\",\"qry_end\":\"" + qry_end +
+    string body = "{\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
         "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
 
     DL_INFO("General search: [" << body << "]");
 
-    dbPost( "col/pub/search2", {{"scope",to_string(a_request.scope())}}, &body, result );
+    dbPost( "col/pub/search2", {{"scope",to_string(a_request.scope())},{"mode",to_string(a_request.mode())}}, &body, result );
 
     setListingDataReply( a_reply, result );
 }
@@ -3869,20 +3869,18 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
 }
 
 uint32_t
-DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_qry_begin, std::string & a_qry_col, std::string & a_qry_end, std::string & a_params )
+DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_qry_begin, std::string & a_qry_end, std::string & a_qry_filter, std::string & a_params )
 {
     string view = (a_request.mode()==SM_DATA?"dataview":"collview");
-    string query = "";
-    string filter;
 
     if ( a_request.has_text() > 0 )
     {
-        query += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
+        a_qry_begin += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
     }
 
     if ( a_request.cat_tags_size() > 0 )
     {
-        query += " and @ctags all in i.cat_tags";
+        a_qry_begin += " and @ctags all in i.cat_tags";
 
         a_params += ",\"ctags\":[";
         for ( int i = 0; i < a_request.cat_tags_size(); ++i )
@@ -3896,7 +3894,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
 
     if ( a_request.tags_size() > 0 )
     {
-        query += " and @tags all in i.tags";
+        a_qry_begin += " and @tags all in i.tags";
 
         a_params += ",\"tags\":[";
         for ( int i = 0; i < a_request.tags_size(); ++i )
@@ -3910,18 +3908,18 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
 
     if ( a_request.has_id() )
     {
-        query += " and " + parseSearchIdAlias( a_request.id(), "i" );
+        a_qry_begin += " and " + parseSearchIdAlias( a_request.id(), "i" );
     }
 
     if ( a_request.has_from() )
     {
-        query += " and i.ut >= @utfr";
+        a_qry_begin += " and i.ut >= @utfr";
         a_params += ",\"utfr\":" + to_string( a_request.from() );
     }
 
     if ( a_request.has_to() )
     {
-        query += " and i.ut <= @utto";
+        a_qry_begin += " and i.ut <= @utto";
         a_params += ",\"utto\":" + to_string( a_request.to() );
     }
 
@@ -3930,49 +3928,49 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
     {
         if ( a_request.has_sch_id() > 0 )
         {
-            query += " and i.sch_id == @sch";
+            a_qry_begin += " and i.sch_id == @sch";
             a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\"";
         }
 
         if ( a_request.has_meta_err() )
         {
-            query += " and i.md_err == true";
+            a_qry_begin += " and i.md_err == true";
         }
 
         if ( a_request.has_meta() )
         {
-            filter = parseSearchMetadata( a_request.meta() );
+            a_qry_filter = parseSearchMetadata( a_request.meta() );
         }
     }
 
     switch ( a_request.scope() )
     {
         case SS_PERSONAL:
-            a_query = string("for i in ") + view + " search i.owner == @client" + query;
+            a_qry_begin = string("for i in ") + view + " search i.owner == @client" + a_qry_begin;
             a_params += ",\"client\":\"" + m_client_uid + "\"";
             break;
         case SS_PROJECT:
             if ( !a_request.has_owner() )
                 EXCEPT( 1, "Owner parameter missing for project scope." );
 
-            a_query = string("for i in ") + view + " search owner == @owner" + query;
+            a_qry_begin = string("for i in ") + view + " search i.owner == @owner" + a_qry_begin;
             a_params += ",\"owner\":\"" + a_request.owner() + "\"";
             break;
         case SS_SHARED:
             if ( !a_request.has_owner() )
                 EXCEPT( 1, "Owner parameter missing for shared data scope." );
 
-            a_query = string("for i in ") + view + " search owner == @owner";
+            a_qry_begin = string("for i in ") + view + " search i.owner == @owner";
             a_params += ",\"owner\":\"" + a_request.owner() + "\"";
             break;
         case SS_PUBLIC:
             if ( a_request.has_owner() )
             {
-                query = " and i.owner == @owner" + query;
+                a_qry_begin = " and i.owner == @owner" + a_qry_begin;
                 a_params += ",\"owner\":\"" + a_request.owner() + "\"";
             }
 
-            a_query = string("for i in ") + view + " search i.public == true" + query;
+            a_qry_begin = string("for i in ") + view + " search i.public == true" + a_qry_begin;
             break;
     }
 
@@ -3986,66 +3984,69 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
         }
         a_params += "]";
 
+/*
         if ( a_request.mode() == SM_DATA )
-            a_query += " for e in item filter e._to == i._id and e._from in @cols";
+            a_query_col += " for e in item filter e._to == i._id and e._from in @cols";
         else
             a_query += " filter i._id in @cols";
 
         if ( filter.size() )
             a_query += " and " + filter;
-
+*/
     }
+/*
     else if ( filter.size() )
     {
         if ( filter.size() )
             a_query += " filter " + filter;
     }
+*/
 
     bool sort_relevance = false;
 
-    a_query += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first)) sort ";
+    a_qry_end += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first)) sort ";
 
     if ( a_request.has_sort() )
     {
         switch( a_request.sort() )
         {
             case SORT_OWNER:
-                a_query += "i.name";
+                a_qry_end += "i.name";
                 break;
             case SORT_TIME_CREATE:
-                a_query += "i.ct";
+                a_qry_end += "i.ct";
                 break;
             case SORT_TIME_UPDATE:
-                a_query += "i.ut";
+                a_qry_end += "i.ut";
                 break;
             case SORT_RELEVANCE:
                 if ( a_request.has_text() )
                 {
-                    a_query += "BM25(i) DESC";
+                    a_qry_end += "BM25(i) DESC";
                     sort_relevance = true;
                 }
                 else
                 {
-                    a_query += "i.title";
+                    a_qry_end += "i.title";
                 }
                 break;
             case SORT_TITLE:
             default:
-                a_query += "i.title";
+                a_qry_end += "i.title";
                 break;
         }
 
         if ( a_request.has_sort_rev() && a_request.sort_rev() && !sort_relevance )
         {
-            a_query += " DESC";
+            a_qry_end += " DESC";
         }
     }
     else
     {
-        a_query += " i.title";
+        a_qry_end += " i.title";
     }
 
-    a_query += " limit @off,@cnt";
+    a_qry_end += " limit @off,@cnt";
 
     uint32_t cnt = min(a_request.has_count()?a_request.count():50,100U),
              off = a_request.has_offset()?a_request.offset():0;
@@ -4060,8 +4061,11 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
     // Get rid of leading delimiter
     a_params[0] = ' ';
 
-    a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner:i.owner,owner_name:name,alias:i.alias")+(a_request.mode() == SM_DATA?",size:i.size,md_err:i.md_err":"")+"}";
-    a_query = escapeJSON( a_query );
+    a_qry_end += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner:i.owner,owner_name:name,alias:i.alias")+(a_request.mode() == SM_DATA?",size:i.size,md_err:i.md_err":"")+"}";
+
+    a_qry_begin = escapeJSON( a_qry_begin );
+    a_qry_end = escapeJSON( a_qry_end );
+    a_qry_filter = escapeJSON( a_qry_filter );
 
     return cnt;
 }

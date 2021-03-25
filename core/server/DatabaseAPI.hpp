@@ -221,7 +221,7 @@ private:
 
     //uint32_t parseCatalogSearchRequest( const Auth::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial = false );
     //void parseRecordSearchPublishedRequest( const Auth::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params );
-    uint32_t    parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_qry_begin, std::string & a_qry_col, std::string & a_qry_end, std::string & a_params );
+    uint32_t    parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_qry_begin, std::string & a_qry_end, std::string & a_filter, std::string & a_params );
     std::string parseSearchTextPhrase( const std::string & a_phrase, const std::string & a_iter );
     std::string parseSearchTerms( const std::string & a_key, const std::vector<std::string> & a_terms, const std::string & a_iter );
     std::string parseSearchMetadata( const std::string & a_query, const std::string & a_iter = "i" );
