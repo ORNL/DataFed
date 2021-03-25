@@ -1560,6 +1560,7 @@ function parseQuickSearch( a_noscope ){
     query.mode = model.SM_DATA;
     //query.scope = model.SS_PERSONAL;
     query.scope = model.SS_PROJECT;
+    query.owner = 'p/proj.priv';
 
     if ( !a_noscope ){
         
