@@ -155,10 +155,11 @@ view.properties({
           "tags": { analyzers: ["identity"] },
           "title": { analyzers: ["text_en"] },
           "desc": { analyzers: ["text_en"] },
+          "sch_id": { analyzers: ["identity"] },
           "md_err": { analyzers: ["identity"] },
           "owner": { analyzers: ["identity"] },
           "ut": { analyzers: ["identity"] },
-          "sch_id": { analyzers: ["identity"] },
+          "alias": { analyzers: ["identity"] },
           "_id": { analyzers: ["identity"] }
         },
         includeAllFields: false
@@ -185,7 +186,9 @@ view.properties({
           "title": { analyzers: ["text_en"] },
           "desc": { analyzers: ["text_en"] },
           "owner": { analyzers: ["identity"] },
-          "ut": { analyzers: ["identity"] }
+          "ut": { analyzers: ["identity"] },
+          "alias": { analyzers: ["identity"] },
+          "_id": { analyzers: ["identity"] }
         },
         includeAllFields: false
       }

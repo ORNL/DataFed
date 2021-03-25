@@ -2080,10 +2080,11 @@ module.exports = ( function() {
 
     obj.expandSearchCollections_recurse = function( a_client, a_cols, a_col_id, a_inh_perm ){
         if ( !a_cols.has( a_col_id )){
+            console.log("expColl",a_col_id,"inh:",a_inh_perm);
             var col, res;
             if ( obj.hasAdminPermObject( a_client, a_col_id )){
                 a_cols.add( a_col_id );
-
+                console.log("has admin");
                 res = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",{ col: a_col_id });
                 while( res.hasNext()){
                     col = res.next();
@@ -2095,8 +2096,9 @@ module.exports = ( function() {
                 col = obj.db.c.document(a_col_id);
 
                 var perm = obj.getPermissionsLocal( a_client._id, col, a_inh_perm == undefined?true:false, obj.PERM_RD_REC | obj.PERM_LIST );
+                console.log("perm",perm);
 
-                if (( perm.grant | perm.inherited | a_inh_perm ) & (obj.PERM_RD_REC | obj.PERM_LIST) != ( obj.PERM_RD_REC | obj.PERM_LIST )){
+                if ((( perm.grant | perm.inherited | a_inh_perm ) & (obj.PERM_RD_REC | obj.PERM_LIST)) != ( obj.PERM_RD_REC | obj.PERM_LIST )){
                     if ( a_inh_perm == undefined ){
                         // Only throw a PERM_DENIED error if this is one of the user-specified collections (not a child)
                         throw [obj.ERR_PERM_DENIED,"Permission denied for collection '" + col._id + "'"];
@@ -2106,9 +2108,13 @@ module.exports = ( function() {
                     }
                 }
 
+                console.log("have access", perm.grant | perm.inherited | a_inh_perm );
+
                 a_cols.add( a_col_id );
 
-                if (( perm.inhgrant | perm.inherited | a_inh_perm ) & (obj.PERM_RD_REC | obj.PERM_LIST) == ( obj.PERM_RD_REC | obj.PERM_LIST )){
+                if ((( perm.inhgrant | perm.inherited | a_inh_perm ) & (obj.PERM_RD_REC | obj.PERM_LIST)) == ( obj.PERM_RD_REC | obj.PERM_LIST )){
+                    console.log("have all inh perms");
+
                     res = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",{ col: a_col_id });
                     while( res.hasNext()){
                         col = res.next();
@@ -2118,9 +2124,11 @@ module.exports = ( function() {
                     }    
                 }else{
                     res = obj.db._query("for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
-                    perm = perm.inhgrant | perm.inherited | a_inh_perm;
+                    perm = ( perm.inhgrant | perm.inherited | a_inh_perm );
+                    console.log("not all inh perms", perm);
+
                     while( res.hasNext()){
-                        obj.expandSearchCollections_recurse( a_client, a_cols, child.next(), perm );
+                        obj.expandSearchCollections_recurse( a_client, a_cols, res.next(), perm );
                     }
                 }
             }

@@ -1028,9 +1028,28 @@ router.post('/pub/search2', function (req, res) {
             delete req.body.params.sch_id;
         }
 
-        //console.log("pu/src",req.body.query, req.body.params);
+        // Assemble query based on filter and collection state
+        var qry = req.body.qry_begin;
 
-        var item, count, result = g_db._query( req.body.query, req.body.params, {}, { fullCount: true }).toArray();
+        if ( req.body.params.cols ){
+            if ( req.queryParams.mode == g_lib.SM_DATA ){
+                qry += " for e in item filter e._to == i._id and e._from in @cols";
+            }else{
+                qry += " filter i._id in @cols";
+            }
+
+            if ( req.body.qry_filter ){
+                qry += " and " + req.body.qry_filter;
+            }
+        }else if ( req.body.qry_filter ){
+            qry += " filter " + req.body.qry_filter;
+        }
+
+        qry += req.body.qry_end;
+
+        console.log( "qry", qry );
+
+        var item, count, result = g_db._query( qry, req.body.params, {}, { fullCount: true }).toArray();
 
         if ( result.length > req.body.limit ){
             result.length = req.body.limit;
@@ -1065,8 +1084,11 @@ router.post('/pub/search2', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .queryParam('scope', joi.number().integer().required(), "Scope")
+.queryParam('mode', joi.number().integer().required(), "Mode")
 .body(joi.object({
-    query: joi.string().required(),
+    qry_begin: joi.string().required(),
+    qry_end: joi.string().required(),
+    qry_filter: joi.string().optional().allow(""),
     params: joi.object().required(),
     limit: joi.number().integer().required()
 }).required(), 'Collection fields')
