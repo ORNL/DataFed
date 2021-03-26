@@ -963,7 +963,7 @@ router.post('/pub/search2', function (req, res) {
                     if ( !g_db.p.exists( req.body.params.owner ))
                         throw [g_lib.ERR_NOT_FOUND,"Project " + req.body.params.owner + " not found"];
                 }else if ( req.body.params.owner.startsWith( "u/" )){
-                    if ( !g_db.u.exists( req.body.owner ))
+                    if ( !g_db.u.exists( req.body.params.owner ))
                         throw [g_lib.ERR_NOT_FOUND,"user " + req.body.params.owner + " not found"];
                 }else{
                     throw [g_lib.ERR_INVALID_PARAM, "Invalid project / user ID: " + req.body.params.owner ];
@@ -972,7 +972,7 @@ router.post('/pub/search2', function (req, res) {
                 console.log("chk 3");
 
                 if ( !req.body.params.cols ){
-                    req.body.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: req.body.owner }).toArray();
+                    req.body.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: req.body.params.owner }).toArray();
                     col_chk = false;
                 }
 
@@ -1048,6 +1048,7 @@ router.post('/pub/search2', function (req, res) {
         qry += req.body.qry_end;
 
         console.log( "qry", qry );
+        console.log( "params", req.body.params );
 
         var item, count, result = g_db._query( qry, req.body.params, {}, { fullCount: true }).toArray();
 
