@@ -6,6 +6,7 @@ import * as dialogs from "./dialogs.js";
 import * as panel_info from "./panel_item_info.js";
 import * as panel_cat from "./panel_catalog.js";
 import * as panel_graph from "./panel_graph.js";
+import * as panel_search from "./panel_search.js";
 import * as dlgDataNewEdit from "./dlg_data_new_edit.js";
 import * as dlgRepoEdit from "./dlg_repo_edit.js";
 import * as dlgSetACLs from "./dlg_set_acls.js";
@@ -46,7 +47,7 @@ var SS_TREE = 0,
     select_source_prev = SS_TREE,
     cur_query,
     update_files, import_direct,
-    cat_panel, graph_panel;
+    search_panel, cat_panel, graph_panel;
 
 // Task history vars (to be moved to panel_task_hist )
 var taskTimer, taskHist = [];
@@ -1522,6 +1523,64 @@ function handleQueryResults( data ){
     }
 }
 
+export function searchPanel_Run( query ){
+    console.log("searchPanel_Run", query );
+    // Selection can only be personal data, a project, a shared user, or a shared project, or one or more collections
+    // If collections, then all must have same scope
+    var i,n,sel = data_tree.getSelectedNodes();
+    for ( var i in sel ){
+        n = sel[i];
+        console.log( "node: ", n );
+        if ( n.key == "mydata" ){
+            query.scope = model.SS_PERSONAL;
+        }else if ( n.key.startsWith( "p/" )){
+            query.scope = model.SS_PROJECT;
+            query.owner = n.key;
+        }else if ( n.key.startsWith( "shared_user_" )){
+            query.scope = model.SS_SHARED;
+            query.owner = n.key.substr( 12 );
+        }else if ( n.key.startsWith( "shared_proj_" )){
+            query.scope = model.SS_SHARED;
+            query.owner = n.key.substr( 12 );
+        }else if ( n.key.startsWith( "c/" )){
+            if ( !query.scope ){
+                if ( n.data.scope == ( "u/" + settings.user.uid )){
+                    query.scope = model.SS_PERSONAL;
+                }else if ( n.data.scope.startsWith( "u/" )){
+                    query.scope = model.SS_SHARED;
+                    query.owner = n.key;
+                }else if ( n.data.scope.startsWith( "p/" )){
+                    // Is this a member or shared project?
+                    var par = n.getParentList(false,false);
+                    if ( par[0].key.startsWith("shared")){
+                        query.scope = model.SS_SHARED;
+                    }else{
+                        query.scope = model.SS_PROJECT;
+                    }
+                    query.owner = n.data.scope;
+                }else{
+                    console.log("invalid selection");
+                    return;
+                }
+            }
+
+            if ( !query.coll ){
+                query.coll = [ n.key ];
+            }else{
+                query.coll.push( n.key );
+            }
+        }else{
+            console.log("invalid selection");
+            return;
+        }
+    }
+
+    if ( query.scope != undefined ){
+        console.log("query",query);
+        execQuery( query );
+    }
+}
+
 function execQuery( query ){
     util.setStatusText("Executing search query...");
     api.dataSearch( query, function( ok, data ){
@@ -1557,10 +1616,10 @@ function parseQuickSearch( a_noscope ){
     if ( tmp.length )
         query.tags = tmp;
 
-    query.mode = model.SM_DATA;
+    query.mode = model.SM_COLLECTION;
     //query.scope = model.SS_PERSONAL;
-    query.scope = model.SS_PROJECT;
-    query.owner = 'p/proj.priv';
+    query.scope = model.SS_PERSONAL;
+    //query.owner = 'p/proj.priv';
 
     if ( !a_noscope ){
         
@@ -2137,6 +2196,10 @@ $("#id_query,#text_query,#meta_query").on( "input", function(e) {
 $("#btn_srch_refresh").on("click", function(){
     if ( cur_query )
         execQuery( cur_query );
+});
+
+$("#btn_search_panel").on("click", function(){
+    $("#sreach_panel",frame).toggle();
 });
 
 $("#tag_query",frame).tagit({
@@ -2772,8 +2835,33 @@ export function init(){
     $(".btn-refresh").button({icon:"ui-icon-refresh",showLabel:false});
     util.inputTheme( $('input'));
 
-    cat_panel = panel_cat.newCatalogPanel( "#catalog_tree", $("#tab-catalogs",frame), this );
+    $(".srch-mode",frame).selectmenu({ width: false });
+    $(".srch-sort",frame).selectmenu({ width: false });
 
+    $(".accordion.acc-act",frame).accordion({
+        header: "h3",
+        collapsible: true,
+        heightStyle: "content",
+        create: function( ev, ui ){
+            ui.header.removeClass("ui-state-active");
+        },
+        activate: function( ev, ui ){
+            ui.newHeader.removeClass("ui-state-active");
+        }
+    });
+
+    $(".accordion:not(.acc-act)",frame).accordion({
+        header: "h3",
+        collapsible: true,
+        heightStyle: "content",
+        active: false,
+        activate: function( ev, ui ){
+            ui.newHeader.removeClass("ui-state-active");
+        }
+    });
+
+    search_panel = panel_search.newSearchPanel( $("#sreach_panel",frame), this );
+    cat_panel = panel_cat.newCatalogPanel( "#catalog_tree", $("#tab-catalogs",frame), this );
     graph_panel = panel_graph.newGraphPanel( "#data-graph", $("tab#-prov-graph",frame), this );
 
     $("#search_results_tree").fancytree({

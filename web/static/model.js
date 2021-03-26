@@ -27,8 +27,6 @@ export const SS_PERSONAL     = 0;
 export const SS_PROJECT      = 1;
 export const SS_SHARED       = 2;
 export const SS_PUBLIC       = 3;
-export const SS_COLLECTION   = 4;
-
 
 export const TT_DATA_GET         = 0;
 export const TT_DATA_PUT         = 1;

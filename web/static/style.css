@@ -463,6 +463,20 @@ div.cat-topic-div:hover .cat-topic-btn-div
     background:transparent!important;
 }
 
+.srch-panel-div
+{
+    padding: 0.5rem 0.5rem 0 0.5rem;
+}
+
+.srch-mode + span
+{
+    width:15ch!important;
+}
+
+.srch-sort + span
+{
+    width:15ch!important;
+}
 
 /*
 div.cat-coll-container

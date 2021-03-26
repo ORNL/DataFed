@@ -10,11 +10,22 @@
                     <li style="display:none"><a href="#tab-search-results">Search Results</a><span class='ui-icon ui-icon-circle-close search-results-close'></span></li>
                 </ul>
                 <div id="tab-data-tree" class="ui-widget-content" style="padding:0;height:100%;min-height:0">
-                    <div class="col-flex" style="height:100%">
-                        <div class="content scrollable" style="flex:1 1 auto;border-top:none;min-height:0">
-                            <div id="data_tree" class="content no-border" style="display:inline-block"></div>
+
+                    <div class="col-flex" style="flex:1 1 auto;height:100%">
+
+                        <div class="row-flex" style="flex:1 1 auto">
+                            <div id='sreach_panel' class='scrollable' style='flex:none;min-height:0;width:22ch'>
+                                <% include 'panel_search.ect' %>
+                            </div>
+
+                            <div class="content scrollable" style="flex:1 1 auto;border-top:none;min-height:0">
+                                <div id="data_tree" class="content no-border" style="display:inline-block"></div>
+                            </div>
                         </div>
+
                         <div class='ui-widget-content toolbar' style="flex:none;padding:.25em 0 0 .25em">
+                            <button class='btn btn-icon' id="btn_search_panel" title='Toggle search panel'><span class='ui-icon ui-icon-zoom'></span></button>
+                            &nbsp;&nbsp;&nbsp;
                             <button class="btn btn-icon" id="btn_new_data" title='Create new data record' disabled><span class="ui-icon ui-icon-file"></span></button>
                             <button class="btn btn-icon" id="btn_dup_data" title='Create new duplicate data record' disabled><span class="ui-icon ui-icon-files"></span></button>
                             <button class="btn btn-icon" id="btn_new_coll" title='Create new collection' disabled><span class="ui-icon ui-icon-folder"></span></button>
@@ -26,6 +37,7 @@
                             <input type="file" id="input_files" name="files[]" multiple style='display:none'/>
                             <output id="import_list"></output>
                         </div>
+
                     </div>
                 </div>
                 <div id="tab-catalogs" style="padding:0;overflow:hidden">
@@ -193,7 +205,7 @@
     <div id="footer" class='' style="flex:none;padding:0">
         <div id="footer-tabs" style="border:none;padding:0;border-radius:0">
             <ul>
-                <li><a href="#tab-search">Data Search</a></li>
+                <li><a href="#tab-search">Search</a></li>
                 <li><a href="#tab-tasks">Tasks</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
                 <li style='display:none'><a href="#tab-admin">Administration</a></li>
