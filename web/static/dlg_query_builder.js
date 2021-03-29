@@ -6,6 +6,8 @@ import * as dlgSchemaList from "./dlg_schema_list.js";
 export function show( a_schema, a_query, a_cb ){
     console.log("show query builder dialog");
 
+    console.log( a_schema );
+
     var frame = $(document.createElement('div'));
 
     frame.html(

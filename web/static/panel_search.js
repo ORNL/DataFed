@@ -1,11 +1,13 @@
-import * as util from "./util.js";
 import * as api from "./api.js";
+import * as util from "./util.js";
 import * as model from "./model.js";
 import * as settings from "./settings.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
 import * as dlgPickProj from "./dlg_pick_proj.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
 import * as dlgQueryBuild from "./dlg_query_builder.js";
+
+//$("#run_qry_btn").addClass("ui-state-error");
 
 
 export function newSearchPanel( a_frame, a_parent ){
@@ -16,11 +18,16 @@ function SearchPanel( a_frame, a_parent ){
     var inst = this,
         tags_div = $("#srch_tags_div",a_frame),
         user_tags = [],
-        textTimer = null,
         date_from = $("#srch_date_from",a_frame),
         date_from_ts = $("#srch_date_from_ts",a_frame),
         date_to = $("#srch_date_to",a_frame),
-        date_to_ts = $("#srch_date_to_ts",a_frame);
+        date_to_ts = $("#srch_date_to_ts",a_frame),
+        enabled = false;
+
+    this.enableSearch = function( a_enable ){
+        enabled = a_enable;
+        $("#srch_run_btn",a_frame).button("option","disabled",!a_enable);
+    }
 
     this.buildSearch = function(){
         var tmp, query = {};
@@ -87,6 +94,18 @@ function SearchPanel( a_frame, a_parent ){
 
     });
 
+
+    // ----- Search mode -----
+
+    $(".srch-mode",a_frame).on("selectmenuchange", function(){
+        var cur_mode = parseInt( $(".srch-mode",a_frame).val() );
+        if ( cur_mode == model.SM_DATA ){
+            $(".srch-data-options",a_frame).show();
+        }else{
+            $(".srch-data-options",a_frame).hide();
+        }
+    });
+
     // ----- Tag input setup -----
 
     tags_div.tagit({
@@ -98,16 +117,16 @@ function SearchPanel( a_frame, a_parent ){
         caseSensitive: false,
         removeConfirmation: true,
         afterTagAdded: function( ev, ui ){
+            //$("#run_qry_btn").addClass("ui-state-error");
             user_tags.push( ui.tagLabel );
-            //coll_off = 0;
-            //loadCollections();
         },
         beforeTagRemoved: function( ev, ui ){
             var idx = user_tags.indexOf( ui.tagLabel );
             if ( idx != -1 )
                 user_tags.splice( idx, 1 );
-            //coll_off = 0;
-            //loadCollections();
+        },
+        afterTagRemoved: function(){
+            //$("#run_qry_btn").addClass("ui-state-error");
         }
     });
 
@@ -115,39 +134,21 @@ function SearchPanel( a_frame, a_parent ){
 
     $("#srch_tags_clear",a_frame).on("click",function(){
         tags_div.tagit("removeAll");
-        //coll_off = 0;
-        //loadCollections();
     });
 
     // ----- Text input setup -----
 
-    $("#srch_text,#srch_creator,#srch_meta,#srch_sch_id",a_frame).on("keypress",function( ev ){
+    $("#srch_id,#srch_text,#srch_creator,#srch_meta,#srch_sch_id",a_frame).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
-            if ( textTimer )
-                clearTimeout( textTimer );
             ev.preventDefault();
-            //coll_off = 0;
-            //loadCollections();
+            if ( enabled ){
+                a_parent.searchPanel_Run( inst.buildSearch() );
+            }
         }
     });
 
-    $("#srch_text,#srch_creator",a_frame).on("input",function( ev ){
-        if ( textTimer )
-            clearTimeout( textTimer );
-
-        textTimer = setTimeout(function(){
-            //coll_off = 0;
-            //loadCollections();
-            textTimer = null;
-        },2000);
-    });
-
     $("#srch_text_clear",a_frame).on("click",function(){
-        if ( textTimer )
-            clearTimeout( textTimer );
         $("#srch_text",a_frame).val("");
-        //coll_off = 0;
-        //loadCollections();
     });
 
     // ----- Schema input setup -----
@@ -155,38 +156,31 @@ function SearchPanel( a_frame, a_parent ){
     $("#srch_sch_pick",a_frame).on("click",function(){
         dlgSchemaList.show( true, false, function( schema ){
             $("#srch_sch_id",a_frame).val( schema.id + ":" + schema.ver );
-            //coll_off = 0;
-            //loadCollections();
         });
     });
 
     $("#srch_sch_clear",a_frame).on("click",function(){
-        if ( textTimer )
-            clearTimeout( textTimer );
         $("#srch_sch_id",a_frame).val("");
-        //coll_off = 0;
-        //loadCollections();
     });
 
     // ----- Metadata input setup -----
 
     $("#srch_meta_build",a_frame).on("click",function(){
-        dlgQueryBuild.show();
+        var sch_id = $("#srch_sch_id",a_frame).val().trim();
+        if ( sch_id ){
+            api.schemaView( sch_id, true, function( ok, reply ){
+                if ( !ok ){
+                    util.setStatusText( reply, true );
+                }
+                dlgQueryBuild.show( ok?reply.schema[0]:null );
+            });
+        }else{
+            dlgQueryBuild.show();
+        }
     });
 
     $("#srch_meta_clear",a_frame).on("click",function(){
-        if ( textTimer )
-            clearTimeout( textTimer );
         $("#srch_meta",a_frame).val("");
-        //coll_off = 0;
-        //loadCollections();
-    });
-
-    $("#srch_meta_err",a_frame).change( function(){
-        if ( textTimer )
-            clearTimeout( textTimer );
-        //coll_off = 0;
-        //loadCollections();
     });
 
     // ----- Creator input setup -----
@@ -194,17 +188,11 @@ function SearchPanel( a_frame, a_parent ){
     $("#srch_creator_pick_user",a_frame).on("click",function(){
         dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
             $("#srch_creator",a_frame).val( users[0] );
-            //coll_off = 0;
-            //loadCollections();
         });
     });
 
     $("#srch_creator_clear",a_frame).on("click",function(){
-        if ( textTimer )
-            clearTimeout( textTimer );
         $("#srch_creator",a_frame).val("");
-        //coll_off = 0;
-        //loadCollections();
     });
 
     // ----- Date input setup -----
@@ -220,8 +208,6 @@ function SearchPanel( a_frame, a_parent ){
         },
         onClose: function( date ){
             if ( date ){
-                //coll_off = 0;
-                //loadCollections();
             }
         }
     });
@@ -237,21 +223,16 @@ function SearchPanel( a_frame, a_parent ){
         },
         onClose: function( date ){
             if ( date ){
-                //coll_off = 0;
-                //loadCollections();
             }
         }
     });
 
     $("#srch_datetime_clear",a_frame).on("click",function(){
-        if ( textTimer )
-            clearTimeout( textTimer );
-
         date_from.val("");
         date_to.val("");
-        //coll_off = 0;
-        //loadCollections();
     });
+
+    util.inputTheme( $('input,textarea', a_frame ));
 
     return this;
 }
