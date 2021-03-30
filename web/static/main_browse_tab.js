@@ -40,6 +40,8 @@ var SS_TREE = 0,
     SS_PROV = 2,
     select_source = SS_TREE,
     select_source_prev = SS_TREE,
+    searchMode = false,
+    searchScope = new Set(),
     cur_query,
     update_files, import_direct,
     search_panel, cat_panel, graph_panel;
@@ -1399,7 +1401,7 @@ function handleQueryResults( data ){
                 results.push({ title: util.generateTitle(item,false,true),folder:true,lazy:true,scope:item.owner,key:item.id,offset:0,nodrag:true});
             }else{
                 results.push({ title: util.generateTitle(item,false,true),icon: util.getDataIcon(item),
-                    key:item.id,nodrag:false,notarg:true,scope:item.owner,size:item.size});
+                    key:item.id,nodrag:false,notarg:true,checkbox:false,scope:item.owner,size:item.size});
             }
         }
     } else {
@@ -1802,10 +1804,10 @@ function addTreePagingNode( a_data ){
 var tree_source = [
     //{title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
     {title:"Personal Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,lazy:true},
-    {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",folder:true,lazy:true},
-    {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
-        {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
-        {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
+    {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",checkbox:false,folder:true,lazy:true},
+    {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,checkbox:false,key:"shared_all",children:[
+        {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_user"},
+        {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_proj"}
     ]},
     /*{title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},*/
 
@@ -2198,6 +2200,7 @@ export function init(){
         },
         source: tree_source,
         selectMode: 2,
+        checkbox: false,
         collapse: function( ev, data ) {
             var act_id = panel_info.getActiveItemID();
             if ( act_id ){
@@ -2264,14 +2267,14 @@ export function init(){
             if ( data.node.key == "mydata" ){
                 var uid = "u/" + settings.user.uid;
                 data.result = [
-                    {title:util.generateTitle(data.response),folder:true,expanded:false,lazy:true,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
+                    {title:util.generateTitle(data.response),folder:true,expanded:false,lazy:true,checkbox:false,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-book"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key.startsWith("p/")){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
-                    {title: util.generateTitle( data.response ),folder:true,lazy:true,key:"c/p_"+prj_id+"_root",offset:0,scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
+                    {title: util.generateTitle( data.response ),folder:true,lazy:true,checkbox:false,key:"c/p_"+prj_id+"_root",offset:0,scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-book"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
@@ -2377,14 +2380,27 @@ export function init(){
             panel_info.showSelectedInfo( data.node, checkTreeUpdate );
         },
         select: function( event, data ) {
+            // FINDME
+            console.log("select",data.node.key);
             if ( data.node.isSelected() ){
+                searchScope.add( data.node.key );
+                // Unselect child nodes
                 data.node.visit( function( node ){
                     node.setSelected( false );
+                    searchScope.delete( node.key );
                 });
+                // Unselect parent nodes
                 var parents = data.node.getParentList();
                 for ( var i in parents ){
                     parents[i].setSelected( false );
+                    searchScope.delete( node.key );
                 }
+            }else{
+                searchScope.delete( data.node.key );
+            }
+
+            if ( searchMode ){
+                search_panel.setSearchScope( searchScope );
             }
 
             updateBtnState();
@@ -2414,7 +2430,7 @@ export function init(){
 
             if ( dragging ){ // Suppress click processing on aborted drag
                 dragging = false;
-            }else{
+            }else if ( !searchMode ){
                 if ( event.which == null ){
                     // RIGHT-CLICK CONTEXT MENU
 
@@ -2548,7 +2564,17 @@ export function init(){
     graph_panel = panel_graph.newGraphPanel( "#data-graph", $("tab#-prov-graph",frame), this );
 
     $("#btn_search_panel").on("click", function(){
-        $("#sreach_panel",frame).toggle();
+        if ( searchMode ){
+            searchMode = false;
+            search_panel.setSearchScope();
+            $("#sreach_panel",frame).hide();
+            $(data_tree_div).fancytree("option","checkbox",false);
+        }else{
+            searchMode = true;
+            search_panel.setSearchScope( searchScope );
+            $("#sreach_panel",frame).show();
+            $(data_tree_div).fancytree("option","checkbox",true);
+        }
     });
 
     data_tree_div.contextmenu(ctxt_menu_opts);

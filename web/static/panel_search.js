@@ -29,6 +29,16 @@ function SearchPanel( a_frame, a_parent ){
         $("#srch_run_btn",a_frame).button("option","disabled",!a_enable);
     }
 
+    this.setSearchScope = function( a_id_set ){
+        var html = "";
+        if ( a_id_set ){
+            a_id_set.forEach( function( id ){
+                html += id + "<br>"
+            });
+        }
+        $("#srch_scope",a_frame).html(html);
+    }
+
     this.buildSearch = function(){
         var tmp, query = {};
 
