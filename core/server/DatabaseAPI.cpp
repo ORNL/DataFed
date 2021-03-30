@@ -4061,7 +4061,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
     // Get rid of leading delimiter
     a_params[0] = ' ';
 
-    a_qry_end += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner:i.owner,owner_name:name,alias:i.alias")+(a_request.mode() == SM_DATA?",size:i.size,md_err:i.md_err":"")+"}";
+    a_qry_end += string(" return distinct {_id:i._id,title:i.title,'desc':i['desc'],owner:i.owner,owner_name:name,alias:i.alias")+(a_request.mode() == SM_DATA?",size:i.size,md_err:i.md_err":"")+"}";
 
     a_qry_begin = escapeJSON( a_qry_begin );
     a_qry_end = escapeJSON( a_qry_end );
