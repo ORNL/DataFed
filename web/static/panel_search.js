@@ -62,7 +62,7 @@ function SearchPanel( a_frame, a_parent ){
 
         tmp = $("#srch_creator",a_frame).val().trim();
         if ( tmp ){
-            query.owner = tmp;
+            query.creator = tmp;
         }
 
         if ( query.mode == model.SM_DATA ){

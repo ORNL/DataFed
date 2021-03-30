@@ -3911,6 +3911,12 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
         a_qry_begin += " and " + parseSearchIdAlias( a_request.id(), "i" );
     }
 
+    if ( a_request.has_creator() )
+    {
+        a_qry_begin += " and i.creator == @creator";
+        a_params += ",\"creator\":\"" + a_request.creator() + "\"";
+    }
+
     if ( a_request.has_from() )
     {
         a_qry_begin += " and i.ut >= @utfr";
@@ -3960,7 +3966,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
             if ( !a_request.has_owner() )
                 EXCEPT( 1, "Owner parameter missing for shared data scope." );
 
-            a_qry_begin = string("for i in ") + view + " search i.owner == @owner";
+            a_qry_begin = string("for i in ") + view + " search i.owner == @owner" + a_qry_begin;
             a_params += ",\"owner\":\"" + a_request.owner() + "\"";
             break;
         case SS_PUBLIC:
