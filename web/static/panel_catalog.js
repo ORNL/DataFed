@@ -157,7 +157,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         tags_div = $("#cat_tags_div",cat_panel),
         topic_search_path = {},
         loading = 0,
-        cur_mode = 0,
+        cur_mode = model.SM_COLLECTION,
         coll_off = 0;
 
         //coll_div_title = $("#coll_div_title",cat_panel);
@@ -344,7 +344,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     }*/
 
     function openCollTree( a_coll_id ){
-        if ( cur_mode != 0 )
+        if ( cur_mode != mode.SM_COLLECTION )
             return;
 
         var coll = cur_items[a_coll_id];
@@ -454,7 +454,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                             <div class='cat-coll-icon'><span class='ui-icon ui-icon-"+util.getItemIcon(item)+"'></span></div>\
                             <div class='cat-coll-title'>" + util.escapeHTML(item.title) + "</div>\
                             <div class='cat-coll-notes'>" + (item.notes?"&nbsp;"+util.generateNoteSpan(item)+"&nbsp;":"") + "</div>"+
-                            (cur_mode==0?"<div class='cat-coll-btn-div'><button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button></div>":"") +
+                            (cur_mode==model.SM_COLLECTION?"<div class='cat-coll-btn-div'><button class='btn btn-icon btn-cat-coll-open'><span class='ui-icon "+ icon_open + "'></span></button></div>":"") +
                         "</div>\
                         <div class='cat-coll-info-div'>\
                             <div class='cat-coll-info-brief'>"+ (item.desc?util.escapeHTML(item.desc):"(no description)") + "</div>\
@@ -631,10 +631,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     $(".cat-mode",cat_panel).on("selectmenuchange", function(){
         cur_mode = parseInt( $(".cat-mode",cat_panel).val() );
-        if ( cur_mode ){
-            $(".cat-filter-meta,.cat-filter-schema",cat_panel).show();
+        if ( cur_mode == model.SM_DATA ){
+            $("#cat_qry_data_div",cat_panel).show();
         }else{
-            $(".cat-filter-meta,.cat-filter-schema",cat_panel).hide();
+            $("#cat_qry_data_div",cat_panel).hide();
         }
         loadCollections();
     });
@@ -659,106 +659,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         return coll_qry;
     }
 
-    function loadCollections(){
-        $(".cat-coll-prev,.btn-cat-home,.btn-cat-back,.cat-topic-result",cat_panel).button("disable");
-        $(".cat-mode",cat_panel).selectmenu("disable");
-        $(".cat-coll-sort",cat_panel).selectmenu("disable");
-
-        loading |= 2;
-
-        cat_coll_div.html( "Loading..." );
-
-        coll_qry.mode = parseInt( $(".cat-mode",cat_panel).val() );
-        coll_qry.sort = parseInt( $(".cat-coll-sort",cat_panel).val() );
-        if ( coll_qry.sort < 0 ){
-            coll_qry.sort = -coll_qry.sort;
-            coll_qry.sortRev = true;
-        }else{
-            coll_qry.sortRev = false;
-        }
-
-        coll_qry.offset = coll_off;
-        coll_qry.count = settings.opts.page_sz;
-        coll_qry.catTags = topic_tags;
-        coll_qry.tags = user_tags;
-
-        var tmp = $("#cat_text_qry",cat_panel).val().trim();
-        if ( tmp ){
-            coll_qry.text = tmp;
-        }else{
-            delete coll_qry.text;
-        }
-
-        tmp = $("#cat_qry_sch_id",cat_panel).val().trim();
-        if ( tmp ){
-            coll_qry.schId = tmp;
-        }else{
-            delete coll_qry.schId;
-        }
-
-        tmp = $("#cat_meta_qry",cat_panel).val().trim();
-        if ( tmp ){
-            coll_qry.meta = tmp;
-        }else{
-            delete coll_qry.meta;
-        }
-
-        if ( $( "#cat_qry_meta_err", cat_panel ).prop("checked")){
-            coll_qry.metaErr = true;
-        }else{
-            delete coll_qry.metaErr;
-        }
-
-        tmp = $("#cat_qry_owner",cat_panel).val().trim();
-        if ( tmp ){
-            coll_qry.owner = tmp;
-        }else{
-            delete coll_qry.owner;
-        }
-
-        if ( date_from.val() ){
-            coll_qry.from = parseInt( date_from_ts.val() )/1000;
-        }else{
-            delete coll_qry.from;
-        }
-
-        if ( date_to.val() ){
-            coll_qry.to = parseInt( date_to_ts.val() )/1000;
-        }else{
-            delete coll_qry.to;
-        }
-
-        console.log("cat qry", coll_qry );
-
-        api.dataSearch( coll_qry, function( ok, data ){
-            loading &= 1;
-
-            if ( ok ){
-                setItems( data );
-            }else{
-                setItems( [] );
-                util.setStatusText( data, true );
-                //dialogs.dlgAlert( "Catalog Search Error", data );
-            }
-
-            updateTopicNav();
-        });
-    }
-
-    function onCollectionsNext(){
-        coll_off += settings.opts.page_sz;
-
-        loadCollections();
-    }
-
-    function onCollectionsPrev(){
-        if ( coll_off > settings.opts.page_sz )
-            coll_off -= settings.opts.page_sz;
-        else
-        coll_off = 0;
-
-        loadCollections();
-    }
 
     tags_div.tagit({
         autocomplete: {
@@ -792,7 +692,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     var textTimer = null;
 
-    $("#cat_text_qry,#cat_qry_owner,#cat_meta_qry,#cat_qry_sch_id",cat_panel).on("keypress",function( ev ){
+    $("#cat_text_qry,#cat_qry_owner,#cat_qry_creator,#cat_meta_qry,#cat_qry_sch_id",cat_panel).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
             if ( textTimer )
                 clearTimeout( textTimer );
@@ -802,7 +702,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }
     });
 
-    $("#cat_text_qry,#cat_qry_owner",cat_panel).on("input",function( ev ){
+    $("#cat_text_qry,#cat_qry_owner,#cat_qry_creator",cat_panel).on("input",function( ev ){
         if ( textTimer )
             clearTimeout( textTimer );
 
@@ -877,6 +777,22 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         if ( textTimer )
             clearTimeout( textTimer );
         $("#cat_qry_owner",cat_panel).val("");
+        coll_off = 0;
+        loadCollections();
+    });
+
+    $("#cat_qry_creator_pick_user",cat_panel).on("click",function(){
+        dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
+            $("#cat_qry_creator",cat_panel).val( users[0] );
+            coll_off = 0;
+            loadCollections();
+        });
+    });
+
+    $("#cat_qry_creator_clear",cat_panel).on("click",function(){
+        if ( textTimer )
+            clearTimeout( textTimer );
+        $("#cat_qry_creator",cat_panel).val("");
         coll_off = 0;
         loadCollections();
     });
@@ -1019,7 +935,123 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }
         }
     });
-    
+ 
+    function loadCollections(){
+        $(".cat-coll-prev,.btn-cat-home,.btn-cat-back,.cat-topic-result",cat_panel).button("disable");
+        $(".cat-mode",cat_panel).selectmenu("disable");
+        $(".cat-coll-sort",cat_panel).selectmenu("disable");
+
+        loading |= 2;
+
+        cat_coll_div.html( "Loading..." );
+
+        coll_qry.scope = model.SS_PUBLIC;
+        coll_qry.mode = parseInt( $(".cat-mode",cat_panel).val() );
+        coll_qry.sort = parseInt( $(".cat-coll-sort",cat_panel).val() );
+
+        if ( coll_qry.sort < 0 ){
+            coll_qry.sort = -coll_qry.sort;
+            coll_qry.sortRev = true;
+        }else{
+            coll_qry.sortRev = false;
+        }
+
+        coll_qry.offset = coll_off;
+        coll_qry.count = settings.opts.page_sz;
+        coll_qry.catTags = topic_tags;
+        coll_qry.tags = user_tags;
+
+        var tmp = $("#cat_text_qry",cat_panel).val().trim();
+        if ( tmp ){
+            coll_qry.text = tmp;
+        }else{
+            delete coll_qry.text;
+        }
+
+        if ( coll_qry.mode == model.SM_DATA ){
+            tmp = $("#cat_qry_sch_id",cat_panel).val().trim();
+            if ( tmp ){
+                coll_qry.schId = tmp;
+            }else{
+                delete coll_qry.schId;
+            }
+
+            tmp = $("#cat_meta_qry",cat_panel).val().trim();
+            if ( tmp ){
+                coll_qry.meta = tmp;
+            }else{
+                delete coll_qry.meta;
+            }
+
+            if ( $( "#cat_qry_meta_err", cat_panel ).prop("checked")){
+                coll_qry.metaErr = true;
+            }else{
+                delete coll_qry.metaErr;
+            }
+        }else{
+            delete coll_qry.schId;
+            delete coll_qry.meta;
+            delete coll_qry.metaErr;
+        }
+
+        tmp = $("#cat_qry_owner",cat_panel).val().trim();
+        if ( tmp ){
+            coll_qry.owner = tmp;
+        }else{
+            delete coll_qry.owner;
+        }
+
+        tmp = $("#cat_qry_creator",cat_panel).val().trim();
+        if ( tmp ){
+            coll_qry.creator = tmp;
+        }else{
+            delete coll_qry.creator;
+        }
+
+        if ( date_from.val() ){
+            coll_qry.from = parseInt( date_from_ts.val() )/1000;
+        }else{
+            delete coll_qry.from;
+        }
+
+        if ( date_to.val() ){
+            coll_qry.to = parseInt( date_to_ts.val() )/1000;
+        }else{
+            delete coll_qry.to;
+        }
+
+        console.log("cat qry", coll_qry );
+
+        api.dataSearch( coll_qry, function( ok, data ){
+            loading &= 1;
+
+            if ( ok ){
+                setItems( data );
+            }else{
+                setItems( [] );
+                util.setStatusText( data, true );
+                //dialogs.dlgAlert( "Catalog Search Error", data );
+            }
+
+            updateTopicNav();
+        });
+    }
+
+    function onCollectionsNext(){
+        coll_off += settings.opts.page_sz;
+
+        loadCollections();
+    }
+
+    function onCollectionsPrev(){
+        if ( coll_off > settings.opts.page_sz )
+            coll_off -= settings.opts.page_sz;
+        else
+        coll_off = 0;
+
+        loadCollections();
+    }
+
     top_res_div.html( "(loading...)" );
 
     loadTopics();
