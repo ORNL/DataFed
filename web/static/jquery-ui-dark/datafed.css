@@ -289,8 +289,7 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 
 .ui-icon-file
 {
-    /*color: #008F00*/
-    color: #ffffff;
+    color: #aaa;
 }
 
 .ui-icon-flag

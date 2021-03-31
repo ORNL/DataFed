@@ -344,7 +344,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     }*/
 
     function openCollTree( a_coll_id ){
-        if ( cur_mode != mode.SM_COLLECTION )
+        if ( cur_mode != model.SM_COLLECTION )
             return;
 
         var coll = cur_items[a_coll_id];

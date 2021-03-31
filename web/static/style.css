@@ -106,6 +106,12 @@ span.fancytree-custom-icon {
     vertical-align:middle!important;
 }
 
+
+
+span.fancytree-checkbox {
+    margin:0.25rem 0 0 0!important;
+}
+
 ul.fancytree-container
 {
     font-size:1rem!important;
@@ -126,22 +132,25 @@ ul.fancytree-container ul
 /* Override Fancytree folder icons */
 span.fancytree-node.fancytree-folder > span.fancytree-icon {
     background-image:none;
+    margin-top:-4px!important;
 }
 
 span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon {
     background-image:none;
+    margin-top:-4px!important;
 }
 
 span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
     font-family:"jquery-ui";
     content: "\e69a";
+    margin-top:-4px!important;
 }
 
 span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:after {
     font-family:"jquery-ui";
     content: "\e69b";
+    margin-top:-4px!important;
 }
-
 
 /* Override Fancytree expander icons */
 span.fancytree-node.fancytree-folder > span.fancytree-expander {
