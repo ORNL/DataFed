@@ -22,7 +22,8 @@ function SearchPanel( a_frame, a_parent ){
         date_from_ts = $("#srch_date_from_ts",a_frame),
         date_to = $("#srch_date_to",a_frame),
         date_to_ts = $("#srch_date_to_ts",a_frame),
-        enabled = false;
+        enabled = false,
+        srch_scope = $("#srch_scope",a_frame);
 
     this.enableSearch = function( a_enable ){
         enabled = a_enable;
@@ -33,10 +34,15 @@ function SearchPanel( a_frame, a_parent ){
         var html = "";
         if ( a_id_set ){
             a_id_set.forEach( function( id ){
-                html += id + "<br>"
+                html += "<div class='srch-scope-item' data='" + id +
+                    "'><div class='row-flex'><div style='flex:1 1 auto'>" + id +
+                    "</div><div class='srch-scope-btn-div' style='flex:none'><button class='srch-scope-rem-btn btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div></div></div>";
             });
+            srch_scope.html(html);
+            $(".btn",srch_scope).button();
+        }else{
+            srch_scope.html(html);
         }
-        $("#srch_scope",a_frame).html(html);
     }
 
     this.buildSearch = function(){
@@ -114,6 +120,22 @@ function SearchPanel( a_frame, a_parent ){
         }else{
             $(".srch-data-options",a_frame).hide();
         }
+    });
+
+    // ----- Search Scope (selection) -----
+
+    $("#srch_scope",a_frame).on("click",".srch-scope-rem-btn",function(){
+        var el = $(this),
+            item = el.closest(".srch-scope-item"),
+            id = item.attr("data");
+
+        a_parent.searchPanel_RemoveScope( id );
+        item.remove();
+    });
+
+    $("#srch_scope_clear",a_frame).on("click",function(){
+        inst.setSearchScope();
+        a_parent.searchPanel_ClearScope();
     });
 
     // ----- Tag input setup -----
@@ -243,6 +265,31 @@ function SearchPanel( a_frame, a_parent ){
     });
 
     util.inputTheme( $('input,textarea', a_frame ));
+
+    $(".srch-mode",a_frame).selectmenu({ width: false });
+    $(".srch-sort",a_frame).selectmenu({ width: false });
+
+    $(".accordion.acc-act",a_frame).accordion({
+        header: "h3",
+        collapsible: true,
+        heightStyle: "content",
+        create: function( ev, ui ){
+            ui.header.removeClass("ui-state-active");
+        },
+        activate: function( ev, ui ){
+            ui.newHeader.removeClass("ui-state-active");
+        }
+    });
+
+    $(".accordion:not(.acc-act)",a_frame).accordion({
+        header: "h3",
+        collapsible: true,
+        heightStyle: "content",
+        active: false,
+        activate: function( ev, ui ){
+            ui.newHeader.removeClass("ui-state-active");
+        }
+    });
 
     return this;
 }

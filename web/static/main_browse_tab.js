@@ -1388,7 +1388,7 @@ function handleQueryResults( data ){
     console.log("handleQueryResults");
     var results_node = data_tree.getNodeByKey("search_results");
     if ( !results_node ){
-        results_node = data_tree.getRootNode().addChildren({title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]});
+        results_node = data_tree.getRootNode().addChildren({title:"Search Results",checkbox:false,folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]});
     }
 
     var results = [];
@@ -1431,6 +1431,22 @@ function checkValidSearchSelection(){
     }
     console.log("valid:",valid);
     search_panel.enableSearch( valid );
+}
+
+export function searchPanel_RemoveScope( a_id ){
+    var sel = data_tree.getSelectedNodes();
+    for ( var i in sel ){
+        if ( sel[i].key == a_id ){
+            sel[i].setSelected( false );
+        }
+    }
+
+    searchScope.delete( a_id );
+}
+
+export function searchPanel_ClearScope(){
+    data_tree.selectAll( false );
+    searchScope.clear();
 }
 
 export function searchPanel_Run( query ){
@@ -2344,12 +2360,16 @@ export function init(){
 
                 for ( i in items ) {
                     item = items[i];
-                    console.log("item:",item);
+
                     if ( item.id[0]=="c" ){
                         entry = { title: util.generateTitle(item),folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub };
                     }else{
                         entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon: util.getDataIcon( item ),
                         scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size };
+                    }
+
+                    if ( searchMode && searchScope.has( item.id )){
+                        entry.selected = true;
                     }
 
                     data.result.push( entry );
@@ -2380,23 +2400,72 @@ export function init(){
             panel_info.showSelectedInfo( data.node, checkTreeUpdate );
         },
         select: function( event, data ) {
-            // FINDME
-            console.log("select",data.node.key);
             if ( data.node.isSelected() ){
+                console.log("select",data.node.key);
+                var others;
+
+                if ( searchMode ){
+                    others = new Set();
+                }
+
                 searchScope.add( data.node.key );
+
                 // Unselect child nodes
                 data.node.visit( function( node ){
-                    node.setSelected( false );
+                    //node.setSelected( false );
                     searchScope.delete( node.key );
+                    if ( searchMode ){
+                        others.add( node.key );
+                    }
                 });
+
                 // Unselect parent nodes
                 var parents = data.node.getParentList();
                 for ( var i in parents ){
-                    parents[i].setSelected( false );
-                    searchScope.delete( node.key );
+                    //parents[i].setSelected( false );
+                    searchScope.delete( parents[i].key );
+                    if ( searchMode ){
+                        others.add( parents[i].key );
+                    }
+                }
+
+                // Select/Deselect other node instances
+                if ( searchMode ){
+                    //console.log("parents",parents);
+                    if ( parents.length ){
+                        parents = parents[0];
+                        parents.setSelected( false );
+                    }else{
+                        parents = data.node;
+                    }
+
+                    console.log("start",parents);
+                    //parents.setSelected( false );
+
+                    parents.visit( function( node ){
+                        if ( others.has( node.key )){
+                            //console.log( "delsel", node.key );
+                            node.setSelected( false );
+                        }else if ( node.key == data.node.key ){
+                            node.setSelected( true );
+                        }
+                    });
                 }
             }else{
+                console.log("deselect",data.node.key);
                 searchScope.delete( data.node.key );
+
+                if ( searchMode ){
+                    var parents = data.node.getParentList();
+                    //console.log("parents 2",parents);
+                    parents = parents.length?parents[0]:data.node;
+                    console.log("start",parents);
+                    parents.visit( function( node ){
+                        if ( node.key == data.node.key ){
+                            node.setSelected( false );
+                        }
+                    });
+                }
             }
 
             if ( searchMode ){
@@ -2533,31 +2602,6 @@ export function init(){
 
     $(".btn-refresh").button({icon:"ui-icon-refresh",showLabel:false});
     util.inputTheme( $('input'));
-
-    $(".srch-mode",frame).selectmenu({ width: false });
-    $(".srch-sort",frame).selectmenu({ width: false });
-
-    $(".accordion.acc-act",frame).accordion({
-        header: "h3",
-        collapsible: true,
-        heightStyle: "content",
-        create: function( ev, ui ){
-            ui.header.removeClass("ui-state-active");
-        },
-        activate: function( ev, ui ){
-            ui.newHeader.removeClass("ui-state-active");
-        }
-    });
-
-    $(".accordion:not(.acc-act)",frame).accordion({
-        header: "h3",
-        collapsible: true,
-        heightStyle: "content",
-        active: false,
-        activate: function( ev, ui ){
-            ui.newHeader.removeClass("ui-state-active");
-        }
-    });
 
     search_panel = panel_search.newSearchPanel( $("#sreach_panel",frame), this );
     cat_panel = panel_cat.newCatalogPanel( "#catalog_tree", $("#tab-catalogs",frame), this );

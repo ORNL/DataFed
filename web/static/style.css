@@ -487,6 +487,39 @@ div.cat-topic-div:hover .cat-topic-btn-div
     width:15ch!important;
 }
 
+#srch_scope
+{
+    padding: 0.25em 0.25em 0 0.25em;
+}
+
+div.srch-scope-item
+{
+    width:100%;
+    /*margin-bottom: 0.25em;*/
+}
+
+.srch-scope-rem-btn
+{
+    font-size: 0.8rem!important;
+    margin:3px!important;
+    color: #ff0000!important;
+}
+
+div.srch-scope-item:hover
+{
+    background:#303030;
+}
+
+div.srch-scope-item .srch-scope-btn-div
+{
+    visibility:hidden;
+}
+
+div.srch-scope-item:hover .srch-scope-btn-div
+{
+    visibility:visible;
+}
+
 /*
 div.cat-coll-container
 {
