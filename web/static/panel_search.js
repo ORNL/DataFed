@@ -28,12 +28,14 @@ function SearchPanel( a_frame, a_parent ){
 
     this.setSearchSelect = function( a_id_set ){
         var html = "";
-        if ( a_id_set && a_id_set.size ){
-            a_id_set.forEach( function( id ){
+        if ( a_id_set && !util.isObjEmpty( a_id_set )){
+            var title;
+            for ( var id in a_id_set ){
+                title = a_id_set[id];
                 html += "<div class='srch-scope-item' data='" + id +
-                    "'><div class='row-flex'><div style='flex:1 1 auto'>" + id +
+                    "' title='" + id + "'><div class='row-flex' style='width:100%'><div style='flex:1 1 auto;white-space:nowrap;overflow:hidden'>" + title +
                     "</div><div class='srch-scope-btn-div' style='flex:none'><button class='srch-scope-rem-btn btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div></div></div>";
-            });
+            }
             srch_scope.html(html);
             $(".btn",srch_scope).button();
             $("#srch_run_btn",a_frame).button("option","disabled",false);

@@ -41,7 +41,7 @@ var SS_TREE = 0,
     select_source_prev = SS_TREE,
     searchMode = false,
     searchScope = null,
-    searchSelect = new Set(),
+    searchSelect = {},
     searchSelTree = {},
     cur_query,
     update_files, import_direct,
@@ -1413,7 +1413,7 @@ function handleQueryResults( data ){
             var item = data.item[i];
             // Results can be data records and/or collections
             if ( item.id[0]=="c" ){
-                results.push({ title: util.generateTitle(item,false,true),folder:true,lazy:true,scope:item.owner,key:item.id,offset:0,nodrag:true});
+                results.push({ title: util.generateTitle(item,false,true),_title:item.title,folder:true,lazy:true,scope:item.owner,key:item.id,offset:0,nodrag:true});
             }else{
                 results.push({ title: util.generateTitle(item,false,true),icon: util.getDataIcon(item),
                     key:item.id,nodrag:false,notarg:true,checkbox:false,scope:item.owner,size:item.size});
@@ -1437,13 +1437,13 @@ export function searchPanel_RemoveScope( a_id ){
         }
     }
 
-    searchSelect.delete( a_id );
+    delete searchSelect[a_id];
     searchSelTree
 }
 
 export function searchPanel_ClearScope(){
     data_tree.selectAll( false );
-    searchSelect.clear();
+    searchSelect = {};
     searchSelTree = {};
 }
 
@@ -2253,7 +2253,7 @@ export function init(){
                         item = data.response.item[i];
                         admin = (item.owner == uid);
                         mgr = (item.creator == uid);
-                        data.result.push({ title: util.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:item.id,scope:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
+                        data.result.push({ title: util.generateTitle(item,true),_title:item.title,icon:"ui-icon ui-icon-box",folder:true,key:item.id,scope:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
                     }
                 }
 
@@ -2271,7 +2271,7 @@ export function init(){
                 if ( data.response.item && data.response.item.length ){
                     for ( i in data.response.item ) {
                         item = data.response.item[i];
-                        data.result.push({ title: util.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
+                        data.result.push({ title: util.generateTitle(item,true),_title:item.title,icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
                     }
                 }
             } else if ( data.node.key == "search_saved" ) {
@@ -2310,13 +2310,13 @@ export function init(){
                     item = items[i];
 
                     if ( item.id[0]=="c" ){
-                        entry = { title: util.generateTitle(item),folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub };
+                        entry = { title: util.generateTitle(item),_title:item.title,folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub };
                     }else{
                         entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon: util.getDataIcon( item ),
                         scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size };
                     }
 
-                    if ( searchMode && searchSelect.has( item.id )){
+                    if ( searchMode && ( item.id in searchSelect )){
                         entry.selected = true;
                     }
 
@@ -2355,7 +2355,7 @@ export function init(){
                 if ( searchMode ){
                     if ( searchScope != data.node.data.scope ){
                         searchScope = data.node.data.scope;
-                        if ( searchSelect.size ){
+                        if ( !util.isObjEmpty( searchSelect )){
                             //data_tree.selectAll( false );
                             var sel = data_tree.getSelectedNodes();
                             for( var i in sel ){
@@ -2363,18 +2363,19 @@ export function init(){
                                     sel[i].setSelected( false );
                                 }
                             }
-                            searchSelect.clear();
+                            searchSelect = {};
                         }
                     }else{
                         others = new Set();
                     }
                 }
+                //console.log( data.node.title );
 
-                searchSelect.add( data.node.key );
+                searchSelect[ data.node.key ] = data.node.data._title?data.node.data._title:data.node.title;
 
                 // Unselect child nodes
                 data.node.visit( function( node ){
-                    searchSelect.delete( node.key );
+                    delete searchSelect[node.key];
                     if ( searchMode && others ){
                         others.add( node.key );
                     }
@@ -2383,7 +2384,7 @@ export function init(){
                 // Unselect parent nodes
                 var parents = data.node.getParentList();
                 for ( var i in parents ){
-                    searchSelect.delete( parents[i].key );
+                    delete searchSelect[parents[i].key];
                     if ( searchMode && others ){
                         others.add( parents[i].key );
                     }
@@ -2410,7 +2411,7 @@ export function init(){
                 }
             }else{
                 //console.log("deselect",data.node.key);
-                searchSelect.delete( data.node.key );
+                delete searchSelect[data.node.key];
 
                 if ( searchMode ){
                     var parents = data.node.getParentList();

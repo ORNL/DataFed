@@ -6,6 +6,13 @@ import * as dlgStartXfer from "./dlg_start_xfer.js";
 
 var status_timer;
 
+export function isObjEmpty( a_obj ){
+    for ( var i in a_obj ){
+        return false;
+    }
+    return true;
+}
+
 export function inputTheme( a_objs ){
     a_objs.addClass("ui-widget ui-widget-content");
     return a_objs;
