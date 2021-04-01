@@ -20,14 +20,13 @@ import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";
 import * as dlgAnnotation from "./dlg_annotation.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
 
-import * as dlgQueryBuild from "./dlg_query_builder.js";
+//import * as dlgQueryBuild from "./dlg_query_builder.js";
 
 var frame = $("#content");
 var task_hist = $("#task_hist",frame);
 var data_tree_div;
 var data_tree = null;
 var my_root_key;
-//var uid = "u/" + settings.user.uid;
 var drag_mode = 0;
 var drag_enabled = true;
 var selectScope = null;
@@ -41,7 +40,9 @@ var SS_TREE = 0,
     select_source = SS_TREE,
     select_source_prev = SS_TREE,
     searchMode = false,
-    searchScope = new Set(),
+    searchScope = null,
+    searchSelect = new Set(),
+    searchSelTree = {},
     cur_query,
     update_files, import_direct,
     search_panel, cat_panel, graph_panel;
@@ -86,25 +87,39 @@ export function windowResized(){
     $("#info-tabs > .ui-tabs-panel").outerHeight( h - hdr_h );
 }
 
-window.pageLoad = function( key, offset ){
-    var node = data_tree.getNodeByKey( key );
-    if ( node ){
-        node.data.offset = offset;
-        setTimeout(function(){
-            node.load(true);
-        },0);
-    }
-};
+$("body").on("click",".page-first",function(ev){
+    var node = $.ui.fancytree.getNode(ev).parent;
+    node.data.offset = 0;
+    setTimeout(function(){
+        node.load(true);
+    },0);
+});
 
-window.pageLoadCat = function( key, offset ){
-    /*var node = cat_panel.tree.getNodeByKey( key );
-    if ( node ){
-        node.data.offset = offset;
-        setTimeout( function(){
-            node.load(true);
-        },0);
-    }*/
-};
+$("body").on("click",".page-prev",function(ev){
+    var node = $.ui.fancytree.getNode(ev).parent;
+    node.data.offset -= settings.opts.page_sz;
+    setTimeout(function(){
+        node.load(true);
+    },0);
+});
+
+$("body").on("click",".page-next",function(ev){
+    var node = $.ui.fancytree.getNode(ev).parent;
+    node.data.offset += settings.opts.page_sz;
+    setTimeout(function(){
+        node.load(true);
+    },0);
+});
+
+$("body").on("click",".page-last",function(ev){
+    var page = parseInt(ev.currentTarget.getAttribute("page"));
+    var node = $.ui.fancytree.getNode(ev).parent;
+    node.data.offset = page*settings.opts.page_sz;
+    setTimeout(function(){
+        node.load(true);
+    },0);
+});
+
 
 function getSelectedNodes(){
     var sel;
@@ -162,7 +177,7 @@ function getSelectedIDs(){
 
 
 export function refreshUI( a_ids, a_data, a_reload ){
-    console.log("refresh",a_ids,a_data);
+    //console.log("refresh",a_ids,a_data);
     if ( !a_ids || !a_data ){
         // If no IDs or unknown action, refresh everything
         util.reloadNode(data_tree.getNodeByKey("mydata"));
@@ -740,7 +755,7 @@ function actionDupData(){
     if ( node ){
         if ( node.key.startsWith("d/")) {
             parent = node.parent.key;
-            console.log("parent",parent);
+            //console.log("parent",parent);
         }
     }
 
@@ -757,7 +772,7 @@ function actionDupData(){
 
         api.dataView( node.key, function( data ){
             dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_DUP, data, parent, 0, function(data2,parent_id){
-                console.log("back from dup",parent_id);
+                //console.log("back from dup",parent_id);
                 var node = data_tree.getNodeByKey( parent_id );
                 if ( node )
                     util.reloadNode( node );
@@ -785,7 +800,7 @@ function actionNewColl(){
     }
 
     api.checkPerms( parent, model.PERM_CREATE, function( ok, data ){
-        console.log("coll create", ok, data );
+        //console.log("coll create", ok, data );
         if ( !ok ){
             dialogs.dlgAlert( "Permission Denied", data );
             return
@@ -832,7 +847,7 @@ function actionImportData( files ){
 
     for ( var i = 0; i < files.length; i++ ){
         file = files[i];
-        console.log("size:",file.size,typeof file.size);
+        //console.log("size:",file.size,typeof file.size);
         if ( file.size == 0 ){
             dialogs.dlgAlert("Import Error","File " + file.name + " is empty." );
             //asyncEnd();
@@ -960,7 +975,7 @@ function actionCutSelected(){
 }
 
 function actionCopySelected(){
-    console.log("Copy");
+    //console.log("Copy");
     if ( select_source == SS_TREE )
         pasteItems = data_tree.getSelectedNodes();
     else
@@ -1023,7 +1038,7 @@ function permGateAny( item_id, req_perms, cb ){
         if (( perms & req_perms ) == 0 ){
             util.setStatusText( "Permission Denied.", 1 );
         }else{
-            console.log("have perms:",perms);
+            //console.log("have perms:",perms);
             cb( perms );
         }
     });
@@ -1169,7 +1184,7 @@ function actionSubscribe(){
 
     var id = ids[0];
 
-    console.log("subscribe");
+    //console.log("subscribe");
     /*if ( id.charAt(0) == "d" ) {
         graph_panel.load( id );
         $('[href="#tab-prov-graph"]').closest('li').show();
@@ -1385,7 +1400,7 @@ function handleQueryResults( data ){
     //{title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]},
     // Find results node in data tree
 
-    console.log("handleQueryResults");
+    //console.log("handleQueryResults");
     var results_node = data_tree.getNodeByKey("search_results");
     if ( !results_node ){
         results_node = data_tree.getRootNode().addChildren({title:"Search Results",checkbox:false,folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]});
@@ -1414,25 +1429,6 @@ function handleQueryResults( data ){
     results_node.setExpanded();
 }
 
-function checkValidSearchSelection(){
-    console.log( "checkValidSearchSelection" );
-
-    var valid = true,i,n,sel = data_tree.getSelectedNodes();
-
-    for ( var i in sel ){
-        n = sel[i];
-        console.log( "node: ", n.key );
-
-        if ( n.key != "mydata" && !n.key.startsWith( "c/" ) && !n.key.startsWith( "p/" ) && !n.key.startsWith( "shared_user_" ) && !n.key.startsWith( "shared_proj_" ) ){
-            //console.log("invalid selection");
-            valid = false;
-            break;
-        }
-    }
-    console.log("valid:",valid);
-    search_panel.enableSearch( valid );
-}
-
 export function searchPanel_RemoveScope( a_id ){
     var sel = data_tree.getSelectedNodes();
     for ( var i in sel ){
@@ -1441,12 +1437,14 @@ export function searchPanel_RemoveScope( a_id ){
         }
     }
 
-    searchScope.delete( a_id );
+    searchSelect.delete( a_id );
+    searchSelTree
 }
 
 export function searchPanel_ClearScope(){
     data_tree.selectAll( false );
-    searchScope.clear();
+    searchSelect.clear();
+    searchSelTree = {};
 }
 
 export function searchPanel_Run( query ){
@@ -1521,37 +1519,6 @@ function execQuery( query ){
             dialogs.dlgAlert("Query Error",data);
         }
     });
-}
-
-function searchDirect(){
-    $("#run_qry_btn").removeClass("ui-state-error");
-
-    /*if ( select_source == SS_CAT ){
-        var qry = parseQuickSearch( true );
-        // TODO Fix this when data search is updated
-        if ( qry.meta ){
-            qry.md = qry.meta;
-            delete qry.meta;
-        }
-        qry.coll = cat_panel.getCollectionQuery();
-
-        console.log("qry",qry);
-
-        util.setStatusText("Executing collection search...");
-        api.dataPubSearch( qry, function( ok, data ){
-            console.log( "qry res:", ok, data );
-            if ( ok ){
-                handleQueryResults( data );
-            }else{
-                dialogs.dlgAlert("Search Error",data);
-            }
-        });
-    }else{*/
-        var query = parseQuickSearch();
-
-        //if ( query.scopes.length && ( query.text || query.meta || query.id ))
-        execQuery( query );
-    //}
 }
 
 function querySave(){
@@ -1713,8 +1680,6 @@ function treeSelectNode( a_node, a_toggle ){
     }else{
         a_node.setSelected( true );
     }
-
-    checkValidSearchSelection();
 }
 
 function treeSelectRange( a_tree, a_node ){
@@ -1802,34 +1767,6 @@ function pasteAllowed( dest_node, src_node ){
         return false;
     }
 }
-
-
-function addTreePagingNode( a_data ){
-    if ( a_data.response.offset > 0 || a_data.response.total > (a_data.response.offset + a_data.response.count )){
-        var pages = Math.ceil(a_data.response.total/settings.opts.page_sz), page = 1+a_data.response.offset/settings.opts.page_sz;
-        a_data.result.push({title:"<button class='btn btn-icon-tiny''"+(page==1?" disabled":"")+" onclick='pageLoad(\"" +
-            a_data.node.key+"\",0)'><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> <button class='btn btn-icon-tiny'"+(page==1?" disabled":"") +
-            " onclick='pageLoad(\""+a_data.node.key+"\","+(page-2)*settings.opts.page_sz+")'><span class='ui-icon ui-icon-triangle-1-w'></span></button> Page " +
-            page + " of " + pages + " <button class='btn btn-icon-tiny'"+(page==pages?" disabled":"")+" onclick='pageLoad(\"" +
-            a_data.node.key+"\","+page*settings.opts.page_sz+")'><span class='ui-icon ui-icon-triangle-1-e'></span></button> <button class='btn btn-icon-tiny'" + 
-            (page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(pages-1)*settings.opts.page_sz +
-            ")'><span class='ui-icon ui-icon-triangle-1-e-stop'></span></button>", folder:false, icon:false, checkbox:false, hasBtn:true });
-    }
-}
-
-var tree_source = [
-    //{title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-    {title:"Personal Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,lazy:true},
-    {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",checkbox:false,folder:true,lazy:true},
-    {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,checkbox:false,key:"shared_all",children:[
-        {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_user"},
-        {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_proj"}
-    ]},
-    /*{title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},*/
-
-    {title:"Saved Searches",folder:true,icon:"ui-icon ui-icon-zoom",lazy:true,nodrag:true,key:"search_saved",checkbox:false,offset:0},
-    //{title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]},
-];
 
 var ctxt_menu_opts = {
     delegate: "li",
@@ -2050,7 +1987,20 @@ $("#btn_export_data",frame).on('click', function(){
 
 export function init(){
     //console.log("browser - user from settings:",settings.user);
-
+    var tree_source = [
+        //{title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
+        {title:"Personal Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,lazy:true,scope:"u/"+settings.user.uid},
+        {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",checkbox:false,folder:true,lazy:true},
+        {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,checkbox:false,key:"shared_all",children:[
+            {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_user"},
+            {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_proj"}
+        ]},
+        /*{title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},*/
+    
+        {title:"Saved Searches",folder:true,icon:"ui-icon ui-icon-zoom",lazy:true,nodrag:true,key:"search_saved",checkbox:false,offset:0},
+        //{title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]},
+    ];
+    
     my_root_key = "c/u_" + settings.user.uid + "_root";
 
     $("#data_tree",frame).fancytree({
@@ -2297,20 +2247,18 @@ export function init(){
             }else if ( data.node.key == "projects" ){
                 data.result = [];
                 if ( data.response.item && data.response.item.length ){
-                    console.log( "pos proc project:", data.response );
                     var admin, mgr, uid = "u/" + settings.user.uid;
 
                     for ( i in data.response.item ) {
                         item = data.response.item[i];
                         admin = (item.owner == uid);
                         mgr = (item.creator == uid);
-                        data.result.push({ title: util.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
+                        data.result.push({ title: util.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:item.id,scope:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
                     }
                 }
 
-                addTreePagingNode( data );
+                util.addTreePagingNode( data );
             } else if ( data.node.key == "shared_user" && !data.node.data.scope ){
-                console.log("pos proc:", data.response );
                 data.result = [];
                 if ( data.response.item && data.response.item.length ){
                     for ( i in data.response.item ) {
@@ -2356,7 +2304,7 @@ export function init(){
                 scope = data.node.data.scope;
                 var items = data.response.data?data.response.data:data.response.item;
 
-                addTreePagingNode( data );
+                util.addTreePagingNode( data );
 
                 for ( i in items ) {
                     item = items[i];
@@ -2368,7 +2316,7 @@ export function init(){
                         scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size };
                     }
 
-                    if ( searchMode && searchScope.has( item.id )){
+                    if ( searchMode && searchSelect.has( item.id )){
                         entry.selected = true;
                     }
 
@@ -2401,20 +2349,33 @@ export function init(){
         },
         select: function( event, data ) {
             if ( data.node.isSelected() ){
-                console.log("select",data.node.key);
+                //console.log("select",data.node.key,"scope:",data.node.data.scope);
                 var others;
 
                 if ( searchMode ){
-                    others = new Set();
+                    if ( searchScope != data.node.data.scope ){
+                        searchScope = data.node.data.scope;
+                        if ( searchSelect.size ){
+                            //data_tree.selectAll( false );
+                            var sel = data_tree.getSelectedNodes();
+                            for( var i in sel ){
+                                if ( sel[i].key != data.node.key ){
+                                    sel[i].setSelected( false );
+                                }
+                            }
+                            searchSelect.clear();
+                        }
+                    }else{
+                        others = new Set();
+                    }
                 }
 
-                searchScope.add( data.node.key );
+                searchSelect.add( data.node.key );
 
                 // Unselect child nodes
                 data.node.visit( function( node ){
-                    //node.setSelected( false );
-                    searchScope.delete( node.key );
-                    if ( searchMode ){
+                    searchSelect.delete( node.key );
+                    if ( searchMode && others ){
                         others.add( node.key );
                     }
                 });
@@ -2422,9 +2383,8 @@ export function init(){
                 // Unselect parent nodes
                 var parents = data.node.getParentList();
                 for ( var i in parents ){
-                    //parents[i].setSelected( false );
-                    searchScope.delete( parents[i].key );
-                    if ( searchMode ){
+                    searchSelect.delete( parents[i].key );
+                    if ( searchMode && others ){
                         others.add( parents[i].key );
                     }
                 }
@@ -2439,11 +2399,8 @@ export function init(){
                         parents = data.node;
                     }
 
-                    console.log("start",parents);
-                    //parents.setSelected( false );
-
                     parents.visit( function( node ){
-                        if ( others.has( node.key )){
+                        if ( others && others.has( node.key )){
                             //console.log( "delsel", node.key );
                             node.setSelected( false );
                         }else if ( node.key == data.node.key ){
@@ -2452,14 +2409,14 @@ export function init(){
                     });
                 }
             }else{
-                console.log("deselect",data.node.key);
-                searchScope.delete( data.node.key );
+                //console.log("deselect",data.node.key);
+                searchSelect.delete( data.node.key );
 
                 if ( searchMode ){
                     var parents = data.node.getParentList();
                     //console.log("parents 2",parents);
                     parents = parents.length?parents[0]:data.node;
-                    console.log("start",parents);
+                    //console.log("start",parents);
                     parents.visit( function( node ){
                         if ( node.key == data.node.key ){
                             node.setSelected( false );
@@ -2469,7 +2426,7 @@ export function init(){
             }
 
             if ( searchMode ){
-                search_panel.setSearchScope( searchScope );
+                search_panel.setSearchSelect( searchSelect );
             }
 
             updateBtnState();
@@ -2504,7 +2461,7 @@ export function init(){
                     // RIGHT-CLICK CONTEXT MENU
 
                     if ( !data.node.isSelected() ){
-                        console.log("not selected - select");
+                        //console.log("not selected - select");
                         data_tree.selectAll(false);
                         selectScope = data.node;
                         treeSelectNode(data.node);
@@ -2610,12 +2567,12 @@ export function init(){
     $("#btn_search_panel").on("click", function(){
         if ( searchMode ){
             searchMode = false;
-            search_panel.setSearchScope();
+            search_panel.setSearchSelect();
             $("#sreach_panel",frame).hide();
             $(data_tree_div).fancytree("option","checkbox",false);
         }else{
             searchMode = true;
-            search_panel.setSearchScope( searchScope );
+            search_panel.setSearchSelect( searchSelect );
             $("#sreach_panel",frame).show();
             $(data_tree_div).fancytree("option","checkbox",true);
         }
@@ -2649,7 +2606,7 @@ export function checkTreeUpdate( a_data, a_source ){
 }
 
 model.registerUpdateListener( function( a_data ){
-    console.log("main tab updating:",a_data);
+    //console.log("main tab updating:",a_data);
 
     var nd, data;
 

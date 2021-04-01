@@ -99,15 +99,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 var items = data.response.item;
                 var scope = data.node.data.scope;
 
-                if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
-                    var pages = Math.ceil(data.response.total/settings.opts.page_sz), page = 1+data.response.offset/settings.opts.page_sz;
-                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='pageLoadCat(\""+data.node.key+
-                        "\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='pageLoadCat(\""+data.node.key+
-                        "\","+(page-2)*settings.opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+
-                        (page==pages?" disabled":"")+" onclick='pageLoadCat(\""+data.node.key+"\","+page*settings.opts.page_sz+
-                        ")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='pageLoadCat(\""+
-                        data.node.key+"\","+(pages-1)*settings.opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
-                }
+                util.addTreePagingNode( data );
 
                 for ( var i in items ) {
                     item = items[i];
@@ -266,8 +258,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         $(".cat-topic-div",topics_div).removeClass("ui-state-active");
         $(".cat-topic-div",el).addClass("ui-state-active");
 
-        console.log("topic ID",el[0].id);
-
         panel_info.showSelectedInfo( el[0].id );
         a_parent.updateBtnState();
 
@@ -355,7 +345,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         $(".cat-mode",cat_panel).selectmenu("disable");
         $(".cat-coll-sort",cat_panel).selectmenu("disable");
 
-        cat_tree.reload([{title: util.generateTitle( coll ), key: a_coll_id, scope: coll.owner, folder: true, lazy: true, selected: true }])
+        cat_tree.reload([{title: util.generateTitle( coll ), key: a_coll_id, scope: coll.owner, folder: true, lazy: true, selected: true, offset: 0 }])
             .done( function(){
                 cat_tree.rootNode.children[0].setExpanded();
             });
@@ -738,7 +728,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     });
 
     $("#cat_qry_build",cat_panel).on("click",function(){
-        console.log("qry build click");
         dlgQueryBuild.show();
     });
 
@@ -905,7 +894,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     }
     
     model.registerUpdateListener( function( a_data ){
-        console.log("cat panel updating:",a_data);
         var data;
 
         if ( cat_tree_div.is( ":visible" )){
@@ -929,7 +917,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                 data = a_data[i];
                 div = $( "#"+data.id.charAt(0)+"_"+data.id.substr(2), cat_coll_div );
                 if ( div.length ){
-                    console.log("found",data,div);
                     makeCollDiv( data, div );
                 }
             }
@@ -1020,7 +1007,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             delete coll_qry.to;
         }
 
-        console.log("cat qry", coll_qry );
+        //console.log("cat qry", coll_qry );
 
         api.dataSearch( coll_qry, function( ok, data ){
             loading &= 1;

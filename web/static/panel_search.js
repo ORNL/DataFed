@@ -25,14 +25,10 @@ function SearchPanel( a_frame, a_parent ){
         enabled = false,
         srch_scope = $("#srch_scope",a_frame);
 
-    this.enableSearch = function( a_enable ){
-        enabled = a_enable;
-        $("#srch_run_btn",a_frame).button("option","disabled",!a_enable);
-    }
 
-    this.setSearchScope = function( a_id_set ){
+    this.setSearchSelect = function( a_id_set ){
         var html = "";
-        if ( a_id_set ){
+        if ( a_id_set && a_id_set.size ){
             a_id_set.forEach( function( id ){
                 html += "<div class='srch-scope-item' data='" + id +
                     "'><div class='row-flex'><div style='flex:1 1 auto'>" + id +
@@ -40,8 +36,12 @@ function SearchPanel( a_frame, a_parent ){
             });
             srch_scope.html(html);
             $(".btn",srch_scope).button();
+            $("#srch_run_btn",a_frame).button("option","disabled",false);
+            enabled = true;
         }else{
             srch_scope.html(html);
+            $("#srch_run_btn",a_frame).button("option","disabled",true);
+            enabled = false;
         }
     }
 
@@ -134,7 +134,7 @@ function SearchPanel( a_frame, a_parent ){
     });
 
     $("#srch_scope_clear",a_frame).on("click",function(){
-        inst.setSearchScope();
+        inst.setSearchSelect();
         a_parent.searchPanel_ClearScope();
     });
 
