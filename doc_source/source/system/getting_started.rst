@@ -69,9 +69,9 @@ Most high performance computing clusters will already have at-least one endpoint
 +----------+---------------------------------+-------------------------------------------------------------------------------------------+
 | NERSC    | Cori                            | `nersc#dtn  <https://docs.nersc.gov/services/globus/>`_                                   |
 +----------+---------------------------------+-------------------------------------------------------------------------------------------+
-| CADES    | CADES Open Research             | `CADES-OR <https://docs.cades.ornl.gov/#data-transfer-storage/globus-endpoints/>`_        |
+| CADES    | CADES Open Research             | `cades#CADES-OR <https://docs.cades.ornl.gov/#data-transfer-storage/globus-endpoints/>`_  |
 +----------+---------------------------------+-------------------------------------------------------------------------------------------+
-| CADES    | CADES Moderate Research         | `CADES-MOD <https://docs.cades.ornl.gov/#data-transfer-storage/globus-endpoints/>`_       |
+| CADES    | CADES Moderate Research         | `cades#CADES-MOD <https://docs.cades.ornl.gov/#data-transfer-storage/globus-endpoints/>`_ |
 +----------+---------------------------------+-------------------------------------------------------------------------------------------+
 
 If your cluster is not listed above, you may need to identify the endpoint(s) from the cluster's documentation or
