@@ -59,23 +59,13 @@ function recordCreate( client, record, result ){
     g_lib.procInputParam( record, "title", false, obj );
     g_lib.procInputParam( record, "desc", false, obj );
     g_lib.procInputParam( record, "alias", false, obj );
-    g_lib.procInputParam( record, "doi", false, obj );
-    g_lib.procInputParam( record, "data_url", false, obj );
+    g_lib.procInputParam( record, "source", false, obj );
     g_lib.procInputParam( record, "sch_id", false, obj );
 
-    if ( record.md ){
-        obj.md = record.md;
-        if ( Array.isArray( obj.md ))
-            throw [g_lib.ERR_INVALID_PARAM,"Metadata cannot be an array"];
-    }
-
-    if ( obj.doi || obj.data_url ){
-        if ( !obj.doi || !obj.data_url )
-            throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
-
-        alias_key = (obj.doi.split("/").join("_"));
-        //console.log("alias:",alias_key);
+    if ( record.external ){
+        obj.external = true;
     }else{
+        // Extension setting only apply to managed data
         if ( record.ext_auto !== undefined )
             obj.ext_auto = record.ext_auto;
         else
@@ -86,10 +76,16 @@ function recordCreate( client, record, result ){
             if ( obj.ext.length && obj.ext.charAt(0) != "." )
                 obj.ext = "." + obj.ext;
         }
+    }
 
-        if ( obj.alias ){
-            alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
-        }
+    if ( record.md ){
+        obj.md = record.md;
+        if ( Array.isArray( obj.md ))
+            throw [g_lib.ERR_INVALID_PARAM,"Metadata cannot be an array"];
+    }
+
+    if ( obj.alias ){
+        alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
     }
 
     if ( record.tags != undefined ){
@@ -219,9 +215,9 @@ router.post('/create', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    doi: joi.string().allow('').optional(),
-    data_url: joi.string().allow('').optional(),
     parent: joi.string().allow('').optional(),
+    external: joi.boolean().optional(),
+    source: joi.string().allow('').optional(),
     repo: joi.string().allow('').optional(),
     md: joi.any().optional(),
     sch_id: joi.string().allow('').optional(),
@@ -274,9 +270,9 @@ router.post('/create/batch', function (req, res) {
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
-        doi: joi.string().allow('').optional(),
-        data_url: joi.string().allow('').optional(),
         parent: joi.string().allow('').optional(),
+        external: joi.boolean().optional(),
+        source: joi.string().allow('').optional(),
         repo: joi.string().allow('').optional(),
         md: joi.any().optional(),
         sch_id: joi.string().allow('').optional(),
@@ -289,7 +285,6 @@ router.post('/create/batch', function (req, res) {
         id: joi.string().allow('').optional(), // Ignored
         locked: joi.boolean().optional(), // Ignore
         size: joi.number().optional(), // Ignored
-        source: joi.string().allow('').optional(), // Ignored
         owner: joi.string().allow('').optional(), // Ignored
         creator: joi.string().allow('').optional(), // Ignored
         dt: joi.number().optional(), // Ignored
@@ -317,7 +312,7 @@ function recordUpdate( client, record, result ){
         if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.tags !== undefined )
             perms |= g_lib.PERM_WR_REC;
 
-        if ( record.size !== undefined || record.dt !== undefined || record.data_url !== undefined || record.doi !== undefined || record.source !== undefined )
+        if ( record.size !== undefined || record.dt !== undefined || record.source !== undefined )
             perms |= g_lib.PERM_WR_DATA;
 
         if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
@@ -332,8 +327,6 @@ function recordUpdate( client, record, result ){
     g_lib.procInputParam( record, "desc", true, obj );
     g_lib.procInputParam( record, "alias", true, obj );
     g_lib.procInputParam( record, "source", true, obj );
-    g_lib.procInputParam( record, "doi", true, obj );
-    g_lib.procInputParam( record, "data_url", true, obj );
     g_lib.procInputParam( record, "sch_id", true, obj );
 
     if ( record.md === "" ){
@@ -381,27 +374,29 @@ function recordUpdate( client, record, result ){
         }
     }
 
-    if ( record.ext_auto !== undefined )
-        obj.ext_auto = record.ext_auto;
+    if ( !data.external ){
+        if ( record.ext_auto !== undefined )
+            obj.ext_auto = record.ext_auto;
 
-    if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
-        if ( obj.source !== undefined || data.source !== undefined ){
-            var src = obj.source || data.source;
-            if ( src ){
-                // Skip possible "." in end-point name
-                var pos = src.lastIndexOf("/");
-                pos = src.indexOf(".",pos>0?pos:0);
-                if ( pos != -1 ){
-                    obj.ext = src.substr( pos );
-                }else{
-                    obj.ext = null;
+        if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
+            if ( obj.source !== undefined || data.source !== undefined ){
+                var src = obj.source || data.source;
+                if ( src ){
+                    // Skip possible "." in end-point name
+                    var pos = src.lastIndexOf("/");
+                    pos = src.indexOf(".",pos>0?pos:0);
+                    if ( pos != -1 ){
+                        obj.ext = src.substr( pos );
+                    }else{
+                        obj.ext = null;
+                    }
                 }
             }
+        }else{
+            g_lib.procInputParam( record, "ext", true, obj );
+            if ( obj.ext && obj.ext.charAt(0) != "." )
+                obj.ext = "." + obj.ext;
         }
-    }else{
-        g_lib.procInputParam( record, "ext", true, obj );
-        if ( obj.ext && obj.ext.charAt(0) != "." )
-            obj.ext = "." + obj.ext;
     }
 
     var loc = g_db.loc.firstExample({ _from: data_id }),
@@ -415,12 +410,6 @@ function recordUpdate( client, record, result ){
             g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
         }
     }
-
-    if ( !data.doi && ( obj.doi || obj.data_url ))
-        throw [ g_lib.ERR_INVALID_PARAM, "Cannot set DOI parameters for managed data." ];
-
-    if ( data.doi && ( obj.size !== undefined || obj.source !== undefined || obj.ext_auto !== undefined || obj.ext !== undefined ))
-        throw [ g_lib.ERR_INVALID_PARAM, "Cannot set data parameters for published data." ];
 
     if ( record.dt != undefined )
         obj.dt = record.dt;
@@ -605,8 +594,6 @@ router.post('/update', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    doi: joi.string().allow('').optional(),
-    data_url: joi.string().allow('').optional(),
     tags: joi.array().items(joi.string()).optional(),
     tags_clear: joi.boolean().optional(),
     md: joi.any().optional(),
@@ -680,13 +667,12 @@ router.post('/update/batch', function (req, res) {
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
-        doi: joi.string().allow('').optional(),
-        data_url: joi.string().allow('').optional(),
         tags: joi.array().items(joi.string()).optional(),
         tags_clear: joi.boolean().optional(),
         md: joi.any().optional(),
         mdset: joi.boolean().optional().default(false),
         sch_id: joi.string().allow('').optional(),
+        source: joi.string().allow('').optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
         dep_add: joi.array().items(joi.object({
@@ -698,7 +684,6 @@ router.post('/update/batch', function (req, res) {
         dt: joi.number().optional(), // Ignore
         locked: joi.boolean().optional(), // Ignore
         size: joi.number().optional(), // Ignore
-        source: joi.string().allow('').optional(), // Ignore
         owner: joi.string().allow('').optional(), // Ignored
         creator: joi.string().allow('').optional(), // Ignored
         ut: joi.number().optional(), // Ignored
@@ -856,40 +841,6 @@ router.get('/view', function (req, res) {
 .description('Get data by ID or alias');
 
 
-router.get('/view/doi', function (req, res) {
-    try {
-        var data_id = g_lib.resolveDataID( "doi:" + req.queryParams.doi );
-        var data = g_db.d.document( data_id );
-
-        var i,dep,rem_md = false;
-
-        data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
-        for ( i in data.deps ){
-            dep = data.deps[i];
-            if ( dep.alias )
-                dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
-        }
-
-        if ( rem_md && data.md )
-            delete data.md;
-
-        data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
-
-        delete data._rev;
-        delete data._key;
-        data.id = data._id;
-        delete data._id;
-
-        res.send({ results: [data] });
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('doi', joi.string().required(), "DOI number (without doi: prefix)")
-.summary('Get data by DOI')
-.description('Get data by DOI');
-
 router.post('/export', function (req, res) {
     try {
         g_db._executeTransaction({
@@ -1008,9 +959,9 @@ router.get('/dep/graph/get', function (req, res) {
                             next.push([dep.id,dep.type < 2]);
                         }
                     }
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:notes,locked:rec.locked,gen:gen,deps:deps});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,size:rec.size,notes:notes,locked:rec.locked,gen:gen,deps:deps});
                 }else{
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:notes,locked:rec.locked});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,size:rec.size,notes:notes,locked:rec.locked});
                 }
             }
 
@@ -1036,7 +987,7 @@ router.get('/dep/graph/get', function (req, res) {
                 entry = cur[i];
 
                 //rec = g_db.d.document( cur[i] );
-                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,doi:v.doi,size:v.size,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
+                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,size:v.size,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
 
                 if ( entry[1] ){
                     for ( j in deps ){
@@ -1047,7 +998,7 @@ router.get('/dep/graph/get', function (req, res) {
                         if ( visited.indexOf(dep.id) < 0 ){
                             //console.log("follow");
 
-                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,doi:dep.doi,size:dep.size,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
+                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,size:dep.size,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
                             if ( node.alias && client._id != node.owner )
                                 node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
 
@@ -1187,14 +1138,14 @@ router.get('/list/by_alloc', function (req, res) {
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id },{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }
         else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id });
         }
 
