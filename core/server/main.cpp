@@ -47,7 +47,7 @@ int main( int a_argc, char ** a_argv )
             ("task-purge-age",po::value<uint32_t>( &config.task_purge_age ),"Task purge age (seconds)")
             ("task-purge-per",po::value<uint32_t>( &config.task_purge_period ),"Task purge period (seconds)")
             ("client-threads",po::value<uint32_t>( &config.num_client_worker_threads ),"Number of client worker threads")
-            ("task-threads",po::value<uint32_t>( &config.num_client_worker_threads ),"Number of task worker threads")
+            ("task-threads",po::value<uint32_t>( &config.num_task_worker_threads ),"Number of task worker threads")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
             ("gen-keys",po::bool_switch( &gen_keys ),"Generate new server keys then exit")
             ;
