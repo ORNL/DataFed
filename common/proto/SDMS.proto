@@ -166,8 +166,6 @@ message ListingData
     optional string             creator     = 6;
     optional double             size        = 7;
     optional uint32             notes       = 8;
-    optional string             doi         = 9;
-    optional string             url         = 10;
     // Needed for provenance graphing
     optional int32              gen         = 11;
     optional bool               deps_avail  = 12;
@@ -209,26 +207,25 @@ message RecordData
     optional string             alias       = 3;
     optional string             desc        = 4;
     repeated string             tags        = 5;
-    optional string             doi         = 6;
-    optional string             data_url    = 7;
-    optional string             metadata    = 8;
+    optional string             metadata    = 6;
+    optional bool               external    = 7;
+    optional string             source      = 8;
     optional string             repo_id     = 9;
     optional double             size        = 10;
-    optional string             source      = 11;
-    optional string             ext         = 12;
-    optional bool               ext_auto    = 13;
-    optional uint32             ct          = 14;
-    optional uint32             ut          = 15;
-    optional uint32             dt          = 16;
-    optional string             owner       = 17;
-    optional string             creator     = 18;
-    optional bool               locked      = 19;
-    optional string             parent_id   = 20;
-    repeated DependencyData     deps        = 21;
-    optional uint32             notes       = 22;
-    optional string             md_err_msg  = 23;
-    optional string             sch_id      = 24;
-    optional uint32             sch_ver     = 25;
+    optional string             ext         = 11;
+    optional bool               ext_auto    = 12;
+    optional uint32             ct          = 13;
+    optional uint32             ut          = 14;
+    optional uint32             dt          = 15;
+    optional string             owner       = 16;
+    optional string             creator     = 17;
+    optional bool               locked      = 18;
+    optional string             parent_id   = 19;
+    repeated DependencyData     deps        = 20;
+    optional uint32             notes       = 21;
+    optional string             md_err_msg  = 22;
+    optional string             sch_id      = 23;
+    optional uint32             sch_ver     = 24;
 }
 
 // Fields required for a data repo to locate raw data

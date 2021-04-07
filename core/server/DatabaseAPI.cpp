@@ -946,7 +946,17 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::Re
 {
     Value result;
 
-    string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+    string body;
+
+    if ( a_request.has_metadata() )
+        body.reserve( a_request.metadata().size() + 4*1024 );
+    else
+        body.reserve( 4*1024 );
+
+    body.append( "{\"title\":\"" );
+    body.append( escapeJSON( a_request.title() ));
+    body.append( "\"" );
+
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_alias() )
@@ -968,12 +978,16 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::Re
         body += ",\"md\":" + a_request.metadata();
     if ( a_request.has_sch_id() )
         body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
-    if ( a_request.has_doi() )
-        body += string(",\"doi\":\"") + a_request.doi() + "\"";
-    if ( a_request.has_data_url() )
-        body += string(",\"data_url\":\"") + a_request.data_url() + "\"";
     if ( a_request.has_parent_id() )
         body += ",\"parent\":\"" + a_request.parent_id() + "\"";
+    if ( a_request.has_external() )
+    {
+        body.append( ",\"external\":\"" );
+        body.append( a_request.external()?"true":"false" );
+        body.append( "\"" );
+    }
+    if ( a_request.has_source() )
+        body += ",\"source\":\"" + a_request.source() + "\"";
     if ( a_request.has_repo_id() )
         body += ",\"repo\":\"" + a_request.repo_id() + "\"";
     if ( a_request.deps_size() )
@@ -1041,10 +1055,6 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::Re
     }
     if ( a_request.has_sch_id() )
         body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
-    if ( a_request.has_doi() )
-        body += string(",\"doi\":\"") + a_request.doi() + "\"";
-    if ( a_request.has_data_url() )
-        body += string(",\"data_url\":\"") + a_request.data_url() + "\"";
     if ( a_request.has_size() )
         body += ",\"size\":" + to_string(a_request.size());
     if ( a_request.has_source() )
@@ -1209,18 +1219,6 @@ DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphReque
 }
 
 
-/*
-void
-DatabaseAPI::doiView( const Anon::DOIViewRequest & a_request, Anon::RecordDataReply & a_reply )
-{
-    Value result;
-
-    dbGet( "dat/view/doi", {{"doi",a_request.doi()}}, result );
-
-    setRecordData( a_reply, result );
-}
-*/
-
 void
 DatabaseAPI::setRecordData( Auth::RecordDataReply & a_reply, const Value & a_result )
 {
@@ -1267,12 +1265,6 @@ DatabaseAPI::setRecordData( Auth::RecordDataReply & a_reply, const Value & a_res
                 }
             }
 
-            if ( obj.has( "doi" ))
-                rec->set_doi( obj.asString() );
-
-            if ( obj.has( "data_url" ))
-                rec->set_data_url( obj.asString() );
-
             if ( obj.has( "md" ))
                 rec->set_metadata( obj.value().toString() );
 
@@ -1281,6 +1273,9 @@ DatabaseAPI::setRecordData( Auth::RecordDataReply & a_reply, const Value & a_res
 
             if ( obj.has( "sch_id" ))
                 rec->set_sch_id( obj.asString() );
+
+            if ( obj.has( "external" ))
+                rec->set_external( obj.asBool() );
 
             if ( obj.has( "repo_id" ))
                 rec->set_repo_id( obj.asString() );
@@ -1861,12 +1856,6 @@ DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
 
     if ( a_obj.has( "desc" ) && !a_obj.value().isNull( ))
         a_item->set_desc( a_obj.asString() );
-
-    if ( a_obj.has( "doi" ) && !a_obj.value().isNull( ))
-        a_item->set_doi( a_obj.asString() );
-
-    if ( a_obj.has( "url" ) && !a_obj.value().isNull( ))
-        a_item->set_url( a_obj.asString() );
 
     if ( a_obj.has( "size" ) && !a_obj.value().isNull( ))
         a_item->set_size( a_obj.asNumber() );
@@ -3989,24 +3978,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
             a_params += "\"" + a_request.coll(i) + "\"";
         }
         a_params += "]";
-
-/*
-        if ( a_request.mode() == SM_DATA )
-            a_query_col += " for e in item filter e._to == i._id and e._from in @cols";
-        else
-            a_query += " filter i._id in @cols";
-
-        if ( filter.size() )
-            a_query += " and " + filter;
-*/
     }
-/*
-    else if ( filter.size() )
-    {
-        if ( filter.size() )
-            a_query += " filter " + filter;
-    }
-*/
 
     bool sort_relevance = false;
 
@@ -4076,216 +4048,6 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
     return cnt;
 }
 
-
-/*
-uint32_t
-DatabaseAPI::parseCatalogSearchRequest( const Auth::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial )
-{
-    a_query = string("for i in ") + (a_request.mode()==0?"collview":"dataview") + " search i.public == true";
-
-    if ( a_request.mode() == 1 && a_request.has_sch_id() > 0 )
-    {
-        a_query += " and i.sch_id == @sch";
-        a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\"";
-    }
-
-    if ( a_request.has_text() > 0 )
-    {
-        a_query += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
-    }
-
-    if ( a_request.cat_tags_size() > 0 )
-    {
-        a_query += " and @ctags all in i.cat_tags";
-
-        a_params += ",\"ctags\":[";
-        for ( int i = 0; i < a_request.cat_tags_size(); ++i )
-        {
-            if ( i > 0 )
-                a_params += ",";
-            a_params += "\"" + a_request.cat_tags(i) + "\"";
-        }
-        a_params += "]";
-    }
-
-    if ( a_request.tags_size() > 0 )
-    {
-        a_query += " and @tags all in i.tags";
-
-        a_params += ",\"tags\":[";
-        for ( int i = 0; i < a_request.tags_size(); ++i )
-        {
-            if ( i > 0 )
-                a_params += ",";
-            a_params += "\"" + a_request.tags(i) + "\"";
-        }
-        a_params += "]";
-    }
-
-    if ( a_request.has_id() )
-    {
-        a_query += " and " + parseSearchIdAlias( a_request.id(), "i" );
-    }
-
-    if ( a_request.has_owner() )
-    {
-        a_query += " and i.owner == @owner";
-        a_params += ",\"owner\":\"" + a_request.owner() + "\"";
-    }
-
-    if ( a_request.has_from() )
-    {
-        a_query += " and i.ut >= @utfr";
-        a_params += ",\"utfr\":" + to_string( a_request.from() );
-    }
-
-    if ( a_request.has_to() )
-    {
-        a_query += " and i.ut <= @utto";
-        a_params += ",\"utto\":" + to_string( a_request.to() );
-    }
-
-    if ( a_request.mode() == 1 ){
-        if ( a_request.has_meta_err() )
-        {
-            a_query += " and i.md_err == true";
-        }
-
-        if ( a_request.has_meta() )
-        {
-            a_query += " filter first(for j in d filter j._id == i._id and (" + parseSearchMetadata( a_request.meta() ) + ") return true)";
-        }
-    }
-
-    if ( !a_partial )
-    {
-        bool sort_relevance = false;
-
-        a_query += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first)) sort ";
-
-        if ( a_request.has_sort() )
-        {
-            switch( a_request.sort() )
-            {
-                case SORT_OWNER:
-                    a_query += "i.name";
-                    break;
-                case SORT_TIME_CREATE:
-                    a_query += "i.ct";
-                    break;
-                case SORT_TIME_UPDATE:
-                    a_query += "i.ut";
-                    break;
-                case SORT_RELEVANCE:
-                    if ( a_request.has_text() )
-                    {
-                        a_query += "BM25(i) DESC";
-                        sort_relevance = true;
-                    }
-                    else
-                    {
-                        a_query += "i.title";
-                    }
-                    break;
-                case SORT_TITLE:
-                default:
-                    a_query += "i.title";
-                    break;
-            }
-
-            if ( a_request.has_sort_rev() && a_request.sort_rev() && !sort_relevance )
-            {
-                a_query += " DESC";
-            }
-        }
-        else
-        {
-            a_query += " i.title";
-        }
-    }
-
-    a_query += " limit @off,@cnt";
-
-    uint32_t cnt = min(a_request.has_count()?a_request.count():50,100U),
-             off = a_request.has_offset()?a_request.offset():0;
-
-    if ( off + cnt >= 1000 ){
-        off = 999 - cnt;
-    }
-
-    a_params += ",\"off\":" + to_string( off );
-    a_params += ",\"cnt\":" + to_string( cnt + 1 ); // Add one to detect more results (truncated by DB)
-
-    // If not part of another query, build full query string
-    if ( !a_partial )
-    {
-        a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size,md_err:i.md_err":"")+"}";
-        a_query = escapeJSON( a_query );
-    }
-
-    return cnt;
-}
-
-
-void
-DatabaseAPI::parseRecordSearchPublishedRequest( const Auth::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params )
-{
-    parseCatalogSearchRequest( a_request.coll(), a_query, a_params, true );
-
-    a_query += " for v in 1..10 outbound i item";
-
-    string iter;
-
-    if ( a_request.has_text() )
-    {
-        a_query += " for t in dataview search t._id == v._id and analyzer(" + parseSearchTextPhrase( a_request.text(), "t" ) + ",'text_en')";
-        iter = "t";
-    }
-    else
-    {
-        a_query += " filter is_same_collection('d',v)";
-        iter = "v";
-    }
-
-    if ( a_request.tags_size() > 0 )
-    {
-        a_query += " and @dtags all in " + iter + ".tags";
-
-        a_params += ",\"dtags\":[";
-        for ( int i = 0; i < a_request.tags_size(); ++i )
-        {
-            if ( i > 0 )
-                a_params += ",";
-            a_params += "\"" + a_request.tags(i) + "\"";
-        }
-        a_params += "]";
-    }
-
-    if ( a_request.has_id() )
-    {
-        a_query += " and " + parseSearchIdAlias( a_request.id(), "v" );
-    }
-
-    if ( a_request.has_md() )
-    {
-        a_query += " and (" + parseSearchMetadata( a_request.md(), "v" ) + ")";
-    }
-
-    if ( a_request.has_from() )
-    {
-        a_query += " and v.ut >= @dutfr";
-        a_params += ",\"dutfr\":" + to_string( a_request.from() );
-    }
-
-    if ( a_request.has_to() )
-    {
-        a_query += " and v.ut <= @dutto";
-        a_params += ",\"dutto\":" + to_string( a_request.to() );
-    }
-
-    a_query += " limit 0,100 sort v.title return { _id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size }";
-}
-*/
 
 string
 DatabaseAPI::parseSearchTextPhrase( const string & a_phrase, const string & a_iter )
@@ -4523,7 +4285,7 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
 {
     // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
     // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
-    static set<string> terms = {"title","desc","alias","doi","data_url","owner","creator","ct","ut","size","source","ext"};
+    static set<string> terms = {"title","desc","alias","external","owner","creator","ct","ut","size","source","ext"};
     static set<string> funcs = {"abs","acos","asin","atan","atan2","average","avg","ceil","cos","degrees","exp","exp2",
         "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
         "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample","length","lower","upper",

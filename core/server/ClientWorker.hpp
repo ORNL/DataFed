@@ -74,15 +74,6 @@ private:
         return find_if(str.begin(), str.end(), []( char c ){ return !isalnum(c); }) != str.end();
     }
 
-    //std::string parseSearchTerms( const std::string & a_key, const std::vector<std::string> & a_terms );
-    //std::string parseSearchPhrase( const char * key, const std::string & a_phrase );
-    //std::string parseSearchTextPhrase( const std::string & a_phrase );
-    //std::string parseSearchTags(  const libjson::Value::Array & a_tags );
-    //std::string parseSearchIdAlias( const std::string & a_query );
-    //std::string parseSearchMetadata( const std::string & a_query );
-    //std::string parseQuery( const std::string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects );
-    //std::string parseProjectQuery( const std::string & a_text_query, const std::vector<std::string> & a_scope );
-
     typedef bool (ClientWorker::*msg_fun_t)( const std::string & a_uid );
 
     void schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value );

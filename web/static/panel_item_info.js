@@ -639,7 +639,7 @@ function showSelectedItemForm( item ){
         $("#sel_info_creator",form).text( item.creator );
 
     if ( cls == ".sid" ){
-        $("#sel_info_repo",form).text( item.repoId.substr(5) );
+        $("#sel_info_loc",form).text( item.external?"External":item.repoId.substr(5) );
         $("#sel_info_size",form).text( util.sizeToString( item.size ) );
         if ( item.source )
             $("#sel_info_src",form).text( item.source );

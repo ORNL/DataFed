@@ -40,8 +40,11 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' maxlength='2000' rows=8 style='width:100%;padding:0'></textarea></td></tr>\
                     <tr><td style='vertical-align:top'>Tags:</td><td colspan='3'><ul id='tags' class='input-bg'></ul></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
-                    <tr id='dlg_alloc_row'><td>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
-                    <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%' readonly></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-file'></span></button></tr>\
+                    <tr id='dlg_alloc_row'>\
+                        <td>Allocation:</td><td><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td>\
+                        <td colspan='2'><span title='External source data file' style='display:inline-block;white-space:nowrap'><label for='external'>External</label><input id='external' type='checkbox'></input></span></td>\
+                    </tr>\
+                    <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-file'></span></button></tr>\
                     <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
                 </table>\
             </div>\
@@ -94,13 +97,16 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     else
         return;
 
-    var tag_el = $("#tags",frame);
+    var tag_el = $("#tags",frame),
+        ext_auto = $("#ext_auto",frame),
+        extension = $("#extension",frame),
+        extern = $("#external",frame);
 
     $("#pick_source",frame).on("click",function(){
         dlgStartXfer.show( null, null, function( a_path, a_encrypt_mode ){
             $("#source_file",frame).val( a_path );
             encrypt_mode = a_encrypt_mode;
-            if ( $("#ext_auto",frame).prop("checked") )
+            if ( ext_auto.prop("checked") )
                 updateAutoExt();
         });
     });
@@ -235,24 +241,26 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 }
             }
         }
-        $("#extension",frame).val( ext + '(auto)');
+        extension.val( ext + '(auto)');
     }
 
     function callback( ok, reply ){
         if ( ok ) {
-            // Start transfer if source changed
-            var tmp = $("#source_file").val().trim();
-            if ( tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
+            if (( a_data && !a_data.external ) || ( !a_data && extern.prop( "checked" ))){
+                // Start transfer if source changed
+                var tmp = $("#source_file").val().trim();
+                if ( tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
 
-                api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, reply2 ){
-                    if ( ok2 ){
-                        util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
-                    }else{
-                        dialogs.dlgAlert( "Transfer Error", reply2 );
-                    }
-                });
+                    api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, reply2 ){
+                        if ( ok2 ){
+                            util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
+                        }else{
+                            dialogs.dlgAlert( "Transfer Error", reply2 );
+                        }
+                    });
+                }
             }
-            
+
             dlg_inst.dialog('close');
 
             if ( a_cb )
@@ -334,19 +342,18 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         }
                     }
 
-                    if ( a_data.doi ){
-                        obj.doi="";
-                        obj.dataUrl="";
-                    }
+                    if ( !a_data.external ){
+                        if ( ext_auto.prop("checked") ){
+                            if ( !a_data.extAuto )
+                                obj.extAuto = true;
+                        }else{
+                            if ( a_data.extAuto )
+                                obj.extAuto = false;
 
-                    if ( $("#ext_auto",frame).prop("checked") ){
-                        if ( !a_data.extAuto )
-                            obj.extAuto = true;
+                            util.getUpdatedValue( extension.val(), a_data, obj, "ext" );
+                        }
                     }else{
-                        if ( a_data.extAuto )
-                            obj.extAuto = false;
-
-                        util.getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
+                        util.getUpdatedValue( $("#source_file").val(), a_data, obj, "source" );
                     }
 
                     if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
@@ -411,10 +418,22 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
                     util.getUpdatedValue( sch_id, {}, obj, "schId" );
 
-                    if ( $("#ext_auto",frame).prop("checked") ){
-                        obj.extAuto = true;
+                    if ( extern.prop("checked") ){
+                        obj.external = true;
+                        util.getUpdatedValue( $("#source_file").val(), {}, obj, "source" );
                     }else{
-                        util.getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
+                        var repo_id = $("#alloc").val();
+                        if ( repo_id == "bad" ){
+                            dialogs.dlgAlert( "Data Entry Error", "Parent collection is invalid");
+                            return;
+                        }else if ( repo_id != 'default' )
+                            obj.repoId = repo_id;
+    
+                        if ( ext_auto.prop("checked") ){
+                            obj.extAuto = true;
+                        }else{
+                            util.getUpdatedValue( extension.val(), {}, obj, "ext" );
+                        }
                     }
 
                     var tmp = jsoned.getValue();
@@ -423,13 +442,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                     if ( deps.length )
                         obj.deps = deps;
-
-                    var repo_id = $("#alloc").val();
-                    if ( repo_id == "bad" ){
-                        dialogs.dlgAlert( "Data Entry Error", "Parent collection is invalid");
-                        return;
-                    }else if (repo_id != 'default' )
-                        obj.repoId = repo_id;
 
                     obj.tags = tag_el.tagit("assignedTags");
 
@@ -544,30 +556,25 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
 
                     if (( a_upd_perms & model.PERM_WR_DATA ) == 0 ){
-                        util.inputDisable( $("#extension,#doi,data_url,#pick_source", frame ));
-                        $("#ext_auto",frame).prop("disabled",true);
+                        util.inputDisable( $("#extension,#pick_source", frame ));
+                        ext_auto.prop("disabled",true);
                     }
 
                     $("#dlg_coll_row",frame).css("display","none");
                     $("#dlg_alloc_row",frame).css("display","none");
                     $("#source_file",frame).val(a_data.source);
-                    if ( a_data.extAuto ){
-                        $("#ext_auto",frame).prop("checked",true);
-                        $("#extension",frame).val(a_data.ext?a_data.ext + " (auto)":"(auto)").prop("disabled",true);
+
+                    if ( a_data.external ){
+                        ext_auto.prop("checked",true).prop("disabled",true);
+                        extension.val("(auto)").prop("disabled",true);
                     }else{
-                        $("#extension",frame).val(a_data.ext?a_data.ext:"");
+                        if ( a_data.extAuto ){
+                            ext_auto.prop("checked",true);
+                            extension.val(a_data.ext?a_data.ext + " (auto)":"(auto)").prop("disabled",true);
+                        }else{
+                            extension.val(a_data.ext?a_data.ext:"");
+                        }
                     }
-                    //$("#doi",frame).val(a_data.doi);
-                    //$("#data_url",frame).val(a_data.dataUrl);
-                    /*if ( a_data.dataUrl ){
-                        $("#published",frame).prop("checked",true);
-                        $("#working_data",frame).hide();
-                        $("#published_data",frame).show();
-                        $("#pub_upd_warn",frame).show();
-                        util.inputDisable( $("#alias", frame ));
-                    }else if ( a_data.size > 0 ){
-                        $("#pub_del_warn,#pub_del_warn_ast",frame).show();
-                    }*/
                 }else{
                     $("#dlg_md_row2",frame).css("display","none");
                     if ( a_parent )
@@ -579,36 +586,34 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
-                //$("#tags",frame).val("");
-                //$("#md",frame).val("");
                 $("#dlg_md_row2",frame).css("display","none");
                 if ( a_parent )
                     parent = a_parent;
-                $("#ext_auto",frame).prop("checked",true);
-                $("#extension",frame).val("(auto)").prop("disabled",true);
+                ext_auto.prop("checked",true);
+                extension.val("(auto)").prop("disabled",true);
             }
 
-            /*$("#published",frame).checkboxradio().on( "change",function(ev){
-                var pub = $("#published",frame).prop("checked");
-                if ( pub ){
-                    $("#working_data",frame).hide();
-                    $("#published_data",frame).show();
-                    $("#alias", frame ).val("");
-                    util.inputDisable( $("#alias", frame ));
+            extern.checkboxradio().on( "change",function(ev){
+                var chk = extern.prop("checked");
+                if ( chk ){
+                    $("#alloc",frame).prop("disabled",true).selectmenu("refresh");;
+                    ext_auto.prop("checked",true).prop("disabled",true);
+                    extension.val('(auto)').prop("disabled",true);
                 }else{
-                    $("#working_data",frame).show();
-                    $("#published_data",frame).hide();
-                    util.inputEnable( $("#alias", frame ));
+                    $("#alloc",frame).prop("disabled",false).selectmenu("refresh");;
+                    ext_auto.prop("disabled",false);
+                    extension.prop("disabled",false);
                 }
-            });*/
+                ext_auto.checkboxradio("refresh");
+            });
 
-            $("#ext_auto",frame).checkboxradio().on( "change",function(ev){
-                var auto = $("#ext_auto",frame).prop("checked");
+            ext_auto.checkboxradio().on( "change",function(ev){
+                var auto = ext_auto.prop("checked");
                 if ( auto ){
                     updateAutoExt();
-                    $("#extension",frame).prop("disabled",true);
+                    extension.prop("disabled",true);
                 }else{
-                    $("#extension",frame).val('').prop("disabled",false);
+                    extension.val('').prop("disabled",false);
                 }
             });
 

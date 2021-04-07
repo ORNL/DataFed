@@ -179,10 +179,10 @@ message RecordCreateRequest
     optional string             desc        = 2;
     repeated string             tags        = 3;
     optional string             alias       = 4;
-    optional string             doi         = 5;
-    optional string             data_url    = 6;
-    optional string             metadata    = 7;
-    optional string             parent_id   = 8;
+    optional string             metadata    = 5;
+    optional string             parent_id   = 6;
+    optional bool               external    = 7;
+    optional string             source      = 8;
     optional string             repo_id     = 9;
     optional string             ext         = 10;
     optional bool               ext_auto    = 11;
@@ -204,19 +204,17 @@ message RecordUpdateRequest
     repeated string             tags        = 4;
     optional bool               tags_clear  = 5;
     optional string             alias       = 6;
-    optional string             doi         = 7;
-    optional string             data_url    = 8;
-    optional string             metadata    = 9;
-    optional bool               mdset       = 10;
-    optional string             sch_id      = 11;
-    optional bool               sch_enforce = 12;
-    optional string             source      = 13;
-    optional string             ext         = 14;
-    optional bool               ext_auto    = 15;
-    optional uint64             size        = 16;
-    optional uint32             dt          = 17;
-    repeated DependencySpecData dep_add     = 18;
-    repeated DependencySpecData dep_rem     = 19;
+    optional string             metadata    = 7;
+    optional bool               mdset       = 8;
+    optional string             sch_id      = 9;
+    optional bool               sch_enforce = 10;
+    optional string             source      = 11;
+    optional string             ext         = 12;
+    optional bool               ext_auto    = 13;
+    optional uint64             size        = 14;
+    optional uint32             dt          = 15;
+    repeated DependencySpecData dep_add     = 16;
+    repeated DependencySpecData dep_rem     = 17;
 }
 
 message RecordUpdateBatchRequest
