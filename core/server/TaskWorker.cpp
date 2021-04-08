@@ -159,7 +159,7 @@ bool
 TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 {
     DL_INFO( "Task " << m_task->task_id << " cmdRawDataTransfer" );
-    DL_DEBUG( "params: " << a_task_params.toString() );
+    //DL_DEBUG( "params: " << a_task_params.toString() );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -171,28 +171,28 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
     const string &              dst_ep = obj.getString( "dst_repo_ep" );
     const string &              dst_path = obj.getString( "dst_repo_path" );
     const Value::Array &        files = obj.getArray( "files" );
-    string                      src_repo_id;
-    string                      dst_repo_id;
+    //string                      src_repo_id;
+    //string                      dst_repo_id;
     bool                        encrypted = true;
     GlobusAPI::EndpointInfo     ep_info;
 
+/*
     switch ( type )
     {
     case TT_DATA_GET:
-        src_repo_id = obj.getString( "src_repo_id" );
+        //src_repo_id = obj.getString( "src_repo_id" );
         break;
     case TT_DATA_PUT:
-        dst_repo_id = obj.getString( "dst_repo_id" );
-        break;
     case TT_REC_CHG_ALLOC:
     case TT_REC_CHG_OWNER:
-        src_repo_id = obj.getString( "src_repo_id" );
+        //src_repo_id = obj.getString( "src_repo_id" );
         dst_repo_id = obj.getString( "dst_repo_id" );
         break;
     default:
         EXCEPT_PARAM( 1, "Invalid task type for raw data transfer command: " << type );
         break;
     }
+*/
 
     string acc_tok = obj.getString( "acc_tok" );
     string ref_tok = obj.getString( "ref_tok" );

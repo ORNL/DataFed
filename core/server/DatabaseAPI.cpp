@@ -3380,7 +3380,7 @@ DatabaseAPI::setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value
             setListingData( a_reply.add_item(), j->asObject() );
     }
 
-    if ( obj.has( "http_data" ) && obj.value().size() )
+    if ( obj.has( "ext_data" ) && obj.value().size() )
     {
         const Value::Array & arr = obj.asArray();
 

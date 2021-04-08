@@ -661,7 +661,7 @@ export function dataGet( a_ids, a_cb ){
     api.dataGetCheck( a_ids, function( ok, data ){
         if ( ok ){
             //console.log("data get check:",data);
-            var i, internal = false, external = false;
+            var i, internal = false;
 
             if ( !data.item || !data.item.length ){
                 dialogs.dlgAlert("Data Get Error","Selection contains no raw data.");
@@ -673,9 +673,8 @@ export function dataGet( a_ids, a_cb ){
                     dialogs.dlgAlert("Data Get Error","One or more data records are currently locked.");
                     return;
                 }
-                if ( data.item[i].url ){
-                    external = true;
-                }else if ( data.item[i].size <= 0 ){
+
+                if ( data.item[i].size <= 0 ){
                     dialogs.dlgAlert("Data Get Error","One or more data records have no raw data.");
                     return;
                 }else{
@@ -683,12 +682,9 @@ export function dataGet( a_ids, a_cb ){
                 }
             }
 
-            if ( internal && external ){
-                dialogs.dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
-                return;
-            } else if ( internal ){
-                dlgStartXfer.show( model.TT_DATA_GET, data.item, a_cb );
-            }else{
+            dlgStartXfer.show( model.TT_DATA_GET, data.item, a_cb );
+
+            /* unused http xfr
                 for ( i in data.item ){
                     //console.log("download ", data.item[i].url )
                     var link = document.createElement("a");
@@ -698,7 +694,7 @@ export function dataGet( a_ids, a_cb ){
                     link.target = "_blank";
                     link.click();
                 }
-            }
+            */
         }else{
             dialogs.dlgAlert("Data Get Error",data);
         }
