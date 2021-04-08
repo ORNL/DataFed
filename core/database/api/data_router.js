@@ -64,6 +64,7 @@ function recordCreate( client, record, result ){
 
     if ( record.external ){
         obj.external = true;
+        obj.size = 1000000; // Don't know actual size - doesn't matter
     }else{
         // Extension setting only apply to managed data
         if ( record.ext_auto !== undefined )
