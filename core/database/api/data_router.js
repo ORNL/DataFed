@@ -64,7 +64,14 @@ function recordCreate( client, record, result ){
 
     if ( record.external ){
         obj.external = true;
-        obj.size = 1000000; // Don't know actual size - doesn't matter
+        // Verify source path is a full globus path to a file
+        if ( obj.source ){
+            if ( !g_lib.isFullGlobusPath( obj.source, true, false )){
+                throw [g_lib.ERR_INVALID_PARAM,"Source must be a full Globus path to a file."];
+            }
+
+            obj.size = 1048576; // Don't know actual size - doesn't really matter
+        }
     }else{
         // Extension setting only apply to managed data
         if ( record.ext_auto !== undefined )
@@ -375,7 +382,15 @@ function recordUpdate( client, record, result ){
         }
     }
 
-    if ( !data.external ){
+    if ( data.external ){
+        if ( obj.source ){
+            if ( !g_lib.isFullGlobusPath( obj.source, true, false )){
+                throw [g_lib.ERR_INVALID_PARAM,"Source must be a full Globus path to a file."];
+            }
+
+            obj.size = 1048576; // Don't know actual size - doesn't really matter
+        }
+    }else{
         if ( record.ext_auto !== undefined )
             obj.ext_auto = record.ext_auto;
 
@@ -575,8 +590,10 @@ router.post('/update', function (req, res) {
             }else{
                 doc = g_db._document( id );
                 doc.notes = g_lib.annotationGetMask( client, doc._id );
-                if ( doc.md_err )
+
+                if ( doc.md_err ){
                     doc.notes |= g_lib.NOTE_MASK_MD_ERR;
+                }
             }
             delete doc.desc;
             //delete doc.md;
@@ -647,8 +664,10 @@ router.post('/update/batch', function (req, res) {
         result.updates.forEach( function( id ){
             doc = g_db._document( id );
             doc.notes = g_lib.annotationGetMask( client, doc._id );
-            if ( doc.md_err )
+
+            if ( doc.md_err ){
                 doc.notes |= g_lib.NOTE_MASK_MD_ERR;
+            }
 
             delete doc.desc;
             delete doc.md;
@@ -804,8 +823,10 @@ router.get('/view', function (req, res) {
         }
 
         data.notes = g_lib.annotationGetMask( client, data_id, admin );
-        if ( data.md_err )
+
+        if ( data.md_err ){
             data.notes |= g_lib.NOTE_MASK_MD_ERR;
+        }
 
         if ( data.sch_id ){
             var sch = g_db.sch.document( data.sch_id );
@@ -1139,14 +1160,14 @@ router.get('/list/by_alloc', function (req, res) {
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id },{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }
         else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id });
         }
 
@@ -1198,8 +1219,9 @@ router.get('/search', function (req, res) {
         for ( var i in results ){
             doc = results[i];
             doc.notes = g_lib.annotationGetMask( client, doc.id );
-            if ( doc.md_err )
+            if ( doc.md_err ){
                 doc.notes |= g_lib.NOTE_MASK_MD_ERR;
+            }
         }
 
         res.send( results );
