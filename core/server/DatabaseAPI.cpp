@@ -1860,6 +1860,9 @@ DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
     if ( a_obj.has( "size" ) && !a_obj.value().isNull( ))
         a_item->set_size( a_obj.asNumber() );
 
+    if ( a_obj.has( "external" ) && !a_obj.value().isNull( ))
+        a_item->set_external( a_obj.asBool() );
+
     if ( a_obj.has( "notes" ))
         a_item->set_notes( a_obj.asNumber() );
 

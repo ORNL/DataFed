@@ -239,7 +239,7 @@ export function getKeyIcon( a_key ){
 }
 
 export function getDataIcon( a_data ){
-    if ( a_data.doi )
+    if ( a_data.external )
         return "ui-icon ui-icon-linkext";
     else if ( a_data.size )
         return "ui-icon ui-icon-file-text";

@@ -640,11 +640,11 @@ function showSelectedItemForm( item ){
 
     if ( cls == ".sid" ){
         $("#sel_info_loc",form).text( item.external?"External":item.repoId.substr(5) );
-        $("#sel_info_size",form).text( util.sizeToString( item.size ) );
+        $("#sel_info_size",form).text( item.external?"Unknown":util.sizeToString( item.size ) );
         if ( item.source )
             $("#sel_info_src",form).text( item.source );
 
-        $("#sel_info_ext",form).text(( item.ext?item.ext+" ":"") + ( item.extAuto?"(auto)":"" ));
+        $("#sel_info_ext",form).text(item.external?"(auto)":(( item.ext?item.ext+" ":"") + ( item.extAuto?"(auto)":"" )));
     }
 
     if ( cls == ".siq" ){

@@ -1248,7 +1248,7 @@ function calcActionState( sel ){
                     bits = 0x00;
                 else
                     bits = 0x102;
-                if ( node.data.doi )
+                if ( node.data.external )
                     bits |= 0x10;
                 if ( !node.data.size )
                     bits |= 0x20;
@@ -1369,7 +1369,7 @@ function handleQueryResults( data ){
                 results.push({ title: util.generateTitle(item,false,true),_title:item.title,folder:true,lazy:true,scope:item.owner,key:item.id,offset:0,nodrag:true});
             }else{
                 results.push({ title: util.generateTitle(item,false,true),icon: util.getDataIcon(item),
-                    key:item.id,nodrag:false,notarg:true,checkbox:false,scope:item.owner,size:item.size});
+                    key:item.id,nodrag:false,notarg:true,checkbox:false,scope:item.owner,size:item.size,external:item.external});
             }
         }
     } else {
@@ -2266,7 +2266,7 @@ export function init(){
                         entry = { title: util.generateTitle(item),_title:item.title,folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub };
                     }else{
                         entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon: util.getDataIcon( item ),
-                        scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size };
+                        scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size, external:item.external };
                     }
 
                     if ( searchMode && ( item.id in searchSelect )){

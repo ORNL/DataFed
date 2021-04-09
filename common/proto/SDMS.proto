@@ -165,14 +165,15 @@ message ListingData
     optional string             owner       = 5;
     optional string             creator     = 6;
     optional double             size        = 7;
-    optional uint32             notes       = 8;
+    optional bool               external    = 8;
+    optional uint32             notes       = 9;
     // Needed for provenance graphing
-    optional int32              gen         = 11;
-    optional bool               deps_avail  = 12;
-    repeated DependencyData     dep         = 13;
+    optional int32              gen         = 10;
+    optional bool               deps_avail  = 11;
+    repeated DependencyData     dep         = 12;
     // Needed for catalog view
-    optional string             owner_name  = 14;
-    optional string             desc        = 15;
+    optional string             owner_name  = 13;
+    optional string             desc        = 14;
 }
 
 /*
