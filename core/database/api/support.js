@@ -314,12 +314,67 @@ module.exports = ( function() {
             return false;
     };
 
+    // Quick check to determine if ID looks like a UUID (does not verify)
     obj.isUUID = function( a_client_id ) {
         if ( a_client_id.length == 36 && a_client_id.charAt(8) == "-" )
             return true;
         else
             return false;
     };
+
+    // Verify a_is is a valid UUID AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA (full check)
+    obj.isValidUUID = function( a_id ) {
+        if ( a_id.length == 36 ){
+            var code;
+            for ( var i = 0; i < 36; i++ ){
+                if ( i == 8 || i == 13 || i == 18 || i == 23 ){
+                    if ( a_id.charAt(i) != "-" ){
+                        return false;
+                    }
+                }else{
+                    code = a_id.charCodeAt(i);
+                    if (!(code > 47 && code < 58) && // numeric (0-9)
+                        !(code > 64 && code < 71) && // upper alpha (A-F)
+                        !(code > 96 && code < 103)) { // lower alpha (a-F)
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    };
+
+    obj.isFullGlobusPath = function( a_path, a_is_file = true ){
+        // Full Globus path can be UUID/<som_path> or legacy#name/<some_path>
+        var idx = a_path.indexOf("/");
+        if ( idx > 0 ){
+            var ep = a_path.substr( 0, idx ),
+                idx2 = ep.indexOf("#");
+
+            if ( idx2 > -1 ){
+                // Verify ep is in valid legacy name format (one # with prefix & suffix)
+                if ( idx2 == 0 || idx2 == ep.length - 1 || ep.indexOf("#",idx2+1) != -1 ){
+                    return false;
+                }
+            }else{
+                // Verify ep is in valid UUID format
+                if ( !obj.isValidUUID( ep )){
+                    return false;
+                }
+            }
+
+            if ( a_is_file && a_path.charAt(a_path.length-1) == "/" ){
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
 
     obj.getUserFromClientID = function( a_client_id ) {
         // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)

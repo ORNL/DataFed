@@ -419,13 +419,13 @@ router.get('/read', function (req, res) {
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, notes: (v.md_err?4096:0), locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, notes: (v.md_err?4096:0), locked: v.locked }";
             result = g_db._query( qry, params,{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, notes: (v.md_err?4096:0), locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, notes: (v.md_err?4096:0), locked: v.locked }";
             result = g_db._query( qry, params ).toArray();
         }
 
@@ -899,8 +899,9 @@ router.post('/pub/search', function (req, res) {
             }
 
             item.notes = g_lib.annotationGetMask( client, item._id );
-            if ( item.md_err )
+            if ( item.md_err ){
                 item.notes |= g_lib.NOTE_MASK_MD_ERR;
+            }
         }
 
         result.push({ paging: { off: req.body.params.off, cnt: result.length, tot: req.body.params.off + count }});
@@ -1072,8 +1073,10 @@ router.post('/pub/search2', function (req, res) {
             }
 
             item.notes = g_lib.annotationGetMask( client, item._id );
-            if ( item.md_err )
+
+            if ( item.md_err ){
                 item.notes |= g_lib.NOTE_MASK_MD_ERR;
+            }
         }
 
         result.push({ paging: { off: req.body.params.off, cnt: result.length, tot: req.body.params.off + count }});
