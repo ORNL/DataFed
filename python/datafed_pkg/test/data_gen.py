@@ -78,6 +78,7 @@ do_up = args.u
 def selectRand( a, b, cnt ):
     res = []
     N = random.randint(a,b)
+
     for i in range(N):
         retry = True
         while retry:
@@ -91,10 +92,11 @@ def selectRand( a, b, cnt ):
 
     return res
 
-
-
-keywords = ["synthetic","organic","regenerative","photosynthesis","culture","society","distributed","centralized","advanced","distopian"]
-tags = ["apple","orange","red","blue","night","day","future","past","good","bad","up","down","left","right"]
+aliases = []
+ref_ty = ["der","ver","comp"]
+adjectives = ["synthetic","organic","regenerative","distributed","centralized","advanced","distopian"]
+subjects = ["photosynthesis","culture","society","technology","computing","transportation","power generation","process optimization"]
+tags = ["apple","orange","banana","red","blue","green","night","day","future","past","present","good","bad","up","down","left","right"]
 topics = [
     "energy.generation.fission",
     "energy.generation.fusion",
@@ -131,6 +133,8 @@ tstart = time.time()
 for i in range( start, end + 1 ):
     alias = "{}.coll.{}".format(alias_pfx,i)
 
+    print( alias )
+
     if do_del:
         if pub:
             if api.collectionUpdate( alias, topic = "", context = ctx )[0] == None:
@@ -145,10 +149,13 @@ for i in range( start, end + 1 ):
 
     name = "{} Collection {}".format(title_pfx,i)
 
-    sel = selectRand(1, 3, len( keywords ))
-    _desc = "A collection about"
+    sel = selectRand(1, 2, len( adjectives ))
+    _desc = "A collection of data regarding"
     for j in sel:
-        _desc += " " + keywords[j]
+        _desc += " " + adjectives[j]
+
+    sel = selectRand(1, 1, len( subjects ))
+    _desc += " " + subjects[sel[0]] + "."
 
     sel = selectRand(1, 3, len( tags ))
     _tags = []
@@ -167,17 +174,24 @@ for i in range( start, end + 1 ):
 
         name = "{} Data {}.{}".format(title_pfx,i,j)
         data_alias = "{}.data.{}.{}".format(alias_pfx,i,j)
+        aliases.append(data_alias)
 
-        sel = selectRand(1, 3, len( keywords ))
+        # Description
+        sel = selectRand(1, 3, len( adjectives ))
         _desc = "A data record about"
         for k in sel:
-            _desc += " " + keywords[k]
+            _desc += " " + adjectives[k]
 
+        sel = selectRand(1, 1, len( subjects ))
+        _desc += " " + subjects[sel[0]] + "."
+
+        # Tags
         sel = selectRand(1, 3, len( tags ))
         _tags = []
         for k in sel:
             _tags.append( tags[k] )
 
+        # Generate metadata (alternate schemas?)
         md = {
             "i" : i,
             "j" : j,
@@ -186,10 +200,21 @@ for i in range( start, end + 1 ):
             "a": random.randint(0,3599)/10.0,
             "v": random.randint(0,100),
             "tag": tags[selectRand(1, 1, len( tags ))[0]],
-            "keyword": keywords[selectRand(1, 1, len( keywords ))[0]]
+            "keyword": subjects[selectRand(1, 1, len( subjects ))[0]]
         }
 
-        if api.dataCreate( name, alias=data_alias, metadata = json.dumps(md), parent_id = alias, description = _desc, tags = _tags, repo_id = repo, context = ctx )[0] == None:
+        # Provenance - random links to previous records, 50% none,
+        deps = []
+        num_link = random.randint(0,5) - 2
+
+        if num_link > 0 and num_link < len(aliases)-1:
+            links = selectRand( 0, num_link, len(aliases)-1 )
+
+            for l in links:
+                deps.append( ["der",aliases[l]] )
+
+        # Create record
+        if api.dataCreate( name, alias=data_alias, metadata = json.dumps(md), parent_id = alias, description = _desc, tags = _tags, deps = deps, repo_id = repo, context = ctx )[0] == None:
             print("Timeout on dataCreate, coll {}, rec {}".format(i,j))
             exit()
 

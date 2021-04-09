@@ -27,10 +27,7 @@ private:
     bool        cmdAllocCreate( const libjson::Value & a_task_params );
     bool        cmdAllocDelete( const libjson::Value & a_task_params );
 
-
-    void        abortTask( const std::string & a_msg );
     bool        checkEncryption( const std::string & a_ep, Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info );
-    //bool        refreshDataSize( const std::string & a_repo_id, const std::string & a_data_id, const std::string & a_data_path, const std::string & a_src_path, const libjson::Value & a_ext );
     bool        repoSendRecv( const std::string & a_repo_id, MsgBuf::Message & a_msg, MsgBuf::Message *& a_reply );
 
     ITaskMgr &                  m_mgr;

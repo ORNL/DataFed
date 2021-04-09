@@ -193,16 +193,17 @@ function GraphPanel( a_id, a_frame, a_parent ){
                     switch ( d.ty ){
                         case 0: return 'url(#arrow-derivation)';
                         case 1: return 'url(#arrow-component)';
+                        case 2: return 'url(#arrow-new-version)';
                         default: return '';
                     }
                 })
-                .attr('marker-end',function(d){
+                /*.attr('marker-end',function(d){
                     //console.log("link enter 1");
                     switch ( d.ty ){
                         case 2: return 'url(#arrow-new-version)';
                         default: return '';
                     }
-                })
+                })*/
                 .attr('class',function(d){
                     //console.log("link enter 2");
                     switch ( d.ty ){
@@ -866,6 +867,8 @@ function defineArrowMarkerComp( a_svg ){
             .attr('d', 'M 4,0 L 0,2 L 4,4 L 8,2');
 }
 
+/*
+Old version marker at 'start'
 function defineArrowMarkerNewVer( a_svg, a_name ){
     a_svg.append('defs').append('marker')
         .attr('id','arrow-new-version')
@@ -878,4 +881,18 @@ function defineArrowMarkerNewVer( a_svg, a_name ){
             .attr('class','arrow-path new-version')
             .attr('d', 'M 2,0 L 6,2 L 2,4 M 4,2 L 0,4 L 0,0');
 }
+*/
 
+// New version marker at 'end'
+function defineArrowMarkerNewVer( a_svg, a_name ){
+    a_svg.append('defs').append('marker')
+        .attr('id','arrow-new-version')
+        .attr('refX',-2.5)
+        .attr('refY',2)
+        .attr('orient','auto')
+        .attr('markerWidth',7)
+        .attr('markerHeight',4)
+        .append('svg:path')
+            .attr('class','arrow-path new-version')
+            .attr('d', 'M 5,0 L 0,2 L 5,4 L 5,0 M 6,0 L 7,0 L 7,4 L 6,4 L 6,0');
+}

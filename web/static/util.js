@@ -21,13 +21,11 @@ export function tooltipTheme( a_objs ){
 
 export function inputDisable( a_objs ){
     a_objs.prop("disabled",true).addClass("ui-state-disabled");
-    //a_objs.prop("disabled",true).removeClass("ui-widget-content").addClass("ui-state-disabled");
     return a_objs;
 }
 
 export function inputEnable( a_objs ){
     a_objs.prop("disabled",false).removeClass("ui-state-disabled");
-    //a_objs.prop("disabled",false).removeClass("ui-state-disabled").addClass("ui-widget-content");
     return a_objs;
 }
 
@@ -37,6 +35,24 @@ export function getUpdatedValue( a_new_val, a_old_obj, a_new_obj, a_field ){
     var tmp = a_new_val.trim(), old = a_old_obj[a_field];
     if (( old === undefined && tmp.length ) || ( old !== undefined && tmp != old ))
         a_new_obj[a_field] = tmp;
+}
+
+// NOTE: values are strings containing JSON, not actual JSON objects
+export function getUpdatedValueJSON( a_new_val, a_old_obj, a_new_obj, a_field ){
+    var tmp = a_new_val.trim(), old = a_old_obj[a_field];
+    if ( old === undefined && tmp.length ){
+        a_new_obj[a_field] = tmp;
+    }else if ( tmp.length ){
+        // Must compare values - have to restringify both b/c formats may differ with same content
+        // TODO - This should be a deep compare due to possibly inconsistent object arrangement
+        var oldjs = JSON.stringify(JSON.parse( old )),
+            newjs = JSON.stringify(JSON.parse( tmp ));
+
+        if ( oldjs != newjs ){
+            a_new_obj[a_field] = tmp;
+        }
+    }
+
 }
 
 export function sizeToString( a_bytes ){
@@ -186,7 +202,7 @@ export function getKeyIcon( a_key ){
     else if ( a_key.startsWith( "published" ))
         return "book";
 
-    console.log("not found", a_key );
+    console.log("getKeyIcon - not found", a_key );
 }
 
 export function getDataIcon( a_data ){

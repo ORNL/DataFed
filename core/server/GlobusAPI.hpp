@@ -53,14 +53,15 @@ public:
     void        refreshAccessToken( const std::string & a_ref_tok, std::string & a_new_acc_tok, uint32_t & a_expires_in );
 
 private:
-    long        get( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, std::string & a_result );
-    long        post( const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, std::string & a_result );
+    long        get( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, std::string & a_result );
+    long        post( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, std::string & a_result );
     std::string getSubmissionID( const std::string & a_acc_token );
     bool        eventsHaveErrors( const std::vector<std::string> & a_events, XfrStatus & status, std::string & a_err_msg );
     void        checkResponsCode( long a_code, libjson::Value::Object & a_body ) const;
 
     Config &    m_config;
-    CURL *      m_curl;
+    CURL *      m_curl_xfr;
+    CURL *      m_curl_auth;
 };
 
 }}
