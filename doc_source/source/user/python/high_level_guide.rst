@@ -29,6 +29,7 @@ Getting Started
 ---------------
 Users are recommended to follow the:
 
+* `YouTube video on an introduction to DataFed <https://www.youtube.com/watch?v=MAfgHxPHNCI>`_
 * `getting-started guide <../../system/getting_started.html>`_ to get accounts, and allocations on DataFed
 * `installation instructions <../client/install.html>`_ to install and configure the DataFed Python package on the machine(s) where they intend to use DataFed
 
