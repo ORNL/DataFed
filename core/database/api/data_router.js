@@ -317,11 +317,8 @@ function recordUpdate( client, record, result ){
         if ( record.md !== undefined )
             perms |= g_lib.PERM_WR_META;
 
-        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.tags !== undefined )
+        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.tags !== undefined || record.source !== undefined )
             perms |= g_lib.PERM_WR_REC;
-
-        if ( record.size !== undefined || record.dt !== undefined || record.source !== undefined )
-            perms |= g_lib.PERM_WR_DATA;
 
         if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
             throw g_lib.ERR_PERM_DENIED;
@@ -334,18 +331,18 @@ function recordUpdate( client, record, result ){
     g_lib.procInputParam( record, "title", true, obj );
     g_lib.procInputParam( record, "desc", true, obj );
     g_lib.procInputParam( record, "alias", true, obj );
-    g_lib.procInputParam( record, "source", true, obj );
     g_lib.procInputParam( record, "sch_id", true, obj );
+    g_lib.procInputParam( record, "source", true, obj );
 
     if ( record.md === "" ){
         obj.md = null;
         obj.md_err_msg = null;
         obj.md_err = false;
-    }
-    else if ( record.md ){
+    }else if ( record.md ){
         obj.md = record.md;
-        if ( Array.isArray( obj.md ))
+        if ( Array.isArray( obj.md )){
             throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
+        }
         obj.md_err_msg = null;
         obj.md_err = false;
     }
@@ -361,7 +358,7 @@ function recordUpdate( client, record, result ){
             obj.md_err_msg = null;
             obj.md_err = false;
         }
-    }else if ( obj.sch_id ) {
+    }else if ( obj.sch_id ){
         var idx = obj.sch_id.indexOf(":");
         if ( idx < 0 ){
             throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
@@ -370,8 +367,9 @@ function recordUpdate( client, record, result ){
             sch_ver = parseInt( obj.sch_id.substr( idx + 1 )),
             sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
 
-        if ( !sch )
+        if ( !sch ){
             throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist" ];
+        }
 
         obj.sch_id = sch._id;
         g_db._update( sch._id, { cnt: sch.cnt + 1 });
@@ -391,11 +389,15 @@ function recordUpdate( client, record, result ){
             obj.size = 1048576; // Don't know actual size - doesn't really matter
         }
     }else{
+        if ( obj.source ){
+            throw [g_lib.ERR_INVALID_PARAM,"Raw data source cannot be specified for managed data records."];
+        }
+
         if ( record.ext_auto !== undefined )
             obj.ext_auto = record.ext_auto;
 
         if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
-            if ( obj.source !== undefined || data.source !== undefined ){
+            if ( data.source !== undefined ){
                 var src = obj.source || data.source;
                 if ( src ){
                     // Skip possible "." in end-point name
@@ -419,7 +421,7 @@ function recordUpdate( client, record, result ){
         alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to }),
         i;
 
-    if ( record.size !== undefined ) {
+    /*if ( record.size !== undefined ) {
         obj.size = record.size;
 
         if ( obj.size != data.size ){
@@ -429,6 +431,7 @@ function recordUpdate( client, record, result ){
 
     if ( record.dt != undefined )
         obj.dt = record.dt;
+    */
 
     if ( record.tags_clear ){
         if ( data.tags ){
@@ -453,12 +456,9 @@ function recordUpdate( client, record, result ){
                 }
             }
 
-            //console.log("add tags",add_tags);
-            //console.log("rem tags",rem_tags);
             g_lib.addTags( add_tags );
             g_lib.removeTags( rem_tags );
         }else{
-            //console.log("add tags",record.tags);
             g_lib.addTags( record.tags );
         }
 
@@ -467,8 +467,7 @@ function recordUpdate( client, record, result ){
 
     //console.log("upd obj",obj);
 
-    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: record.mdset?false:true });
-    data = data.new;
+    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: record.mdset?false:true }).new;
 
     if ( obj.alias !== undefined ) {
         var old_alias = g_db.alias.firstExample({ _from: data_id });
@@ -617,11 +616,11 @@ router.post('/update', function (req, res) {
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
     sch_id: joi.string().allow('').optional(),
-    size: joi.number().optional(),
+    //size: joi.number().optional(),
     source: joi.string().allow('').optional(),
     ext: joi.string().allow('').optional(),
     ext_auto: joi.boolean().optional(),
-    dt: joi.number().optional(),
+    //dt: joi.number().optional(),
     dep_add: joi.array().items(joi.object({
         id: joi.string().required(),
         type: joi.number().integer().required()})).optional(),
