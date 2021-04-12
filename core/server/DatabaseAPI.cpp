@@ -1055,16 +1055,16 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::Re
     }
     if ( a_request.has_sch_id() )
         body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
-    if ( a_request.has_size() )
-        body += ",\"size\":" + to_string(a_request.size());
+    //if ( a_request.has_size() )
+    //    body += ",\"size\":" + to_string(a_request.size());
     if ( a_request.has_source() )
         body += ",\"source\":\"" + a_request.source() + "\"";
     if ( a_request.has_ext() )
         body += ",\"ext\":\"" + a_request.ext() + "\"";
     if ( a_request.has_ext_auto() )
         body += string(",\"ext_auto\":") + (a_request.ext_auto()?"true":"false");
-    if ( a_request.has_dt() )
-        body += ",\"dt\":" + to_string(a_request.dt());
+    //if ( a_request.has_dt() )
+    //    body += ",\"dt\":" + to_string(a_request.dt());
 
     if ( a_request.dep_add_size() )
     {

@@ -213,7 +213,7 @@ class API:
 
     def dataCreate( self, title, alias = None, description = None, tags = None, extension = None,
         metadata = None, metadata_file = None, schema = None, schema_enforce = None,
-        parent_id = "root", deps = None, repo_id = None, context = None ):
+        parent_id = "root", deps = None, repo_id = None, raw_data_file = None, external = None, context = None ):
         """
         Create a new data record
 
@@ -255,6 +255,12 @@ class API:
         repo_id : str, Optional. Default = None
             ID of data repository to create this record in.
             By default, the default repository will be chosen.
+        raw_data_file : str, Optional. Default = None
+            Raw data file as a full Globus path. Currently, this parameter can only
+            be specified with the external flag set to true.
+        external : bool, Optional. Default = None
+            Set to true to specify raw data for this record is external (unmanaged).
+            Cannot be specified with repo_id.
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
 
@@ -268,8 +274,14 @@ class API:
         Exception : On communication or server error
         """
 
+        if repo_id and external:
+            raise Exception( "Cannot specify repository for external (unmanaged) data." )
+
+        if raw_data_file and not external:
+            raise Exception( "Cannot specify raw_data_file for managed data (must upload after record creation)." )
+
         if metadata and metadata_file:
-            raise Exception( "Cannot specify both metadata and metadata-file options" )
+            raise Exception( "Cannot specify both metadata and metadata-file options." )
 
         msg = auth.RecordCreateRequest()
         msg.title = title
@@ -286,6 +298,12 @@ class API:
 
         if repo_id:
             msg.repo_id = repo_id
+
+        if external:
+            msg.external = external
+
+        if raw_data_file:
+            msg.source = raw_data_file
 
         if extension:
             msg.ext = extension
@@ -323,7 +341,7 @@ class API:
 
     def dataUpdate( self, data_id, title = None, alias = None, description = None, tags = None,
         extension = None, metadata = None, metadata_file = None, metadata_set = False,
-        schema = None, schema_enforce = None, deps_add = None, deps_rem = None, context = None ):
+        schema = None, schema_enforce = None, deps_add = None, deps_rem = None, raw_data_file = None, context = None ):
         """
         Update an existing data record
 
@@ -372,6 +390,9 @@ class API:
             * "der" - Is derived from
             * "comp" - Is comprised of
             * "ver" - Is new version of
+        raw_data_file : str, Optional. Default = None
+            Raw data file as a full Globus path. Currently, this parameter can only
+            be specified for records with the external (unmanaged) raw data.
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
 
@@ -412,6 +433,9 @@ class API:
                 msg.ext_auto = False
             else:
                 msg.ext_auto = True
+
+        if raw_data_file:
+            msg.source = raw_data_file
 
         if metadata_file:
             try:

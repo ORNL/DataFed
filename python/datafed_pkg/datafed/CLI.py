@@ -650,16 +650,17 @@ def _dataView( data_id, context ):
 @click.option("-T","--tags",type=str,required=False,help="Tags (comma separated list).")
 @click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.")
 @click.option("-x","--extension",type=str,required=False,help="Override raw data file extension if provided (default is auto detect).")
+@click.option("-E","--external",is_flag=True,required=False,help="Raw data file is external to DataFed (unmanaged)") 
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.")
 @click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.") 
 @click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version") 
 @click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors") 
 @click.option("-p","--parent",type=str,required=False, help="Parent collection ID, alias, or listing index. Default is the current working collection.")
-@click.option("-R","--repository",type=str,required=False,help="Repository ID. Uses default allocation if not specified.")
+@click.option("-R","--repository",type=str,required=False,help="Repository ID (managed data only). Uses default allocation if not specified.")
 @click.option("-D","--deps",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.")
 @_global_context_options
 @_global_output_options
-def _dataCreate( title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, schema, schema_enforce, parent, repository, deps, context ):
+def _dataCreate( title, alias, description, tags, raw_data_file, extension, external, metadata, metadata_file, schema, schema_enforce, parent, repository, deps, context ):
     '''
     Create a new data record. The data record 'title' is required, but all
     other attributes are optional. On success, the ID of the created data
@@ -670,8 +671,11 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, meta
     convenience to avoid a separate dataPut() call.
     '''
 
-    if raw_data_file and not _interactive:
+    if raw_data_file and not ( _interactive and external ):
         raise Exception( "Cannot specify --raw-data-file option in non-interactive modes." )
+
+    if repository and external:
+        raise Exception( "Cannot specify a repository for external raw data." )
 
     if metadata and metadata_file:
         raise Exception( "Cannot specify both --metadata and --metadata-file options." )
@@ -686,10 +690,10 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, meta
 
     reply = _capi.dataCreate( title, alias = alias, description = description, tags = tags, extension = extension,
         metadata = metadata, metadata_file = metadata_file, schema = schema, schema_enforce = schema_enforce,
-        parent_id = parent_id, deps = deps, repo_id = repository, context = context )
+        parent_id = parent_id, deps = deps, repo_id = repository, raw_data_file = raw_data_file, external = external, context = context )
     _generic_reply_handler( reply, _print_data )
 
-    if raw_data_file:
+    if raw_data_file and not external:
         click.echo("")
         reply = _capi.dataPut( reply[0].data[0].id, raw_data_file )
         _generic_reply_handler( reply, _print_task )
@@ -720,8 +724,12 @@ def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extens
     provided as a convenience to avoid a separate dataPut() call.
     '''
 
-    if raw_data_file and not _interactive:
-        raise Exception( "Cannot specify --raw-data-file option in non-interactive modes." )
+    if raw_data_file:
+        # Must determine if record has external data
+        view_reply = _capi.dataView( _resolve_id( data_id ), context = context )
+        external = view_reply[0].data[0].external
+        if ( not external ) and not _interactive:
+            raise Exception( "Cannot specify --raw-data-file option in non-interactive modes." )
 
     if metadata and metadata_file:
         raise Exception( "Cannot specify both --metadata and --metadata-file options." )
@@ -731,10 +739,10 @@ def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extens
 
     reply = _capi.dataUpdate( _resolve_id( data_id ), title = title, alias = alias, description = description, tags = tags, extension = extension,
         metadata = metadata, metadata_file = metadata_file, metadata_set = metadata_set, schema = schema, schema_enforce = schema_enforce,
-        deps_add = deps_add, deps_rem = deps_rem, context = context )
+        deps_add = deps_add, deps_rem = deps_rem, raw_data_file = raw_data_file, context = context )
     _generic_reply_handler( reply, _print_data )
 
-    if raw_data_file:
+    if raw_data_file and not external:
         click.echo("")
         reply = _capi.dataPut( reply[0].data[0].id, raw_data_file )
         _generic_reply_handler( reply, _print_task )
@@ -1750,28 +1758,30 @@ def _print_endpoints( message ):
 
 def _print_data( message ):
     for dr in message.data:
-        print("data:",dr)
-
         click.echo( "{:<15}{:<50}".format('ID: ', dr.id))
         click.echo( "{:<15}{:<50}".format('Alias: ', dr.alias if dr.alias else "(none)" ))
         _wrap_text( dr.title, "Title:", 15 )
         _wrap_text( _arrayToCSV( dr.tags, 0 ), "Tags:", 15 )
 
-        if dr.data_url:
-            click.echo("{:<15}{:<50}".format('DOI No.: ', dr.doi))
-            click.echo("{:<15}{:<50}".format('Data URL: ', dr.data_url))
-        else:
-            click.echo("{:<15}{:<50}".format('Data Size: ', _capi.sizeToStr(dr.size)) + '\n' +
-                    "{:<15}{:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
+        if dr.external:
+            click.echo(
+                    "{:<15}{:<50}\n".format('Type: ', 'External' ) +
                     "{:<15}{:<50}".format('Source: ', dr.source if dr.source else '(none)' ))
+        else:
+            click.echo(
+                    "{:<15}{:<50}\n".format('Type: ', 'Managed' ) +
+                    "{:<15}{:<50}\n".format('Source: ', dr.source if dr.source else '(none)' ) +
+                    "{:<15}{:<50}\n".format('Size: ', _capi.sizeToStr(dr.size)) +
+                    "{:<15}{:<50}".format('Repo ID: ', dr.repo_id ))
+
             if dr.ext_auto:
                 click.echo( "{:<15}{:<50}".format('Extension: ', '(auto)'))
             else:
                 click.echo( "{:<15}{:<50}".format('Extension: ', dr.ext if dr.ext else '(not set)' ))
 
-        click.echo( "{:<15}{:<50}".format('Owner: ', dr.owner[2:]) + '\n' +
-                    "{:<15}{:<50}".format('Creator: ', dr.creator[2:]) + '\n' +
-                    "{:<15}{:<50}".format('Created: ', _capi.timestampToStr(dr.ct)) + '\n' +
+        click.echo( "{:<15}{:<50}\n".format('Owner: ', dr.owner[2:]) +
+                    "{:<15}{:<50}\n".format('Creator: ', dr.creator[2:]) +
+                    "{:<15}{:<50}\n".format('Created: ', _capi.timestampToStr(dr.ct)) +
                     "{:<15}{:<50}".format('Updated: ', _capi.timestampToStr(dr.ut)))
 
         if len(dr.desc) > 200 and _verbosity < 2:
