@@ -124,20 +124,9 @@
 
         api.userView( user_uid, true, function( ok, user ){
             if ( ok && user ){
-                //console.log("user from db:",user);
-
                 settings.setUser( user );
 
-                console.log("user from settings:",settings.user);
-
                 api.epRecentLoad();
-
-                //settings.setUserAdmin( user.isAdmin );
-                //settings.setUserRepoAdmin( user.isRepoAdmin );
-
-                //if ( user.options ){
-                //    settings.setOptions( user.options );
-                //}
 
                 //document.getElementById("uname").innerHTML = settings.user.name;
                 $( "#uname" ).text( settings.user.nameFirst + " " + settings.user.nameLast );

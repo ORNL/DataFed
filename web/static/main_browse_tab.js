@@ -2289,7 +2289,12 @@ export function init(){
                 $(".btn",data.node.li).button();
             }
         },
+        focus: function( ev, data ){
+            //console.log("focus",data.node.key);
+            data.node.setActive( true );
+        },
         activate: function( event, data ) {
+            //console.log("activate",data.node.key);
 
             if ( keyNav && !keyNavMS ){
                 data_tree.selectAll(false);
@@ -2301,8 +2306,8 @@ export function init(){
             panel_info.showSelectedInfo( data.node, checkTreeUpdate );
         },
         select: function( event, data ) {
-            if ( data.node.isSelected() ){
-                //console.log("select",data.node.key,"scope:",data.node.data.scope);
+                //console.log("select",data.node.key);
+                if ( data.node.isSelected() ){
                 var others;
 
                 if ( searchMode ){
@@ -2409,8 +2414,10 @@ export function init(){
             //console.log("click",data.node.key);
 
             if ( dragging ){ // Suppress click processing on aborted drag
+                console.log("click drasgging");
                 dragging = false;
             }else if ( !searchMode ){
+                console.log("click not search");
                 if ( event.which == null ){
                     // RIGHT-CLICK CONTEXT MENU
 
