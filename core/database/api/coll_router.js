@@ -61,7 +61,7 @@ router.post('/create', function (req, res) {
                 }
 
                 var time = Math.floor( Date.now()/1000 );
-                var obj = { owner: owner._id, ct: time, ut: time };
+                var obj = { owner: owner._id, creator: client._id, ct: time, ut: time };
 
                 g_lib.procInputParam( req.body, "title", false, obj );
                 g_lib.procInputParam( req.body, "desc", false, obj );
