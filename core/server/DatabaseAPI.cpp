@@ -1749,6 +1749,9 @@ DatabaseAPI::setCollData( Auth::CollDataReply & a_reply, const libjson::Value & 
             if ( obj.has( "owner" ))
                 coll->set_owner( obj.asString() );
 
+            if ( obj.has( "creator" ))
+                coll->set_creator( obj.asString() );
+
             if ( obj.has( "notes" ))
                 coll->set_notes( obj.asNumber() );
         }

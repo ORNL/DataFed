@@ -259,10 +259,11 @@ message CollData
     repeated string             tags        = 5;
     optional string             topic       = 6;
     optional string             owner       = 7;
-    optional uint32             ct          = 8;
-    optional uint32             ut          = 9;
-    optional string             parent_id   = 10;
-    optional uint32             notes       = 11;
+    optional string             creator     = 8;
+    optional uint32             ct          = 9;
+    optional uint32             ut          = 10;
+    optional string             parent_id   = 11;
+    optional uint32             notes       = 12;
 }
 
 message GroupData
