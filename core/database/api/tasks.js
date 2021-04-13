@@ -14,17 +14,28 @@ var tasks_func = function() {
     obj.taskInitAllocCreate = function( a_client, a_repo_id, a_subject_id, a_data_limit, a_rec_limit ){
         console.log("taskInitAllocCreate");
 
+        // Check if repo and subject exist
         if ( !g_db._exists( a_repo_id ))
             throw [g_lib.ERR_NOT_FOUND,"Repo, '" + a_repo_id + "', does not exist"];
 
         if ( !g_db._exists( a_subject_id ))
             throw [g_lib.ERR_NOT_FOUND,"Subject, '" + a_subject_id + "', does not exist"];
 
+        // Check for proper permissions
         g_lib.ensureAdminPermRepo( a_client, a_repo_id );
 
+        // Check if there is already a matching allocation
         var alloc = g_db.alloc.firstExample({ _from: a_subject_id, _to: a_repo_id });
         if ( alloc )
             throw [g_lib.ERR_INVALID_PARAM, "Subject, '" + a_subject_id + "', already has as allocation on " + a_repo_id ];
+
+        // Check if there is an existing alloc task to involving the same allocation (repo + subject)
+        var res = g_db._query("for v, e in 1..1 inbound @repo lock filter e.context == @subj && v.type == @type return v._id",
+            { repo: a_repo_id, subj: a_subject_id, type: g_lib.TT_ALLOC_CREATE });
+
+        if ( res.hasNext() ){
+            throw [g_lib.ERR_IN_USE, "A duplicate allocation create task was found." ];
+        }
 
         var repo = g_db.repo.document( a_repo_id );
         var path = repo.path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
@@ -86,6 +97,14 @@ var tasks_func = function() {
         var count = g_db._query("return length(for v, e in 1..1 inbound @repo loc filter e.uid == @subj return 1)", { repo: a_repo_id, subj: a_subject_id }).next();
         if ( count )
             throw [g_lib.ERR_IN_USE,"Cannot delete allocation - records present"];
+
+        // Check if there is an existing alloc task to involving the same allocation (repo + subject)
+        var res = g_db._query("for v, e in 1..1 inbound @repo lock filter e.context == @subj && v.type == @type return v._id",
+            { repo: a_repo_id, subj: a_subject_id, type: g_lib.TT_ALLOC_DEL });
+
+        if ( res.hasNext() ){
+            throw [g_lib.ERR_IN_USE, "A duplicate allocation delete task was found." ];
+        }
 
         var path = repo.path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
         var state = { repo_id: a_repo_id, subject: a_subject_id, repo_path: path };
