@@ -138,6 +138,7 @@ function recordCreate( client, record, result ){
         var loc = { _from: data._id, _to: repo_alloc._to, uid: owner_id };
         g_db.loc.save( loc );
         g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
+        data.repo_id = repo_alloc._to;
     }
 
     if ( alias_key ) {
@@ -183,7 +184,6 @@ function recordCreate( client, record, result ){
     
     data.id = data._id;
     data.parent_id = parent_id;
-    data.repo_id = repo_alloc._to;
 
     delete data._id;
     delete data._key;

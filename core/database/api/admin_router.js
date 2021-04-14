@@ -85,7 +85,7 @@ router.get('/check', function (req, res) {
                 count += subres.length;
                 result.data_multi_owner = subres;
 
-                subres = g_db._query("for i in d let x = (for v in 1..1 outbound i._id loc return v) filter length(x) == 0 return i._id").toArray();
+                subres = g_db._query("for i in d filter i.external != true let x = (for v in 1..1 outbound i._id loc return v) filter length(x) == 0 return i._id").toArray();
                 count += subres.length;
                 result.data_no_loc = subres;
 

@@ -844,15 +844,6 @@ module.exports = ( function() {
             return Array.from( ctx.tags );
     };
 
-    // For use when moving a record
-    obj.getCollCategoryTags = function( a_coll_id ){
-        var coll = obj.db.c.document( a_coll_id ),
-            ctx = obj.catalogCalcParCtxt( coll, {} );
-
-        if ( ctx.pub )
-            return Array.from( ctx.tags );
-    };
-    
     obj.catalogUpdateRecord = function( a_data, a_coll, a_ctx, a_visited = {}){
         var p, par = obj.db.item.byExample({ _to: a_data._id }),
             tmp, _ctx = (a_ctx?a_ctx:{ pub: false, tags: new Set()});
