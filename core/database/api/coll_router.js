@@ -589,8 +589,9 @@ router.get('/write', function (req, res) {
                 if ( have_loose ){
                     var root_id = g_lib.getRootID(owner_id),
                         rctxt = null,
-                        loose_res = [],
-                        cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
+                        loose_res = [];
+
+                    cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
 
                     if ( cres.count() + (req.queryParams.add?req.queryParams.add.length:0) > g_lib.MAX_COLL_ITEMS )
                         throw [g_lib.ERR_INPUT_TOO_LONG,"Root collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
@@ -658,8 +659,7 @@ router.get('/move', function (req, res) {
 
                 var chk_perm = false,
                     src_perms = 0,
-                    dst_perms = 0,
-                    coll;
+                    dst_perms = 0;
 
                 if ( !g_lib.hasAdminPermObject( client, src_id )) {
                     src_perms = g_lib.getPermissions( client, src, g_lib.PERM_LINK, true );

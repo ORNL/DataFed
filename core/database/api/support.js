@@ -374,7 +374,7 @@ module.exports = ( function() {
         }
 
         return false;
-    }
+    };
 
     obj.getUserFromClientID = function( a_client_id ) {
         // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
@@ -883,7 +883,7 @@ module.exports = ( function() {
 
         // Update record with pub flag & tags
         obj.db._update( a_data._id, { public: _ctx.pub, cat_tags: _ctx.pub?Array.from(_ctx.tags):null }, { keepNull: false });
-    }
+    };
 
     obj.catalogCalcParCtxt = function( a_coll, a_visited ){
         console.log("catalogCalcParCtxt",a_coll._id);
@@ -2123,7 +2123,7 @@ module.exports = ( function() {
         }
 
         return Array.from( cols );
-    }
+    };
 
     obj.expandSearchCollections = function( a_client, a_col_ids ){
         var cols = new Set();
@@ -2131,7 +2131,7 @@ module.exports = ( function() {
             obj.expandSearchCollections_recurse( a_client, cols, a_col_ids[c] );
         }
         return Array.from( cols );
-    }
+    };
 
     obj.expandSearchCollections_recurse = function( a_client, a_cols, a_col_id, a_inh_perm ){
         if ( !a_cols.has( a_col_id )){
@@ -2188,7 +2188,7 @@ module.exports = ( function() {
                 }
             }
         }
-    }
+    };
 
     return obj;
 }() );

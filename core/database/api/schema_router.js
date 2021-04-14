@@ -474,7 +474,7 @@ router.get('/search', function (req, res) {
         //qry += " filter (i.pub == true || i.own_id == @uid) sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
 
         result = g_db._query( qry, par, {}, { fullCount: true });
-        var res, tot = result.getExtra().stats.fullCount;
+        var tot = result.getExtra().stats.fullCount;
         result = result.toArray();
 
         for ( var i in result ){
@@ -609,7 +609,7 @@ function gatherRefs( a_doc, a_refs ){
         v = a_doc[k];
 
         if (  v !== null && ( typeof v === 'object' || Array.isArray( v ))){
-            gatherRefs( v, a_refs )
+            gatherRefs( v, a_refs );
         }else if ( k == "$ref" ){
             if ( typeof v !== 'string' )
                 throw [ g_lib.ERR_INVALID_PARAM, "Invalid reference type in schema." ];

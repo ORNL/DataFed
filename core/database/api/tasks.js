@@ -1732,7 +1732,7 @@ var tasks_func = function() {
         }
 
         var data, alias, a, key,
-            alias_pref = a_dst_owner_id.charAt(0) + ":" + a_dst_owner_id.substr(2) + ":";
+            alias_pref = a_dst_owner_id.charAt(0) + ":" + a_dst_owner_id.substr(2) + ":",
             coll = g_db.c.document( a_dst_coll_id );
 
         if ( coll.owner != a_dst_owner_id )
@@ -1780,7 +1780,7 @@ var tasks_func = function() {
                 g_db.owner.save({ _from: "a/"+key, _to: a_dst_owner_id });
             }
         }
-    }
+    };
 
     obj._ensureExclusiveAccess = function( a_ids ){
         console.log("_ensureExclusiveAccess start", Date.now());

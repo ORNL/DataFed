@@ -366,8 +366,9 @@ function recordUpdate( client, record, result ){
             throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
         }
         var sch_id = obj.sch_id.substr( 0, idx ),
-            sch_ver = parseInt( obj.sch_id.substr( idx + 1 )),
-            sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
+            sch_ver = parseInt( obj.sch_id.substr( idx + 1 ));
+
+        sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
 
         if ( !sch ){
             throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist" ];
@@ -523,7 +524,7 @@ function recordUpdate( client, record, result ){
 
     // Convert DB schema _id to user-facing id + ver
     if ( data.sch_id ){
-        var sch = g_db.sch.document( data.sch_id );
+        sch = g_db.sch.document( data.sch_id );
         data.sch_id = sch.id + ":" + sch.ver;
     }
 
