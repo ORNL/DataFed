@@ -42,16 +42,6 @@ function recordCreate( client, record, result ){
     if ( cnt_res.next() >= g_lib.MAX_COLL_ITEMS )
         throw [g_lib.ERR_INPUT_TOO_LONG,"Parent collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 
-    // If repo is specified, verify it; otherwise assign one (aware of default)
-    if ( record.repo ) {
-        repo_alloc = g_lib.verifyRepo( owner_id, record.repo );
-    } else {
-        repo_alloc = g_lib.assignRepo( owner_id );
-    }
-
-    if ( !repo_alloc )
-        throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
-
     var time = Math.floor( Date.now()/1000 ),
         obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id },
         sch_id, sch_ver;
@@ -73,6 +63,16 @@ function recordCreate( client, record, result ){
             obj.size = 1048576; // Don't know actual size - doesn't really matter
         }
     }else{
+        // If repo is specified, verify it; otherwise assign one (aware of default)
+        if ( record.repo ) {
+            repo_alloc = g_lib.verifyRepo( owner_id, record.repo );
+        } else {
+            repo_alloc = g_lib.assignRepo( owner_id );
+        }
+
+        if ( !repo_alloc )
+            throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
+
         // Extension setting only apply to managed data
         if ( record.ext_auto !== undefined )
             obj.ext_auto = record.ext_auto;
@@ -133,10 +133,12 @@ function recordCreate( client, record, result ){
 
     g_lib.makeTitleUnique( parent_id, data );
 
-    // Create data location edge and update allocation and stats
-    var loc = { _from: data._id, _to: repo_alloc._to, uid: owner_id };
-    g_db.loc.save( loc );
-    g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
+    if ( !record.external ){
+        // Create data location edge and update allocation and stats
+        var loc = { _from: data._id, _to: repo_alloc._to, uid: owner_id };
+        g_db.loc.save( loc );
+        g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
+    }
 
     if ( alias_key ) {
         if ( g_db.a.exists({ _key: alias_key }))
@@ -326,7 +328,7 @@ function recordUpdate( client, record, result ){
 
     var owner_id = g_db.owner.firstExample({ _from: data_id })._to,
         obj = { ut: Math.floor( Date.now()/1000 ) },
-        sch;
+        sch,i;
 
     g_lib.procInputParam( record, "title", true, obj );
     g_lib.procInputParam( record, "desc", true, obj );
@@ -416,22 +418,6 @@ function recordUpdate( client, record, result ){
                 obj.ext = "." + obj.ext;
         }
     }
-
-    var loc = g_db.loc.firstExample({ _from: data_id }),
-        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to }),
-        i;
-
-    /*if ( record.size !== undefined ) {
-        obj.size = record.size;
-
-        if ( obj.size != data.size ){
-            g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
-        }
-    }
-
-    if ( record.dt != undefined )
-        obj.dt = record.dt;
-    */
 
     if ( record.tags_clear ){
         if ( data.tags ){
@@ -556,7 +542,13 @@ function recordUpdate( client, record, result ){
     result.updates.add( data._id );
 
     data.id = data._id;
-    data.repo_id = alloc._to;
+
+    if ( !data.external ){
+        var loc = g_db.loc.firstExample({ _from: data_id }),
+            alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+
+        data.repo_id = alloc._to;
+    }
 
     delete data._rev;
     delete data._key;
@@ -740,7 +732,7 @@ router.post('/update/md_err_msg', function (req, res) {
 .summary('Update data record schema validation error message')
 .description('Update data record schema validation error message');
 
-
+// Only called after upload of raw data for managed records
 router.post('/update/size', function (req, res) {
         var retry = 10;
 
@@ -805,8 +797,6 @@ router.get('/view', function (req, res) {
         var data = g_db.d.document( data_id ),
             i,dep,rem_md = false, admin = false;
 
-        console.log("view 2");
-
         if ( client ){
             admin = g_lib.hasAdminPermObject( client, data_id );
 
@@ -844,7 +834,9 @@ router.get('/view', function (req, res) {
         if ( rem_md && data.md )
             delete data.md;
 
-        data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
+        if ( !data.external ){
+            data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
+        }
 
         delete data._rev;
         delete data._key;

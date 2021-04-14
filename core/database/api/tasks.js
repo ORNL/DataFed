@@ -355,6 +355,11 @@ var tasks_func = function() {
 
     // ----------------------- ALLOCATION CHANGE ----------------------------
 
+    /* Move records with managed data to the specified destination repository.
+    Requires removing old "loc" edges and creating new ones between the affected
+    records and the destination repository, and updating the statistics of all
+    involved allocations. Unmanaged records do not use allocations and are ignored.
+    */
     obj.taskInitRecAllocChg = function( a_client, a_proj_id, a_res_ids, a_dst_repo_id, a_check ){
         console.log("taskInitRecAllocChg");
 
@@ -388,26 +393,13 @@ var tasks_func = function() {
 
         result.tot_cnt = result.ext_data.length + result.glob_data.length;
         result.act_size = 0;
-        result.act_cnt = 0;
-
-        for ( i in result.ext_data ){
-            rec = result.ext_data[i];
-            rec_ids.push( rec.id );
-
-            loc = g_db.loc.firstExample({ _from: rec.id });
-            if ( loc._to != a_dst_repo_id ){
-                result.act_cnt++;
-            }
-        }
 
         for ( i in result.glob_data ){
             rec = result.glob_data[i];
-            rec_ids.push( rec.id );
-
             loc = g_db.loc.firstExample({ _from: rec.id });
-            if ( loc._to != a_dst_repo_id ){
+            if ( loc && loc._to != a_dst_repo_id ){
+                rec_ids.push( rec.id );
                 if ( rec.size ){
-                    result.act_cnt++;
                     result.act_size += rec.size;
                 }
             }
@@ -423,8 +415,8 @@ var tasks_func = function() {
         if ( rec_ids.length == 0 || a_check )
             return result;
 
-        var state = { encrypt: 1, ext_data: result.ext_data, glob_data: result.glob_data, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
-        var task = obj._createTask( a_client._id, g_lib.TT_REC_ALLOC_CHG, 3, state );
+        var state = { encrypt: 1, glob_data: result.glob_data, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
+        var task = obj._createTask( a_client._id, g_lib.TT_REC_ALLOC_CHG, 2, state );
 
         if ( g_proc._processTaskDeps( task._id, rec_ids, 1, 0 )){
             task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued"}, { returnNew: true }).new;
@@ -472,37 +464,18 @@ var tasks_func = function() {
             obj._transact( function(){
                 // Generate transfer steps
                 state.xfr = obj._buildTransferDoc( g_lib.TT_REC_ALLOC_CHG, state.glob_data, null, state.dst_repo_id, false, state.owner_id );
-                // Update step info
+                // Recalculate number of steps
                 a_task.step = 1;
-                a_task.steps = ( state.xfr.length * 4 ) + 3;
+                a_task.steps = ( state.xfr.length * 4 ) + 2;
                 // Update task
                 g_db._update( a_task._id, { step: a_task.step, steps: a_task.steps, state: { xfr: state.xfr }, ut: Math.floor( Date.now()/1000 )});
                 // Fall-through to initiate first transfer
             }, ["repo","loc"], ["task"] );
         }
 
-        if ( a_task.step == 1 ){
-            console.log("taskRunRecAllocChg - move non-globus records");
-            obj._transact( function(){
-                if ( state.ext_data.length ){
-                    // Ensure allocation has sufficient record capacity
-                    alloc = g_db.alloc.firstExample({_from: state.owner_id, _to: state.dst_repo_id });
-                    if ( alloc.rec_count + state.ext_data.length > alloc.rec_limit )
-                        throw [ g_lib.ERR_PERM_DENIED, "Allocation record limit exceeded on " + state.dst_repo_id ];
-
-                    obj.recMoveInit( state.ext_data, state.dst_repo_id );
-                    obj.recMoveFini( state.ext_data );
-                }
-                // Update task step
-                a_task.step = 2;
-                g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-                // Fall-through to next step
-            }, [], ["loc","alloc","task"] );
-        }
-
-        if ( a_task.step > 1 && a_task.step < a_task.steps - 1 ){
-            substep = (a_task.step - 2) % 4;
-            xfrnum = Math.floor((a_task.step-2)/4);
+        if ( a_task.step > 0 && a_task.step < a_task.steps - 1 ){
+            substep = (a_task.step - 1) % 4;
+            xfrnum = Math.floor((a_task.step-1)/4);
             xfr = state.xfr[xfrnum];
             console.log("taskRunRecAllocChg - xfr num",xfrnum,"substep",substep);
 
@@ -584,6 +557,13 @@ var tasks_func = function() {
 
     // ----------------------- OWNER CHANGE ----------------------------
 
+    /* Move records to the specified new owner and destination collection and
+    repository. Requires removing old "owner" and "loc" edges and creating new
+    ones between the affected records and the destination owner and repository,
+    and updating the statistics of all involved allocations. Unmanaged records
+    do not use allocations, so only ownership is updated.
+    */
+
     obj.taskInitRecOwnerChg = function( a_client, a_res_ids, a_dst_coll_id, a_dst_repo_id, a_check ){
         // Verify destination collection
 
@@ -630,26 +610,20 @@ var tasks_func = function() {
 
         result.tot_cnt = result.ext_data.length + result.glob_data.length;
         result.act_size = 0;
-        result.act_cnt = 0;
 
         for ( i in result.ext_data ){
             rec = result.ext_data[i];
-            deps.push({ id: rec.id, lev: 1 });
-
-            loc = g_db.loc.firstExample({ _from: rec.id });
-            if ( loc.uid != owner_id || loc._to != a_dst_repo_id ){
-                result.act_cnt++;
+            if ( rec.owner != owner_id ){
+                deps.push({ id: rec.id, lev: 1 });
             }
         }
 
         for ( i in result.glob_data ){
             rec = result.glob_data[i];
-            deps.push({ id: rec.id, lev: 1 });
-
             loc = g_db.loc.firstExample({ _from: rec.id });
             if ( loc.uid != owner_id || loc._to != a_dst_repo_id ){
+                deps.push({ id: rec.id, lev: 1 });
                 if ( rec.size ){
-                    result.act_cnt++;
                     result.act_size += rec.size;
                 }
             }
@@ -733,17 +707,12 @@ var tasks_func = function() {
         }
 
         if ( a_task.step == 1 ){
-            console.log("taskRunRecOwnerChg - move non-globus records");
+            console.log("taskRunRecOwnerChg - move unmanaged records");
             obj._transact( function(){
                 if ( state.ext_data.length ){
-                    // Ensure allocation has sufficient record capacity
-                    alloc = g_db.alloc.firstExample({_from: state.owner_id, _to: state.dst_repo_id });
-                    if ( alloc.rec_count + state.ext_data.length > alloc.rec_limit )
-                        throw [ g_lib.ERR_PERM_DENIED, "Allocation record limit exceeded on " + state.dst_repo_id ];
-
-                    obj.recMoveInit( state.ext_data, state.dst_repo_id, state.owner_id, state.dst_coll_id );
-                    obj.recMoveFini( state.ext_data );
+                    obj.recMoveExt( state.ext_data, state.owner_id, state.dst_coll_id );
                 }
+
                 // Update task step
                 a_task.step = 2;
                 g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
@@ -1502,9 +1471,11 @@ var tasks_func = function() {
 
         // Update allocation
         var loc = g_db.loc.firstExample({ _from: a_id });
-        var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
-        if ( alloc ){
-            g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
+        if ( loc ){
+            var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
+            if ( alloc ){
+                g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
+            }
         }
 
         // Delete data record
@@ -1538,17 +1509,19 @@ var tasks_func = function() {
 
             // Update allocation
             loc = g_db.loc.firstExample({ _from: id });
-            if ( !( doc.owner in allocs )){
-                allocs[doc.owner] = {};
-            }
+            if ( loc ){
+                if ( !( doc.owner in allocs )){
+                    allocs[doc.owner] = {};
+                }
 
-            tmp = allocs[doc.owner][loc._to];
+                tmp = allocs[doc.owner][loc._to];
 
-            if ( !tmp ){
-                allocs[doc.owner][loc._to] = {ct: 1, sz: doc.size };
-            }else{
-                tmp.ct++;
-                tmp.sz += doc.size;
+                if ( !tmp ){
+                    allocs[doc.owner][loc._to] = {ct: 1, sz: doc.size };
+                }else{
+                    tmp.ct++;
+                    tmp.sz += doc.size;
+                }
             }
 
             // Delete data record
@@ -1753,6 +1726,61 @@ var tasks_func = function() {
         }
     };
 
+    obj.recMoveExt = function( a_data, a_dst_owner_id, a_dst_coll_id ){
+        if ( !g_db.c.exists( a_dst_coll_id )){
+            throw [ g_lib.ERR_INTERNAL_FAULT, "Destination collection '" + a_dst_coll_id + "' does not exist!" ];
+        }
+
+        var data, alias, a, key,
+            alias_pref = a_dst_owner_id.charAt(0) + ":" + a_dst_owner_id.substr(2) + ":";
+            coll = g_db.c.document( a_dst_coll_id );
+
+        if ( coll.owner != a_dst_owner_id )
+            throw [ g_lib.ERR_INTERNAL_FAULT, "Destination collection '" + a_dst_coll_id + "' not owned by new owner!" ];
+
+        for ( var i in a_data ){
+            data = a_data[i];
+
+            // Clear all record ACLs
+            g_db.acl.removeByExample({ _from: data.id });
+
+            // Update record to new owner
+            g_db._update( data.id, { owner: a_dst_owner_id });
+
+            // Move ownership edge
+            g_db.owner.removeByExample({ _from: data.id });
+            g_db.owner.save({ _from: data.id, _to: a_dst_owner_id });
+
+            // Move to new collection
+            g_db.item.removeByExample({ _to: data.id });
+            g_db.item.save({ _from: a_dst_coll_id, _to: data.id });
+
+            // Move owner edge of alias if alias present
+            alias = g_db.alias.firstExample({ _from: data.id });
+            if ( alias ){
+                // remove old alias and all edges
+                g_graph.a.remove( alias._to );
+
+                // Create new alias (add suffix if collides with existing alias)
+                alias = alias_pref + alias._to.substr( alias._to.lastIndexOf(":") + 1 );
+                for( a = 0; ; a++ ){
+                    key = alias + (a>0?"-"+a:"");
+                    if ( !g_db.a.exists({ _key: key })){
+                        //console.log("try alias:",key);
+                        g_db.a.save({ _key: key });
+                        break;
+                    }
+                }
+                // If alias suffix, update record
+                if ( a > 0 ){
+                    g_db.d.update( data.id, { alias: key });
+                }
+
+                g_db.alias.save({ _from: data.id, _to: "a/"+key });
+                g_db.owner.save({ _from: "a/"+key, _to: a_dst_owner_id });
+            }
+        }
+    }
 
     obj._ensureExclusiveAccess = function( a_ids ){
         console.log("_ensureExclusiveAccess start", Date.now());

@@ -56,6 +56,7 @@ router.get('/gridftp', function (req, res) {
         }
 
         // Verify repo and path are correct for record
+        // Note: only managed records have an allocations and this gridftp auth call is only made for managed records
         var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
         var loc = g_db.loc.firstExample({_from: data_id});
         if ( !loc )

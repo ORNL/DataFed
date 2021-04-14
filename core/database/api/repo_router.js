@@ -320,17 +320,17 @@ function calcSize( a_item, a_recurse, a_depth, a_visited, a_result ){
             return;
         item = g_db.d.document( a_item );
         loc = g_db.loc.firstExample({ _from: a_item });
-        if ( !loc )
-            throw [g_lib.ERR_INTERNAL_FAULT,"Data record missing allocation link"];
-
-        if ( loc._to in a_result ){
-            (res = a_result[loc._to]).records++;
-            if ( item.size ){
-                res.files++;
-                res.total_sz += item.size;
+        // TODO - Should have a loc edge, but just skip if it doesn't
+        if ( loc ){
+            if ( loc._to in a_result ){
+                (res = a_result[loc._to]).records++;
+                if ( item.size ){
+                    res.files++;
+                    res.total_sz += item.size;
+                }
+            }else{
+                a_result[loc._to] = {records:1,files:item.size?1:0,total_sz:item.size};
             }
-        }else{
-            a_result[loc._to] = {records:1,files:item.size?1:0,total_sz:item.size};
         }
         a_visited[a_item] = true;
     }else if ( a_item.charAt(0) == 'c' ){
