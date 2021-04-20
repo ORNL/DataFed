@@ -146,7 +146,7 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
         curl_free( esc_txt );
     }
 
-    DL_DEBUG( "url: " << url );
+    //DL_DEBUG( "url: " << url );
 
     //curl_easy_setopt( m_curl, CURLOPT_VERBOSE, 1 );
     curl_easy_setopt( a_curl, CURLOPT_URL, url.c_str() );
@@ -159,7 +159,7 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
     if ( a_body )
     {
         tmp = a_body->toString();
-        DL_DEBUG( "POST BODY:[" << tmp << "]" );
+        //DL_DEBUG( "POST BODY:[" << tmp << "]" );
         curl_easy_setopt( a_curl, CURLOPT_POSTFIELDS, tmp.c_str() );
     }
     else

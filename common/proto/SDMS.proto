@@ -12,6 +12,8 @@
 // and uses doubles for both integer and floats. As long as an integer does not
 // exceed 53 bits, this approach works.
 
+syntax = "proto2";
+
 package SDMS;
 
 

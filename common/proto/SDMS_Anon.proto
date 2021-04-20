@@ -7,6 +7,8 @@
 // maintained. Unused messages and parameters should be marked as deprecated,
 // and these should be removed at the next major version change.
 
+syntax = "proto2";
+
 import "SDMS.proto";
 
 package SDMS.Anon;

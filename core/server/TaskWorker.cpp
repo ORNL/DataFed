@@ -61,13 +61,13 @@ TaskWorker::workerThread()
             try
             {
                 if ( first ){
-                    DL_DEBUG( "Calling task run (first)" );
+                    DL_TRACE( "Calling task run (first)" );
                     m_db.taskRun( m_task->task_id, task_cmd, 0 );
                     first = false;
                 }
                 else
                 {
-                    DL_DEBUG( "Calling task run, step: " << step );
+                    DL_TRACE( "Calling task run, step: " << step );
                     m_db.taskRun( m_task->task_id, task_cmd, err_msg.size()?0:&step, err_msg.size()?&err_msg:0 );
                 }
 
@@ -102,7 +102,7 @@ TaskWorker::workerThread()
                     retry = cmdAllocDelete( params );
                     break;
                 case TC_STOP:
-                    DL_DEBUG("Task STOP. payload: " << params.toString() );
+                    DL_DEBUG( "Task STOP." );
                     m_mgr.newTasks( params );
                     break;
                 default:
@@ -158,8 +158,7 @@ TaskWorker::workerThread()
 bool
 TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdRawDataTransfer" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdRawDataTransfer" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -171,46 +170,23 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
     const string &              dst_ep = obj.getString( "dst_repo_ep" );
     const string &              dst_path = obj.getString( "dst_repo_path" );
     const Value::Array &        files = obj.getArray( "files" );
-    //string                      src_repo_id;
-    //string                      dst_repo_id;
     bool                        encrypted = true;
     GlobusAPI::EndpointInfo     ep_info;
-
-/*
-    switch ( type )
-    {
-    case TT_DATA_GET:
-        //src_repo_id = obj.getString( "src_repo_id" );
-        break;
-    case TT_DATA_PUT:
-    case TT_REC_CHG_ALLOC:
-    case TT_REC_CHG_OWNER:
-        //src_repo_id = obj.getString( "src_repo_id" );
-        dst_repo_id = obj.getString( "dst_repo_id" );
-        break;
-    default:
-        EXCEPT_PARAM( 1, "Invalid task type for raw data transfer command: " << type );
-        break;
-    }
-*/
 
     string acc_tok = obj.getString( "acc_tok" );
     string ref_tok = obj.getString( "ref_tok" );
     uint32_t expires_in = obj.getNumber( "acc_tok_exp_in" );
 
-    DL_INFO( ">>>> Token Expires in: " << expires_in );
+    DL_TRACE( ">>>> Token Expires in: " << expires_in );
 
     if ( expires_in < 3600 )
     {
-        DL_INFO( "Refreshing access token for " << uid << " (expires in " << expires_in << ")" );
+        DL_DEBUG( "Refreshing access token for " << uid << " (expires in " << expires_in << ")" );
 
         m_glob.refreshAccessToken( ref_tok, acc_tok, expires_in );
-        DL_INFO( "Save user access token to DB");
         m_db.setClient( uid );
         m_db.userSetAccessToken( acc_tok, expires_in, ref_tok );
     }
-
-    //EXCEPT(1,"TEST ONLY EXCEPTION");
 
     if ( type == TT_DATA_GET || type == TT_DATA_PUT )
     {
@@ -275,8 +251,7 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 bool
 TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdRawDataDelete" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdRawDataDelete" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -320,8 +295,7 @@ TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
 bool
 TaskWorker::cmdRawDataUpdateSize( const  Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdRawDataUpdateSize" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdRawDataUpdateSize" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -365,8 +339,7 @@ TaskWorker::cmdRawDataUpdateSize( const  Value & a_task_params )
 bool
 TaskWorker::cmdAllocCreate( const Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdAllocCreate" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdAllocCreate" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -390,8 +363,7 @@ TaskWorker::cmdAllocCreate( const Value & a_task_params )
 bool
 TaskWorker::cmdAllocDelete( const Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdAllocDelete" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdAllocDelete" );
 
     const Value::Object & obj = a_task_params.asObject();
 

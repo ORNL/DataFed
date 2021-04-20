@@ -222,7 +222,7 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         curl_free( esc_txt );
     }
 
-    DL_TRACE( "post url: " << url );
+    //DL_TRACE( "post url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
@@ -383,7 +383,7 @@ DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_to
 void
 DatabaseAPI::userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok )
 {
-    DL_DEBUG("userSetAccessToken: " << a_acc_tok  << " : " << a_ref_tok << " : " << a_expires_in );
+    //DL_DEBUG("userSetAccessToken: " << a_acc_tok  << " : " << a_ref_tok << " : " << a_expires_in );
     string result;
     dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok},{"expires_in",to_string(a_expires_in)}}, result );
 }
@@ -1088,7 +1088,7 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::Re
 
     body += "}";
 
-    DL_INFO("update body[" << body << "]");
+    //DL_INFO("update body[" << body << "]");
 
     dbPost( "dat/update", {}, &body, result );
 
@@ -2744,11 +2744,9 @@ DatabaseAPI::topicSearch( const Auth::TopicSearchRequest & a_request, Auth::Topi
 
     dbGet( "topic/search", {{"phrase",a_request.phrase()}}, result );
 
-    DL_INFO("srch res: " << result.toString());
+    //DL_INFO("srch res: " << result.toString());
 
     setTopicDataReply( a_reply, result );
-    //setListingDataReply( a_reply, result );
-    DL_INFO("reply: " << a_reply.DebugString() );
 }
 
 void
@@ -4374,6 +4372,7 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
             v.len = 0;
             state = PS_TOKEN;
             // FALL-THROUGH to token processing
+            [[gnu::fallthrough]];
         case PS_TOKEN: // Token
             //if ( spec.find( *c ) != spec.end() )
             val_token = isalnum( *c ) || *c == '.' || *c == '_';
