@@ -159,7 +159,7 @@ router.post('/update', function (req, res) {
                 var coll_id = g_lib.resolveCollID( req.body.id, client );
                 var coll = g_db.c.document( coll_id );
 
-                console.log("update coll",req.body);
+                //console.log("update coll",req.body);
 
                 var time = Math.floor( Date.now()/1000 ),
                     obj = {ut:time},
@@ -204,7 +204,7 @@ router.post('/update', function (req, res) {
                 if ( obj.topic !== undefined && obj.topic != coll.topic ){
                     //console.log("update topic, old:", data.topic ,",new:", obj.topic );
                     if ( coll.topic ){
-                        console.log("rem cat_tags:",coll.cat_tags);
+                        //console.log("rem cat_tags:",coll.cat_tags);
                         //console.log("unlink old topic");
                         g_lib.topicUnlink( coll._id );
                         obj.public = null;
@@ -229,7 +229,7 @@ router.post('/update', function (req, res) {
                                 //}
                             }
                         }
-                        console.log("add cat_tags:",obj.cat_tags);
+                        //console.log("add cat_tags:",obj.cat_tags);
                     }
 
                     //console.log("cat add_tags:",add_tags,"cat rem_tags:",rem_tags);
@@ -243,7 +243,7 @@ router.post('/update', function (req, res) {
                     if ( coll.tags && coll.tags.length ){
                         var add_tags = [], rem_tags = [];
 
-                        console.log("coll.tags:",coll.tags,"req.body.tags:",req.body.tags);
+                        //console.log("coll.tags:",coll.tags,"req.body.tags:",req.body.tags);
 
                         for ( i in coll.tags ){
                             tag = coll.tags[i];
@@ -259,7 +259,7 @@ router.post('/update', function (req, res) {
                             }
                         }
             
-                        console.log("add_tags:",add_tags,"rem_tags:",rem_tags);
+                        //console.log("add_tags:",add_tags,"rem_tags:",rem_tags);
 
                         g_lib.addTags( add_tags );
                         g_lib.removeTags( rem_tags );
@@ -369,7 +369,7 @@ router.get('/view', function (req, res) {
 
             if ( !admin) {
                 if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC )){
-                    console.log("perm denied");
+                    //console.log("perm denied");
                     throw g_lib.ERR_PERM_DENIED;
                 }
             }
@@ -567,7 +567,7 @@ router.get('/write', function (req, res) {
                             g_db.item.save({ _from: coll_id, _to: obj._id });
 
                             if ( coll_ctx.pub ){
-                                console.log("update pub coll");
+                                //console.log("update pub coll");
 
                                 // Must update all records in this collection
                                 g_lib.catalogUpdateColl( obj, coll_ctx, visited );
@@ -576,7 +576,7 @@ router.get('/write', function (req, res) {
                             g_db.item.save({ _from: coll_id, _to: obj._id });
 
                             if ( coll_ctx.pub ){
-                                console.log("update pub record");
+                                //console.log("update pub record");
 
                                 // Update this record
                                 g_lib.catalogUpdateRecord( obj, coll, coll_ctx, visited );
@@ -925,8 +925,8 @@ router.post('/pub/search2', function (req, res) {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
         var col_chk = true;
 
-        console.log("search scope:",req.queryParams.scope);
-        console.log("body:",req.body);
+        //console.log("search scope:",req.queryParams.scope);
+        //console.log("body:",req.body);
 
         switch ( req.queryParams.scope ){
             case g_lib.SS_PROJECT:
@@ -939,11 +939,11 @@ router.post('/pub/search2', function (req, res) {
                 if ( !g_db.p.exists( req.body.params.owner ))
                     throw [g_lib.ERR_NOT_FOUND,"Project " + req.body.params.owner + " not found"];
 
-                console.log("chk 1");
+                //console.log("chk 1");
 
                 var role = g_lib.getProjectRole( client._id, req.body.params.owner );
 
-                console.log("chk 2");
+                //console.log("chk 2");
 
                 if( role == g_lib.PROJ_MEMBER ){
                     // If no collections specified, add project root
@@ -970,7 +970,7 @@ router.post('/pub/search2', function (req, res) {
                     throw [g_lib.ERR_INVALID_PARAM, "Invalid project / user ID: " + req.body.params.owner ];
                 }
 
-                console.log("chk 3");
+                //console.log("chk 3");
 
                 if ( !req.body.params.cols ){
                     req.body.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: req.body.params.owner }).toArray();
@@ -980,11 +980,11 @@ router.post('/pub/search2', function (req, res) {
                 break;
         }
 
-        console.log("chk 4");
+        //console.log("chk 4");
 
         // If user-specified collections given, must verify scope and access, then expand to include all sub-collections
         if ( req.body.params.cols ){
-            console.log("proc cols");
+            //console.log("proc cols");
             if ( col_chk ){
                 var col;
                 for ( var c in req.body.params.cols ){
@@ -1007,10 +1007,10 @@ router.post('/pub/search2', function (req, res) {
             }
 
             req.body.params.cols = g_lib.expandSearchCollections( client, req.body.params.cols );
-            console.log("exp cols:",req.body.params.cols);
+            //console.log("exp cols:",req.body.params.cols);
         }
 
-        console.log("chk 5");
+        //console.log("chk 5");
 
         if ( req.body.params.sch_id ){
             // sch_id is id:ver
@@ -1048,8 +1048,8 @@ router.post('/pub/search2', function (req, res) {
 
         qry += req.body.qry_end;
 
-        console.log( "qry", qry );
-        console.log( "params", req.body.params );
+        //console.log( "qry", qry );
+        //console.log( "params", req.body.params );
 
         var item, count, result = g_db._query( qry, req.body.params, {}, { fullCount: true }).toArray();
 

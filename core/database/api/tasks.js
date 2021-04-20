@@ -1381,16 +1381,14 @@ var tasks_func = function() {
     obj._buildDeleteDoc = function( a_data ){
         var loc, locs, doc = [], repo_map = {};
 
-        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
+        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
 
         //console.log("locs hasNext",locs.hasNext());
 
         while ( locs.hasNext() ){
             loc = locs.next();
 
-            // Skip records with no raw data
-            if ( !loc.d_sz )
-                continue;
+            // Delete all files regardless of raw data size (may have 0 sized files)
 
             if ( loc.r_id in repo_map ){
                 repo_map[loc.r_id].ids.push(loc.d_id);

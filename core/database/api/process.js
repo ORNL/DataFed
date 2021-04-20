@@ -166,9 +166,8 @@ module.exports = ( function() {
 
                 if ((( coll_perm & a_ctxt.coll_perm ) != a_ctxt.coll_perm ) ||
                     (( data_perm & a_ctxt.data_perm ) != a_ctxt.data_perm )){
-                    console.log("chk coll perms");
+
                     if ( !g_lib.hasAdminPermObjectLoaded( a_ctxt.client, doc )){
-                        console.log("not admin");
 
                         if ( a_coll_perm != null ) // Already have inherited permission, don't ask again
                             perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc );
@@ -180,8 +179,6 @@ module.exports = ( function() {
                         be against granted permissions and permissions inherited from parent collections (which
                         is available in perm.inherited)
                         */
-
-                       console.log("req perm:",a_ctxt.coll_perm,",act perm:",perm);
 
                         if ((( perm.grant | perm.inherited ) & a_ctxt.coll_perm ) != a_ctxt.coll_perm ){
                             throw [g_lib.ERR_PERM_DENIED,"Permission denied for collection " + id];
@@ -242,8 +239,6 @@ module.exports = ( function() {
                             else
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
 
-                            //console.log( "pp 4" );
-
                             if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm )
                                 throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
                         }
@@ -257,7 +252,6 @@ module.exports = ( function() {
                                 perm = g_lib.getPermissionsLocal( a_ctxt.client._id, doc, true, a_ctxt.data_perm );
 
                             if ((( perm.grant | perm.inherited ) & a_ctxt.data_perm ) != a_ctxt.data_perm ){
-                                //console.log("req perm:",a_ctxt.data_perm,",act perm:",perm);
                                 throw [g_lib.ERR_PERM_DENIED,"Permission denied for data record " + id];
                             }
                         }
@@ -281,8 +275,6 @@ module.exports = ( function() {
         for ( i in a_ids ){
             id = a_ids[i];
 
-            //console.log("proc task dep:",id);
-
             owner = g_db.owner.firstExample({ _from: id });
             if ( owner )
                 owners.add( owner._to );
@@ -290,8 +282,6 @@ module.exports = ( function() {
             // Gather other tasks with priority over this new one
             locks = g_db.lock.byExample({_to: id });
             while ( locks.hasNext() ){
-                //console.log("has a lock!");
-
                 lock = locks.next();
                 if ( lock.context == a_context ){
                     if ( a_lock_lev > 0 || lock.level > 0 ){
@@ -299,8 +289,6 @@ module.exports = ( function() {
                     }
                 }
             }
-
-            //console.log("save a lock");
 
             // Add new lock
             if ( a_context )
@@ -342,13 +330,9 @@ module.exports = ( function() {
         for ( i in a_deps ){
             dep = a_deps[i];
 
-            //console.log("lock task dep:",dep.id);
-
             // Gather other tasks with priority over this new one
             locks = g_db.lock.byExample({_to: dep.id });
             while ( locks.hasNext() ){
-                //console.log("has a lock!");
-
                 lock = locks.next();
                 if ( lock.context == dep.ctx ){
                     if ( dep.lev > 0 || lock.level > 0 ){
@@ -356,8 +340,6 @@ module.exports = ( function() {
                     }
                 }
             }
-
-            //console.log("save a lock");
 
             // Add new lock
             if ( dep.ctx )
@@ -375,9 +357,6 @@ module.exports = ( function() {
         }
         return false;
     };
-
-
-
 
     return obj;
 }() );

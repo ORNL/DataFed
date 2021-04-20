@@ -877,12 +877,12 @@ module.exports = ( function() {
     };
 
     obj.catalogCalcParCtxt = function( a_coll, a_visited ){
-        console.log("catalogCalcParCtxt",a_coll._id);
+        //console.log("catalogCalcParCtxt",a_coll._id);
         var c, ctx = { pub: a_coll.public?true:false, tags: new Set( a_coll.cat_tags?a_coll.cat_tags:[] )},
             item = obj.db.item.firstExample({ _to: a_coll._id });
 
         while ( item ){
-            console.log("chk par",item);
+            //console.log("chk par",item);
             c = a_visited[item._from];
 
             if ( c ){
@@ -890,7 +890,7 @@ module.exports = ( function() {
                 if ( c.tags ){
                     c.tags.forEach( ctx.tags.add, ctx.tags );
                 }
-                console.log("found visited - stop");
+                //console.log("found visited - stop");
                 break;
             }else{
                 c = obj.db.c.document( item._from );
@@ -902,7 +902,7 @@ module.exports = ( function() {
 
             item = obj.db.item.firstExample({ _to: item._from });
         }
-        console.log("update visited",ctx);
+        //console.log("update visited",ctx);
 
         a_visited[a_coll._id] = ctx;
         return ctx;
@@ -948,22 +948,22 @@ module.exports = ( function() {
                     p = par.next();
 
                     if ( p._from != a_coll._id ){
-                        console.log("chk link to ",p._from );
+                        //console.log("chk link to ",p._from );
                         // Record has a parent outside of starting collection tree
                         tmp = a_visited[p._from];
                         if ( !tmp ){
-                            console.log("not visited");
+                            //console.log("not visited");
 
                             tmp = obj.db.c.document( p._from );
                             //console.log("loaded",tmp);
                             tmp = obj.catalogCalcParCtxt( tmp, a_visited );
                         }
 
-                        console.log("ctx",tmp);
+                        //console.log("ctx",tmp);
 
                         // Only merge tags if this parent coll is public (or has public ancestor)
                         if ( tmp.pub ){
-                            console.log("merge");
+                            //console.log("merge");
 
                             // Create new context for record if needed
                             if ( _ctx === ctx ){
@@ -974,7 +974,7 @@ module.exports = ( function() {
                             tmp.tags.forEach( _ctx.tags.add, _ctx.tags );
                         }
                     }else{
-                        console.log("ignore link to ",a_coll._id );
+                        //console.log("ignore link to ",a_coll._id );
                     }
                 }
 
@@ -1980,7 +1980,7 @@ module.exports = ( function() {
     };
 
     obj.addTags = function( a_tags ){
-        console.log("addTags",a_tags);
+        //console.log("addTags",a_tags);
 
         var id, tag, j, code;
 
@@ -1988,11 +1988,11 @@ module.exports = ( function() {
             tag = a_tags[i].toLowerCase();
             id = "tag/" + tag;
             if ( obj.db.tag.exists( id )){
-                console.log( "update", id );
+                //console.log( "update", id );
                 tag = obj.db.tag.document( id );
                 obj.db._update( id, { count: tag.count + 1 });
             }else{
-                console.log( "save", id );
+                //console.log( "save", id );
                 if ( tag.length > 40 )
                     throw [obj.ERR_INVALID_PARAM,"Tag too long (max 40 characters)."];
 
@@ -2010,7 +2010,7 @@ module.exports = ( function() {
     };
 
     obj.removeTags = function( a_tags ){
-        console.log("removeTags",a_tags);
+        //console.log("removeTags",a_tags);
 
         var id, tag;
         for ( var i in a_tags ){
@@ -2018,10 +2018,10 @@ module.exports = ( function() {
             if ( obj.db.tag.exists( id )){
                 tag = obj.db.tag.document( id );
                 if ( tag.count > 1 ){
-                    console.log("update",id);
+                    //console.log("update",id);
                     obj.db._update( id, { count: tag.count - 1 });
                 }else{
-                    console.log("remove",id);
+                    //console.log("remove",id);
                     obj.db._remove( id );
                 }
             }
@@ -2126,11 +2126,11 @@ module.exports = ( function() {
 
     obj.expandSearchCollections_recurse = function( a_client, a_cols, a_col_id, a_inh_perm ){
         if ( !a_cols.has( a_col_id )){
-            console.log("expColl",a_col_id,"inh:",a_inh_perm);
+            //console.log("expColl",a_col_id,"inh:",a_inh_perm);
             var col, res;
             if ( obj.hasAdminPermObject( a_client, a_col_id )){
                 a_cols.add( a_col_id );
-                console.log("has admin");
+                //console.log("has admin");
                 res = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",{ col: a_col_id });
                 while( res.hasNext()){
                     col = res.next();
@@ -2142,7 +2142,7 @@ module.exports = ( function() {
                 col = obj.db.c.document(a_col_id);
 
                 var perm = obj.getPermissionsLocal( a_client._id, col, a_inh_perm == undefined?true:false, obj.PERM_RD_REC | obj.PERM_LIST );
-                console.log("perm",perm);
+                //console.log("perm",perm);
 
                 if ((( perm.grant | perm.inherited | a_inh_perm ) & (obj.PERM_RD_REC | obj.PERM_LIST)) != ( obj.PERM_RD_REC | obj.PERM_LIST )){
                     if ( a_inh_perm == undefined ){
@@ -2154,12 +2154,12 @@ module.exports = ( function() {
                     }
                 }
 
-                console.log("have access", perm.grant | perm.inherited | a_inh_perm );
+                //console.log("have access", perm.grant | perm.inherited | a_inh_perm );
 
                 a_cols.add( a_col_id );
 
                 if ((( perm.inhgrant | perm.inherited | a_inh_perm ) & (obj.PERM_RD_REC | obj.PERM_LIST)) == ( obj.PERM_RD_REC | obj.PERM_LIST )){
-                    console.log("have all inh perms");
+                    //console.log("have all inh perms");
 
                     res = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",{ col: a_col_id });
                     while( res.hasNext()){
@@ -2171,7 +2171,7 @@ module.exports = ( function() {
                 }else{
                     res = obj.db._query("for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
                     perm = ( perm.inhgrant | perm.inherited | a_inh_perm );
-                    console.log("not all inh perms", perm);
+                    //console.log("not all inh perms", perm);
 
                     while( res.hasNext()){
                         obj.expandSearchCollections_recurse( a_client, a_cols, res.next(), perm );

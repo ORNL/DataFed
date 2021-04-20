@@ -125,13 +125,12 @@ router.get('/run', function (req, res) {
             }
         }
 
-        console.log("task/run result",result);
+        console.log("task/run return");
         res.send( result );
 
     } catch( e ){
         g_lib.handleException( e, res );
     }
-    console.log("task/run - last");
 })
 .queryParam('task_id', joi.string().required(), "Task ID")
 .queryParam('step', joi.number().integer().optional(), "Task step")
