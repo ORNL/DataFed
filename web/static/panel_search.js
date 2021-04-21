@@ -312,6 +312,10 @@ function SearchPanel( a_frame, a_parent ){
     $(".srch-mode",a_frame).selectmenu({ width: false });
     $(".srch-sort",a_frame).selectmenu({ width: false });
 
+    $(".srch-mode,.srch-sort",a_frame).on("selectmenuchange",function(){
+        inst.runSearch();
+    });
+
     $(".accordion.acc-act",a_frame).accordion({
         header: "h3",
         collapsible: true,
