@@ -1369,7 +1369,7 @@ function handleQueryResults( data ){
                 results.push({ title: util.generateTitle(item,false,true),_title:item.title,folder:true,lazy:true,scope:item.owner,key:item.id,offset:0,nodrag:true});
             }else{
                 results.push({ title: util.generateTitle(item,false,true),icon: util.getDataIcon(item),
-                    key:item.id,nodrag:false,notarg:true,checkbox:false,scope:item.owner,size:item.size,external:item.external});
+                    key:item.id,nodrag:false,notarg:true,checkbox:false,scope:item.owner,size:item.size,external:item.external,nodrag:true});
             }
         }
     } else {
@@ -1969,14 +1969,12 @@ export function init(){
                 console.log( "dnd start" );
 
                 if ( !drag_enabled || node.data.nodrag ){
-                    console.log( "NOT ALLOWED" );
                     return false;
                 }
 
                 clearTimeout( hoverTimer );
                 node.setActive(true);
                 if ( !node.isSelected() ){
-                    console.log( "clear selection" );
                     data_tree.selectAll(false);
                     selectScope = data.node;
                     node.setSelected(true);
@@ -2008,6 +2006,10 @@ export function init(){
 
                 // data.otherNode = source, node = destination
                 console.log("drop stop in",dest_node.key,pasteItems);
+
+                console.log( pasteSourceParent );
+                if ( !pasteSourceParent || !pasteSourceParent.data )
+                    return;
 
                 var i, proj_id, ids = [];
 
@@ -2247,15 +2249,14 @@ export function init(){
                 }
             } else if ( data.node.parent ) {
                 // General data/collection listing for all nodes
-
-                var is_pub = false;
-                if ( data.node.key.startsWith("published"))
-                    is_pub = true;
-
                 data.result = [];
-                var entry;
+
+                var is_pub = data.node.key.startsWith("published")?true:false,
+                    nodrag = data.node.key.startsWith("q/"),
+                    entry,
+                    items = data.response.data?data.response.data:data.response.item;
+
                 scope = data.node.data.scope;
-                var items = data.response.data?data.response.data:data.response.item;
 
                 util.addTreePagingNode( data );
 
@@ -2263,10 +2264,10 @@ export function init(){
                     item = items[i];
 
                     if ( item.id[0]=="c" ){
-                        entry = { title: util.generateTitle(item),_title:item.title,folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub };
+                        entry = { title: util.generateTitle(item),_title:item.title,folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub || nodrag };
                     }else{
                         entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon: util.getDataIcon( item ),
-                        scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size, external:item.external };
+                        scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size, external:item.external, nodrag: nodrag };
                     }
 
                     if ( searchMode && ( item.id in searchSelect )){
