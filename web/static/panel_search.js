@@ -99,11 +99,16 @@ function SearchPanel( a_frame, a_parent ){
 
         return query;
     }
-        
+    
+    this.runSearch = function(){
+        a_parent.searchPanel_Run( inst.buildSearch() );
+    }
+
     // ----- Run query button -----
 
     $("#srch_run_btn",a_frame).on("click", function(){
-        a_parent.searchPanel_Run( inst.buildSearch() );
+        //a_parent.searchPanel_Run( inst.buildSearch() );
+        inst.runSearch();
     });
 
     // ----- Save query button -----
@@ -151,8 +156,8 @@ function SearchPanel( a_frame, a_parent ){
         caseSensitive: false,
         removeConfirmation: true,
         afterTagAdded: function( ev, ui ){
-            //$("#run_qry_btn").addClass("ui-state-error");
             user_tags.push( ui.tagLabel );
+            inst.runSearch();
         },
         beforeTagRemoved: function( ev, ui ){
             var idx = user_tags.indexOf( ui.tagLabel );
@@ -160,41 +165,65 @@ function SearchPanel( a_frame, a_parent ){
                 user_tags.splice( idx, 1 );
         },
         afterTagRemoved: function(){
-            //$("#run_qry_btn").addClass("ui-state-error");
+            inst.runSearch();
         }
     });
 
     $(".tagit-new",a_frame).css("clear","left");
 
     $("#srch_tags_clear",a_frame).on("click",function(){
+        var refresh = user_tags.length?true:false;
         tags_div.tagit("removeAll");
+        if ( refresh ){
+            inst.runSearch();
+        }
     });
 
-    // ----- Text input setup -----
+    // ----- Search ID setup -----
+
+    $("#srch_id_clear",a_frame).on("click",function(){
+        if ( $("#srch_id",a_frame).val().trim().length ){
+            $("#srch_id",a_frame).val("");
+            inst.runSearch();
+        }
+    });
+    
+    // ----- Text fields input setup -----
 
     $("#srch_id,#srch_text,#srch_creator,#srch_meta,#srch_sch_id",a_frame).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
             ev.preventDefault();
             if ( enabled ){
-                a_parent.searchPanel_Run( inst.buildSearch() );
+                //a_parent.searchPanel_Run( inst.buildSearch() );
+                inst.runSearch();
             }
         }
     });
 
     $("#srch_text_clear",a_frame).on("click",function(){
-        $("#srch_text",a_frame).val("");
+        if ( $("#srch_text",a_frame).val().trim().length ){
+            $("#srch_text",a_frame).val("");
+            inst.runSearch();
+        }
     });
 
     // ----- Schema input setup -----
 
     $("#srch_sch_pick",a_frame).on("click",function(){
         dlgSchemaList.show( true, false, function( schema ){
-            $("#srch_sch_id",a_frame).val( schema.id + ":" + schema.ver );
+            var id = schema.id + ":" + schema.ver;
+            if ( $("#srch_sch_id",a_frame).val() != id ){
+                $("#srch_sch_id",a_frame).val( id );
+                inst.runSearch();
+            }
         });
     });
 
     $("#srch_sch_clear",a_frame).on("click",function(){
-        $("#srch_sch_id",a_frame).val("");
+        if ( $("#srch_sch_id",a_frame).val().trim().length ){
+            $("#srch_sch_id",a_frame).val("");
+            inst.runSearch();
+        }
     });
 
     // ----- Metadata input setup -----
@@ -214,19 +243,28 @@ function SearchPanel( a_frame, a_parent ){
     });
 
     $("#srch_meta_clear",a_frame).on("click",function(){
-        $("#srch_meta",a_frame).val("");
+        if ( $("#srch_meta",a_frame).val().trim().length ){
+            $("#srch_meta",a_frame).val("");
+            inst.runSearch();
+        }
     });
 
     // ----- Creator input setup -----
 
     $("#srch_creator_pick_user",a_frame).on("click",function(){
         dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
-            $("#srch_creator",a_frame).val( users[0] );
+            if ( $("#srch_creator",a_frame).val().trim() != users[0] ){
+                $("#srch_creator",a_frame).val( users[0] );
+                inst.runSearch();
+            }
         });
     });
 
     $("#srch_creator_clear",a_frame).on("click",function(){
-        $("#srch_creator",a_frame).val("");
+        if ( $("#srch_creator",a_frame).val().trim().length ){
+            $("#srch_creator",a_frame).val("");
+            inst.runSearch();
+        }
     });
 
     // ----- Date input setup -----
@@ -242,6 +280,7 @@ function SearchPanel( a_frame, a_parent ){
         },
         onClose: function( date ){
             if ( date ){
+                inst.runSearch();
             }
         }
     });
@@ -257,6 +296,7 @@ function SearchPanel( a_frame, a_parent ){
         },
         onClose: function( date ){
             if ( date ){
+                inst.runSearch();
             }
         }
     });
@@ -264,6 +304,7 @@ function SearchPanel( a_frame, a_parent ){
     $("#srch_datetime_clear",a_frame).on("click",function(){
         date_from.val("");
         date_to.val("");
+        inst.runSearch();
     });
 
     util.inputTheme( $('input,textarea', a_frame ));
