@@ -2,6 +2,7 @@ import * as api from "./api.js";
 import * as util from "./util.js";
 import * as model from "./model.js";
 import * as settings from "./settings.js";
+import * as query_builder from "./query_builder.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
 import * as dlgPickProj from "./dlg_pick_proj.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
@@ -44,6 +45,15 @@ function SearchPanel( a_frame, a_parent ){
             srch_scope.html(html);
             $("#srch_run_btn",a_frame).button("option","disabled",true);
             enabled = false;
+        }
+    }
+
+    this.setQuery = function( a_qry ){
+        console.log("setQuery:", a_qry );
+        var expr = query_builder.queryToExpression( a_qry );
+        if ( expr ){
+            console.log("expr:", expr );
+            $("#srch_meta",a_frame).val( expr );
         }
     }
 
@@ -235,10 +245,14 @@ function SearchPanel( a_frame, a_parent ){
                 if ( !ok ){
                     util.setStatusText( reply, true );
                 }
-                dlgQueryBuild.show( ok?reply.schema[0]:null );
+                dlgQueryBuild.show( ok?reply.schema[0]:null, null, function( qry ){
+                    inst.setQuery( qry );
+                });
             });
         }else{
-            dlgQueryBuild.show();
+            dlgQueryBuild.show( null, null, function( qry ){
+                inst.setQuery( qry );
+            });
         }
     });
 

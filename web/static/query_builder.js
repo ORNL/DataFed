@@ -16,6 +16,20 @@ export const OPR_TRU     = "TRUE";
 export const OPR_FAL     = "FALSE";
 export const OPR_CON     = "HAS";
 
+// Generate a text expression from a given query
+export function queryToExpression( a_qry ){
+    var expr = "";
+
+    return expr;
+}
+
+// Generate a query from a given text expression
+export function expressionToQuery( a_expr ){
+    var qry = {};
+
+    return qry;
+}
+
 export class QueryBuilder extends HTMLElement {
     static _top_html = "<div class='group-div-header'><button class='group-btn-opr qb-btn-icon' title='Set group combination operator'>AND</button>\
         <button class='field-btn-add qb-btn-icon'><span class='ui-icon ui-icon-input' title='Add field'></span></button>\
