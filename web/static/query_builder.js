@@ -18,10 +18,52 @@ export const OPR_CON     = "HAS";
 
 // Generate a text expression from a given query
 export function queryToExpression( a_qry ){
-    var expr = "";
+    var expr;
+    console.log("queryToExpression", a_qry);
+    if ( a_qry.type == "group" ){
+        if ( a_qry.children.length == 1 ){
+            expr = queryToExpression( a_qry.children[0] );
+        }else if ( a_qry.children.length > 1 ){
+            expr = "(";
+            for ( var i in a_qry.children ){
+                if ( i > 0 ){
+                    expr += " " + a_qry.op + " ";
+                }
+                expr += queryToExpression( a_qry.children[i] );
+            }
+            expr += ")";
+        }else{
+            throw "Invalid query";
+        }
+    }else{
+        var val = (a_qry.rh_is_field?"md.":"") + a_qry.rh;
+        expr = "md." + a_qry.lh;
+
+        if ( a_qry.op == OPR_DF ){
+            expr += " != NULL";
+        }else if ( a_qry.op == OPR_NDF ){
+            expr += " == NULL";
+        }else if ( a_qry.op == OPR_TRU ){
+            expr += " == true";
+        }else if ( a_qry.op == OPR_FAL ){
+            expr += " == false";
+        }else if ( a_qry.op == OPR_RGX ){
+            expr = "REGEX_TEST(" + expr + "," + val + ",false)";
+        }else if ( a_qry.op == OPR_WLD ){
+            expr += " like " + val;
+        }else if ( a_qry.op == OPR_CON ){
+            expr = val + " in " + expr;
+        }else{
+            expr += " " + a_qry.op + " " + val;
+        }
+    }
+
+
+    console.log("expr", expr);
 
     return expr;
 }
+
 
 // Generate a query from a given text expression
 export function expressionToQuery( a_expr ){
@@ -174,27 +216,38 @@ export class QueryBuilder extends HTMLElement {
     }
 
     _getQueryRecurse( div ){
+        //console.log("_getQueryRecurse");
         if ( div.classList.contains("query-builder-group")){
             var ch = [], q;
+
+            //console.log("  group, ch len:", div.children.length );
 
             for ( var i = 0; i < div.children.length; i++ ){
                 q = this._getQueryRecurse( div.children[i] );
                 if ( q ){
+                    //console.log("  add ch:", q );
                     ch.push( q );
+                    //console.log("  ch:", ch );
                 }
             }
 
-            return {
+            //console.log("  ch fin:", ch );
+
+            var qry = {
                 type: "group",
                 op: $(".group-btn-opr", div ).button('option', 'label').toLowerCase(),
                 children: ch
             };
+
+            return qry;
         }else if ( div.classList.contains("query-builder-field")){
             var qry = {
                 type: "field",
                 lh: $(".field-inp-lh", div ).val(),
                 op: $(".field-sel-opr", div ).val()
             };
+
+            //console.log("  field:", qry );
 
             if ( this._state[div.id].opr[1] ){
                 qry.rh = $(".field-inp-rh", div ).val();
