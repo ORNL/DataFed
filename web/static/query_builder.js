@@ -19,7 +19,9 @@ export const OPR_CON     = "HAS";
 // Generate a text expression from a given query
 export function queryToExpression( a_qry ){
     var expr;
-    console.log("queryToExpression", a_qry);
+
+    //console.log("queryToExpression", a_qry);
+
     if ( a_qry.type == "group" ){
         if ( a_qry.children.length == 1 ){
             expr = queryToExpression( a_qry.children[0] );
@@ -36,30 +38,20 @@ export function queryToExpression( a_qry ){
             throw "Invalid query";
         }
     }else{
-        var val = (a_qry.rh_is_field?"md.":"") + a_qry.rh;
-        expr = "md." + a_qry.lh;
-
-        if ( a_qry.op == OPR_DF ){
-            expr += " != NULL";
-        }else if ( a_qry.op == OPR_NDF ){
-            expr += " == NULL";
-        }else if ( a_qry.op == OPR_TRU ){
-            expr += " == true";
-        }else if ( a_qry.op == OPR_FAL ){
-            expr += " == false";
-        }else if ( a_qry.op == OPR_RGX ){
-            expr = "REGEX_TEST(" + expr + "," + val + ",false)";
-        }else if ( a_qry.op == OPR_WLD ){
-            expr += " like " + val;
-        }else if ( a_qry.op == OPR_CON ){
-            expr = val + " in " + expr;
-        }else{
-            expr += " " + a_qry.op + " " + val;
+        expr = "md." + a_qry.lh + " " + a_qry.op;
+        if ( a_qry.rh ){
+            expr += " ";
+            if ( a_qry.rh_is_field ){
+                expr += "md." + a_qry.rh;
+            }else if ( a_qry.rh_type == "string"){
+                expr += JSON.stringify( a_qry.rh );
+            }else{
+                expr += a_qry.rh;
+            }
         }
     }
 
-
-    console.log("expr", expr);
+    //console.log("expr", expr);
 
     return expr;
 }
@@ -250,7 +242,9 @@ export class QueryBuilder extends HTMLElement {
             //console.log("  field:", qry );
 
             if ( this._state[div.id].opr[1] ){
+                console.log("state:", this._state[div.id] );
                 qry.rh = $(".field-inp-rh", div ).val();
+                qry.rh_type = this._state[div.id].lh.type;
                 qry.rh_is_field = ($(".field-btn-val-type",div).button( "option", "label" ) == "F"?true:false);
             }
 
@@ -486,7 +480,7 @@ export class QueryBuilder extends HTMLElement {
                     }
                 }
 
-                console.log("input val/field",val,field );
+                //console.log("input val/field",val,field );
                 field = flds;
                 if ( field ){
                     field.path = val;
@@ -508,7 +502,7 @@ export class QueryBuilder extends HTMLElement {
             this._state[div.id] = st;
         }
 
-        console.log("field:",field);
+        //console.log("field:",field);
 
         // No valid field selected, remove RH inputs, reset field state (not inpt timer)
         if ( !field ){

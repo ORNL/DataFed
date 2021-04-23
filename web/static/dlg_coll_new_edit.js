@@ -88,12 +88,6 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                         obj.tagsClear = true;
                     }
                     
-                    /*else{
-                        for ( var i in obj.tags ){
-                            obj.tags[i] = util.escapeJSON( obj.tags[i] );
-                        }
-                    }*/
-
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
                         return;

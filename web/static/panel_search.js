@@ -24,7 +24,9 @@ function SearchPanel( a_frame, a_parent ){
         date_to = $("#srch_date_to",a_frame),
         date_to_ts = $("#srch_date_to_ts",a_frame),
         enabled = false,
-        srch_scope = $("#srch_scope",a_frame);
+        srch_scope = $("#srch_scope",a_frame),
+        qry_doc = null,
+        suppress_run = false;
 
 
     this.setSearchSelect = function( a_id_set ){
@@ -49,16 +51,17 @@ function SearchPanel( a_frame, a_parent ){
     }
 
     this.setQuery = function( a_qry ){
-        console.log("setQuery:", a_qry );
+        //console.log("setQuery:", a_qry );
         var expr = query_builder.queryToExpression( a_qry );
         if ( expr ){
-            console.log("expr:", expr );
+            qry_doc = a_qry;
+            //console.log("expr:", expr );
             $("#srch_meta",a_frame).val( expr );
         }
     }
 
     this.buildSearch = function(){
-        var tmp, query = {};
+        var tmp, query = {empty:true};
 
         query.mode = parseInt( $(".srch-mode",a_frame).val() );
 
@@ -71,39 +74,54 @@ function SearchPanel( a_frame, a_parent ){
         }
 
         tmp = $("#srch_id",a_frame).val();
-        if ( tmp )
+        if ( tmp ){
             query.id = tmp;
+            query.empty = false;
+        }
 
         tmp = $("#srch_text",a_frame).val();
-        if ( tmp )
+        if ( tmp ){
             query.text = tmp;
+            query.empty = false;
+        }
     
         query.tags = user_tags;
+        if ( query.tags.length ){
+            query.empty = false;
+        }
 
         if ( date_from.val() ){
             query.from = parseInt( date_from_ts.val() )/1000;
+            query.empty = false;
         }
 
         if ( date_to.val() ){
             query.to = parseInt( date_to_ts.val() )/1000;
+            query.empty = false;
         }
 
         tmp = $("#srch_creator",a_frame).val().trim();
         if ( tmp ){
             query.creator = tmp;
+            query.empty = false;
         }
 
         if ( query.mode == model.SM_DATA ){
             tmp = $("#srch_sch_id",a_frame).val();
-            if ( tmp )
+            if ( tmp ){
                 query.schId = tmp;
+                query.empty = false;
+            }
 
             tmp = $("#srch_meta",a_frame).val();
-            if ( tmp )
+            if ( tmp ){
                 query.meta = tmp;
+                query.empty = false;
+            }
         
             if ( $( "#srch_meta_err", a_frame ).prop("checked")){
                 query.metaErr = true;
+                query.empty = false;
             }
         }
 
@@ -167,7 +185,9 @@ function SearchPanel( a_frame, a_parent ){
         removeConfirmation: true,
         afterTagAdded: function( ev, ui ){
             user_tags.push( ui.tagLabel );
-            inst.runSearch();
+            if ( !suppress_run ){
+                inst.runSearch();
+            }
         },
         beforeTagRemoved: function( ev, ui ){
             var idx = user_tags.indexOf( ui.tagLabel );
@@ -175,16 +195,19 @@ function SearchPanel( a_frame, a_parent ){
                 user_tags.splice( idx, 1 );
         },
         afterTagRemoved: function(){
-            inst.runSearch();
+            if ( !suppress_run ){
+                inst.runSearch();
+            }
         }
     });
 
     $(".tagit-new",a_frame).css("clear","left");
 
     $("#srch_tags_clear",a_frame).on("click",function(){
-        var refresh = user_tags.length?true:false;
-        tags_div.tagit("removeAll");
-        if ( refresh ){
+        if ( user_tags.length ){
+            suppress_run = true;
+            tags_div.tagit("removeAll");
+            suppress_run = false;
             inst.runSearch();
         }
     });
@@ -200,13 +223,15 @@ function SearchPanel( a_frame, a_parent ){
     
     // ----- Text fields input setup -----
 
-    $("#srch_id,#srch_text,#srch_creator,#srch_meta,#srch_sch_id",a_frame).on("keypress",function( ev ){
+    $("#srch_id,#srch_text,#srch_creator,#srch_sch_id",a_frame).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
             ev.preventDefault();
             if ( enabled ){
                 //a_parent.searchPanel_Run( inst.buildSearch() );
                 inst.runSearch();
             }
+        }else{
+            qry_doc = null;
         }
     });
 
@@ -229,14 +254,26 @@ function SearchPanel( a_frame, a_parent ){
         });
     });
 
-    $("#srch_sch_clear",a_frame).on("click",function(){
+    /*$("#srch_sch_clear",a_frame).on("click",function(){
         if ( $("#srch_sch_id",a_frame).val().trim().length ){
             $("#srch_sch_id",a_frame).val("");
             inst.runSearch();
         }
-    });
+    });*/
 
     // ----- Metadata input setup -----
+
+    $("#srch_meta",a_frame).on("keypress",function( ev ){
+        if ( ev.keyCode == 13 ){
+            ev.preventDefault();
+            if ( enabled ){
+                //a_parent.searchPanel_Run( inst.buildSearch() );
+                inst.runSearch();
+            }
+        }else{
+            qry_doc = null;
+        }
+    });
 
     $("#srch_meta_build",a_frame).on("click",function(){
         var sch_id = $("#srch_sch_id",a_frame).val().trim();
@@ -245,12 +282,12 @@ function SearchPanel( a_frame, a_parent ){
                 if ( !ok ){
                     util.setStatusText( reply, true );
                 }
-                dlgQueryBuild.show( ok?reply.schema[0]:null, null, function( qry ){
+                dlgQueryBuild.show( ok?reply.schema[0]:null, qry_doc, function( qry ){
                     inst.setQuery( qry );
                 });
             });
         }else{
-            dlgQueryBuild.show( null, null, function( qry ){
+            dlgQueryBuild.show( null, qry_doc, function( qry ){
                 inst.setQuery( qry );
             });
         }
@@ -258,10 +295,15 @@ function SearchPanel( a_frame, a_parent ){
 
     $("#srch_meta_clear",a_frame).on("click",function(){
         if ( $("#srch_meta",a_frame).val().trim().length ){
-            $("#srch_meta",a_frame).val("");
+            $("#srch_meta,#srch_sch_id",a_frame).val("");
+            qry_doc = null;
             inst.runSearch();
         }
     });
+
+    $( "#srch_meta_err", a_frame ).on("change",function(){
+        inst.runSearch();
+    })
 
     // ----- Creator input setup -----
 

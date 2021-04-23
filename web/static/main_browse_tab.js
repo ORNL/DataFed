@@ -1402,12 +1402,18 @@ export function searchPanel_ClearScope(){
 
 export function searchPanel_Run( query ){
     console.log("searchPanel_Run", query );
+
+    if ( query.empty ){
+        handleQueryResults([]);
+        return;
+    }
+
     // Selection can only be personal data, a project, a shared user, or a shared project, or one or more collections
     // If collections, then all must have same scope
     var i,n,sel = data_tree.getSelectedNodes();
     for ( var i in sel ){
         n = sel[i];
-        console.log( "node: ", n );
+        //console.log( "node: ", n );
         if ( n.key == "mydata" ){
             query.scope = model.SS_PERSONAL;
         }else if ( n.key.startsWith( "p/" )){
@@ -1453,7 +1459,7 @@ export function searchPanel_Run( query ){
     }
 
     if ( query.scope != undefined ){
-        console.log("query",query);
+        //console.log("query",query);
         execQuery( query );
     }
 }
@@ -1461,7 +1467,7 @@ export function searchPanel_Run( query ){
 function execQuery( query ){
     util.setStatusText("Executing search query...");
     api.dataSearch( query, function( ok, data ){
-        console.log( "qry res:", ok, data );
+        //console.log( "qry res:", ok, data );
         if ( ok ){
             //var srch_node = data_tree.getNodeByKey("search");
 
