@@ -3,6 +3,8 @@
 #include <zmq.h>
 #include <unistd.h>
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
+#include <google/protobuf/util/json_util.h>
 #include "Util.hpp"
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
@@ -1919,19 +1921,44 @@ void
 DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply )
 {
     Value result;
-    vector<pair<string,string>> params;
+    //vector<pair<string,string>> params;
 
-    params.push_back({"title",a_request.title()});
-    params.push_back({"query",a_request.query()});
-    params.push_back({"query_comp",a_request.query_comp()});
-    if ( a_request.has_use_owner() )
+    string qry_begin, qry_end, qry_filter, params;
+
+    uint32_t cnt = parseSearchRequest( a_request.query(), qry_begin, qry_end, qry_filter, params );
+
+    google::protobuf::util::JsonPrintOptions options;
+    string query_json;
+
+    google::protobuf::util::Status stat = google::protobuf::util::MessageToJsonString( a_request.query(), & query_json, options );
+    if ( !stat.ok() )
+    {
+        EXCEPT(1,"Invalid search request");
+    }
+
+    DL_INFO("Orig search msg:" << query_json );
+
+    string body = string("{") +
+        "\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
+        "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt) +
+        "\"title\":\"" + a_request.title() + "\"" +
+        "\"query\":\"" +  + "\"" +
+        "}";
+
+
+    //params.push_back({"title",a_request.title()});
+    //params.push_back({"query",a_request.query()});
+    //params.push_back({"query_comp",a_request.query_comp()});
+    
+    /*if ( a_request.has_use_owner() )
         params.push_back({"use_owner",a_request.use_owner()?"true":"false"});
     if ( a_request.has_use_sh_usr() )
         params.push_back({"use_sh_usr",a_request.use_sh_usr()?"true":"false"});
     if ( a_request.has_use_sh_prj() )
         params.push_back({"use_sh_prj",a_request.use_sh_prj()?"true":"false"});
+    */
 
-    dbGet( "qry/create", params, result );
+    dbPost( "qry/create", {}, &body, result );
 
     setQueryData( a_reply, result );
 }
@@ -1940,8 +1967,29 @@ void
 DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply )
 {
     Value result;
-    vector<pair<string,string>> params;
+    //vector<pair<string,string>> params;
 
+    string body = "{\"id\":\"" + a_request.id() + "\"";
+
+    if ( a_request.has_title() )
+    {
+        body += ",\"title\":\"" + a_request.title() + "\"";
+    }
+
+    if ( a_request.has_query() )
+    {
+        string qry_begin, qry_end, qry_filter, params;
+
+        uint32_t cnt = parseSearchRequest( a_request.query(), qry_begin, qry_end, qry_filter, params );
+
+        body += ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
+        "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt);
+    }
+
+    body += "}";
+
+
+/*
     params.push_back({"id",a_request.id()});
     if ( a_request.has_title() )
         params.push_back({"title",a_request.title()});
@@ -1949,24 +1997,39 @@ DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::Quer
         params.push_back({"query",a_request.query()});
     if ( a_request.has_query_comp() )
         params.push_back({"query_comp",a_request.query_comp()});
-    if ( a_request.has_use_owner() )
+*/
+
+    /*if ( a_request.has_use_owner() )
         params.push_back({"use_owner",a_request.use_owner()?"true":"false"});
     if ( a_request.has_use_sh_usr() )
         params.push_back({"use_sh_usr",a_request.use_sh_usr()?"true":"false"});
     if ( a_request.has_use_sh_prj() )
         params.push_back({"use_sh_prj",a_request.use_sh_prj()?"true":"false"});
+    */
 
-    dbGet( "qry/update", params, result );
+    dbPost( "qry/update", {}, &body, result );
 
     setQueryData( a_reply, result );
 }
 
+//DatabaseAPI::queryDelete( const std::string & a_id )
 void
-DatabaseAPI::queryDelete( const std::string & a_id )
+DatabaseAPI::queryDelete( const Auth::QueryDeleteRequest & a_request, Anon::AckReply & a_reply )
 {
+    (void)a_reply;
     Value result;
+    string ids = "[";
 
-    dbGet( "qry/delete", {{"id",a_id}}, result );
+    for ( int i = 0; i < a_request.id_size(); i++ )
+    {
+        if ( i )
+            ids += ",";
+
+        ids += "\"" + a_request.id(i) + "\"";
+    }
+    ids += "]";
+
+    dbGet( "qry/delete", {{"id",ids}}, result );
 }
 
 void
@@ -1999,39 +2062,24 @@ DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingR
 void
 DatabaseAPI::setQueryData( QueryDataReply & a_reply, const libjson::Value & a_result )
 {
-    QueryData *         qry;
-
     TRANSLATE_BEGIN()
 
-    const Value::Array & arr = a_result.asArray();
+    const Value::Object & obj = a_result.asObject();
 
-    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
-    {
-        const Value::Object & obj = i->asObject();
+    a_reply.set_id( obj.getString( "id" ));
+    a_reply.set_title( obj.getString( "title" ));
 
-        qry = a_reply.add_query();
-        qry->set_id( obj.getString( "id" ));
-        qry->set_title( obj.getString( "title" ));
-        qry->set_query( obj.getString( "query" ));
+    if ( obj.has( "owner" ))
+        a_reply.set_owner( obj.asString() );
 
-        if ( obj.has( "owner" ))
-            qry->set_owner( obj.asString() );
+    if ( obj.has( "ct" ))
+        a_reply.set_ct( obj.asNumber() );
 
-        if ( obj.has( "ct" ))
-            qry->set_ct( obj.asNumber() );
+    if ( obj.has( "ut" ))
+        a_reply.set_ut( obj.asNumber() );
 
-        if ( obj.has( "ut" ))
-            qry->set_ut( obj.asNumber() );
-
-        if ( obj.has( "use_owner" ) && !obj.value().isNull() )
-            qry->set_use_owner( obj.asBool() );
-
-        if ( obj.has( "use_sh_usr" ) && !obj.value().isNull() )
-            qry->set_use_sh_usr( obj.asBool() );
-
-        if ( obj.has( "use_sh_prj" ) && !obj.value().isNull() )
-            qry->set_use_sh_prj( obj.asBool() );
-    }
+    //qry->set_query( obj.getString( "query" ));
+    //a_reply
 
     TRANSLATE_END( a_result )
 }
@@ -4424,13 +4472,32 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                 }
                 else
                 {
-                    result.append( a_iter );
-
-                    if ( tmp == "md" || tmp.compare( 0, 3, "md." ) == 0 )
-                        result.append( "." );
+                    if ( boost::iequals( tmp, "def" ))
+                    {
+                        result.append( "!= null" );
+                    }
+                    else if ( boost::iequals( tmp, "undef" ))
+                    {
+                        result.append( "== null" );
+                    }
+                    /*else if ( boost::iequals( tmp, "istrue" ))
+                    {
+                        result.append( "== true" );
+                    }
+                    else if ( boost::iequals( tmp, "isfalse" ))
+                    {
+                        result.append( "== false" );
+                    }*/
                     else
-                        result.append( ".md." );
-                    result.append( tmp );
+                    {
+                        result.append( a_iter );
+
+                        if ( tmp == "md" || tmp.compare( 0, 3, "md." ) == 0 )
+                            result.append( "." );
+                        else
+                            result.append( ".md." );
+                        result.append( tmp );
+                    }
                 }
 
                 v.reset();

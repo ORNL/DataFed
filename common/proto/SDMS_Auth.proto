@@ -806,22 +806,22 @@ message TopicUnlinkRequest
 message QueryCreateRequest
 {
     required string             title       = 1;
-    required string             query       = 2;
-    optional string             query_comp  = 3;
-    optional bool               use_owner   = 4;
-    optional bool               use_sh_usr  = 5;
-    optional bool               use_sh_prj  = 6;
+    required SearchRequest      query       = 2;
+    //optional string             query_comp  = 3;
+    //optional bool               use_owner   = 4;
+    //optional bool               use_sh_usr  = 5;
+    //optional bool               use_sh_prj  = 6;
 }
 
 message QueryUpdateRequest
 {
     required string             id          = 1;
     optional string             title       = 2;
-    optional string             query       = 3;
-    optional string             query_comp  = 4;
-    optional bool               use_owner   = 5;
-    optional bool               use_sh_usr  = 6;
-    optional bool               use_sh_prj  = 7;
+    optional SearchRequest      query       = 3;
+    //optional string             query_comp  = 4;
+    //optional bool               use_owner   = 5;
+    //optional bool               use_sh_usr  = 6;
+    //optional bool               use_sh_prj  = 7;
 }
 
 message QueryDeleteRequest
@@ -849,7 +849,13 @@ message QueryExecRequest
 
 message QueryDataReply
 {
-    repeated SDMS.QueryData     query       = 1;
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             owner       = 4;
+    optional uint32             ct          = 5;
+    optional uint32             ut          = 6;
+    required SearchRequest      query       = 7;
+    //repeated SDMS.QueryData     query       = 1;
 }
 
 // ============================ Annotation Messages

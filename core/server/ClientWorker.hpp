@@ -49,13 +49,9 @@ private:
     bool procRecordDeleteRequest( const std::string & a_uid );
     bool procRecordAllocChangeRequest( const std::string & a_uid );
     bool procRecordOwnerChangeRequest( const std::string & a_uid );
-    //bool procSearchRequest( const std::string & a_uid );
     bool procCollectionDeleteRequest( const std::string & a_uid );
     bool procProjectDeleteRequest( const std::string & a_uid );
-    bool procQueryDeleteRequest( const std::string & a_uid );
     bool procProjectSearchRequest( const std::string & a_uid );
-    bool procQueryCreateRequest( const std::string & a_uid );
-    bool procQueryUpdateRequest( const std::string & a_uid );
     bool procRepoAllocationCreateRequest( const std::string & a_uid );
     bool procRepoAllocationDeleteRequest( const std::string & a_uid );
     bool procRepoAuthzRequest( const std::string & a_uid );

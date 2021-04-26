@@ -103,7 +103,8 @@ public:
     void queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply );
     void queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply );
     void queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply );
-    void queryDelete( const std::string & a_id );
+    void queryDelete( const Auth::QueryDeleteRequest & a_request, Anon::AckReply & a_reply );
+    //void queryDelete( const std::string & a_id );
     void queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply );
     void queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply );
 

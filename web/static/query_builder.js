@@ -9,9 +9,9 @@ export const OPR_NEQ     = "!=";
 export const OPR_GTE     = ">=";
 export const OPR_GT      = ">";
 export const OPR_DF      = "DEF";
-export const OPR_NDF     = "NDEF";
-export const OPR_RGX     = "RGX";
-export const OPR_WLD     = "PAT";
+export const OPR_NDF     = "UNDEF";
+export const OPR_RGX     = "REGEX";
+export const OPR_WLD     = "LIKE";
 export const OPR_TRU     = "TRUE";
 export const OPR_FAL     = "FALSE";
 export const OPR_CON     = "HAS";
@@ -91,7 +91,7 @@ export class QueryBuilder extends HTMLElement {
         "number" : {label:"[num]", opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_LT,3],[OPR_LTE,3],[OPR_GTE,3],[OPR_GT,3],[OPR_DF,0],[OPR_NDF,0]]},
         "integer": {label:"[int]", opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_LT,3],[OPR_LTE,3],[OPR_GTE,3],[OPR_GT,3],[OPR_DF,0],[OPR_NDF,0]]},
         "enum"   : {label:"[enum]",opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_DF,0],[OPR_NDF,0]]},
-        "bool"   : {label:"[bool]",opr:[[OPR_TRU,0],[OPR_FAL,0],[OPR_EQ,2],[OPR_NEQ,2],[OPR_DF,0],[OPR_NDF,0]]},
+        "boolean": {label:"[bool]",opr:[[OPR_TRU,0],[OPR_FAL,0],[OPR_EQ,2],[OPR_NEQ,2],[OPR_DF,0],[OPR_NDF,0]]},
         "array"  : {label:"[arr]", opr:[[OPR_CON,1],[OPR_DF,0],[OPR_NDF,0]]},
         "object" : {label:"[obj]", opr:[[OPR_DF,0],[OPR_NDF,0]]}
     }

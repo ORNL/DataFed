@@ -1480,10 +1480,17 @@ function execQuery( query ){
     });
 }
 
-function querySave(){
+export function searchPanel_Save( query ){
+    console.log("searchPanel_Save", query );
+
+    if ( query.empty ){
+        dialogs.dlgAlert( "Save Query", "Cannot save - query contains no terms." )
+        return;
+    }
+
     dialogs.dlgSingleEntry( "Save Query", "Query Title:", ["Save","Cancel"], function(btn,val){
         if ( btn == 0 ){
-            var query = parseQuickSearch();
+            //var query = parseQuickSearch();
             api.sendQueryCreate( val, query, function( ok, data ){
                 if ( ok )
                     util.reloadNode(data_tree.getNodeByKey("queries"));

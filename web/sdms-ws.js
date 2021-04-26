@@ -609,7 +609,7 @@ app.get('/api/query/list', ( a_req, a_resp ) => {
 
 
 app.post('/api/query/create', ( a_req, a_resp ) => {
-    sendMessage( "QueryCreateRequest", {title:a_req.query.title,query:JSON.stringify( a_req.body )}, a_req, a_resp, function( reply ) {
+    sendMessage( "QueryCreateRequest", {title: a_req.query.title, query: a_req.body }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -619,7 +619,7 @@ app.post('/api/query/update', ( a_req, a_resp ) => {
     if ( a_req.query.title )
         params.title = a_req.query.title;
     if ( a_req.body )
-        params.query = JSON.stringify( a_req.body );
+        params.query = a_req.body;
 
     //console.log("'/api/query/update, params=[",params,"]");
 
@@ -667,9 +667,6 @@ app.post('/api/dat/search', ( a_req, a_resp ) => {
 
 app.post('/api/dat/create', ( a_req, a_resp ) => {
     sendMessage( "RecordCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
-        if ( reply.data && reply.data.length ){
-            console.log( "User", a_req.session.uid, "- data create, id:", reply.data[0].id );
-        }
         a_resp.send(reply);
     });
 });

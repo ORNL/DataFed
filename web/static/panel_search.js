@@ -41,11 +41,11 @@ function SearchPanel( a_frame, a_parent ){
             }
             srch_scope.html(html);
             $(".btn",srch_scope).button();
-            $("#srch_run_btn",a_frame).button("option","disabled",false);
+            $("#srch_run_btn,#srch_save_btn",a_frame).button("option","disabled",false);
             enabled = true;
         }else{
             srch_scope.html(html);
-            $("#srch_run_btn",a_frame).button("option","disabled",true);
+            $("#srch_run_btn,#srch_save_btn",a_frame).button("option","disabled",true);
             enabled = false;
         }
     }
@@ -142,7 +142,7 @@ function SearchPanel( a_frame, a_parent ){
     // ----- Save query button -----
 
     $("#srch_save_btn",a_frame).on("click", function(){
-
+        a_parent.searchPanel_Save( inst.buildSearch() );
     });
 
 

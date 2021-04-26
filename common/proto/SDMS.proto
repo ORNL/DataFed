@@ -314,18 +314,20 @@ message RepoData
     repeated string             admin       = 11;
 }
 
+/*
 message QueryData
 {
     required string             id          = 1;
     required string             title       = 2;
     required string             query       = 3;
     optional string             owner       = 4;
-    optional bool               use_owner   = 5;
-    optional bool               use_sh_usr  = 6;
-    optional bool               use_sh_prj  = 7;
+    //optional bool               use_owner   = 5;
+    //optional bool               use_sh_usr  = 6;
+    //optional bool               use_sh_prj  = 7;
     optional uint32             ct          = 8;
     optional uint32             ut          = 9;
 }
+*/
 
 // -------------------------------------------- ANNOTATION DEFINES
 

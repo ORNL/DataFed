@@ -95,11 +95,8 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RecordAllocChangeRequest, &ClientWorker::procRecordAllocChangeRequest );
         SET_MSG_HANDLER( proto_id, RecordOwnerChangeRequest, &ClientWorker::procRecordOwnerChangeRequest );
         SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &ClientWorker::procProjectSearchRequest );
-        SET_MSG_HANDLER( proto_id, QueryCreateRequest, &ClientWorker::procQueryCreateRequest );
-        SET_MSG_HANDLER( proto_id, QueryUpdateRequest, &ClientWorker::procQueryUpdateRequest );
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &ClientWorker::procCollectionDeleteRequest );
         SET_MSG_HANDLER( proto_id, ProjectDeleteRequest, &ClientWorker::procProjectDeleteRequest );
-        SET_MSG_HANDLER( proto_id, QueryDeleteRequest, &ClientWorker::procQueryDeleteRequest );
         SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &ClientWorker::procRepoAuthzRequest );
         SET_MSG_HANDLER( proto_id, RepoAllocationCreateRequest, &ClientWorker::procRepoAllocationCreateRequest );
         SET_MSG_HANDLER( proto_id, RepoAllocationDeleteRequest, &ClientWorker::procRepoAllocationDeleteRequest );
@@ -126,7 +123,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ListingReply, projList );
         SET_MSG_HANDLER_DB( proto_id, ProjectGetRoleRequest, ProjectGetRoleReply, projGetRole );
-        //SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
         SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordExportRequest, RecordExportReply, recordExport );
@@ -149,6 +145,9 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryListRequest, ListingReply, queryList );
         SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
         SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
+        SET_MSG_HANDLER_DB( proto_id, QueryCreateRequest, QueryDataReply, queryCreate );
+        SET_MSG_HANDLER_DB( proto_id, QueryUpdateRequest, QueryDataReply, queryUpdate );
+        SET_MSG_HANDLER_DB( proto_id, QueryDeleteRequest, AckReply, queryDelete );
         SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
         SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
         SET_MSG_HANDLER_DB( proto_id, AnnotationCreateRequest, AnnotationDataReply, annotationCreate );
@@ -1049,22 +1048,6 @@ ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid )
 
 
 bool
-ClientWorker::procQueryDeleteRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( QueryDeleteRequest, AckReply )
-
-    m_db_client.setClient( a_uid );
-
-    for ( int i = 0; i < request->id_size(); i++ )
-    {
-        m_db_client.queryDelete( request->id(i) );
-    }
-
-    PROC_MSG_END
-}
-
-
-bool
 ClientWorker::procProjectSearchRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( ProjectSearchRequest, ProjectDataReply )
@@ -1081,83 +1064,6 @@ ClientWorker::procProjectSearchRequest( const std::string & a_uid )
     DL_INFO("parsed query[" << q << "]" );
     m_db_client.projSearch( q, reply );
 */
-
-    PROC_MSG_END
-}
-
-
-bool
-ClientWorker::procQueryCreateRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( QueryCreateRequest, QueryDataReply )
-
-    m_db_client.setClient( a_uid );
-
-    EXCEPT(1,"Not implemented");
-/*
-    QueryCreateRequest req2;
-    bool use_owner = false;
-    bool use_sh_usr = false;
-    bool use_sh_prj = false;
-
-    DL_INFO("about to parse query[" << request->query() << "]" );
-
-    string q = parseQuery( request->query(), use_owner, use_sh_usr, use_sh_prj );
-
-    DL_INFO("parsed query[" << q << "]" );
-
-    req2.set_title( request->title());
-    req2.set_query( request->query() );
-    req2.set_query_comp( q );
-    req2.set_use_owner( use_owner );
-    req2.set_use_sh_usr( use_sh_usr );
-    req2.set_use_sh_prj( use_sh_prj );
-
-    m_db_client.queryCreate( req2, reply );
-*/
-
-    PROC_MSG_END
-}
-
-bool
-ClientWorker::procQueryUpdateRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( QueryUpdateRequest, QueryDataReply )
-
-    m_db_client.setClient( a_uid );
-
-    EXCEPT(1,"Not implemented");
-    /*
-    if ( request->has_query() )
-    {
-        QueryUpdateRequest req2;
-        bool use_owner = false;
-        bool use_sh_usr = false;
-        bool use_sh_prj = false;
-
-        DL_INFO("about to parse query[" << request->query() << "]" );
-
-        string q = parseQuery( request->query(), use_owner, use_sh_usr, use_sh_prj );
-
-        DL_INFO("parsed query[" << q << "]" );
-
-        if ( request->has_title() )
-            req2.set_title( request->title());
-
-        req2.set_id( request->id() );
-        req2.set_query( request->query() );
-        req2.set_query_comp( q );
-        req2.set_use_owner( use_owner );
-        req2.set_use_sh_usr( use_sh_usr );
-        req2.set_use_sh_prj( use_sh_prj );
-
-        m_db_client.queryUpdate( req2, reply );
-    }
-    else
-    {
-        m_db_client.queryUpdate( *request, reply );
-    }
-    */
 
     PROC_MSG_END
 }
