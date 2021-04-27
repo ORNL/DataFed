@@ -1376,12 +1376,13 @@ DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::Listing
 
     uint32_t cnt = parseSearchRequest( a_request, qry_begin, qry_end, qry_filter, params );
 
-    string body = "{\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
+    string body = "{\"scope\":" + to_string(a_request.scope()) + ",\"mode\":"+to_string(a_request.mode()) +
+        ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
         "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
 
     DL_INFO("General search: [" << body << "]");
 
-    dbPost( "col/pub/search2", {{"scope",to_string(a_request.scope())},{"mode",to_string(a_request.mode())}}, &body, result );
+    dbPost( "qry/exec/direct", {}, &body, result );
 
     setListingDataReply( a_reply, result );
 }
@@ -1936,27 +1937,15 @@ DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::Quer
         EXCEPT(1,"Invalid search request");
     }
 
-    DL_INFO("Orig search msg:" << query_json );
+    //DL_INFO("Orig search msg:" << query_json );
 
     string body = string("{") +
-        "\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
+        "\"qry_begin\":\"" + escapeJSON( qry_begin ) + "\",\"qry_end\":\"" + escapeJSON( qry_end ) + "\",\"qry_filter\":\"" + escapeJSON( qry_filter ) +
         "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt) +
-        "\"title\":\"" + a_request.title() + "\"" +
-        "\"query\":\"" +  + "\"" +
-        "}";
+        ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"" +
+        ",\"query\":" + query_json + "}";
 
-
-    //params.push_back({"title",a_request.title()});
-    //params.push_back({"query",a_request.query()});
-    //params.push_back({"query_comp",a_request.query_comp()});
-    
-    /*if ( a_request.has_use_owner() )
-        params.push_back({"use_owner",a_request.use_owner()?"true":"false"});
-    if ( a_request.has_use_sh_usr() )
-        params.push_back({"use_sh_usr",a_request.use_sh_usr()?"true":"false"});
-    if ( a_request.has_use_sh_prj() )
-        params.push_back({"use_sh_prj",a_request.use_sh_prj()?"true":"false"});
-    */
+    //DL_INFO("body:["<<body<<"]");
 
     dbPost( "qry/create", {}, &body, result );
 
@@ -1982,30 +1971,20 @@ DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::Quer
 
         uint32_t cnt = parseSearchRequest( a_request.query(), qry_begin, qry_end, qry_filter, params );
 
+        google::protobuf::util::JsonPrintOptions options;
+        string query_json;
+
+        google::protobuf::util::Status stat = google::protobuf::util::MessageToJsonString( a_request.query(), & query_json, options );
+        if ( !stat.ok() )
+        {
+            EXCEPT(1,"Invalid search request");
+        }
+
         body += ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
-        "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt);
+        "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt) + ",\"query\":" + query_json;
     }
 
     body += "}";
-
-
-/*
-    params.push_back({"id",a_request.id()});
-    if ( a_request.has_title() )
-        params.push_back({"title",a_request.title()});
-    if ( a_request.has_query() )
-        params.push_back({"query",a_request.query()});
-    if ( a_request.has_query_comp() )
-        params.push_back({"query_comp",a_request.query_comp()});
-*/
-
-    /*if ( a_request.has_use_owner() )
-        params.push_back({"use_owner",a_request.use_owner()?"true":"false"});
-    if ( a_request.has_use_sh_usr() )
-        params.push_back({"use_sh_usr",a_request.use_sh_usr()?"true":"false"});
-    if ( a_request.has_use_sh_prj() )
-        params.push_back({"use_sh_prj",a_request.use_sh_prj()?"true":"false"});
-    */
 
     dbPost( "qry/update", {}, &body, result );
 
@@ -2029,7 +2008,7 @@ DatabaseAPI::queryDelete( const Auth::QueryDeleteRequest & a_request, Anon::AckR
     }
     ids += "]";
 
-    dbGet( "qry/delete", {{"id",ids}}, result );
+    dbGet( "qry/delete", {{"ids",ids}}, result );
 }
 
 void
@@ -2068,18 +2047,15 @@ DatabaseAPI::setQueryData( QueryDataReply & a_reply, const libjson::Value & a_re
 
     a_reply.set_id( obj.getString( "id" ));
     a_reply.set_title( obj.getString( "title" ));
+    a_reply.set_owner( obj.getString( "owner" ));
+    a_reply.set_ct( obj.getNumber( "ct" ) );
+    a_reply.set_ut( obj.getNumber( "ut" ) );
 
-    if ( obj.has( "owner" ))
-        a_reply.set_owner( obj.asString() );
-
-    if ( obj.has( "ct" ))
-        a_reply.set_ct( obj.asNumber() );
-
-    if ( obj.has( "ut" ))
-        a_reply.set_ut( obj.asNumber() );
-
-    //qry->set_query( obj.getString( "query" ));
-    //a_reply
+    google::protobuf::util::Status stat = google::protobuf::util::JsonStringToMessage( obj.getValue( "query" ).toString(), a_reply.mutable_query()  );
+    if ( !stat.ok() )
+    {
+        EXCEPT(1,"Query data reply parse error!");
+    }
 
     TRANSLATE_END( a_result )
 }

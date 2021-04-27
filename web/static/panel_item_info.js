@@ -107,6 +107,7 @@ export function showSelectedInfo( node, cb ){
         showSelectedProjInfo( key, node, cb );
     }else if ( key.startsWith("q/")){
         api.sendQueryView( key, function( ok, item ){
+            console.log("qryView:",ok,item);
             showSelectedItemInfo( item );
             if ( cb ) cb( item, node );
         }); 
@@ -130,7 +131,7 @@ export function showSelectedInfo( node, cb ){
 export function showSelectedItemInfo( item ){
     var disabled = [];
 
-    //console.log("show info",item);
+    console.log("show info",item);
 
     if ( item && item.id ){
         if ( !tabs_parent_vis ){
@@ -648,23 +649,77 @@ function showSelectedItemForm( item ){
     }
 
     if ( cls == ".siq" ){
-        var qry = JSON.parse( item.query );
+        $("#sel_info_qry_mode",form).text( item.query.mode == "SM_DATA"?"Data":"Collections" );
 
-        if ( qry.id )
-            $("#sel_info_qry_id",form).text( qry.id );
-        if ( qry.text )
-            $("#sel_info_qry_text",form).text( qry.text );
-        if ( qry.meta )
-            $("#sel_info_qry_meta",form).text( qry.meta );
-        if ( qry.tags ){
+        switch( item.query.scope ){
+            case "SS_PERSONAL": tmp = "Personal Data"; break;
+            case "SS_PROJECT": tmp = "Project Data (" + item.query.owner + ")"; break;
+            case "SS_SHARED": tmp = "Shared Data (" + item.query.owner + ")"; break;
+            case "SS_PUBLIC": tmp = "Public Data"; break;
+        }
+
+        $("#sel_info_qry_scope",form).text( tmp );
+
+        if ( item.query.coll ){
             tmp = "";
-            for ( i in qry.tags ){
+            for ( i in item.query.coll ){
+                if ( tmp ){
+                    tmp += ", ";
+                }
+                tmp += item.query.coll[i];
+            }
+        }else{
+            tmp = "All data";
+        }
+
+        $("#sel_info_qry_sel",form).text( tmp );
+
+    
+        if ( item.query.id ){
+            $("#sel_info_qry_id",form).text( item.query.id );
+        }
+
+        if ( item.query.text ){
+            $("#sel_info_qry_text",form).text( item.query.text );
+        }
+
+        if ( item.query.tags ){
+            tmp = "";
+            for ( i in item.query.tags ){
                 if ( tmp )
                     tmp += ", ";
-                tmp += qry.tags[i];
+                tmp += item.query.tags[i];
             }
-            $("#sel_info_tags",form).text( tmp );
+            $("#sel_info_qry_tags",form).text( tmp );
         }
+
+        if ( item.query.creator ){
+            $("#sel_info_qry_creator",form).text( item.query.creator );
+        }
+
+        if ( item.query.from ){
+            date.setTime(item.query.from*1000);
+            $("#sel_info_qry_from",form).text( date.toLocaleDateString("en-US", settings.date_opts ));
+        }
+
+        if ( item.query.to ){
+            date.setTime(item.query.to*1000);
+            $("#sel_info_qry_to",form).text( date.toLocaleDateString("en-US", settings.date_opts ));
+        }
+
+        if ( item.query.schId ){
+            $("#sel_info_qry_sch_id",form).text( item.query.schId );
+        }
+
+        if ( item.query.meta ){
+            $("#sel_info_qry_meta",form).text( item.query.meta );
+        }
+
+        if ( item.query.metaErr ){
+            $("#sel_info_qry_meta_err",form).text( "Yes" );
+        }
+
+        //repeated string             coll        = 11;
     }
 
     if ( cls == ".sia" ){

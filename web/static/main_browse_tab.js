@@ -1400,14 +1400,7 @@ export function searchPanel_ClearScope(){
     searchSelTree = {};
 }
 
-export function searchPanel_Run( query ){
-    console.log("searchPanel_Run", query );
-
-    if ( query.empty ){
-        handleQueryResults([]);
-        return;
-    }
-
+function searchBuildQuery( query ){
     // Selection can only be personal data, a project, a shared user, or a shared project, or one or more collections
     // If collections, then all must have same scope
     var i,n,sel = data_tree.getSelectedNodes();
@@ -1458,8 +1451,19 @@ export function searchPanel_Run( query ){
         }
     }
 
+}
+
+export function searchPanel_Run( query ){
+    console.log("searchPanel_Run", query );
+
+    if ( query.empty ){
+        handleQueryResults([]);
+        return;
+    }
+
+    searchBuildQuery( query );
+
     if ( query.scope != undefined ){
-        //console.log("query",query);
         execQuery( query );
     }
 }
@@ -1467,10 +1471,7 @@ export function searchPanel_Run( query ){
 function execQuery( query ){
     util.setStatusText("Executing search query...");
     api.dataSearch( query, function( ok, data ){
-        //console.log( "qry res:", ok, data );
         if ( ok ){
-            //var srch_node = data_tree.getNodeByKey("search");
-
             // Set this query as current for refresh
             cur_query = query;
             handleQueryResults( data );
@@ -1481,10 +1482,15 @@ function execQuery( query ){
 }
 
 export function searchPanel_Save( query ){
-    console.log("searchPanel_Save", query );
-
     if ( query.empty ){
         dialogs.dlgAlert( "Save Query", "Cannot save - query contains no terms." )
+        return;
+    }
+
+    searchBuildQuery( query );
+
+    if ( query.scope == undefined ){
+        dialogs.dlgAlert( "Save Query", "Cannot save - invalid search selection." )
         return;
     }
 

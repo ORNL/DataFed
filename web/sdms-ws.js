@@ -636,11 +636,7 @@ app.get('/api/query/delete', ( a_req, a_resp ) => {
 
 app.get('/api/query/view', ( a_req, a_resp ) => {
     sendMessage( "QueryViewRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        if ( reply.query && reply.query.length )
-            a_resp.send(reply.query[0]);
-        else
-            a_resp.send();
-
+        a_resp.send(reply);
     });
 });
 

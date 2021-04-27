@@ -851,9 +851,9 @@ message QueryDataReply
 {
     required string             id          = 1;
     required string             title       = 2;
-    optional string             owner       = 4;
-    optional uint32             ct          = 5;
-    optional uint32             ut          = 6;
+    required string             owner       = 4;
+    required uint32             ct          = 5;
+    required uint32             ut          = 6;
     required SearchRequest      query       = 7;
     //repeated SDMS.QueryData     query       = 1;
 }
