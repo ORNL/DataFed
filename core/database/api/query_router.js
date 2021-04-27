@@ -34,29 +34,35 @@ router.get('/create', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 );
 
-                var obj = { query: req.queryParams.query, query_comp: req.queryParams.query_comp, ct: time, ut: time, owner: client._id };
+                var obj = {
+                    query: req.body.query,
+                    qry_begin: req.body.qry_begin,
+                    qry_end: req.body.qry_end,
+                    qry_filter: req.body.qry_filter,
+                    params: req.body.params,
+                    limit: req.body.limit,
+                    ct: time,
+                    ut: time,
+                    owner: client._id
+                };
 
                 g_lib.procInputParam( req.queryParams, "title", false, obj );
 
-                if ( req.queryParams.use_owner )
-                    obj.use_owner = true;
+                var qry = g_db.q.save( obj, { returnNew: true }).new;
+                g_db.owner.save({ _from: qry._id, _to: client._id });
 
-                if ( req.queryParams.use_sh_usr )
-                    obj.use_sh_usr = true;
+                qry.id = qry._id;
 
-                if ( req.queryParams.use_sh_prj )
-                    obj.use_sh_prj = true;
+                delete qry._id;
+                delete qry._key;
+                delete qry._rev;
+                delete qry.qry_begin;
+                delete qry.qry_end;
+                delete qry.qry_filter;
+                delete qry.params;
+                delete qry.lmit;
 
-                var qry = g_db.q.save( obj, { returnNew: true });
-                g_db.owner.save({ _from: qry.new._id, _to: client._id });
-
-                qry.new.id = qry.new._id;
-
-                delete qry.new._id;
-                delete qry.new._key;
-                delete qry.new._rev;
-
-                result.push( qry.new );
+                result.push( qry );
             }
         });
 
@@ -66,12 +72,15 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('title', joi.string().required(), "Query Title")
-.queryParam('query', joi.string().required(), "Query expression")
-.queryParam('query_comp', joi.string().required(), "Compiled query expression")
-.queryParam('use_owner', joi.bool().optional(), "Query uses owner param")
-.queryParam('use_sh_usr', joi.bool().optional(), "Query uses shared users param")
-.queryParam('use_sh_prj', joi.bool().optional(), "Query uses shared projects param")
+.body( joi.object({
+    title: joi.string().required(),
+    qry_begin: joi.string().required(),
+    qry_end: joi.string().required(),
+    qry_filter: joi.string().required(),
+    params: joi.any().required(),
+    limit: joi.integer().required(),
+    query: joi.any().required()
+}).required(), 'Query fields' )
 .summary('Create a query')
 .description('Create a query');
 
