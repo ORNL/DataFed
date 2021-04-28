@@ -40,9 +40,9 @@ var SS_TREE = 0,
     select_source = SS_TREE,
     select_source_prev = SS_TREE,
     searchMode = false,
-    searchScope = null,
-    searchSelect = {},
-    searchSelTree = {},
+    //searchScope = null,
+    //searchSelect = {},
+    //searchSelTree = {},
     cur_query,
     update_files, import_direct,
     search_panel, cat_panel, graph_panel;
@@ -141,11 +141,11 @@ function getActionableIDs(){
 
     switch( select_source ){
         case SS_TREE:
-            if ( searchMode ){
+            /*if ( searchMode ){
                 sel = [data_tree.getActiveNode()];
-            }else{
+            }else{*/
                 sel = data_tree.getSelectedNodes();
-            }
+            //}
             for ( i in sel ){
                 ids.push( sel[i].key );
             }
@@ -1289,11 +1289,11 @@ export function updateBtnState(){
     var bits,sel;
     switch( select_source ){
         case SS_TREE:
-            if ( searchMode ){
+            /*if ( searchMode ){
                 sel = [data_tree.getActiveNode()];
-            }else{
+            }else{*/
                 sel = data_tree.getSelectedNodes();
-            }
+            //}
             console.log("sel:",sel);
 
             bits = calcActionState( sel );
@@ -1363,14 +1363,14 @@ export function updateBtnState(){
 function setSearchMode( enabled ){
     if ( enabled ){
         searchMode = true;
-        search_panel.setSearchSelect( searchSelect );
+        //search_panel.setSearchSelect( searchSelect );
         $("#sreach_panel",frame).show();
-        $(data_tree_div).fancytree("option","checkbox",true);
+        //$(data_tree_div).fancytree("option","checkbox",true);
     }else{
         searchMode = false;
-        search_panel.setSearchSelect();
+        //search_panel.setSearchSelect();
         $("#sreach_panel",frame).hide();
-        $(data_tree_div).fancytree("option","checkbox",false);
+        //$(data_tree_div).fancytree("option","checkbox",false);
     }
 }
 
@@ -1407,22 +1407,34 @@ function handleQueryResults( data ){
     results_node.setExpanded();
 }
 
+export function searchPanel_GetSelection(){
+    var res = {}, node, sel = data_tree.getSelectedNodes();
+
+    for ( var i in sel ){
+        node = sel[i];
+        res[ node.key ] = node.data._title?node.data._title:node.title;
+    }
+
+    return res;
+}
+
 export function searchPanel_RemoveScope( a_id ){
+    /*
     var sel = data_tree.getSelectedNodes();
     for ( var i in sel ){
         if ( sel[i].key == a_id ){
             sel[i].setSelected( false );
         }
     }
-
-    delete searchSelect[a_id];
-    searchSelTree
+    */
+    //delete searchSelect[a_id];
+    //searchSelTree
 }
 
 export function searchPanel_ClearScope(){
-    data_tree.selectAll( false );
+    /*data_tree.selectAll( false );
     searchSelect = {};
-    searchSelTree = {};
+    searchSelTree = {};*/
 }
 
 function searchBuildQuery( query ){
@@ -2314,9 +2326,9 @@ export function init(){
                         scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size, external:item.external, nodrag: nodrag };
                     }
 
-                    if ( searchMode && ( item.id in searchSelect )){
+                    /*if ( searchMode && ( item.id in searchSelect )){
                         entry.selected = true;
-                    }
+                    }*/
 
                     data.result.push( entry );
                 }
@@ -2350,13 +2362,14 @@ export function init(){
 
             panel_info.showSelectedInfo( data.node, checkTreeUpdate );
 
-            if ( searchMode ){
+            /*if ( searchMode ){
                 updateBtnState();                
-            }
+            }*/
         },
         select: function( event, data ) {
-                //console.log("select",data.node.key);
-                if ( data.node.isSelected() ){
+            //console.log("select",data.node.key);
+            /*
+            if ( data.node.isSelected() ){
                 var others;
 
                 if ( searchMode ){
@@ -2436,6 +2449,7 @@ export function init(){
             if ( searchMode ){
                 search_panel.setSearchSelect( searchSelect );
             }
+            */
 
             updateBtnState();
         },
@@ -2465,8 +2479,8 @@ export function init(){
             if ( dragging ){ // Suppress click processing on aborted drag
                 console.log("click drasgging");
                 dragging = false;
-            }else if ( !searchMode ){
-                console.log("click not search");
+            }else /*if ( !searchMode )*/ {
+                //console.log("click not search");
                 if ( event.which == null ){
                     // RIGHT-CLICK CONTEXT MENU
 

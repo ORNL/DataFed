@@ -220,6 +220,13 @@ function SearchPanel( a_frame, a_parent ){
         item.remove();
     });
 
+    $("#srch_scope_add",a_frame).on("click",function(){
+        //inst.setSearchSelect();
+        //a_parent.searchPanel_ClearScope();
+        var sel = a_parent.searchPanel_GetSelection();
+        inst.setSearchSelect( sel );
+    });
+
     $("#srch_scope_clear",a_frame).on("click",function(){
         inst.setSearchSelect();
         a_parent.searchPanel_ClearScope();
