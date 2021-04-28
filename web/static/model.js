@@ -23,6 +23,27 @@ export const PAYLOAD_MAX_SIZE            = 1048576; // Max server payload size =
 export const SM_DATA         = 0;
 export const SM_COLLECTION   = 1;
 
+export const SearchModeFromString = {
+    "SM_DATA":SM_DATA,
+    "SM_COLLECTION":SM_COLLECTION
+};
+
+export const SORT_ID            = 0;
+export const SORT_TITLE         = 1;
+export const SORT_OWNER         = 2;
+export const SORT_TIME_CREATE   = 3;
+export const SORT_TIME_UPDATE   = 4;
+export const SORT_RELEVANCE     = 5;
+
+export const SortFromString = {
+    "SORT_ID":SORT_ID,
+    "SORT_TITLE":SORT_TITLE,
+    "SORT_OWNER":SORT_OWNER,
+    "SORT_TIME_CREATE":SORT_TIME_CREATE,
+    "SORT_TIME_UPDATE":SORT_TIME_UPDATE,
+    "SORT_RELEVANCE":SORT_RELEVANCE
+};
+
 export const SS_PERSONAL     = 0;
 export const SS_PROJECT      = 1;
 export const SS_SHARED       = 2;
@@ -82,14 +103,6 @@ export const NOTE_MASK_LOC_ERR   = 0x88;
 export const NOTE_MASK_LOC_ALL   = 0xFF;
 export const NOTE_MASK_INH_ALL   = 0xC00;
 export const NOTE_MASK_MD_ERR    = 0x1000;
-
-export const SORT_ID            = 0;
-export const SORT_TITLE         = 1;
-export const SORT_OWNER         = 2;
-export const SORT_TIME_CREATE   = 3;
-export const SORT_TIME_UPDATE   = 4;
-export const SORT_RELEVANCE     = 5;
-
 
 export const NoteTypeLabel = [
     "Question",

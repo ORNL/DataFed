@@ -136,12 +136,16 @@ function getSelectedNodes(){
     return sel;
 }
 
-function getSelectedIDs(){
+function getActionableIDs(){
     var ids = [], sel, i;
 
     switch( select_source ){
         case SS_TREE:
-            sel = data_tree.getSelectedNodes();
+            if ( searchMode ){
+                sel = [data_tree.getActiveNode()];
+            }else{
+                sel = data_tree.getSelectedNodes();
+            }
             for ( i in sel ){
                 ids.push( sel[i].key );
             }
@@ -381,7 +385,7 @@ function displayPath( path, item ){
 
 
 function showParent( which ){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 ){
         return;
     }
@@ -462,7 +466,7 @@ function showParent( which ){
 
 
 function setLockSelected( a_lock ){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length == 0 )
         return;
 
@@ -571,7 +575,7 @@ function dataPut( a_id, a_cb ){
 // ACTION FUNCTIONS (UI event handlers)
 
 function actionDeleteSelected(){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length == 0 )
         return;
 
@@ -1001,7 +1005,7 @@ function actionEditSelected() {
     //if ( async_guard )
     //    return;
 
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
 
     if ( ids.length != 1 )
         return;
@@ -1045,13 +1049,15 @@ function actionEditSelected() {
             }); 
             break;
         case 'q':
-            api.sendQueryView( id, function( ok, old_qry ){
+            api.sendQueryView( id, function( ok, data ){
                 if ( ok ){
-                    dlgQueryNewEdit.show( old_qry, function( data ){
-                        refreshUI( id, data, true );
-                    });
-                }else
-                    util.setStatusText("Search Edit Error: " + old_qry, 1);
+                    if ( !searchMode ){
+                        setSearchMode( true );
+                    }
+                    search_panel.setQuery( data.query );
+                }else{
+                    util.setStatusText("Saved Query Edit Error: " + data, 1);
+                }
             });
             return;
         default:
@@ -1060,7 +1066,7 @@ function actionEditSelected() {
 }
 
 function actionShareSelected() {
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
@@ -1091,7 +1097,7 @@ function actionShareSelected() {
 }
 
 function actionDepGraph(){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
@@ -1131,7 +1137,7 @@ function actionRefresh(){
 }
 
 function actionSubscribe(){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
@@ -1146,7 +1152,7 @@ function actionSubscribe(){
 }
 
 function actionAnnotate(){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
@@ -1164,14 +1170,14 @@ function actionAnnotate(){
 }
 
 function actionDataGet() {
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     dataGet( ids, function(){
         resetTaskPoll();
     });
 }
 
 function actionDataPut() {
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
@@ -1283,7 +1289,13 @@ export function updateBtnState(){
     var bits,sel;
     switch( select_source ){
         case SS_TREE:
-            sel = data_tree.getSelectedNodes();
+            if ( searchMode ){
+                sel = [data_tree.getActiveNode()];
+            }else{
+                sel = data_tree.getSelectedNodes();
+            }
+            console.log("sel:",sel);
+
             bits = calcActionState( sel );
             break;
         case SS_CAT:
@@ -1348,6 +1360,19 @@ export function updateBtnState(){
     data_tree_div.contextmenu("enableEntry", "note", (bits & 0x400) == 0 );
 }
 
+function setSearchMode( enabled ){
+    if ( enabled ){
+        searchMode = true;
+        search_panel.setSearchSelect( searchSelect );
+        $("#sreach_panel",frame).show();
+        $(data_tree_div).fancytree("option","checkbox",true);
+    }else{
+        searchMode = false;
+        search_panel.setSearchSelect();
+        $("#sreach_panel",frame).hide();
+        $(data_tree_div).fancytree("option","checkbox",false);
+    }
+}
 
 function handleQueryResults( data ){
     //{title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]},
@@ -1943,7 +1968,7 @@ $("#btn_export_data",frame).on('click', function(){
     $("#filemenu").hide();
     dialogs.dlgConfirmChoice( "Confirm Export", "Export selected record metadata to browser download directory?", ["Cancel","Export"], function( choice ){
         if ( choice == 1 ){
-            var ids = getSelectedIDs();
+            var ids = getActionableIDs();
 
             api.dataExport( ids, function( ok, data ){
                 console.log("reply:", data );
@@ -2324,6 +2349,10 @@ export function init(){
             keyNav = false;
 
             panel_info.showSelectedInfo( data.node, checkTreeUpdate );
+
+            if ( searchMode ){
+                updateBtnState();                
+            }
         },
         select: function( event, data ) {
                 //console.log("select",data.node.key);
@@ -2546,17 +2575,7 @@ export function init(){
     graph_panel = panel_graph.newGraphPanel( "#data-graph", $("tab#-prov-graph",frame), this );
 
     $("#btn_search_panel").on("click", function(){
-        if ( searchMode ){
-            searchMode = false;
-            search_panel.setSearchSelect();
-            $("#sreach_panel",frame).hide();
-            $(data_tree_div).fancytree("option","checkbox",false);
-        }else{
-            searchMode = true;
-            search_panel.setSearchSelect( searchSelect );
-            $("#sreach_panel",frame).show();
-            $(data_tree_div).fancytree("option","checkbox",true);
-        }
+        setSearchMode( !searchMode );
     });
 
     data_tree_div.contextmenu(ctxt_menu_opts);
