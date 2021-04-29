@@ -212,7 +212,7 @@ export function refreshUI( a_ids, a_data, a_reload ){
     }
 
     if ( cur_query ){
-        execQuery( cur_query );
+        queryExec( cur_query );
     }
 
     if ( graph_panel.getSubjectID() ){
@@ -1294,7 +1294,7 @@ export function updateBtnState(){
             }else{*/
                 sel = data_tree.getSelectedNodes();
             //}
-            console.log("sel:",sel);
+            //console.log("sel:",sel);
 
             bits = calcActionState( sel );
             break;
@@ -1407,12 +1407,78 @@ function handleQueryResults( data ){
     results_node.setExpanded();
 }
 
+// Get selected nodes and return as a subtree
+// Filter-out nodes that cannot be searched
 export function searchPanel_GetSelection(){
-    var res = {}, node, sel = data_tree.getSelectedNodes();
+    //console.log( "searchPanel_GetSelection" );
+
+    var res, j, n, scope, owner, par, ch, sel = data_tree.getSelectedNodes();
 
     for ( var i in sel ){
-        node = sel[i];
-        res[ node.key ] = node.data._title?node.data._title:node.title;
+        n = sel[i];
+        // Only allow collections, projects, mydata, shared project & user collections
+        // If personal root collection is specified, convert to "my data" scope
+        // If a project root collection is specified, convert to project scope
+
+        if ( n.key == "mydata" ){
+            scope = model.SS_PERSONAL;
+            owner = 0;
+        }else if ( n.key.startsWith( "p/" )){
+            scope = model.SS_PROJECT;
+            owner = n.key;
+        }else if ( n.key.startsWith( "shared_user_" )){
+            scope = model.SS_SHARED;
+            owner = n.key.substr( 12 );
+        }else if ( n.key.startsWith( "shared_proj_" )){
+            scope = model.SS_SHARED;
+            owner = n.key.substr( 12 );
+        }else if ( n.key.startsWith( "c/" )){
+            // TODO Must use DB cal to get real path (or add this to public collections)
+            par = n.getParentList(false,true);
+            //console.log("par:",par);
+            // TODO Check for root & replace with parent scope (user/project)
+
+            if ( n.data.scope == ( "u/" + settings.user.uid )){
+                scope = model.SS_PERSONAL;
+                owner = 0;
+            }else if ( n.data.scope.startsWith( "u/" )){
+                scope = model.SS_SHARED;
+                owner = n.key;
+            }else if ( n.data.scope.startsWith( "p/" )){
+                // Is this a member or shared project?
+                if ( par[0].key.startsWith("shared")){
+                    scope = model.SS_SHARED;
+                }else{
+                    scope = model.SS_PROJECT;
+                }
+                owner = n.data.scope;
+            }else{
+                continue;
+            }
+
+            // Handle collection entries & skip default
+            if ( !res || res._scope != scope || res._owner != owner ){
+                res = { _scope : scope, _owner : owner, ch: {} };
+            }
+
+            ch = res.ch;
+            for ( j in par ){
+                n = par[j];
+                if ( !( n.key in ch )){
+                    ch[n.key] = { _title : n.data._title?n.data._title:n.title, ch: {}};
+                }
+
+                ch = ch[n.key].ch;
+            }
+
+            continue;
+        }else{
+            // Invalid selections
+            continue;
+        }
+
+        // Handle default entries (not collections)
+        res = { _scope : scope, _owner: owner, ch : { [n.key] : { _title : n.data._title?n.data._title:n.title, ch: {} }}};
     }
 
     return res;
@@ -1437,7 +1503,7 @@ export function searchPanel_ClearScope(){
     searchSelTree = {};*/
 }
 
-function searchBuildQuery( query ){
+function queryCalcScope( query ){
     // Selection can only be personal data, a project, a shared user, or a shared project, or one or more collections
     // If collections, then all must have same scope
     var i,n,sel = data_tree.getSelectedNodes();
@@ -1487,7 +1553,6 @@ function searchBuildQuery( query ){
             return;
         }
     }
-
 }
 
 export function searchPanel_Run( query ){
@@ -1498,14 +1563,14 @@ export function searchPanel_Run( query ){
         return;
     }
 
-    searchBuildQuery( query );
+    queryCalcScope( query );
 
     if ( query.scope != undefined ){
-        execQuery( query );
+        queryExec( query );
     }
 }
 
-function execQuery( query ){
+function queryExec( query ){
     util.setStatusText("Executing search query...");
     api.dataSearch( query, function( ok, data ){
         if ( ok ){
@@ -1524,7 +1589,7 @@ export function searchPanel_Save( query ){
         return;
     }
 
-    searchBuildQuery( query );
+    queryCalcScope( query );
 
     if ( query.scope == undefined ){
         dialogs.dlgAlert( "Save Query", "Cannot save - invalid search selection." )
@@ -2244,14 +2309,14 @@ export function init(){
             if ( data.node.key == "mydata" ){
                 var uid = "u/" + settings.user.uid;
                 data.result = [
-                    {title:util.generateTitle(data.response),folder:true,expanded:false,lazy:true,checkbox:false,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
+                    {title:util.generateTitle(data.response),_title:util.escapeHTML(data.response.title),folder:true,expanded:false,lazy:true,checkbox:false,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-book"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key.startsWith("p/")){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
-                    {title: util.generateTitle( data.response ),folder:true,lazy:true,checkbox:false,key:"c/p_"+prj_id+"_root",offset:0,scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
+                    {title: util.generateTitle( data.response ),_title:util.escapeHTML(data.response.title),folder:true,lazy:true,checkbox:false,key:"c/p_"+prj_id+"_root",offset:0,scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-book"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
@@ -2264,7 +2329,7 @@ export function init(){
                         item = data.response.item[i];
                         admin = (item.owner == uid);
                         mgr = (item.creator == uid);
-                        data.result.push({ title: util.generateTitle(item,true),_title:item.title,icon:"ui-icon ui-icon-box",folder:true,key:item.id,scope:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
+                        data.result.push({ title: util.generateTitle(item,true),_title:util.escapeHTML(item.title),icon:"ui-icon ui-icon-box",folder:true,key:item.id,scope:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
                     }
                 }
 
@@ -2282,7 +2347,7 @@ export function init(){
                 if ( data.response.item && data.response.item.length ){
                     for ( i in data.response.item ) {
                         item = data.response.item[i];
-                        data.result.push({ title: util.generateTitle(item,true),_title:item.title,icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
+                        data.result.push({ title: util.generateTitle(item,true),_title:util.escapeHTML(item.title),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
                     }
                 }
             } else if ( data.node.key == "search_saved" ) {
@@ -2320,7 +2385,7 @@ export function init(){
                     item = items[i];
 
                     if ( item.id[0]=="c" ){
-                        entry = { title: util.generateTitle(item),_title:item.title,folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub || nodrag };
+                        entry = { title: util.generateTitle(item),_title:util.escapeHTML(item.title),folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub || nodrag };
                     }else{
                         entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon: util.getDataIcon( item ),
                         scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size, external:item.external, nodrag: nodrag };

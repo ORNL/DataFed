@@ -15,6 +15,76 @@ export function newSearchPanel( a_frame, a_parent ){
     return new SearchPanel( a_frame, a_parent );
 }
 
+function _makeSelTree( a_tree ){
+    var html = "", item;
+
+    for ( var id in a_tree ){
+        item = a_tree[id];
+        if ( item.ch && !util.isObjEmpty( item.ch )){
+            html += _makeSelTree( item.ch );
+        }else{
+            html += "<div class='srch-scope-item' data='" + id +
+                "' title='" + id + "'><div class='row-flex' style='width:100%'><div style='flex:1 1 auto;white-space:nowrap;overflow:hidden'>" + item._title +
+                "</div><div class='srch-scope-btn-div' style='flex:none'><button class='srch-scope-rem-btn btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div></div></div>";
+        }
+    }
+
+    return html;
+}
+
+/*
+Adds new selection to existing.
+Only leaf nodes in a_tree matter: if a leaf node is not already in the old tree, it is added. If it
+is in the existing tree, then all nodes below that node are pruned.
+*/
+function _addSelTree( a_old, a_new ){
+    console.log("addSelTree",a_old,a_new);
+    for ( var id in a_new ){
+        if ( id in a_old && !util.isObjEmpty( a_new[id].ch )){
+            console.log( id, "is in old");
+            _addSelTree( a_old[id].ch, a_new[id].ch );
+        }else{
+            console.log( id, "not in old");
+            a_old[id] = a_new[id];
+        }
+    }
+}
+
+function _remSelTree( a_old, a_rem_id ){
+    if ( util.isObjEmpty( a_old )){
+        return 0;
+    }
+
+    if ( a_rem_id in a_old ){
+        delete a_old[a_rem_id];
+        // Return true if empty = prune this node
+        if ( util.isObjEmpty( a_old )){
+            return 1;
+        }else{
+            return -1;
+        }
+    }else{
+        var res;
+        for ( var i in a_old ){
+            res = _remSelTree( a_old[i].ch, a_rem_id );
+
+            if ( res > 0 ){
+                delete a_old[i];
+                // Return true if empty = prune this node
+                if ( util.isObjEmpty( a_old )){
+                    return 1;
+                }else{
+                    return -1;
+                }
+            }else if ( res < 0 ){
+                return -1;
+            }
+        }
+
+        return 0;
+    }
+}
+
 function SearchPanel( a_frame, a_parent ){
     var inst = this,
         tags_div = $("#srch_tags_div",a_frame),
@@ -24,11 +94,51 @@ function SearchPanel( a_frame, a_parent ){
         date_to = $("#srch_date_to",a_frame),
         date_to_ts = $("#srch_date_to_ts",a_frame),
         enabled = false,
-        srch_scope = $("#srch_scope",a_frame),
+        srch_sel_div = $("#srch_sel",a_frame),
+        srch_sel,
         qry_doc = null,
         suppress_run = false;
 
+    this.setSearchSelect = function( a_sel_info ){
+        //console.log( "setSearchSelect", a_sel_info, srch_sel );
 
+        if ( a_sel_info ){
+            if ( srch_sel && srch_sel._scope == a_sel_info._scope && srch_sel._owner == a_sel_info._owner ){
+                //console.log("merge sel");
+                // Merge with existing selection
+                // Note: existing methods (assign, extend, ...) do NOT actually merge - existing fields are overwriten
+                _addSelTree( srch_sel.ch, a_sel_info.ch );
+            }else{
+                //console.log("replace sel");
+                srch_sel = a_sel_info;
+            }
+        }else{
+            srch_sel = null;
+        }
+
+        inst._updateSelTree();
+    }
+
+    this._updateSelTree = function(){
+        var html = "";
+
+        if ( srch_sel ){
+            html = _makeSelTree( srch_sel.ch );
+        }
+
+        srch_sel_div.html( html );
+
+        if ( html.length ){
+            $(".btn",srch_sel_div).button();
+            $("#srch_run_btn,#srch_save_btn",a_frame).button("option","disabled",false);
+            enabled = true;
+        }else{
+            $("#srch_run_btn,#srch_save_btn",a_frame).button("option","disabled",true);
+            enabled = false;
+        }
+    }
+
+    /*
     this.setSearchSelect = function( a_id_set ){
         var html = "";
         if ( a_id_set && !util.isObjEmpty( a_id_set )){
@@ -49,6 +159,7 @@ function SearchPanel( a_frame, a_parent ){
             enabled = false;
         }
     }
+    */
 
     this.setQuery = function( query ){
         // Protobuf Enums returned as string names, not integers
@@ -211,23 +322,28 @@ function SearchPanel( a_frame, a_parent ){
 
     // ----- Search Scope (selection) -----
 
-    $("#srch_scope",a_frame).on("click",".srch-scope-rem-btn",function(){
+    $("#srch_sel",a_frame).on("click",".srch-scope-rem-btn",function(){
         var el = $(this),
             item = el.closest(".srch-scope-item"),
             id = item.attr("data");
 
-        a_parent.searchPanel_RemoveScope( id );
-        item.remove();
+        _remSelTree( srch_sel.ch, id );
+        inst._updateSelTree();
+
+        //a_parent.searchPanel_RemoveScope( id );
+        //item.remove();
     });
 
-    $("#srch_scope_add",a_frame).on("click",function(){
+    $("#srch_sel_add",a_frame).on("click",function(){
         //inst.setSearchSelect();
         //a_parent.searchPanel_ClearScope();
         var sel = a_parent.searchPanel_GetSelection();
-        inst.setSearchSelect( sel );
+        if ( sel ){
+            inst.setSearchSelect( sel );
+        }
     });
 
-    $("#srch_scope_clear",a_frame).on("click",function(){
+    $("#srch_sel_clear",a_frame).on("click",function(){
         inst.setSearchSelect();
         a_parent.searchPanel_ClearScope();
     });
