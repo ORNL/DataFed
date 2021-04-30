@@ -35,7 +35,13 @@ router.post('/create', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 );
 
-                var obj = {
+                var obj = req.body;
+
+                obj.owner = client._id;
+                obj.ct = time;
+                obj.ut = time;
+
+/*                var obj = {
                     query: req.body.query,
                     qry_begin: req.body.qry_begin,
                     qry_end: req.body.qry_end,
@@ -45,7 +51,7 @@ router.post('/create', function (req, res) {
                     ct: time,
                     ut: time,
                     owner: client._id
-                };
+                };*/
 
                 g_lib.procInputParam( req.body, "title", false, obj );
 
@@ -371,6 +377,7 @@ function execQuery( client, scope, mode, query ){
 
     qry += query.qry_end;
 
+    //console.log( "execqry" );
     //console.log( "qry", qry );
     //console.log( "params", query.params );
 
