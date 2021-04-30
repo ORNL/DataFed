@@ -609,6 +609,7 @@ app.get('/api/query/list', ( a_req, a_resp ) => {
 
 
 app.post('/api/query/create', ( a_req, a_resp ) => {
+    console.log("save:",a_req.body);
     sendMessage( "QueryCreateRequest", {title: a_req.query.title, query: a_req.body }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });

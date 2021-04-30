@@ -1931,6 +1931,8 @@ DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::Quer
     google::protobuf::util::JsonPrintOptions options;
     string query_json;
 
+    options.always_print_enums_as_ints = true;
+
     google::protobuf::util::Status stat = google::protobuf::util::MessageToJsonString( a_request.query(), & query_json, options );
     if ( !stat.ok() )
     {
@@ -1973,6 +1975,8 @@ DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::Quer
 
         google::protobuf::util::JsonPrintOptions options;
         string query_json;
+
+        options.always_print_enums_as_ints = true;
 
         google::protobuf::util::Status stat = google::protobuf::util::MessageToJsonString( a_request.query(), & query_json, options );
         if ( !stat.ok() )

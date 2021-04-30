@@ -1420,9 +1420,11 @@ export function searchPanel_GetSelection(){
         // If personal root collection is specified, convert to "my data" scope
         // If a project root collection is specified, convert to project scope
 
+        par = n.getParentList(false,true);
+
         if ( n.key == "mydata" ){
             scope = model.SS_PERSONAL;
-            owner = 0;
+            owner = null; //"u/" + settings.user.uid;
         }else if ( n.key.startsWith( "p/" )){
             scope = model.SS_PROJECT;
             owner = n.key;
@@ -1433,17 +1435,12 @@ export function searchPanel_GetSelection(){
             scope = model.SS_SHARED;
             owner = n.key.substr( 12 );
         }else if ( n.key.startsWith( "c/" )){
-            // TODO Must use DB cal to get real path (or add this to public collections)
-            par = n.getParentList(false,true);
-            //console.log("par:",par);
-            // TODO Check for root & replace with parent scope (user/project)
-
             if ( n.data.scope == ( "u/" + settings.user.uid )){
                 scope = model.SS_PERSONAL;
-                owner = 0;
+                owner = null; //n.data.scope;
             }else if ( n.data.scope.startsWith( "u/" )){
                 scope = model.SS_SHARED;
-                owner = n.key;
+                owner = n.data.scope;
             }else if ( n.data.scope.startsWith( "p/" )){
                 // Is this a member or shared project?
                 if ( par[0].key.startsWith("shared")){
@@ -1455,30 +1452,29 @@ export function searchPanel_GetSelection(){
             }else{
                 continue;
             }
-
-            // Handle collection entries & skip default
-            if ( !res || res._scope != scope || res._owner != owner ){
-                res = { _scope : scope, _owner : owner, ch: {} };
-            }
-
-            ch = res.ch;
-            for ( j in par ){
-                n = par[j];
-                if ( !( n.key in ch )){
-                    ch[n.key] = { _title : n.data._title?n.data._title:n.title, ch: {}};
-                }
-
-                ch = ch[n.key].ch;
-            }
-
-            continue;
         }else{
             // Invalid selections
             continue;
         }
 
-        // Handle default entries (not collections)
-        res = { _scope : scope, _owner: owner, ch : { [n.key] : { _title : n.data._title?n.data._title:n.title, ch: {} }}};
+        if ( !res || res.scope != scope || res.owner != owner ){
+            res = { scope : scope, owner : owner, ch: {} };
+        }
+
+        // If leaf node is root, prune it (search all of user/project instead)
+        if ( par[par.length-1].data.isroot ){
+            par.pop();
+        }
+
+        ch = res.ch;
+        for ( j in par ){
+            n = par[j];
+            if ( !( n.key in ch )){
+                ch[n.key] = { _title : n.data._title?n.data._title:n.title, ch: {}};
+            }
+
+            ch = ch[n.key].ch;
+        }
     }
 
     return res;
@@ -1503,6 +1499,7 @@ export function searchPanel_ClearScope(){
     searchSelTree = {};*/
 }
 
+/*
 function queryCalcScope( query ){
     // Selection can only be personal data, a project, a shared user, or a shared project, or one or more collections
     // If collections, then all must have same scope
@@ -1553,7 +1550,7 @@ function queryCalcScope( query ){
             return;
         }
     }
-}
+}*/
 
 export function searchPanel_Run( query ){
     console.log("searchPanel_Run", query );
@@ -1563,7 +1560,7 @@ export function searchPanel_Run( query ){
         return;
     }
 
-    queryCalcScope( query );
+    //queryCalcScope( query );
 
     if ( query.scope != undefined ){
         queryExec( query );
@@ -1589,7 +1586,7 @@ export function searchPanel_Save( query ){
         return;
     }
 
-    queryCalcScope( query );
+    //queryCalcScope( query );
 
     if ( query.scope == undefined ){
         dialogs.dlgAlert( "Save Query", "Cannot save - invalid search selection." )
@@ -1601,7 +1598,7 @@ export function searchPanel_Save( query ){
             //var query = parseQuickSearch();
             api.sendQueryCreate( val, query, function( ok, data ){
                 if ( ok )
-                    util.reloadNode(data_tree.getNodeByKey("queries"));
+                    util.reloadNode(data_tree.getNodeByKey("search_saved"));
                 else
                     util.setStatusText( "Query Save Error: " + data, 1 );
             });
@@ -2385,7 +2382,8 @@ export function init(){
                     item = items[i];
 
                     if ( item.id[0]=="c" ){
-                        entry = { title: util.generateTitle(item),_title:util.escapeHTML(item.title),folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub || nodrag };
+                        entry = { title: util.generateTitle(item), _title:util.escapeHTML(item.title), folder:true, lazy:true,
+                            scope: scope, isroot: item.id.endsWith("_root"), key: item.id, offset: 0, nodrag: is_pub || nodrag };
                     }else{
                         entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon: util.getDataIcon( item ),
                         scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size, external:item.external, nodrag: nodrag };
@@ -2590,8 +2588,13 @@ export function init(){
                     if ( data_tree.getSelectedNodes().length == 0 )
                         selectScope = data.node;
 
-                    if ( data.originalEvent.shiftKey && (data.originalEvent.ctrlKey || data.originalEvent.metaKey)) {
-                        treeSelectRange(data_tree,data.node);
+                    if ( data.originalEvent.altKey ) {
+                        if ( searchMode ){
+                            data_tree.selectAll(false);
+                            selectScope = data.node;
+                            data.node.setSelected( true );
+                            search_panel.addSelected();
+                        }
                     }else if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey ) {
                         treeSelectNode(data.node,true);
                     }else if ( data.originalEvent.shiftKey ) {

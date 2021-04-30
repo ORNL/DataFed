@@ -47,7 +47,10 @@ export function showSelectedInfo( node, cb ){
         return;
     }
 
-    //console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
+    if ( node ){
+        console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
+    }
+
     var key;
 
     if ( !node ){
@@ -63,8 +66,6 @@ export function showSelectedInfo( node, cb ){
         key = node.key.substr( node.data.key_pfx.length );
     else
         key = node.key;
-
-    //console.log("key",key);
 
     cur_item_id = key;
 
@@ -198,7 +199,7 @@ function showGeneralInfo( a_key, a_title ){
 function showSelectedUserInfo( key, node, cb ){
     api.userView( key, true, function( ok, item ){
         if ( ok, item ){
-            console.log("userView:",item);
+            //console.log("userView:",item);
             item.id = item.uid;
             showSelectedItemInfo( item );
             if ( cb ) cb( item, node );

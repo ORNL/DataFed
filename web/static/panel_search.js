@@ -38,13 +38,10 @@ Only leaf nodes in a_tree matter: if a leaf node is not already in the old tree,
 is in the existing tree, then all nodes below that node are pruned.
 */
 function _addSelTree( a_old, a_new ){
-    console.log("addSelTree",a_old,a_new);
     for ( var id in a_new ){
         if ( id in a_old && !util.isObjEmpty( a_new[id].ch )){
-            console.log( id, "is in old");
             _addSelTree( a_old[id].ch, a_new[id].ch );
         }else{
-            console.log( id, "not in old");
             a_old[id] = a_new[id];
         }
     }
@@ -85,6 +82,20 @@ function _remSelTree( a_old, a_rem_id ){
     }
 }
 
+function _getSelTreeColl( a_sel, a_res ){
+    if ( util.isObjEmpty( a_sel.ch )){
+        // Leaf node
+        return true;
+    }else{
+        for ( var id in a_sel.ch ){
+            if ( _getSelTreeColl( a_sel.ch[id], a_res ) && id.startsWith( "c/" )){
+                a_res.push( id );
+            }
+        }
+        return false;
+    }
+}
+
 function SearchPanel( a_frame, a_parent ){
     var inst = this,
         tags_div = $("#srch_tags_div",a_frame),
@@ -100,16 +111,12 @@ function SearchPanel( a_frame, a_parent ){
         suppress_run = false;
 
     this.setSearchSelect = function( a_sel_info ){
-        //console.log( "setSearchSelect", a_sel_info, srch_sel );
-
         if ( a_sel_info ){
-            if ( srch_sel && srch_sel._scope == a_sel_info._scope && srch_sel._owner == a_sel_info._owner ){
-                //console.log("merge sel");
+            if ( srch_sel && srch_sel.scope == a_sel_info.scope && srch_sel.owner == a_sel_info.owner ){
                 // Merge with existing selection
                 // Note: existing methods (assign, extend, ...) do NOT actually merge - existing fields are overwriten
                 _addSelTree( srch_sel.ch, a_sel_info.ch );
             }else{
-                //console.log("replace sel");
                 srch_sel = a_sel_info;
             }
         }else{
@@ -138,28 +145,13 @@ function SearchPanel( a_frame, a_parent ){
         }
     }
 
-    /*
-    this.setSearchSelect = function( a_id_set ){
-        var html = "";
-        if ( a_id_set && !util.isObjEmpty( a_id_set )){
-            var title;
-            for ( var id in a_id_set ){
-                title = a_id_set[id];
-                html += "<div class='srch-scope-item' data='" + id +
-                    "' title='" + id + "'><div class='row-flex' style='width:100%'><div style='flex:1 1 auto;white-space:nowrap;overflow:hidden'>" + title +
-                    "</div><div class='srch-scope-btn-div' style='flex:none'><button class='srch-scope-rem-btn btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div></div></div>";
-            }
-            srch_scope.html(html);
-            $(".btn",srch_scope).button();
-            $("#srch_run_btn,#srch_save_btn",a_frame).button("option","disabled",false);
-            enabled = true;
-        }else{
-            srch_scope.html(html);
-            $("#srch_run_btn,#srch_save_btn",a_frame).button("option","disabled",true);
-            enabled = false;
+    this.addSelected = function(){
+        var sel = a_parent.searchPanel_GetSelection();
+        if ( sel ){
+            inst.setSearchSelect( sel );
         }
     }
-    */
+
 
     this.setQuery = function( query ){
         // Protobuf Enums returned as string names, not integers
@@ -189,7 +181,6 @@ function SearchPanel( a_frame, a_parent ){
         }
 
         if ( query.from || query.to ){
-            console.log("form:",query.from,",to:",query.to);
             date_from.datepicker( "setDate", query.from? new Date( query.from * 1000 ): null );
             date_to.datepicker( "setDate", query.to? new Date( query.to * 1000 ): null );
             $('#srch_date_div').accordion( 'option', { active: 0 });
@@ -218,6 +209,16 @@ function SearchPanel( a_frame, a_parent ){
 
     this.getQuery = function(){
         var tmp, query = {empty:true};
+
+        query.scope = srch_sel.scope;
+        query.owner = srch_sel.owner;
+
+        // Add any/all leaf nodes that are collections in sel tree as coll entries in query
+        var coll = [];
+        _getSelTreeColl( srch_sel, coll );
+        if ( coll.length ){
+            query.coll = coll;
+        }
 
         query.mode = parseInt( $(".srch-mode",a_frame).val() );
 
@@ -334,13 +335,24 @@ function SearchPanel( a_frame, a_parent ){
         //item.remove();
     });
 
+    $("#srch_sel",a_frame).on("dragover", function( ev ){
+        //console.log("sel dragover!");
+        ev.preventDefault();
+    });
+
+    $("#srch_sel",a_frame).on("drop", function( ev ){
+        console.log("sel drop!");
+        ev.preventDefault();
+        inst.addSelected();
+    });
+
     $("#srch_sel_add",a_frame).on("click",function(){
-        //inst.setSearchSelect();
-        //a_parent.searchPanel_ClearScope();
-        var sel = a_parent.searchPanel_GetSelection();
+        inst.addSelected();
+
+        /*var sel = a_parent.searchPanel_GetSelection();
         if ( sel ){
             inst.setSearchSelect( sel );
-        }
+        }*/
     });
 
     $("#srch_sel_clear",a_frame).on("click",function(){
