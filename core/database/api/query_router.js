@@ -43,6 +43,8 @@ router.post('/create', function (req, res) {
 
                 g_lib.procInputParam( req.body, "title", false, obj );
 
+                //console.log("qry/create filter:",obj.qry_filter);
+
                 var qry = g_db.q.save( obj, { returnNew: true }).new;
                 g_db.owner.save({ _from: qry._id, _to: client._id });
 
@@ -103,6 +105,7 @@ router.post('/update', function (req, res) {
                 obj.ut = time;
                 g_lib.procInputParam( req.body, "title", true, obj );
 
+                //console.log("qry/upd filter:",obj.qry_filter);
                 qry = g_db._update( qry._id, obj, { keepNull: false, returnNew: true }).new;
 
                 qry.id = qry._id;
@@ -234,6 +237,8 @@ router.get('/list', function (req, res) {
 
 function execQuery( client, scope, mode, query ){
     var col_chk = true;
+
+    //console.log("execQuery filter:",query.qry_filter);
 
     switch ( scope ){
         case g_lib.SS_PROJECT:
