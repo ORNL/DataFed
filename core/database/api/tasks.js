@@ -890,7 +890,7 @@ var tasks_func = function() {
                         // Update task step
                         a_task.step += 1;
                         g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-                    }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag"] );
+                    }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag","sch"] );
                     break;
                 } catch( e ) {
                     if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
@@ -992,7 +992,7 @@ var tasks_func = function() {
                 // Update task step
                 a_task.step += 1;
                 g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-            }, [], ["d","c","p","a","g","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag"] );
+            }, [], ["d","c","p","a","g","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag","sch"] );
 
             // Continue to next step
         }
@@ -1467,6 +1467,12 @@ var tasks_func = function() {
         if ( doc.tags && doc.tags.length )
             g_lib.removeTags( doc.tags );
 
+        // Update schema count
+        if ( doc.sch_id && g_db.sch.exists( doc.sch_id )){
+            var sch = g_db.sch.document( doc.sch_id );
+            g_db._update( sch._id, { cnt: sch.cnt - 1 });
+        }
+            
         // Update allocation
         var loc = g_db.loc.firstExample({ _from: a_id });
         if ( loc ){
@@ -1502,8 +1508,15 @@ var tasks_func = function() {
             }
 
             // Remove tags
-            if ( doc.tags && doc.tags.length )
+            if ( doc.tags && doc.tags.length ){
                 g_lib.removeTags( doc.tags );
+            }
+
+            // Update schema count
+            if ( doc.sch_id && g_db.sch.exists( doc.sch_id )){
+                var sch = g_db.sch.document( doc.sch_id );
+                g_db._update( sch._id, { cnt: sch.cnt - 1 });
+            }
 
             // Update allocation
             loc = g_db.loc.firstExample({ _from: id });
