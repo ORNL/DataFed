@@ -41,18 +41,6 @@ router.post('/create', function (req, res) {
                 obj.ct = time;
                 obj.ut = time;
 
-/*                var obj = {
-                    query: req.body.query,
-                    qry_begin: req.body.qry_begin,
-                    qry_end: req.body.qry_end,
-                    qry_filter: req.body.qry_filter,
-                    params: req.body.params,
-                    limit: req.body.limit,
-                    ct: time,
-                    ut: time,
-                    owner: client._id
-                };*/
-
                 g_lib.procInputParam( req.body, "title", false, obj );
 
                 var qry = g_db.q.save( obj, { returnNew: true }).new;
@@ -94,7 +82,7 @@ router.post('/create', function (req, res) {
 
 router.post('/update', function (req, res) {
     try {
-        var result = [];
+        var result;
 
         g_db._executeTransaction({
             collections: {
@@ -103,35 +91,22 @@ router.post('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var qry = g_db.q.document( req.queryParams.id );
+                var qry = g_db.q.document( req.body.id );
 
-                if ( client._id != qry.owner && !client.is_admin) {
+                if ( client._id != qry.owner && !client.is_admin ) {
                     throw g_lib.ERR_PERM_DENIED;
                 }
 
-                var time = Math.floor( Date.now()/1000 );
-                var obj = { ut: time };
+                var time = Math.floor( Date.now()/1000 ),
+                    obj = req.body;
 
-                g_lib.procInputParam( req.queryParams, "title", true, obj );
-
-                if ( req.queryParams.query != undefined )
-                    obj.query = req.queryParams.query;
-
-                if ( req.queryParams.query_comp != undefined )
-                    obj.query_comp = req.queryParams.query_comp;
-
-                if ( req.queryParams.use_owner != undefined )
-                    obj.use_owner = req.queryParams.use_owner;
-
-                if ( req.queryParams.use_sh_usr != undefined )
-                    obj.use_sh_usr = req.queryParams.use_sh_usr;
-
-                if ( req.queryParams.use_sh_prj != undefined )
-                    obj.use_sh_prj = req.queryParams.use_sh_prj;
+                obj.ut = time;
+                g_lib.procInputParam( req.body, "title", true, obj );
 
                 qry = g_db._update( qry._id, obj, { keepNull: false, returnNew: true }).new;
 
                 qry.id = qry._id;
+
                 delete qry._id;
                 delete qry._key;
                 delete qry._rev;
@@ -141,7 +116,7 @@ router.post('/update', function (req, res) {
                 delete qry.params;
                 delete qry.lmit;
 
-                result.push( qry );
+                result = qry;
             }
         });
 
@@ -151,13 +126,16 @@ router.post('/update', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Query ID")
-.queryParam('title', joi.string().optional(), "Query Title")
-.queryParam('query', joi.string().optional(), "Query expression")
-.queryParam('query_comp', joi.string().optional(), "Compiled query expression")
-.queryParam('use_owner', joi.bool().optional(), "Query uses owner param")
-.queryParam('use_sh_usr', joi.bool().optional(), "Query uses shared users param")
-.queryParam('use_sh_prj', joi.bool().optional(), "Query uses shared projects param")
+.body( joi.object({
+    id: joi.string().required(),
+    title: joi.string().optional(),
+    qry_begin: joi.string().required(),
+    qry_end: joi.string().required(),
+    qry_filter: joi.string().allow('').required(),
+    params: joi.any().required(),
+    limit: joi.number().integer().required(),
+    query: joi.any().required()
+}).required(), 'Query fields' )
 .summary('Update a saved query')
 .description('Update a saved query');
 
