@@ -19,6 +19,7 @@ import * as dlgCollNewEdit from "./dlg_coll_new_edit.js";
 import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";
 import * as dlgAnnotation from "./dlg_annotation.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
+import * as dlgQuerySave from "./dlg_query_save.js";
 
 //import * as dlgQueryBuild from "./dlg_query_builder.js";
 
@@ -43,7 +44,7 @@ var SS_TREE = 0,
     //searchScope = null,
     //searchSelect = {},
     //searchSelTree = {},
-    cur_query,
+    query_cur, query_id, query_title,
     update_files, import_direct,
     search_panel, cat_panel, graph_panel;
 
@@ -211,8 +212,8 @@ export function refreshUI( a_ids, a_data, a_reload ){
         });*/
     }
 
-    if ( cur_query ){
-        queryExec( cur_query );
+    if ( query_cur ){
+        queryExec( query_cur );
     }
 
     if ( graph_panel.getSubjectID() ){
@@ -638,7 +639,7 @@ function actionDeleteSelected(){
                 });
             }
             if ( qry.length ){
-                api.sendQueryDelete( qry, function( ok, data ){
+                api.queryDelete( qry, function( ok, data ){
                     if ( ok ){
                         util.reloadNode(data_tree.getNodeByKey("search_saved"));
                         panel_info.showSelectedInfo();
@@ -1049,11 +1050,13 @@ function actionEditSelected() {
             }); 
             break;
         case 'q':
-            api.sendQueryView( id, function( ok, data ){
+            api.queryView( id, function( ok, data ){
                 if ( ok ){
                     if ( !searchMode ){
                         setSearchMode( true );
                     }
+                    query_id = data.id;
+                    query_title = data.title;
                     search_panel.setQuery( data.query );
                 }else{
                     util.setStatusText("Saved Query Edit Error: " + data, 1);
@@ -1480,78 +1483,6 @@ export function searchPanel_GetSelection(){
     return res;
 }
 
-export function searchPanel_RemoveScope( a_id ){
-    /*
-    var sel = data_tree.getSelectedNodes();
-    for ( var i in sel ){
-        if ( sel[i].key == a_id ){
-            sel[i].setSelected( false );
-        }
-    }
-    */
-    //delete searchSelect[a_id];
-    //searchSelTree
-}
-
-export function searchPanel_ClearScope(){
-    /*data_tree.selectAll( false );
-    searchSelect = {};
-    searchSelTree = {};*/
-}
-
-/*
-function queryCalcScope( query ){
-    // Selection can only be personal data, a project, a shared user, or a shared project, or one or more collections
-    // If collections, then all must have same scope
-    var i,n,sel = data_tree.getSelectedNodes();
-    for ( var i in sel ){
-        n = sel[i];
-        //console.log( "node: ", n );
-        if ( n.key == "mydata" ){
-            query.scope = model.SS_PERSONAL;
-        }else if ( n.key.startsWith( "p/" )){
-            query.scope = model.SS_PROJECT;
-            query.owner = n.key;
-        }else if ( n.key.startsWith( "shared_user_" )){
-            query.scope = model.SS_SHARED;
-            query.owner = n.key.substr( 12 );
-        }else if ( n.key.startsWith( "shared_proj_" )){
-            query.scope = model.SS_SHARED;
-            query.owner = n.key.substr( 12 );
-        }else if ( n.key.startsWith( "c/" )){
-            if ( !query.scope ){
-                if ( n.data.scope == ( "u/" + settings.user.uid )){
-                    query.scope = model.SS_PERSONAL;
-                }else if ( n.data.scope.startsWith( "u/" )){
-                    query.scope = model.SS_SHARED;
-                    query.owner = n.key;
-                }else if ( n.data.scope.startsWith( "p/" )){
-                    // Is this a member or shared project?
-                    var par = n.getParentList(false,false);
-                    if ( par[0].key.startsWith("shared")){
-                        query.scope = model.SS_SHARED;
-                    }else{
-                        query.scope = model.SS_PROJECT;
-                    }
-                    query.owner = n.data.scope;
-                }else{
-                    console.log("invalid selection");
-                    return;
-                }
-            }
-
-            if ( !query.coll ){
-                query.coll = [ n.key ];
-            }else{
-                query.coll.push( n.key );
-            }
-        }else{
-            console.log("invalid selection");
-            return;
-        }
-    }
-}*/
-
 export function searchPanel_Run( query ){
     console.log("searchPanel_Run", query );
 
@@ -1567,19 +1498,6 @@ export function searchPanel_Run( query ){
     }
 }
 
-function queryExec( query ){
-    util.setStatusText("Executing search query...");
-    api.dataSearch( query, function( ok, data ){
-        if ( ok ){
-            // Set this query as current for refresh
-            cur_query = query;
-            handleQueryResults( data );
-        }else{
-            dialogs.dlgAlert("Query Error",data);
-        }
-    });
-}
-
 export function searchPanel_Save( query ){
     if ( query.empty ){
         dialogs.dlgAlert( "Save Query", "Cannot save - query contains no terms." )
@@ -1593,6 +1511,31 @@ export function searchPanel_Save( query ){
         return;
     }
 
+    dlgQuerySave.show( query, query_id, query_title, function( title, update ){
+        if ( update ){
+            api.queryUpdate( query_id, title, query, function( ok, data ){
+                if ( ok ){
+                    util.reloadNode(data_tree.getNodeByKey("search_saved"));
+                    query_id = null;
+                    query_title = null;
+                }else{
+                    util.setStatusText( "Search Save Error: " + data, 1 );
+                }
+            });
+        }else{
+            api.queryCreate( title, query, function( ok, data ){
+                if ( ok ){
+                    util.reloadNode(data_tree.getNodeByKey("search_saved"));
+                    query_id = null;
+                    query_title = null;
+                }else{
+                    util.setStatusText( "Search Save Error: " + data, 1 );
+                }
+            });
+        }
+    });
+
+    /*
     dialogs.dlgSingleEntry( "Save Query", "Query Title:", ["Save","Cancel"], function(btn,val){
         if ( btn == 0 ){
             //var query = parseQuickSearch();
@@ -1602,6 +1545,20 @@ export function searchPanel_Save( query ){
                 else
                     util.setStatusText( "Query Save Error: " + data, 1 );
             });
+        }
+    });
+    */
+}
+
+function queryExec( query ){
+    util.setStatusText("Executing search query...");
+    api.dataSearch( query, function( ok, data ){
+        if ( ok ){
+            // Set this query as current for refresh
+            query_cur = query;
+            handleQueryResults( data );
+        }else{
+            dialogs.dlgAlert("Query Error",data);
         }
     });
 }

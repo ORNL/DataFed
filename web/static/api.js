@@ -810,24 +810,22 @@ export function queryExec_url( a_id ){
     return "/api/query/exec?id=" + encodeURIComponent( a_id );
 }
 
-export function sendQueryCreate( a_title, a_query, a_callback ) {
-    //_asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
+export function queryCreate( a_title, a_query, a_callback ) {
     _asyncPost("/api/query/create?title="+encodeURIComponent(a_title),a_query,a_callback);
 }
 
-export function sendQueryUpdate( a_id, a_title, a_query, a_callback ) {
+export function queryUpdate( a_id, a_title, a_query, a_callback ) {
     var url = "/api/query/update?id="+a_id;
     if ( a_title != undefined )
         url += "&title=" + encodeURIComponent(a_title);
     _asyncPost(url,a_query,a_callback);
 }
 
-export function sendQueryDelete( a_ids, a_cb ){
+export function queryDelete( a_ids, a_cb ){
     _asyncGet( "/api/query/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
-export function sendQueryView( a_id, a_callback ){
-    //console.log("sendQueryView,",a_id);
+export function queryView( a_id, a_callback ){
     _asyncGet("/api/query/view?id="+encodeURIComponent(a_id),null,a_callback);
 }
 

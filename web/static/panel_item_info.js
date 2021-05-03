@@ -107,7 +107,7 @@ export function showSelectedInfo( node, cb ){
     }else if ( key.startsWith("p/")){
         showSelectedProjInfo( key, node, cb );
     }else if ( key.startsWith("q/")){
-        api.sendQueryView( key, function( ok, item ){
+        api.queryView( key, function( ok, item ){
             console.log("qryView:",ok,item);
             showSelectedItemInfo( item );
             if ( cb ) cb( item, node );
