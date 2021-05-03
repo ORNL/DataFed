@@ -294,7 +294,9 @@ function SearchPanel( a_frame, a_parent ){
     }
 
     this._runSearch = function(){
-        a_parent.searchPanel_Run( inst.getQuery() );
+        if ( srch_sel ){
+            a_parent.searchPanel_Run( inst.getQuery() );
+        }
     }
 
     // ----- Run query button -----

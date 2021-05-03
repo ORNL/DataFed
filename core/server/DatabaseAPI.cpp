@@ -1942,7 +1942,7 @@ DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::Quer
     //DL_INFO("Orig search msg:" << query_json );
 
     string body = string("{") +
-        "\"qry_begin\":\"" + escapeJSON( qry_begin ) + "\",\"qry_end\":\"" + escapeJSON( qry_end ) + "\",\"qry_filter\":\"" + escapeJSON( qry_filter ) +
+        "\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
         "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt) +
         ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"" +
         ",\"query\":" + query_json + "}";
@@ -1964,7 +1964,7 @@ DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::Quer
 
     if ( a_request.has_title() )
     {
-        body += ",\"title\":\"" + a_request.title() + "\"";
+        body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
     }
 
     if ( a_request.has_query() )
