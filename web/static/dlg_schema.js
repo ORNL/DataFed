@@ -36,12 +36,9 @@ export function show( a_mode, a_schema, a_cb ){
                         </tr>\
                         <tr><td>Owner:</td><td colspan='5'><input type='text' title='Owner name/ID' id='sch_own' style='width:100%'></input></td></tr>\
                         <tr><td>Access:</td><td colspan='5'>\
-                            <input type='radio' id='sch_priv' name='sch_acc' value='private' checked/>\
-                            <label for='sch_priv'>Private</label>&nbsp;&nbsp;\
-                            <input type='radio' id='sch_pub' name='sch_acc' value='public'/>\
-                            <label for='sch_pub'>Public</label>&nbsp;&nbsp;\
-                            <input type='radio' id='sch_sys' name='sch_acc' value='system'/>\
-                            <label for='sch_sys'>System</label>\
+                            <label for='sch_priv'><input type='radio' id='sch_priv' name='sch_acc' value='private' checked/>Private</label>&nbsp;&nbsp;\
+                            <label for='sch_pub'><input type='radio' id='sch_pub' name='sch_acc' value='public'/>Public</label>&nbsp;&nbsp;\
+                            <label for='sch_sys'><input type='radio' id='sch_sys' name='sch_acc' value='system'/>System</label>\
                         </td></tr>\
                     </table></div>\
                     <div style='flex:none;padding:1em 0 0.25em .2em'>Description: <span class='note'>*</span></div>\
@@ -117,7 +114,7 @@ export function show( a_mode, a_schema, a_cb ){
                 $("#sch_desc",frame).val( a_schema.desc );
                 $("#sch_ver",frame).val( a_schema.ver + (a_schema.depr?" (deprecated)":""));
                 $("#sch_cnt",frame).val( a_schema.cnt );
-                if ( a_schema.usedBy ){
+                if ( a_mode != mode_rev && a_schema.usedBy ){
                     $("#sch_refs",frame).val( a_schema.usedBy.length );
                 }else{
                     $("#sch_refs",frame).val( 0 );
@@ -139,22 +136,25 @@ export function show( a_mode, a_schema, a_cb ){
                 json_val = JSON.stringify( def, null, 4 );
                 jsoned.setValue( json_val, -1);
 
-                var i, dep, html;
-                if ( a_schema.uses ){
-                    html = "";
-                    for ( i in a_schema.uses ){
-                        dep = a_schema.uses[i];
-                        html += dep.id + ":" + dep.ver + "<br>";
+                if ( a_mode != mode_rev ){
+                    var i, dep, html;
+                    if ( a_schema.uses ){
+                        html = "";
+                        for ( i in a_schema.uses ){
+                            dep = a_schema.uses[i];
+                            html += dep.id + ":" + dep.ver + "<br>";
+                        }
+                        $("#sch_uses",frame).html( html );
                     }
-                    $("#sch_uses",frame).html( html );
-                }
-                if ( a_schema.usedBy ){
-                    html = "";
-                    for ( i in a_schema.usedBy ){
-                        dep = a_schema.usedBy[i];
-                        html += dep.id + ":" + dep.ver + "<br>";
+
+                    if ( a_schema.usedBy ){
+                        html = "";
+                        for ( i in a_schema.usedBy ){
+                            dep = a_schema.usedBy[i];
+                            html += dep.id + ":" + dep.ver + "<br>";
+                        }
+                        $("#sch_used_by",frame).html( html );
                     }
-                    $("#sch_used_by",frame).html( html );
                 }
             }else{
                 $("#sch_ver",frame).val( 0 );
@@ -178,15 +178,16 @@ export function show( a_mode, a_schema, a_cb ){
             }else if( a_mode == mode_edit ){
                 if ( a_schema.depr || a_schema.ver > 0 )
                     util.inputDisable( $("#sch_id", frame ));
+                // If in use or referenced, do not allow definition to be changed
                 if ( a_schema.cnt || ( a_schema.usedBy && a_schema.usedBy.length )){
                     jsoned.setReadOnly(true);
                     jsoned.container.style.opacity=0.45;
                 }
             }
 
-            if ( !settings.user.isAdmin ){
-                console.log("disable sys acc");
+            if ( !settings.user.isAdmin && a_mode != mode_view ){
                 $("#sch_sys",frame).attr('disabled',true);
+                $("#sch_sys",frame).parent().hide();
             }
         },
         close: function() {
