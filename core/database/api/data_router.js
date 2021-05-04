@@ -319,8 +319,11 @@ function recordUpdate( client, record, result ){
         if ( record.md !== undefined )
             perms |= g_lib.PERM_WR_META;
 
-        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.tags !== undefined || record.source !== undefined )
+        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined ||
+            record.tags !== undefined || record.source !== undefined || 
+            ( record.dep_add && record.dep_add.length ) || ( record.dep_rem && record.dep_rem.length )){
             perms |= g_lib.PERM_WR_REC;
+        }
 
         if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
             throw g_lib.ERR_PERM_DENIED;
