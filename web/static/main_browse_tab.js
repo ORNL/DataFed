@@ -189,7 +189,7 @@ export function refreshUI( a_ids, a_data, a_reload ){
         util.reloadNode(data_tree.getNodeByKey("projects"));
         util.reloadNode(data_tree.getNodeByKey("shared_user"));
         util.reloadNode(data_tree.getNodeByKey("shared_proj"));
-        util.reloadNode(data_tree.getNodeByKey("search_saved"));
+        util.reloadNode(data_tree.getNodeByKey("saved_queries"));
         //util.reloadNode(cat_panel.tree.getNodeByKey("topics"));
     }else{
         var ids = Array.isArray(a_ids)?a_ids:[a_ids];
@@ -641,10 +641,10 @@ function actionDeleteSelected(){
             if ( qry.length ){
                 api.queryDelete( qry, function( ok, data ){
                     if ( ok ){
-                        util.reloadNode(data_tree.getNodeByKey("search_saved"));
+                        util.reloadNode(data_tree.getNodeByKey("saved_queries"));
                         panel_info.showSelectedInfo();
                     }else
-                        dialogs.dlgAlert( "Saved Search Delete Error", data );
+                        dialogs.dlgAlert( "Saved Query Delete Error", data );
                 });
             }
         }
@@ -1500,14 +1500,14 @@ export function searchPanel_Run( query ){
 
 export function searchPanel_Save( query ){
     if ( query.empty ){
-        dialogs.dlgAlert( "Save Query", "Cannot save - query contains no terms." )
+        dialogs.dlgAlert( "Save Query", "Cannot save query - no search terms." )
         return;
     }
 
     //queryCalcScope( query );
 
     if ( query.scope == undefined ){
-        dialogs.dlgAlert( "Save Query", "Cannot save - invalid search selection." )
+        dialogs.dlgAlert( "Save Query", "Cannot save query - invalid search selection." )
         return;
     }
 
@@ -1515,39 +1515,25 @@ export function searchPanel_Save( query ){
         if ( update ){
             api.queryUpdate( query_id, title, query, function( ok, data ){
                 if ( ok ){
-                    util.reloadNode(data_tree.getNodeByKey("search_saved"));
+                    util.reloadNode(data_tree.getNodeByKey("saved_queries"));
                     query_id = null;
                     query_title = null;
                 }else{
-                    util.setStatusText( "Search Save Error: " + data, 1 );
+                    util.setStatusText( "Query Save Error: " + data, 1 );
                 }
             });
         }else{
             api.queryCreate( title, query, function( ok, data ){
                 if ( ok ){
-                    util.reloadNode(data_tree.getNodeByKey("search_saved"));
+                    util.reloadNode(data_tree.getNodeByKey("saved_queries"));
                     query_id = null;
                     query_title = null;
                 }else{
-                    util.setStatusText( "Search Save Error: " + data, 1 );
+                    util.setStatusText( "Query Save Error: " + data, 1 );
                 }
             });
         }
     });
-
-    /*
-    dialogs.dlgSingleEntry( "Save Query", "Query Title:", ["Save","Cancel"], function(btn,val){
-        if ( btn == 0 ){
-            //var query = parseQuickSearch();
-            api.sendQueryCreate( val, query, function( ok, data ){
-                if ( ok )
-                    util.reloadNode(data_tree.getNodeByKey("search_saved"));
-                else
-                    util.setStatusText( "Query Save Error: " + data, 1 );
-            });
-        }
-    });
-    */
 }
 
 function queryExec( query ){
@@ -2025,7 +2011,7 @@ export function init(){
         ]},
         /*{title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},*/
     
-        {title:"Saved Searches",folder:true,icon:"ui-icon ui-icon-zoom",lazy:true,nodrag:true,key:"search_saved",checkbox:false,offset:0},
+        {title:"Saved Queries",folder:true,icon:"ui-icon ui-icon-zoom",lazy:true,nodrag:true,key:"saved_queries",checkbox:false,offset:0},
         //{title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]},
     ];
     
@@ -2233,7 +2219,7 @@ export function init(){
                 data.result = { url: api.repoAllocListByOwner_url( data.node.data.scope, data.node.data.scope ), cache: false };
             } else if ( data.node.key.startsWith( "repo/" )) {
                 data.result = { url: api.repoAllocListItems_url( data.node.data.repo, data.node.data.scope, data.node.data.offset, settings.opts.page_sz ), cache: false };
-            } else if ( data.node.key == 'search_saved') {
+            } else if ( data.node.key == 'saved_queries') {
                 data.result = { url: api.queryList_url( data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key.startsWith("q/") ) {
                 data.result = { url: api.queryExec_url( data.node.key ), cache: false };
@@ -2304,7 +2290,7 @@ export function init(){
                         data.result.push({ title: util.generateTitle(item,true),_title:util.escapeHTML(item.title),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
                     }
                 }
-            } else if ( data.node.key == "search_saved" ) {
+            } else if ( data.node.key == "saved_queries" ) {
                 data.result = [];
                 if ( data.response.length ){
                     var qry;

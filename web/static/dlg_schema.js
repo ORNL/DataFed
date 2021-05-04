@@ -59,9 +59,9 @@ export function show( a_mode, a_schema, a_cb ){
             </div>\
             <div id='tab-dlg-ref' style='padding:.5em 1em'>\
                 <div class='col-flex' style='height:100%'>\
-                    <div>Schema Uses:</div>\
+                    <div>Other schemas that reference this schema:</div>\
                     <div id='sch_uses' class='ui-widget ui-widget-content content' style='flex: 1 1 50%;overflow:auto;margin-top:0.5em;padding:0.25em'></div>\
-                    <div style='padding-top:0.5em'>Schema Used By:</div>\
+                    <div style='padding-top:0.5em'>Schemas referenced by this schema:</div>\
                     <div id='sch_used_by' class='ui-widget ui-widget-content content' style='flex: 1 1 50%;overflow:auto;margin-top:0.5em;padding:0.25em'></div>\
                 </div>\
             </div>\
