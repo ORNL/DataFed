@@ -16,7 +16,7 @@ module.exports = ( function() {
      * that isn't linked elsewhere are returned.
      */
     obj.preprocessItems = function( a_client, a_new_owner_id, a_ids, a_mode ){
-        console.log( "preprocessItems start" );
+        //console.log( "preprocessItems start" );
         var ctxt = {
             client: {
                 _id: a_client._id,
@@ -90,7 +90,7 @@ module.exports = ( function() {
         delete ctxt.coll_perm;
         delete ctxt.comb_perm;
 
-        console.log( "preprocessItems finished" );
+        //console.log( "preprocessItems finished" );
 
         return ctxt;
     };
