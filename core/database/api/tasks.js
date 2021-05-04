@@ -823,6 +823,12 @@ var tasks_func = function() {
 
         var state = {};
 
+        //console.log("ext_data:",result.ext_data);
+        //console.log("glob_data:",result.glob_data);
+        //console.log("rec_ids:",rec_ids);
+        //console.log("del coll:",result.coll);
+        //throw [1,"Stop for debug"];
+
         // For deleted collections, unlink all contained items
         if ( result.coll.length ){
             state.del_coll = result.coll;

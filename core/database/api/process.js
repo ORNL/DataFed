@@ -74,11 +74,25 @@ module.exports = ( function() {
         if ( a_mode == g_lib.TT_REC_DEL ){
             var cnt, data, remove = [];
 
+            for ( i in ctxt.ext_data ){
+                data = ctxt.ext_data[i];
+                cnt = ctxt.visited[data.id];
+                if ( cnt == -1 || cnt == g_lib.getDataCollectionLinkCount( data.id )){
+                    //console.log("Del ext rec",data.id,",cnt:",cnt,", links:", lcnt );
+                    remove.push( data );
+                }
+            }
+
+            ctxt.ext_data = remove;
+            remove = [];
+
             for ( i in ctxt.glob_data ){
                 data = ctxt.glob_data[i];
                 cnt = ctxt.visited[data.id];
-                if ( cnt == -1 || cnt == g_lib.getDataCollectionLinkCount( data.id ))
+                if ( cnt == -1 || cnt == g_lib.getDataCollectionLinkCount( data.id )){
+                    //console.log("Del man rec",data.id,",cnt:",cnt,", links:", lcnt );
                     remove.push( data );
+                }
             }
 
             ctxt.glob_data = remove;
