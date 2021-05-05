@@ -739,7 +739,7 @@ def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extens
 
     reply = _capi.dataUpdate( _resolve_id( data_id ), title = title, alias = alias, description = description, tags = tags, extension = extension,
         metadata = metadata, metadata_file = metadata_file, metadata_set = metadata_set, schema = schema, schema_enforce = schema_enforce,
-        deps_add = deps_add, deps_rem = deps_rem, raw_data_file = raw_data_file, context = context )
+        deps_add = deps_add, deps_rem = deps_rem, raw_data_file = raw_data_file if external else None, context = context )
     _generic_reply_handler( reply, _print_data )
 
     if raw_data_file and not external:
@@ -789,29 +789,19 @@ def _dataGet( df_id, path, wait, encrypt, orig_fname, context ):
     aliases, or index values from s listing. The PATH argument is the
     destination for the download and can be either a full Globus path (with
     endpoint), or a local file system path (absolute or relative).
-    
-    Downloads will involve either Globus transfers or HTTP transfers depending
-    on the source data for the selected records, and the two source types may
-    not be mixed. For Globus transfers, if no endpoint is specified in the PATH
-    argument, the current endpoint will be used. For HTTP transfers, the PATH
-    argument may be an absolute or relative path within the local filesystem.
-    For both cases, if the destination PATH doesn't exist, it will be created
-    given sufficient filesystem permissions.
 
-    Because HTTP downloads are performed directly by the CLI, they are always
-    blocking calls; thus the 'wait' option only applies to Globus transfers.
+    If no endpoint is specified in the PATH argument, the current endpoint will
+    be used. If the destination PATH doesn't exist, it will be created
+    given sufficient filesystem permissions. Note that the path does not have to
+    be local to where the CLI is running - data can be transferred to/from remote
+    systems; however, full Globus paths must used in this case.
     '''
 
     resolved_ids = []
     for ids in df_id:
         resolved_ids.append( _resolve_id( ids ))
 
-    if _interactive:
-        bar = _bar_adaptive_human_readable
-    else:
-        bar = None
-
-    reply = _capi.dataGet( resolved_ids, path, encrypt = int(encrypt), orig_fname = orig_fname, wait = wait, progress_bar = bar, context = context )
+    reply = _capi.dataGet( resolved_ids, path, encrypt = int(encrypt), orig_fname = orig_fname, wait = wait, context = context )
 
     if reply[1] == "DataGetReply":
         _generic_reply_handler( reply, _print_task )

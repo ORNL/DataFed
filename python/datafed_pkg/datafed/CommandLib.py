@@ -513,17 +513,16 @@ class API:
 
     def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL,
                  orig_fname = False, wait = False, timeout_sec = 0,
-                 progress_bar = None, context = None ):
+                 context = None ):
         """
         Get (download) raw data for one or more data records and/or collections
 
         This method downloads to the specified path the raw data associated with
         a specified data record, or the records contained in a collection, or
-        with a list of records and/or collections. The download may involve
-        either a Globus transfer, or an HTTP transfer. The path may be a full
-        globus path (only works for Globus transfers), or a full or relative
-        local file system path (will prepend the default endpoint for Globus
-        transfers).
+        with a list of records and/or collections. The path may be a full
+        globus path or a full or relative local file system path (will prepend
+        the default endpoint). If the endpoint is not local, only full paths
+        should be specified.
 
         Parameters
         ----------
@@ -546,10 +545,6 @@ class API:
         timeout_sec : int, Optional. Default = 0
             Timeout in seconds for polling the status of the Globus transfer.
             By default, there is no timeout.
-        progress_bar : callable, Optional. Default = None
-            A progress bar class to display progress for HTTP download.
-            This kwarg is passed on as the ``bar`` kwarg of wget.download().
-            By default, wget will use dots to display progress.
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
 
@@ -580,52 +575,15 @@ class API:
         # May initiate multiple transfers - one per repo with multiple records per transfer
         # Downloads may be Globus OR HTTP, but not both
 
-        glob_list = []
-        http_list = []
+        glob_ids = []
+
         for i in reply[0].item:
-            if i.url:
-                http_list.append((i.url, i.id))
-            else:
-                glob_list.append(i.id)
+            glob_ids.append(i.id)
 
-        if len(glob_list) > 0 and len(http_list) > 0:
-            raise Exception("Cannot 'get' records via Globus and http with same command.")
-
-        if len(http_list) > 0:
-            # HTTP transfers
-            path = self._resolvePathForHTTP( path )
-            reply = auth.HttpXfrDataReply()
-
-            for item in http_list:
-                xfr = reply.xfr.add()
-                xfr.rec_id = item[1]
-                setattr( xfr, "from", item[0] )
-                xfr.to = path
-                xfr.started = int(time.time())
-
-                try:
-                    filename = os.path.join( path, wget.filename_from_url( item[0] ))
-                    # wget has a buggy filename uniquifier, appended integer will not increase after 1
-                    new_filename = self._uniquifyFilename( filename )
-                    if progress_bar != None:
-                        print("Downloading {} to {}".format(item[1],new_filename))
-                    data_file = wget.download( item[0], out=str(new_filename), bar = progress_bar )
-                    if progress_bar != None:
-                        print("")
-                    xfr.to = data_file
-                    xfr.updated = int(time.time())
-                    xfr.failed = False
-                except Exception as e:
-                    xfr.failed = True
-                    xfr.err_msg = str(e)
-                    xfr.updated = int(time.time())
-                    print( "Error: {}".format( e ))
-
-            return [ reply, "HttpXfrDataReply" ]
-        elif len(glob_list) > 0:
+        if len(glob_ids) > 0:
             # Globus transfers
             msg = auth.DataGetRequest()
-            msg.id.extend(glob_list)
+            msg.id.extend(glob_ids)
             msg.path = self._resolvePathForGlobus( path, False )
             msg.encrypt = encrypt
             msg.orig_fname = orig_fname

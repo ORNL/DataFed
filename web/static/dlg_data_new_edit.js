@@ -246,7 +246,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
     function callback( ok, reply ){
         if ( ok ) {
-            if (( a_data && !a_data.external ) || ( !a_data && extern.prop( "checked" ))){
+            if (( a_data && !a_data.external ) || ( !a_data && !extern.prop( "checked" ))){
                 // Start transfer if source changed
                 var tmp = $("#source_file").val().trim();
                 if ( tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){

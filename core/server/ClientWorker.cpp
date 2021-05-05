@@ -234,12 +234,12 @@ ClientWorker::workerThread()
 
                 if ( msg_type != task_list_msg_type )
                 {
-                    DL_DEBUG( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
+                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
                 }
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
-                    DL_WARN( "W"<<m_tid<<" unauthorized access attempt from anon user" );
+                    DL_WARN( "W" << m_tid << " unauthorized access attempt from anon user" );
                     m_msg_buf.serialize( nack );
                     comm.send( m_msg_buf );
                 }
@@ -248,19 +248,19 @@ ClientWorker::workerThread()
                     handler = m_msg_handlers.find( msg_type );
                     if ( handler != m_msg_handlers.end() )
                     {
-                        DL_TRACE( "W"<<m_tid<<" calling handler" );
+                        //DL_TRACE( "W"<<m_tid<<" calling handler" );
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
                             comm.send( m_msg_buf );
-                            if ( msg_type != task_list_msg_type )
+                            /*if ( msg_type != task_list_msg_type )
                             {
                                 DL_DEBUG( "W"<<m_tid<<" reply sent." );
-                            }
+                            }*/
                         }
                     }
                     else
-                        DL_ERROR( "W"<<m_tid<<" recvd unregistered msg type: " << msg_type );
+                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
                 }
             }
         }
@@ -1075,7 +1075,7 @@ ClientWorker::procRepoAuthzRequest( const std::string & a_uid )
     (void)a_uid;
     PROC_MSG_BEGIN( RepoAuthzRequest, AckReply )
 
-    DL_INFO( "AuthzReq, uid: " << a_uid << ", client: " << request->client() << ", repo: " << request->repo() << ", file: " << request->file() << ", act: " << request->action() );
+    DL_INFO( "AUTHZ repo: " << a_uid << ", usr: " << request->client() /*<< ", repo: " << request->repo()*/ << ", file: " << request->file() << ", act: " << request->action() );
 
     m_db_client.setClient( request->client() );
     m_db_client.repoAuthz( *request, reply );

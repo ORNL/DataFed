@@ -32,8 +32,8 @@ parser.add_argument('-T', metavar='PREFIX', default='Test',
 parser.add_argument('-c', metavar='COUNT', type=int, default=20,
                    help='Number of data records per collection')
 
-parser.add_argument('-u', action='store_true',
-                   help='Upload small test file for each data record')
+parser.add_argument('--up', metavar='FILE',
+                   help='Upload filename from dev server /data/files')
 
 parser.add_argument('--alloc', metavar='NAME',
                    help='Destination allocation (without repo/ prefix)')
@@ -71,9 +71,8 @@ title_pfx = args.T
 rec_cnt = args.c
 pub = args.public
 do_del = args.delete
-do_up = args.u
+up_file = args.up
 
-#exit()
 
 def selectRand( a, b, cnt ):
     res = []
@@ -218,8 +217,8 @@ for i in range( start, end + 1 ):
             print("Timeout on dataCreate, coll {}, rec {}".format(i,j))
             exit()
 
-        if do_up:
-            if api.dataPut( data_alias, "u_eiiq2lgi7fd7jfaggqdmnijiya#SDMS-Dev/data/files/small", context = ctx )[0] == None:
+        if up_file:
+            if api.dataPut( data_alias, "u_eiiq2lgi7fd7jfaggqdmnijiya#SDMS-Dev/data/files/" + up_file, context = ctx )[0] == None:
                 print("Timeout on dataPut, coll {}, rec {}".format(i,j))
                 exit()
 

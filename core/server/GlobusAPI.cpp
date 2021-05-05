@@ -279,7 +279,7 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
 
     for ( vector<pair<string,string>>::const_iterator f = a_files.begin(); f != a_files.end(); f++ )
     {
-        DL_DEBUG( "  xfr from " << f->first << " to " << f->second );
+        //DL_DEBUG( "  xfr from " << f->first << " to " << f->second );
 
         Value xfr_item;
         Value::Object & xobj = xfr_item.initObject();
