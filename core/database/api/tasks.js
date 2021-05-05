@@ -154,6 +154,29 @@ var tasks_func = function() {
             if ( idx == -1 )
                 throw [g_lib.ERR_INVALID_PARAM,"Invalid destination path (must include endpoint)"];
 
+            // Check for duplicate names
+            if ( a_orig_fname ){
+                var fname, fnames = new Set();
+
+                for ( i in result.glob_data ){
+                    fname = result.glob_data[i].source.substr( result.glob_data[i].source.lastIndexOf("/") + 1);
+                    if ( fnames.has( fname )){
+                        throw [g_lib.ERR_XFR_CONFLICT, "Duplicate filename(s) detected in transfer request."];
+                    }
+
+                    fnames.add( fname );
+                }
+
+                for ( i in result.ext_data ){
+                    fname = result.ext_data[i].source.substr( result.ext_data[i].source.lastIndexOf("/") + 1);
+                    if ( fnames.has( fname )){
+                        throw [g_lib.ERR_XFR_CONFLICT, "Duplicate filename(s) detected in transfer request."];
+                    }
+
+                    fnames.add( fname );
+                }
+            }
+
             var state = { path: a_path, encrypt: a_encrypt, orig_fname: a_orig_fname, glob_data: result.glob_data, ext_data: result.ext_data },
                 task = obj._createTask( a_client._id, g_lib.TT_DATA_GET, 2, state ),
                 i, dep_ids = [];
@@ -1146,7 +1169,7 @@ var tasks_func = function() {
 
         console.log("_buildTransferDoc", a_mode, a_remote, a_orig_fname );
 
-        var i, idx, file, rem_ep, rem_fname, rem_path, xfr, repo_map = {}, src;
+        var fnames, i, idx, file, rem_ep, rem_fname, rem_path, xfr, repo_map = {}, src;
 
         if ( a_mode == g_lib.TT_DATA_GET || a_mode == g_lib.TT_DATA_PUT ){
             idx = a_remote.indexOf("/");
@@ -1181,6 +1204,10 @@ var tasks_func = function() {
             rem_path = repo.path + (a_dst_owner.charAt(0)=="u"?"user/":"project/") + a_dst_owner.substr(2) + "/";
         }
 
+        if ( a_mode  == g_lib.TT_DATA_GET){
+            fnames = new Set();
+        }
+
         if ( a_data.length ){
             var loc, locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, d_ext: i.ext, d_src: i.source, r_id: v._id, r_ep: v.endpoint, r_path: v.path, uid: e.uid }", { data: a_data });
 
@@ -1196,8 +1223,14 @@ var tasks_func = function() {
                     case g_lib.TT_DATA_GET:
                         file.from = loc.d_id.substr( 2 );
                         if ( a_orig_fname ){
-                            src = loc.d_src.substr( loc.d_src.lastIndexOf("/") + 1);
-                            if ( loc.d_ext ){
+                            file.to = loc.d_src.substr( loc.d_src.lastIndexOf("/") + 1);
+                            if ( fnames.has( file.to )){
+                                throw [g_lib.ERR_XFR_CONFLICT, "Duplicate filename(s) detected in transfer request."];
+                            }
+
+                            fnames.add( file.to );
+
+                            /*if ( loc.d_ext ){
                                 idx = src.indexOf(".");
                                 if ( idx > 0 ){
                                     src = src.substr(0,idx);
@@ -1205,7 +1238,7 @@ var tasks_func = function() {
                                 file.to = src + loc.d_ext;
                             }else{
                                 file.to = src;
-                            }
+                            }*/
                         }else{
                             file.to = file.from + (loc.d_ext?loc.d_ext:"");
                         }
@@ -1253,11 +1286,18 @@ var tasks_func = function() {
                 ep = edat.source.substr( 0, idx );
                 src = edat.source.substr( idx );
                 file.from = src;
-                idx = src.lastIndexOf("/");
-                if ( idx < 0 ){
-                    throw [g_lib.ERR_INVALID_PARAM,"Invalid external source path: "+edat.source];
+                if ( a_orig_fname ){
+                    idx = src.lastIndexOf("/");
+                    if ( idx < 0 ){
+                        throw [g_lib.ERR_INVALID_PARAM,"Invalid external source path: "+edat.source];
+                    }
+                    file.to = src.substr( idx + 1 );
+                    if ( fnames.has( file.to )){
+                        throw [g_lib.ERR_XFR_CONFLICT, "Duplicate filename(s) detected in transfer request."];
+                    }
+                }else{
+                    file.to = file.id.substr( 2 );
                 }
-                file.to = src.substr( idx + 1 );
     
                 if ( ep in repo_map ){
                     repo_map[ep].files.push(file);
