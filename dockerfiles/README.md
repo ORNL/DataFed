@@ -110,7 +110,34 @@ This will be the `collection` volume directory in step (1)
  - Globus endpoint UUID for the GCS in pre-requisite step (2)
  - Directory that was used for the GCS (in GCSv5, this will be the ["collection"](https://docs.globus.org/globus-connect-server/v5/data-access-guide/#collections))
 
-8.) Start the data repository server:
+
+8.) Setup the GridFTP authz callouts
+  - DataFed contains a custom GridFTP authorization module as a shared library that needs to be "hooked into" GridFTP server.
+  - There is a description of this in the [DataFed repository source docs](https://github.com/ORNL/DataFed/tree/master/repository/gridftp/authz)
+  - Mainly, after building this shared library, create / copy the [gsi-authz.conf](https://github.com/ORNL/DataFed/tree/master/repository/gridftp/authz) file to `/etc/grid-security/gsi-authz.conf`. GridFTP will "auto-magically" pick this up.
+  - Restart the GridFTP server for changes to take place (i.e. `sudo systemctl restart globus-gridftp-server`)
+  - Check the module is called in the logs (i.e. `sudo journalctl -u globus-gridftp-server -f`). The output should be something like the following after either a Globus transfer or navigating the Globus File Manager for the endpoint:
+```
+May 06 10:52:40 ... systemd[1]: Stopping Globus Connect GridFTP Service...
+May 06 10:52:40 ... systemd[1]: Stopped Globus Connect GridFTP Service.
+May 06 10:52:40 ... systemd[1]: Starting Globus Connect GridFTP Service...
+May 06 10:52:40 ... gsi_authz[23161]: DataFed Authz module started, version 1.2.0:4
+May 06 10:52:40 ... systemd[1]: Started Globus Connect GridFTP Service.
+May 06 10:52:40 ... gsi_authz[23162]: DataFed Authz module started, version 1.2.0:4
+May 06 10:52:48 ... gsi_authz[23171]: DataFed Authz module started, version 1.2.0:4
+May 06 10:52:49 ... gsi_authz[23171]: gsi_authz_handle_init
+May 06 10:52:49 ... gsi_authz[23171]: gsi_authz_handle_destroy
+May 06 10:52:50 ... gsi_authz[23178]: DataFed Authz module started, version 1.2.0:4
+May 06 10:52:50 ... gsi_authz[23178]: gsi_authz_handle_init
+May 06 10:52:50 ... gsi_authz[23178]: gsi_authz_authorize_async
+May 06 10:52:51 ... gsi_authz[23178]: gsi_authz_handle_destroy
+May 06 10:52:51 ... gsi_authz[23184]: DataFed Authz module started, version 1.2.0:4
+May 06 10:52:51 ... gsi_authz[23184]: gsi_authz_handle_init
+May 06 10:52:52 ... gsi_authz[23184]: gsi_authz_authorize_async
+May 06 10:52:52 ... gsi_authz[23184]: gsi_authz_authorize_async
+```
+
+9.) Start the data repository server:
 ```
 ./sdms-repo --server tcp://<address of core datafed server:port>
 ```
