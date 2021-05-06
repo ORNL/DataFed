@@ -601,6 +601,10 @@ class API:
 
                     reply2 = self._mapi.sendRecv( msg2, nack_except = False )
 
+                    # timeout
+                    if reply2[0] == None:
+                        break
+
                     # Not sure if this can happen:
                     if reply2[1] == "NackReply":
                         break
