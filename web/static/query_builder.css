@@ -50,9 +50,6 @@ query-builder{
     pointer-events: none;
 }
 
-.qb-error{
-    background:#600000!important;
-}
 
 .group-div-header + .query-builder-field{
     padding-top: 0;

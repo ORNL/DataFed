@@ -49,6 +49,10 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     background: #e0e0e0;
 }
 
+.qb-error{
+    background:#FF7070!important;
+}
+
 /* DataFed Theme */
 
 body
