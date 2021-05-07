@@ -1771,9 +1771,9 @@ module.exports = ( function() {
         while ( res.hasNext() ){
             n = res.next();
 
-            if ( n.state == obj.NOTE_CLOSED ){
+            /*if ( n.state == obj.NOTE_CLOSED ){
                 mask |= 0x1000;
-            }else{
+            }else{*/
                 b = 1<<n.type;
                 if ( n.parent_id && n.state == obj.NOTE_OPEN )
                     b <<= 8;
@@ -1781,7 +1781,7 @@ module.exports = ( function() {
                     b <<= 4;
 
                 mask |= b;
-            }
+            //}
         }
 
         return mask;
