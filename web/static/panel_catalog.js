@@ -3,7 +3,8 @@ import * as api from "./api.js";
 import * as model from "./model.js";
 import * as settings from "./settings.js";
 import * as panel_info from "./panel_item_info.js";
-//import * as dialogs from "./dialogs.js";
+import * as panel_search from "./panel_search.js";
+
 import * as dlgPickUser from "./dlg_pick_user.js";
 import * as dlgPickProj from "./dlg_pick_proj.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
@@ -672,6 +673,9 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }
     });
 
+    var search_panel = panel_search.newSearchPanel( $("#cat_search_panel",cat_panel), this, { no_scope: true });
+
+    /*
     $(".tagit-new",cat_panel).css("clear","left");
 
     $("#cat_qry_tags_clear",cat_panel).on("click",function(){
@@ -795,6 +799,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         coll_off = 0;
         loadCollections();
     });
+    */
 
     var search_sel_mode = false;
 
@@ -815,6 +820,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     $(".cat-mode",cat_panel).selectmenu({ width: false });
     $(".cat-coll-sort",cat_panel).selectmenu({ width: false });
 
+    /*
     $(".accordion.acc-act",cat_panel).accordion({
         header: "h3",
         collapsible: true,
@@ -826,6 +832,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             ui.newHeader.removeClass("ui-state-active");
         }
     });
+
 
     $(".accordion:not(.acc-act)",cat_panel).accordion({
         header: "h3",
@@ -870,6 +877,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }
         }
     });
+    */
 
     // Prevent active tabs from being highlighted
     /*$(".accordion .ui-accordion-header",cat_panel).click(function(e) {
@@ -933,6 +941,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         cat_coll_div.html( "Loading..." );
 
         coll_qry.scope = model.SS_PUBLIC;
+
+/*
         coll_qry.mode = parseInt( $(".cat-mode",cat_panel).val() );
         coll_qry.sort = parseInt( $(".cat-coll-sort",cat_panel).val() );
 
@@ -1022,6 +1032,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
             updateTopicNav();
         });
+*/
     }
 
     function onCollectionsNext(){

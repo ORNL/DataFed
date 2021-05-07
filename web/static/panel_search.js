@@ -11,8 +11,8 @@ import * as dlgQueryBuild from "./dlg_query_builder.js";
 //$("#run_qry_btn").addClass("ui-state-error");
 
 
-export function newSearchPanel( a_frame, a_parent ){
-    return new SearchPanel( a_frame, a_parent );
+export function newSearchPanel( a_frame, a_parent, a_opts ){
+    return new SearchPanel( a_frame, a_parent, a_opts );
 }
 
 function _makeSelTree( a_tree ){
@@ -96,7 +96,7 @@ function _getSelTreeColl( a_sel, a_res ){
     }
 }
 
-function SearchPanel( a_frame, a_parent ){
+function SearchPanel( a_frame, a_parent, a_opts = {} ){
     var inst = this,
         tags_div = $("#srch_tags_div",a_frame),
         user_tags = [],
@@ -324,43 +324,47 @@ function SearchPanel( a_frame, a_parent ){
     });
 
     // ----- Search Scope (selection) -----
+    if ( a_opts.no_scope ){
+        console.log("hide sel");
+        $("#srch_sel_div",a_frame).hide();
+    }else{
+        $("#srch_sel",a_frame).on("click",".srch-scope-rem-btn",function(){
+            var el = $(this),
+                item = el.closest(".srch-scope-item"),
+                id = item.attr("data");
 
-    $("#srch_sel",a_frame).on("click",".srch-scope-rem-btn",function(){
-        var el = $(this),
-            item = el.closest(".srch-scope-item"),
-            id = item.attr("data");
+            _remSelTree( srch_sel.ch, id );
+            inst._updateSelTree();
 
-        _remSelTree( srch_sel.ch, id );
-        inst._updateSelTree();
+            //a_parent.searchPanel_RemoveScope( id );
+            //item.remove();
+        });
 
-        //a_parent.searchPanel_RemoveScope( id );
-        //item.remove();
-    });
+        $("#srch_sel",a_frame).on("dragover", function( ev ){
+            //console.log("sel dragover!");
+            ev.preventDefault();
+        });
 
-    $("#srch_sel",a_frame).on("dragover", function( ev ){
-        //console.log("sel dragover!");
-        ev.preventDefault();
-    });
+        $("#srch_sel",a_frame).on("drop", function( ev ){
+            console.log("sel drop!");
+            ev.preventDefault();
+            inst.addSelected();
+        });
 
-    $("#srch_sel",a_frame).on("drop", function( ev ){
-        console.log("sel drop!");
-        ev.preventDefault();
-        inst.addSelected();
-    });
+        $("#srch_sel_add",a_frame).on("click",function(){
+            inst.addSelected();
 
-    $("#srch_sel_add",a_frame).on("click",function(){
-        inst.addSelected();
+            /*var sel = a_parent.searchPanel_GetSelection();
+            if ( sel ){
+                inst.setSearchSelect( sel );
+            }*/
+        });
 
-        /*var sel = a_parent.searchPanel_GetSelection();
-        if ( sel ){
-            inst.setSearchSelect( sel );
-        }*/
-    });
-
-    $("#srch_sel_clear",a_frame).on("click",function(){
-        inst.setSearchSelect();
-        a_parent.searchPanel_ClearScope();
-    });
+        $("#srch_sel_clear",a_frame).on("click",function(){
+            inst.setSearchSelect();
+            a_parent.searchPanel_ClearScope();
+        });
+    }
 
     // ----- Tag input setup -----
 

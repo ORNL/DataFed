@@ -1367,12 +1367,12 @@ function setSearchMode( enabled ){
     if ( enabled ){
         searchMode = true;
         //search_panel.setSearchSelect( searchSelect );
-        $("#sreach_panel",frame).show();
+        $("#search_panel",frame).show();
         //$(data_tree_div).fancytree("option","checkbox",true);
     }else{
         searchMode = false;
         //search_panel.setSearchSelect();
-        $("#sreach_panel",frame).hide();
+        $("#search_panel",frame).hide();
         //$(data_tree_div).fancytree("option","checkbox",false);
     }
 }
@@ -2595,7 +2595,7 @@ export function init(){
     $(".btn-refresh").button({icon:"ui-icon-refresh",showLabel:false});
     util.inputTheme( $('input'));
 
-    search_panel = panel_search.newSearchPanel( $("#sreach_panel",frame), this );
+    search_panel = panel_search.newSearchPanel( $("#search_panel",frame), this );
     cat_panel = panel_cat.newCatalogPanel( "#catalog_tree", $("#tab-catalogs",frame), this );
     graph_panel = panel_graph.newGraphPanel( "#data-graph", $("tab#-prov-graph",frame), this );
 
