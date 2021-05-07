@@ -11,10 +11,44 @@ export const OPR_GT      = ">";
 export const OPR_DF      = "DEF";
 export const OPR_NDF     = "UNDEF";
 export const OPR_RGX     = "REGEX";
+export const OPR_NRGX    = "!REGEX";
 export const OPR_WLD     = "LIKE";
 export const OPR_TRU     = "TRUE";
 export const OPR_FAL     = "FALSE";
 export const OPR_CON     = "HAS";
+
+const _opr_out = {
+    [OPR_AND]:"&&",
+    [OPR_OR]:"||",
+    [OPR_LT]:OPR_LT,
+    [OPR_LTE]:OPR_LTE,
+    [OPR_EQ]:OPR_EQ,
+    [OPR_NEQ]:OPR_NEQ,
+    [OPR_GTE]:OPR_GTE,
+    [OPR_GT]:OPR_GT,
+    [OPR_DF]:"!= null",
+    [OPR_NDF]:"== null",
+    [OPR_RGX]:"=~",
+    [OPR_NRGX]:"!~",
+    [OPR_WLD]:"like",
+    [OPR_TRU]:"== true",
+    [OPR_FAL]:"== false",
+    [OPR_CON]:"",
+}
+
+function _exprGetRH( a_qry ){
+    var expr = "";
+    if ( a_qry.rh ){
+        if ( a_qry.rh_is_field ){
+            expr += "md." + a_qry.rh;
+        }else if ( a_qry.rh_type == "string"){
+            expr += JSON.stringify( a_qry.rh );
+        }else{
+            expr += a_qry.rh;
+        }
+    }
+    return expr;
+}
 
 // Generate a text expression from a given query
 export function queryToExpression( a_qry ){
@@ -22,14 +56,17 @@ export function queryToExpression( a_qry ){
 
     //console.log("queryToExpression", a_qry);
 
+    // REGEX_MATCHES(text, regex, caseInsensitive)
+
     if ( a_qry.type == "group" ){
         if ( a_qry.children.length == 1 ){
             expr = queryToExpression( a_qry.children[0] );
         }else if ( a_qry.children.length > 1 ){
             expr = "(";
             for ( var i in a_qry.children ){
+                console.log("group op:",a_qry.op);
                 if ( i > 0 ){
-                    expr += " " + a_qry.op + " ";
+                    expr += " " + _opr_out[a_qry.op] + " ";
                 }
                 expr += queryToExpression( a_qry.children[i] );
             }
@@ -38,15 +75,22 @@ export function queryToExpression( a_qry ){
             throw "Invalid query";
         }
     }else{
-        expr = "md." + a_qry.lh + " " + a_qry.op;
-        if ( a_qry.rh ){
-            expr += " ";
-            if ( a_qry.rh_is_field ){
-                expr += "md." + a_qry.rh;
-            }else if ( a_qry.rh_type == "string"){
-                expr += JSON.stringify( a_qry.rh );
-            }else{
-                expr += a_qry.rh;
+        // Special cases
+        if( a_qry.op == OPR_CON ){
+            expr = _exprGetRH( a_qry ) + " in md." + a_qry.lh;
+        }else{
+            expr = "md." + a_qry.lh + " " + _opr_out[a_qry.op];
+            if ( a_qry.rh ){
+                expr += " " + _exprGetRH( a_qry );
+                /*
+                if ( a_qry.rh_is_field ){
+                    expr += "md." + a_qry.rh;
+                }else if ( a_qry.rh_type == "string"){
+                    expr += JSON.stringify( a_qry.rh );
+                }else{
+                    expr += a_qry.rh;
+                }
+                */
             }
         }
     }
@@ -87,7 +131,7 @@ export class QueryBuilder extends HTMLElement {
     static _RH_FLD     = 2;
 
     static _fld_cfg = {
-        "string" : {label:"[str]", opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_RGX,1],[OPR_WLD,1],[OPR_DF,0],[OPR_NDF,0]]},
+        "string" : {label:"[str]", opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_RGX,1],[OPR_NRGX,1],[OPR_WLD,1],[OPR_DF,0],[OPR_NDF,0]]},
         "number" : {label:"[num]", opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_LT,3],[OPR_LTE,3],[OPR_GTE,3],[OPR_GT,3],[OPR_DF,0],[OPR_NDF,0]]},
         "integer": {label:"[int]", opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_LT,3],[OPR_LTE,3],[OPR_GTE,3],[OPR_GT,3],[OPR_DF,0],[OPR_NDF,0]]},
         "enum"   : {label:"[enum]",opr:[[OPR_EQ,3],[OPR_NEQ,3],[OPR_DF,0],[OPR_NDF,0]]},
@@ -227,7 +271,7 @@ export class QueryBuilder extends HTMLElement {
 
             var qry = {
                 type: "group",
-                op: $(".group-btn-opr", div ).button('option', 'label').toLowerCase(),
+                op: $(".group-btn-opr", div ).button('option', 'label'),
                 children: ch
             };
 

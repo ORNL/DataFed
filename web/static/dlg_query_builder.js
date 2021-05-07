@@ -1,6 +1,5 @@
 import * as dialogs from "./dialogs.js";
 import * as util from "./util.js";
-import * as api from "./api.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
 
 export function show( a_schema, a_query, a_cb ){

@@ -4491,13 +4491,13 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
             break;
         }
 
-        // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
-
         if ( state == PS_STOP )
             break;
         else if ( state == PS_DEFAULT )
         {
-            if ( *c == '?' )
+            // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
+
+            /*if ( *c == '?' )
                 result += " like ";
             else if ( *c == '~' )
                 if ( last != '=' )
@@ -4509,7 +4509,7 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                     result += "==";
                 else
                     result += '=';
-            else
+            else*/
                 result += *c;
         }
         else if ( state != PS_TOKEN )
