@@ -1,36 +1,35 @@
-    <div class='srch-panel-div row-flex'>
-        <div style='flex:1 1 auto'>Query Options</div>
-        <div style='flex:none'>
-            <button id="srch_run_btn" class="btn btn-icon" disabled><span class='ui-icon ui-icon-play'></span></button>
-            <button id="srch_save_btn" class='btn btn-icon' disabled><span class='ui-icon ui-icon-save'></span></button>
+    <!-- button id="srch_run_btn" class="btn btn-icon" disabled><span class='ui-icon ui-icon-play'></span></button -->
+
+    <div class='accordion acc-act'>
+        <h3>Options</h3>
+        <div>
+            <div class='srch-panel-div row-flex' style='padding-bottom:0.25em'>
+                <div style='flex:1 1 auto'>Find:</div>
+                <div style='flex:none'>
+                    <select class='srch-mode'><option value='0' selected>Data</option><option value='1'>Collections</option></select>
+                </div>
+            </div>
+
+            <div class='srch-panel-div row-flex'>
+                <div style='flex:1 1 auto'>Sort:</div>
+                <div style='flex:none'>
+                    <select class='srch-sort'>
+                        <option value='1' selected>Title</option>
+                        <option value='-1'>Title (rev)</option>
+                        <option value='2'>Owner</option>
+                        <option value='-2'>Owner (rev)</option>
+                        <option value='3'>Created</option>
+                        <option value='-3'>Created (rev)</option>
+                        <option value='4'>Updated</option>
+                        <option value='-4'>Updated (rev)</option>
+                        <option value='5'>Relevance</option>
+                    </select>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- div class='srch-panel-div' style='font-size:75%;padding-bottom:1em'>Select item(s) in tree to search.</div -->
-
-    <div class='srch-panel-div row-flex'>
-        <div style='flex:1 1 auto'>Find:</div>
-        <div style='flex:none'>
-            <select class='srch-mode'><option value='0' selected>Data</option><option value='1'>Collections</option></select>
-        </div>
-    </div>
-
-    <div class='srch-panel-div row-flex' style='padding-bottom:1em'>
-        <div style='flex:1 1 auto'>Sort:</div>
-        <div style='flex:none'>
-            <select class='srch-sort'>
-                <option value='1' selected>Title</option>
-                <option value='-1'>Title (rev)</option>
-                <option value='2'>Owner</option>
-                <option value='-2'>Owner (rev)</option>
-                <option value='3'>Created</option>
-                <option value='-3'>Created (rev)</option>
-                <option value='4'>Updated</option>
-                <option value='-4'>Updated (rev)</option>
-                <option value='5'>Relevance</option>
-            </select>
-        </div>
-    </div>
 
     <div id='srch_sel_div' class='accordion acc-act'>
         <h3>Selection</h3>
@@ -64,7 +63,7 @@
     <div id='srch_tags_div' class='accordion'>
         <h3>Tags</h3>
         <div>
-            <ul id='srch_tags_div' class='input-bg no-border tagit-vertical'></ul>
+            <ul id='srch_tags' class='input-bg no-border tagit-vertical'></ul>
             <div style='float:right;padding-top:0.25em'>
                 <button id='srch_tags_clear' class='btn btn-small'>reset</button>
             </div>
@@ -116,4 +115,8 @@
                 <input id='srch_meta_err' type='checkbox'><label for="srch_meta_err">Has Errors</label>
             </div>
         </div>
+    </div>
+
+    <div style='padding:1em'>
+        <center><button id="srch_save_btn" class='btn' disabled>Save Query</button></center>
     </div>

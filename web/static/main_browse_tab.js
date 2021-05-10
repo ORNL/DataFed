@@ -1486,7 +1486,7 @@ export function searchPanel_GetSelection(){
 export function searchPanel_Run( query ){
     console.log("searchPanel_Run", query );
 
-    if ( query.empty ){
+    if ( query.scope == undefined || query.empty ){
         handleQueryResults([]);
         return;
     }
@@ -1500,7 +1500,7 @@ export function searchPanel_Run( query ){
 
 export function searchPanel_Save( query ){
     if ( query.empty ){
-        dialogs.dlgAlert( "Save Query", "Cannot save query - no search terms." )
+        util.setStatusText( "Cannot save query - no search terms.", true );
         return;
     }
 
@@ -2595,7 +2595,7 @@ export function init(){
     $(".btn-refresh").button({icon:"ui-icon-refresh",showLabel:false});
     util.inputTheme( $('input'));
 
-    search_panel = panel_search.newSearchPanel( $("#search_panel",frame), this );
+    search_panel = panel_search.newSearchPanel( $("#search_panel",frame), "qry", this );
     cat_panel = panel_cat.newCatalogPanel( "#catalog_tree", $("#tab-catalogs",frame), this );
     graph_panel = panel_graph.newGraphPanel( "#data-graph", $("tab#-prov-graph",frame), this );
 

@@ -457,12 +457,6 @@ div.cat-topic-div:hover .cat-topic-btn-div
     margin:0!important;
 }
 
-.cat-topic-empty
-{
-    /*padding:0.5em 1em;*/
-}
-
-
 .accordion .ui-accordion-header
 {
     margin: 0!important;
@@ -470,10 +464,11 @@ div.cat-topic-div:hover .cat-topic-btn-div
     background:transparent!important;
 }
 
+/*
 .srch-panel-div
 {
-    padding: 0.5rem 0.5rem 0 0.5rem;
-}
+    padding: 0.5rem 0 0 0.25rem;
+}*/
 
 .srch-mode + span
 {
@@ -980,10 +975,9 @@ textarea
 }
 
 .blink-background {
-    animation:3s blinker linear infinite;
-    -webkit-animation:3s blinker linear infinite;
-    -moz-animation:3s blinker linear infinite;
-    
+    animation:2s blinker linear infinite;
+    -webkit-animation:2s blinker linear infinite;
+    -moz-animation:2s blinker linear infinite;
 }
 
 .clearfix::after {
@@ -993,15 +987,28 @@ textarea
 }
 
 @-moz-keyframes blinker{
+    0% { background-color:#9f0000; }
+    50% { background-color:#400000; }
+    100% { background-color:#9f0000; }
+}
+
+@-webkit-keyframes blinker{
+    0% { background-color:#9f0000; }
+    50% { background-color:#400000; }
+    100% { background-color:#9f0000; }
+}
+
+@keyframes blinker{
+    0% { background-color:#9f0000; }
+    50% { background-color:#400000; }
+    100% { background-color:#9f0000; }
+}
+
+/*@-moz-keyframes blinker{
     0% { background-color:#000000; }
     20% { background-color:#9f0000; }
     80% { background-color:#000000; }
     100% { background-color:#000000; }
-    /*
-    0% { opacity: 1.0; }
-    50% { opacity: 0.0; }
-    100% { opacity: 1.0; }
-    */
 }
 
 @-webkit-keyframes blinker{
@@ -1016,10 +1023,8 @@ textarea
     20% { background-color:#9f0000; }
     80% { background-color:#000000; }
     100% { background-color:#000000; }
-    /*0% { opacity: 1.0; }
-    50% { opacity: 0.0; }
-    100% { opacity: 1.0; }*/
 }
+*/
 
 .toc1
 {

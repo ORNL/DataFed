@@ -4,15 +4,11 @@ import * as model from "./model.js";
 import * as settings from "./settings.js";
 import * as query_builder from "./query_builder.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
-import * as dlgPickProj from "./dlg_pick_proj.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
 import * as dlgQueryBuild from "./dlg_query_builder.js";
 
-//$("#run_qry_btn").addClass("ui-state-error");
-
-
-export function newSearchPanel( a_frame, a_parent, a_opts ){
-    return new SearchPanel( a_frame, a_parent, a_opts );
+export function newSearchPanel( a_frame, a_key, a_parent, a_opts ){
+    return new SearchPanel( a_frame, a_key, a_parent, a_opts );
 }
 
 function _makeSelTree( a_tree ){
@@ -96,19 +92,25 @@ function _getSelTreeColl( a_sel, a_res ){
     }
 }
 
-function SearchPanel( a_frame, a_parent, a_opts = {} ){
+function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
+    $("#srch_date_from",a_frame).attr("id","srch_date_from_" + a_key );
+    $("#srch_date_from_ts",a_frame).attr("id","srch_date_from_ts_" + a_key );
+    $("#srch_date_to",a_frame).attr("id","srch_date_to_" + a_key );
+    $("#srch_date_to_ts",a_frame).attr("id","srch_date_to_ts_" + a_key );
+
     var inst = this,
-        tags_div = $("#srch_tags_div",a_frame),
+        tags_div = $("#srch_tags",a_frame),
         user_tags = [],
-        date_from = $("#srch_date_from",a_frame),
-        date_from_ts = $("#srch_date_from_ts",a_frame),
-        date_to = $("#srch_date_to",a_frame),
-        date_to_ts = $("#srch_date_to_ts",a_frame),
-        enabled = false,
+        date_from = $("#srch_date_from_" + a_key,a_frame),
+        date_from_ts = $("#srch_date_from_ts_" + a_key, a_frame),
+        date_to = $("#srch_date_to_"+a_key,a_frame),
+        date_to_ts = $("#srch_date_to_ts_" + a_key, a_frame),
         srch_sel_div = $("#srch_sel",a_frame),
         srch_sel,
         qry_doc = null,
         suppress_run = false;
+
+    console.log( "search panel, frame:",a_frame,",date_from_ts:",date_from_ts);
 
     this.setSearchSelect = function( a_sel_info ){
         if ( a_sel_info ){
@@ -123,10 +125,18 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
             srch_sel = null;
         }
 
-        inst._updateSelTree();
+        inst._updateSelectionHTML();
+
+        if ( srch_sel ){
+            $("#srch_save_btn",a_frame).button("option","disabled",false);
+        }else{
+            $("#srch_save_btn",a_frame).button("option","disabled",true);
+        }
+
+        inst._runSearch();
     }
 
-    this._updateSelTree = function(){
+    this._updateSelectionHTML = function(){
         var html = "";
 
         if ( srch_sel ){
@@ -134,15 +144,7 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
         }
 
         srch_sel_div.html( html );
-
-        if ( html.length ){
-            $(".btn",srch_sel_div).button();
-            $("#srch_run_btn,#srch_save_btn",a_frame).button("option","disabled",false);
-            enabled = true;
-        }else{
-            $("#srch_run_btn,#srch_save_btn",a_frame).button("option","disabled",true);
-            enabled = false;
-        }
+        $(".btn",srch_sel_div).button();
     }
 
     this.addSelected = function(){
@@ -210,14 +212,16 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
     this.getQuery = function(){
         var tmp, query = {empty:true};
 
-        query.scope = srch_sel.scope;
-        query.owner = srch_sel.owner;
+        if ( !a_opts.no_select && srch_sel ){
+            query.scope = srch_sel.scope;
+            query.owner = srch_sel.owner;
 
-        // Add any/all leaf nodes that are collections in sel tree as coll entries in query
-        var coll = [];
-        _getSelTreeColl( srch_sel, coll );
-        if ( coll.length ){
-            query.coll = coll;
+            // Add any/all leaf nodes that are collections in sel tree as coll entries in query
+            var coll = [];
+            _getSelTreeColl( srch_sel, coll );
+            if ( coll.length ){
+                query.coll = coll;
+            }
         }
 
         query.mode = parseInt( $(".srch-mode",a_frame).val() );
@@ -294,23 +298,28 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
     }
 
     this._runSearch = function(){
-        if ( srch_sel ){
-            a_parent.searchPanel_Run( inst.getQuery() );
-        }
+        a_parent.searchPanel_Run( inst.getQuery() );
     }
 
     // ----- Run query button -----
 
-    $("#srch_run_btn",a_frame).on("click", function(){
-        inst._runSearch();
-    });
+    if ( a_opts.no_run_btn ){
+        $("#srch_run_btn",a_frame).hide();
+    }else{
+        $("#srch_run_btn",a_frame).on("click", function(){
+            inst._runSearch();
+        });
+    }
 
     // ----- Save query button -----
 
-    $("#srch_save_btn",a_frame).on("click", function(){
-        a_parent.searchPanel_Save( inst.getQuery() );
-    });
-
+    if ( a_opts.no_save_btn ){
+        $("#srch_save_btn",a_frame).hide();
+    }else{
+        $("#srch_save_btn",a_frame).on("click", function(){
+            a_parent.searchPanel_Save( inst.getQuery() );
+        });
+    }
 
     // ----- Search mode -----
 
@@ -324,8 +333,8 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
     });
 
     // ----- Search Scope (selection) -----
-    if ( a_opts.no_scope ){
-        console.log("hide sel");
+
+    if ( a_opts.no_select ){
         $("#srch_sel_div",a_frame).hide();
     }else{
         $("#srch_sel",a_frame).on("click",".srch-scope-rem-btn",function(){
@@ -334,14 +343,17 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
                 id = item.attr("data");
 
             _remSelTree( srch_sel.ch, id );
-            inst._updateSelTree();
 
-            //a_parent.searchPanel_RemoveScope( id );
-            //item.remove();
+            if ( util.isObjEmpty( srch_sel.ch )){
+                srch_sel = null;
+                $("#srch_save_btn",a_frame).button("option","disabled",true);
+            }
+
+            inst._updateSelectionHTML();
+            inst._runSearch();
         });
 
         $("#srch_sel",a_frame).on("dragover", function( ev ){
-            //console.log("sel dragover!");
             ev.preventDefault();
         });
 
@@ -353,16 +365,10 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
 
         $("#srch_sel_add",a_frame).on("click",function(){
             inst.addSelected();
-
-            /*var sel = a_parent.searchPanel_GetSelection();
-            if ( sel ){
-                inst.setSearchSelect( sel );
-            }*/
         });
 
         $("#srch_sel_clear",a_frame).on("click",function(){
             inst.setSearchSelect();
-            a_parent.searchPanel_ClearScope();
         });
     }
 
@@ -377,6 +383,7 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
         caseSensitive: false,
         removeConfirmation: true,
         afterTagAdded: function( ev, ui ){
+            console.log("tag add");
             user_tags.push( ui.tagLabel );
             if ( !suppress_run ){
                 inst._runSearch();
@@ -416,12 +423,28 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
     
     // ----- Text fields input setup -----
 
+    // Trigger timer on input to run search after pause
+    // Does not include metadata input as this would cause DB errors if the user pauses while typing
+
+    var textTimer = null;
+
+    $("#srch_id,#srch_text,#srch_creator,#srch_sch_id",a_frame).on("input",function( ev ){
+        if ( textTimer ){
+            clearTimeout( textTimer );
+        }
+
+        textTimer = setTimeout(function(){
+            textTimer = null;
+            inst._runSearch();
+        },1000);
+    });
+
     $("#srch_id,#srch_text,#srch_creator,#srch_sch_id",a_frame).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
+            if ( textTimer ){ clearTimeout( textTimer ); }
+
             ev.preventDefault();
-            if ( enabled ){
-                inst._runSearch();
-            }
+            inst._runSearch();
         }else{
             qry_doc = null;
         }
@@ -430,6 +453,8 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
     $("#srch_text_clear",a_frame).on("click",function(){
         if ( $("#srch_text",a_frame).val().trim().length ){
             $("#srch_text",a_frame).val("");
+            if ( textTimer ){ clearTimeout( textTimer ); }
+
             inst._runSearch();
         }
     });
@@ -441,6 +466,8 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
             var id = schema.id + ":" + schema.ver;
             if ( $("#srch_sch_id",a_frame).val() != id ){
                 $("#srch_sch_id",a_frame).val( id );
+                if ( textTimer ){ clearTimeout( textTimer ); }
+
                 inst._runSearch();
             }
         });
@@ -451,9 +478,7 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
     $("#srch_meta",a_frame).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
             ev.preventDefault();
-            if ( enabled ){
-                inst._runSearch();
-            }
+            inst._runSearch();
         }else{
             qry_doc = null;
         }
@@ -510,7 +535,7 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
     // ----- Date input setup -----
 
     date_from.datepicker({
-        altField: "#srch_date_from_ts",
+        altField: date_from_ts, //$("#srch_date_from_ts",a_frame),
         altFormat: "@",
         beforeShow: function(){
             var _to = date_to.val();
@@ -526,7 +551,7 @@ function SearchPanel( a_frame, a_parent, a_opts = {} ){
     });
 
     date_to.datepicker({
-        altField: "#srch_date_to_ts",
+        altField: date_to_ts, //$("#srch_date_to_ts",a_frame),
         altFormat: "@",
         beforeShow: function( input, picker ){
             var _from = date_from.val();

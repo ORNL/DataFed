@@ -616,8 +616,9 @@ export function addTreePagingNode( a_data ){
 }
 
 export function setStatusText( text, err ){
-    if ( status_timer )
+    if ( status_timer ){
         clearTimeout( status_timer );
+    }
 
     var bar = $("#status_text");
 
@@ -633,7 +634,7 @@ export function setStatusText( text, err ){
         status_timer = null;
         bar.html(" ");
         bar.removeClass("blink-background");
-    },9000);
+    },8000);
 }
 
 export function saveFile( filename, text ){
