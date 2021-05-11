@@ -126,13 +126,6 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
         }
 
         inst._updateSelectionHTML();
-
-        if ( srch_sel ){
-            $("#srch_save_btn",a_frame).button("option","disabled",false);
-        }else{
-            $("#srch_save_btn",a_frame).button("option","disabled",true);
-        }
-
         inst._runSearch();
     }
 
@@ -311,16 +304,6 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
         });
     }
 
-    // ----- Save query button -----
-
-    if ( a_opts.no_save_btn ){
-        $("#srch_save_btn",a_frame).hide();
-    }else{
-        $("#srch_save_btn",a_frame).on("click", function(){
-            a_parent.searchPanel_Save( inst.getQuery() );
-        });
-    }
-
     // ----- Search mode -----
 
     $(".srch-mode",a_frame).on("selectmenuchange", function(){
@@ -346,7 +329,6 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
 
             if ( util.isObjEmpty( srch_sel.ch )){
                 srch_sel = null;
-                $("#srch_save_btn",a_frame).button("option","disabled",true);
             }
 
             inst._updateSelectionHTML();

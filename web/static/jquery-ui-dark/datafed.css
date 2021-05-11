@@ -51,6 +51,11 @@ textarea
     background:#003147;
 }
 
+.top-border
+{
+    border-top: solid 1px #000;
+}
+
 
 /*
 #data-tabs > .ui-tabs-nav

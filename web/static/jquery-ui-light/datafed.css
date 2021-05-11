@@ -101,6 +101,12 @@ ul.tagit {
     background:#a0e1cb;
 }
 
+.top-border
+{
+    border-top: solid 1px #999;
+}
+
+
 .task-table th
 {
     background-color:#f0f0f0;

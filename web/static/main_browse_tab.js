@@ -1483,22 +1483,35 @@ export function searchPanel_GetSelection(){
     return res;
 }
 
+// ----- Run query button -----
+
+$("#srch_run_btn",frame).on("click", function(){
+    var query = search_panel.getQuery();
+    searchPanel_Run( query );
+});
+
 export function searchPanel_Run( query ){
-    console.log("searchPanel_Run", query );
+    //console.log("searchPanel_Run", query );
 
     if ( query.scope == undefined || query.empty ){
         handleQueryResults([]);
+        $("#srch_save_btn,#srch_run_btn",frame).button("option","disabled",true);
         return;
     }
 
-    //queryCalcScope( query );
-
-    if ( query.scope != undefined ){
-        queryExec( query );
-    }
+    queryExec( query );
+    $("#srch_save_btn,#srch_run_btn",frame).button("option","disabled",false);
 }
 
-export function searchPanel_Save( query ){
+// ----- Save query button -----
+
+$("#srch_save_btn",frame).on("click", function(){
+    searchPanel_Save();
+});
+
+export function searchPanel_Save(){
+    var query = search_panel.getQuery();
+
     if ( query.empty ){
         util.setStatusText( "Cannot save query - no search terms.", true );
         return;

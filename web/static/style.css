@@ -406,6 +406,7 @@ svg text
     max-height:5em;
     overflow:auto;
     padding:0.25em 0.25em 0 0.25em;
+    margin-bottom:0.25em;
 }
 
 .cat-topic-result
@@ -1003,28 +1004,6 @@ textarea
     50% { background-color:#400000; }
     100% { background-color:#9f0000; }
 }
-
-/*@-moz-keyframes blinker{
-    0% { background-color:#000000; }
-    20% { background-color:#9f0000; }
-    80% { background-color:#000000; }
-    100% { background-color:#000000; }
-}
-
-@-webkit-keyframes blinker{
-    0% { background-color:#000000; }
-    20% { background-color:#9f0000; }
-    80% { background-color:#000000; }
-    100% { background-color:#000000; }
-}
-
-@keyframes blinker{
-    0% { background-color:#000000; }
-    20% { background-color:#9f0000; }
-    80% { background-color:#000000; }
-    100% { background-color:#000000; }
-}
-*/
 
 .toc1
 {
