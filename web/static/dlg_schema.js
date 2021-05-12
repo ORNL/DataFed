@@ -112,12 +112,15 @@ export function show( a_mode, a_schema, a_cb ){
             if ( a_schema ){
                 $("#sch_id",frame).val( a_schema.id );
                 $("#sch_desc",frame).val( a_schema.desc );
-                $("#sch_ver",frame).val( a_schema.ver + (a_schema.depr?" (deprecated)":""));
-                $("#sch_cnt",frame).val( a_schema.cnt );
-                if ( a_mode != mode_rev && a_schema.usedBy ){
-                    $("#sch_refs",frame).val( a_schema.usedBy.length );
-                }else{
+
+                if ( a_mode == mode_rev ){
+                    $("#sch_ver",frame).val( a_schema.ver + 1 );
+                    $("#sch_cnt",frame).val( 0 );
                     $("#sch_refs",frame).val( 0 );
+                }else{
+                    $("#sch_ver",frame).val( a_schema.ver + (a_schema.depr?" (deprecated)":""));
+                    $("#sch_cnt",frame).val( a_schema.cnt );
+                    $("#sch_refs",frame).val( a_schema.usedBy?a_schema.usedBy.length:0 );
                 }
 
                 if ( a_schema.ownNm ){
