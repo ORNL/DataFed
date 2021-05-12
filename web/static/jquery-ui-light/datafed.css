@@ -68,6 +68,12 @@ scrollbar-color: #d8d8d8 #f8f8f8;
 	color: #222;
 }
 
+.input-bg
+{
+    background:#fff!important;
+    border: solid 1px #999;
+}
+
 input
 {
     background:#fff!important;
