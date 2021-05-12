@@ -110,8 +110,6 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
         qry_doc = null,
         suppress_run = false;
 
-    console.log( "search panel, frame:",a_frame,",date_from_ts:",date_from_ts);
-
     this.setSearchSelect = function( a_sel_info ){
         if ( a_sel_info ){
             if ( srch_sel && srch_sel.scope == a_sel_info.scope && srch_sel.owner == a_sel_info.owner ){

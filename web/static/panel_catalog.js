@@ -141,6 +141,12 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
     $(".btn",cat_panel).button();
 
+    this.init = function(){
+        top_res_div.html( "(loading...)" );
+        loadTopics();
+        loadCollections();
+    }
+    
     this.getSelectedNodes = function(){
         if ( cat_tree_div.is( ":visible" )){
             return cat_tree.getSelectedNodes();
@@ -639,11 +645,9 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         });
     }
 
-    top_res_div.html( "(loading...)" );
-
-    loadTopics();
-    coll_off = 0;
-    loadCollections();
+    //top_res_div.html( "(loading...)" );
+    //loadTopics();
+    //loadCollections();
 
     return this;
 }

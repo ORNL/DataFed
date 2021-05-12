@@ -250,7 +250,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 // Start transfer if source changed
                 var tmp = $("#source_file").val().trim();
                 if ( tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
-
                     api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, reply2 ){
                         if ( ok2 ){
                             util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");

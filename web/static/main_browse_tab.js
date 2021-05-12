@@ -13,7 +13,6 @@ import * as dlgSetACLs from "./dlg_set_acls.js";
 import * as dlgRepoManage from "./dlg_repo_manage.js";
 import * as dlgOwnerChangeConfirm from "./dlg_owner_chg_confirm.js";
 import * as dlgStartXfer from "./dlg_start_xfer.js";
-import * as dlgQueryNewEdit from "./dlg_query_new_edit.js";
 import * as dlgSettings from "./dlg_settings.js";
 import * as dlgCollNewEdit from "./dlg_coll_new_edit.js";
 import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";
@@ -23,30 +22,27 @@ import * as dlgQuerySave from "./dlg_query_save.js";
 
 //import * as dlgQueryBuild from "./dlg_query_builder.js";
 
-var frame = $("#content");
-var task_hist = $("#task_hist",frame);
-var data_tree_div;
-var data_tree = null;
-var my_root_key;
-var drag_mode = 0;
-var drag_enabled = true;
-var selectScope = null;
-var dragging = false;
-var hoverTimer;
-var keyNav, keyNavMS;
-var pasteItems = [], pasteMode, pasteSourceParent, pasteCollections;
-var SS_TREE = 0,
+var frame = $("#content"),
+    task_hist = $("#task_hist",frame),
+    data_tree_div,
+    data_tree = null,
+    my_root_key,
+    drag_mode = 0,
+    drag_enabled = true,
+    selectScope = null,
+    dragging = false,
+    hoverTimer,
+    keyNav, keyNavMS,
+    pasteItems = [], pasteMode, pasteSourceParent, pasteCollections,
+    SS_TREE = 0,
     SS_CAT = 1,
     SS_PROV = 2,
     select_source = SS_TREE,
     select_source_prev = SS_TREE,
     searchMode = false,
-    //searchScope = null,
-    //searchSelect = {},
-    //searchSelTree = {},
     query_cur, query_id, query_title,
     update_files, import_direct,
-    search_panel, cat_panel, graph_panel;
+    search_panel, cat_panel, cat_init = true, graph_panel;
 
 // Task history vars (to be moved to panel_task_hist )
 var taskTimer, taskHist = [];
@@ -701,8 +697,6 @@ function actionNewData() {
             var node = data_tree.getNodeByKey( parent_id );
             if ( node )
                 util.reloadNode( node );
-            //if ( graph_panel.getSubjectID() )
-            //    graph_panel.load( graph_panel.getSubjectID(), graph_panel.getSelectedID() );
         });
     });
 }
@@ -730,12 +724,10 @@ function actionDupData(){
 
         api.dataView( node.key, function( data ){
             dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_DUP, data, parent, 0, function(data2,parent_id){
-                //console.log("back from dup",parent_id);
+                resetTaskPoll();
                 var node = data_tree.getNodeByKey( parent_id );
                 if ( node )
                     util.reloadNode( node );
-                //if ( graph_panel.getSubjectID() )
-                //    graph_panel.load( graph_panel.getSubjectID(), graph_panel.getSelectedID() );
             });
         });
     });
@@ -758,7 +750,6 @@ function actionNewColl(){
     }
 
     api.checkPerms( parent, model.PERM_CREATE, function( ok, data ){
-        //console.log("coll create", ok, data );
         if ( !ok ){
             dialogs.dlgAlert( "Permission Denied", data );
             return
@@ -1655,7 +1646,6 @@ function taskHistoryPoll(){
 }
 
 function resetTaskPoll(){
-    console.log("reset task poll");
     pollSince = 0;
     clearTimeout(taskTimer);
     taskTimer = setTimeout( taskHistoryPoll, 1000 );
@@ -1908,6 +1898,10 @@ $("#data-tabs").tabs({
                     break;
                 case "tab-catalogs":
                     select_source = SS_CAT;
+                    if ( cat_init ){
+                        cat_panel.init();
+                        cat_init = false;
+                    }
                     panel_info.showSelectedInfo( cat_panel.getActiveNode(), checkTreeUpdate );
                     break;
                 case "tab-prov-graph":
@@ -2001,7 +1995,7 @@ $("#btn_export_data",frame).on('click', function(){
             var ids = getActionableIDs();
 
             api.dataExport( ids, function( ok, data ){
-                console.log("reply:", data );
+                //console.log("reply:", data );
                 var rec;
                 for ( var i in data.record ){
                     rec = JSON.parse( data.record[i] );
@@ -2040,7 +2034,7 @@ export function init(){
             dropEffectDefault: "copy",
             scroll: false,
             dragStart: function(node, data) {
-                console.log( "dnd start" );
+                //console.log( "dnd start" );
 
                 if ( !drag_enabled || node.data.nodrag ){
                     return false;
@@ -2059,7 +2053,7 @@ export function init(){
                 data.dataTransfer.setData("text/plain",node.key);
 
                 pasteSourceParent = pasteItems[0].parent;
-                console.log("pasteSourceParent",pasteSourceParent);
+                //console.log("pasteSourceParent",pasteSourceParent);
                 pasteCollections = [];
                 for ( var i in pasteItems ){
                     if ( pasteItems[i].key.startsWith("c/") )
@@ -2079,16 +2073,16 @@ export function init(){
                 drag_enabled = false;
 
                 // data.otherNode = source, node = destination
-                console.log("drop stop in",dest_node.key,pasteItems);
+                //console.log("drop stop in",dest_node.key,pasteItems);
 
-                console.log( pasteSourceParent );
+                //console.log( pasteSourceParent );
                 if ( !pasteSourceParent || !pasteSourceParent.data )
                     return;
 
                 var i, proj_id, ids = [];
 
                 if ( pasteSourceParent.data.scope != dest_node.data.scope ){
-                    console.log("Change owner");
+                    //console.log("Change owner");
                     var coll_id = ( dest_node.key == "empty" || dest_node.key.startsWith( "d/" ))?dest_node.parent.key:dest_node.key;
                     proj_id = pasteSourceParent.data.scope.charAt(0) == 'p'?pasteSourceParent.data.scope:null;
 
@@ -2097,13 +2091,13 @@ export function init(){
                     }
 
                     api.dataOwnerChange( ids, coll_id, null, proj_id, true, function( ok, reply ){
-                        console.log("chg owner reply:",ok,reply);
+                        //console.log("chg owner reply:",ok,reply);
                         if ( ok ){
                             dlgOwnerChangeConfirm.show( pasteSourceParent.data.scope, dest_node.data.scope, reply, function( repo ){
-                                console.log("chg owner conf:", repo );
+                                //console.log("chg owner conf:", repo );
                                 api.dataOwnerChange( ids, coll_id, repo, proj_id, false, function( ok, reply ){
                                     if ( ok ){
-                                        console.log("reply:", reply );
+                                        //console.log("reply:", reply );
                                         resetTaskPoll();
                                         dialogs.dlgAlert( "Change Record Owner", "Task " + reply.task.id.substr(5) + " created to transfer data records to new owner." );
                                     }else{
@@ -2180,7 +2174,7 @@ export function init(){
                 //data.dropEffect = data.dropEffectSuggested;
             },*/
             dragEnter: function(node, data) {
-                console.log("dragEnter");
+                //console.log("dragEnter");
                 var allowed = pasteAllowed( node, data.otherNode );
 
                 return allowed;
@@ -2496,7 +2490,7 @@ export function init(){
             //console.log("click",data.node.key);
 
             if ( dragging ){ // Suppress click processing on aborted drag
-                console.log("click drasgging");
+                //console.log("click dragging");
                 dragging = false;
             }else /*if ( !searchMode )*/ {
                 //console.log("click not search");

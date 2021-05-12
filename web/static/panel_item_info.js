@@ -47,9 +47,9 @@ export function showSelectedInfo( node, cb ){
         return;
     }
 
-    if ( node ){
+    /*if ( node ){
         console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
-    }
+    }*/
 
     var key;
 
