@@ -475,11 +475,13 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
                 }
                 dlgQueryBuild.show( ok?reply.schema[0]:null, qry_doc, function( qry ){
                     inst._setMetaQuery( qry );
+                    inst._runSearch();
                 });
             });
         }else{
             dlgQueryBuild.show( null, qry_doc, function( qry ){
                 inst._setMetaQuery( qry );
+                inst._runSearch();
             });
         }
     });
