@@ -159,7 +159,7 @@ export function showSelectedItemInfo( item ){
 
         showSelectedItemForm( item );
 
-        if (( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )) && item.notes ){
+        if (( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )) && ( item.notes & model.NOTE_MASK_ALL )){
             setupAnnotationTab( item.id );
         }else{
             note_div.hide();
@@ -225,13 +225,13 @@ var tree_opts1 = {
     source: [],
     nodata: false,
     selectMode: 1,
-    activate: function( event, data ) {
+    activate: function( ev, data ) {
         showSelectedNoteInfo( data.node );
     },
-    lazyLoad: function( event, data ) {
+    lazyLoad: function( ev, data ) {
         data.result = { url: api.annotationView_url( data.node.data.parentId ), cache: false };
     },
-    postProcess: function( event, data ) {
+    postProcess: function( ev, data ) {
         //console.log("postproc:",data);
 
         data.result = [];
@@ -250,9 +250,12 @@ var tree_opts1 = {
             if ( note.parentId ){
                 //entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";
                 entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> [inherited] ";
-                entry.parentId = note.parentId;
-                entry.folder = true;
-                entry.lazy = true;
+                // Only allow viewing ancestor notes if note is open or active
+                if ( model.NoteStateFromString[note.state] != model.NOTE_CLOSED ){
+                    entry.parentId = note.parentId;
+                    entry.folder = true;
+                    entry.lazy = true;
+                }
             }else{
                 entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> ";
             }
@@ -290,13 +293,12 @@ function setupAnnotationTab( a_subject_id, a_cb ){
             var note_active = [],
                 note_open = [],
                 note_closed = [],
-                note, ns, nt;
+                note, ns;
 
             if ( data.note ){
                 for ( var i = 0; i < data.note.length; i++ ) {
                     note = data.note[i];
                     ns = model.NoteStateFromString[note.state];
-                    nt = model.NoteTypeFromString[note.type];
 
                     if ( ns == model.NOTE_ACTIVE ){
                         note_active.push( note );
