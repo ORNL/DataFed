@@ -132,7 +132,7 @@ export function showSelectedInfo( node, cb ){
 export function showSelectedItemInfo( item ){
     var disabled = [];
 
-    console.log("show info",item);
+    //console.log("show info",item);
 
     if ( item && item.id ){
         if ( !tabs_parent_vis ){
