@@ -108,19 +108,20 @@ module.exports = ( function() {
     obj.NOTE_OPEN           = 1;
     obj.NOTE_ACTIVE         = 2;
 
-    obj.NOTE_MASK_ACT_QUES  = 0x01;
-    obj.NOTE_MASK_ACT_INFO  = 0x02;
-    obj.NOTE_MASK_ACT_WARN  = 0x04;
-    obj.NOTE_MASK_ACT_ERR   = 0x08;
-    obj.NOTE_MASK_OPN_QUES  = 0x10;
-    obj.NOTE_MASK_OPN_INFO  = 0x20;
-    obj.NOTE_MASK_OPN_WARN  = 0x40;
-    obj.NOTE_MASK_OPN_ERR   = 0x80;
-    obj.NOTE_MASK_INH_WARN  = 0x400;
-    obj.NOTE_MASK_INH_ERR   = 0x800;
-    obj.NOTE_MASK_LOC_ALL   = 0xFF;
-    obj.NOTE_MASK_INH_ALL   = 0xC00;
-    obj.NOTE_MASK_MD_ERR    = 0x1000;
+    obj.NOTE_MASK_ACT_QUES  = 0x0001;
+    obj.NOTE_MASK_ACT_INFO  = 0x0002;
+    obj.NOTE_MASK_ACT_WARN  = 0x0004;
+    obj.NOTE_MASK_ACT_ERR   = 0x0008;
+    obj.NOTE_MASK_OPN_QUES  = 0x0010;
+    obj.NOTE_MASK_OPN_INFO  = 0x0020;
+    obj.NOTE_MASK_OPN_WARN  = 0x0040;
+    obj.NOTE_MASK_OPN_ERR   = 0x0080;
+    obj.NOTE_MASK_INH_WARN  = 0x0400; // Questions & info are not inherited
+    obj.NOTE_MASK_INH_ERR   = 0x0800;
+    obj.NOTE_MASK_CLS_ANY   = 0x1000;
+    obj.NOTE_MASK_LOC_ALL   = 0x00FF;
+    obj.NOTE_MASK_INH_ALL   = 0x0C00;
+    obj.NOTE_MASK_MD_ERR    = 0x2000;
 
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
@@ -1759,12 +1760,12 @@ module.exports = ( function() {
         if ( a_client ){
             if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, a_subj_id ))){
                 // Owner/admin - return notes that are open or active
-                res = obj.db._query("for n in 1..1 outbound @id note filter n.state > 0 return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                res = obj.db._query("for n in 1..1 outbound @id note return {type:n.type,state:n.state,parent_id:n.parent_id}",
                     { id: a_subj_id });
             }else{
                 // Non-owner - return notes that are active
                 // Creator - return notes that are open or active
-                res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || ( n.creator == @client && n.state > 0 ) return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || n.creator == @client return {type:n.type,state:n.state,parent_id:n.parent_id}",
                     { id: a_subj_id, client: a_client._id });
             }
         }else{
@@ -1776,13 +1777,18 @@ module.exports = ( function() {
         // Shift note type bits based on inherited, open, active state
         while ( res.hasNext() ){
             n = res.next();
-            b = 1<<n.type;
-            if ( n.parent_id && n.state == obj.NOTE_OPEN )
-                b <<= 8;
-            else if ( n.state == obj.NOTE_OPEN )
-                b <<= 4;
 
-            mask |= b;
+            if ( n.state == obj.NOTE_CLOSED ){
+                mask |= obj.NOTE_MASK_CLS_ANY;
+            }else{
+                b = 1<<n.type;
+                if ( n.parent_id && n.state == obj.NOTE_OPEN )
+                    b <<= 8;
+                else if ( n.state == obj.NOTE_OPEN )
+                    b <<= 4;
+
+                mask |= b;
+            }
         }
 
         return mask;
