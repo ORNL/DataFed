@@ -485,7 +485,7 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
     });
 
     $("#srch_meta_clear",a_frame).on("click",function(){
-        if ( $("#srch_meta",a_frame).val().trim().length ){
+        if ( $("#srch_meta",a_frame).val().trim().length || $("#srch_sch_id",a_frame).val().trim().length ){
             $("#srch_meta,#srch_sch_id",a_frame).val("");
             qry_doc = null;
             inst._runSearch();
