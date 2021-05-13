@@ -377,7 +377,7 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_PERM_DENIED;
         }
 
-        coll.notes = g_lib.annotationGetMask( client, coll_id, admin );
+        coll.notes = g_lib.getNoteMask( client, coll, admin );
 
         coll.id = coll._id;
         delete coll._id;
@@ -432,8 +432,7 @@ router.get('/read', function (req, res) {
         for ( var i in result ){
             item = result[i];
             if ( item.id ){
-                item.notes = g_lib.annotationGetMask( client, item.id, admin ) | (item.md_err?g_lib.NOTE_MASK_MD_ERR:0);
-                delete item.md_err;
+                item.notes = g_lib.getNoteMask( client, item, admin );
             }
         }
 

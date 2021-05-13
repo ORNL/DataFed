@@ -364,6 +364,10 @@ function recordUpdate( client, record, result ){
             obj.md_err = false;
         }
     }else if ( obj.sch_id ){
+        // Schema ID has changed - clear md err, will be revalidated
+        obj.md_err_msg = null;
+        obj.md_err = false;
+
         var idx = obj.sch_id.indexOf(":");
         if ( idx < 0 ){
             throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
@@ -531,7 +535,7 @@ function recordUpdate( client, record, result ){
         data.sch_id = sch.id + ":" + sch.ver;
     }
 
-    data.notes = g_lib.annotationGetMask( client, data._id );
+    data.notes = g_lib.getNoteMask( client, data );
 
     data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
     for ( i in data.deps ){
@@ -584,11 +588,7 @@ router.post('/update', function (req, res) {
                 doc = Object.assign( result.results[0] );
             }else{
                 doc = g_db._document( id );
-                doc.notes = g_lib.annotationGetMask( client, doc._id );
-
-                if ( doc.md_err ){
-                    doc.notes |= g_lib.NOTE_MASK_MD_ERR;
-                }
+                doc.notes =  g_lib.getNoteMask( client, doc );
             }
             delete doc.desc;
             //delete doc.md;
@@ -658,11 +658,7 @@ router.post('/update/batch', function (req, res) {
         var doc, updates = [];
         result.updates.forEach( function( id ){
             doc = g_db._document( id );
-            doc.notes = g_lib.annotationGetMask( client, doc._id );
-
-            if ( doc.md_err ){
-                doc.notes |= g_lib.NOTE_MASK_MD_ERR;
-            }
+            doc.notes =  g_lib.getNoteMask( client, doc );
 
             delete doc.desc;
             delete doc.md;
@@ -815,24 +811,20 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_PERM_DENIED;
         }
 
-        data.notes = g_lib.annotationGetMask( client, data_id, admin );
-
-        if ( data.md_err ){
-            data.notes |= g_lib.NOTE_MASK_MD_ERR;
-        }
+        data.notes =  g_lib.getNoteMask( client, data );
 
         if ( data.sch_id ){
             var sch = g_db.sch.document( data.sch_id );
             data.sch_id = sch.id + ":" + sch.ver;
         }
         
-        data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
+        data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,md_err:v.md_err,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
             dep = data.deps[i];
             if ( dep.alias && ( !client || client._id != dep.owner ))
                 dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
 
-            dep.notes = g_lib.annotationGetMask( client, dep.id );
+            dep.notes =  g_lib.getNoteMask( client, dep );
         }
 
         if ( rem_md && data.md )
@@ -909,34 +901,6 @@ router.post('/export', function (req, res) {
 .summary('Export record metadata')
 .description('Export record metadata');
 
-// TODO Don't need this method
-
-// Same as view, but for multiple records - returns minimal info + deps
-/* router.get('/dep/get', function (req, res) {
-    const client = g_lib.getUserFromClientID( req.queryParams.client );
-    var data, dep, res, result = [];
-    for ( var id in req.queryParams.id ){
-        id = g_lib.resolveDataID( id, client );
-        data = g_db._document( id );
-        res = { id: id, title: data.title };
-        res.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:id}).toArray();
-
-        for ( i in res.deps ){
-            dep = res.deps[i];
-            if ( dep.alias && client._id != dep.owner )
-                dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
-
-            dep.notes = g_lib.annotationGetMask( client, dep.id );
-        }
-
-        result.push( res );
-    }
-    res.send( [result] );
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('ids', joi.array().items(joi.string()).required(), "Data IDs or aliases")
-.summary('Get data dependencies')
-.description('Get data dependencies'); */
 
 router.get('/dep/graph/get', function (req, res) {
     try {
@@ -960,9 +924,7 @@ router.get('/dep/graph/get', function (req, res) {
                 }
                     
                 //console.log("calc notes for", rec._id );
-                notes = g_lib.annotationGetMask( client, rec._id );
-                if ( rec.md_err )
-                    notes |= g_lib.NOTE_MASK_MD_ERR;
+                notes =  g_lib.getNoteMask( client, rec );
     
                 if ( entry[1] ){
                     deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:entry[0]}).toArray();
@@ -1004,7 +966,7 @@ router.get('/dep/graph/get', function (req, res) {
                 entry = cur[i];
 
                 //rec = g_db.d.document( cur[i] );
-                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,size:v.size,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
+                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,size:v.size,md_err:v.md_err,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
 
                 if ( entry[1] ){
                     for ( j in deps ){
@@ -1013,14 +975,14 @@ router.get('/dep/graph/get', function (req, res) {
                         //console.log("dep:",dep.id,"ty:",dep.type);
 
                         if ( visited.indexOf(dep.id) < 0 ){
-                            //console.log("follow");
 
-                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,size:dep.size,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
+                            // TODO Why are we not just copying the dep object?
+                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,size:dep.size,md_err:dep.md_err,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
                             if ( node.alias && client._id != node.owner )
                                 node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
 
-                            node.notes = g_lib.annotationGetMask( client, node.id );
-                
+                            node.notes =  g_lib.getNoteMask( client, node );
+
                             if ( dep.type<2 )
                                 node.gen = gen;
                             result.push(node);
@@ -1147,23 +1109,27 @@ router.get('/list/by_alloc', function (req, res) {
             owner_id = client._id;
         }
 
-        var qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title";
-        var result;
-
-        // TODO Add notes to results?
-        //node.notes = g_lib.annotationGetMask( client, node._id );
+        var qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title",
+            result, doc;
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, md_err: v.md_err, external: v.external, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id },{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }
         else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, md_err: v.md_err, external: v.external, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id });
+        }
+
+        for ( var i in result ){
+            doc = result[i];
+            if ( doc.id ){
+                doc.notes = g_lib.getNoteMask( client, doc );
+            }
         }
 
         res.send( result );
@@ -1178,61 +1144,6 @@ router.get('/list/by_alloc', function (req, res) {
 .queryParam('count', joi.number().optional(), "Count")
 .summary('List data records by allocation')
 .description('List data records by allocation');
-
-
-router.get('/search', function (req, res) {
-    try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var params = {};
-
-        if ( req.queryParams.use_client )
-            params.client = client._id;
-
-        if ( req.queryParams.use_shared_users ){
-            params.users = g_lib.usersWithClientACLs( client._id, true );
-        }
-
-        if ( req.queryParams.use_shared_projects ){
-            params.projs = g_lib.projectsWithClientACLs( client._id, true );
-        }
-
-        if ( req.queryParams.offset )
-            params.offset = req.queryParams.offset;
-        else
-            params.offset = 0;
-
-        if ( req.queryParams.count ){
-            params.count = Math.min(req.queryParams.count,1000-params.offset);
-        }else{
-            params.count = Math.min(50,1000-params.offset);
-        }
-
-        //console.log("params:",params);
-
-        var doc, results = g_db._query( req.queryParams.query, params ).toArray();
-
-        for ( var i in results ){
-            doc = results[i];
-            doc.notes = g_lib.annotationGetMask( client, doc.id );
-            if ( doc.md_err ){
-                doc.notes |= g_lib.NOTE_MASK_MD_ERR;
-            }
-        }
-
-        res.send( results );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('query', joi.string().required(), "Query")
-.queryParam('use_client', joi.bool().required(), "Query uses client param")
-.queryParam('use_shared_users', joi.bool().required(), "Query uses shared users param")
-.queryParam('use_shared_projects', joi.bool().required(), "Query uses shared projects param")
-.queryParam('offset', joi.number().integer().min(0).max(999).optional(), "Offset")
-.queryParam('count', joi.number().integer().min(1).max(1000).optional(), "Count")
-.summary('Find all data records that match query')
-.description('Find all data records that match query');
 
 
 router.post('/get', function (req, res) {

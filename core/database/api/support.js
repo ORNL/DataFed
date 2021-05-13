@@ -1754,24 +1754,26 @@ module.exports = ( function() {
 
     // Returns bitmask: CLOSED_BIT (1) | OPEN_TYPE_INH (4) | OPEN_TYPE (4) | ACTIVE_TYPE (4)
 
-    obj.annotationGetMask = function( a_client, a_subj_id, a_admin ){
-        var mask = 0, res, n, b;
+
+    //obj.annotationGetMask = function( a_client, a_subj_id, a_admin ){
+    obj.getNoteMask = function( a_client, a_subj, a_admin ){
+        var mask = 0, res, n, b, id = a_subj.id || a_subj._id;
 
         if ( a_client ){
-            if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, a_subj_id ))){
+            if ( a_admin || ( a_admin === undefined && obj.hasAdminPermObject( a_client, id ))){
                 // Owner/admin - return notes that are open or active
                 res = obj.db._query("for n in 1..1 outbound @id note return {type:n.type,state:n.state,parent_id:n.parent_id}",
-                    { id: a_subj_id });
+                    { id: id });
             }else{
                 // Non-owner - return notes that are active
                 // Creator - return notes that are open or active
                 res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || n.creator == @client return {type:n.type,state:n.state,parent_id:n.parent_id}",
-                    { id: a_subj_id, client: a_client._id });
+                    { id: id, client: a_client._id });
             }
         }else{
             // Annonymous - return notes that are active
             res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 return {type:n.type,state:n.state,parent_id:n.parent_id}",
-            { id: a_subj_id });
+            { id: id });
         }
 
         // Shift note type bits based on inherited, open, active state
@@ -1789,6 +1791,10 @@ module.exports = ( function() {
 
                 mask |= b;
             }
+        }
+
+        if ( a_subj.md_err ){
+            mask |= obj.NOTE_MASK_MD_ERR;
         }
 
         return mask;
@@ -1820,7 +1826,7 @@ module.exports = ( function() {
 
             // Add update listing data if not present
             if ( !( dep._id in a_updates )){
-                dep.notes = obj.annotationGetMask( a_client, dep._id );
+                dep.notes = obj.getNoteMask( a_client, dep );
                 // remove larger unnecessary fields
                 delete dep.desc;
                 delete dep.md;
@@ -1891,10 +1897,10 @@ module.exports = ( function() {
 
             // Add/refresh update listing data
             if ( note.subject_id in a_context.updates ){
-                a_context.updates[note.subject_id].notes = obj.annotationGetMask( a_context.client, note.subject_id );
+                a_context.updates[note.subject_id].notes = obj.getNoteMask( a_context.client, a_context.updates[note.subject_id] );
             }else{
                 subj = obj.db._document( note.subject_id );
-                subj.notes = obj.annotationGetMask( a_context.client, note.subject_id );
+                subj.notes = obj.getNoteMask( a_context.client, subj );
                 // remove larger unnecessary fields
                 delete subj.desc;
                 delete subj.md;

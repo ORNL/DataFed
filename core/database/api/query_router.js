@@ -385,11 +385,7 @@ function execQuery( client, scope, mode, query ){
             item.desc = item.desc.slice(0,120) + " ...";
         }
 
-        item.notes = g_lib.annotationGetMask( client, item._id );
-
-        if ( item.md_err ){
-            item.notes |= g_lib.NOTE_MASK_MD_ERR;
-        }
+        item.notes = g_lib.getNoteMask( client, item );
     }
 
     result.push({ paging: { off: query.params.off, cnt: result.length, tot: query.params.off + count }});

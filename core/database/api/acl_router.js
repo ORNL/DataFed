@@ -200,11 +200,11 @@ router.get('/by_subject/list', function (req, res) {
 
         // TODO This does not work if the subject is a project member
 
-        var i,share,shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,doi:v.doi,locked:v.locked}", { client: subj, owner: owner_id }).toArray();
+        var i,share,shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,md_err:v.md_err,external:v.external,locked:v.locked}", { client: subj, owner: owner_id }).toArray();
 
         for ( i in shares ){
             share = shares[i];
-            share.notes = g_lib.annotationGetMask( client, share.id );
+            share.notes = g_lib.getNoteMask( client, share );
         }
 
         if ( shares.length < 2 ){

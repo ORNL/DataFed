@@ -12,6 +12,7 @@ module.exports = router;
 //==================== ACL API FUNCTIONS
 
 router.post('/create', function (req, res) {
+    console.log("note/create");
     try {
         g_db._executeTransaction({
             collections: {
@@ -51,7 +52,8 @@ router.post('/create', function (req, res) {
 
                 delete doc.desc;
                 delete doc.md;
-                doc.notes = g_lib.annotationGetMask( client, doc._id );
+                doc.notes = g_lib.getNoteMask( client, doc );
+
                 updates[doc._id] = doc;
 
                 res.send({ results: [note.new], updates: Object.values( updates )});
@@ -72,6 +74,7 @@ router.post('/create', function (req, res) {
 
 
 router.post('/update', function (req, res) {
+    console.log("note/update");
     try {
         g_db._executeTransaction({
             collections: {
@@ -155,7 +158,8 @@ router.post('/update', function (req, res) {
 
                 delete doc.desc;
                 delete doc.md;
-                doc.notes = g_lib.annotationGetMask( client, doc._id );
+                doc.notes = g_lib.getNoteMask( client, doc );
+
                 updates[doc._id] = doc;
 
                 res.send({ results: [note], updates: Object.values(updates)});
