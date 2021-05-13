@@ -195,6 +195,7 @@ long
 DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, Value & a_result )
 {
     //DL_DEBUG( "dbPost " << a_url_path << " [" << (a_body?*a_body:"") << "]" );
+    static const char * empty_body = "";
 
     a_result.clear();
 
@@ -230,8 +231,9 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
     curl_easy_setopt( m_curl, CURLOPT_POST, 1 );
-    if ( a_body )
-        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, a_body->c_str() );
+
+    // libcurl seems to no longer work with POSTs without a body, so must set body to an empty string
+    curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, a_body?a_body->c_str():empty_body );
 
     CURLcode res = curl_easy_perform( m_curl );
 
@@ -262,6 +264,8 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         {
             if ( res_json.size() && a_result.asObject().has( "errorMessage" ))
             {
+                DL_DEBUG( "dbPost FAILED " << url << " [" << (a_body?*a_body:"") << "]" );
+
                 EXCEPT_PARAM( ID_BAD_REQUEST, a_result.asObject().asString());
             }
             else
@@ -2835,6 +2839,8 @@ DatabaseAPI::setTopicDataReply( Auth::TopicDataReply & a_reply, const libjson::V
 void
 DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
+    DL_INFO("annotationCreate");
+
     Value result;
     vector<pair<string,string>> params;
     params.push_back({ "type", to_string( a_request.type() )});
@@ -2851,6 +2857,8 @@ DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Auth::
 void
 DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
+    DL_INFO("annotationUpdate");
+
     Value result;
     vector<pair<string,string>> params;
     params.push_back({ "id", a_request.id() });
@@ -4347,16 +4355,16 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
     ParseState state = PS_DEFAULT;
     Var v;
     string result,tmp;
-    char last = 0, next = 0, next_nws = 0;
+    char /*last = 0, next = 0,*/ next_nws = 0;
     string::const_iterator c2;
     bool val_token, last_char = false;
 
     for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
     {
-        if ( c+1 != a_query.end() )
+        /*if ( c+1 != a_query.end() )
             next = *(c+1);
         else
-            next = 0;
+            next = 0;*/
 
         next_nws = 0;
         for ( c2 = c + 1; c2 != a_query.end(); c2++ )
@@ -4515,7 +4523,7 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
         else if ( state != PS_TOKEN )
             result += *c;
 
-        last = *c;
+        //last = *c;
     }
 
     if ( state == PS_SINGLE_QUOTE || state == PS_DOUBLE_QUOTE )

@@ -23,6 +23,8 @@ namespace Core {
 
 map<uint16_t,ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 
+// TODO - This should be defined in proto files
+#define NOTE_MASK_MD_ERR 0x2000
 
 ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid ) :
     m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_worker_thread(0), m_run(true),
@@ -779,7 +781,7 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
 
         m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
         // TODO need a def for md_err mask
-        data->set_notes( data->notes() | 0x1000 );
+        data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
     }
 
     PROC_MSG_END
@@ -881,7 +883,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
         m_db_client.recordUpdateSchemaError( request->id(), m_validator_err );
         // Must find and update md_err flag in reply (always 1 data entry)
         RecordData * data = reply.mutable_data(0);
-        data->set_notes( data->notes() | 0x1000 );
+        data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
 
         for ( int i = 0; i < reply.update_size(); i++ )
         {
@@ -889,7 +891,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
             if ( data->id() == request->id() )
             {
                 // TODO need a def for md_err mask
-                data->set_notes( data->notes() | 0x1000 );
+                data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
             }
         }
     }

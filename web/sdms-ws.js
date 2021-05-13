@@ -1021,6 +1021,7 @@ app.get('/api/tag/autocomp', ( a_req, a_resp ) => {
     });
 });
 
+// TODO This doesn't seem to be used anymore
 app.get('/api/tag/list/by_count', ( a_req, a_resp ) => {
     var par = {};
     if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
