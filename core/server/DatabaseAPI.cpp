@@ -877,47 +877,6 @@ DatabaseAPI::setProjectData( Auth::ProjectDataReply & a_reply, const Value & a_r
     TRANSLATE_END( a_result )
 }
 
-/*
-void
-DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, Auth::ListingReply & a_reply )
-{
-    Value result;
-    vector<pair<string,string>> params;
-    params.push_back({"query",a_request.query()});
-    params.push_back({"use_client",a_request.use_client()?"true":"false"});
-    params.push_back({"use_shared_users",a_request.use_shared_users()?"true":"false"});
-    params.push_back({"use_shared_projects",a_request.use_shared_projects()?"true":"false"});
-    if ( a_request.has_offset())
-        params.push_back({"offset",to_string(a_request.offset())});
-    if ( a_request.has_count() )
-        params.push_back({"count",to_string(a_request.count())});
-
-    dbGet( "/dat/search", params, result );
-
-    setListingDataReply( a_reply, result );
-}*/
-
-/*
-void
-DatabaseAPI::recordSearchPublished( const Auth::RecordSearchPublishedRequest & a_request, Auth::ListingReply & a_reply )
-{
-    Value result;
-    string query, params;
-    
-    parseRecordSearchPublishedRequest( a_request, query, params );
-
-    if ( params.size() )
-        params[0] = ' '; // Get rid of leading delimiter;
-
-    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"}}";
-
-    DL_INFO("Record Search Pub Req: [" << body << "]");
-
-    dbPost( "/col/pub/search", {}, &body, result );
-
-    setListingDataReply( a_reply, result );
-}
-*/
 
 void
 DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply )
@@ -1192,26 +1151,6 @@ DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::Listin
 
     setListingDataReply( a_reply, result );
 }
-
-/*void
-DatabaseAPI::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Auth::ListingReply & a_reply )
-{
-    Value result;
-
-    string ids="[";
-    for ( int i = 0; i < a_request.id_size(); i++ )
-    {
-        if ( i > 0 )
-            ids += ",";
-
-        ids += "\"" + a_request.id(i) + "\"";
-    }
-    ids += "]";
-
-    dbGet( "dat/dep/get", {{"ids", ids}}, result );
-
-    setListingDataReply( a_reply, result );
-}*/
 
 
 void
@@ -1620,86 +1559,6 @@ DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::
     a_reply.set_item( a_request.item() );
     a_reply.set_offset( result.asObject().getNumber( "offset" ));
 }
-
-/*
-void
-DatabaseAPI::catalogSearch( const Auth::CatalogSearchRequest & a_request, Auth::CatalogSearchReply & a_reply )
-{
-    Value result;
-    string query, params;
-
-    uint32_t cnt = parseCatalogSearchRequest( a_request, query, params );
-
-    if ( params.size() )
-        params[0] = ' '; // Get rid of leading delimiter;
-
-    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
-
-    DL_INFO("Coll Search Pub Req: [" << body << "]");
-
-    dbPost( "col/pub/search", {}, &body, result );
-
-    setCatalogSearchReply( a_reply, result );
-}
-
-void
-DatabaseAPI::setCatalogSearchReply( Auth::CatalogSearchReply & a_reply, const libjson::Value & a_result )
-{
-    Value::ObjectConstIter   j;
-
-    TRANSLATE_BEGIN()
-
-    const Value::Array & arr = a_result.asArray();
-
-    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
-    {
-        const Value::Object & obj = i->asObject();
-
-        if ( obj.has( "paging" ))
-        {
-            const Value::Object & obj2 = obj.asObject();
-
-            a_reply.set_offset( obj2.getNumber( "off" ));
-            a_reply.set_count( obj2.getNumber( "cnt" ));
-            a_reply.set_total( obj2.getNumber( "tot" ));
-        }
-        else
-        {
-            setCatItemInfoData( a_reply.add_item(), obj );
-        }
-    }
-
-    TRANSLATE_END( a_result )
-}
-
-
-void
-DatabaseAPI::setCatItemInfoData( CatItemInfoData * a_item, const Value::Object & a_obj )
-{
-    if ( a_obj.has( "id" ))
-        a_item->set_id( a_obj.asString() );
-    else if ( a_obj.has( "_id" ))
-        a_item->set_id( a_obj.asString() );
-
-    a_item->set_title( a_obj.getString( "title" ));
-    a_item->set_owner_id( a_obj.getString( "owner_id" ));
-
-    if ( a_obj.has( "owner_name" ) && !a_obj.value().isNull( ))
-        a_item->set_owner_name( a_obj.asString());
-
-    if ( a_obj.has( "alias" ) && !a_obj.value().isNull( ))
-        a_item->set_alias( a_obj.asString() );
-
-    if ( a_obj.has( "notes" ))
-        a_item->set_notes( a_obj.asNumber() );
-
-    if ( a_obj.has( "desc" ) && !a_obj.value().isNull( ))
-        a_item->set_brief( a_obj.asString() );
-
-    if ( a_obj.has( "size" ))
-        a_item->set_size( a_obj.asNumber() );
-}
-*/
 
 
 void
@@ -2752,22 +2611,6 @@ DatabaseAPI::topicView( const Auth::TopicViewRequest  & a_request, Auth::TopicDa
     setTopicDataReply( a_reply, result );
 }
 
-/*void
-DatabaseAPI::topicListCollections( const Auth::TopicListCollectionsRequest & a_request, Auth::TopicListCollectionsReply & a_reply )
-{
-    Value result;
-    vector<pair<string,string>> params;
-    params.push_back({ "id", a_request.topic_id() });
-    if ( a_request.has_offset() && a_request.has_count() )
-    {
-        params.push_back({ "offset", to_string( a_request.offset() )});
-        params.push_back({ "count", to_string( a_request.count() )});
-    }
-
-    dbGet( "topic/list/coll", params, result );
-
-    setTopicListCollectionsReply( a_reply, result );
-}*/
 
 void
 DatabaseAPI::topicSearch( const Auth::TopicSearchRequest & a_request, Auth::TopicDataReply & a_reply )
@@ -2775,8 +2618,6 @@ DatabaseAPI::topicSearch( const Auth::TopicSearchRequest & a_request, Auth::Topi
     Value result;
 
     dbGet( "topic/search", {{"phrase",a_request.phrase()}}, result );
-
-    //DL_INFO("srch res: " << result.toString());
 
     setTopicDataReply( a_reply, result );
 }

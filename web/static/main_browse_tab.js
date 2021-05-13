@@ -2638,7 +2638,7 @@ export function checkTreeUpdate( a_data, a_source ){
 }
 
 model.registerUpdateListener( function( a_data ){
-    //console.log("main tab updating:",a_data);
+    console.log("main tab updating:",a_data);
 
     var nd, data;
 
