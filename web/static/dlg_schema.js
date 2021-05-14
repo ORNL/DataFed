@@ -81,7 +81,7 @@ export function show( a_mode, a_schema, a_cb ){
             if ( a_cb ) a_cb();
             dlg_inst.dialog('close');
         }else{
-            dialogs.dlgAlert( "Schema Update Error", reply );
+            dialogs.dlgAlert( "Schema Update Error", util.escapeHTML( reply ));
         }
     }
 
@@ -219,7 +219,7 @@ export function show( a_mode, a_schema, a_cb ){
             var anno = jsoned.getSession().getAnnotations();
 
             if ( anno && anno.length ){
-                dialogs.dlgAlert( "Schema Error", "Schema input has unresolved JSON syntax errors.");
+                dialogs.dlgAlert( "Schema Error", "Schema has unresolved JSON syntax errors.");
                 return;
             }
     

@@ -876,18 +876,47 @@ export class QueryBuilder extends HTMLElement {
         frame.dialog( options );
     }
 
+    // This is a recursive function that builds a document of schema fields with all references resolved (denormalized)
     _buildFieldSchema( a_props, a_out, a_refs ){
+        //console.log("_buildFieldSchema", a_props, a_out, a_refs );
+
         var v, p;
         for ( var k in a_props ){
             v = a_props[k];
     
             if ( "$ref" in v ){
-                a_out[k] = {};
-                this._buildFieldSchema( a_refs[v["$ref"]].properties, a_out[k], a_refs );
+                // Field is a reference
+                p = v["$ref"];
+
+                if ( !(p in a_refs )){
+                    // Unresolved reference.
+                    // Must be a local path to an internal definition (i.e. #/foo/bar/sub_schema)
+                    // Find the definition in the current schema
+                    var parts = p.split("/"), def = this._sch.def;
+                    for ( var i = 1; i < parts.length; i++ ){
+                        if ( parts[i] in def ){
+                            def = def[parts[i]];
+                        }else{
+                            console.log("Local definition path invalid: ", p );
+                            return;
+                        }
+                    }
+                    // Add definition to a_refs
+                    a_refs[p] = def;
+                }
+
+                if ( a_refs[p].properties != undefined ){
+                    a_out[k] = {};
+                    this._buildFieldSchema( a_refs[p].properties, a_out[k], a_refs );
+                }else{
+                    a_out[k] = a_refs[p];
+                }
             }else if (( p = v.properties ) != undefined ) {
+                // Field is a nested object
                 a_out[k] = {};
                 this._buildFieldSchema( p, a_out[k], a_refs );
             }else{
+                // Field is a simple type
                 a_out[k] = v;
             }
         }
