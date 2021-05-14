@@ -730,6 +730,8 @@ def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extens
         external = view_reply[0].data[0].external
         if ( not external ) and not _interactive:
             raise Exception( "Cannot specify --raw-data-file option in non-interactive modes." )
+    else:
+        external = False
 
     if metadata and metadata_file:
         raise Exception( "Cannot specify both --metadata and --metadata-file options." )
