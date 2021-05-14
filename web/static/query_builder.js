@@ -64,7 +64,7 @@ export function queryToExpression( a_qry ){
         }else if ( a_qry.children.length > 1 ){
             expr = "(";
             for ( var i in a_qry.children ){
-                console.log("group op:",a_qry.op);
+                //console.log("group op:",a_qry.op);
                 if ( i > 0 ){
                     expr += " " + _opr_out[a_qry.op] + " ";
                 }
@@ -286,7 +286,7 @@ export class QueryBuilder extends HTMLElement {
             //console.log("  field:", qry );
 
             if ( this._state[div.id].opr[1] ){
-                console.log("state:", this._state[div.id] );
+                //console.log("state:", this._state[div.id] );
                 qry.rh = $(".field-inp-rh", div ).val();
                 qry.rh_type = this._state[div.id].lh.type;
                 qry.rh_is_field = ($(".field-btn-val-type",div).button( "option", "label" ) == "F"?true:false);
@@ -880,7 +880,7 @@ export class QueryBuilder extends HTMLElement {
     _buildFieldSchema( a_props, a_out, a_refs ){
         //console.log("_buildFieldSchema", a_props, a_out, a_refs );
 
-        var v, p;
+        var v, p, i;
         for ( var k in a_props ){
             v = a_props[k];
     
@@ -888,12 +888,23 @@ export class QueryBuilder extends HTMLElement {
                 // Field is a reference
                 p = v["$ref"];
 
+                // Refs can be:
+                //   1) external, whole schema: schema-id:0
+                //   2) external, sub schema: schema-id:0#/path/to/sub-schema
+                //   3) internal definition: #/path/to/sub-schema
+
                 if ( !(p in a_refs )){
-                    // Unresolved reference.
-                    // Must be a local path to an internal definition (i.e. #/foo/bar/sub_schema)
-                    // Find the definition in the current schema
-                    var parts = p.split("/"), def = this._sch.def;
-                    for ( var i = 1; i < parts.length; i++ ){
+                    // Unresolved reference. Must be case (2) or (3), above
+                    var parts = p.split("/"), def;
+
+                    if (( i = p.indexOf("#")) > 0 ){
+                        def = a_refs[p.substr(0,i)];
+                    }else{
+                        def = this._sch.def
+                    }
+                    //console.log("Local def: ", def );
+
+                    for ( i = 1; i < parts.length; i++ ){
                         if ( parts[i] in def ){
                             def = def[parts[i]];
                         }else{

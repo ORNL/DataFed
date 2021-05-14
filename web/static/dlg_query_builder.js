@@ -3,9 +3,8 @@ import * as util from "./util.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
 
 export function show( a_schema, a_query, a_cb ){
-    console.log("show query builder dialog");
-
-    console.log( a_schema );
+    //console.log("show query builder dialog");
+    //console.log( a_schema );
 
     var frame = $(document.createElement('div'));
 
@@ -45,7 +44,7 @@ export function show( a_schema, a_query, a_cb ){
 
                 var qry = qb.getQuery();
 
-                console.log("query:",qry);
+                //console.log("query:",qry);
 
                 if ( a_cb )
                     a_cb( qry );

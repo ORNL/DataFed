@@ -44,7 +44,7 @@ function loadSchemas(){
 
     api.schemaSearch(par, function(ok,data){
         if ( ok ){
-            console.log( "sch res: ", data );
+            //console.log( "sch res: ", data );
             var src = [];
             if ( data.schema ){
                 var sch;
