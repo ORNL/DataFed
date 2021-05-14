@@ -557,6 +557,11 @@ export class QueryBuilder extends HTMLElement {
             st.lh = field;
             target.val( field.path );
             target.removeClass( "qb-error" );
+
+            if ( Array.isArray(field.type)){
+                throw "Arrays in field type not supported";
+            }
+
             target.attr( "title", field.path + " : " + QueryBuilder._fld_cfg[field.type].label + " " + field.description );
 
             // Update select menu items
@@ -928,6 +933,9 @@ export class QueryBuilder extends HTMLElement {
                 this._buildFieldSchema( p, a_out[k], a_refs );
             }else{
                 // Field is a simple type
+                if ( Array.isArray( v.type )){
+                    v.type = v.type[0];
+                }
                 a_out[k] = v;
             }
         }
