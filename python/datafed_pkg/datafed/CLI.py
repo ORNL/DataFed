@@ -117,9 +117,9 @@ def run():
                 if session == None:
                     session = PromptSession(history=FileHistory(os.path.expanduser("~/.datafed-hist")))
                 if _cur_ctx != _uid:
-                    prefix = "(" + _cur_ctx + ") " + _cur_coll_prefix + ">"
+                    prefix = "\n(" + _cur_ctx + ") " + _cur_coll_prefix + ">"
                 else:
-                    prefix = _cur_coll_prefix + ">"
+                    prefix = "\n" + _cur_coll_prefix + ">"
                 _args = shlex.split(session.prompt(prefix,auto_suggest=AutoSuggestFromHistory()))
                 _cli(prog_name="datafed",args=_args,standalone_mode=False)
 
@@ -1770,6 +1770,10 @@ def _print_data( message ):
                 click.echo( "{:<15}{:<50}".format('Extension: ', '(auto)'))
             else:
                 click.echo( "{:<15}{:<50}".format('Extension: ', dr.ext if dr.ext else '(not set)' ))
+
+        click.echo( "{:<15}{:<50}".format('Schema: ', dr.sch_id if dr.sch_id else '(none)' ))
+        if dr.sch_id and dr.metadata:
+            click.echo( "{:<15}{:<50}".format('Meta Errors: ', "Yes" if dr.md_err_msg else 'No' ))
 
         click.echo( "{:<15}{:<50}\n".format('Owner: ', dr.owner[2:]) +
                     "{:<15}{:<50}\n".format('Creator: ', dr.creator[2:]) +
