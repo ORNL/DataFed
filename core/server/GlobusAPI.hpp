@@ -36,6 +36,7 @@ public:
 
     struct EndpointInfo
     {
+        std::string id;
         bool        activated;
         bool        never_expires;
         uint32_t    expiration;

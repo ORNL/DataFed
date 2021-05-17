@@ -572,6 +572,7 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
 
         checkResponsCode( code,resp_obj );
 
+        a_ep_info.id = a_ep_id;
         a_ep_info.activated = resp_obj.getBool( "activated" );
 
         int64_t exp = resp_obj.getNumber( "expires_in" );

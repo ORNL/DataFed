@@ -199,8 +199,21 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 
         // TODO Notify if ep activation expiring soon
 
-        // Calculate encryption state
-        encrypted = checkEncryption( ep, encrypt, ep_info );
+        // Calculate encryption state based on non-datafed endpoint
+        encrypted = checkEncryption( ep_info, encrypt );
+
+        // If data is external, also check the other endpoint for encryption state
+        if ( type == TT_DATA_GET && obj.getValue( "src_repo_id" ).isNumber() )
+        {
+            DL_DEBUG( "Download involves external data" );
+            GlobusAPI::EndpointInfo     ep_info2;
+
+            m_glob.getEndpointInfo( src_ep, acc_tok, ep_info2 );
+            if ( !ep_info.activated )
+                EXCEPT_PARAM( 1, "Globus endpoint " << ep << " requires activation." );
+
+            encrypted = checkEncryption( ep_info, ep_info2, encrypt );
+        }
     }
 
     // Init Globus transfer
@@ -385,13 +398,13 @@ TaskWorker::cmdAllocDelete( const Value & a_task_params )
 
 
 bool
-TaskWorker::checkEncryption( const std::string & a_ep, Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info )
+TaskWorker::checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info, Encryption a_encrypt )
 {
     switch ( a_encrypt )
     {
         case ENCRYPT_NONE:
             if ( a_ep_info.force_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep << " requires encryption.");
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info.id << " requires encryption.");
             return false;
         case ENCRYPT_AVAIL:
             if ( a_ep_info.supports_encryption )
@@ -400,7 +413,7 @@ TaskWorker::checkEncryption( const std::string & a_ep, Encryption a_encrypt, con
                 return false;
         case ENCRYPT_FORCE:
             if ( !a_ep_info.supports_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep << " does not support encryption.");
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info.id << " does not support encryption.");
             return true;
         default:
             EXCEPT_PARAM( 1, "Invalid transfer encryption value: " << a_encrypt );
@@ -410,6 +423,39 @@ TaskWorker::checkEncryption( const std::string & a_ep, Encryption a_encrypt, con
     return false;
 }
 
+bool
+TaskWorker::checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info1, const GlobusAPI::EndpointInfo & a_ep_info2, Encryption a_encrypt )
+{
+    switch ( a_encrypt )
+    {
+        case ENCRYPT_NONE:
+            if ( a_ep_info1.force_encryption && a_ep_info1.force_encryption )
+                EXCEPT_PARAM( 1, "Endpoints " << a_ep_info1.id << " and " << a_ep_info2.id << " require encryption.");
+            else if ( a_ep_info1.force_encryption )
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info1.id << " requires encryption.");
+            else if ( a_ep_info2.force_encryption )
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info2.id << " requires encryption.");
+            return false;
+        case ENCRYPT_AVAIL:
+            if ( a_ep_info1.supports_encryption && a_ep_info2.supports_encryption )
+                return true;
+            else
+                return false;
+        case ENCRYPT_FORCE:
+            if ( !a_ep_info1.supports_encryption && !a_ep_info1.supports_encryption )
+                EXCEPT_PARAM( 1, "Endpoints " << a_ep_info1.id << " and " << a_ep_info1.id << " do not support encryption.");
+            else if ( !a_ep_info1.supports_encryption )
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info1.id << " does not support encryption.");
+            else if ( !a_ep_info2.supports_encryption )
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info2.id << " does not support encryption.");
+            return true;
+        default:
+            EXCEPT_PARAM( 1, "Invalid transfer encryption value: " << a_encrypt );
+    }
+
+    // compiler warns, but can't get here
+    return false;
+}
 
 bool
 TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, MsgBuf::Message *& a_reply )
