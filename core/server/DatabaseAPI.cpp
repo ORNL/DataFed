@@ -4170,7 +4170,13 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
     static set<string> funcs = {"abs","acos","asin","atan","atan2","average","avg","ceil","cos","degrees","exp","exp2",
         "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
         "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample","length","lower","upper",
-        "distance","is_in_polygon"};
+        "distance","is_in_polygon",
+        // AQL Array functions
+        "append", "contains_array", "count", "count_distinct", "count_unique", "first", "flatten", "interleave", "intersection",
+        "jaccard", "last", "length", "minus", "nth", "outersection", "pop", "position", "push", "remove_nth", "replace_nth",
+        "remove_value", "remove_values", "reverse", "shift", "slice", "sorted", "sorted_unique", "union", "union_distinct",
+        "unique", "unshift"};
+
     static set<string> date_funcs = {"date_now","date_timestamp"};
     static set<string> other = {"like","true","false","null","in"};
 

@@ -194,13 +194,24 @@ for i in range( start, end + 1 ):
         md = {
             "i" : i,
             "j" : j,
-            "x": random.randint(-100,100),
-            "y": random.randint(-100,100),
-            "a": random.randint(0,3599)/10.0,
-            "v": random.randint(0,100),
             "tag": tags[selectRand(1, 1, len( tags ))[0]],
             "keyword": subjects[selectRand(1, 1, len( subjects ))[0]]
         }
+
+        # 75% chance to have x and y
+        if random.uniform(0,1) > .75:
+            md['x'] = random.randint(-100,100)
+            md['y'] = random.randint(-100,100)
+
+        # 50% chance to have p and q
+        if random.uniform(0,1) > .75:
+            md['p'] = random.uniform(-1,1)
+            md['q'] = random.uniform(-1,1)
+
+        md['data'] = []
+        dlen = random.randint(1,10)
+        for k in range( dlen ):
+            md['data'].append( random.randint( 0, 9 ))
 
         # Provenance - random links to previous records, 50% none,
         deps = []
@@ -213,7 +224,8 @@ for i in range( start, end + 1 ):
                 deps.append( ["der",aliases[l]] )
 
         # Create record
-        if api.dataCreate( name, alias=data_alias, metadata = json.dumps(md), parent_id = alias, description = _desc, tags = _tags, deps = deps, repo_id = repo, context = ctx )[0] == None:
+        if api.dataCreate( name, alias=data_alias, metadata = json.dumps(md), parent_id = alias, description = _desc,
+            tags = _tags, schema = "datagen:0", deps = deps, repo_id = repo, context = ctx )[0] == None:
             print("Timeout on dataCreate, coll {}, rec {}".format(i,j))
             exit()
 
