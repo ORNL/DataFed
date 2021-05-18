@@ -1799,7 +1799,7 @@ var ctxt_menu_opts = {
             {title: "Download", action: actionDataGet, cmd: "get" },
             {title: "Upload", action: actionDataPut, cmd: "put" },
             {title: "Provenance", action: actionDepGraph, cmd: "graph" },
-            {title: "Subcribe", action: actionSubscribe, cmd: "sub" },
+            {title: "Subscribe", action: actionSubscribe, cmd: "sub" },
             {title: "Annotate", action: actionAnnotate, cmd: "note" },
             {title: "----"},
             {title: "Delete", action: actionDeleteSelected, cmd: "del" }
