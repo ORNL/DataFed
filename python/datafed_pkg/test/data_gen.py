@@ -8,6 +8,7 @@ import random
 import datafed.CommandLib
 import json
 import time
+import getpass
 
 parser = argparse.ArgumentParser( description='DataFed Data Generator' )
 
@@ -43,6 +44,9 @@ parser.add_argument('--public', action='store_true',
 
 parser.add_argument('--delete', action='store_true',
                    help='Delete collections (public flag will un-publish first)')
+
+parser.add_argument('-m', action='store_true',
+                   help='Manually authenticate')
 
 args = parser.parse_args()
 
@@ -117,7 +121,19 @@ topics = [
     "computing.virtual"
 ]
 
-api = datafed.CommandLib.API()
+
+opts = {}
+
+if args.m:
+    opts['manual_auth'] = True
+    uid = input("User ID: ")
+    password = getpass.getpass(prompt="Password: ")
+
+api = datafed.CommandLib.API( opts )
+
+if args.m:
+    api.loginByPassword( uid, password )
+    print( api.getAuthUser() )
 
 try:
     api.collectionView( par_coll, context = ctx )

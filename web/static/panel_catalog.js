@@ -554,6 +554,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     });
 
     this.searchPanel_Run = function( a_qry ){
+        coll_off = 0;
         loadCollections();
     }
 

@@ -4,6 +4,7 @@ import * as model from "./model.js";
 import * as settings from "./settings.js";
 import * as query_builder from "./query_builder.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
+import * as dlgPickProj from "./dlg_pick_proj.js";
 import * as dlgSchemaList from "./dlg_schema_list.js";
 import * as dlgQueryBuild from "./dlg_query_builder.js";
 
@@ -252,6 +253,14 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
             query.empty = false;
         }
 
+        if ( a_opts.no_select ){
+            tmp = $("#srch_owner",a_frame).val().trim();
+            if ( tmp ){
+                query.owner = tmp;
+                query.empty = false;
+            }
+        }
+
         tmp = $("#srch_creator",a_frame).val().trim();
         if ( tmp ){
             query.creator = tmp;
@@ -408,7 +417,7 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
 
     var textTimer = null;
 
-    $("#srch_id,#srch_text,#srch_creator,#srch_sch_id",a_frame).on("input",function( ev ){
+    $("#srch_id,#srch_text,#srch_owner,#srch_creator,#srch_sch_id",a_frame).on("input",function( ev ){
         if ( textTimer ){
             clearTimeout( textTimer );
         }
@@ -419,7 +428,7 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
         },1000);
     });
 
-    $("#srch_id,#srch_text,#srch_creator,#srch_sch_id",a_frame).on("keypress",function( ev ){
+    $("#srch_id,#srch_text,#srch_owner,#srch_creator,#srch_sch_id",a_frame).on("keypress",function( ev ){
         if ( ev.keyCode == 13 ){
             if ( textTimer ){ clearTimeout( textTimer ); }
 
@@ -495,6 +504,37 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
     $( "#srch_meta_err", a_frame ).on("change",function(){
         inst._runSearch();
     })
+
+    // ----- Owner input setup -----
+
+    if ( !a_opts.no_select ){
+        $("#srch_owner_div",a_frame).hide();
+    }else{
+        $("#srch_owner_pick_user",a_frame).on("click",function(){
+            dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
+                if ( $("#srch_owner",a_frame).val().trim() != users[0] ){
+                    $("#srch_owner",a_frame).val( users[0] );
+                    inst._runSearch();
+                }
+            });
+        });
+
+        $("#srch_owner_pick_proj",a_frame).on("click",function(){
+            dlgPickProj.show( [], true, function( projs ){
+                if ( $("#srch_owner",a_frame).val().trim() != projs[0] ){
+                    $("#srch_owner",a_frame).val( projs[0] );
+                    inst._runSearch();
+                }
+            });
+        });
+
+        $("#srch_owner_clear",a_frame).on("click",function(){
+            if ( $("#srch_owner",a_frame).val().trim().length ){
+                $("#srch_owner",a_frame).val("");
+                inst._runSearch();
+            }
+        });
+    }
 
     // ----- Creator input setup -----
 
