@@ -4,6 +4,7 @@ import * as dialogs from "./dialogs.js";
 import * as dlgPickUser from "./dlg_pick_user.js";
 import * as dlgGroups from "./dlg_groups.js";
 import * as dlgGroupEdit from "./dlg_group_edit.js";
+import * as settings from "./settings.js";
 
 
 export function show( item ){
@@ -182,7 +183,7 @@ export function show( item ){
 
             if ( sub.id.startsWith( "u/" ))
                 user_rules.push({title:sub.id.substring(2),icon:"ui-icon ui-icon-person",key:sub.id,rule:sub });
-            else if ( sub.id.startsWith( "g/" ))
+            else if ( !excl_groups && sub.id.startsWith( "g/" ))
                 group_rules.push({title:sub.id.substring(2),icon:"ui-icon ui-icon-persons",key:sub.id,rule:sub,folder:true,lazy:true });
         }
 
@@ -200,11 +201,10 @@ export function show( item ){
             group_none = false;
         }
 
-        var src = [
-            {title:"Users",icon:"ui-icon ui-icon-folder",folder:true,expanded:true,children:user_rules,key:"users"},
-            {title:"Groups",icon:"ui-icon ui-icon-folder",folder:true,expanded:true,children:group_rules,key:"groups"}
-        ];
-
+        var src = [{title:"Users",icon:"ui-icon ui-icon-folder",folder:true,expanded:true,children:user_rules,key:"users"}];
+        if ( !excl_groups ){
+            src.push({ title: "Groups",icon:"ui-icon ui-icon-folder",folder:true,expanded:true,children:group_rules,key:"groups" });
+        }
         return src;
     }
 
@@ -423,9 +423,9 @@ export function show( item ){
     function editGroup(){
         var node = rule_tree.getActiveNode();
         if ( node ){
-            api.groupView( uid, node.key, function( ok, group ){
+            api.groupView( uid, node.key, function( ok, reply ){
                 if ( ok ){
-                    dlgGroupEdit.show( uid, excl, group, function( group_new ){
+                    dlgGroupEdit.show( uid, excl, reply.group[0], function( group_new ){
                         if ( group_new ){
                             node.setTitle( group_new.title + " (" +group_new.gid + ")");
                             node.resetLazy();
@@ -473,17 +473,18 @@ export function show( item ){
 
     //console.log( "acls for", item );
 
-    var DATA_MODE = 1;
-    var COLL_MODE = 2;
-    var is_coll = (item.id[0]=="c");
-    var uid = item.owner;
-    var disable_state = false;
-    var orig_rules = [];
-    var new_rules = [];
-    var cur_rule;
-    var excl = [];
-    var rule_tree, perm_tree, inh_perm_tree;
-    var user_none, group_none;
+    var DATA_MODE = 1,
+        COLL_MODE = 2,
+        is_coll = (item.id[0]=="c"),
+        uid = item.owner,
+        disable_state = false,
+        orig_rules = [],
+        new_rules = [],
+        cur_rule,
+        excl = [],
+        excl_groups = false,
+        rule_tree, perm_tree, inh_perm_tree,
+        user_none, group_none;
 
     if ( item.owner.startsWith("p/")){
         api.projView( uid, function(proj){
@@ -497,6 +498,10 @@ export function show( item ){
                 excl = excl.concat( proj.admin );
         });
     }else{
+        if ( item.owner != "u/" + settings.user.uid ){
+            // Disable group functions if current user is not owner
+            excl_groups = true;
+        }
         excl = [uid];
     }
 
@@ -578,6 +583,10 @@ export function show( item ){
                     $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>Note: public read access active.</span>");
                 }
 
+                if ( excl_groups ){
+                    $("#dlg_add_group",frame).hide();
+                }
+
                 var src = buildTreeSource( orig_rules );
 
                 $("#dlg_rule_tree",frame).fancytree({
@@ -589,22 +598,22 @@ export function show( item ){
                     source: src,
                     selectMode: 1,
                     nodata: false,
-                    lazyLoad: function( event, data ) {
+                    lazyLoad: function( ev, data ) {
                         if ( data.node.key.startsWith("g/")){
                             data.result = { url: api.groupView_url( uid, data.node.key.substr( 2 )), cache: false };
                         }
                     },
-                    postProcess: function( event, data ) {
-                        console.log("post proc",data);
+                    postProcess: function( ev, data ) {
                         if ( data.node.key.startsWith("g/")){
-                            data.node.setTitle( data.response.title + " (" +data.response.gid + ")" );
                             data.result = [];
-                            if ( data.response.desc )
-                                data.result.push({title: "["+data.response.desc+"]", icon: false });
+                            var grp = data.response.group[0];
+                            data.node.setTitle( grp.title + " (" + grp.gid + ")" );
+                            if ( grp.desc )
+                                data.result.push({title: "["+grp.desc+"]", icon: false });
 
-                            if ( data.response.member && data.response.member.length ){
-                                for ( var i in data.response.member ) {
-                                    data.result.push({ title: data.response.member[i].substr(2), icon:"ui-icon ui-icon-person" });
+                            if ( grp.member && grp.member.length ){
+                                for ( var i in grp.member ) {
+                                    data.result.push({ title: grp.member[i].substr(2), icon:"ui-icon ui-icon-person" });
                                 }
                             }else{
                                 data.result.push({ title: "(empty)", icon: false  });

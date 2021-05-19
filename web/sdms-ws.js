@@ -571,7 +571,7 @@ app.get('/api/grp/update', ( a_req, a_resp ) => {
 
 app.get('/api/grp/view', ( a_req, a_resp ) => {
     sendMessage( "GroupViewRequest", { uid: a_req.query.uid, gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.group[0]);
+        a_resp.send(reply);
     });
 });
 
