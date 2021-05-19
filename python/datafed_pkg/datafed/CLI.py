@@ -700,7 +700,7 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, exte
 
 
 @_data.command(name='update')
-@click.argument("data_id", metavar="ID", required=False)
+@click.argument("data_id", metavar="ID", required=True)
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
@@ -712,8 +712,8 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, exte
 @click.option("-S","--metadata-set",is_flag=True,required=False,help="Set (replace) existing metadata with provided instead of merging.")
 @click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version") 
 @click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors") 
-@click.option("-A","--deps-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
-@click.option("-R","--deps-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
+@click.option("-A","--deps-add",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
+@click.option("-R","--deps-rem",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
 @_global_context_options
 @_global_output_options
 def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, metadata_set, schema, schema_enforce, deps_add, deps_rem, context ):
