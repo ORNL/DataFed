@@ -1131,12 +1131,15 @@ function actionRefresh(){
 }
 
 function actionSubscribe(){
+    // Not implemented yet
+
+/*
     var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
     var id = ids[0];
-
+*/
     //console.log("subscribe");
     /*if ( id.charAt(0) == "d" ) {
         graph_panel.load( id );
@@ -2011,7 +2014,7 @@ export function init(){
     var tree_source = [
         //{title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
         {title:"Personal Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,lazy:true,scope:"u/"+settings.user.uid},
-        {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",checkbox:false,folder:true,lazy:true},
+        {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",checkbox:false,folder:true,lazy:true,offset:0},
         {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,checkbox:false,key:"shared_all",children:[
             {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_user"},
             {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_proj"}
