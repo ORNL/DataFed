@@ -1925,7 +1925,7 @@ def _print_proj( message ):
                 text = _arrayToCSV(proj.member,2)
                 _wrap_text( text, "Members:", 15 )
             else:
-                click.echo("{:<14} (none)".format('Admin(s): '))
+                click.echo("{:<14} (none)".format('Members(s): '))
 
             if len(proj.alloc) > 0:
                 first = True
