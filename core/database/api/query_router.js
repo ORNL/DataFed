@@ -105,6 +105,11 @@ router.post('/update', function (req, res) {
                 obj.ut = time;
                 g_lib.procInputParam( req.body, "title", true, obj );
 
+                if ( !req.body.query.coll ){
+                    obj.query.coll = null;
+                    obj.params.cols = null;
+                }
+
                 //console.log("qry/upd filter:",obj.qry_filter);
                 qry = g_db._update( qry._id, obj, { keepNull: false, returnNew: true }).new;
 
