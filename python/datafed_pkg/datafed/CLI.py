@@ -508,9 +508,17 @@ def _genDocCmd( cmd, ctx, level, parname = None, recurse = True ):
 @click.argument("coll_id",required=False, metavar="ID")
 def _wc( coll_id ):
     '''
-    Set/print current working collection or path. 'ID' can be a collection ID, alias,
-    list index number, '-' (previous collection), or path. Only '..' and '/' are
-    supported for paths. 'cd' is an alias for this command.
+    Set/print current working collection or path. 'ID' can be a collection ID, alias, user
+    or project ID, listing index, previous collection ('-'), or path ('..','/','~'). 'cd' is
+    an alias for the 'wc' command.
+    
+    The 'wc' command can be used to switch to a different user or project context by either
+    specifying a user/project ID/alias as the argument, or by specifying a collection ID/alias
+    that is owned by another user or project. In either case, if permission is granted, the CLI
+    context will be changed to the associated user/project and all subsequent commands will act
+    within that context. To return to the authenticated users context, use the 'wc ~' command.
+    The '~' path indicates the authenticated user's root collection; whereas the '/' path is the
+    root colelction of the current context.
     '''
 
     if _output_mode_sticky != _OM_RETN and not _interactive:
@@ -890,10 +898,14 @@ def _data_batch_update( file ):
 def _list( ctx, item_id, offset, count, context ):
     '''
     List contents of a collection, or shared items. ID may be a collection ID
-    or alias, a relative path, a user or project ID, an index value from a
+    or alias, a path ('..','/','~'), a user or project ID, an index value from a
     listing, or omitted for the current working collection. If the ID is a
     user or project, the ls command will list shared items associated with the
     given user or project.
+
+    Note: the '/' path lists the root collection of the current context (user or
+    project); whereas the '~' path always lists the root collection of the
+    authenticated user, regardless of context.
     '''
 
     global _cur_coll
