@@ -1972,24 +1972,60 @@ def _print_path( message ):
             ind = ind + 3
 
 def _print_query( message ):
-    for q in message.query:
-        click.echo( "{:<20} {:<50}\n".format('ID: ', q.id)+
-                    "{:<20} {:<50}".format('Title: ', q.title))
+    click.echo( "{:<20} {:<50}\n".format('ID: ', message.id)+
+                "{:<20} {:<50}\n".format('Title: ', message.title)+
+                "{:<20} {:<50}\n".format('Owner: ', message.owner[2:]) +
+                "{:<20} {:<50}\n".format('Created: ', _capi.timestampToStr(message.ct)) +
+                "{:<20} {:<50}\n\nSearch Terms:\n".format('Updated: ', _capi.timestampToStr(message.ut)))
 
-        qry = jsonlib.loads( q.query )
-        click.echo( "{:<20} {:<50}".format('ID Term: ', "\"" + qry["id"] + "\"" if "id" in qry else "N/A"))
-        click.echo( "{:<20} {:<50}".format('Text Term: ', "\"" + qry["text"] + "\"" if "text" in qry else "N/A"))
-        click.echo( "{:<20} {:<50}".format('Meta Term: ', "\"" + qry["meta"] + "\"" if "meta" in qry else "N/A"))
-        delim = ""
-        scopes = ""
-        for s in qry["scopes"]:
-            scopes = scopes + delim + _scopeToStr( s )
-            delim = ", "
-        click.echo( "{:<20} {:<50}".format('Scopes: ', scopes ))
+    if message.query.scope == 0:
+        click.echo( "  {:<18} {:<50}".format('Scope: ', "Personal Data" ))
+    elif message.query.scope == 1:
+        click.echo( "  {:<18} Project Data ({})".format('Scope: ', message.query.owner ))
+    elif message.query.scope == 2:
+        click.echo( "  {:<18} Shared Data ({})".format('Scope: ', message.query.owner ))
+    else:
+        click.echo( "  {:<18} {:<50}".format('Scope: ', "Public Data" ))
 
-        click.echo( "{:<20} {:<50}\n".format('Owner: ', q.owner[2:]) +
-                    "{:<20} {:<50}\n".format('Created: ', _capi.timestampToStr(q.ct)) +
-                    "{:<20} {:<50}\n".format('Updated: ', _capi.timestampToStr(q.ut)))
+    click.echo( "  {:<18} {:<50}".format('Mode: ', "Data" if message.query.mode == 0 else "Collections" ))
+
+    if len(message.query.coll):
+        tags = _arrayToCSV( message.query.coll, 2 )
+        _wrap_text( _arrayToCSV( message.query.coll, 0 ), "  Selection:", 21 )
+    else:
+        click.echo( "  {:<18} {:<50}".format('Selection: ', "All Data" ))
+
+    if message.query.HasField('id'):
+        click.echo( "  {:<18} {:<50}".format('ID/Alias: ', message.query.id ))
+
+    if message.query.HasField('text'):
+        _wrap_text( message.query.text, "  Text:", 21 )
+
+    if len(message.query.tags):
+        tags = _arrayToCSV( message.query.tags, 2 )
+        _wrap_text( _arrayToCSV( message.query.tags, 0 ), "  Tags:", 21 )
+
+    if message.query.scope == 3 and message.query.HasField('owner'):
+        click.echo( "  {:<18} {:<50}".format('Owner: ', message.query.owner ))
+
+    if message.query.HasField('creator'):
+        click.echo( "  {:<18} {:<50}".format('Creator: ', message.query.creator ))
+
+    if message.query.HasField('from'):
+        click.echo( "  {:<18} {:<50}".format('From Date: ', _capi.timestampToStr( getattr( message.query, 'from' ))))
+
+    if message.query.HasField('to'):
+        click.echo( "  {:<18} {:<50}".format('To Date: ', _capi.timestampToStr( message.query.to )))
+
+    if message.query.HasField('sch_id'):
+        click.echo( "  {:<18} {:<50}".format('Schema: ', message.query.sch_id ))
+
+    if message.query.HasField('meta'):
+        _wrap_text( message.query.meta, "  Metadata:", 21 )
+
+    if message.query.HasField('meta_err'):
+        click.echo( "  {:<18} {:<50}".format('Meta Errors: ', 'Yes' ))
+
 
 def _wrap_text( text, prefix, indent, compact = False ):
     if len(text) == 0:
