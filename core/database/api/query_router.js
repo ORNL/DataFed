@@ -241,7 +241,7 @@ router.get('/list', function (req, res) {
 .description('List client saved queries');
 
 function execQuery( client, scope, mode, query ){
-    var col_chk = true;
+    var col_chk = true, ctxt = client._id;
 
     //console.log("execQuery filter:",query.qry_filter);
 
@@ -271,6 +271,7 @@ function execQuery( client, scope, mode, query ){
             }else if ( role != g_lib.PROJ_ADMIN && role != g_lib.PROJ_MANAGER ){
                 throw g_lib.ERR_PERM_DENIED;
             }
+            ctxt = query.params.owner;
             break;
         case g_lib.SS_SHARED:
             // Get collections shared by owner (user/project)
@@ -288,6 +289,7 @@ function execQuery( client, scope, mode, query ){
             }
 
             //console.log("chk 3");
+            ctxt = query.params.owner;
 
             if ( !query.params.cols ){
                 query.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: query.params.owner }).toArray();
@@ -303,28 +305,22 @@ function execQuery( client, scope, mode, query ){
     if ( query.params.cols ){
         //console.log("proc cols");
         if ( col_chk ){
-            var col;
+            var col, cols = [];
+
             for ( var c in query.params.cols ){
-                col = query.params.cols[c];
-
-                if ( !col.startsWith( "c/" )){
-                    throw [g_lib.ERR_INVALID_PARAM, "Invalid collection ID: " + col ];
-                }
-
-                if ( !g_db.c.exists( col )){
-                    throw [g_lib.ERR_NOT_FOUND,"Collection '" + col + "' not found"];
-                }
-                
+                col = g_lib.resolveCollID2( query.params.cols[c], ctxt );
+                //console.log("col:", query.params.cols[c],",ctxt:", ctxt,",id:", col);
                 if ( query.params.owner ){
                     if ( g_db.owner.firstExample({ _from: col })._to != query.params.owner ){
                         throw [ g_lib.ERR_INVALID_PARAM, "Collection '" + col + "' not in search scope." ];
                     }
                 }
+                cols.push( col );
             }
+            query.params.cols = g_lib.expandSearchCollections( client, cols );
+        }else{
+            query.params.cols = g_lib.expandSearchCollections( client, query.params.cols );
         }
-
-        query.params.cols = g_lib.expandSearchCollections( client, query.params.cols );
-        //console.log("exp cols:",query.params.cols);
     }
 
     //console.log("chk 5");

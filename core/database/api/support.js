@@ -728,18 +728,7 @@ module.exports = ( function() {
     };
 
     obj.resolveDataID = function( a_id, a_client ) {
-        var alias, id;
-
-        if ( a_id.startsWith( 'doi:' )){
-            id = "a/" + (a_id.substr(4).split("/").join("_"));
-            alias = obj.db.alias.firstExample({ _to: id });
-            if ( !alias )
-                throw [obj.ERR_NOT_FOUND,"DOI '" + a_id + "' does not exist " + id];
-
-            return alias._from;
-        }
-
-        var i=a_id.indexOf('/');
+        var alias, id, i = a_id.indexOf('/');
 
         if ( i != -1 ) {
             if ( !a_id.startsWith('d/'))
@@ -791,6 +780,37 @@ module.exports = ( function() {
 
             if ( !id.startsWith('c/'))
                 throw [ obj.ERR_INVALID_PARAM, "Alias '" + a_id + "' does not identify a collection" ];
+        }
+
+        if ( !obj.db.c.exists( id ) ){
+            throw [ obj.ERR_INVALID_PARAM, "Collection '" + id + "' does not exist." ];
+        }
+
+        return id;
+    };
+
+    obj.resolveCollID2 = function( a_id, a_ctxt ) {
+        var id, i = a_id.indexOf('/');
+
+        if ( i != -1 ) {
+            if ( !a_id.startsWith('c/'))
+                throw [ obj.ERR_INVALID_PARAM, "Invalid collection ID '" + a_id + "'" ];
+            id = a_id;
+        } else {
+            var alias_id = "a/";
+            if ( a_ctxt && a_id.indexOf(":") == -1 )
+                alias_id += a_ctxt.charAt(0) + ":" + a_ctxt.substr(2) + ":" + a_id;
+            else
+                alias_id += a_id;
+
+            var alias = obj.db.alias.firstExample({ _to: alias_id });
+            if ( !alias )
+                throw [obj.ERR_NOT_FOUND,"Alias '" + alias_id + "' does not exist"];
+
+            id = alias._from;
+
+            if ( !id.startsWith('c/'))
+                throw [ obj.ERR_INVALID_PARAM, "Alias '" + alias_id + "' does not identify a collection" ];
         }
 
         if ( !obj.db.c.exists( id ) ){
