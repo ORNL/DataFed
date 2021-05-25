@@ -1206,7 +1206,7 @@ class API:
         """
         msg = auth.QueryCreateRequest()
         msg.title = title
-        msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
+        #msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
 
         return self._mapi.sendRecv( msg )
 
@@ -1331,30 +1331,22 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-    def queryDirect( self, id = None, text = None, meta = None,
-                     no_default = None, coll = None, proj = None,
-                     offset = 0, count = 20 ):
+    def queryDirect( self, coll_mode = None, scope = None, coll = None, id = None, text = None,
+        tags = None, schema = None, meta = None, meta_err = None, creator = None,
+        time_from = None, time_to = None, offset = 0, count = 20 ):
         """
         Directly run a manually entered query and return matches
 
         Parameters
         ----------
+        coll : str, Optional. Default = None
+            ID(s) or alias(es) of collection(s) to add to scope
         id : str
             ID/alias query text
         text : str, Optional. Default = None
             Description of query
         meta : str, Optional. Default = None
             Query expression
-        no_default : bool, Optional. Default = None
-            Omit default scopes if True
-        coll : str, Optional. Default = None
-            ID(s) or alias(es) of collection(s) to add to scope
-        proj : str, Optional. Default = None
-            ID(s) or alias(es) of project(s) to add to scope
-        offset : int, Optional. Default = 0
-            Offset of listing results for paging
-        count : int, Optional. Default = 20
-            Number (limit) of listing results for (cleaner) paging
 
         Returns
         -------
@@ -1366,8 +1358,66 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.RecordSearchRequest()
-        msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
+
+        if coll_mode and (schema != None or meta != None or meta_err == True ):
+            raise Exception("Cannot specify metadata terms when searching for collection.")
+
+        msg = auth.SearchRequest()
+
+        if coll_mode:
+            msg.mode = 1
+        else:
+            msg.mode = 0
+
+        if scope == None:
+            msg.scope = 0
+        elif scope.startswith("p/"):
+            # TODO Must determine if this project is a shared or not
+            msg.scope = 1
+            msg.owner = scope
+        elif scope.startswith("u/"):
+            msg.scope = 2
+            msg.owner = scope
+        else:
+            raise Exception("Invalid search scope.")
+
+        if coll != None:
+            msg.coll.extend( coll )
+
+        if id != None:
+            msg.id = id
+
+        if text != None:
+            msg.text = text
+
+        if tags != None:
+            msg.tags.extend( tags )
+
+        if creator != None:
+            msg.creator = creator
+
+        if schema != None:
+            msg.sch_id = schema
+
+        if meta != None:
+            msg.meta = meta
+
+        if meta_err == True:
+            msg.meta_err = True
+
+        if time_from != None:
+            ts = self.strToTimestamp( time_from )
+            if ts == None:
+                raise Exception("Invalid time format for 'from' option.")
+
+            setattr( msg, "from", ts )
+
+        if time_to != None:
+            ts = self.strToTimestamp( time_to )
+            if ts == None:
+                raise Exception("Invalid time format for 'from' option.")
+            msg.to = ts
+
         msg.offset = offset
         msg.count = count
 
@@ -2105,73 +2155,6 @@ class API:
     # =========================================================================
     # --------------------------------------------------------- Private Methods
     # =========================================================================
-
-    def _makeQueryString( self, id, text, meta, no_default, coll, proj ):
-        """
-        Compose query parameters into a query string
-
-        Parameters
-        ----------
-        id : str
-            portion of ID or alias of data of interest
-        text : str
-            plain text to search
-        meta : str
-            metadata search query in AQL format
-        no_default : bool
-            Whether or not to use default values
-        coll : list of str
-            IDs or aliases of the collections to search over
-        proj : list of str
-            IDs or aliases of the projects to search over
-
-        Returns
-        -------
-        str
-            Final search query
-        """
-        if id is None and text is None and meta is None:
-            raise Exception("No search terms provided.")
-
-        if no_default and (( coll is None or len( coll ) == 0 ) and ( proj is None or len( proj ) == 0 )):
-            raise Exception("Must specify one or more collections or projects to search if 'no default' option is enabled.")
-
-        qry = "{"
-
-        if id:
-            qry = qry + "\"id\":\"" + id + "\","
-
-        if text:
-            qry = qry + "\"text\":\"" + text + "\","
-
-        if meta:
-            qry = qry + "\"meta\":\"" + meta + "\","
-
-        scopes = ""
-        delim = ""
-
-        if not no_default:
-            scopes = scopes + "{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}"
-
-        if coll:
-            if len(scopes):
-                delim = ","
-
-            for c in coll:
-                scopes = scopes + delim + "{\"scope\":6,\"id\":\"" + self._resolve_id( c ) + "\"}"
-                delim = ","
-
-        if proj:
-            if len(scopes):
-                delim = ","
-
-            for p in proj:
-                scopes = scopes + delim + "{\"scope\":2,\"id\":\"" + p + "\"}"
-                delim = ","
-
-        # TODO - Add topics when topics are supported by CLI
-
-        return qry + "\"scopes\":[" + scopes + "]}"
 
     def _uniquifyFilename( self, path ):
         """

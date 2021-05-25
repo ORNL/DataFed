@@ -1173,25 +1173,30 @@ def _queryExec( qry_id, offset, count ):
 
 
 @_query.command(name='run')
-@click.option("-i","--id",help="ID/alias expression")
-@click.option("-t","--text",help="Text expression")
-@click.option("-m","--meta",help="Metadata expression")
-@click.option("-n","--no-default",is_flag=True,help="Exclude personal data and projects")
-@click.option("-c","--coll",multiple=True, type=str,help="Collection(s) to search")
-@click.option("-p","--proj",multiple=True, type=str,help="Project(s) to search")
-@click.option("-O","--offset",default=0,help="Start result list at offset")
-@click.option("-C","--count",default=20,help="Limit to count results (default = 20)")
-def _queryRun( id, text, meta, no_default, coll, proj, offset, count ):
+@click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
+@click.option("-s","--scope",type=str,help="Search scope (user/project ID)")
+@click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
+@click.option("--id",type=str,help="ID/alias expression")
+@click.option("--text",type=str,help="Text expression")
+@click.option("-t","--tag",type=str,multiple=True,help="Tag (multiple allowed)")
+@click.option("--schema",type=str,help="Metadata schema ID")
+@click.option("--meta",type=str,help="Metadata expression")
+@click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
+@click.option("--creator",type=str,help="Creating user ID")
+@click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--offset",default=0,help="Start result list at offset")
+@click.option("--count",default=20,help="Limit to count results (default = 20)")
+def _queryRun( coll_mode, scope, coll, id, text, tag, schema, meta, meta_err, creator, time_from, time_to, offset, count ):
     '''
-    Run a directly entered query. Unless the 'no-default' option is included,
-    the search scope includes all data owned by the authenticated user (in
-    their root collection and projects that are owned or managed, or where the
-    user is a member of the project. Projects and collections that are not part
-    of the default scope may be added using the --proj and --coll options
-    respectively.
+    Run a direct query on data or collections. The default scope is the current
+    authenticated user. If collections are specified, they must be in the same
+    overall search scope. At least one search term must be specified.
     '''
+    reply = _capi.queryDirect( coll_mode = coll_mode, scope = scope, coll = coll, id = id, text = text,
+        tags = tag, schema = schema, meta = meta, meta_err = meta_err, creator = creator,
+        time_from = time_from, time_to = time_to, offset = offset, count = count )
 
-    reply = _capi.queryDirect( id = id, text = text, meta = meta, no_default = no_default, coll = coll, proj = proj, offset = offset, count = count )
     _generic_reply_handler( reply, _print_listing )
 
 # =============================================================================
@@ -1972,31 +1977,31 @@ def _print_path( message ):
             ind = ind + 3
 
 def _print_query( message ):
-    click.echo( "{:<20} {:<50}\n".format('ID: ', message.id)+
-                "{:<20} {:<50}\n".format('Title: ', message.title)+
-                "{:<20} {:<50}\n".format('Owner: ', message.owner[2:]) +
-                "{:<20} {:<50}\n".format('Created: ', _capi.timestampToStr(message.ct)) +
-                "{:<20} {:<50}\n\nSearch Terms:\n".format('Updated: ', _capi.timestampToStr(message.ut)))
+    click.echo( "{:<20} {}\n".format('ID: ', message.id)+
+                "{:<20} {}\n".format('Title: ', message.title)+
+                "{:<20} {}\n".format('Owner: ', message.owner[2:]) +
+                "{:<20} {}\n".format('Created: ', _capi.timestampToStr(message.ct)) +
+                "{:<20} {}\n\nSearch Terms:\n".format('Updated: ', _capi.timestampToStr(message.ut)))
 
     if message.query.scope == 0:
-        click.echo( "  {:<18} {:<50}".format('Scope: ', "Personal Data" ))
+        click.echo( "  {:<18} {}".format('Scope: ', "Personal Data" ))
     elif message.query.scope == 1:
         click.echo( "  {:<18} Project Data ({})".format('Scope: ', message.query.owner ))
     elif message.query.scope == 2:
         click.echo( "  {:<18} Shared Data ({})".format('Scope: ', message.query.owner ))
     else:
-        click.echo( "  {:<18} {:<50}".format('Scope: ', "Public Data" ))
+        click.echo( "  {:<18} {}".format('Scope: ', "Public Data" ))
 
-    click.echo( "  {:<18} {:<50}".format('Mode: ', "Data" if message.query.mode == 0 else "Collections" ))
+    click.echo( "  {:<18} {}".format('Mode: ', "Data" if message.query.mode == 0 else "Collections" ))
 
     if len(message.query.coll):
         tags = _arrayToCSV( message.query.coll, 2 )
         _wrap_text( _arrayToCSV( message.query.coll, 0 ), "  Selection:", 21 )
     else:
-        click.echo( "  {:<18} {:<50}".format('Selection: ', "All Data" ))
+        click.echo( "  {:<18} {}".format('Selection: ', "All Data" ))
 
     if message.query.HasField('id'):
-        click.echo( "  {:<18} {:<50}".format('ID/Alias: ', message.query.id ))
+        click.echo( "  {:<18} {}".format('ID/Alias: ', message.query.id ))
 
     if message.query.HasField('text'):
         _wrap_text( message.query.text, "  Text:", 21 )
@@ -2006,25 +2011,25 @@ def _print_query( message ):
         _wrap_text( _arrayToCSV( message.query.tags, 0 ), "  Tags:", 21 )
 
     if message.query.scope == 3 and message.query.HasField('owner'):
-        click.echo( "  {:<18} {:<50}".format('Owner: ', message.query.owner ))
+        click.echo( "  {:<18} {}".format('Owner: ', message.query.owner ))
 
     if message.query.HasField('creator'):
-        click.echo( "  {:<18} {:<50}".format('Creator: ', message.query.creator ))
+        click.echo( "  {:<18} {}".format('Creator: ', message.query.creator ))
 
     if message.query.HasField('from'):
-        click.echo( "  {:<18} {:<50}".format('From Date: ', _capi.timestampToStr( getattr( message.query, 'from' ))))
+        click.echo( "  {:<18} {}".format('From Date: ', _capi.timestampToStr( getattr( message.query, 'from' ))))
 
     if message.query.HasField('to'):
-        click.echo( "  {:<18} {:<50}".format('To Date: ', _capi.timestampToStr( message.query.to )))
+        click.echo( "  {:<18} {}".format('To Date: ', _capi.timestampToStr( message.query.to )))
 
     if message.query.HasField('sch_id'):
-        click.echo( "  {:<18} {:<50}".format('Schema: ', message.query.sch_id ))
+        click.echo( "  {:<18} {}".format('Schema: ', message.query.sch_id ))
 
     if message.query.HasField('meta'):
         _wrap_text( message.query.meta, "  Metadata:", 21 )
 
     if message.query.HasField('meta_err'):
-        click.echo( "  {:<18} {:<50}".format('Meta Errors: ', 'Yes' ))
+        click.echo( "  {:<18} {}".format('Meta Errors: ', 'Yes' ))
 
 
 def _wrap_text( text, prefix, indent, compact = False ):

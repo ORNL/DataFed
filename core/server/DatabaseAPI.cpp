@@ -49,7 +49,11 @@ DatabaseAPI::~DatabaseAPI()
 void
 DatabaseAPI::setClient( const std::string & a_client )
 {
-    m_client_uid = a_client.size()?(string("u/") + a_client):"";
+    if ( a_client.size() )
+        m_client_uid = ( a_client.compare(0,2,"u/") == 0 ? a_client : ( string("u/") + a_client ));
+    else
+        m_client_uid = "";
+
     if ( m_client )
         curl_free( m_client );
 
@@ -1317,13 +1321,13 @@ DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::Listing
     Value result;
     string qry_begin, qry_end, qry_filter, params;
 
+    DL_DEBUG("gen search clinet: " << m_client_uid );
+
     uint32_t cnt = parseSearchRequest( a_request, qry_begin, qry_end, qry_filter, params );
 
     string body = "{\"scope\":" + to_string(a_request.scope()) + ",\"mode\":"+to_string(a_request.mode()) +
         ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
         "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
-
-    DL_INFO("General search: [" << body << "]");
 
     dbPost( "qry/exec/direct", {}, &body, result );
 
@@ -1821,8 +1825,6 @@ void
 DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply )
 {
     Value result;
-    //vector<pair<string,string>> params;
-
     string body = "{\"id\":\"" + a_request.id() + "\"";
 
     if ( a_request.has_title() )
