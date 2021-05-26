@@ -99,19 +99,25 @@ router.post('/update', function (req, res) {
                     throw g_lib.ERR_PERM_DENIED;
                 }
 
-                var time = Math.floor( Date.now()/1000 ),
-                    obj = req.body;
+                // Update time and title (if set)
+                qry.ut = Math.floor( Date.now()/1000 );
+                g_lib.procInputParam( req.body, "title", true, qry );
 
-                obj.ut = time;
-                g_lib.procInputParam( req.body, "title", true, obj );
+                // Replace all other query fields with those in body
+                qry.qry_begin = req.body.qry_begin;
+                qry.qry_end = req.body.qry_end;
+                qry.qry_filter = req.body.qry_filter;
+                qry.params = req.body.params;
+                qry.limit = req.body.limit;
+                qry.query = req.body.query;
 
-                if ( !req.body.query.coll ){
-                    obj.query.coll = null;
-                    obj.params.cols = null;
-                }
+                /*if ( !req.body.query.coll ){
+                    qry.query.coll = null;
+                    qry.params.cols = null;
+                }*/
 
                 //console.log("qry/upd filter:",obj.qry_filter);
-                qry = g_db._update( qry._id, obj, { keepNull: false, returnNew: true }).new;
+                qry = g_db._update( qry._id, qry, { mergeObjects: false, returnNew: true }).new;
 
                 qry.id = qry._id;
 
