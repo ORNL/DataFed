@@ -1116,35 +1116,64 @@ def _queryView( qry_id ):
     _generic_reply_handler( reply, _print_query )
 
 @_query.command(name='create')
-@click.option("-i","--id",help="ID/alias expression")
-@click.option("-t","--text",help="Text expression")
-@click.option("-m","--meta",help="Metadata expression")
-@click.option("-n","--no-default",is_flag=True,help="Exclude personal data and projects")
-@click.option("-c","--coll",multiple=True, type=str,help="Collection(s) to search")
-@click.option("-p","--proj",multiple=True, type=str,help="Project(s) to search")
+
 @click.argument("title", metavar="TITLE")
-def _queryCreate( title, id, text, meta, no_default, coll, proj ):
+@click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
+@click.option("-s","--scope",type=str,help="Search scope (user/project ID or 'public')")
+@click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
+@click.option("--id",type=str,help="ID/alias expression")
+@click.option("--text",type=str,help="Text expression")
+@click.option("-t","--tag",type=str,multiple=True,help="Tag (multiple allowed)")
+@click.option("--schema",type=str,help="Metadata schema ID")
+@click.option("--meta",type=str,help="Metadata expression")
+@click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
+@click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
+@click.option("--creator",type=str,help="Category (public scope only)")
+@click.option("--category",type=str,help="Creating user ID")
+@click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--sort",type=str,help="Sort option (id,title,owner,text,ct,ut)")
+@click.option("--sort-rev",is_flag=True,help="Sort in reverse order (not available for text)")
+def _queryCreate( title, coll_mode, scope, coll, id, text, tag, schema, meta, meta_err, owner, creator,
+    category, time_from, time_to, sort, sort_rev ):
     '''
     Create a saved query.
     '''
 
-    reply = _capi.queryCreate( title, id = id, text = text, meta = meta, no_default = no_default, coll = coll, proj = proj )
+    reply = _capi.queryCreate( title, coll_mode, scope, coll, id, text, tag, schema, meta, meta_err,
+        owner, creator, category, time_from, time_to, sort, sort_rev )
+
     _generic_reply_handler( reply, _print_query )
 
 @_query.command(name='update')
 @click.option("--title",help="New query title")
-@click.option("-i","--id",help="ID/alias expression")
-@click.option("-t","--text",help="Text expression")
-@click.option("-m","--meta",help="Metadata expression")
+@click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
+@click.option("-s","--scope",type=str,help="Search scope (user/project ID or 'public')")
+@click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
+@click.option("--id",type=str,help="ID/alias expression")
+@click.option("--text",type=str,help="Text expression")
+@click.option("-t","--tag",type=str,multiple=True,help="Tag (multiple allowed)")
+@click.option("--schema",type=str,help="Metadata schema ID")
+@click.option("--meta",type=str,help="Metadata expression")
+@click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
+@click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
+@click.option("--creator",type=str,help="Category (public scope only)")
+@click.option("--category",type=str,help="Creating user ID")
+@click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--sort",type=str,help="Sort option (id,title,owner,text,ct,ut)")
+@click.option("--sort-rev",is_flag=True,help="Sort in reverse order (not available for text)")
 @click.argument("qry_id", metavar="ID")
-def _queryUpdate( qry_id, title, id, text, meta ):
+def _queryUpdate( qry_id, title, coll_mode, scope, coll, id, text, tag, schema, meta, meta_err, owner, creator,
+    category, time_from, time_to, sort, sort_rev ):
     '''
     Update a saved query. The title and search terms of a query may be updated;
     however, search scope cannot currently be changed. To remove a term,
     specify an empty string ("") for the associated option.
     '''
 
-    reply = _capi.queryUpdate( _resolve_id( qry_id ), title = title, id = id, text = text, meta = meta )
+    reply = _capi.queryUpdate( _resolve_id( qry_id ), title, coll_mode, scope, coll, id, text, tag, schema, meta, meta_err,
+        owner, creator, category, time_from, time_to, sort, sort_rev )
     _generic_reply_handler( reply, _print_query )
 
 
@@ -1174,7 +1203,7 @@ def _queryExec( qry_id, offset, count ):
 
 @_query.command(name='run')
 @click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
-@click.option("-s","--scope",type=str,help="Search scope (user/project ID)")
+@click.option("-s","--scope",type=str,help="Search scope (user/project ID or 'public')")
 @click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
 @click.option("--id",type=str,help="ID/alias expression")
 @click.option("--text",type=str,help="Text expression")
@@ -1182,20 +1211,31 @@ def _queryExec( qry_id, offset, count ):
 @click.option("--schema",type=str,help="Metadata schema ID")
 @click.option("--meta",type=str,help="Metadata expression")
 @click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
-@click.option("--creator",type=str,help="Creating user ID")
+@click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
+@click.option("--creator",type=str,help="Category (public scope only)")
+@click.option("--category",type=str,help="Creating user ID")
 @click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--sort",type=str,help="Sort option (id,title,owner,text,ct,ut)")
+@click.option("--sort-rev",is_flag=True,help="Sort in reverse order (not available for text)")
 @click.option("--offset",default=0,help="Start result list at offset")
 @click.option("--count",default=20,help="Limit to count results (default = 20)")
-def _queryRun( coll_mode, scope, coll, id, text, tag, schema, meta, meta_err, creator, time_from, time_to, offset, count ):
+def _queryRun( coll_mode, scope, coll, id, text, tag, schema, meta, meta_err, owner, creator,
+    category, time_from, time_to, sort, sort_rev, offset, count ):
     '''
     Run a direct query on data or collections. The default scope is the current
     authenticated user. If collections are specified, they must be in the same
     overall search scope. At least one search term must be specified.
+
+    The sort option 'text' is a text-matching relevance ranking and only works
+    if a text term is specified in the query. The --sort-rev option does
+    not work with text relevance matching. The sort options 'ct' and 'ut'
+    are creation and update times, respectively.
     '''
-    reply = _capi.queryDirect( coll_mode = coll_mode, scope = scope, coll = coll, id = id, text = text,
-        tags = tag, schema = schema, meta = meta, meta_err = meta_err, creator = creator,
-        time_from = time_from, time_to = time_to, offset = offset, count = count )
+    reply = _capi.queryDirect( coll_mode = coll_mode, scope = scope, coll = coll, id = id,
+        text = text, tags = tag, schema = schema, meta = meta, meta_err = meta_err,
+        owner = owner, creator = creator, category = category, time_from = time_from,
+        time_to = time_to, sort = sort, sort_rev = sort_rev, offset = offset, count = count )
 
     _generic_reply_handler( reply, _print_listing )
 

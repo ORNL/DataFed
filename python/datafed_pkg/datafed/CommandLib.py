@@ -1170,8 +1170,10 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-    def queryCreate( self, title, id = None, text = None, meta = None,
-                     no_default = None, coll = None, proj = None ):
+    def queryCreate( self, title, coll_mode = None, scope = None, coll = None, id = None, text = None,
+        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
+        category = None, time_from = None, time_to = None, sort = None, sort_rev = None ):
+
         """
         Create a new saved query
 
@@ -1206,12 +1208,16 @@ class API:
         """
         msg = auth.QueryCreateRequest()
         msg.title = title
-        #msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
+
+        self._buildSearchRequest( msg.query, coll_mode, scope, coll, id, text, tags, schema, meta,
+            meta_err, owner, creator, category, time_from, time_to, sort, sort_rev )
 
         return self._mapi.sendRecv( msg )
 
-    def queryUpdate( self, query_id, title = None, id = None, text = None,
-                     meta = None ):
+
+    def queryUpdate( self, query_id, title = None, coll_mode = None, scope = None, coll = None, id = None, text = None,
+        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
+        category = None, time_from = None, time_to = None, sort = None, sort_rev = None ):
         """
         Update an existing saved query
 
@@ -1220,16 +1226,6 @@ class API:
 
         Parameters
         ----------
-        query_id : str
-            ID/alias for query.
-        title : str, Optional. Default = None
-            Title  of query
-        id : str, Optional. Default = None
-            ID/alias query
-        text : str, Optional. Default = None
-            Description of query
-        meta : str, Optional. Default = None
-            Query expression
 
         Returns
         -------
@@ -1240,44 +1236,18 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.QueryViewRequest()
-        msg.id = query_id
-
-        reply = self._mapi.sendRecv( msg )
 
         msg = auth.QueryUpdateRequest()
         msg.id = query_id
 
-        for q in reply[0].query:
-            if title:
-                msg.title = title
-            else:
-                msg.title = q.title
+        if title != None:
+            msg.title = title
 
-            qry = jsonlib.loads( q.query )
-
-            if id:
-                qry["id"] = id
-            elif id == "":
-                qry.pop("id",None)
-
-            if text:
-                qry["text"] = text
-            elif text == "":
-                qry.pop("text",None)
-
-            if meta:
-                qry["meta"] = meta
-            elif meta == "":
-                qry.pop("meta",None)
-
-            if not (('id' in qry and qry["id"]) or ('text' in qry and qry["text"]) or ('meta' in qry and qry["meta"])):
-                raise Exception("No search terms left in query.")
-
-            msg.query = jsonlib.dumps( qry )
-            break
+        self._buildSearchRequest( msg.query, coll_mode, scope, coll, id, text, tags, schema, meta,
+            meta_err, owner, creator, category, time_from, time_to, sort, sort_rev )
 
         return self._mapi.sendRecv( msg )
+
 
     def queryDelete( self, query_id ):
         """
@@ -1300,6 +1270,7 @@ class API:
         msg.id.append( query_id )
 
         return self._mapi.sendRecv( msg )
+
 
     def queryExec( self, query_id, offset = 0, count = 20 ):
         """
@@ -1331,9 +1302,11 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+
     def queryDirect( self, coll_mode = None, scope = None, coll = None, id = None, text = None,
-        tags = None, schema = None, meta = None, meta_err = None, creator = None,
-        time_from = None, time_to = None, offset = 0, count = 20 ):
+        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
+        category = None, time_from = None, time_to = None, sort = None, sort_rev = None,
+        offset = 0, count = 20 ):
         """
         Directly run a manually entered query and return matches
 
@@ -1358,11 +1331,20 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
+        msg = auth.SearchRequest()
 
+        self._buildSearchRequest( msg, coll_mode, scope, coll, id, text, tags, schema, meta,
+            meta_err, owner, creator, category, time_from, time_to, sort, sort_rev, offset, count )
+
+        return self._mapi.sendRecv( msg )
+
+
+    def _buildSearchRequest( self, msg, coll_mode = None, scope = None, coll = None, id = None, text = None,
+        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
+        category = None, time_from = None, time_to = None, sort = None, sort_rev = None,
+        offset = 0, count = 20 ):
         if coll_mode and (schema != None or meta != None or meta_err == True ):
             raise Exception("Cannot specify metadata terms when searching for collection.")
-
-        msg = auth.SearchRequest()
 
         if coll_mode:
             msg.mode = 1
@@ -1378,11 +1360,41 @@ class API:
         elif scope.startswith("u/"):
             msg.scope = 2
             msg.owner = scope
+        elif scope == "public" or scope == "pub":
+            msg.scope = 3
         else:
             raise Exception("Invalid search scope.")
 
+        if msg.scope != 3 and owner != None:
+            raise Exception("Owner search option is only available for public search scope.")
+
+        if msg.scope != 3 and category != None:
+            raise Exception("Category search option is only available for public search scope.")
+
         if coll != None:
             msg.coll.extend( coll )
+
+        if sort != None:
+            if sort == "id":
+                msg.sort = 0
+            elif sort == "title":
+                msg.sort = 1
+            elif sort == "owner":
+                msg.sort = 2
+            elif sort == "ct":
+                msg.sort = 3
+            elif sort == "ut":
+                msg.sort = 4
+            elif sort == "text":
+                msg.sort = 5
+            else:
+                raise Exception("Invalid sort option.")
+
+        if sort_rev == True:
+            if msg.sort == 5:
+                raise Exception("Reverse sort option not available for text-relevance sorting.")
+
+            msg.sort_rev = True
 
         if id != None:
             msg.id = id
@@ -1392,6 +1404,13 @@ class API:
 
         if tags != None:
             msg.tags.extend( tags )
+
+        if msg.scope == 3:
+            if owner != None:
+                msg.owner = owner
+
+            if category != None:
+                msg.cat_tags.extend( category.split( "." ))
 
         if creator != None:
             msg.creator = creator
@@ -1418,10 +1437,11 @@ class API:
                 raise Exception("Invalid time format for 'from' option.")
             msg.to = ts
 
-        msg.offset = offset
-        msg.count = count
+        if offset != None:
+            msg.offset = offset
 
-        return self._mapi.sendRecv( msg )
+        if count != None:
+            msg.count = count
 
     # =========================================================================
     # ------------------------------------------------------------ User Methods
