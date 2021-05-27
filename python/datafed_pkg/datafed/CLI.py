@@ -1119,7 +1119,6 @@ def _queryView( qry_id ):
 
 @click.argument("title", metavar="TITLE")
 @click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
-@click.option("-s","--scope",type=str,help="Search scope (user/project ID or 'public')")
 @click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
 @click.option("--id",type=str,help="ID/alias expression")
 @click.option("--text",type=str,help="Text expression")
@@ -1128,27 +1127,27 @@ def _queryView( qry_id ):
 @click.option("--meta",type=str,help="Metadata expression")
 @click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
 @click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
-@click.option("--creator",type=str,help="Category (public scope only)")
-@click.option("--category",type=str,help="Creating user ID")
+@click.option("--creator",type=str,help="Creating user ID")
 @click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("-p","--public",is_flag=True,help="Search public data/collections in catalog")
+@click.option("--category",type=str,help="Category (public searches only)")
 @click.option("--sort",type=str,help="Sort option (id,title,owner,text,ct,ut)")
 @click.option("--sort-rev",is_flag=True,help="Sort in reverse order (not available for text)")
-def _queryCreate( title, coll_mode, scope, coll, id, text, tag, schema, meta, meta_err, owner, creator,
-    category, time_from, time_to, sort, sort_rev ):
+def _queryCreate( title, coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator,
+    time_from, time_to, public, category, sort, sort_rev ):
     '''
     Create a saved query.
     '''
 
-    reply = _capi.queryCreate( title, coll_mode, scope, coll, id, text, tag, schema, meta, meta_err,
-        owner, creator, category, time_from, time_to, sort, sort_rev )
+    reply = _capi.queryCreate( title, coll_mode, coll, id, text, tag, schema, meta, meta_err,
+        owner, creator, time_from, time_to, public, category, sort, sort_rev )
 
     _generic_reply_handler( reply, _print_query )
 
 @_query.command(name='update')
 @click.option("--title",help="New query title")
 @click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
-@click.option("-s","--scope",type=str,help="Search scope (user/project ID or 'public')")
 @click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
 @click.option("--id",type=str,help="ID/alias expression")
 @click.option("--text",type=str,help="Text expression")
@@ -1157,23 +1156,24 @@ def _queryCreate( title, coll_mode, scope, coll, id, text, tag, schema, meta, me
 @click.option("--meta",type=str,help="Metadata expression")
 @click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
 @click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
-@click.option("--creator",type=str,help="Category (public scope only)")
-@click.option("--category",type=str,help="Creating user ID")
+@click.option("--creator",type=str,help="Creating user ID")
 @click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("-p","--public",is_flag=True,help="Search public data/collections in catalog")
+@click.option("--category",type=str,help="Category (public searches only)")
 @click.option("--sort",type=str,help="Sort option (id,title,owner,text,ct,ut)")
 @click.option("--sort-rev",is_flag=True,help="Sort in reverse order (not available for text)")
 @click.argument("qry_id", metavar="ID")
-def _queryUpdate( qry_id, title, coll_mode, scope, coll, id, text, tag, schema, meta, meta_err, owner, creator,
-    category, time_from, time_to, sort, sort_rev ):
+def _queryUpdate( qry_id, title, coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator,
+    time_from, time_to, public, category, sort, sort_rev ):
     '''
     Update a saved query. The title and search terms of a query may be updated;
     however, search scope cannot currently be changed. To remove a term,
     specify an empty string ("") for the associated option.
     '''
 
-    reply = _capi.queryUpdate( _resolve_id( qry_id ), title, coll_mode, scope, coll, id, text, tag, schema, meta, meta_err,
-        owner, creator, category, time_from, time_to, sort, sort_rev )
+    reply = _capi.queryUpdate( _resolve_id( qry_id ), title, coll_mode, coll, id, text, tag, schema, meta, meta_err,
+        owner, creator, time_from, time_to, public, category, sort, sort_rev )
     _generic_reply_handler( reply, _print_query )
 
 
@@ -1203,7 +1203,6 @@ def _queryExec( qry_id, offset, count ):
 
 @_query.command(name='run')
 @click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
-@click.option("-s","--scope",type=str,help="Search scope (user/project ID or 'public')")
 @click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
 @click.option("--id",type=str,help="ID/alias expression")
 @click.option("--text",type=str,help="Text expression")
@@ -1212,16 +1211,17 @@ def _queryExec( qry_id, offset, count ):
 @click.option("--meta",type=str,help="Metadata expression")
 @click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
 @click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
-@click.option("--creator",type=str,help="Category (public scope only)")
-@click.option("--category",type=str,help="Creating user ID")
+@click.option("--creator",type=str,help="Creating user ID")
 @click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("-p","--public",is_flag=True,help="Search public data/collections in catalog")
+@click.option("--category",type=str,help="Category (public searches only)")
 @click.option("--sort",type=str,help="Sort option (id,title,owner,text,ct,ut)")
 @click.option("--sort-rev",is_flag=True,help="Sort in reverse order (not available for text)")
 @click.option("--offset",default=0,help="Start result list at offset")
 @click.option("--count",default=20,help="Limit to count results (default = 20)")
-def _queryRun( coll_mode, scope, coll, id, text, tag, schema, meta, meta_err, owner, creator,
-    category, time_from, time_to, sort, sort_rev, offset, count ):
+def _queryRun( coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator,
+    time_from, time_to, public, category, sort, sort_rev, offset, count ):
     '''
     Run a direct query on data or collections. The default scope is the current
     authenticated user. If collections are specified, they must be in the same
@@ -1232,10 +1232,8 @@ def _queryRun( coll_mode, scope, coll, id, text, tag, schema, meta, meta_err, ow
     not work with text relevance matching. The sort options 'ct' and 'ut'
     are creation and update times, respectively.
     '''
-    reply = _capi.queryDirect( coll_mode = coll_mode, scope = scope, coll = coll, id = id,
-        text = text, tags = tag, schema = schema, meta = meta, meta_err = meta_err,
-        owner = owner, creator = creator, category = category, time_from = time_from,
-        time_to = time_to, sort = sort, sort_rev = sort_rev, offset = offset, count = count )
+    reply = _capi.queryDirect( coll_mode, coll, id, text, tag, schema, meta, meta_err,
+        owner, creator, time_from, time_to, public, category, sort, sort_rev, offset, count )
 
     _generic_reply_handler( reply, _print_listing )
 
@@ -2021,16 +2019,7 @@ def _print_query( message ):
                 "{:<20} {}\n".format('Title: ', message.title)+
                 "{:<20} {}\n".format('Owner: ', message.owner[2:]) +
                 "{:<20} {}\n".format('Created: ', _capi.timestampToStr(message.ct)) +
-                "{:<20} {}\n\nSearch Terms:\n".format('Updated: ', _capi.timestampToStr(message.ut)))
-
-    if message.query.scope == 0:
-        click.echo( "  {:<18} {}".format('Scope: ', "Personal Data" ))
-    elif message.query.scope == 1:
-        click.echo( "  {:<18} Project Data ({})".format('Scope: ', message.query.owner ))
-    elif message.query.scope == 2:
-        click.echo( "  {:<18} Shared Data ({})".format('Scope: ', message.query.owner ))
-    else:
-        click.echo( "  {:<18} {}".format('Scope: ', "Public Data" ))
+                "{:<20} {}\nSearch Terms:\n".format('Updated: ', _capi.timestampToStr(message.ut)))
 
     click.echo( "  {:<18} {}".format('Mode: ', "Data" if message.query.mode == 0 else "Collections" ))
 
@@ -2050,7 +2039,7 @@ def _print_query( message ):
         tags = _arrayToCSV( message.query.tags, 2 )
         _wrap_text( _arrayToCSV( message.query.tags, 0 ), "  Tags:", 21 )
 
-    if message.query.scope == 3 and message.query.HasField('owner'):
+    if message.query.HasField('owner'):
         click.echo( "  {:<18} {}".format('Owner: ', message.query.owner ))
 
     if message.query.HasField('creator'):
@@ -2070,6 +2059,12 @@ def _print_query( message ):
 
     if message.query.HasField('meta_err'):
         click.echo( "  {:<18} {}".format('Meta Errors: ', 'Yes' ))
+
+    if message.query.HasField('published') and message.query.published:
+        click.echo( "  {:<18} {}".format('Public: ', 'Yes' ))
+
+    if len(message.query.cat_tags):
+        click.echo( "  {:<18} {}".format('Category: ',  _arrayToDotted( message.query.cat_tags )))
 
 
 def _wrap_text( text, prefix, indent, compact = False ):
@@ -2093,22 +2088,6 @@ def _wrap_text( text, prefix, indent, compact = False ):
             if first == True:
                 wrapper.initial_indent = ' '*indent
                 first = False
-
-def _scopeToStr( scope ):
-    s = scope["scope"]
-
-    if s == 1:
-        return "my-data"
-    elif s == 2:
-        return "proj: " + scope["id"]
-    elif s == 3:
-        return "my-proj"
-    elif s == 4:
-        return "mgd-proj"
-    elif s == 5:
-        return "mem-proj"
-    elif s == 6:
-        return "coll: " + scope["id"]
 
 
 # =============================================================================
@@ -2206,6 +2185,16 @@ def _arrayToCSV( items, skip ):
             text += i
     return text
 
+def _arrayToDotted( items, skip = 0 ):
+    text = ""
+    for i in items:
+        if len(text):
+            text += "."
+        if skip:
+            text += i[skip:]
+        else:
+            text += i
+    return text
 
 def _printJSON( json, cur_indent, indent ):
     pref = " "*cur_indent

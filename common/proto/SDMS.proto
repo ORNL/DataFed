@@ -51,6 +51,7 @@ enum SearchMode
     SM_COLLECTION   = 1;
 }
 
+/*
 enum SearchScope
 {
     SS_PERSONAL     = 0;
@@ -58,6 +59,7 @@ enum SearchScope
     SS_SHARED       = 2;
     SS_PUBLIC       = 3;
 }
+*/
 
 enum DependencyType
 {

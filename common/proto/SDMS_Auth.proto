@@ -352,16 +352,16 @@ message DataPathReply
 message SearchRequest
 {
     required SDMS.SearchMode    mode        = 1;
-    required SDMS.SearchScope   scope       = 2;
-    optional string             owner       = 3; // Required for all scopes except public
+    optional bool               published   = 2;
 
     // Data and Collections
-    optional string             id          = 4;
-    optional string             text        = 5;
-    repeated string             tags        = 6;
-    repeated string             cat_tags    = 7;
-    optional uint32             from        = 8;
-    optional uint32             to          = 9;
+    optional string             id          = 3;
+    optional string             text        = 4;
+    repeated string             tags        = 5;
+    repeated string             cat_tags    = 6;
+    optional uint32             from        = 7;
+    optional uint32             to          = 8;
+    optional string             owner       = 9; 
     optional string             creator     = 10;
     repeated string             coll        = 11;
 
@@ -807,10 +807,6 @@ message QueryCreateRequest
 {
     required string             title       = 1;
     required SearchRequest      query       = 2;
-    //optional string             query_comp  = 3;
-    //optional bool               use_owner   = 4;
-    //optional bool               use_sh_usr  = 5;
-    //optional bool               use_sh_prj  = 6;
 }
 
 message QueryUpdateRequest
@@ -818,10 +814,6 @@ message QueryUpdateRequest
     required string             id          = 1;
     optional string             title       = 2;
     optional SearchRequest      query       = 3;
-    //optional string             query_comp  = 4;
-    //optional bool               use_owner   = 5;
-    //optional bool               use_sh_usr  = 6;
-    //optional bool               use_sh_prj  = 7;
 }
 
 message QueryDeleteRequest

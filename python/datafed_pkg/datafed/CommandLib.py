@@ -1170,9 +1170,9 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-    def queryCreate( self, title, coll_mode = None, scope = None, coll = None, id = None, text = None,
+    def queryCreate( self, title, coll_mode = None, coll = None, id = None, text = None,
         tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
-        category = None, time_from = None, time_to = None, sort = None, sort_rev = None ):
+        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None ):
 
         """
         Create a new saved query
@@ -1187,15 +1187,9 @@ class API:
         id : str, Optional. Default = None
             ID/alias for query. Automatically assigned by default.
         text : str, Optional. Default = None
-            Description of query
+            Text in title or description of query
         meta : str, Optional. Default = None
             Query expression
-        no_default : bool, Optional. Default = None
-            Omit default scopes if True
-        coll : str, Optional. Default = None
-            ID(s) or alias(es) of collection(s) to add to scope
-        proj : str, Optional. Default = None
-            ID(s) or alias(es) of project(s) to add to scope
 
         Returns
         -------
@@ -1209,15 +1203,15 @@ class API:
         msg = auth.QueryCreateRequest()
         msg.title = title
 
-        self._buildSearchRequest( msg.query, coll_mode, scope, coll, id, text, tags, schema, meta,
-            meta_err, owner, creator, category, time_from, time_to, sort, sort_rev )
+        self._buildSearchRequest( msg.query, coll_mode, coll, id, text, tags, schema, meta,
+            meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev )
 
         return self._mapi.sendRecv( msg )
 
 
-    def queryUpdate( self, query_id, title = None, coll_mode = None, scope = None, coll = None, id = None, text = None,
+    def queryUpdate( self, query_id, title = None, coll_mode = None, coll = None, id = None, text = None,
         tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
-        category = None, time_from = None, time_to = None, sort = None, sort_rev = None ):
+        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None ):
         """
         Update an existing saved query
 
@@ -1243,8 +1237,8 @@ class API:
         if title != None:
             msg.title = title
 
-        self._buildSearchRequest( msg.query, coll_mode, scope, coll, id, text, tags, schema, meta,
-            meta_err, owner, creator, category, time_from, time_to, sort, sort_rev )
+        self._buildSearchRequest( msg.query, coll_mode, coll, id, text, tags, schema, meta,
+            meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev )
 
         return self._mapi.sendRecv( msg )
 
@@ -1303,9 +1297,9 @@ class API:
         return self._mapi.sendRecv( msg )
 
 
-    def queryDirect( self, coll_mode = None, scope = None, coll = None, id = None, text = None,
+    def queryDirect( self, coll_mode = None, coll = None, id = None, text = None,
         tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
-        category = None, time_from = None, time_to = None, sort = None, sort_rev = None,
+        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None,
         offset = 0, count = 20 ):
         """
         Directly run a manually entered query and return matches
@@ -1333,16 +1327,17 @@ class API:
         """
         msg = auth.SearchRequest()
 
-        self._buildSearchRequest( msg, coll_mode, scope, coll, id, text, tags, schema, meta,
-            meta_err, owner, creator, category, time_from, time_to, sort, sort_rev, offset, count )
+        self._buildSearchRequest( msg, coll_mode, coll, id, text, tags, schema, meta,
+            meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev, offset, count )
 
         return self._mapi.sendRecv( msg )
 
 
-    def _buildSearchRequest( self, msg, coll_mode = None, scope = None, coll = None, id = None, text = None,
+    def _buildSearchRequest( self, msg, coll_mode = None, coll = None, id = None, text = None,
         tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
-        category = None, time_from = None, time_to = None, sort = None, sort_rev = None,
+        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None,
         offset = 0, count = 20 ):
+
         if coll_mode and (schema != None or meta != None or meta_err == True ):
             raise Exception("Cannot specify metadata terms when searching for collection.")
 
@@ -1351,25 +1346,8 @@ class API:
         else:
             msg.mode = 0
 
-        if scope == None:
-            msg.scope = 0
-        elif scope.startswith("p/"):
-            # TODO Must determine if this project is a shared or not
-            msg.scope = 1
-            msg.owner = scope
-        elif scope.startswith("u/"):
-            msg.scope = 2
-            msg.owner = scope
-        elif scope == "public" or scope == "pub":
-            msg.scope = 3
-        else:
-            raise Exception("Invalid search scope.")
-
-        if msg.scope != 3 and owner != None:
-            raise Exception("Owner search option is only available for public search scope.")
-
-        if msg.scope != 3 and category != None:
-            raise Exception("Category search option is only available for public search scope.")
+        #if category != None and not public:
+        #    raise Exception("Category search option is only available for public searches.")
 
         if coll != None:
             msg.coll.extend( coll )
@@ -1405,12 +1383,8 @@ class API:
         if tags != None:
             msg.tags.extend( tags )
 
-        if msg.scope == 3:
-            if owner != None:
-                msg.owner = owner
-
-            if category != None:
-                msg.cat_tags.extend( category.split( "." ))
+        if owner != None:
+            msg.owner = owner
 
         if creator != None:
             msg.creator = creator
@@ -1436,6 +1410,12 @@ class API:
             if ts == None:
                 raise Exception("Invalid time format for 'from' option.")
             msg.to = ts
+
+        if public:
+            msg.published = True
+
+        if category != None:
+            msg.cat_tags.extend( category.split( "." ))
 
         if offset != None:
             msg.offset = offset

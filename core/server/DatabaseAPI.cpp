@@ -1321,13 +1321,13 @@ DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::Listing
     Value result;
     string qry_begin, qry_end, qry_filter, params;
 
-    DL_DEBUG("gen search clinet: " << m_client_uid );
-
     uint32_t cnt = parseSearchRequest( a_request, qry_begin, qry_end, qry_filter, params );
 
-    string body = "{\"scope\":" + to_string(a_request.scope()) + ",\"mode\":"+to_string(a_request.mode()) +
+    string body = "{\"mode\":"+to_string(a_request.mode()) + ",\"published\":"+ ((a_request.has_published() && a_request.published())?"true":"false") +
         ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
         "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
+
+    //DL_DEBUG("Query: [" << body << "]");
 
     dbPost( "qry/exec/direct", {}, &body, result );
 
@@ -1799,6 +1799,7 @@ DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::Quer
     string query_json;
 
     options.always_print_enums_as_ints = true;
+    options.preserve_proto_field_names = true;
 
     google::protobuf::util::Status stat = google::protobuf::util::MessageToJsonString( a_request.query(), & query_json, options );
     if ( !stat.ok() )
@@ -1842,6 +1843,7 @@ DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::Quer
         string query_json;
 
         options.always_print_enums_as_ints = true;
+        options.preserve_proto_field_names = true;
 
         google::protobuf::util::Status stat = google::protobuf::util::MessageToJsonString( a_request.query(), & query_json, options );
         if ( !stat.ok() )
@@ -3745,6 +3747,21 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
 {
     string view = (a_request.mode()==SM_DATA?"dataview":"collview");
 
+    if ( a_request.has_published() && a_request.published() )
+    {
+        a_qry_begin = string("for i in ") + view + " search i.public == true";
+        if ( a_request.has_owner() )
+        {
+            a_qry_begin += " and i.owner == @owner";
+            a_params += ",\"owner\":\"" + a_request.owner() + "\"";
+        }
+    }
+    else
+    {
+        a_qry_begin = string("for i in ") + view + " search i.owner == @owner";
+        a_params += ",\"owner\":\"" + (a_request.has_owner()?a_request.owner():m_client_uid) + "\"";
+    }
+
     if ( a_request.has_text() > 0 )
     {
         a_qry_begin += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
@@ -3821,6 +3838,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
         }
     }
 
+/*
     switch ( a_request.scope() )
     {
         case SS_PERSONAL:
@@ -3851,6 +3869,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
             a_qry_begin = string("for i in ") + view + " search i.public == true" + a_qry_begin;
             break;
     }
+*/
 
     if ( a_request.coll_size() > 0 )
     {

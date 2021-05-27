@@ -1409,7 +1409,7 @@ function handleQueryResults( data ){
 export function searchPanel_GetSelection(){
     //console.log( "searchPanel_GetSelection" );
 
-    var res, j, n, scope, owner, par, ch, sel = data_tree.getSelectedNodes();
+    var res, j, n, owner, par, ch, sel = data_tree.getSelectedNodes();
 
     for ( var i in sel ){
         n = sel[i];
@@ -1420,33 +1420,20 @@ export function searchPanel_GetSelection(){
         par = n.getParentList(false,true);
 
         if ( n.key == "mydata" ){
-            scope = model.SS_PERSONAL;
-            owner = null; //"u/" + settings.user.uid;
+            owner = null;
         }else if ( n.key.startsWith( "p/" )){
-            scope = model.SS_PROJECT;
             owner = n.key;
         }else if ( n.key.startsWith( "shared_user_" )){
-            scope = model.SS_SHARED;
             owner = n.key.substr( 12 );
         }else if ( n.key.startsWith( "shared_proj_" )){
-            scope = model.SS_SHARED;
             owner = n.key.substr( 12 );
         }else if ( n.key.startsWith( "c/" )){
             if ( n.data.scope == ( "u/" + settings.user.uid )){
-                scope = model.SS_PERSONAL;
-                owner = null; //n.data.scope;
-            }else if ( n.data.scope.startsWith( "u/" )){
-                scope = model.SS_SHARED;
-                owner = n.data.scope;
-            }else if ( n.data.scope.startsWith( "p/" )){
-                // Is this a member or shared project?
-                if ( par[0].key.startsWith("shared")){
-                    scope = model.SS_SHARED;
-                }else{
-                    scope = model.SS_PROJECT;
-                }
+                owner = null;
+            }else if ( n.data.scope.startsWith( "u/" ) || n.data.scope.startsWith( "p/" )){
                 owner = n.data.scope;
             }else{
+                // Might be a search result?
                 continue;
             }
         }else{
@@ -1454,8 +1441,8 @@ export function searchPanel_GetSelection(){
             continue;
         }
 
-        if ( !res || res.scope != scope || res.owner != owner ){
-            res = { scope : scope, owner : owner, ch: {} };
+        if ( !res || res.owner != owner ){
+            res = { owner : owner, ch: {} };
         }
 
         // If leaf node is root, prune it (search all of user/project instead)
@@ -1485,9 +1472,9 @@ $("#srch_run_btn",frame).on("click", function(){
 });
 
 export function searchPanel_Run( query ){
-    //console.log("searchPanel_Run", query );
+    console.log("searchPanel_Run", query );
 
-    if ( query.scope == undefined || query.empty ){
+    if ( query.owner === undefined || query.empty ){
         handleQueryResults([]);
         $("#srch_save_btn,#srch_run_btn",frame).button("option","disabled",true);
         return;
@@ -1513,7 +1500,7 @@ export function searchPanel_Save(){
 
     //queryCalcScope( query );
 
-    if ( query.scope == undefined ){
+    if ( query.owner === undefined ){
         dialogs.dlgAlert( "Save Query", "Cannot save query - invalid search selection." )
         return;
     }

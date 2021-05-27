@@ -20,9 +20,9 @@ function _makeSelTree( a_tree ){
         if ( item.ch && !util.isObjEmpty( item.ch )){
             html += _makeSelTree( item.ch );
         }else{
-            html += "<div class='srch-scope-item' data='" + id +
+            html += "<div class='srch-sel-item' data='" + id +
                 "' title='" + id + "'><div class='row-flex' style='width:100%'><div style='flex:1 1 auto;white-space:nowrap;overflow:hidden'>" + item._title +
-                "</div><div class='srch-scope-btn-div' style='flex:none'><button class='srch-scope-rem-btn btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div></div></div>";
+                "</div><div class='srch-sel-btn-div' style='flex:none'><button class='srch-sel-rem-btn btn btn-icon'><span class='ui-icon ui-icon-close'></span></button></div></div></div>";
         }
     }
 
@@ -113,7 +113,7 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
 
     this.setSearchSelect = function( a_sel_info ){
         if ( a_sel_info ){
-            if ( srch_sel && srch_sel.scope == a_sel_info.scope && srch_sel.owner == a_sel_info.owner ){
+            if ( srch_sel && srch_sel.owner == a_sel_info.owner ){
                 // Merge with existing selection
                 // Note: existing methods (assign, extend, ...) do NOT actually merge - existing fields are overwriten
                 _addSelTree( srch_sel.ch, a_sel_info.ch );
@@ -205,7 +205,6 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
         var tmp, query = {empty:true};
 
         if ( !a_opts.no_select && srch_sel ){
-            query.scope = srch_sel.scope;
             query.owner = srch_sel.owner;
 
             // Add any/all leaf nodes that are collections in sel tree as coll entries in query
@@ -219,6 +218,7 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
         query.mode = parseInt( $(".srch-mode",a_frame).val() );
 
         query.sort = parseInt( $(".srch-sort",a_frame).val() );
+
         if ( query.sort < 0 ){
             query.sort = -query.sort;
             query.sortRev = true;
@@ -322,14 +322,14 @@ function SearchPanel( a_frame, a_key, a_parent, a_opts = {} ){
         }
     });
 
-    // ----- Search Scope (selection) -----
+    // ----- Search Selection -----
 
     if ( a_opts.no_select ){
         $("#srch_sel_div",a_frame).hide();
     }else{
-        $("#srch_sel",a_frame).on("click",".srch-scope-rem-btn",function(){
+        $("#srch_sel",a_frame).on("click",".srch-sel-rem-btn",function(){
             var el = $(this),
-                item = el.closest(".srch-scope-item"),
+                item = el.closest(".srch-sel-item"),
                 id = item.attr("data");
 
             _remSelTree( srch_sel.ch, id );

@@ -625,7 +625,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
 
         var coll_qry = search_panel.getQuery();
 
-        coll_qry.scope = model.SS_PUBLIC;
+        coll_qry.published = true;
         coll_qry.offset = coll_off;
         coll_qry.count = settings.opts.page_sz;
         coll_qry.catTags = topic_tags;
