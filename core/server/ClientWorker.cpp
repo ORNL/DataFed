@@ -1052,6 +1052,8 @@ ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid )
 bool
 ClientWorker::procProjectSearchRequest( const std::string & a_uid )
 {
+    (void) a_uid;
+
     PROC_MSG_BEGIN( ProjectSearchRequest, ProjectDataReply )
 
     EXCEPT( 1, "Not implemented" );
