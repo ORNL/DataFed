@@ -34,6 +34,27 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     color: #a0a0a0;
 }
 
+/* QueryBuilder overrides */
+
+.query-builder-field + .query-builder-field
+{
+    border-top: 1px solid #a0a0a0!important;
+}
+
+.query-builder-group{
+    border: 1px solid #a0a0a0!important;
+}
+
+.qb-drop-target{
+    background: #e0e0e0;
+}
+
+.qb-error{
+    background:#FF7070!important;
+}
+
+/* DataFed Theme */
+
 body
 {
     color:#000;
@@ -47,6 +68,12 @@ scrollbar-color: #d8d8d8 #f8f8f8;
 	color: #222;
 }
 
+.input-bg
+{
+    background:#fff!important;
+    border: solid 1px #999;
+}
+
 input
 {
     background:#fff!important;
@@ -57,6 +84,12 @@ textarea
 {
     background:#fff!important;
     resize: none;
+}
+
+.ui-state-disabled
+{
+    opacity:.65!important;
+    color: #555;
 }
 
 ul.tagit {
@@ -73,6 +106,12 @@ ul.tagit {
 {
     background:#a0e1cb;
 }
+
+.top-border
+{
+    border-top: solid 1px #999;
+}
+
 
 .task-table th
 {
@@ -216,6 +255,11 @@ ul.tagit {
 .ui-icon-notice
 {
     color: #0080FF;
+}
+
+.ui-icon-wrench
+{
+    color: #ff0000;
 }
 
 .ui-icon-person
@@ -377,7 +421,7 @@ ul.tagit {
 
 .ui-icon-linkext
 {
-    color: #ff8000;
+    color: #060;
 }
 
 .shadowed

@@ -146,7 +146,7 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
         curl_free( esc_txt );
     }
 
-    DL_DEBUG( "url: " << url );
+    //DL_DEBUG( "url: " << url );
 
     //curl_easy_setopt( m_curl, CURLOPT_VERBOSE, 1 );
     curl_easy_setopt( a_curl, CURLOPT_URL, url.c_str() );
@@ -159,7 +159,7 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
     if ( a_body )
     {
         tmp = a_body->toString();
-        DL_DEBUG( "POST BODY:[" << tmp << "]" );
+        //DL_DEBUG( "POST BODY:[" << tmp << "]" );
         curl_easy_setopt( a_curl, CURLOPT_POSTFIELDS, tmp.c_str() );
     }
     else
@@ -279,7 +279,7 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
 
     for ( vector<pair<string,string>>::const_iterator f = a_files.begin(); f != a_files.end(); f++ )
     {
-        DL_DEBUG( "  xfr from " << f->first << " to " << f->second );
+        //DL_DEBUG( "  xfr from " << f->first << " to " << f->second );
 
         Value xfr_item;
         Value::Object & xobj = xfr_item.initObject();
@@ -347,7 +347,59 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
     a_err_msg.clear();
     string raw_result;
 
-    long code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id + "/event_list", a_acc_tok, {}, raw_result );
+    // First check task global status for "SUCEEDED", "FAILED", "INACTIVE"
+
+    long code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id /*+ "?fields=status,nice_status"*/, a_acc_tok, {}, raw_result );
+
+    try
+    {
+        if ( !raw_result.size() )
+            EXCEPT_PARAM( ID_SERVICE_ERROR, "Empty response. Code: " << code );
+
+        Value result;
+
+        //DL_DEBUG( "task:["<<raw_result<<"]");
+
+        result.fromString( raw_result );
+
+        Value::Object & resp_obj = result.asObject();
+        string & status = resp_obj.getString( "status" );
+
+        if ( status == "SUCCEEDED" )
+        {
+            a_status = XS_SUCCEEDED;
+            return false;
+        }
+        else if ( status == "FAILED" || status == "INACTIVE" )
+        {
+            a_err_msg = resp_obj.getString("nice_status");
+            a_status = XS_FAILED;
+            return true;
+        }
+    }
+    catch( libjson::ParseError & e )
+    {
+        DL_DEBUG("PARSE FAILED!");
+        DL_DEBUG( raw_result );
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus task view API call returned invalid JSON." );
+    }
+    catch( TraceException & e )
+    {
+        DL_DEBUG( raw_result );
+        e.addContext( "Globus task view API call failed." );
+        throw;
+    }
+    catch( ... )
+    {
+        DL_DEBUG("UNEXPECTED/MISSING JSON!");
+        DL_DEBUG( raw_result );
+        EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus task view API call returned unexpected content" );
+    }
+
+    // If task status is "ACTIVE", also check event list for transient errors that should map to fatal errors
+
+    raw_result.clear();
+    code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id + "/event_list", a_acc_tok, {}, raw_result );
 
     try
     {
@@ -467,12 +519,9 @@ GlobusAPI::eventsHaveErrors( const vector<string> & a_events, XfrStatus & a_stat
     // Processing events in order of oldest first
     for ( vector<string>::const_reverse_iterator istat = a_events.rbegin(); istat != a_events.rend(); ++istat )
     {
-        if ( *istat == "STARTED" || *istat == "PROGRESS" )
-            a_status = XS_ACTIVE;
-        else if ( *istat == "SUCCEEDED" )
+        if ( *istat == "STARTED" || *istat == "PROGRESS" || *istat == "SUCCEEDED" )
         {
-            a_status = XS_SUCCEEDED;
-            break;
+            a_status = XS_ACTIVE;
         }
         else if ( *istat == "CANCELED" )
         {
@@ -523,6 +572,7 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
 
         checkResponsCode( code,resp_obj );
 
+        a_ep_info.id = a_ep_id;
         a_ep_info.activated = resp_obj.getBool( "activated" );
 
         int64_t exp = resp_obj.getNumber( "expires_in" );

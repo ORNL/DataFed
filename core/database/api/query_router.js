@@ -12,9 +12,10 @@ module.exports = router;
 
 //==================== QUERY API FUNCTIONS
 
-router.get('/create', function (req, res) {
+
+router.post('/create', function (req, res) {
     try {
-        var result = [];
+        var result;
 
         g_db._executeTransaction({
             collections: {
@@ -34,29 +35,31 @@ router.get('/create', function (req, res) {
 
                 var time = Math.floor( Date.now()/1000 );
 
-                var obj = { query: req.queryParams.query, query_comp: req.queryParams.query_comp, ct: time, ut: time, owner: client._id };
+                var obj = req.body;
 
-                g_lib.procInputParam( req.queryParams, "title", false, obj );
+                obj.owner = client._id;
+                obj.ct = time;
+                obj.ut = time;
 
-                if ( req.queryParams.use_owner )
-                    obj.use_owner = true;
+                g_lib.procInputParam( req.body, "title", false, obj );
 
-                if ( req.queryParams.use_sh_usr )
-                    obj.use_sh_usr = true;
+                //console.log("qry/create filter:",obj.qry_filter);
 
-                if ( req.queryParams.use_sh_prj )
-                    obj.use_sh_prj = true;
+                var qry = g_db.q.save( obj, { returnNew: true }).new;
+                g_db.owner.save({ _from: qry._id, _to: client._id });
 
-                var qry = g_db.q.save( obj, { returnNew: true });
-                g_db.owner.save({ _from: qry.new._id, _to: client._id });
+                qry.id = qry._id;
 
-                qry.new.id = qry.new._id;
+                delete qry._id;
+                delete qry._key;
+                delete qry._rev;
+                delete qry.qry_begin;
+                delete qry.qry_end;
+                delete qry.qry_filter;
+                delete qry.params;
+                delete qry.lmit;
 
-                delete qry.new._id;
-                delete qry.new._key;
-                delete qry.new._rev;
-
-                result.push( qry.new );
+                result = qry;
             }
         });
 
@@ -66,19 +69,22 @@ router.get('/create', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('title', joi.string().required(), "Query Title")
-.queryParam('query', joi.string().required(), "Query expression")
-.queryParam('query_comp', joi.string().required(), "Compiled query expression")
-.queryParam('use_owner', joi.bool().optional(), "Query uses owner param")
-.queryParam('use_sh_usr', joi.bool().optional(), "Query uses shared users param")
-.queryParam('use_sh_prj', joi.bool().optional(), "Query uses shared projects param")
+.body( joi.object({
+    title: joi.string().required(),
+    qry_begin: joi.string().required(),
+    qry_end: joi.string().required(),
+    qry_filter: joi.string().allow('').required(),
+    params: joi.any().required(),
+    limit: joi.number().integer().required(),
+    query: joi.any().required()
+}).required(), 'Query fields' )
 .summary('Create a query')
 .description('Create a query');
 
 
-router.get('/update', function (req, res) {
+router.post('/update', function (req, res) {
     try {
-        var result = [];
+        var result;
 
         g_db._executeTransaction({
             collections: {
@@ -87,40 +93,44 @@ router.get('/update', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var qry = g_db.q.document( req.queryParams.id );
+                var qry = g_db.q.document( req.body.id );
 
-                if ( client._id != qry.owner && !client.is_admin) {
+                if ( client._id != qry.owner && !client.is_admin ) {
                     throw g_lib.ERR_PERM_DENIED;
                 }
 
-                var time = Math.floor( Date.now()/1000 );
-                var obj = { ut: time };
+                // Update time and title (if set)
+                qry.ut = Math.floor( Date.now()/1000 );
+                g_lib.procInputParam( req.body, "title", true, qry );
 
-                g_lib.procInputParam( req.queryParams, "title", true, obj );
+                // Replace all other query fields with those in body
+                qry.qry_begin = req.body.qry_begin;
+                qry.qry_end = req.body.qry_end;
+                qry.qry_filter = req.body.qry_filter;
+                qry.params = req.body.params;
+                qry.limit = req.body.limit;
+                qry.query = req.body.query;
 
-                if ( req.queryParams.query != undefined )
-                    obj.query = req.queryParams.query;
+                /*if ( !req.body.query.coll ){
+                    qry.query.coll = null;
+                    qry.params.cols = null;
+                }*/
 
-                if ( req.queryParams.query_comp != undefined )
-                    obj.query_comp = req.queryParams.query_comp;
-
-                if ( req.queryParams.use_owner != undefined )
-                    obj.use_owner = req.queryParams.use_owner;
-
-                if ( req.queryParams.use_sh_usr != undefined )
-                    obj.use_sh_usr = req.queryParams.use_sh_usr;
-
-                if ( req.queryParams.use_sh_prj != undefined )
-                    obj.use_sh_prj = req.queryParams.use_sh_prj;
-
-                qry = g_db._update( qry._id, obj, { keepNull: false, returnNew: true }).new;
+                //console.log("qry/upd filter:",obj.qry_filter);
+                qry = g_db._update( qry._id, qry, { mergeObjects: false, returnNew: true }).new;
 
                 qry.id = qry._id;
+
                 delete qry._id;
                 delete qry._key;
                 delete qry._rev;
+                delete qry.qry_begin;
+                delete qry.qry_end;
+                delete qry.qry_filter;
+                delete qry.params;
+                delete qry.lmit;
 
-                result.push( qry );
+                result = qry;
             }
         });
 
@@ -130,13 +140,16 @@ router.get('/update', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Query ID")
-.queryParam('title', joi.string().optional(), "Query Title")
-.queryParam('query', joi.string().optional(), "Query expression")
-.queryParam('query_comp', joi.string().optional(), "Compiled query expression")
-.queryParam('use_owner', joi.bool().optional(), "Query uses owner param")
-.queryParam('use_sh_usr', joi.bool().optional(), "Query uses shared users param")
-.queryParam('use_sh_prj', joi.bool().optional(), "Query uses shared projects param")
+.body( joi.object({
+    id: joi.string().required(),
+    title: joi.string().optional(),
+    qry_begin: joi.string().required(),
+    qry_end: joi.string().required(),
+    qry_filter: joi.string().allow('').required(),
+    params: joi.any().required(),
+    limit: joi.number().integer().required(),
+    query: joi.any().required()
+}).required(), 'Query fields' )
 .summary('Update a saved query')
 .description('Update a saved query');
 
@@ -153,8 +166,13 @@ router.get('/view', function (req, res) {
         delete qry._id;
         delete qry._key;
         delete qry._rev;
+        delete qry.qry_begin;
+        delete qry.qry_end;
+        delete qry.qry_filter;
+        delete qry.params;
+        delete qry.lmit;
 
-        res.send( [qry] );
+        res.send( qry );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
@@ -168,19 +186,30 @@ router.get('/view', function (req, res) {
 router.get('/delete', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var qry = g_db.q.document( req.queryParams.id );
+        var owner;
 
-        if ( client._id != qry.owner && !client.is_admin) {
-            throw g_lib.ERR_PERM_DENIED;
+        for ( var i in req.queryParams.ids ){
+            if ( !req.queryParams.ids[i].startsWith( "q/" )){
+                throw [ g_lib.ERR_INVALID_PARAM, "Invalid query ID '" + req.queryParams.ids[i] + "'."];
+            }
+
+            owner = g_db.owner.firstExample({ _from: req.queryParams.ids[i] });
+            if ( !owner ){
+                throw [ g_lib.ERR_NOT_FOUND, "Query '" + req.queryParams.ids[i] + "' not found."];
+            }
+
+            if ( client._id != owner._to && !client.is_admin ) {
+                throw g_lib.ERR_PERM_DENIED;
+            }
+
+            g_graph.q.remove( owner._from );
         }
-
-        g_graph.q.remove( qry._id );
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('id', joi.string().required(), "Query ID")
+.queryParam('ids', joi.array().items(joi.string()).required(), "Query IDs")
 .summary('Delete specified query')
 .description('Delete specified query');
 
@@ -217,6 +246,151 @@ router.get('/list', function (req, res) {
 .summary('List client saved queries')
 .description('List client saved queries');
 
+function execQuery( client, mode, published, query ){
+    var col_chk = true, ctxt = client._id;
+
+    if ( !published ){
+        // For searches over private data, must perform access checks based on owner field and client id
+
+        if ( query.params.owner.startsWith( "u/" ) && query.params.owner != client._id ){
+            // A non-client owner for non-public searches means this is a search over shared data
+            if ( !g_db.u.exists( query.params.owner ))
+                throw [g_lib.ERR_NOT_FOUND,"user " + query.params.owner + " not found"];
+
+            ctxt = query.params.owner;
+
+            // Build list of accessible collections shared with client
+            if ( !query.params.cols ){
+                query.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: query.params.owner }).toArray();
+                if ( !query.params.cols ){
+                    throw [g_lib.ERR_PERM_DENIED, "No access to user '" + query.params.owner + "' data/collections."];
+                }
+                col_chk = false;
+            }
+        }else if ( query.params.owner.startsWith( "p/" )){
+            if ( !g_db.p.exists( query.params.owner ))
+                throw [g_lib.ERR_NOT_FOUND,"Project " + query.params.owner + " not found"];
+
+            // Must determine clients access to the project
+
+            var role = g_lib.getProjectRole( client._id, query.params.owner );
+
+            /*if( role == g_lib.PROJ_MEMBER ){
+                // If no collections specified, add project root
+                if ( !query.params.cols ){
+                    query.params.cols = ["c/p_" + query.params.owner.substr(2) + "_root"];
+                    col_chk = false;
+                }*/
+            if ( role == g_lib.PROJ_MEMBER || role == g_lib.PROJ_NO_ROLE ){
+                // Build list of accessible collections shared with client
+                if ( !query.params.cols ){
+                    query.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: query.params.owner }).toArray();
+                    if ( !query.params.cols ){
+                        throw [g_lib.ERR_PERM_DENIED, "No access to project '" + query.params.owner + "'."];
+                    }
+                    col_chk = false;
+                }
+            }
+
+            ctxt = query.params.owner;
+        }
+    }
+
+    //console.log("chk 4");
+
+    // If user-specified collections given, must verify scope and access, then expand to include all sub-collections
+    if ( query.params.cols ){
+        //console.log("proc cols");
+        if ( col_chk ){
+            var col, cols = [];
+
+            for ( var c in query.params.cols ){
+                col = g_lib.resolveCollID2( query.params.cols[c], ctxt );
+                //console.log("col:", query.params.cols[c],",ctxt:", ctxt,",id:", col);
+                if ( query.params.owner ){
+                    if ( g_db.owner.firstExample({ _from: col })._to != query.params.owner ){
+                        throw [ g_lib.ERR_INVALID_PARAM, "Collection '" + col + "' not in search scope." ];
+                    }
+                }
+                cols.push( col );
+            }
+            query.params.cols = g_lib.expandSearchCollections( client, cols );
+        }else{
+            query.params.cols = g_lib.expandSearchCollections( client, query.params.cols );
+        }
+    }
+
+    //console.log("chk 5");
+
+    if ( query.params.sch_id ){
+        // sch_id is id:ver
+        var idx = query.params.sch_id.indexOf(":");
+        if ( idx < 0 ){
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+        }
+        var sch_id = query.params.sch_id.substr( 0, idx ),
+            sch_ver = parseInt( query.params.sch_id.substr( idx + 1 ));
+
+        query.params.sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
+        if ( !query.params.sch )
+            throw [ g_lib.ERR_NOT_FOUND, "Schema '" + sch_id + "-" + sch_ver + "' does not exist." ];
+
+        query.params.sch = query.params.sch._id;
+        delete query.params.sch_id;
+    }
+
+    // Assemble query based on filter and collection state
+    var qry = query.qry_begin;
+
+    if ( query.params.cols ){
+        if ( mode == g_lib.SM_DATA ){
+            qry += " for e in item filter e._to == i._id and e._from in @cols";
+        }else{
+            qry += " filter i._id in @cols";
+        }
+
+        if ( query.qry_filter ){
+            qry += " and " + query.qry_filter;
+        }
+    }else if ( query.qry_filter ){
+        qry += " filter " + query.qry_filter;
+    }
+
+    qry += query.qry_end;
+
+    //console.log( "execqry" );
+    //console.log( "qry", qry );
+    //console.log( "params", query.params );
+
+    var item, count, result = g_db._query( qry, query.params, {}, { fullCount: true }).toArray();
+
+    if ( result.length > query.limit ){
+        result.length = query.limit;
+        count = query.limit + 1;
+    }else{
+        count = result.length;
+    }
+
+    for ( var i in result ){
+        item = result[i];
+
+        if ( item.owner_name && item.owner_name.length )
+            item.owner_name = item.owner_name[0];
+        else
+            item.owner_name = null;
+
+        if ( item.desc && item.desc.length > 120 ){
+            item.desc = item.desc.slice(0,120) + " ...";
+        }
+
+        item.notes = g_lib.getNoteMask( client, item );
+    }
+
+    result.push({ paging: { off: query.params.off, cnt: result.length, tot: query.params.off + count }});
+
+    return result;
+}
+
 router.get('/exec', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -226,34 +400,12 @@ router.get('/exec', function (req, res) {
             throw g_lib.ERR_PERM_DENIED;
         }
 
-        var params = {};
-
-        if ( qry.use_owner )
-            params.client = qry.owner;
-
-        if ( qry.use_sh_usr )
-            params.users = g_lib.usersWithClientACLs( qry.owner, true );
-
-        if ( qry.use_sh_prj )
-            params.projs = g_lib.projectsWithClientACLs( qry.owner, true );
-
-        if ( req.queryParams.offset )
-            params.offset = req.queryParams.offset;
-        else
-            params.offset = 0;
-
-        if ( req.queryParams.count ){
-            params.count = Math.min(req.queryParams.count,1000-params.offset);
-        }else{
-            params.count = Math.min(50,1000-params.offset);
+        if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
+            qry.params.off = req.queryParams.offset;
+            qry.params.cnt = req.queryParams.count;
         }
 
-        var doc, results = g_db._query( qry.query_comp, params ).toArray();
-
-        for ( var i in results ){
-            doc = results[i];
-            doc.notes = g_lib.annotationGetMask( client, doc.id );
-        }
+        var results = execQuery( client, qry.query.mode, qry.query.published, qry );
 
         res.send( results );
     } catch( e ) {
@@ -268,3 +420,26 @@ router.get('/exec', function (req, res) {
 .description('Execute specified query');
 
 
+router.post('/exec/direct', function (req, res) {
+    try {
+        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
+
+        var results = execQuery( client, req.body.mode, req.body.published, req.body );
+
+        res.send( results );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().required(), "Client ID")
+.body(joi.object({
+    mode: joi.number().integer().required(),
+    published: joi.boolean().required(),
+    qry_begin: joi.string().required(),
+    qry_end: joi.string().required(),
+    qry_filter: joi.string().optional().allow(""),
+    params: joi.object().required(),
+    limit: joi.number().integer().required()
+}).required(), 'Collection fields')
+.summary('Execute published data search query')
+.description('Execute published data search query');

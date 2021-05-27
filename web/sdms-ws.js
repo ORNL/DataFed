@@ -571,7 +571,7 @@ app.get('/api/grp/update', ( a_req, a_resp ) => {
 
 app.get('/api/grp/view', ( a_req, a_resp ) => {
     sendMessage( "GroupViewRequest", { uid: a_req.query.uid, gid: a_req.query.gid }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.group[0]);
+        a_resp.send(reply);
     });
 });
 
@@ -609,7 +609,8 @@ app.get('/api/query/list', ( a_req, a_resp ) => {
 
 
 app.post('/api/query/create', ( a_req, a_resp ) => {
-    sendMessage( "QueryCreateRequest", {title:a_req.query.title,query:JSON.stringify( a_req.body )}, a_req, a_resp, function( reply ) {
+    console.log("save:",a_req.body);
+    sendMessage( "QueryCreateRequest", {title: a_req.query.title, query: a_req.body }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -619,7 +620,7 @@ app.post('/api/query/update', ( a_req, a_resp ) => {
     if ( a_req.query.title )
         params.title = a_req.query.title;
     if ( a_req.body )
-        params.query = JSON.stringify( a_req.body );
+        params.query = a_req.body;
 
     //console.log("'/api/query/update, params=[",params,"]");
 
@@ -636,11 +637,7 @@ app.get('/api/query/delete', ( a_req, a_resp ) => {
 
 app.get('/api/query/view', ( a_req, a_resp ) => {
     sendMessage( "QueryViewRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        if ( reply.query && reply.query.length )
-            a_resp.send(reply.query[0]);
-        else
-            a_resp.send();
-
+        a_resp.send(reply);
     });
 });
 
@@ -654,17 +651,19 @@ app.get('/api/query/exec', ( a_req, a_resp ) => {
 
 
 app.post('/api/dat/search', ( a_req, a_resp ) => {
-    //console.log("search:",a_req.body);
-    sendMessage( "RecordSearchRequest", { query: JSON.stringify( a_req.body ) }, a_req, a_resp, function( reply ) {
+    console.log("search:",a_req.body);
+    //var msg = g_msg_by_name["SearchRequest"];
+    //var msg_buf = msg.encode(JSON.stringify( a_req.body )).finish();
+    //var msg2 = msg.decode( msg_buf );
+    //console.log("msg2",msg2);
+
+    sendMessage( "SearchRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.post('/api/dat/create', ( a_req, a_resp ) => {
     sendMessage( "RecordCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
-        if ( reply.data && reply.data.length ){
-            console.log( "User", a_req.session.uid, "- data create, id:", reply.data[0].id );
-        }
         a_resp.send(reply);
     });
 });
@@ -837,6 +836,14 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
     //console.log('/api/dat/owner_chg params:',params);
 
     sendMessage( "RecordOwnerChangeRequest", params, a_req, a_resp, function( reply ) {
+        a_resp.send(reply);
+    });
+});
+
+app.post('/api/metadata/validate', ( a_req, a_resp ) => {
+    //console.log( "md val", a_req.body );
+    sendMessage( "MetadataValidateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        //console.log("rec update:",reply);
         a_resp.send(reply);
     });
 });
@@ -1014,6 +1021,7 @@ app.get('/api/tag/autocomp', ( a_req, a_resp ) => {
     });
 });
 
+// TODO This doesn't seem to be used anymore
 app.get('/api/tag/list/by_count', ( a_req, a_resp ) => {
     var par = {};
     if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
@@ -1292,6 +1300,42 @@ app.get('/api/top/view', ( a_req, a_resp ) => {
 app.get('/api/top/search', ( a_req, a_resp ) => {
     //console.log("top srch",a_req.query.phrase);
     sendMessage( "TopicSearchRequest", {phrase:a_req.query.phrase}, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.get('/api/sch/view', ( a_req, a_resp ) => {
+    sendMessage( "SchemaViewRequest", { id: a_req.query.id, resolve: a_req.query.resolve }, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/search', ( a_req, a_resp ) => {
+    sendMessage( "SchemaSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/create', ( a_req, a_resp ) => {
+    sendMessage( "SchemaCreateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/revise', ( a_req, a_resp ) => {
+    sendMessage( "SchemaReviseRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/update', ( a_req, a_resp ) => {
+    sendMessage( "SchemaUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
+        a_resp.json(reply);
+    });
+});
+
+app.post('/api/sch/delete', ( a_req, a_resp ) => {
+    sendMessage( "SchemaDeleteRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
 });
@@ -1651,6 +1695,7 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
 process.on('unhandledRejection', (reason, p) => {
     console.log( 'Error - unhandled rejection at: Promise', p, 'reason:', reason );
 });
+
 
 g_core_sock.on('message', function( delim, frame, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );

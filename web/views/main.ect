@@ -21,10 +21,13 @@
 
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+        <link href="/query_builder.css" rel="stylesheet" type="text/css">
+
         <script type="module" charset="utf-8" src="/model.js"></script>
         <script type="module" charset="utf-8" src="/util.js"></script>
         <script type="module" charset="utf-8" src="/settings.js"></script>
         <script type="module" charset="utf-8" src="/api.js"></script>
+        <script type="module" charset="utf-8" src="/query_builder.js"></script>
         <script type="module" charset="utf-8" src="/dialogs.js"></script>
         <script type="module" charset="utf-8" src="/dlg_annotation.js"></script>
         <script type="module" charset="utf-8" src="/dlg_pick_user.js"></script>
@@ -32,7 +35,7 @@
         <script type="module" charset="utf-8" src="/dlg_set_acls.js"></script>
         <script type="module" charset="utf-8" src="/dlg_data_new_edit.js"></script>
         <script type="module" charset="utf-8" src="/dlg_coll_new_edit.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_query_new_edit.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_query_save.js"></script>
         <script type="module" charset="utf-8" src="/dlg_groups.js"></script>
         <script type="module" charset="utf-8" src="/dlg_group_edit.js"></script>
         <script type="module" charset="utf-8" src="/dlg_proj_new_edit.js"></script>
@@ -43,6 +46,9 @@
         <script type="module" charset="utf-8" src="/dlg_repo_edit.js"></script>
         <script type="module" charset="utf-8" src="/dlg_repo_manage.js"></script>
         <script type="module" charset="utf-8" src="/dlg_owner_chg_confirm.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_schema.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_schema_list.js"></script>
+        <script type="module" charset="utf-8" src="/dlg_query_builder.js"></script>
         <script type="module" charset="utf-8" src="/panel_catalog.js"></script>
         <script type="module" charset="utf-8" src="/panel_graph.js"></script>
         <script type="module" charset="utf-8" src="/panel_item_info.js"></script>
@@ -118,20 +124,9 @@
 
         api.userView( user_uid, true, function( ok, user ){
             if ( ok && user ){
-                //console.log("user from db:",user);
-
                 settings.setUser( user );
 
-                //console.log("user from settings:",settings.user);
-
                 api.epRecentLoad();
-
-                //settings.setUserAdmin( user.isAdmin );
-                //settings.setUserRepoAdmin( user.isRepoAdmin );
-
-                //if ( user.options ){
-                //    settings.setOptions( user.options );
-                //}
 
                 //document.getElementById("uname").innerHTML = settings.user.name;
                 $( "#uname" ).text( settings.user.nameFirst + " " + settings.user.nameLast );

@@ -3,7 +3,6 @@
 #include <boost/tokenizer.hpp>
 #include <ClientWorker.hpp>
 #include <TraceException.hpp>
-#include <DynaLog.hpp>
 #include <Util.hpp>
 #include <Version.pb.h>
 #include <SDMS.pb.h>
@@ -24,6 +23,8 @@ namespace Core {
 
 map<uint16_t,ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 
+// TODO - This should be defined in proto files
+#define NOTE_MASK_MD_ERR 0x2000
 
 ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid ) :
     m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_worker_thread(0), m_run(true),
@@ -76,22 +77,11 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
-        SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
-        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
-        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
-        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
-        SET_MSG_HANDLER_DB( proto_id, CatalogSearchRequest, CatalogSearchReply, catalogSearch );
-        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
-        SET_MSG_HANDLER_DB( proto_id, RecordSearchPublishedRequest, ListingReply, recordSearchPublished );
-        SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, TopicDataReply, topicListTopics );
-        SET_MSG_HANDLER_DB( proto_id, TopicViewRequest, TopicDataReply, topicView );
-        //SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
-        SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, TopicDataReply, topicSearch );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
-        SET_MSG_HANDLER_DB( proto_id, TagSearchRequest, TagDataReply, tagSearch );
-        SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
+
+        //SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
+        //SET_MSG_HANDLER_DB( proto_id, CatalogSearchRequest, CatalogSearchReply, catalogSearch );
+        //SET_MSG_HANDLER_DB( proto_id, RecordSearchPublishedRequest, ListingReply, recordSearchPublished );
 
         proto_id = REG_PROTO( SDMS::Auth );
 
@@ -100,22 +90,23 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, RevokeCredentialsRequest, &ClientWorker::procRevokeCredentialsRequest );
         SET_MSG_HANDLER( proto_id, DataGetRequest, &ClientWorker::procDataGetRequest );
         SET_MSG_HANDLER( proto_id, DataPutRequest, &ClientWorker::procDataPutRequest );
+        SET_MSG_HANDLER( proto_id, RecordCreateRequest, &ClientWorker::procRecordCreateRequest );
         SET_MSG_HANDLER( proto_id, RecordUpdateRequest, &ClientWorker::procRecordUpdateRequest );
         SET_MSG_HANDLER( proto_id, RecordUpdateBatchRequest, &ClientWorker::procRecordUpdateBatchRequest );
         SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &ClientWorker::procRecordDeleteRequest );
         SET_MSG_HANDLER( proto_id, RecordAllocChangeRequest, &ClientWorker::procRecordAllocChangeRequest );
         SET_MSG_HANDLER( proto_id, RecordOwnerChangeRequest, &ClientWorker::procRecordOwnerChangeRequest );
-        SET_MSG_HANDLER( proto_id, RecordSearchRequest, &ClientWorker::procRecordSearchRequest );
         SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &ClientWorker::procProjectSearchRequest );
-        SET_MSG_HANDLER( proto_id, QueryCreateRequest, &ClientWorker::procQueryCreateRequest );
-        SET_MSG_HANDLER( proto_id, QueryUpdateRequest, &ClientWorker::procQueryUpdateRequest );
         SET_MSG_HANDLER( proto_id, CollDeleteRequest, &ClientWorker::procCollectionDeleteRequest );
         SET_MSG_HANDLER( proto_id, ProjectDeleteRequest, &ClientWorker::procProjectDeleteRequest );
-        SET_MSG_HANDLER( proto_id, QueryDeleteRequest, &ClientWorker::procQueryDeleteRequest );
         SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &ClientWorker::procRepoAuthzRequest );
         SET_MSG_HANDLER( proto_id, RepoAllocationCreateRequest, &ClientWorker::procRepoAllocationCreateRequest );
         SET_MSG_HANDLER( proto_id, RepoAllocationDeleteRequest, &ClientWorker::procRepoAllocationDeleteRequest );
         SET_MSG_HANDLER( proto_id, UserGetAccessTokenRequest, &ClientWorker::procUserGetAccessTokenRequest );
+        SET_MSG_HANDLER( proto_id, SchemaCreateRequest, &ClientWorker::procSchemaCreateRequest );
+        SET_MSG_HANDLER( proto_id, SchemaReviseRequest, &ClientWorker::procSchemaReviseRequest );
+        SET_MSG_HANDLER( proto_id, SchemaUpdateRequest, &ClientWorker::procSchemaUpdateRequest );
+        SET_MSG_HANDLER( proto_id, MetadataValidateRequest, &ClientWorker::procMetadataValidateRequest );
 
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
@@ -129,18 +120,22 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, UserFindByNameUIDRequest, UserDataReply, userFindByNameUID );
         SET_MSG_HANDLER_DB( proto_id, UserGetRecentEPRequest, UserGetRecentEPReply, userGetRecentEP );
         SET_MSG_HANDLER_DB( proto_id, UserSetRecentEPRequest, AckReply, userSetRecentEP );
+        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
         SET_MSG_HANDLER_DB( proto_id, ProjectCreateRequest, ProjectDataReply, projCreate );
         SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
         SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ListingReply, projList );
         SET_MSG_HANDLER_DB( proto_id, ProjectGetRoleRequest, ProjectGetRoleReply, projGetRole );
-        SET_MSG_HANDLER_DB( proto_id, RecordCreateRequest, RecordDataReply, recordCreate );
+        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
         SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
         SET_MSG_HANDLER_DB( proto_id, RecordExportRequest, RecordExportReply, recordExport );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
         //SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependencyGraphRequest, ListingReply, recordGetDependencyGraph );
+        SET_MSG_HANDLER_DB( proto_id, SearchRequest, ListingReply, generalSearch );
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
+        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
+        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
         SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollListPublishedRequest, ListingReply, collListPublished );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
@@ -152,6 +147,11 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryListRequest, ListingReply, queryList );
         SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
         SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
+        SET_MSG_HANDLER_DB( proto_id, QueryCreateRequest, QueryDataReply, queryCreate );
+        SET_MSG_HANDLER_DB( proto_id, QueryUpdateRequest, QueryDataReply, queryUpdate );
+        SET_MSG_HANDLER_DB( proto_id, QueryDeleteRequest, AckReply, queryDelete );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
+        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
         SET_MSG_HANDLER_DB( proto_id, AnnotationCreateRequest, AnnotationDataReply, annotationCreate );
         SET_MSG_HANDLER_DB( proto_id, AnnotationUpdateRequest, AnnotationDataReply, annotationUpdate );
         SET_MSG_HANDLER_DB( proto_id, AnnotationCommentEditRequest, AnnotationDataReply, annotationCommentEdit );
@@ -183,8 +183,16 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetDefaultRequest, AckReply, repoAllocationSetDefault );
         SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
-        //SET_MSG_HANDLER_DB( proto_id, TopicLinkRequest, AckReply, topicLink );
-        //SET_MSG_HANDLER_DB( proto_id, TopicUnlinkRequest, AckReply, topicUnlink );
+        SET_MSG_HANDLER_DB( proto_id, SchemaSearchRequest, SchemaDataReply, schemaSearch );
+        SET_MSG_HANDLER_DB( proto_id, SchemaViewRequest, SchemaDataReply, schemaView );
+        SET_MSG_HANDLER_DB( proto_id, SchemaDeleteRequest, AckReply, schemaDelete );
+        SET_MSG_HANDLER_DB( proto_id, TagSearchRequest, TagDataReply, tagSearch );
+        SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
+        SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, TopicDataReply, topicListTopics );
+        SET_MSG_HANDLER_DB( proto_id, TopicViewRequest, TopicDataReply, topicView );
+        //SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
+        SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, TopicDataReply, topicSearch );
+
     }
     catch( TraceException & e)
     {
@@ -228,12 +236,12 @@ ClientWorker::workerThread()
 
                 if ( msg_type != task_list_msg_type )
                 {
-                    DL_DEBUG( "W"<<m_tid<<" recvd msg type: " << msg_type << " from ["<< m_msg_buf.getUID() <<"]" );
+                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
                 }
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
-                    DL_WARN( "W"<<m_tid<<" unauthorized access attempt from anon user" );
+                    DL_WARN( "W" << m_tid << " unauthorized access attempt from anon user" );
                     m_msg_buf.serialize( nack );
                     comm.send( m_msg_buf );
                 }
@@ -242,19 +250,19 @@ ClientWorker::workerThread()
                     handler = m_msg_handlers.find( msg_type );
                     if ( handler != m_msg_handlers.end() )
                     {
-                        DL_TRACE( "W"<<m_tid<<" calling handler" );
+                        //DL_TRACE( "W"<<m_tid<<" calling handler" );
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
                             comm.send( m_msg_buf );
-                            if ( msg_type != task_list_msg_type )
+                            /*if ( msg_type != task_list_msg_type )
                             {
                                 DL_DEBUG( "W"<<m_tid<<" reply sent." );
-                            }
+                            }*/
                         }
                     }
                     else
-                        DL_ERROR( "W"<<m_tid<<" recvd unregistered msg type: " << msg_type );
+                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
                 }
             }
         }
@@ -515,6 +523,270 @@ ClientWorker::procDataPutRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
+void
+ClientWorker::schemaEnforceRequiredProperties( const nlohmann::json & a_schema )
+{
+    // json_schema validator does not check for required fields in schema
+    // Must include properties and type: Object
+    if ( !a_schema.is_object() )
+        EXCEPT(1,"Schema must be a JSON object.");
+
+    nlohmann::json::const_iterator i = a_schema.find("properties");
+
+    if ( i == a_schema.end() )
+        EXCEPT(1,"Schema is missing required 'properties' field.");
+
+    if ( !i.value().is_object() )
+        EXCEPT(1,"Schema properties field must be a JSON object.");
+
+    i = a_schema.find("type");
+
+    if ( i == a_schema.end() )
+        EXCEPT(1,"Schema is missing required 'type' field.");
+
+    if ( !i.value().is_string() || i.value().get<string>() != "object" )
+        EXCEPT(1,"Schema type must be 'object'.");
+}
+
+bool
+ClientWorker::procSchemaCreateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( SchemaCreateRequest, AckReply )
+
+    m_db_client.setClient( a_uid );
+
+    DL_INFO( "Schema create" );
+
+    try
+    {
+        nlohmann::json schema = nlohmann::json::parse( request->def() );
+
+        schemaEnforceRequiredProperties( schema );
+
+        nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+        validator.set_root_schema( schema );
+
+        m_db_client.schemaCreate( *request );
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
+        DL_ERROR( "Invalid metadata schema: " << e.what() );
+    }
+
+    PROC_MSG_END
+}
+
+
+bool
+ClientWorker::procSchemaReviseRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( SchemaReviseRequest, AckReply )
+
+    m_db_client.setClient( a_uid );
+
+    DL_INFO( "Schema revise" );
+
+    if ( request->has_def() )
+    {
+        try
+        {
+            nlohmann::json schema = nlohmann::json::parse( request->def() );
+
+            schemaEnforceRequiredProperties( schema );
+
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+            validator.set_root_schema( schema );
+        }
+        catch( exception & e )
+        {
+            EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
+            DL_ERROR( "Invalid metadata schema: " << e.what() );
+        }
+    }
+
+    m_db_client.schemaRevise( *request );
+
+    PROC_MSG_END
+}
+
+bool
+ClientWorker::procSchemaUpdateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( SchemaUpdateRequest, AckReply )
+
+    m_db_client.setClient( a_uid );
+
+    DL_INFO( "Schema update" );
+
+    if ( request->has_def() )
+    {
+        try
+        {
+            nlohmann::json schema = nlohmann::json::parse( request->def() );
+
+            schemaEnforceRequiredProperties( schema );
+
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+            validator.set_root_schema( schema );
+        }
+        catch( exception & e )
+        {
+            EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
+            DL_ERROR( "Invalid metadata schema: " << e.what() );
+        }
+    }
+
+    m_db_client.schemaUpdate( *request );
+
+    PROC_MSG_END
+}
+
+bool
+ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
+{
+    DL_INFO( "Meta validate" );
+
+    PROC_MSG_BEGIN( MetadataValidateRequest, MetadataValidateReply )
+
+    m_db_client.setClient( a_uid );
+
+    nlohmann::json schema;
+
+    try
+    {
+        libjson::Value sch;
+        DL_INFO( "Schema " << request->sch_id() );
+
+        m_db_client.schemaView( request->sch_id(), sch );
+
+        DL_INFO( "Schema: " << sch.asArray().begin()->asObject().getValue("def").toString() );
+
+        schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+    }
+    catch( TraceException & e )
+    {
+        throw;
+    }
+    catch( exception & e )
+    {
+        EXCEPT_PARAM(1,"Schema parse error: " << e.what() );
+    }
+
+    //DL_INFO( "Schema " << schema );
+
+    nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+    try
+    {
+        //DL_INFO( "Setting root schema" );
+        validator.set_root_schema( schema );
+        //DL_INFO( "Validating" );
+
+        nlohmann::json md = nlohmann::json::parse( request->metadata() );
+
+        m_validator_err.clear();
+        validator.validate( md, *this );
+    }
+    catch( exception & e )
+    {
+        m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
+        DL_ERROR( "Invalid metadata schema: " << e.what() );
+    }
+
+    
+    if ( m_validator_err.size() )
+    {
+        reply.set_errors( m_validator_err );
+    }
+
+    PROC_MSG_END
+}
+
+
+bool
+ClientWorker::procRecordCreateRequest( const std::string & a_uid )
+{
+    PROC_MSG_BEGIN( RecordCreateRequest, RecordDataReply )
+
+    m_db_client.setClient( a_uid );
+
+    // Validate metdata if present
+
+    //libjson::Value result;
+
+    DL_INFO("Creating record");
+
+    m_validator_err.clear();
+
+    if ( request->has_metadata() && request->has_sch_id() )
+    {
+        //DL_INFO("Has metadata/schema");
+        //DL_INFO( "Must validate JSON, schema " << s->second.asString() );
+
+        nlohmann::json schema;
+
+        try
+        {
+            libjson::Value sch;
+            m_db_client.schemaView( request->sch_id(), sch );
+            schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+            try
+            {
+                //DL_INFO( "Setting root schema" );
+                validator.set_root_schema( schema );
+                //DL_INFO( "Validating" );
+
+                nlohmann::json md = nlohmann::json::parse( request->metadata() );
+
+                m_validator_err.clear();
+                validator.validate( md, *this );
+            }
+            catch( exception & e )
+            {
+                m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
+                DL_ERROR( "Invalid metadata schema: " << e.what() );
+            }
+        }
+        catch( exception & e )
+        {
+            m_validator_err = string( "Metadata schema error: ") + e.what() + "\n";
+            DL_ERROR( "Could not load metadata schema: " << e.what() );
+        }
+
+        if ( request->has_sch_enforce() && m_validator_err.size() )
+        {
+            EXCEPT( 1, m_validator_err );
+        }
+    }
+    else if ( request->has_sch_enforce() )
+    {
+        EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
+    }
+
+    m_db_client.recordCreate( *request, reply );
+
+    if ( m_validator_err.size() )
+    {
+        DL_ERROR( "Validation error - update record" );
+
+        //const string & id = obj.getString("id");
+        RecordData * data = reply.mutable_data(0);
+
+        m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
+        // TODO need a def for md_err mask
+        data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+    }
+
+    PROC_MSG_END
+}
+
 
 bool
 ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
@@ -523,11 +795,106 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
     m_db_client.setClient( a_uid );
 
+    // Validate metdata if present
+
     libjson::Value result;
+    //nlohmann::json result;
+
+    DL_INFO("Updating record");
+
+    m_validator_err.clear();
+
+    if ( request->has_metadata() || ( request->has_sch_id() && request->sch_id().size() ) || request->has_sch_enforce() )
+    {
+        //DL_INFO("Has metadata/schema");
+        string metadata = request->has_metadata()?request->metadata():"";
+        string sch_id = request->has_sch_id()?request->sch_id():"";
+
+        // If update does not include metadata AND schema, then we must load the missing parts from DB before we can validate here
+        if ( !request->has_metadata() || !request->has_sch_id() )
+        {
+            RecordViewRequest view_request;
+            RecordDataReply view_reply;
+
+            view_request.set_id( request->id() );
+
+            m_db_client.recordView( view_request, view_reply );
+
+            if ( !request->has_metadata() )
+                metadata = view_reply.data(0).metadata();
+
+            if ( !request->has_sch_id() )
+                sch_id = view_reply.data(0).sch_id();
+        }
+
+        if ( metadata.size() && sch_id.size() )
+        {
+            DL_INFO( "Must validate JSON, schema " << sch_id );
+
+            libjson::Value sch;
+            m_db_client.schemaView( sch_id, sch );
+
+            DL_INFO( "Schema record JSON:" << sch.toString() );
+            //DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
+
+            nlohmann::json schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+
+            DL_INFO( "Schema nlohmann: " << schema );
+
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+
+            try
+            {
+                DL_INFO( "Setting root schema" );
+                validator.set_root_schema( schema );
+
+                // TODO This is a hacky way to convert between JSON implementations...
+                DL_INFO( "Parse md" );
+
+                nlohmann::json md = nlohmann::json::parse( metadata );
+
+                DL_INFO( "Validating" );
+
+                validator.validate( md, *this );
+            }
+            catch( exception & e )
+            {
+                m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
+                DL_ERROR( "Invalid metadata schema: " << e.what() );
+            }
+
+            if ( request->has_sch_enforce() && m_validator_err.size() )
+            {
+                EXCEPT( 1, m_validator_err );
+            }
+        }
+        else if ( request->has_sch_enforce() )
+        {
+            EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
+        }
+    }
 
     m_db_client.recordUpdate( *request, reply, result );
 
-    handleTaskResponse( result );
+    if ( m_validator_err.size() )
+    {
+        DL_ERROR( "Validation error - update record" );
+
+        m_db_client.recordUpdateSchemaError( request->id(), m_validator_err );
+        // Must find and update md_err flag in reply (always 1 data entry)
+        RecordData * data = reply.mutable_data(0);
+        data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+
+        for ( int i = 0; i < reply.update_size(); i++ )
+        {
+            ListingData * data = reply.mutable_update(i);
+            if ( data->id() == request->id() )
+            {
+                // TODO need a def for md_err mask
+                data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+            }
+        }
+    }
 
     PROC_MSG_END
 }
@@ -683,56 +1050,13 @@ ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid )
 
 
 bool
-ClientWorker::procQueryDeleteRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( QueryDeleteRequest, AckReply )
-
-    m_db_client.setClient( a_uid );
-
-    for ( int i = 0; i < request->id_size(); i++ )
-    {
-        m_db_client.queryDelete( request->id(i) );
-    }
-
-    PROC_MSG_END
-}
-
-
-bool
-ClientWorker::procRecordSearchRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( RecordSearchRequest, ListingReply )
-
-    m_db_client.setClient( a_uid );
-    RecordSearchRequest req2;
-    DL_INFO("about to parse query[" << request->query() << "]" );
-    bool use_client = false;
-    bool use_shared_users = false;
-    bool use_shared_projects = false;
-    string q = parseQuery( request->query(), use_client, use_shared_users, use_shared_projects );
-    DL_INFO("parsed query[" << q << "]" );
-    req2.set_query( q );
-    req2.set_use_client( use_client );
-    req2.set_use_shared_users( use_shared_users );
-    req2.set_use_shared_projects( use_shared_projects );
-
-    if ( request->has_offset() )
-        req2.set_offset( request->offset());
-
-    if ( request->has_count() )
-        req2.set_count( request->count());
-
-    m_db_client.recordSearch( req2, reply );
-
-    PROC_MSG_END
-}
-
-
-bool
 ClientWorker::procProjectSearchRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( ProjectSearchRequest, ProjectDataReply )
 
+    EXCEPT( 1, "Not implemented" );
+
+/*
     m_db_client.setClient( a_uid );
     DL_INFO("about to parse query[" << request->text_query() << "]" );
     vector<string> scope;
@@ -741,76 +1065,7 @@ ClientWorker::procProjectSearchRequest( const std::string & a_uid )
     string q = parseProjectQuery( request->text_query(), scope );
     DL_INFO("parsed query[" << q << "]" );
     m_db_client.projSearch( q, reply );
-
-    PROC_MSG_END
-}
-
-
-bool
-ClientWorker::procQueryCreateRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( QueryCreateRequest, QueryDataReply )
-
-    m_db_client.setClient( a_uid );
-
-    QueryCreateRequest req2;
-    bool use_owner = false;
-    bool use_sh_usr = false;
-    bool use_sh_prj = false;
-
-    DL_INFO("about to parse query[" << request->query() << "]" );
-
-    string q = parseQuery( request->query(), use_owner, use_sh_usr, use_sh_prj );
-
-    DL_INFO("parsed query[" << q << "]" );
-
-    req2.set_title( request->title());
-    req2.set_query( request->query() );
-    req2.set_query_comp( q );
-    req2.set_use_owner( use_owner );
-    req2.set_use_sh_usr( use_sh_usr );
-    req2.set_use_sh_prj( use_sh_prj );
-
-    m_db_client.queryCreate( req2, reply );
-
-    PROC_MSG_END
-}
-
-bool
-ClientWorker::procQueryUpdateRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( QueryUpdateRequest, QueryDataReply )
-
-    m_db_client.setClient( a_uid );
-    if ( request->has_query() )
-    {
-        QueryUpdateRequest req2;
-        bool use_owner = false;
-        bool use_sh_usr = false;
-        bool use_sh_prj = false;
-
-        DL_INFO("about to parse query[" << request->query() << "]" );
-
-        string q = parseQuery( request->query(), use_owner, use_sh_usr, use_sh_prj );
-
-        DL_INFO("parsed query[" << q << "]" );
-
-        if ( request->has_title() )
-            req2.set_title( request->title());
-
-        req2.set_id( request->id() );
-        req2.set_query( request->query() );
-        req2.set_query_comp( q );
-        req2.set_use_owner( use_owner );
-        req2.set_use_sh_usr( use_sh_usr );
-        req2.set_use_sh_prj( use_sh_prj );
-
-        m_db_client.queryUpdate( req2, reply );
-    }
-    else
-    {
-        m_db_client.queryUpdate( *request, reply );
-    }
+*/
 
     PROC_MSG_END
 }
@@ -822,7 +1077,7 @@ ClientWorker::procRepoAuthzRequest( const std::string & a_uid )
     (void)a_uid;
     PROC_MSG_BEGIN( RepoAuthzRequest, AckReply )
 
-    DL_INFO( "AuthzReq, uid: " << a_uid << ", client: " << request->client() << ", repo: " << request->repo() << ", file: " << request->file() << ", act: " << request->action() );
+    DL_INFO( "AUTHZ repo: " << a_uid << ", usr: " << request->client() /*<< ", repo: " << request->repo()*/ << ", file: " << request->file() << ", act: " << request->action() );
 
     m_db_client.setClient( request->client() );
     m_db_client.repoAuthz( *request, reply );
@@ -871,710 +1126,7 @@ ClientWorker::handleTaskResponse( libjson::Value & a_result )
     }
 }
 
-
-string
-ClientWorker::parseSearchTerms( const string & a_key, const vector<string> & a_terms )
-{
-    vector<string> and_terms;
-    vector<string> nand_terms;
-    vector<string> or_terms;
-
-    for ( vector<string>::const_iterator t = a_terms.begin(); t != a_terms.end(); ++t )
-    {
-        switch( (*t)[0] )
-        {
-        case '+':
-            and_terms.push_back( (*t).substr(1) );
-            break;
-        case '-':
-            nand_terms.push_back( (*t).substr(1) );
-            break;
-        default:
-            or_terms.push_back( *t );
-            break;
-        }
-    }
-
-    string result;
-    vector<string>::iterator i;
-
-    if ( or_terms.size() > 1 )
-        result += "(";
-
-    for ( i = or_terms.begin(); i != or_terms.end(); i++ )
-    {
-        if ( i != or_terms.begin() )
-            result += " or ";
-
-        result += "phrase(i['" + a_key + "'],'" + *i + "')";
-    }
-
-    if ( or_terms.size() > 1 )
-        result += ")";
-
-    for ( i = and_terms.begin(); i != and_terms.end(); i++ )
-    {
-        if ( result.size() )
-            result += " and ";
-
-        result += "phrase(i['" + a_key + "'],'" + *i + "')";
-    }
-
-    for ( i = nand_terms.begin(); i != nand_terms.end(); i++ )
-    {
-        if ( result.size() )
-            result += " and ";
-
-        result += "not phrase(i['" + a_key + "'],'" + *i + "')";
-    }
-
-    return "("+result+")";
-}
-
-string
-ClientWorker::parseSearchPhrase( const char * key, const string & a_phrase )
-{
-    // tokenize phrase on ws, comma, and semicolons - properly handling quotes
-    // each token is used as a search phrase and joined based on eny prefix operators:
-    //  + = AND, - = NOT, | = OR
-    //vector<string> tokens = smartTokenize(a_phrase," ,;");
-
-    string separator1("");//dont let quoted arguments escape themselves
-    string separator2(" ");//split on spaces
-    string separator3("\"\'");//let it have quoted arguments
-
-    boost::escaped_list_separator<char> els(separator1,separator2,separator3);
-    boost::tokenizer<boost::escaped_list_separator<char>> tok(a_phrase, els);
-
-    vector<string>  terms;
-
-    for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
-        terms.push_back( *t );
-
-    return parseSearchTerms( key, terms );
-}
-
-string
-ClientWorker::parseSearchTextPhrase( const string & a_phrase )
-{
-    /* This function parses category logic (if present) around full-
-    text queries. Text queries are typed into the text input and are
-    simpler than advanced queries.Categories are title, description, and
-    keywords. Categories may be specified just before query terms:
-
-        title: fusion simulation keywords: -experiment
-
-    If no categories are specified, all categories are searched and the
-    default operator is OR for both categories and terms.
-
-    If one or more categories are specified, the default operator for categories
-    is AND but for terms it is still OR.
-
-    Operator may be specified by prefixing category or term with:
-        +   AND
-        -   AND NOT
-
-    There is no NOR operator since this would produce low-specificity queryies.
-
-    If terms are included before a category is specified, these terms apply to all
-    categories (as if they were copied as-is into each category phrase)
-
-    Categories may only be specified once.
-
-    Phrases are specified with single or double quotations.
-    All punctuation is ignored.
-
-    The order of categories and terms does not matter, they are grouped by operator
-    in an expression such as:
-
-        (term1 or term2 or term3) and term4 and term5 and not term6 and not term7
-        OR terms                        AND terms           NAND terms
-    */
-    static map<string,int> cat_map =
-    {
-        {"t:",1},{"title:",1},
-        {"d:",2},{"desc:",2},{"descr:",2},{"description:",2}
-    };
-
-    string separator1("");//dont let quoted arguments escape themselves
-    string separator2(" ");//split on spaces
-    string separator3("\"\'");//let it have quoted arguments
-
-    boost::escaped_list_separator<char> els(separator1,separator2,separator3);
-    boost::tokenizer<boost::escaped_list_separator<char>> tok(a_phrase, els);
-
-    string result;
-    vector<string>  title,desc,keyw;
-    size_t pos;
-    int op = 0;
-    int ops[5] = {0,0,0,0,0};
-    int cat = 7;
-    int count_or = 0;
-    int count_other = 0;
-    string op_str, extra;
-
-    map<string,int>::const_iterator c;
-
-    for(boost::tokenizer<boost::escaped_list_separator<char>>::iterator t = tok.begin(); t != tok.end(); ++t )
-    {
-        pos = (*t).find_first_of(':');
-        if ( pos != string::npos )
-        {
-            if ( pos < (*t).size() -  1 )
-            {
-                op_str = (*t).substr(0,pos+1);
-                extra = (*t).substr(pos+1);
-            }
-            else
-            {
-                op_str = *t;
-                extra.clear();
-            }
-
-            if ( op_str[0] == '+' )
-            {
-                c = cat_map.find(op_str.substr(1));
-                op = 2; // AND
-                count_other++;
-            }
-            else if ( op_str[0] == '-' )
-            {
-                c = cat_map.find(op_str.substr(1));
-                op = 3; // NAND
-                count_other++;
-            }
-            else
-            {
-                c = cat_map.find(op_str);
-                op = 1; // OR
-                count_or++;
-            }
-
-            if ( c == cat_map.end() )
-                EXCEPT_PARAM(1,"Invalid query scope '" << op_str << "'" );
-
-            cat = c->second;
-
-            if ( ops[cat] != 0 )
-                EXCEPT_PARAM(1,"Invalid query - categories may only be specified once." );
-
-            ops[cat] = op;
-
-            if ( extra.size() )
-            {
-                if ( cat & 1 ) title.push_back( extra );
-                if ( cat & 2 ) desc.push_back( extra );
-            }
-        }
-        else
-        {
-            if ( cat & 1 ) title.push_back( *t );
-            if ( cat & 2 ) desc.push_back( *t );
-        }
-    }
-
-    // Apply default operator for unspecified categories, check for empty categories
-    if ( ops[1] == 0  )
-    {
-        if ( title.size() )
-        {
-            ops[1] = 1;
-            count_or++;
-        }
-    }
-    else if ( !title.size() )
-        EXCEPT(1,"Title category specified without search terms" );
-
-    if ( ops[2] == 0 )
-    {
-        if ( desc.size() )
-        {
-            ops[2] = 1;
-            count_or++;
-        }
-    }
-    else if ( !desc.size() )
-        EXCEPT(1,"Description category specified without search terms" );
-
-    // Build OR phrase
-    if ( count_or > 1 && count_other > 0 )
-        result += "(";
-
-    if ( ops[1] == 1 )
-        result += parseSearchTerms( "title", title );
-
-    if ( ops[2] == 1 )
-        result += (result.size()?" or ":"") + parseSearchTerms( "desc", desc );
-
-    if ( count_or > 1 && count_other > 0 )
-        result += ")";
-
-    // Build AND phrase
-    if ( ops[1] == 2 )
-        result += (result.size()?" and ":"") + parseSearchTerms( "title", title );
-
-    if ( ops[2] == 2 )
-        result += (result.size()?" and ":"") + parseSearchTerms( "desc", desc );
-
-    // Build NAND phrase
-    if ( ops[1] == 3 )
-        result += (result.size()?" and not (":"not (") + parseSearchTerms( "title", title ) + ")";
-
-    if ( ops[2] == 3 )
-        result += (result.size()?" and not (":"not (") + parseSearchTerms( "desc", desc ) + ")";
-
-    return result;
-}
-
-string
-ClientWorker::parseSearchTags( const libjson::Value::Array & a_tags )
-{
-    string res;
-
-    for ( libjson::Value::ArrayConstIter i = a_tags.begin(); i != a_tags.end(); i++ )
-    {
-        if ( res.size() )
-            res += " && ";
-
-        res += "'" + i->asString() + "' in i.tags";
-    }
-
-    return res;
-}
-
-string
-ClientWorker::parseSearchIdAlias( const string & a_query )
-{
-    string val;
-    val.resize(a_query.size());
-    std::transform(a_query.begin(), a_query.end(), val.begin(), ::tolower);
-
-    bool id_ok = true;
-    bool alias_ok = true;
-    size_t p;
-
-    if (( p = val.find_first_of("/") ) != string::npos ) // Aliases cannot contain "/"
-    {
-        if ( p == 0 || ( p == 1 && val[0] == 'd' ))
-        {
-            // Minimum len of key (numbers) is 2
-            if ( val.size() >= p + 3 )
-            {
-                for ( string::const_iterator c = val.begin()+p+1; c != val.end(); c++ )
-                {
-                    if ( !isdigit( *c ) )
-                    {
-                        id_ok = false;
-                        break;
-                    }
-                }
-
-                if ( id_ok )
-                    return string("i._id like \'d/") + val.substr(p+1) + "%\'";
-            }
-        }
-
-        EXCEPT(1,"Invalid ID/Alias query value.");
-    }
-
-    for ( string::const_iterator c = val.begin(); c != val.end(); c++ )
-    {
-        // ids (keys) are only digits
-        // alias are alphanum plus "_-."
-        if ( !isdigit( *c ))
-        {
-            id_ok = false;
-            if ( !isalpha( *c ) && *c != '_' && *c != '-' && *c != '.' )
-            {
-                alias_ok = false;
-                break;
-            }
-        }
-    }
-
-    if ( id_ok && alias_ok )
-        return string("i._id like \"%") + val + "%\" || i.alias like \"%" + val + "%\"";
-    else if ( id_ok )
-        return string("i._id like \"%") + val + "%\"";
-    else if ( alias_ok )
-        return string("i.alias like \"%") + val + "%\"";
-    else
-        EXCEPT(1,"Invalid ID/Alias query value.");
-}
-
-
-string
-ClientWorker::parseSearchMetadata( const string & a_query )
-{
-    // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
-    // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
-    static set<string> terms = {"title","desc","alias","topic","doi","data_url","owner","creator","keyw","ct","ut","size","source","ext"};
-    static set<string> funcs = {"abs","acos","asin","atan","atan2","average","avg","ceil","cos","degrees","exp","exp2",
-        "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
-        "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample","length","lower","upper",
-        "distance","is_in_polygon"};
-    static set<string> date_funcs = {"date_now","date_timestamp"};
-    static set<string> other = {"like","true","false","null","in"};
-
-
-    struct Var
-    {
-        Var() : start(0), len(0) {}
-        void reset() { start = 0; len = 0; }
-
-        size_t  start;
-        size_t  len;
-    };
-
-    enum ParseState
-    {
-        PS_DEFAULT = 0,
-        PS_SINGLE_QUOTE,
-        PS_DOUBLE_QUOTE,
-        PS_TOKEN,
-        PS_STOP
-    };
-
-    ParseState state = PS_DEFAULT;
-    Var v;
-    string result,tmp;
-    char last = 0, next = 0, next_nws = 0;
-    string::const_iterator c2;
-    bool val_token, last_char = false;
-
-    for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
-    {
-        if ( c+1 != a_query.end() )
-            next = *(c+1);
-        else
-            next = 0;
-
-        next_nws = 0;
-        for ( c2 = c + 1; c2 != a_query.end(); c2++ )
-        {
-            if ( !isspace( *c2 ))
-            {
-                next_nws = *c2;
-                break;
-            }
-        }
-        cout << "c[" << *c << "]\n";
-
-        switch( state )
-        {
-        case PS_SINGLE_QUOTE: // Single quote (not escaped)
-            if ( *c == '\'' && *(c-1) != '\\' )
-                state = PS_DEFAULT;
-            break;
-        case PS_DOUBLE_QUOTE: // Double quote (not escaped)
-            if ( *c == '\"' && *(c-1) != '\\' )
-                state = PS_DEFAULT;
-            break;
-        case PS_DEFAULT: // Not quoted, not an identifier
-            if ( *c == '\'' )
-            {
-                state = PS_SINGLE_QUOTE;
-                cout << "single q start\n";
-                break;
-            }
-            else if ( *c == '\"' )
-            {
-                state = PS_DOUBLE_QUOTE;
-                cout << "dbl q start\n";
-                break;
-            }
-            else if ( !isalpha( *c ))
-                break;
-
-            v.start = c - a_query.begin();
-            cout << "tok start: " << v.start << "\n";
-            v.len = 0;
-            state = PS_TOKEN;
-            // FALL-THROUGH to token processing
-        case PS_TOKEN: // Token
-            //if ( spec.find( *c ) != spec.end() )
-            val_token = isalnum( *c ) || *c == '.' || *c == '_';
-            last_char = (( c + 1 ) == a_query.end());
-
-            if ( !val_token || last_char )
-            {
-                //cout << "start: " << v.start << ", len: " << v.len << "\n";
-                if ( !val_token )
-                {
-                    tmp = a_query.substr( v.start, v.len );
-                    if ( *c == '\'' )
-                        state = PS_SINGLE_QUOTE;
-                    else if ( *c == '\"' )
-                        state = PS_DOUBLE_QUOTE;
-                    else
-                        state = PS_DEFAULT;
-                }
-                else
-                {
-                    tmp = a_query.substr( v.start, v.len + 1 );
-                    state = PS_STOP;
-                }
-                cout << "token[" << tmp << "]" << endl;
-
-                // Determine if identifier needs to be prefixed with "i." by testing agains allowed identifiers
-                if ( tmp == "desc" )
-                    result.append( "i['desc']" );
-                else if ( other.find( tmp ) != other.end() || (funcs.find( tmp ) != funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' ))))
-                    result.append( tmp );
-                else if ( date_funcs.find( tmp ) != date_funcs.end() && ( *c == '(' || ( isspace( *c ) && next_nws == '(' )))
-                {
-                    result.append( "0.001*");
-                    result.append( tmp );
-                }
-                else if ( tmp == "id" )
-                {
-                    result.append( "i._id" );
-                }
-                else if ( terms.find( tmp ) != terms.end() )
-                {
-                    result.append( "i." );
-                    result.append( tmp );
-                }
-                else
-                {
-                    if ( tmp == "md" || tmp.compare( 0, 3, "md." ) == 0 )
-                        result.append( "i." );
-                    else
-                        result.append( "i.md." );
-                    result.append( tmp );
-                }
-
-                v.reset();
-
-            }
-            else
-            {
-                v.len++;
-            }
-            break;
-        default:
-            break;
-        }
-
-        // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
-
-        if ( state == PS_STOP )
-            break;
-        else if ( state == PS_DEFAULT )
-        {
-            if ( *c == '?' )
-                result += " like ";
-            else if ( *c == '~' )
-                if ( last != '=' )
-                    result += "=~";
-                else
-                    result += '~';
-            else if ( *c == '=' )
-                if ( last != '=' && last != '<' && last != '>' && last != '!' && next != '~' && next != '=' )
-                    result += "==";
-                else
-                    result += '=';
-            else
-                result += *c;
-        }
-        else if ( state != PS_TOKEN )
-            result += *c;
-
-        last = *c;
-    }
-
-    if ( state == PS_SINGLE_QUOTE || state == PS_DOUBLE_QUOTE )
-    {
-        EXCEPT(1,"Mismatched quotation marks in query" );
-    }
-
-    //cout << "[" << a_query << "]=>[" << result << "]\n";
-    return result;
-}
-
-
-string
-ClientWorker::parseQuery( const string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects )
-{
-    use_client = false;
-
-    libjson::Value query;
-    query.fromString( a_query );
-
-    string phrase;
-    libjson::Value::Object &    obj = query.asObject();
-    libjson::Value::ObjectIter  j, i = obj.find( "text" );
-
-    if ( !obj.has( "id" ) && !obj.has( "text" ) && !obj.has( "meta" ) && !obj.has( "tags" ))
-        EXCEPT( 1, "Query contains no search terms." );
-
-    if ( i != obj.end( ))
-    {
-        phrase = parseSearchTextPhrase( i->second.asString() );
-    }
-    else
-    {
-        if ( obj.has( "title" ))
-            phrase = parseSearchPhrase( "title", obj.asString() );
-
-        if ( obj.has( "desc" ))
-        {
-            if ( phrase.size( ))
-                phrase += " or ";
-            phrase += parseSearchPhrase( "desc", obj.asString() );
-        }
-    }
-
-    string filter = "";
-    size_t fcnt = 0;
-
-    if ( obj.has( "tags" ))
-    {
-        const libjson::Value::Array & arr = obj.asArray();
-        if ( arr.size() )
-        {
-            filter += string("(") + parseSearchTags( arr ) + ")";
-            fcnt++;
-        }
-    }
-
-    if ( obj.has( "id" ))
-    {
-        if ( fcnt )
-            filter += " && ";
-        filter += string("(") + parseSearchIdAlias( obj.asString() ) + ")";
-        fcnt++;
-    }
-
-    if ( obj.has( "meta" ))
-    {
-        if ( fcnt )
-            filter += " && ";
-        filter += string("(") + parseSearchMetadata( obj.asString() ) + ")";
-        fcnt++;
-    }
-
-    string result;
-
-    if ( phrase.size() )
-        result += string("for i in intersection((for i in dataview search analyzer(") + phrase + ",'text_en') return i),(";
-
-    libjson::Value::Array & scopes = obj.getArray( "scopes" );
-
-    if ( scopes.size() == 0 )
-        EXCEPT(1,"No query scopes provided");
-
-    if ( scopes.size() > 1 )
-        result += "for i in union((";
-
-    bool inc_ret = false;
-    if ( scopes.size() > 1 || phrase.size() )
-        inc_ret = true;
-
-    for ( libjson::Value::ArrayIter s = scopes.begin(); s != scopes.end(); s++ )
-    {
-        libjson::Value::Object & scope = s->asObject();
-
-        if ( s != scopes.begin( ))
-            result += "),(";
-
-        switch( (int)scope.getNumber( "scope" ))
-        {
-        case SDMS::SS_USER:
-            use_client = true;
-
-            result += "for i in 1..1 inbound @client owner filter is_same_collection('d',i)";
-            break;
-        case SDMS::SS_PROJECT:
-            result += string("for i in 1..1 inbound '") + scope.getString( "id" ) + "' owner filter is_same_collection('d',i)";
-            break;
-        case SDMS::SS_PROJECTS:
-            use_client = true;
-
-            result += string("for i in union("
-                "(for i,e,p in 2..2 inbound @client owner, admin filter IS_SAME_COLLECTION('p',p.vertices[1]) and IS_SAME_COLLECTION('d',i) return i),"
-                "(for i,e,p in 3..3 inbound @client member, any owner filter p.vertices[1].gid == 'members' and IS_SAME_COLLECTION('p',p.vertices[2]) and IS_SAME_COLLECTION('d',i) return i)"
-                ")");
-            break;
-        case SDMS::SS_COLLECTION:
-            result += string("for i in 1..10 outbound '") + scope.getString( "id" ) + "' item filter is_same_collection('d',i)";
-            break;
-        case SDMS::SS_TOPIC:
-            result += string("for i in 1..10 inbound '") + scope.getString( "id" ) + "' top, outbound item filter is_same_collection('d',i)";
-            break;
-        case SDMS::SS_SHARED_BY_USER:
-            {
-            use_client = true;
-            string & id = scope.getString( "id" );
-
-            result += string("for i in union_distinct("
-                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + id + "' return v),"
-                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + id + "' return v),"
-                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + id + "' return v)"
-                ")";
-            }
-            break;
-        case SDMS::SS_SHARED_BY_ANY_USER:
-            //result += "for u in @shared_users for i in 1..1 inbound u owner filter IS_SAME_COLLECTION('d',i) return i";
-            use_client = true;
-            use_shared_users = true;
-
-            result += "for i in union_distinct("
-                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @users return v),"
-                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @users return v),"
-                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner in @users return v)"
-                ")";
-            break;
-        case SDMS::SS_SHARED_BY_PROJECT:
-            {
-            use_client = true;
-            string & id = scope.getString( "id" );
-
-            result += string("for i in union_distinct("
-                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner == '") + id + "' return v),"
-                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner == '" + id + "' return v),"
-                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner == '" + id + "' return v)"
-                ")";
-            break;
-            }
-        case SDMS::SS_SHARED_BY_ANY_PROJECT:
-            use_client = true;
-            use_shared_projects = true;
-
-            result += "for i in union_distinct("
-                "(for v in 1..2 inbound @client member, acl filter is_same_collection('d',v) and v.owner in @projs return v),"
-                "(for v,e,p in 3..11 inbound @client member, acl, outbound item filter is_same_collection('member',p.edges[0]) and v.owner in @projs return v),"
-                "(for v in 2..12 inbound @client acl, outbound item filter is_same_collection('d',v) and v.owner in @projs return v)"
-                ")";
-            break;
-        case SDMS::SS_VIEW:
-            break;
-        }
-
-        if ( inc_ret )
-            result += " return i";
-    }
-
-    if ( scopes.size() > 1 )
-    {
-        result += "))";
-        if ( phrase.size() )
-            result += " return i";
-    }
-
-    if ( phrase.size() )
-        result += "))";
-
-    if ( filter.size() )
-        result += " filter " + filter;
-
-    result += " limit @offset, @count return {id:i._id,title:i.title,alias:i.alias,locked:i.locked,owner:i.owner,creator:i.creator,doi:i.doi,size:i.size}";
-
-
-    return result;
-}
-
-
+/*
 string
 ClientWorker::parseProjectQuery( const string & a_text_query, const vector<string> & a_scope )
 {
@@ -1616,6 +1168,22 @@ ClientWorker::parseProjectQuery( const string & a_text_query, const vector<strin
     result += " limit 100 return {id:i._id,title:i.title,owner:i.owner}";
 
     return result;
+}
+*/
+
+void
+ClientWorker::schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value )
+{
+    DL_INFO( "Load schema, scheme: " << a_uri.scheme() << ", path: " << a_uri.path() << ", auth: " << a_uri.authority() << ", id: " << a_uri.identifier() );
+
+    libjson::Value sch;
+    std::string id = a_uri.path();
+
+    id = id.substr( 1 ); // Skip leading "/"
+    m_db_client.schemaView( id, sch );
+
+    a_value = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+    DL_INFO( "Loaded schema: " << a_value );
 }
 
 }}

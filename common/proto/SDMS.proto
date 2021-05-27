@@ -12,6 +12,8 @@
 // and uses doubles for both integer and floats. As long as an integer does not
 // exceed 53 bits, this approach works.
 
+syntax = "proto2";
+
 package SDMS;
 
 
@@ -43,19 +45,21 @@ enum CollDelMode
     CDM_OWNED       = 1;
 }
 
+enum SearchMode
+{
+    SM_DATA         = 0;
+    SM_COLLECTION   = 1;
+}
+
+/*
 enum SearchScope
 {
-    SS_USER                     = 1;
-    SS_PROJECT                  = 2;
-    SS_PROJECTS                 = 3;
-    SS_COLLECTION               = 4;
-    SS_TOPIC                    = 5;
-    SS_SHARED_BY_USER           = 6;
-    SS_SHARED_BY_ANY_USER       = 7;
-    SS_SHARED_BY_PROJECT        = 8;
-    SS_SHARED_BY_ANY_PROJECT    = 9;
-    SS_VIEW                     = 10;
+    SS_PERSONAL     = 0;
+    SS_PROJECT      = 1;
+    SS_SHARED       = 2;
+    SS_PUBLIC       = 3;
 }
+*/
 
 enum DependencyType
 {
@@ -164,15 +168,19 @@ message ListingData
     optional bool               locked      = 4;
     optional string             owner       = 5;
     optional string             creator     = 6;
-    optional int32              gen         = 7;
-    optional double             size        = 8;
+    optional double             size        = 7;
+    optional bool               external    = 8;
     optional uint32             notes       = 9;
-    optional string             doi         = 10;
-    optional string             url         = 11;
-    optional bool               deps_avail  = 12;
-    repeated DependencyData     dep         = 13;
+    // Needed for provenance graphing
+    optional int32              gen         = 10;
+    optional bool               deps_avail  = 11;
+    repeated DependencyData     dep         = 12;
+    // Needed for catalog view
+    optional string             owner_name  = 13;
+    optional string             desc        = 14;
 }
 
+/*
 message CatItemInfoData
 {
     required string             id          = 1;
@@ -184,6 +192,7 @@ message CatItemInfoData
     optional string             brief       = 7;
     optional double             size        = 8;
 }
+*/
 
 message TagData
 {
@@ -203,23 +212,25 @@ message RecordData
     optional string             alias       = 3;
     optional string             desc        = 4;
     repeated string             tags        = 5;
-    optional string             doi         = 6;
-    optional string             data_url    = 7;
-    optional string             metadata    = 8;
+    optional string             metadata    = 6;
+    optional bool               external    = 7;
+    optional string             source      = 8;
     optional string             repo_id     = 9;
     optional double             size        = 10;
-    optional string             source      = 11;
-    optional string             ext         = 12;
-    optional bool               ext_auto    = 13;
-    optional uint32             ct          = 14;
-    optional uint32             ut          = 15;
-    optional uint32             dt          = 16;
-    optional string             owner       = 17;
-    optional string             creator     = 18;
-    optional bool               locked      = 19;
-    optional string             parent_id   = 20;
-    repeated DependencyData     deps        = 21;
-    optional uint32             notes       = 22;
+    optional string             ext         = 11;
+    optional bool               ext_auto    = 12;
+    optional uint32             ct          = 13;
+    optional uint32             ut          = 14;
+    optional uint32             dt          = 15;
+    optional string             owner       = 16;
+    optional string             creator     = 17;
+    optional bool               locked      = 18;
+    optional string             parent_id   = 19;
+    repeated DependencyData     deps        = 20;
+    optional uint32             notes       = 21;
+    optional string             md_err_msg  = 22;
+    optional string             sch_id      = 23;
+    optional uint32             sch_ver     = 24;
 }
 
 // Fields required for a data repo to locate raw data
@@ -252,10 +263,11 @@ message CollData
     repeated string             tags        = 5;
     optional string             topic       = 6;
     optional string             owner       = 7;
-    optional uint32             ct          = 8;
-    optional uint32             ut          = 9;
-    optional string             parent_id   = 10;
-    optional uint32             notes       = 11;
+    optional string             creator     = 8;
+    optional uint32             ct          = 9;
+    optional uint32             ut          = 10;
+    optional string             parent_id   = 11;
+    optional uint32             notes       = 12;
 }
 
 message GroupData
@@ -304,18 +316,6 @@ message RepoData
     repeated string             admin       = 11;
 }
 
-message QueryData
-{
-    required string             id          = 1;
-    required string             title       = 2;
-    required string             query       = 3;
-    optional string             owner       = 4;
-    optional bool               use_owner   = 5;
-    optional bool               use_sh_usr  = 6;
-    optional bool               use_sh_prj  = 7;
-    optional uint32             ct          = 8;
-    optional uint32             ut          = 9;
-}
 
 // -------------------------------------------- ANNOTATION DEFINES
 
@@ -424,4 +424,23 @@ message HttpXfrData
     required uint32             updated     = 6;
     required bool               failed      = 7;
     optional string             err_msg     = 8; // Only set if status == XFR_FAILED
+}
+
+// -------------------------------------------------- TASK DEFINES
+
+message SchemaData
+{
+    required string             id          = 1;
+    required uint32             ver         = 2;
+    optional bool               depr        = 3;
+    optional uint32             cnt         = 4;
+    optional bool               ref         = 5;
+    optional string             own_id      = 6;
+    optional string             own_nm      = 7;
+    optional string             desc        = 8;
+    optional bool               pub         = 9;
+    optional string             def         = 10;
+    repeated SchemaData         uses        = 11;
+    repeated SchemaData         used_by     = 12;
+    // Add topics?
 }

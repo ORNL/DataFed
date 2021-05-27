@@ -1,17 +1,14 @@
-//import * as model from "./model.js";
-//import * as util from "./util.js";
 import * as api from "./api.js";
+import * as util from "./util.js";
 import * as dialogs from "./dialogs.js";
 import * as settings from "./settings.js";
 
 var topic_tree;
 
 window.pageLoadTopic = function( key, offset ){
-    //console.log("topic pageLoad",key, offset);
     var node = topic_tree.getNodeByKey( key );
     if ( node ){
         node.data.offset = offset;
-        //console.log("new offset:",node.data.offset);
         node.load(true);
     }
 };
@@ -25,7 +22,6 @@ export function show( a_cb ){
 
     frame.html( html );
     var selection = false;
-    //var tree;
 
     api.topicListTopics( null, 0, null, function( ok, a_data ){
         if ( ok ){
@@ -49,7 +45,6 @@ export function show( a_cb ){
                 },
                 postProcess: function( event, data ) {
                     data.result = [];
-                    //console.log("post proc:",data.response);
 
                     if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
                         var pages = Math.ceil(data.response.total/settings.opts.page_sz), page = 1+data.response.offset/settings.opts.page_sz;
@@ -64,21 +59,13 @@ export function show( a_cb ){
                     for ( var i in data.response.topic ) {
                         top = data.response.topic[i];
                         title = util.escapeHTML(top.title);
-                        //if ( top.id.startsWith("t/"))
                         data.result.push({ title: title.charAt(0).toUpperCase() + title.substr(1), folder:true, icon:false, lazy: true, key: top.id, offset: 0 } );
                     }
-
-                    //if ( !data.result.length )
-                    //    data.result.push({title:"(empty)",icon:false});
                 },
                 collapse: function( ev, data ){
                     console.log("reset",data.node);
                     data.node.resetLazy();
                 },
-                /*beforeActivate: function(ev,data){
-                    if ( !data.node.key.startsWith("t/"))
-                        return false;
-                },*/
                 activate: function() {
                     if ( !selection ){
                         selection = true;
@@ -92,7 +79,6 @@ export function show( a_cb ){
                 }
             });
             topic_tree = $.ui.fancytree.getTree("#dlg_topic_tree");
-            //$("#dlg_topic_tree", frame).fancytree("getTree");
         }else{
             dialogs.dlgAlert("Service Error",data);
         }

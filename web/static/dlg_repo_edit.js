@@ -259,39 +259,11 @@ export function show( a_repo_id, a_cb ){
 
     var alloc_tree = $.ui.fancytree.getTree($("#alloc_tree",frame));
 
-    if ( a_repo_id != null ){
-        api.repoView( a_repo_id, function( ok, a_repo ){
-            if ( ok && a_repo.length ){
-                repo = a_repo[0];
-                initForm();
-            }
-        });
-
-        api.allocStats( a_repo_id, null, function( ok, stats ){
-            if ( ok ){
-                initStats( stats );
-            }
-        });
-
-        api.allocList( a_repo_id, function( ok, alloc ){
-            if ( ok ){
-                initAlloc( alloc );
-            }
-        });
-    }else{
-        $("#stat_alloc_btn",frame).button("option", "disabled", true);
-        $("#add_alloc_btn",frame).button("option", "disabled", true);
-        $("#edit_alloc_btn",frame).button("option", "disabled", true);
-        $("#del_alloc_btn",frame).button("option", "disabled", true);
-        $("#id",frame).attr("disabled", false);
-        $(".edit-only",frame).hide();
-    }
-
     var options = {
         title: (a_repo_id?"Edit":"New") + " Data Repository",
         modal: true,
         width: 750,
-        height: 'auto',
+        height: 550, // NOTE: Chrome does not layout dialog correctly with auto height
         resizable: true,
         buttons: [{
             text: a_repo_id?"Close":"Cancel",
@@ -408,9 +380,40 @@ export function show( a_repo_id, a_cb ){
             }
         }],
         open: function(event,ui){
-            if ( a_repo_id ){
+            if ( a_repo_id != null ){
+                api.repoView( a_repo_id, function( ok, a_repo ){
+                    if ( ok && a_repo.length ){
+                        repo = a_repo[0];
+                        initForm();
+                    }
+                });
+        
+                api.allocStats( a_repo_id, null, function( ok, stats ){
+                    if ( ok ){
+                        initStats( stats );
+                    }
+                });
+        
+                api.allocList( a_repo_id, function( ok, alloc ){
+                    if ( ok ){
+                        initAlloc( alloc );
+                    }
+                });
+
                 $("#apply_btn").button("option", "disabled", true);
+            }else{
+                $("#stat_alloc_btn",frame).button("option", "disabled", true);
+                $("#add_alloc_btn",frame).button("option", "disabled", true);
+                $("#edit_alloc_btn",frame).button("option", "disabled", true);
+                $("#del_alloc_btn",frame).button("option", "disabled", true);
+                $("#id",frame).attr("disabled", false);
+                $(".edit-only",frame).hide();
             }
+        
+            //if ( a_repo_id ){
+            //    $("#apply_btn").button("option", "disabled", true);
+           // }
+
             var widget = frame.dialog( "widget" );
             $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>* Required fields</span>");
         },

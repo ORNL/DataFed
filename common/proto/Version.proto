@@ -1,8 +1,10 @@
+syntax = "proto2";
+
 enum Version
 {
     option allow_alias = true;
     VER_MAJOR = 1;
-    VER_MAPI_MAJOR = 1;
+    VER_MAPI_MAJOR = 2;
     VER_MAPI_MINOR = 0;
     VER_SERVER = 4;
     VER_CLIENT = 4;

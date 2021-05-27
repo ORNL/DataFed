@@ -4,6 +4,7 @@ import * as util from "./util.js";
 import * as settings from "./settings.js";
 import * as dialogs from "./dialogs.js";
 import * as dlgStartXfer from "./dlg_start_xfer.js";
+import * as dlgSchList from "./dlg_schema_list.js";
 
 export var DLG_DATA_MODE_NEW = 0;
 export var DLG_DATA_MODE_EDIT = 1;
@@ -22,29 +23,58 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         ref_rows = 1,
         orig_deps = [],
         encrypt_mode = 1,
-        //is_published,
         parent_coll;
     
-    //console.log("data:",a_data);
-
-    //<tr><td>Tags:</td><td colspan='3'><input title='Tags (optional, space delimited)' type='text' id='tags' style='width:100%'></input></td></tr>
-
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
             <ul>\
                 <li><a href='#tab-dlg-gen'>General</a></li>\
-                <li><a href='#tab-dlg-ref'>References</a></li>\
-                <li><a href='#tab-dlg-data'>Data</a></li>\
+                <!-- li><a href='#tab-dlg-data'>Data</a></li -->\
                 <li><a href='#tab-dlg-meta'>Metadata</a></li>\
+                <li><a href='#tab-dlg-ref'>References</a></li>\
             </ul>\
             <div id='tab-dlg-gen' style='padding:1em'>\
                 <table class='form-table'>\
                     <tr><td>Title: <span class='note'>*</span></td><td colspan='3'><input title='Title string (required)' type='text' id='title' maxlength='80' style='width:100%'></input></td></tr>\
                     <tr><td>Alias:</td><td colspan='3'><input title='Alias ID (optional)' type='text' maxlength='40' id='alias' style='width:100%'></input></td></tr>\
-                    <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' maxlength='2000' rows=6 style='width:100%;padding:0'></textarea></td></tr>\
-                    <tr><td style='vertical-align:top'>Tags:</td><td colspan='3'><ul id='tags' class='input-bg'></ul></td></tr>\
+                    <tr><td style='vertical-align:top'>Description:</td><td colspan='3'><textarea title='Description string (optional)' id='desc' maxlength='2000' rows=8 style='width:100%;padding:0'></textarea></td></tr>\
+                    <tr><td style='vertical-align:top'>Tags:</td><td colspan='3'><ul id='tags' class='input-bg' style='padding:.25em'></ul></td></tr>\
                     <tr id='dlg_coll_row'><td>Parent: <span class='note'>*</span></td><td colspan='3'><input title='Parent collection ID or alias (required)' type='text' id='coll' style='width:100%'></input></td></tr>\
+                    <tr id='dlg_alloc_row'>\
+                        <td>Allocation:</td><td><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td>\
+                        <td colspan='2'><span title='External source data file' style='display:inline-block;white-space:nowrap'><label for='external'>External</label><input id='external' type='checkbox'></input></span></td>\
+                    </tr>\
+                    <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%'></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-file'></span></button></tr>\
+                    <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
                 </table>\
+            </div>\
+            <div id='tab-dlg-meta' style='padding:1em'>\
+                <div class='col-flex' style='height:100%'>\
+                    <div style='flex:none;padding-bottom:0.25em'>\
+                        Metadata (JSON): <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
+                    </div>\
+                    <div class='ui-widget ui-widget-content' style='flex:1 1 100%;padding:0'>\
+                        <div id='md' style='height:100%;width:100%'></div>\
+                    </div>\
+                    <div id='dlg_md_row2' style='flex:none;padding-top:.5em'><span>Update mode:</span>\
+                        <input type='radio' id='md_merge' name='md_mode' value='merge'/>\
+                        <label for='md_merge'>Merge</label>\
+                        <input type='radio' id='md_set' name='md_mode' value='set' checked/>\
+                        <label for='md_set'>Replace</label>\
+                    </div>\
+                    <div  style='flex:none;padding-top:0.5em'>\
+                        <table class='form-table' style='border-collapse: collapse'>\
+                            <tr>\
+                                <td>Schema:&nbsp</td>\
+                                <td><input id='sch_id' type='text' style='width:100%'></input></td>\
+                                <td><button title='Reset schema' id='sch_reset' class='btn btn-icon-tiny' style='margin-left:0.25em'><span class='ui-icon ui-icon-close'></span></button></td>\
+                                <td><button title='Browse schemas' id='sch_pick' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-structure'></span></button></td>\
+                                <td><button title='Validate with specified schemas' id='md_validate' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-refresh'></span></button></td>\
+                            </tr>\
+                        </table>\
+                    </div>\
+                    <div id='md_err_msg' class='ui-widget content' style='flex:none;padding:.5em;white-space:pre-wrap;max-height:4em;overflow:auto;margin-top:0.5em;display:none'></div>\
+                </div>\
             </div>\
             <div id='tab-dlg-ref' style='padding:1em'>\
                 <div class='col-flex' style='height:100%'>\
@@ -56,45 +86,8 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     <div style='flex:none;padding:1em 0 0 .1em'><button title='Add new reference' class='btn add-ref'>Add Reference</button></div>\
                 </div>\
             </div>\
-            <div id='tab-dlg-data' style='padding:1em'>\
-                <!-- span title='Set data mode to published.' style='display:inline-block;white-space:nowrap'><label for='published'>Published Data</label><input id='published' type='checkbox'></input> <span id='pub_del_warn_ast' style='display:none' class='note'>**</span></span><br><br -->\
-                <div id='working_data'>\
-                    <table class='form-table'>\
-                        <tr id='dlg_alloc_row'><td>Allocation:</td><td colspan='3'><select title='Data repository allocation (required)' id='alloc'><option value='bad'>----</option></select></td></tr>\
-                        <tr id='dlg_put_row'><td>Source:</td><td colspan='2'><input title='Full globus path to source data file (optional)' type='text' id='source_file' style='width:100%' readonly></input></td><td style='width:1em'><button title='Browse end-points' id='pick_source' class='btn btn-icon-tiny'><span class='ui-icon ui-icon-file'></span></button></tr>\
-                        <tr><td>Extension:</td><td><input title='Data record file extension (optional)' type='text' id='extension' style='width:100%'></input></td><td colspan='2'><span title='Automatically assign extension from source data file' style='display:inline-block;white-space:nowrap'><label for='ext_auto'>Auto&nbspExt.</label><input id='ext_auto' type='checkbox'></input></span></td></tr>\
-                    </table>\
-                </div>\
-                <!-- div id='published_data' style='display:none'>\
-                    <table class='form-table'>\
-                        <tr><td>DOI:</td><td colspan='3'><input title='DOI number (optional)' type='text' id='doi' style='width:100%'></input></td></tr>\
-                        <tr><td>Data&nbspURL:</td><td colspan='3'><input title='Data URL (optional)' type='text' id='data_url' style='width:100%'></input></td></tr>\
-                    </table>\
-                </div><br><br>\
-                <div id='pub_del_warn' style='display:none;width:100%' class='note'>\
-                    ** Setting record to published will delete associated DataFed-managed raw data.\
-                </div -->\
-                <div id='pub_upd_warn' style='display:none' class='note'>\
-                    Note: Editing data source information of published records is not recommended due to potential impact on data subscribers.\
-                </div>\
-            </div>\
-            <div id='tab-dlg-meta' style='padding:1em'>\
-                <div class='col-flex' style='height:100%'>\
-                    <div style='flex:none'>\
-                        Enter metadata as JSON: <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
-                    </div>\
-                    <div class='ui-widget ui-widget-content' style='flex:1 1 100%;padding:0'>\
-                        <div id='md' style='height:100%;width:100%'></div>\
-                    </div>\
-                    <div id='dlg_md_row2' style='flex:none;padding:.5em 2px 2px 2px'><span>Metadata update mode:</span>\
-                        <input type='radio' id='md_merge' name='md_mode' value='merge'/>\
-                        <label for='md_merge'>Merge</label>\
-                        <input type='radio' id='md_set' name='md_mode' value='set' checked/>\
-                        <label for='md_set'>Replace</label>\
-                    </div>\
-                </div>\
-            </div>\
         </div>" );
+
 
     var dlg_title;
     if ( a_data && ( a_mode == DLG_DATA_MODE_EDIT || a_mode == DLG_DATA_MODE_DUP ))
@@ -104,13 +97,16 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     else
         return;
 
-    var tag_el = $("#tags",frame);
+    var tag_el = $("#tags",frame),
+        ext_auto = $("#ext_auto",frame),
+        extension = $("#extension",frame),
+        extern = $("#external",frame);
 
     $("#pick_source",frame).on("click",function(){
         dlgStartXfer.show( null, null, function( a_path, a_encrypt_mode ){
             $("#source_file",frame).val( a_path );
             encrypt_mode = a_encrypt_mode;
-            if ( $("#ext_auto",frame).prop("checked") )
+            if ( ext_auto.prop("checked") )
                 updateAutoExt();
         });
     });
@@ -122,7 +118,47 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     $(".rem-ref",frame).on("click",function(ev){
         remRef(ev);
     });
+    
+    $("#sch_reset",frame).on("click",function(ev){
+        $("#sch_id",frame).val("");
+        $("#md_err_msg",frame).text("").hide();
+    });
 
+    $("#sch_pick",frame).on("click",function(ev){
+        dlgSchList.show( true, false, function( schema ){
+            $("#sch_id",frame).val( schema.id + ":" + schema.ver );
+            $("#md_err_msg",frame).text("").hide();
+        });
+    });
+
+    $("#md_validate",frame).on("click",function(ev){
+        var anno = jsoned.getSession().getAnnotations();
+
+        if ( anno && anno.length ){
+            dialogs.dlgAlert( "Validation Error", "Metadata input has unresolved JSON syntax errors.");
+            return;
+        }
+
+        var sch_id = $("#sch_id",frame).val().trim();
+
+        if ( !sch_id ){
+            dialogs.dlgAlert( "Validation Error", "Schema ID not specified.");
+            return;
+        }
+
+        api.metadataValidate( sch_id, jsoned.getValue(), function( ok, data ){
+            //console.log("val res:", ok, data );
+            if ( ok ){
+                if ( data.errors ){
+                    $("#md_err_msg",frame).text(data.errors).show();
+                }else{
+                    $("#md_err_msg",frame).text("").hide();
+                }
+            }else{
+                dialogs.dlgAlert( "Validation Error", data );;
+            }
+        });      
+    });
 
     function addRef(){
         var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");
@@ -205,23 +241,25 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 }
             }
         }
-        $("#extension",frame).val( ext + '(auto)');
+        extension.val( ext + '(auto)');
     }
 
     function callback( ok, reply ){
         if ( ok ) {
-            // Start transfer if source changed
-            var tmp = $("#source_file").val().trim();
-            if ( /*!is_published &&*/ tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
-                api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, reply2 ){
-                    if ( ok2 ){
-                        util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
-                    }else{
-                        dialogs.dlgAlert( "Transfer Error", reply2 );
-                    }
-                });
+            if (( a_data && !a_data.external ) || ( !a_data && !extern.prop( "checked" ))){
+                // Start transfer if source changed
+                var tmp = $("#source_file").val().trim();
+                if ( tmp && ( !a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP )){
+                    api.xfrStart( [reply.data[0].id], model.TT_DATA_PUT, tmp, 0, encrypt_mode, function( ok2, reply2 ){
+                        if ( ok2 ){
+                            util.setStatusText("Transfer initiated. Track progress under 'Transfer' tab.");
+                        }else{
+                            dialogs.dlgAlert( "Transfer Error", reply2 );
+                        }
+                    });
+                }
             }
-            
+
             dlg_inst.dialog('close');
 
             if ( a_cb )
@@ -271,18 +309,18 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
                 });
 
-                /*if ( $("#published",frame).prop("checked") )
-                    is_published = true;
-                else
-                    is_published = false;
-                    */
+                var sch_id = $("#sch_id",frame).val().trim();
 
-
+                if ( sch_id && settings.opts.meta_val ){
+                    obj.schValidate = true;
+                }
+    
                 if ( a_data && a_mode == DLG_DATA_MODE_EDIT ){
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), a_data, obj, "desc" );
                     util.getUpdatedValueJSON( jsoned.getValue(), a_data, obj, "metadata" );
+                    util.getUpdatedValue( sch_id, a_data, obj, "schId" );
 
                     obj.tags = tag_el.tagit("assignedTags");
 
@@ -303,32 +341,19 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         }
                     }
 
-                    /*if ( is_published ){
-                        var doi = $("#doi",frame).val(),
-                            data_url = $("#data_url",frame).val();
-
-                        if ( !doi || !data_url ){
-                            dialogs.dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
-                            return;
-                        }
-                        util.getUpdatedValue( doi, a_data, obj, "doi" );
-                        util.getUpdatedValue( data_url, a_data, obj, "dataUrl" );
-                    }else{*/
-                        if ( a_data.doi ){
-                            obj.doi="";
-                            obj.dataUrl="";
-                        }
-
-                        if ( $("#ext_auto",frame).prop("checked") ){
+                    if ( !a_data.external ){
+                        if ( ext_auto.prop("checked") ){
                             if ( !a_data.extAuto )
                                 obj.extAuto = true;
                         }else{
                             if ( a_data.extAuto )
                                 obj.extAuto = false;
 
-                            util.getUpdatedValue( $("#extension",frame).val(), a_data, obj, "ext" );
+                            util.getUpdatedValue( extension.val(), a_data, obj, "ext" );
                         }
-                    //}
+                    }else{
+                        util.getUpdatedValue( $("#source_file").val(), a_data, obj, "source" );
+                    }
 
                     if ( obj.metadata != undefined && $('input[name=md_mode]:checked', frame ).val() == "set" )
                         obj.mdset = true;
@@ -390,21 +415,25 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     util.getUpdatedValue( $("#title",frame).val(), {}, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), {}, obj, "alias" );
                     util.getUpdatedValue( $("#desc",frame).val(), {}, obj, "desc" );
+                    util.getUpdatedValue( sch_id, {}, obj, "schId" );
 
-                    /*if ( is_published ){
-                        util.getUpdatedValue( $("#doi",frame).val(), {}, obj, "doi" );
-                        util.getUpdatedValue( $("#data_url",frame).val(), {}, obj, "dataUrl" );
-                        if ( !obj.doi || !obj.dataUrl ){
-                            dialogs.dlgAlert( "Data Entry Error", "DOI and Data URL must be specified for published data.");
+                    if ( extern.prop("checked") ){
+                        obj.external = true;
+                        util.getUpdatedValue( $("#source_file").val(), {}, obj, "source" );
+                    }else{
+                        var repo_id = $("#alloc").val();
+                        if ( repo_id == "bad" ){
+                            dialogs.dlgAlert( "Data Entry Error", "Parent collection is invalid");
                             return;
-                        }
-                    }else{*/
-                        if ( $("#ext_auto",frame).prop("checked") ){
+                        }else if ( repo_id != 'default' )
+                            obj.repoId = repo_id;
+    
+                        if ( ext_auto.prop("checked") ){
                             obj.extAuto = true;
                         }else{
-                            util.getUpdatedValue( $("#extension",frame).val(), {}, obj, "ext" );
+                            util.getUpdatedValue( extension.val(), {}, obj, "ext" );
                         }
-                    //}
+                    }
 
                     var tmp = jsoned.getValue();
                     if ( tmp )
@@ -412,13 +441,6 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
 
                     if ( deps.length )
                         obj.deps = deps;
-
-                    var repo_id = $("#alloc").val();
-                    if ( repo_id == "bad" ){
-                        dialogs.dlgAlert( "Data Entry Error", "Parent collection is invalid");
-                        return;
-                    }else if (repo_id != 'default' )
-                        obj.repoId = repo_id;
 
                     obj.tags = tag_el.tagit("assignedTags");
 
@@ -482,6 +504,10 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
                 }
 
+                if ( a_data.schId ){
+                    $("#sch_id",frame).val(a_data.schId);
+                }
+
                 if ( a_data.metadata ){
                     var md = JSON.parse( a_data.metadata );
                     var txt = JSON.stringify( md, null, 4 );
@@ -513,6 +539,13 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         $("#md_merge",frame).attr('disabled',true);
                         $("#md_set",frame).attr('disabled',true);
                     }
+
+                    if ( a_data.mdErrMsg ){
+                        $("#md_err_msg",frame).text( a_data.mdErrMsg ).show();
+                    }else{
+                        $("#md_err_msg",frame).hide();
+                    }
+
                     if (( a_upd_perms & model.PERM_WR_REC ) == 0 ){
                         util.inputDisable( $("#title,#desc,#alias", frame ));
                         util.inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
@@ -522,30 +555,25 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                     }
 
                     if (( a_upd_perms & model.PERM_WR_DATA ) == 0 ){
-                        util.inputDisable( $("#extension,#doi,data_url,#pick_source", frame ));
-                        $("#ext_auto",frame).prop("disabled",true);
+                        util.inputDisable( $("#extension,#pick_source", frame ));
+                        ext_auto.prop("disabled",true);
                     }
 
                     $("#dlg_coll_row",frame).css("display","none");
                     $("#dlg_alloc_row",frame).css("display","none");
                     $("#source_file",frame).val(a_data.source);
-                    if ( a_data.extAuto ){
-                        $("#ext_auto",frame).prop("checked",true);
-                        $("#extension",frame).val(a_data.ext?a_data.ext + " (auto)":"(auto)").prop("disabled",true);
+
+                    if ( a_data.external ){
+                        ext_auto.prop("checked",true).prop("disabled",true);
+                        extension.val("(auto)").prop("disabled",true);
                     }else{
-                        $("#extension",frame).val(a_data.ext?a_data.ext:"");
+                        if ( a_data.extAuto ){
+                            ext_auto.prop("checked",true);
+                            extension.val(a_data.ext?a_data.ext + " (auto)":"(auto)").prop("disabled",true);
+                        }else{
+                            extension.val(a_data.ext?a_data.ext:"");
+                        }
                     }
-                    //$("#doi",frame).val(a_data.doi);
-                    //$("#data_url",frame).val(a_data.dataUrl);
-                    /*if ( a_data.dataUrl ){
-                        $("#published",frame).prop("checked",true);
-                        $("#working_data",frame).hide();
-                        $("#published_data",frame).show();
-                        $("#pub_upd_warn",frame).show();
-                        util.inputDisable( $("#alias", frame ));
-                    }else if ( a_data.size > 0 ){*/
-                        //$("#pub_del_warn,#pub_del_warn_ast",frame).show();
-                    //}
                 }else{
                     $("#dlg_md_row2",frame).css("display","none");
                     if ( a_parent )
@@ -557,36 +585,34 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 $("#title",frame).val("");
                 $("#alias",frame).val("");
                 $("#desc",frame).val("");
-                //$("#tags",frame).val("");
-                //$("#md",frame).val("");
                 $("#dlg_md_row2",frame).css("display","none");
                 if ( a_parent )
                     parent = a_parent;
-                $("#ext_auto",frame).prop("checked",true);
-                $("#extension",frame).val("(auto)").prop("disabled",true);
+                ext_auto.prop("checked",true);
+                extension.val("(auto)").prop("disabled",true);
             }
 
-            /*$("#published",frame).checkboxradio().on( "change",function(ev){
-                var pub = $("#published",frame).prop("checked");
-                if ( pub ){
-                    $("#working_data",frame).hide();
-                    $("#published_data",frame).show();
-                    $("#alias", frame ).val("");
-                    util.inputDisable( $("#alias", frame ));
+            extern.checkboxradio().on( "change",function(ev){
+                var chk = extern.prop("checked");
+                if ( chk ){
+                    $("#alloc",frame).prop("disabled",true).selectmenu("refresh");;
+                    ext_auto.prop("checked",true).prop("disabled",true);
+                    extension.val('(auto)').prop("disabled",true);
                 }else{
-                    $("#working_data",frame).show();
-                    $("#published_data",frame).hide();
-                    util.inputEnable( $("#alias", frame ));
+                    $("#alloc",frame).prop("disabled",false).selectmenu("refresh");;
+                    ext_auto.prop("disabled",false);
+                    extension.prop("disabled",false);
                 }
-            });*/
+                ext_auto.checkboxradio("refresh");
+            });
 
-            $("#ext_auto",frame).checkboxradio().on( "change",function(ev){
-                var auto = $("#ext_auto",frame).prop("checked");
+            ext_auto.checkboxradio().on( "change",function(ev){
+                var auto = ext_auto.prop("checked");
                 if ( auto ){
                     updateAutoExt();
-                    $("#extension",frame).prop("disabled",true);
+                    extension.prop("disabled",true);
                 }else{
-                    $("#extension",frame).val('').prop("disabled",false);
+                    extension.val('').prop("disabled",false);
                 }
             });
 

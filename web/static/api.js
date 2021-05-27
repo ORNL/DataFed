@@ -271,7 +271,7 @@ export function copyData( a_src_id, a_dst_id, a_cb ){
     _asyncGet( "/api/dat/copy?src=" + encodeURIComponent(a_src_id) + "&dst=" + encodeURIComponent(a_dst_id), null, a_cb);
 }
 
-export function dataFind( a_query, a_callback ) {
+export function dataSearch( a_query, a_callback ) {
     //_asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
     _asyncPost("/api/dat/search",a_query,a_callback);
 }
@@ -282,6 +282,11 @@ export function dataPubSearch( a_query, a_cb ){
 
 export function sendDataLock( a_ids, a_lock, a_cb ){
     _asyncGet( "/api/dat/lock?lock="+a_lock+"&ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
+}
+
+export function metadataValidate( a_sch_id, a_metadata, a_cb ){
+    var doc = { schId: a_sch_id, metadata: a_metadata };
+    _asyncPost( "/api/metadata/validate", doc, a_cb );
 }
 
 export function collView_url( a_id ) {
@@ -736,8 +741,8 @@ export function topicSearch( a_phrase, a_cb ){
     _asyncGet( topicSearch_url( a_phrase ), null, a_cb );
 }
 
-export function topicView_url( a_id, a_offset, a_count ){
-    return "/api/top/view?id=" + a_id;
+export function topicView_url( a_id ){
+    return "/api/top/view?id=" + encodeURIComponent(a_id);
 }
 
 export function topicView( a_id, a_cb ){
@@ -753,6 +758,50 @@ export function topicView( a_id, a_cb ){
     });
 }
 
+export function schemaView( a_id, a_res, a_cb ){
+    if ( !a_cb )
+        return;
+
+    _asyncGet( "/api/sch/view?id=" + encodeURIComponent(a_id) + (a_res?"&resolve=true":""), null, function( ok, reply ){
+        a_cb( ok, reply );
+    });
+}
+
+export function schemaSearch( a_req, a_cb ){
+    if ( !a_cb )
+        return;
+
+    _asyncPost( "/api/sch/search", a_req, a_cb );
+}
+
+export function schemaCreate( a_req, a_cb ){
+    _asyncPost( "/api/sch/create", a_req, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+    });
+}
+
+export function schemaUpdate( a_req, a_cb ){
+    _asyncPost( "/api/sch/update", a_req, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+    });
+}
+
+export function schemaRevise( a_req, a_cb ){
+    _asyncPost( "/api/sch/revise", a_req, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+    });
+}
+
+export function schemaDelete( a_id, a_cb ){
+    _asyncPost( "/api/sch/delete?id=" + a_id, {}, function( ok, reply ){
+        if ( a_cb )
+            a_cb( ok, reply );
+    });
+}
+
 export function queryList_url( a_offset, a_count ){
     return "/api/query/list?offset="+a_offset+"&count="+a_count;
 }
@@ -761,24 +810,22 @@ export function queryExec_url( a_id ){
     return "/api/query/exec?id=" + encodeURIComponent( a_id );
 }
 
-export function sendQueryCreate( a_title, a_query, a_callback ) {
-    //_asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
+export function queryCreate( a_title, a_query, a_callback ) {
     _asyncPost("/api/query/create?title="+encodeURIComponent(a_title),a_query,a_callback);
 }
 
-export function sendQueryUpdate( a_id, a_title, a_query, a_callback ) {
+export function queryUpdate( a_id, a_title, a_query, a_callback ) {
     var url = "/api/query/update?id="+a_id;
     if ( a_title != undefined )
         url += "&title=" + encodeURIComponent(a_title);
     _asyncPost(url,a_query,a_callback);
 }
 
-export function sendQueryDelete( a_ids, a_cb ){
+export function queryDelete( a_ids, a_cb ){
     _asyncGet( "/api/query/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb );
 }
 
-export function sendQueryView( a_id, a_callback ){
-    //console.log("sendQueryView,",a_id);
+export function queryView( a_id, a_callback ){
     _asyncGet("/api/query/view?id="+encodeURIComponent(a_id),null,a_callback);
 }
 

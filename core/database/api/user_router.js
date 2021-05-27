@@ -660,7 +660,7 @@ router.get('/delete', function (req, res) {
                 else {
                     user_id = client._id;
                 }
-                console.log( "delete user", user_id );
+                //console.log( "delete user", user_id );
 
                 var objects,subobjects,obj,subobj,i,j;
 
@@ -668,7 +668,7 @@ router.get('/delete', function (req, res) {
                 objects = g_db._query( "for v in 1..1 outbound @user ident return v._id", { user: user_id }).toArray();
                 for ( i in objects ) {
                     obj = objects[i];
-                    console.log( "del ident", obj );
+                    //console.log( "del ident", obj );
                     g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 
@@ -676,11 +676,11 @@ router.get('/delete', function (req, res) {
                 objects = g_db._query( "for v in 1..1 inbound @user owner filter is_same_collection('p',v) return v._id", { user: user_id }).toArray();
                 for ( i in objects ) {
                     obj = objects[i];
-                    console.log( "del proj", obj );
+                    //console.log( "del proj", obj );
                     subobjects = g_db._query( "for v in 1..1 inbound @proj owner return v._id", { proj: obj }).toArray();
                     for ( j in subobjects ) {
                         subobj = subobjects[j];
-                        console.log("del subobj",subobj);
+                        //console.log("del subobj",subobj);
                         g_graph[subobj.substr(0,subobj.indexOf("/"))].remove( subobj );
                     }
 
@@ -691,7 +691,7 @@ router.get('/delete', function (req, res) {
                 objects = g_db._query( "for v in 1..1 inbound @user owner return v._id", { user: user_id }).toArray();
                 for ( i in objects ) {
                     obj = objects[i];
-                    console.log( "del owned", obj );
+                    //console.log( "del owned", obj );
                     g_graph[obj.substr(0,obj.indexOf("/"))].remove( obj );
                 }
 

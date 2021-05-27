@@ -3,6 +3,8 @@
 #include <zmq.h>
 #include <unistd.h>
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
+#include <google/protobuf/util/json_util.h>
 #include "Util.hpp"
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
@@ -47,7 +49,11 @@ DatabaseAPI::~DatabaseAPI()
 void
 DatabaseAPI::setClient( const std::string & a_client )
 {
-    m_client_uid = a_client.size()?(string("u/") + a_client):"";
+    if ( a_client.size() )
+        m_client_uid = ( a_client.compare(0,2,"u/") == 0 ? a_client : ( string("u/") + a_client ));
+    else
+        m_client_uid = "";
+
     if ( m_client )
         curl_free( m_client );
 
@@ -57,6 +63,8 @@ DatabaseAPI::setClient( const std::string & a_client )
 long
 DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, libjson::Value & a_result, bool a_log )
 {
+    (void)a_log;
+
     a_result.clear();
 
     string  url;
@@ -191,6 +199,7 @@ long
 DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, Value & a_result )
 {
     //DL_DEBUG( "dbPost " << a_url_path << " [" << (a_body?*a_body:"") << "]" );
+    static const char * empty_body = "";
 
     a_result.clear();
 
@@ -220,14 +229,15 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         curl_free( esc_txt );
     }
 
-    DL_TRACE( "post url: " << url );
+    //DL_TRACE( "post url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
     curl_easy_setopt( m_curl, CURLOPT_POST, 1 );
-    if ( a_body )
-        curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, a_body->c_str() );
+
+    // libcurl seems to no longer work with POSTs without a body, so must set body to an empty string
+    curl_easy_setopt( m_curl, CURLOPT_POSTFIELDS, a_body?a_body->c_str():empty_body );
 
     CURLcode res = curl_easy_perform( m_curl );
 
@@ -258,6 +268,8 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         {
             if ( res_json.size() && a_result.asObject().has( "errorMessage" ))
             {
+                DL_DEBUG( "dbPost FAILED " << url << " [" << (a_body?*a_body:"") << "]" );
+
                 EXCEPT_PARAM( ID_BAD_REQUEST, a_result.asObject().asString());
             }
             else
@@ -271,6 +283,7 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         EXCEPT_PARAM( ID_SERVICE_ERROR, "SDMS DB interface failed. error: " << error << ", " << curl_easy_strerror( res ));
     }
 }
+
 
 void
 DatabaseAPI::serverPing()
@@ -380,7 +393,7 @@ DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_to
 void
 DatabaseAPI::userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok )
 {
-    DL_DEBUG("userSetAccessToken: " << a_acc_tok  << " : " << a_ref_tok << " : " << a_expires_in );
+    //DL_DEBUG("userSetAccessToken: " << a_acc_tok  << " : " << a_ref_tok << " : " << a_expires_in );
     string result;
     dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok},{"expires_in",to_string(a_expires_in)}}, result );
 }
@@ -661,7 +674,7 @@ DatabaseAPI::setUserData( Anon::UserDataReply & a_reply, const Value & a_result 
 }
 
 void
-DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Anon::ProjectDataReply & a_reply )
+DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -704,7 +717,7 @@ DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Anon::Pro
 }
 
 void
-DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Anon::ProjectDataReply & a_reply )
+DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -749,7 +762,7 @@ DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Anon::Pro
 }
 
 void
-DatabaseAPI::projView( const Anon::ProjectViewRequest & a_request, Anon::ProjectDataReply & a_reply )
+DatabaseAPI::projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply )
 {
     Value result;
     dbGet( "prj/view", {{"id",a_request.id()}}, result );
@@ -758,7 +771,7 @@ DatabaseAPI::projView( const Anon::ProjectViewRequest & a_request, Anon::Project
 }
 
 void
-DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -800,7 +813,7 @@ DatabaseAPI::projGetRole( const Auth::ProjectGetRoleRequest & a_request, Auth::P
 }
 
 void
-DatabaseAPI::projSearch( const std::string & a_query, Anon::ProjectDataReply & a_reply )
+DatabaseAPI::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply )
 {
     Value result;
 
@@ -811,7 +824,7 @@ DatabaseAPI::projSearch( const std::string & a_query, Anon::ProjectDataReply & a
 
 
 void
-DatabaseAPI::setProjectData( Anon::ProjectDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setProjectData( Auth::ProjectDataReply & a_reply, const Value & a_result )
 {
     ProjectData*            proj;
     Value::ArrayConstIter   k;
@@ -868,47 +881,9 @@ DatabaseAPI::setProjectData( Anon::ProjectDataReply & a_reply, const Value & a_r
     TRANSLATE_END( a_result )
 }
 
-void
-DatabaseAPI::recordSearch( const RecordSearchRequest & a_request, Anon::ListingReply & a_reply )
-{
-    Value result;
-    vector<pair<string,string>> params;
-    params.push_back({"query",a_request.query()});
-    params.push_back({"use_client",a_request.use_client()?"true":"false"});
-    params.push_back({"use_shared_users",a_request.use_shared_users()?"true":"false"});
-    params.push_back({"use_shared_projects",a_request.use_shared_projects()?"true":"false"});
-    if ( a_request.has_offset())
-        params.push_back({"offset",to_string(a_request.offset())});
-    if ( a_request.has_count() )
-        params.push_back({"count",to_string(a_request.count())});
-
-    dbGet( "/dat/search", params, result );
-
-    setListingDataReply( a_reply, result );
-}
 
 void
-DatabaseAPI::recordSearchPublished( const Anon::RecordSearchPublishedRequest & a_request, Anon::ListingReply & a_reply )
-{
-    Value result;
-    string query, params;
-    
-    parseRecordSearchPublishedRequest( a_request, query, params );
-
-    if ( params.size() )
-        params[0] = ' '; // Get rid of leading delimiter;
-
-    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"}}";
-
-    DL_INFO("Record Search Pub Req: [" << body << "]");
-
-    dbPost( "/col/pub/search", {}, &body, result );
-
-    setListingDataReply( a_reply, result );
-}
-
-void
-DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -926,7 +901,7 @@ DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request
 
 
 void
-DatabaseAPI::recordView( const Anon::RecordViewRequest & a_request, Anon::RecordDataReply & a_reply )
+DatabaseAPI::recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply )
 {
     Value result;
 
@@ -936,11 +911,21 @@ DatabaseAPI::recordView( const Anon::RecordViewRequest & a_request, Anon::Record
 }
 
 void
-DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::RecordDataReply & a_reply )
+DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply )
 {
     Value result;
 
-    string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+    string body;
+
+    if ( a_request.has_metadata() )
+        body.reserve( a_request.metadata().size() + 4*1024 );
+    else
+        body.reserve( 4*1024 );
+
+    body.append( "{\"title\":\"" );
+    body.append( escapeJSON( a_request.title() ));
+    body.append( "\"" );
+
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
     if ( a_request.has_alias() )
@@ -960,12 +945,18 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::Re
 
     if ( a_request.has_metadata() )
         body += ",\"md\":" + a_request.metadata();
-    if ( a_request.has_doi() )
-        body += string(",\"doi\":\"") + a_request.doi() + "\"";
-    if ( a_request.has_data_url() )
-        body += string(",\"data_url\":\"") + a_request.data_url() + "\"";
+    if ( a_request.has_sch_id() )
+        body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
     if ( a_request.has_parent_id() )
         body += ",\"parent\":\"" + a_request.parent_id() + "\"";
+    if ( a_request.has_external() )
+    {
+        body.append( ",\"external\":\"" );
+        body.append( a_request.external()?"true":"false" );
+        body.append( "\"" );
+    }
+    if ( a_request.has_source() )
+        body += ",\"source\":\"" + a_request.source() + "\"";
     if ( a_request.has_repo_id() )
         body += ",\"repo\":\"" + a_request.repo_id() + "\"";
     if ( a_request.deps_size() )
@@ -986,7 +977,7 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Anon::Re
 }
 
 void
-DatabaseAPI::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Anon::RecordDataReply & a_reply )
+DatabaseAPI::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply )
 {
     Value result;
 
@@ -996,7 +987,7 @@ DatabaseAPI::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request
 }
 
 void
-DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result )
+DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
 {
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
@@ -1031,20 +1022,18 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
             body += (a_request.mdset()?"true":"false");
         }
     }
-    if ( a_request.has_doi() )
-        body += string(",\"doi\":\"") + a_request.doi() + "\"";
-    if ( a_request.has_data_url() )
-        body += string(",\"data_url\":\"") + a_request.data_url() + "\"";
-    if ( a_request.has_size() )
-        body += ",\"size\":" + to_string(a_request.size());
+    if ( a_request.has_sch_id() )
+        body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
+    //if ( a_request.has_size() )
+    //    body += ",\"size\":" + to_string(a_request.size());
     if ( a_request.has_source() )
         body += ",\"source\":\"" + a_request.source() + "\"";
     if ( a_request.has_ext() )
         body += ",\"ext\":\"" + a_request.ext() + "\"";
     if ( a_request.has_ext_auto() )
         body += string(",\"ext_auto\":") + (a_request.ext_auto()?"true":"false");
-    if ( a_request.has_dt() )
-        body += ",\"dt\":" + to_string(a_request.dt());
+    //if ( a_request.has_dt() )
+    //    body += ",\"dt\":" + to_string(a_request.dt());
 
     if ( a_request.dep_add_size() )
     {
@@ -1068,6 +1057,8 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
 
     body += "}";
 
+    //DL_INFO("update body[" << body << "]");
+
     dbPost( "dat/update", {}, &body, result );
 
     setRecordData( a_reply, result );
@@ -1075,7 +1066,7 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Anon::Re
 
 
 void
-DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Anon::RecordDataReply & a_reply, libjson::Value & result )
+DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
 {
     // "records" field is a JSON document - send directly to DB
     dbPost( "dat/update/batch", {}, &a_request.records(), result );
@@ -1101,6 +1092,14 @@ DatabaseAPI::recordUpdateSize( const Auth::RepoDataSizeReply & a_size_rep )
     body += "]}";
 
     dbPost( "dat/update/size", {}, &body, result );
+}
+
+void
+DatabaseAPI::recordUpdateSchemaError( const std::string & a_rec_id, const std::string & a_err_msg )
+{
+    libjson::Value result;
+
+    dbPost( "dat/update/md_err_msg", {{"id", a_rec_id }}, &a_err_msg, result );
 }
 
 void
@@ -1132,7 +1131,7 @@ DatabaseAPI::recordExport( const Auth::RecordExportRequest & a_request, Auth::Re
 }
 
 void
-DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     string ids;
@@ -1157,29 +1156,9 @@ DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Anon::Listin
     setListingDataReply( a_reply, result );
 }
 
-/*void
-DatabaseAPI::recordGetDependencies( const Auth::RecordGetDependenciesRequest & a_request, Anon::ListingReply & a_reply )
-{
-    Value result;
-
-    string ids="[";
-    for ( int i = 0; i < a_request.id_size(); i++ )
-    {
-        if ( i > 0 )
-            ids += ",";
-
-        ids += "\"" + a_request.id(i) + "\"";
-    }
-    ids += "]";
-
-    dbGet( "dat/dep/get", {{"ids", ids}}, result );
-
-    setListingDataReply( a_reply, result );
-}*/
-
 
 void
-DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
 
@@ -1190,18 +1169,7 @@ DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphReque
 
 
 void
-DatabaseAPI::doiView( const Anon::DOIViewRequest & a_request, Anon::RecordDataReply & a_reply )
-{
-    Value result;
-
-    dbGet( "dat/view/doi", {{"doi",a_request.doi()}}, result );
-
-    setRecordData( a_reply, result );
-}
-
-
-void
-DatabaseAPI::setRecordData( Anon::RecordDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setRecordData( Auth::RecordDataReply & a_reply, const Value & a_result )
 {
     RecordData *        rec;
     DependencyData *    deps;
@@ -1246,14 +1214,17 @@ DatabaseAPI::setRecordData( Anon::RecordDataReply & a_reply, const Value & a_res
                 }
             }
 
-            if ( obj.has( "doi" ))
-                rec->set_doi( obj.asString() );
-
-            if ( obj.has( "data_url" ))
-                rec->set_data_url( obj.asString() );
-
             if ( obj.has( "md" ))
                 rec->set_metadata( obj.value().toString() );
+
+            if ( obj.has( "md_err_msg" ))
+                rec->set_md_err_msg( obj.asString() );
+
+            if ( obj.has( "sch_id" ))
+                rec->set_sch_id( obj.asString() );
+
+            if ( obj.has( "external" ))
+                rec->set_external( obj.asBool() );
 
             if ( obj.has( "repo_id" ))
                 rec->set_repo_id( obj.asString() );
@@ -1333,9 +1304,39 @@ DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathRe
     a_reply.set_path( obj.getString( "path" ));
 }
 
+/**
+ * @brief Search for private or public data or collections
+ *
+ * This is the entry point for all data/collection searches across all search scopes. It
+ * supports searching private data (personal, project, shared) and public (catalog). The
+ * SearchRequest message contains search parameters that apply conditionally based on
+ * scope and other search options. The search message is parsed and a query is composed
+ * and then sent to the database. While the query syntax is stable, the main query is
+ * prefixed differently depending on scope. The DB relies on either tha "dataview" or
+ * "collview" Arango search views for execution of the query.
+ */
+void
+DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::ListingReply & a_reply )
+{
+    Value result;
+    string qry_begin, qry_end, qry_filter, params;
+
+    uint32_t cnt = parseSearchRequest( a_request, qry_begin, qry_end, qry_filter, params );
+
+    string body = "{\"mode\":"+to_string(a_request.mode()) + ",\"published\":"+ ((a_request.has_published() && a_request.published())?"true":"false") +
+        ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
+        "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
+
+    //DL_DEBUG("Query: [" << body << "]");
+
+    dbPost( "qry/exec/direct", {}, &body, result );
+
+    setListingDataReply( a_reply, result );
+}
+
 
 void
-DatabaseAPI::collList( const CollListRequest & a_request, Anon::CollDataReply & a_reply )
+DatabaseAPI::collList( const CollListRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
 
@@ -1348,7 +1349,7 @@ DatabaseAPI::collList( const CollListRequest & a_request, Anon::CollDataReply & 
 }
 
 void
-DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1366,7 +1367,7 @@ DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request
 }
 
 void
-DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Anon::CollDataReply & a_reply )
+DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
     string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
@@ -1403,7 +1404,7 @@ DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Anon::CollDa
 }
 
 void
-DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Anon::CollDataReply & a_reply )
+DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
     string body = "{\"id\":\"" + a_request.id() + "\"";
@@ -1445,7 +1446,7 @@ DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Anon::CollDa
 
 
 void
-DatabaseAPI::collView( const Anon::CollViewRequest & a_request, Anon::CollDataReply & a_reply )
+DatabaseAPI::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
 
@@ -1455,7 +1456,7 @@ DatabaseAPI::collView( const Anon::CollViewRequest & a_request, Anon::CollDataRe
 }
 
 void
-DatabaseAPI::collRead( const Anon::CollReadRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1471,7 +1472,7 @@ DatabaseAPI::collRead( const Anon::CollReadRequest & a_request, Anon::ListingRep
 }
 
 void
-DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply )
 {
     string add_list, rem_list;
     vector<pair<string,string>> params;
@@ -1563,88 +1564,9 @@ DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::
     a_reply.set_offset( result.asObject().getNumber( "offset" ));
 }
 
-void
-DatabaseAPI::catalogSearch( const Anon::CatalogSearchRequest & a_request, Anon::CatalogSearchReply & a_reply )
-{
-    Value result;
-    string query, params;
-
-    uint32_t cnt = parseCatalogSearchRequest( a_request, query, params );
-
-    if ( params.size() )
-        params[0] = ' '; // Get rid of leading delimiter;
-
-    string body = "{\"query\":\"" + query + "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
-
-    //DL_INFO("Coll Search Pub Req: [" << body << "]");
-
-    dbPost( "col/pub/search", {}, &body, result );
-
-    setCatalogSearchReply( a_reply, result );
-}
 
 void
-DatabaseAPI::setCatalogSearchReply( Anon::CatalogSearchReply & a_reply, const libjson::Value & a_result )
-{
-    Value::ObjectConstIter   j;
-
-    TRANSLATE_BEGIN()
-
-    const Value::Array & arr = a_result.asArray();
-
-    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
-    {
-        const Value::Object & obj = i->asObject();
-
-        if ( obj.has( "paging" ))
-        {
-            const Value::Object & obj2 = obj.asObject();
-
-            a_reply.set_offset( obj2.getNumber( "off" ));
-            a_reply.set_count( obj2.getNumber( "cnt" ));
-            a_reply.set_total( obj2.getNumber( "tot" ));
-        }
-        else
-        {
-            setCatItemInfoData( a_reply.add_item(), obj );
-        }
-    }
-
-    TRANSLATE_END( a_result )
-}
-
-
-void
-DatabaseAPI::setCatItemInfoData( CatItemInfoData * a_item, const Value::Object & a_obj )
-{
-    if ( a_obj.has( "id" ))
-        a_item->set_id( a_obj.asString() );
-    else if ( a_obj.has( "_id" ))
-        a_item->set_id( a_obj.asString() );
-
-    a_item->set_title( a_obj.getString( "title" ));
-    a_item->set_owner_id( a_obj.getString( "owner_id" ));
-
-    if ( a_obj.has( "owner_name" ) && !a_obj.value().isNull( ))
-        a_item->set_owner_name( a_obj.asString());
-
-    if ( a_obj.has( "alias" ) && !a_obj.value().isNull( ))
-        a_item->set_alias( a_obj.asString() );
-
-    if ( a_obj.has( "notes" ))
-        a_item->set_notes( a_obj.asNumber() );
-
-    if ( a_obj.has( "desc" ) && !a_obj.value().isNull( ))
-        a_item->set_brief( a_obj.asString() );
-
-    if ( a_obj.has( "size" ))
-        a_item->set_size( a_obj.asNumber() );
-}
-
-
-
-void
-DatabaseAPI::setCollData( Anon::CollDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setCollData( Auth::CollDataReply & a_reply, const libjson::Value & a_result )
 {
     CollData* coll;
     Value::ObjectConstIter j;
@@ -1696,6 +1618,9 @@ DatabaseAPI::setCollData( Anon::CollDataReply & a_reply, const libjson::Value & 
 
             if ( obj.has( "owner" ))
                 coll->set_owner( obj.asString() );
+
+            if ( obj.has( "creator" ))
+                coll->set_creator( obj.asString() );
 
             if ( obj.has( "notes" ))
                 coll->set_notes( obj.asNumber() );
@@ -1751,7 +1676,7 @@ DatabaseAPI::setCollPathData( CollPathReply & a_reply, const libjson::Value & a_
 }
 
 void
-DatabaseAPI::setListingDataReply( Anon::ListingReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setListingDataReply( Auth::ListingReply & a_reply, const libjson::Value & a_result )
 {
     Value::ObjectConstIter   j;
 
@@ -1796,17 +1721,20 @@ DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
     if ( a_obj.has( "owner" ) && !a_obj.value().isNull( ))
         a_item->set_owner( a_obj.asString() );
 
+    if ( a_obj.has( "owner_name" ) && !a_obj.value().isNull( ))
+        a_item->set_owner_name( a_obj.asString() );
+
     if ( a_obj.has( "creator" ) && !a_obj.value().isNull( ))
         a_item->set_creator( a_obj.asString() );
 
-    if ( a_obj.has( "doi" ) && !a_obj.value().isNull( ))
-        a_item->set_doi( a_obj.asString() );
-
-    if ( a_obj.has( "url" ) && !a_obj.value().isNull( ))
-        a_item->set_url( a_obj.asString() );
+    if ( a_obj.has( "desc" ) && !a_obj.value().isNull( ))
+        a_item->set_desc( a_obj.asString() );
 
     if ( a_obj.has( "size" ) && !a_obj.value().isNull( ))
         a_item->set_size( a_obj.asNumber() );
+
+    if ( a_obj.has( "external" ) && !a_obj.value().isNull( ))
+        a_item->set_external( a_obj.asBool() );
 
     if ( a_obj.has( "notes" ))
         a_item->set_notes( a_obj.asNumber() );
@@ -1843,7 +1771,7 @@ DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
 }
 
 void
-DatabaseAPI::queryList( const Auth::QueryListRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1861,19 +1789,35 @@ void
 DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply )
 {
     Value result;
-    vector<pair<string,string>> params;
+    //vector<pair<string,string>> params;
 
-    params.push_back({"title",a_request.title()});
-    params.push_back({"query",a_request.query()});
-    params.push_back({"query_comp",a_request.query_comp()});
-    if ( a_request.has_use_owner() )
-        params.push_back({"use_owner",a_request.use_owner()?"true":"false"});
-    if ( a_request.has_use_sh_usr() )
-        params.push_back({"use_sh_usr",a_request.use_sh_usr()?"true":"false"});
-    if ( a_request.has_use_sh_prj() )
-        params.push_back({"use_sh_prj",a_request.use_sh_prj()?"true":"false"});
+    string qry_begin, qry_end, qry_filter, params;
 
-    dbGet( "qry/create", params, result );
+    uint32_t cnt = parseSearchRequest( a_request.query(), qry_begin, qry_end, qry_filter, params );
+
+    google::protobuf::util::JsonPrintOptions options;
+    string query_json;
+
+    options.always_print_enums_as_ints = true;
+    options.preserve_proto_field_names = true;
+
+    google::protobuf::util::Status stat = google::protobuf::util::MessageToJsonString( a_request.query(), & query_json, options );
+    if ( !stat.ok() )
+    {
+        EXCEPT(1,"Invalid search request");
+    }
+
+    //DL_INFO("Orig search msg:" << query_json );
+
+    string body = string("{") +
+        "\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
+        "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt) +
+        ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"" +
+        ",\"query\":" + query_json + "}";
+
+    //DL_INFO("body:["<<body<<"]");
+
+    dbPost( "qry/create", {}, &body, result );
 
     setQueryData( a_reply, result );
 }
@@ -1882,33 +1826,60 @@ void
 DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply )
 {
     Value result;
-    vector<pair<string,string>> params;
+    string body = "{\"id\":\"" + a_request.id() + "\"";
 
-    params.push_back({"id",a_request.id()});
     if ( a_request.has_title() )
-        params.push_back({"title",a_request.title()});
-    if ( a_request.has_query() )
-        params.push_back({"query",a_request.query()});
-    if ( a_request.has_query_comp() )
-        params.push_back({"query_comp",a_request.query_comp()});
-    if ( a_request.has_use_owner() )
-        params.push_back({"use_owner",a_request.use_owner()?"true":"false"});
-    if ( a_request.has_use_sh_usr() )
-        params.push_back({"use_sh_usr",a_request.use_sh_usr()?"true":"false"});
-    if ( a_request.has_use_sh_prj() )
-        params.push_back({"use_sh_prj",a_request.use_sh_prj()?"true":"false"});
+    {
+        body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+    }
 
-    dbGet( "qry/update", params, result );
+    if ( a_request.has_query() )
+    {
+        string qry_begin, qry_end, qry_filter, params;
+
+        uint32_t cnt = parseSearchRequest( a_request.query(), qry_begin, qry_end, qry_filter, params );
+
+        google::protobuf::util::JsonPrintOptions options;
+        string query_json;
+
+        options.always_print_enums_as_ints = true;
+        options.preserve_proto_field_names = true;
+
+        google::protobuf::util::Status stat = google::protobuf::util::MessageToJsonString( a_request.query(), & query_json, options );
+        if ( !stat.ok() )
+        {
+            EXCEPT(1,"Invalid search request");
+        }
+
+        body += ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
+        "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt) + ",\"query\":" + query_json;
+    }
+
+    body += "}";
+
+    dbPost( "qry/update", {}, &body, result );
 
     setQueryData( a_reply, result );
 }
 
+//DatabaseAPI::queryDelete( const std::string & a_id )
 void
-DatabaseAPI::queryDelete( const std::string & a_id )
+DatabaseAPI::queryDelete( const Auth::QueryDeleteRequest & a_request, Anon::AckReply & a_reply )
 {
+    (void)a_reply;
     Value result;
+    string ids = "[";
 
-    dbGet( "qry/delete", {{"id",a_id}}, result );
+    for ( int i = 0; i < a_request.id_size(); i++ )
+    {
+        if ( i )
+            ids += ",";
+
+        ids += "\"" + a_request.id(i) + "\"";
+    }
+    ids += "]";
+
+    dbGet( "qry/delete", {{"ids",ids}}, result );
 }
 
 void
@@ -1922,7 +1893,7 @@ DatabaseAPI::queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDat
 }
 
 void
-DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Anon::ListingReply & a_reply )
+DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1941,38 +1912,20 @@ DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Anon::ListingR
 void
 DatabaseAPI::setQueryData( QueryDataReply & a_reply, const libjson::Value & a_result )
 {
-    QueryData *         qry;
-
     TRANSLATE_BEGIN()
 
-    const Value::Array & arr = a_result.asArray();
+    const Value::Object & obj = a_result.asObject();
 
-    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
+    a_reply.set_id( obj.getString( "id" ));
+    a_reply.set_title( obj.getString( "title" ));
+    a_reply.set_owner( obj.getString( "owner" ));
+    a_reply.set_ct( obj.getNumber( "ct" ) );
+    a_reply.set_ut( obj.getNumber( "ut" ) );
+
+    google::protobuf::util::Status stat = google::protobuf::util::JsonStringToMessage( obj.getValue( "query" ).toString(), a_reply.mutable_query()  );
+    if ( !stat.ok() )
     {
-        const Value::Object & obj = i->asObject();
-
-        qry = a_reply.add_query();
-        qry->set_id( obj.getString( "id" ));
-        qry->set_title( obj.getString( "title" ));
-        qry->set_query( obj.getString( "query" ));
-
-        if ( obj.has( "owner" ))
-            qry->set_owner( obj.asString() );
-
-        if ( obj.has( "ct" ))
-            qry->set_ct( obj.asNumber() );
-
-        if ( obj.has( "ut" ))
-            qry->set_ut( obj.asNumber() );
-
-        if ( obj.has( "use_owner" ) && !obj.value().isNull() )
-            qry->set_use_owner( obj.asBool() );
-
-        if ( obj.has( "use_sh_usr" ) && !obj.value().isNull() )
-            qry->set_use_sh_usr( obj.asBool() );
-
-        if ( obj.has( "use_sh_prj" ) && !obj.value().isNull() )
-            qry->set_use_sh_prj( obj.asBool() );
+        EXCEPT(1,"Query data reply parse error!");
     }
 
     TRANSLATE_END( a_result )
@@ -2005,7 +1958,7 @@ DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataR
 }
 
 void
-DatabaseAPI::aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Anon::ListingReply & a_reply )
+DatabaseAPI::aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2023,7 +1976,7 @@ DatabaseAPI::aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Anon::L
 }
 
 void
-DatabaseAPI::aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Anon::ListingReply & a_reply )
+DatabaseAPI::aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2634,7 +2587,7 @@ DatabaseAPI::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply
 }
 
 void
-DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, Anon::TopicDataReply  & a_reply )
+DatabaseAPI::topicListTopics( const Auth::TopicListTopicsRequest & a_request, Auth::TopicDataReply  & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2653,7 +2606,7 @@ DatabaseAPI::topicListTopics( const Anon::TopicListTopicsRequest & a_request, An
 }
 
 void
-DatabaseAPI::topicView( const Anon::TopicViewRequest  & a_request, Anon::TopicDataReply & a_reply )
+DatabaseAPI::topicView( const Auth::TopicViewRequest  & a_request, Auth::TopicDataReply & a_reply )
 {
     Value result;
 
@@ -2662,39 +2615,19 @@ DatabaseAPI::topicView( const Anon::TopicViewRequest  & a_request, Anon::TopicDa
     setTopicDataReply( a_reply, result );
 }
 
-/*void
-DatabaseAPI::topicListCollections( const Anon::TopicListCollectionsRequest & a_request, Anon::TopicListCollectionsReply & a_reply )
-{
-    Value result;
-    vector<pair<string,string>> params;
-    params.push_back({ "id", a_request.topic_id() });
-    if ( a_request.has_offset() && a_request.has_count() )
-    {
-        params.push_back({ "offset", to_string( a_request.offset() )});
-        params.push_back({ "count", to_string( a_request.count() )});
-    }
-
-    dbGet( "topic/list/coll", params, result );
-
-    setTopicListCollectionsReply( a_reply, result );
-}*/
 
 void
-DatabaseAPI::topicSearch( const Anon::TopicSearchRequest & a_request, Anon::TopicDataReply & a_reply )
+DatabaseAPI::topicSearch( const Auth::TopicSearchRequest & a_request, Auth::TopicDataReply & a_reply )
 {
     Value result;
 
     dbGet( "topic/search", {{"phrase",a_request.phrase()}}, result );
 
-    DL_INFO("srch res: " << result.toString());
-
     setTopicDataReply( a_reply, result );
-    //setListingDataReply( a_reply, result );
-    DL_INFO("reply: " << a_reply.DebugString() );
 }
 
 void
-DatabaseAPI::setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setTopicDataReply( Auth::TopicDataReply & a_reply, const libjson::Value & a_result )
 {
     TRANSLATE_BEGIN()
 
@@ -2749,8 +2682,10 @@ DatabaseAPI::setTopicDataReply( Anon::TopicDataReply & a_reply, const libjson::V
 }
 
 void
-DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
+    DL_INFO("annotationCreate");
+
     Value result;
     vector<pair<string,string>> params;
     params.push_back({ "type", to_string( a_request.type() )});
@@ -2765,8 +2700,10 @@ DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Anon::
 }
 
 void
-DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
+    DL_INFO("annotationUpdate");
+
     Value result;
     vector<pair<string,string>> params;
     params.push_back({ "id", a_request.id() });
@@ -2784,7 +2721,7 @@ DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Anon::
 }
 
 void
-DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2798,7 +2735,7 @@ DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a
 }
 
 void
-DatabaseAPI::annotationView( const Anon::AnnotationViewRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationView( const Auth::AnnotationViewRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
     Value result;
 
@@ -2808,7 +2745,7 @@ DatabaseAPI::annotationView( const Anon::AnnotationViewRequest & a_request, Anon
 }
 
 void
-DatabaseAPI::annotationListBySubject( const Anon::AnnotationListBySubjectRequest & a_request, Anon::AnnotationDataReply & a_reply )
+DatabaseAPI::annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply )
 {
     Value result;
 
@@ -2826,7 +2763,7 @@ DatabaseAPI::annotationPurge( uint32_t a_age_sec )
 }
 
 void
-DatabaseAPI::setNoteDataReply( Anon::AnnotationDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, const libjson::Value & a_result )
 {
     Value::ArrayConstIter    i;
 
@@ -2895,7 +2832,7 @@ DatabaseAPI::setNoteData( NoteData * a_note, const libjson::Value::Object & a_ob
 
 
 void
-DatabaseAPI::tagSearch( const Anon::TagSearchRequest & a_request, Anon::TagDataReply & a_reply )
+DatabaseAPI::tagSearch( const Auth::TagSearchRequest & a_request, Auth::TagDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2915,7 +2852,7 @@ DatabaseAPI::tagSearch( const Anon::TagSearchRequest & a_request, Anon::TagDataR
 
 
 void
-DatabaseAPI::tagListByCount( const Anon::TagListByCountRequest & a_request, Anon::TagDataReply & a_reply )
+DatabaseAPI::tagListByCount( const Auth::TagListByCountRequest & a_request, Auth::TagDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2932,7 +2869,7 @@ DatabaseAPI::tagListByCount( const Anon::TagListByCountRequest & a_request, Anon
 }
 
 void
-DatabaseAPI::setTagDataReply( Anon::TagDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setTagDataReply( Auth::TagDataReply & a_reply, const Value & a_result )
 {
     Value::ObjectConstIter   j;
 
@@ -2968,6 +2905,282 @@ DatabaseAPI::setTagData( TagData * a_tag, const libjson::Value::Object & a_obj )
     a_tag->set_name( a_obj.getString( "name" ));
     a_tag->set_count( a_obj.getNumber( "count" ));
 }
+
+
+void
+DatabaseAPI::schemaSearch( const Auth::SchemaSearchRequest & a_request, Auth::SchemaDataReply & a_reply )
+{
+    libjson::Value result;
+    vector<pair<string,string>> params;
+
+    if ( a_request.has_id() )
+        params.push_back({ "id", a_request.id() });
+    if ( a_request.has_text() )
+        params.push_back({ "text", a_request.text() });
+    if ( a_request.has_owner() )
+        params.push_back({ "owner", a_request.owner() });
+    if ( a_request.has_sort() )
+        params.push_back({ "sort", to_string( a_request.sort() )});
+    if ( a_request.has_sort_rev() )
+        params.push_back({ "sort_rev", a_request.sort_rev()?"true":"false" });
+    if ( a_request.has_offset( ))
+        params.push_back({ "offset", to_string( a_request.offset() )});
+    if ( a_request.has_count( ))
+        params.push_back({ "count", to_string( a_request.count() )});
+
+    dbGet( "schema/search", params, result );
+    setSchemaDataReply( a_reply, result );
+}
+
+
+void
+DatabaseAPI::schemaView( const Auth::SchemaViewRequest & a_request, Auth::SchemaDataReply & a_reply )
+{
+    libjson::Value result;
+    vector<pair<string,string>> params;
+
+    params.push_back({ "id", a_request.id() });
+    if ( a_request.has_resolve() && a_request.resolve() )
+        params.push_back({ "resolve", "true" });
+
+    dbGet( "schema/view", params, result );
+    setSchemaDataReply( a_reply, result );
+}
+
+void
+DatabaseAPI::schemaCreate( const Auth::SchemaCreateRequest & a_request )
+{
+    libjson::Value result;
+    string body = "{\"id\":\"";
+    body.append( a_request.id() );
+    body.append( "\",\"desc\":\"" );
+    body.append( escapeJSON( a_request.desc() ));
+    body.append( "\",\"pub\":" );
+    body.append( a_request.pub()?"true":"false" );
+    body.append( ",\"sys\":" );
+    body.append( a_request.sys()?"true":"false" );
+    body.append( ",\"def\":" );
+    body.append( a_request.def() );
+    body.append( "}" );
+
+    dbPost( "schema/create", {}, &body, result );
+}
+
+void
+DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request )
+{
+    libjson::Value result;
+    string body = "{";
+
+    if ( a_request.has_desc() )
+    {
+        body.append( "\"desc\":\"" );
+        body.append( a_request.desc() );
+        body.append( "\"" );
+    }
+
+    if ( a_request.has_pub() )
+    {
+        if ( body.size() > 1 )
+            body.append( "," );
+
+        body.append( "\"pub\":" );
+        body.append( a_request.pub()?"true":"false" );
+    }
+
+    if ( a_request.has_sys() )
+    {
+        if ( body.size() > 1 )
+            body.append( "," );
+
+        body.append( "\"sys\":" );
+        body.append( a_request.sys()?"true":"false" );
+    }
+
+    if ( a_request.has_def() )
+    {
+        if ( body.size() > 1 )
+            body.append( "," );
+
+        body.append( "\"def\":" );
+        body.append( a_request.def() );
+    }
+
+    body.append("}");
+
+    dbPost( "schema/revise", {{ "id", a_request.id() }}, &body, result );
+}
+
+
+void
+DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request )
+{
+    libjson::Value result;
+    string body = "{";
+
+    if ( a_request.has_id_new() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"id\":\"" );
+        body.append( a_request.id_new() );
+        body.append( "\"" );
+    }
+
+    if ( a_request.has_desc() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"desc\":\"" );
+        body.append( a_request.desc() );
+        body.append( "\"" );
+    }
+
+    if ( a_request.has_pub() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"pub\":" );
+        body.append( a_request.pub()?"true":"false" );
+    }
+
+    if ( a_request.has_sys() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"sys\":" );
+        body.append( a_request.sys()?"true":"false" );
+    }
+
+    if ( a_request.has_def() )
+    {
+        if ( body.size() > 1 )
+            body.append(",");
+
+        body.append( "\"def\":" );
+        body.append( a_request.def() );
+    }
+
+    body.append("}");
+
+    //DL_INFO("sch upd " << body );
+
+    dbPost( "schema/update", {{"id",a_request.id()}}, &body, result );
+}
+
+void
+DatabaseAPI::schemaDelete( const Auth::SchemaDeleteRequest & a_request, Anon::AckReply & a_reply )
+{
+    (void) a_reply;
+    libjson::Value result;
+
+    dbPost( "schema/delete", {{"id",a_request.id()}}, 0, result );
+}
+
+void
+DatabaseAPI::setSchemaDataReply( Auth::SchemaDataReply & a_reply, const libjson::Value & a_result )
+{
+    Value::ObjectConstIter   j;
+
+    TRANSLATE_BEGIN()
+
+    const Value::Array & arr = a_result.asArray();
+
+    for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
+    {
+        const Value::Object & obj = i->asObject();
+
+        if ( obj.has( "paging" ))
+        {
+            const Value::Object & obj2 = obj.asObject();
+
+            a_reply.set_offset( obj2.getNumber( "off" ));
+            a_reply.set_count( obj2.getNumber( "cnt" ));
+            a_reply.set_total( obj2.getNumber( "tot" ));
+        }
+        else
+        {
+            setSchemaData( a_reply.add_schema(), obj );
+        }
+    }
+
+    TRANSLATE_END( a_result )
+}
+
+
+void
+DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object & a_obj )
+{
+    a_schema->set_id( a_obj.getString( "id" ));
+    a_schema->set_ver( a_obj.getNumber( "ver" ));
+
+    if ( a_obj.has( "cnt" ))
+        a_schema->set_cnt( a_obj.asNumber() );
+
+    if ( a_obj.has( "own_id" ) && !a_obj.value().isNull() )
+        a_schema->set_own_id( a_obj.asString() );
+
+    if ( a_obj.has( "own_nm" ) && !a_obj.value().isNull() )
+        a_schema->set_own_nm( a_obj.asString() );
+
+    if ( a_obj.has( "desc" ))
+        a_schema->set_desc( a_obj.asString() );
+
+    if ( a_obj.has( "pub" ))
+        a_schema->set_pub( a_obj.asBool() );
+
+    if ( a_obj.has( "depr" ))
+        a_schema->set_depr( a_obj.asBool() );
+
+    if ( a_obj.has( "ref" ))
+        a_schema->set_ref( a_obj.asBool() );
+
+    if ( a_obj.has( "def" ))
+        a_schema->set_def( a_obj.value().toString() );
+
+    Value::ArrayConstIter j;
+    SchemaData * dep;
+
+    if ( a_obj.has( "uses" ) && a_obj.value().size() )
+    {
+        const Value::Array & arr = a_obj.asArray();
+
+        for ( j = arr.begin(); j != arr.end(); j++ )
+        {
+            const Value::Object & obj = j->asObject();
+            dep = a_schema->add_uses();
+            
+            dep->set_id( obj.getString( "id" ));
+            dep->set_ver( obj.getNumber( "ver" ));
+        }
+    }
+
+    if ( a_obj.has( "used_by" ) && a_obj.value().size() )
+    {
+        const Value::Array & arr = a_obj.asArray();
+
+        for ( j = arr.begin(); j != arr.end(); j++ )
+        {
+            const Value::Object & obj = j->asObject();
+            dep = a_schema->add_used_by();
+            
+            dep->set_id( obj.getString( "id" ));
+            dep->set_ver( obj.getNumber( "ver" ));
+        }
+    }
+}
+
+
+void
+DatabaseAPI::schemaView( const std::string & a_id, libjson::Value & a_result )
+{
+    dbGet( "schema/view", {{ "id", a_id }}, a_result );
+}
+
 
 void
 DatabaseAPI::taskLoadReady( libjson::Value & a_result )
@@ -3052,7 +3265,7 @@ DatabaseAPI::setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value
             setListingData( a_reply.add_item(), j->asObject() );
     }
 
-    if ( obj.has( "http_data" ) && obj.value().size() )
+    if ( obj.has( "ext_data" ) && obj.value().size() )
     {
         const Value::Array & arr = obj.asArray();
 
@@ -3529,20 +3742,34 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
     dbGet( "task/purge", {{"age_sec",to_string( a_age_sec )}}, result );
 }
 
-
 uint32_t
-DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_request, std::string & a_query, std::string & a_params, bool a_partial )
+DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_qry_begin, std::string & a_qry_end, std::string & a_qry_filter, std::string & a_params )
 {
-    a_query = string("for i in ") + (a_request.mode()==0?"collview":"dataview") + " search i.public == true";
+    string view = (a_request.mode()==SM_DATA?"dataview":"collview");
+
+    if ( a_request.has_published() && a_request.published() )
+    {
+        a_qry_begin = string("for i in ") + view + " search i.public == true";
+        if ( a_request.has_owner() )
+        {
+            a_qry_begin += " and i.owner == @owner";
+            a_params += ",\"owner\":\"" + a_request.owner() + "\"";
+        }
+    }
+    else
+    {
+        a_qry_begin = string("for i in ") + view + " search i.owner == @owner";
+        a_params += ",\"owner\":\"" + (a_request.has_owner()?a_request.owner():m_client_uid) + "\"";
+    }
 
     if ( a_request.has_text() > 0 )
     {
-        a_query += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
+        a_qry_begin += " and analyzer(" + parseSearchTextPhrase( a_request.text(), "i" ) + ",'text_en')";
     }
 
     if ( a_request.cat_tags_size() > 0 )
     {
-        a_query += " and @ctags all in i.cat_tags";
+        a_qry_begin += " and @ctags all in i.cat_tags";
 
         a_params += ",\"ctags\":[";
         for ( int i = 0; i < a_request.cat_tags_size(); ++i )
@@ -3556,7 +3783,7 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
 
     if ( a_request.tags_size() > 0 )
     {
-        a_query += " and @tags all in i.tags";
+        a_qry_begin += " and @tags all in i.tags";
 
         a_params += ",\"tags\":[";
         for ( int i = 0; i < a_request.tags_size(); ++i )
@@ -3570,81 +3797,136 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
 
     if ( a_request.has_id() )
     {
-        a_query += " and " + parseSearchIdAlias( a_request.id(), "i" );
+        a_qry_begin += " and " + parseSearchIdAlias( a_request.id(), "i" );
     }
 
-    if ( a_request.has_owner() )
+    if ( a_request.has_creator() )
     {
-        a_query += " and i.owner == @owner";
-        a_params += ",\"owner\":\"" + a_request.owner() + "\"";
+        a_qry_begin += " and i.creator == @creator";
+        a_params += ",\"creator\":\"" + a_request.creator() + "\"";
     }
 
     if ( a_request.has_from() )
     {
-        a_query += " and i.ut >= @utfr";
+        a_qry_begin += " and i.ut >= @utfr";
         a_params += ",\"utfr\":" + to_string( a_request.from() );
     }
 
     if ( a_request.has_to() )
     {
-        a_query += " and i.ut <= @utto";
+        a_qry_begin += " and i.ut <= @utto";
         a_params += ",\"utto\":" + to_string( a_request.to() );
     }
 
-    if ( a_request.mode() == 1 && a_request.has_meta() )
+    // Data-only search options
+    if ( a_request.mode() == SM_DATA )
     {
-        a_query += " filter first(for j in d filter j._id ==  i._id and (" + parseSearchMetadata( a_request.meta() ) + ") return true)";
-        //a_query += " and (" + parseSearchMetadata( a_request.meta() ) + ")";
-    }
-
-    if ( !a_partial )
-    {
-        bool sort_relevance = false;
-
-        a_query += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first)) sort ";
-
-        if ( a_request.has_sort() )
+        if ( a_request.has_sch_id() > 0 )
         {
-            switch( a_request.sort() )
-            {
-                case SORT_OWNER:
-                    a_query += "i.name";
-                    break;
-                case SORT_TIME_CREATE:
-                    a_query += "i.ct";
-                    break;
-                case SORT_TIME_UPDATE:
-                    a_query += "i.ut";
-                    break;
-                case SORT_RELEVANCE:
-                    if ( a_request.has_text() )
-                    {
-                        a_query += "BM25(i) DESC";
-                        sort_relevance = true;
-                    }
-                    else
-                    {
-                        a_query += "i.title";
-                    }
-                    break;
-                case SORT_TITLE:
-                default:
-                    a_query += "i.title";
-                    break;
-            }
-
-            if ( a_request.has_sort_rev() && a_request.sort_rev() && !sort_relevance )
-            {
-                a_query += " DESC";
-            }
+            a_qry_begin += " and i.sch_id == @sch";
+            a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\"";
         }
-        else
+
+        if ( a_request.has_meta_err() )
         {
-            a_query += " i.title";
+            a_qry_begin += " and i.md_err == true";
+        }
+
+        if ( a_request.has_meta() )
+        {
+            a_qry_filter = parseSearchMetadata( a_request.meta() );
         }
     }
 
-    a_query += " limit @off,@cnt";
+/*
+    switch ( a_request.scope() )
+    {
+        case SS_PERSONAL:
+            a_qry_begin = string("for i in ") + view + " search i.owner == @client" + a_qry_begin;
+            a_params += ",\"client\":\"" + m_client_uid + "\"";
+            break;
+        case SS_PROJECT:
+            if ( !a_request.has_owner() )
+                EXCEPT( 1, "Owner parameter missing for project scope." );
+
+            a_qry_begin = string("for i in ") + view + " search i.owner == @owner" + a_qry_begin;
+            a_params += ",\"owner\":\"" + a_request.owner() + "\"";
+            break;
+        case SS_SHARED:
+            if ( !a_request.has_owner() )
+                EXCEPT( 1, "Owner parameter missing for shared data scope." );
+
+            a_qry_begin = string("for i in ") + view + " search i.owner == @owner" + a_qry_begin;
+            a_params += ",\"owner\":\"" + a_request.owner() + "\"";
+            break;
+        case SS_PUBLIC:
+            if ( a_request.has_owner() )
+            {
+                a_qry_begin = " and i.owner == @owner" + a_qry_begin;
+                a_params += ",\"owner\":\"" + a_request.owner() + "\"";
+            }
+
+            a_qry_begin = string("for i in ") + view + " search i.public == true" + a_qry_begin;
+            break;
+    }
+*/
+
+    if ( a_request.coll_size() > 0 )
+    {
+        a_params += ",\"cols\":[";
+        for ( int i = 0; i < a_request.coll_size(); i++ ){
+            if ( i > 0 )
+                a_params += ",";
+            a_params += "\"" + a_request.coll(i) + "\"";
+        }
+        a_params += "]";
+    }
+
+    bool sort_relevance = false;
+
+    a_qry_end += " let name = (for j in u filter j._id == i.owner return concat(j.name_last,', ', j.name_first)) sort ";
+
+    if ( a_request.has_sort() )
+    {
+        switch( a_request.sort() )
+        {
+            case SORT_OWNER:
+                a_qry_end += "i.name";
+                break;
+            case SORT_TIME_CREATE:
+                a_qry_end += "i.ct";
+                break;
+            case SORT_TIME_UPDATE:
+                a_qry_end += "i.ut";
+                break;
+            case SORT_RELEVANCE:
+                if ( a_request.has_text() )
+                {
+                    a_qry_end += "BM25(i) DESC";
+                    sort_relevance = true;
+                }
+                else
+                {
+                    a_qry_end += "i.title";
+                }
+                break;
+            case SORT_TITLE:
+            default:
+                a_qry_end += "i.title";
+                break;
+        }
+
+        if ( a_request.has_sort_rev() && a_request.sort_rev() && !sort_relevance )
+        {
+            a_qry_end += " DESC";
+        }
+    }
+    else
+    {
+        a_qry_end += " i.title";
+    }
+
+    a_qry_end += " limit @off,@cnt";
 
     uint32_t cnt = min(a_request.has_count()?a_request.count():50,100U),
              off = a_request.has_offset()?a_request.offset():0;
@@ -3656,74 +3938,16 @@ DatabaseAPI::parseCatalogSearchRequest( const Anon::CatalogSearchRequest & a_req
     a_params += ",\"off\":" + to_string( off );
     a_params += ",\"cnt\":" + to_string( cnt + 1 ); // Add one to detect more results (truncated by DB)
 
-    // If not part of another query, build full query string
-    if ( !a_partial )
-    {
-        a_query += string(" return {_id:i._id,title:i.title,'desc':i['desc'],owner_id:i.owner,owner_name:name,alias:i.alias")+(a_request.mode()==1?",size:i.size":"")+"}";
-        a_query = escapeJSON( a_query );
-    }
+    // Get rid of leading delimiter
+    a_params[0] = ' ';
+
+    a_qry_end += string(" return distinct {_id:i._id,title:i.title,'desc':i['desc'],owner:i.owner,owner_name:name,alias:i.alias")+(a_request.mode() == SM_DATA?",size:i.size,md_err:i.md_err":"")+"}";
+
+    a_qry_begin = escapeJSON( a_qry_begin );
+    a_qry_end = escapeJSON( a_qry_end );
+    a_qry_filter = escapeJSON( a_qry_filter );
 
     return cnt;
-}
-
-
-void
-DatabaseAPI::parseRecordSearchPublishedRequest( const Anon::RecordSearchPublishedRequest & a_request, std::string & a_query, std::string & a_params )
-{
-    parseCatalogSearchRequest( a_request.coll(), a_query, a_params, true );
-
-    a_query += " for v in 1..10 outbound i item";
-
-    string iter;
-
-    if ( a_request.has_text() )
-    {
-        a_query += " for t in textview search t._id == v._id and analyzer(" + parseSearchTextPhrase( a_request.text(), "t" ) + ",'text_en')";
-        iter = "t";
-    }
-    else
-    {
-        a_query += " filter is_same_collection('d',v)";
-        iter = "v";
-    }
-
-    if ( a_request.tags_size() > 0 )
-    {
-        a_query += " and @dtags all in " + iter + ".tags";
-
-        a_params += ",\"dtags\":[";
-        for ( int i = 0; i < a_request.tags_size(); ++i )
-        {
-            if ( i > 0 )
-                a_params += ",";
-            a_params += "\"" + a_request.tags(i) + "\"";
-        }
-        a_params += "]";
-    }
-
-    if ( a_request.has_id() )
-    {
-        a_query += " and " + parseSearchIdAlias( a_request.id(), "v" );
-    }
-
-    if ( a_request.has_md() )
-    {
-        a_query += " and (" + parseSearchMetadata( a_request.md(), "v" ) + ")";
-    }
-
-    if ( a_request.has_from() )
-    {
-        a_query += " and v.ut >= @dutfr";
-        a_params += ",\"dutfr\":" + to_string( a_request.from() );
-    }
-
-    if ( a_request.has_to() )
-    {
-        a_query += " and v.ut <= @dutto";
-        a_params += ",\"dutto\":" + to_string( a_request.to() );
-    }
-
-    a_query += " limit 0,100 sort v.title return { _id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size }";
 }
 
 
@@ -3963,11 +4187,17 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
 {
     // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
     // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
-    static set<string> terms = {"title","desc","alias","doi","data_url","owner","creator","ct","ut","size","source","ext"};
+    static set<string> terms = {"title","desc","alias","external","owner","creator","ct","ut","size","source","ext"};
     static set<string> funcs = {"abs","acos","asin","atan","atan2","average","avg","ceil","cos","degrees","exp","exp2",
         "floor","log","log2","log10","max","median","min","percentile","pi","pow","radians","round","sin","sqrt",
         "stddev_population","stddev_sample","sum","tan","variance_population","variance_sample","length","lower","upper",
-        "distance","is_in_polygon"};
+        "distance","is_in_polygon",
+        // AQL Array functions
+        "append", "contains_array", "count", "count_distinct", "count_unique", "first", "flatten", "interleave", "intersection",
+        "jaccard", "last", "length", "minus", "nth", "outersection", "pop", "position", "push", "remove_nth", "replace_nth",
+        "remove_value", "remove_values", "reverse", "shift", "slice", "sorted", "sorted_unique", "union", "union_distinct",
+        "unique", "unshift"};
+
     static set<string> date_funcs = {"date_now","date_timestamp"};
     static set<string> other = {"like","true","false","null","in"};
 
@@ -3993,16 +4223,16 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
     ParseState state = PS_DEFAULT;
     Var v;
     string result,tmp;
-    char last = 0, next = 0, next_nws = 0;
+    char /*last = 0, next = 0,*/ next_nws = 0;
     string::const_iterator c2;
     bool val_token, last_char = false;
 
     for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
     {
-        if ( c+1 != a_query.end() )
+        /*if ( c+1 != a_query.end() )
             next = *(c+1);
         else
-            next = 0;
+            next = 0;*/
 
         next_nws = 0;
         for ( c2 = c + 1; c2 != a_query.end(); c2++ )
@@ -4046,6 +4276,7 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
             v.len = 0;
             state = PS_TOKEN;
             // FALL-THROUGH to token processing
+            [[gnu::fallthrough]];
         case PS_TOKEN: // Token
             //if ( spec.find( *c ) != spec.end() )
             val_token = isalnum( *c ) || *c == '.' || *c == '_';
@@ -4097,13 +4328,32 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                 }
                 else
                 {
-                    result.append( a_iter );
-
-                    if ( tmp == "md" || tmp.compare( 0, 3, "md." ) == 0 )
-                        result.append( "." );
+                    if ( boost::iequals( tmp, "def" ))
+                    {
+                        result.append( "!= null" );
+                    }
+                    else if ( boost::iequals( tmp, "undef" ))
+                    {
+                        result.append( "== null" );
+                    }
+                    /*else if ( boost::iequals( tmp, "istrue" ))
+                    {
+                        result.append( "== true" );
+                    }
+                    else if ( boost::iequals( tmp, "isfalse" ))
+                    {
+                        result.append( "== false" );
+                    }*/
                     else
-                        result.append( ".md." );
-                    result.append( tmp );
+                    {
+                        result.append( a_iter );
+
+                        if ( tmp == "md" || tmp.compare( 0, 3, "md." ) == 0 )
+                            result.append( "." );
+                        else
+                            result.append( ".md." );
+                        result.append( tmp );
+                    }
                 }
 
                 v.reset();
@@ -4117,13 +4367,13 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
             break;
         }
 
-        // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
-
         if ( state == PS_STOP )
             break;
         else if ( state == PS_DEFAULT )
         {
-            if ( *c == '?' )
+            // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
+
+            /*if ( *c == '?' )
                 result += " like ";
             else if ( *c == '~' )
                 if ( last != '=' )
@@ -4135,13 +4385,13 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                     result += "==";
                 else
                     result += '=';
-            else
+            else*/
                 result += *c;
         }
         else if ( state != PS_TOKEN )
             result += *c;
 
-        last = *c;
+        //last = *c;
     }
 
     if ( state == PS_SINGLE_QUOTE || state == PS_DOUBLE_QUOTE )

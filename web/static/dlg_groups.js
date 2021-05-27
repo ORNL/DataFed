@@ -69,6 +69,8 @@ export function show( a_uid, a_excl, cb, select ){
                             node.resetLazy();
                         }
                     });
+                }else{
+                    dialogs.dlgAlert( "Edit Group Error", group );
                 }
             });
         }
@@ -98,6 +100,13 @@ export function show( a_uid, a_excl, cb, select ){
         }],
         open: function( ev, ui ){
             api.groupList( a_uid, function( ok, data ){
+                console.log("grpList",ok,data);
+                if ( !ok ){
+                    dialogs.dlgAlert( "Error Loading Groups", data );
+                    $(this).dialog('close');
+                    return;
+                }
+
                 var src = [];
                 var group;
                 for ( var i in data ){
@@ -122,12 +131,14 @@ export function show( a_uid, a_excl, cb, select ){
                     },
                     postProcess: function( event, data ) {
                         if ( data.node.lazy ){
+                            console.log( "post grp:", data );
                             data.result = [];
-                            if ( data.response.desc )
-                                data.result.push( { title:"["+util.escapeHTML(data.response.desc)+"]", icon: false, checkbox: false,key:"desc" } );
-                            var mem;
-                            for ( var i in data.response.member ) {
-                                mem = data.response.member[i];
+                            var mem, grp = data.response.group[0];
+                            if ( grp.desc )
+                                data.result.push( { title:"["+util.escapeHTML( grp.desc )+"]", icon: false, checkbox: false,key:"desc" } );
+
+                            for ( var i in grp.member ) {
+                                mem = grp.member[i];
                                 data.result.push( { title: mem.substr(2), icon: false, checkbox: false,key:mem } );
                             }
                         }

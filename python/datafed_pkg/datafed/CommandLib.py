@@ -205,14 +205,15 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = anon.RecordViewRequest()
+        msg = auth.RecordViewRequest()
         msg.id = self._resolve_id( data_id, context )
         msg.details = details
 
         return self._mapi.sendRecv( msg )
 
     def dataCreate( self, title, alias = None, description = None, tags = None, extension = None,
-        metadata = None, metadata_file = None, parent_id = "root", deps = None, repo_id = None, context = None ):
+        metadata = None, metadata_file = None, schema = None, schema_enforce = None,
+        parent_id = "root", deps = None, repo_id = None, raw_data_file = None, external = None, context = None ):
         """
         Create a new data record
 
@@ -237,6 +238,10 @@ class API:
             This dictionary can be nested.
         metadata_file : str, Optional. Default = None
             Path to local JSON file containing domain-specific metadata
+        schema: str, Optional. Default = None
+            Set schema ID:ver for metadata validation
+        schema_enforce: bool, Optional, Default = None
+            Set to true to enforce metadata schema validation (i.e. fail if does not comply).
         parent_id : str, Optional. Default = "root"
             ID/alias of collection within which to create this record.
             By default, the record will be created in the user's root collection
@@ -250,6 +255,12 @@ class API:
         repo_id : str, Optional. Default = None
             ID of data repository to create this record in.
             By default, the default repository will be chosen.
+        raw_data_file : str, Optional. Default = None
+            Raw data file as a full Globus path. Currently, this parameter can only
+            be specified with the external flag set to true.
+        external : bool, Optional. Default = None
+            Set to true to specify raw data for this record is external (unmanaged).
+            Cannot be specified with repo_id.
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
 
@@ -263,8 +274,14 @@ class API:
         Exception : On communication or server error
         """
 
+        if repo_id and external:
+            raise Exception( "Cannot specify repository for external (unmanaged) data." )
+
+        if raw_data_file and not external:
+            raise Exception( "Cannot specify raw_data_file for managed data (must upload after record creation)." )
+
         if metadata and metadata_file:
-            raise Exception( "Cannot specify both metadata and metadata-file options" )
+            raise Exception( "Cannot specify both metadata and metadata-file options." )
 
         msg = auth.RecordCreateRequest()
         msg.title = title
@@ -282,6 +299,12 @@ class API:
         if repo_id:
             msg.repo_id = repo_id
 
+        if external:
+            msg.external = external
+
+        if raw_data_file:
+            msg.source = raw_data_file
+
         if extension:
             msg.ext = extension
             msg.ext_auto = False
@@ -297,6 +320,12 @@ class API:
         if metadata:
             msg.metadata = metadata
 
+        if schema:
+            msg.sch_id = schema
+
+        if schema_enforce:
+            msg.sch_enforce = schema_enforce
+
         if deps:
             for d in deps:
                 dp = msg.deps.add()
@@ -311,8 +340,8 @@ class API:
         return self._mapi.sendRecv( msg )
 
     def dataUpdate( self, data_id, title = None, alias = None, description = None, tags = None,
-        extension = None, metadata = None, metadata_file = None, metadata_set = False, deps_add = None,
-        deps_rem = None, context = None ):
+        extension = None, metadata = None, metadata_file = None, metadata_set = False,
+        schema = None, schema_enforce = None, deps_add = None, deps_rem = None, raw_data_file = None, context = None ):
         """
         Update an existing data record
 
@@ -343,6 +372,10 @@ class API:
             Set to True to replace existing metadata with provided.
             Otherwise, and by default, provided metadata will be merged with
             existing metadata.
+        schema: str, Optional. Default = None
+            Set schema ID:ver for metadata validation
+        schema_enforce: bool, Optional, Default = None
+            Set to true to enforce metadata schema validation (i.e. fail if does not comply).
         deps_add : list, Optional. Default = None
             Dependencies of this data record to add, specified as an array of
             lists as [ [relation type <str>,  record ID <str>], [], [] ... ].
@@ -357,6 +390,9 @@ class API:
             * "der" - Is derived from
             * "comp" - Is comprised of
             * "ver" - Is new version of
+        raw_data_file : str, Optional. Default = None
+            Raw data file as a full Globus path. Currently, this parameter can only
+            be specified for records with the external (unmanaged) raw data.
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
 
@@ -398,6 +434,9 @@ class API:
             else:
                 msg.ext_auto = True
 
+        if raw_data_file:
+            msg.source = raw_data_file
+
         if metadata_file:
             try:
                 f = open( metadata_file, "r" )
@@ -411,6 +450,12 @@ class API:
 
         if metadata_set:
             msg.mdset = True
+
+        if schema is not None:
+            msg.sch_id = schema
+
+        if schema_enforce:
+            msg.sch_enforce = schema_enforce
 
         if deps_add:
             for d in deps_add:
@@ -468,17 +513,16 @@ class API:
 
     def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL,
                  orig_fname = False, wait = False, timeout_sec = 0,
-                 progress_bar = None, context = None ):
+                 context = None ):
         """
         Get (download) raw data for one or more data records and/or collections
 
         This method downloads to the specified path the raw data associated with
         a specified data record, or the records contained in a collection, or
-        with a list of records and/or collections. The download may involve
-        either a Globus transfer, or an HTTP transfer. The path may be a full
-        globus path (only works for Globus transfers), or a full or relative
-        local file system path (will prepend the default endpoint for Globus
-        transfers).
+        with a list of records and/or collections. The path may be a full
+        globus path or a full or relative local file system path (will prepend
+        the default endpoint). If the endpoint is not local, only full paths
+        should be specified.
 
         Parameters
         ----------
@@ -501,10 +545,6 @@ class API:
         timeout_sec : int, Optional. Default = 0
             Timeout in seconds for polling the status of the Globus transfer.
             By default, there is no timeout.
-        progress_bar : callable, Optional. Default = None
-            A progress bar class to display progress for HTTP download.
-            This kwarg is passed on as the ``bar`` kwarg of wget.download().
-            By default, wget will use dots to display progress.
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
 
@@ -535,52 +575,15 @@ class API:
         # May initiate multiple transfers - one per repo with multiple records per transfer
         # Downloads may be Globus OR HTTP, but not both
 
-        glob_list = []
-        http_list = []
+        glob_ids = []
+
         for i in reply[0].item:
-            if i.url:
-                http_list.append((i.url, i.id))
-            else:
-                glob_list.append(i.id)
+            glob_ids.append(i.id)
 
-        if len(glob_list) > 0 and len(http_list) > 0:
-            raise Exception("Cannot 'get' records via Globus and http with same command.")
-
-        if len(http_list) > 0:
-            # HTTP transfers
-            path = self._resolvePathForHTTP( path )
-            reply = auth.HttpXfrDataReply()
-
-            for item in http_list:
-                xfr = reply.xfr.add()
-                xfr.rec_id = item[1]
-                setattr( xfr, "from", item[0] )
-                xfr.to = path
-                xfr.started = int(time.time())
-
-                try:
-                    filename = os.path.join( path, wget.filename_from_url( item[0] ))
-                    # wget has a buggy filename uniquifier, appended integer will not increase after 1
-                    new_filename = self._uniquifyFilename( filename )
-                    if progress_bar != None:
-                        print("Downloading {} to {}".format(item[1],new_filename))
-                    data_file = wget.download( item[0], out=str(new_filename), bar = progress_bar )
-                    if progress_bar != None:
-                        print("")
-                    xfr.to = data_file
-                    xfr.updated = int(time.time())
-                    xfr.failed = False
-                except Exception as e:
-                    xfr.failed = True
-                    xfr.err_msg = str(e)
-                    xfr.updated = int(time.time())
-                    print( "Error: {}".format( e ))
-
-            return [ reply, "HttpXfrDataReply" ]
-        elif len(glob_list) > 0:
+        if len(glob_ids) > 0:
             # Globus transfers
             msg = auth.DataGetRequest()
-            msg.id.extend(glob_list)
+            msg.id.extend(glob_ids)
             msg.path = self._resolvePathForGlobus( path, False )
             msg.encrypt = encrypt
             msg.orig_fname = orig_fname
@@ -597,6 +600,10 @@ class API:
                     elapsed = elapsed + 4
 
                     reply2 = self._mapi.sendRecv( msg2, nack_except = False )
+
+                    # timeout
+                    if reply2[0] == None:
+                        break
 
                     # Not sure if this can happen:
                     if reply2[1] == "NackReply":
@@ -828,7 +835,7 @@ class API:
         ------
         Exception : On invalid options or communication / server error.
         """
-        msg = anon.CollViewRequest()
+        msg = auth.CollViewRequest()
         msg.id = self._resolve_id( coll_id, context )
         #msg.id = self._resolve_coll_id( coll_id, context )
 
@@ -1020,7 +1027,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = anon.CollReadRequest()
+        msg = auth.CollReadRequest()
         msg.count = count
         msg.offset = offset
         msg.id = self._resolve_id( coll_id, context )
@@ -1163,8 +1170,10 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-    def queryCreate( self, title, id = None, text = None, meta = None,
-                     no_default = None, coll = None, proj = None ):
+    def queryCreate( self, title, coll_mode = None, coll = None, id = None, text = None,
+        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
+        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None ):
+
         """
         Create a new saved query
 
@@ -1178,15 +1187,9 @@ class API:
         id : str, Optional. Default = None
             ID/alias for query. Automatically assigned by default.
         text : str, Optional. Default = None
-            Description of query
+            Text in title or description of query
         meta : str, Optional. Default = None
             Query expression
-        no_default : bool, Optional. Default = None
-            Omit default scopes if True
-        coll : str, Optional. Default = None
-            ID(s) or alias(es) of collection(s) to add to scope
-        proj : str, Optional. Default = None
-            ID(s) or alias(es) of project(s) to add to scope
 
         Returns
         -------
@@ -1199,12 +1202,16 @@ class API:
         """
         msg = auth.QueryCreateRequest()
         msg.title = title
-        msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
+
+        self._buildSearchRequest( msg.query, coll_mode, coll, id, text, tags, schema, meta,
+            meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev )
 
         return self._mapi.sendRecv( msg )
 
-    def queryUpdate( self, query_id, title = None, id = None, text = None,
-                     meta = None ):
+
+    def queryUpdate( self, query_id, title = None, coll_mode = None, coll = None, id = None, text = None,
+        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
+        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None ):
         """
         Update an existing saved query
 
@@ -1213,16 +1220,6 @@ class API:
 
         Parameters
         ----------
-        query_id : str
-            ID/alias for query.
-        title : str, Optional. Default = None
-            Title  of query
-        id : str, Optional. Default = None
-            ID/alias query
-        text : str, Optional. Default = None
-            Description of query
-        meta : str, Optional. Default = None
-            Query expression
 
         Returns
         -------
@@ -1233,44 +1230,18 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.QueryViewRequest()
-        msg.id = query_id
-
-        reply = self._mapi.sendRecv( msg )
 
         msg = auth.QueryUpdateRequest()
         msg.id = query_id
 
-        for q in reply[0].query:
-            if title:
-                msg.title = title
-            else:
-                msg.title = q.title
+        if title != None:
+            msg.title = title
 
-            qry = jsonlib.loads( q.query )
-
-            if id:
-                qry["id"] = id
-            elif id == "":
-                qry.pop("id",None)
-
-            if text:
-                qry["text"] = text
-            elif text == "":
-                qry.pop("text",None)
-
-            if meta:
-                qry["meta"] = meta
-            elif meta == "":
-                qry.pop("meta",None)
-
-            if not (('id' in qry and qry["id"]) or ('text' in qry and qry["text"]) or ('meta' in qry and qry["meta"])):
-                raise Exception("No search terms left in query.")
-
-            msg.query = jsonlib.dumps( qry )
-            break
+        self._buildSearchRequest( msg.query, coll_mode, coll, id, text, tags, schema, meta,
+            meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev )
 
         return self._mapi.sendRecv( msg )
+
 
     def queryDelete( self, query_id ):
         """
@@ -1293,6 +1264,7 @@ class API:
         msg.id.append( query_id )
 
         return self._mapi.sendRecv( msg )
+
 
     def queryExec( self, query_id, offset = 0, count = 20 ):
         """
@@ -1324,30 +1296,24 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
-    def queryDirect( self, id = None, text = None, meta = None,
-                     no_default = None, coll = None, proj = None,
-                     offset = 0, count = 20 ):
+
+    def queryDirect( self, coll_mode = None, coll = None, id = None, text = None,
+        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
+        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None,
+        offset = 0, count = 20 ):
         """
         Directly run a manually entered query and return matches
 
         Parameters
         ----------
+        coll : str, Optional. Default = None
+            ID(s) or alias(es) of collection(s) to add to scope
         id : str
             ID/alias query text
         text : str, Optional. Default = None
             Description of query
         meta : str, Optional. Default = None
             Query expression
-        no_default : bool, Optional. Default = None
-            Omit default scopes if True
-        coll : str, Optional. Default = None
-            ID(s) or alias(es) of collection(s) to add to scope
-        proj : str, Optional. Default = None
-            ID(s) or alias(es) of project(s) to add to scope
-        offset : int, Optional. Default = 0
-            Offset of listing results for paging
-        count : int, Optional. Default = 20
-            Number (limit) of listing results for (cleaner) paging
 
         Returns
         -------
@@ -1359,12 +1325,103 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.RecordSearchRequest()
-        msg.query = self._makeQueryString( id, text, meta, no_default, coll, proj )
-        msg.offset = offset
-        msg.count = count
+        msg = auth.SearchRequest()
+
+        self._buildSearchRequest( msg, coll_mode, coll, id, text, tags, schema, meta,
+            meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev, offset, count )
 
         return self._mapi.sendRecv( msg )
+
+
+    def _buildSearchRequest( self, msg, coll_mode = None, coll = None, id = None, text = None,
+        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
+        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None,
+        offset = 0, count = 20 ):
+
+        if coll_mode and (schema != None or meta != None or meta_err == True ):
+            raise Exception("Cannot specify metadata terms when searching for collection.")
+
+        if coll_mode:
+            msg.mode = 1
+        else:
+            msg.mode = 0
+
+        #if category != None and not public:
+        #    raise Exception("Category search option is only available for public searches.")
+
+        if coll != None:
+            msg.coll.extend( coll )
+
+        if sort != None:
+            if sort == "id":
+                msg.sort = 0
+            elif sort == "title":
+                msg.sort = 1
+            elif sort == "owner":
+                msg.sort = 2
+            elif sort == "ct":
+                msg.sort = 3
+            elif sort == "ut":
+                msg.sort = 4
+            elif sort == "text":
+                msg.sort = 5
+            else:
+                raise Exception("Invalid sort option.")
+
+        if sort_rev == True:
+            if msg.sort == 5:
+                raise Exception("Reverse sort option not available for text-relevance sorting.")
+
+            msg.sort_rev = True
+
+        if id != None:
+            msg.id = id
+
+        if text != None:
+            msg.text = text
+
+        if tags != None:
+            msg.tags.extend( tags )
+
+        if owner != None:
+            msg.owner = owner
+
+        if creator != None:
+            msg.creator = creator
+
+        if schema != None:
+            msg.sch_id = schema
+
+        if meta != None:
+            msg.meta = meta
+
+        if meta_err == True:
+            msg.meta_err = True
+
+        if time_from != None:
+            ts = self.strToTimestamp( time_from )
+            if ts == None:
+                raise Exception("Invalid time format for 'from' option.")
+
+            setattr( msg, "from", ts )
+
+        if time_to != None:
+            ts = self.strToTimestamp( time_to )
+            if ts == None:
+                raise Exception("Invalid time format for 'from' option.")
+            msg.to = ts
+
+        if public:
+            msg.published = True
+
+        if category != None:
+            msg.cat_tags.extend( category.split( "." ))
+
+        if offset != None:
+            msg.offset = offset
+
+        if count != None:
+            msg.count = count
 
     # =========================================================================
     # ------------------------------------------------------------ User Methods
@@ -1513,7 +1570,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = anon.ProjectViewRequest()
+        msg = auth.ProjectViewRequest()
         msg.id = project_id
 
         return self._mapi.sendRecv( msg )
@@ -1971,7 +2028,7 @@ class API:
             id2 = item_id
 
             if id2[0:2] == "p/":
-                msg = anon.ProjectViewRequest()
+                msg = auth.ProjectViewRequest()
                 msg.id = id2
             else:
                 if id2[0:2] != "u/":
@@ -2098,73 +2155,6 @@ class API:
     # =========================================================================
     # --------------------------------------------------------- Private Methods
     # =========================================================================
-
-    def _makeQueryString( self, id, text, meta, no_default, coll, proj ):
-        """
-        Compose query parameters into a query string
-
-        Parameters
-        ----------
-        id : str
-            portion of ID or alias of data of interest
-        text : str
-            plain text to search
-        meta : str
-            metadata search query in AQL format
-        no_default : bool
-            Whether or not to use default values
-        coll : list of str
-            IDs or aliases of the collections to search over
-        proj : list of str
-            IDs or aliases of the projects to search over
-
-        Returns
-        -------
-        str
-            Final search query
-        """
-        if id is None and text is None and meta is None:
-            raise Exception("No search terms provided.")
-
-        if no_default and (( coll is None or len( coll ) == 0 ) and ( proj is None or len( proj ) == 0 )):
-            raise Exception("Must specify one or more collections or projects to search if 'no default' option is enabled.")
-
-        qry = "{"
-
-        if id:
-            qry = qry + "\"id\":\"" + id + "\","
-
-        if text:
-            qry = qry + "\"text\":\"" + text + "\","
-
-        if meta:
-            qry = qry + "\"meta\":\"" + meta + "\","
-
-        scopes = ""
-        delim = ""
-
-        if not no_default:
-            scopes = scopes + "{\"scope\":1},{\"scope\":3},{\"scope\":4},{\"scope\":5}"
-
-        if coll:
-            if len(scopes):
-                delim = ","
-
-            for c in coll:
-                scopes = scopes + delim + "{\"scope\":6,\"id\":\"" + self._resolve_id( c ) + "\"}"
-                delim = ","
-
-        if proj:
-            if len(scopes):
-                delim = ","
-
-            for p in proj:
-                scopes = scopes + delim + "{\"scope\":2,\"id\":\"" + p + "\"}"
-                delim = ","
-
-        # TODO - Add topics when topics are supported by CLI
-
-        return qry + "\"scopes\":[" + scopes + "]}"
 
     def _uniquifyFilename( self, path ):
         """

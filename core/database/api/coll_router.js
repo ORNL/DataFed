@@ -57,11 +57,11 @@ router.post('/create', function (req, res) {
                 if ( owner.max_coll >= 0 ){
                     var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('c',i._from) RETURN 1)",{id:owner_id}).next();
                     if ( count >= owner.max_coll )
-                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Collection limit reached ("+client.max_coll+"). Contact system administrator to increase limit."];
+                        throw [g_lib.ERR_ALLOCATION_EXCEEDED,"Collection limit reached ("+owner.max_coll+"). Contact system administrator to increase limit."];
                 }
 
                 var time = Math.floor( Date.now()/1000 );
-                var obj = { owner: owner._id, ct: time, ut: time };
+                var obj = { owner: owner._id, creator: client._id, ct: time, ut: time };
 
                 g_lib.procInputParam( req.body, "title", false, obj );
                 g_lib.procInputParam( req.body, "desc", false, obj );
@@ -159,7 +159,7 @@ router.post('/update', function (req, res) {
                 var coll_id = g_lib.resolveCollID( req.body.id, client );
                 var coll = g_db.c.document( coll_id );
 
-                console.log("update coll",req.body);
+                //console.log("update coll",req.body);
 
                 var time = Math.floor( Date.now()/1000 ),
                     obj = {ut:time},
@@ -204,7 +204,7 @@ router.post('/update', function (req, res) {
                 if ( obj.topic !== undefined && obj.topic != coll.topic ){
                     //console.log("update topic, old:", data.topic ,",new:", obj.topic );
                     if ( coll.topic ){
-                        console.log("rem cat_tags:",coll.cat_tags);
+                        //console.log("rem cat_tags:",coll.cat_tags);
                         //console.log("unlink old topic");
                         g_lib.topicUnlink( coll._id );
                         obj.public = null;
@@ -229,7 +229,7 @@ router.post('/update', function (req, res) {
                                 //}
                             }
                         }
-                        console.log("add cat_tags:",obj.cat_tags);
+                        //console.log("add cat_tags:",obj.cat_tags);
                     }
 
                     //console.log("cat add_tags:",add_tags,"cat rem_tags:",rem_tags);
@@ -243,7 +243,7 @@ router.post('/update', function (req, res) {
                     if ( coll.tags && coll.tags.length ){
                         var add_tags = [], rem_tags = [];
 
-                        console.log("coll.tags:",coll.tags,"req.body.tags:",req.body.tags);
+                        //console.log("coll.tags:",coll.tags,"req.body.tags:",req.body.tags);
 
                         for ( i in coll.tags ){
                             tag = coll.tags[i];
@@ -259,7 +259,7 @@ router.post('/update', function (req, res) {
                             }
                         }
             
-                        console.log("add_tags:",add_tags,"rem_tags:",rem_tags);
+                        //console.log("add_tags:",add_tags,"rem_tags:",rem_tags);
 
                         g_lib.addTags( add_tags );
                         g_lib.removeTags( rem_tags );
@@ -369,7 +369,7 @@ router.get('/view', function (req, res) {
 
             if ( !admin) {
                 if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_RD_REC )){
-                    console.log("perm denied");
+                    //console.log("perm denied");
                     throw g_lib.ERR_PERM_DENIED;
                 }
             }
@@ -377,7 +377,7 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_PERM_DENIED;
         }
 
-        coll.notes = g_lib.annotationGetMask( client, coll_id, admin );
+        coll.notes = g_lib.getNoteMask( client, coll, admin );
 
         coll.id = coll._id;
         delete coll._id;
@@ -419,20 +419,21 @@ router.get('/read', function (req, res) {
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, md_err: v.md_err, locked: v.locked }";
             result = g_db._query( qry, params,{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, doi: v.doi, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, md_err: v.md_err, locked: v.locked }";
             result = g_db._query( qry, params ).toArray();
         }
 
         for ( var i in result ){
             item = result[i];
-            if ( item.id )
-                item.notes = g_lib.annotationGetMask( client, item.id, admin );
+            if ( item.id ){
+                item.notes = g_lib.getNoteMask( client, item, admin );
+            }
         }
 
         res.send( result );
@@ -566,7 +567,7 @@ router.get('/write', function (req, res) {
                             g_db.item.save({ _from: coll_id, _to: obj._id });
 
                             if ( coll_ctx.pub ){
-                                console.log("update pub coll");
+                                //console.log("update pub coll");
 
                                 // Must update all records in this collection
                                 g_lib.catalogUpdateColl( obj, coll_ctx, visited );
@@ -575,7 +576,7 @@ router.get('/write', function (req, res) {
                             g_db.item.save({ _from: coll_id, _to: obj._id });
 
                             if ( coll_ctx.pub ){
-                                console.log("update pub record");
+                                //console.log("update pub record");
 
                                 // Update this record
                                 g_lib.catalogUpdateRecord( obj, coll, coll_ctx, visited );
@@ -588,8 +589,9 @@ router.get('/write', function (req, res) {
                 if ( have_loose ){
                     var root_id = g_lib.getRootID(owner_id),
                         rctxt = null,
-                        loose_res = [],
-                        cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
+                        loose_res = [];
+
+                    cres = g_db._query("for v in 1..1 outbound @coll item return v._id",{coll:root_id});
 
                     if ( cres.count() + (req.queryParams.add?req.queryParams.add.length:0) > g_lib.MAX_COLL_ITEMS )
                         throw [g_lib.ERR_INPUT_TOO_LONG,"Root collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
@@ -657,8 +659,7 @@ router.get('/move', function (req, res) {
 
                 var chk_perm = false,
                     src_perms = 0,
-                    dst_perms = 0,
-                    coll;
+                    dst_perms = 0;
 
                 if ( !g_lib.hasAdminPermObject( client, src_id )) {
                     src_perms = g_lib.getPermissions( client, src, g_lib.PERM_LINK, true );
@@ -852,47 +853,3 @@ router.get('/published/list', function (req, res) {
 .summary('Get list of clients published collections.')
 .description('Get list of clients published collections.');
 
-
-router.post('/pub/search', function (req, res) {
-    try {
-        const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
-
-        var item, count, result = g_db._query( req.body.query, req.body.params, {}, { fullCount: true }).toArray();
-
-        if ( result.length > req.body.limit ){
-            result.length = req.body.limit;
-            count = req.body.limit + 1;
-        }else{
-            count = result.length;
-        }
-
-        for ( var i in result ){
-            item = result[i];
-
-            if ( item.owner_name && item.owner_name.length )
-                item.owner_name = item.owner_name[0];
-            else
-                item.owner_name = null;
-
-            if ( item.desc && item.desc.length > 120 ){
-                item.desc = item.desc.slice(0,120) + " ...";
-            }
-
-            item.notes = g_lib.annotationGetMask( client, item._id );
-        }
-
-        result.push({ paging: { off: req.body.params.off, cnt: result.length, tot: req.body.params.off + count }});
-
-        res.send( result );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.body(joi.object({
-    query: joi.string().required(),
-    params: joi.object().required(),
-    limit: joi.number().integer().required()
-}).required(), 'Collection fields')
-.summary('Execute published data search query')
-.description('Execute published data search query');

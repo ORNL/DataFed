@@ -42,38 +42,38 @@ function recordCreate( client, record, result ){
     if ( cnt_res.next() >= g_lib.MAX_COLL_ITEMS )
         throw [g_lib.ERR_INPUT_TOO_LONG,"Parent collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)" ];
 
-    // If repo is specified, verify it; otherwise assign one (aware of default)
-    if ( record.repo ) {
-        repo_alloc = g_lib.verifyRepo( owner_id, record.repo );
-    } else {
-        repo_alloc = g_lib.assignRepo( owner_id );
-    }
-
-    if ( !repo_alloc )
-        throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
-
-    var time = Math.floor( Date.now()/1000 );
-    var obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id };
+    var time = Math.floor( Date.now()/1000 ),
+        obj = { size: 0, ct: time, ut: time, owner: owner_id, creator: client._id },
+        sch_id, sch_ver;
 
     g_lib.procInputParam( record, "title", false, obj );
     g_lib.procInputParam( record, "desc", false, obj );
     g_lib.procInputParam( record, "alias", false, obj );
-    g_lib.procInputParam( record, "doi", false, obj );
-    g_lib.procInputParam( record, "data_url", false, obj );
+    g_lib.procInputParam( record, "source", false, obj );
+    g_lib.procInputParam( record, "sch_id", false, obj );
 
-    if ( record.md ){
-        obj.md = record.md;
-        if ( Array.isArray( obj.md ))
-            throw [g_lib.ERR_INVALID_PARAM,"Metadata cannot be an array"];
-    }
+    if ( record.external ){
+        obj.external = true;
+        // Verify source path is a full globus path to a file
+        if ( obj.source ){
+            if ( !g_lib.isFullGlobusPath( obj.source, true, false )){
+                throw [g_lib.ERR_INVALID_PARAM,"Source must be a full Globus path to a file."];
+            }
 
-    if ( obj.doi || obj.data_url ){
-        if ( !obj.doi || !obj.data_url )
-            throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
-
-        alias_key = (obj.doi.split("/").join("_"));
-        //console.log("alias:",alias_key);
+            obj.size = 1048576; // Don't know actual size - doesn't really matter
+        }
     }else{
+        // If repo is specified, verify it; otherwise assign one (aware of default)
+        if ( record.repo ) {
+            repo_alloc = g_lib.verifyRepo( owner_id, record.repo );
+        } else {
+            repo_alloc = g_lib.assignRepo( owner_id );
+        }
+
+        if ( !repo_alloc )
+            throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
+
+        // Extension setting only apply to managed data
         if ( record.ext_auto !== undefined )
             obj.ext_auto = record.ext_auto;
         else
@@ -84,10 +84,16 @@ function recordCreate( client, record, result ){
             if ( obj.ext.length && obj.ext.charAt(0) != "." )
                 obj.ext = "." + obj.ext;
         }
+    }
 
-        if ( obj.alias ){
-            alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
-        }
+    if ( record.md ){
+        obj.md = record.md;
+        if ( Array.isArray( obj.md ))
+            throw [g_lib.ERR_INVALID_PARAM,"Metadata cannot be an array"];
+    }
+
+    if ( obj.alias ){
+        alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
     }
 
     if ( record.tags != undefined ){
@@ -102,32 +108,55 @@ function recordCreate( client, record, result ){
         obj.public = true;
     }
 
-    var data = g_db.d.save( obj, { returnNew: true });
+    // Note: sch_id function param is the "id:ver" of sch, not "_id", must convert to "_id" before processing
+    // sch_id stored in record is sch "_id" field.
 
-    g_db.owner.save({ _from: data.new._id, _to: owner_id });
+    if ( obj.sch_id ) {
+        var idx = obj.sch_id.indexOf(":");
+        if ( idx < 0 ){
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+        }
+        sch_id = obj.sch_id.substr( 0, idx ),
+        sch_ver = parseInt( obj.sch_id.substr( idx + 1 ));
+        var sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
 
-    g_lib.makeTitleUnique( parent_id, data.new );
+        if ( !sch )
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist" ];
 
-    // Create data location edge and update allocation and stats
-    var loc = { _from: data.new._id, _to: repo_alloc._to, uid: owner_id };
-    g_db.loc.save( loc );
-    g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
+        obj.sch_id = sch._id;
+        g_db._update( sch._id, { cnt: sch.cnt + 1 });
+    }
+
+    var data = g_db.d.save( obj, { returnNew: true }).new;
+
+    g_db.owner.save({ _from: data._id, _to: owner_id });
+
+    g_lib.makeTitleUnique( parent_id, data );
+
+    if ( !record.external ){
+        // Create data location edge and update allocation and stats
+        var loc = { _from: data._id, _to: repo_alloc._to, uid: owner_id };
+        g_db.loc.save( loc );
+        g_db.alloc.update( repo_alloc._id, { rec_count: repo_alloc.rec_count + 1 });
+        data.repo_id = repo_alloc._to;
+    }
 
     if ( alias_key ) {
         if ( g_db.a.exists({ _key: alias_key }))
             throw [g_lib.ERR_INVALID_PARAM,"Alias, "+alias_key+", already in use"];
 
         g_db.a.save({ _key: alias_key });
-        g_db.alias.save({ _from: data.new._id, _to: "a/" + alias_key });
+        g_db.alias.save({ _from: data._id, _to: "a/" + alias_key });
         g_db.owner.save({ _from: "a/" + alias_key, _to: owner_id });
     }
+
 
     var updates = new Set();
 
     // Handle specified dependencies
     if ( record.deps != undefined ){
         var dep,id,dep_data,dep_ids=new Set();
-        data.new.deps = [];
+        data.deps = [];
 
         for ( var i in record.deps ) {
             dep = record.deps[i];
@@ -136,27 +165,31 @@ function recordCreate( client, record, result ){
             if ( g_db.dep.firstExample({ _from: data._id, _to: id }))
                 throw [g_lib.ERR_INVALID_PARAM,"Only one dependency can be defined between any two data records."];
             g_db.dep.save({ _from: data._id, _to: id, type: dep.type });
-            data.new.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
+            data.deps.push({id:id,alias:dep_data.alias,type:dep.type,dir:g_lib.DEP_OUT});
 
             if ( dep.type < g_lib.DEP_IS_NEW_VERSION_OF )
                 dep_ids.add( id );
         }
 
         if ( dep_ids.size )
-            g_lib.annotationDependenciesUpdated( data.new, dep_ids, null, updates );
+            g_lib.annotationDependenciesUpdated( data, dep_ids, null, updates );
     }
 
-    g_db.item.save({ _from: parent_id, _to: data.new._id });
+    g_db.item.save({ _from: parent_id, _to: data._id });
 
-    data.new.id = data.new._id;
-    data.new.parent_id = parent_id;
-    data.new.repo_id = repo_alloc._to;
+    // Replace internal sch_id with user-facing sch_id + sch_ver
+    if ( sch_id ){
+        data.sch_id = sch_id + ":" + sch_ver;
+    }
+    
+    data.id = data._id;
+    data.parent_id = parent_id;
 
-    delete data.new._id;
-    delete data.new._key;
-    delete data.new._rev;
+    delete data._id;
+    delete data._key;
+    delete data._rev;
 
-    result.results.push( data.new );
+    result.results.push( data );
 }
 
 router.post('/create', function (req, res) {
@@ -170,7 +203,7 @@ router.post('/create', function (req, res) {
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag","sch"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -192,11 +225,12 @@ router.post('/create', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    doi: joi.string().allow('').optional(),
-    data_url: joi.string().allow('').optional(),
     parent: joi.string().allow('').optional(),
+    external: joi.boolean().optional(),
+    source: joi.string().allow('').optional(),
     repo: joi.string().allow('').optional(),
     md: joi.any().optional(),
+    sch_id: joi.string().allow('').optional(),
     ext: joi.string().allow('').optional(),
     ext_auto: joi.boolean().optional(),
     deps: joi.array().items(joi.object({
@@ -221,7 +255,7 @@ router.post('/create/batch', function (req, res) {
             g_db._executeTransaction({
                 collections: {
                     read: ["u","uuid","accn","repo"],
-                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag"]
+                    write: ["d","a","alloc","loc","owner","alias","item","dep","n","note","tag","sch"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -246,11 +280,12 @@ router.post('/create/batch', function (req, res) {
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
-        doi: joi.string().allow('').optional(),
-        data_url: joi.string().allow('').optional(),
         parent: joi.string().allow('').optional(),
+        external: joi.boolean().optional(),
+        source: joi.string().allow('').optional(),
         repo: joi.string().allow('').optional(),
         md: joi.any().optional(),
+        sch_id: joi.string().allow('').optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
         deps: joi.array().items(joi.object({
@@ -260,7 +295,6 @@ router.post('/create/batch', function (req, res) {
         id: joi.string().allow('').optional(), // Ignored
         locked: joi.boolean().optional(), // Ignore
         size: joi.number().optional(), // Ignored
-        source: joi.string().allow('').optional(), // Ignored
         owner: joi.string().allow('').optional(), // Ignored
         creator: joi.string().allow('').optional(), // Ignored
         dt: joi.number().optional(), // Ignored
@@ -285,78 +319,113 @@ function recordUpdate( client, record, result ){
         if ( record.md !== undefined )
             perms |= g_lib.PERM_WR_META;
 
-        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined || record.tags !== undefined )
+        if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined ||
+            record.tags !== undefined || record.source !== undefined || 
+            ( record.dep_add && record.dep_add.length ) || ( record.dep_rem && record.dep_rem.length )){
             perms |= g_lib.PERM_WR_REC;
-
-        if ( record.size !== undefined || record.dt !== undefined || record.data_url !== undefined || record.doi !== undefined || record.source !== undefined )
-            perms |= g_lib.PERM_WR_DATA;
+        }
 
         if ( data.locked || !g_lib.hasPermissions( client, data, perms ))
             throw g_lib.ERR_PERM_DENIED;
     }
 
-    var owner_id = g_db.owner.firstExample({ _from: data_id })._to;
-
-    var obj = { ut: Math.floor( Date.now()/1000 ) };
+    var owner_id = g_db.owner.firstExample({ _from: data_id })._to,
+        obj = { ut: Math.floor( Date.now()/1000 ) },
+        sch,i;
 
     g_lib.procInputParam( record, "title", true, obj );
     g_lib.procInputParam( record, "desc", true, obj );
     g_lib.procInputParam( record, "alias", true, obj );
+    g_lib.procInputParam( record, "sch_id", true, obj );
     g_lib.procInputParam( record, "source", true, obj );
-    g_lib.procInputParam( record, "doi", true, obj );
-    g_lib.procInputParam( record, "data_url", true, obj );
 
-    if ( record.md === "" )
+    if ( record.md === "" ){
         obj.md = null;
-    else if ( record.md ){
+        obj.md_err_msg = null;
+        obj.md_err = false;
+    }else if ( record.md ){
         obj.md = record.md;
-        if ( Array.isArray( obj.md ))
+        if ( Array.isArray( obj.md )){
             throw [ g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array" ];
+        }
+        obj.md_err_msg = null;
+        obj.md_err = false;
     }
 
-    if ( record.ext_auto !== undefined )
-        obj.ext_auto = record.ext_auto;
+    // Note: sch_id function param is the "id" field of sch, not "_id", must convert to "_id" before processing
+    // sch_id stored in record is sch "_id" field.
 
-    if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
-        if ( obj.source !== undefined || data.source !== undefined ){
-            var src = obj.source || data.source;
-            if ( src ){
-                // Skip possible "." in end-point name
-                var pos = src.lastIndexOf("/");
-                pos = src.indexOf(".",pos>0?pos:0);
-                if ( pos != -1 ){
-                    obj.ext = src.substr( pos );
-                }else{
-                    obj.ext = null;
-                }
+    if ( obj.sch_id === null ){
+        // If there was a schema set before, deref count it and clear any metadata errors
+        if ( data.sch_id ){
+            sch = g_db.sch.document( data.sch_id );
+            g_db._update( sch._id, { cnt: sch.cnt - 1 });
+            obj.md_err_msg = null;
+            obj.md_err = false;
+        }
+    }else if ( obj.sch_id ){
+        // Schema ID has changed - clear md err, will be revalidated
+        obj.md_err_msg = null;
+        obj.md_err = false;
+
+        var idx = obj.sch_id.indexOf(":");
+        if ( idx < 0 ){
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix." ];
+        }
+        var sch_id = obj.sch_id.substr( 0, idx ),
+            sch_ver = parseInt( obj.sch_id.substr( idx + 1 ));
+
+        sch = g_db.sch.firstExample({ id: sch_id, ver: sch_ver });
+
+        if ( !sch ){
+            throw [ g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist" ];
+        }
+
+        obj.sch_id = sch._id;
+        g_db._update( sch._id, { cnt: sch.cnt + 1 });
+
+        if ( data.sch_id ){
+            sch = g_db.sch.document( data.sch_id );
+            g_db._update( sch._id, { cnt: sch.cnt - 1 });
+        }
+    }
+
+    if ( data.external ){
+        if ( obj.source ){
+            if ( !g_lib.isFullGlobusPath( obj.source, true, false )){
+                throw [g_lib.ERR_INVALID_PARAM,"Source must be a full Globus path to a file."];
             }
+
+            obj.size = 1048576; // Don't know actual size - doesn't really matter
         }
     }else{
-        g_lib.procInputParam( record, "ext", true, obj );
-        if ( obj.ext && obj.ext.charAt(0) != "." )
-            obj.ext = "." + obj.ext;
-    }
+        if ( obj.source ){
+            throw [g_lib.ERR_INVALID_PARAM,"Raw data source cannot be specified for managed data records."];
+        }
 
-    var loc = g_db.loc.firstExample({ _from: data_id }),
-        alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to }),
-        i;
+        if ( record.ext_auto !== undefined )
+            obj.ext_auto = record.ext_auto;
 
-    if ( record.size !== undefined ) {
-        obj.size = record.size;
-
-        if ( obj.size != data.size ){
-            g_db._update( alloc._id, { data_size: Math.max( 0, alloc.data_size - data.size + obj.size )});
+        if ( obj.ext_auto == true || ( obj.ext_auto == undefined && data.ext_auto == true )){
+            if ( data.source !== undefined ){
+                var src = obj.source || data.source;
+                if ( src ){
+                    // Skip possible "." in end-point name
+                    var pos = src.lastIndexOf("/");
+                    pos = src.indexOf(".",pos>0?pos:0);
+                    if ( pos != -1 ){
+                        obj.ext = src.substr( pos );
+                    }else{
+                        obj.ext = null;
+                    }
+                }
+            }
+        }else{
+            g_lib.procInputParam( record, "ext", true, obj );
+            if ( obj.ext && obj.ext.charAt(0) != "." )
+                obj.ext = "." + obj.ext;
         }
     }
-
-    if ( !data.doi && ( obj.doi || obj.data_url ))
-        throw [ g_lib.ERR_INVALID_PARAM, "Cannot set DOI parameters for managed data." ];
-
-    if ( data.doi && ( obj.size !== undefined || obj.source !== undefined || obj.ext_auto !== undefined || obj.ext !== undefined ))
-        throw [ g_lib.ERR_INVALID_PARAM, "Cannot set data parameters for published data." ];
-
-    if ( record.dt != undefined )
-        obj.dt = record.dt;
 
     if ( record.tags_clear ){
         if ( data.tags ){
@@ -381,12 +450,9 @@ function recordUpdate( client, record, result ){
                 }
             }
 
-            //console.log("add tags",add_tags);
-            //console.log("rem tags",rem_tags);
             g_lib.addTags( add_tags );
             g_lib.removeTags( rem_tags );
         }else{
-            //console.log("add tags",record.tags);
             g_lib.addTags( record.tags );
         }
 
@@ -395,8 +461,7 @@ function recordUpdate( client, record, result ){
 
     //console.log("upd obj",obj);
 
-    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: record.mdset?false:true });
-    data = data.new;
+    data = g_db._update( data_id, obj, { keepNull: false, returnNew: true, mergeObjects: record.mdset?false:true }).new;
 
     if ( obj.alias !== undefined ) {
         var old_alias = g_db.alias.firstExample({ _from: data_id });
@@ -464,7 +529,13 @@ function recordUpdate( client, record, result ){
         g_lib.annotationDependenciesUpdated( data, deps_add.size?deps_add:null, deps_rem.size?deps_rem:null, result.updates );
     }
 
-    data.notes = g_lib.annotationGetMask( client, data._id );
+    // Convert DB schema _id to user-facing id + ver
+    if ( data.sch_id ){
+        sch = g_db.sch.document( data.sch_id );
+        data.sch_id = sch.id + ":" + sch.ver;
+    }
+
+    data.notes = g_lib.getNoteMask( client, data );
 
     data.deps = g_db._query("for v,e in 1..1 any @data dep return {id:v._id,alias:v.alias,type:e.type,from:e._from}",{data:data_id}).toArray();
     for ( i in data.deps ){
@@ -479,7 +550,13 @@ function recordUpdate( client, record, result ){
     result.updates.add( data._id );
 
     data.id = data._id;
-    data.repo_id = alloc._to;
+
+    if ( !data.external ){
+        var loc = g_db.loc.firstExample({ _from: data_id }),
+            alloc = g_db.alloc.firstExample({ _from: owner_id, _to: loc._to });
+
+        data.repo_id = alloc._to;
+    }
 
     delete data._rev;
     delete data._key;
@@ -496,7 +573,7 @@ router.post('/update', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag","sch"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -511,10 +588,10 @@ router.post('/update', function (req, res) {
                 doc = Object.assign( result.results[0] );
             }else{
                 doc = g_db._document( id );
-                doc.notes = g_lib.annotationGetMask( client, doc._id );
+                doc.notes =  g_lib.getNoteMask( client, doc );
             }
             delete doc.desc;
-            delete doc.md;
+            //delete doc.md;
             updates.push( doc );
         });
         result.updates = updates;
@@ -530,17 +607,16 @@ router.post('/update', function (req, res) {
     title: joi.string().allow('').optional(),
     desc: joi.string().allow('').optional(),
     alias: joi.string().allow('').optional(),
-    doi: joi.string().allow('').optional(),
-    data_url: joi.string().allow('').optional(),
     tags: joi.array().items(joi.string()).optional(),
     tags_clear: joi.boolean().optional(),
     md: joi.any().optional(),
     mdset: joi.boolean().optional().default(false),
-    size: joi.number().optional(),
+    sch_id: joi.string().allow('').optional(),
+    //size: joi.number().optional(),
     source: joi.string().allow('').optional(),
     ext: joi.string().allow('').optional(),
     ext_auto: joi.boolean().optional(),
-    dt: joi.number().optional(),
+    //dt: joi.number().optional(),
     dep_add: joi.array().items(joi.object({
         id: joi.string().required(),
         type: joi.number().integer().required()})).optional(),
@@ -560,7 +636,7 @@ router.post('/update/batch', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","loc"],
-                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag"],
+                write: ["d","a","p","owner","alias","alloc","dep","n","note","tag","sch"],
                 exclusive: ["task","lock","block"]
             },
             action: function() {
@@ -582,7 +658,8 @@ router.post('/update/batch', function (req, res) {
         var doc, updates = [];
         result.updates.forEach( function( id ){
             doc = g_db._document( id );
-            doc.notes = g_lib.annotationGetMask( client, doc._id );
+            doc.notes =  g_lib.getNoteMask( client, doc );
+
             delete doc.desc;
             delete doc.md;
             updates.push( doc );
@@ -601,12 +678,12 @@ router.post('/update/batch', function (req, res) {
         title: joi.string().allow('').optional(),
         desc: joi.string().allow('').optional(),
         alias: joi.string().allow('').optional(),
-        doi: joi.string().allow('').optional(),
-        data_url: joi.string().allow('').optional(),
         tags: joi.array().items(joi.string()).optional(),
         tags_clear: joi.boolean().optional(),
         md: joi.any().optional(),
         mdset: joi.boolean().optional().default(false),
+        sch_id: joi.string().allow('').optional(),
+        source: joi.string().allow('').optional(),
         ext: joi.string().allow('').optional(),
         ext_auto: joi.boolean().optional(),
         dep_add: joi.array().items(joi.object({
@@ -618,7 +695,6 @@ router.post('/update/batch', function (req, res) {
         dt: joi.number().optional(), // Ignore
         locked: joi.boolean().optional(), // Ignore
         size: joi.number().optional(), // Ignore
-        source: joi.string().allow('').optional(), // Ignore
         owner: joi.string().allow('').optional(), // Ignored
         creator: joi.string().allow('').optional(), // Ignored
         ut: joi.number().optional(), // Ignored
@@ -628,7 +704,35 @@ router.post('/update/batch', function (req, res) {
 .summary('Update a batch of existing data record')
 .description('Update a batch of existing data record from JSON body');
 
+router.post('/update/md_err_msg', function (req, res) {
+    try {
+        g_db._executeTransaction({
+            collections: {
+                write: ["d"]
+            },
+            action: function() {
+                const client = g_lib.getUserFromClientID( req.queryParams.client );
+                var data_id = g_lib.resolveDataID( req.queryParams.id, client );
 
+                if ( !g_db.d.exists({ _id: data_id }))
+                    throw [g_lib.ERR_INVALID_PARAM,"Record, " + data_id + ", does not exist."];
+
+                // TODO Update schema validation error flag
+                g_db._update( data_id, { md_err_msg: req.body, md_err: true }, { keepNull: false });
+            }
+        });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('client', joi.string().optional(), "Client ID")
+.queryParam('id', joi.string().required(), "Record ID")
+//.body( joi.string().required(), 'Error message')
+.body(['text/plain'], 'Error message' )
+.summary('Update data record schema validation error message')
+.description('Update data record schema validation error message');
+
+// Only called after upload of raw data for managed records
 router.post('/update/size', function (req, res) {
         var retry = 10;
 
@@ -688,8 +792,9 @@ router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
-        var data_id = g_lib.resolveDataID( req.queryParams.id, client ),
-            data = g_db.d.document( data_id ),
+        var data_id = g_lib.resolveDataID( req.queryParams.id, client );
+
+        var data = g_db.d.document( data_id ),
             i,dep,rem_md = false, admin = false;
 
         if ( client ){
@@ -706,21 +811,28 @@ router.get('/view', function (req, res) {
             throw g_lib.ERR_PERM_DENIED;
         }
 
-        data.notes = g_lib.annotationGetMask( client, data_id, admin );
+        data.notes =  g_lib.getNoteMask( client, data );
 
-        data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
+        if ( data.sch_id ){
+            var sch = g_db.sch.document( data.sch_id );
+            data.sch_id = sch.id + ":" + sch.ver;
+        }
+        
+        data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,md_err:v.md_err,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
             dep = data.deps[i];
             if ( dep.alias && ( !client || client._id != dep.owner ))
                 dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
 
-            dep.notes = g_lib.annotationGetMask( client, dep.id );
+            dep.notes =  g_lib.getNoteMask( client, dep );
         }
 
         if ( rem_md && data.md )
             delete data.md;
 
-        data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
+        if ( !data.external ){
+            data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
+        }
 
         delete data._rev;
         delete data._key;
@@ -737,40 +849,6 @@ router.get('/view', function (req, res) {
 .summary('Get data by ID or alias')
 .description('Get data by ID or alias');
 
-
-router.get('/view/doi', function (req, res) {
-    try {
-        var data_id = g_lib.resolveDataID( "doi:" + req.queryParams.doi );
-        var data = g_db.d.document( data_id );
-
-        var i,dep,rem_md = false;
-
-        data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:data_id}).toArray();
-        for ( i in data.deps ){
-            dep = data.deps[i];
-            if ( dep.alias )
-                dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
-        }
-
-        if ( rem_md && data.md )
-            delete data.md;
-
-        data.repo_id = g_db.loc.firstExample({ _from: data_id })._to;
-
-        delete data._rev;
-        delete data._key;
-        data.id = data._id;
-        delete data._id;
-
-        res.send({ results: [data] });
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('doi', joi.string().required(), "DOI number (without doi: prefix)")
-.summary('Get data by DOI')
-.description('Get data by DOI');
 
 router.post('/export', function (req, res) {
     try {
@@ -823,34 +901,6 @@ router.post('/export', function (req, res) {
 .summary('Export record metadata')
 .description('Export record metadata');
 
-// TODO Don't need this method
-
-// Same as view, but for multiple records - returns minimal info + deps
-/* router.get('/dep/get', function (req, res) {
-    const client = g_lib.getUserFromClientID( req.queryParams.client );
-    var data, dep, res, result = [];
-    for ( var id in req.queryParams.id ){
-        id = g_lib.resolveDataID( id, client );
-        data = g_db._document( id );
-        res = { id: id, title: data.title };
-        res.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,type:e.type,dir:dir}",{data:id}).toArray();
-
-        for ( i in res.deps ){
-            dep = res.deps[i];
-            if ( dep.alias && client._id != dep.owner )
-                dep.alias = dep.owner.charAt(0) + ":" + dep.owner.substr(2) + ":" + dep.alias;
-
-            dep.notes = g_lib.annotationGetMask( client, dep.id );
-        }
-
-        result.push( res );
-    }
-    res.send( [result] );
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('ids', joi.array().items(joi.string()).required(), "Data IDs or aliases")
-.summary('Get data dependencies')
-.description('Get data dependencies'); */
 
 router.get('/dep/graph/get', function (req, res) {
     try {
@@ -874,8 +924,8 @@ router.get('/dep/graph/get', function (req, res) {
                 }
                     
                 //console.log("calc notes for", rec._id );
-                notes = g_lib.annotationGetMask( client, rec._id );
-
+                notes =  g_lib.getNoteMask( client, rec );
+    
                 if ( entry[1] ){
                     deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:entry[0]}).toArray();
 
@@ -888,9 +938,9 @@ router.get('/dep/graph/get', function (req, res) {
                             next.push([dep.id,dep.type < 2]);
                         }
                     }
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:notes,locked:rec.locked,gen:gen,deps:deps});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,size:rec.size,notes:notes,locked:rec.locked,gen:gen,deps:deps});
                 }else{
-                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,doi:rec.doi,size:rec.size,notes:notes,locked:rec.locked});
+                    result.push({id:rec._id,title:rec.title,alias:rec.alias,owner:rec.owner,creator:rec.creator,size:rec.size,notes:notes,locked:rec.locked});
                 }
             }
 
@@ -916,7 +966,7 @@ router.get('/dep/graph/get', function (req, res) {
                 entry = cur[i];
 
                 //rec = g_db.d.document( cur[i] );
-                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,doi:v.doi,size:v.size,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
+                deps = g_db._query("for v,e in 1..1 inbound @data dep return {id:v._id,alias:v.alias,title:v.title,owner:v.owner,creator:v.creator,size:v.size,md_err:v.md_err,locked:v.locked,type:e.type}",{data:entry[0]}).toArray();
 
                 if ( entry[1] ){
                     for ( j in deps ){
@@ -925,13 +975,13 @@ router.get('/dep/graph/get', function (req, res) {
                         //console.log("dep:",dep.id,"ty:",dep.type);
 
                         if ( visited.indexOf(dep.id) < 0 ){
-                            //console.log("follow");
 
-                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,doi:dep.doi,size:dep.size,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
+                            // TODO Why are we not just copying the dep object?
+                            node = {id:dep.id,title:dep.title,alias:dep.alias,owner:dep.owner,creator:dep.creator,size:dep.size,md_err:dep.md_err,locked:dep.locked,deps:[{id:entry[0],type:dep.type,dir:0}]};
                             if ( node.alias && client._id != node.owner )
                                 node.alias = node.owner.charAt(0) + ":" + node.owner.substr(2) + ":" + node.alias;
 
-                            node.notes = g_lib.annotationGetMask( client, node.id );
+                            node.notes =  g_lib.getNoteMask( client, node );
 
                             if ( dep.type<2 )
                                 node.gen = gen;
@@ -1059,23 +1109,27 @@ router.get('/list/by_alloc', function (req, res) {
             owner_id = client._id;
         }
 
-        var qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title";
-        var result;
-
-        // TODO Add notes to results?
-        //node.notes = g_lib.annotationGetMask( client, node._id );
+        var qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title",
+            result, doc;
 
         if ( req.queryParams.offset != undefined && req.queryParams.count != undefined ){
             qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, md_err: v.md_err, external: v.external, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id },{},{fullCount:true});
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
             result.push({paging:{off:req.queryParams.offset,cnt:req.queryParams.count,tot:tot}});
         }
         else{
-            qry += " return { id: v._id, title: v.title, alias: v.alias, doi: v.doi, owner: v.owner, creator: v.creator, size: v.size, locked: v.locked }";
+            qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, md_err: v.md_err, external: v.external, locked: v.locked }";
             result = g_db._query( qry, { repo: req.queryParams.repo, uid: owner_id });
+        }
+
+        for ( var i in result ){
+            doc = result[i];
+            if ( doc.id ){
+                doc.notes = g_lib.getNoteMask( client, doc );
+            }
         }
 
         res.send( result );
@@ -1090,58 +1144,6 @@ router.get('/list/by_alloc', function (req, res) {
 .queryParam('count', joi.number().optional(), "Count")
 .summary('List data records by allocation')
 .description('List data records by allocation');
-
-
-router.get('/search', function (req, res) {
-    try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var params = {};
-
-        if ( req.queryParams.use_client )
-            params.client = client._id;
-
-        if ( req.queryParams.use_shared_users ){
-            params.users = g_lib.usersWithClientACLs( client._id, true );
-        }
-
-        if ( req.queryParams.use_shared_projects ){
-            params.projs = g_lib.projectsWithClientACLs( client._id, true );
-        }
-
-        if ( req.queryParams.offset )
-            params.offset = req.queryParams.offset;
-        else
-            params.offset = 0;
-
-        if ( req.queryParams.count ){
-            params.count = Math.min(req.queryParams.count,1000-params.offset);
-        }else{
-            params.count = Math.min(50,1000-params.offset);
-        }
-
-        //console.log("params:",params);
-
-        var doc, results = g_db._query( req.queryParams.query, params ).toArray();
-
-        for ( var i in results ){
-            doc = results[i];
-            doc.notes = g_lib.annotationGetMask( client, doc.id );
-        }
-
-        res.send( results );
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('query', joi.string().required(), "Query")
-.queryParam('use_client', joi.bool().required(), "Query uses client param")
-.queryParam('use_shared_users', joi.bool().required(), "Query uses shared users param")
-.queryParam('use_shared_projects', joi.bool().required(), "Query uses shared projects param")
-.queryParam('offset', joi.number().integer().min(0).max(999).optional(), "Offset")
-.queryParam('count', joi.number().integer().min(1).max(1000).optional(), "Count")
-.summary('Find all data records that match query')
-.description('Find all data records that match query');
 
 
 router.post('/get', function (req, res) {

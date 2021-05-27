@@ -382,7 +382,8 @@ Server::zapHandler()
                     "\n\tmechanism: " << mechanism <<
                     "\n\tclient_key: " << client_key_text << "\n";
                 */
-                cout << "ZAP client key ["<< client_key_text << "]\n";
+
+                //cout << "ZAP client key ["<< client_key_text << "]\n";
 
                 // Always accept - but only set UID if it's a known client (by key)
                 if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())

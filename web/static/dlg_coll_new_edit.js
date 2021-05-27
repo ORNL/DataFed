@@ -15,7 +15,7 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
         <tr><td>Title: <span class='note'>*</span></td><td colspan='2'><input type='text' id='title' style='width:100%'></input></td></tr>\
         <tr><td>Alias:</td><td colspan='2'><input type='text' id='alias' style='width:100%'></input></td></tr>\
         <tr><td style='vertical-align:top'>Description:</td><td colspan='2'><textarea id='desc' rows=5 style='width:100%;padding:0'></textarea></td></tr>\
-        <tr><td style='vertical-align:top'>Tags:</td><td colspan='2'><ul id='tags' class='input-bg'></ul></td></tr>\
+        <tr><td style='vertical-align:top'>Tags:</td><td colspan='2'><ul id='tags' class='input-bg' style='padding:.25em'></ul></td></tr>\
         <tr id='parent_row'><td>Parent: <span class='note'>*</span></td><td colspan='2'><input type='text' id='coll' style='width:100%'></input></td></tr>\
         <tr><td>Access:</span></td>\
             <td colspan='2'>\
@@ -88,12 +88,6 @@ export function show( a_data, a_parent, a_upd_perms, a_cb ){
                         obj.tagsClear = true;
                     }
                     
-                    /*else{
-                        for ( var i in obj.tags ){
-                            obj.tags[i] = util.escapeJSON( obj.tags[i] );
-                        }
-                    }*/
-
                     if ( Object.keys(obj).length === 0 ){
                         $(this).dialog('close');
                         return;

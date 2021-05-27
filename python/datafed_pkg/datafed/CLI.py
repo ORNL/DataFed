@@ -117,9 +117,9 @@ def run():
                 if session == None:
                     session = PromptSession(history=FileHistory(os.path.expanduser("~/.datafed-hist")))
                 if _cur_ctx != _uid:
-                    prefix = "(" + _cur_ctx + ") " + _cur_coll_prefix + ">"
+                    prefix = "\n(" + _cur_ctx + ") " + _cur_coll_prefix + ">"
                 else:
-                    prefix = _cur_coll_prefix + ">"
+                    prefix = "\n" + _cur_coll_prefix + ">"
                 _args = shlex.split(session.prompt(prefix,auto_suggest=AutoSuggestFromHistory()))
                 _cli(prog_name="datafed",args=_args,standalone_mode=False)
 
@@ -508,9 +508,17 @@ def _genDocCmd( cmd, ctx, level, parname = None, recurse = True ):
 @click.argument("coll_id",required=False, metavar="ID")
 def _wc( coll_id ):
     '''
-    Set/print current working collection or path. 'ID' can be a collection ID, alias,
-    list index number, '-' (previous collection), or path. Only '..' and '/' are
-    supported for paths. 'cd' is an alias for this command.
+    Set/print current working collection or path. 'ID' can be a collection ID, alias, user
+    or project ID, listing index, previous collection ('-'), or path ('..','/','~'). 'cd' is
+    an alias for the 'wc' command.
+    
+    The 'wc' command can be used to switch to a different user or project context by either
+    specifying a user/project ID/alias as the argument, or by specifying a collection ID/alias
+    that is owned by another user or project. In either case, if permission is granted, the CLI
+    context will be changed to the associated user/project and all subsequent commands will act
+    within that context. To return to the authenticated users context, use the 'wc ~' command.
+    The '~' path indicates the authenticated user's root collection; whereas the '/' path is the
+    root colelction of the current context.
     '''
 
     if _output_mode_sticky != _OM_RETN and not _interactive:
@@ -650,14 +658,17 @@ def _dataView( data_id, context ):
 @click.option("-T","--tags",type=str,required=False,help="Tags (comma separated list).")
 @click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.")
 @click.option("-x","--extension",type=str,required=False,help="Override raw data file extension if provided (default is auto detect).")
+@click.option("-E","--external",is_flag=True,required=False,help="Raw data file is external to DataFed (unmanaged)") 
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.")
 @click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.") 
+@click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version") 
+@click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors") 
 @click.option("-p","--parent",type=str,required=False, help="Parent collection ID, alias, or listing index. Default is the current working collection.")
-@click.option("-R","--repository",type=str,required=False,help="Repository ID. Uses default allocation if not specified.")
+@click.option("-R","--repository",type=str,required=False,help="Repository ID (managed data only). Uses default allocation if not specified.")
 @click.option("-D","--deps",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.")
 @_global_context_options
 @_global_output_options
-def _dataCreate( title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, parent, repository, deps, context ):
+def _dataCreate( title, alias, description, tags, raw_data_file, extension, external, metadata, metadata_file, schema, schema_enforce, parent, repository, deps, context ):
     '''
     Create a new data record. The data record 'title' is required, but all
     other attributes are optional. On success, the ID of the created data
@@ -668,8 +679,11 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, meta
     convenience to avoid a separate dataPut() call.
     '''
 
-    if raw_data_file and not _interactive:
+    if raw_data_file and not ( _interactive and external ):
         raise Exception( "Cannot specify --raw-data-file option in non-interactive modes." )
+
+    if repository and external:
+        raise Exception( "Cannot specify a repository for external raw data." )
 
     if metadata and metadata_file:
         raise Exception( "Cannot specify both --metadata and --metadata-file options." )
@@ -683,17 +697,18 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, meta
         parent_id = _cur_coll
 
     reply = _capi.dataCreate( title, alias = alias, description = description, tags = tags, extension = extension,
-        metadata = metadata, metadata_file = metadata_file, parent_id = parent_id, deps = deps, repo_id = repository, context = context )
+        metadata = metadata, metadata_file = metadata_file, schema = schema, schema_enforce = schema_enforce,
+        parent_id = parent_id, deps = deps, repo_id = repository, raw_data_file = raw_data_file, external = external, context = context )
     _generic_reply_handler( reply, _print_data )
 
-    if raw_data_file:
+    if raw_data_file and not external:
         click.echo("")
         reply = _capi.dataPut( reply[0].data[0].id, raw_data_file )
         _generic_reply_handler( reply, _print_task )
 
 
 @_data.command(name='update')
-@click.argument("data_id", metavar="ID", required=False)
+@click.argument("data_id", metavar="ID", required=True)
 @click.option("-t","--title",type=str,required=False,help="Title")
 @click.option("-a","--alias",type=str,required=False,help="Alias")
 @click.option("-d","--description",type=str,required=False,help="Description text")
@@ -703,11 +718,13 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, meta
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format.")
 @click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON.")
 @click.option("-S","--metadata-set",is_flag=True,required=False,help="Set (replace) existing metadata with provided instead of merging.")
-@click.option("-A","--deps-add",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
-@click.option("-R","--deps-rem",multiple=True, nargs=2, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
+@click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version") 
+@click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors") 
+@click.option("-A","--deps-add",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
+@click.option("-R","--deps-rem",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
 @_global_context_options
 @_global_output_options
-def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, metadata_set, deps_add, deps_rem, context ):
+def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, metadata_set, schema, schema_enforce, deps_add, deps_rem, context ):
     '''
     Update an existing data record. The data record ID is required and can be
     an ID, alias, or listing index; all other record attributes are optional.
@@ -715,8 +732,14 @@ def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extens
     provided as a convenience to avoid a separate dataPut() call.
     '''
 
-    if raw_data_file and not _interactive:
-        raise Exception( "Cannot specify --raw-data-file option in non-interactive modes." )
+    if raw_data_file:
+        # Must determine if record has external data
+        view_reply = _capi.dataView( _resolve_id( data_id ), context = context )
+        external = view_reply[0].data[0].external
+        if ( not external ) and not _interactive:
+            raise Exception( "Cannot specify --raw-data-file option in non-interactive modes." )
+    else:
+        external = False
 
     if metadata and metadata_file:
         raise Exception( "Cannot specify both --metadata and --metadata-file options." )
@@ -725,10 +748,11 @@ def _dataUpdate( data_id, title, alias, description, tags, raw_data_file, extens
         tags = tags.split(",")
 
     reply = _capi.dataUpdate( _resolve_id( data_id ), title = title, alias = alias, description = description, tags = tags, extension = extension,
-        metadata = metadata, metadata_file = metadata_file, metadata_set = metadata_set, deps_add = deps_add, deps_rem = deps_rem, context = context )
+        metadata = metadata, metadata_file = metadata_file, metadata_set = metadata_set, schema = schema, schema_enforce = schema_enforce,
+        deps_add = deps_add, deps_rem = deps_rem, raw_data_file = raw_data_file if external else None, context = context )
     _generic_reply_handler( reply, _print_data )
 
-    if raw_data_file:
+    if raw_data_file and not external:
         click.echo("")
         reply = _capi.dataPut( reply[0].data[0].id, raw_data_file )
         _generic_reply_handler( reply, _print_task )
@@ -775,29 +799,19 @@ def _dataGet( df_id, path, wait, encrypt, orig_fname, context ):
     aliases, or index values from s listing. The PATH argument is the
     destination for the download and can be either a full Globus path (with
     endpoint), or a local file system path (absolute or relative).
-    
-    Downloads will involve either Globus transfers or HTTP transfers depending
-    on the source data for the selected records, and the two source types may
-    not be mixed. For Globus transfers, if no endpoint is specified in the PATH
-    argument, the current endpoint will be used. For HTTP transfers, the PATH
-    argument may be an absolute or relative path within the local filesystem.
-    For both cases, if the destination PATH doesn't exist, it will be created
-    given sufficient filesystem permissions.
 
-    Because HTTP downloads are performed directly by the CLI, they are always
-    blocking calls; thus the 'wait' option only applies to Globus transfers.
+    If no endpoint is specified in the PATH argument, the current endpoint will
+    be used. If the destination PATH doesn't exist, it will be created
+    given sufficient filesystem permissions. Note that the path does not have to
+    be local to where the CLI is running - data can be transferred to/from remote
+    systems; however, full Globus paths must used in this case.
     '''
 
     resolved_ids = []
     for ids in df_id:
         resolved_ids.append( _resolve_id( ids ))
 
-    if _interactive:
-        bar = _bar_adaptive_human_readable
-    else:
-        bar = None
-
-    reply = _capi.dataGet( resolved_ids, path, encrypt = int(encrypt), orig_fname = orig_fname, wait = wait, progress_bar = bar, context = context )
+    reply = _capi.dataGet( resolved_ids, path, encrypt = int(encrypt), orig_fname = orig_fname, wait = wait, context = context )
 
     if reply[1] == "DataGetReply":
         _generic_reply_handler( reply, _print_task )
@@ -884,10 +898,14 @@ def _data_batch_update( file ):
 def _list( ctx, item_id, offset, count, context ):
     '''
     List contents of a collection, or shared items. ID may be a collection ID
-    or alias, a relative path, a user or project ID, an index value from a
+    or alias, a path ('..','/','~'), a user or project ID, an index value from a
     listing, or omitted for the current working collection. If the ID is a
     user or project, the ls command will list shared items associated with the
     given user or project.
+
+    Note: the '/' path lists the root collection of the current context (user or
+    project); whereas the '~' path always lists the root collection of the
+    authenticated user, regardless of context.
     '''
 
     global _cur_coll
@@ -1098,35 +1116,64 @@ def _queryView( qry_id ):
     _generic_reply_handler( reply, _print_query )
 
 @_query.command(name='create')
-@click.option("-i","--id",help="ID/alias expression")
-@click.option("-t","--text",help="Text expression")
-@click.option("-m","--meta",help="Metadata expression")
-@click.option("-n","--no-default",is_flag=True,help="Exclude personal data and projects")
-@click.option("-c","--coll",multiple=True, type=str,help="Collection(s) to search")
-@click.option("-p","--proj",multiple=True, type=str,help="Project(s) to search")
+
 @click.argument("title", metavar="TITLE")
-def _queryCreate( title, id, text, meta, no_default, coll, proj ):
+@click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
+@click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
+@click.option("--id",type=str,help="ID/alias expression")
+@click.option("--text",type=str,help="Text expression")
+@click.option("-t","--tag",type=str,multiple=True,help="Tag (multiple allowed)")
+@click.option("--schema",type=str,help="Metadata schema ID")
+@click.option("--meta",type=str,help="Metadata expression")
+@click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
+@click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
+@click.option("--creator",type=str,help="Creating user ID")
+@click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("-p","--public",is_flag=True,help="Search public data/collections in catalog")
+@click.option("--category",type=str,help="Category (public searches only)")
+@click.option("--sort",type=str,help="Sort option (id,title,owner,text,ct,ut)")
+@click.option("--sort-rev",is_flag=True,help="Sort in reverse order (not available for text)")
+def _queryCreate( title, coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator,
+    time_from, time_to, public, category, sort, sort_rev ):
     '''
     Create a saved query.
     '''
 
-    reply = _capi.queryCreate( title, id = id, text = text, meta = meta, no_default = no_default, coll = coll, proj = proj )
+    reply = _capi.queryCreate( title, coll_mode, coll, id, text, tag, schema, meta, meta_err,
+        owner, creator, time_from, time_to, public, category, sort, sort_rev )
+
     _generic_reply_handler( reply, _print_query )
 
 @_query.command(name='update')
 @click.option("--title",help="New query title")
-@click.option("-i","--id",help="ID/alias expression")
-@click.option("-t","--text",help="Text expression")
-@click.option("-m","--meta",help="Metadata expression")
+@click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
+@click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
+@click.option("--id",type=str,help="ID/alias expression")
+@click.option("--text",type=str,help="Text expression")
+@click.option("-t","--tag",type=str,multiple=True,help="Tag (multiple allowed)")
+@click.option("--schema",type=str,help="Metadata schema ID")
+@click.option("--meta",type=str,help="Metadata expression")
+@click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
+@click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
+@click.option("--creator",type=str,help="Creating user ID")
+@click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("-p","--public",is_flag=True,help="Search public data/collections in catalog")
+@click.option("--category",type=str,help="Category (public searches only)")
+@click.option("--sort",type=str,help="Sort option (id,title,owner,text,ct,ut)")
+@click.option("--sort-rev",is_flag=True,help="Sort in reverse order (not available for text)")
 @click.argument("qry_id", metavar="ID")
-def _queryUpdate( qry_id, title, id, text, meta ):
+def _queryUpdate( qry_id, title, coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator,
+    time_from, time_to, public, category, sort, sort_rev ):
     '''
     Update a saved query. The title and search terms of a query may be updated;
     however, search scope cannot currently be changed. To remove a term,
     specify an empty string ("") for the associated option.
     '''
 
-    reply = _capi.queryUpdate( _resolve_id( qry_id ), title = title, id = id, text = text, meta = meta )
+    reply = _capi.queryUpdate( _resolve_id( qry_id ), title, coll_mode, coll, id, text, tag, schema, meta, meta_err,
+        owner, creator, time_from, time_to, public, category, sort, sort_rev )
     _generic_reply_handler( reply, _print_query )
 
 
@@ -1155,25 +1202,39 @@ def _queryExec( qry_id, offset, count ):
 
 
 @_query.command(name='run')
-@click.option("-i","--id",help="ID/alias expression")
-@click.option("-t","--text",help="Text expression")
-@click.option("-m","--meta",help="Metadata expression")
-@click.option("-n","--no-default",is_flag=True,help="Exclude personal data and projects")
-@click.option("-c","--coll",multiple=True, type=str,help="Collection(s) to search")
-@click.option("-p","--proj",multiple=True, type=str,help="Project(s) to search")
-@click.option("-O","--offset",default=0,help="Start result list at offset")
-@click.option("-C","--count",default=20,help="Limit to count results (default = 20)")
-def _queryRun( id, text, meta, no_default, coll, proj, offset, count ):
+@click.option("-C","--coll-mode",is_flag=True,help="Search for collections intead of data")
+@click.option("-c","--coll",multiple=True,type=str,help="Collection to search (multiple allowed)")
+@click.option("--id",type=str,help="ID/alias expression")
+@click.option("--text",type=str,help="Text expression")
+@click.option("-t","--tag",type=str,multiple=True,help="Tag (multiple allowed)")
+@click.option("--schema",type=str,help="Metadata schema ID")
+@click.option("--meta",type=str,help="Metadata expression")
+@click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
+@click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
+@click.option("--creator",type=str,help="Creating user ID")
+@click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("-p","--public",is_flag=True,help="Search public data/collections in catalog")
+@click.option("--category",type=str,help="Category (public searches only)")
+@click.option("--sort",type=str,help="Sort option (id,title,owner,text,ct,ut)")
+@click.option("--sort-rev",is_flag=True,help="Sort in reverse order (not available for text)")
+@click.option("--offset",default=0,help="Start result list at offset")
+@click.option("--count",default=20,help="Limit to count results (default = 20)")
+def _queryRun( coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator,
+    time_from, time_to, public, category, sort, sort_rev, offset, count ):
     '''
-    Run a directly entered query. Unless the 'no-default' option is included,
-    the search scope includes all data owned by the authenticated user (in
-    their root collection and projects that are owned or managed, or where the
-    user is a member of the project. Projects and collections that are not part
-    of the default scope may be added using the --proj and --coll options
-    respectively.
-    '''
+    Run a direct query on data or collections. The default scope is the current
+    authenticated user. If collections are specified, they must be in the same
+    overall search scope. At least one search term must be specified.
 
-    reply = _capi.queryDirect( id = id, text = text, meta = meta, no_default = no_default, coll = coll, proj = proj, offset = offset, count = count )
+    The sort option 'text' is a text-matching relevance ranking and only works
+    if a text term is specified in the query. The --sort-rev option does
+    not work with text relevance matching. The sort options 'ct' and 'ut'
+    are creation and update times, respectively.
+    '''
+    reply = _capi.queryDirect( coll_mode, coll, id, text, tag, schema, meta, meta_err,
+        owner, creator, time_from, time_to, public, category, sort, sort_rev, offset, count )
+
     _generic_reply_handler( reply, _print_listing )
 
 # =============================================================================
@@ -1744,28 +1805,34 @@ def _print_endpoints( message ):
 
 def _print_data( message ):
     for dr in message.data:
-        print("data:",dr)
-
         click.echo( "{:<15}{:<50}".format('ID: ', dr.id))
         click.echo( "{:<15}{:<50}".format('Alias: ', dr.alias if dr.alias else "(none)" ))
         _wrap_text( dr.title, "Title:", 15 )
         _wrap_text( _arrayToCSV( dr.tags, 0 ), "Tags:", 15 )
 
-        if dr.data_url:
-            click.echo("{:<15}{:<50}".format('DOI No.: ', dr.doi))
-            click.echo("{:<15}{:<50}".format('Data URL: ', dr.data_url))
-        else:
-            click.echo("{:<15}{:<50}".format('Data Size: ', _capi.sizeToStr(dr.size)) + '\n' +
-                    "{:<15}{:<50}".format('Data Repo ID: ', dr.repo_id) + '\n' +
+        if dr.external:
+            click.echo(
+                    "{:<15}{:<50}\n".format('Type: ', 'External' ) +
                     "{:<15}{:<50}".format('Source: ', dr.source if dr.source else '(none)' ))
+        else:
+            click.echo(
+                    "{:<15}{:<50}\n".format('Type: ', 'Managed' ) +
+                    "{:<15}{:<50}\n".format('Source: ', dr.source if dr.source else '(none)' ) +
+                    "{:<15}{:<50}\n".format('Size: ', _capi.sizeToStr(dr.size)) +
+                    "{:<15}{:<50}".format('Repo ID: ', dr.repo_id ))
+
             if dr.ext_auto:
                 click.echo( "{:<15}{:<50}".format('Extension: ', '(auto)'))
             else:
                 click.echo( "{:<15}{:<50}".format('Extension: ', dr.ext if dr.ext else '(not set)' ))
 
-        click.echo( "{:<15}{:<50}".format('Owner: ', dr.owner[2:]) + '\n' +
-                    "{:<15}{:<50}".format('Creator: ', dr.creator[2:]) + '\n' +
-                    "{:<15}{:<50}".format('Created: ', _capi.timestampToStr(dr.ct)) + '\n' +
+        click.echo( "{:<15}{:<50}".format('Schema: ', dr.sch_id if dr.sch_id else '(none)' ))
+        if dr.sch_id and dr.metadata:
+            click.echo( "{:<15}{:<50}".format('Meta Errors: ', "Yes" if dr.md_err_msg else 'No' ))
+
+        click.echo( "{:<15}{:<50}\n".format('Owner: ', dr.owner[2:]) +
+                    "{:<15}{:<50}\n".format('Creator: ', dr.creator[2:]) +
+                    "{:<15}{:<50}\n".format('Created: ', _capi.timestampToStr(dr.ct)) +
                     "{:<15}{:<50}".format('Updated: ', _capi.timestampToStr(dr.ut)))
 
         if len(dr.desc) > 200 and _verbosity < 2:
@@ -1913,7 +1980,7 @@ def _print_proj( message ):
                 text = _arrayToCSV(proj.member,2)
                 _wrap_text( text, "Members:", 15 )
             else:
-                click.echo("{:<14} (none)".format('Admin(s): '))
+                click.echo("{:<14} (none)".format('Members(s): '))
 
             if len(proj.alloc) > 0:
                 first = True
@@ -1948,24 +2015,57 @@ def _print_path( message ):
             ind = ind + 3
 
 def _print_query( message ):
-    for q in message.query:
-        click.echo( "{:<20} {:<50}\n".format('ID: ', q.id)+
-                    "{:<20} {:<50}".format('Title: ', q.title))
+    click.echo( "{:<20} {}\n".format('ID: ', message.id)+
+                "{:<20} {}\n".format('Title: ', message.title)+
+                "{:<20} {}\n".format('Owner: ', message.owner[2:]) +
+                "{:<20} {}\n".format('Created: ', _capi.timestampToStr(message.ct)) +
+                "{:<20} {}\nSearch Terms:\n".format('Updated: ', _capi.timestampToStr(message.ut)))
 
-        qry = jsonlib.loads( q.query )
-        click.echo( "{:<20} {:<50}".format('ID Term: ', "\"" + qry["id"] + "\"" if "id" in qry else "N/A"))
-        click.echo( "{:<20} {:<50}".format('Text Term: ', "\"" + qry["text"] + "\"" if "text" in qry else "N/A"))
-        click.echo( "{:<20} {:<50}".format('Meta Term: ', "\"" + qry["meta"] + "\"" if "meta" in qry else "N/A"))
-        delim = ""
-        scopes = ""
-        for s in qry["scopes"]:
-            scopes = scopes + delim + _scopeToStr( s )
-            delim = ", "
-        click.echo( "{:<20} {:<50}".format('Scopes: ', scopes ))
+    click.echo( "  {:<18} {}".format('Mode: ', "Data" if message.query.mode == 0 else "Collections" ))
 
-        click.echo( "{:<20} {:<50}\n".format('Owner: ', q.owner[2:]) +
-                    "{:<20} {:<50}\n".format('Created: ', _capi.timestampToStr(q.ct)) +
-                    "{:<20} {:<50}\n".format('Updated: ', _capi.timestampToStr(q.ut)))
+    if len(message.query.coll):
+        tags = _arrayToCSV( message.query.coll, 2 )
+        _wrap_text( _arrayToCSV( message.query.coll, 0 ), "  Selection:", 21 )
+    else:
+        click.echo( "  {:<18} {}".format('Selection: ', "All Data" ))
+
+    if message.query.HasField('id'):
+        click.echo( "  {:<18} {}".format('ID/Alias: ', message.query.id ))
+
+    if message.query.HasField('text'):
+        _wrap_text( message.query.text, "  Text:", 21 )
+
+    if len(message.query.tags):
+        tags = _arrayToCSV( message.query.tags, 2 )
+        _wrap_text( _arrayToCSV( message.query.tags, 0 ), "  Tags:", 21 )
+
+    if message.query.HasField('owner'):
+        click.echo( "  {:<18} {}".format('Owner: ', message.query.owner ))
+
+    if message.query.HasField('creator'):
+        click.echo( "  {:<18} {}".format('Creator: ', message.query.creator ))
+
+    if message.query.HasField('from'):
+        click.echo( "  {:<18} {}".format('From Date: ', _capi.timestampToStr( getattr( message.query, 'from' ))))
+
+    if message.query.HasField('to'):
+        click.echo( "  {:<18} {}".format('To Date: ', _capi.timestampToStr( message.query.to )))
+
+    if message.query.HasField('sch_id'):
+        click.echo( "  {:<18} {}".format('Schema: ', message.query.sch_id ))
+
+    if message.query.HasField('meta'):
+        _wrap_text( message.query.meta, "  Metadata:", 21 )
+
+    if message.query.HasField('meta_err'):
+        click.echo( "  {:<18} {}".format('Meta Errors: ', 'Yes' ))
+
+    if message.query.HasField('published') and message.query.published:
+        click.echo( "  {:<18} {}".format('Public: ', 'Yes' ))
+
+    if len(message.query.cat_tags):
+        click.echo( "  {:<18} {}".format('Category: ',  _arrayToDotted( message.query.cat_tags )))
+
 
 def _wrap_text( text, prefix, indent, compact = False ):
     if len(text) == 0:
@@ -1988,22 +2088,6 @@ def _wrap_text( text, prefix, indent, compact = False ):
             if first == True:
                 wrapper.initial_indent = ' '*indent
                 first = False
-
-def _scopeToStr( scope ):
-    s = scope["scope"]
-
-    if s == 1:
-        return "my-data"
-    elif s == 2:
-        return "proj: " + scope["id"]
-    elif s == 3:
-        return "my-proj"
-    elif s == 4:
-        return "mgd-proj"
-    elif s == 5:
-        return "mem-proj"
-    elif s == 6:
-        return "coll: " + scope["id"]
 
 
 # =============================================================================
@@ -2101,6 +2185,16 @@ def _arrayToCSV( items, skip ):
             text += i
     return text
 
+def _arrayToDotted( items, skip = 0 ):
+    text = ""
+    for i in items:
+        if len(text):
+            text += "."
+        if skip:
+            text += i[skip:]
+        else:
+            text += i
+    return text
 
 def _printJSON( json, cur_indent, indent ):
     pref = " "*cur_indent

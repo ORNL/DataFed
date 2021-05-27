@@ -6,16 +6,20 @@
 #include <thread>
 #include <algorithm>
 #include <zmq.h>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json-schema.hpp>
+#include "Util.hpp"
 #include "MsgComm.hpp"
 #include "DatabaseAPI.hpp"
 #include "ICoreServer.hpp"
 #include "GlobusAPI.hpp"
+#include <DynaLog.hpp>
 
 namespace SDMS {
 namespace Core {
 
 
-class ClientWorker
+class ClientWorker : public nlohmann::json_schema::basic_error_handler
 {
 public:
     ClientWorker( ICoreServer & a_core, size_t a_tid );
@@ -39,22 +43,24 @@ private:
     bool procDataGetRequest( const std::string & a_uid );
     bool procDataPutRequest( const std::string & a_uid );
     bool procDataCopyRequest( const std::string & a_uid );
+    bool procRecordCreateRequest( const std::string & a_uid );
     bool procRecordUpdateRequest( const std::string & a_uid );
     bool procRecordUpdateBatchRequest( const std::string & a_uid );
     bool procRecordDeleteRequest( const std::string & a_uid );
     bool procRecordAllocChangeRequest( const std::string & a_uid );
     bool procRecordOwnerChangeRequest( const std::string & a_uid );
-    bool procRecordSearchRequest( const std::string & a_uid );
     bool procCollectionDeleteRequest( const std::string & a_uid );
     bool procProjectDeleteRequest( const std::string & a_uid );
-    bool procQueryDeleteRequest( const std::string & a_uid );
     bool procProjectSearchRequest( const std::string & a_uid );
-    bool procQueryCreateRequest( const std::string & a_uid );
-    bool procQueryUpdateRequest( const std::string & a_uid );
     bool procRepoAllocationCreateRequest( const std::string & a_uid );
     bool procRepoAllocationDeleteRequest( const std::string & a_uid );
     bool procRepoAuthzRequest( const std::string & a_uid );
     bool procUserGetAccessTokenRequest( const std::string & a_uid );
+    bool procMetadataValidateRequest( const std::string & a_uid );
+    bool procSchemaCreateRequest( const std::string & a_uid );
+    bool procSchemaReviseRequest( const std::string & a_uid );
+    bool procSchemaUpdateRequest( const std::string & a_uid );
+    void schemaEnforceRequiredProperties( const nlohmann::json & a_schema );
 
     void recordCollectionDelete( const std::vector<std::string> & a_ids, Auth::TaskDataReply & a_reply );
     void handleTaskResponse( libjson::Value & a_result );
@@ -64,16 +70,22 @@ private:
         return find_if(str.begin(), str.end(), []( char c ){ return !isalnum(c); }) != str.end();
     }
 
-    std::string parseSearchTerms( const std::string & a_key, const std::vector<std::string> & a_terms );
-    std::string parseSearchPhrase( const char * key, const std::string & a_phrase );
-    std::string parseSearchTextPhrase( const std::string & a_phrase );
-    std::string parseSearchTags(  const libjson::Value::Array & a_tags );
-    std::string parseSearchIdAlias( const std::string & a_query );
-    std::string parseSearchMetadata( const std::string & a_query );
-    std::string parseQuery( const std::string & a_query, bool & use_client, bool & use_shared_users, bool & use_shared_projects );
-    std::string parseProjectQuery( const std::string & a_text_query, const std::vector<std::string> & a_scope );
-
     typedef bool (ClientWorker::*msg_fun_t)( const std::string & a_uid );
+
+    void schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value );
+
+    void error( const nlohmann::json_pointer<nlohmann::basic_json<>> & a_ptr, const nlohmann::json & a_inst, const std::string & a_err_msg ) override
+    {
+        (void) a_ptr;
+        (void) a_inst;
+        const std::string & path = a_ptr.to_string();
+
+        if ( m_validator_err.size() == 0 )
+            m_validator_err = "Schema Validation Error(s):\n";
+
+        m_validator_err += "At " + (path.size()?path:"top-level") + ": " + a_err_msg + "\n";
+        //std::cerr << "ERROR: '" << pointer << "' - '" << instance << "': " << message << "\n";
+    }
 
     Config &            m_config;
     ICoreServer &       m_core;
@@ -83,6 +95,7 @@ private:
     DatabaseAPI         m_db_client;
     MsgBuf              m_msg_buf;
     GlobusAPI           m_globus_api;
+    std::string         m_validator_err;
 
     static std::map<uint16_t,msg_fun_t> m_msg_handlers;
 };

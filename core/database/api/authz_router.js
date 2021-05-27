@@ -24,7 +24,7 @@ router.get('/gridftp', function (req, res) {
             if ( req.queryParams.act != "read" || !g_lib.hasPublicRead( data_id )){
                 throw g_lib.ERR_PERM_DENIED;
             }
-            console.log("allow anon read of public record");
+            //console.log("allow anon read of public record");
         }else{
             //console.log("client:",client);
 
@@ -56,6 +56,7 @@ router.get('/gridftp', function (req, res) {
         }
 
         // Verify repo and path are correct for record
+        // Note: only managed records have an allocations and this gridftp auth call is only made for managed records
         var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
         var loc = g_db.loc.firstExample({_from: data_id});
         if ( !loc )
@@ -68,14 +69,14 @@ router.get('/gridftp', function (req, res) {
         if ( alloc.path + data_key != path ){
             // This may be due to an alloc/owner change
             // Allow IF new path matches
-            console.log("authz loc info:", loc );
+            //console.log("authz loc info:", loc );
 
             if ( !loc.new_repo )
                 throw g_lib.ERR_PERM_DENIED;
 
             alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });
 
-            console.log("path:", path, "alloc path:", alloc.path + data_key );
+            //console.log("path:", path, "alloc path:", alloc.path + data_key );
 
             if ( !alloc || ( alloc.path + data_key != path ))
                 throw g_lib.ERR_PERM_DENIED;

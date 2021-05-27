@@ -14,17 +14,28 @@ var tasks_func = function() {
     obj.taskInitAllocCreate = function( a_client, a_repo_id, a_subject_id, a_data_limit, a_rec_limit ){
         console.log("taskInitAllocCreate");
 
+        // Check if repo and subject exist
         if ( !g_db._exists( a_repo_id ))
             throw [g_lib.ERR_NOT_FOUND,"Repo, '" + a_repo_id + "', does not exist"];
 
         if ( !g_db._exists( a_subject_id ))
             throw [g_lib.ERR_NOT_FOUND,"Subject, '" + a_subject_id + "', does not exist"];
 
+        // Check for proper permissions
         g_lib.ensureAdminPermRepo( a_client, a_repo_id );
 
+        // Check if there is already a matching allocation
         var alloc = g_db.alloc.firstExample({ _from: a_subject_id, _to: a_repo_id });
         if ( alloc )
             throw [g_lib.ERR_INVALID_PARAM, "Subject, '" + a_subject_id + "', already has as allocation on " + a_repo_id ];
+
+        // Check if there is an existing alloc task to involving the same allocation (repo + subject)
+        var res = g_db._query("for v, e in 1..1 inbound @repo lock filter e.context == @subj && v.type == @type return v._id",
+            { repo: a_repo_id, subj: a_subject_id, type: g_lib.TT_ALLOC_CREATE });
+
+        if ( res.hasNext() ){
+            throw [g_lib.ERR_IN_USE, "A duplicate allocation create task was found." ];
+        }
 
         var repo = g_db.repo.document( a_repo_id );
         var path = repo.path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
@@ -53,7 +64,7 @@ var tasks_func = function() {
              // Create allocation edge and finish
 
             obj._transact( function(){
-                console.log("saving alloc:", state.subject, state.repo_id, state.data_limit, state.rec_limit,  0, 0, state.repo_path );
+                //console.log("saving alloc:", state.subject, state.repo_id, state.data_limit, state.rec_limit,  0, 0, state.repo_path );
 
                 g_db.alloc.save({ _from: state.subject, _to: state.repo_id, data_limit: state.data_limit, rec_limit: state.rec_limit, rec_count: 0, data_size: 0, path: state.repo_path });
                 reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
@@ -86,6 +97,14 @@ var tasks_func = function() {
         var count = g_db._query("return length(for v, e in 1..1 inbound @repo loc filter e.uid == @subj return 1)", { repo: a_repo_id, subj: a_subject_id }).next();
         if ( count )
             throw [g_lib.ERR_IN_USE,"Cannot delete allocation - records present"];
+
+        // Check if there is an existing alloc task to involving the same allocation (repo + subject)
+        var res = g_db._query("for v, e in 1..1 inbound @repo lock filter e.context == @subj && v.type == @type return v._id",
+            { repo: a_repo_id, subj: a_subject_id, type: g_lib.TT_ALLOC_DEL });
+
+        if ( res.hasNext() ){
+            throw [g_lib.ERR_IN_USE, "A duplicate allocation delete task was found." ];
+        }
 
         var path = repo.path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
         var state = { repo_id: a_repo_id, subject: a_subject_id, repo_path: path };
@@ -130,17 +149,45 @@ var tasks_func = function() {
 
         var result = g_proc.preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_GET );
 
-        if ( result.glob_data.length > 0 && !a_check ){
+        if (( result.glob_data.length + result.ext_data.length ) > 0 && !a_check ){
             var idx = a_path.indexOf("/");
             if ( idx == -1 )
                 throw [g_lib.ERR_INVALID_PARAM,"Invalid destination path (must include endpoint)"];
 
-            var state = { path: a_path, encrypt: a_encrypt, orig_fname: a_orig_fname, glob_data: result.glob_data };
-            var task = obj._createTask( a_client._id, g_lib.TT_DATA_GET, 2, state );
+            // Check for duplicate names
+            if ( a_orig_fname ){
+                var fname, fnames = new Set();
 
-            var dep_ids = [];
-            for ( var i in result.glob_data )
+                for ( i in result.glob_data ){
+                    fname = result.glob_data[i].source.substr( result.glob_data[i].source.lastIndexOf("/") + 1);
+                    if ( fnames.has( fname )){
+                        throw [g_lib.ERR_XFR_CONFLICT, "Duplicate filename(s) detected in transfer request."];
+                    }
+
+                    fnames.add( fname );
+                }
+
+                for ( i in result.ext_data ){
+                    fname = result.ext_data[i].source.substr( result.ext_data[i].source.lastIndexOf("/") + 1);
+                    if ( fnames.has( fname )){
+                        throw [g_lib.ERR_XFR_CONFLICT, "Duplicate filename(s) detected in transfer request."];
+                    }
+
+                    fnames.add( fname );
+                }
+            }
+
+            var state = { path: a_path, encrypt: a_encrypt, orig_fname: a_orig_fname, glob_data: result.glob_data, ext_data: result.ext_data },
+                task = obj._createTask( a_client._id, g_lib.TT_DATA_GET, 2, state ),
+                i, dep_ids = [];
+
+            // Determine if any other tasks use the selected records and queue this task if needed
+            
+            for ( i in result.glob_data )
                 dep_ids.push( result.glob_data[i]._id );
+
+            for ( i in result.ext_data )
+                dep_ids.push( result.ext_data[i]._id );
 
             if ( g_proc._processTaskDeps( task._id, dep_ids, 0, 0 )){
                 task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued" }, { returnNew: true }).new;
@@ -162,10 +209,10 @@ var tasks_func = function() {
             return;
 
         if ( a_task.step == 0 ){
-            console.log("taskRunDataGet - do setup");
+            //console.log("taskRunDataGet - do setup");
             obj._transact( function(){
                 // Generate transfer steps
-                state.xfr = obj._buildTransferDoc( g_lib.TT_DATA_GET, state.glob_data, state.path, state.orig_fname );
+                state.xfr = obj._buildTransferDoc( g_lib.TT_DATA_GET, state.glob_data, state.ext_data, state.path, state.orig_fname );
                 // Update step info
                 a_task.step = 1;
                 a_task.steps = state.xfr.length + 2;
@@ -176,7 +223,7 @@ var tasks_func = function() {
         }
 
         if ( a_task.step < a_task.steps - 1 ){
-            console.log("taskRunDataGet - do xfr");
+            //console.log("taskRunDataGet - do xfr");
             // Transfer data step
 
             var tokens = g_lib.getAccessToken( a_task.client );
@@ -192,7 +239,7 @@ var tasks_func = function() {
 
             reply = { cmd: g_lib.TC_RAW_DATA_TRANSFER, params: params, step: a_task.step };
         }else{
-            console.log("taskRunDataGet - complete task");
+            //console.log("taskRunDataGet - complete task");
             obj._transact( function(){
                 // Last step - complete task
                 reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
@@ -240,10 +287,10 @@ var tasks_func = function() {
             return;
 
         if ( a_task.step == 0 ){
-            console.log("taskRunDataPut - do setup");
+            //console.log("taskRunDataPut - do setup");
             obj._transact( function(){
                 // Generate transfer steps
-                state.xfr = obj._buildTransferDoc( g_lib.TT_DATA_PUT, state.glob_data, state.path, false );
+                state.xfr = obj._buildTransferDoc( g_lib.TT_DATA_PUT, state.glob_data, null, state.path, false );
                 // Update step info
                 a_task.step = 1;
                 a_task.steps = state.xfr.length + 3;
@@ -254,7 +301,7 @@ var tasks_func = function() {
         }
 
         if ( a_task.step < a_task.steps - 2 ){
-            console.log("taskRunDataPut - do xfr");
+            //console.log("taskRunDataPut - do xfr");
             // Transfer data step
 
             var tokens = g_lib.getAccessToken( a_task.client );
@@ -319,7 +366,7 @@ var tasks_func = function() {
             };
             reply = { cmd: g_lib.TC_RAW_DATA_UPDATE_SIZE, params: params, step: a_task.step };
         } else {
-            console.log("taskRunDataPut - complete task");
+            //console.log("taskRunDataPut - complete task");
             obj._transact( function(){
                 // Last step - complete task
                 reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
@@ -331,6 +378,11 @@ var tasks_func = function() {
 
     // ----------------------- ALLOCATION CHANGE ----------------------------
 
+    /* Move records with managed data to the specified destination repository.
+    Requires removing old "loc" edges and creating new ones between the affected
+    records and the destination repository, and updating the statistics of all
+    involved allocations. Unmanaged records do not use allocations and are ignored.
+    */
     obj.taskInitRecAllocChg = function( a_client, a_proj_id, a_res_ids, a_dst_repo_id, a_check ){
         console.log("taskInitRecAllocChg");
 
@@ -362,28 +414,15 @@ var tasks_func = function() {
 
         var i,loc,rec,rec_ids = [];
 
-        result.tot_cnt = result.http_data.length + result.glob_data.length;
+        result.tot_cnt = result.ext_data.length + result.glob_data.length;
         result.act_size = 0;
-        result.act_cnt = 0;
-
-        for ( i in result.http_data ){
-            rec = result.http_data[i];
-            rec_ids.push( rec.id );
-
-            loc = g_db.loc.firstExample({ _from: rec.id });
-            if ( loc._to != a_dst_repo_id ){
-                result.act_cnt++;
-            }
-        }
 
         for ( i in result.glob_data ){
             rec = result.glob_data[i];
-            rec_ids.push( rec.id );
-
             loc = g_db.loc.firstExample({ _from: rec.id });
-            if ( loc._to != a_dst_repo_id ){
+            if ( loc && loc._to != a_dst_repo_id ){
+                rec_ids.push( rec.id );
                 if ( rec.size ){
-                    result.act_cnt++;
                     result.act_size += rec.size;
                 }
             }
@@ -399,8 +438,8 @@ var tasks_func = function() {
         if ( rec_ids.length == 0 || a_check )
             return result;
 
-        var state = { encrypt: 1, http_data: result.http_data, glob_data: result.glob_data, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
-        var task = obj._createTask( a_client._id, g_lib.TT_REC_ALLOC_CHG, 3, state );
+        var state = { encrypt: 1, glob_data: result.glob_data, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
+        var task = obj._createTask( a_client._id, g_lib.TT_REC_ALLOC_CHG, 2, state );
 
         if ( g_proc._processTaskDeps( task._id, rec_ids, 1, 0 )){
             task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued"}, { returnNew: true }).new;
@@ -419,18 +458,18 @@ var tasks_func = function() {
         // TODO Add rollback functionality
         if ( a_task.step < 0 ){
             var step = -a_task.step;
-            console.log("taskRunRecAllocChg - rollback step: ", step );
+            //console.log("taskRunRecAllocChg - rollback step: ", step );
 
             if ( step > 1 && step < a_task.steps - 1 ){
                 substep = (step - 2) % 4;
                 xfrnum = Math.floor((step-2)/4);
                 xfr = state.xfr[xfrnum];
-                console.log("taskRunRecAllocChg - rollback substep: ", substep );
+                //console.log("taskRunRecAllocChg - rollback substep: ", substep );
 
                 // Only action is to revert location in DB if transfer failed.
                 if ( substep > 0 && substep < 3 ){
                     obj._transact( function(){
-                        console.log("taskRunRecAllocChg - recMoveRevert" );
+                        //console.log("taskRunRecAllocChg - recMoveRevert" );
                         obj.recMoveRevert( xfr.files );
 
                         // Update task step
@@ -444,47 +483,28 @@ var tasks_func = function() {
         }
 
         if ( a_task.step == 0 ){
-            console.log("taskRunRecAllocChg - do setup");
+            //console.log("taskRunRecAllocChg - do setup");
             obj._transact( function(){
                 // Generate transfer steps
-                state.xfr = obj._buildTransferDoc( g_lib.TT_REC_ALLOC_CHG, state.glob_data, state.dst_repo_id, false, state.owner_id );
-                // Update step info
+                state.xfr = obj._buildTransferDoc( g_lib.TT_REC_ALLOC_CHG, state.glob_data, null, state.dst_repo_id, false, state.owner_id );
+                // Recalculate number of steps
                 a_task.step = 1;
-                a_task.steps = ( state.xfr.length * 4 ) + 3;
+                a_task.steps = ( state.xfr.length * 4 ) + 2;
                 // Update task
                 g_db._update( a_task._id, { step: a_task.step, steps: a_task.steps, state: { xfr: state.xfr }, ut: Math.floor( Date.now()/1000 )});
                 // Fall-through to initiate first transfer
             }, ["repo","loc"], ["task"] );
         }
 
-        if ( a_task.step == 1 ){
-            console.log("taskRunRecAllocChg - move non-globus records");
-            obj._transact( function(){
-                if ( state.http_data.length ){
-                    // Ensure allocation has sufficient record capacity
-                    alloc = g_db.alloc.firstExample({_from: state.owner_id, _to: state.dst_repo_id });
-                    if ( alloc.rec_count + state.http_data.length > alloc.rec_limit )
-                        throw [ g_lib.ERR_PERM_DENIED, "Allocation record limit exceeded on " + state.dst_repo_id ];
-
-                    obj.recMoveInit( state.http_data, state.dst_repo_id );
-                    obj.recMoveFini( state.http_data );
-                }
-                // Update task step
-                a_task.step = 2;
-                g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-                // Fall-through to next step
-            }, [], ["loc","alloc","task"] );
-        }
-
-        if ( a_task.step > 1 && a_task.step < a_task.steps - 1 ){
-            substep = (a_task.step - 2) % 4;
-            xfrnum = Math.floor((a_task.step-2)/4);
+        if ( a_task.step > 0 && a_task.step < a_task.steps - 1 ){
+            substep = (a_task.step - 1) % 4;
+            xfrnum = Math.floor((a_task.step-1)/4);
             xfr = state.xfr[xfrnum];
-            console.log("taskRunRecAllocChg - xfr num",xfrnum,"substep",substep);
+            //console.log("taskRunRecAllocChg - xfr num",xfrnum,"substep",substep);
 
             switch ( substep ){
                 case 0:
-                    console.log("taskRunRecAllocChg - init move");
+                    //console.log("taskRunRecAllocChg - init move");
                     obj._transact( function(){
                         // Ensure allocation has sufficient record and data capacity
                         alloc = g_db.alloc.firstExample({_from: state.owner_id, _to: state.dst_repo_id });
@@ -505,7 +525,7 @@ var tasks_func = function() {
                     }, [], ["loc","task"] );
                     /* falls through */
                 case 1:
-                    console.log("taskRunRecAllocChg - do xfr");
+                    //console.log("taskRunRecAllocChg - do xfr");
                     // Transfer data step
 
                     var tokens = g_lib.getAccessToken( a_task.client );
@@ -521,7 +541,7 @@ var tasks_func = function() {
                     reply = { cmd: g_lib.TC_RAW_DATA_TRANSFER, params: params, step: a_task.step };
                     break;
                 case 2:
-                    console.log("taskRunRecAllocChg - finalize move");
+                    //console.log("taskRunRecAllocChg - finalize move");
                     obj._transact( function(){
                         // Init record move
                         obj.recMoveFini( xfr.files );
@@ -533,7 +553,7 @@ var tasks_func = function() {
                     }, [], ["loc","alloc","task"] );
                     /* falls through */
                 case 3:
-                    console.log("taskRunRecAllocChg - delete old data");
+                    //console.log("taskRunRecAllocChg - delete old data");
                     // Request data size update
                     params = {
                         repo_id: xfr.src_repo_id,
@@ -548,7 +568,7 @@ var tasks_func = function() {
                     break;
             }
         } else {
-            console.log("taskRunRecAllocChg - complete task");
+            //console.log("taskRunRecAllocChg - complete task");
             obj._transact( function(){
                 // Last step - complete task
                 reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
@@ -559,6 +579,13 @@ var tasks_func = function() {
     };
 
     // ----------------------- OWNER CHANGE ----------------------------
+
+    /* Move records to the specified new owner and destination collection and
+    repository. Requires removing old "owner" and "loc" edges and creating new
+    ones between the affected records and the destination owner and repository,
+    and updating the statistics of all involved allocations. Unmanaged records
+    do not use allocations, so only ownership is updated.
+    */
 
     obj.taskInitRecOwnerChg = function( a_client, a_res_ids, a_dst_coll_id, a_dst_repo_id, a_check ){
         // Verify destination collection
@@ -604,28 +631,22 @@ var tasks_func = function() {
 
         var i,loc,rec,deps = [];
 
-        result.tot_cnt = result.http_data.length + result.glob_data.length;
+        result.tot_cnt = result.ext_data.length + result.glob_data.length;
         result.act_size = 0;
-        result.act_cnt = 0;
 
-        for ( i in result.http_data ){
-            rec = result.http_data[i];
-            deps.push({ id: rec.id, lev: 1 });
-
-            loc = g_db.loc.firstExample({ _from: rec.id });
-            if ( loc.uid != owner_id || loc._to != a_dst_repo_id ){
-                result.act_cnt++;
+        for ( i in result.ext_data ){
+            rec = result.ext_data[i];
+            if ( rec.owner != owner_id ){
+                deps.push({ id: rec.id, lev: 1 });
             }
         }
 
         for ( i in result.glob_data ){
             rec = result.glob_data[i];
-            deps.push({ id: rec.id, lev: 1 });
-
             loc = g_db.loc.firstExample({ _from: rec.id });
             if ( loc.uid != owner_id || loc._to != a_dst_repo_id ){
+                deps.push({ id: rec.id, lev: 1 });
                 if ( rec.size ){
-                    result.act_cnt++;
                     result.act_size += rec.size;
                 }
             }
@@ -651,7 +672,7 @@ var tasks_func = function() {
         deps.push({ id: owner_id, lev: 0 });
         deps.push({ id: a_dst_repo_id, lev: 1, ctx: owner_id });
 
-        var state = { encrypt: 1, http_data: result.http_data, glob_data: result.glob_data, dst_coll_id: a_dst_coll_id, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
+        var state = { encrypt: 1, ext_data: result.ext_data, glob_data: result.glob_data, dst_coll_id: a_dst_coll_id, dst_repo_id: a_dst_repo_id, owner_id: owner_id };
         var task = obj._createTask( a_client._id, g_lib.TT_REC_OWNER_CHG, 3, state );
         if ( g_proc._lockDepsGeneral( task._id, deps )){
             task = g_db._update( task._id, { status: g_lib.TS_BLOCKED, msg: "Queued"}, { returnNew: true }).new;
@@ -670,18 +691,18 @@ var tasks_func = function() {
         // TODO Add rollback functionality
         if ( a_task.step < 0 ){
             var step = -a_task.step;
-            console.log("taskRunRecOwnerChg - rollback step: ", step );
+            //console.log("taskRunRecOwnerChg - rollback step: ", step );
 
             if ( step > 1 && step < a_task.steps - 1 ){
                 substep = (step - 2) % 4;
                 xfrnum = Math.floor((step-2)/4);
                 xfr = state.xfr[xfrnum];
-                console.log("taskRunRecOwnerChg - rollback substep: ", substep );
+                //console.log("taskRunRecOwnerChg - rollback substep: ", substep );
 
                 // Only action is to revert location in DB if transfer failed.
                 if ( substep > 0 && substep < 3 ){
                     obj._transact( function(){
-                        console.log("taskRunRecOwnerChg - recMoveRevert" );
+                        //console.log("taskRunRecOwnerChg - recMoveRevert" );
                         obj.recMoveRevert( xfr.files );
 
                         // Update task step
@@ -695,10 +716,10 @@ var tasks_func = function() {
         }
 
         if ( a_task.step == 0 ){
-            console.log("taskRunRecOwnerChg - do setup");
+            //console.log("taskRunRecOwnerChg - do setup");
             obj._transact( function(){
                 // Generate transfer steps
-                state.xfr = obj._buildTransferDoc( g_lib.TT_REC_OWNER_CHG, state.glob_data, state.dst_repo_id, false, state.owner_id );
+                state.xfr = obj._buildTransferDoc( g_lib.TT_REC_OWNER_CHG, state.glob_data, null, state.dst_repo_id, false, state.owner_id );
                 // Update step info
                 a_task.step = 1;
                 a_task.steps = ( state.xfr.length * 4 ) + 3;
@@ -709,17 +730,12 @@ var tasks_func = function() {
         }
 
         if ( a_task.step == 1 ){
-            console.log("taskRunRecOwnerChg - move non-globus records");
+            //console.log("taskRunRecOwnerChg - move unmanaged records");
             obj._transact( function(){
-                if ( state.http_data.length ){
-                    // Ensure allocation has sufficient record capacity
-                    alloc = g_db.alloc.firstExample({_from: state.owner_id, _to: state.dst_repo_id });
-                    if ( alloc.rec_count + state.http_data.length > alloc.rec_limit )
-                        throw [ g_lib.ERR_PERM_DENIED, "Allocation record limit exceeded on " + state.dst_repo_id ];
-
-                    obj.recMoveInit( state.http_data, state.dst_repo_id, state.owner_id, state.dst_coll_id );
-                    obj.recMoveFini( state.http_data );
+                if ( state.ext_data.length ){
+                    obj.recMoveExt( state.ext_data, state.owner_id, state.dst_coll_id );
                 }
+
                 // Update task step
                 a_task.step = 2;
                 g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
@@ -731,11 +747,11 @@ var tasks_func = function() {
             substep = (a_task.step - 2) % 4;
             xfrnum = Math.floor((a_task.step-2)/4);
             xfr = state.xfr[xfrnum];
-            console.log("taskRunRecOwnerChg - xfr num",xfrnum,"substep",substep);
+            //console.log("taskRunRecOwnerChg - xfr num",xfrnum,"substep",substep);
 
             switch ( substep ){
                 case 0:
-                    console.log("taskRunRecOwnerChg - init move");
+                    //console.log("taskRunRecOwnerChg - init move");
                     obj._transact( function(){
                         // Ensure allocation has sufficient record and data capacity
                         alloc = g_db.alloc.firstExample({_from: state.owner_id, _to: state.dst_repo_id });
@@ -753,7 +769,7 @@ var tasks_func = function() {
                     }, [], ["loc","task"] );
                     /* falls through */
                 case 1:
-                    console.log("taskRunRecOwnerChg - do xfr");
+                    //console.log("taskRunRecOwnerChg - do xfr");
                     // Transfer data step
 
                     var tokens = g_lib.getAccessToken( a_task.client );
@@ -769,7 +785,7 @@ var tasks_func = function() {
                     reply = { cmd: g_lib.TC_RAW_DATA_TRANSFER, params: params, step: a_task.step };
                     break;
                 case 2:
-                    console.log("taskRunRecOwnerChg - finalize move");
+                    //console.log("taskRunRecOwnerChg - finalize move");
                     obj._transact( function(){
                         // Init record move
                         obj.recMoveFini( xfr.files );
@@ -781,7 +797,7 @@ var tasks_func = function() {
                     }, ["c"], ["loc","alloc","acl","d","owner","item","task","a","alias"] );
                     /* falls through */
                 case 3:
-                    console.log("taskRunRecOwnerChg - delete old data");
+                    //console.log("taskRunRecOwnerChg - delete old data");
                     // Request data size update
                     params = {
                         repo_id: xfr.src_repo_id,
@@ -796,7 +812,7 @@ var tasks_func = function() {
                     break;
             }
         } else {
-            console.log("taskRunRecOwnerChg - complete task");
+            //console.log("taskRunRecOwnerChg - complete task");
             obj._transact( function(){
                 // Last step - complete task
                 reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
@@ -817,10 +833,10 @@ var tasks_func = function() {
 
         var i,rec_ids = [];
 
-        console.log("HTTP records:", result.http_data.length, ", Globus records:", result.glob_data.length );
+        //console.log("Extern recs:", result.ext_data.length, ", Globus recs:", result.glob_data.length );
 
-        for ( i in result.http_data ){
-            rec_ids.push( result.http_data[i].id );
+        for ( i in result.ext_data ){
+            rec_ids.push( result.ext_data[i].id );
         }
 
         for ( i in result.glob_data )
@@ -829,6 +845,12 @@ var tasks_func = function() {
         obj._ensureExclusiveAccess( rec_ids );
 
         var state = {};
+
+        //console.log("ext_data:",result.ext_data);
+        //console.log("glob_data:",result.glob_data);
+        //console.log("rec_ids:",rec_ids);
+        //console.log("del coll:",result.coll);
+        //throw [1,"Stop for debug"];
 
         // For deleted collections, unlink all contained items
         if ( result.coll.length ){
@@ -840,10 +862,10 @@ var tasks_func = function() {
 
         state.del_rec = [];
 
-        if ( result.http_data.length ){
-            for ( i in result.http_data ){
-                state.del_rec.push( result.http_data[i].id );
-                g_db.item.removeByExample({ _to: result.http_data[i].id });
+        if ( result.ext_data.length ){
+            for ( i in result.ext_data ){
+                state.del_rec.push( result.ext_data[i].id );
+                g_db.item.removeByExample({ _to: result.ext_data[i].id });
             }
         }
 
@@ -860,7 +882,7 @@ var tasks_func = function() {
 
         result.task = obj._createTask( a_client._id, g_lib.TT_REC_DEL, state.del_data.length + 2, state );
 
-        console.log("taskInitRecCollDelete finished",Date.now());
+        //console.log("taskInitRecCollDelete finished",Date.now());
         return result;
     };
 
@@ -880,14 +902,14 @@ var tasks_func = function() {
             {
                 try{
                     obj._transact( function(){
-                        console.log("Del collections",Date.now());
+                        //console.log("Del collections",Date.now());
 
                         for ( i in state.del_coll ){
                             // TODO Adjust for collection limit on allocation
                             obj._deleteCollection( state.del_coll[i] );
                         }
 
-                        console.log("Del records",Date.now());
+                        //console.log("Del records",Date.now());
 
                         // Delete records with no data
                         if ( state.del_rec.length ){
@@ -897,7 +919,7 @@ var tasks_func = function() {
                         // Update task step
                         a_task.step += 1;
                         g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-                    }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag"] );
+                    }, [], ["d","c","a","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag","sch"] );
                     break;
                 } catch( e ) {
                     if ( --retry == 0 || !e.errorNum || e.errorNum != 1200 ){
@@ -909,10 +931,10 @@ var tasks_func = function() {
         }
 
         if ( a_task.step < a_task.steps - 1 ){
-            console.log("taskRunRecCollDelete - del", a_task.step, Date.now() );
+            //console.log("taskRunRecCollDelete - del", a_task.step, Date.now() );
             reply = { cmd: g_lib.TC_RAW_DATA_DELETE, params: state.del_data[ a_task.step - 1 ], step: a_task.step };
         }else{
-            console.log("taskRunRecCollDelete - complete task", Date.now() );
+            //console.log("taskRunRecCollDelete - complete task", Date.now() );
             obj._transact( function(){
                 // Last step - complete task
                 reply = { cmd: g_lib.TC_STOP, params: obj.taskComplete( a_task._id, true )};
@@ -990,7 +1012,7 @@ var tasks_func = function() {
 
         if ( a_task.step == 0 ){
             obj._transact( function(){
-                console.log("Del projects",Date.now());
+                //console.log("Del projects",Date.now());
 
                 for ( var i in state.proj_ids ){
                     obj._projectDelete( state.proj_ids[i] );
@@ -999,7 +1021,7 @@ var tasks_func = function() {
                 // Update task step
                 a_task.step += 1;
                 g_db._update( a_task._id, { step: a_task.step, ut: Math.floor( Date.now()/1000 )});
-            }, [], ["d","c","p","a","g","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag"] );
+            }, [], ["d","c","p","a","g","alias","owner","item","acl","loc","alloc","t","top","dep","n","note","task","tag","sch"] );
 
             // Continue to next step
         }
@@ -1120,7 +1142,7 @@ var tasks_func = function() {
         return task.new;
     };
 
-    obj._buildTransferDoc = function( a_mode, a_data, a_remote, a_orig_fname, a_dst_owner ){
+    obj._buildTransferDoc = function( a_mode, a_data, a_ext_data, a_remote, a_orig_fname, a_dst_owner ){
         /* Output per mode:
         GET:
             src_repo_xx - DataFed storage location
@@ -1145,9 +1167,9 @@ var tasks_func = function() {
             xfr_docs - chunked per source repo and max data transfer size
         */
 
-        console.log("_buildTransferDoc", a_mode, a_data, a_remote, a_orig_fname );
+        console.log("_buildTransferDoc", a_mode, a_remote, a_orig_fname );
 
-        var idx, locs, loc, file, rem_ep, rem_fname, rem_path, xfr, repo_map = {}, src;
+        var fnames, i, idx, file, rem_ep, rem_fname, rem_path, xfr, repo_map = {}, src;
 
         if ( a_mode == g_lib.TT_DATA_GET || a_mode == g_lib.TT_DATA_PUT ){
             idx = a_remote.indexOf("/");
@@ -1182,62 +1204,115 @@ var tasks_func = function() {
             rem_path = repo.path + (a_dst_owner.charAt(0)=="u"?"user/":"project/") + a_dst_owner.substr(2) + "/";
         }
 
-        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, d_ext: i.ext, d_src: i.source, r_id: v._id, r_ep: v.endpoint, r_path: v.path, uid: e.uid }", { data: a_data });
+        if ( a_mode  == g_lib.TT_DATA_GET){
+            fnames = new Set();
+        }
 
-        //console.log("locs hasNext",locs.hasNext());
+        if ( a_data.length ){
+            var loc, locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, d_ext: i.ext, d_src: i.source, r_id: v._id, r_ep: v.endpoint, r_path: v.path, uid: e.uid }", { data: a_data });
 
-        while ( locs.hasNext() ){
-            loc = locs.next();
-            console.log("loc",loc);
+            //console.log("locs hasNext",locs.hasNext());
 
-            file = { id: loc.d_id, size: loc.d_sz };
+            while ( locs.hasNext() ){
+                loc = locs.next();
+                //console.log("loc",loc);
 
-            switch ( a_mode ){
-                case g_lib.TT_DATA_GET:
-                    file.from = loc.d_id.substr( 2 );
-                    if ( a_orig_fname ){
-                        src = loc.d_src.substr( loc.d_src.lastIndexOf("/") + 1);
-                        if ( loc.d_ext ){
-                            idx = src.indexOf(".");
-                            if ( idx > 0 ){
-                                src = src.substr(0,idx);
+                file = { id: loc.d_id, size: loc.d_sz };
+
+                switch ( a_mode ){
+                    case g_lib.TT_DATA_GET:
+                        file.from = loc.d_id.substr( 2 );
+                        if ( a_orig_fname ){
+                            file.to = loc.d_src.substr( loc.d_src.lastIndexOf("/") + 1);
+                            if ( fnames.has( file.to )){
+                                throw [g_lib.ERR_XFR_CONFLICT, "Duplicate filename(s) detected in transfer request."];
                             }
-                            file.to = src + loc.d_ext;
+
+                            fnames.add( file.to );
+
+                            /*if ( loc.d_ext ){
+                                idx = src.indexOf(".");
+                                if ( idx > 0 ){
+                                    src = src.substr(0,idx);
+                                }
+                                file.to = src + loc.d_ext;
+                            }else{
+                                file.to = src;
+                            }*/
                         }else{
-                            file.to = src;
+                            file.to = file.from + (loc.d_ext?loc.d_ext:"");
                         }
-                    }else{
-                        file.to = file.from + (loc.d_ext?loc.d_ext:"");
-                    }
-                    break;
-                case g_lib.TT_DATA_PUT:
-                    file.from = rem_fname;
-                    file.to = loc.d_id.substr( 2 );
-                    break;
-                case g_lib.TT_REC_ALLOC_CHG:
-                case g_lib.TT_REC_OWNER_CHG:
-                    file.from = loc.d_id.substr( 2 );
-                    file.to = file.from;
-                    break;
+                        break;
+                    case g_lib.TT_DATA_PUT:
+                        file.from = rem_fname;
+                        file.to = loc.d_id.substr( 2 );
+                        break;
+                    case g_lib.TT_REC_ALLOC_CHG:
+                    case g_lib.TT_REC_OWNER_CHG:
+                        file.from = loc.d_id.substr( 2 );
+                        file.to = file.from;
+                        break;
+                }
+
+                //console.log("file:",file);
+
+                if ( loc.r_id in repo_map ){
+                    repo_map[loc.r_id].files.push(file);
+                }else{
+                    repo_map[loc.r_id] = {
+                        repo_id: loc.r_id,
+                        repo_ep: loc.r_ep,
+                        repo_path: loc.r_path + (loc.uid.charAt(0)=="u"?"user/":"project/") + loc.uid.substr(2) + "/",
+                        files:[file]
+                    };
+                }
             }
+        }
 
-            //console.log("file:",file);
+        // Process external data (only supported for GET)
+        if ( a_ext_data && a_ext_data.length ){
+            var edat,ep;
 
-            if ( loc.r_id in repo_map ){
-                repo_map[loc.r_id].files.push(file);
-            }else{
-                repo_map[loc.r_id] = {
-                    repo_id: loc.r_id,
-                    repo_ep: loc.r_ep,
-                    repo_path: loc.r_path + (loc.uid.charAt(0)=="u"?"user/":"project/") + loc.uid.substr(2) + "/",
-                    files:[file]
-                };
+            // Add external endpoints to repo_map using endpoint as ID
+
+            for ( i in a_ext_data ){
+                edat = a_ext_data[i];
+                file = { id: edat.id, size: edat.size };
+
+                idx = edat.source.indexOf("/");
+                if ( idx < 0 ){
+                    throw [g_lib.ERR_INVALID_PARAM,"Invalid external source path: "+edat.source];
+                }
+                ep = edat.source.substr( 0, idx );
+                src = edat.source.substr( idx );
+                file.from = src;
+                if ( a_orig_fname ){
+                    idx = src.lastIndexOf("/");
+                    if ( idx < 0 ){
+                        throw [g_lib.ERR_INVALID_PARAM,"Invalid external source path: "+edat.source];
+                    }
+                    file.to = src.substr( idx + 1 );
+                    if ( fnames.has( file.to )){
+                        throw [g_lib.ERR_XFR_CONFLICT, "Duplicate filename(s) detected in transfer request."];
+                    }
+                }else{
+                    file.to = file.id.substr( 2 );
+                }
+    
+                if ( ep in repo_map ){
+                    repo_map[ep].files.push(file);
+                }else{
+                    repo_map[ep] = {
+                        repo_id: 0, // ID 0 indicates external endpoint
+                        files:[file]
+                    };
+                }
             }
         }
 
         //console.log("repo map len",Object.keys(repo_map).length);
 
-        var i, rm, xfr_docs = [];
+        var rm, xfr_docs = [];
 
         if ( a_mode == g_lib.TT_REC_ALLOC_CHG || a_mode == g_lib.TT_REC_OWNER_CHG ){
             var j, k, chunks, chunk_sz, files, sz;
@@ -1313,13 +1388,23 @@ var tasks_func = function() {
                 rm = repo_map[i];
 
                 if ( a_mode == g_lib.TT_DATA_GET ){
-                    xfr = {
-                        src_repo_id: rm.repo_id,
-                        src_repo_ep: rm.repo_ep,
-                        src_repo_path: rm.repo_path,
-                        dst_repo_ep: rem_ep,
-                        dst_repo_path: rem_path
-                    };
+                    if ( rm.repo_id == 0 ){
+                        xfr = {
+                            src_repo_id: 0,
+                            src_repo_ep: i,
+                            src_repo_path: "",
+                            dst_repo_ep: rem_ep,
+                            dst_repo_path: rem_path
+                        };
+                    }else{
+                        xfr = {
+                            src_repo_id: rm.repo_id,
+                            src_repo_ep: rm.repo_ep,
+                            src_repo_path: rm.repo_path,
+                            dst_repo_ep: rem_ep,
+                            dst_repo_path: rem_path
+                        };
+                    }
                 }else{
                     xfr = {
                         src_repo_ep: rem_ep,
@@ -1342,16 +1427,14 @@ var tasks_func = function() {
     obj._buildDeleteDoc = function( a_data ){
         var loc, locs, doc = [], repo_map = {};
 
-        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
+        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
 
         //console.log("locs hasNext",locs.hasNext());
 
         while ( locs.hasNext() ){
             loc = locs.next();
 
-            // Skip records with no raw data
-            if ( !loc.d_sz )
-                continue;
+            // Delete all files regardless of raw data size (may have 0 sized files)
 
             if ( loc.r_id in repo_map ){
                 repo_map[loc.r_id].ids.push(loc.d_id);
@@ -1430,11 +1513,19 @@ var tasks_func = function() {
         if ( doc.tags && doc.tags.length )
             g_lib.removeTags( doc.tags );
 
+        // Update schema count
+        if ( doc.sch_id && g_db.sch.exists( doc.sch_id )){
+            var sch = g_db.sch.document( doc.sch_id );
+            g_db._update( sch._id, { cnt: sch.cnt - 1 });
+        }
+            
         // Update allocation
         var loc = g_db.loc.firstExample({ _from: a_id });
-        var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
-        if ( alloc ){
-            g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
+        if ( loc ){
+            var alloc = g_db.alloc.firstExample({ _from: doc.owner, _to: loc._to });
+            if ( alloc ){
+                g_db.alloc.update( alloc._id, { data_size: alloc.data_size - doc.size,  rec_count: alloc.rec_count - 1 });
+            }
         }
 
         // Delete data record
@@ -1443,7 +1534,7 @@ var tasks_func = function() {
 
 
     obj._deleteDataRecords = function( a_ids ){
-        console.log( "deleting records", Date.now() );
+        //console.log( "deleting records", Date.now() );
         var i, j, id, doc, tmp, loc, alloc, allocs = {};
 
         for ( i in a_ids ){
@@ -1463,22 +1554,31 @@ var tasks_func = function() {
             }
 
             // Remove tags
-            if ( doc.tags && doc.tags.length )
+            if ( doc.tags && doc.tags.length ){
                 g_lib.removeTags( doc.tags );
+            }
+
+            // Update schema count
+            if ( doc.sch_id && g_db.sch.exists( doc.sch_id )){
+                var sch = g_db.sch.document( doc.sch_id );
+                g_db._update( sch._id, { cnt: sch.cnt - 1 });
+            }
 
             // Update allocation
             loc = g_db.loc.firstExample({ _from: id });
-            if ( !( doc.owner in allocs )){
-                allocs[doc.owner] = {};
-            }
+            if ( loc ){
+                if ( !( doc.owner in allocs )){
+                    allocs[doc.owner] = {};
+                }
 
-            tmp = allocs[doc.owner][loc._to];
+                tmp = allocs[doc.owner][loc._to];
 
-            if ( !tmp ){
-                allocs[doc.owner][loc._to] = {ct: 1, sz: doc.size };
-            }else{
-                tmp.ct++;
-                tmp.sz += doc.size;
+                if ( !tmp ){
+                    allocs[doc.owner][loc._to] = {ct: 1, sz: doc.size };
+                }else{
+                    tmp.ct++;
+                    tmp.sz += doc.size;
+                }
             }
 
             // Delete data record
@@ -1499,7 +1599,7 @@ var tasks_func = function() {
             }
         }
 
-        console.log( "deleting records finished", Date.now() );
+        //console.log( "deleting records finished", Date.now() );
     };
 
 
@@ -1683,9 +1783,64 @@ var tasks_func = function() {
         }
     };
 
+    obj.recMoveExt = function( a_data, a_dst_owner_id, a_dst_coll_id ){
+        if ( !g_db.c.exists( a_dst_coll_id )){
+            throw [ g_lib.ERR_INTERNAL_FAULT, "Destination collection '" + a_dst_coll_id + "' does not exist!" ];
+        }
+
+        var data, alias, a, key,
+            alias_pref = a_dst_owner_id.charAt(0) + ":" + a_dst_owner_id.substr(2) + ":",
+            coll = g_db.c.document( a_dst_coll_id );
+
+        if ( coll.owner != a_dst_owner_id )
+            throw [ g_lib.ERR_INTERNAL_FAULT, "Destination collection '" + a_dst_coll_id + "' not owned by new owner!" ];
+
+        for ( var i in a_data ){
+            data = a_data[i];
+
+            // Clear all record ACLs
+            g_db.acl.removeByExample({ _from: data.id });
+
+            // Update record to new owner
+            g_db._update( data.id, { owner: a_dst_owner_id });
+
+            // Move ownership edge
+            g_db.owner.removeByExample({ _from: data.id });
+            g_db.owner.save({ _from: data.id, _to: a_dst_owner_id });
+
+            // Move to new collection
+            g_db.item.removeByExample({ _to: data.id });
+            g_db.item.save({ _from: a_dst_coll_id, _to: data.id });
+
+            // Move owner edge of alias if alias present
+            alias = g_db.alias.firstExample({ _from: data.id });
+            if ( alias ){
+                // remove old alias and all edges
+                g_graph.a.remove( alias._to );
+
+                // Create new alias (add suffix if collides with existing alias)
+                alias = alias_pref + alias._to.substr( alias._to.lastIndexOf(":") + 1 );
+                for( a = 0; ; a++ ){
+                    key = alias + (a>0?"-"+a:"");
+                    if ( !g_db.a.exists({ _key: key })){
+                        //console.log("try alias:",key);
+                        g_db.a.save({ _key: key });
+                        break;
+                    }
+                }
+                // If alias suffix, update record
+                if ( a > 0 ){
+                    g_db.d.update( data.id, { alias: key });
+                }
+
+                g_db.alias.save({ _from: data.id, _to: "a/"+key });
+                g_db.owner.save({ _from: "a/"+key, _to: a_dst_owner_id });
+            }
+        }
+    };
 
     obj._ensureExclusiveAccess = function( a_ids ){
-        console.log("_ensureExclusiveAccess start", Date.now());
+        //console.log("_ensureExclusiveAccess start", Date.now());
         var i, id, lock;
         for ( i in a_ids ){
             id = a_ids[i];
@@ -1694,7 +1849,7 @@ var tasks_func = function() {
             if ( lock )
                 throw [ g_lib.ERR_PERM_DENIED, "Operation not permitted - '" + id + "' in use." ];
         }
-        console.log("_ensureExclusiveAccess done", Date.now());
+        //console.log("_ensureExclusiveAccess done", Date.now());
     };
 
     return obj;

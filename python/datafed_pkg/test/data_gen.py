@@ -8,6 +8,7 @@ import random
 import datafed.CommandLib
 import json
 import time
+import getpass
 
 parser = argparse.ArgumentParser( description='DataFed Data Generator' )
 
@@ -32,8 +33,8 @@ parser.add_argument('-T', metavar='PREFIX', default='Test',
 parser.add_argument('-c', metavar='COUNT', type=int, default=20,
                    help='Number of data records per collection')
 
-parser.add_argument('-u', action='store_true',
-                   help='Upload small test file for each data record')
+parser.add_argument('--up', metavar='FILE',
+                   help='Upload filename from dev server /data/files')
 
 parser.add_argument('--alloc', metavar='NAME',
                    help='Destination allocation (without repo/ prefix)')
@@ -43,6 +44,9 @@ parser.add_argument('--public', action='store_true',
 
 parser.add_argument('--delete', action='store_true',
                    help='Delete collections (public flag will un-publish first)')
+
+parser.add_argument('-m', action='store_true',
+                   help='Manually authenticate')
 
 args = parser.parse_args()
 
@@ -71,9 +75,8 @@ title_pfx = args.T
 rec_cnt = args.c
 pub = args.public
 do_del = args.delete
-do_up = args.u
+up_file = args.up
 
-#exit()
 
 def selectRand( a, b, cnt ):
     res = []
@@ -94,7 +97,7 @@ def selectRand( a, b, cnt ):
 
 aliases = []
 ref_ty = ["der","ver","comp"]
-adjectives = ["synthetic","organic","regenerative","distributed","centralized","advanced","distopian"]
+adjectives = ["synthetic","organic","regenerative","distributed","centralized","advanced","dystopian"]
 subjects = ["photosynthesis","culture","society","technology","computing","transportation","power generation","process optimization"]
 tags = ["apple","orange","banana","red","blue","green","night","day","future","past","present","good","bad","up","down","left","right"]
 topics = [
@@ -118,7 +121,19 @@ topics = [
     "computing.virtual"
 ]
 
-api = datafed.CommandLib.API()
+
+opts = {}
+
+if args.m:
+    opts['manual_auth'] = True
+    uid = input("User ID: ")
+    password = getpass.getpass(prompt="Password: ")
+
+api = datafed.CommandLib.API( opts )
+
+if args.m:
+    api.loginByPassword( uid, password )
+    print( api.getAuthUser() )
 
 try:
     api.collectionView( par_coll, context = ctx )
@@ -145,7 +160,7 @@ for i in range( start, end + 1 ):
             print("Timeout on collectionDelete, coll {}".format(i))
             exit()
 
-        continue;
+        continue
 
     name = "{} Collection {}".format(title_pfx,i)
 
@@ -195,13 +210,24 @@ for i in range( start, end + 1 ):
         md = {
             "i" : i,
             "j" : j,
-            "x": random.randint(-100,100),
-            "y": random.randint(-100,100),
-            "a": random.randint(0,3599)/10.0,
-            "v": random.randint(0,100),
             "tag": tags[selectRand(1, 1, len( tags ))[0]],
             "keyword": subjects[selectRand(1, 1, len( subjects ))[0]]
         }
+
+        # 75% chance to have x and y
+        if random.uniform(0,1) > .75:
+            md['x'] = random.randint(-100,100)
+            md['y'] = random.randint(-100,100)
+
+        # 50% chance to have p and q
+        if random.uniform(0,1) > .75:
+            md['p'] = random.uniform(-1,1)
+            md['q'] = random.uniform(-1,1)
+
+        md['data'] = []
+        dlen = random.randint(1,10)
+        for k in range( dlen ):
+            md['data'].append( random.randint( 0, 9 ))
 
         # Provenance - random links to previous records, 50% none,
         deps = []
@@ -214,12 +240,13 @@ for i in range( start, end + 1 ):
                 deps.append( ["der",aliases[l]] )
 
         # Create record
-        if api.dataCreate( name, alias=data_alias, metadata = json.dumps(md), parent_id = alias, description = _desc, tags = _tags, deps = deps, repo_id = repo, context = ctx )[0] == None:
+        if api.dataCreate( name, alias=data_alias, metadata = json.dumps(md), parent_id = alias, description = _desc,
+            tags = _tags, schema = "datagen:0", deps = deps, repo_id = repo, context = ctx )[0] == None:
             print("Timeout on dataCreate, coll {}, rec {}".format(i,j))
             exit()
 
-        if do_up:
-            if api.dataPut( data_alias, "u_eiiq2lgi7fd7jfaggqdmnijiya#SDMS-Dev/data/files/small", context = ctx )[0] == None:
+        if up_file:
+            if api.dataPut( data_alias, "u_eiiq2lgi7fd7jfaggqdmnijiya#SDMS-Dev/data/files/" + up_file, context = ctx )[0] == None:
                 print("Timeout on dataPut, coll {}, rec {}".format(i,j))
                 exit()
 

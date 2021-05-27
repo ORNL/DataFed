@@ -54,9 +54,9 @@ find_package(PkgConfig)
 ## use pkg-config to get hints for 0mq locations
 pkg_check_modules(PC_ZeroMQ QUIET zmq)
 
-## use the hint from above to find where 'zmq.hpp' is located
+## use the hint from above to find where 'zmq.h' is located
 find_path(ZeroMQ_INCLUDE_DIR
-        NAMES zmq.hpp
+        NAMES zmq.h
         PATHS ${PC_ZeroMQ_INCLUDE_DIRS}
         )
 
@@ -68,6 +68,9 @@ find_library(ZeroMQ_LIBRARY
 
 include_directories( ${ZeroMQ_INCLUDE_DIR} )
 link_directories( ${PC_ZeroMQ_LIBRARY_DIRS} )
+
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
 
 
 if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})

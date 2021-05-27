@@ -12,6 +12,8 @@ var form = $("#sel_info_form"),
     desc_div = $("#sel_info_desc"),
     note_div = $("#note-div"),
     note_details = $("#note-details"),
+    schema_val_err_div = $("#schema_val_err_div"),
+    schema_val_err = $("#schema_val_err"),
     data_md_tree = null,
     data_md_empty = true,
     tree_empty_src = [{title:"(none)", icon:false}],
@@ -45,7 +47,10 @@ export function showSelectedInfo( node, cb ){
         return;
     }
 
-    //console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
+    /*if ( node ){
+        console.log( "node key:", node.key, "scope:", node.data?node.data.scope:"n/a" );
+    }*/
+
     var key;
 
     if ( !node ){
@@ -61,8 +66,6 @@ export function showSelectedInfo( node, cb ){
         key = node.key.substr( node.data.key_pfx.length );
     else
         key = node.key;
-
-    //console.log("key",key);
 
     cur_item_id = key;
 
@@ -104,7 +107,8 @@ export function showSelectedInfo( node, cb ){
     }else if ( key.startsWith("p/")){
         showSelectedProjInfo( key, node, cb );
     }else if ( key.startsWith("q/")){
-        api.sendQueryView( key, function( ok, item ){
+        api.queryView( key, function( ok, item ){
+            console.log("qryView:",ok,item);
             showSelectedItemInfo( item );
             if ( cb ) cb( item, node );
         }); 
@@ -155,7 +159,7 @@ export function showSelectedItemInfo( item ){
 
         showSelectedItemForm( item );
 
-        if (( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )) && item.notes ){
+        if (( item.id.startsWith( "d/" ) || item.id.startsWith( "c/" )) && ( item.notes & model.NOTE_MASK_ALL )){
             setupAnnotationTab( item.id );
         }else{
             note_div.hide();
@@ -163,7 +167,7 @@ export function showSelectedItemInfo( item ){
         }
 
         if ( item.metadata ){
-            showSelectedMetadata( item.metadata );
+            showSelectedMetadata( item.metadata, item.mdErrMsg );
         }else{
             disabled.push(1);
             showSelectedMetadata();
@@ -195,7 +199,7 @@ function showGeneralInfo( a_key, a_title ){
 function showSelectedUserInfo( key, node, cb ){
     api.userView( key, true, function( ok, item ){
         if ( ok, item ){
-            console.log("userView:",item);
+            //console.log("userView:",item);
             item.id = item.uid;
             showSelectedItemInfo( item );
             if ( cb ) cb( item, node );
@@ -221,13 +225,13 @@ var tree_opts1 = {
     source: [],
     nodata: false,
     selectMode: 1,
-    activate: function( event, data ) {
+    activate: function( ev, data ) {
         showSelectedNoteInfo( data.node );
     },
-    lazyLoad: function( event, data ) {
+    lazyLoad: function( ev, data ) {
         data.result = { url: api.annotationView_url( data.node.data.parentId ), cache: false };
     },
-    postProcess: function( event, data ) {
+    postProcess: function( ev, data ) {
         //console.log("postproc:",data);
 
         data.result = [];
@@ -246,9 +250,12 @@ var tree_opts1 = {
             if ( note.parentId ){
                 //entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";
                 entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> [inherited] ";
-                entry.parentId = note.parentId;
-                entry.folder = true;
-                entry.lazy = true;
+                // Only allow viewing ancestor notes if note is open or active
+                if ( model.NoteStateFromString[note.state] != model.NOTE_CLOSED ){
+                    entry.parentId = note.parentId;
+                    entry.folder = true;
+                    entry.lazy = true;
+                }
             }else{
                 entry.title = "<span class='ui-icon ui-icon-" + note_icon[nt] + "'></span> ";
             }
@@ -286,13 +293,12 @@ function setupAnnotationTab( a_subject_id, a_cb ){
             var note_active = [],
                 note_open = [],
                 note_closed = [],
-                note, ns, nt;
+                note, ns;
 
             if ( data.note ){
                 for ( var i = 0; i < data.note.length; i++ ) {
                     note = data.note[i];
                     ns = model.NoteStateFromString[note.state];
-                    nt = model.NoteTypeFromString[note.type];
 
                     if ( ns == model.NOTE_ACTIVE ){
                         note_active.push( note );
@@ -623,6 +629,9 @@ function showSelectedItemForm( item ){
         $("#sel_info_tags",form).text( tmp );
     }
 
+    if ( item.schId )
+        $("#sel_info_schema",form).text( item.schId );
+
     if ( item.topic )
         $("#sel_info_topic",form).text( item.topic );
 
@@ -634,32 +643,86 @@ function showSelectedItemForm( item ){
         $("#sel_info_creator",form).text( item.creator );
 
     if ( cls == ".sid" ){
-        $("#sel_info_repo",form).text( item.repoId.substr(5) );
-        $("#sel_info_size",form).text( util.sizeToString( item.size ) );
+        $("#sel_info_loc",form).text( item.external?"External":item.repoId.substr(5) );
+        $("#sel_info_size",form).text( item.external?"Unknown":util.sizeToString( item.size ) );
         if ( item.source )
             $("#sel_info_src",form).text( item.source );
 
-        $("#sel_info_ext",form).text(( item.ext?item.ext+" ":"") + ( item.extAuto?"(auto)":"" ));
+        $("#sel_info_ext",form).text(item.external?"(auto)":(( item.ext?item.ext+" ":"") + ( item.extAuto?"(auto)":"" )));
     }
 
     if ( cls == ".siq" ){
-        var qry = JSON.parse( item.query );
+        $("#sel_info_qry_mode",form).text( item.query.mode == "SM_DATA"?"Data":"Collections" );
 
-        if ( qry.id )
-            $("#sel_info_qry_id",form).text( qry.id );
-        if ( qry.text )
-            $("#sel_info_qry_text",form).text( qry.text );
-        if ( qry.meta )
-            $("#sel_info_qry_meta",form).text( qry.meta );
-        if ( qry.tags ){
+        switch( item.query.scope ){
+            case "SS_PERSONAL": tmp = "Personal Data"; break;
+            case "SS_PROJECT": tmp = "Project Data (" + item.query.owner + ")"; break;
+            case "SS_SHARED": tmp = "Shared Data (" + item.query.owner + ")"; break;
+            case "SS_PUBLIC": tmp = "Public Data"; break;
+        }
+
+        $("#sel_info_qry_scope",form).text( tmp );
+
+        if ( item.query.coll ){
             tmp = "";
-            for ( i in qry.tags ){
+            for ( i in item.query.coll ){
+                if ( tmp ){
+                    tmp += ", ";
+                }
+                tmp += item.query.coll[i];
+            }
+        }else{
+            tmp = "All data";
+        }
+
+        $("#sel_info_qry_sel",form).text( tmp );
+
+    
+        if ( item.query.id ){
+            $("#sel_info_qry_id",form).text( item.query.id );
+        }
+
+        if ( item.query.text ){
+            $("#sel_info_qry_text",form).text( item.query.text );
+        }
+
+        if ( item.query.tags ){
+            tmp = "";
+            for ( i in item.query.tags ){
                 if ( tmp )
                     tmp += ", ";
-                tmp += qry.tags[i];
+                tmp += item.query.tags[i];
             }
-            $("#sel_info_tags",form).text( tmp );
+            $("#sel_info_qry_tags",form).text( tmp );
         }
+
+        if ( item.query.creator ){
+            $("#sel_info_qry_creator",form).text( item.query.creator );
+        }
+
+        if ( item.query.from ){
+            date.setTime(item.query.from*1000);
+            $("#sel_info_qry_from",form).text( date.toLocaleDateString("en-US", settings.date_opts ));
+        }
+
+        if ( item.query.to ){
+            date.setTime(item.query.to*1000);
+            $("#sel_info_qry_to",form).text( date.toLocaleDateString("en-US", settings.date_opts ));
+        }
+
+        if ( item.query.schId ){
+            $("#sel_info_qry_sch_id",form).text( item.query.schId );
+        }
+
+        if ( item.query.meta ){
+            $("#sel_info_qry_meta",form).text( item.query.meta );
+        }
+
+        if ( item.query.metaErr ){
+            $("#sel_info_qry_meta_err",form).text( "Yes" );
+        }
+
+        //repeated string             coll        = 11;
     }
 
     if ( cls == ".sia" ){
@@ -776,7 +839,7 @@ function showSelectedItemForm( item ){
     form.show();
 }
 
-function showSelectedMetadata( md_str )
+function showSelectedMetadata( md_str, md_err )
 {
     //console.log("showSelectedMetadata, inst:",inst);
     if ( md_str ){
@@ -790,6 +853,14 @@ function showSelectedMetadata( md_str )
         var md = JSON.parse( md_str );
         var src = util.buildObjSrcTree( md, "md", data_md_exp );
         data_md_tree.reload( src );
+
+        if ( md_err ){
+            schema_val_err.text( md_err );
+            schema_val_err_div.show();
+        }else{
+            schema_val_err_div.hide();
+        }
+
         if ( data_md_empty ){
             data_md_empty = false;
             $("#md_div").show();
@@ -797,6 +868,7 @@ function showSelectedMetadata( md_str )
 
     } else if ( !data_md_empty ) {
         data_md_tree.reload(tree_empty_src);
+        schema_val_err.text("");
         data_md_empty = true;
         $("#md_div").hide();
     }

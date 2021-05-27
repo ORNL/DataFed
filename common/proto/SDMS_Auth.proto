@@ -7,6 +7,8 @@
 // maintained. Unused messages and parameters should be marked as deprecated,
 // and these should be removed at the next major version change.
 
+syntax = "proto2";
+
 import "SDMS.proto";
 
 package SDMS.Auth;
@@ -134,6 +136,16 @@ message UserSetRecentEPRequest
     repeated string             ep          = 1;
 }
 
+// ============================ General Data/Collection Messages
+
+message ListingReply
+{
+    repeated ListingData        item        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
 // ============================ Data Record Messages
 
 message RecordListRequest
@@ -150,20 +162,35 @@ message RecordListByAllocRequest
     optional uint32             count       = 4;
 }
 
+
+message RecordViewRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 2;
+}
+
+message RecordDataReply
+{
+    repeated SDMS.RecordData    data        = 1;
+    repeated SDMS.ListingData   update      = 2;
+}
+
 message RecordCreateRequest
 {
     optional string             title       = 1;
     optional string             desc        = 2;
     repeated string             tags        = 3;
     optional string             alias       = 4;
-    optional string             doi         = 5;
-    optional string             data_url    = 6;
-    optional string             metadata    = 7;
-    optional string             parent_id   = 8;
+    optional string             metadata    = 5;
+    optional string             parent_id   = 6;
+    optional bool               external    = 7;
+    optional string             source      = 8;
     optional string             repo_id     = 9;
     optional string             ext         = 10;
     optional bool               ext_auto    = 11;
     repeated DependencySpecData deps        = 12;
+    optional string             sch_id      = 13;
+    optional bool               sch_enforce = 14;
 }
 
 message RecordCreateBatchRequest
@@ -179,15 +206,15 @@ message RecordUpdateRequest
     repeated string             tags        = 4;
     optional bool               tags_clear  = 5;
     optional string             alias       = 6;
-    optional string             doi         = 7;
-    optional string             data_url    = 8;
-    optional string             metadata    = 9;
-    optional bool               mdset       = 10;
+    optional string             metadata    = 7;
+    optional bool               mdset       = 8;
+    optional string             sch_id      = 9;
+    optional bool               sch_enforce = 10;
     optional string             source      = 11;
     optional string             ext         = 12;
     optional bool               ext_auto    = 13;
-    optional uint64             size        = 14;
-    optional uint32             dt          = 15;
+    //optional uint64             size        = 14;
+    //optional uint32             dt          = 15;
     repeated DependencySpecData dep_add     = 16;
     repeated DependencySpecData dep_rem     = 17;
 }
@@ -216,16 +243,6 @@ message RecordLockRequest
 message RecordDeleteRequest
 {
     repeated string             id          = 1;
-}
-
-message RecordSearchRequest
-{
-    required string             query       = 1;
-    optional bool               use_client  = 2;
-    optional bool               use_shared_users  = 3;
-    optional bool               use_shared_projects  = 4;
-    optional uint32             offset      = 5;
-    optional uint32             count       = 6;
 }
 
 message RecordGetDependencyGraphRequest
@@ -329,7 +346,57 @@ message DataPathReply
     required string             path        = 1;
 }
 
+// ============================ Search Messages
+
+// Returns ListingReply
+message SearchRequest
+{
+    required SDMS.SearchMode    mode        = 1;
+    optional bool               published   = 2;
+
+    // Data and Collections
+    optional string             id          = 3;
+    optional string             text        = 4;
+    repeated string             tags        = 5;
+    repeated string             cat_tags    = 6;
+    optional uint32             from        = 7;
+    optional uint32             to          = 8;
+    optional string             owner       = 9; 
+    optional string             creator     = 10;
+    repeated string             coll        = 11;
+
+    // Data scope only
+    optional string             sch_id      = 12;
+    optional string             meta        = 13;
+    optional bool               meta_err    = 14;
+
+    optional SDMS.SortOption    sort        = 15;
+    optional bool               sort_rev    = 16;
+    optional uint32             offset      = 17;
+    optional uint32             count       = 18;
+}
+
 // ============================ Collection Messages
+
+message CollViewRequest
+{
+    required string             id          = 1;
+}
+
+message CollDataReply
+{
+    repeated SDMS.CollData      coll        = 1;
+    repeated SDMS.ListingData   update      = 2;    
+}
+
+// Returns ListingReply
+message CollReadRequest
+{
+    required string             id          = 1;
+    optional bool               details     = 3;
+    optional uint32             offset      = 4;
+    optional uint32             count       = 5;
+}
 
 message CollCreateRequest
 {
@@ -487,6 +554,16 @@ message ACLDataReply
 }
 
 // ============================ Project Messages
+
+message ProjectViewRequest
+{
+    required string             id          = 1;
+}
+
+message ProjectDataReply
+{
+    repeated ProjectData        proj        = 1;
+}
 
 message ProjectCreateRequest
 {
@@ -729,22 +806,14 @@ message TopicUnlinkRequest
 message QueryCreateRequest
 {
     required string             title       = 1;
-    required string             query       = 2;
-    optional string             query_comp  = 3;
-    optional bool               use_owner   = 4;
-    optional bool               use_sh_usr  = 5;
-    optional bool               use_sh_prj  = 6;
+    required SearchRequest      query       = 2;
 }
 
 message QueryUpdateRequest
 {
     required string             id          = 1;
     optional string             title       = 2;
-    optional string             query       = 3;
-    optional string             query_comp  = 4;
-    optional bool               use_owner   = 5;
-    optional bool               use_sh_usr  = 6;
-    optional bool               use_sh_prj  = 7;
+    optional SearchRequest      query       = 3;
 }
 
 message QueryDeleteRequest
@@ -772,10 +841,32 @@ message QueryExecRequest
 
 message QueryDataReply
 {
-    repeated SDMS.QueryData     query       = 1;
+    required string             id          = 1;
+    required string             title       = 2;
+    required string             owner       = 4;
+    required uint32             ct          = 5;
+    required uint32             ut          = 6;
+    required SearchRequest      query       = 7;
+    //repeated SDMS.QueryData     query       = 1;
 }
 
 // ============================ Annotation Messages
+
+message AnnotationListBySubjectRequest
+{
+    required string             subject     = 1;
+}
+
+message AnnotationViewRequest
+{
+    required string             id          = 1;
+}
+
+message AnnotationDataReply
+{
+    repeated SDMS.NoteData      note    = 1;
+    repeated SDMS.ListingData   update  = 2;
+}
 
 message AnnotationCreateRequest
 {
@@ -824,3 +915,136 @@ message TaskDataReply
 {
     repeated SDMS.TaskData      task        = 1;
 }
+
+
+// ============================ Tag Messages
+
+
+// Returns TagDataReply
+message TagSearchRequest
+{
+    optional string             name        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
+// Returns TagDataReply
+message TagListByCountRequest
+{
+    optional uint32             offset      = 1;
+    optional uint32             count       = 2;
+}
+
+message TagDataReply
+{
+    repeated SDMS.TagData       tag         = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+
+// ============================ Schema / Validation Messages
+
+message MetadataValidateRequest
+{
+    required string             metadata    = 1;
+    required string             sch_id      = 2;
+}
+
+message MetadataValidateReply
+{
+    optional string             errors      = 1;
+}
+
+message SchemaViewRequest
+{
+    required string             id          = 1;
+    optional bool               resolve     = 2;
+}
+
+message SchemaSearchRequest
+{
+    optional string             id          = 1;
+    optional string             text        = 2;
+    optional string             owner       = 3;
+    optional SDMS.SortOption    sort        = 4;
+    optional bool               sort_rev    = 5;
+    optional uint32             offset      = 6;
+    optional uint32             count       = 7;
+}
+
+message SchemaDataReply
+{
+    repeated SDMS.SchemaData    schema      = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+message SchemaCreateRequest
+{
+    required string             id          = 1;
+    required string             desc        = 2;
+    required bool               pub         = 3;
+    required bool               sys         = 4;
+    required string             def         = 5;
+}
+
+message SchemaReviseRequest
+{
+    required string             id          = 1;
+    optional string             desc        = 2;
+    optional bool               pub         = 3;
+    optional bool               sys         = 4;
+    optional string             def         = 5;
+}
+
+message SchemaUpdateRequest
+{
+    required string             id          = 1;
+    optional string             id_new      = 2;
+    optional string             desc        = 3;
+    optional bool               pub         = 4;
+    optional bool               sys         = 5;
+    optional string             def         = 6;
+}
+
+message SchemaDeleteRequest
+{
+    required string             id          = 1;
+}
+
+
+// ============================ Catalog / Topic Messages
+
+
+
+// Returns TopicDataReply
+message TopicListTopicsRequest
+{
+    optional string             topic_id    = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+}
+
+// Returns TopicDataReply
+message TopicViewRequest
+{
+    required string             id          = 1;
+}
+
+// Returns TopicDataReply
+message TopicSearchRequest
+{
+    optional string             phrase      = 1;
+}
+
+message TopicDataReply
+{
+    repeated TopicData          topic       = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+

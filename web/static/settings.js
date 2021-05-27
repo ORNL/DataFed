@@ -3,7 +3,8 @@ export var user = null;
 export var ep_recent = [];
 export var opts = {
     page_sz: 20,
-    task_hist: 168
+    task_hist: 168,
+    meta_val: 1
 };
 
 export var date_opts = { year: '2-digit', month: 'numeric', day: 'numeric', hour: '2-digit', minute: 'numeric', hour12: false, second: '2-digit' };
@@ -33,8 +34,9 @@ export function setUser( a_user ){
         isAdmin: a_user.isAdmin,
         isRepoAdmin: a_user.isRepoAdmin
     }
+
     if ( a_user.options ){
-       user.opts = JSON.parse( a_user.options );
+       opts = JSON.parse( a_user.options );
     }
 }
 

@@ -46,7 +46,7 @@ router.get('/view', function (req, res) {
 router.get('/run', function (req, res) {
     var task, run_func;
 
-    console.log("task/run - trans 1");
+    //console.log("task/run - trans 1");
 
     try {
         g_db._executeTransaction({
@@ -82,7 +82,7 @@ router.get('/run', function (req, res) {
             }
         });
 
-        console.log("task/run - call handler" );
+        //console.log("task/run - call handler" );
 
         var result;
 
@@ -95,7 +95,7 @@ router.get('/run', function (req, res) {
                 result = run_func.call( g_tasks, task );
                 // An empty result means rollback has completed without additional errors
                 if ( !result ){
-                    console.log("Task run handler stopped rollback" );
+                    //console.log("Task run handler stopped rollback" );
                     result = { cmd: g_lib.TC_STOP, params: g_tasks.taskComplete( task._id, false, task.error )};
                 }
                 break;
@@ -109,7 +109,7 @@ router.get('/run', function (req, res) {
                 // Load current task and check step #
                 task = g_db.task.document( task._id );
                 if ( task.step > 0 ){
-                    console.log("First exception" );
+                    //console.log("First exception" );
                     // Exception on processing, start roll-back
                     task.step = -task.step;
                     task.error = String(err);
@@ -125,13 +125,12 @@ router.get('/run', function (req, res) {
             }
         }
 
-        console.log("task/run result",result);
+        //console.log("task/run return");
         res.send( result );
 
     } catch( e ){
         g_lib.handleException( e, res );
     }
-    console.log("task/run - last");
 })
 .queryParam('task_id', joi.string().required(), "Task ID")
 .queryParam('step', joi.number().integer().optional(), "Task step")

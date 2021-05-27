@@ -6,44 +6,43 @@ import * as dialogs from "./dialogs.js";
 import * as panel_info from "./panel_item_info.js";
 import * as panel_cat from "./panel_catalog.js";
 import * as panel_graph from "./panel_graph.js";
+import * as panel_search from "./panel_search.js";
 import * as dlgDataNewEdit from "./dlg_data_new_edit.js";
 import * as dlgRepoEdit from "./dlg_repo_edit.js";
 import * as dlgSetACLs from "./dlg_set_acls.js";
 import * as dlgRepoManage from "./dlg_repo_manage.js";
 import * as dlgOwnerChangeConfirm from "./dlg_owner_chg_confirm.js";
 import * as dlgStartXfer from "./dlg_start_xfer.js";
-import * as dlgQueryNewEdit from "./dlg_query_new_edit.js";
 import * as dlgSettings from "./dlg_settings.js";
 import * as dlgCollNewEdit from "./dlg_coll_new_edit.js";
 import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";
 import * as dlgAnnotation from "./dlg_annotation.js";
+import * as dlgSchemaList from "./dlg_schema_list.js";
+import * as dlgQuerySave from "./dlg_query_save.js";
 
-var frame = $("#content");
-var task_hist = $("#task_hist",frame);
-var data_tree_div;
-var data_tree = null;
-var results_tree_div;
-var results_tree;
-var my_root_key;
-//var uid = "u/" + settings.user.uid;
-var drag_mode = 0;
-var drag_enabled = true;
-var searchSelect = false;
-var selectScope = null;
-var dragging = false;
-var hoverTimer;
-var keyNav, keyNavMS;
-var pasteItems = [], pasteMode, pasteSourceParent, pasteCollections;
-var SS_TREE = 0,
+//import * as dlgQueryBuild from "./dlg_query_builder.js";
+
+var frame = $("#content"),
+    task_hist = $("#task_hist",frame),
+    data_tree_div,
+    data_tree = null,
+    my_root_key,
+    drag_mode = 0,
+    drag_enabled = true,
+    selectScope = null,
+    dragging = false,
+    hoverTimer,
+    keyNav, keyNavMS,
+    pasteItems = [], pasteMode, pasteSourceParent, pasteCollections,
+    SS_TREE = 0,
     SS_CAT = 1,
     SS_PROV = 2,
-    SS_SEARCH = 3,
-    SS_NOTIFY = 4,
     select_source = SS_TREE,
     select_source_prev = SS_TREE,
-    cur_query,
+    searchMode = false,
+    query_cur, query_id, query_title,
     update_files, import_direct,
-    cat_panel, graph_panel;
+    search_panel, cat_panel, cat_init = true, graph_panel;
 
 // Task history vars (to be moved to panel_task_hist )
 var taskTimer, taskHist = [];
@@ -85,25 +84,39 @@ export function windowResized(){
     $("#info-tabs > .ui-tabs-panel").outerHeight( h - hdr_h );
 }
 
-window.pageLoad = function( key, offset ){
-    var node = data_tree.getNodeByKey( key );
-    if ( node ){
-        node.data.offset = offset;
-        setTimeout(function(){
-            node.load(true);
-        },0);
-    }
-};
+$("body").on("click",".page-first",function(ev){
+    var node = $.ui.fancytree.getNode(ev).parent;
+    node.data.offset = 0;
+    setTimeout(function(){
+        node.load(true);
+    },0);
+});
 
-window.pageLoadCat = function( key, offset ){
-    /*var node = cat_panel.tree.getNodeByKey( key );
-    if ( node ){
-        node.data.offset = offset;
-        setTimeout( function(){
-            node.load(true);
-        },0);
-    }*/
-};
+$("body").on("click",".page-prev",function(ev){
+    var node = $.ui.fancytree.getNode(ev).parent;
+    node.data.offset -= settings.opts.page_sz;
+    setTimeout(function(){
+        node.load(true);
+    },0);
+});
+
+$("body").on("click",".page-next",function(ev){
+    var node = $.ui.fancytree.getNode(ev).parent;
+    node.data.offset += settings.opts.page_sz;
+    setTimeout(function(){
+        node.load(true);
+    },0);
+});
+
+$("body").on("click",".page-last",function(ev){
+    var page = parseInt(ev.currentTarget.getAttribute("page"));
+    var node = $.ui.fancytree.getNode(ev).parent;
+    node.data.offset = page*settings.opts.page_sz;
+    setTimeout(function(){
+        node.load(true);
+    },0);
+});
+
 
 function getSelectedNodes(){
     var sel;
@@ -111,9 +124,6 @@ function getSelectedNodes(){
     switch( select_source ){
         case SS_TREE:
             sel = data_tree.getSelectedNodes();
-            break;
-        case SS_SEARCH:
-            sel = results_tree.getSelectedNodes();
             break;
         case SS_CAT:
             sel = cat_panel.getSelectedNodes();
@@ -123,18 +133,16 @@ function getSelectedNodes(){
     return sel;
 }
 
-function getSelectedIDs(){
+function getActionableIDs(){
     var ids = [], sel, i;
 
     switch( select_source ){
         case SS_TREE:
-            sel = data_tree.getSelectedNodes();
-            for ( i in sel ){
-                ids.push( sel[i].key );
-            }
-            break;
-        case SS_SEARCH:
-            sel = results_tree.getSelectedNodes();
+            /*if ( searchMode ){
+                sel = [data_tree.getActiveNode()];
+            }else{*/
+                sel = data_tree.getSelectedNodes();
+            //}
             for ( i in sel ){
                 ids.push( sel[i].key );
             }
@@ -170,14 +178,14 @@ function getSelectedIDs(){
 
 
 export function refreshUI( a_ids, a_data, a_reload ){
-    console.log("refresh",a_ids,a_data);
+    //console.log("refresh",a_ids,a_data);
     if ( !a_ids || !a_data ){
         // If no IDs or unknown action, refresh everything
         util.reloadNode(data_tree.getNodeByKey("mydata"));
         util.reloadNode(data_tree.getNodeByKey("projects"));
         util.reloadNode(data_tree.getNodeByKey("shared_user"));
         util.reloadNode(data_tree.getNodeByKey("shared_proj"));
-        util.reloadNode(data_tree.getNodeByKey("queries"));
+        util.reloadNode(data_tree.getNodeByKey("saved_queries"));
         //util.reloadNode(cat_panel.tree.getNodeByKey("topics"));
     }else{
         var ids = Array.isArray(a_ids)?a_ids:[a_ids];
@@ -200,8 +208,8 @@ export function refreshUI( a_ids, a_data, a_reload ){
         });*/
     }
 
-    if ( cur_query ){
-        execQuery( cur_query );
+    if ( query_cur ){
+        queryExec( query_cur );
     }
 
     if ( graph_panel.getSubjectID() ){
@@ -224,9 +232,6 @@ export function refreshUI( a_ids, a_data, a_reload ){
             break;
         case SS_PROV:
             act_node = graph_panel.getSelectedID();
-            break;
-        case SS_SEARCH:
-            act_node = results_tree.activeNode;
             break;
     }
 
@@ -377,7 +382,7 @@ function displayPath( path, item ){
 
 
 function showParent( which ){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 ){
         return;
     }
@@ -458,7 +463,7 @@ function showParent( which ){
 
 
 function setLockSelected( a_lock ){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length == 0 )
         return;
 
@@ -489,51 +494,22 @@ function refreshCollectionNodes( node_keys, scope ){
         if ( node.data.scope !== undefined ){
             if ( node.data.scope == scope ){
                 if ( node_keys.indexOf( node.key ) != -1 ){
-                    //console.log("REF: found node:",node.key);
                     refresh.push( node );
                     found = true;
                     return "skip";
                 }
             }else if (found){
-                //console.log("REF: early terminate search at:",node.key);
                 return false;
             }else{
-                //console.log("REF: skip node:",node.key);
                 return "skip";
             }
-        }else{
-            //console.log("REF: ignore node:",node.key);
         }
     });
-
-    //console.log("REF: refresh results:",refresh);
 
     for ( i in refresh )
         util.reloadNode(refresh[i]);
 
     refresh= [];
-    //console.log("REF: search catalog tree");
-
-    // catalog_tree is slightly different than data_tree
-    /*cat_panel.tree.visit( function( node ){
-        // Ignore nodes without scope (top-level nodes)
-        if ( node.data.scope !== undefined ){
-            if ( node.data.scope == scope ){
-                if ( node_keys.indexOf( node.key ) != -1 ){
-                    //console.log("REF: found node:",node.key);
-                    refresh.push( node );
-                    return "skip";
-                }
-            }else{
-                //console.log("REF: skip node:",node.key);
-                return "skip";
-            }
-        }else{
-            //console.log("REF: ignore node:",node.key);
-        }
-    });*/
-
-    //console.log("REF: refresh results:",refresh);
 
     for ( i in refresh )
         util.reloadNode(refresh[i]);
@@ -579,53 +555,6 @@ function moveItems( items, dest_node, cb ){
 
 function dataGet( a_ids, a_cb ){
     util.dataGet( a_ids, a_cb );
-    /*
-    api.dataGetCheck( a_ids, function( ok, data ){
-        if ( ok ){
-            //console.log("data get check:",data);
-            var i, internal = false, external = false;
-
-            if ( !data.item || !data.item.length ){
-                dialogs.dlgAlert("Data Get Error","Selection contains no raw data.");
-                return;
-            }
-
-            for ( i in data.item ){
-                if ( data.item[i].locked ){
-                    dialogs.dlgAlert("Data Get Error","One or more data records are currently locked.");
-                    return;
-                }
-                if ( data.item[i].url ){
-                    external = true;
-                }else if ( data.item[i].size <= 0 ){
-                    dialogs.dlgAlert("Data Get Error","One or more data records have no raw data.");
-                    return;
-                }else{
-                    internal = true;
-                }
-            }
-
-            if ( internal && external ){
-                dialogs.dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
-                return;
-            } else if ( internal ){
-                dlgStartXfer.show( model.TT_DATA_GET, data.item, a_cb );
-            }else{
-                for ( i in data.item ){
-                    //console.log("download ", data.item[i].url )
-                    var link = document.createElement("a");
-                    var idx = data.item[i].url.lastIndexOf("/");
-                    link.download = data.item[i].url.substr(idx);
-                    link.href = data.item[i].url;
-                    link.target = "_blank";
-                    link.click();
-                }
-            }
-        }else{
-            dialogs.dlgAlert("Data Get Error",data);
-        }
-    });
-    */
 }
 
 function dataPut( a_id, a_cb ){
@@ -643,7 +572,7 @@ function dataPut( a_id, a_cb ){
 // ACTION FUNCTIONS (UI event handlers)
 
 function actionDeleteSelected(){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length == 0 )
         return;
 
@@ -706,12 +635,12 @@ function actionDeleteSelected(){
                 });
             }
             if ( qry.length ){
-                api.sendQueryDelete( qry, function( ok, data ){
+                api.queryDelete( qry, function( ok, data ){
                     if ( ok ){
-                        util.reloadNode(data_tree.getNodeByKey("queries"));
+                        util.reloadNode(data_tree.getNodeByKey("saved_queries"));
                         panel_info.showSelectedInfo();
                     }else
-                        dialogs.dlgAlert( "Query Delete Error", data );
+                        dialogs.dlgAlert( "Saved Query Delete Error", data );
                 });
             }
         }
@@ -768,8 +697,6 @@ function actionNewData() {
             var node = data_tree.getNodeByKey( parent_id );
             if ( node )
                 util.reloadNode( node );
-            //if ( graph_panel.getSubjectID() )
-            //    graph_panel.load( graph_panel.getSubjectID(), graph_panel.getSelectedID() );
         });
     });
 }
@@ -780,7 +707,7 @@ function actionDupData(){
     if ( node ){
         if ( node.key.startsWith("d/")) {
             parent = node.parent.key;
-            console.log("parent",parent);
+            //console.log("parent",parent);
         }
     }
 
@@ -797,12 +724,10 @@ function actionDupData(){
 
         api.dataView( node.key, function( data ){
             dlgDataNewEdit.show( dlgDataNewEdit.DLG_DATA_MODE_DUP, data, parent, 0, function(data2,parent_id){
-                console.log("back from dup",parent_id);
+                resetTaskPoll();
                 var node = data_tree.getNodeByKey( parent_id );
                 if ( node )
                     util.reloadNode( node );
-                //if ( graph_panel.getSubjectID() )
-                //    graph_panel.load( graph_panel.getSubjectID(), graph_panel.getSelectedID() );
             });
         });
     });
@@ -825,7 +750,6 @@ function actionNewColl(){
     }
 
     api.checkPerms( parent, model.PERM_CREATE, function( ok, data ){
-        console.log("coll create", ok, data );
         if ( !ok ){
             dialogs.dlgAlert( "Permission Denied", data );
             return
@@ -872,7 +796,7 @@ function actionImportData( files ){
 
     for ( var i = 0; i < files.length; i++ ){
         file = files[i];
-        console.log("size:",file.size,typeof file.size);
+        //console.log("size:",file.size,typeof file.size);
         if ( file.size == 0 ){
             dialogs.dlgAlert("Import Error","File " + file.name + " is empty." );
             //asyncEnd();
@@ -1000,11 +924,9 @@ function actionCutSelected(){
 }
 
 function actionCopySelected(){
-    console.log("Copy");
+    //console.log("Copy");
     if ( select_source == SS_TREE )
         pasteItems = data_tree.getSelectedNodes();
-    else if ( select_source == SS_SEARCH )
-        pasteItems = results_tree.getSelectedNodes();
     else
         return;
 
@@ -1065,7 +987,7 @@ function permGateAny( item_id, req_perms, cb ){
         if (( perms & req_perms ) == 0 ){
             util.setStatusText( "Permission Denied.", 1 );
         }else{
-            console.log("have perms:",perms);
+            //console.log("have perms:",perms);
             cb( perms );
         }
     });
@@ -1075,9 +997,7 @@ function actionEditSelected() {
     //if ( async_guard )
     //    return;
 
-    console.log("actionEditSelected");
-
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
 
     if ( ids.length != 1 )
         return;
@@ -1086,7 +1006,6 @@ function actionEditSelected() {
 
     if ( util.checkDlgOpen( id + "_edit" ))
         return;
-    console.log("id", id);
 
     switch( id.charAt(0) ){
         case "p":
@@ -1122,13 +1041,17 @@ function actionEditSelected() {
             }); 
             break;
         case 'q':
-            api.sendQueryView( id, function( ok, old_qry ){
+            api.queryView( id, function( ok, data ){
                 if ( ok ){
-                    dlgQueryNewEdit.show( old_qry, function( data ){
-                        refreshUI( id, data, true );
-                    });
-                }else
-                    util.setStatusText("Query Edit Error: " + old_qry, 1);
+                    if ( !searchMode ){
+                        setSearchMode( true );
+                    }
+                    query_id = data.id;
+                    query_title = data.title;
+                    search_panel.setQuery( data.query );
+                }else{
+                    util.setStatusText("Saved Query Edit Error: " + data, 1);
+                }
             });
             return;
         default:
@@ -1137,7 +1060,7 @@ function actionEditSelected() {
 }
 
 function actionShareSelected() {
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
@@ -1168,7 +1091,7 @@ function actionShareSelected() {
 }
 
 function actionDepGraph(){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
@@ -1208,13 +1131,16 @@ function actionRefresh(){
 }
 
 function actionSubscribe(){
-    var ids = getSelectedIDs();
+    // Not implemented yet
+
+/*
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
     var id = ids[0];
-
-    console.log("subscribe");
+*/
+    //console.log("subscribe");
     /*if ( id.charAt(0) == "d" ) {
         graph_panel.load( id );
         $('[href="#tab-prov-graph"]').closest('li').show();
@@ -1223,7 +1149,7 @@ function actionSubscribe(){
 }
 
 function actionAnnotate(){
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
@@ -1241,14 +1167,14 @@ function actionAnnotate(){
 }
 
 function actionDataGet() {
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     dataGet( ids, function(){
         resetTaskPoll();
     });
 }
 
 function actionDataPut() {
-    var ids = getSelectedIDs();
+    var ids = getActionableIDs();
     if ( ids.length != 1 )
         return;
 
@@ -1276,6 +1202,13 @@ function actionDataPut() {
         }
     }
 }*/
+
+function actionSchemaList() {
+    if ( util.checkDlgOpen( "dlg_schema_list" ))
+        return;
+
+    dlgSchemaList.show();
+}
 
 function calcActionState( sel ){
     var bits,node;
@@ -1318,7 +1251,7 @@ function calcActionState( sel ){
                     bits = 0x00;
                 else
                     bits = 0x102;
-                if ( node.data.doi )
+                if ( node.data.external )
                     bits |= 0x10;
                 if ( !node.data.size )
                     bits |= 0x20;
@@ -1353,7 +1286,13 @@ export function updateBtnState(){
     var bits,sel;
     switch( select_source ){
         case SS_TREE:
-            sel = data_tree.getSelectedNodes();
+            /*if ( searchMode ){
+                sel = [data_tree.getActiveNode()];
+            }else{*/
+                sel = data_tree.getSelectedNodes();
+            //}
+            //console.log("sel:",sel);
+
             bits = calcActionState( sel );
             break;
         case SS_CAT:
@@ -1362,10 +1301,6 @@ export function updateBtnState(){
             break;
         case SS_PROV:
             bits = calcActionState(graph_panel.getSelectedNodes());
-            break;
-        case SS_SEARCH:
-            sel = results_tree.getSelectedNodes();
-            bits = calcActionState( sel );
             break;
     }
 
@@ -1422,108 +1357,185 @@ export function updateBtnState(){
     data_tree_div.contextmenu("enableEntry", "note", (bits & 0x400) == 0 );
 }
 
-/*
-function saveExpandedPaths( node, paths ){
-    var subp = {};
-    if ( node.children ){
-        var child;
-        for ( var i in node.children ){
-            child = node.children[i];
-            if ( child.isExpanded() ){
-                saveExpandedPaths( child, subp );
-            }
-        }
+function setSearchMode( enabled ){
+    if ( enabled ){
+        searchMode = true;
+        //search_panel.setSearchSelect( searchSelect );
+        $("#search_panel",frame).show();
+        //$(data_tree_div).fancytree("option","checkbox",true);
+    }else{
+        searchMode = false;
+        //search_panel.setSearchSelect();
+        $("#search_panel",frame).hide();
+        //$(data_tree_div).fancytree("option","checkbox",false);
     }
-    paths[node.key] = subp;
 }
-
-
-function restoreExpandedPaths( a_node, a_paths, a_cb ){
-    var num_nodes = 0;
-
-    function done(){
-        if ( a_cb ){
-            if ( --num_nodes == 0 ){
-                a_cb();
-            }
-        }
-    }
-
-    function recurseExpPaths( node, paths ){
-        num_nodes += 1;
-
-        node.setExpanded( true ).always(function(){
-            if ( node.children ){
-                var child;
-                for ( var i in node.children ){
-                    child = node.children[i];
-                    if ( child.key in paths ){
-                        recurseExpPaths( child, paths[child.key] );
-                    }
-                }
-            }
-    
-            done();
-        });
-    }
-
-    recurseExpPaths( a_node, a_paths );
-}
-*/
-
-/*
-function reloadNode( a_node, a_cb ){
-    if ( !a_node || a_node.isLazy() && !a_node.isLoaded() )
-        return;
-
-    var save_exp = a_node.isExpanded();
-    var paths = {};
-
-    if ( save_exp ){
-        saveExpandedPaths( a_node, paths );
-    }
-
-    a_node.load(true).always(function(){
-        if ( save_exp ){
-            restoreExpandedPaths( a_node, paths[a_node.key], a_cb );
-        }
-    });
-}
-*/
 
 function handleQueryResults( data ){
+    //{title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]},
+    // Find results node in data tree
+
+    //console.log("handleQueryResults");
+    var results_node = data_tree.getNodeByKey("search_results");
+    if ( !results_node ){
+        results_node = data_tree.getRootNode().addChildren({title:"Search Results",checkbox:false,folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]});
+    }
+
     var results = [];
     if ( data.item && data.item.length > 0 ){
         util.setStatusText( "Found " + data.item.length + " result" + (data.item.length==1?"":"s"));
         for ( var i in data.item ){
             var item = data.item[i];
-            results.push({title:util.generateTitle( item, false, true ),icon: util.getDataIcon( item ),
-                checkbox:false,key:item.id,nodrag:false,notarg:true,scope:item.owner,doi:item.doi,size:item.size});
+            // Results can be data records and/or collections
+            if ( item.id[0]=="c" ){
+                results.push({ title: util.generateTitle(item,false,true),_title:item.title,folder:true,lazy:true,scope:item.owner,key:item.id,offset:0,nodrag:true});
+            }else{
+                results.push({ title: util.generateTitle(item,false,true),icon: util.getDataIcon(item),
+                    key:item.id,nodrag:false,notarg:true,checkbox:false,scope:item.owner,size:item.size,external:item.external,nodrag:true});
+            }
         }
     } else {
         util.setStatusText("No results found");
         results.push({title:"(no results)",icon:false,checkbox:false,nodrag:true,notarg:true});
     }
 
-    $.ui.fancytree.getTree("#search_results_tree").reload(results);
-    $('[href="#tab-search-results"]').closest('li').show();
-    $( "#data-tabs" ).tabs({ active: 4 });
-
-    if ( select_source == SS_SEARCH ){
-        panel_info.showSelectedInfo();
-        updateBtnState();
-    }
+    results_node.removeChildren();
+    results_node.addChildren( results );
+    results_node.setExpanded();
 }
 
-function execQuery( query ){
-    util.setStatusText("Executing search query...");
-    api.dataFind( query, function( ok, data ){
-        console.log( "qry res:", ok, data );
-        if ( ok ){
-            //var srch_node = data_tree.getNodeByKey("search");
+// Get selected nodes and return as a subtree
+// Filter-out nodes that cannot be searched
+export function searchPanel_GetSelection(){
+    //console.log( "searchPanel_GetSelection" );
 
+    var res, j, n, owner, par, ch, sel = data_tree.getSelectedNodes();
+
+    for ( var i in sel ){
+        n = sel[i];
+        // Only allow collections, projects, mydata, shared project & user collections
+        // If personal root collection is specified, convert to "my data" scope
+        // If a project root collection is specified, convert to project scope
+
+        par = n.getParentList(false,true);
+
+        if ( n.key == "mydata" ){
+            owner = null;
+        }else if ( n.key.startsWith( "p/" )){
+            owner = n.key;
+        }else if ( n.key.startsWith( "shared_user_" )){
+            owner = n.key.substr( 12 );
+        }else if ( n.key.startsWith( "shared_proj_" )){
+            owner = n.key.substr( 12 );
+        }else if ( n.key.startsWith( "c/" )){
+            if ( n.data.scope == ( "u/" + settings.user.uid )){
+                owner = null;
+            }else if ( n.data.scope.startsWith( "u/" ) || n.data.scope.startsWith( "p/" )){
+                owner = n.data.scope;
+            }else{
+                // Might be a search result?
+                continue;
+            }
+        }else{
+            // Invalid selections
+            continue;
+        }
+
+        if ( !res || res.owner != owner ){
+            res = { owner : owner, ch: {} };
+        }
+
+        // If leaf node is root, prune it (search all of user/project instead)
+        if ( par[par.length-1].data.isroot ){
+            par.pop();
+        }
+
+        ch = res.ch;
+        for ( j in par ){
+            n = par[j];
+            if ( !( n.key in ch )){
+                ch[n.key] = { _title : n.data._title?n.data._title:n.title, ch: {}};
+            }
+
+            ch = ch[n.key].ch;
+        }
+    }
+
+    return res;
+}
+
+// ----- Run query button -----
+
+$("#srch_run_btn",frame).on("click", function(){
+    var query = search_panel.getQuery();
+    searchPanel_Run( query );
+});
+
+export function searchPanel_Run( query ){
+    console.log("searchPanel_Run", query );
+
+    if ( query.owner === undefined || query.empty ){
+        handleQueryResults([]);
+        $("#srch_save_btn,#srch_run_btn",frame).button("option","disabled",true);
+        return;
+    }
+
+    queryExec( query );
+    $("#srch_save_btn,#srch_run_btn",frame).button("option","disabled",false);
+}
+
+// ----- Save query button -----
+
+$("#srch_save_btn",frame).on("click", function(){
+    searchPanel_Save();
+});
+
+export function searchPanel_Save(){
+    var query = search_panel.getQuery();
+
+    if ( query.empty ){
+        util.setStatusText( "Cannot save query - no search terms.", true );
+        return;
+    }
+
+    //queryCalcScope( query );
+
+    if ( query.owner === undefined ){
+        dialogs.dlgAlert( "Save Query", "Cannot save query - invalid search selection." )
+        return;
+    }
+
+    dlgQuerySave.show( query, query_id, query_title, function( title, update ){
+        if ( update ){
+            api.queryUpdate( query_id, title, query, function( ok, data ){
+                if ( ok ){
+                    util.reloadNode(data_tree.getNodeByKey("saved_queries"));
+                    query_id = null;
+                    query_title = null;
+                }else{
+                    util.setStatusText( "Query Save Error: " + data, 1 );
+                }
+            });
+        }else{
+            api.queryCreate( title, query, function( ok, data ){
+                if ( ok ){
+                    util.reloadNode(data_tree.getNodeByKey("saved_queries"));
+                    query_id = null;
+                    query_title = null;
+                }else{
+                    util.setStatusText( "Query Save Error: " + data, 1 );
+                }
+            });
+        }
+    });
+}
+
+function queryExec( query ){
+    util.setStatusText("Executing search query...");
+    api.dataSearch( query, function( ok, data ){
+        if ( ok ){
             // Set this query as current for refresh
-            cur_query = query;
+            query_cur = query;
             handleQueryResults( data );
         }else{
             dialogs.dlgAlert("Query Error",data);
@@ -1531,150 +1543,6 @@ function execQuery( query ){
     });
 }
 
-function parseQuickSearch( a_noscope ){
-    //console.log("parse query");
-    var query = {};
-    var tmp = $("#text_query",frame).val();
-    if ( tmp )
-        query.text = tmp;
-
-    tmp = $("#id_query",frame).val();
-    if ( tmp )
-        query.id = tmp;
-
-    tmp = $("#meta_query",frame).val();
-    if ( tmp )
-        query.meta = tmp;
-
-    tmp = $("#tag_query",frame).tagit("assignedTags");
-    if ( tmp.length )
-        query.tags = tmp;
-
-    if ( !a_noscope ){
-        query.scopes = [];
-
-        if ( $("#scope_selected",frame).prop("checked")){
-            //console.log("select mode");
-            var i, key, nodes = data_tree.getSelectedNodes();
-            for ( i in nodes ){
-                key = nodes[i].key;
-                if ( key == "mydata" ){
-                    query.scopes.push({scope:model.SS_USER});
-                }else if ( key == "projects" ){
-                    query.scopes.push({scope:model.SS_PROJECTS});
-                }else if ( key == "shared_all" ){
-                    query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
-                    query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
-                }else if ( key == "shared_user" ){
-                    if ( nodes[i].data.scope )
-                        query.scopes.push({scope:model.SS_SHARED_BY_USER,id:nodes[i].data.scope});
-                    else
-                        query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
-                }else if ( key == "shared_proj" ){
-                    if ( nodes[i].data.scope )
-                        query.scopes.push({scope:model.SS_SHARED_BY_PROJECT,id:nodes[i].data.scope});
-                    else
-                        query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
-                }else if ( key.startsWith("c/") )
-                    query.scopes.push({scope:model.SS_COLLECTION,id:key,recurse:true});
-                else if ( key.startsWith("p/") )
-                    query.scopes.push({scope:model.SS_PROJECT,id:key});
-                //else if ( key.startsWith("t/") ){
-                //    query.scopes.push({scope:SS_TOPIC,id:key,recurse:true});
-                //}
-            }
-            /*nodes = cat_panel.tree.getSelectedNodes();
-            //console.log("cat tree nodes:",nodes.length);
-            for ( i in nodes ){
-                key = nodes[i].key;
-                query.scopes.push({scope:model.SS_TOPIC,id:key,recurse:true});
-            }*/
-        }else{
-            if ( $("#scope_mydat",frame).prop("checked"))
-                query.scopes.push({scope:model.SS_USER});
-            if ( $("#scope_proj",frame).prop("checked"))
-                query.scopes.push({scope:model.SS_PROJECTS});
-            if ( $("#scope_shared",frame).prop("checked")){
-                query.scopes.push({scope:model.SS_SHARED_BY_ANY_USER});
-                query.scopes.push({scope:model.SS_SHARED_BY_ANY_PROJECT});
-            }
-        }
-    }
-
-    //console.log("query:", query);
-
-    // TODO make sure at least one scope set and on term
-    return query;
-}
-
-function searchDirect(){
-    $("#run_qry_btn").removeClass("ui-state-error");
-
-    if ( select_source == SS_CAT ){
-        var qry = parseQuickSearch( true );
-        // TODO Fix this when data search is updated
-        if ( qry.meta ){
-            qry.md = qry.meta;
-            delete qry.meta;
-        }
-        qry.coll = cat_panel.getCollectionQuery();
-
-        console.log("qry",qry);
-
-        util.setStatusText("Executing collection search...");
-        api.dataPubSearch( qry, function( ok, data ){
-            console.log( "qry res:", ok, data );
-            if ( ok ){
-                handleQueryResults( data );
-            }else{
-                dialogs.dlgAlert("Search Error",data);
-            }
-        });
-    }else{
-        var query = parseQuickSearch();
-
-        //if ( query.scopes.length && ( query.text || query.meta || query.id ))
-        execQuery( query );
-    }
-}
-
-function querySave(){
-    dialogs.dlgSingleEntry( "Save Query", "Query Title:", ["Save","Cancel"], function(btn,val){
-        if ( btn == 0 ){
-            var query = parseQuickSearch();
-            api.sendQueryCreate( val, query, function( ok, data ){
-                if ( ok )
-                    util.reloadNode(data_tree.getNodeByKey("queries"));
-                else
-                    util.setStatusText( "Query Save Error: " + data, 1 );
-            });
-        }
-    });
-}
-
-function updateSearchSelectState( enabled ){
-    if( enabled && $("#scope_selected",frame).prop("checked")){
-        $(data_tree_div).fancytree("option","checkbox",true);
-        //cat_panel.setSearchSelectMode(true);
-
-        //cat_panel.tree.setOption("checkbox",true);
-        $("#btn_srch_clear_select",frame).button("option","disabled",false);
-        searchSelect = true;
-    }else{
-        $(data_tree_div).fancytree("option","checkbox",false);
-        //cat_panel.setSearchSelectMode(false);
-        //cat_panel.tree.setOption("checkbox",false);
-        $("#btn_srch_clear_select",frame).button("option","disabled",true);
-        searchSelect = false;
-    }
-    data_tree.selectAll(false);
-    //cat_panel.tree.selectAll(false);
-}
-
-function searchClearSelection(){
-    data_tree.selectAll(false);
-    //cat_panel.tree.selectAll(false);
-}
 
 function taskUpdateHistory( task_list ){
     var len = task_list.length;
@@ -1689,20 +1557,7 @@ function taskUpdateHistory( task_list ){
             task = task_list[i];
 
             html += "<tr style='font-size:.9em' class='task-row' id='"+task.id+"'><td>" + task.id.substr(5) + "</td><td style='white-space: nowrap'>";
-
             html += model.TaskTypeLabel[task.type];
-            /*switch( task.type ){
-                case "TT_DATA_GET": html += "Get Data"; break;
-                case "TT_DATA_PUT": html += "Put Data"; break;
-                case "TT_DATA_DEL": html += "Delete Data"; break;
-                case "TT_REC_CHG_ALLOC": html += "Change Alloc"; break;
-                case "TT_REC_CHG_OWNER": html += "Change Owner"; break;
-                case "TT_REC_DEL": html += "Delete Record"; break;
-                case "TT_ALLOC_CREATE": html += "Create Alloc"; break;
-                case "TT_ALLOC_DEL": html += "Delete Alloc"; break;
-                case "TT_USER_DEL": html += "Delete User"; break;
-                case "TT_PROJ_DEL": html += "Delete Project"; break;
-            }*/
 
             time.setTime( task.ct*1000 );
             html += "</td><td style='white-space: nowrap'>" + time.toLocaleDateString("en-US", settings.date_opts );
@@ -1720,15 +1575,12 @@ function taskUpdateHistory( task_list ){
             }
 
             html += "</td></tr>";
-
-            //html += "</td><td>" + task.msg + "</td></tr>";
         }
         html += "</table>";
     }
     task_hist.html( html );
 
     $(".task-row",task_hist).on("click",function( ev ){
-        //console.log("row click!",ev.currentTarget.id);
         panel_info.showSelectedInfo( ev.currentTarget.id );
     }).hover( function(){
         $(this).addClass("my-fancytree-hover");
@@ -1784,7 +1636,6 @@ function taskHistoryPoll(){
 }
 
 function resetTaskPoll(){
-    console.log("reset task poll");
     pollSince = 0;
     clearTimeout(taskTimer);
     taskTimer = setTimeout( taskHistoryPoll, 1000 );
@@ -1820,7 +1671,7 @@ function setupRepoTab(){
     });
 }
 
-
+// Only called for data tree nodes
 function treeSelectNode( a_node, a_toggle ){
     if ( a_node.parent != selectScope.parent || a_node.data.scope != selectScope.data.scope ){
         util.setStatusText("Cannot select across collections or categories",1);
@@ -1924,32 +1775,6 @@ function pasteAllowed( dest_node, src_node ){
     }
 }
 
-
-function addTreePagingNode( a_data ){
-    if ( a_data.response.offset > 0 || a_data.response.total > (a_data.response.offset + a_data.response.count )){
-        var pages = Math.ceil(a_data.response.total/settings.opts.page_sz), page = 1+a_data.response.offset/settings.opts.page_sz;
-        a_data.result.push({title:"<button class='btn btn-icon-tiny''"+(page==1?" disabled":"")+" onclick='pageLoad(\"" +
-            a_data.node.key+"\",0)'><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> <button class='btn btn-icon-tiny'"+(page==1?" disabled":"") +
-            " onclick='pageLoad(\""+a_data.node.key+"\","+(page-2)*settings.opts.page_sz+")'><span class='ui-icon ui-icon-triangle-1-w'></span></button> Page " +
-            page + " of " + pages + " <button class='btn btn-icon-tiny'"+(page==pages?" disabled":"")+" onclick='pageLoad(\"" +
-            a_data.node.key+"\","+page*settings.opts.page_sz+")'><span class='ui-icon ui-icon-triangle-1-e'></span></button> <button class='btn btn-icon-tiny'" + 
-            (page==pages?" disabled":"")+" onclick='pageLoad(\""+a_data.node.key+"\","+(pages-1)*settings.opts.page_sz +
-            ")'><span class='ui-icon ui-icon-triangle-1-e-stop'></span></button>", folder:false, icon:false, checkbox:false, hasBtn:true });
-    }
-}
-
-var tree_source = [
-    //{title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-    {title:"Personal Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,lazy:true},
-    {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",folder:true,lazy:true},
-    {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,key:"shared_all",children:[
-        {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,folder:true,lazy:true,key:"shared_user"},
-        {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,folder:true,lazy:true,key:"shared_proj"}
-    ]},
-    /*{title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},*/
-    {title:"Saved Queries",folder:true,icon:"ui-icon ui-icon-view-list",lazy:true,nodrag:true,key:"queries",checkbox:false,offset:0},
-];
-
 var ctxt_menu_opts = {
     delegate: "li",
     show: false,
@@ -1964,7 +1789,7 @@ var ctxt_menu_opts = {
             {title: "Download", action: actionDataGet, cmd: "get" },
             {title: "Upload", action: actionDataPut, cmd: "put" },
             {title: "Provenance", action: actionDepGraph, cmd: "graph" },
-            {title: "Subcribe", action: actionSubscribe, cmd: "sub" },
+            {title: "Subscribe", action: actionSubscribe, cmd: "sub" },
             {title: "Annotate", action: actionAnnotate, cmd: "note" },
             {title: "----"},
             {title: "Delete", action: actionDeleteSelected, cmd: "del" }
@@ -1999,19 +1824,6 @@ var ctxt_menu_opts = {
 };
 
 
-$(".scope",frame).checkboxradio();
-$(".scope2",frame).checkboxradio();
-
-$("#scope_selected",frame).on( "change",function(ev){
-    if( $("#scope_selected",frame).prop("checked")){
-        $(".scope",frame).prop("checked",false).checkboxradio("disable").checkboxradio("refresh");
-    }else{
-        $(".scope",frame).checkboxradio("enable");
-    }
-
-    updateSearchSelectState( true );
-});
-
 $('#input_files',frame).on("change",function(ev){
     if ( ev.target.files && ev.target.files.length ){
         actionImportData( ev.target.files );
@@ -2038,10 +1850,6 @@ $("#filemenu").mouseover(function(){
     }
 });
 
-// Wire-up callbacks in static browser template
-$("#run_qry_btn",frame).on("click", function(){ searchDirect(); });
-$("#save_qry_btn",frame).on("click", function(){ querySave(); });
-$("#btn_srch_clear_select",frame).on("click", function(){ searchClearSelection(); });
 
 $("#info-tabs").tabs({
     heightStyle:"fill",
@@ -2054,32 +1862,16 @@ $(".prov-graph-close").click( function(){
     $( "#data-tabs" ).tabs({ active: select_source_prev });
 });
 
-$(".search-results-close").click( function(){
-    cur_query = null;
-    $.ui.fancytree.getTree("#search_results_tree").clear();
-    $('[href="#tab-search-results"]').closest('li').hide();
-    $( "#data-tabs" ).tabs({ active: select_source_prev });
-});
-
 $("#footer-tabs").tabs({
     heightStyle: "auto",
     collapsible: true,
     active: false,
     activate: function(ev,ui){
-        if ( ui.newPanel.length && ui.newPanel[0].id == "tab-search" ){
-            updateSearchSelectState( true );
-        } else if ( ui.oldPanel.length && ui.oldPanel[0].id == "tab-search" ){
-            updateSearchSelectState( false );
-        }
-
         if (( ui.newTab.length == 0 && ui.newPanel.length == 0 ) || ( ui.oldTab.length == 0 && ui.oldPanel.length == 0 )){
             windowResized();
-            /*setTimeout( function(){
-                windowResized();
-            }, 1500 );*/
         }
     }
-}); //.css({'overflow': 'auto'});
+});
 
 $("#data-tabs").tabs({
     heightStyle:"fill",
@@ -2093,32 +1885,18 @@ $("#data-tabs").tabs({
                 case "tab-data-tree":
                     select_source = SS_TREE;
                     panel_info.showSelectedInfo( data_tree.activeNode, checkTreeUpdate );
-                    $(".search-scope",frame).show();
-                    $(".search-scope-alt",frame).hide();
                     break;
                 case "tab-catalogs":
                     select_source = SS_CAT;
+                    if ( cat_init ){
+                        cat_panel.init();
+                        cat_init = false;
+                    }
                     panel_info.showSelectedInfo( cat_panel.getActiveNode(), checkTreeUpdate );
-                    $(".search-scope",frame).hide();
-                    $(".search-scope-alt",frame).show();
-                    break;
-                case "tab-notifications":
-                    //select_source = SS_CAT;
-                    //panel_info.showSelectedInfo( cat_panel.tree.activeNode );
-                    $(".search-scope",frame).show();
-                    $(".search-scope-alt",frame).hide();
                     break;
                 case "tab-prov-graph":
                     select_source = SS_PROV;
                     panel_info.showSelectedInfo( graph_panel.getSelectedID(), graph_panel.checkGraphUpdate );
-                    $(".search-scope",frame).hide();
-                    $(".search-scope-alt",frame).show();
-                    break;
-                case "tab-search-results":
-                    select_source = SS_SEARCH;
-                    panel_info.showSelectedInfo( results_tree.activeNode, checkTreeUpdate );
-                    $(".search-scope",frame).show();
-                    $(".search-scope-alt",frame).hide();
                     break;
             }
         }
@@ -2126,35 +1904,6 @@ $("#data-tabs").tabs({
     }
 });
 
-
-$("#id_query,#text_query,#meta_query").on( "input", function(e) {
-    $("#run_qry_btn").addClass("ui-state-error");
-});
-
-$("#btn_srch_refresh").on("click", function(){
-    if ( cur_query )
-        execQuery( cur_query );
-});
-
-$("#tag_query",frame).tagit({
-    autocomplete: {
-        delay: 500,
-        minLength: 3,
-        source: "/api/tag/autocomp",
-        position: {
-            my: "left bottom",
-            at: "left top"
-        }
-    },
-    caseSensitive: false,
-    removeConfirmation: true,
-    afterTagAdded: function(){
-        $("#run_qry_btn").addClass("ui-state-error");
-    },
-    afterTagRemoved: function(){
-        $("#run_qry_btn").addClass("ui-state-error");
-    }
-});
 
 $("#btn_edit",frame).on('click', actionEditSelected );
 //$("#btn_dup",frame).on('click', dupSelected );
@@ -2173,6 +1922,7 @@ $("#btn_refresh",frame).on('click', actionRefresh );
 $("#btn_srch_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_first_par_coll",frame).on('click', actionFirstParent );
 $("#btn_cat_refresh",frame).on('click', actionRefresh );
+$("#btn_schemas",frame).on('click', actionSchemaList );
 
 $("#btn_exp_node",frame).on('click', function(){
     graph_panel.expandNode();
@@ -2197,20 +1947,6 @@ $("#btn_settings").on('click', function(){ dlgSettings.show( function(reload){
     taskTimer = setTimeout( taskHistoryPoll, 1000 );
 });});
 
-$("#id_query,#text_query,#meta_query,#tag_query").on('keypress', function (e) {
-    if (e.keyCode == 13){
-        searchDirect();
-    }
-});
-
-/*$('#text_query').droppable({
-    accept: function( item ){
-        return true;
-    },
-    drop: function(ev,ui){
-        var sourceNode = $(ui.helper).data("ftSourceNode");
-    }
-});*/
 
 // Connect event/click handlers
 $("#btn_file_menu",frame).on('click', fileMenu );
@@ -2246,10 +1982,10 @@ $("#btn_export_data",frame).on('click', function(){
     $("#filemenu").hide();
     dialogs.dlgConfirmChoice( "Confirm Export", "Export selected record metadata to browser download directory?", ["Cancel","Export"], function( choice ){
         if ( choice == 1 ){
-            var ids = getSelectedIDs();
+            var ids = getActionableIDs();
 
             api.dataExport( ids, function( ok, data ){
-                console.log("reply:", data );
+                //console.log("reply:", data );
                 var rec;
                 for ( var i in data.record ){
                     rec = JSON.parse( data.record[i] );
@@ -2262,7 +1998,20 @@ $("#btn_export_data",frame).on('click', function(){
 
 export function init(){
     //console.log("browser - user from settings:",settings.user);
-
+    var tree_source = [
+        //{title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
+        {title:"Personal Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,lazy:true,scope:"u/"+settings.user.uid},
+        {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",checkbox:false,folder:true,lazy:true,offset:0},
+        {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,checkbox:false,key:"shared_all",children:[
+            {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_user"},
+            {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_proj"}
+        ]},
+        /*{title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},*/
+    
+        {title:"Saved Queries",folder:true,icon:"ui-icon ui-icon-zoom",lazy:true,nodrag:true,key:"saved_queries",checkbox:false,offset:0},
+        //{title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]},
+    ];
+    
     my_root_key = "c/u_" + settings.user.uid + "_root";
 
     $("#data_tree",frame).fancytree({
@@ -2275,17 +2024,15 @@ export function init(){
             dropEffectDefault: "copy",
             scroll: false,
             dragStart: function(node, data) {
-                console.log( "dnd start" );
+                //console.log( "dnd start" );
 
                 if ( !drag_enabled || node.data.nodrag ){
-                    console.log( "NOT ALLOWED" );
                     return false;
                 }
 
                 clearTimeout( hoverTimer );
                 node.setActive(true);
                 if ( !node.isSelected() ){
-                    console.log( "clear selection" );
                     data_tree.selectAll(false);
                     selectScope = data.node;
                     node.setSelected(true);
@@ -2296,7 +2043,7 @@ export function init(){
                 data.dataTransfer.setData("text/plain",node.key);
 
                 pasteSourceParent = pasteItems[0].parent;
-                console.log("pasteSourceParent",pasteSourceParent);
+                //console.log("pasteSourceParent",pasteSourceParent);
                 pasteCollections = [];
                 for ( var i in pasteItems ){
                     if ( pasteItems[i].key.startsWith("c/") )
@@ -2316,12 +2063,16 @@ export function init(){
                 drag_enabled = false;
 
                 // data.otherNode = source, node = destination
-                console.log("drop stop in",dest_node.key,pasteItems);
+                //console.log("drop stop in",dest_node.key,pasteItems);
+
+                //console.log( pasteSourceParent );
+                if ( !pasteSourceParent || !pasteSourceParent.data )
+                    return;
 
                 var i, proj_id, ids = [];
 
                 if ( pasteSourceParent.data.scope != dest_node.data.scope ){
-                    console.log("Change owner");
+                    //console.log("Change owner");
                     var coll_id = ( dest_node.key == "empty" || dest_node.key.startsWith( "d/" ))?dest_node.parent.key:dest_node.key;
                     proj_id = pasteSourceParent.data.scope.charAt(0) == 'p'?pasteSourceParent.data.scope:null;
 
@@ -2330,13 +2081,13 @@ export function init(){
                     }
 
                     api.dataOwnerChange( ids, coll_id, null, proj_id, true, function( ok, reply ){
-                        console.log("chg owner reply:",ok,reply);
+                        //console.log("chg owner reply:",ok,reply);
                         if ( ok ){
                             dlgOwnerChangeConfirm.show( pasteSourceParent.data.scope, dest_node.data.scope, reply, function( repo ){
-                                console.log("chg owner conf:", repo );
+                                //console.log("chg owner conf:", repo );
                                 api.dataOwnerChange( ids, coll_id, repo, proj_id, false, function( ok, reply ){
                                     if ( ok ){
-                                        console.log("reply:", reply );
+                                        //console.log("reply:", reply );
                                         resetTaskPoll();
                                         dialogs.dlgAlert( "Change Record Owner", "Task " + reply.task.id.substr(5) + " created to transfer data records to new owner." );
                                     }else{
@@ -2413,7 +2164,7 @@ export function init(){
                 //data.dropEffect = data.dropEffectSuggested;
             },*/
             dragEnter: function(node, data) {
-                console.log("dragEnter");
+                //console.log("dragEnter");
                 var allowed = pasteAllowed( node, data.otherNode );
 
                 return allowed;
@@ -2428,6 +2179,7 @@ export function init(){
         },
         source: tree_source,
         selectMode: 2,
+        checkbox: false,
         collapse: function( ev, data ) {
             var act_id = panel_info.getActiveItemID();
             if ( act_id ){
@@ -2464,7 +2216,7 @@ export function init(){
                 data.result = { url: api.repoAllocListByOwner_url( data.node.data.scope, data.node.data.scope ), cache: false };
             } else if ( data.node.key.startsWith( "repo/" )) {
                 data.result = { url: api.repoAllocListItems_url( data.node.data.repo, data.node.data.scope, data.node.data.offset, settings.opts.page_sz ), cache: false };
-            } else if ( data.node.key == 'queries') {
+            } else if ( data.node.key == 'saved_queries') {
                 data.result = { url: api.queryList_url( data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key.startsWith("q/") ) {
                 data.result = { url: api.queryExec_url( data.node.key ), cache: false };
@@ -2494,34 +2246,32 @@ export function init(){
             if ( data.node.key == "mydata" ){
                 var uid = "u/" + settings.user.uid;
                 data.result = [
-                    {title:util.generateTitle(data.response),folder:true,expanded:false,lazy:true,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
+                    {title:util.generateTitle(data.response),_title:util.escapeHTML(data.response.title),folder:true,expanded:false,lazy:true,checkbox:false,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-book"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key.startsWith("p/")){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
-                    {title: util.generateTitle( data.response ),folder:true,lazy:true,key:"c/p_"+prj_id+"_root",offset:0,scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
+                    {title: util.generateTitle( data.response ),_title:util.escapeHTML(data.response.title),folder:true,lazy:true,checkbox:false,key:"c/p_"+prj_id+"_root",offset:0,scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
                     {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-book"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
             }else if ( data.node.key == "projects" ){
                 data.result = [];
                 if ( data.response.item && data.response.item.length ){
-                    console.log( "pos proc project:", data.response );
                     var admin, mgr, uid = "u/" + settings.user.uid;
 
                     for ( i in data.response.item ) {
                         item = data.response.item[i];
                         admin = (item.owner == uid);
                         mgr = (item.creator == uid);
-                        data.result.push({ title: util.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
+                        data.result.push({ title: util.generateTitle(item,true),_title:util.escapeHTML(item.title),icon:"ui-icon ui-icon-box",folder:true,key:item.id,scope:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
                     }
                 }
 
-                addTreePagingNode( data );
+                util.addTreePagingNode( data );
             } else if ( data.node.key == "shared_user" && !data.node.data.scope ){
-                console.log("pos proc:", data.response );
                 data.result = [];
                 if ( data.response.item && data.response.item.length ){
                     for ( i in data.response.item ) {
@@ -2534,16 +2284,16 @@ export function init(){
                 if ( data.response.item && data.response.item.length ){
                     for ( i in data.response.item ) {
                         item = data.response.item[i];
-                        data.result.push({ title: util.generateTitle(item,true),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
+                        data.result.push({ title: util.generateTitle(item,true),_title:util.escapeHTML(item.title),icon:"ui-icon ui-icon-box",folder:true,key:"shared_proj_"+item.id,scope:item.id,lazy:true,nodrag:true});
                     }
                 }
-            } else if ( data.node.key == "queries" ) {
+            } else if ( data.node.key == "saved_queries" ) {
                 data.result = [];
                 if ( data.response.length ){
                     var qry;
                     for ( i in data.response ) {
                         qry = data.response[i];
-                        data.result.push({ title: qry.title+"",icon:"ui-icon ui-icon-zoom",folder:true,key:qry.id,lazy:true,offset:0,checkbox:false,nodrag:true});
+                        data.result.push({ title: qry.title+"",icon:false,folder:true,key:qry.id,lazy:true,offset:0,checkbox:false,nodrag:true});
                     }
                 }
             } else if ( data.node.key == "allocs" ) {
@@ -2557,27 +2307,31 @@ export function init(){
                 }
             } else if ( data.node.parent ) {
                 // General data/collection listing for all nodes
-
-                var is_pub = false;
-                if ( data.node.key.startsWith("published"))
-                    is_pub = true;
-
                 data.result = [];
-                var entry;
-                scope = data.node.data.scope;
-                var items = data.response.data?data.response.data:data.response.item;
 
-                addTreePagingNode( data );
+                var is_pub = data.node.key.startsWith("published")?true:false,
+                    nodrag = data.node.key.startsWith("q/"),
+                    entry,
+                    items = data.response.data?data.response.data:data.response.item;
+
+                scope = data.node.data.scope;
+
+                util.addTreePagingNode( data );
 
                 for ( i in items ) {
                     item = items[i];
-                    //console.log("item:",item);
+
                     if ( item.id[0]=="c" ){
-                        entry = { title: util.generateTitle(item),folder:true,lazy:true,scope:scope, key: item.id, offset: 0, nodrag: is_pub };
+                        entry = { title: util.generateTitle(item), _title:util.escapeHTML(item.title), folder:true, lazy:true,
+                            scope: scope, isroot: item.id.endsWith("_root"), key: item.id, offset: 0, nodrag: is_pub || nodrag };
                     }else{
                         entry = { title: util.generateTitle(item),checkbox:false,folder:false, icon: util.getDataIcon( item ),
-                        scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size };
+                        scope:item.owner?item.owner:scope, key:item.id, doi:item.doi, size:item.size, external:item.external, nodrag: nodrag };
                     }
+
+                    /*if ( searchMode && ( item.id in searchSelect )){
+                        entry.selected = true;
+                    }*/
 
                     data.result.push( entry );
                 }
@@ -2595,7 +2349,12 @@ export function init(){
                 $(".btn",data.node.li).button();
             }
         },
+        focus: function( ev, data ){
+            //console.log("focus",data.node.key);
+            data.node.setActive( true );
+        },
         activate: function( event, data ) {
+            //console.log("activate",data.node.key);
 
             if ( keyNav && !keyNavMS ){
                 data_tree.selectAll(false);
@@ -2605,34 +2364,106 @@ export function init(){
             keyNav = false;
 
             panel_info.showSelectedInfo( data.node, checkTreeUpdate );
+
+            /*if ( searchMode ){
+                updateBtnState();                
+            }*/
         },
         select: function( event, data ) {
-            //if ( searchSelect && data.node.isSelected() ){
+            //console.log("select",data.node.key);
+            /*
             if ( data.node.isSelected() ){
-                //showSelectedInfo( data.node );
+                var others;
 
+                if ( searchMode ){
+                    if ( searchScope != data.node.data.scope ){
+                        searchScope = data.node.data.scope;
+                        if ( !util.isObjEmpty( searchSelect )){
+                            //data_tree.selectAll( false );
+                            var sel = data_tree.getSelectedNodes();
+                            for( var i in sel ){
+                                if ( sel[i].key != data.node.key ){
+                                    sel[i].setSelected( false );
+                                }
+                            }
+                            searchSelect = {};
+                        }
+                    }else{
+                        others = new Set();
+                    }
+                }
+                //console.log( data.node.title );
+
+                searchSelect[ data.node.key ] = data.node.data._title?data.node.data._title:data.node.title;
+
+                // Unselect child nodes
                 data.node.visit( function( node ){
-                    node.setSelected( false );
+                    delete searchSelect[node.key];
+                    if ( searchMode && others ){
+                        others.add( node.key );
+                    }
                 });
+
+                // Unselect parent nodes
                 var parents = data.node.getParentList();
                 for ( var i in parents ){
-                    parents[i].setSelected( false );
+                    delete searchSelect[parents[i].key];
+                    if ( searchMode && others ){
+                        others.add( parents[i].key );
+                    }
+                }
+
+                // Select/Deselect other node instances
+                if ( searchMode ){
+                    //console.log("parents",parents);
+                    if ( parents.length ){
+                        parents = parents[0];
+                        parents.setSelected( false );
+                    }else{
+                        parents = data.node;
+                    }
+
+                    parents.visit( function( node ){
+                        if ( others && others.has( node.key )){
+                            //console.log( "delsel", node.key );
+                            node.setSelected( false );
+                        }else if ( node.key == data.node.key ){
+                            node.setSelected( true );
+                        }
+                    });
+                }
+            }else{
+                //console.log("deselect",data.node.key);
+                delete searchSelect[data.node.key];
+
+                if ( searchMode ){
+                    var parents = data.node.getParentList();
+                    //console.log("parents 2",parents);
+                    parents = parents.length?parents[0]:data.node;
+                    //console.log("start",parents);
+                    parents.visit( function( node ){
+                        if ( node.key == data.node.key ){
+                            node.setSelected( false );
+                        }
+                    });
                 }
             }
+
+            if ( searchMode ){
+                search_panel.setSearchSelect( searchSelect );
+            }
+            */
 
             updateBtnState();
         },
         keydown: function(ev, data) {
             //console.log("keydown",ev.keyCode);
             if ( ev.keyCode == 32 ){
-                // Manual search select uses different select rules
-                if ( !searchSelect ){
-                    if ( data_tree.getSelectedNodes().length == 0 ){
-                        selectScope = data.node;
-                    }
-
-                    treeSelectNode(data.node,true);
+                if ( data_tree.getSelectedNodes().length == 0 ){
+                    selectScope = data.node;
                 }
+
+                treeSelectNode(data.node,true);
             }else if( ev.keyCode == 13 ){
                 if ( keyNavMS ){
                     keyNavMS = false;
@@ -2649,13 +2480,15 @@ export function init(){
             //console.log("click",data.node.key);
 
             if ( dragging ){ // Suppress click processing on aborted drag
+                //console.log("click dragging");
                 dragging = false;
-            }else if ( !searchSelect ){ // Selection "rules" differ for search-select mode
+            }else /*if ( !searchMode )*/ {
+                //console.log("click not search");
                 if ( event.which == null ){
                     // RIGHT-CLICK CONTEXT MENU
 
                     if ( !data.node.isSelected() ){
-                        console.log("not selected - select");
+                        //console.log("not selected - select");
                         data_tree.selectAll(false);
                         selectScope = data.node;
                         treeSelectNode(data.node);
@@ -2695,8 +2528,13 @@ export function init(){
                     if ( data_tree.getSelectedNodes().length == 0 )
                         selectScope = data.node;
 
-                    if ( data.originalEvent.shiftKey && (data.originalEvent.ctrlKey || data.originalEvent.metaKey)) {
-                        treeSelectRange(data_tree,data.node);
+                    if ( data.originalEvent.altKey ) {
+                        if ( searchMode ){
+                            data_tree.selectAll(false);
+                            selectScope = data.node;
+                            data.node.setSelected( true );
+                            search_panel.addSelected();
+                        }
                     }else if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey ) {
                         treeSelectNode(data.node,true);
                     }else if ( data.originalEvent.shiftKey ) {
@@ -2754,125 +2592,15 @@ export function init(){
     $(".btn-refresh").button({icon:"ui-icon-refresh",showLabel:false});
     util.inputTheme( $('input'));
 
+    search_panel = panel_search.newSearchPanel( $("#search_panel",frame), "qry", this );
     cat_panel = panel_cat.newCatalogPanel( "#catalog_tree", $("#tab-catalogs",frame), this );
-
     graph_panel = panel_graph.newGraphPanel( "#data-graph", $("tab#-prov-graph",frame), this );
 
-    $("#search_results_tree").fancytree({
-        extensions: ["themeroller","dnd5"],
-        themeroller: {
-            activeClass: "my-fancytree-active",
-            hoverClass: ""
-        },
-        dnd5:{
-            preventForeignNodes: true,
-            dropEffectDefault: "copy",
-            scroll: false,
-            dragStart: function(node, data) {
-                console.log( "dnd start" );
-                data.dataTransfer.setData("text/plain",node.key);
-                return true;
-            }
-        },
-        source: [{title:"(no results)"}],
-        selectMode: 2,
-        activate: function( event, data ) {
-            if ( keyNav && !keyNavMS ){
-                results_tree.selectAll(false);
-                data.node.setSelected( true );
-            }
-            keyNav = false;
-
-            panel_info.showSelectedInfo( data.node, checkTreeUpdate );
-        },
-        select: function( event, data ) {
-            updateBtnState();
-        },
-        keydown: function(ev, data) {
-            //console.log("keydown",ev.keyCode);
-            if ( ev.keyCode == 32 ){
-                if ( data.node.isSelected() ){
-                    data.node.setSelected( false );
-                }else{
-                    data.node.setSelected( true );
-                }
-            }else if( ev.keyCode == 13 ){
-                if ( keyNavMS ){
-                    keyNavMS = false;
-                    util.setStatusText("Keyboard multi-select mode DISABLED");
-                }else{
-                    keyNavMS = true;
-                    util.setStatusText("Keyboard multi-select mode ENABLED");
-                }
-            }else if( ev.keyCode == 38 || ev.keyCode == 40 ){
-                keyNav = true;
-            }
-        },
-        click: function(event, data) {
-            if ( event.which == null ){
-                // RIGHT-CLICK CONTEXT MENU
-                //console.log("click no which");
-
-                if ( !data.node.isSelected() ){
-                    results_tree.selectAll(false);
-                    data.node.setSelected( true );
-                }
-
-                // Enable/disable actions
-                results_tree_div.contextmenu("enableEntry", "unlink", false );
-                results_tree_div.contextmenu("enableEntry", "cut", false );
-                results_tree_div.contextmenu("enableEntry", "copy", true );
-                results_tree_div.contextmenu("enableEntry", "paste", false );
-                results_tree_div.contextmenu("enableEntry", "new", false );
-
-            } else if ( data.targetType != "expander" /*&& data.node.data.scope*/ ){
-                if ( data.originalEvent.shiftKey && (data.originalEvent.ctrlKey || data.originalEvent.metaKey)) {
-                    util.treeSelectRange( results_tree, data.node );
-                }else if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey ) {
-                    if ( data.node.isSelected() ){
-                        data.node.setSelected( false );
-                    }else{
-                        data.node.setSelected( true );
-                    }
-                }else if ( data.originalEvent.shiftKey ) {
-                    results_tree.selectAll(false);
-                    //selectScope = data.node;
-                    util.treeSelectRange( results_tree, data.node );
-                }else{
-                    results_tree.selectAll(false);
-                    //selectScope = data.node;
-                    data.node.setSelected( true );
-                }
-            }
-        }
-    }).on("mouseenter", ".fancytree-node", function(event){
-        if ( event.ctrlKey || event.metaKey ){
-            if ( hoverTimer ){
-                clearTimeout(hoverTimer);
-                //hoverNav = false;
-                hoverTimer = null;
-            }
-            var node = $.ui.fancytree.getNode(event);
-            hoverTimer = setTimeout(function(){
-                if ( !node.isActive() ){
-                    //hoverNav = true;
-                    node.setActive(true);
-                }
-                hoverTimer = null;
-            },750);
-            //console.log("hover:",node.key);
-        }
-        //node.info(event.type);
+    $("#btn_search_panel").on("click", function(){
+        setSearchMode( !searchMode );
     });
 
-    results_tree_div = $('#search_results_tree');
-    results_tree = $.ui.fancytree.getTree("#search_results_tree");
-
-    util.tooltipTheme( results_tree_div );
-
     data_tree_div.contextmenu(ctxt_menu_opts);
-    //cat_panel.tree_div.contextmenu(ctxt_menu_opts);
-    results_tree_div.contextmenu(ctxt_menu_opts);
 
     var node = data_tree.getNodeByKey( "mydata" );
 
@@ -2914,9 +2642,6 @@ model.registerUpdateListener( function( a_data ){
         case SS_PROV:
             nd = graph_panel.getSelectedID();
             break;
-        case SS_SEARCH:
-            nd = results_tree.activeNode;
-            break;
     }
 
     if ( nd ){
@@ -2932,17 +2657,6 @@ model.registerUpdateListener( function( a_data ){
     data_tree.visit( function(node){
         if ( node.key in a_data ){
             data = a_data[node.key];
-            // Update size if changed
-            if ( node.key.startsWith("d/") && node.data.size != data.size ){
-                node.data.size = data.size;
-            }
-            util.refreshNodeTitle( node, data );
-        }
-    });
-
-    // Find impacted nodes in search results and update title
-    results_tree.visit( function(node){
-        if ( node.key in a_data ){
             // Update size if changed
             if ( node.key.startsWith("d/") && node.data.size != data.size ){
                 node.data.size = data.size;

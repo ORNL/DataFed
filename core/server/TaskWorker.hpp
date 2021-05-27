@@ -27,7 +27,8 @@ private:
     bool        cmdAllocCreate( const libjson::Value & a_task_params );
     bool        cmdAllocDelete( const libjson::Value & a_task_params );
 
-    bool        checkEncryption( const std::string & a_ep, Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info );
+    bool        checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info, Encryption a_encrypt );
+    bool        checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info1, const GlobusAPI::EndpointInfo & a_ep_info2, Encryption a_encrypt );
     bool        repoSendRecv( const std::string & a_repo_id, MsgBuf::Message & a_msg, MsgBuf::Message *& a_reply );
 
     ITaskMgr &                  m_mgr;

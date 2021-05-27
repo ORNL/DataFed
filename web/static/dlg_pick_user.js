@@ -154,16 +154,16 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
             } else if ( a_data.node.key == "groups" ){
                 a_data.result = [];
                 var group;
-                for ( i in a_data.response ) {
-                    group = a_data.response[i];
+                for ( i in a_data.response.group ) {
+                    group = a_data.response.group[i];
                     if ( a_excl.indexOf( "g/"+group.gid ) == -1 )
                         a_data.result.push({ title: group.title + " ("+group.gid +")",icon:"ui-icon ui-icon-persons",unselectable:true,folder:true,lazy:true,key:"g/"+group.gid });
                 }
             } else if ( a_data.node.key.startsWith("g/")){
                 a_data.result = [];
-                var mem;
-                for ( i in a_data.response.member ) {
-                    mem = a_data.response.member[i];
+                var mem, grp = a_data.response.group[0];
+                for ( i in grp.member ) {
+                    mem = grp.member[i];
                     if ( a_excl.indexOf( mem ) == -1 )
                         a_data.result.push({ title: mem.substr(2),icon:"ui-icon ui-icon-person",key:mem});
                 }

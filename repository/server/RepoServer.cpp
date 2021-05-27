@@ -52,7 +52,7 @@ Server::run()
 {
     checkServerVersion();
 
-    DL_INFO( "Public/private MAPI starting on ports " << m_config.port << "/" << ( m_config.port + 1))
+    DL_INFO( "Public/private MAPI starting on port " << m_config.port )
 
     // Create worker threads
     for ( uint16_t t = 0; t < m_config.num_req_worker_threads; ++t )

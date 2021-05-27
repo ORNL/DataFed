@@ -6,6 +6,13 @@ import * as dlgStartXfer from "./dlg_start_xfer.js";
 
 var status_timer;
 
+export function isObjEmpty( a_obj ){
+    for ( var i in a_obj ){
+        return false;
+    }
+    return true;
+}
+
 export function inputTheme( a_objs ){
     a_objs.addClass("ui-widget ui-widget-content");
     return a_objs;
@@ -13,9 +20,11 @@ export function inputTheme( a_objs ){
 
 export function tooltipTheme( a_objs ){
     a_objs.tooltip({
-        show: { effect: "fade", delay: 1000 },
+        items: ":hover",
+        //items: ".tooltip:not(:focus)",
+        show: { effect: "fade", duration: 100, delay: 1500 },
         classes:{ "ui-tooltip": "note ui-corner-all tooltip-style" },
-        position: {my: "left+15 top+15", at: "left bottom", collision: "flipfit" }
+        position: {my: "left+5 top+5", at: "left bottom", collision: "flipfit" }
     });
 }
 
@@ -147,6 +156,30 @@ export function parseSize( a_size_str ){
     return result;
 }
 
+export function strToIntStrict( value ) {
+    if ( typeof value === "string" ){
+        var inp = value.trim();
+        if ( inp.length ){
+            var res = Number( value );
+            if ( Number.isInteger( res ))
+                return res;
+        }
+    }
+
+    return NaN;
+}
+
+export function strToNumStrict( value ) {
+    if ( typeof value === "string" ){
+        var inp = value.trim();
+        if ( inp.length ){
+            return Number( value );
+        }
+    }
+
+    return NaN;
+}
+
 var escapeMap = {
     '&': '&amp;',
     '<': '&lt;',
@@ -206,7 +239,7 @@ export function getKeyIcon( a_key ){
 }
 
 export function getDataIcon( a_data ){
-    if ( a_data.doi )
+    if ( a_data.external )
         return "ui-icon ui-icon-linkext";
     else if ( a_data.size )
         return "ui-icon ui-icon-file-text";
@@ -251,7 +284,7 @@ export function generateNoteSpan( item, codes ){
                 res += "<span class='ui-icon ui-icon-circle-help'></span>";
         }
 
-        // Show separate icon for most critical nhererited note - err > warn
+        // Show separate icon for most critical inhererited note - err > warn
         if ( item.notes & model.NOTE_MASK_INH_ERR ){
             if ( codes )
                 res += " (&#xe6e9;)";
@@ -262,6 +295,14 @@ export function generateNoteSpan( item, codes ){
                 res += " (&#xe65f;)";
             else
                 res += " <span class='inh-warn-title'>(<span class='ui-icon ui-icon-alert inh-warn-title'></span>)</span> ";
+        }
+
+        // Show metadata error icon
+        if ( item.notes & model.NOTE_MASK_MD_ERR ){
+            if ( codes )
+                res += " &#xe662;";
+            else
+                res += "<span class='ui-icon ui-icon-wrench'></span>";
         }
     }
 
@@ -559,9 +600,25 @@ export function buildObjSrcTree( obj, base, md_exp ){
     return src;
 }
 
+export function addTreePagingNode( a_data ){
+    if ( a_data.response.offset > 0 || a_data.response.total > (a_data.response.offset + a_data.response.count )){
+        var page_mx = Math.ceil(a_data.response.total/settings.opts.page_sz) - 1,
+            page = Math.floor(a_data.response.offset/settings.opts.page_sz);
+
+        a_data.result.push({title:
+            "<button class='btn btn-icon-tiny page-first''" + (page==0?" disabled":"") + "><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> \
+            <button class='btn btn-icon-tiny page-prev'" + (page==0?" disabled":"") + "><span class='ui-icon ui-icon-triangle-1-w'></span></button> \
+            Page " + (page + 1) + " of " + (page_mx + 1) + 
+            " <button class='btn btn-icon-tiny page-next'" + (page>=page_mx?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-e'></span></button> \
+            <button class='btn btn-icon-tiny page-last'" + (page>=page_mx?" disabled":"")+" page='" + page_mx + "'><span class='ui-icon ui-icon-triangle-1-e-stop'></span></button>",
+            folder:false, icon:false, checkbox:false, hasBtn:true });
+    }
+}
+
 export function setStatusText( text, err ){
-    if ( status_timer )
+    if ( status_timer ){
         clearTimeout( status_timer );
+    }
 
     var bar = $("#status_text");
 
@@ -577,7 +634,7 @@ export function setStatusText( text, err ){
         status_timer = null;
         bar.html(" ");
         bar.removeClass("blink-background");
-    },9000);
+    },8000);
 }
 
 export function saveFile( filename, text ){
@@ -597,7 +654,7 @@ export function dataGet( a_ids, a_cb ){
     api.dataGetCheck( a_ids, function( ok, data ){
         if ( ok ){
             //console.log("data get check:",data);
-            var i, internal = false, external = false;
+            var i, internal = false;
 
             if ( !data.item || !data.item.length ){
                 dialogs.dlgAlert("Data Get Error","Selection contains no raw data.");
@@ -609,9 +666,8 @@ export function dataGet( a_ids, a_cb ){
                     dialogs.dlgAlert("Data Get Error","One or more data records are currently locked.");
                     return;
                 }
-                if ( data.item[i].url ){
-                    external = true;
-                }else if ( data.item[i].size <= 0 ){
+
+                if ( data.item[i].size <= 0 ){
                     dialogs.dlgAlert("Data Get Error","One or more data records have no raw data.");
                     return;
                 }else{
@@ -619,12 +675,9 @@ export function dataGet( a_ids, a_cb ){
                 }
             }
 
-            if ( internal && external ){
-                dialogs.dlgAlert("Data Get Error", "Selected data records contain both internal and external raw data.");
-                return;
-            } else if ( internal ){
-                dlgStartXfer.show( model.TT_DATA_GET, data.item, a_cb );
-            }else{
+            dlgStartXfer.show( model.TT_DATA_GET, data.item, a_cb );
+
+            /* unused http xfr
                 for ( i in data.item ){
                     //console.log("download ", data.item[i].url )
                     var link = document.createElement("a");
@@ -634,9 +687,29 @@ export function dataGet( a_ids, a_cb ){
                     link.target = "_blank";
                     link.click();
                 }
-            }
+            */
         }else{
             dialogs.dlgAlert("Data Get Error",data);
         }
     });
 }
+
+// Only works on schema records with valid JSON schema definitions
+/*
+export function schemaResolveRefs( a_schema ){
+    var refs = {};
+    _schemaResolveRefs( a_schema.def.properties, refs );
+}
+
+function _schemaResolveRefs( a_props, a_refs ){
+    var v, p;
+    for ( var k in a_props ){
+        v = a_props[k];
+
+        if ( "$ref" in v ){
+        }else if (( p = v.properties ) != undefined ) {
+            _schemaResolveRefs( p, a_refs );
+        }
+    }
+}
+*/

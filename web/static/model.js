@@ -20,16 +20,29 @@ export const PERM_ALL            = 0x0FFF;
 export const MD_MAX_SIZE                 = 102400; // Max metadata size = 100 Kb
 export const PAYLOAD_MAX_SIZE            = 1048576; // Max server payload size = 10 MB
 
-export const SS_USER                     = 1;
-export const SS_PROJECT                  = 2;
-export const SS_PROJECTS                 = 3;
-export const SS_COLLECTION               = 4;
-export const SS_TOPIC                    = 5;
-export const SS_SHARED_BY_USER           = 6;
-export const SS_SHARED_BY_ANY_USER       = 7;
-export const SS_SHARED_BY_PROJECT        = 8;
-export const SS_SHARED_BY_ANY_PROJECT    = 9;
-export const SS_VIEW                     = 10;
+export const SM_DATA         = 0;
+export const SM_COLLECTION   = 1;
+
+export const SearchModeFromString = {
+    "SM_DATA":SM_DATA,
+    "SM_COLLECTION":SM_COLLECTION
+};
+
+export const SORT_ID            = 0;
+export const SORT_TITLE         = 1;
+export const SORT_OWNER         = 2;
+export const SORT_TIME_CREATE   = 3;
+export const SORT_TIME_UPDATE   = 4;
+export const SORT_RELEVANCE     = 5;
+
+export const SortFromString = {
+    "SORT_ID":SORT_ID,
+    "SORT_TITLE":SORT_TITLE,
+    "SORT_OWNER":SORT_OWNER,
+    "SORT_TIME_CREATE":SORT_TIME_CREATE,
+    "SORT_TIME_UPDATE":SORT_TIME_UPDATE,
+    "SORT_RELEVANCE":SORT_RELEVANCE
+};
 
 export const TT_DATA_GET         = 0;
 export const TT_DATA_PUT         = 1;
@@ -68,27 +81,25 @@ export const NOTE_CLOSED     = 0;
 export const NOTE_OPEN       = 1;
 export const NOTE_ACTIVE     = 2;
 
-export const NOTE_MASK_ACT_QUES  = 0x01;
-export const NOTE_MASK_ACT_INFO  = 0x02;
-export const NOTE_MASK_ACT_WARN  = 0x04;
-export const NOTE_MASK_ACT_ERR   = 0x08;
-export const NOTE_MASK_OPN_QUES  = 0x10;
-export const NOTE_MASK_OPN_INFO  = 0x20;
-export const NOTE_MASK_OPN_WARN  = 0x40;
-export const NOTE_MASK_OPN_ERR   = 0x80;
-export const NOTE_MASK_INH_WARN  = 0x400;
-export const NOTE_MASK_INH_ERR   = 0x800;
-export const NOTE_MASK_LOC_QUES  = 0x11;
-export const NOTE_MASK_LOC_INFO  = 0x22;
-export const NOTE_MASK_LOC_WARN  = 0x44;
-export const NOTE_MASK_LOC_ERR   = 0x88;
-export const NOTE_MASK_LOC_ALL   = 0xFF;
-export const NOTE_MASK_INH_ALL   = 0xC00;
-
-export const SORT_ID            = 0;
-export const SORT_TITLE         = 1;
-export const SORT_TIME_CREATE   = 2;
-export const SORT_TIME_UPDATE   = 3;
+export const NOTE_MASK_ACT_QUES  = 0x0001;
+export const NOTE_MASK_ACT_INFO  = 0x0002;
+export const NOTE_MASK_ACT_WARN  = 0x0004;
+export const NOTE_MASK_ACT_ERR   = 0x0008;
+export const NOTE_MASK_OPN_QUES  = 0x0010;
+export const NOTE_MASK_OPN_INFO  = 0x0020;
+export const NOTE_MASK_OPN_WARN  = 0x0040;
+export const NOTE_MASK_OPN_ERR   = 0x0080;
+export const NOTE_MASK_INH_WARN  = 0x0400;
+export const NOTE_MASK_INH_ERR   = 0x0800;
+export const NOTE_MASK_LOC_QUES  = 0x0011;
+export const NOTE_MASK_LOC_INFO  = 0x0022;
+export const NOTE_MASK_LOC_WARN  = 0x0044;
+export const NOTE_MASK_LOC_ERR   = 0x0088;
+export const NOTE_MASK_LOC_ALL   = 0x00FF;
+export const NOTE_MASK_INH_ALL   = 0x0C00;
+export const NOTE_MASK_CLS_ANY   = 0x1000;
+export const NOTE_MASK_ALL       = 0x1FFF;
+export const NOTE_MASK_MD_ERR    = 0x2000;
 
 export const NoteTypeLabel = [
     "Question",

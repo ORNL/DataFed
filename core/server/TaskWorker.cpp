@@ -61,13 +61,13 @@ TaskWorker::workerThread()
             try
             {
                 if ( first ){
-                    DL_DEBUG( "Calling task run (first)" );
+                    DL_TRACE( "Calling task run (first)" );
                     m_db.taskRun( m_task->task_id, task_cmd, 0 );
                     first = false;
                 }
                 else
                 {
-                    DL_DEBUG( "Calling task run, step: " << step );
+                    DL_TRACE( "Calling task run, step: " << step );
                     m_db.taskRun( m_task->task_id, task_cmd, err_msg.size()?0:&step, err_msg.size()?&err_msg:0 );
                 }
 
@@ -102,7 +102,7 @@ TaskWorker::workerThread()
                     retry = cmdAllocDelete( params );
                     break;
                 case TC_STOP:
-                    DL_DEBUG("Task STOP. payload: " << params.toString() );
+                    DL_DEBUG( "Task STOP." );
                     m_mgr.newTasks( params );
                     break;
                 default:
@@ -158,8 +158,7 @@ TaskWorker::workerThread()
 bool
 TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdRawDataTransfer" );
-    DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdRawDataTransfer" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -171,46 +170,23 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
     const string &              dst_ep = obj.getString( "dst_repo_ep" );
     const string &              dst_path = obj.getString( "dst_repo_path" );
     const Value::Array &        files = obj.getArray( "files" );
-    string                      src_repo_id;
-    string                      dst_repo_id;
     bool                        encrypted = true;
     GlobusAPI::EndpointInfo     ep_info;
-
-    switch ( type )
-    {
-    case TT_DATA_GET:
-        src_repo_id = obj.getString( "src_repo_id" );
-        break;
-    case TT_DATA_PUT:
-        dst_repo_id = obj.getString( "dst_repo_id" );
-        break;
-    case TT_REC_CHG_ALLOC:
-    case TT_REC_CHG_OWNER:
-        src_repo_id = obj.getString( "src_repo_id" );
-        dst_repo_id = obj.getString( "dst_repo_id" );
-        break;
-    default:
-        EXCEPT_PARAM( 1, "Invalid task type for raw data transfer command: " << type );
-        break;
-    }
 
     string acc_tok = obj.getString( "acc_tok" );
     string ref_tok = obj.getString( "ref_tok" );
     uint32_t expires_in = obj.getNumber( "acc_tok_exp_in" );
 
-    DL_INFO( ">>>> Token Expires in: " << expires_in );
+    DL_TRACE( ">>>> Token Expires in: " << expires_in );
 
     if ( expires_in < 3600 )
     {
-        DL_INFO( "Refreshing access token for " << uid << " (expires in " << expires_in << ")" );
+        DL_DEBUG( "Refreshing access token for " << uid << " (expires in " << expires_in << ")" );
 
         m_glob.refreshAccessToken( ref_tok, acc_tok, expires_in );
-        DL_INFO( "Save user access token to DB");
         m_db.setClient( uid );
         m_db.userSetAccessToken( acc_tok, expires_in, ref_tok );
     }
-
-    //EXCEPT(1,"TEST ONLY EXCEPTION");
 
     if ( type == TT_DATA_GET || type == TT_DATA_PUT )
     {
@@ -223,8 +199,21 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 
         // TODO Notify if ep activation expiring soon
 
-        // Calculate encryption state
-        encrypted = checkEncryption( ep, encrypt, ep_info );
+        // Calculate encryption state based on non-datafed endpoint
+        encrypted = checkEncryption( ep_info, encrypt );
+
+        // If data is external, also check the other endpoint for encryption state
+        if ( type == TT_DATA_GET && obj.getValue( "src_repo_id" ).isNumber() )
+        {
+            DL_DEBUG( "Download involves external data" );
+            GlobusAPI::EndpointInfo     ep_info2;
+
+            m_glob.getEndpointInfo( src_ep, acc_tok, ep_info2 );
+            if ( !ep_info.activated )
+                EXCEPT_PARAM( 1, "Globus endpoint " << ep << " requires activation." );
+
+            encrypted = checkEncryption( ep_info, ep_info2, encrypt );
+        }
     }
 
     // Init Globus transfer
@@ -275,8 +264,7 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 bool
 TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdRawDataDelete" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdRawDataDelete" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -320,8 +308,7 @@ TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
 bool
 TaskWorker::cmdRawDataUpdateSize( const  Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdRawDataUpdateSize" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdRawDataUpdateSize" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -365,8 +352,7 @@ TaskWorker::cmdRawDataUpdateSize( const  Value & a_task_params )
 bool
 TaskWorker::cmdAllocCreate( const Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdAllocCreate" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdAllocCreate" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -390,8 +376,7 @@ TaskWorker::cmdAllocCreate( const Value & a_task_params )
 bool
 TaskWorker::cmdAllocDelete( const Value & a_task_params )
 {
-    DL_INFO( "Task " << m_task->task_id << " cmdAllocDelete" );
-    //DL_DEBUG( "params: " << a_task_params.toString() );
+    DL_DEBUG( "Task " << m_task->task_id << " cmdAllocDelete" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -413,13 +398,13 @@ TaskWorker::cmdAllocDelete( const Value & a_task_params )
 
 
 bool
-TaskWorker::checkEncryption( const std::string & a_ep, Encryption a_encrypt, const GlobusAPI::EndpointInfo & a_ep_info )
+TaskWorker::checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info, Encryption a_encrypt )
 {
     switch ( a_encrypt )
     {
         case ENCRYPT_NONE:
             if ( a_ep_info.force_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep << " requires encryption.");
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info.id << " requires encryption.");
             return false;
         case ENCRYPT_AVAIL:
             if ( a_ep_info.supports_encryption )
@@ -428,7 +413,7 @@ TaskWorker::checkEncryption( const std::string & a_ep, Encryption a_encrypt, con
                 return false;
         case ENCRYPT_FORCE:
             if ( !a_ep_info.supports_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep << " does not support encryption.");
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info.id << " does not support encryption.");
             return true;
         default:
             EXCEPT_PARAM( 1, "Invalid transfer encryption value: " << a_encrypt );
@@ -438,6 +423,39 @@ TaskWorker::checkEncryption( const std::string & a_ep, Encryption a_encrypt, con
     return false;
 }
 
+bool
+TaskWorker::checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info1, const GlobusAPI::EndpointInfo & a_ep_info2, Encryption a_encrypt )
+{
+    switch ( a_encrypt )
+    {
+        case ENCRYPT_NONE:
+            if ( a_ep_info1.force_encryption && a_ep_info1.force_encryption )
+                EXCEPT_PARAM( 1, "Endpoints " << a_ep_info1.id << " and " << a_ep_info2.id << " require encryption.");
+            else if ( a_ep_info1.force_encryption )
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info1.id << " requires encryption.");
+            else if ( a_ep_info2.force_encryption )
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info2.id << " requires encryption.");
+            return false;
+        case ENCRYPT_AVAIL:
+            if ( a_ep_info1.supports_encryption && a_ep_info2.supports_encryption )
+                return true;
+            else
+                return false;
+        case ENCRYPT_FORCE:
+            if ( !a_ep_info1.supports_encryption && !a_ep_info1.supports_encryption )
+                EXCEPT_PARAM( 1, "Endpoints " << a_ep_info1.id << " and " << a_ep_info1.id << " do not support encryption.");
+            else if ( !a_ep_info1.supports_encryption )
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info1.id << " does not support encryption.");
+            else if ( !a_ep_info2.supports_encryption )
+                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info2.id << " does not support encryption.");
+            return true;
+        default:
+            EXCEPT_PARAM( 1, "Invalid transfer encryption value: " << a_encrypt );
+    }
+
+    // compiler warns, but can't get here
+    return false;
+}
 
 bool
 TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, MsgBuf::Message *& a_reply )
@@ -456,7 +474,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
 
     if ( !comm.recv( buffer, false, config.repo_timeout ))
     {
-        DL_ERROR( "Timeout waiting for size response from repo " << a_repo_id );
+        DL_ERROR( "Timeout waiting for response from " << a_repo_id );
         cerr.flush();
         return true;
     }

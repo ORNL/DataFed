@@ -9,7 +9,7 @@ ul.tagit {
 ul.tagit li {
     display: block;
     float: left;
-    margin: 0 2px 0 0;
+    margin: 0 .25em 0 0;
     /*margin: 2px 5px 2px 0;*/
 }
 
@@ -40,12 +40,12 @@ ul.tagit li.tagit-choice-read-only {
 } 
 
 ul.tagit li.tagit-choice-editable { 
-    padding: 0 .1em;
+    padding: 0 .25em;
     margin-bottom: .2em;
 } 
 
 ul.tagit li.tagit-new {
-    padding: .1em;
+    padding: 0;
     /*padding: .25em 4px .25em 0;*/
 }
 

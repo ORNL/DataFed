@@ -19,9 +19,11 @@ struct Config
         return inst;
     }
 
+    //glob_xfr_url("https://transfer.api.globusonline.org/v0.10/"),
+
     Config():
         glob_oauth_url("https://auth.globus.org/v2/oauth2/"),
-        glob_xfr_url("https://transfer.api.globusonline.org/v0.10/"),
+        glob_xfr_url("https://transfer.api.globus.org/v0.10/"),
         port(7512),
         timeout( 5 ),
         num_client_worker_threads( 4 ),
