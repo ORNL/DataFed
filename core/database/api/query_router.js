@@ -246,63 +246,54 @@ router.get('/list', function (req, res) {
 .summary('List client saved queries')
 .description('List client saved queries');
 
-function execQuery( client, scope, mode, query ){
+function execQuery( client, mode, published, query ){
     var col_chk = true, ctxt = client._id;
 
-    //console.log("execQuery filter:",query.qry_filter);
+    if ( !published ){
+        // For searches over private data, must perform access checks based on owner field and client id
 
-    switch ( scope ){
-        case g_lib.SS_PROJECT:
-            if ( !query.params.owner )
-                throw [g_lib.ERR_MISSING_REQ_PARAM, "Project ID not specified." ];
+        if ( query.params.owner.startsWith( "u/" ) && query.params.owner != client._id ){
+            // A non-client owner for non-public searches means this is a search over shared data
+            if ( !g_db.u.exists( query.params.owner ))
+                throw [g_lib.ERR_NOT_FOUND,"user " + query.params.owner + " not found"];
 
-            if ( !query.params.owner.startsWith( "p/" ))
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid project ID: " + query.params.owner ];
+            ctxt = query.params.owner;
 
+            // Build list of accessible collections shared with client
+            if ( !query.params.cols ){
+                query.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: query.params.owner }).toArray();
+                if ( !query.params.cols ){
+                    throw [g_lib.ERR_PERM_DENIED, "No access to user '" + query.params.owner + "' data/collections."];
+                }
+                col_chk = false;
+            }
+        }else if ( query.params.owner.startsWith( "p/" )){
             if ( !g_db.p.exists( query.params.owner ))
                 throw [g_lib.ERR_NOT_FOUND,"Project " + query.params.owner + " not found"];
 
-            //console.log("chk 1");
+            // Must determine clients access to the project
 
             var role = g_lib.getProjectRole( client._id, query.params.owner );
 
-            //console.log("chk 2");
-
-            if( role == g_lib.PROJ_MEMBER ){
+            /*if( role == g_lib.PROJ_MEMBER ){
                 // If no collections specified, add project root
                 if ( !query.params.cols ){
                     query.params.cols = ["c/p_" + query.params.owner.substr(2) + "_root"];
                     col_chk = false;
+                }*/
+            if ( role == g_lib.PROJ_MEMBER || role == g_lib.PROJ_NO_ROLE ){
+                // Build list of accessible collections shared with client
+                if ( !query.params.cols ){
+                    query.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: query.params.owner }).toArray();
+                    if ( !query.params.cols ){
+                        throw [g_lib.ERR_PERM_DENIED, "No access to project '" + query.params.owner + "'."];
+                    }
+                    col_chk = false;
                 }
-            }else if ( role != g_lib.PROJ_ADMIN && role != g_lib.PROJ_MANAGER ){
-                throw g_lib.ERR_PERM_DENIED;
             }
+
             ctxt = query.params.owner;
-            break;
-        case g_lib.SS_SHARED:
-            // Get collections shared by owner (user/project)
-            if ( !query.params.owner )
-                throw [g_lib.ERR_MISSING_REQ_PARAM, "Project / user ID not specified." ];
-
-            if ( query.params.owner.startsWith( "p/" )){
-                if ( !g_db.p.exists( query.params.owner ))
-                    throw [g_lib.ERR_NOT_FOUND,"Project " + query.params.owner + " not found"];
-            }else if ( query.params.owner.startsWith( "u/" )){
-                if ( !g_db.u.exists( query.params.owner ))
-                    throw [g_lib.ERR_NOT_FOUND,"user " + query.params.owner + " not found"];
-            }else{
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid project / user ID: " + query.params.owner ];
-            }
-
-            //console.log("chk 3");
-            ctxt = query.params.owner;
-
-            if ( !query.params.cols ){
-                query.params.cols = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner and is_same_collection('c',v) return v._id", { client: client._id, owner: query.params.owner }).toArray();
-                col_chk = false;
-            }
-
-            break;
+        }
     }
 
     //console.log("chk 4");
@@ -414,7 +405,7 @@ router.get('/exec', function (req, res) {
             qry.params.cnt = req.queryParams.count;
         }
 
-        var results = execQuery( client, qry.query.scope, qry.query.mode, qry );
+        var results = execQuery( client, qry.query.mode, qry.query.published, qry );
 
         res.send( results );
     } catch( e ) {
@@ -433,7 +424,7 @@ router.post('/exec/direct', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
 
-        var results = execQuery( client, req.body.scope, req.body.mode, req.body );
+        var results = execQuery( client, req.body.mode, req.body.published, req.body );
 
         res.send( results );
     } catch( e ) {
@@ -442,8 +433,8 @@ router.post('/exec/direct', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
-    scope: joi.number().integer().required(),
     mode: joi.number().integer().required(),
+    published: joi.boolean().required(),
     qry_begin: joi.string().required(),
     qry_end: joi.string().required(),
     qry_filter: joi.string().optional().allow(""),
