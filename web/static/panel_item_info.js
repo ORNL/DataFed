@@ -654,14 +654,11 @@ function showSelectedItemForm( item ){
     if ( cls == ".siq" ){
         $("#sel_info_qry_mode",form).text( item.query.mode == "SM_DATA"?"Data":"Collections" );
 
-        switch( item.query.scope ){
-            case "SS_PERSONAL": tmp = "Personal Data"; break;
-            case "SS_PROJECT": tmp = "Project Data (" + item.query.owner + ")"; break;
-            case "SS_SHARED": tmp = "Shared Data (" + item.query.owner + ")"; break;
-            case "SS_PUBLIC": tmp = "Public Data"; break;
-        }
+        $("#sel_info_qry_pub",form).text( item.query.published?"Yes":"No" );
 
-        $("#sel_info_qry_scope",form).text( tmp );
+        if ( item.query.catTags ){
+            $("#sel_info_qry_cat",form).text( item.query.catTags.join( "." ));
+        }
 
         if ( item.query.coll ){
             tmp = "";
@@ -694,6 +691,10 @@ function showSelectedItemForm( item ){
                 tmp += item.query.tags[i];
             }
             $("#sel_info_qry_tags",form).text( tmp );
+        }
+
+        if ( item.query.owner ){
+            $("#sel_info_qry_owner",form).text( item.query.owner );
         }
 
         if ( item.query.creator ){
