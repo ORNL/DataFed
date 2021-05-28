@@ -3,9 +3,9 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Guide to High Level Interface &mdash; DataFed 1.4 documentation</title>
   
@@ -13,11 +13,16 @@
   
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
 
   
   
+
   
+  
+
   
 
   
@@ -27,6 +32,7 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
         <script src="../../_static/doctools.js"></script>
@@ -51,7 +57,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> DataFed
+            <a href="../../index.html" class="icon icon-home"> DataFed
           
 
           
@@ -184,6 +190,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../dev/project.html">Project Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/release.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../dev/roadmap.html">Feature Road Map</a></li>
 </ul>
 
@@ -225,6 +232,8 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
@@ -236,7 +245,7 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
         
       </li>
     
@@ -322,7 +331,7 @@ for checking user authentication status and for logging users in or out using pa
 rather than the user’s own personal <code class="docutils literal notranslate"><span class="pre">root</span></code> collection.</p>
 <p>First, let’s try to find projects we are part of using the <code class="docutils literal notranslate"><span class="pre">projectList()</span></code> function in DataFed:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plist_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">projectList</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">plist_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">plist_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(item {
@@ -415,7 +424,7 @@ since we will jump straight into using a single line of code to access the desir
 <h3>Iterating through message items</h3>
 <p>Let’s say we wanted to print out ID and owner of each of the projects in the listing, we could iterate through the items as:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">proj</span> <span class="ow">in</span> <span class="n">pl_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">proj</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">proj</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>p/abc123        u/breetju
@@ -466,7 +475,7 @@ Users in DataFed have their own <code class="docutils literal notranslate"><span
 <div class="section" id="default-context">
 <h3>Default context</h3>
 <p>We can always ask DataFed what <code class="docutils literal notranslate"><span class="pre">context</span></code> it is using via the <code class="docutils literal notranslate"><span class="pre">getContext()</span></code> function:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">df_api</span><span class="o">.</span><span class="n">getContext</span><span class="p">())</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">df_api</span><span class="o">.</span><span class="n">getContext</span><span class="p">())</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&#39;u/somnaths&#39;
@@ -500,7 +509,7 @@ but will use it here to illustrate another concept.</p>
 <p>Since we are interested in the <code class="docutils literal notranslate"><span class="pre">root</span></code> Collection within the <code class="docutils literal notranslate"><span class="pre">context</span></code> of the Training <code class="docutils literal notranslate"><span class="pre">Project</span></code>,
 and not the <code class="docutils literal notranslate"><span class="pre">User</span></code> <code class="docutils literal notranslate"><span class="pre">Personal</span> <span class="pre">Data</span></code> which is the current (default) <code class="docutils literal notranslate"><span class="pre">context</span></code>,
 we can specify the context for this function call using the <code class="docutils literal notranslate"><span class="pre">context</span></code> keyword argument as:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">df_api</span><span class="o">.</span><span class="n">collectionView</span><span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s1">&#39;p/trn001&#39;</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">df_api</span><span class="o">.</span><span class="n">collectionView</span><span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s1">&#39;p/trn001&#39;</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(coll {
@@ -517,7 +526,7 @@ we can specify the context for this function call using the <code class="docutil
 <p>The <code class="docutils literal notranslate"><span class="pre">desc</span></code> field in the above response illustrates that,
 we did in fact get information regarding the <code class="docutils literal notranslate"><span class="pre">root</span></code> Collection belonging to the Training project and not the user’s <code class="docutils literal notranslate"><span class="pre">Personal</span> <span class="pre">Data</span></code> space.</p>
 <p>Let’s see what would have happened if we did not specify the <code class="docutils literal notranslate"><span class="pre">context</span></code> via the keyword argument:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">df_api</span><span class="o">.</span><span class="n">collectionView</span><span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">df_api</span><span class="o">.</span><span class="n">collectionView</span><span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(coll {
@@ -538,7 +547,7 @@ user’s <code class="docutils literal notranslate"><span class="pre">Personal</
 we can take a look at the contents of the project by listing everything in the project’s
 <code class="docutils literal notranslate"><span class="pre">root</span></code> collection using the <code class="docutils literal notranslate"><span class="pre">collectionItemsList()</span></code> function as shown below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ls_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s1">&#39;p/trn001&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">ls_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(item {
@@ -776,7 +785,7 @@ the Data Record would be created within the <code class="docutils literal notran
 <div class="section" id="extract-record-id">
 <h3>Extract Record ID</h3>
 <p>Let’s look at the response we got for the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> function call:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">dc_resp</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">dc_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(data {
@@ -805,7 +814,7 @@ We expect to be able to continue to get this verbose response through an optiona
 <p>Similar to getting the title from the project information, if we wanted to get the
 record ID to be used for later operations, here’s how we could go about it:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">record_id</span> <span class="o">=</span> <span class="n">dc_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&#39;d/34682319&#39;
@@ -820,9 +829,9 @@ unique <code class="docutils literal notranslate"><span class="pre">alias</span>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">du_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataUpdate</span><span class="p">(</span><span class="n">record_id</span><span class="p">,</span>
                             <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Some new title for the data&#39;</span><span class="p">,</span>
                             <span class="n">alias</span><span class="o">=</span><span class="s1">&#39;my_first_dataset&#39;</span><span class="p">,</span>
-                            <span class="n">metadata</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;appended_metadata&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+                            <span class="n">metadata</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;appended_metadata&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})</span>
                             <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">du_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">du_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(data {
@@ -862,7 +871,7 @@ of the successful execution of the data update.</p>
 <p>Since the response from the <code class="docutils literal notranslate"><span class="pre">dataCreate()</span></code> and <code class="docutils literal notranslate"><span class="pre">dataUpdate()</span></code> functions does not include the
 metadata, we can always get the most comprehensive information about Data Records via the <code class="docutils literal notranslate"><span class="pre">dataView()</span></code> function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dv_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataView</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(data {
@@ -894,14 +903,14 @@ can be converted to familiar python <code class="docutils literal notranslate"><
 <h3>Extract metadata</h3>
 <p>As the response above shows, the metadata is also part of the response we got from <code class="docutils literal notranslate"><span class="pre">dataView()</span></code>.</p>
 <p>By default, the metadata in the response is formatted as a JSON string:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;{\&quot;a\&quot;:4,\&quot;appended_metadata\&quot;:true,\&quot;b\&quot;:[1,2,-4,7.123],\&quot;c\&quot;:\&quot;Something important\&quot;,\&quot;d\&quot;:{\&quot;x\&quot;:14,\&quot;y\&quot;:-19}}&quot;
 </pre></div>
 </div>
 <p>In order to get back a python dictionary, use <code class="docutils literal notranslate"><span class="pre">json.loads()</span></code></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;a&#39;: 4,
@@ -919,10 +928,10 @@ can be converted to familiar python <code class="docutils literal notranslate"><
 If desired, we could completely replace the metadata by setting <code class="docutils literal notranslate"><span class="pre">metadata_set</span></code> to <code class="docutils literal notranslate"><span class="pre">True</span></code> as in:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">du_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataUpdate</span><span class="p">(</span><span class="n">record_id</span><span class="p">,</span>
                             <span class="n">metadata</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="s1">&#39;Hello&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]}),</span>
-                            <span class="n">metadata_set</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                            <span class="n">metadata_set</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                             <span class="p">)</span>
 <span class="n">dv_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataView</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;p&#39;: 14, &#39;q&#39;: &#39;Hello&#39;, &#39;r&#39;: [1, 2, 3]}
@@ -946,7 +955,7 @@ We could not only track the resultant new datasets as Data Records in DataFed bu
                               <span class="n">parent_id</span><span class="o">=</span><span class="n">dest_collection</span><span class="p">,</span> <span class="c1"># parent collection</span>
                              <span class="p">)</span>
 <span class="n">clean_rec_id</span> <span class="o">=</span> <span class="n">dc2_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">clean_rec_id</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">clean_rec_id</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&#39;d/34682715&#39;
@@ -964,7 +973,7 @@ wherein the first item in the list is the relationship type and the second item 
 </ul>
 <p>For our example, we will say that our new Record is derived from our original record via the <code class="docutils literal notranslate"><span class="pre">dataUpdate()</span></code> function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dep_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataUpdate</span><span class="p">(</span><span class="n">clean_rec_id</span><span class="p">,</span> <span class="n">deps_add</span><span class="o">=</span><span class="p">[[</span><span class="s2">&quot;der&quot;</span><span class="p">,</span> <span class="n">record_id</span><span class="p">]])</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">dep_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">dep_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(data {
@@ -1042,9 +1051,9 @@ follow the steps detailed towards the end of the <a class="reference external" h
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">put_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataPut</span><span class="p">(</span><span class="n">record_id</span><span class="p">,</span>
                           <span class="s1">&#39;./parameters.json&#39;</span><span class="p">,</span>
-                          <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># Waits until transfer completes.</span>
+                          <span class="n">wait</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="c1"># Waits until transfer completes.</span>
                           <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">put_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">put_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(item {
@@ -1085,7 +1094,7 @@ until the Globus transfer was completed.</p>
 In a later section, we will go over an example usecase wherein asynchronous transfers may be preferred.</p>
 <p>Let’s view the Data Record we have been working on so far:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dv_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataView</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">dv_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(data {
@@ -1121,13 +1130,13 @@ keyword argument to <code class="docutils literal notranslate"><span class="pre"
 <p>Just to prove that the file download is indeed taking place, let’s check to make sure that there is no other JSON file
 whose name matches that of the record ID.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">expected_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">record_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;d/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>./34682319.json
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>False
@@ -1141,10 +1150,10 @@ Until the next version, users are recommended to put their singular ID into a <c
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">get_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataGet</span><span class="p">([</span><span class="n">record_id</span><span class="p">],</span> <span class="c1"># currently only accepts a list of IDs / aliases</span>
                           <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="c1"># directory where data should be downloaded</span>
-                          <span class="n">orig_fname</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="c1"># do not name file by its original name</span>
-                          <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># Wait until Globus transfer completes</span>
+                          <span class="n">orig_fname</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="c1"># do not name file by its original name</span>
+                          <span class="n">wait</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="c1"># Wait until Globus transfer completes</span>
                          <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">get_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">get_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(task {
@@ -1165,7 +1174,7 @@ Until the next version, users are recommended to put their singular ID into a <c
 </div>
 <p>The response shows that the Globus file transfer to the local file system did indeed complete successfully.
 Now, let us verify that the file does indeed exist as it should:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">expected_file_name</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>True
@@ -1181,7 +1190,7 @@ Now, let us verify that the file does indeed exist as it should:</p>
 <p>DataFed makes it possible to check on the status of transfer tasks in an easy and programmatic manner.</p>
 <p>From the earlier <code class="docutils literal notranslate"><span class="pre">dataGet()</span></code> function call’s response, we can extract the <code class="docutils literal notranslate"><span class="pre">task</span> <span class="pre">id</span></code> as:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">task_id</span> <span class="o">=</span> <span class="n">get_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">task</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>task/34682556
@@ -1189,7 +1198,7 @@ Now, let us verify that the file does indeed exist as it should:</p>
 </div>
 <p>Using the task ID, we can check on the status of the <code class="docutils literal notranslate"><span class="pre">task</span></code> via the <code class="docutils literal notranslate"><span class="pre">taskView()</span></code> function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">task_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">taskView</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">task_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">task_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(task {
@@ -1291,7 +1300,7 @@ to asynchronously upload the data in the background without impeding the followi
 or, importantly - wasting precious wall time on the supercomputer.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">xfer_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Starting simulation #</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ind</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Starting simulation #{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ind</span><span class="p">))</span>
     <span class="c1"># Run the simulation and make sure to get the path to the results</span>
     <span class="n">results_file</span> <span class="o">=</span> <span class="n">expensive_simulation</span><span class="p">()</span>
     <span class="c1"># Create a unique Data Record for this simulation</span>
@@ -1300,17 +1309,17 @@ or, importantly - wasting precious wall time on the supercomputer.</p>
                                  <span class="n">parent_id</span><span class="o">=</span><span class="n">sim_coll_id</span><span class="p">)</span>
     <span class="c1"># Extract the ID for this record from the response</span>
     <span class="n">this_rec_id</span> <span class="o">=</span> <span class="n">rec_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Uploading data from simulation #</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ind</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Uploading data from simulation #{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ind</span><span class="p">))</span>
     <span class="c1"># Put the raw data into this record</span>
-    <span class="n">put_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataPut</span><span class="p">(</span><span class="n">this_rec_id</span><span class="p">,</span> <span class="n">results_file</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">put_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">dataPut</span><span class="p">(</span><span class="n">this_rec_id</span><span class="p">,</span> <span class="n">results_file</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="c1"># Extract the task ID from the put response as we have done before</span>
     <span class="c1"># Add that task ID to the list of tasks we need to track</span>
     <span class="n">xfer_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">put_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
     <span class="c1"># Print instantaneous transfer statuses of all data put tasks so far</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Transfer status(es): </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">check_xfer_status</span><span class="p">(</span><span class="n">xfer_tasks</span><span class="p">)))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Transfer status(es): {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">check_xfer_status</span><span class="p">(</span><span class="n">xfer_tasks</span><span class="p">)))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Simulations complete&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Simulations complete&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Starting simulation #0
@@ -1398,7 +1407,7 @@ The Data Records would be distinguishable via the <code class="docutils literal 
 Since we need to create several Data Records for dogs and cats, we will define a quick function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
 
-<span class="k">def</span> <span class="nf">generate_animal_data</span><span class="p">(</span><span class="n">is_dog</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">generate_animal_data</span><span class="p">(</span><span class="n">is_dog</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="n">this_animal</span> <span class="o">=</span> <span class="s1">&#39;cat&#39;</span>
     <span class="k">if</span> <span class="n">is_dog</span><span class="p">:</span>
         <span class="n">this_animal</span> <span class="o">=</span> <span class="s1">&#39;dog&#39;</span>
@@ -1432,16 +1441,16 @@ We will generate 5 examples each of cats and dogs:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cat_records</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 <span class="n">dog_records</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
-    <span class="n">dog_records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">generate_animal_data</span><span class="p">(</span><span class="n">is_dog</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="n">dog_records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">generate_animal_data</span><span class="p">(</span><span class="n">is_dog</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
-    <span class="n">cat_records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">generate_animal_data</span><span class="p">(</span><span class="n">is_dog</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">cat_records</span><span class="p">)</span>
+    <span class="n">cat_records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">generate_animal_data</span><span class="p">(</span><span class="n">is_dog</span><span class="o">=</span><span class="bp">False</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">cat_records</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[&#39;d/34684011&#39;, &#39;d/34684035&#39;, &#39;d/34684059&#39;, &#39;d/34684083&#39;, &#39;d/34684107&#39;]
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">dog_records</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">dog_records</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[&#39;d/34683891&#39;, &#39;d/34683915&#39;, &#39;d/34683939&#39;, &#39;d/34683963&#39;, &#39;d/34683987&#39;]
@@ -1455,7 +1464,7 @@ simply via <code class="docutils literal notranslate"><span class="pre">collecti
 <p>Since we set the context earlier in the guide, we do not need to specify the <code class="docutils literal notranslate"><span class="pre">context</span></code>
 keyword argument though we are using the <code class="docutils literal notranslate"><span class="pre">alias</span></code> as the identifier:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">coll_list_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="n">coll_alias</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">coll_list_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">coll_list_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(item {
@@ -1601,7 +1610,7 @@ This should reveal a pop up window that will let you name and save this search q
 <p>Much like listing the Projects this user is part of or the contents of a Collection, one can also list the
 saved queries via the <code class="docutils literal notranslate"><span class="pre">queryList()</span></code> function as:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ql_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">queryList</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">ql_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ql_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(item {
@@ -1617,7 +1626,7 @@ saved queries via the <code class="docutils literal notranslate"><span class="pr
 Importantly, we see our newly created query listed here.</p>
 <p>We can extract the query ID as:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">query_id</span> <span class="o">=</span> <span class="n">ql_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">query_id</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">query_id</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&#39;q/34684970&#39;
@@ -1651,7 +1660,7 @@ Importantly, we see our newly created query listed here.</p>
 <h3>Execute query</h3>
 <p>Finally, we can run the desired query using <code class="docutils literal notranslate"><span class="pre">queryExec()</span></code> as shown below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">query_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">queryExec</span><span class="p">(</span><span class="n">query_id</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">query_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">query_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(item {
@@ -1707,7 +1716,7 @@ This behavior will be changed in a subsequent version of DataFed.</p>
 (the list of cat IDs we collected when the records were created):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># First get IDs from query result</span>
 <span class="n">cat_rec_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">record</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">query_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cat_rec_ids</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">cat_records</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cat_rec_ids</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">cat_records</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>True
@@ -1726,7 +1735,7 @@ We now know the IDs of all the cats from the response to a saved query.</p>
 We could segregate all cat data into a new, separate collection just for cats via the <code class="docutils literal notranslate"><span class="pre">collectionCreate()</span></code> function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">coll_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionCreate</span><span class="p">(</span><span class="s1">&#39;Cats&#39;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s1">&#39;cats&#39;</span><span class="p">,</span> <span class="n">parent_id</span><span class="o">=</span><span class="n">coll_alias</span><span class="p">)</span>
 <span class="n">cat_coll_id</span> <span class="o">=</span> <span class="n">coll_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coll</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">cat_coll_id</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">cat_coll_id</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&#39;c/34685092&#39;
@@ -1739,7 +1748,7 @@ We could segregate all cat data into a new, separate collection just for cats vi
 with respect to the <code class="docutils literal notranslate"><span class="pre">root</span></code> Collection of the current <code class="docutils literal notranslate"><span class="pre">context</span></code> (the Training project),
 we could use the <code class="docutils literal notranslate"><span class="pre">collectionGetParents()</span></code> function as:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">path_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionGetParents</span><span class="p">(</span><span class="n">cat_coll_id</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">path_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">path_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(path {
@@ -1774,7 +1783,7 @@ we now already have the cat Records in the incorrect Collection.</p>
 <code class="docutils literal notranslate"><span class="pre">Cats</span></code> Collection via the <code class="docutils literal notranslate"><span class="pre">collectionItemsUpdate()</span></code> function as shown below.
 This function accepts a list of IDs to add via the <code class="docutils literal notranslate"><span class="pre">add_ids</span></code> keyword argument:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cup_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsUpdate</span><span class="p">(</span><span class="n">cat_coll_id</span><span class="p">,</span> <span class="n">add_ids</span><span class="o">=</span><span class="n">cat_rec_ids</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">cup_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">cup_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(, &#39;ListingReply&#39;)
@@ -1786,7 +1795,7 @@ However, this is acceptable since we knew the IDs being added into the Collectio
 the familiar <code class="docutils literal notranslate"><span class="pre">collectionItemsList()</span></code> function as shown below.
 In the interest of brevity, we capture the response and only print out ID and title of the items in the collection:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ls_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="n">cat_coll_id</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">([(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ls_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">])</span>
+<span class="k">print</span><span class="p">([(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ls_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">])</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[(&#39;d/34684107&#39;, &#39;cat_22&#39;),
@@ -1799,7 +1808,7 @@ In the interest of brevity, we capture the response and only print out ID and ti
 <p>We have indeed ensured that the cat Records are part of the <code class="docutils literal notranslate"><span class="pre">Cats</span></code> Collection.
 However, let us list the contents of the original / outer collection:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ls_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="n">coll_alias</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">([(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ls_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">])</span>
+<span class="k">print</span><span class="p">([(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ls_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">])</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[(&#39;c/34685092&#39;, &#39;Cats&#39;),
@@ -1822,7 +1831,7 @@ We do this again via the <code class="docutils literal notranslate"><span class=
 However, this time, we would need to pass the same cat Record IDs with the <code class="docutils literal notranslate"><span class="pre">rem_ids</span></code> keyword argument
 rather than the <code class="docutils literal notranslate"><span class="pre">add_ids</span></code> keyword argument:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cup_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsUpdate</span><span class="p">(</span><span class="n">coll_alias</span><span class="p">,</span> <span class="n">rem_ids</span><span class="o">=</span><span class="n">cat_rec_ids</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">cup_resp</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">cup_resp</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(, &#39;ListingReply&#39;)
@@ -1830,7 +1839,7 @@ rather than the <code class="docutils literal notranslate"><span class="pre">add
 </div>
 <p>Let us verify that the original / outer Collection no longer contains cat Records:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ls_resp</span> <span class="o">=</span> <span class="n">df_api</span><span class="o">.</span><span class="n">collectionItemsList</span><span class="p">(</span><span class="n">coll_alias</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">([(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ls_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">])</span>
+<span class="k">print</span><span class="p">([(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">ls_resp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">])</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[(&#39;c/34685092&#39;, &#39;Cats&#39;),
@@ -1936,37 +1945,29 @@ The interested user is encouraged to go over the complete documentation of all t
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="notebooks.html" class="btn btn-neutral float-right" title="Jupyter Notebooks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="../cli/reference.html" class="btn btn-neutral float-left" title="Command Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="notebooks.html" class="btn btn-neutral float-right" title="Jupyter Notebooks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../cli/reference.html" class="btn btn-neutral float-left" title="Command Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        
-        &copy; Copyright 2020, Oak Ridge National Laboratories
+        &#169; Copyright 2020, Oak Ridge National Laboratories.
 
     </p>
   </div>
     
     
     
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     
     provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 

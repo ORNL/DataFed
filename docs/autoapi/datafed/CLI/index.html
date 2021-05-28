@@ -3,9 +3,9 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>datafed.CLI &mdash; DataFed 1.4 documentation</title>
   
@@ -13,11 +13,16 @@
   
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
 
   
   
+
   
+  
+
   
 
   
@@ -27,6 +32,7 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
         <script src="../../../_static/doctools.js"></script>
@@ -51,7 +57,7 @@
           
 
           
-            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> DataFed
+            <a href="../../../index.html" class="icon icon-home"> DataFed
           
 
           
@@ -131,6 +137,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../dev/project.html">Project Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/release.html">Release Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../dev/roadmap.html">Feature Road Map</a></li>
 </ul>
 
@@ -172,6 +179,8 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
@@ -187,7 +196,7 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
         
       </li>
     
@@ -268,7 +277,7 @@
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._wc" title="datafed.CLI._wc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_wc</span></code></a>(coll_id)</p></td>
-<td><p>Set/print current working collection or path. ‘ID’ can be a collection ID, alias,</p></td>
+<td><p>Set/print current working collection or path. ‘ID’ can be a collection ID, alias, user</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._wp" title="datafed.CLI._wp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_wp</span></code></a>()</p></td>
 <td><p>Get current working path. Displays the full path of the current working</p></td>
@@ -279,10 +288,10 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._dataView" title="datafed.CLI._dataView"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_dataView</span></code></a>(data_id, context)</p></td>
 <td><p>View data record information. Displays record title, description, tags,</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._dataCreate" title="datafed.CLI._dataCreate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_dataCreate</span></code></a>(title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, parent, repository, deps, context)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._dataCreate" title="datafed.CLI._dataCreate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_dataCreate</span></code></a>(title, alias, description, tags, raw_data_file, extension, external, metadata, metadata_file, schema, schema_enforce, parent, repository, deps, context)</p></td>
 <td><p>Create a new data record. The data record ‘title’ is required, but all</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._dataUpdate" title="datafed.CLI._dataUpdate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_dataUpdate</span></code></a>(data_id, title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, metadata_set, deps_add, deps_rem, context)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._dataUpdate" title="datafed.CLI._dataUpdate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_dataUpdate</span></code></a>(data_id, title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, metadata_set, schema, schema_enforce, deps_add, deps_rem, context)</p></td>
 <td><p>Update an existing data record. The data record ID is required and can be</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._dataDelete" title="datafed.CLI._dataDelete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_dataDelete</span></code></a>(data_id, force, context)</p></td>
@@ -336,10 +345,10 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._queryView" title="datafed.CLI._queryView"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_queryView</span></code></a>(qry_id)</p></td>
 <td><p>View a saved query by ID.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._queryCreate" title="datafed.CLI._queryCreate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_queryCreate</span></code></a>(title, id, text, meta, no_default, coll, proj)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._queryCreate" title="datafed.CLI._queryCreate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_queryCreate</span></code></a>(title, coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev)</p></td>
 <td><p>Create a saved query.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._queryUpdate" title="datafed.CLI._queryUpdate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_queryUpdate</span></code></a>(qry_id, title, id, text, meta)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._queryUpdate" title="datafed.CLI._queryUpdate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_queryUpdate</span></code></a>(qry_id, title, coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev)</p></td>
 <td><p>Update a saved query. The title and search terms of a query may be updated;</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._queryDelete" title="datafed.CLI._queryDelete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_queryDelete</span></code></a>(qry_id)</p></td>
@@ -348,8 +357,8 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._queryExec" title="datafed.CLI._queryExec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_queryExec</span></code></a>(qry_id, offset, count)</p></td>
 <td><p>Execute a saved query by ID.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._queryRun" title="datafed.CLI._queryRun"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_queryRun</span></code></a>(id, text, meta, no_default, coll, proj, offset, count)</p></td>
-<td><p>Run a directly entered query. Unless the ‘no-default’ option is included,</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._queryRun" title="datafed.CLI._queryRun"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_queryRun</span></code></a>(coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev, offset, count)</p></td>
+<td><p>Run a direct query on data or collections. The default scope is the current</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._user" title="datafed.CLI._user"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_user</span></code></a>()</p></td>
 <td><p></p></td>
@@ -474,22 +483,22 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._wrap_text" title="datafed.CLI._wrap_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_wrap_text</span></code></a>(text, prefix, indent, compact=False)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._scopeToStr" title="datafed.CLI._scopeToStr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_scopeToStr</span></code></a>(scope)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._resolve_id" title="datafed.CLI._resolve_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_resolve_id</span></code></a>(df_id)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._resolve_id" title="datafed.CLI._resolve_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_resolve_id</span></code></a>(df_id)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._resolve_coll_id" title="datafed.CLI._resolve_coll_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_resolve_coll_id</span></code></a>(coll_id, context=None)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._resolve_coll_id" title="datafed.CLI._resolve_coll_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_resolve_coll_id</span></code></a>(coll_id, context=None)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._generic_reply_handler" title="datafed.CLI._generic_reply_handler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_generic_reply_handler</span></code></a>(reply, printFunc)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._generic_reply_handler" title="datafed.CLI._generic_reply_handler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_generic_reply_handler</span></code></a>(reply, printFunc)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._setWorkingCollectionTitle" title="datafed.CLI._setWorkingCollectionTitle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_setWorkingCollectionTitle</span></code></a>()</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._setWorkingCollectionTitle" title="datafed.CLI._setWorkingCollectionTitle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_setWorkingCollectionTitle</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._arrayToCSV" title="datafed.CLI._arrayToCSV"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_arrayToCSV</span></code></a>(items, skip)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._arrayToCSV" title="datafed.CLI._arrayToCSV"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_arrayToCSV</span></code></a>(items, skip)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._arrayToDotted" title="datafed.CLI._arrayToDotted"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_arrayToDotted</span></code></a>(items, skip=0)</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._printJSON" title="datafed.CLI._printJSON"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_printJSON</span></code></a>(json, cur_indent, indent)</p></td>
@@ -509,170 +518,268 @@
 </tr>
 </tbody>
 </table>
+</div>
+<div class="section" id="attributes">
+<h3>Attributes</h3>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._OM_TEXT" title="datafed.CLI._OM_TEXT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_OM_TEXT</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._OM_JSON" title="datafed.CLI._OM_JSON"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_OM_JSON</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._OM_RETN" title="datafed.CLI._OM_RETN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_OM_RETN</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._STAT_OK" title="datafed.CLI._STAT_OK"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_STAT_OK</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._STAT_ERROR" title="datafed.CLI._STAT_ERROR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_STAT_ERROR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._capi" title="datafed.CLI._capi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_capi</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._return_val" title="datafed.CLI._return_val"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_return_val</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._uid" title="datafed.CLI._uid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_uid</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._cur_ctx" title="datafed.CLI._cur_ctx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_cur_ctx</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._cur_coll" title="datafed.CLI._cur_coll"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_cur_coll</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._cur_coll_prefix" title="datafed.CLI._cur_coll_prefix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_cur_coll_prefix</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._cur_coll_title" title="datafed.CLI._cur_coll_title"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_cur_coll_title</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._cur_alias_prefix" title="datafed.CLI._cur_alias_prefix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_cur_alias_prefix</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._prev_coll" title="datafed.CLI._prev_coll"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_prev_coll</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._prev_ctx" title="datafed.CLI._prev_ctx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_prev_ctx</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._list_items" title="datafed.CLI._list_items"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_list_items</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._interactive" title="datafed.CLI._interactive"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_interactive</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._verbosity_sticky" title="datafed.CLI._verbosity_sticky"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_verbosity_sticky</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._verbosity" title="datafed.CLI._verbosity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_verbosity</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._output_mode_sticky" title="datafed.CLI._output_mode_sticky"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_output_mode_sticky</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._output_mode" title="datafed.CLI._output_mode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_output_mode</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._ctxt_settings" title="datafed.CLI._ctxt_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_ctxt_settings</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._task_statuses" title="datafed.CLI._task_statuses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_task_statuses</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._task_types" title="datafed.CLI._task_types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_task_types</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._initialized" title="datafed.CLI._initialized"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_initialized</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI._devnull" title="datafed.CLI._devnull"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_devnull</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI._hdr_lev_char" title="datafed.CLI._hdr_lev_char"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_hdr_lev_char</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#datafed.CLI.__global_context_options" title="datafed.CLI.__global_context_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__global_context_options</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CLI.__global_output_options" title="datafed.CLI.__global_output_options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__global_output_options</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
 <dl class="py data">
-<dt id="datafed.CLI._OM_TEXT">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_OM_TEXT</code><em class="property"> = 0</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._OM_TEXT">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_OM_TEXT</span></span><em class="property"> <span class="pre">=</span> <span class="pre">0</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._OM_JSON">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_OM_JSON</code><em class="property"> = 1</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._OM_JSON">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_OM_JSON</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._OM_RETN">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_OM_RETN</code><em class="property"> = 2</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._OM_RETN">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_OM_RETN</span></span><em class="property"> <span class="pre">=</span> <span class="pre">2</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._STAT_OK">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_STAT_OK</code><em class="property"> = 0</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._STAT_OK">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_STAT_OK</span></span><em class="property"> <span class="pre">=</span> <span class="pre">0</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._STAT_ERROR">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_STAT_ERROR</code><em class="property"> = 1</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._STAT_ERROR">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_STAT_ERROR</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._capi">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_capi</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._capi">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_capi</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._return_val">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_return_val</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._return_val">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_return_val</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._uid">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_uid</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._uid">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_uid</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._cur_ctx">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_cur_ctx</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._cur_ctx">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_cur_ctx</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._cur_coll">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_cur_coll</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._cur_coll">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_cur_coll</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._cur_coll_prefix">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_cur_coll_prefix</code><em class="property"> = root</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._cur_coll_prefix">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_cur_coll_prefix</span></span><em class="property"> <span class="pre">=</span> <span class="pre">root</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._cur_coll_title">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_cur_coll_title</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._cur_coll_title">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_cur_coll_title</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._cur_alias_prefix">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_cur_alias_prefix</code><em class="property"> =</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._cur_alias_prefix">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_cur_alias_prefix</span></span><em class="property"> <span class="pre">=</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._prev_coll">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_prev_coll</code><em class="property"> = root</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._prev_coll">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_prev_coll</span></span><em class="property"> <span class="pre">=</span> <span class="pre">root</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._prev_ctx">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_prev_ctx</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._prev_ctx">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_prev_ctx</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._list_items">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_list_items</code><em class="property"> = []</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._list_items">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_list_items</span></span><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._interactive">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_interactive</code><em class="property"> = True</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._interactive">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_interactive</span></span><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._verbosity_sticky">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_verbosity_sticky</code><em class="property"> = 1</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._verbosity_sticky">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_verbosity_sticky</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._verbosity">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_verbosity</code><em class="property"> = 1</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._verbosity">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_verbosity</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._output_mode_sticky">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_output_mode_sticky</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._output_mode_sticky">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_output_mode_sticky</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._output_mode">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_output_mode</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._output_mode">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_output_mode</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._ctxt_settings">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_ctxt_settings</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._ctxt_settings">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_ctxt_settings</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._task_statuses">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_task_statuses</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._task_statuses">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_task_statuses</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._task_types">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_task_types</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._task_types">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_task_types</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._initialized">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_initialized</code><em class="property"> = False</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._initialized">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_initialized</span></span><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._devnull">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_devnull</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI._devnull">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_devnull</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI._hdr_lev_char">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_hdr_lev_char</code><em class="property"> = ['-', '-', '^', ',']</em></dt>
+<dt class="sig sig-object py" id="datafed.CLI._hdr_lev_char">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_hdr_lev_char</span></span><em class="property"> <span class="pre">=</span> <span class="pre">['-',</span> <span class="pre">'-',</span> <span class="pre">'^',</span> <span class="pre">',']</span></em></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI.run">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI.run">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI.init">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">opts</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI.init">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI.loginByPassword">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">loginByPassword</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uid</span></em>, <em class="sig-param"><span class="n">password</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI.loginByPassword">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">loginByPassword</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI.loginByToken">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">loginByToken</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">token</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI.loginByToken">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">loginByToken</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">token</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI.command">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">command</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI.command">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">command</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py class">
-<dt id="datafed.CLI._AliasedGroup">
-<em class="property">class </em><code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_AliasedGroup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">commands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">attrs</span></em><span class="sig-paren">)</span></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">click.Group</span></code></p>
+<dt class="sig sig-object py" id="datafed.CLI._AliasedGroup">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_AliasedGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commands</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">attrs</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">click.Group</span></code></p>
 <p>A group allows a command to have subcommands attached.  This is the
 most common way to implement nesting in Click.</p>
 <dl class="field-list simple">
@@ -681,23 +788,23 @@ most common way to implement nesting in Click.</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="datafed.CLI._AliasedGroup.get_command">
-<code class="sig-name descname">get_command</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">cmd_name</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._AliasedGroup.get_command">
+<span class="sig-name descname"><span class="pre">get_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmd_name</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Given a context and a command name, this returns a
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code> object if it exists or returns <cite>None</cite>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="datafed.CLI._AliasedGroup.resolve_command">
-<code class="sig-name descname">resolve_command</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._AliasedGroup.resolve_command">
+<span class="sig-name descname"><span class="pre">resolve_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt id="datafed.CLI._AliasedGroupRoot">
-<em class="property">class </em><code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_AliasedGroupRoot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">commands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">attrs</span></em><span class="sig-paren">)</span></dt>
-<dd><p>Bases: <a class="reference internal" href="#datafed.CLI._AliasedGroup" title="datafed.CLI._AliasedGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">datafed.CLI._AliasedGroup</span></code></a></p>
+<dt class="sig sig-object py" id="datafed.CLI._AliasedGroupRoot">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_AliasedGroupRoot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commands</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">attrs</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Bases: <a class="reference internal" href="#datafed.CLI._AliasedGroup" title="datafed.CLI._AliasedGroup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_AliasedGroup</span></code></a></p>
 <p>A group allows a command to have subcommands attached.  This is the
 most common way to implement nesting in Click.</p>
 <dl class="field-list simple">
@@ -706,8 +813,8 @@ most common way to implement nesting in Click.</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="datafed.CLI._AliasedGroupRoot.get_command">
-<code class="sig-name descname">get_command</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">cmd_name</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._AliasedGroupRoot.get_command">
+<span class="sig-name descname"><span class="pre">get_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmd_name</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Given a context and a command name, this returns a
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code> object if it exists or returns <cite>None</cite>.</p>
 </dd></dl>
@@ -715,45 +822,45 @@ most common way to implement nesting in Click.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="datafed.CLI._NoCommand">
-<em class="property">exception </em><code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_NoCommand</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<dt class="sig sig-object py" id="datafed.CLI._NoCommand">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_NoCommand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">Exception</span></code></p>
 <p>Common base class for all non-exit exceptions.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._set_script_cb">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_set_script_cb</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">param</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._set_script_cb">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_set_script_cb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._set_verbosity_cb">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_set_verbosity_cb</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">param</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._set_verbosity_cb">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_set_verbosity_cb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI.__global_context_options">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">__global_context_options</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI.__global_context_options">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">__global_context_options</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._global_context_options">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_global_context_options</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._global_context_options">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_global_context_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt id="datafed.CLI.__global_output_options">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">__global_output_options</code></dt>
+<dt class="sig sig-object py" id="datafed.CLI.__global_output_options">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">__global_output_options</span></span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._global_output_options">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_global_output_options</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._global_output_options">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_global_output_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._cli">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_cli</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._cli">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>‘datafed’ is the command-line interface (CLI) for the DataFed federated data management
 service and may be used to access many of the features available via the DataFed web
 portal. This CLI may be used interactively (human-friendly output) or for scripting (JSON
@@ -764,44 +871,51 @@ prefix.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._genDoc">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_genDoc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctx</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._genDoc">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_genDoc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._genDocHeader">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_genDocHeader</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cmd</span></em>, <em class="sig-param"><span class="n">level</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._genDocHeader">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_genDocHeader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._genDocCmd">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_genDocCmd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cmd</span></em>, <em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">level</span></em>, <em class="sig-param"><span class="n">parname</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">recurse</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._genDocCmd">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_genDocCmd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recurse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._wc">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_wc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coll_id</span></em><span class="sig-paren">)</span></dt>
-<dd><p>Set/print current working collection or path. ‘ID’ can be a collection ID, alias,
-list index number, ‘-‘ (previous collection), or path. Only ‘..’ and ‘/’ are
-supported for paths. ‘cd’ is an alias for this command.</p>
+<dt class="sig sig-object py" id="datafed.CLI._wc">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_wc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Set/print current working collection or path. ‘ID’ can be a collection ID, alias, user
+or project ID, listing index, previous collection (‘-‘), or path (‘..’,’/’,’~’). ‘cd’ is
+an alias for the ‘wc’ command.</p>
+<p>The ‘wc’ command can be used to switch to a different user or project context by either
+specifying a user/project ID/alias as the argument, or by specifying a collection ID/alias
+that is owned by another user or project. In either case, if permission is granted, the CLI
+context will be changed to the associated user/project and all subsequent commands will act
+within that context. To return to the authenticated users context, use the ‘wc ~’ command.
+The ‘~’ path indicates the authenticated user’s root collection; whereas the ‘/’ path is the
+root colelction of the current context.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._wp">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_wp</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._wp">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_wp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd><p>Get current working path. Displays the full path of the current working
 collection starting from the root collection of the associated user or
 project.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._data">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._data">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._dataView">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_dataView</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_id</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._dataView">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_dataView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>View data record information. Displays record title, description, tags,
 and other informational and administrative fields. ID may be a data record
 identifier, alias, or index value from a listing. By default, description
@@ -810,8 +924,8 @@ level 2.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._dataCreate">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_dataCreate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">alias</span></em>, <em class="sig-param"><span class="n">description</span></em>, <em class="sig-param"><span class="n">tags</span></em>, <em class="sig-param"><span class="n">raw_data_file</span></em>, <em class="sig-param"><span class="n">extension</span></em>, <em class="sig-param"><span class="n">metadata</span></em>, <em class="sig-param"><span class="n">metadata_file</span></em>, <em class="sig-param"><span class="n">parent</span></em>, <em class="sig-param"><span class="n">repository</span></em>, <em class="sig-param"><span class="n">deps</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._dataCreate">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_dataCreate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">external</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema_enforce</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repository</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Create a new data record. The data record ‘title’ is required, but all
 other attributes are optional. On success, the ID of the created data
 record is returned. Note that if a parent collection is specified, and
@@ -822,8 +936,8 @@ convenience to avoid a separate dataPut() call.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._dataUpdate">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_dataUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_id</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">alias</span></em>, <em class="sig-param"><span class="n">description</span></em>, <em class="sig-param"><span class="n">tags</span></em>, <em class="sig-param"><span class="n">raw_data_file</span></em>, <em class="sig-param"><span class="n">extension</span></em>, <em class="sig-param"><span class="n">metadata</span></em>, <em class="sig-param"><span class="n">metadata_file</span></em>, <em class="sig-param"><span class="n">metadata_set</span></em>, <em class="sig-param"><span class="n">deps_add</span></em>, <em class="sig-param"><span class="n">deps_rem</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._dataUpdate">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_dataUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema_enforce</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deps_add</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deps_rem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Update an existing data record. The data record ID is required and can be
 an ID, alias, or listing index; all other record attributes are optional.
 The raw-data-file option is only supported in interactive mode and is
@@ -831,8 +945,8 @@ provided as a convenience to avoid a separate dataPut() call.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._dataDelete">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_dataDelete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_id</span></em>, <em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._dataDelete">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_dataDelete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Delete one or more existing data records. Multiple ID arguments can be
 provided and may data record IDs, aliases, or index values from a listing.
 By default, a confirmation prompt is used, but this can be bypassed with
@@ -840,27 +954,23 @@ the ‘–force’ option.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._dataGet">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_dataGet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df_id</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">wait</span></em>, <em class="sig-param"><span class="n">encrypt</span></em>, <em class="sig-param"><span class="n">orig_fname</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._dataGet">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_dataGet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encrypt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orig_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Get (download) raw data of data records and/or collections. Multiple ID
 arguments can be specified and may be data record and/or collection IDs,
 aliases, or index values from s listing. The PATH argument is the
 destination for the download and can be either a full Globus path (with
 endpoint), or a local file system path (absolute or relative).</p>
-<p>Downloads will involve either Globus transfers or HTTP transfers depending
-on the source data for the selected records, and the two source types may
-not be mixed. For Globus transfers, if no endpoint is specified in the PATH
-argument, the current endpoint will be used. For HTTP transfers, the PATH
-argument may be an absolute or relative path within the local filesystem.
-For both cases, if the destination PATH doesn’t exist, it will be created
-given sufficient filesystem permissions.</p>
-<p>Because HTTP downloads are performed directly by the CLI, they are always
-blocking calls; thus the ‘wait’ option only applies to Globus transfers.</p>
+<p>If no endpoint is specified in the PATH argument, the current endpoint will
+be used. If the destination PATH doesn’t exist, it will be created
+given sufficient filesystem permissions. Note that the path does not have to
+be local to where the CLI is running - data can be transferred to/from remote
+systems; however, full Globus paths must used in this case.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._dataPut">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_dataPut</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_id</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">wait</span></em>, <em class="sig-param"><span class="n">extension</span></em>, <em class="sig-param"><span class="n">encrypt</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._dataPut">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_dataPut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encrypt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Put (upload) raw data located at PATH to DataFed record ID.  The ID
 argument may be data record ID, alias, or index value from a listing.
 The PATH argument specifies the source file for the upload and can be
@@ -870,13 +980,13 @@ argument, the current endpoint will be used.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._batch">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._batch">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_batch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._data_batch_create">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_data_batch_create</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">collection</span></em>, <em class="sig-param"><span class="n">file</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._data_batch_create">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_data_batch_create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Batch create data records from JSON file(s). Multiple FILE arguments may be
 specified and are absolute or relative paths to JSON inputs file on a local
 filesystem. JSON input files may contain individual JSON objects, or arrays
@@ -885,8 +995,8 @@ must comply with the DataFed record input schema (see online documentation).</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._data_batch_update">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_data_batch_update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._data_batch_update">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_data_batch_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Batch update data records from JSON file(s). Multiple FILE arguments may be
 specified and are absolute or relative paths to JSON inputs file on a local
 filesystem. JSON input files may contain individual JSON objects, or arrays
@@ -895,23 +1005,26 @@ must comply with the DataFed record input schema (see online documentation).</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._list">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_list</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">item_id</span></em>, <em class="sig-param"><span class="n">offset</span></em>, <em class="sig-param"><span class="n">count</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._list">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>List contents of a collection, or shared items. ID may be a collection ID
-or alias, a relative path, a user or project ID, an index value from a
+or alias, a path (‘..’,’/’,’~’), a user or project ID, an index value from a
 listing, or omitted for the current working collection. If the ID is a
 user or project, the ls command will list shared items associated with the
 given user or project.</p>
+<p>Note: the ‘/’ path lists the root collection of the current context (user or
+project); whereas the ‘~’ path always lists the root collection of the
+authenticated user, regardless of context.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._coll">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_coll</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._coll">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_coll</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._collView">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_collView</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coll_id</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._collView">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_collView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>View collection information. Displays collection title, description, and
 other administrative fields. ID may be a collection identifier, alias, or
 index value from a listing. Use ‘coll list’ command to see items contained
@@ -919,8 +1032,8 @@ in a collection.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._collCreate">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_collCreate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">alias</span></em>, <em class="sig-param"><span class="n">description</span></em>, <em class="sig-param"><span class="n">tags</span></em>, <em class="sig-param"><span class="n">topic</span></em>, <em class="sig-param"><span class="n">parent</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._collCreate">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_collCreate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Create a new collection. The collection ‘title’ is required, but all
 other attributes are optional. On success, the ID of the created
 collection is returned. Note that if a parent collection is specified, and
@@ -929,16 +1042,16 @@ user must have permission to write to that collection.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._collUpdate">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_collUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coll_id</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">alias</span></em>, <em class="sig-param"><span class="n">description</span></em>, <em class="sig-param"><span class="n">tags</span></em>, <em class="sig-param"><span class="n">topic</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._collUpdate">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_collUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Update an existing collection. The collection ID is required and can be
 an ID, alias, or listing index; all other collection attributes are
 optional.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._collDelete">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_collDelete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coll_id</span></em>, <em class="sig-param"><span class="n">force</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._collDelete">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_collDelete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Delete one or more existing collections. Multiple ID arguments can be
 provided and may be collection IDs, aliases, or index values from a
 listing. By default, a confirmation prompt is used, but this can be
@@ -949,8 +1062,8 @@ another collection not involved in the deletion.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._collItemsAdd">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_collItemsAdd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coll_id</span></em>, <em class="sig-param"><span class="n">item_id</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._collItemsAdd">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_collItemsAdd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Add data records and/or collections to a collection. COLL_ID is the
 destination collection and ITEM_IDs specify one or more data records and/or
 collections to add to the destination collection. COLL_ID and ITEM_IDs may
@@ -959,8 +1072,8 @@ relative collection path (‘.’, ‘..’, or ‘/’).</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._coll_rem">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_coll_rem</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coll_id</span></em>, <em class="sig-param"><span class="n">item_id</span></em>, <em class="sig-param"><span class="n">context</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._coll_rem">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_coll_rem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Remove data records and/or collections from a collection. COLL_ID is the
 containing collection and ITEM_IDs specify one or more data records and/or
 collections to remove from the containing collection. COLL_ID and ITEM_IDs
@@ -969,123 +1082,124 @@ relative collection path (‘.’, ‘..’, or ‘/’).</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._query">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_query</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._query">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._queryList">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_queryList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">offset</span></em>, <em class="sig-param"><span class="n">count</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._queryList">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_queryList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>List saved queries.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._queryView">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_queryView</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qry_id</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._queryView">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_queryView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qry_id</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>View a saved query by ID.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._queryCreate">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_queryCreate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">text</span></em>, <em class="sig-param"><span class="n">meta</span></em>, <em class="sig-param"><span class="n">no_default</span></em>, <em class="sig-param"><span class="n">coll</span></em>, <em class="sig-param"><span class="n">proj</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._queryCreate">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_queryCreate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_err</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_rev</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Create a saved query.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._queryUpdate">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_queryUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qry_id</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">text</span></em>, <em class="sig-param"><span class="n">meta</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._queryUpdate">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_queryUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qry_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_err</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_rev</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Update a saved query. The title and search terms of a query may be updated;
 however, search scope cannot currently be changed. To remove a term,
 specify an empty string (“”) for the associated option.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._queryDelete">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_queryDelete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qry_id</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._queryDelete">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_queryDelete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qry_id</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Delete a saved query by ID.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._queryExec">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_queryExec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qry_id</span></em>, <em class="sig-param"><span class="n">offset</span></em>, <em class="sig-param"><span class="n">count</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._queryExec">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_queryExec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qry_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Execute a saved query by ID.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._queryRun">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_queryRun</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">text</span></em>, <em class="sig-param"><span class="n">meta</span></em>, <em class="sig-param"><span class="n">no_default</span></em>, <em class="sig-param"><span class="n">coll</span></em>, <em class="sig-param"><span class="n">proj</span></em>, <em class="sig-param"><span class="n">offset</span></em>, <em class="sig-param"><span class="n">count</span></em><span class="sig-paren">)</span></dt>
-<dd><p>Run a directly entered query. Unless the ‘no-default’ option is included,
-the search scope includes all data owned by the authenticated user (in
-their root collection and projects that are owned or managed, or where the
-user is a member of the project. Projects and collections that are not part
-of the default scope may be added using the –proj and –coll options
-respectively.</p>
+<dt class="sig sig-object py" id="datafed.CLI._queryRun">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_queryRun</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coll_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_err</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_rev</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Run a direct query on data or collections. The default scope is the current
+authenticated user. If collections are specified, they must be in the same
+overall search scope. At least one search term must be specified.</p>
+<p>The sort option ‘text’ is a text-matching relevance ranking and only works
+if a text term is specified in the query. The –sort-rev option does
+not work with text relevance matching. The sort options ‘ct’ and ‘ut’
+are creation and update times, respectively.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._user">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_user</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._user">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_user</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._userListCollab">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_userListCollab</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">offset</span></em>, <em class="sig-param"><span class="n">count</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._userListCollab">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_userListCollab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>List all users that are collaborators. Collaborators are defined as users
 that have projects in common with the current user, or that have data-
 sharing relationships with the current user.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._userListAll">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_userListAll</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">offset</span></em>, <em class="sig-param"><span class="n">count</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._userListAll">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_userListAll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>List all users.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._userView">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_userView</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uid</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._userView">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_userView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>View user information.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._userWho">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_userWho</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._userWho">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_userWho</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd><p>Show current authenticated user ID.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._project">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_project</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._project">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_project</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._projectList">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_projectList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">owned</span></em>, <em class="sig-param"><span class="n">admin</span></em>, <em class="sig-param"><span class="n">member</span></em>, <em class="sig-param"><span class="n">offset</span></em>, <em class="sig-param"><span class="n">count</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._projectList">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_projectList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owned</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">member</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>List projects associated with current user. List projects that are owned or managed by the
 current user, as well as projects were the current user is a member.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._projectView">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_projectView</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">proj_id</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._projectView">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_projectView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proj_id</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>View project information. Current user must have a role (owner, manager, or
 member) within the project specified by the ID argument.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._shares">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_shares</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">users</span></em>, <em class="sig-param"><span class="n">projects</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._shares">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_shares</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">users</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projects</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>List users and/or projects sharing data with current user.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._task">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_task</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._task">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_task</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._taskList">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_taskList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_from</span></em>, <em class="sig-param"><span class="n">to</span></em>, <em class="sig-param"><span class="n">since</span></em>, <em class="sig-param"><span class="n">status</span></em>, <em class="sig-param"><span class="n">offset</span></em>, <em class="sig-param"><span class="n">count</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._taskList">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_taskList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">since</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>List recent tasks. If no time or status filter options are
 provided, all tasks initiated by the current user are listed,
 most recent first. Note that the DataFed server periodically purges
@@ -1093,59 +1207,59 @@ tasks history such that only up to 30 days of history are retained.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._taskView">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_taskView</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">task_id</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._taskView">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_taskView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Show task information. Use the ID argument to view a specific task
 record, or omit to view the latest task initiated by the current user.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._ep">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_ep</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._ep">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_ep</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._epGet">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_epGet</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._epGet">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_epGet</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd><p>Get Globus endpoint for the current session. At the start of a session, the
 current endpoint will be set to the default endpoint, if configured.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._epSet">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_epSet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">endpoint</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._epSet">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_epSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">endpoint</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Set endpoint for the current session. If no endpoint is given, the
 default endpoint will be set as the current endpoint, if configured.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._epList">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_epList</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._epList">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_epList</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd><p>List recently used endpoints.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._epDefault">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_epDefault</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._epDefault">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_epDefault</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._epDefaultGet">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_epDefaultGet</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._epDefaultGet">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_epDefaultGet</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd><p>Show the default Globus endpoint.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._epDefaultSet">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_epDefaultSet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">current</span></em>, <em class="sig-param"><span class="n">endpoint</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._epDefaultSet">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_epDefaultSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Set the default Globus endpoint. The default endpoint will be set from the
 ‘endpoint’ argument, or if the ‘–current’ options is specified, from the
 currently active endpoint.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._setup">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_setup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctx</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._setup">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Setup local credentials. This command installs DataFed credentials for the
 current user in the configured client configuration directory. Subsequent
 use of the DataFed CLI will read these credentials instead of requiring
@@ -1153,169 +1267,169 @@ manual authentication.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._verbositySet">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_verbositySet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">level</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._verbositySet">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_verbositySet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Set/display verbosity level. The verbosity level argument can be 0
 (lowest), 1 (normal), or 2 (highest). If the the level is omitted, the
 current verbosity level is returned.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._help_cli">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_help_cli</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">command</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._help_cli">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_help_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">command</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Show DataFed CLI help. Include a command name as the argument to see
 command-specific help.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._exit_cli">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_exit_cli</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._exit_cli">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_exit_cli</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd><p>Exit an interactive session. Ctrl-C may also be used to exit the shell.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_msg">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_msg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">level</span></em>, <em class="sig-param"><span class="n">message</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_msg">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_msg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_ack_reply">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_ack_reply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reply</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_ack_reply">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_ack_reply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reply</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_listing">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_listing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_listing">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_listing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_user_listing">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_user_listing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_user_listing">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_user_listing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_proj_listing">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_proj_listing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_proj_listing">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_proj_listing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_endpoints">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_endpoints</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_endpoints">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_endpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_data">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_data">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_batch">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_batch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_batch">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_coll">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_coll</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_coll">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_coll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_deps">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_deps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dr</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_deps">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_deps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dr</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_task_listing">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_task_listing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_task_listing">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_task_listing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_task">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_task</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_task">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_task</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_task_array">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_task_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_task_array">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_task_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_user">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_user</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_user">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_proj">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_proj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_proj">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_proj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_path">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_path</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_path">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._print_query">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_print_query</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._print_query">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_print_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._wrap_text">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_wrap_text</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em>, <em class="sig-param"><span class="n">prefix</span></em>, <em class="sig-param"><span class="n">indent</span></em>, <em class="sig-param"><span class="n">compact</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._wrap_text">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_wrap_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._scopeToStr">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_scopeToStr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scope</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._resolve_id">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_resolve_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_id</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._resolve_id">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_resolve_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df_id</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._resolve_coll_id">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_resolve_coll_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._resolve_coll_id">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_resolve_coll_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coll_id</span></em>, <em class="sig-param"><span class="n">context</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._generic_reply_handler">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_generic_reply_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reply</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">printFunc</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._generic_reply_handler">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_generic_reply_handler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reply</span></em>, <em class="sig-param"><span class="n">printFunc</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._setWorkingCollectionTitle">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_setWorkingCollectionTitle</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._setWorkingCollectionTitle">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_setWorkingCollectionTitle</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._arrayToCSV">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_arrayToCSV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._arrayToCSV">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_arrayToCSV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">items</span></em>, <em class="sig-param"><span class="n">skip</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._arrayToDotted">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_arrayToDotted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._printJSON">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_printJSON</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">json</span></em>, <em class="sig-param"><span class="n">cur_indent</span></em>, <em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._printJSON">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_printJSON</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cur_indent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._printJSON_List">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_printJSON_List</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">json</span></em>, <em class="sig-param"><span class="n">cur_indent</span></em>, <em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._printJSON_List">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_printJSON_List</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cur_indent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._bar_adaptive_human_readable">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_bar_adaptive_human_readable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">current</span></em>, <em class="sig-param"><span class="n">total</span></em>, <em class="sig-param"><span class="n">width</span><span class="o">=</span><span class="default_value">80</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._bar_adaptive_human_readable">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_bar_adaptive_human_readable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">80</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._initialize">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_initialize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">opts</span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._initialize">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="datafed.CLI._addConfigOptions">
-<code class="sig-prename descclassname">datafed.CLI.</code><code class="sig-name descname">_addConfigOptions</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="datafed.CLI._addConfigOptions">
+<span class="sig-prename descclassname"><span class="pre">datafed.CLI.</span></span><span class="sig-name descname"><span class="pre">_addConfigOptions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
 <dd></dd></dl>
 
 </div>
@@ -1327,37 +1441,29 @@ command-specific help.</p>
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../CommandLib/index.html" class="btn btn-neutral float-right" title="datafed.CommandLib" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="../index.html" class="btn btn-neutral float-left" title="datafed" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="../CommandLib/index.html" class="btn btn-neutral float-right" title="datafed.CommandLib" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../index.html" class="btn btn-neutral float-left" title="datafed" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        
-        &copy; Copyright 2020, Oak Ridge National Laboratories
+        &#169; Copyright 2020, Oak Ridge National Laboratories.
 
     </p>
   </div>
     
     
     
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     
     provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
