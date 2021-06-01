@@ -40,15 +40,6 @@ else()
 	find_package(Boost REQUIRED)
 endif()
 
-#if ( DEFINED ENV{ZMQ_INC_DIR} AND DEFINED ENV{ZMQ_LIB_DIR})
-#	message( "ZMQ_INC_DIR:" $ENV{ZMQ_INC_DIR} )
-#	message( "ZMQ_LIB_DIR:" $ENV{ZMQ_LIB_DIR} )
-#	include_directories( $ENV{ZMQ_INC_DIR} )
-#	link_directories( $ENV{ZMQ_LIB_DIR} )
-#else()
-#	find_package(ZeroMQ REQUIRED)
-#endif()
-
 ## load in pkg-config support
 find_package(PkgConfig)
 ## use pkg-config to get hints for 0mq locations
@@ -100,7 +91,6 @@ set(CMAKE_C_FLAGS_RELEASE "-O3")
 add_subdirectory( common )
 add_subdirectory( test )
 add_subdirectory( python )
-add_subdirectory( facility )
 IF(NOT CLIENT_ONLY)
 	add_subdirectory( core )
 	add_subdirectory( repository )
