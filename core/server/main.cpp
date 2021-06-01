@@ -10,11 +10,15 @@
 #include "Config.hpp"
 #include "Version.pb.h"
 
-
 using namespace std;
 using namespace SDMS;
 namespace po = boost::program_options;
 
+
+/** @brief Entry point for Core Server
+ *
+ * Parses command line options then creates and runs a CoreServer instance.
+ */
 int main( int a_argc, char ** a_argv )
 {
     try
@@ -114,6 +118,8 @@ int main( int a_argc, char ** a_argv )
             DL_ERROR( "Options error: " << e.what() );
             return 1;
         }
+
+        // Create and run CoreServer instance. Configuration is held in Config singleton
 
         Core::Server server;
         server.run();

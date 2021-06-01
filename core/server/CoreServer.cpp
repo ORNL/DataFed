@@ -25,28 +25,35 @@ namespace SDMS {
 
 namespace Core {
 
-
 Server::Server() :
     m_config(Config::getInstance()),
     m_io_secure_thread(0),
     m_io_insecure_thread(0),
-    m_io_running(false),
     m_zap_thread(0),
     m_msg_router_thread(0),
     m_db_maint_thread(0)
 {
+    // One-time global libcurl init
     curl_global_init( CURL_GLOBAL_DEFAULT );
 
+    // Load ZMQ keys
     loadKeys( m_config.cred_dir );
 
+    // Configure ZMQ security context
     m_config.sec_ctx.is_server = true;
     m_config.sec_ctx.public_key = m_pub_key;
     m_config.sec_ctx.private_key = m_priv_key;
 
+    // Wait for DB connection
     waitForDB();
+
+    // Load repository config from DB
     loadRepositoryConfig();
 
+    // Start ZAP handler
     m_zap_thread = new thread( &Server::zapHandler, this );
+
+    // Start DB maintenance thread
     m_db_maint_thread = new thread( &Server::dbMaintenance, this );
 
     // Create task mgr (starts it's own threads)
@@ -56,7 +63,8 @@ Server::Server() :
 
 Server::~Server()
 {
-    // TODO There is no way to cleanly shutdown the server, prob not needed
+    // There is no way to cleanly shutdown the server, so this code really has no effect since
+    // the o/s cleans-up for us
 
     m_zap_thread->join();
     delete m_zap_thread;
@@ -153,23 +161,22 @@ Server::loadRepositoryConfig()
     }
 }
 
+/**
+ * Start and run external interfaces.
+ *
+ * This method is not really needed anymore. Originally there were separete start/run/pause
+ * methods to allow a host program to control conre service, but these features were never
+ * needed/used. The functions performed here could be put in the constructor, but leaving
+ * them here allows the use of the calling thread ti run one of the interfaces.
+ */
 void
 Server::run()
 {
-    if ( m_io_running )
-        throw runtime_error( "Only one worker router instance allowed" );
-
-    m_io_running = true;
     DL_INFO( "Public/private MAPI starting on ports " << m_config.port << "/" << ( m_config.port + 1))
-
 
     m_msg_router_thread = new thread( &Server::msgRouter, this );
     m_io_secure_thread = new thread( &Server::ioSecure, this );
     ioInsecure();
-
-
-    m_io_running = false;
-    m_router_cvar.notify_all();
 
     m_msg_router_thread->join();
     delete m_msg_router_thread;
@@ -391,7 +398,7 @@ Server::zapHandler()
                     uid = iclient->second;
                     DL_DEBUG( "ZAP: Known pre-authorized client connected: " << uid );
                 }
-                else if ( isClientAuthorized( client_key_text, uid ))
+                else if ( isClientAuthenticated( client_key_text, uid ))
                 {
                     DL_DEBUG( "ZAP: Known transient client connected: " << uid );
                 }
@@ -449,7 +456,7 @@ Server::zapHandler()
 
 
 void
-Server::authorizeClient( const std::string & a_cert_uid, const std::string & a_uid )
+Server::authenticateClient( const std::string & a_cert_uid, const std::string & a_uid )
 {
     if ( strncmp( a_cert_uid.c_str(), "anon_", 5 ) == 0 )
     {
@@ -460,7 +467,7 @@ Server::authorizeClient( const std::string & a_cert_uid, const std::string & a_u
 }
 
 bool
-Server::isClientAuthorized( const std::string & a_client_key, std::string & a_uid )
+Server::isClientAuthenticated( const std::string & a_client_key, std::string & a_uid )
 {
     lock_guard<mutex> lock( m_trans_client_mutex );
 

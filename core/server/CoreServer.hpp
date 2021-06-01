@@ -18,23 +18,53 @@ namespace Core {
 
 class ClientWorker;
 
+/**
+ * The CoreServer class creates and manages all core services.
+ *
+ * The CoreServer class initializes and manages all of the worker threads of the core service
+ * and serves as a message router for all in-coming messages (both client and other distributed
+ * services). The various threads run by the CoreServer include client authentication, message
+ * routing, background task processing, and maintenance functions.
+ * 
+ * Most DataFed client and server communication is based on message-passing using Google protobuf
+ * messages over encrypted ZeroMQ connections. The communication from the web client to the
+ * DataFed web service, and the communication between the DatabaseAPI and ArangoDB is based on
+ * JSON over HTTP/S. The CoreServer handles all ZeroMQ messaging and delegates the HTTP/S to
+ * the web server and DatabaseAPI class.
+ *
+ * There are two ZeroMQ interfaces exposed by the CoreServer at the configured port and
+ * port + 1. The former is a secure interface used for all non-local communication, and the latter
+ * is insecure for use by trusted local processes. Messages received from either interface are
+ * routed to the same worker threads for processing.
+ *
+ * The ICoreServer interface class exposes an authenticateClient method to client workers for
+ * manual (password) and token-based authentication.
+ */
 class Server : public ICoreServer
 {
 public:
+    /// CoreServer constructor (uses Config singleton)
     Server();
+
+    /// CoreServer destructor
     virtual ~Server();
 
+    /// Disallow instance copying
     Server& operator=( const Server & ) = delete;
 
+    /// Start and run Core service interfaces. This method does not return.
     void    run();
 
 private:
+    /// Map of client key to DataFed ID
     typedef std::map<std::string,std::string> auth_client_map_t;
+
+    /// Map of client key to DataFed ID and expiration time
     typedef std::map<std::string,std::pair<std::string,time_t>> trans_client_map_t;
 
     void waitForDB();
-    void authorizeClient( const std::string & a_cert_uid, const std::string & a_uid );
-    bool isClientAuthorized( const std::string & a_client_key, std::string & a_uid );
+    void authenticateClient( const std::string & a_cert_uid, const std::string & a_uid );
+    bool isClientAuthenticated( const std::string & a_client_key, std::string & a_uid );
     void loadKeys( const std::string & a_cred_dir );
     void loadRepositoryConfig();
     void msgRouter();
@@ -43,23 +73,18 @@ private:
     void zapHandler();
     void dbMaintenance();
 
-    Config &                        m_config;
-    std::thread *                   m_io_secure_thread;
-    std::thread *                   m_io_insecure_thread;
-    std::mutex                      m_trans_client_mutex;
-    bool                            m_io_running;
-    std::condition_variable         m_router_cvar;
-    std::string                     m_pub_key;
-    std::string                     m_priv_key;
-    std::thread *                   m_zap_thread;
-    auth_client_map_t               m_auth_clients;
-    trans_client_map_t              m_trans_auth_clients;
-    std::thread *                   m_msg_router_thread;
-    std::vector<ClientWorker*>      m_workers;
-    std::thread *                   m_io_local_thread;
-    std::thread *                   m_db_maint_thread;
-
-    friend class Session;
+    Config &                        m_config;               ///< Ref to configuration singleton
+    std::thread *                   m_io_secure_thread;     ///< Secure I/O thread handle
+    std::thread *                   m_io_insecure_thread;   ///< Insecure I/O thread handle
+    std::mutex                      m_trans_client_mutex;   ///< Mutex for transient client data access
+    std::string                     m_pub_key;              ///< Public key for secure interface
+    std::string                     m_priv_key;             ///< Private key for secure interface
+    std::thread *                   m_zap_thread;           ///< ZeroMQ client authentication (ZAP) thread
+    auth_client_map_t               m_auth_clients;         ///< List of known authenticated clients
+    trans_client_map_t              m_trans_auth_clients;   ///< List of transient authenticated clients
+    std::thread *                   m_msg_router_thread;    ///< Main message router thread handle
+    std::vector<ClientWorker*>      m_workers;              ///< List of ClientWorker instances
+    std::thread *                   m_db_maint_thread;      ///< DB maintenance thread handle
 };
 
 

@@ -393,7 +393,7 @@ ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid )
 
     DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
 
-    m_core.authorizeClient( a_uid, reply.uid() );
+    m_core.authenticateClient( a_uid, reply.uid() );
 
     PROC_MSG_END
 }
@@ -411,7 +411,7 @@ ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid )
 
     DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
 
-    m_core.authorizeClient( a_uid, reply.uid() );
+    m_core.authenticateClient( a_uid, reply.uid() );
 
     PROC_MSG_END
 }
