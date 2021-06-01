@@ -60,28 +60,39 @@ ClientWorker::wait()
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
 #define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
 
+/**
+ * This method configures message handling by creating a map from message type to handler function.
+ * There are currently two protocol levels: anonymous and authenticated. Each is supported by a
+ * Google protobuf interface (in /common/proto). Most requests can be handled directly by the
+ * DB (via DatabaseAPI class), but some require local processing. This method maps the two classes
+ * of requests using the macros SET_MSG_HANDLER (for local) and SET_MSG_HANDLER_DB (for DB only).
+ */
 void
 ClientWorker::setupMsgHandlers()
 {
     static std::atomic_flag lock = ATOMIC_FLAG_INIT;
 
+    // Only perform the processing once as it affects global state in the messaging libraries
     if ( lock.test_and_set() )
         return;
 
     try
     {
+        // Register and setup handlers for the Anonymous interface
+
         uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
+        // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, StatusRequest, &ClientWorker::procStatusRequest );
         SET_MSG_HANDLER( proto_id, VersionRequest, &ClientWorker::procVersionRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
+
+        // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
 
-        //SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
-        //SET_MSG_HANDLER_DB( proto_id, CatalogSearchRequest, CatalogSearchReply, catalogSearch );
-        //SET_MSG_HANDLER_DB( proto_id, RecordSearchPublishedRequest, ListingReply, recordSearchPublished );
+        // Register and setup handlers for the Authenticated interface
 
         proto_id = REG_PROTO( SDMS::Auth );
 
@@ -130,7 +141,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordExportRequest, RecordExportReply, recordExport );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
-        //SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependencyGraphRequest, ListingReply, recordGetDependencyGraph );
         SET_MSG_HANDLER_DB( proto_id, SearchRequest, ListingReply, generalSearch );
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
@@ -161,10 +171,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
         SET_MSG_HANDLER_DB( proto_id, ACLBySubjectRequest, ListingReply, aclBySubject );
         SET_MSG_HANDLER_DB( proto_id, ACLListItemsBySubjectRequest, ListingReply, aclListItemsBySubject );
-        //SET_MSG_HANDLER_DB( proto_id, ACLByUserRequest, UserDataReply, aclByUser );
-        //SET_MSG_HANDLER_DB( proto_id, ACLByUserListRequest, ListingReply, aclByUserList );
-        //SET_MSG_HANDLER_DB( proto_id, ACLByProjRequest, ProjectDataReply, aclByProj );
-        //SET_MSG_HANDLER_DB( proto_id, ACLByProjListRequest, ListingReply, aclByProjList );
         SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
         SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
         SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
@@ -190,9 +196,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
         SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, TopicDataReply, topicListTopics );
         SET_MSG_HANDLER_DB( proto_id, TopicViewRequest, TopicDataReply, topicView );
-        //SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
         SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, TopicDataReply, topicSearch );
-
     }
     catch( TraceException & e)
     {
@@ -201,7 +205,9 @@ ClientWorker::setupMsgHandlers()
     }
 }
 
-
+/**
+ * ClientWorker message handling thread.
+ */
 void
 ClientWorker::workerThread()
 {
@@ -281,6 +287,9 @@ ClientWorker::workerThread()
     }
 }
 
+// TODO The macros below should be replaced with templates
+
+/// This macro defines the begining of the common message handling code for all local handlers
 
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
 msgclass *request = 0; \
@@ -295,6 +304,8 @@ if ( base_msg ) \
         replyclass reply; \
         try \
         {
+
+/// This macro defines the end of the common message handling code for all local handlers
 
 #define PROC_MSG_END \
             if ( send_reply ) \
@@ -339,7 +350,7 @@ else { \
 } \
 return send_reply;
 
-
+/// This method wraps all direct-to-DB message handler calls
 template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
 bool
 ClientWorker::dbPassThrough( const std::string & a_uid )

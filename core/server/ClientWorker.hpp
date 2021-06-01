@@ -18,14 +18,27 @@
 namespace SDMS {
 namespace Core {
 
-
+/**
+ * The ClientWorker class provides client message processing on a dedicated thread.
+ *
+ * The ClientWorker class handles client-originating messages and either processes
+ * requests directly or passes them on to the DB. Most requests can be handled by the
+ * database alone, but requests that require orchestration with other parts of the system
+ * are handled by the ClientWorker.
+ */
 class ClientWorker : public nlohmann::json_schema::basic_error_handler
 {
 public:
+    /// ClientWorker constructor
     ClientWorker( ICoreServer & a_core, size_t a_tid );
+
+    /// ClientWorker destructor
     ~ClientWorker();
 
+    /// Request ClientWorker to stop processing requests
     void stop();
+
+    /// Wait for ClientWorker thread to exit after stop()
     void wait();
 
 private:
@@ -61,7 +74,6 @@ private:
     bool procSchemaReviseRequest( const std::string & a_uid );
     bool procSchemaUpdateRequest( const std::string & a_uid );
     void schemaEnforceRequiredProperties( const nlohmann::json & a_schema );
-
     void recordCollectionDelete( const std::vector<std::string> & a_ids, Auth::TaskDataReply & a_reply );
     void handleTaskResponse( libjson::Value & a_result );
 
@@ -84,19 +96,19 @@ private:
             m_validator_err = "Schema Validation Error(s):\n";
 
         m_validator_err += "At " + (path.size()?path:"top-level") + ": " + a_err_msg + "\n";
-        //std::cerr << "ERROR: '" << pointer << "' - '" << instance << "': " << message << "\n";
     }
 
-    Config &            m_config;
-    ICoreServer &       m_core;
-    size_t              m_tid;
-    std::thread *       m_worker_thread;
-    bool                m_run;
-    DatabaseAPI         m_db_client;
-    MsgBuf              m_msg_buf;
-    GlobusAPI           m_globus_api;
-    std::string         m_validator_err;
+    Config &            m_config;           ///< Ref to configuration singleton
+    ICoreServer &       m_core;             ///< Ref to parent CoreServer interface
+    size_t              m_tid;              ///< Thread ID
+    std::thread *       m_worker_thread;    ///< Local thread handle
+    bool                m_run;              ///< Thread run flag
+    DatabaseAPI         m_db_client;        ///< Local DB client instance
+    MsgBuf              m_msg_buf;          ///< Reusable message buffer
+    GlobusAPI           m_globus_api;       ///< Local GlobusAPI instance
+    std::string         m_validator_err;    ///< String buffer for metadata validation errors
 
+    /// Map of message type to message handler functions
     static std::map<uint16_t,msg_fun_t> m_msg_handlers;
 };
 
