@@ -15,6 +15,10 @@ Submodules
    Config/index.rst
    Connection/index.rst
    MessageLib/index.rst
+   SDMS_Anon_pb2/index.rst
+   SDMS_Auth_pb2/index.rst
+   SDMS_pb2/index.rst
+   Version_pb2/index.rst
 
 
 Package Contents

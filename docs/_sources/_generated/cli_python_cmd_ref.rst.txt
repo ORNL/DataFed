@@ -20,17 +20,17 @@ Options:
 -m, --manual-auth  Force manual authentication
 -s, --script  Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.
 --version  Print version number and exit.
--v, --verbosity INTEGER  Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.
---server-cfg-file TEXT  Server configuration file
--P, --server-port INTEGER  Server port number
 --server-cfg-dir TEXT  Server configuration directory
---client-pub-key-file TEXT  Client public key file
---client-cfg-dir TEXT  Client configuration directory
--e, --default-ep TEXT  Default Globus endpoint
--H, --server-host TEXT  Sever host name or IP address
---client-priv-key-file TEXT  Client private key file
---client-cfg-file TEXT  Client configuration file
+--server-cfg-file TEXT  Server configuration file
 --server-pub-key-file TEXT  Server public key file
+-H, --server-host TEXT  Sever host name or IP address
+-P, --server-port INTEGER  Server port number
+--client-cfg-dir TEXT  Client configuration directory
+--client-cfg-file TEXT  Client configuration file
+--client-pub-key-file TEXT  Client public key file
+--client-priv-key-file TEXT  Client private key file
+-e, --default-ep TEXT  Default Globus endpoint
+-v, --verbosity INTEGER  Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.
 -h, --help  Show this message and exit.
 
 Sub-Commands:
@@ -312,10 +312,13 @@ Options:
 -T, --tags TEXT  Tags (comma separated list).
 -r, --raw-data-file TEXT  Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.
 -x, --extension TEXT  Override raw data file extension if provided (default is auto detect).
+-E, --external  Raw data file is external to DataFed (unmanaged)
 -m, --metadata TEXT  Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.
 -f, --metadata-file TEXT  Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.
+-s, --schema TEXT  Set metadata schema id:version
+-e, --schema-enforce  Fail on metadata validation errors
 -p, --parent TEXT  Parent collection ID, alias, or listing index. Default is the current working collection.
--R, --repository TEXT  Repository ID. Uses default allocation if not specified.
+-R, --repository TEXT  Repository ID (managed data only). Uses default allocation if not specified.
 -D, --deps <CHOICE TEXT>...  Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.
 -X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
 -v, --verbosity [0|1|2]  Verbosity level of output
@@ -350,16 +353,11 @@ aliases, or index values from s listing. The PATH argument is the
 destination for the download and can be either a full Globus path (with
 endpoint), or a local file system path (absolute or relative).
 
-Downloads will involve either Globus transfers or HTTP transfers depending
-on the source data for the selected records, and the two source types may
-not be mixed. For Globus transfers, if no endpoint is specified in the PATH
-argument, the current endpoint will be used. For HTTP transfers, the PATH
-argument may be an absolute or relative path within the local filesystem.
-For both cases, if the destination PATH doesn't exist, it will be created
-given sufficient filesystem permissions.
-
-Because HTTP downloads are performed directly by the CLI, they are always
-blocking calls; thus the 'wait' option only applies to Globus transfers.
+If no endpoint is specified in the PATH argument, the current endpoint will
+be used. If the destination PATH doesn't exist, it will be created
+given sufficient filesystem permissions. Note that the path does not have to
+be local to where the CLI is running - data can be transferred to/from remote
+systems; however, full Globus paths must used in this case.
 
 Usage::
 
@@ -420,6 +418,8 @@ Options:
 -m, --metadata TEXT  Inline metadata in JSON format.
 -f, --metadata-file TEXT  Path to local metadata file containing JSON.
 -S, --metadata-set  Set (replace) existing metadata with provided instead of merging.
+-s, --schema TEXT  Set metadata schema id:version
+-e, --schema-enforce  Fail on metadata validation errors
 -A, --deps-add <CHOICE TEXT>...  Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.
 -R, --deps-rem <CHOICE TEXT>...  Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.
 -X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
@@ -601,10 +601,14 @@ Ls Command
 ----------
 
 List contents of a collection, or shared items. ID may be a collection ID
-or alias, a relative path, a user or project ID, an index value from a
+or alias, a path ('..','/','~'), a user or project ID, an index value from a
 listing, or omitted for the current working collection. If the ID is a
 user or project, the ls command will list shared items associated with the
 given user or project.
+
+Note: the '/' path lists the root collection of the current context (user or
+project); whereas the '~' path always lists the root collection of the
+authenticated user, regardless of context.
 
 Usage::
 
@@ -696,7 +700,7 @@ create           Create a saved query.
 delete           Delete a saved query by ID.
 exec             Execute a saved query by ID.
 list             List saved queries.
-run              Run a directly entered query.
+run              Run a direct query on data or collections.
 update           Update a saved query.
 view             View a saved query by ID.
 ===============  ============================================================
@@ -712,12 +716,22 @@ Usage::
 
 Options:
 
--i, --id TEXT  ID/alias expression
--t, --text TEXT  Text expression
--m, --meta TEXT  Metadata expression
--n, --no-default  Exclude personal data and projects
--c, --coll TEXT  Collection(s) to search
--p, --proj TEXT  Project(s) to search
+-C, --coll-mode  Search for collections intead of data
+-c, --coll TEXT  Collection to search (multiple allowed)
+--id TEXT  ID/alias expression
+--text TEXT  Text expression
+-t, --tag TEXT  Tag (multiple allowed)
+--schema TEXT  Metadata schema ID
+--meta TEXT  Metadata expression
+--meta-err  Metadata has validation errors
+--owner TEXT  Owninging user ID (only for public queries)
+--creator TEXT  Creating user ID
+--from TEXT  Find from specified date/time (M/D/YYYY[,HH:MM])
+--to TEXT  Find up to specified date/time (M/D/YYYY[,HH:MM])
+-p, --public  Search public data/collections in catalog
+--category TEXT  Category (public searches only)
+--sort TEXT  Sort option (id,title,owner,text,ct,ut)
+--sort-rev  Sort in reverse order (not available for text)
 -h, --help  Show this message and exit.
 
 
@@ -770,12 +784,14 @@ Options:
 Query Run Command
 -----------------
 
-Run a directly entered query. Unless the 'no-default' option is included,
-the search scope includes all data owned by the authenticated user (in
-their root collection and projects that are owned or managed, or where the
-user is a member of the project. Projects and collections that are not part
-of the default scope may be added using the --proj and --coll options
-respectively.
+Run a direct query on data or collections. The default scope is the current
+authenticated user. If collections are specified, they must be in the same
+overall search scope. At least one search term must be specified.
+
+The sort option 'text' is a text-matching relevance ranking and only works
+if a text term is specified in the query. The --sort-rev option does
+not work with text relevance matching. The sort options 'ct' and 'ut'
+are creation and update times, respectively.
 
 Usage::
 
@@ -783,14 +799,24 @@ Usage::
 
 Options:
 
--i, --id TEXT  ID/alias expression
--t, --text TEXT  Text expression
--m, --meta TEXT  Metadata expression
--n, --no-default  Exclude personal data and projects
--c, --coll TEXT  Collection(s) to search
--p, --proj TEXT  Project(s) to search
--O, --offset INTEGER  Start result list at offset
--C, --count INTEGER  Limit to count results (default = 20)
+-C, --coll-mode  Search for collections intead of data
+-c, --coll TEXT  Collection to search (multiple allowed)
+--id TEXT  ID/alias expression
+--text TEXT  Text expression
+-t, --tag TEXT  Tag (multiple allowed)
+--schema TEXT  Metadata schema ID
+--meta TEXT  Metadata expression
+--meta-err  Metadata has validation errors
+--owner TEXT  Owninging user ID (only for public queries)
+--creator TEXT  Creating user ID
+--from TEXT  Find from specified date/time (M/D/YYYY[,HH:MM])
+--to TEXT  Find up to specified date/time (M/D/YYYY[,HH:MM])
+-p, --public  Search public data/collections in catalog
+--category TEXT  Category (public searches only)
+--sort TEXT  Sort option (id,title,owner,text,ct,ut)
+--sort-rev  Sort in reverse order (not available for text)
+--offset INTEGER  Start result list at offset
+--count INTEGER  Limit to count results (default = 20)
 -h, --help  Show this message and exit.
 
 
@@ -808,9 +834,22 @@ Usage::
 Options:
 
 --title TEXT  New query title
--i, --id TEXT  ID/alias expression
--t, --text TEXT  Text expression
--m, --meta TEXT  Metadata expression
+-C, --coll-mode  Search for collections intead of data
+-c, --coll TEXT  Collection to search (multiple allowed)
+--id TEXT  ID/alias expression
+--text TEXT  Text expression
+-t, --tag TEXT  Tag (multiple allowed)
+--schema TEXT  Metadata schema ID
+--meta TEXT  Metadata expression
+--meta-err  Metadata has validation errors
+--owner TEXT  Owninging user ID (only for public queries)
+--creator TEXT  Creating user ID
+--from TEXT  Find from specified date/time (M/D/YYYY[,HH:MM])
+--to TEXT  Find up to specified date/time (M/D/YYYY[,HH:MM])
+-p, --public  Search public data/collections in catalog
+--category TEXT  Category (public searches only)
+--sort TEXT  Sort option (id,title,owner,text,ct,ut)
+--sort-rev  Sort in reverse order (not available for text)
 -h, --help  Show this message and exit.
 
 
@@ -1028,9 +1067,17 @@ Options:
 Wc Command
 ----------
 
-Set/print current working collection or path. 'ID' can be a collection ID, alias,
-list index number, '-' (previous collection), or path. Only '..' and '/' are
-supported for paths. 'cd' is an alias for this command.
+Set/print current working collection or path. 'ID' can be a collection ID, alias, user
+or project ID, listing index, previous collection ('-'), or path ('..','/','~'). 'cd' is
+an alias for the 'wc' command.
+
+The 'wc' command can be used to switch to a different user or project context by either
+specifying a user/project ID/alias as the argument, or by specifying a collection ID/alias
+that is owned by another user or project. In either case, if permission is granted, the CLI
+context will be changed to the associated user/project and all subsequent commands will act
+within that context. To return to the authenticated users context, use the 'wc ~' command.
+The '~' path indicates the authenticated user's root collection; whereas the '/' path is the
+root colelction of the current context.
 
 Usage::
 

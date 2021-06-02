@@ -297,38 +297,38 @@ prefix.</p>
 <dt><kbd><span class="option">--version</span></kbd></dt>
 <dd><p>Print version number and exit.</p>
 </dd>
-<dt><kbd><span class="option">-v</span>, <span class="option">--verbosity <var>INTEGER</var></span></kbd></dt>
-<dd><p>Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.</p>
+<dt><kbd><span class="option">--server-cfg-dir <var>TEXT</var></span></kbd></dt>
+<dd><p>Server configuration directory</p>
 </dd>
 <dt><kbd><span class="option">--server-cfg-file <var>TEXT</var></span></kbd></dt>
 <dd><p>Server configuration file</p>
 </dd>
-<dt><kbd><span class="option">-P</span>, <span class="option">--server-port <var>INTEGER</var></span></kbd></dt>
-<dd><p>Server port number</p>
-</dd>
-<dt><kbd><span class="option">--server-cfg-dir <var>TEXT</var></span></kbd></dt>
-<dd><p>Server configuration directory</p>
-</dd>
-<dt><kbd><span class="option">--client-pub-key-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Client public key file</p>
-</dd>
-<dt><kbd><span class="option">--client-cfg-dir <var>TEXT</var></span></kbd></dt>
-<dd><p>Client configuration directory</p>
-</dd>
-<dt><kbd><span class="option">-e</span>, <span class="option">--default-ep <var>TEXT</var></span></kbd></dt>
-<dd><p>Default Globus endpoint</p>
+<dt><kbd><span class="option">--server-pub-key-file <var>TEXT</var></span></kbd></dt>
+<dd><p>Server public key file</p>
 </dd>
 <dt><kbd><span class="option">-H</span>, <span class="option">--server-host <var>TEXT</var></span></kbd></dt>
 <dd><p>Sever host name or IP address</p>
 </dd>
-<dt><kbd><span class="option">--client-priv-key-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Client private key file</p>
+<dt><kbd><span class="option">-P</span>, <span class="option">--server-port <var>INTEGER</var></span></kbd></dt>
+<dd><p>Server port number</p>
+</dd>
+<dt><kbd><span class="option">--client-cfg-dir <var>TEXT</var></span></kbd></dt>
+<dd><p>Client configuration directory</p>
 </dd>
 <dt><kbd><span class="option">--client-cfg-file <var>TEXT</var></span></kbd></dt>
 <dd><p>Client configuration file</p>
 </dd>
-<dt><kbd><span class="option">--server-pub-key-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Server public key file</p>
+<dt><kbd><span class="option">--client-pub-key-file <var>TEXT</var></span></kbd></dt>
+<dd><p>Client public key file</p>
+</dd>
+<dt><kbd><span class="option">--client-priv-key-file <var>TEXT</var></span></kbd></dt>
+<dd><p>Client private key file</p>
+</dd>
+<dt><kbd><span class="option">-e</span>, <span class="option">--default-ep <var>TEXT</var></span></kbd></dt>
+<dd><p>Default Globus endpoint</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbosity <var>INTEGER</var></span></kbd></dt>
+<dd><p>Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.</p>
 </dd>
 <dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
 <dd><p>Show this message and exit.</p>
@@ -729,17 +729,26 @@ convenience to avoid a separate dataPut() call.</p>
 <dt><kbd><span class="option">-x</span>, <span class="option">--extension <var>TEXT</var></span></kbd></dt>
 <dd><p>Override raw data file extension if provided (default is auto detect).</p>
 </dd>
+<dt><kbd><span class="option">-E</span>, <span class="option">--external</span></kbd></dt>
+<dd><p>Raw data file is external to DataFed (unmanaged)</p>
+</dd>
 <dt><kbd><span class="option">-m</span>, <span class="option">--metadata <var>TEXT</var></span></kbd></dt>
 <dd><p>Inline metadata in JSON format. JSON must define an object type. Cannot be specified with –metadata-file option.</p>
 </dd>
 <dt><kbd><span class="option">-f</span>, <span class="option">--metadata-file <var>TEXT</var></span></kbd></dt>
 <dd><p>Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with –metadata option.</p>
 </dd>
+<dt><kbd><span class="option">-s</span>, <span class="option">--schema <var>TEXT</var></span></kbd></dt>
+<dd><p>Set metadata schema id:version</p>
+</dd>
+<dt><kbd><span class="option">-e</span>, <span class="option">--schema-enforce</span></kbd></dt>
+<dd><p>Fail on metadata validation errors</p>
+</dd>
 <dt><kbd><span class="option">-p</span>, <span class="option">--parent <var>TEXT</var></span></kbd></dt>
 <dd><p>Parent collection ID, alias, or listing index. Default is the current working collection.</p>
 </dd>
 <dt><kbd><span class="option">-R</span>, <span class="option">--repository <var>TEXT</var></span></kbd></dt>
-<dd><p>Repository ID. Uses default allocation if not specified.</p>
+<dd><p>Repository ID (managed data only). Uses default allocation if not specified.</p>
 </dd>
 </dl>
 <p>-D, –deps &lt;CHOICE TEXT&gt;…  Dependencies (provenance). Use one ‘–deps’ option per dependency and specify with a string consisting of the type of relationship (‘der’, ‘comp’, ‘ver’) follwed by ID/alias of the referenced record. Relationship types are: ‘der’ for ‘derived from’, ‘comp’ for ‘a component of’, and ‘ver’ for ‘a new version of’.
@@ -777,15 +786,11 @@ arguments can be specified and may be data record and/or collection IDs,
 aliases, or index values from s listing. The PATH argument is the
 destination for the download and can be either a full Globus path (with
 endpoint), or a local file system path (absolute or relative).</p>
-<p>Downloads will involve either Globus transfers or HTTP transfers depending
-on the source data for the selected records, and the two source types may
-not be mixed. For Globus transfers, if no endpoint is specified in the PATH
-argument, the current endpoint will be used. For HTTP transfers, the PATH
-argument may be an absolute or relative path within the local filesystem.
-For both cases, if the destination PATH doesn’t exist, it will be created
-given sufficient filesystem permissions.</p>
-<p>Because HTTP downloads are performed directly by the CLI, they are always
-blocking calls; thus the ‘wait’ option only applies to Globus transfers.</p>
+<p>If no endpoint is specified in the PATH argument, the current endpoint will
+be used. If the destination PATH doesn’t exist, it will be created
+given sufficient filesystem permissions. Note that the path does not have to
+be local to where the CLI is running - data can be transferred to/from remote
+systems; however, full Globus paths must used in this case.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">data</span> <span class="n">get</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span> <span class="n">PATH</span>
 </pre></div>
@@ -864,6 +869,12 @@ provided as a convenience to avoid a separate dataPut() call.</p>
 </dd>
 <dt><kbd><span class="option">-S</span>, <span class="option">--metadata-set</span></kbd></dt>
 <dd><p>Set (replace) existing metadata with provided instead of merging.</p>
+</dd>
+<dt><kbd><span class="option">-s</span>, <span class="option">--schema <var>TEXT</var></span></kbd></dt>
+<dd><p>Set metadata schema id:version</p>
+</dd>
+<dt><kbd><span class="option">-e</span>, <span class="option">--schema-enforce</span></kbd></dt>
+<dd><p>Fail on metadata validation errors</p>
 </dd>
 </dl>
 <p>-A, –deps-add &lt;CHOICE TEXT&gt;…  Specify dependencies to add by listing first the type of relationship (‘der’, ‘comp’, or ‘ver’) follwed by ID/alias of the target record. Can be specified multiple times.
@@ -1066,10 +1077,13 @@ command-specific help.</p>
 <div class="section" id="ls-command">
 <h2>Ls Command</h2>
 <p>List contents of a collection, or shared items. ID may be a collection ID
-or alias, a relative path, a user or project ID, an index value from a
+or alias, a path (‘..’,’/’,’~’), a user or project ID, an index value from a
 listing, or omitted for the current working collection. If the ID is a
 user or project, the ls command will list shared items associated with the
 given user or project.</p>
+<p>Note: the ‘/’ path lists the root collection of the current context (user or
+project); whereas the ‘~’ path always lists the root collection of the
+authenticated user, regardless of context.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">ls</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
 </pre></div>
@@ -1194,7 +1208,7 @@ member) within the project specified by the ID argument.</p>
 <td><p>List saved queries.</p></td>
 </tr>
 <tr class="row-odd"><td><p>run</p></td>
-<td><p>Run a directly entered query.</p></td>
+<td><p>Run a direct query on data or collections.</p></td>
 </tr>
 <tr class="row-even"><td><p>update</p></td>
 <td><p>Update a saved query.</p></td>
@@ -1213,23 +1227,53 @@ member) within the project specified by the ID argument.</p>
 </div>
 <p>Options:</p>
 <dl class="option-list">
-<dt><kbd><span class="option">-i</span>, <span class="option">--id <var>TEXT</var></span></kbd></dt>
-<dd><p>ID/alias expression</p>
-</dd>
-<dt><kbd><span class="option">-t</span>, <span class="option">--text <var>TEXT</var></span></kbd></dt>
-<dd><p>Text expression</p>
-</dd>
-<dt><kbd><span class="option">-m</span>, <span class="option">--meta <var>TEXT</var></span></kbd></dt>
-<dd><p>Metadata expression</p>
-</dd>
-<dt><kbd><span class="option">-n</span>, <span class="option">--no-default</span></kbd></dt>
-<dd><p>Exclude personal data and projects</p>
+<dt><kbd><span class="option">-C</span>, <span class="option">--coll-mode</span></kbd></dt>
+<dd><p>Search for collections intead of data</p>
 </dd>
 <dt><kbd><span class="option">-c</span>, <span class="option">--coll <var>TEXT</var></span></kbd></dt>
-<dd><p>Collection(s) to search</p>
+<dd><p>Collection to search (multiple allowed)</p>
 </dd>
-<dt><kbd><span class="option">-p</span>, <span class="option">--proj <var>TEXT</var></span></kbd></dt>
-<dd><p>Project(s) to search</p>
+<dt><kbd><span class="option">--id <var>TEXT</var></span></kbd></dt>
+<dd><p>ID/alias expression</p>
+</dd>
+<dt><kbd><span class="option">--text <var>TEXT</var></span></kbd></dt>
+<dd><p>Text expression</p>
+</dd>
+<dt><kbd><span class="option">-t</span>, <span class="option">--tag <var>TEXT</var></span></kbd></dt>
+<dd><p>Tag (multiple allowed)</p>
+</dd>
+<dt><kbd><span class="option">--schema <var>TEXT</var></span></kbd></dt>
+<dd><p>Metadata schema ID</p>
+</dd>
+<dt><kbd><span class="option">--meta <var>TEXT</var></span></kbd></dt>
+<dd><p>Metadata expression</p>
+</dd>
+<dt><kbd><span class="option">--meta-err</span></kbd></dt>
+<dd><p>Metadata has validation errors</p>
+</dd>
+<dt><kbd><span class="option">--owner <var>TEXT</var></span></kbd></dt>
+<dd><p>Owninging user ID (only for public queries)</p>
+</dd>
+<dt><kbd><span class="option">--creator <var>TEXT</var></span></kbd></dt>
+<dd><p>Creating user ID</p>
+</dd>
+<dt><kbd><span class="option">--from <var>TEXT</var></span></kbd></dt>
+<dd><p>Find from specified date/time (M/D/YYYY[,HH:MM])</p>
+</dd>
+<dt><kbd><span class="option">--to <var>TEXT</var></span></kbd></dt>
+<dd><p>Find up to specified date/time (M/D/YYYY[,HH:MM])</p>
+</dd>
+<dt><kbd><span class="option">-p</span>, <span class="option">--public</span></kbd></dt>
+<dd><p>Search public data/collections in catalog</p>
+</dd>
+<dt><kbd><span class="option">--category <var>TEXT</var></span></kbd></dt>
+<dd><p>Category (public searches only)</p>
+</dd>
+<dt><kbd><span class="option">--sort <var>TEXT</var></span></kbd></dt>
+<dd><p>Sort option (id,title,owner,text,ct,ut)</p>
+</dd>
+<dt><kbd><span class="option">--sort-rev</span></kbd></dt>
+<dd><p>Sort in reverse order (not available for text)</p>
 </dd>
 <dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
 <dd><p>Show this message and exit.</p>
@@ -1292,40 +1336,71 @@ member) within the project specified by the ID argument.</p>
 </div>
 <div class="section" id="query-run-command">
 <h3>Query Run Command</h3>
-<p>Run a directly entered query. Unless the ‘no-default’ option is included,
-the search scope includes all data owned by the authenticated user (in
-their root collection and projects that are owned or managed, or where the
-user is a member of the project. Projects and collections that are not part
-of the default scope may be added using the –proj and –coll options
-respectively.</p>
+<p>Run a direct query on data or collections. The default scope is the current
+authenticated user. If collections are specified, they must be in the same
+overall search scope. At least one search term must be specified.</p>
+<p>The sort option ‘text’ is a text-matching relevance ranking and only works
+if a text term is specified in the query. The –sort-rev option does
+not work with text relevance matching. The sort options ‘ct’ and ‘ut’
+are creation and update times, respectively.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">query</span> <span class="n">run</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>Options:</p>
 <dl class="option-list">
-<dt><kbd><span class="option">-i</span>, <span class="option">--id <var>TEXT</var></span></kbd></dt>
-<dd><p>ID/alias expression</p>
-</dd>
-<dt><kbd><span class="option">-t</span>, <span class="option">--text <var>TEXT</var></span></kbd></dt>
-<dd><p>Text expression</p>
-</dd>
-<dt><kbd><span class="option">-m</span>, <span class="option">--meta <var>TEXT</var></span></kbd></dt>
-<dd><p>Metadata expression</p>
-</dd>
-<dt><kbd><span class="option">-n</span>, <span class="option">--no-default</span></kbd></dt>
-<dd><p>Exclude personal data and projects</p>
+<dt><kbd><span class="option">-C</span>, <span class="option">--coll-mode</span></kbd></dt>
+<dd><p>Search for collections intead of data</p>
 </dd>
 <dt><kbd><span class="option">-c</span>, <span class="option">--coll <var>TEXT</var></span></kbd></dt>
-<dd><p>Collection(s) to search</p>
+<dd><p>Collection to search (multiple allowed)</p>
 </dd>
-<dt><kbd><span class="option">-p</span>, <span class="option">--proj <var>TEXT</var></span></kbd></dt>
-<dd><p>Project(s) to search</p>
+<dt><kbd><span class="option">--id <var>TEXT</var></span></kbd></dt>
+<dd><p>ID/alias expression</p>
 </dd>
-<dt><kbd><span class="option">-O</span>, <span class="option">--offset <var>INTEGER</var></span></kbd></dt>
+<dt><kbd><span class="option">--text <var>TEXT</var></span></kbd></dt>
+<dd><p>Text expression</p>
+</dd>
+<dt><kbd><span class="option">-t</span>, <span class="option">--tag <var>TEXT</var></span></kbd></dt>
+<dd><p>Tag (multiple allowed)</p>
+</dd>
+<dt><kbd><span class="option">--schema <var>TEXT</var></span></kbd></dt>
+<dd><p>Metadata schema ID</p>
+</dd>
+<dt><kbd><span class="option">--meta <var>TEXT</var></span></kbd></dt>
+<dd><p>Metadata expression</p>
+</dd>
+<dt><kbd><span class="option">--meta-err</span></kbd></dt>
+<dd><p>Metadata has validation errors</p>
+</dd>
+<dt><kbd><span class="option">--owner <var>TEXT</var></span></kbd></dt>
+<dd><p>Owninging user ID (only for public queries)</p>
+</dd>
+<dt><kbd><span class="option">--creator <var>TEXT</var></span></kbd></dt>
+<dd><p>Creating user ID</p>
+</dd>
+<dt><kbd><span class="option">--from <var>TEXT</var></span></kbd></dt>
+<dd><p>Find from specified date/time (M/D/YYYY[,HH:MM])</p>
+</dd>
+<dt><kbd><span class="option">--to <var>TEXT</var></span></kbd></dt>
+<dd><p>Find up to specified date/time (M/D/YYYY[,HH:MM])</p>
+</dd>
+<dt><kbd><span class="option">-p</span>, <span class="option">--public</span></kbd></dt>
+<dd><p>Search public data/collections in catalog</p>
+</dd>
+<dt><kbd><span class="option">--category <var>TEXT</var></span></kbd></dt>
+<dd><p>Category (public searches only)</p>
+</dd>
+<dt><kbd><span class="option">--sort <var>TEXT</var></span></kbd></dt>
+<dd><p>Sort option (id,title,owner,text,ct,ut)</p>
+</dd>
+<dt><kbd><span class="option">--sort-rev</span></kbd></dt>
+<dd><p>Sort in reverse order (not available for text)</p>
+</dd>
+<dt><kbd><span class="option">--offset <var>INTEGER</var></span></kbd></dt>
 <dd><p>Start result list at offset</p>
 </dd>
-<dt><kbd><span class="option">-C</span>, <span class="option">--count <var>INTEGER</var></span></kbd></dt>
+<dt><kbd><span class="option">--count <var>INTEGER</var></span></kbd></dt>
 <dd><p>Limit to count results (default = 20)</p>
 </dd>
 <dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
@@ -1347,14 +1422,53 @@ specify an empty string (“”) for the associated option.</p>
 <dt><kbd><span class="option">--title <var>TEXT</var></span></kbd></dt>
 <dd><p>New query title</p>
 </dd>
-<dt><kbd><span class="option">-i</span>, <span class="option">--id <var>TEXT</var></span></kbd></dt>
+<dt><kbd><span class="option">-C</span>, <span class="option">--coll-mode</span></kbd></dt>
+<dd><p>Search for collections intead of data</p>
+</dd>
+<dt><kbd><span class="option">-c</span>, <span class="option">--coll <var>TEXT</var></span></kbd></dt>
+<dd><p>Collection to search (multiple allowed)</p>
+</dd>
+<dt><kbd><span class="option">--id <var>TEXT</var></span></kbd></dt>
 <dd><p>ID/alias expression</p>
 </dd>
-<dt><kbd><span class="option">-t</span>, <span class="option">--text <var>TEXT</var></span></kbd></dt>
+<dt><kbd><span class="option">--text <var>TEXT</var></span></kbd></dt>
 <dd><p>Text expression</p>
 </dd>
-<dt><kbd><span class="option">-m</span>, <span class="option">--meta <var>TEXT</var></span></kbd></dt>
+<dt><kbd><span class="option">-t</span>, <span class="option">--tag <var>TEXT</var></span></kbd></dt>
+<dd><p>Tag (multiple allowed)</p>
+</dd>
+<dt><kbd><span class="option">--schema <var>TEXT</var></span></kbd></dt>
+<dd><p>Metadata schema ID</p>
+</dd>
+<dt><kbd><span class="option">--meta <var>TEXT</var></span></kbd></dt>
 <dd><p>Metadata expression</p>
+</dd>
+<dt><kbd><span class="option">--meta-err</span></kbd></dt>
+<dd><p>Metadata has validation errors</p>
+</dd>
+<dt><kbd><span class="option">--owner <var>TEXT</var></span></kbd></dt>
+<dd><p>Owninging user ID (only for public queries)</p>
+</dd>
+<dt><kbd><span class="option">--creator <var>TEXT</var></span></kbd></dt>
+<dd><p>Creating user ID</p>
+</dd>
+<dt><kbd><span class="option">--from <var>TEXT</var></span></kbd></dt>
+<dd><p>Find from specified date/time (M/D/YYYY[,HH:MM])</p>
+</dd>
+<dt><kbd><span class="option">--to <var>TEXT</var></span></kbd></dt>
+<dd><p>Find up to specified date/time (M/D/YYYY[,HH:MM])</p>
+</dd>
+<dt><kbd><span class="option">-p</span>, <span class="option">--public</span></kbd></dt>
+<dd><p>Search public data/collections in catalog</p>
+</dd>
+<dt><kbd><span class="option">--category <var>TEXT</var></span></kbd></dt>
+<dd><p>Category (public searches only)</p>
+</dd>
+<dt><kbd><span class="option">--sort <var>TEXT</var></span></kbd></dt>
+<dd><p>Sort option (id,title,owner,text,ct,ut)</p>
+</dd>
+<dt><kbd><span class="option">--sort-rev</span></kbd></dt>
+<dd><p>Sort in reverse order (not available for text)</p>
 </dd>
 <dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
 <dd><p>Show this message and exit.</p>
@@ -1607,9 +1721,16 @@ current verbosity level is returned.</p>
 </div>
 <div class="section" id="wc-command">
 <h2>Wc Command</h2>
-<p>Set/print current working collection or path. ‘ID’ can be a collection ID, alias,
-list index number, ‘-‘ (previous collection), or path. Only ‘..’ and ‘/’ are
-supported for paths. ‘cd’ is an alias for this command.</p>
+<p>Set/print current working collection or path. ‘ID’ can be a collection ID, alias, user
+or project ID, listing index, previous collection (‘-‘), or path (‘..’,’/’,’~’). ‘cd’ is
+an alias for the ‘wc’ command.</p>
+<p>The ‘wc’ command can be used to switch to a different user or project context by either
+specifying a user/project ID/alias as the argument, or by specifying a collection ID/alias
+that is owned by another user or project. In either case, if permission is granted, the CLI
+context will be changed to the associated user/project and all subsequent commands will act
+within that context. To return to the authenticated users context, use the ‘wc ~’ command.
+The ‘~’ path indicates the authenticated user’s root collection; whereas the ‘/’ path is the
+root colelction of the current context.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">wc</span> <span class="p">[</span><span class="n">OPTIONS</span><span class="p">]</span> <span class="n">ID</span>
 </pre></div>
