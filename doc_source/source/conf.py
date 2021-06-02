@@ -59,7 +59,7 @@ html_show_sourcelink = False
 html_static_path = ['_static']
 html_permalinks = False
 html_css_files = [
-    'css/custom.css'
+    'custom.css'
 ]
 
 source_suffix = ['.rst']
