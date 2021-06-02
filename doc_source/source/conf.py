@@ -64,6 +64,8 @@ source_suffix = ['.rst']
 
 master_doc = 'index'
 
+highlight_language = 'none'
+
 autoapi_type = 'python'
 autoapi_dirs = ['../../python/datafed_pkg/datafed']
 #autoapi_generate_api_docs = False

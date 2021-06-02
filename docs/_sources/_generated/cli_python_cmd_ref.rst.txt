@@ -15,23 +15,24 @@ Usage::
 
     datafed [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--m, --manual-auth  Force manual authentication
--s, --script  Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.
---version  Print version number and exit.
---server-cfg-dir TEXT  Server configuration directory
---server-cfg-file TEXT  Server configuration file
---server-pub-key-file TEXT  Server public key file
--H, --server-host TEXT  Sever host name or IP address
--P, --server-port INTEGER  Server port number
---client-cfg-dir TEXT  Client configuration directory
---client-cfg-file TEXT  Client configuration file
---client-pub-key-file TEXT  Client public key file
---client-priv-key-file TEXT  Client private key file
--e, --default-ep TEXT  Default Globus endpoint
--v, --verbosity INTEGER  Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.
--h, --help  Show this message and exit.
+  "-m, --manual-auth","Force manual authentication"
+  "-s, --script","Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable."
+  "--version","Print version number and exit."
+  "--server-cfg-dir TEXT","Server configuration directory"
+  "--server-cfg-file TEXT","Server configuration file"
+  "--server-pub-key-file TEXT","Server public key file"
+  "-H, --server-host TEXT","Sever host name or IP address"
+  "-P, --server-port INTEGER","Server port number"
+  "--client-cfg-dir TEXT","Client configuration directory"
+  "--client-cfg-file TEXT","Client configuration file"
+  "--client-pub-key-file TEXT","Client public key file"
+  "--client-priv-key-file TEXT","Client private key file"
+  "-e, --default-ep TEXT","Default Globus endpoint"
+  "-v, --verbosity INTEGER","Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only."
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -63,9 +64,10 @@ Usage::
 
     datafed coll [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -91,10 +93,11 @@ Usage::
 
     datafed coll add [OPTIONS] COLL_ID ITEM_ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--h, --help  Show this message and exit.
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-h, --help","Show this message and exit."
 
 
 Coll Create Command
@@ -110,16 +113,17 @@ Usage::
 
     datafed coll create [OPTIONS] TITLE
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--a, --alias TEXT  Alias
--p, --parent TEXT  Parent collection ID/alias (default is current working collection)
--d, --description TEXT  Description text
--T, --tags TEXT  Tags (comma separated list).
---topic TEXT  Publish the collection to the provided topic.
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--v, --verbosity [0|1|2]  Verbosity level of output
--h, --help  Show this message and exit.
+  "-a, --alias TEXT","Alias"
+  "-p, --parent TEXT","Parent collection ID/alias (default is current working collection)"
+  "-d, --description TEXT","Description text"
+  "-T, --tags TEXT","Tags (comma separated list)."
+  "--topic TEXT","Publish the collection to the provided topic."
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-v, --verbosity [0|1|2]","Verbosity level of output"
+  "-h, --help","Show this message and exit."
 
 
 Coll Delete Command
@@ -138,11 +142,12 @@ Usage::
 
     datafed coll delete [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--f, --force  Delete without confirmation.
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--h, --help  Show this message and exit.
+  "-f, --force","Delete without confirmation."
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-h, --help","Show this message and exit."
 
 
 Coll Remove Command
@@ -158,10 +163,11 @@ Usage::
 
     datafed coll remove [OPTIONS] COLL_ID ITEM_ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--h, --help  Show this message and exit.
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-h, --help","Show this message and exit."
 
 
 Coll Update Command
@@ -175,16 +181,17 @@ Usage::
 
     datafed coll update [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--t, --title TEXT  Title
--a, --alias TEXT  Alias
--d, --description TEXT  Description text
--T, --tags TEXT  Tags (comma separated list).
---topic TEXT  Publish the collection under the provided topic.
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--v, --verbosity [0|1|2]  Verbosity level of output
--h, --help  Show this message and exit.
+  "-t, --title TEXT","Title"
+  "-a, --alias TEXT","Alias"
+  "-d, --description TEXT","Description text"
+  "-T, --tags TEXT","Tags (comma separated list)."
+  "--topic TEXT","Publish the collection under the provided topic."
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-v, --verbosity [0|1|2]","Verbosity level of output"
+  "-h, --help","Show this message and exit."
 
 
 Coll View Command
@@ -199,11 +206,12 @@ Usage::
 
     datafed coll view [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--v, --verbosity [0|1|2]  Verbosity level of output
--h, --help  Show this message and exit.
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-v, --verbosity [0|1|2]","Verbosity level of output"
+  "-h, --help","Show this message and exit."
 
 
 -------------
@@ -216,9 +224,10 @@ Usage::
 
     datafed data [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -241,9 +250,10 @@ Usage::
 
     datafed data batch [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -265,11 +275,12 @@ Usage::
 
     datafed data batch create [OPTIONS] FILE
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--c, --collection TEXT  Optional target collection (default is root).
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--h, --help  Show this message and exit.
+  "-c, --collection TEXT","Optional target collection (default is root)."
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-h, --help","Show this message and exit."
 
 
 Data Batch Update Command
@@ -285,9 +296,10 @@ Usage::
 
     datafed data batch update [OPTIONS] FILE...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 Data Create Command
@@ -305,24 +317,25 @@ Usage::
 
     datafed data create [OPTIONS] TITLE
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--a, --alias TEXT  Record alias.
--d, --description TEXT  Description text.
--T, --tags TEXT  Tags (comma separated list).
--r, --raw-data-file TEXT  Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.
--x, --extension TEXT  Override raw data file extension if provided (default is auto detect).
--E, --external  Raw data file is external to DataFed (unmanaged)
--m, --metadata TEXT  Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.
--f, --metadata-file TEXT  Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.
--s, --schema TEXT  Set metadata schema id:version
--e, --schema-enforce  Fail on metadata validation errors
--p, --parent TEXT  Parent collection ID, alias, or listing index. Default is the current working collection.
--R, --repository TEXT  Repository ID (managed data only). Uses default allocation if not specified.
--D, --deps <CHOICE TEXT>...  Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--v, --verbosity [0|1|2]  Verbosity level of output
--h, --help  Show this message and exit.
+  "-a, --alias TEXT","Record alias."
+  "-d, --description TEXT","Description text."
+  "-T, --tags TEXT","Tags (comma separated list)."
+  "-r, --raw-data-file TEXT","Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided."
+  "-x, --extension TEXT","Override raw data file extension if provided (default is auto detect)."
+  "-E, --external","Raw data file is external to DataFed (unmanaged)"
+  "-m, --metadata TEXT","Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option."
+  "-f, --metadata-file TEXT","Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option."
+  "-s, --schema TEXT","Set metadata schema id:version"
+  "-e, --schema-enforce","Fail on metadata validation errors"
+  "-p, --parent TEXT","Parent collection ID, alias, or listing index. Default is the current working collection."
+  "-R, --repository TEXT","Repository ID (managed data only). Uses default allocation if not specified."
+  "-D, --deps <CHOICE TEXT>...","Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'."
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-v, --verbosity [0|1|2]","Verbosity level of output"
+  "-h, --help","Show this message and exit."
 
 
 Data Delete Command
@@ -337,11 +350,12 @@ Usage::
 
     datafed data delete [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--f, --force  Delete record(s) without confirmation.
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--h, --help  Show this message and exit.
+  "-f, --force","Delete record(s) without confirmation."
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-h, --help","Show this message and exit."
 
 
 Data Get Command
@@ -363,13 +377,14 @@ Usage::
 
     datafed data get [OPTIONS] ID PATH
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--w, --wait  Block until Globus transfer is complete.
--e, --encrypt [0|1|2]  Encryption mode: 0 = none, 1 = if available (default), 2 = force.
--o, --orig_fname  Download to original filename(s).
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--h, --help  Show this message and exit.
+  "-w, --wait","Block until Globus transfer is complete."
+  "-e, --encrypt [0|1|2]","Encryption mode: 0 = none, 1 = if available (default), 2 = force."
+  "-o, --orig_fname","Download to original filename(s)."
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-h, --help","Show this message and exit."
 
 
 Data Put Command
@@ -386,13 +401,14 @@ Usage::
 
     datafed data put [OPTIONS] ID PATH
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--w, --wait  Block reply or further commands until transfer is complete
--x, --extension TEXT  Override extension for raw data file (default = auto detect).
--e, --encrypt [0|1|2]  Encryption mode: 0 = none, 1 = if available (default), 2 = force.
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--h, --help  Show this message and exit.
+  "-w, --wait","Block reply or further commands until transfer is complete"
+  "-x, --extension TEXT","Override extension for raw data file (default = auto detect)."
+  "-e, --encrypt [0|1|2]","Encryption mode: 0 = none, 1 = if available (default), 2 = force."
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-h, --help","Show this message and exit."
 
 
 Data Update Command
@@ -407,24 +423,25 @@ Usage::
 
     datafed data update [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--t, --title TEXT  Title
--a, --alias TEXT  Alias
--d, --description TEXT  Description text
--T, --tags TEXT  Tags (comma separated list)
--r, --raw-data-file TEXT  Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.
--x, --extension TEXT  Override extension for raw data file (default = auto detect).
--m, --metadata TEXT  Inline metadata in JSON format.
--f, --metadata-file TEXT  Path to local metadata file containing JSON.
--S, --metadata-set  Set (replace) existing metadata with provided instead of merging.
--s, --schema TEXT  Set metadata schema id:version
--e, --schema-enforce  Fail on metadata validation errors
--A, --deps-add <CHOICE TEXT>...  Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.
--R, --deps-rem <CHOICE TEXT>...  Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--v, --verbosity [0|1|2]  Verbosity level of output
--h, --help  Show this message and exit.
+  "-t, --title TEXT","Title"
+  "-a, --alias TEXT","Alias"
+  "-d, --description TEXT","Description text"
+  "-T, --tags TEXT","Tags (comma separated list)"
+  "-r, --raw-data-file TEXT","Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided."
+  "-x, --extension TEXT","Override extension for raw data file (default = auto detect)."
+  "-m, --metadata TEXT","Inline metadata in JSON format."
+  "-f, --metadata-file TEXT","Path to local metadata file containing JSON."
+  "-S, --metadata-set","Set (replace) existing metadata with provided instead of merging."
+  "-s, --schema TEXT","Set metadata schema id:version"
+  "-e, --schema-enforce","Fail on metadata validation errors"
+  "-A, --deps-add <CHOICE TEXT>...","Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times."
+  "-R, --deps-rem <CHOICE TEXT>...","Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times."
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-v, --verbosity [0|1|2]","Verbosity level of output"
+  "-h, --help","Show this message and exit."
 
 
 Data View Command
@@ -440,11 +457,12 @@ Usage::
 
     datafed data view [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--v, --verbosity [0|1|2]  Verbosity level of output
--h, --help  Show this message and exit.
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-v, --verbosity [0|1|2]","Verbosity level of output"
+  "-h, --help","Show this message and exit."
 
 
 -----------
@@ -457,9 +475,10 @@ Usage::
 
     datafed ep [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -479,9 +498,10 @@ Usage::
 
     datafed ep default [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -499,9 +519,10 @@ Usage::
 
     datafed ep default get [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 Ep Default Set Command
@@ -515,10 +536,11 @@ Usage::
 
     datafed ep default set [OPTIONS] [ENDPOINT]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--c, --current  Set default endpoint to current endpoint.
--h, --help  Show this message and exit.
+  "-c, --current","Set default endpoint to current endpoint."
+  "-h, --help","Show this message and exit."
 
 
 Ep Get Command
@@ -531,9 +553,10 @@ Usage::
 
     datafed ep get [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 Ep List Command
@@ -545,9 +568,10 @@ Usage::
 
     datafed ep list [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 Ep Set Command
@@ -560,9 +584,10 @@ Usage::
 
     datafed ep set [OPTIONS] [ENDPOINT]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 ------------
@@ -575,9 +600,10 @@ Usage::
 
     datafed exit [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 ------------
@@ -591,9 +617,10 @@ Usage::
 
     datafed help [OPTIONS] [COMMAND]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 ----------
@@ -614,12 +641,13 @@ Usage::
 
     datafed ls [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--O, --offset INTEGER  Start list at offset
--C, --count INTEGER  Limit list to count results
--X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
--h, --help  Show this message and exit.
+  "-O, --offset INTEGER","Start list at offset"
+  "-C, --count INTEGER","Limit list to count results"
+  "-X, --context TEXT","User or project ID for command alias context. See 'alias' command help for more information."
+  "-h, --help","Show this message and exit."
 
 
 ----------------
@@ -632,9 +660,10 @@ Usage::
 
     datafed project [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -653,14 +682,15 @@ Usage::
 
     datafed project list [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--o, --owned  Include owned projects
--a, --admin  Include administered projects
--m, --member  Include membership projects
--O, --offset INTEGER  Start list at offset
--C, --count INTEGER  Limit list to count results
--h, --help  Show this message and exit.
+  "-o, --owned","Include owned projects"
+  "-a, --admin","Include administered projects"
+  "-m, --member","Include membership projects"
+  "-O, --offset INTEGER","Start list at offset"
+  "-C, --count INTEGER","Limit list to count results"
+  "-h, --help","Show this message and exit."
 
 
 Project View Command
@@ -673,10 +703,11 @@ Usage::
 
     datafed project view [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--v, --verbosity [0|1|2]  Verbosity level of output
--h, --help  Show this message and exit.
+  "-v, --verbosity [0|1|2]","Verbosity level of output"
+  "-h, --help","Show this message and exit."
 
 
 --------------
@@ -689,9 +720,10 @@ Usage::
 
     datafed query [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -714,25 +746,26 @@ Usage::
 
     datafed query create [OPTIONS] TITLE
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--C, --coll-mode  Search for collections intead of data
--c, --coll TEXT  Collection to search (multiple allowed)
---id TEXT  ID/alias expression
---text TEXT  Text expression
--t, --tag TEXT  Tag (multiple allowed)
---schema TEXT  Metadata schema ID
---meta TEXT  Metadata expression
---meta-err  Metadata has validation errors
---owner TEXT  Owninging user ID (only for public queries)
---creator TEXT  Creating user ID
---from TEXT  Find from specified date/time (M/D/YYYY[,HH:MM])
---to TEXT  Find up to specified date/time (M/D/YYYY[,HH:MM])
--p, --public  Search public data/collections in catalog
---category TEXT  Category (public searches only)
---sort TEXT  Sort option (id,title,owner,text,ct,ut)
---sort-rev  Sort in reverse order (not available for text)
--h, --help  Show this message and exit.
+  "-C, --coll-mode","Search for collections intead of data"
+  "-c, --coll TEXT","Collection to search (multiple allowed)"
+  "--id TEXT","ID/alias expression"
+  "--text TEXT","Text expression"
+  "-t, --tag TEXT","Tag (multiple allowed)"
+  "--schema TEXT","Metadata schema ID"
+  "--meta TEXT","Metadata expression"
+  "--meta-err","Metadata has validation errors"
+  "--owner TEXT","Owninging user ID (only for public queries)"
+  "--creator TEXT","Creating user ID"
+  "--from TEXT","Find from specified date/time (M/D/YYYY[,HH:MM])"
+  "--to TEXT","Find up to specified date/time (M/D/YYYY[,HH:MM])"
+  "-p, --public","Search public data/collections in catalog"
+  "--category TEXT","Category (public searches only)"
+  "--sort TEXT","Sort option (id,title,owner,text,ct,ut)"
+  "--sort-rev","Sort in reverse order (not available for text)"
+  "-h, --help","Show this message and exit."
 
 
 Query Delete Command
@@ -744,9 +777,10 @@ Usage::
 
     datafed query delete [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 Query Exec Command
@@ -758,11 +792,12 @@ Usage::
 
     datafed query exec [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--O, --offset INTEGER  Start results list at offset
--C, --count INTEGER  Limit to count results
--h, --help  Show this message and exit.
+  "-O, --offset INTEGER","Start results list at offset"
+  "-C, --count INTEGER","Limit to count results"
+  "-h, --help","Show this message and exit."
 
 
 Query List Command
@@ -774,11 +809,12 @@ Usage::
 
     datafed query list [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--O, --offset INTEGER  Start list at offset
--C, --count INTEGER  Limit list to count results
--h, --help  Show this message and exit.
+  "-O, --offset INTEGER","Start list at offset"
+  "-C, --count INTEGER","Limit list to count results"
+  "-h, --help","Show this message and exit."
 
 
 Query Run Command
@@ -797,27 +833,28 @@ Usage::
 
     datafed query run [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--C, --coll-mode  Search for collections intead of data
--c, --coll TEXT  Collection to search (multiple allowed)
---id TEXT  ID/alias expression
---text TEXT  Text expression
--t, --tag TEXT  Tag (multiple allowed)
---schema TEXT  Metadata schema ID
---meta TEXT  Metadata expression
---meta-err  Metadata has validation errors
---owner TEXT  Owninging user ID (only for public queries)
---creator TEXT  Creating user ID
---from TEXT  Find from specified date/time (M/D/YYYY[,HH:MM])
---to TEXT  Find up to specified date/time (M/D/YYYY[,HH:MM])
--p, --public  Search public data/collections in catalog
---category TEXT  Category (public searches only)
---sort TEXT  Sort option (id,title,owner,text,ct,ut)
---sort-rev  Sort in reverse order (not available for text)
---offset INTEGER  Start result list at offset
---count INTEGER  Limit to count results (default = 20)
--h, --help  Show this message and exit.
+  "-C, --coll-mode","Search for collections intead of data"
+  "-c, --coll TEXT","Collection to search (multiple allowed)"
+  "--id TEXT","ID/alias expression"
+  "--text TEXT","Text expression"
+  "-t, --tag TEXT","Tag (multiple allowed)"
+  "--schema TEXT","Metadata schema ID"
+  "--meta TEXT","Metadata expression"
+  "--meta-err","Metadata has validation errors"
+  "--owner TEXT","Owninging user ID (only for public queries)"
+  "--creator TEXT","Creating user ID"
+  "--from TEXT","Find from specified date/time (M/D/YYYY[,HH:MM])"
+  "--to TEXT","Find up to specified date/time (M/D/YYYY[,HH:MM])"
+  "-p, --public","Search public data/collections in catalog"
+  "--category TEXT","Category (public searches only)"
+  "--sort TEXT","Sort option (id,title,owner,text,ct,ut)"
+  "--sort-rev","Sort in reverse order (not available for text)"
+  "--offset INTEGER","Start result list at offset"
+  "--count INTEGER","Limit to count results (default = 20)"
+  "-h, --help","Show this message and exit."
 
 
 Query Update Command
@@ -831,26 +868,27 @@ Usage::
 
     datafed query update [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
---title TEXT  New query title
--C, --coll-mode  Search for collections intead of data
--c, --coll TEXT  Collection to search (multiple allowed)
---id TEXT  ID/alias expression
---text TEXT  Text expression
--t, --tag TEXT  Tag (multiple allowed)
---schema TEXT  Metadata schema ID
---meta TEXT  Metadata expression
---meta-err  Metadata has validation errors
---owner TEXT  Owninging user ID (only for public queries)
---creator TEXT  Creating user ID
---from TEXT  Find from specified date/time (M/D/YYYY[,HH:MM])
---to TEXT  Find up to specified date/time (M/D/YYYY[,HH:MM])
--p, --public  Search public data/collections in catalog
---category TEXT  Category (public searches only)
---sort TEXT  Sort option (id,title,owner,text,ct,ut)
---sort-rev  Sort in reverse order (not available for text)
--h, --help  Show this message and exit.
+  "--title TEXT","New query title"
+  "-C, --coll-mode","Search for collections intead of data"
+  "-c, --coll TEXT","Collection to search (multiple allowed)"
+  "--id TEXT","ID/alias expression"
+  "--text TEXT","Text expression"
+  "-t, --tag TEXT","Tag (multiple allowed)"
+  "--schema TEXT","Metadata schema ID"
+  "--meta TEXT","Metadata expression"
+  "--meta-err","Metadata has validation errors"
+  "--owner TEXT","Owninging user ID (only for public queries)"
+  "--creator TEXT","Creating user ID"
+  "--from TEXT","Find from specified date/time (M/D/YYYY[,HH:MM])"
+  "--to TEXT","Find up to specified date/time (M/D/YYYY[,HH:MM])"
+  "-p, --public","Search public data/collections in catalog"
+  "--category TEXT","Category (public searches only)"
+  "--sort TEXT","Sort option (id,title,owner,text,ct,ut)"
+  "--sort-rev","Sort in reverse order (not available for text)"
+  "-h, --help","Show this message and exit."
 
 
 Query View Command
@@ -862,9 +900,10 @@ Usage::
 
     datafed query view [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 -------------
@@ -880,9 +919,10 @@ Usage::
 
     datafed setup [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 --------------
@@ -895,11 +935,12 @@ Usage::
 
     datafed shares [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--u, --users  Show users only
--p, --projects  Show projects only
--h, --help  Show this message and exit.
+  "-u, --users","Show users only"
+  "-p, --projects","Show projects only"
+  "-h, --help","Show this message and exit."
 
 
 -------------
@@ -912,9 +953,10 @@ Usage::
 
     datafed task [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -935,15 +977,16 @@ Usage::
 
     datafed task list [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--s, --since TEXT  List from specified time (seconds default, suffix h = hours, d = days, w = weeks)
--f, --from TEXT  List from specified date/time (M/D/YYYY[,HH:MM])
--t, --to TEXT  List up to specified date/time (M/D/YYYY[,HH:MM])
--S, --status [0|1|2|3|4|queued|ready|running|succeeded|failed]  List tasks matching specified status
--O, --offset INTEGER  Start list at offset
--C, --count INTEGER  Limit list to count results
--h, --help  Show this message and exit.
+  "-s, --since TEXT","List from specified time (seconds default, suffix h = hours, d = days, w = weeks)"
+  "-f, --from TEXT","List from specified date/time (M/D/YYYY[,HH:MM])"
+  "-t, --to TEXT","List up to specified date/time (M/D/YYYY[,HH:MM])"
+  "-S, --status [0|1|2|3|4|queued|ready|running|succeeded|failed]","List tasks matching specified status"
+  "-O, --offset INTEGER","Start list at offset"
+  "-C, --count INTEGER","Limit list to count results"
+  "-h, --help","Show this message and exit."
 
 
 Task View Command
@@ -956,9 +999,10 @@ Usage::
 
     datafed task view [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 -------------
@@ -971,9 +1015,10 @@ Usage::
 
     datafed user [OPTIONS] COMMAND [ARGS]...
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 Sub-Commands:
 
@@ -993,11 +1038,12 @@ Usage::
 
     datafed user all [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--O, --offset INTEGER  Start list at offset
--C, --count INTEGER  Limit list to count results
--h, --help  Show this message and exit.
+  "-O, --offset INTEGER","Start list at offset"
+  "-C, --count INTEGER","Limit list to count results"
+  "-h, --help","Show this message and exit."
 
 
 User Collab Command
@@ -1011,11 +1057,12 @@ Usage::
 
     datafed user collab [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--O, --offset INTEGER  Start list at offset
--C, --count INTEGER  Limit list to count results
--h, --help  Show this message and exit.
+  "-O, --offset INTEGER","Start list at offset"
+  "-C, --count INTEGER","Limit list to count results"
+  "-h, --help","Show this message and exit."
 
 
 User View Command
@@ -1027,9 +1074,10 @@ Usage::
 
     datafed user view [OPTIONS] UID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 User Who Command
@@ -1041,9 +1089,10 @@ Usage::
 
     datafed user who [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 -----------------
@@ -1058,9 +1107,10 @@ Usage::
 
     datafed verbosity [OPTIONS] [LEVEL]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 ----------
@@ -1083,9 +1133,10 @@ Usage::
 
     datafed wc [OPTIONS] ID
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 ----------
@@ -1100,9 +1151,10 @@ Usage::
 
     datafed wp [OPTIONS]
 
-Options::
+.. csv-table:: Options
+  :header: "Option", "Description"
 
--h, --help  Show this message and exit.
+  "-h, --help","Show this message and exit."
 
 
 

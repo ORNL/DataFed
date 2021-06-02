@@ -337,25 +337,25 @@ numeric index value, starting at 1. These index values can be used in place of i
 subsequent commands.</p>
 <p>For example, listing the contents of a collection using the ‘ls’ command will produce results in the following
 format:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">root</span><span class="o">&gt;</span><span class="n">ls</span>
-<span class="mf">1.</span> <span class="n">c</span><span class="o">/</span><span class="mi">12351468</span>                         <span class="n">A</span> <span class="n">simple</span> <span class="n">collection</span>
-<span class="mf">2.</span> <span class="n">c</span><span class="o">/</span><span class="mi">11801571</span>   <span class="p">(</span><span class="n">demo</span><span class="p">)</span>                <span class="n">A</span> <span class="n">collection</span> <span class="k">for</span> <span class="n">demonstration</span> <span class="n">data</span>
-<span class="mf">3.</span> <span class="n">c</span><span class="o">/</span><span class="mi">14022631</span>   <span class="p">(</span><span class="n">test</span><span class="p">)</span>                <span class="n">Collection</span> <span class="n">of</span> <span class="n">test</span> <span class="n">data</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root&gt;ls
+1. c/12351468                         A simple collection
+2. c/11801571   (demo)                A collection for demonstration data
+3. c/14022631   (test)                Collection of test data
 </pre></div>
 </div>
 <p>After running the command above, shortcuts for the three listed collections are enabled (as 1, 2, and 3). These
 shortcuts can then be used on a follow-up command, such as viewing the first collection from the previous example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">root</span><span class="o">&gt;</span><span class="n">coll</span> <span class="n">view</span> <span class="mi">1</span>
-<span class="n">ID</span><span class="p">:</span>            <span class="n">c</span><span class="o">/</span><span class="mi">12351468</span>
-<span class="n">Alias</span><span class="p">:</span>         <span class="p">(</span><span class="n">none</span><span class="p">)</span>
-<span class="n">Title</span><span class="p">:</span>         <span class="n">A</span> <span class="n">simple</span> <span class="n">collection</span>
-<span class="n">Tags</span><span class="p">:</span>          <span class="p">(</span><span class="n">none</span><span class="p">)</span>
-<span class="n">Topic</span><span class="p">:</span>         <span class="p">(</span><span class="ow">not</span> <span class="n">published</span><span class="p">)</span>
-<span class="n">Owner</span><span class="p">:</span>         <span class="n">user123</span>
-<span class="n">Created</span><span class="p">:</span>       <span class="mi">09</span><span class="o">/</span><span class="mi">25</span><span class="o">/</span><span class="mi">2020</span><span class="p">,</span><span class="mi">10</span><span class="p">:</span><span class="mi">32</span>
-<span class="n">Updated</span><span class="p">:</span>       <span class="mi">10</span><span class="o">/</span><span class="mi">02</span><span class="o">/</span><span class="mi">2020</span><span class="p">,</span><span class="mi">13</span><span class="p">:</span><span class="mi">07</span>
-<span class="n">Description</span><span class="p">:</span>   <span class="n">An</span> <span class="n">example</span> <span class="n">collection</span>
-<span class="n">root</span><span class="o">&gt;</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root&gt;coll view 1
+ID:            c/12351468
+Alias:         (none)
+Title:         A simple collection
+Tags:          (none)
+Topic:         (not published)
+Owner:         user123
+Created:       09/25/2020,10:32
+Updated:       10/02/2020,13:07
+Description:   An example collection
+root&gt;
 </pre></div>
 </div>
 <p>Using listing index numbers is far quicker than typing in the ID or alias of a record or collection in a follow-up

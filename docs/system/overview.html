@@ -111,7 +111,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#collections">Collections</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#root-collection">Root Collection</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#public-collections">Public Collections</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id1">Field Summary</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id9">Field Summary</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#projects">Projects</a></li>
@@ -254,7 +254,7 @@ DataFed services and several connected facilities and DataFed repositories. The 
 represent the physical boundaries of geographically distributed facilities. The wide blue arrows represent
 the DataFed high-speed raw data transfer “bus” (i.e. GridFTP) that is used to move data between facilities,
 and the green arrows represent the DataFed communication “bus” use by clients to send requests to DataFed.</p>
-<div class="figure align-center" id="id2">
+<div class="figure align-center" id="id10">
 <img alt="../_images/simplified_architecture.png" src="../_images/simplified_architecture.png" />
 <p class="caption"><span class="caption-text">Figure 1 - An Example DataFed Network</span></p>
 </div>
@@ -292,7 +292,7 @@ in the DataFed <a class="reference internal" href="usecases.html"><span class="d
 the DataFed network to implement scalable distributed data storage and indexing. A simplified system architecture
 is shown in Figure 2, below, and shows only the central DataFed services, one DataFed data repository, and
 supporting interfaces.</p>
-<div class="figure align-center" id="id3">
+<div class="figure align-center" id="id11">
 <a class="reference internal image-reference" href="../_images/system_components.png"><img alt="../_images/system_components.png" src="../_images/system_components.png" style="width: 570.75px; height: 433.5px;" /></a>
 <p class="caption"><span class="caption-text">Figure 2 - DataFed System Components</span></p>
 </div>
@@ -463,11 +463,11 @@ is far more <em>findable</em> and <em>interoperable</em> than encoding this info
 <p>A data record is the basic unit of data storage within DataFed and consist of, at a minimum, an identifier and a title. A number
 of additional optional informational fields can be specified including an alias, a textual description, structured metadata,
 provenance relationships, and tags. All of these data record fields are maintained centrally within DataFed and do not count
-against a users storage allocation(s). Refer to the <span class="xref std std-ref">Field Summary</span>, below, for a full list of data record fields.</p>
+against a users storage allocation(s). Refer to the <a href="#id1"><span class="problematic" id="id2">:ref:`Field Summary`_</span></a>, below, for a full list of data record fields.</p>
 <p>While metadata-only data records can be useful for specific use cases, it is likely some form of source data will need to be
 associated with a given data record. This data is referred to as “raw data” because DataFed treats it as an oblique attachment to a
 data record (i.e. DataFed cannot “see” inside this raw data for purposes of indexing or searching). Raw data can be any format
-and any size so long as a user has sufficient allocation space to store it. See the <span class="xref std std-ref">Raw Data</span> section, below, for further details.</p>
+and any size so long as a user has sufficient allocation space to store it. See the <a href="#id3"><span class="problematic" id="id4">:ref:`Raw Data`_</span></a> section, below, for further details.</p>
 <p>When creating a data record, a storage allocation on a DataFed repository must be available. If a user has multiple allocations,
 then an allocation can be specified or the default allocation will be used instead. The default allocation can be viewed and set
 in the DataFed web portal. After creation, it is possible to move a record to an allocation on a different repository, and if raw
@@ -483,7 +483,7 @@ with moving the raw data may take a significant amount of time to complete. Prog
 <p>The metadata of a data record is distinct from the built-in record fields such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable, can represent
 arbitrary structured documents, and is easily validated using JSON-based schemas (see <a class="reference external" href="https://json-schema.org/">https://json-schema.org/</a>). Like
-other fields, metadata is searchable using the powerful built-in query language described in the <span class="xref std std-ref">Data Search</span> section of
+other fields, metadata is searchable using the powerful built-in query language described in the <a href="#id5"><span class="problematic" id="id6">:ref:`Data Search`_</span></a> section of
 this document.</p>
 <p>When creating or updating a data record, metadata may be directly specified or a JSON file may be referenced as the metadata source.
 When updating the metadata associated with an existing data record, the user has the option to either replace all of the existing
@@ -684,9 +684,9 @@ For a project with an ID of &quot;proj123&quot;, the root collection ID is &quot
 <h4>Public Collections</h4>
 <p>Collections can be set to public access, in which case the collection and all of its contents will become discoverable and
 readable by any DataFed user. Public access is implemented through a DataFed catalog system which allows users to browse
-and search for public collections and datasets. Please refer to the <span class="xref std std-ref">Catalog</span> section for more information.</p>
+and search for public collections and datasets. Please refer to the <a href="#id7"><span class="problematic" id="id8">:ref:`Catalog`_</span></a> section for more information.</p>
 </div>
-<div class="section" id="id1">
+<div class="section" id="id9">
 <h4>Field Summary</h4>
 <p>The table below lists all of the fields of a collection. Currently, only public collections in the DataFed catalog can be
 searched, and only through the DataFed web portal. In a future release, direct queries will be supported.</p>

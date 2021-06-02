@@ -257,11 +257,11 @@ Users need not do anything for this prerequisite.</p></li>
 <h3>1. Install python package</h3>
 <p>Like many Python packages, the DataFed CLI is easy to install using Python’s <code class="docutils literal notranslate"><span class="pre">pip</span></code> tool. For Linux
 and Mac OS, the command is as follows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="n">datafed</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install --user datafed
 </pre></div>
 </div>
 <p>And for Windows, the command is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">datafed</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install -U datafed
 </pre></div>
 </div>
 <p>Pip will install the DataFed client package and all dependencies, and will also install an executable
@@ -365,16 +365,16 @@ or by overriding configured server settings (the client file takes priority over
 <p>Both server and client configuration files are standard “.ini” files and follow the same format, and the
 reference table in <a class="reference internal" href="#settings-quick-reference">Settings Quick Reference</a> section indicate the .ini section and setting name for all
 available options. An example configuration file is shown below:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">server</span><span class="p">]</span>
-<span class="n">host</span> <span class="o">=</span> <span class="n">datafed</span><span class="o">.</span><span class="n">ornl</span><span class="o">.</span><span class="n">gov</span>
-<span class="n">port</span> <span class="o">=</span> <span class="mi">7512</span>
-<span class="n">config_dir</span> <span class="o">=</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">share</span><span class="o">/</span><span class="n">datafed</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[server]
+host = datafed.ornl.gov
+port = 7512
+config_dir = /usr/share/datafed
 
-<span class="p">[</span><span class="n">client</span><span class="p">]</span>
-<span class="n">config_dir</span> <span class="o">=</span> <span class="o">~/.</span><span class="n">datafed</span>
+[client]
+config_dir = ~/.datafed
 
-<span class="p">[</span><span class="n">general</span><span class="p">]</span>
-<span class="n">default_endpoint</span> <span class="o">=</span> <span class="n">cades</span><span class="c1">#CADES-OR</span>
+[general]
+default_endpoint = cades#CADES-OR
 </pre></div>
 </div>
 <div class="admonition note">
@@ -433,7 +433,7 @@ client by installing local client credentials (encryption key files). Automatic 
 a convenience feature, but it is essential for non-interactive use of the Python API (i.e. for scripting). It is
 enabled by simply running the following DataFed CLI command from the environment to be configured for
 automatic authentication:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datafed</span> <span class="n">setup</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed setup
 </pre></div>
 </div>
 <p>When run the first time, the user must manually authenticate using their DataFed user ID and password.

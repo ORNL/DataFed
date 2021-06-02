@@ -233,25 +233,25 @@ the specific distribution is not important.</p>
 Prior to building DataFed, the build environment must be properly configured as described below
 (the examples are based on Debian). Min/max version restrictions are listed later in the Dependencies section.</p>
 <p>Install packages required to build DataFed:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">g</span><span class="o">++</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">git</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">cmake</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libboost</span><span class="o">-</span><span class="nb">all</span><span class="o">-</span><span class="n">dev</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">protobuf</span><span class="o">-</span><span class="n">compiler</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libzmq3</span><span class="o">-</span><span class="n">dev</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libssl</span><span class="o">-</span><span class="n">dev</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libcurl4</span><span class="o">-</span><span class="n">openssl</span><span class="o">-</span><span class="n">dev</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libglobus</span><span class="o">-</span><span class="n">common</span><span class="o">-</span><span class="n">dev</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libfuse</span><span class="o">-</span><span class="n">dev</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>sudo apt install g++
+sudo apt install git
+sudo apt install cmake
+sudo apt install libboost-all-dev
+sudo apt install protobuf-compiler
+sudo apt install libzmq3-dev
+sudo apt install libssl-dev
+sudo apt install libcurl4-openssl-dev
+sudo apt install libglobus-common-dev
+sudo apt install libfuse-dev
 </pre></div>
 </div>
 <p>Get and build the DataFed source code:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">ORNL</span><span class="o">/</span><span class="n">DataFed</span><span class="o">.</span><span class="n">git</span>
-<span class="n">cd</span> <span class="n">DataFed</span>
-<span class="n">mkdir</span> <span class="n">build</span>
-<span class="n">cd</span> <span class="n">build</span>
-<span class="n">cmake</span> <span class="o">..</span>
-<span class="n">make</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/ORNL/DataFed.git
+cd DataFed
+mkdir build
+cd build
+cmake ..
+make
 </pre></div>
 </div>
 </div>
@@ -273,15 +273,15 @@ reduce latency and avoid the need for TLS connections.</p>
 <li><p>Create a core service configuration file (i.e. /opt/datafed/datafed-core.cfg). See example below.</p></li>
 </ol>
 <p>Example datafed-core.cfg file:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">port</span> <span class="o">=</span> <span class="mi">9100</span>
-<span class="n">client</span><span class="o">-</span><span class="n">threads</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">task</span><span class="o">-</span><span class="n">threads</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">db</span><span class="o">-</span><span class="n">url</span> <span class="o">=</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">127.0</span><span class="o">.</span><span class="mf">0.1</span><span class="p">:</span><span class="mi">8529</span><span class="o">/</span><span class="n">_db</span><span class="o">/</span><span class="n">sdms</span><span class="o">/</span><span class="n">api</span><span class="o">/</span>
-<span class="n">db</span><span class="o">-</span><span class="n">user</span> <span class="o">=</span> <span class="n">root</span>
-<span class="n">db</span><span class="o">-</span><span class="k">pass</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">password</span><span class="o">&gt;</span>
-<span class="n">cred</span><span class="o">-</span><span class="nb">dir</span> <span class="o">=</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">datafed</span><span class="o">/</span><span class="n">keys</span>
-<span class="n">client</span><span class="o">-</span><span class="nb">id</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">Globus</span> <span class="n">App</span> <span class="n">ID</span><span class="o">&gt;</span>
-<span class="n">client</span><span class="o">-</span><span class="n">secret</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">Globus</span> <span class="n">App</span> <span class="n">Secret</span><span class="o">&gt;</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>port = 9100
+client-threads = 4
+task-threads = 4
+db-url = http://127.0.0.1:8529/_db/sdms/api/
+db-user = root
+db-pass = &lt;password&gt;
+cred-dir = /opt/datafed/keys
+client-id = &lt;Globus App ID&gt;
+client-secret = &lt;Globus App Secret&gt;
 </pre></div>
 </div>
 </div>
@@ -292,24 +292,24 @@ reduce latency and avoid the need for TLS connections.</p>
 <li><p>Download and install the latest ArangoDB server package for your host operating system. (see example, below)</p></li>
 </ol>
 <p>Example download/install of ArangoDB 3.7 for Ubuntu:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">download</span><span class="o">.</span><span class="n">arangodb</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">arangodb37</span><span class="o">/</span><span class="n">Community</span><span class="o">/</span><span class="n">Linux</span><span class="o">/</span><span class="n">arangodb3_3</span><span class="o">.</span><span class="mf">7.10</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="o">./</span><span class="n">arangodb3_3</span><span class="o">.</span><span class="mf">7.10</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>wget https://download.arangodb.com/arangodb37/Community/Linux/arangodb3_3.7.10-1_amd64.deb
+sudo apt install ./arangodb3_3.7.10-1_amd64.deb
 </pre></div>
 </div>
 </div>
 <div class="section" id="web-service">
 <h4>Web Service</h4>
 <p>For the DataFed web service, install the following packages:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">nodejs</span>
-<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">npm</span>
-<span class="n">npm</span> <span class="n">install</span> <span class="n">express</span>
-<span class="n">npm</span> <span class="n">install</span> <span class="n">express</span><span class="o">-</span><span class="n">session</span>
-<span class="n">npm</span> <span class="n">install</span> <span class="n">cookie</span> <span class="n">parser</span>
-<span class="n">npm</span> <span class="n">install</span> <span class="n">helmet</span>
-<span class="n">npm</span> <span class="n">install</span> <span class="n">protobufjs</span>
-<span class="n">npm</span> <span class="n">install</span> <span class="n">zeromq</span><span class="nd">@5</span><span class="o">.</span><span class="mf">2.0</span>
-<span class="n">npm</span> <span class="n">install</span> <span class="n">ect</span>
-<span class="n">npm</span> <span class="n">install</span> <span class="n">client</span><span class="o">-</span><span class="n">oauth2</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>sudo apt install nodejs
+sudo apt install npm
+npm install express
+npm install express-session
+npm install cookie parser
+npm install helmet
+npm install protobufjs
+npm install zeromq@5.2.0
+npm install ect
+npm install client-oauth2
 </pre></div>
 </div>
 </div>
@@ -317,10 +317,10 @@ reduce latency and avoid the need for TLS connections.</p>
 <div class="section" id="data-repository">
 <h3>Data Repository</h3>
 <p>For a DataFed data repository, install Globus Connect v4:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">curl</span> <span class="o">-</span><span class="n">LOs</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">downloads</span><span class="o">.</span><span class="n">globus</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">toolkit</span><span class="o">/</span><span class="n">globus</span><span class="o">-</span><span class="n">connect</span><span class="o">-</span><span class="n">server</span><span class="o">/</span><span class="n">globus</span><span class="o">-</span><span class="n">connect</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">repo_latest_all</span><span class="o">.</span><span class="n">deb</span>
-<span class="n">sudo</span> <span class="n">dpkg</span> <span class="o">-</span><span class="n">i</span> <span class="n">globus</span><span class="o">-</span><span class="n">connect</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">repo_latest_all</span><span class="o">.</span><span class="n">deb</span>
-<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">update</span>
-<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">globus</span><span class="o">-</span><span class="n">connect</span><span class="o">-</span><span class="n">server</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>sudo curl -LOs https://downloads.globus.org/toolkit/globus-connect-server/globus-connect-server-repo_latest_all.deb
+sudo dpkg -i globus-connect-server-repo_latest_all.deb
+sudo apt-get update
+sudo apt-get install globus-connect-server
 </pre></div>
 </div>
 </div>
