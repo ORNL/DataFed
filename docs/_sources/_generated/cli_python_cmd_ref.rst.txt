@@ -16,8 +16,8 @@ Usage::
     datafed [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -68,8 +68,8 @@ Usage::
     datafed coll [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -100,8 +100,8 @@ Usage::
     datafed coll add [OPTIONS] COLL_ID ITEM_ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -123,8 +123,8 @@ Usage::
     datafed coll create [OPTIONS] TITLE
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -155,8 +155,8 @@ Usage::
     datafed coll delete [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -179,8 +179,8 @@ Usage::
     datafed coll remove [OPTIONS] COLL_ID ITEM_ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -200,8 +200,8 @@ Usage::
     datafed coll update [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -228,8 +228,8 @@ Usage::
     datafed coll view [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -249,8 +249,8 @@ Usage::
     datafed data [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -278,8 +278,8 @@ Usage::
     datafed data batch [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -306,8 +306,8 @@ Usage::
     datafed data batch create [OPTIONS] FILE
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -330,8 +330,8 @@ Usage::
     datafed data batch update [OPTIONS] FILE...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -354,8 +354,8 @@ Usage::
     datafed data create [OPTIONS] TITLE
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -390,8 +390,8 @@ Usage::
     datafed data delete [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -420,8 +420,8 @@ Usage::
     datafed data get [OPTIONS] ID PATH
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -447,8 +447,8 @@ Usage::
     datafed data put [OPTIONS] ID PATH
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -472,8 +472,8 @@ Usage::
     datafed data update [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -509,8 +509,8 @@ Usage::
     datafed data view [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -530,8 +530,8 @@ Usage::
     datafed ep [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -556,8 +556,8 @@ Usage::
     datafed ep default [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -580,8 +580,8 @@ Usage::
     datafed ep default get [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -600,8 +600,8 @@ Usage::
     datafed ep default set [OPTIONS] [ENDPOINT]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -620,8 +620,8 @@ Usage::
     datafed ep get [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -638,8 +638,8 @@ Usage::
     datafed ep list [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -657,8 +657,8 @@ Usage::
     datafed ep set [OPTIONS] [ENDPOINT]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -676,8 +676,8 @@ Usage::
     datafed exit [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -696,8 +696,8 @@ Usage::
     datafed help [OPTIONS] [COMMAND]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -723,8 +723,8 @@ Usage::
     datafed ls [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -745,8 +745,8 @@ Usage::
     datafed project [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -770,8 +770,8 @@ Usage::
     datafed project list [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -794,8 +794,8 @@ Usage::
     datafed project view [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -814,8 +814,8 @@ Usage::
     datafed query [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -843,8 +843,8 @@ Usage::
     datafed query create [OPTIONS] TITLE
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -877,8 +877,8 @@ Usage::
     datafed query delete [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -895,8 +895,8 @@ Usage::
     datafed query exec [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -915,8 +915,8 @@ Usage::
     datafed query list [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -942,8 +942,8 @@ Usage::
     datafed query run [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -980,8 +980,8 @@ Usage::
     datafed query update [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1015,8 +1015,8 @@ Usage::
     datafed query view [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1037,8 +1037,8 @@ Usage::
     datafed setup [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1056,8 +1056,8 @@ Usage::
     datafed shares [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1077,8 +1077,8 @@ Usage::
     datafed task [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1104,8 +1104,8 @@ Usage::
     datafed task list [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1129,8 +1129,8 @@ Usage::
     datafed task view [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1148,8 +1148,8 @@ Usage::
     datafed user [OPTIONS] COMMAND [ARGS]...
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1174,8 +1174,8 @@ Usage::
     datafed user all [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1196,8 +1196,8 @@ Usage::
     datafed user collab [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1216,8 +1216,8 @@ Usage::
     datafed user view [OPTIONS] UID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1234,8 +1234,8 @@ Usage::
     datafed user who [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1255,8 +1255,8 @@ Usage::
     datafed verbosity [OPTIONS] [LEVEL]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1284,8 +1284,8 @@ Usage::
     datafed wc [OPTIONS] ID
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 
@@ -1305,8 +1305,8 @@ Usage::
     datafed wp [OPTIONS]
 
 Options:
-.. csv-table::
 
+.. csv-table::
     :class: table-no-hscroll
     :header: "Option", "Description"
 

@@ -481,7 +481,7 @@ def _genDocCmd( cmd, ctx, level, parname = None, recurse = True ):
         doc += ctx.command_path 
 
     #doc += " " + " ".join(tmp) + "\n\nOptions::\n\n"
-    doc += " " + " ".join(tmp) + "\n\nOptions:\n.. csv-table::\n\n"
+    doc += " " + " ".join(tmp) + "\n\nOptions:\n\n.. csv-table::\n"
     doc += '    :class: table-no-hscroll\n'
     doc += '    :header: "Option", "Description"\n\n'
 

@@ -202,28 +202,65 @@ prefix.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-m, --manual-auth&quot;,&quot;Force manual authentication&quot;
-&quot;-s, --script&quot;,&quot;Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.&quot;
-&quot;--version&quot;,&quot;Print version number and exit.&quot;
-&quot;--server-cfg-dir TEXT&quot;,&quot;Server configuration directory&quot;
-&quot;--server-cfg-file TEXT&quot;,&quot;Server configuration file&quot;
-&quot;--server-pub-key-file TEXT&quot;,&quot;Server public key file&quot;
-&quot;-H, --server-host TEXT&quot;,&quot;Sever host name or IP address&quot;
-&quot;-P, --server-port INTEGER&quot;,&quot;Server port number&quot;
-&quot;--client-cfg-dir TEXT&quot;,&quot;Client configuration directory&quot;
-&quot;--client-cfg-file TEXT&quot;,&quot;Client configuration file&quot;
-&quot;--client-pub-key-file TEXT&quot;,&quot;Client public key file&quot;
-&quot;--client-priv-key-file TEXT&quot;,&quot;Client private key file&quot;
-&quot;-e, --default-ep TEXT&quot;,&quot;Default Globus endpoint&quot;
-&quot;-v, --verbosity INTEGER&quot;,&quot;Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-m, –manual-auth</p></td>
+<td><p>Force manual authentication</p></td>
+</tr>
+<tr class="row-odd"><td><p>-s, –script</p></td>
+<td><p>Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.</p></td>
+</tr>
+<tr class="row-even"><td><p>–version</p></td>
+<td><p>Print version number and exit.</p></td>
+</tr>
+<tr class="row-odd"><td><p>–server-cfg-dir TEXT</p></td>
+<td><p>Server configuration directory</p></td>
+</tr>
+<tr class="row-even"><td><p>–server-cfg-file TEXT</p></td>
+<td><p>Server configuration file</p></td>
+</tr>
+<tr class="row-odd"><td><p>–server-pub-key-file TEXT</p></td>
+<td><p>Server public key file</p></td>
+</tr>
+<tr class="row-even"><td><p>-H, –server-host TEXT</p></td>
+<td><p>Sever host name or IP address</p></td>
+</tr>
+<tr class="row-odd"><td><p>-P, –server-port INTEGER</p></td>
+<td><p>Server port number</p></td>
+</tr>
+<tr class="row-even"><td><p>–client-cfg-dir TEXT</p></td>
+<td><p>Client configuration directory</p></td>
+</tr>
+<tr class="row-odd"><td><p>–client-cfg-file TEXT</p></td>
+<td><p>Client configuration file</p></td>
+</tr>
+<tr class="row-even"><td><p>–client-pub-key-file TEXT</p></td>
+<td><p>Client public key file</p></td>
+</tr>
+<tr class="row-odd"><td><p>–client-priv-key-file TEXT</p></td>
+<td><p>Client private key file</p></td>
+</tr>
+<tr class="row-even"><td><p>-e, –default-ep TEXT</p></td>
+<td><p>Default Globus endpoint</p></td>
+</tr>
+<tr class="row-odd"><td><p>-v, –verbosity INTEGER</p></td>
+<td><p>Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -286,14 +323,23 @@ prefix.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed coll [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -332,15 +378,26 @@ relative collection path (‘.’, ‘..’, or ‘/’).</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed coll add [OPTIONS] COLL_ID ITEM_ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="coll-create-command">
 <h2>Coll Create Command</h2>
@@ -353,21 +410,44 @@ user must have permission to write to that collection.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed coll create [OPTIONS] TITLE
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-a, --alias TEXT&quot;,&quot;Alias&quot;
-&quot;-p, --parent TEXT&quot;,&quot;Parent collection ID/alias (default is current working collection)&quot;
-&quot;-d, --description TEXT&quot;,&quot;Description text&quot;
-&quot;-T, --tags TEXT&quot;,&quot;Tags (comma separated list).&quot;
-&quot;--topic TEXT&quot;,&quot;Publish the collection to the provided topic.&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-v, --verbosity [0|1|2]&quot;,&quot;Verbosity level of output&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-a, –alias TEXT</p></td>
+<td><p>Alias</p></td>
+</tr>
+<tr class="row-odd"><td><p>-p, –parent TEXT</p></td>
+<td><p>Parent collection ID/alias (default is current working collection)</p></td>
+</tr>
+<tr class="row-even"><td><p>-d, –description TEXT</p></td>
+<td><p>Description text</p></td>
+</tr>
+<tr class="row-odd"><td><p>-T, –tags TEXT</p></td>
+<td><p>Tags (comma separated list).</p></td>
+</tr>
+<tr class="row-even"><td><p>–topic TEXT</p></td>
+<td><p>Publish the collection to the provided topic.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-even"><td><p>-v, –verbosity [0|1|2]</p></td>
+<td><p>Verbosity level of output</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="coll-delete-command">
 <h2>Coll Delete Command</h2>
@@ -382,16 +462,29 @@ another collection not involved in the deletion.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed coll delete [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-f, --force&quot;,&quot;Delete without confirmation.&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-f, –force</p></td>
+<td><p>Delete without confirmation.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="coll-remove-command">
 <h2>Coll Remove Command</h2>
@@ -404,15 +497,26 @@ relative collection path (‘.’, ‘..’, or ‘/’).</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed coll remove [OPTIONS] COLL_ID ITEM_ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="coll-update-command">
 <h2>Coll Update Command</h2>
@@ -423,21 +527,44 @@ optional.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed coll update [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-t, --title TEXT&quot;,&quot;Title&quot;
-&quot;-a, --alias TEXT&quot;,&quot;Alias&quot;
-&quot;-d, --description TEXT&quot;,&quot;Description text&quot;
-&quot;-T, --tags TEXT&quot;,&quot;Tags (comma separated list).&quot;
-&quot;--topic TEXT&quot;,&quot;Publish the collection under the provided topic.&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-v, --verbosity [0|1|2]&quot;,&quot;Verbosity level of output&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-t, –title TEXT</p></td>
+<td><p>Title</p></td>
+</tr>
+<tr class="row-odd"><td><p>-a, –alias TEXT</p></td>
+<td><p>Alias</p></td>
+</tr>
+<tr class="row-even"><td><p>-d, –description TEXT</p></td>
+<td><p>Description text</p></td>
+</tr>
+<tr class="row-odd"><td><p>-T, –tags TEXT</p></td>
+<td><p>Tags (comma separated list).</p></td>
+</tr>
+<tr class="row-even"><td><p>–topic TEXT</p></td>
+<td><p>Publish the collection under the provided topic.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-even"><td><p>-v, –verbosity [0|1|2]</p></td>
+<td><p>Verbosity level of output</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="coll-view-command">
 <h2>Coll View Command</h2>
@@ -449,16 +576,29 @@ in a collection.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed coll view [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-v, --verbosity [0|1|2]&quot;,&quot;Verbosity level of output&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-v, –verbosity [0|1|2]</p></td>
+<td><p>Verbosity level of output</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="data-commands">
@@ -468,14 +608,23 @@ in a collection.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -513,14 +662,23 @@ in a collection.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data batch [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -547,16 +705,29 @@ must comply with the DataFed record input schema (see online documentation).</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data batch create [OPTIONS] FILE
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-c, --collection TEXT&quot;,&quot;Optional target collection (default is root).&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-c, –collection TEXT</p></td>
+<td><p>Optional target collection (default is root).</p></td>
+</tr>
+<tr class="row-odd"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="data-batch-update-command">
 <h3>Data Batch Update Command</h3>
@@ -569,14 +740,23 @@ must comply with the DataFed record input schema (see online documentation).</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data batch update [OPTIONS] FILE...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="data-create-command">
@@ -592,29 +772,68 @@ convenience to avoid a separate dataPut() call.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data create [OPTIONS] TITLE
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-a, --alias TEXT&quot;,&quot;Record alias.&quot;
-&quot;-d, --description TEXT&quot;,&quot;Description text.&quot;
-&quot;-T, --tags TEXT&quot;,&quot;Tags (comma separated list).&quot;
-&quot;-r, --raw-data-file TEXT&quot;,&quot;Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.&quot;
-&quot;-x, --extension TEXT&quot;,&quot;Override raw data file extension if provided (default is auto detect).&quot;
-&quot;-E, --external&quot;,&quot;Raw data file is external to DataFed (unmanaged)&quot;
-&quot;-m, --metadata TEXT&quot;,&quot;Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.&quot;
-&quot;-f, --metadata-file TEXT&quot;,&quot;Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.&quot;
-&quot;-s, --schema TEXT&quot;,&quot;Set metadata schema id:version&quot;
-&quot;-e, --schema-enforce&quot;,&quot;Fail on metadata validation errors&quot;
-&quot;-p, --parent TEXT&quot;,&quot;Parent collection ID, alias, or listing index. Default is the current working collection.&quot;
-&quot;-R, --repository TEXT&quot;,&quot;Repository ID (managed data only). Uses default allocation if not specified.&quot;
-&quot;-D, --deps &lt;CHOICE TEXT&gt;...&quot;,&quot;Dependencies (provenance). Use one &#39;--deps&#39; option per dependency and specify with a string consisting of the type of relationship (&#39;der&#39;, &#39;comp&#39;, &#39;ver&#39;) follwed by ID/alias of the referenced record. Relationship types are: &#39;der&#39; for &#39;derived from&#39;, &#39;comp&#39; for &#39;a component of&#39;, and &#39;ver&#39; for &#39;a new version of&#39;.&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-v, --verbosity [0|1|2]&quot;,&quot;Verbosity level of output&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-a, –alias TEXT</p></td>
+<td><p>Record alias.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-d, –description TEXT</p></td>
+<td><p>Description text.</p></td>
+</tr>
+<tr class="row-even"><td><p>-T, –tags TEXT</p></td>
+<td><p>Tags (comma separated list).</p></td>
+</tr>
+<tr class="row-odd"><td><p>-r, –raw-data-file TEXT</p></td>
+<td><p>Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.</p></td>
+</tr>
+<tr class="row-even"><td><p>-x, –extension TEXT</p></td>
+<td><p>Override raw data file extension if provided (default is auto detect).</p></td>
+</tr>
+<tr class="row-odd"><td><p>-E, –external</p></td>
+<td><p>Raw data file is external to DataFed (unmanaged)</p></td>
+</tr>
+<tr class="row-even"><td><p>-m, –metadata TEXT</p></td>
+<td><p>Inline metadata in JSON format. JSON must define an object type. Cannot be specified with –metadata-file option.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-f, –metadata-file TEXT</p></td>
+<td><p>Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with –metadata option.</p></td>
+</tr>
+<tr class="row-even"><td><p>-s, –schema TEXT</p></td>
+<td><p>Set metadata schema id:version</p></td>
+</tr>
+<tr class="row-odd"><td><p>-e, –schema-enforce</p></td>
+<td><p>Fail on metadata validation errors</p></td>
+</tr>
+<tr class="row-even"><td><p>-p, –parent TEXT</p></td>
+<td><p>Parent collection ID, alias, or listing index. Default is the current working collection.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-R, –repository TEXT</p></td>
+<td><p>Repository ID (managed data only). Uses default allocation if not specified.</p></td>
+</tr>
+<tr class="row-even"><td><p>-D, –deps &lt;CHOICE TEXT&gt;…</p></td>
+<td><p>Dependencies (provenance). Use one ‘–deps’ option per dependency and specify with a string consisting of the type of relationship (‘der’, ‘comp’, ‘ver’) follwed by ID/alias of the referenced record. Relationship types are: ‘der’ for ‘derived from’, ‘comp’ for ‘a component of’, and ‘ver’ for ‘a new version of’.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-even"><td><p>-v, –verbosity [0|1|2]</p></td>
+<td><p>Verbosity level of output</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="data-delete-command">
 <h2>Data Delete Command</h2>
@@ -626,16 +845,29 @@ the ‘–force’ option.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data delete [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-f, --force&quot;,&quot;Delete record(s) without confirmation.&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-f, –force</p></td>
+<td><p>Delete record(s) without confirmation.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="data-get-command">
 <h2>Data Get Command</h2>
@@ -653,18 +885,35 @@ systems; however, full Globus paths must used in this case.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data get [OPTIONS] ID PATH
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-w, --wait&quot;,&quot;Block until Globus transfer is complete.&quot;
-&quot;-e, --encrypt [0|1|2]&quot;,&quot;Encryption mode: 0 = none, 1 = if available (default), 2 = force.&quot;
-&quot;-o, --orig_fname&quot;,&quot;Download to original filename(s).&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-w, –wait</p></td>
+<td><p>Block until Globus transfer is complete.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-e, –encrypt [0|1|2]</p></td>
+<td><p>Encryption mode: 0 = none, 1 = if available (default), 2 = force.</p></td>
+</tr>
+<tr class="row-even"><td><p>-o, –orig_fname</p></td>
+<td><p>Download to original filename(s).</p></td>
+</tr>
+<tr class="row-odd"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="data-put-command">
 <h2>Data Put Command</h2>
@@ -678,18 +927,35 @@ argument, the current endpoint will be used.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data put [OPTIONS] ID PATH
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-w, --wait&quot;,&quot;Block reply or further commands until transfer is complete&quot;
-&quot;-x, --extension TEXT&quot;,&quot;Override extension for raw data file (default = auto detect).&quot;
-&quot;-e, --encrypt [0|1|2]&quot;,&quot;Encryption mode: 0 = none, 1 = if available (default), 2 = force.&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-w, –wait</p></td>
+<td><p>Block reply or further commands until transfer is complete</p></td>
+</tr>
+<tr class="row-odd"><td><p>-x, –extension TEXT</p></td>
+<td><p>Override extension for raw data file (default = auto detect).</p></td>
+</tr>
+<tr class="row-even"><td><p>-e, –encrypt [0|1|2]</p></td>
+<td><p>Encryption mode: 0 = none, 1 = if available (default), 2 = force.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="data-update-command">
 <h2>Data Update Command</h2>
@@ -701,29 +967,68 @@ provided as a convenience to avoid a separate dataPut() call.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data update [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-t, --title TEXT&quot;,&quot;Title&quot;
-&quot;-a, --alias TEXT&quot;,&quot;Alias&quot;
-&quot;-d, --description TEXT&quot;,&quot;Description text&quot;
-&quot;-T, --tags TEXT&quot;,&quot;Tags (comma separated list)&quot;
-&quot;-r, --raw-data-file TEXT&quot;,&quot;Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.&quot;
-&quot;-x, --extension TEXT&quot;,&quot;Override extension for raw data file (default = auto detect).&quot;
-&quot;-m, --metadata TEXT&quot;,&quot;Inline metadata in JSON format.&quot;
-&quot;-f, --metadata-file TEXT&quot;,&quot;Path to local metadata file containing JSON.&quot;
-&quot;-S, --metadata-set&quot;,&quot;Set (replace) existing metadata with provided instead of merging.&quot;
-&quot;-s, --schema TEXT&quot;,&quot;Set metadata schema id:version&quot;
-&quot;-e, --schema-enforce&quot;,&quot;Fail on metadata validation errors&quot;
-&quot;-A, --deps-add &lt;CHOICE TEXT&gt;...&quot;,&quot;Specify dependencies to add by listing first the type of relationship (&#39;der&#39;, &#39;comp&#39;, or &#39;ver&#39;) follwed by ID/alias of the target record. Can be specified multiple times.&quot;
-&quot;-R, --deps-rem &lt;CHOICE TEXT&gt;...&quot;,&quot;Specify dependencies to remove by listing first the type of relationship (&#39;der&#39;, &#39;comp&#39;, or &#39;ver&#39;) followed by ID/alias of the target record. Can be specified multiple times.&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-v, --verbosity [0|1|2]&quot;,&quot;Verbosity level of output&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-t, –title TEXT</p></td>
+<td><p>Title</p></td>
+</tr>
+<tr class="row-odd"><td><p>-a, –alias TEXT</p></td>
+<td><p>Alias</p></td>
+</tr>
+<tr class="row-even"><td><p>-d, –description TEXT</p></td>
+<td><p>Description text</p></td>
+</tr>
+<tr class="row-odd"><td><p>-T, –tags TEXT</p></td>
+<td><p>Tags (comma separated list)</p></td>
+</tr>
+<tr class="row-even"><td><p>-r, –raw-data-file TEXT</p></td>
+<td><p>Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-x, –extension TEXT</p></td>
+<td><p>Override extension for raw data file (default = auto detect).</p></td>
+</tr>
+<tr class="row-even"><td><p>-m, –metadata TEXT</p></td>
+<td><p>Inline metadata in JSON format.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-f, –metadata-file TEXT</p></td>
+<td><p>Path to local metadata file containing JSON.</p></td>
+</tr>
+<tr class="row-even"><td><p>-S, –metadata-set</p></td>
+<td><p>Set (replace) existing metadata with provided instead of merging.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-s, –schema TEXT</p></td>
+<td><p>Set metadata schema id:version</p></td>
+</tr>
+<tr class="row-even"><td><p>-e, –schema-enforce</p></td>
+<td><p>Fail on metadata validation errors</p></td>
+</tr>
+<tr class="row-odd"><td><p>-A, –deps-add &lt;CHOICE TEXT&gt;…</p></td>
+<td><p>Specify dependencies to add by listing first the type of relationship (‘der’, ‘comp’, or ‘ver’) follwed by ID/alias of the target record. Can be specified multiple times.</p></td>
+</tr>
+<tr class="row-even"><td><p>-R, –deps-rem &lt;CHOICE TEXT&gt;…</p></td>
+<td><p>Specify dependencies to remove by listing first the type of relationship (‘der’, ‘comp’, or ‘ver’) followed by ID/alias of the target record. Can be specified multiple times.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-even"><td><p>-v, –verbosity [0|1|2]</p></td>
+<td><p>Verbosity level of output</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="data-view-command">
 <h2>Data View Command</h2>
@@ -736,16 +1041,29 @@ level 2.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed data view [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-v, --verbosity [0|1|2]&quot;,&quot;Verbosity level of output&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-v, –verbosity [0|1|2]</p></td>
+<td><p>Verbosity level of output</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="ep-commands">
@@ -755,14 +1073,23 @@ level 2.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed ep [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -791,14 +1118,23 @@ level 2.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed ep default [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -821,14 +1157,23 @@ level 2.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed ep default get [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="ep-default-set-command">
 <h3>Ep Default Set Command</h3>
@@ -839,15 +1184,26 @@ currently active endpoint.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed ep default set [OPTIONS] [ENDPOINT]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-c, --current&quot;,&quot;Set default endpoint to current endpoint.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-c, –current</p></td>
+<td><p>Set default endpoint to current endpoint.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="ep-get-command">
@@ -858,14 +1214,23 @@ current endpoint will be set to the default endpoint, if configured.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed ep get [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="ep-list-command">
 <h2>Ep List Command</h2>
@@ -874,14 +1239,23 @@ current endpoint will be set to the default endpoint, if configured.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed ep list [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="ep-set-command">
 <h2>Ep Set Command</h2>
@@ -891,14 +1265,23 @@ default endpoint will be set as the current endpoint, if configured.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed ep set [OPTIONS] [ENDPOINT]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="exit-command">
@@ -908,14 +1291,23 @@ default endpoint will be set as the current endpoint, if configured.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed exit [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="help-command">
 <h1>Help Command</h1>
@@ -925,14 +1317,23 @@ command-specific help.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed help [OPTIONS] [COMMAND]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="ls-command">
 <h1>Ls Command</h1>
@@ -948,17 +1349,32 @@ authenticated user, regardless of context.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed ls [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-O, --offset INTEGER&quot;,&quot;Start list at offset&quot;
-&quot;-C, --count INTEGER&quot;,&quot;Limit list to count results&quot;
-&quot;-X, --context TEXT&quot;,&quot;User or project ID for command alias context. See &#39;alias&#39; command help for more information.&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-O, –offset INTEGER</p></td>
+<td><p>Start list at offset</p></td>
+</tr>
+<tr class="row-odd"><td><p>-C, –count INTEGER</p></td>
+<td><p>Limit list to count results</p></td>
+</tr>
+<tr class="row-even"><td><p>-X, –context TEXT</p></td>
+<td><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="project-commands">
 <h1>Project Commands</h1>
@@ -967,14 +1383,23 @@ authenticated user, regardless of context.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed project [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -998,19 +1423,38 @@ current user, as well as projects were the current user is a member.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed project list [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-o, --owned&quot;,&quot;Include owned projects&quot;
-&quot;-a, --admin&quot;,&quot;Include administered projects&quot;
-&quot;-m, --member&quot;,&quot;Include membership projects&quot;
-&quot;-O, --offset INTEGER&quot;,&quot;Start list at offset&quot;
-&quot;-C, --count INTEGER&quot;,&quot;Limit list to count results&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-o, –owned</p></td>
+<td><p>Include owned projects</p></td>
+</tr>
+<tr class="row-odd"><td><p>-a, –admin</p></td>
+<td><p>Include administered projects</p></td>
+</tr>
+<tr class="row-even"><td><p>-m, –member</p></td>
+<td><p>Include membership projects</p></td>
+</tr>
+<tr class="row-odd"><td><p>-O, –offset INTEGER</p></td>
+<td><p>Start list at offset</p></td>
+</tr>
+<tr class="row-even"><td><p>-C, –count INTEGER</p></td>
+<td><p>Limit list to count results</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="project-view-command">
 <h2>Project View Command</h2>
@@ -1020,15 +1464,26 @@ member) within the project specified by the ID argument.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed project view [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-v, --verbosity [0|1|2]&quot;,&quot;Verbosity level of output&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-v, –verbosity [0|1|2]</p></td>
+<td><p>Verbosity level of output</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="query-commands">
@@ -1038,14 +1493,23 @@ member) within the project specified by the ID argument.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed query [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -1083,30 +1547,71 @@ member) within the project specified by the ID argument.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed query create [OPTIONS] TITLE
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-C, --coll-mode&quot;,&quot;Search for collections intead of data&quot;
-&quot;-c, --coll TEXT&quot;,&quot;Collection to search (multiple allowed)&quot;
-&quot;--id TEXT&quot;,&quot;ID/alias expression&quot;
-&quot;--text TEXT&quot;,&quot;Text expression&quot;
-&quot;-t, --tag TEXT&quot;,&quot;Tag (multiple allowed)&quot;
-&quot;--schema TEXT&quot;,&quot;Metadata schema ID&quot;
-&quot;--meta TEXT&quot;,&quot;Metadata expression&quot;
-&quot;--meta-err&quot;,&quot;Metadata has validation errors&quot;
-&quot;--owner TEXT&quot;,&quot;Owninging user ID (only for public queries)&quot;
-&quot;--creator TEXT&quot;,&quot;Creating user ID&quot;
-&quot;--from TEXT&quot;,&quot;Find from specified date/time (M/D/YYYY[,HH:MM])&quot;
-&quot;--to TEXT&quot;,&quot;Find up to specified date/time (M/D/YYYY[,HH:MM])&quot;
-&quot;-p, --public&quot;,&quot;Search public data/collections in catalog&quot;
-&quot;--category TEXT&quot;,&quot;Category (public searches only)&quot;
-&quot;--sort TEXT&quot;,&quot;Sort option (id,title,owner,text,ct,ut)&quot;
-&quot;--sort-rev&quot;,&quot;Sort in reverse order (not available for text)&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-C, –coll-mode</p></td>
+<td><p>Search for collections intead of data</p></td>
+</tr>
+<tr class="row-odd"><td><p>-c, –coll TEXT</p></td>
+<td><p>Collection to search (multiple allowed)</p></td>
+</tr>
+<tr class="row-even"><td><p>–id TEXT</p></td>
+<td><p>ID/alias expression</p></td>
+</tr>
+<tr class="row-odd"><td><p>–text TEXT</p></td>
+<td><p>Text expression</p></td>
+</tr>
+<tr class="row-even"><td><p>-t, –tag TEXT</p></td>
+<td><p>Tag (multiple allowed)</p></td>
+</tr>
+<tr class="row-odd"><td><p>–schema TEXT</p></td>
+<td><p>Metadata schema ID</p></td>
+</tr>
+<tr class="row-even"><td><p>–meta TEXT</p></td>
+<td><p>Metadata expression</p></td>
+</tr>
+<tr class="row-odd"><td><p>–meta-err</p></td>
+<td><p>Metadata has validation errors</p></td>
+</tr>
+<tr class="row-even"><td><p>–owner TEXT</p></td>
+<td><p>Owninging user ID (only for public queries)</p></td>
+</tr>
+<tr class="row-odd"><td><p>–creator TEXT</p></td>
+<td><p>Creating user ID</p></td>
+</tr>
+<tr class="row-even"><td><p>–from TEXT</p></td>
+<td><p>Find from specified date/time (M/D/YYYY[,HH:MM])</p></td>
+</tr>
+<tr class="row-odd"><td><p>–to TEXT</p></td>
+<td><p>Find up to specified date/time (M/D/YYYY[,HH:MM])</p></td>
+</tr>
+<tr class="row-even"><td><p>-p, –public</p></td>
+<td><p>Search public data/collections in catalog</p></td>
+</tr>
+<tr class="row-odd"><td><p>–category TEXT</p></td>
+<td><p>Category (public searches only)</p></td>
+</tr>
+<tr class="row-even"><td><p>–sort TEXT</p></td>
+<td><p>Sort option (id,title,owner,text,ct,ut)</p></td>
+</tr>
+<tr class="row-odd"><td><p>–sort-rev</p></td>
+<td><p>Sort in reverse order (not available for text)</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="query-delete-command">
 <h2>Query Delete Command</h2>
@@ -1115,14 +1620,23 @@ member) within the project specified by the ID argument.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed query delete [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="query-exec-command">
 <h2>Query Exec Command</h2>
@@ -1131,16 +1645,29 @@ member) within the project specified by the ID argument.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed query exec [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-O, --offset INTEGER&quot;,&quot;Start results list at offset&quot;
-&quot;-C, --count INTEGER&quot;,&quot;Limit to count results&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-O, –offset INTEGER</p></td>
+<td><p>Start results list at offset</p></td>
+</tr>
+<tr class="row-odd"><td><p>-C, –count INTEGER</p></td>
+<td><p>Limit to count results</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="query-list-command">
 <h2>Query List Command</h2>
@@ -1149,16 +1676,29 @@ member) within the project specified by the ID argument.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed query list [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-O, --offset INTEGER&quot;,&quot;Start list at offset&quot;
-&quot;-C, --count INTEGER&quot;,&quot;Limit list to count results&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-O, –offset INTEGER</p></td>
+<td><p>Start list at offset</p></td>
+</tr>
+<tr class="row-odd"><td><p>-C, –count INTEGER</p></td>
+<td><p>Limit list to count results</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="query-run-command">
 <h2>Query Run Command</h2>
@@ -1173,32 +1713,77 @@ are creation and update times, respectively.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed query run [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-C, --coll-mode&quot;,&quot;Search for collections intead of data&quot;
-&quot;-c, --coll TEXT&quot;,&quot;Collection to search (multiple allowed)&quot;
-&quot;--id TEXT&quot;,&quot;ID/alias expression&quot;
-&quot;--text TEXT&quot;,&quot;Text expression&quot;
-&quot;-t, --tag TEXT&quot;,&quot;Tag (multiple allowed)&quot;
-&quot;--schema TEXT&quot;,&quot;Metadata schema ID&quot;
-&quot;--meta TEXT&quot;,&quot;Metadata expression&quot;
-&quot;--meta-err&quot;,&quot;Metadata has validation errors&quot;
-&quot;--owner TEXT&quot;,&quot;Owninging user ID (only for public queries)&quot;
-&quot;--creator TEXT&quot;,&quot;Creating user ID&quot;
-&quot;--from TEXT&quot;,&quot;Find from specified date/time (M/D/YYYY[,HH:MM])&quot;
-&quot;--to TEXT&quot;,&quot;Find up to specified date/time (M/D/YYYY[,HH:MM])&quot;
-&quot;-p, --public&quot;,&quot;Search public data/collections in catalog&quot;
-&quot;--category TEXT&quot;,&quot;Category (public searches only)&quot;
-&quot;--sort TEXT&quot;,&quot;Sort option (id,title,owner,text,ct,ut)&quot;
-&quot;--sort-rev&quot;,&quot;Sort in reverse order (not available for text)&quot;
-&quot;--offset INTEGER&quot;,&quot;Start result list at offset&quot;
-&quot;--count INTEGER&quot;,&quot;Limit to count results (default = 20)&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-C, –coll-mode</p></td>
+<td><p>Search for collections intead of data</p></td>
+</tr>
+<tr class="row-odd"><td><p>-c, –coll TEXT</p></td>
+<td><p>Collection to search (multiple allowed)</p></td>
+</tr>
+<tr class="row-even"><td><p>–id TEXT</p></td>
+<td><p>ID/alias expression</p></td>
+</tr>
+<tr class="row-odd"><td><p>–text TEXT</p></td>
+<td><p>Text expression</p></td>
+</tr>
+<tr class="row-even"><td><p>-t, –tag TEXT</p></td>
+<td><p>Tag (multiple allowed)</p></td>
+</tr>
+<tr class="row-odd"><td><p>–schema TEXT</p></td>
+<td><p>Metadata schema ID</p></td>
+</tr>
+<tr class="row-even"><td><p>–meta TEXT</p></td>
+<td><p>Metadata expression</p></td>
+</tr>
+<tr class="row-odd"><td><p>–meta-err</p></td>
+<td><p>Metadata has validation errors</p></td>
+</tr>
+<tr class="row-even"><td><p>–owner TEXT</p></td>
+<td><p>Owninging user ID (only for public queries)</p></td>
+</tr>
+<tr class="row-odd"><td><p>–creator TEXT</p></td>
+<td><p>Creating user ID</p></td>
+</tr>
+<tr class="row-even"><td><p>–from TEXT</p></td>
+<td><p>Find from specified date/time (M/D/YYYY[,HH:MM])</p></td>
+</tr>
+<tr class="row-odd"><td><p>–to TEXT</p></td>
+<td><p>Find up to specified date/time (M/D/YYYY[,HH:MM])</p></td>
+</tr>
+<tr class="row-even"><td><p>-p, –public</p></td>
+<td><p>Search public data/collections in catalog</p></td>
+</tr>
+<tr class="row-odd"><td><p>–category TEXT</p></td>
+<td><p>Category (public searches only)</p></td>
+</tr>
+<tr class="row-even"><td><p>–sort TEXT</p></td>
+<td><p>Sort option (id,title,owner,text,ct,ut)</p></td>
+</tr>
+<tr class="row-odd"><td><p>–sort-rev</p></td>
+<td><p>Sort in reverse order (not available for text)</p></td>
+</tr>
+<tr class="row-even"><td><p>–offset INTEGER</p></td>
+<td><p>Start result list at offset</p></td>
+</tr>
+<tr class="row-odd"><td><p>–count INTEGER</p></td>
+<td><p>Limit to count results (default = 20)</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="query-update-command">
 <h2>Query Update Command</h2>
@@ -1209,31 +1794,74 @@ specify an empty string (“”) for the associated option.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed query update [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;--title TEXT&quot;,&quot;New query title&quot;
-&quot;-C, --coll-mode&quot;,&quot;Search for collections intead of data&quot;
-&quot;-c, --coll TEXT&quot;,&quot;Collection to search (multiple allowed)&quot;
-&quot;--id TEXT&quot;,&quot;ID/alias expression&quot;
-&quot;--text TEXT&quot;,&quot;Text expression&quot;
-&quot;-t, --tag TEXT&quot;,&quot;Tag (multiple allowed)&quot;
-&quot;--schema TEXT&quot;,&quot;Metadata schema ID&quot;
-&quot;--meta TEXT&quot;,&quot;Metadata expression&quot;
-&quot;--meta-err&quot;,&quot;Metadata has validation errors&quot;
-&quot;--owner TEXT&quot;,&quot;Owninging user ID (only for public queries)&quot;
-&quot;--creator TEXT&quot;,&quot;Creating user ID&quot;
-&quot;--from TEXT&quot;,&quot;Find from specified date/time (M/D/YYYY[,HH:MM])&quot;
-&quot;--to TEXT&quot;,&quot;Find up to specified date/time (M/D/YYYY[,HH:MM])&quot;
-&quot;-p, --public&quot;,&quot;Search public data/collections in catalog&quot;
-&quot;--category TEXT&quot;,&quot;Category (public searches only)&quot;
-&quot;--sort TEXT&quot;,&quot;Sort option (id,title,owner,text,ct,ut)&quot;
-&quot;--sort-rev&quot;,&quot;Sort in reverse order (not available for text)&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>–title TEXT</p></td>
+<td><p>New query title</p></td>
+</tr>
+<tr class="row-odd"><td><p>-C, –coll-mode</p></td>
+<td><p>Search for collections intead of data</p></td>
+</tr>
+<tr class="row-even"><td><p>-c, –coll TEXT</p></td>
+<td><p>Collection to search (multiple allowed)</p></td>
+</tr>
+<tr class="row-odd"><td><p>–id TEXT</p></td>
+<td><p>ID/alias expression</p></td>
+</tr>
+<tr class="row-even"><td><p>–text TEXT</p></td>
+<td><p>Text expression</p></td>
+</tr>
+<tr class="row-odd"><td><p>-t, –tag TEXT</p></td>
+<td><p>Tag (multiple allowed)</p></td>
+</tr>
+<tr class="row-even"><td><p>–schema TEXT</p></td>
+<td><p>Metadata schema ID</p></td>
+</tr>
+<tr class="row-odd"><td><p>–meta TEXT</p></td>
+<td><p>Metadata expression</p></td>
+</tr>
+<tr class="row-even"><td><p>–meta-err</p></td>
+<td><p>Metadata has validation errors</p></td>
+</tr>
+<tr class="row-odd"><td><p>–owner TEXT</p></td>
+<td><p>Owninging user ID (only for public queries)</p></td>
+</tr>
+<tr class="row-even"><td><p>–creator TEXT</p></td>
+<td><p>Creating user ID</p></td>
+</tr>
+<tr class="row-odd"><td><p>–from TEXT</p></td>
+<td><p>Find from specified date/time (M/D/YYYY[,HH:MM])</p></td>
+</tr>
+<tr class="row-even"><td><p>–to TEXT</p></td>
+<td><p>Find up to specified date/time (M/D/YYYY[,HH:MM])</p></td>
+</tr>
+<tr class="row-odd"><td><p>-p, –public</p></td>
+<td><p>Search public data/collections in catalog</p></td>
+</tr>
+<tr class="row-even"><td><p>–category TEXT</p></td>
+<td><p>Category (public searches only)</p></td>
+</tr>
+<tr class="row-odd"><td><p>–sort TEXT</p></td>
+<td><p>Sort option (id,title,owner,text,ct,ut)</p></td>
+</tr>
+<tr class="row-even"><td><p>–sort-rev</p></td>
+<td><p>Sort in reverse order (not available for text)</p></td>
+</tr>
+<tr class="row-odd"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="query-view-command">
 <h2>Query View Command</h2>
@@ -1242,14 +1870,23 @@ specify an empty string (“”) for the associated option.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed query view [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="setup-command">
@@ -1262,14 +1899,23 @@ manual authentication.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed setup [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="shares-command">
 <h1>Shares Command</h1>
@@ -1278,16 +1924,29 @@ manual authentication.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed shares [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-u, --users&quot;,&quot;Show users only&quot;
-&quot;-p, --projects&quot;,&quot;Show projects only&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-u, –users</p></td>
+<td><p>Show users only</p></td>
+</tr>
+<tr class="row-odd"><td><p>-p, –projects</p></td>
+<td><p>Show projects only</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="task-commands">
 <h1>Task Commands</h1>
@@ -1296,14 +1955,23 @@ manual authentication.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed task [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -1329,20 +1997,41 @@ tasks history such that only up to 30 days of history are retained.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed task list [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-s, --since TEXT&quot;,&quot;List from specified time (seconds default, suffix h = hours, d = days, w = weeks)&quot;
-&quot;-f, --from TEXT&quot;,&quot;List from specified date/time (M/D/YYYY[,HH:MM])&quot;
-&quot;-t, --to TEXT&quot;,&quot;List up to specified date/time (M/D/YYYY[,HH:MM])&quot;
-&quot;-S, --status [0|1|2|3|4|queued|ready|running|succeeded|failed]&quot;,&quot;List tasks matching specified status&quot;
-&quot;-O, --offset INTEGER&quot;,&quot;Start list at offset&quot;
-&quot;-C, --count INTEGER&quot;,&quot;Limit list to count results&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-s, –since TEXT</p></td>
+<td><p>List from specified time (seconds default, suffix h = hours, d = days, w = weeks)</p></td>
+</tr>
+<tr class="row-odd"><td><p>-f, –from TEXT</p></td>
+<td><p>List from specified date/time (M/D/YYYY[,HH:MM])</p></td>
+</tr>
+<tr class="row-even"><td><p>-t, –to TEXT</p></td>
+<td><p>List up to specified date/time (M/D/YYYY[,HH:MM])</p></td>
+</tr>
+<tr class="row-odd"><td><p>-S, –status [0|1|2|3|4|queued|ready|running|succeeded|failed]</p></td>
+<td><p>List tasks matching specified status</p></td>
+</tr>
+<tr class="row-even"><td><p>-O, –offset INTEGER</p></td>
+<td><p>Start list at offset</p></td>
+</tr>
+<tr class="row-odd"><td><p>-C, –count INTEGER</p></td>
+<td><p>Limit list to count results</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="task-view-command">
 <h2>Task View Command</h2>
@@ -1352,14 +2041,23 @@ record, or omit to view the latest task initiated by the current user.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed task view [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="user-commands">
@@ -1369,14 +2067,23 @@ record, or omit to view the latest task initiated by the current user.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed user [OPTIONS] COMMAND [ARGS]...
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -1405,16 +2112,29 @@ record, or omit to view the latest task initiated by the current user.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed user all [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-O, --offset INTEGER&quot;,&quot;Start list at offset&quot;
-&quot;-C, --count INTEGER&quot;,&quot;Limit list to count results&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-O, –offset INTEGER</p></td>
+<td><p>Start list at offset</p></td>
+</tr>
+<tr class="row-odd"><td><p>-C, –count INTEGER</p></td>
+<td><p>Limit list to count results</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="user-collab-command">
 <h2>User Collab Command</h2>
@@ -1425,16 +2145,29 @@ sharing relationships with the current user.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed user collab [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-O, --offset INTEGER&quot;,&quot;Start list at offset&quot;
-&quot;-C, --count INTEGER&quot;,&quot;Limit list to count results&quot;
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-O, –offset INTEGER</p></td>
+<td><p>Start list at offset</p></td>
+</tr>
+<tr class="row-odd"><td><p>-C, –count INTEGER</p></td>
+<td><p>Limit list to count results</p></td>
+</tr>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="user-view-command">
 <h2>User View Command</h2>
@@ -1443,14 +2176,23 @@ sharing relationships with the current user.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed user view [OPTIONS] UID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="user-who-command">
 <h2>User Who Command</h2>
@@ -1459,14 +2201,23 @@ sharing relationships with the current user.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed user who [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="section" id="verbosity-command">
@@ -1478,14 +2229,23 @@ current verbosity level is returned.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed verbosity [OPTIONS] [LEVEL]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="wc-command">
 <h1>Wc Command</h1>
@@ -1503,14 +2263,23 @@ root colelction of the current context.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed wc [OPTIONS] ID
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="wp-command">
 <h1>Wp Command</h1>
@@ -1521,14 +2290,23 @@ project.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>datafed wp [OPTIONS]
 </pre></div>
 </div>
-<p>Options:
-.. csv-table:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>:class: table-no-hscroll
-:header: &quot;Option&quot;, &quot;Description&quot;
-
-&quot;-h, --help&quot;,&quot;Show this message and exit.&quot;
-</pre></div>
-</div>
+<p>Options:</p>
+<table class="table-no-hscroll docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>-h, –help</p></td>
+<td><p>Show this message and exit.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 
 
