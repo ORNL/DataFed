@@ -1,0 +1,1357 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>datafed.CommandLib &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="datafed.Config" href="../Config/index.html" />
+    <link rel="prev" title="datafed.CLI" href="../CLI/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/web/portal.html">Web Portal Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/reference.html">Command Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../CLI/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CLI</span></code></a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Config/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Connection/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Connection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../MessageLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.MessageLib</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin/general.html">Administration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/release.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">API Reference</a> &raquo;</li>
+        
+          <li><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a> &raquo;</li>
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code></li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-datafed.CommandLib">
+<span id="datafed-commandlib"></span><h1><a class="reference internal" href="#module-datafed.CommandLib" title="datafed.CommandLib"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code></a></h1>
+<div class="section" id="module-contents">
+<h2>Module Contents</h2>
+<div class="section" id="classes">
+<h3>Classes</h3>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#datafed.CommandLib.API" title="datafed.CommandLib.API"><code class="xref py py-obj docutils literal notranslate"><span class="pre">API</span></code></a></p></td>
+<td><p>A high-level messaging interface to the DataFed core server</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="datafed.CommandLib.API">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">datafed.CommandLib.</span></span><span class="sig-name descname"><span class="pre">API</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>A high-level messaging interface to the DataFed core server</p>
+<p>The DataFed CommandLib.API class provides a high-level interface
+for sending requests to a DataFed server. Requests are sent via python
+class methods and replies are (currently) returned as Google Protobuf message objects.
+These reply messages are defined in the *.proto files included in the
+DataFed client package. Basic functionality of th API class mirrors the
+capabilities exposed in the DataFed CLI.</p>
+<p>The Config class is used to load configuration settings, but settings
+(all or some) may also be supplied as an argument to the constructor.
+On success, a secure connection is established to the configured DataFed
+core server. If user credentials are installed, the associated user
+will be authenticated; otherwise an anonymous connection will be
+created. Use the getAuthUser() method to check is authentication is
+required after constructing an API instance.</p>
+<dl class="simple">
+<dt>opts<span class="classifier">dict, Optional</span></dt><dd><p>Configuration options</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>_max_md_size<span class="classifier">int.</span></dt><dd><p>Maximum size of metadata in bytes.
+Currently set to 102400</p>
+</dd>
+<dt>_max_payload_size<span class="classifier">int</span></dt><dd><p>Maximum limit for the amount of data that can be sent in a single batch
+create request.
+Currently set to 1048576</p>
+</dd>
+</dl>
+<p>Exception : if invalid config values are present</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._max_md_size">
+<span class="sig-name descname"><span class="pre">_max_md_size</span></span><em class="property"> <span class="pre">=</span> <span class="pre">102400</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._max_payload_size">
+<span class="sig-name descname"><span class="pre">_max_payload_size</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1048576</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._endpoint_legacy">
+<span class="sig-name descname"><span class="pre">_endpoint_legacy</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._endpoint_uuid">
+<span class="sig-name descname"><span class="pre">_endpoint_uuid</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.getAuthUser">
+<span class="sig-name descname"><span class="pre">getAuthUser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Get current authenticated user, if any.</p>
+<p>Returns current user ID If current connection is authenticated,
+otherwise returns None.</p>
+<dl class="simple">
+<dt>str :</dt><dd><p>Authenticated user ID or None if not authenticated</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.logout">
+<span class="sig-name descname"><span class="pre">logout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Logout current client, if any.</p>
+<p>If connected, logs-out by reseting underlying connection and clearing
+current user.</p>
+<p>None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.loginByPassword">
+<span class="sig-name descname"><span class="pre">loginByPassword</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Manually authenticate client by user id and password</p>
+<p>If not authenticated, this method attempts manual authentication
+using the supplied DataFed user ID and password.</p>
+<dl class="simple">
+<dt>uid<span class="classifier">str</span></dt><dd><p>DataFed user ID</p>
+</dd>
+<dt>password<span class="classifier">str</span></dt><dd><p>DataFed password</p>
+</dd>
+</dl>
+<p>None</p>
+<p>Exception : if authentication fails.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.generateCredentials">
+<span class="sig-name descname"><span class="pre">generateCredentials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Generate/download local user credentials</p>
+<p>Requests the DataFed server to generate and send local credentials for
+the current user. These credentials should be saved/loaded from a
+set of public/private client keys files as specified via the Config
+module.</p>
+<p>msg: Google protobuf message</p>
+<p>Exception: On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.dataView">
+<span class="sig-name descname"><span class="pre">dataView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">details</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>View a data record</p>
+<p>Retrieves all metadata associated with record with metadata (without
+raw data).</p>
+<dl class="simple">
+<dt>data_id<span class="classifier">str</span></dt><dd><p>Data record ID or alias</p>
+</dd>
+<dt>details<span class="classifier">str, Optional. Default = False</span></dt><dd><p>NOT USED</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">RecordDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.dataCreate">
+<span class="sig-name descname"><span class="pre">dataCreate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema_enforce</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'root'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repo_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_data_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">external</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Create a new data record</p>
+<p>Create a new data record. May specify alias, containing collection,
+metadata, dependencies, and allocation. Raw data must be uploaded
+separately. Cannot use both metadata and metadata_file options.</p>
+<dl class="simple">
+<dt>title<span class="classifier">str</span></dt><dd><p>Title of record</p>
+</dd>
+<dt>alias<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Alias of record</p>
+</dd>
+<dt>description<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Text description of record</p>
+</dd>
+<dt>tags<span class="classifier">list of str, Optional. Default = None</span></dt><dd><p>Tags that describe the record</p>
+</dd>
+<dt>extension<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Extension for raw data file to use / override</p>
+</dd>
+<dt>metadata<span class="classifier">JSON string, Optional. Default = None</span></dt><dd><p>Domain-specific metadata described in dictionary form.
+This dictionary can be nested.</p>
+</dd>
+<dt>metadata_file<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Path to local JSON file containing domain-specific metadata</p>
+</dd>
+<dt>schema: str, Optional. Default = None</dt><dd><p>Set schema ID:ver for metadata validation</p>
+</dd>
+<dt>schema_enforce: bool, Optional, Default = None</dt><dd><p>Set to true to enforce metadata schema validation (i.e. fail if does not comply).</p>
+</dd>
+<dt>parent_id<span class="classifier">str, Optional. Default = “root”</span></dt><dd><p>ID/alias of collection within which to create this record.
+By default, the record will be created in the user’s root collection</p>
+</dd>
+<dt>deps<span class="classifier">list, Optional. Default = None</span></dt><dd><p>Dependencies of this data record specified as an array of
+lists as [ [relation type &lt;str&gt;,  record ID &lt;str&gt;], [], [] … ].
+Relation types currently supported are:
+* “der” - Is derived from
+* “comp” - Is comprised of
+* “ver” - Is new version of</p>
+</dd>
+<dt>repo_id<span class="classifier">str, Optional. Default = None</span></dt><dd><p>ID of data repository to create this record in.
+By default, the default repository will be chosen.</p>
+</dd>
+<dt>raw_data_file<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Raw data file as a full Globus path. Currently, this parameter can only
+be specified with the external flag set to true.</p>
+</dd>
+<dt>external<span class="classifier">bool, Optional. Default = None</span></dt><dd><p>Set to true to specify raw data for this record is external (unmanaged).
+Cannot be specified with repo_id.</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">RecordDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.dataUpdate">
+<span class="sig-name descname"><span class="pre">dataUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema_enforce</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deps_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deps_rem</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_data_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update an existing data record</p>
+<p>Update an existing data record. May specify title, alias, metadata,
+dependencies, and allocation. Raw data must be uploaded separately.
+Cannot use both metadata and metadata_file options.</p>
+<dl class="simple">
+<dt>data_id<span class="classifier">str</span></dt><dd><p>Data record ID or alias</p>
+</dd>
+<dt>title<span class="classifier">str</span></dt><dd><p>Title of record</p>
+</dd>
+<dt>alias<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Alias of record</p>
+</dd>
+<dt>description<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Text description of record</p>
+</dd>
+<dt>tags<span class="classifier">list of str, Optional. Default = None</span></dt><dd><p>Tags that describe the record</p>
+</dd>
+<dt>extension<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Extension for raw data file to use / override</p>
+</dd>
+<dt>metadata<span class="classifier">JSON string, Optional. Default = None</span></dt><dd><p>Domain-specific metadata described in dictionary form.
+This dictionary can be nested.</p>
+</dd>
+<dt>metadata_file<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Path to local JSON file containing domain-specific metadata</p>
+</dd>
+<dt>metadata_set<span class="classifier">bool, Optional. Default = False</span></dt><dd><p>Set to True to replace existing metadata with provided.
+Otherwise, and by default, provided metadata will be merged with
+existing metadata.</p>
+</dd>
+<dt>schema: str, Optional. Default = None</dt><dd><p>Set schema ID:ver for metadata validation</p>
+</dd>
+<dt>schema_enforce: bool, Optional, Default = None</dt><dd><p>Set to true to enforce metadata schema validation (i.e. fail if does not comply).</p>
+</dd>
+<dt>deps_add<span class="classifier">list, Optional. Default = None</span></dt><dd><p>Dependencies of this data record to add, specified as an array of
+lists as [ [relation type &lt;str&gt;,  record ID &lt;str&gt;], [], [] … ].
+Relation types currently supported are:
+* “der” - Is derived from
+* “comp” - Is comprised of
+* “ver” - Is new version of</p>
+</dd>
+<dt>deps_rem<span class="classifier">list, Optional. Default = None</span></dt><dd><p>Dependencies of this data record to remove, specified as an array of
+lists as [ [relation type &lt;str&gt;,  record ID &lt;str&gt;], [], [] … ].
+Relation types currently supported are:
+* “der” - Is derived from
+* “comp” - Is comprised of
+* “ver” - Is new version of</p>
+</dd>
+<dt>raw_data_file<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Raw data file as a full Globus path. Currently, this parameter can only
+be specified for records with the external (unmanaged) raw data.</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">RecordDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.dataDelete">
+<span class="sig-name descname"><span class="pre">dataDelete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Deletes onr or more data records and associated raw data.</p>
+<dl class="simple">
+<dt>data_id<span class="classifier">str</span></dt><dd><p>Data record ID or alias</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">RecordDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On invalid options or communication / server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.dataGet">
+<span class="sig-name descname"><span class="pre">dataGet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encrypt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">sdms.ENCRYPT_AVAIL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orig_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_sec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Get (download) raw data for one or more data records and/or collections</p>
+<p>This method downloads to the specified path the raw data associated with
+a specified data record, or the records contained in a collection, or
+with a list of records and/or collections. The path may be a full
+globus path or a full or relative local file system path (will prepend
+the default endpoint). If the endpoint is not local, only full paths
+should be specified.</p>
+<dl class="simple">
+<dt>item_id<span class="classifier">str or list or str</span></dt><dd><p>Data record or collection ID/alias, or a list of IDs/aliases</p>
+</dd>
+<dt>path<span class="classifier">str</span></dt><dd><p>Globus or local file system destination path</p>
+</dd>
+<dt>encrypt :</dt><dd><p>Encrypt mode (none, if avail, force)</p>
+</dd>
+<dt>orig_fname<span class="classifier">bool, Optional. Default = False</span></dt><dd><p>If set to True, the file(s) contained in the record(s) will be
+downloaded with their original name(s).
+Otherwise, and by default, the files will be named according to
+their unique record ID followed by the original or overriden
+extension.</p>
+</dd>
+<dt>wait<span class="classifier">bool, Optional. Default = False</span></dt><dd><p>Set to true to wait until the file transfer is complete.
+Otherwise, and by default, the transfer will take place in the
+background / asynchronously</p>
+</dd>
+<dt>timeout_sec<span class="classifier">int, Optional. Default = 0</span></dt><dd><p>Timeout in seconds for polling the status of the Globus transfer.
+By default, there is no timeout.</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">XfrDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On invalid options or communication / server error.
+Exception : If both Globus and HTTP transfers are required</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.dataPut">
+<span class="sig-name descname"><span class="pre">dataPut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encrypt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">sdms.ENCRYPT_AVAIL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_sec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Put (upload) raw data for a data record</p>
+<p>This method uploads raw data from the specified path to the specified
+data record. The upload involves a Globus transfer, and the path may be
+a full globus path, or a full or relative local file system path (the
+current endpoint will be prepended).</p>
+<dl class="simple">
+<dt>data_id<span class="classifier">str</span></dt><dd><p>Data record ID or alias</p>
+</dd>
+<dt>path<span class="classifier">str</span></dt><dd><p>Globus or local file system path to source file</p>
+</dd>
+<dt>encrypt :</dt><dd><p>Encrypt mode (none, if avail, force)</p>
+</dd>
+<dt>wait<span class="classifier">bool, Optional. Default = False</span></dt><dd><p>Set to true to wait until the file transfer is complete.
+Otherwise, and by default, the transfer will take place in the
+background / asynchronously</p>
+</dd>
+<dt>timeout_sec<span class="classifier">int, Optional. Default = 0</span></dt><dd><p>Timeout in seconds for polling the status of the Globus transfer.
+By default, there is no timeout.</p>
+</dd>
+<dt>extension<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Override extension of source file.
+By default, the extension is detected automatically.</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">XfrDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On invalid options or communication / server error.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.dataBatchCreate">
+<span class="sig-name descname"><span class="pre">dataBatchCreate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Batch create data records</p>
+<p>Create one or more data records from JSON source files that specify all
+metadata for the record. The source files may contain an individual JSON
+object, or an array of JSON objects. There is a maximum limit to the
+amount of data that can be sent in a single batch create request (see
+<code class="docutils literal notranslate"><span class="pre">_max_payload_size</span></code> attribute).</p>
+<dl class="simple">
+<dt>file<span class="classifier">list or tuple</span></dt><dd><p>An array of (JSON) filenames to process</p>
+</dd>
+<dt>coll_id<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Parent collection ID/alias . Replaces parent field in JSON.
+By default, the parent field in the JSON file will be used.</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">RecordDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On invalid options or communication / server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.dataBatchUpdate">
+<span class="sig-name descname"><span class="pre">dataBatchUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Batch update data records</p>
+<p>Update one or more data records from JSON source files that specify all
+updated metadata for the record. The source files may contain an
+individual JSON object, or an array of JSON objects. There is a maximum
+limit to the amount of data that can be sent in a single batch create
+request (see _max_payload_size).</p>
+<dl class="simple">
+<dt>file<span class="classifier">list or tuple</span></dt><dd><p>An array of filenames on local file system to process</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">RecordDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On invalid options or communication / server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.collectionView">
+<span class="sig-name descname"><span class="pre">collectionView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>View collection information</p>
+<p>View alias, title, and description of a collection</p>
+<dl class="simple">
+<dt>coll_id<span class="classifier">str</span></dt><dd><p>ID/alias of Collection to view</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">CollDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On invalid options or communication / server error.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.collectionCreate">
+<span class="sig-name descname"><span class="pre">collectionCreate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'root'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Create a new collection</p>
+<p>Create a new collection with title, alias, and description. Note that if
+topic is provided, the collection and contents become publicly readable
+and will be presented in DataFed catalog browser.</p>
+<dl class="simple">
+<dt>title<span class="classifier">str</span></dt><dd><p>Title of collection</p>
+</dd>
+<dt>alias<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Alias of collection</p>
+</dd>
+<dt>description<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Text description of collection</p>
+</dd>
+<dt>tags<span class="classifier">list of str, Optional. Default = None</span></dt><dd><p>Tags that describe the collection</p>
+</dd>
+<dt>topic<span class="classifier">str</span></dt><dd><p>Scientific topics under which this collection is organized
+in the catalog view.
+If topic is added, the collection and contents become <strong>publicly</strong>
+readable and will be presented in DataFed catalog browser.</p>
+</dd>
+<dt>parent_id<span class="classifier">str, Optional. Default = “root”</span></dt><dd><p>ID/alias of collection within which to create this collection.
+By default, the collection will be created in the user’s root
+collection</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">CollDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.collectionUpdate">
+<span class="sig-name descname"><span class="pre">collectionUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update an existing collection with title, alias, and description.</p>
+<p>Note
+that if topic is added, the collection and contents become publicly
+readable and will be presented in DataFed catalog browser.</p>
+<dl class="simple">
+<dt>coll_id<span class="classifier">str</span></dt><dd><p>ID/alias of the collection</p>
+</dd>
+<dt>title<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Title of collection</p>
+</dd>
+<dt>alias<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Alias of collection</p>
+</dd>
+<dt>description<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Text description of collection</p>
+</dd>
+<dt>tags<span class="classifier">list of str, Optional. Default = None</span></dt><dd><p>Tags that describe the collection</p>
+</dd>
+<dt>topic<span class="classifier">str</span></dt><dd><p>Scientific topics under which this collection is organized
+in the catalog view.
+If topic is added, the collection and contents become <strong>publicly</strong>
+readable and will be presented in DataFed catalog browser.</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">CollDataReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.collectionDelete">
+<span class="sig-name descname"><span class="pre">collectionDelete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Delete one or more existing collections</p>
+<p>Deletes one or more collections and contained items. When a collection is
+deleted, all contained collections are also deleted. However, contained
+data records are only deleted if they are not linked to another
+collection not involved in the deletion.</p>
+<dl class="simple">
+<dt>coll_id<span class="classifier">str, or list of str</span></dt><dd><p>ID/alias OR list of IDs/aliases of the collection(s) to be deleted</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>msg<span class="classifier">AckReply Google protobuf message</span></dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.collectionItemsList">
+<span class="sig-name descname"><span class="pre">collectionItemsList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>List items in collection</p>
+<p>List items linked to or contained in the specified collection.</p>
+<dl class="simple">
+<dt>coll_id<span class="classifier">str</span></dt><dd><p>ID/alias of the collection</p>
+</dd>
+<dt>offset<span class="classifier">int, Optional. Default = 0</span></dt><dd><p>Offset of listing results for paging</p>
+</dd>
+<dt>count<span class="classifier">int, Optional. Default = 20</span></dt><dd><p>Number (limit) of listing results for (cleaner) paging</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>ListingReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.collectionItemsUpdate">
+<span class="sig-name descname"><span class="pre">collectionItemsUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rem_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update (add/remove) items linked to a specified collection</p>
+<p>Note that data
+records may be linked to any number of collections, but collections can
+only be linked to one parent collection. If a collection is added to a
+new parent collection, it is automatically unlinked from it’s current
+parent. An ancestor (parent, grandparent, etc) collection cannot be
+linked to a descendant collection.</p>
+<p>Items removed from a collection that have no other parent collections
+are automatically re-linked to the root collection. The return reply
+of this method contains any such re-linked items.</p>
+<dl class="simple">
+<dt>coll_id<span class="classifier">str</span></dt><dd><p>ID/alias of the collection</p>
+</dd>
+<dt>add_ids<span class="classifier">str or list of str, Optional. Default = None</span></dt><dd><p>ID/alias of record(s) and/or collection(s) to add</p>
+</dd>
+<dt>rem_ids<span class="classifier">str or list of str, Optional. Default = None</span></dt><dd><p>ID/alias of record(s) and/or collection(s) to remove</p>
+</dd>
+</dl>
+<p>context</p>
+<dl class="simple">
+<dt>ListingReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.collectionGetParents">
+<span class="sig-name descname"><span class="pre">collectionGetParents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inclusive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Get parents of specified collection up to the root collection</p>
+<dl class="simple">
+<dt>coll_id<span class="classifier">str</span></dt><dd><p>ID/alias of the collection</p>
+</dd>
+<dt>inclusive<span class="classifier">bool, Optional. Default = False</span></dt><dd><p>Set to True to include starting collection.
+Otherwise, and by default, starting collection is ignored.</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>CollPathReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.queryList">
+<span class="sig-name descname"><span class="pre">queryList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>List saved queries</p>
+<dl class="simple">
+<dt>offset<span class="classifier">int, Optional. Default = 0</span></dt><dd><p>Offset of listing results for paging</p>
+</dd>
+<dt>count<span class="classifier">int, Optional. Default = 20</span></dt><dd><p>Number (limit) of listing results for (cleaner) paging</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>ListingReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.queryView">
+<span class="sig-name descname"><span class="pre">queryView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_id</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>View a saved query</p>
+<dl class="simple">
+<dt>query_id<span class="classifier">str</span></dt><dd><p>ID of saved query to view</p>
+</dd>
+</dl>
+<p>QueryDataReply Google protobuf message</p>
+<p>Exception : On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.queryCreate">
+<span class="sig-name descname"><span class="pre">queryCreate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_rev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Create a new saved query</p>
+<p>Default scope for the search includes owned data and all data
+associated with owned and managed projects, as well as member projects.</p>
+<dl class="simple">
+<dt>title<span class="classifier">str</span></dt><dd><p>Title of query</p>
+</dd>
+<dt>id<span class="classifier">str, Optional. Default = None</span></dt><dd><p>ID/alias for query. Automatically assigned by default.</p>
+</dd>
+<dt>text<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Text in title or description of query</p>
+</dd>
+<dt>meta<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Query expression</p>
+</dd>
+</dl>
+<p>QueryDataReply Google protobuf message</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.queryUpdate">
+<span class="sig-name descname"><span class="pre">queryUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_rev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update an existing saved query</p>
+<p>Things like the title, and the query expression can be modified.
+However, the scope may not be changed</p>
+<p>QueryDataReply Google protobuf message</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.queryDelete">
+<span class="sig-name descname"><span class="pre">queryDelete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_id</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Delete a saved query.</p>
+<dl class="simple">
+<dt>query_id<span class="classifier">str</span></dt><dd><p>ID/alias for query.</p>
+</dd>
+</dl>
+<p>AckReply Google protobuf message</p>
+<p>Exception : On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.queryExec">
+<span class="sig-name descname"><span class="pre">queryExec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Execute a stored query and return matches.</p>
+<dl class="simple">
+<dt>query_id<span class="classifier">str</span></dt><dd><p>ID/alias for query.</p>
+</dd>
+<dt>offset<span class="classifier">int, Optional. Default = 0</span></dt><dd><p>Offset of listing results for paging</p>
+</dd>
+<dt>count<span class="classifier">int, Optional. Default = 20</span></dt><dd><p>Number (limit) of listing results for (cleaner) paging</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>ListingReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.queryDirect">
+<span class="sig-name descname"><span class="pre">queryDirect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_rev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Directly run a manually entered query and return matches</p>
+<dl class="simple">
+<dt>coll<span class="classifier">str, Optional. Default = None</span></dt><dd><p>ID(s) or alias(es) of collection(s) to add to scope</p>
+</dd>
+<dt>id<span class="classifier">str</span></dt><dd><p>ID/alias query text</p>
+</dd>
+<dt>text<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Description of query</p>
+</dd>
+<dt>meta<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Query expression</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>ListingReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._buildSearchRequest">
+<span class="sig-name descname"><span class="pre">_buildSearchRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_rev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.userListCollaborators">
+<span class="sig-name descname"><span class="pre">userListCollaborators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>List collaborators. Collaborators are defined as users that have projects
+in common with the current user, or that have data-sharing relationships
+with the current user.</p>
+<dl class="simple">
+<dt>offset<span class="classifier">int, Optional. Default = 0</span></dt><dd><p>Offset of listing results for paging</p>
+</dd>
+<dt>count<span class="classifier">int, Optional. Default = 20</span></dt><dd><p>Number (limit) of listing results for (cleaner) paging</p>
+</dd>
+</dl>
+<p>UserDataReply Google protobuf message</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.userListAll">
+<span class="sig-name descname"><span class="pre">userListAll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>List all users</p>
+<dl class="simple">
+<dt>offset<span class="classifier">int, Optional. Default = 0</span></dt><dd><p>Offset of listing results for paging</p>
+</dd>
+<dt>count<span class="classifier">int, Optional. Default = 20</span></dt><dd><p>Number (limit) of listing results for (cleaner) paging</p>
+</dd>
+</dl>
+<p>UserDataReply Google protobuf message</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.userView">
+<span class="sig-name descname"><span class="pre">userView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uid</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>View user information</p>
+<dl class="simple">
+<dt>uid<span class="classifier">str</span></dt><dd><p>ID of user to view</p>
+</dd>
+</dl>
+<p>UserDataReply Google protobuf message</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.projectList">
+<span class="sig-name descname"><span class="pre">projectList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owned</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">member</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>List projects associated with current user</p>
+<p>List projects that are owned or managed by the current user, as well as
+projects were the current user is a member.</p>
+<dl class="simple">
+<dt>owned<span class="classifier">bool, optional. Default = True</span></dt><dd><p>If True, includes owned projects. Otherwise, only includes projects
+owned by others that this user is part of.</p>
+</dd>
+<dt>admin<span class="classifier">bool, optional. Default = True</span></dt><dd><p>If True, includes projects managed by this user. Otherwise, only
+includes projects managed by others that this user is part of.</p>
+</dd>
+<dt>member<span class="classifier">bool, optional. Default = True</span></dt><dd><p>If True, includes projects where the current user is a member.
+Otherwise, does not list such projects.</p>
+</dd>
+<dt>offset<span class="classifier">int, Optional. Default = 0</span></dt><dd><p>Offset of listing results for paging</p>
+</dd>
+<dt>count<span class="classifier">int, Optional. Default = 20</span></dt><dd><p>Number (limit) of listing results for (cleaner) paging</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>ListingReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.projectView">
+<span class="sig-name descname"><span class="pre">projectView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>View project information (title, description, owner, etc.)</p>
+<dl class="simple">
+<dt>project_id<span class="classifier">str</span></dt><dd><p>ID of project to view</p>
+</dd>
+</dl>
+<p>ProjectDataReply Google protobuf message</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.projectGetRole">
+<span class="sig-name descname"><span class="pre">projectGetRole</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Get the role that this user plays in a given project</p>
+<dl class="simple">
+<dt>project_id<span class="classifier">str</span></dt><dd><p>ID of project to view</p>
+</dd>
+</dl>
+<p>Google protobuf message</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.sharesListOwners">
+<span class="sig-name descname"><span class="pre">sharesListOwners</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inc_users</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inc_projects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>List users and/or that have shared data with client/subject.</p>
+<dl class="simple">
+<dt>inc_users<span class="classifier">list of str, Optional. Default</span></dt><dd><p>Include a list of specified users</p>
+</dd>
+<dt>inc_projects<span class="classifier">list of str, Optional. Default</span></dt><dd><p>Include a list of specified projects</p>
+</dd>
+<dt>subject<span class="classifier">list of str, Optional. Default</span></dt><dd><p>Include a list of specified subjects</p>
+</dd>
+</dl>
+<p>ListingReply Google protobuf message</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.sharesListItems">
+<span class="sig-name descname"><span class="pre">sharesListItems</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>List shared data records and collections by user/project ID</p>
+<dl class="simple">
+<dt>owner_id<span class="classifier">str</span></dt><dd><p>User or project ID</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+<dt>offset<span class="classifier">int, Optional. Default = 0</span></dt><dd><p>Offset of listing results for paging</p>
+</dd>
+<dt>count<span class="classifier">int, Optional. Default = 20</span></dt><dd><p>Number (limit) of listing results for (cleaner) paging</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>ListingReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.taskList">
+<span class="sig-name descname"><span class="pre">taskList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">since</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>List recent Globus data transfer tasks</p>
+<p>If no time or status filter options are provided, all Globus transfers
+initiated by the current user are listed, arranged by
+most recent first. Note that the DataFed server periodically purges
+transfer history such that only up to 30 days of history are retained.</p>
+<dl class="simple">
+<dt>time_from<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Start date/time for listing specified as M/D/YYYY[,HH:MM]</p>
+</dd>
+<dt>time_to<span class="classifier">str, Optional. Default = None</span></dt><dd><p>End date/time for listing specified as M/D/YYYY[,HH:MM]</p>
+</dd>
+<dt>since: str, Optional. Default = None</dt><dd><p>List from specified time string (second default, suffix
+h = hours, d = days, w = weeks)</p>
+</dd>
+</dl>
+<p>status : list of str and/or int. Default = None
+offset : int, Optional. Default = 0</p>
+<blockquote>
+<div><p>Offset of matching results for paging</p>
+</div></blockquote>
+<dl class="simple">
+<dt>count<span class="classifier">int, Optional. Default = 20</span></dt><dd><p>Number (limit) of matching results for (cleaner) paging</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>XfrDataReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.taskView">
+<span class="sig-name descname"><span class="pre">taskView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>View information regarding a (Globus data transfer) task</p>
+<dl class="simple">
+<dt>task_id<span class="classifier">str, Optional. Default = None</span></dt><dd><p>Task ID to view.
+If specified, information regarding the requested task is returned.
+Otherwise and by default, information regarding the latest task
+initiated by the current user is returned.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>TaskDataReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.endpointListRecent">
+<span class="sig-name descname"><span class="pre">endpointListRecent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>List recently used Globus endpoints</p>
+<dl class="simple">
+<dt>UserGetRecentEPReply Google protobuf message</dt><dd><p>Response from DataFed</p>
+</dd>
+</dl>
+<p>Exception : On communication or server error</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.endpointDefaultGet">
+<span class="sig-name descname"><span class="pre">endpointDefaultGet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Get configured default endpoint</p>
+<dl class="simple">
+<dt>str</dt><dd><p>default endpoint string, or None if not configured</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.endpointDefaultSet">
+<span class="sig-name descname"><span class="pre">endpointDefaultSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Set the default Globus endpoint (used to set initial current endpoint)</p>
+<dl class="simple">
+<dt>endpoint<span class="classifier">str</span></dt><dd><p>New default endpoint</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.endpointGet">
+<span class="sig-name descname"><span class="pre">endpointGet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Get current Globus endpoint</p>
+<dl class="simple">
+<dt>str</dt><dd><p>current endpoint string, or None if not set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.endpointSet">
+<span class="sig-name descname"><span class="pre">endpointSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Set current Globus endpoint (added to partial get/put paths)</p>
+<dl class="simple">
+<dt>endpoint<span class="classifier">str</span></dt><dd><p>New current Globus endpoint</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.setupCredentials">
+<span class="sig-name descname"><span class="pre">setupCredentials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Setup local credentials</p>
+<p>This command installs DataFed credentials for the current user in the
+configured client configuration directory. Subsequent use of the
+DataFed API will read these credentials instead of requiring manual
+authentication.</p>
+<p>None</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.setContext">
+<span class="sig-name descname"><span class="pre">setContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Set current context which is used to resolve relative aliases</p>
+<dl class="simple">
+<dt>item_id<span class="classifier">str, optional. Default = None</span></dt><dd><p>A user or project ID. By default, this user’s ID will be used as
+the context</p>
+</dd>
+</dl>
+<p>None</p>
+<p>Exception : On communication or server error
+Exception : On invalid options</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.getContext">
+<span class="sig-name descname"><span class="pre">getContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Gets the current context which is used to resolve relative aliases</p>
+<dl class="simple">
+<dt>str</dt><dd><p>The current user or project ID context string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.timestampToStr">
+<span class="sig-name descname"><span class="pre">timestampToStr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Convert timestamp into standard string format</p>
+<dl class="simple">
+<dt>ts<span class="classifier">time.struct_time</span></dt><dd><p>Timestamp in local time</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>str</dt><dd><p>A string representation of the timestamp in local time</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.strToTimestamp">
+<span class="sig-name descname"><span class="pre">strToTimestamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_str</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Convert a date/time string into the integer value of the
+represented timestamp (in local time)</p>
+<dl class="simple">
+<dt>time_str<span class="classifier">str</span></dt><dd><p>Date/time in %m/%d/%Y[,%H:%M[:%S]] format</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>int</dt><dd><p>The integer timestamp representation of the time string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API.sizeToStr">
+<span class="sig-name descname"><span class="pre">sizeToStr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Convert integer size of data sizes to human readable size string with
+metric units</p>
+<dl class="simple">
+<dt>size<span class="classifier">int</span></dt><dd><p>size of data file</p>
+</dd>
+<dt>precision<span class="classifier">int, optional. defaut = 1</span></dt><dd><p>Precision of converted value</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>str</dt><dd><p>The size as a string with byte units</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._uniquifyFilename">
+<span class="sig-name descname"><span class="pre">_uniquifyFilename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Ensures that the provided file name is unique by generating a new
+unique file name if the specified file name already exists.</p>
+<dl class="simple">
+<dt>path<span class="classifier">str or Pathlib path</span></dt><dd><p>path to file of interest</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>str</dt><dd><p>Unique file path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._resolvePathForHTTP">
+<span class="sig-name descname"><span class="pre">_resolvePathForHTTP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Resolve relative local path</p>
+<dl class="simple">
+<dt>path<span class="classifier">str</span></dt><dd><p>User specified relative path</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>str</dt><dd><p>Path ready for HTTP</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._resolvePathForGlobus">
+<span class="sig-name descname"><span class="pre">_resolvePathForGlobus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">must_exist</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Resolve relative paths and prefix with current endpoint if needed</p>
+<dl class="simple">
+<dt>path<span class="classifier">str</span></dt><dd><p>file path</p>
+</dd>
+<dt>must_exist<span class="classifier">bool</span></dt><dd><p>Whether or not the path must exist</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>str</dt><dd><p>Path with globus endpoint UUID or alias prefixed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._resolve_id">
+<span class="sig-name descname"><span class="pre">_resolve_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Resolve ID by prefixing relative aliases with current or specifies
+context</p>
+<dl class="simple">
+<dt>item_id<span class="classifier">str</span></dt><dd><p>ID of record, project, user or collection</p>
+</dd>
+<dt>context<span class="classifier">str, Optional. Default = None</span></dt><dd><p>User ID or project ID to use for alias resolution.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>str</dt><dd><p>resolved ID</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="datafed.CommandLib.API._setSaneDefaultOptions">
+<span class="sig-name descname"><span class="pre">_setSaneDefaultOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Set any missing config options to sane defaults</p>
+<dl class="simple">
+<dt>opts<span class="classifier">dict</span></dt><dd><p>Automatically determined save configuration options</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../Config/index.html" class="btn btn-neutral float-right" title="datafed.Config" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../CLI/index.html" class="btn btn-neutral float-left" title="datafed.CLI" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Oak Ridge National Laboratories.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

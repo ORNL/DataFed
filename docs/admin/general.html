@@ -1,0 +1,378 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Administration &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Project Management" href="../dev/project.html" />
+    <link rel="prev" title="datafed.MessageLib" href="../autoapi/datafed/MessageLib/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system/papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../system/getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/web/portal.html">Web Portal Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/reference.html">Command Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Administration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#system-deployment">System Deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-datafed">Building DataFed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#service-installation-configuration">Service Installation &amp; Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#central-services">Central Services</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#core-service">Core Service</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#database">Database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#web-service">Web Service</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#data-repository">Data Repository</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/release.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Administration</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="administration">
+<h1>Administration</h1>
+<div class="section" id="system-deployment">
+<h2>System Deployment</h2>
+<p>Deploying DataFed requires building, installing, and configuring DataFed service as well as several
+third-party packages/services. The process described here is manual, but the goal is to eventually
+automate this process as much as possible (via container technology). The services to be deployed
+relate to either the DataFed “Central Services” (of which there is only one instance) and DataFed
+“Data Repositories”. (These services are listed below.)</p>
+<p>The hardware configuration selection depends on desired performace/cost and can range from a single
+node/VM up up to a dedicated high-performacne cluster. The host operating system must be Linux, but
+the specific distribution is not important.</p>
+<p>Central Services:
+- DataFed Core Service
+- DataFed Web Service
+- Arango Database</p>
+<p>Data Repository:
+- DataFed Repository Service
+- Globus Connect Service (version 4)
+- DataFed GridFTP AUTHZ Module</p>
+<p>Client Applications:
+- DataFed Python Client</p>
+</div>
+<div class="section" id="building-datafed">
+<h2>Building DataFed</h2>
+<p>To deply DataFed, it must be built from source code hosted on <a class="reference external" href="https://github.com/ORNL/DataFed">GitHub</a>.
+Prior to building DataFed, the build environment must be properly configured as described below
+(the examples are based on Debian). Min/max version restrictions are listed later in the Dependencies section.</p>
+<p>Install packages required to build DataFed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">g</span><span class="o">++</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">git</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">cmake</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libboost</span><span class="o">-</span><span class="nb">all</span><span class="o">-</span><span class="n">dev</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">protobuf</span><span class="o">-</span><span class="n">compiler</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libzmq3</span><span class="o">-</span><span class="n">dev</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libssl</span><span class="o">-</span><span class="n">dev</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libcurl4</span><span class="o">-</span><span class="n">openssl</span><span class="o">-</span><span class="n">dev</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libglobus</span><span class="o">-</span><span class="n">common</span><span class="o">-</span><span class="n">dev</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libfuse</span><span class="o">-</span><span class="n">dev</span>
+</pre></div>
+</div>
+<p>Get and build the DataFed source code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">ORNL</span><span class="o">/</span><span class="n">DataFed</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">DataFed</span>
+<span class="n">mkdir</span> <span class="n">build</span>
+<span class="n">cd</span> <span class="n">build</span>
+<span class="n">cmake</span> <span class="o">..</span>
+<span class="n">make</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="service-installation-configuration">
+<h2>Service Installation &amp; Configuration</h2>
+<div class="section" id="central-services">
+<h3>Central Services</h3>
+<p>DataFed central services include the Core service, the database, and the web service. These
+services may be installed together on a single node, or across multiple nodes. If the latter
+is chosen, it is strongly recommended that a high-speed private network be used in order to
+reduce latency and avoid the need for TLS connections.</p>
+<div class="section" id="core-service">
+<h4>Core Service</h4>
+<p>Steps to deploy DataFed Core Service:</p>
+<ol class="arabic simple">
+<li><p>Build DataFed source code as described in previous section.</p></li>
+<li><p>Copy/link core executable (DataFed/build/core/service/sdms-core) to installation location (i.e. /opt/datafed)</p></li>
+<li><p>Copy/link core systemd service (DataFed/core/server/sdms-core.service) to /etc/systemd/system</p></li>
+<li><p>Create a core service configuration file (i.e. /opt/datafed/datafed-core.cfg). See example below.</p></li>
+</ol>
+<p>Example datafed-core.cfg file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">port</span> <span class="o">=</span> <span class="mi">9100</span>
+<span class="n">client</span><span class="o">-</span><span class="n">threads</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">task</span><span class="o">-</span><span class="n">threads</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">db</span><span class="o">-</span><span class="n">url</span> <span class="o">=</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">127.0</span><span class="o">.</span><span class="mf">0.1</span><span class="p">:</span><span class="mi">8529</span><span class="o">/</span><span class="n">_db</span><span class="o">/</span><span class="n">sdms</span><span class="o">/</span><span class="n">api</span><span class="o">/</span>
+<span class="n">db</span><span class="o">-</span><span class="n">user</span> <span class="o">=</span> <span class="n">root</span>
+<span class="n">db</span><span class="o">-</span><span class="k">pass</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">password</span><span class="o">&gt;</span>
+<span class="n">cred</span><span class="o">-</span><span class="nb">dir</span> <span class="o">=</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">datafed</span><span class="o">/</span><span class="n">keys</span>
+<span class="n">client</span><span class="o">-</span><span class="nb">id</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">Globus</span> <span class="n">App</span> <span class="n">ID</span><span class="o">&gt;</span>
+<span class="n">client</span><span class="o">-</span><span class="n">secret</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">Globus</span> <span class="n">App</span> <span class="n">Secret</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="database">
+<h4>Database</h4>
+<p>Steps to deploy DataFed Database:</p>
+<ol class="arabic simple">
+<li><p>Download and install the latest ArangoDB server package for your host operating system. (see example, below)</p></li>
+</ol>
+<p>Example download/install of ArangoDB 3.7 for Ubuntu:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">download</span><span class="o">.</span><span class="n">arangodb</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">arangodb37</span><span class="o">/</span><span class="n">Community</span><span class="o">/</span><span class="n">Linux</span><span class="o">/</span><span class="n">arangodb3_3</span><span class="o">.</span><span class="mf">7.10</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="o">./</span><span class="n">arangodb3_3</span><span class="o">.</span><span class="mf">7.10</span><span class="o">-</span><span class="mi">1</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="web-service">
+<h4>Web Service</h4>
+<p>For the DataFed web service, install the following packages:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">nodejs</span>
+<span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">npm</span>
+<span class="n">npm</span> <span class="n">install</span> <span class="n">express</span>
+<span class="n">npm</span> <span class="n">install</span> <span class="n">express</span><span class="o">-</span><span class="n">session</span>
+<span class="n">npm</span> <span class="n">install</span> <span class="n">cookie</span> <span class="n">parser</span>
+<span class="n">npm</span> <span class="n">install</span> <span class="n">helmet</span>
+<span class="n">npm</span> <span class="n">install</span> <span class="n">protobufjs</span>
+<span class="n">npm</span> <span class="n">install</span> <span class="n">zeromq</span><span class="nd">@5</span><span class="o">.</span><span class="mf">2.0</span>
+<span class="n">npm</span> <span class="n">install</span> <span class="n">ect</span>
+<span class="n">npm</span> <span class="n">install</span> <span class="n">client</span><span class="o">-</span><span class="n">oauth2</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="data-repository">
+<h3>Data Repository</h3>
+<p>For a DataFed data repository, install Globus Connect v4:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">curl</span> <span class="o">-</span><span class="n">LOs</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">downloads</span><span class="o">.</span><span class="n">globus</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">toolkit</span><span class="o">/</span><span class="n">globus</span><span class="o">-</span><span class="n">connect</span><span class="o">-</span><span class="n">server</span><span class="o">/</span><span class="n">globus</span><span class="o">-</span><span class="n">connect</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">repo_latest_all</span><span class="o">.</span><span class="n">deb</span>
+<span class="n">sudo</span> <span class="n">dpkg</span> <span class="o">-</span><span class="n">i</span> <span class="n">globus</span><span class="o">-</span><span class="n">connect</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">repo_latest_all</span><span class="o">.</span><span class="n">deb</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">update</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">globus</span><span class="o">-</span><span class="n">connect</span><span class="o">-</span><span class="n">server</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../dev/project.html" class="btn btn-neutral float-right" title="Project Management" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../autoapi/datafed/MessageLib/index.html" class="btn btn-neutral float-left" title="datafed.MessageLib" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Oak Ridge National Laboratories.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
