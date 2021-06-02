@@ -96,3 +96,4 @@ IF(NOT CLIENT_ONLY)
 	add_subdirectory( repository )
 ENDIF(NOT CLIENT_ONLY)
 
+add_subdirectory( doc_source )
