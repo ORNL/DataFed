@@ -15,7 +15,7 @@ Usage::
 
     datafed [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -m, --manual-auth  Force manual authentication
 -s, --script  Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.
@@ -63,7 +63,7 @@ Usage::
 
     datafed coll [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -91,7 +91,7 @@ Usage::
 
     datafed coll add [OPTIONS] COLL_ID ITEM_ID
 
-Options:
+Options::
 
 -X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
 -h, --help  Show this message and exit.
@@ -110,7 +110,7 @@ Usage::
 
     datafed coll create [OPTIONS] TITLE
 
-Options:
+Options::
 
 -a, --alias TEXT  Alias
 -p, --parent TEXT  Parent collection ID/alias (default is current working collection)
@@ -138,7 +138,7 @@ Usage::
 
     datafed coll delete [OPTIONS] ID
 
-Options:
+Options::
 
 -f, --force  Delete without confirmation.
 -X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
@@ -158,7 +158,7 @@ Usage::
 
     datafed coll remove [OPTIONS] COLL_ID ITEM_ID
 
-Options:
+Options::
 
 -X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
 -h, --help  Show this message and exit.
@@ -175,7 +175,7 @@ Usage::
 
     datafed coll update [OPTIONS] ID
 
-Options:
+Options::
 
 -t, --title TEXT  Title
 -a, --alias TEXT  Alias
@@ -199,7 +199,7 @@ Usage::
 
     datafed coll view [OPTIONS] ID
 
-Options:
+Options::
 
 -X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
 -v, --verbosity [0|1|2]  Verbosity level of output
@@ -216,7 +216,7 @@ Usage::
 
     datafed data [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -241,7 +241,7 @@ Usage::
 
     datafed data batch [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -265,7 +265,7 @@ Usage::
 
     datafed data batch create [OPTIONS] FILE
 
-Options:
+Options::
 
 -c, --collection TEXT  Optional target collection (default is root).
 -X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
@@ -285,7 +285,7 @@ Usage::
 
     datafed data batch update [OPTIONS] FILE...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -305,7 +305,7 @@ Usage::
 
     datafed data create [OPTIONS] TITLE
 
-Options:
+Options::
 
 -a, --alias TEXT  Record alias.
 -d, --description TEXT  Description text.
@@ -337,7 +337,7 @@ Usage::
 
     datafed data delete [OPTIONS] ID
 
-Options:
+Options::
 
 -f, --force  Delete record(s) without confirmation.
 -X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
@@ -363,7 +363,7 @@ Usage::
 
     datafed data get [OPTIONS] ID PATH
 
-Options:
+Options::
 
 -w, --wait  Block until Globus transfer is complete.
 -e, --encrypt [0|1|2]  Encryption mode: 0 = none, 1 = if available (default), 2 = force.
@@ -386,7 +386,7 @@ Usage::
 
     datafed data put [OPTIONS] ID PATH
 
-Options:
+Options::
 
 -w, --wait  Block reply or further commands until transfer is complete
 -x, --extension TEXT  Override extension for raw data file (default = auto detect).
@@ -407,7 +407,7 @@ Usage::
 
     datafed data update [OPTIONS] ID
 
-Options:
+Options::
 
 -t, --title TEXT  Title
 -a, --alias TEXT  Alias
@@ -440,7 +440,7 @@ Usage::
 
     datafed data view [OPTIONS] ID
 
-Options:
+Options::
 
 -X, --context TEXT  User or project ID for command alias context. See 'alias' command help for more information.
 -v, --verbosity [0|1|2]  Verbosity level of output
@@ -457,7 +457,7 @@ Usage::
 
     datafed ep [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -479,7 +479,7 @@ Usage::
 
     datafed ep default [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -499,7 +499,7 @@ Usage::
 
     datafed ep default get [OPTIONS]
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -515,7 +515,7 @@ Usage::
 
     datafed ep default set [OPTIONS] [ENDPOINT]
 
-Options:
+Options::
 
 -c, --current  Set default endpoint to current endpoint.
 -h, --help  Show this message and exit.
@@ -531,7 +531,7 @@ Usage::
 
     datafed ep get [OPTIONS]
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -545,7 +545,7 @@ Usage::
 
     datafed ep list [OPTIONS]
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -560,7 +560,7 @@ Usage::
 
     datafed ep set [OPTIONS] [ENDPOINT]
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -575,7 +575,7 @@ Usage::
 
     datafed exit [OPTIONS]
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -591,7 +591,7 @@ Usage::
 
     datafed help [OPTIONS] [COMMAND]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -614,7 +614,7 @@ Usage::
 
     datafed ls [OPTIONS] ID
 
-Options:
+Options::
 
 -O, --offset INTEGER  Start list at offset
 -C, --count INTEGER  Limit list to count results
@@ -632,7 +632,7 @@ Usage::
 
     datafed project [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -653,7 +653,7 @@ Usage::
 
     datafed project list [OPTIONS]
 
-Options:
+Options::
 
 -o, --owned  Include owned projects
 -a, --admin  Include administered projects
@@ -673,7 +673,7 @@ Usage::
 
     datafed project view [OPTIONS] ID
 
-Options:
+Options::
 
 -v, --verbosity [0|1|2]  Verbosity level of output
 -h, --help  Show this message and exit.
@@ -689,7 +689,7 @@ Usage::
 
     datafed query [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -714,7 +714,7 @@ Usage::
 
     datafed query create [OPTIONS] TITLE
 
-Options:
+Options::
 
 -C, --coll-mode  Search for collections intead of data
 -c, --coll TEXT  Collection to search (multiple allowed)
@@ -744,7 +744,7 @@ Usage::
 
     datafed query delete [OPTIONS] ID
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -758,7 +758,7 @@ Usage::
 
     datafed query exec [OPTIONS] ID
 
-Options:
+Options::
 
 -O, --offset INTEGER  Start results list at offset
 -C, --count INTEGER  Limit to count results
@@ -774,7 +774,7 @@ Usage::
 
     datafed query list [OPTIONS]
 
-Options:
+Options::
 
 -O, --offset INTEGER  Start list at offset
 -C, --count INTEGER  Limit list to count results
@@ -797,7 +797,7 @@ Usage::
 
     datafed query run [OPTIONS]
 
-Options:
+Options::
 
 -C, --coll-mode  Search for collections intead of data
 -c, --coll TEXT  Collection to search (multiple allowed)
@@ -831,7 +831,7 @@ Usage::
 
     datafed query update [OPTIONS] ID
 
-Options:
+Options::
 
 --title TEXT  New query title
 -C, --coll-mode  Search for collections intead of data
@@ -862,7 +862,7 @@ Usage::
 
     datafed query view [OPTIONS] ID
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -880,7 +880,7 @@ Usage::
 
     datafed setup [OPTIONS]
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -895,7 +895,7 @@ Usage::
 
     datafed shares [OPTIONS]
 
-Options:
+Options::
 
 -u, --users  Show users only
 -p, --projects  Show projects only
@@ -912,7 +912,7 @@ Usage::
 
     datafed task [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -935,7 +935,7 @@ Usage::
 
     datafed task list [OPTIONS]
 
-Options:
+Options::
 
 -s, --since TEXT  List from specified time (seconds default, suffix h = hours, d = days, w = weeks)
 -f, --from TEXT  List from specified date/time (M/D/YYYY[,HH:MM])
@@ -956,7 +956,7 @@ Usage::
 
     datafed task view [OPTIONS] ID
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -971,7 +971,7 @@ Usage::
 
     datafed user [OPTIONS] COMMAND [ARGS]...
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -993,7 +993,7 @@ Usage::
 
     datafed user all [OPTIONS]
 
-Options:
+Options::
 
 -O, --offset INTEGER  Start list at offset
 -C, --count INTEGER  Limit list to count results
@@ -1011,7 +1011,7 @@ Usage::
 
     datafed user collab [OPTIONS]
 
-Options:
+Options::
 
 -O, --offset INTEGER  Start list at offset
 -C, --count INTEGER  Limit list to count results
@@ -1027,7 +1027,7 @@ Usage::
 
     datafed user view [OPTIONS] UID
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -1041,7 +1041,7 @@ Usage::
 
     datafed user who [OPTIONS]
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -1058,7 +1058,7 @@ Usage::
 
     datafed verbosity [OPTIONS] [LEVEL]
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -1083,7 +1083,7 @@ Usage::
 
     datafed wc [OPTIONS] ID
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 
@@ -1100,7 +1100,7 @@ Usage::
 
     datafed wp [OPTIONS]
 
-Options:
+Options::
 
 -h, --help  Show this message and exit.
 

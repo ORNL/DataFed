@@ -304,12 +304,12 @@ Data Records
 A data record is the basic unit of data storage within DataFed and consist of, at a minimum, an identifier and a title. A number
 of additional optional informational fields can be specified including an alias, a textual description, structured metadata,
 provenance relationships, and tags. All of these data record fields are maintained centrally within DataFed and do not count
-against a users storage allocation(s). Refer to the :ref:`Field Summary`, below, for a full list of data record fields.
+against a users storage allocation(s). Refer to the :ref:`Field Summary`_, below, for a full list of data record fields.
 
 While metadata-only data records can be useful for specific use cases, it is likely some form of source data will need to be
 associated with a given data record. This data is referred to as "raw data" because DataFed treats it as an oblique attachment to a
 data record (i.e. DataFed cannot "see" inside this raw data for purposes of indexing or searching). Raw data can be any format
-and any size so long as a user has sufficient allocation space to store it. See the :ref:`Raw Data` section, below, for further details.
+and any size so long as a user has sufficient allocation space to store it. See the :ref:`Raw Data`_ section, below, for further details.
 
 When creating a data record, a storage allocation on a DataFed repository must be available. If a user has multiple allocations,
 then an allocation can be specified or the default allocation will be used instead. The default allocation can be viewed and set
@@ -328,7 +328,7 @@ Metadata
 The metadata of a data record is distinct from the built-in record fields such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable, can represent
 arbitrary structured documents, and is easily validated using JSON-based schemas (see `<https://json-schema.org/>`_). Like
-other fields, metadata is searchable using the powerful built-in query language described in the :ref:`Data Search` section of
+other fields, metadata is searchable using the powerful built-in query language described in the :ref:`Data Search`_ section of
 this document.
 
 When creating or updating a data record, metadata may be directly specified or a JSON file may be referenced as the metadata source.
@@ -463,7 +463,7 @@ Public Collections
 
 Collections can be set to public access, in which case the collection and all of its contents will become discoverable and
 readable by any DataFed user. Public access is implemented through a DataFed catalog system which allows users to browse
-and search for public collections and datasets. Please refer to the :ref:`Catalog` section for more information.
+and search for public collections and datasets. Please refer to the :ref:`Catalog`_ section for more information.
 
 Field Summary
 -------------

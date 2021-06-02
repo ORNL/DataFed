@@ -202,53 +202,23 @@ prefix.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-m</span>, <span class="option">--manual-auth</span></kbd></dt>
-<dd><p>Force manual authentication</p>
-</dd>
-<dt><kbd><span class="option">-s</span>, <span class="option">--script</span></kbd></dt>
-<dd><p>Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.</p>
-</dd>
-<dt><kbd><span class="option">--version</span></kbd></dt>
-<dd><p>Print version number and exit.</p>
-</dd>
-<dt><kbd><span class="option">--server-cfg-dir <var>TEXT</var></span></kbd></dt>
-<dd><p>Server configuration directory</p>
-</dd>
-<dt><kbd><span class="option">--server-cfg-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Server configuration file</p>
-</dd>
-<dt><kbd><span class="option">--server-pub-key-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Server public key file</p>
-</dd>
-<dt><kbd><span class="option">-H</span>, <span class="option">--server-host <var>TEXT</var></span></kbd></dt>
-<dd><p>Sever host name or IP address</p>
-</dd>
-<dt><kbd><span class="option">-P</span>, <span class="option">--server-port <var>INTEGER</var></span></kbd></dt>
-<dd><p>Server port number</p>
-</dd>
-<dt><kbd><span class="option">--client-cfg-dir <var>TEXT</var></span></kbd></dt>
-<dd><p>Client configuration directory</p>
-</dd>
-<dt><kbd><span class="option">--client-cfg-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Client configuration file</p>
-</dd>
-<dt><kbd><span class="option">--client-pub-key-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Client public key file</p>
-</dd>
-<dt><kbd><span class="option">--client-priv-key-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Client private key file</p>
-</dd>
-<dt><kbd><span class="option">-e</span>, <span class="option">--default-ep <var>TEXT</var></span></kbd></dt>
-<dd><p>Default Globus endpoint</p>
-</dd>
-<dt><kbd><span class="option">-v</span>, <span class="option">--verbosity <var>INTEGER</var></span></kbd></dt>
-<dd><p>Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">m</span><span class="p">,</span> <span class="o">--</span><span class="n">manual</span><span class="o">-</span><span class="n">auth</span>  <span class="n">Force</span> <span class="n">manual</span> <span class="n">authentication</span>
+<span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="o">--</span><span class="n">script</span>  <span class="n">Start</span> <span class="ow">in</span> <span class="n">non</span><span class="o">-</span><span class="n">interactive</span> <span class="n">scripting</span> <span class="n">mode</span><span class="o">.</span> <span class="n">Output</span> <span class="ow">is</span> <span class="ow">in</span> <span class="n">JSON</span><span class="p">,</span> <span class="nb">all</span> <span class="n">intermediate</span> <span class="n">I</span><span class="o">/</span><span class="n">O</span> <span class="ow">is</span> <span class="n">disabled</span><span class="p">,</span> <span class="ow">and</span> <span class="n">certain</span> <span class="n">client</span><span class="o">-</span><span class="n">side</span> <span class="n">commands</span> <span class="n">are</span> <span class="n">unavailable</span><span class="o">.</span>
+<span class="o">--</span><span class="n">version</span>  <span class="n">Print</span> <span class="n">version</span> <span class="n">number</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+<span class="o">--</span><span class="n">server</span><span class="o">-</span><span class="n">cfg</span><span class="o">-</span><span class="nb">dir</span> <span class="n">TEXT</span>  <span class="n">Server</span> <span class="n">configuration</span> <span class="n">directory</span>
+<span class="o">--</span><span class="n">server</span><span class="o">-</span><span class="n">cfg</span><span class="o">-</span><span class="n">file</span> <span class="n">TEXT</span>  <span class="n">Server</span> <span class="n">configuration</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">server</span><span class="o">-</span><span class="n">pub</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="n">file</span> <span class="n">TEXT</span>  <span class="n">Server</span> <span class="n">public</span> <span class="n">key</span> <span class="n">file</span>
+<span class="o">-</span><span class="n">H</span><span class="p">,</span> <span class="o">--</span><span class="n">server</span><span class="o">-</span><span class="n">host</span> <span class="n">TEXT</span>  <span class="n">Sever</span> <span class="n">host</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">IP</span> <span class="n">address</span>
+<span class="o">-</span><span class="n">P</span><span class="p">,</span> <span class="o">--</span><span class="n">server</span><span class="o">-</span><span class="n">port</span> <span class="n">INTEGER</span>  <span class="n">Server</span> <span class="n">port</span> <span class="n">number</span>
+<span class="o">--</span><span class="n">client</span><span class="o">-</span><span class="n">cfg</span><span class="o">-</span><span class="nb">dir</span> <span class="n">TEXT</span>  <span class="n">Client</span> <span class="n">configuration</span> <span class="n">directory</span>
+<span class="o">--</span><span class="n">client</span><span class="o">-</span><span class="n">cfg</span><span class="o">-</span><span class="n">file</span> <span class="n">TEXT</span>  <span class="n">Client</span> <span class="n">configuration</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">client</span><span class="o">-</span><span class="n">pub</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="n">file</span> <span class="n">TEXT</span>  <span class="n">Client</span> <span class="n">public</span> <span class="n">key</span> <span class="n">file</span>
+<span class="o">--</span><span class="n">client</span><span class="o">-</span><span class="n">priv</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="n">file</span> <span class="n">TEXT</span>  <span class="n">Client</span> <span class="n">private</span> <span class="n">key</span> <span class="n">file</span>
+<span class="o">-</span><span class="n">e</span><span class="p">,</span> <span class="o">--</span><span class="n">default</span><span class="o">-</span><span class="n">ep</span> <span class="n">TEXT</span>  <span class="n">Default</span> <span class="n">Globus</span> <span class="n">endpoint</span>
+<span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbosity</span> <span class="n">INTEGER</span>  <span class="n">Verbosity</span> <span class="n">level</span> <span class="p">(</span><span class="mi">0</span><span class="o">=</span><span class="n">quiet</span><span class="p">,</span><span class="mi">1</span><span class="o">=</span><span class="n">normal</span><span class="p">,</span><span class="mi">2</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span><span class="o">-</span><span class="nb">format</span> <span class="n">output</span> <span class="n">only</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -312,11 +282,9 @@ prefix.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -356,14 +324,10 @@ relative collection path (‘.’, ‘..’, or ‘/’).</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="coll-create-command">
 <h2>Coll Create Command</h2>
@@ -377,28 +341,16 @@ user must have permission to write to that collection.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-a</span>, <span class="option">--alias <var>TEXT</var></span></kbd></dt>
-<dd><p>Alias</p>
-</dd>
-<dt><kbd><span class="option">-p</span>, <span class="option">--parent <var>TEXT</var></span></kbd></dt>
-<dd><p>Parent collection ID/alias (default is current working collection)</p>
-</dd>
-<dt><kbd><span class="option">-d</span>, <span class="option">--description <var>TEXT</var></span></kbd></dt>
-<dd><p>Description text</p>
-</dd>
-<dt><kbd><span class="option">-T</span>, <span class="option">--tags <var>TEXT</var></span></kbd></dt>
-<dd><p>Tags (comma separated list).</p>
-</dd>
-<dt><kbd><span class="option">--topic <var>TEXT</var></span></kbd></dt>
-<dd><p>Publish the collection to the provided topic.</p>
-</dd>
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-</dl>
-<p>-v, –verbosity [0|1|2]  Verbosity level of output
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">a</span><span class="p">,</span> <span class="o">--</span><span class="n">alias</span> <span class="n">TEXT</span>  <span class="n">Alias</span>
+<span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="o">--</span><span class="n">parent</span> <span class="n">TEXT</span>  <span class="n">Parent</span> <span class="n">collection</span> <span class="n">ID</span><span class="o">/</span><span class="n">alias</span> <span class="p">(</span><span class="n">default</span> <span class="ow">is</span> <span class="n">current</span> <span class="n">working</span> <span class="n">collection</span><span class="p">)</span>
+<span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="o">--</span><span class="n">description</span> <span class="n">TEXT</span>  <span class="n">Description</span> <span class="n">text</span>
+<span class="o">-</span><span class="n">T</span><span class="p">,</span> <span class="o">--</span><span class="n">tags</span> <span class="n">TEXT</span>  <span class="n">Tags</span> <span class="p">(</span><span class="n">comma</span> <span class="n">separated</span> <span class="nb">list</span><span class="p">)</span><span class="o">.</span>
+<span class="o">--</span><span class="n">topic</span> <span class="n">TEXT</span>  <span class="n">Publish</span> <span class="n">the</span> <span class="n">collection</span> <span class="n">to</span> <span class="n">the</span> <span class="n">provided</span> <span class="n">topic</span><span class="o">.</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbosity</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="p">]</span>  <span class="n">Verbosity</span> <span class="n">level</span> <span class="n">of</span> <span class="n">output</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="coll-delete-command">
 <h2>Coll Delete Command</h2>
@@ -414,17 +366,11 @@ another collection not involved in the deletion.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-f</span>, <span class="option">--force</span></kbd></dt>
-<dd><p>Delete without confirmation.</p>
-</dd>
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">f</span><span class="p">,</span> <span class="o">--</span><span class="n">force</span>  <span class="n">Delete</span> <span class="n">without</span> <span class="n">confirmation</span><span class="o">.</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="coll-remove-command">
 <h2>Coll Remove Command</h2>
@@ -438,14 +384,10 @@ relative collection path (‘.’, ‘..’, or ‘/’).</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="coll-update-command">
 <h2>Coll Update Command</h2>
@@ -457,28 +399,16 @@ optional.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-t</span>, <span class="option">--title <var>TEXT</var></span></kbd></dt>
-<dd><p>Title</p>
-</dd>
-<dt><kbd><span class="option">-a</span>, <span class="option">--alias <var>TEXT</var></span></kbd></dt>
-<dd><p>Alias</p>
-</dd>
-<dt><kbd><span class="option">-d</span>, <span class="option">--description <var>TEXT</var></span></kbd></dt>
-<dd><p>Description text</p>
-</dd>
-<dt><kbd><span class="option">-T</span>, <span class="option">--tags <var>TEXT</var></span></kbd></dt>
-<dd><p>Tags (comma separated list).</p>
-</dd>
-<dt><kbd><span class="option">--topic <var>TEXT</var></span></kbd></dt>
-<dd><p>Publish the collection under the provided topic.</p>
-</dd>
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-</dl>
-<p>-v, –verbosity [0|1|2]  Verbosity level of output
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">t</span><span class="p">,</span> <span class="o">--</span><span class="n">title</span> <span class="n">TEXT</span>  <span class="n">Title</span>
+<span class="o">-</span><span class="n">a</span><span class="p">,</span> <span class="o">--</span><span class="n">alias</span> <span class="n">TEXT</span>  <span class="n">Alias</span>
+<span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="o">--</span><span class="n">description</span> <span class="n">TEXT</span>  <span class="n">Description</span> <span class="n">text</span>
+<span class="o">-</span><span class="n">T</span><span class="p">,</span> <span class="o">--</span><span class="n">tags</span> <span class="n">TEXT</span>  <span class="n">Tags</span> <span class="p">(</span><span class="n">comma</span> <span class="n">separated</span> <span class="nb">list</span><span class="p">)</span><span class="o">.</span>
+<span class="o">--</span><span class="n">topic</span> <span class="n">TEXT</span>  <span class="n">Publish</span> <span class="n">the</span> <span class="n">collection</span> <span class="n">under</span> <span class="n">the</span> <span class="n">provided</span> <span class="n">topic</span><span class="o">.</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbosity</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="p">]</span>  <span class="n">Verbosity</span> <span class="n">level</span> <span class="n">of</span> <span class="n">output</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="coll-view-command">
 <h2>Coll View Command</h2>
@@ -491,13 +421,11 @@ in a collection.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-</dl>
-<p>-v, –verbosity [0|1|2]  Verbosity level of output
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbosity</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="p">]</span>  <span class="n">Verbosity</span> <span class="n">level</span> <span class="n">of</span> <span class="n">output</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="data-commands">
@@ -508,11 +436,9 @@ in a collection.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -551,11 +477,9 @@ in a collection.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -583,17 +507,11 @@ must comply with the DataFed record input schema (see online documentation).</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-c</span>, <span class="option">--collection <var>TEXT</var></span></kbd></dt>
-<dd><p>Optional target collection (default is root).</p>
-</dd>
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">c</span><span class="p">,</span> <span class="o">--</span><span class="n">collection</span> <span class="n">TEXT</span>  <span class="n">Optional</span> <span class="n">target</span> <span class="n">collection</span> <span class="p">(</span><span class="n">default</span> <span class="ow">is</span> <span class="n">root</span><span class="p">)</span><span class="o">.</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="data-batch-update-command">
 <h3>Data Batch Update Command</h3>
@@ -607,11 +525,9 @@ must comply with the DataFed record input schema (see online documentation).</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="data-create-command">
@@ -628,48 +544,24 @@ convenience to avoid a separate dataPut() call.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-a</span>, <span class="option">--alias <var>TEXT</var></span></kbd></dt>
-<dd><p>Record alias.</p>
-</dd>
-<dt><kbd><span class="option">-d</span>, <span class="option">--description <var>TEXT</var></span></kbd></dt>
-<dd><p>Description text.</p>
-</dd>
-<dt><kbd><span class="option">-T</span>, <span class="option">--tags <var>TEXT</var></span></kbd></dt>
-<dd><p>Tags (comma separated list).</p>
-</dd>
-<dt><kbd><span class="option">-r</span>, <span class="option">--raw-data-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.</p>
-</dd>
-<dt><kbd><span class="option">-x</span>, <span class="option">--extension <var>TEXT</var></span></kbd></dt>
-<dd><p>Override raw data file extension if provided (default is auto detect).</p>
-</dd>
-<dt><kbd><span class="option">-E</span>, <span class="option">--external</span></kbd></dt>
-<dd><p>Raw data file is external to DataFed (unmanaged)</p>
-</dd>
-<dt><kbd><span class="option">-m</span>, <span class="option">--metadata <var>TEXT</var></span></kbd></dt>
-<dd><p>Inline metadata in JSON format. JSON must define an object type. Cannot be specified with –metadata-file option.</p>
-</dd>
-<dt><kbd><span class="option">-f</span>, <span class="option">--metadata-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with –metadata option.</p>
-</dd>
-<dt><kbd><span class="option">-s</span>, <span class="option">--schema <var>TEXT</var></span></kbd></dt>
-<dd><p>Set metadata schema id:version</p>
-</dd>
-<dt><kbd><span class="option">-e</span>, <span class="option">--schema-enforce</span></kbd></dt>
-<dd><p>Fail on metadata validation errors</p>
-</dd>
-<dt><kbd><span class="option">-p</span>, <span class="option">--parent <var>TEXT</var></span></kbd></dt>
-<dd><p>Parent collection ID, alias, or listing index. Default is the current working collection.</p>
-</dd>
-<dt><kbd><span class="option">-R</span>, <span class="option">--repository <var>TEXT</var></span></kbd></dt>
-<dd><p>Repository ID (managed data only). Uses default allocation if not specified.</p>
-</dd>
-</dl>
-<p>-D, –deps &lt;CHOICE TEXT&gt;…  Dependencies (provenance). Use one ‘–deps’ option per dependency and specify with a string consisting of the type of relationship (‘der’, ‘comp’, ‘ver’) follwed by ID/alias of the referenced record. Relationship types are: ‘der’ for ‘derived from’, ‘comp’ for ‘a component of’, and ‘ver’ for ‘a new version of’.
--X, –context TEXT  User or project ID for command alias context. See ‘alias’ command help for more information.
--v, –verbosity [0|1|2]  Verbosity level of output
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">a</span><span class="p">,</span> <span class="o">--</span><span class="n">alias</span> <span class="n">TEXT</span>  <span class="n">Record</span> <span class="n">alias</span><span class="o">.</span>
+<span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="o">--</span><span class="n">description</span> <span class="n">TEXT</span>  <span class="n">Description</span> <span class="n">text</span><span class="o">.</span>
+<span class="o">-</span><span class="n">T</span><span class="p">,</span> <span class="o">--</span><span class="n">tags</span> <span class="n">TEXT</span>  <span class="n">Tags</span> <span class="p">(</span><span class="n">comma</span> <span class="n">separated</span> <span class="nb">list</span><span class="p">)</span><span class="o">.</span>
+<span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="o">--</span><span class="n">raw</span><span class="o">-</span><span class="n">data</span><span class="o">-</span><span class="n">file</span> <span class="n">TEXT</span>  <span class="n">Globus</span> <span class="n">path</span> <span class="n">to</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="p">(</span><span class="n">local</span> <span class="ow">or</span> <span class="n">remote</span><span class="p">)</span> <span class="n">to</span> <span class="n">upload</span> <span class="n">to</span> <span class="n">new</span> <span class="n">record</span><span class="o">.</span> <span class="n">Default</span> <span class="n">endpoint</span> <span class="ow">is</span> <span class="n">used</span> <span class="k">if</span> <span class="n">none</span> <span class="n">provided</span><span class="o">.</span>
+<span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="o">--</span><span class="n">extension</span> <span class="n">TEXT</span>  <span class="n">Override</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="n">extension</span> <span class="k">if</span> <span class="n">provided</span> <span class="p">(</span><span class="n">default</span> <span class="ow">is</span> <span class="n">auto</span> <span class="n">detect</span><span class="p">)</span><span class="o">.</span>
+<span class="o">-</span><span class="n">E</span><span class="p">,</span> <span class="o">--</span><span class="n">external</span>  <span class="n">Raw</span> <span class="n">data</span> <span class="n">file</span> <span class="ow">is</span> <span class="n">external</span> <span class="n">to</span> <span class="n">DataFed</span> <span class="p">(</span><span class="n">unmanaged</span><span class="p">)</span>
+<span class="o">-</span><span class="n">m</span><span class="p">,</span> <span class="o">--</span><span class="n">metadata</span> <span class="n">TEXT</span>  <span class="n">Inline</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="n">JSON</span> <span class="nb">format</span><span class="o">.</span> <span class="n">JSON</span> <span class="n">must</span> <span class="n">define</span> <span class="n">an</span> <span class="nb">object</span> <span class="nb">type</span><span class="o">.</span> <span class="n">Cannot</span> <span class="n">be</span> <span class="n">specified</span> <span class="k">with</span> <span class="o">--</span><span class="n">metadata</span><span class="o">-</span><span class="n">file</span> <span class="n">option</span><span class="o">.</span>
+<span class="o">-</span><span class="n">f</span><span class="p">,</span> <span class="o">--</span><span class="n">metadata</span><span class="o">-</span><span class="n">file</span> <span class="n">TEXT</span>  <span class="n">Path</span> <span class="n">to</span> <span class="n">local</span> <span class="n">metadata</span> <span class="n">file</span> <span class="n">containing</span> <span class="n">JSON</span><span class="o">.</span> <span class="n">JSON</span> <span class="n">must</span> <span class="n">define</span> <span class="n">an</span> <span class="nb">object</span> <span class="nb">type</span><span class="o">.</span> <span class="n">Cannot</span> <span class="n">be</span> <span class="n">specified</span> <span class="k">with</span> <span class="o">--</span><span class="n">metadata</span> <span class="n">option</span><span class="o">.</span>
+<span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="o">--</span><span class="n">schema</span> <span class="n">TEXT</span>  <span class="n">Set</span> <span class="n">metadata</span> <span class="n">schema</span> <span class="nb">id</span><span class="p">:</span><span class="n">version</span>
+<span class="o">-</span><span class="n">e</span><span class="p">,</span> <span class="o">--</span><span class="n">schema</span><span class="o">-</span><span class="n">enforce</span>  <span class="n">Fail</span> <span class="n">on</span> <span class="n">metadata</span> <span class="n">validation</span> <span class="n">errors</span>
+<span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="o">--</span><span class="n">parent</span> <span class="n">TEXT</span>  <span class="n">Parent</span> <span class="n">collection</span> <span class="n">ID</span><span class="p">,</span> <span class="n">alias</span><span class="p">,</span> <span class="ow">or</span> <span class="n">listing</span> <span class="n">index</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">current</span> <span class="n">working</span> <span class="n">collection</span><span class="o">.</span>
+<span class="o">-</span><span class="n">R</span><span class="p">,</span> <span class="o">--</span><span class="n">repository</span> <span class="n">TEXT</span>  <span class="n">Repository</span> <span class="n">ID</span> <span class="p">(</span><span class="n">managed</span> <span class="n">data</span> <span class="n">only</span><span class="p">)</span><span class="o">.</span> <span class="n">Uses</span> <span class="n">default</span> <span class="n">allocation</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">specified</span><span class="o">.</span>
+<span class="o">-</span><span class="n">D</span><span class="p">,</span> <span class="o">--</span><span class="n">deps</span> <span class="o">&lt;</span><span class="n">CHOICE</span> <span class="n">TEXT</span><span class="o">&gt;...</span>  <span class="n">Dependencies</span> <span class="p">(</span><span class="n">provenance</span><span class="p">)</span><span class="o">.</span> <span class="n">Use</span> <span class="n">one</span> <span class="s1">&#39;--deps&#39;</span> <span class="n">option</span> <span class="n">per</span> <span class="n">dependency</span> <span class="ow">and</span> <span class="n">specify</span> <span class="k">with</span> <span class="n">a</span> <span class="n">string</span> <span class="n">consisting</span> <span class="n">of</span> <span class="n">the</span> <span class="nb">type</span> <span class="n">of</span> <span class="n">relationship</span> <span class="p">(</span><span class="s1">&#39;der&#39;</span><span class="p">,</span> <span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="s1">&#39;ver&#39;</span><span class="p">)</span> <span class="n">follwed</span> <span class="n">by</span> <span class="n">ID</span><span class="o">/</span><span class="n">alias</span> <span class="n">of</span> <span class="n">the</span> <span class="n">referenced</span> <span class="n">record</span><span class="o">.</span> <span class="n">Relationship</span> <span class="n">types</span> <span class="n">are</span><span class="p">:</span> <span class="s1">&#39;der&#39;</span> <span class="k">for</span> <span class="s1">&#39;derived from&#39;</span><span class="p">,</span> <span class="s1">&#39;comp&#39;</span> <span class="k">for</span> <span class="s1">&#39;a component of&#39;</span><span class="p">,</span> <span class="ow">and</span> <span class="s1">&#39;ver&#39;</span> <span class="k">for</span> <span class="s1">&#39;a new version of&#39;</span><span class="o">.</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbosity</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="p">]</span>  <span class="n">Verbosity</span> <span class="n">level</span> <span class="n">of</span> <span class="n">output</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="data-delete-command">
 <h2>Data Delete Command</h2>
@@ -682,17 +574,11 @@ the ‘–force’ option.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-f</span>, <span class="option">--force</span></kbd></dt>
-<dd><p>Delete record(s) without confirmation.</p>
-</dd>
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">f</span><span class="p">,</span> <span class="o">--</span><span class="n">force</span>  <span class="n">Delete</span> <span class="n">record</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="n">without</span> <span class="n">confirmation</span><span class="o">.</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="data-get-command">
 <h2>Data Get Command</h2>
@@ -711,15 +597,13 @@ systems; however, full Globus paths must used in this case.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-w</span>, <span class="option">--wait</span></kbd></dt>
-<dd><p>Block until Globus transfer is complete.</p>
-</dd>
-</dl>
-<p>-e, –encrypt [0|1|2]  Encryption mode: 0 = none, 1 = if available (default), 2 = force.
--o, –orig_fname  Download to original filename(s).
--X, –context TEXT  User or project ID for command alias context. See ‘alias’ command help for more information.
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">w</span><span class="p">,</span> <span class="o">--</span><span class="n">wait</span>  <span class="n">Block</span> <span class="n">until</span> <span class="n">Globus</span> <span class="n">transfer</span> <span class="ow">is</span> <span class="n">complete</span><span class="o">.</span>
+<span class="o">-</span><span class="n">e</span><span class="p">,</span> <span class="o">--</span><span class="n">encrypt</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="p">]</span>  <span class="n">Encryption</span> <span class="n">mode</span><span class="p">:</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">none</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="k">if</span> <span class="n">available</span> <span class="p">(</span><span class="n">default</span><span class="p">),</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">force</span><span class="o">.</span>
+<span class="o">-</span><span class="n">o</span><span class="p">,</span> <span class="o">--</span><span class="n">orig_fname</span>  <span class="n">Download</span> <span class="n">to</span> <span class="n">original</span> <span class="n">filename</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="data-put-command">
 <h2>Data Put Command</h2>
@@ -734,17 +618,13 @@ argument, the current endpoint will be used.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-w</span>, <span class="option">--wait</span></kbd></dt>
-<dd><p>Block reply or further commands until transfer is complete</p>
-</dd>
-<dt><kbd><span class="option">-x</span>, <span class="option">--extension <var>TEXT</var></span></kbd></dt>
-<dd><p>Override extension for raw data file (default = auto detect).</p>
-</dd>
-</dl>
-<p>-e, –encrypt [0|1|2]  Encryption mode: 0 = none, 1 = if available (default), 2 = force.
--X, –context TEXT  User or project ID for command alias context. See ‘alias’ command help for more information.
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">w</span><span class="p">,</span> <span class="o">--</span><span class="n">wait</span>  <span class="n">Block</span> <span class="n">reply</span> <span class="ow">or</span> <span class="n">further</span> <span class="n">commands</span> <span class="n">until</span> <span class="n">transfer</span> <span class="ow">is</span> <span class="n">complete</span>
+<span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="o">--</span><span class="n">extension</span> <span class="n">TEXT</span>  <span class="n">Override</span> <span class="n">extension</span> <span class="k">for</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="p">(</span><span class="n">default</span> <span class="o">=</span> <span class="n">auto</span> <span class="n">detect</span><span class="p">)</span><span class="o">.</span>
+<span class="o">-</span><span class="n">e</span><span class="p">,</span> <span class="o">--</span><span class="n">encrypt</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="p">]</span>  <span class="n">Encryption</span> <span class="n">mode</span><span class="p">:</span> <span class="mi">0</span> <span class="o">=</span> <span class="n">none</span><span class="p">,</span> <span class="mi">1</span> <span class="o">=</span> <span class="k">if</span> <span class="n">available</span> <span class="p">(</span><span class="n">default</span><span class="p">),</span> <span class="mi">2</span> <span class="o">=</span> <span class="n">force</span><span class="o">.</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="data-update-command">
 <h2>Data Update Command</h2>
@@ -757,46 +637,24 @@ provided as a convenience to avoid a separate dataPut() call.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-t</span>, <span class="option">--title <var>TEXT</var></span></kbd></dt>
-<dd><p>Title</p>
-</dd>
-<dt><kbd><span class="option">-a</span>, <span class="option">--alias <var>TEXT</var></span></kbd></dt>
-<dd><p>Alias</p>
-</dd>
-<dt><kbd><span class="option">-d</span>, <span class="option">--description <var>TEXT</var></span></kbd></dt>
-<dd><p>Description text</p>
-</dd>
-<dt><kbd><span class="option">-T</span>, <span class="option">--tags <var>TEXT</var></span></kbd></dt>
-<dd><p>Tags (comma separated list)</p>
-</dd>
-<dt><kbd><span class="option">-r</span>, <span class="option">--raw-data-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.</p>
-</dd>
-<dt><kbd><span class="option">-x</span>, <span class="option">--extension <var>TEXT</var></span></kbd></dt>
-<dd><p>Override extension for raw data file (default = auto detect).</p>
-</dd>
-<dt><kbd><span class="option">-m</span>, <span class="option">--metadata <var>TEXT</var></span></kbd></dt>
-<dd><p>Inline metadata in JSON format.</p>
-</dd>
-<dt><kbd><span class="option">-f</span>, <span class="option">--metadata-file <var>TEXT</var></span></kbd></dt>
-<dd><p>Path to local metadata file containing JSON.</p>
-</dd>
-<dt><kbd><span class="option">-S</span>, <span class="option">--metadata-set</span></kbd></dt>
-<dd><p>Set (replace) existing metadata with provided instead of merging.</p>
-</dd>
-<dt><kbd><span class="option">-s</span>, <span class="option">--schema <var>TEXT</var></span></kbd></dt>
-<dd><p>Set metadata schema id:version</p>
-</dd>
-<dt><kbd><span class="option">-e</span>, <span class="option">--schema-enforce</span></kbd></dt>
-<dd><p>Fail on metadata validation errors</p>
-</dd>
-</dl>
-<p>-A, –deps-add &lt;CHOICE TEXT&gt;…  Specify dependencies to add by listing first the type of relationship (‘der’, ‘comp’, or ‘ver’) follwed by ID/alias of the target record. Can be specified multiple times.
--R, –deps-rem &lt;CHOICE TEXT&gt;…  Specify dependencies to remove by listing first the type of relationship (‘der’, ‘comp’, or ‘ver’) followed by ID/alias of the target record. Can be specified multiple times.
--X, –context TEXT  User or project ID for command alias context. See ‘alias’ command help for more information.
--v, –verbosity [0|1|2]  Verbosity level of output
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">t</span><span class="p">,</span> <span class="o">--</span><span class="n">title</span> <span class="n">TEXT</span>  <span class="n">Title</span>
+<span class="o">-</span><span class="n">a</span><span class="p">,</span> <span class="o">--</span><span class="n">alias</span> <span class="n">TEXT</span>  <span class="n">Alias</span>
+<span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="o">--</span><span class="n">description</span> <span class="n">TEXT</span>  <span class="n">Description</span> <span class="n">text</span>
+<span class="o">-</span><span class="n">T</span><span class="p">,</span> <span class="o">--</span><span class="n">tags</span> <span class="n">TEXT</span>  <span class="n">Tags</span> <span class="p">(</span><span class="n">comma</span> <span class="n">separated</span> <span class="nb">list</span><span class="p">)</span>
+<span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="o">--</span><span class="n">raw</span><span class="o">-</span><span class="n">data</span><span class="o">-</span><span class="n">file</span> <span class="n">TEXT</span>  <span class="n">Globus</span> <span class="n">path</span> <span class="n">to</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="p">(</span><span class="n">local</span> <span class="ow">or</span> <span class="n">remote</span><span class="p">)</span> <span class="n">to</span> <span class="n">upload</span> <span class="k">with</span> <span class="n">record</span><span class="o">.</span> <span class="n">Default</span> <span class="n">endpoint</span> <span class="n">used</span> <span class="k">if</span> <span class="n">none</span> <span class="n">provided</span><span class="o">.</span>
+<span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="o">--</span><span class="n">extension</span> <span class="n">TEXT</span>  <span class="n">Override</span> <span class="n">extension</span> <span class="k">for</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="p">(</span><span class="n">default</span> <span class="o">=</span> <span class="n">auto</span> <span class="n">detect</span><span class="p">)</span><span class="o">.</span>
+<span class="o">-</span><span class="n">m</span><span class="p">,</span> <span class="o">--</span><span class="n">metadata</span> <span class="n">TEXT</span>  <span class="n">Inline</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="n">JSON</span> <span class="nb">format</span><span class="o">.</span>
+<span class="o">-</span><span class="n">f</span><span class="p">,</span> <span class="o">--</span><span class="n">metadata</span><span class="o">-</span><span class="n">file</span> <span class="n">TEXT</span>  <span class="n">Path</span> <span class="n">to</span> <span class="n">local</span> <span class="n">metadata</span> <span class="n">file</span> <span class="n">containing</span> <span class="n">JSON</span><span class="o">.</span>
+<span class="o">-</span><span class="n">S</span><span class="p">,</span> <span class="o">--</span><span class="n">metadata</span><span class="o">-</span><span class="nb">set</span>  <span class="n">Set</span> <span class="p">(</span><span class="n">replace</span><span class="p">)</span> <span class="n">existing</span> <span class="n">metadata</span> <span class="k">with</span> <span class="n">provided</span> <span class="n">instead</span> <span class="n">of</span> <span class="n">merging</span><span class="o">.</span>
+<span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="o">--</span><span class="n">schema</span> <span class="n">TEXT</span>  <span class="n">Set</span> <span class="n">metadata</span> <span class="n">schema</span> <span class="nb">id</span><span class="p">:</span><span class="n">version</span>
+<span class="o">-</span><span class="n">e</span><span class="p">,</span> <span class="o">--</span><span class="n">schema</span><span class="o">-</span><span class="n">enforce</span>  <span class="n">Fail</span> <span class="n">on</span> <span class="n">metadata</span> <span class="n">validation</span> <span class="n">errors</span>
+<span class="o">-</span><span class="n">A</span><span class="p">,</span> <span class="o">--</span><span class="n">deps</span><span class="o">-</span><span class="n">add</span> <span class="o">&lt;</span><span class="n">CHOICE</span> <span class="n">TEXT</span><span class="o">&gt;...</span>  <span class="n">Specify</span> <span class="n">dependencies</span> <span class="n">to</span> <span class="n">add</span> <span class="n">by</span> <span class="n">listing</span> <span class="n">first</span> <span class="n">the</span> <span class="nb">type</span> <span class="n">of</span> <span class="n">relationship</span> <span class="p">(</span><span class="s1">&#39;der&#39;</span><span class="p">,</span> <span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="ow">or</span> <span class="s1">&#39;ver&#39;</span><span class="p">)</span> <span class="n">follwed</span> <span class="n">by</span> <span class="n">ID</span><span class="o">/</span><span class="n">alias</span> <span class="n">of</span> <span class="n">the</span> <span class="n">target</span> <span class="n">record</span><span class="o">.</span> <span class="n">Can</span> <span class="n">be</span> <span class="n">specified</span> <span class="n">multiple</span> <span class="n">times</span><span class="o">.</span>
+<span class="o">-</span><span class="n">R</span><span class="p">,</span> <span class="o">--</span><span class="n">deps</span><span class="o">-</span><span class="n">rem</span> <span class="o">&lt;</span><span class="n">CHOICE</span> <span class="n">TEXT</span><span class="o">&gt;...</span>  <span class="n">Specify</span> <span class="n">dependencies</span> <span class="n">to</span> <span class="n">remove</span> <span class="n">by</span> <span class="n">listing</span> <span class="n">first</span> <span class="n">the</span> <span class="nb">type</span> <span class="n">of</span> <span class="n">relationship</span> <span class="p">(</span><span class="s1">&#39;der&#39;</span><span class="p">,</span> <span class="s1">&#39;comp&#39;</span><span class="p">,</span> <span class="ow">or</span> <span class="s1">&#39;ver&#39;</span><span class="p">)</span> <span class="n">followed</span> <span class="n">by</span> <span class="n">ID</span><span class="o">/</span><span class="n">alias</span> <span class="n">of</span> <span class="n">the</span> <span class="n">target</span> <span class="n">record</span><span class="o">.</span> <span class="n">Can</span> <span class="n">be</span> <span class="n">specified</span> <span class="n">multiple</span> <span class="n">times</span><span class="o">.</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbosity</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="p">]</span>  <span class="n">Verbosity</span> <span class="n">level</span> <span class="n">of</span> <span class="n">output</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="data-view-command">
 <h2>Data View Command</h2>
@@ -810,13 +668,11 @@ level 2.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-</dl>
-<p>-v, –verbosity [0|1|2]  Verbosity level of output
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbosity</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="p">]</span>  <span class="n">Verbosity</span> <span class="n">level</span> <span class="n">of</span> <span class="n">output</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="ep-commands">
@@ -827,11 +683,9 @@ level 2.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -861,11 +715,9 @@ level 2.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -889,11 +741,9 @@ level 2.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="ep-default-set-command">
 <h3>Ep Default Set Command</h3>
@@ -905,14 +755,10 @@ currently active endpoint.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-c</span>, <span class="option">--current</span></kbd></dt>
-<dd><p>Set default endpoint to current endpoint.</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">c</span><span class="p">,</span> <span class="o">--</span><span class="n">current</span>  <span class="n">Set</span> <span class="n">default</span> <span class="n">endpoint</span> <span class="n">to</span> <span class="n">current</span> <span class="n">endpoint</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="ep-get-command">
@@ -924,11 +770,9 @@ current endpoint will be set to the default endpoint, if configured.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="ep-list-command">
 <h2>Ep List Command</h2>
@@ -938,11 +782,9 @@ current endpoint will be set to the default endpoint, if configured.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="ep-set-command">
 <h2>Ep Set Command</h2>
@@ -953,11 +795,9 @@ default endpoint will be set as the current endpoint, if configured.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="exit-command">
@@ -968,11 +808,9 @@ default endpoint will be set as the current endpoint, if configured.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="help-command">
 <h1>Help Command</h1>
@@ -983,11 +821,9 @@ command-specific help.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="ls-command">
 <h1>Ls Command</h1>
@@ -1004,20 +840,12 @@ authenticated user, regardless of context.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-O</span>, <span class="option">--offset <var>INTEGER</var></span></kbd></dt>
-<dd><p>Start list at offset</p>
-</dd>
-<dt><kbd><span class="option">-C</span>, <span class="option">--count <var>INTEGER</var></span></kbd></dt>
-<dd><p>Limit list to count results</p>
-</dd>
-<dt><kbd><span class="option">-X</span>, <span class="option">--context <var>TEXT</var></span></kbd></dt>
-<dd><p>User or project ID for command alias context. See ‘alias’ command help for more information.</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">offset</span> <span class="n">INTEGER</span>  <span class="n">Start</span> <span class="nb">list</span> <span class="n">at</span> <span class="n">offset</span>
+<span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">count</span> <span class="n">INTEGER</span>  <span class="n">Limit</span> <span class="nb">list</span> <span class="n">to</span> <span class="n">count</span> <span class="n">results</span>
+<span class="o">-</span><span class="n">X</span><span class="p">,</span> <span class="o">--</span><span class="n">context</span> <span class="n">TEXT</span>  <span class="n">User</span> <span class="ow">or</span> <span class="n">project</span> <span class="n">ID</span> <span class="k">for</span> <span class="n">command</span> <span class="n">alias</span> <span class="n">context</span><span class="o">.</span> <span class="n">See</span> <span class="s1">&#39;alias&#39;</span> <span class="n">command</span> <span class="n">help</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="project-commands">
 <h1>Project Commands</h1>
@@ -1027,11 +855,9 @@ authenticated user, regardless of context.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -1056,26 +882,14 @@ current user, as well as projects were the current user is a member.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-o</span>, <span class="option">--owned</span></kbd></dt>
-<dd><p>Include owned projects</p>
-</dd>
-<dt><kbd><span class="option">-a</span>, <span class="option">--admin</span></kbd></dt>
-<dd><p>Include administered projects</p>
-</dd>
-<dt><kbd><span class="option">-m</span>, <span class="option">--member</span></kbd></dt>
-<dd><p>Include membership projects</p>
-</dd>
-<dt><kbd><span class="option">-O</span>, <span class="option">--offset <var>INTEGER</var></span></kbd></dt>
-<dd><p>Start list at offset</p>
-</dd>
-<dt><kbd><span class="option">-C</span>, <span class="option">--count <var>INTEGER</var></span></kbd></dt>
-<dd><p>Limit list to count results</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">o</span><span class="p">,</span> <span class="o">--</span><span class="n">owned</span>  <span class="n">Include</span> <span class="n">owned</span> <span class="n">projects</span>
+<span class="o">-</span><span class="n">a</span><span class="p">,</span> <span class="o">--</span><span class="n">admin</span>  <span class="n">Include</span> <span class="n">administered</span> <span class="n">projects</span>
+<span class="o">-</span><span class="n">m</span><span class="p">,</span> <span class="o">--</span><span class="n">member</span>  <span class="n">Include</span> <span class="n">membership</span> <span class="n">projects</span>
+<span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">offset</span> <span class="n">INTEGER</span>  <span class="n">Start</span> <span class="nb">list</span> <span class="n">at</span> <span class="n">offset</span>
+<span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">count</span> <span class="n">INTEGER</span>  <span class="n">Limit</span> <span class="nb">list</span> <span class="n">to</span> <span class="n">count</span> <span class="n">results</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="project-view-command">
 <h2>Project View Command</h2>
@@ -1086,8 +900,10 @@ member) within the project specified by the ID argument.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<p>-v, –verbosity [0|1|2]  Verbosity level of output
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">v</span><span class="p">,</span> <span class="o">--</span><span class="n">verbosity</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="p">]</span>  <span class="n">Verbosity</span> <span class="n">level</span> <span class="n">of</span> <span class="n">output</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="query-commands">
@@ -1098,11 +914,9 @@ member) within the project specified by the ID argument.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -1141,59 +955,25 @@ member) within the project specified by the ID argument.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-C</span>, <span class="option">--coll-mode</span></kbd></dt>
-<dd><p>Search for collections intead of data</p>
-</dd>
-<dt><kbd><span class="option">-c</span>, <span class="option">--coll <var>TEXT</var></span></kbd></dt>
-<dd><p>Collection to search (multiple allowed)</p>
-</dd>
-<dt><kbd><span class="option">--id <var>TEXT</var></span></kbd></dt>
-<dd><p>ID/alias expression</p>
-</dd>
-<dt><kbd><span class="option">--text <var>TEXT</var></span></kbd></dt>
-<dd><p>Text expression</p>
-</dd>
-<dt><kbd><span class="option">-t</span>, <span class="option">--tag <var>TEXT</var></span></kbd></dt>
-<dd><p>Tag (multiple allowed)</p>
-</dd>
-<dt><kbd><span class="option">--schema <var>TEXT</var></span></kbd></dt>
-<dd><p>Metadata schema ID</p>
-</dd>
-<dt><kbd><span class="option">--meta <var>TEXT</var></span></kbd></dt>
-<dd><p>Metadata expression</p>
-</dd>
-<dt><kbd><span class="option">--meta-err</span></kbd></dt>
-<dd><p>Metadata has validation errors</p>
-</dd>
-<dt><kbd><span class="option">--owner <var>TEXT</var></span></kbd></dt>
-<dd><p>Owninging user ID (only for public queries)</p>
-</dd>
-<dt><kbd><span class="option">--creator <var>TEXT</var></span></kbd></dt>
-<dd><p>Creating user ID</p>
-</dd>
-<dt><kbd><span class="option">--from <var>TEXT</var></span></kbd></dt>
-<dd><p>Find from specified date/time (M/D/YYYY[,HH:MM])</p>
-</dd>
-<dt><kbd><span class="option">--to <var>TEXT</var></span></kbd></dt>
-<dd><p>Find up to specified date/time (M/D/YYYY[,HH:MM])</p>
-</dd>
-<dt><kbd><span class="option">-p</span>, <span class="option">--public</span></kbd></dt>
-<dd><p>Search public data/collections in catalog</p>
-</dd>
-<dt><kbd><span class="option">--category <var>TEXT</var></span></kbd></dt>
-<dd><p>Category (public searches only)</p>
-</dd>
-<dt><kbd><span class="option">--sort <var>TEXT</var></span></kbd></dt>
-<dd><p>Sort option (id,title,owner,text,ct,ut)</p>
-</dd>
-<dt><kbd><span class="option">--sort-rev</span></kbd></dt>
-<dd><p>Sort in reverse order (not available for text)</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">coll</span><span class="o">-</span><span class="n">mode</span>  <span class="n">Search</span> <span class="k">for</span> <span class="n">collections</span> <span class="n">intead</span> <span class="n">of</span> <span class="n">data</span>
+<span class="o">-</span><span class="n">c</span><span class="p">,</span> <span class="o">--</span><span class="n">coll</span> <span class="n">TEXT</span>  <span class="n">Collection</span> <span class="n">to</span> <span class="n">search</span> <span class="p">(</span><span class="n">multiple</span> <span class="n">allowed</span><span class="p">)</span>
+<span class="o">--</span><span class="nb">id</span> <span class="n">TEXT</span>  <span class="n">ID</span><span class="o">/</span><span class="n">alias</span> <span class="n">expression</span>
+<span class="o">--</span><span class="n">text</span> <span class="n">TEXT</span>  <span class="n">Text</span> <span class="n">expression</span>
+<span class="o">-</span><span class="n">t</span><span class="p">,</span> <span class="o">--</span><span class="n">tag</span> <span class="n">TEXT</span>  <span class="n">Tag</span> <span class="p">(</span><span class="n">multiple</span> <span class="n">allowed</span><span class="p">)</span>
+<span class="o">--</span><span class="n">schema</span> <span class="n">TEXT</span>  <span class="n">Metadata</span> <span class="n">schema</span> <span class="n">ID</span>
+<span class="o">--</span><span class="n">meta</span> <span class="n">TEXT</span>  <span class="n">Metadata</span> <span class="n">expression</span>
+<span class="o">--</span><span class="n">meta</span><span class="o">-</span><span class="n">err</span>  <span class="n">Metadata</span> <span class="n">has</span> <span class="n">validation</span> <span class="n">errors</span>
+<span class="o">--</span><span class="n">owner</span> <span class="n">TEXT</span>  <span class="n">Owninging</span> <span class="n">user</span> <span class="n">ID</span> <span class="p">(</span><span class="n">only</span> <span class="k">for</span> <span class="n">public</span> <span class="n">queries</span><span class="p">)</span>
+<span class="o">--</span><span class="n">creator</span> <span class="n">TEXT</span>  <span class="n">Creating</span> <span class="n">user</span> <span class="n">ID</span>
+<span class="o">--</span><span class="kn">from</span> <span class="nn">TEXT</span>  <span class="n">Find</span> <span class="kn">from</span> <span class="nn">specified</span> <span class="n">date</span><span class="o">/</span><span class="n">time</span> <span class="p">(</span><span class="n">M</span><span class="o">/</span><span class="n">D</span><span class="o">/</span><span class="n">YYYY</span><span class="p">[,</span><span class="n">HH</span><span class="p">:</span><span class="n">MM</span><span class="p">])</span>
+<span class="o">--</span><span class="n">to</span> <span class="n">TEXT</span>  <span class="n">Find</span> <span class="n">up</span> <span class="n">to</span> <span class="n">specified</span> <span class="n">date</span><span class="o">/</span><span class="n">time</span> <span class="p">(</span><span class="n">M</span><span class="o">/</span><span class="n">D</span><span class="o">/</span><span class="n">YYYY</span><span class="p">[,</span><span class="n">HH</span><span class="p">:</span><span class="n">MM</span><span class="p">])</span>
+<span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="o">--</span><span class="n">public</span>  <span class="n">Search</span> <span class="n">public</span> <span class="n">data</span><span class="o">/</span><span class="n">collections</span> <span class="ow">in</span> <span class="n">catalog</span>
+<span class="o">--</span><span class="n">category</span> <span class="n">TEXT</span>  <span class="n">Category</span> <span class="p">(</span><span class="n">public</span> <span class="n">searches</span> <span class="n">only</span><span class="p">)</span>
+<span class="o">--</span><span class="n">sort</span> <span class="n">TEXT</span>  <span class="n">Sort</span> <span class="n">option</span> <span class="p">(</span><span class="nb">id</span><span class="p">,</span><span class="n">title</span><span class="p">,</span><span class="n">owner</span><span class="p">,</span><span class="n">text</span><span class="p">,</span><span class="n">ct</span><span class="p">,</span><span class="n">ut</span><span class="p">)</span>
+<span class="o">--</span><span class="n">sort</span><span class="o">-</span><span class="n">rev</span>  <span class="n">Sort</span> <span class="ow">in</span> <span class="n">reverse</span> <span class="n">order</span> <span class="p">(</span><span class="ow">not</span> <span class="n">available</span> <span class="k">for</span> <span class="n">text</span><span class="p">)</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="query-delete-command">
 <h2>Query Delete Command</h2>
@@ -1203,11 +983,9 @@ member) within the project specified by the ID argument.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="query-exec-command">
 <h2>Query Exec Command</h2>
@@ -1217,17 +995,11 @@ member) within the project specified by the ID argument.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-O</span>, <span class="option">--offset <var>INTEGER</var></span></kbd></dt>
-<dd><p>Start results list at offset</p>
-</dd>
-<dt><kbd><span class="option">-C</span>, <span class="option">--count <var>INTEGER</var></span></kbd></dt>
-<dd><p>Limit to count results</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">offset</span> <span class="n">INTEGER</span>  <span class="n">Start</span> <span class="n">results</span> <span class="nb">list</span> <span class="n">at</span> <span class="n">offset</span>
+<span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">count</span> <span class="n">INTEGER</span>  <span class="n">Limit</span> <span class="n">to</span> <span class="n">count</span> <span class="n">results</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="query-list-command">
 <h2>Query List Command</h2>
@@ -1237,17 +1009,11 @@ member) within the project specified by the ID argument.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-O</span>, <span class="option">--offset <var>INTEGER</var></span></kbd></dt>
-<dd><p>Start list at offset</p>
-</dd>
-<dt><kbd><span class="option">-C</span>, <span class="option">--count <var>INTEGER</var></span></kbd></dt>
-<dd><p>Limit list to count results</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">offset</span> <span class="n">INTEGER</span>  <span class="n">Start</span> <span class="nb">list</span> <span class="n">at</span> <span class="n">offset</span>
+<span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">count</span> <span class="n">INTEGER</span>  <span class="n">Limit</span> <span class="nb">list</span> <span class="n">to</span> <span class="n">count</span> <span class="n">results</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="query-run-command">
 <h2>Query Run Command</h2>
@@ -1263,65 +1029,27 @@ are creation and update times, respectively.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-C</span>, <span class="option">--coll-mode</span></kbd></dt>
-<dd><p>Search for collections intead of data</p>
-</dd>
-<dt><kbd><span class="option">-c</span>, <span class="option">--coll <var>TEXT</var></span></kbd></dt>
-<dd><p>Collection to search (multiple allowed)</p>
-</dd>
-<dt><kbd><span class="option">--id <var>TEXT</var></span></kbd></dt>
-<dd><p>ID/alias expression</p>
-</dd>
-<dt><kbd><span class="option">--text <var>TEXT</var></span></kbd></dt>
-<dd><p>Text expression</p>
-</dd>
-<dt><kbd><span class="option">-t</span>, <span class="option">--tag <var>TEXT</var></span></kbd></dt>
-<dd><p>Tag (multiple allowed)</p>
-</dd>
-<dt><kbd><span class="option">--schema <var>TEXT</var></span></kbd></dt>
-<dd><p>Metadata schema ID</p>
-</dd>
-<dt><kbd><span class="option">--meta <var>TEXT</var></span></kbd></dt>
-<dd><p>Metadata expression</p>
-</dd>
-<dt><kbd><span class="option">--meta-err</span></kbd></dt>
-<dd><p>Metadata has validation errors</p>
-</dd>
-<dt><kbd><span class="option">--owner <var>TEXT</var></span></kbd></dt>
-<dd><p>Owninging user ID (only for public queries)</p>
-</dd>
-<dt><kbd><span class="option">--creator <var>TEXT</var></span></kbd></dt>
-<dd><p>Creating user ID</p>
-</dd>
-<dt><kbd><span class="option">--from <var>TEXT</var></span></kbd></dt>
-<dd><p>Find from specified date/time (M/D/YYYY[,HH:MM])</p>
-</dd>
-<dt><kbd><span class="option">--to <var>TEXT</var></span></kbd></dt>
-<dd><p>Find up to specified date/time (M/D/YYYY[,HH:MM])</p>
-</dd>
-<dt><kbd><span class="option">-p</span>, <span class="option">--public</span></kbd></dt>
-<dd><p>Search public data/collections in catalog</p>
-</dd>
-<dt><kbd><span class="option">--category <var>TEXT</var></span></kbd></dt>
-<dd><p>Category (public searches only)</p>
-</dd>
-<dt><kbd><span class="option">--sort <var>TEXT</var></span></kbd></dt>
-<dd><p>Sort option (id,title,owner,text,ct,ut)</p>
-</dd>
-<dt><kbd><span class="option">--sort-rev</span></kbd></dt>
-<dd><p>Sort in reverse order (not available for text)</p>
-</dd>
-<dt><kbd><span class="option">--offset <var>INTEGER</var></span></kbd></dt>
-<dd><p>Start result list at offset</p>
-</dd>
-<dt><kbd><span class="option">--count <var>INTEGER</var></span></kbd></dt>
-<dd><p>Limit to count results (default = 20)</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">coll</span><span class="o">-</span><span class="n">mode</span>  <span class="n">Search</span> <span class="k">for</span> <span class="n">collections</span> <span class="n">intead</span> <span class="n">of</span> <span class="n">data</span>
+<span class="o">-</span><span class="n">c</span><span class="p">,</span> <span class="o">--</span><span class="n">coll</span> <span class="n">TEXT</span>  <span class="n">Collection</span> <span class="n">to</span> <span class="n">search</span> <span class="p">(</span><span class="n">multiple</span> <span class="n">allowed</span><span class="p">)</span>
+<span class="o">--</span><span class="nb">id</span> <span class="n">TEXT</span>  <span class="n">ID</span><span class="o">/</span><span class="n">alias</span> <span class="n">expression</span>
+<span class="o">--</span><span class="n">text</span> <span class="n">TEXT</span>  <span class="n">Text</span> <span class="n">expression</span>
+<span class="o">-</span><span class="n">t</span><span class="p">,</span> <span class="o">--</span><span class="n">tag</span> <span class="n">TEXT</span>  <span class="n">Tag</span> <span class="p">(</span><span class="n">multiple</span> <span class="n">allowed</span><span class="p">)</span>
+<span class="o">--</span><span class="n">schema</span> <span class="n">TEXT</span>  <span class="n">Metadata</span> <span class="n">schema</span> <span class="n">ID</span>
+<span class="o">--</span><span class="n">meta</span> <span class="n">TEXT</span>  <span class="n">Metadata</span> <span class="n">expression</span>
+<span class="o">--</span><span class="n">meta</span><span class="o">-</span><span class="n">err</span>  <span class="n">Metadata</span> <span class="n">has</span> <span class="n">validation</span> <span class="n">errors</span>
+<span class="o">--</span><span class="n">owner</span> <span class="n">TEXT</span>  <span class="n">Owninging</span> <span class="n">user</span> <span class="n">ID</span> <span class="p">(</span><span class="n">only</span> <span class="k">for</span> <span class="n">public</span> <span class="n">queries</span><span class="p">)</span>
+<span class="o">--</span><span class="n">creator</span> <span class="n">TEXT</span>  <span class="n">Creating</span> <span class="n">user</span> <span class="n">ID</span>
+<span class="o">--</span><span class="kn">from</span> <span class="nn">TEXT</span>  <span class="n">Find</span> <span class="kn">from</span> <span class="nn">specified</span> <span class="n">date</span><span class="o">/</span><span class="n">time</span> <span class="p">(</span><span class="n">M</span><span class="o">/</span><span class="n">D</span><span class="o">/</span><span class="n">YYYY</span><span class="p">[,</span><span class="n">HH</span><span class="p">:</span><span class="n">MM</span><span class="p">])</span>
+<span class="o">--</span><span class="n">to</span> <span class="n">TEXT</span>  <span class="n">Find</span> <span class="n">up</span> <span class="n">to</span> <span class="n">specified</span> <span class="n">date</span><span class="o">/</span><span class="n">time</span> <span class="p">(</span><span class="n">M</span><span class="o">/</span><span class="n">D</span><span class="o">/</span><span class="n">YYYY</span><span class="p">[,</span><span class="n">HH</span><span class="p">:</span><span class="n">MM</span><span class="p">])</span>
+<span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="o">--</span><span class="n">public</span>  <span class="n">Search</span> <span class="n">public</span> <span class="n">data</span><span class="o">/</span><span class="n">collections</span> <span class="ow">in</span> <span class="n">catalog</span>
+<span class="o">--</span><span class="n">category</span> <span class="n">TEXT</span>  <span class="n">Category</span> <span class="p">(</span><span class="n">public</span> <span class="n">searches</span> <span class="n">only</span><span class="p">)</span>
+<span class="o">--</span><span class="n">sort</span> <span class="n">TEXT</span>  <span class="n">Sort</span> <span class="n">option</span> <span class="p">(</span><span class="nb">id</span><span class="p">,</span><span class="n">title</span><span class="p">,</span><span class="n">owner</span><span class="p">,</span><span class="n">text</span><span class="p">,</span><span class="n">ct</span><span class="p">,</span><span class="n">ut</span><span class="p">)</span>
+<span class="o">--</span><span class="n">sort</span><span class="o">-</span><span class="n">rev</span>  <span class="n">Sort</span> <span class="ow">in</span> <span class="n">reverse</span> <span class="n">order</span> <span class="p">(</span><span class="ow">not</span> <span class="n">available</span> <span class="k">for</span> <span class="n">text</span><span class="p">)</span>
+<span class="o">--</span><span class="n">offset</span> <span class="n">INTEGER</span>  <span class="n">Start</span> <span class="n">result</span> <span class="nb">list</span> <span class="n">at</span> <span class="n">offset</span>
+<span class="o">--</span><span class="n">count</span> <span class="n">INTEGER</span>  <span class="n">Limit</span> <span class="n">to</span> <span class="n">count</span> <span class="n">results</span> <span class="p">(</span><span class="n">default</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="query-update-command">
 <h2>Query Update Command</h2>
@@ -1333,62 +1061,26 @@ specify an empty string (“”) for the associated option.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">--title <var>TEXT</var></span></kbd></dt>
-<dd><p>New query title</p>
-</dd>
-<dt><kbd><span class="option">-C</span>, <span class="option">--coll-mode</span></kbd></dt>
-<dd><p>Search for collections intead of data</p>
-</dd>
-<dt><kbd><span class="option">-c</span>, <span class="option">--coll <var>TEXT</var></span></kbd></dt>
-<dd><p>Collection to search (multiple allowed)</p>
-</dd>
-<dt><kbd><span class="option">--id <var>TEXT</var></span></kbd></dt>
-<dd><p>ID/alias expression</p>
-</dd>
-<dt><kbd><span class="option">--text <var>TEXT</var></span></kbd></dt>
-<dd><p>Text expression</p>
-</dd>
-<dt><kbd><span class="option">-t</span>, <span class="option">--tag <var>TEXT</var></span></kbd></dt>
-<dd><p>Tag (multiple allowed)</p>
-</dd>
-<dt><kbd><span class="option">--schema <var>TEXT</var></span></kbd></dt>
-<dd><p>Metadata schema ID</p>
-</dd>
-<dt><kbd><span class="option">--meta <var>TEXT</var></span></kbd></dt>
-<dd><p>Metadata expression</p>
-</dd>
-<dt><kbd><span class="option">--meta-err</span></kbd></dt>
-<dd><p>Metadata has validation errors</p>
-</dd>
-<dt><kbd><span class="option">--owner <var>TEXT</var></span></kbd></dt>
-<dd><p>Owninging user ID (only for public queries)</p>
-</dd>
-<dt><kbd><span class="option">--creator <var>TEXT</var></span></kbd></dt>
-<dd><p>Creating user ID</p>
-</dd>
-<dt><kbd><span class="option">--from <var>TEXT</var></span></kbd></dt>
-<dd><p>Find from specified date/time (M/D/YYYY[,HH:MM])</p>
-</dd>
-<dt><kbd><span class="option">--to <var>TEXT</var></span></kbd></dt>
-<dd><p>Find up to specified date/time (M/D/YYYY[,HH:MM])</p>
-</dd>
-<dt><kbd><span class="option">-p</span>, <span class="option">--public</span></kbd></dt>
-<dd><p>Search public data/collections in catalog</p>
-</dd>
-<dt><kbd><span class="option">--category <var>TEXT</var></span></kbd></dt>
-<dd><p>Category (public searches only)</p>
-</dd>
-<dt><kbd><span class="option">--sort <var>TEXT</var></span></kbd></dt>
-<dd><p>Sort option (id,title,owner,text,ct,ut)</p>
-</dd>
-<dt><kbd><span class="option">--sort-rev</span></kbd></dt>
-<dd><p>Sort in reverse order (not available for text)</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">title</span> <span class="n">TEXT</span>  <span class="n">New</span> <span class="n">query</span> <span class="n">title</span>
+<span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">coll</span><span class="o">-</span><span class="n">mode</span>  <span class="n">Search</span> <span class="k">for</span> <span class="n">collections</span> <span class="n">intead</span> <span class="n">of</span> <span class="n">data</span>
+<span class="o">-</span><span class="n">c</span><span class="p">,</span> <span class="o">--</span><span class="n">coll</span> <span class="n">TEXT</span>  <span class="n">Collection</span> <span class="n">to</span> <span class="n">search</span> <span class="p">(</span><span class="n">multiple</span> <span class="n">allowed</span><span class="p">)</span>
+<span class="o">--</span><span class="nb">id</span> <span class="n">TEXT</span>  <span class="n">ID</span><span class="o">/</span><span class="n">alias</span> <span class="n">expression</span>
+<span class="o">--</span><span class="n">text</span> <span class="n">TEXT</span>  <span class="n">Text</span> <span class="n">expression</span>
+<span class="o">-</span><span class="n">t</span><span class="p">,</span> <span class="o">--</span><span class="n">tag</span> <span class="n">TEXT</span>  <span class="n">Tag</span> <span class="p">(</span><span class="n">multiple</span> <span class="n">allowed</span><span class="p">)</span>
+<span class="o">--</span><span class="n">schema</span> <span class="n">TEXT</span>  <span class="n">Metadata</span> <span class="n">schema</span> <span class="n">ID</span>
+<span class="o">--</span><span class="n">meta</span> <span class="n">TEXT</span>  <span class="n">Metadata</span> <span class="n">expression</span>
+<span class="o">--</span><span class="n">meta</span><span class="o">-</span><span class="n">err</span>  <span class="n">Metadata</span> <span class="n">has</span> <span class="n">validation</span> <span class="n">errors</span>
+<span class="o">--</span><span class="n">owner</span> <span class="n">TEXT</span>  <span class="n">Owninging</span> <span class="n">user</span> <span class="n">ID</span> <span class="p">(</span><span class="n">only</span> <span class="k">for</span> <span class="n">public</span> <span class="n">queries</span><span class="p">)</span>
+<span class="o">--</span><span class="n">creator</span> <span class="n">TEXT</span>  <span class="n">Creating</span> <span class="n">user</span> <span class="n">ID</span>
+<span class="o">--</span><span class="kn">from</span> <span class="nn">TEXT</span>  <span class="n">Find</span> <span class="kn">from</span> <span class="nn">specified</span> <span class="n">date</span><span class="o">/</span><span class="n">time</span> <span class="p">(</span><span class="n">M</span><span class="o">/</span><span class="n">D</span><span class="o">/</span><span class="n">YYYY</span><span class="p">[,</span><span class="n">HH</span><span class="p">:</span><span class="n">MM</span><span class="p">])</span>
+<span class="o">--</span><span class="n">to</span> <span class="n">TEXT</span>  <span class="n">Find</span> <span class="n">up</span> <span class="n">to</span> <span class="n">specified</span> <span class="n">date</span><span class="o">/</span><span class="n">time</span> <span class="p">(</span><span class="n">M</span><span class="o">/</span><span class="n">D</span><span class="o">/</span><span class="n">YYYY</span><span class="p">[,</span><span class="n">HH</span><span class="p">:</span><span class="n">MM</span><span class="p">])</span>
+<span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="o">--</span><span class="n">public</span>  <span class="n">Search</span> <span class="n">public</span> <span class="n">data</span><span class="o">/</span><span class="n">collections</span> <span class="ow">in</span> <span class="n">catalog</span>
+<span class="o">--</span><span class="n">category</span> <span class="n">TEXT</span>  <span class="n">Category</span> <span class="p">(</span><span class="n">public</span> <span class="n">searches</span> <span class="n">only</span><span class="p">)</span>
+<span class="o">--</span><span class="n">sort</span> <span class="n">TEXT</span>  <span class="n">Sort</span> <span class="n">option</span> <span class="p">(</span><span class="nb">id</span><span class="p">,</span><span class="n">title</span><span class="p">,</span><span class="n">owner</span><span class="p">,</span><span class="n">text</span><span class="p">,</span><span class="n">ct</span><span class="p">,</span><span class="n">ut</span><span class="p">)</span>
+<span class="o">--</span><span class="n">sort</span><span class="o">-</span><span class="n">rev</span>  <span class="n">Sort</span> <span class="ow">in</span> <span class="n">reverse</span> <span class="n">order</span> <span class="p">(</span><span class="ow">not</span> <span class="n">available</span> <span class="k">for</span> <span class="n">text</span><span class="p">)</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="query-view-command">
 <h2>Query View Command</h2>
@@ -1398,11 +1090,9 @@ specify an empty string (“”) for the associated option.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="setup-command">
@@ -1416,11 +1106,9 @@ manual authentication.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="shares-command">
 <h1>Shares Command</h1>
@@ -1430,17 +1118,11 @@ manual authentication.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-u</span>, <span class="option">--users</span></kbd></dt>
-<dd><p>Show users only</p>
-</dd>
-<dt><kbd><span class="option">-p</span>, <span class="option">--projects</span></kbd></dt>
-<dd><p>Show projects only</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">u</span><span class="p">,</span> <span class="o">--</span><span class="n">users</span>  <span class="n">Show</span> <span class="n">users</span> <span class="n">only</span>
+<span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="o">--</span><span class="n">projects</span>  <span class="n">Show</span> <span class="n">projects</span> <span class="n">only</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="task-commands">
 <h1>Task Commands</h1>
@@ -1450,11 +1132,9 @@ manual authentication.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -1481,21 +1161,15 @@ tasks history such that only up to 30 days of history are retained.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-s</span>, <span class="option">--since <var>TEXT</var></span></kbd></dt>
-<dd><p>List from specified time (seconds default, suffix h = hours, d = days, w = weeks)</p>
-</dd>
-<dt><kbd><span class="option">-f</span>, <span class="option">--from <var>TEXT</var></span></kbd></dt>
-<dd><p>List from specified date/time (M/D/YYYY[,HH:MM])</p>
-</dd>
-<dt><kbd><span class="option">-t</span>, <span class="option">--to <var>TEXT</var></span></kbd></dt>
-<dd><p>List up to specified date/time (M/D/YYYY[,HH:MM])</p>
-</dd>
-</dl>
-<p>-S, –status [0|1|2|3|4|queued|ready|running|succeeded|failed]  List tasks matching specified status
--O, –offset INTEGER  Start list at offset
--C, –count INTEGER  Limit list to count results
--h, –help  Show this message and exit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="o">--</span><span class="n">since</span> <span class="n">TEXT</span>  <span class="n">List</span> <span class="kn">from</span> <span class="nn">specified</span> <span class="n">time</span> <span class="p">(</span><span class="n">seconds</span> <span class="n">default</span><span class="p">,</span> <span class="n">suffix</span> <span class="n">h</span> <span class="o">=</span> <span class="n">hours</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">days</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">weeks</span><span class="p">)</span>
+<span class="o">-</span><span class="n">f</span><span class="p">,</span> <span class="o">--</span><span class="kn">from</span> <span class="nn">TEXT</span>  <span class="n">List</span> <span class="kn">from</span> <span class="nn">specified</span> <span class="n">date</span><span class="o">/</span><span class="n">time</span> <span class="p">(</span><span class="n">M</span><span class="o">/</span><span class="n">D</span><span class="o">/</span><span class="n">YYYY</span><span class="p">[,</span><span class="n">HH</span><span class="p">:</span><span class="n">MM</span><span class="p">])</span>
+<span class="o">-</span><span class="n">t</span><span class="p">,</span> <span class="o">--</span><span class="n">to</span> <span class="n">TEXT</span>  <span class="n">List</span> <span class="n">up</span> <span class="n">to</span> <span class="n">specified</span> <span class="n">date</span><span class="o">/</span><span class="n">time</span> <span class="p">(</span><span class="n">M</span><span class="o">/</span><span class="n">D</span><span class="o">/</span><span class="n">YYYY</span><span class="p">[,</span><span class="n">HH</span><span class="p">:</span><span class="n">MM</span><span class="p">])</span>
+<span class="o">-</span><span class="n">S</span><span class="p">,</span> <span class="o">--</span><span class="n">status</span> <span class="p">[</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span><span class="mi">2</span><span class="o">|</span><span class="mi">3</span><span class="o">|</span><span class="mi">4</span><span class="o">|</span><span class="n">queued</span><span class="o">|</span><span class="n">ready</span><span class="o">|</span><span class="n">running</span><span class="o">|</span><span class="n">succeeded</span><span class="o">|</span><span class="n">failed</span><span class="p">]</span>  <span class="n">List</span> <span class="n">tasks</span> <span class="n">matching</span> <span class="n">specified</span> <span class="n">status</span>
+<span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">offset</span> <span class="n">INTEGER</span>  <span class="n">Start</span> <span class="nb">list</span> <span class="n">at</span> <span class="n">offset</span>
+<span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">count</span> <span class="n">INTEGER</span>  <span class="n">Limit</span> <span class="nb">list</span> <span class="n">to</span> <span class="n">count</span> <span class="n">results</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="task-view-command">
 <h2>Task View Command</h2>
@@ -1506,11 +1180,9 @@ record, or omit to view the latest task initiated by the current user.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="user-commands">
@@ -1521,11 +1193,9 @@ record, or omit to view the latest task initiated by the current user.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>Sub-Commands:</p>
 <table class="docutils align-default">
 <colgroup>
@@ -1555,17 +1225,11 @@ record, or omit to view the latest task initiated by the current user.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-O</span>, <span class="option">--offset <var>INTEGER</var></span></kbd></dt>
-<dd><p>Start list at offset</p>
-</dd>
-<dt><kbd><span class="option">-C</span>, <span class="option">--count <var>INTEGER</var></span></kbd></dt>
-<dd><p>Limit list to count results</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">offset</span> <span class="n">INTEGER</span>  <span class="n">Start</span> <span class="nb">list</span> <span class="n">at</span> <span class="n">offset</span>
+<span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">count</span> <span class="n">INTEGER</span>  <span class="n">Limit</span> <span class="nb">list</span> <span class="n">to</span> <span class="n">count</span> <span class="n">results</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="user-collab-command">
 <h2>User Collab Command</h2>
@@ -1577,17 +1241,11 @@ sharing relationships with the current user.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-O</span>, <span class="option">--offset <var>INTEGER</var></span></kbd></dt>
-<dd><p>Start list at offset</p>
-</dd>
-<dt><kbd><span class="option">-C</span>, <span class="option">--count <var>INTEGER</var></span></kbd></dt>
-<dd><p>Limit list to count results</p>
-</dd>
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">O</span><span class="p">,</span> <span class="o">--</span><span class="n">offset</span> <span class="n">INTEGER</span>  <span class="n">Start</span> <span class="nb">list</span> <span class="n">at</span> <span class="n">offset</span>
+<span class="o">-</span><span class="n">C</span><span class="p">,</span> <span class="o">--</span><span class="n">count</span> <span class="n">INTEGER</span>  <span class="n">Limit</span> <span class="nb">list</span> <span class="n">to</span> <span class="n">count</span> <span class="n">results</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="user-view-command">
 <h2>User View Command</h2>
@@ -1597,11 +1255,9 @@ sharing relationships with the current user.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="user-who-command">
 <h2>User Who Command</h2>
@@ -1611,11 +1267,9 @@ sharing relationships with the current user.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="verbosity-command">
@@ -1628,11 +1282,9 @@ current verbosity level is returned.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="wc-command">
 <h1>Wc Command</h1>
@@ -1651,11 +1303,9 @@ root colelction of the current context.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="wp-command">
 <h1>Wp Command</h1>
@@ -1667,11 +1317,9 @@ project.</p>
 </pre></div>
 </div>
 <p>Options:</p>
-<dl class="option-list">
-<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Show this message and exit.</p>
-</dd>
-</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">Show</span> <span class="n">this</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span><span class="o">.</span>
+</pre></div>
+</div>
 </div>
 
 

@@ -479,7 +479,7 @@ def _genDocCmd( cmd, ctx, level, parname = None, recurse = True ):
         doc += "datafed"
     else:
         doc += ctx.command_path 
-    doc += " " + " ".join(tmp) + "\n\nOptions:\n\n"
+    doc += " " + " ".join(tmp) + "\n\nOptions::\n\n"
 
     for o in opts:
         doc += o[0] + "  " + o[1] + "\n"
