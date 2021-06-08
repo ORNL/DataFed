@@ -33,7 +33,7 @@ release = '1.4'
 # ones.
 
 #extensions = ['sphinx.ext.autodoc','autoapi.extension']
-extensions = ['autoapi.extension']
+extensions = ['autoapi.extension','sphinx.ext.autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
