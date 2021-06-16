@@ -1,0 +1,5 @@
+#!/bin/bash
+
+#export ZMQ_INC_DIR=/usr/include
+#export ZMQ_LIB_DIR=/usr/lib/x86_64-linux-gnu
+export PYTHONPATH=/home/cades/dvstans/DataFed/active/python/datafed_pkg/
