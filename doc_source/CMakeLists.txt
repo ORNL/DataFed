@@ -11,8 +11,12 @@ add_custom_target( cli_doc ALL )
 # Then run sphinx-build to make doc html
 
 add_custom_command( TARGET cli_doc POST_BUILD
+    COMMAND echo "Preparing docs build directories"
     COMMAND rm -rf ${CMAKE_SOURCE_DIR}/docs
     COMMAND mkdir ${CMAKE_SOURCE_DIR}/docs
+    COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/source/_generated
+    COMMAND echo "Generating API docs"
     COMMAND ${CMAKE_COMMAND} -E env "PYTHONPATH=${CMAKE_BINARY_DIR}/python/datafed_pkg/" ${CMAKE_BINARY_DIR}/python/datafed_pkg/scripts/datafed gendoc > ${CMAKE_CURRENT_BINARY_DIR}/source/_generated/cli_python_cmd_ref.rst
+    COMMAND echo "Generating docs HTML"
     COMMAND sphinx-build -b html ${CMAKE_CURRENT_BINARY_DIR}/source ${CMAKE_SOURCE_DIR}/docs 
     COMMAND touch ${CMAKE_SOURCE_DIR}/docs/.nojekyll )
