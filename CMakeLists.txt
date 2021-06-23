@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.0.0)
-project( SDMS CXX C )
+project( DataFed CXX C )
 
 set(SDMS_MAJOR_VERSION 0)
 set(SDMS_MINOR_VERSION 1)
@@ -15,7 +15,7 @@ find_package(Threads REQUIRED)
 #find_package(Zeromq REQUIRED)
 #find_package(Boost REQUIRED)
 
-OPTION(CLIENT_ONLY "Build client only" OFF)
+#OPTION(CLIENT_ONLY "Build client only" OFF)
 
 
 message( "Building for " ${CMAKE_BUILD_TYPE} )
@@ -89,11 +89,14 @@ set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_subdirectory( common )
-add_subdirectory( test )
-add_subdirectory( python )
-IF(NOT CLIENT_ONLY)
-	add_subdirectory( core )
-	add_subdirectory( repository )
-ENDIF(NOT CLIENT_ONLY)
+add_subdirectory( core )
+add_subdirectory( repository )
 
-add_subdirectory( doc_source )
+# Only needed to build client and Python API
+add_subdirectory( python EXCLUDE_FROM_ALL )
+
+# Disabled until unit testing integrated
+#add_subdirectory( test )
+
+# Disabled until fixed
+#add_subdirectory( doc_source )

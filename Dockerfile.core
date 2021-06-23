@@ -1,0 +1,12 @@
+FROM datafed:base
+
+WORKDIR /opt/datafed/bin
+
+RUN yum update -y
+RUN yum install -y \
+    protobuf \
+    boost \
+    libcurl \
+    zeromq
+
+ENTRYPOINT ["./datafed-core"]

@@ -2,15 +2,16 @@ cmake_minimum_required (VERSION 3.0.0)
 
 # Copy doc_source/source tree into build directory
 
+# THis should be done during make stage
 file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/source DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs )
 
-add_custom_target( cli_doc ALL )
+add_custom_target( docs EXCLUDE_FROM_ALL )
 
 # Build CLI command reference w/ datafed CLI and place in local doc source directory
 # Then run sphinx-build to make doc html
 
-add_custom_command( TARGET cli_doc POST_BUILD
+add_custom_command( TARGET docs POST_BUILD
     COMMAND echo "Preparing docs build directories"
     COMMAND rm -rf ${CMAKE_SOURCE_DIR}/docs
     COMMAND mkdir ${CMAKE_SOURCE_DIR}/docs
