@@ -76,6 +76,8 @@ function startServer(){
     console.log( "  Client Secret:", g_client_secret );
     console.log( "  Test mode:", g_test );
 
+    console.log( "Connecting to Core" );
+
     g_core_sock.connect( g_core_serv_addr );
 
     sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
@@ -106,6 +108,9 @@ function startServer(){
             if ( g_server_chain_file ){
                 chain = fs.readFileSync( g_server_chain_file, 'utf8');
             }
+
+            console.log( "Starting web server" );
+
             var httpsServer = https.createServer({
                 key: privateKey,
                 cert: certificate,

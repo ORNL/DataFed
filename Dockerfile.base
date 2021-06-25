@@ -1,6 +1,5 @@
 ARG DATAFED_SRC_DIR="/opt/datafed/source"
 ARG DATAFED_BIN_DIR="/opt/datafed/bin"
-ARG DATAFED_WEB_DIR="/opt/datafed/web"
 
 FROM fedora:34 as build
 
@@ -64,15 +63,10 @@ FROM fedora:34
 
 ARG DATAFED_SRC_DIR
 ARG DATAFED_BIN_DIR
-ARG DATAFED_WEB_DIR
 
 RUN mkdir -p ${DATAFED_BIN_DIR}
-RUN mkdir -p ${DATAFED_WEB_DIR}
 
 COPY --from=build ${DATAFED_SRC_DIR}/build/core/server/datafed-core ${DATAFED_BIN_DIR}
 COPY --from=build ${DATAFED_SRC_DIR}/build/repository/server/datafed-repo ${DATAFED_BIN_DIR}
 COPY --from=build ${DATAFED_SRC_DIR}/build/repository/gridftp/authz/libdatafedauthz.so ${DATAFED_BIN_DIR}
-COPY --from=build ${DATAFED_SRC_DIR}/web/datafed-ws.js ${DATAFED_WEB_DIR}
-COPY --from=build ${DATAFED_SRC_DIR}/web/*.proto ${DATAFED_WEB_DIR}/
-COPY --from=build ${DATAFED_SRC_DIR}/web/package.json ${DATAFED_WEB_DIR}
 

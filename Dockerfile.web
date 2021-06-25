@@ -1,6 +1,28 @@
-FROM datafed:base
+FROM fedora:34 as build
 
-WORKDIR /opt/datafed/web
+ARG DATAFED_WEB_DIR="/opt/datafed/web"
+ARG DATAFED_CONFIG_DIR="/opt/datafed/config"
+
+RUN mkdir -p ${DATAFED_WEB_DIR}
+RUN mkdir -p ${DATAFED_CONFIG_DIR}
+
+# These config files can be replaced when deployed on OpenShift
+
+COPY ./config/datafed-ws.ini ${DATAFED_CONFIG_DIR}
+COPY ./config/datafed-ws.key ${DATAFED_CONFIG_DIR}
+COPY ./config/datafed-ws.cert ${DATAFED_CONFIG_DIR}
+COPY ./config/datafed-core-key.pub ${DATAFED_CONFIG_DIR}
+
+WORKDIR ${DATAFED_WEB_DIR}
+
+RUN mkdir static
+RUN mkdir views
+
+COPY ./common/proto/*.proto ./
+COPY ./web/datafed-ws.js .
+COPY ./web/package.json .
+COPY ./web/static static
+COPY ./web/views views
 
 RUN yum update -y
 RUN yum install -y \
@@ -18,12 +40,8 @@ RUN npm install zeromq@5.2.0
 RUN npm install ect
 RUN npm install client-oauth2
 
+ENV DATAFED_CONFIG_DIR ${DATAFED_CONFIG_DIR}
+
 EXPOSE 443
 
-RUN mkdir static
-RUN mkdir views
-
-COPY ./web/static static
-COPY ./web/views views
-
-ENTRYPOINT ["./datafed-ws.js"]
+CMD ./datafed-ws.js ${DATAFED_CONFIG_DIR}/datafed-ws.ini
