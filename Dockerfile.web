@@ -4,14 +4,6 @@ ARG DATAFED_WEB_DIR="/opt/datafed/web"
 ARG DATAFED_CONFIG_DIR="/opt/datafed/config"
 
 RUN mkdir -p ${DATAFED_WEB_DIR}
-RUN mkdir -p ${DATAFED_CONFIG_DIR}
-
-# These config files can be replaced when deployed on OpenShift
-
-COPY ./config/datafed-ws.ini ${DATAFED_CONFIG_DIR}
-COPY ./config/datafed-ws.key ${DATAFED_CONFIG_DIR}
-COPY ./config/datafed-ws.cert ${DATAFED_CONFIG_DIR}
-COPY ./config/datafed-core-key.pub ${DATAFED_CONFIG_DIR}
 
 WORKDIR ${DATAFED_WEB_DIR}
 
@@ -41,7 +33,5 @@ RUN npm install ect
 RUN npm install client-oauth2
 
 ENV DATAFED_CONFIG_DIR ${DATAFED_CONFIG_DIR}
-
-EXPOSE 443
 
 CMD ./datafed-ws.js ${DATAFED_CONFIG_DIR}/datafed-ws.ini
