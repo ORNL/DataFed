@@ -1,0 +1,469 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>datafed.SDMS_Anon_pb2 &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="datafed.SDMS_Auth_pb2" href="../SDMS_Auth_pb2/index.html" />
+    <link rel="prev" title="datafed.MessageLib" href="../MessageLib/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/web/portal.html">Web Portal Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/reference.html">Command Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../CLI/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CLI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../CommandLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Config/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Connection/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Connection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../MessageLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.MessageLib</span></code></a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Anon_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_Auth_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Auth_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Version_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Version_pb2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin/general.html">Administration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/release.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">API Reference</a> &raquo;</li>
+        
+          <li><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a> &raquo;</li>
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Anon_pb2</span></code></li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-datafed.SDMS_Anon_pb2">
+<span id="datafed-sdms-anon-pb2"></span><h1><a class="reference internal" href="#module-datafed.SDMS_Anon_pb2" title="datafed.SDMS_Anon_pb2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Anon_pb2</span></code></a><a class="headerlink" href="#module-datafed.SDMS_Anon_pb2" title="Permalink to this headline">¶</a></h1>
+<p>Generated protocol buffer code.</p>
+<div class="section" id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._sym_db">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_sym_db</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._sym_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.DESCRIPTOR">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">DESCRIPTOR</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.DESCRIPTOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._PROTOCOL">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_PROTOCOL</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._PROTOCOL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.Protocol">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">Protocol</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.Protocol" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.ID">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">ID</code><em class="property"> = 1</em><a class="headerlink" href="#datafed.SDMS_Anon_pb2.ID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._ACKREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_ACKREPLY</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._ACKREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._NACKREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_NACKREPLY</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._NACKREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._VERSIONREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_VERSIONREQUEST</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._VERSIONREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._VERSIONREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_VERSIONREPLY</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._VERSIONREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._STATUSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_STATUSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._STATUSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._STATUSREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_STATUSREPLY</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._STATUSREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._SERVERINFOREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_SERVERINFOREQUEST</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._SERVERINFOREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._SERVERINFOREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_SERVERINFOREPLY</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._SERVERINFOREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._GETAUTHSTATUSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_GETAUTHSTATUSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._GETAUTHSTATUSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._AUTHSTATUSREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_AUTHSTATUSREPLY</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._AUTHSTATUSREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._AUTHENTICATEBYPASSWORDREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_AUTHENTICATEBYPASSWORDREQUEST</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._AUTHENTICATEBYPASSWORDREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._AUTHENTICATEBYTOKENREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_AUTHENTICATEBYTOKENREQUEST</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._AUTHENTICATEBYTOKENREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._DOIVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_DOIVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._DOIVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._USERVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_USERVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._USERVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._USERDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_USERDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._USERDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.enum_type">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.enum_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id0">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.message_type">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.message_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.AckReply">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">AckReply</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.AckReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.NackReply">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">NackReply</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.NackReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.VersionRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">VersionRequest</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.VersionRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.VersionReply">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">VersionReply</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.VersionReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.StatusRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">StatusRequest</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.StatusRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.StatusReply">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">StatusReply</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.StatusReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.ServerInfoRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">ServerInfoRequest</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.ServerInfoRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.ServerInfoReply">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">ServerInfoReply</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.ServerInfoReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.GetAuthStatusRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">GetAuthStatusRequest</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.GetAuthStatusRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.AuthStatusReply">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">AuthStatusReply</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.AuthStatusReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.AuthenticateByPasswordRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">AuthenticateByPasswordRequest</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.AuthenticateByPasswordRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.AuthenticateByTokenRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">AuthenticateByTokenRequest</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.AuthenticateByTokenRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.DOIViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">DOIViewRequest</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.DOIViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.UserViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">UserViewRequest</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.UserViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2.UserDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">UserDataReply</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2.UserDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._msg_name_to_type">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_msg_name_to_type</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._msg_name_to_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Anon_pb2._msg_type_to_name">
+<code class="sig-prename descclassname">datafed.SDMS_Anon_pb2.</code><code class="sig-name descname">_msg_type_to_name</code><a class="headerlink" href="#datafed.SDMS_Anon_pb2._msg_type_to_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../SDMS_Auth_pb2/index.html" class="btn btn-neutral float-right" title="datafed.SDMS_Auth_pb2" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../MessageLib/index.html" class="btn btn-neutral float-left" title="datafed.MessageLib" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Oak Ridge National Laboratories.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

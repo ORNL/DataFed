@@ -1,0 +1,1934 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>datafed.SDMS_Auth_pb2 &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="datafed.SDMS_pb2" href="../SDMS_pb2/index.html" />
+    <link rel="prev" title="datafed.SDMS_Anon_pb2" href="../SDMS_Anon_pb2/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/web/portal.html">Web Portal Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/reference.html">Command Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../CLI/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CLI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../CommandLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Config/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Connection/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Connection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../MessageLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.MessageLib</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_Anon_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Anon_pb2</span></code></a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Auth_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Version_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Version_pb2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin/general.html">Administration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/release.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">API Reference</a> &raquo;</li>
+        
+          <li><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a> &raquo;</li>
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Auth_pb2</span></code></li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-datafed.SDMS_Auth_pb2">
+<span id="datafed-sdms-auth-pb2"></span><h1><a class="reference internal" href="#module-datafed.SDMS_Auth_pb2" title="datafed.SDMS_Auth_pb2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Auth_pb2</span></code></a><a class="headerlink" href="#module-datafed.SDMS_Auth_pb2" title="Permalink to this headline">¶</a></h1>
+<p>Generated protocol buffer code.</p>
+<div class="section" id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._sym_db">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_sym_db</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._sym_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.DESCRIPTOR">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">DESCRIPTOR</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.DESCRIPTOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROTOCOL">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROTOCOL</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROTOCOL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.Protocol">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">Protocol</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.Protocol" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ID">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ID</code><em class="property"> = 2</em><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GENERATECREDENTIALSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GENERATECREDENTIALSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GENERATECREDENTIALSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REVOKECREDENTIALSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REVOKECREDENTIALSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REVOKECREDENTIALSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GENERATECREDENTIALSREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GENERATECREDENTIALSREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GENERATECREDENTIALSREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._CHECKPERMSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_CHECKPERMSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._CHECKPERMSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._CHECKPERMSREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_CHECKPERMSREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._CHECKPERMSREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GETPERMSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GETPERMSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GETPERMSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GETPERMSREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GETPERMSREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GETPERMSREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERSETACCESSTOKENREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERSETACCESSTOKENREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERSETACCESSTOKENREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERGETACCESSTOKENREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERGETACCESSTOKENREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERGETACCESSTOKENREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERACCESSTOKENREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERACCESSTOKENREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERACCESSTOKENREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERFINDBYUUIDSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERFINDBYUUIDSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERFINDBYUUIDSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERFINDBYNAMEUIDREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERFINDBYNAMEUIDREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERFINDBYNAMEUIDREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERLISTALLREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERLISTALLREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERLISTALLREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERLISTCOLLABREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERLISTCOLLABREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERLISTCOLLABREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERGETRECENTEPREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERGETRECENTEPREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERGETRECENTEPREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERGETRECENTEPREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERGETRECENTEPREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERGETRECENTEPREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._USERSETRECENTEPREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_USERSETRECENTEPREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._USERSETRECENTEPREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._LISTINGREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_LISTINGREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._LISTINGREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDLISTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDLISTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDLISTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDLISTBYALLOCREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDLISTBYALLOCREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDLISTBYALLOCREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDCREATEBATCHREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDCREATEBATCHREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDCREATEBATCHREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDUPDATEBATCHREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDUPDATEBATCHREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDUPDATEBATCHREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDEXPORTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDEXPORTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDEXPORTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDEXPORTREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDEXPORTREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDEXPORTREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDLOCKREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDLOCKREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDLOCKREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDDELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDDELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDDELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDGETDEPENDENCYGRAPHREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDGETDEPENDENCYGRAPHREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDGETDEPENDENCYGRAPHREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDALLOCCHANGEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDALLOCCHANGEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDALLOCCHANGEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDALLOCCHANGEREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDALLOCCHANGEREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDALLOCCHANGEREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDOWNERCHANGEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDOWNERCHANGEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDOWNERCHANGEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._RECORDOWNERCHANGEREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_RECORDOWNERCHANGEREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._RECORDOWNERCHANGEREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._HTTPXFRDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_HTTPXFRDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._HTTPXFRDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._DATAGETREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_DATAGETREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._DATAGETREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._DATAPUTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_DATAPUTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._DATAPUTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._DATAGETREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_DATAGETREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._DATAGETREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._DATAPUTREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_DATAPUTREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._DATAPUTREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._DATADELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_DATADELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._DATADELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._DATAPATHREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_DATAPATHREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._DATAPATHREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._DATAPATHREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_DATAPATHREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._DATAPATHREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._SEARCHREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_SEARCHREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._SEARCHREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLREADREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLREADREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLREADREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLDELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLDELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLDELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLLISTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLLISTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLLISTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLWRITEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLWRITEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLWRITEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLMOVEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLMOVEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLMOVEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLGETPARENTSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLGETPARENTSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLGETPARENTSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLPATHREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLPATHREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLPATHREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLGETOFFSETREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLGETOFFSETREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLGETOFFSETREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLGETOFFSETREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLGETOFFSETREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLGETOFFSETREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._COLLLISTPUBLISHEDREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_COLLLISTPUBLISHEDREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._COLLLISTPUBLISHEDREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GROUPCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GROUPCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GROUPCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GROUPUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GROUPUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GROUPUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GROUPDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GROUPDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GROUPDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GROUPDELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GROUPDELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GROUPDELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GROUPLISTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GROUPLISTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GROUPLISTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._GROUPVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_GROUPVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._GROUPVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ACLVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ACLVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ACLVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ACLUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ACLUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ACLUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ACLBYSUBJECTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ACLBYSUBJECTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ACLBYSUBJECTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ACLLISTITEMSBYSUBJECTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ACLLISTITEMSBYSUBJECTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ACLLISTITEMSBYSUBJECTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ACLDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ACLDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ACLDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROJECTVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROJECTVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROJECTVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROJECTDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROJECTDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROJECTDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROJECTCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROJECTCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROJECTCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROJECTUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROJECTUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROJECTUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROJECTDELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROJECTDELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROJECTDELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROJECTLISTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROJECTLISTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROJECTLISTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROJECTSEARCHREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROJECTSEARCHREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROJECTSEARCHREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROJECTGETROLEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROJECTGETROLEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROJECTGETROLEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._PROJECTGETROLEREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_PROJECTGETROLEREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._PROJECTGETROLEREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPODATADELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPODATADELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPODATADELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPODATAGETSIZEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPODATAGETSIZEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPODATAGETSIZEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPODATASIZEREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPODATASIZEREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPODATASIZEREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOPATHCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOPATHCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOPATHCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOPATHDELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOPATHDELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOPATHDELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOLISTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOLISTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOLISTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPODELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPODELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPODELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPODATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPODATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPODATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOCALCSIZEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOCALCSIZEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOCALCSIZEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOCALCSIZEREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOCALCSIZEREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOCALCSIZEREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOLISTALLOCATIONSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOLISTALLOCATIONSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOLISTALLOCATIONSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOLISTSUBJECTALLOCATIONSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOLISTSUBJECTALLOCATIONSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOLISTSUBJECTALLOCATIONSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOLISTOBJECTALLOCATIONSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOLISTOBJECTALLOCATIONSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOLISTOBJECTALLOCATIONSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOVIEWALLOCATIONREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOVIEWALLOCATIONREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOVIEWALLOCATIONREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOALLOCATIONSREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOALLOCATIONSREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSTATSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOALLOCATIONSTATSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOALLOCATIONSTATSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSTATSREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOALLOCATIONSTATSREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOALLOCATIONSTATSREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOALLOCATIONCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOALLOCATIONCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOALLOCATIONCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSETREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOALLOCATIONSETREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOALLOCATIONSETREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSETDEFAULTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOALLOCATIONSETDEFAULTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOALLOCATIONSETDEFAULTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOALLOCATIONDELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOALLOCATIONDELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOALLOCATIONDELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._REPOAUTHZREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_REPOAUTHZREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._REPOAUTHZREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TOPICLINKREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TOPICLINKREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TOPICLINKREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TOPICUNLINKREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TOPICUNLINKREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TOPICUNLINKREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._QUERYCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_QUERYCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._QUERYCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._QUERYUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_QUERYUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._QUERYUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._QUERYDELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_QUERYDELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._QUERYDELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._QUERYLISTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_QUERYLISTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._QUERYLISTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._QUERYVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_QUERYVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._QUERYVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._QUERYEXECREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_QUERYEXECREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._QUERYEXECREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._QUERYDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_QUERYDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._QUERYDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ANNOTATIONLISTBYSUBJECTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ANNOTATIONLISTBYSUBJECTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ANNOTATIONLISTBYSUBJECTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ANNOTATIONVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ANNOTATIONVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ANNOTATIONVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ANNOTATIONDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ANNOTATIONDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ANNOTATIONDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ANNOTATIONCREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ANNOTATIONCREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ANNOTATIONCREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ANNOTATIONUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ANNOTATIONUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ANNOTATIONUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._ANNOTATIONCOMMENTEDITREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_ANNOTATIONCOMMENTEDITREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._ANNOTATIONCOMMENTEDITREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TASKVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TASKVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TASKVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TASKLISTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TASKLISTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TASKLISTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TASKDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TASKDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TASKDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TAGSEARCHREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TAGSEARCHREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TAGSEARCHREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TAGLISTBYCOUNTREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TAGLISTBYCOUNTREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TAGLISTBYCOUNTREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TAGDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TAGDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TAGDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._METADATAVALIDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_METADATAVALIDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._METADATAVALIDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._METADATAVALIDATEREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_METADATAVALIDATEREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._METADATAVALIDATEREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._SCHEMAVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_SCHEMAVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._SCHEMAVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._SCHEMASEARCHREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_SCHEMASEARCHREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._SCHEMASEARCHREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._SCHEMADATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_SCHEMADATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._SCHEMADATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._SCHEMACREATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_SCHEMACREATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._SCHEMACREATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._SCHEMAREVISEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_SCHEMAREVISEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._SCHEMAREVISEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._SCHEMAUPDATEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_SCHEMAUPDATEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._SCHEMAUPDATEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._SCHEMADELETEREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_SCHEMADELETEREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._SCHEMADELETEREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TOPICLISTTOPICSREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TOPICLISTTOPICSREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TOPICLISTTOPICSREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TOPICVIEWREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TOPICVIEWREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TOPICVIEWREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TOPICSEARCHREQUEST">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TOPICSEARCHREQUEST</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TOPICSEARCHREQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._TOPICDATAREPLY">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_TOPICDATAREPLY</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._TOPICDATAREPLY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.message_type">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.message_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id0">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id1">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id2">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id3">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id4">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id5">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id6">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id6" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id7">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id8">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.enum_type">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.enum_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id9">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id10">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id10" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id11">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id11" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id12">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id12" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id13">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id13" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id14">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id14" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id15">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id15" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id16">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id16" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id17">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id17" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id18">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id18" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id19">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id19" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id20">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id20" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id21">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id21" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id22">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id22" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id23">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id23" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id24">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id24" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id25">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id25" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id26">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id26" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id27">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id27" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id28">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id28" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id29">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id29" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id30">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id30" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id31">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id31" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id32">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id32" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id33">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id33" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id34">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id34" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id35">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id35" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id36">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id36" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id37">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id37" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id38">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id38" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id39">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id39" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id40">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id40" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id41">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id41" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id42">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id42" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id43">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">enum_type</code><a class="headerlink" href="#id43" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id44">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id44" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="id45">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">message_type</code><a class="headerlink" href="#id45" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GenerateCredentialsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GenerateCredentialsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GenerateCredentialsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RevokeCredentialsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RevokeCredentialsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RevokeCredentialsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GenerateCredentialsReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GenerateCredentialsReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GenerateCredentialsReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CheckPermsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CheckPermsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CheckPermsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CheckPermsReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CheckPermsReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CheckPermsReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GetPermsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GetPermsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GetPermsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GetPermsReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GetPermsReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GetPermsReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserSetAccessTokenRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserSetAccessTokenRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserSetAccessTokenRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserGetAccessTokenRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserGetAccessTokenRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserGetAccessTokenRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserAccessTokenReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserAccessTokenReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserAccessTokenReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserFindByUUIDsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserFindByUUIDsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserFindByUUIDsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserFindByNameUIDRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserFindByNameUIDRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserFindByNameUIDRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserListAllRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserListAllRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserListAllRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserListCollabRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserListCollabRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserListCollabRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserGetRecentEPRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserGetRecentEPRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserGetRecentEPRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserGetRecentEPReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserGetRecentEPReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserGetRecentEPReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.UserSetRecentEPRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">UserSetRecentEPRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.UserSetRecentEPRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ListingReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ListingReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ListingReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordListRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordListRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordListRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordListByAllocRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordListByAllocRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordListByAllocRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordCreateBatchRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordCreateBatchRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordCreateBatchRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordUpdateBatchRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordUpdateBatchRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordUpdateBatchRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordExportRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordExportRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordExportRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordExportReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordExportReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordExportReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordLockRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordLockRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordLockRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordGetDependencyGraphRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordGetDependencyGraphRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordGetDependencyGraphRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordAllocChangeRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordAllocChangeRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordAllocChangeRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordAllocChangeReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordAllocChangeReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordAllocChangeReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordOwnerChangeRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordOwnerChangeRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordOwnerChangeRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RecordOwnerChangeReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RecordOwnerChangeReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RecordOwnerChangeReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.HttpXfrDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">HttpXfrDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.HttpXfrDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.DataGetRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">DataGetRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.DataGetRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.DataPutRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">DataPutRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.DataPutRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.DataGetReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">DataGetReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.DataGetReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.DataPutReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">DataPutReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.DataPutReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.DataDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">DataDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.DataDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.DataPathRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">DataPathRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.DataPathRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.DataPathReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">DataPathReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.DataPathReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.SearchRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">SearchRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.SearchRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollReadRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollReadRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollReadRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollListRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollListRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollListRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollWriteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollWriteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollWriteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollMoveRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollMoveRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollMoveRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollGetParentsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollGetParentsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollGetParentsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollPathReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollPathReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollPathReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollGetOffsetRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollGetOffsetRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollGetOffsetRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollGetOffsetReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollGetOffsetReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollGetOffsetReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.CollListPublishedRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">CollListPublishedRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.CollListPublishedRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GroupCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GroupCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GroupCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GroupUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GroupUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GroupUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GroupDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GroupDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GroupDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GroupDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GroupDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GroupDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GroupListRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GroupListRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GroupListRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.GroupViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">GroupViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.GroupViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ACLViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ACLViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ACLViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ACLUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ACLUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ACLUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ACLBySubjectRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ACLBySubjectRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ACLBySubjectRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ACLListItemsBySubjectRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ACLListItemsBySubjectRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ACLListItemsBySubjectRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ACLDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ACLDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ACLDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ProjectViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ProjectViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ProjectViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ProjectDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ProjectDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ProjectDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ProjectCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ProjectCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ProjectCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ProjectUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ProjectUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ProjectUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ProjectDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ProjectDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ProjectDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ProjectListRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ProjectListRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ProjectListRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ProjectSearchRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ProjectSearchRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ProjectSearchRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ProjectGetRoleRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ProjectGetRoleRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ProjectGetRoleRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.ProjectGetRoleReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">ProjectGetRoleReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.ProjectGetRoleReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoDataDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoDataDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoDataDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoDataGetSizeRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoDataGetSizeRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoDataGetSizeRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoDataSizeReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoDataSizeReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoDataSizeReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoPathCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoPathCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoPathCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoPathDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoPathDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoPathDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoListRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoListRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoListRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoCalcSizeRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoCalcSizeRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoCalcSizeRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoCalcSizeReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoCalcSizeReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoCalcSizeReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoListAllocationsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoListAllocationsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoListAllocationsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoListSubjectAllocationsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoListSubjectAllocationsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoListSubjectAllocationsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoListObjectAllocationsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoListObjectAllocationsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoListObjectAllocationsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoViewAllocationRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoViewAllocationRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoViewAllocationRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoAllocationsReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoAllocationsReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoAllocationsReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoAllocationStatsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoAllocationStatsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoAllocationStatsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoAllocationStatsReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoAllocationStatsReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoAllocationStatsReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoAllocationCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoAllocationCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoAllocationCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoAllocationSetRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoAllocationSetRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoAllocationSetRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoAllocationSetDefaultRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoAllocationSetDefaultRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoAllocationSetDefaultRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoAllocationDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoAllocationDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoAllocationDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.RepoAuthzRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">RepoAuthzRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.RepoAuthzRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TopicLinkRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TopicLinkRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TopicLinkRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TopicUnlinkRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TopicUnlinkRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TopicUnlinkRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.QueryCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">QueryCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.QueryCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.QueryUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">QueryUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.QueryUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.QueryDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">QueryDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.QueryDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.QueryListRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">QueryListRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.QueryListRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.QueryViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">QueryViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.QueryViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.QueryExecRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">QueryExecRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.QueryExecRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.QueryDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">QueryDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.QueryDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.AnnotationListBySubjectRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">AnnotationListBySubjectRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.AnnotationListBySubjectRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.AnnotationViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">AnnotationViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.AnnotationViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.AnnotationDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">AnnotationDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.AnnotationDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.AnnotationCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">AnnotationCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.AnnotationCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.AnnotationUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">AnnotationUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.AnnotationUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.AnnotationCommentEditRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">AnnotationCommentEditRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.AnnotationCommentEditRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TaskViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TaskViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TaskViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TaskListRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TaskListRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TaskListRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TaskDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TaskDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TaskDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TagSearchRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TagSearchRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TagSearchRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TagListByCountRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TagListByCountRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TagListByCountRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TagDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TagDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TagDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.MetadataValidateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">MetadataValidateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.MetadataValidateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.MetadataValidateReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">MetadataValidateReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.MetadataValidateReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.SchemaViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">SchemaViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.SchemaViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.SchemaSearchRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">SchemaSearchRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.SchemaSearchRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.SchemaDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">SchemaDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.SchemaDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.SchemaCreateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">SchemaCreateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.SchemaCreateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.SchemaReviseRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">SchemaReviseRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.SchemaReviseRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.SchemaUpdateRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">SchemaUpdateRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.SchemaUpdateRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.SchemaDeleteRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">SchemaDeleteRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.SchemaDeleteRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TopicListTopicsRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TopicListTopicsRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TopicListTopicsRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TopicViewRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TopicViewRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TopicViewRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TopicSearchRequest">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TopicSearchRequest</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TopicSearchRequest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2.TopicDataReply">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">TopicDataReply</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2.TopicDataReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._msg_name_to_type">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_msg_name_to_type</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._msg_name_to_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="datafed.SDMS_Auth_pb2._msg_type_to_name">
+<code class="sig-prename descclassname">datafed.SDMS_Auth_pb2.</code><code class="sig-name descname">_msg_type_to_name</code><a class="headerlink" href="#datafed.SDMS_Auth_pb2._msg_type_to_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../SDMS_pb2/index.html" class="btn btn-neutral float-right" title="datafed.SDMS_pb2" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../SDMS_Anon_pb2/index.html" class="btn btn-neutral float-left" title="datafed.SDMS_Anon_pb2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Oak Ridge National Laboratories.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,666 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>User Guide &mdash; DataFed 1.4 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Command Reference" href="reference.html" />
+    <link rel="prev" title="Installation and Configuration" href="../client/install.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> DataFed
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../web/portal.html">Web Portal Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command Line Interface</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#command-syntax">Command Syntax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#command-shortcuts">Command Shortcuts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#help-and-documentation">Help and Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scientific-metadata">Scientific Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-records">Creating Records</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#uploading-raw-data">Uploading Raw Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#viewing-data-records">Viewing Data Records</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#downloading-raw-data">Downloading Raw Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#comments">Comments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Command Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Python Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../autoapi/index.html">API Reference</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin/general.html">Administration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/release.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">DataFed</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>User Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="user-guide">
+<h1>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this headline">¶</a></h1>
+<p>The DataFed command-line-interface (CLI) provides access to basic DataFed capabilities for both
+interactive use and non-interactive scripting from a command shell, and is the primary means of
+utilizing DataFed from within data, compute, and analytics environments. The DataFed
+CLI is provided via a Python 3 package and can be used on any operating system where Python 3
+is available.</p>
+<p>This document covers basic and advanced usage of the DataFed CLI, with examples. Before the DataFed CLI
+can be used the DataFed Python client package must be locally installed and configured - refer to the
+CLI <a class="reference internal" href="../client/install.html"><span class="doc">Installation and Configuration</span></a> page for details. Reading both the DataFed <a class="reference external" href="/system/getting_started">getting-started guide</a>
+and the <a class="reference external" href="/system/overview">overview</a> are recommended to understand DataFed prerequisites and basic concepts,
+respectively.</p>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>This section is not complete. Additional Topics to be covered include:
+- Navigating collections
+- Accessing project and shared data and collections
+- Data transfers (asynch, monitoring)</p>
+</div>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The DataFed CLI is a text-based utility primarily intended for interactive use and for simple
+non-interactive scripting. For more involved scripting, the DataFed Python API is strongly
+recommended. The DataFed CLI and the DataFed Python API are both provided in the same DataFed Python
+client package, and this package only needs to be installed and configured once per host system
+to access either the CLI or the API.</p>
+<p>The DataFed CLI is run from an operating system shell using the ‘datafed’ script which is installed
+by the DataFed Python client package.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the “datafed” command is not found after installing the DataFed Python client package, please
+verify that the appropriate Python binary directory is included in the executable search path of
+the host operating system.</p>
+</div>
+<p>The DataFed CLI supports three distinct modes of use: single command, interactive, and shell
+scripting. If the CLI is run without any command arguments, an interactive sub-shell is started; otherwise,
+the specified command is run either normally (human-friendly output) or in shell scripting mode when the
+‘–script’ option is specified. Regardless of which mode is used, most DataFed commands look and behave
+the same with the only exception being the output format.</p>
+<p><strong>Single Command Mode</strong></p>
+<p>This mode is used to run a single DafaFed command from an operating system command prompt with the command
+given as an argument to the datafed script. The output is in human-friendly format and the datafed script
+exits immediately after producing output. For example, the ‘user who’ command prints the ID of the currently
+authenticated user, as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ datafed user who
+User ID: u/user123
+</pre></div>
+</div>
+<p><strong>Interactive Mode</strong></p>
+<p>This mode provides a DataFed CLI sub-shell and is started by running the datafed script without any
+command arguments. Commands are entered at a DataFed command prompt and the shell will run until stopped
+with the ‘exit’ command, or by typing ‘Ctrl-C’. Interactive mode is stateful and convenient when needing
+to run multiple DataFed commands and for browsing DataFed collection hierarchies.</p>
+<p>When using interactive mode, commands are entered at the DataFed command prompt without the preceding
+“datafed” script name. For example, use ‘user who’ instead of ‘datafed user who’, as in:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ datafed
+Welcome to DataFed CLI, version <span class="m">1</span>.1.0:0
+Authenticated as u/user123
+Use <span class="s1">&#39;exit&#39;</span> <span class="nb">command</span> or Ctrl-C to <span class="nb">exit</span> shell.
+
+root&gt;user who
+User ID: u/user123
+root&gt;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">root</span></code> prompt in the example output above indicates the current collection (logical folder) within
+the user’s personal data space inside DataFed. Collections will be discussed in detail in the <cite>Organizing Data</cite>
+section later in this guide.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Operating system commands cannot be called from within the interactive mode of DataFed. If needed, users
+are encouraged to utilize two concurrent terminal sessions to interleave operating system and DataFed-specific
+commands. It is possible to interleave operating system and DataFed commands in the other modes.</p>
+</div>
+<p><strong>Shell Scripting Mode</strong></p>
+<p>This mode is similar to the single command mode with the exception that non-essential output is
+suppressed and command responses are returned in a strict JSON format. This mode is useful for
+integrating the CLI into non-Python scripts, and is activated by specifying the “–script”
+(or “-s”) command line option when the CLI is run. As in the previous examples, the “user who”
+command in script mode is run as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ datafed -s user who
+<span class="o">{</span><span class="s2">&quot;uid&quot;</span>:<span class="s2">&quot;u/user123&quot;</span><span class="o">}</span>
+</pre></div>
+</div>
+<p>The JSON document output from script mode follows the same naming conventions and structure as used
+by the DataFed Python API for reply objects returned from commands.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Users are highly encouraged to use the <a class="reference internal" href="../python/high_level_guide.html"><span class="doc">python API</span></a> for non-trivial
+scripting needs since it is easier to use and returned information from DataFed commands are Python
+objects rather than JSON.</p>
+</div>
+</div>
+<div class="section" id="command-syntax">
+<h2>Command Syntax<a class="headerlink" href="#command-syntax" title="Permalink to this headline">¶</a></h2>
+<p>Commands, sub-commands, options, and arguments are specified as shown below when running the DataFed CLI
+using the ‘datafed’ script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>datafed <span class="o">[</span>options<span class="o">]</span> <span class="nb">command</span> <span class="o">[</span>options<span class="o">]</span> <span class="o">[</span>arguments<span class="o">]</span> <span class="o">[</span>sub-command <span class="o">[</span>options<span class="o">]</span> <span class="o">[</span>arguments<span class="o">]</span> ...<span class="o">]</span>
+</pre></div>
+</div>
+<p>When entering a command from the DataFed interactive-mode command prompt, the format is the same, but
+without the ‘datafed’ script name:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">command</span> <span class="o">[</span>options<span class="o">]</span> <span class="o">[</span>arguments<span class="o">]</span> <span class="o">[</span>sub-command <span class="o">[</span>options<span class="o">]</span> <span class="o">[</span>arguments<span class="o">]</span> ...<span class="o">]</span>
+</pre></div>
+</div>
+<p>DataFed commands and sub-commands are hierarchical and are organized into categories. Built-in help
+can be accessed using a universal help option (–help or -h). For example, to view help information
+for the ‘datafed’ script itself, use:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>datafed --help
+</pre></div>
+</div>
+<p>Or to view help for a nested sub-command, such as “data create”, use:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>datafed data create --help
+</pre></div>
+</div>
+<p>In any case, the help output will describe the command, and list and describe all options, arguments,
+and any additional sub-commands. Both options and arguments are position sensitive and must always be
+specified following their associated command or sub-command.</p>
+</div>
+<div class="section" id="command-shortcuts">
+<h2>Command Shortcuts<a class="headerlink" href="#command-shortcuts" title="Permalink to this headline">¶</a></h2>
+<p>For convenience, command names may be abbreviated to only the initial characters needed to avoid ambiguity
+with any other commands. For example, the “data create” command can be entered as simply “d c”. Some
+commands also have built-in alternative names that may be more natural to certain users based on their
+experience with certain operating system shells. Current command alternatives are:</p>
+<ul class="simple">
+<li><p>‘cd’ (change directory) is equivalent to ‘wc’ (working collection)</p></li>
+<li><p>‘dir’ (directory) is equivalent to ‘ls’ (list)</p></li>
+</ul>
+<p>When using the DataFed CLI in interactive mode, an additional convenience feature is provided to make it
+easier to interact with commands that list multiple items in their output. Each item listed will start with a
+numeric index value, starting at 1. These index values can be used in place of identifiers and aliases for
+subsequent commands.</p>
+<p>For example, listing the contents of a collection using the ‘ls’ command will produce results in the following
+format:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root&gt;ls
+1. c/12351468                         A simple collection
+2. c/11801571   (demo)                A collection for demonstration data
+3. c/14022631   (test)                Collection of test data
+</pre></div>
+</div>
+<p>After running the command above, shortcuts for the three listed collections are enabled (as 1, 2, and 3). These
+shortcuts can then be used on a follow-up command, such as viewing the first collection from the previous example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root&gt;coll view 1
+ID:            c/12351468
+Alias:         (none)
+Title:         A simple collection
+Tags:          (none)
+Topic:         (not published)
+Owner:         user123
+Created:       09/25/2020,10:32
+Updated:       10/02/2020,13:07
+Description:   An example collection
+root&gt;
+</pre></div>
+</div>
+<p>Using listing index numbers is far quicker than typing in the ID or alias of a record or collection in a follow-up
+command. These index numbers remain valid until they are replaced by a subsequent command that generates
+listing output.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The interactive mode of the DataFed CLI features a powerful command prompt editor with command history and
+autocompletion features. Command history can be browsed using the up and down arrow keys, and autocompletion
+can be triggered with the right arrow key.</p>
+</div>
+</div>
+<div class="section" id="help-and-documentation">
+<h2>Help and Documentation<a class="headerlink" href="#help-and-documentation" title="Permalink to this headline">¶</a></h2>
+<p>Readers are encouraged to refer to the extensive <a class="reference internal" href="reference.html"><span class="doc">documentation of DataFed’s CLI</span></a> for complete
+information on how to interact with DataFed using its CLI. Alternatively, this same documentation is also available via
+the ‘help’ commands from within DataFed. For example, if we knew that we wanted to perform certain data related operations,
+but did not know the specific commands or options available through the CLI, we would access the ‘data’ sub-command help
+as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ datafed
+Welcome to DataFed CLI, version <span class="m">1</span>.1.0:0
+Authenticated as u/somnaths
+Use <span class="s1">&#39;exit&#39;</span> <span class="nb">command</span> or Ctrl-C to <span class="nb">exit</span> shell.
+root&gt; data --help
+
+Usage: datafed data <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+
+  Data subcommands.
+
+Options:
+  -?, -h, --help  Show this message and exit.
+
+Commands:
+  batch   Data batch subcommands.
+  create  Create a new data record.
+  delete  Delete one or more existing data records.
+  get     Get <span class="o">(</span>download<span class="o">)</span> raw data of data records and/or collections.
+  put     Put <span class="o">(</span>upload<span class="o">)</span> raw data located at PATH to DataFed record ID.
+  update  Update an existing data record.
+  view    View data record information.
+</pre></div>
+</div>
+<p>After identifying the command(s) we need, we can look up more information about a specific command (<code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">create</span></code> in this case) as:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>root&gt; data create --help
+
+Usage: datafed data create <span class="o">[</span>OPTIONS<span class="o">]</span> TITLE
+
+  Create a new data record. The data record <span class="s1">&#39;title&#39;</span> is required, but all
+  other attributes are optional. On success, the ID of the created data
+  record is returned. Note that <span class="k">if</span> a parent collection is specified, and
+  that collection belongs to a project or other collaborator, the creating
+  user must have permission to write to that collection. The raw-data-file
+  option is only supported <span class="k">in</span> interactive mode and is provided as a
+  convenience to avoid a separate dataPut<span class="o">()</span> call.
+
+Options:
+  -a, --alias TEXT             Record alias.
+  -d, --description TEXT       Description text.
+  -T, --tags TEXT              Tags <span class="o">(</span>comma separated list<span class="o">)</span>.
+  -r, --raw-data-file TEXT     Globus path to raw data file <span class="o">(</span><span class="nb">local</span> or remote<span class="o">)</span>
+                               to upload to new record. Default endpoint is
+                               used <span class="k">if</span> none provided.
+  -x, --extension TEXT         Override raw data file extension <span class="k">if</span> provided
+                               <span class="o">(</span>default is auto detect<span class="o">)</span>.
+  -m, --metadata TEXT          Inline metadata <span class="k">in</span> JSON format. JSON must
+                               define an object type. Cannot be specified with
+                               --metadata-file option.
+  -f, --metadata-file TEXT     Path to <span class="nb">local</span> metadata file containing JSON.
+                               JSON must define an object type. Cannot be
+                               specified with --metadata option.
+  -p, --parent TEXT            Parent collection ID, alias, or listing index.
+                               Default is the current working collection.
+  -R, --repository TEXT        Repository ID. Uses default allocation <span class="k">if</span> not
+                               specified.
+  -D, --deps &lt;CHOICE TEXT&gt;...  Dependencies <span class="o">(</span>provenance<span class="o">)</span>. Use one <span class="s1">&#39;--deps&#39;</span>
+                               option per dependency and specify with a string
+                               consisting of the <span class="nb">type</span> of relationship <span class="o">(</span><span class="s1">&#39;der&#39;</span>,
+                               <span class="s1">&#39;comp&#39;</span>, <span class="s1">&#39;ver&#39;</span><span class="o">)</span> follwed by ID/alias of the
+                               referenced record. Relationship types are:
+                               <span class="s1">&#39;der&#39;</span> <span class="k">for</span> <span class="s1">&#39;derived from&#39;</span>, <span class="s1">&#39;comp&#39;</span> <span class="k">for</span> <span class="s1">&#39;a</span>
+<span class="s1">                               component of&#39;</span>, and <span class="s1">&#39;ver&#39;</span> <span class="k">for</span> <span class="s1">&#39;a new version</span>
+<span class="s1">                               of&#39;</span>.
+  -X, --context TEXT           User or project ID <span class="k">for</span> <span class="nb">command</span> <span class="nb">alias</span> context.
+                               See <span class="s1">&#39;alias&#39;</span> <span class="nb">command</span> <span class="nb">help</span> <span class="k">for</span> more information.
+  -v, --verbosity <span class="o">[</span><span class="m">0</span><span class="p">|</span><span class="m">1</span><span class="p">|</span><span class="m">2</span><span class="o">]</span>      Verbosity level of output
+  -?, -h, --help               Show this message and exit.
+</pre></div>
+</div>
+<p>From the documentation above, it is clear that the <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">create</span></code> command must be issued with at least the title for the record.
+Furthermore, there are several options to add other contextual information and even scientific metadata.</p>
+</div>
+<div class="section" id="scientific-metadata">
+<h2>Scientific Metadata<a class="headerlink" href="#scientific-metadata" title="Permalink to this headline">¶</a></h2>
+<p>The majority of DataFed’s benefits can be realized only when data is paired with metadata and provenance information.
+The documentation above shows that scientific metadata can be specified using a JSON file or via a valid JSON string (same content as JSON file).
+In realistic scientific experiments, we would expect that the volume of scientific metadata to be associated with given raw data may be
+non-trivial in length.</p>
+<p>In order to simulate the process of associating metadata with raw data, we will create a simple JSON file with arbitrary contents such as:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">{</span><span class="s1">&#39;a&#39;</span>: True, <span class="s1">&#39;b&#39;</span>: <span class="m">14</span><span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-records">
+<h2>Creating Records<a class="headerlink" href="#creating-records" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have some metadata and we know how to use the <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">create</span></code> function from using the help
+option, we can create a record as shown below:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>root&gt; data create <span class="se">\</span>
+--alias <span class="s2">&quot;record_from_nersc&quot;</span> <span class="se">\ </span><span class="c1"># Optional argument</span>
+--description <span class="s2">&quot;Data and metadata created at NERSC&quot;</span> <span class="se">\ </span><span class="c1"># Optional argument</span>
+--metadata-file ./nersc_md.json <span class="se">\ </span><span class="c1"># Optional argument</span>
+<span class="s2">&quot;First record created at NERSC using DataFed CLI&quot;</span> <span class="c1"># Title is required though</span>
+
+ID:            d/31030353
+Alias:         record_from_nersc
+Title:         First record created at NERSC using DataFed CLI
+Data Size:     <span class="m">0</span>
+Data Repo ID:  repo/cades-cnms
+Source:        <span class="o">(</span>none<span class="o">)</span>
+Owner:         somnaths
+Creator:       somnaths
+Created:       <span class="m">11</span>/25/2020,08:04
+Updated:       <span class="m">11</span>/25/2020,08:04
+Description:   Data and metadata created at NERSC
+</pre></div>
+</div>
+<p>Note that the record was created in the user’s <code class="docutils literal notranslate"><span class="pre">root</span></code> collection rather than in another specific collection such as within a project
+since the <code class="docutils literal notranslate"><span class="pre">--parent</span></code> flag was not specified.</p>
+<p>To verify that the record creation was successful, the ‘ls’ command can be used to list
+records in the current working collection, as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>root&gt; ls
+
+<span class="m">1</span>. d/31027390   <span class="o">(</span>record_from_alcf<span class="o">)</span>    First record created at ALCF
+<span class="m">2</span>. d/31030353   <span class="o">(</span>record_from_nersc<span class="o">)</span>   First record created at NERSC using DataFed CLI
+<span class="m">3</span>. d/29426537                         from_olcf
+</pre></div>
+</div>
+<p>Clearly, the second record within the (user’s) <code class="docutils literal notranslate"><span class="pre">root</span></code> collection is the record we just created.</p>
+<p>Note that we have created a data record only with metadata and not with any actual data.
+For demonstration purposes, we will use a small text file as the data file.</p>
+</div>
+<div class="section" id="uploading-raw-data">
+<h2>Uploading Raw Data<a class="headerlink" href="#uploading-raw-data" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Before attempting to upload raw data, ensure that the Globus endpoint associated with the machine
+where you use DataFed is active.</p>
+</div>
+<p>Here is how we would put raw data into record (via Globus):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>root&gt; data put <span class="se">\</span>
+  --wait <span class="se">\ </span><span class="c1"># optional - wait until Globus transfer completes</span>
+  <span class="s2">&quot;record_from_nersc&quot;</span> <span class="se">\ </span><span class="c1"># optional - (unique) alias of record</span>
+  ./nersc_data.txt <span class="c1"># path to data</span>
+
+Task ID:             task/31030394
+Type:                Data Put
+Status:              Succeeded
+Started:             <span class="m">11</span>/25/2020,08:05
+Updated:             <span class="m">11</span>/25/2020,08:05
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">put</span></code> initiates a Globus transfer on our behalf from the machine where the command was entered to wherever the default data repository is located.
+In addition, the <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">put</span></code> command prints out the status of the Globus transfer.
+Given the small size of the data file, we elected to wait until the transfer was complete before proceeding - hence the <code class="docutils literal notranslate"><span class="pre">wait</span></code> flag.
+Leaving that flag unset would have allowed us to proceed without waiting for the transfer to complete, for example if the size of the file wes very large.</p>
+<p>The output of the <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">view</span></code> command reveals that this record indeed contains a data file as seen in the <code class="docutils literal notranslate"><span class="pre">Data</span> <span class="pre">Size</span></code> and <code class="docutils literal notranslate"><span class="pre">Source</span></code> fields.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>root&gt; data view <span class="s2">&quot;record_from_nersc&quot;</span>
+
+ID:            d/31030353
+Alias:         record_from_nersc
+Title:         First record created at NERSC using DataFed CLI
+Tags:          <span class="o">(</span>none<span class="o">)</span>
+Data Size:     <span class="m">37</span>.0 B
+Data Repo ID:  repo/cades-cnms
+Source:        nersc#dtn/global/u2/s/somnaths/nersc_data.txt
+Extension:     <span class="o">(</span>auto<span class="o">)</span>
+Owner:         somnaths
+Creator:       somnaths
+Created:       <span class="m">11</span>/25/2020,08:04
+Updated:       <span class="m">11</span>/25/2020,08:05
+Description:   Data and metadata created at NERSC
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All metadata associated with a data record lives in the central DataFed servers.
+However, the raw data associated with records lives in DataFed managed repositories, which could be geographically distributed.</p>
+</div>
+<p>Now, we will demonstrate how one could download the data associated with a data record.</p>
+</div>
+<div class="section" id="viewing-data-records">
+<h2>Viewing Data Records<a class="headerlink" href="#viewing-data-records" title="Permalink to this headline">¶</a></h2>
+<p>For the purposes of this demonstration, we will be using data that was created elsewhere as the <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">view</span></code> command shows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>root&gt; data view d/10314975
+
+ID:            d/10314975
+Alias:         cln_b_1_beline_0001
+Title:         CLN_B_1_BEline_0001
+Tags:          <span class="o">(</span>none<span class="o">)</span>
+Data Size:     <span class="m">25</span>.7 MB
+Data Repo ID:  repo/cades-cnms
+Source:        57230a10-7ba2-11e7-8c3b-22000b9923ef/Nanophase/CLN_B_1_BEline_0001.h5
+Extension:     <span class="o">(</span>auto<span class="o">)</span>
+Owner:         somnaths
+Creator:       somnaths
+Created:       <span class="m">11</span>/01/2019,19:54
+Updated:       <span class="m">11</span>/15/2019,20:31
+Description:   <span class="o">(</span>none<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="downloading-raw-data">
+<h2>Downloading Raw Data<a class="headerlink" href="#downloading-raw-data" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Before attempting to upload raw data, ensure that the Globus endpoint associated with the machine
+where you use DataFed is active.</p>
+</div>
+<p>We list the contents of the local directory using the shell <code class="docutils literal notranslate"><span class="pre">ls</span></code> command to show that the file we want to download / <code class="docutils literal notranslate"><span class="pre">get</span></code> doesn’t already exist:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>root&gt; <span class="nb">exit</span> <span class="c1"># returning to bash now</span>
+$ ls -hlt
+total 28M
+-rw-rw---- <span class="m">1</span> somnaths somnaths   <span class="m">40</span> Nov <span class="m">25</span> <span class="m">07</span>:58 nersc_md.json
+-rw-r--r-- <span class="m">1</span> somnaths somnaths 400K Nov  <span class="m">3</span> <span class="m">13</span>:36 Translation_compiled.html
+-rw-r--r-- <span class="m">1</span> somnaths somnaths <span class="m">1</span>.9M Nov  <span class="m">3</span> <span class="m">13</span>:30 image_02.mat
+-rw-rw---- <span class="m">1</span> somnaths somnaths   <span class="m">37</span> Nov  <span class="m">3</span> <span class="m">11</span>:41 nersc_data.txt
+</pre></div>
+</div>
+<p>We can download the data associated with a data record using the <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">get</span></code> command as shown below:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ datafed
+Welcome to DataFed CLI, version <span class="m">1</span>.1.0:0
+Authenticated as u/somnaths
+Use <span class="s1">&#39;exit&#39;</span> <span class="nb">command</span> or Ctrl-C to <span class="nb">exit</span> shell.
+
+root&gt; data get <span class="se">\</span>
+  --wait <span class="se">\ </span><span class="c1"># optional - wait for Globus transfer to complete</span>
+  d/10314975 <span class="se">\ </span><span class="c1"># ID of data record</span>
+  . <span class="c1"># Where to put it in local file system</span>
+
+root&gt; <span class="nb">exit</span>
+
+&gt; ls -hlt
+total 28M
+-rw-r--r-- <span class="m">1</span> somnaths somnaths  26M Nov <span class="m">25</span> <span class="m">08</span>:08 <span class="m">10314975</span>.h5
+-rw-rw---- <span class="m">1</span> somnaths somnaths   <span class="m">40</span> Nov <span class="m">25</span> <span class="m">07</span>:58 nersc_md.json
+-rw-r--r-- <span class="m">1</span> somnaths somnaths 400K Nov  <span class="m">3</span> <span class="m">13</span>:36 Translation_compiled.html
+-rw-r--r-- <span class="m">1</span> somnaths somnaths <span class="m">1</span>.9M Nov  <span class="m">3</span> <span class="m">13</span>:30 image_02.mat
+-rw-rw---- <span class="m">1</span> somnaths somnaths   <span class="m">37</span> Nov  <span class="m">3</span> <span class="m">11</span>:41 nersc_data.txt
+</pre></div>
+</div>
+<p>As the listing of the local directory shows, we got the <code class="docutils literal notranslate"><span class="pre">10314975.h5</span></code> file from the <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">get</span></code> command.</p>
+</div>
+<div class="section" id="comments">
+<h2>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Users are recommended to perform data orchestration (especially large data movement - upload / download) operations
+outside the scope of heavy / parallel computation operations in order to avoid wasting precious wall time on compute clusters.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reference.html" class="btn btn-neutral float-right" title="Command Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../client/install.html" class="btn btn-neutral float-left" title="Installation and Configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Oak Ridge National Laboratories.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
