@@ -6,7 +6,8 @@ cmake_minimum_required (VERSION 3.0.0)
 file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/source DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs )
 
-add_custom_target( docs EXCLUDE_FROM_ALL )
+add_custom_target( docs )
+add_dependencies( docs pydatafed )
 
 # Build CLI command reference w/ datafed CLI and place in local doc source directory
 # Then run sphinx-build to make doc html

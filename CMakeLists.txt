@@ -92,11 +92,11 @@ add_subdirectory( common )
 add_subdirectory( core )
 add_subdirectory( repository )
 
-# Only needed to build client and Python API
+# make target = pydatafed
 add_subdirectory( python EXCLUDE_FROM_ALL )
+
+# make target = docs
+add_subdirectory( doc_source EXCLUDE_FROM_ALL )
 
 # Disabled until unit testing integrated
 #add_subdirectory( test )
-
-# Disabled until fixed
-#add_subdirectory( doc_source )

@@ -10,7 +10,7 @@ endforeach()
 file( GLOB ProtoFiles ${CMAKE_SOURCE_DIR}/common/proto/*.proto )
 PROTOBUF_GENERATE_PYTHON( ProtoFilesPy ${ProtoFiles} )
 
-add_custom_target( pydatafed ALL DEPENDS ${ProtoFilesPy})
+add_custom_target( pydatafed DEPENDS ${ProtoFilesPy})
 
 add_custom_command( TARGET pydatafed POST_BUILD
     COMMAND sed -i -r 's:^import.*_pb2:from . \\0:' ${ProtoFilesPy} )
