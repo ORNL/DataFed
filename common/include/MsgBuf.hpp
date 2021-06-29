@@ -411,7 +411,7 @@ public:
 
         m_frame.proto_id = i_mt->second >> 8;
         m_frame.msg_id = i_mt->second & 0xFF;
-        m_frame.size = a_msg.ByteSize();
+        m_frame.size = a_msg.ByteSizeLong();
 
         // Only serialize if message type has content
         if ( m_frame.size )

@@ -8,8 +8,6 @@
 #include "Config.hpp"
 #include "SDMS.pb.h"
 
-#include <rapidjson/document.h>
-
 namespace SDMS {
 namespace Core {
 

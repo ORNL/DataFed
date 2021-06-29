@@ -413,6 +413,10 @@ def _cli(ctx,*args,**kwargs):
     global _verbosity
     global _verbosity_sticky
 
+    if ctx.invoked_subcommand == "gendoc":
+        ctx.invoke( _genDoc )
+        raise SystemExit()
+
     if _capi == None:
         _initialize(ctx.params)
 
@@ -427,10 +431,7 @@ def _cli(ctx,*args,**kwargs):
 @_cli.command(name='gendoc',hidden=True)
 @click.pass_context
 def _genDoc( ctx ):
-
     body = _genDocCmd( None, ctx, 0, recurse = False )
-
-    #body = _genDocHeader("General Usage",0) + "\n" + _cli.get_help( ctx.parent ) + "\n\n"
 
     for c in _cli.list_commands( ctx ):
         subcmd = _cli.get_command( _cli, c )
