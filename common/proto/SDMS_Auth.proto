@@ -1,11 +1,14 @@
-// ALERT: If messages in this proto file are REORDERED or REMOVED, or if the
-// definitions of existing message parameters are CHANGED, then the
-// VER_PROTO_MAJOR enum value in Version.proto must be incremented and backward
-// compatability will be lost. If new messages are APPENDED to the end of this
-// file, or parameters are APPENDED to the end of an existing message defintion,
-// then VER_PROTO_MINOR must be incremented and backward compatability will be
-// maintained. Unused messages and parameters should be marked as deprecated,
-// and these should be removed at the next major version change.
+// ALERT: If messages in this proto file are ADDED or REMOVED, or if the
+// definitions of existing message fields are CHANGED, then the VER_PROTO_MAJOR
+// enum value in Version.proto must be incremented and backward compatability
+// will be lost. If fields are APPENDED to the end of existing message
+// defintions, then VER_PROTO_MINOR must be incremented and backward
+// compatability will be maintained. Unused messages and parameters should be
+// marked as deprecated, and these should be removed at the next major version
+// change.
+
+// NOTE: All messages in this protobuf file require an authorized client and will
+// be rejected without processing if otherwise.
 
 syntax = "proto2";
 
@@ -18,125 +21,178 @@ enum Protocol
     ID = 2;
 }
 
-// ============================ Setup/Config Messages
 
+// ============================================================================
+// ----------- Setup/Config Messages ------------------------------------------
+// ============================================================================
+
+// Request core server to generate/retrieve user security credentials
+// Reply: GenerateCredentialsReply on success, NackReply on error
 message GenerateCredentialsRequest
 {
-    optional string             domain      = 1;
-    optional uint32             uid         = 2;
+    optional string             domain      = 1; // Reserved for future use (Facility/org domain)
+    optional uint32             uid         = 2; // Reserved for future use (POSIX uid)
 }
 
+// Request core server to revoke (clear) user security credentials for the sending user
+// This will prevent non-interactive login from ALL installed clients for the sending user
+// Reply: AckReply on success, NackReply on error
 message RevokeCredentialsRequest
 {
 }
 
+// Reply containing user security credentials (ZeroMQ keys) that can be used for non-interactive login
+// Note: these keys must be stored securely
 message GenerateCredentialsReply
 {
-    required string             pub_key     = 1;
-    required string             priv_key    = 2;
+    required string             pub_key     = 1; // Public key
+    required string             priv_key    = 2; // Private key
 }
 
-// ============================ Permissions Messages
 
+// ============================================================================
+// ----------- Permissions Messages -------------------------------------------
+// ============================================================================
+
+// Check if specified permission are granted on given resource
+// Reply: CheckPermsReply on success, NackReply on error
 message CheckPermsRequest
 {
-    required string             id          = 1;
-    required uint32             perms       = 2;
+    required string             id          = 1; // Record, collection, or project ID
+    required uint32             perms       = 2; // Requested access permissions
 }
 
+// Reply indicating if all requested permissions are granted
 message CheckPermsReply
 {
-    required bool               granted     = 1;
+    required bool               granted     = 1; // True if all permission granted, false otherwise
 }
 
+// Request current user access permissions for given resource
+// Reply: GetPermsReply on success, NackReply on error
 message GetPermsRequest
 {
-    required string             id          = 1;
-    optional uint32             perms       = 2;
+    required string             id          = 1; // Record, collection, or project ID
+    optional uint32             perms       = 2; // Optional bitmask for permissions to check, gets all if not given
 }
 
+// Reply containing granted permissions for given user/resource
+// If perms bitmask was specified, granted will only apply to requested permissions
 message GetPermsReply
 {
     required uint32             granted     = 1;
 }
 
-// ============================ User Messages
 
+// ============================================================================
+// ----------- User Messages --------------------------------------------------
+// ============================================================================
+
+// Set user access tokens (from Globus OAuth). This message must be called
+// whenever a user logsin via Globus (web portal) in order to update the access
+// and refresh tokens issued by Globus.
+// Reply: AckReply on success, NackReply on error
 message UserSetAccessTokenRequest
 {
-    required string             access      = 1;
-    required uint32             expires_in  = 2;
-    required string             refresh     = 3;
+    required string             access      = 1; // Access token
+    required uint32             expires_in  = 2; // Access expiration time in seconds
+    required string             refresh     = 3; // Refresh token (never expires)
 }
 
+// Get user access token (from Globus OAuth). This token will allow client to
+// access Globus APIs on behalf of the authenticated user.
+// Reply: UserAccessTokenReply on success, NackReply on error
 message UserGetAccessTokenRequest
 {
 }
 
+// Reply containing the user Globus access token and expiration time (in
+// seconds) for authenticated user.
 message UserAccessTokenReply
 {
-    required string             access      = 1;
-    required uint32             expires_in  = 2;
+    required string             access      = 1; // Globus access token
+    required uint32             expires_in  = 2; // Access token expiration in seconds
 }
 
+// Request to create a new DataFed user account.
+// Reply: AckReply on success, NackReply on error
 message UserCreateRequest
 {
-    required string             uid         = 1;
-    optional string             password    = 2;
-    required string             name        = 3;
-    required string             email       = 4;
-    repeated string             uuid        = 5;
-    optional string             options     = 6;
+    required string             uid         = 1; // User's GlobusID UID (name portion only)
+    optional string             password    = 2; // User-specified DataFed CLI password
+    required string             name        = 3; // Full name as given by Globus
+    required string             email       = 4; // Email address
+    repeated string             uuid        = 5; // UUID for primary Globus account
+    optional string             options     = 6; // DataFed options (JSON string)
 }
 
-
+// Request to find DataFed user by one or more Globus UUIDs
+// Reply: UserDataReply on success, NackReply on failure
 message UserFindByUUIDsRequest
 {
-    repeated string             uuid        = 1;
+    repeated string             uuid        = 1; // An identity UUID linked to user's Globus account
 }
 
+// Request to find users matching partial name/UID string (ngram search)
+// Reply: UserDataReply on success, NackReply on failure
 message UserFindByNameUIDRequest
 {
-    required string             name_uid    = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    required string             name_uid    = 1; // String with full/partial name or UID to search for
+    optional uint32             offset      = 2; // Optional result offset
+    optional uint32             count       = 3; // Optional result count
 }
 
+// Request to update a user record
+// Reply: UserDataReply on success, NackReply on failure
 message UserUpdateRequest
 {
-    required string             uid         = 1;
-    optional string             email       = 2;
-    optional string             password    = 3;
-    optional string             options     = 4;
+    required string             uid         = 1; // DataFed UID of user record to update
+    optional string             email       = 2; // Optional new email address
+    optional string             password    = 3; // Optional new DataFed password
+    optional string             options     = 4; // Optional DataFed options (JSON string)
 }
 
+// Request to list all registered users
+// Reply: UserDataReply on success, NackReply on failure
 message UserListAllRequest
 {
-    optional uint32             offset      = 1;
-    optional uint32             count       = 2;
+    optional uint32             offset      = 1; // Optional result offset
+    optional uint32             count       = 2; // Optional result count
 }
 
+// Request to list all users that are collaborators of auth user
+// Collaborators are users on same project(s) and/or with ACLs set to/from auth user
+// Reply: UserDataReply on success, NackReply on failure
 message UserListCollabRequest
 {
-    optional uint32             offset      = 1;
-    optional uint32             count       = 2;
+    optional uint32             offset      = 1; // Optional result offset
+    optional uint32             count       = 2; // Optional result count
 }
 
+// Request to get the list of recent Globus endpoints used by auth user
+// Reply: UserGetRecentEPReply on success, NackReply on failure
 message UserGetRecentEPRequest
 {
 }
 
+// Reply with list of recent Globus endpoints used by auth user
 message UserGetRecentEPReply
 {
-    repeated string             ep          = 1;
+    repeated string             ep          = 1; // Endpoint ID (legacy not UUID)
 }
 
+// Request to set the list of recent Globus endpoints used by auth user
+// This request will replace the stored endpoint list with the one provided
+// Reply: AckReply on success, NackReply on error
 message UserSetRecentEPRequest
 {
-    repeated string             ep          = 1;
+    repeated string             ep          = 1; // Endpoint ID (legacy not UUID)
 }
 
-// ============================ General Data/Collection Messages
+
+// ============================================================================
+// ----------- General Data/Collection Messages -------------------------------
+// ============================================================================
 
 message ListingReply
 {
@@ -146,77 +202,97 @@ message ListingReply
     optional uint32             total       = 4;
 }
 
-// ============================ Data Record Messages
 
+// ============================================================================
+// ----------- Data Record Messages -------------------------------------------
+// ============================================================================
+
+// Deprecated
 message RecordListRequest
 {
     optional string             subject     = 1;
     optional bool               pub         = 2;
 }
 
+// Request to list all records associated with a given repository and user/subject.
+// If the subject is provided sufficient priveleges are required.
+// Reply: ListingReply on success, NackReply on error
 message RecordListByAllocRequest
 {
-    required string             repo        = 1;
-    optional string             subject     = 2;
-    optional uint32             offset      = 3;
-    optional uint32             count       = 4;
+    required string             repo        = 1; // Repository ID
+    optional string             subject     = 2; // Optional project or user ID
+    optional uint32             offset      = 3; // Optional result offset
+    optional uint32             count       = 4; // Optional result count
 }
 
-
+// Request to view a data record. Requires READ_REC permissions. Metadata will be
+// returned if client has READ_META permission.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordViewRequest
 {
-    required string             id          = 1;
-    optional bool               details     = 2;
+    required string             id          = 1; // Record ID or alias
+    optional bool               details     = 2; // Reserved for future use
 }
 
+// Reply containing details of one or more data records in response to original
+// request. If original request resulted in side effects, impacted records will
+// be listed in the update field. This is an optimization to reduce latency for
+// grpahical clients that may be displaying multiple/many records that need to
+// be refreshed as a result of the original request.
 message RecordDataReply
 {
-    repeated SDMS.RecordData    data        = 1;
-    repeated SDMS.ListingData   update      = 2;
+    repeated SDMS.RecordData    data        = 1; // Record details
+    repeated SDMS.ListingData   update      = 2; // Optional list of records impacted by side effects
 }
 
+// Request to create a new data record.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordCreateRequest
 {
-    optional string             title       = 1;
-    optional string             desc        = 2;
-    repeated string             tags        = 3;
-    optional string             alias       = 4;
-    optional string             metadata    = 5;
-    optional string             parent_id   = 6;
-    optional bool               external    = 7;
-    optional string             source      = 8;
-    optional string             repo_id     = 9;
-    optional string             ext         = 10;
-    optional bool               ext_auto    = 11;
-    repeated DependencySpecData deps        = 12;
-    optional string             sch_id      = 13;
-    optional bool               sch_enforce = 14;
+    optional string             title       = 1; // Record title (required)
+    optional string             desc        = 2; // Optional description (markdown supported)
+    repeated string             tags        = 3; // Optional list of tags
+    optional string             alias       = 4; // Optional alias
+    optional string             metadata    = 5; // Optional metadata (JSON string)
+    optional string             parent_id   = 6; // Optional parent collection ID or alias (default is root)
+    optional bool               external    = 7; // Optional flag for external (unmanaged) raw data
+    optional string             source      = 8; // Optional raw data source Globus path
+    optional string             repo_id     = 9; // Optional repository ID (default for user/project used if omitted)
+    optional string             ext         = 10; // Optional record extension
+    optional bool               ext_auto    = 11; // Optional flag for automatic extension (based on source file)
+    repeated DependencySpecData deps        = 12; // Optional record dependencies
+    optional string             sch_id      = 13; // Optional metadata schema ID
+    optional bool               sch_enforce = 14; // Optional flag to enforce schema validation (fails on non-compliance)
 }
 
+// Request to create data records in batch. This message will be deprecated.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordCreateBatchRequest
 {
     required string             records     = 1; // JSON array containing records following DB record create schema
 }
 
+// Request to update an existing data record.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordUpdateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    repeated string             tags        = 4;
-    optional bool               tags_clear  = 5;
-    optional string             alias       = 6;
-    optional string             metadata    = 7;
-    optional bool               mdset       = 8;
-    optional string             sch_id      = 9;
-    optional bool               sch_enforce = 10;
-    optional string             source      = 11;
-    optional string             ext         = 12;
-    optional bool               ext_auto    = 13;
+    required string             id          = 1; // Record ID or alias
+    optional string             title       = 2; // Optional title
+    optional string             desc        = 3; // Optional description (markdown supported)
+    repeated string             tags        = 4; // Optional list of tags to add
+    optional bool               tags_clear  = 5; // Optional flag to clear existing tags
+    optional string             alias       = 6; // Optional alias
+    optional string             metadata    = 7; // Optional metadata (JSON string)
+    optional bool               mdset       = 8; // Optional flag to set (replace) metadata if true, or merge if false
+    optional string             sch_id      = 9; // Optional metadata schema ID
+    optional bool               sch_enforce = 10; // Optional flag to enforce schema validation (fails on non-compliance)
+    optional string             source      = 11; // Optional raw data source Globus path
+    optional string             ext         = 12; // Optional record extension
+    optional bool               ext_auto    = 13; // Optional flag for automatic extension (based on source file)
     //optional uint64             size        = 14;
     //optional uint32             dt          = 15;
-    repeated DependencySpecData dep_add     = 16;
-    repeated DependencySpecData dep_rem     = 17;
+    repeated DependencySpecData dep_add     = 16; // Optional new dependencies to add
+    repeated DependencySpecData dep_rem     = 17; // Optional existing dependencies to remove
 }
 
 message RecordUpdateBatchRequest
@@ -288,8 +364,10 @@ message RecordOwnerChangeReply
     optional SDMS.TaskData      task        = 8;
 }
 
-// ============================ Raw Data Messages
 
+// ============================================================================
+// ----------- Raw Data Messages ----------------------------------------------
+// ============================================================================
 
 message HttpXfrDataReply
 {
@@ -346,7 +424,10 @@ message DataPathReply
     required string             path        = 1;
 }
 
-// ============================ Search Messages
+
+// ============================================================================
+// ----------- Search Messages ------------------------------------------------
+// ============================================================================
 
 // Returns ListingReply
 message SearchRequest
@@ -376,7 +457,10 @@ message SearchRequest
     optional uint32             count       = 18;
 }
 
-// ============================ Collection Messages
+
+// ============================================================================
+// ----------- Collection Messages --------------------------------------------
+// ============================================================================
 
 message CollViewRequest
 {
@@ -479,7 +563,10 @@ message CollListPublishedRequest
     optional uint32             count       = 3;
 }
 
-// ============================ Group Messages
+
+// ============================================================================
+// ----------- Group Messages -------------------------------------------------
+// ============================================================================
 
 message GroupCreateRequest
 {
@@ -518,7 +605,10 @@ message GroupViewRequest
     required string             gid         = 2;
 }
 
-// ============================ ACL Messages
+
+// ============================================================================
+// ----------- ACL Messages ---------------------------------------------------
+// ============================================================================
 
 message ACLViewRequest
 {
@@ -553,7 +643,10 @@ message ACLDataReply
     repeated ACLRule            rule        = 1;
 }
 
-// ============================ Project Messages
+
+// ============================================================================
+// ----------- Project Messages -----------------------------------------------
+// ============================================================================
 
 message ProjectViewRequest
 {
@@ -619,7 +712,10 @@ message ProjectGetRoleReply
     required ProjectRole        role        = 1;
 }
 
-// ============================ Repo Messages
+
+// ============================================================================
+// ----------- Repository Messages --------------------------------------------
+// ============================================================================
 
 message RepoDataDeleteRequest
 {
@@ -787,21 +883,25 @@ message RepoAuthzRequest
     required string             action      = 4;
 }
 
-// ============================ Topic Messages
+// ============================ Topic Messages (Deprecated)
 
+// Deprecated
 message TopicLinkRequest
 {
     required string             topic       = 1;
     required string             id          = 2;
 }
 
+// Deprecated
 message TopicUnlinkRequest
 {
     required string             topic       = 1;
     required string             id          = 2;
 }
 
-// ============================ Query Messages
+// ============================================================================
+// ----------- Saved Query Messages -------------------------------------------
+// ============================================================================
 
 message QueryCreateRequest
 {
@@ -850,7 +950,10 @@ message QueryDataReply
     //repeated SDMS.QueryData     query       = 1;
 }
 
-// ============================ Annotation Messages
+
+// ============================================================================
+// ----------- Annotation Messages --------------------------------------------
+// ============================================================================
 
 message AnnotationListBySubjectRequest
 {
@@ -893,7 +996,10 @@ message AnnotationCommentEditRequest
     required string             comment     = 3;
 }
 
-// ============================ Task Messages
+
+// ============================================================================
+// ----------- Task Messages --------------------------------------------------
+// ============================================================================
 
 message TaskViewRequest
 {
@@ -917,8 +1023,9 @@ message TaskDataReply
 }
 
 
-// ============================ Tag Messages
-
+// ============================================================================
+// ----------- Tag Messages ---------------------------------------------------
+// ============================================================================
 
 // Returns TagDataReply
 message TagSearchRequest
@@ -944,7 +1051,9 @@ message TagDataReply
 }
 
 
-// ============================ Schema / Validation Messages
+// ============================================================================
+// ----------- Schema / Validation Messages -----------------------------------
+// ============================================================================
 
 message MetadataValidateRequest
 {
@@ -1016,9 +1125,9 @@ message SchemaDeleteRequest
 }
 
 
-// ============================ Catalog / Topic Messages
-
-
+// ============================================================================
+// ----------- Catalog / Topic Messages ---------------------------------------
+// ============================================================================
 
 // Returns TopicDataReply
 message TopicListTopicsRequest

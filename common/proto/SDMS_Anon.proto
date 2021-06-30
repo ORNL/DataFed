@@ -1,11 +1,11 @@
-// ALERT: If messages in this proto file are REORDERED or REMOVED, or if the
-// definitions of existing message parameters are CHANGED, then the
-// VER_PROTO_MAJOR enum value in Version.proto must be incremented and backward
-// compatability will be lost. If new messages are APPENDED to the end of this
-// file, or parameters are APPENDED to the end of an existing message defintion,
-// then VER_PROTO_MINOR must be incremented and backward compatability will be
-// maintained. Unused messages and parameters should be marked as deprecated,
-// and these should be removed at the next major version change.
+// ALERT: If messages in this proto file are ADDED or REMOVED, or if the
+// definitions of existing message fields are CHANGED, then the VER_PROTO_MAJOR
+// enum value in Version.proto must be incremented and backward compatability
+// will be lost. If fields are APPENDED to the end of existing message
+// defintions, then VER_PROTO_MINOR must be incremented and backward
+// compatability will be maintained. Unused messages and parameters should be
+// marked as deprecated, and these should be removed at the next major version
+// change.
 
 syntax = "proto2";
 
