@@ -207,7 +207,7 @@ message ListingReply
 // ----------- Data Record Messages -------------------------------------------
 // ============================================================================
 
-// Deprecated
+// DEPRECATED
 message RecordListRequest
 {
     optional string             subject     = 1;
@@ -265,7 +265,7 @@ message RecordCreateRequest
     optional bool               sch_enforce = 14; // Optional flag to enforce schema validation (fails on non-compliance)
 }
 
-// Request to create data records in batch. This message will be deprecated.
+// Request to create data records in batch. This message will be DEPRECATED.
 // Reply: RecordDataReply on success, NackReply on error
 message RecordCreateBatchRequest
 {
@@ -295,73 +295,100 @@ message RecordUpdateRequest
     repeated DependencySpecData dep_rem     = 17; // Optional existing dependencies to remove
 }
 
+// Request to update data records in batch. This message will be DEPRECATED.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordUpdateBatchRequest
 {
     required string             records     = 1; // JSON array containing records following DB record update schema
 }
 
+// Request to export data records in batch. This message may be DEPRECATED.
+// Reply: RecordExportReply on success, NackReply on error
 message RecordExportRequest
 {
     repeated string             id          = 1;
 }
 
+// Reply containing JSON representation of data records. This message may be DEPRECATED.
 message RecordExportReply
 {
-    repeated string             record      = 1;
+    repeated string             record      = 1; // JSON string containing data recird
 }
 
+// Not used currently
 message RecordLockRequest
 {
     repeated string             id          = 1;
     required bool               lock        = 2;
 }
 
+// Request to delete one or more data records. Deletions are handle by background tasks
+// thus a TaskDataReply is returned containinf the TaskID of the delete operation.
+// Reply: TaskDataReply on success, NackReply on error
 message RecordDeleteRequest
 {
-    repeated string             id          = 1;
+    repeated string             id          = 1; // ID/alias of record(s) to delete
 }
 
+// Request to get the dependency graph for a given data record. Returns all ancestor
+// and decendent records that are related by derivation linkage. Lateral provenance
+// relationships of related records are not returned.
+// Reply: ListingReply on success, NackReply on error
 message RecordGetDependencyGraphRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // ID/alias of data record of interest
 }
 
+// Request to change tha allocation of specified records. All records must be owned by
+// the auth user or the specified project. Any records already on destination repo will
+// be ignored. On success, a background task is created to perform the actual allocation
+// change (requires moving raw data and updating records).
+// Reply: RecordAllocChangeReply on success, NackReply on error
 message RecordAllocChangeRequest
 {
-    repeated string             id          = 1;
-    required string             repo_id     = 2;
-    optional string             proj_id     = 3;
-    optional bool               check       = 4;
+    repeated string             id          = 1; // ID/alias of data records and or collections
+    required string             repo_id     = 2; // Destination repository ID
+    optional string             proj_id     = 3; // Optional project ID if data belongs to a porject
+    optional bool               check       = 4; // Optional flag to perform initial validation only if true
 }
 
+// Reply containing information about record allocation change, including
+// associated background task.
 message RecordAllocChangeReply
 {
-    required uint32             act_cnt     = 1;
-    required uint64             act_size    = 2;
-    required uint32             tot_cnt     = 3;
-    required uint64             data_limit  = 4;
-    required uint64             data_size   = 5;
-    required uint32             rec_limit   = 6;
-    required uint32             rec_count   = 7;
-    optional SDMS.TaskData      task        = 8;
+    required uint32             act_cnt     = 1; // Actual count of records to changed
+    required uint64             act_size    = 2; // Actual data size (bytes) that will be moved
+    required uint32             tot_cnt     = 3; // Total number of records in request (including those already on destination repo)
+    required uint64             data_limit  = 4; // Dest repo data size limit (bytes)
+    required uint64             data_size   = 5; // Dest repo current data size (bytes)
+    required uint32             rec_limit   = 6; // Dest repo record count limit
+    required uint32             rec_count   = 7; // Dest repo current record count
+    optional SDMS.TaskData      task        = 8; // Background task information
 }
 
+// Request to change tha ownership of specified records. All records must be owned by
+// the auth user or the specified project. Auth user must have CREATE permission on
+// destination collection. On success, a background task is created to perform the
+// actual ownership change (requires moving raw data and updating records).
+// Reply: RecordOwnerChangeReply on success, NackReply on error
 message RecordOwnerChangeRequest
 {
-    repeated string             id          = 1;
-    required string             coll_id     = 2;
-    optional string             repo_id     = 3;
-    optional string             proj_id     = 4;
-    optional bool               check       = 5;
+    repeated string             id          = 1; // ID/alias of data records and or collections
+    required string             coll_id     = 2; // Destination collection ID/alias
+    optional string             repo_id     = 3; // Optional destination repo ID (default will be used if omitted)
+    optional string             proj_id     = 4; // DEPRECATED
+    optional bool               check       = 5; // Optional flag to perform initial validation only if true
 }
 
+// Reply containing information about record ownership change, including
+// associated background task.
 message RecordOwnerChangeReply
 {
-    required uint32             act_cnt     = 1;
-    required uint64             act_size    = 2;
-    required uint32             tot_cnt     = 3;
-    repeated AllocData          alloc       = 4;
-    optional SDMS.TaskData      task        = 8;
+    required uint32             act_cnt     = 1; // Actual count of records to changed
+    required uint64             act_size    = 2; // Actual data size (bytes) that will be moved
+    required uint32             tot_cnt     = 3; // Total number of records in request (including those already owned by destination account)
+    repeated AllocData          alloc       = 4; // List of available allocations (only if check option set to true)
+    optional SDMS.TaskData      task        = 8; // Background task information
 }
 
 
@@ -369,56 +396,68 @@ message RecordOwnerChangeReply
 // ----------- Raw Data Messages ----------------------------------------------
 // ============================================================================
 
+// DEPRECATED
 message HttpXfrDataReply
 {
     repeated SDMS.HttpXfrData   xfr         = 1;
 }
 
-// Download raw data for one or more records
+// Request to download raw data for one or more records. Auth user must have READ_DATA
+// permission on all requested records. If the orig_fname optiona is specified, a check
+// will be performed to ensure there are no duplicate filenames, and the request will
+// fail if there are. On success, a background task is created to perform the actual
+// data transfer.
+// Reply: DataGetReply on success, NackReply on error
 message DataGetRequest
 {
-    repeated string             id          = 1;
-    optional string             path        = 2;
-    optional Encryption         encrypt     = 3;
-    optional bool               orig_fname  = 4;
-    optional bool               check       = 5;
+    repeated string             id          = 1; // ID/alias of data records and or collections
+    optional string             path        = 2; // Globus path to download to (not required if check option is set)
+    optional Encryption         encrypt     = 3; // Optional encryption mode (none, if availble, required)
+    optional bool               orig_fname  = 4; // Optional flag to download to original filenames
+    optional bool               check       = 5; // Optional flag to perform initial validation only if true
 }
 
-// Upload raw data for one record
+// Request to upload raw data to a data records. Auth user must have WRITE_DATA
+// permission on the requested record. On success, a background task is created to
+// perform the actual data transfer.
+// Reply: DataPutReply on success, NackReply on error
 message DataPutRequest
 {
-    required string             id          = 1;
-    optional string             path        = 2;
-    optional Encryption         encrypt     = 3;
-    optional string             ext         = 4;
-    optional bool               check       = 5;
+    required string             id          = 1; // ID/alias of data record
+    optional string             path        = 2; // Globus path to upload from
+    optional Encryption         encrypt     = 3; // Optional encryption mode (none, if availble, required)
+    optional string             ext         = 4; // Optional extension override
+    optional bool               check       = 5; // Optional flag to perform initial validation only if true
 }
 
+// Reply containing data download information, including associated background task.
 message DataGetReply
 {
-    repeated ListingData        item        = 1;
-    optional SDMS.TaskData      task        = 2;
+    repeated ListingData        item        = 1; // Basic data for records to be downloaded
+    optional SDMS.TaskData      task        = 2; // Background task information
 }
 
+// Reply containing data upload information, including associated background task.
 message DataPutReply
 {
-    required RecordData         item        = 1;
-    optional SDMS.TaskData      task        = 2;
+    required RecordData         item        = 1; // Basic data for record to be uploaded
+    optional SDMS.TaskData      task        = 2; // Background task information
 }
 
-// Delete raw data only (not record)
+// Not currently used (delete raw data only)
 message DataDeleteRequest
 {
     repeated string             id          = 1;
 }
 
-// Get domain-local path to raw data of a record (for direct access)
+// Not currently used (get domain-local path to raw data of a record for direct access)
 message DataPathRequest
 {
     required string             id          = 1;
     required string             domain      = 2;
 }
 
+// Not currently used (domain-local path to raw data of a record for direct access)
 message DataPathReply
 {
     required string             path        = 1;
@@ -883,16 +922,16 @@ message RepoAuthzRequest
     required string             action      = 4;
 }
 
-// ============================ Topic Messages (Deprecated)
+// ============================ Topic Messages (DEPRECATED)
 
-// Deprecated
+// DEPRECATED
 message TopicLinkRequest
 {
     required string             topic       = 1;
     required string             id          = 2;
 }
 
-// Deprecated
+// DEPRECATED
 message TopicUnlinkRequest
 {
     required string             topic       = 1;
