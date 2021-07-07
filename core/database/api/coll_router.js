@@ -329,33 +329,6 @@ router.post('/update', function (req, res) {
 .description('Update an existing collection from JSON body');
 
 
-// This is an OWNER or ADMIN only function, other users must navigate the collection hierarchy
-router.get('/priv/list', function (req, res) {
-    try {
-        const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var owner_id;
-
-        if ( req.queryParams.subject ) {
-            owner_id = req.queryParams.subject;
-        } else {
-            owner_id = client._id;
-        }
-
-        if ( client.is_admin || owner_id == client._id || g_lib.db.admin.firstExample({ _from: owner_id, _to: client._id }) ) {
-            var result = g_db._query( "for v in 1..1 inbound @owner owner filter IS_SAME_COLLECTION('c', v) return { id: v._id, title: v.title }", { owner: owner_id }).toArray();
-            res.send({ results: result });
-        } else
-            throw g_lib.ERR_PERM_DENIED;
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.summary('List all data collections owned by client (or subject)')
-.description('List all data collections owned by client (or subject)');
-
-
 router.get('/view', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID_noexcept( req.queryParams.client );
