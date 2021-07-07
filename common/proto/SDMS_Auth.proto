@@ -701,22 +701,28 @@ message GroupViewRequest
 
 
 // ============================================================================
-// ----------- ACL Messages ---------------------------------------------------
+// ----------- Access Control List (ACL) Messages -----------------------------
 // ============================================================================
 
-// Request to 
-// Reply:  on success, NackError on error
+// Request to view all ACL rules on a given data record or collection.
+// Reply: ACLDataReply on success, NackError on error
 message ACLViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // ID/alias of data record or collection
 }
 
-// Request to 
-// Reply:  on success, NackError on error
+// Request to update (replace) ACLs on a data record or collection. ACLs are
+// set using a JSON payload containing an array of rule objects containing
+// the following fields:
+//   id       : User or group ID (required)
+//   grant    : bitmask for local permission grants
+//   inhgrant : bitmask for inherited permission grants (collections only)
+// Reply: ACLDataReply on success, NackError on error
+// TODO: Why is this not using the ACLRule struct for rules?
 message ACLUpdateRequest
 {
-    required string             id          = 1;
-    optional string             rules       = 2;
+    required string             id          = 1; // ID/alias of data record or collection
+    optional string             rules       = 2; // New ACL rules as JSON
 }
 
 // Request to list users/projects owning any ACLs set for client
@@ -729,12 +735,13 @@ message ACLBySubjectRequest
     optional bool               inc_projects    = 3; // Include project ACLs
 }
 
-// List top-level ACLs set by owner for client or subject (user or project)
+// List data records and/or collections that are share with client by the specified
+// owner (user or project).
 // Reply: ListingReply on success, NackError on error
 message ACLListItemsBySubjectRequest
 {
-    optional string             subject     = 1;
-    required string             owner       = 2;
+    optional string             subject     = 1; // DEPRECATED
+    required string             owner       = 2; // User/project ID that is sharing data
 }
 
 // Reply containing ACL information
@@ -748,65 +755,86 @@ message ACLDataReply
 // ----------- Project Messages -----------------------------------------------
 // ============================================================================
 
+// Request to view project details. Requires client to be associated with the
+// project, or be an admin.
+// Reply: ProjectDataReply on success, NackError on error
 message ProjectViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Project ID
 }
 
+// Reply containing detailed information for one or more projects.
 message ProjectDataReply
 {
     repeated ProjectData        proj        = 1;
 }
 
+// Request to create a new project. Requires client to be a repository administrator.
+// The creator becomes the owner of the project.
+// Reply: ProjectDataReply on success, NackError on error
 message ProjectCreateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    repeated string             admin       = 4;
-    repeated string             member      = 5;
+    required string             id          = 1; // Project OD
+    optional string             title       = 2; // Title
+    optional string             desc        = 3; // Description
+    repeated string             admin       = 4; // List of project admins (managers)
+    repeated string             member      = 5; // List of project members
 }
 
+// Request to update an existing project. Requires client to be either the owner
+// or an admin of the specified project. Only the project owner can alter the admin
+// list.
+// Reply: ProjectDataReply on success, NackError on error
 message ProjectUpdateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    optional bool               admin_set   = 4 [default = false];
-    repeated string             admin       = 5;
-    optional bool               member_set  = 6 [default = false];
-    repeated string             member      = 7;
+    required string             id          = 1; // Project ID
+    optional string             title       = 2; // New title
+    optional string             desc        = 3; // New description
+    optional bool               admin_set   = 4 [default = false]; // Clear existing admin list
+    repeated string             admin       = 5; // New admins (user IDs)
+    optional bool               member_set  = 6 [default = false]; // Clear existing member list
+    repeated string             member      = 7; // New members (user IDs)
 }
 
+// Request to delete a project. Client must be the project owner or a
+// system admin. On success a background task is started to perform the
+// actual delete operation.
+// Reply: TaskDataReply on success, NackError on error
 message ProjectDeleteRequest
 {
-    repeated string             id          = 1;
+    repeated string             id          = 1; // Project ID to delete
 }
 
+// Request to list all projects associated with client.
+// Reply: ListingReply on success, NackError on error
 message ProjectListRequest
 {
-    optional string             subject     = 1;
-    optional bool               as_owner    = 2;
-    optional bool               as_admin    = 3;
-    optional bool               as_member   = 4;
-    optional SortOption         sort        = 5;
-    optional bool               sort_rev    = 6;
-    optional uint32             offset      = 7;
-    optional uint32             count       = 8;
+    optional string             subject     = 1; // DEPRECATED
+    optional bool               as_owner    = 2; // Flag to include owned projects
+    optional bool               as_admin    = 3; // Flag to include managed projects
+    optional bool               as_member   = 4; // Flag to include member projects
+    optional SortOption         sort        = 5; // Sort option
+    optional bool               sort_rev    = 6; // Reverse sort order
+    optional uint32             offset      = 7; // Result offset
+    optional uint32             count       = 8; // Result count
 }
 
+// Not currently used
 message ProjectSearchRequest
 {
     required string             text_query  = 1;
     repeated string             scope       = 2;
 }
 
+// Request to get the project role of client or specified user
+// Reply: ProjectGetRoleReply on success, NackError on error
 message ProjectGetRoleRequest
 {
-    required string             id          = 1;
-    optional string             subject     = 2;
+    required string             id          = 1; // Project ID
+    optional string             subject     = 2; // Optional user ID
 }
 
+// Reply containing the project role of a user
 message ProjectGetRoleReply
 {
     required ProjectRole        role        = 1;
@@ -814,174 +842,235 @@ message ProjectGetRoleReply
 
 
 // ============================================================================
-// ----------- Repository Messages --------------------------------------------
+// ----------- Repository Messages (Repo) -------------------------------------
 // ============================================================================
 
+// NOTE: The following messages are use by Core and Repo servers only
+
+// Request to delete the raw data of onr or more records from repo
+// Reply: AckReply on success, NackError on error
 message RepoDataDeleteRequest
 {
-    repeated RecordDataLocation loc         = 1;
+    repeated RecordDataLocation loc         = 1; // Record ID and file path
 }
 
+// Request to get the file size of one or more data records from repo
+// Reply: RepoDataSizeReply on success, NackError on error
 message RepoDataGetSizeRequest
 {
-    repeated RecordDataLocation loc         = 1;
+    repeated RecordDataLocation loc         = 1; // Record ID and file path
 }
 
+// Reply to hold raw data size of one or more dat records
 message RepoDataSizeReply
 {
-    repeated RecordDataSize     size        = 1;
+    repeated RecordDataSize     size        = 1; // Record size information
 }
 
+// Request to create a data storage path on a repo
+// Reply: AckReply on success, NackError on error
 message RepoPathCreateRequest
 {
-    required string             path        = 1;
+    required string             path        = 1; // Path to raw data storage directory
 }
 
+// Request to delete a data storage path on a repo
+// Reply: AckReply on success, NackError on error
 message RepoPathDeleteRequest
 {
-    required string             path        = 1;
+    required string             path        = 1; // Path to raw data storage directory
 }
 
+
+// ============================================================================
+// ----------- Repository Messages (Core) -------------------------------------
+// ============================================================================
+
+// Request to list repositories
+// Reply: RepoDataReply on success, NackError on error
 message RepoListRequest
 {
-    optional bool               details     = 1;
-    optional bool               all         = 2;
+    optional bool               details     = 1; // Flag to include detailed repo information
+    optional bool               all         = 2; // Return all repos if true, otherwise only those administered by client
 }
 
+// Request to view details of a repository
+// Reply: RepoDataReply on success, NackError on error
 message RepoViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Repo ID
 }
 
+// Request to create a new repository. Only system admins may send this request.
+// Reply: RepoDataReply on success, NackError on error
 message RepoCreateRequest
 {
-    required string             id          = 1;
-    required string             title       = 2;
-    optional string             desc        = 3;
-    optional string             domain      = 5;
-    required string             path        = 6;
-    optional string             exp_path    = 7;
-    required string             address     = 8;
-    required string             endpoint    = 9;
-    required string             pub_key     = 10;
-    required uint64             capacity    = 11;
-    repeated string             admin       = 12;
+    required string             id          = 1; // ID of repo
+    required string             title       = 2; // Title
+    optional string             desc        = 3; // Description
+    optional string             domain      = 5; // RESERVED
+    required string             path        = 6; // Path to storage directories
+    optional string             exp_path    = 7; // RESERVED
+    required string             address     = 8; // Repo server address
+    required string             endpoint    = 9; // Globus endpoint UUID or legacy name
+    required string             pub_key     = 10; // Public encryption key
+    required uint64             capacity    = 11; // Total data capacity
+    repeated string             admin       = 12; // Repo admin(s)
 }
 
+// Request to update an existing repository. Only system or repos admins may
+// send this request. NOTE: Changing the storage path will not automatically
+// move raw data files - this must be done manually.
+// Reply: RepoDataReply on success, NackError on error
 message RepoUpdateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    optional string             domain      = 5;
-    optional string             path        = 6;
-    optional string             exp_path    = 7;
-    optional string             address     = 8;
-    optional string             endpoint    = 9;
-    optional string             pub_key     = 10;
-    optional uint64             capacity    = 11;
-    repeated string             admin       = 12;
+    required string             id          = 1; // ID of repo
+    optional string             title       = 2; // Title
+    optional string             desc        = 3; // Description
+    optional string             domain      = 5; // RESERVED
+    optional string             path        = 6; // Path to storage directories
+    optional string             exp_path    = 7; // RESERVED
+    optional string             address     = 8; // Repo server address
+    optional string             endpoint    = 9; // Globus endpoint UUID or legacy name
+    optional string             pub_key     = 10; // Public encryption key
+    optional uint64             capacity    = 11; // Total data capacity
+    repeated string             admin       = 12; // Repo admin(s)
 }
 
+// Request to delete a repository. Only system or repos admins may send this
+// request. NOTE: All data records for all allocations must be moved/deleted
+// first or this request will fail.
+// Reply: AckReply on success, NackError on error
 message RepoDeleteRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Repo ID
 }
 
+// Reply containing details of one or more repositories
 message RepoDataReply
 {
-    repeated SDMS.RepoData      repo        = 1;
+    repeated SDMS.RepoData      repo        = 1; // Repo details
 }
 
+// Request to calculate the count and size of data stored in onr or more collections.
+// Reply: RepoCalcSizeReply on success, NackError on error
+// TODO: This request should be in Collection category
 message RepoCalcSizeRequest
 {
-    required bool               recurse     = 1;
-    repeated string             item        = 2;
+    required bool               recurse     = 1; // Recursive flag
+    repeated string             item        = 2; // Data / collection IDs
 }
 
+// Reply containing data size information
 message RepoCalcSizeReply
 {
-    repeated AllocStatsData     stats       = 1;
+    repeated AllocStatsData     stats       = 1; // Data size info
 }
 
+// Request to list all allocations on a repo administered by client.
+// Reply: RepoAllocationsReply on success, NackError on error
 message RepoListAllocationsRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Repo ID
 }
 
+// Request to list allocations of client or project.
+// Reply: RepoAllocationsReply on success, NackError on error
 message RepoListSubjectAllocationsRequest
 {
-    optional string             subject     = 1;
-    optional bool               stats       = 2;
+    optional string             subject     = 1; // Optional project ID
+    optional bool               stats       = 2; // Flag to include allocation statistics
 }
 
+// Request to list allocations belonging to owner of data record or collection.
+// Client must have CREATE permission on collection.
+// Reply: RepoAllocationsReply on success, NackError on error
 message RepoListObjectAllocationsRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Collection ID/alias
 }
 
+// Request to view an allocation of a client or project on a given repo. If a
+// project is specified, client must be associated with the project.
+// Reply: RepoAllocationsReply on success, NackError on error
 message RepoViewAllocationRequest
 {
-    required string             repo        = 1;
-    required string             subject     = 2;
+    required string             repo        = 1; // Repo ID
+    required string             subject     = 2; // Optional project ID
 }
 
+// Reply containing allocation information
 message RepoAllocationsReply
 {
-    repeated AllocData          alloc       = 1;
+    repeated AllocData          alloc       = 1; // Allocation information
 }
 
+// Request to calculate allocation statistics of a user or project on a given
+// repo. Only repo admins may make this request.
+// Reply: RepoAllocationStatsReply on success, NackError on error
 message RepoAllocationStatsRequest
 {
-    required string             repo        = 1;
-    optional string             subject     = 2;
+    required string             repo        = 1; // Repo ID
+    optional string             subject     = 2; // Optional user/project ID
 }
 
+// Reply containing allocation statistics.
 message RepoAllocationStatsReply
 {
-    required AllocStatsData     alloc       = 1;
+    required AllocStatsData     alloc       = 1; // Allocation stats
 }
 
-// Reply is ACK/NACK
+// Request to create a new allocation on a repo for a user or project.
+// Only repo admins may make this request. On success, a background task is
+// started to create the allocation.
+// Reply: TaskDataReply on success, NackError on error
 message RepoAllocationCreateRequest
 {
-    required string             repo        = 1;
-    required string             subject     = 2;
-    required uint64             data_limit  = 3;
-    required uint32             rec_limit   = 4;
+    required string             repo        = 1; // Repo ID
+    required string             subject     = 2; // User/project ID
+    required uint64             data_limit  = 3; // Data size limit (bytes)
+    required uint32             rec_limit   = 4; // Data record limit(count)
 }
 
-// Reply is ACK/NACK
+// Request to update an existing allocation. Only repo admins may make this
+// request.
+// Reply: AckReply on success, NackError on error
+// TODO: Rename this message to RepoAllocationUpdateRequest
 message RepoAllocationSetRequest
 {
-    required string             repo        = 1;
-    required string             subject     = 2;
-    required uint64             data_limit  = 3;
-    required uint32             rec_limit   = 4;
+    required string             repo        = 1; // Repo ID
+    required string             subject     = 2; // User/project ID
+    required uint64             data_limit  = 3; // New data size limit (bytes)
+    required uint32             rec_limit   = 4; // New data record limit (count)
 }
 
-// Reply is ACK/NACK
+// Request to set the default allocation for a user or project. If a
+// project is specified, client must be associated with the project.
+// Reply: AckReply on success, NackError on error
 message RepoAllocationSetDefaultRequest
 {
-    required string             repo        = 1;
-    optional string             subject     = 2;
+    required string             repo        = 1; // Repo ID
+    optional string             subject     = 2; // User/project ID
 }
 
-// Reply is ACK/NACK
+// Request to delete an existing allocation.  Only repo admins may make this
+// request.  On success, a background task is started to create the allocation.
+// Reply: TaskDataReply on success, NackError on error
 message RepoAllocationDeleteRequest
 {
-    required string             repo        = 1;
-    required string             subject     = 2;
+    required string             repo        = 1; // Repo ID
+    required string             subject     = 2; // User/project ID
 }
 
-// Reply is ACK/NACK
+// Request to check authorization for GridFTP action on file in a repo.
+// Reply: AckReply on success, NackError on error
 message RepoAuthzRequest
 {
-    required string             repo        = 1;
-    required string             client      = 2;
-    required string             file        = 3;
-    required string             action      = 4;
-}
+    required string             repo        = 1; // Repo ID
+    required string             client      = 2; // Client ID
+    required string             file        = 3; // Path to file in repo
+    required string             action      = 4; // GridFTP action
+
 
 // ============================ Topic Messages (DEPRECATED)
 
