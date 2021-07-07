@@ -1070,51 +1070,65 @@ message RepoAuthzRequest
 // ----------- Saved Query Messages -------------------------------------------
 // ============================================================================
 
+// NOTE: All saved query requests are restricted to authenticated client.
+
+// Request to create a new saved query.
+// Reply: QueryDataReply on success, NackError on error
 message QueryCreateRequest
 {
-    required string             title       = 1;
-    required SearchRequest      query       = 2;
+    required string             title       = 1; // Query title
+    required SearchRequest      query       = 2; // Search parameters
 }
 
+// Request to update an existing saved query.
+// Reply: QueryDataReply on success, NackError on error
 message QueryUpdateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional SearchRequest      query       = 3;
+    required string             id          = 1; // Query ID
+    optional string             title       = 2; // Optional new title
+    optional SearchRequest      query       = 3; // Optional new search parameters
 }
 
+// Request to 
+// Reply: AckReply on success, NackError on error
 message QueryDeleteRequest
 {
-    repeated string             id          = 1;
+    repeated string             id          = 1; // Query ID
 }
 
+// Request to list saved queries.
+// Reply: ListingReply on success, NackError on error
 message QueryListRequest
 {
-    optional uint32             offset      = 1;
-    optional uint32             count       = 2;
+    optional uint32             offset      = 1; // Result offset
+    optional uint32             count       = 2; // Result count
 }
 
+// Request to view a saved query information.
+// Reply: QueryDataReply on success, NackError on error
 message QueryViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Query ID
 }
 
+// Request to execute the specified saved query.
+// Reply: ListingReply on success, NackError on error
 message QueryExecRequest
 {
-    required string             id          = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    required string             id          = 1; // Query ID
+    optional uint32             offset      = 2; // Results offset
+    optional uint32             count       = 3; // Results count
 }
 
+// Reply containing saved query data
 message QueryDataReply
 {
-    required string             id          = 1;
-    required string             title       = 2;
-    required string             owner       = 4;
-    required uint32             ct          = 5;
-    required uint32             ut          = 6;
-    required SearchRequest      query       = 7;
-    //repeated SDMS.QueryData     query       = 1;
+    required string             id          = 1; // Query ID
+    required string             title       = 2; // Title
+    required string             owner       = 4; // Owner user ID
+    required uint32             ct          = 5; // Query create timestamp
+    required uint32             ut          = 6; // Query update timestamp
+    required SearchRequest      query       = 7; // Search parameters
 }
 
 
