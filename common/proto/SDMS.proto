@@ -41,13 +41,6 @@ enum ServiceStatus
     SS_OFFLINE      = 3;
 }
 
-// Deprecated
-enum CollDelMode
-{
-    CDM_ALL         = 0;
-    CDM_OWNED       = 1;
-}
-
 // Used to specify data or collection search mode in queries
 enum SearchMode
 {
@@ -415,18 +408,6 @@ message TaskData
     optional string                 dest        = 11;
 }
 
-
-message HttpXfrData
-{
-    required string             rec_id      = 1;
-    required string             from        = 3;
-    required string             to          = 4;
-    required uint32             started     = 5;
-    required uint32             updated     = 6;
-    required bool               failed      = 7;
-    optional string             err_msg     = 8; // Only set if status == XFR_FAILED
-}
-
 // -------------------------------------------------- TASK DEFINES
 
 message SchemaData
@@ -443,5 +424,4 @@ message SchemaData
     optional string             def         = 10;
     repeated SchemaData         uses        = 11;
     repeated SchemaData         used_by     = 12;
-    // Add topics?
 }

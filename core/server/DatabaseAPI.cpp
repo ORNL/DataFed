@@ -443,7 +443,7 @@ DatabaseAPI::purgeTransferRecords( size_t age )
 }
 
 void
-DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
     params.push_back({"uid",a_request.uid()});
@@ -471,7 +471,7 @@ DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Anon::UserDa
 
 
 void
-DatabaseAPI::userView( const Anon::UserViewRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
     params.push_back({"subject",a_request.uid()});
@@ -486,7 +486,7 @@ DatabaseAPI::userView( const Anon::UserViewRequest & a_request, Anon::UserDataRe
 
 
 void
-DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, Auth::UserDataReply & a_reply )
 {
     Value result;
 
@@ -506,7 +506,7 @@ DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, Anon::UserDataRepl
 
 
 void
-DatabaseAPI::userListAll( const UserListAllRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userListAll( const UserListAllRequest & a_request, Auth::UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
     if ( a_request.has_offset() && a_request.has_count() )
@@ -522,7 +522,7 @@ DatabaseAPI::userListAll( const UserListAllRequest & a_request, Anon::UserDataRe
 }
 
 void
-DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, Auth::UserDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -537,7 +537,7 @@ DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, Anon::User
 }
 
 void
-DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply )
 {
     string uuids = "[";
 
@@ -557,7 +557,7 @@ DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, An
 }
 
 void
-DatabaseAPI::userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Auth::UserDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -612,7 +612,7 @@ DatabaseAPI::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, An
 }
 
 void
-DatabaseAPI::setUserData( Anon::UserDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setUserData( Auth::UserDataReply & a_reply, const Value & a_result )
 {
     UserData*               user;
     Value::ArrayConstIter   k;
@@ -1335,18 +1335,6 @@ DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::Listing
 }
 
 
-void
-DatabaseAPI::collList( const CollListRequest & a_request, Auth::CollDataReply & a_reply )
-{
-    Value result;
-
-    if ( a_request.has_user() )
-        dbGet( "col/priv/list", {{"subject",a_request.user()}}, result );
-    else
-        dbGet( "col/priv/list", {}, result );
-
-    setCollData( a_reply, result );
-}
 
 void
 DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
@@ -1958,34 +1946,30 @@ DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataR
 }
 
 void
-DatabaseAPI::aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
+DatabaseAPI::aclSharedList( const Auth::ACLSharedListRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
 
-    if ( a_request.has_subject() )
-        params.push_back({"subject",a_request.subject()});
     if ( a_request.has_inc_users() )
         params.push_back({"inc_users",a_request.inc_users()?"true":"false"});
     if ( a_request.has_inc_projects() )
         params.push_back({"inc_projects",a_request.inc_projects()?"true":"false"});
 
-    dbGet( "acl/by_subject", params, result );
+    dbGet( "acl/shared/list", params, result );
 
     setListingDataReply( a_reply, result );
 }
 
 void
-DatabaseAPI::aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
+DatabaseAPI::aclSharedListItems( const Auth::ACLSharedListItemsRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
 
     params.push_back({"owner",a_request.owner()});
-    if ( a_request.has_subject() )
-        params.push_back({"subject",a_request.subject()});
 
-    dbGet( "acl/by_subject/list", params, result );
+    dbGet( "acl/shared/list/items", params, result );
 
     setListingDataReply( a_reply, result );
 }

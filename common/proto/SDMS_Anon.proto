@@ -19,96 +19,64 @@ enum Protocol
 }
 
 
-// ============================ Messages
-
-
+// The AckReply is a simple positive acknowledgement for requests that do not
+// need to reply with any data payload.
 message AckReply
 {
 }
 
-// NackReply is only used to capture error information.
-// Text error messages are optional but useful, and
-// should generally be used.
-
+// NackReply is used to convey error information and can be returned from any
+// request.
 message NackReply
 {
     required SDMS.ErrorCode     err_code    = 1;
     optional string             err_msg     = 2;
 }
 
+// Request to get system version information
+// Reply: VersionReply on success, NackError on error
 message VersionRequest
 {
 }
 
+// Reply containing system version information. This information is compared
+// to client/server local version information to determine if interoperability
+// is possible.
 message VersionReply
 {
-    required uint32             major       = 1;
-    required uint32             mapi_major  = 2;
-    required uint32             mapi_minor  = 3;
-    required uint32             server      = 4;
-    required uint32             client      = 5;
+    required uint32             major       = 1; // System MAJOR version, no backward compatibility
+    required uint32             mapi_major  = 2; // Message API MAJOR version, no backward compatibility
+    required uint32             mapi_minor  = 3; // Message API MINOR version, backward compatible
+    required uint32             core        = 4; // Core server MINOR version, information only
+    required uint32             web         = 5; // Web server MINOR version, info/notification purposes
+    required uint32             repo        = 6; // Repo server MINOR version, info/notification purposes
+    required uint32             client_py   = 7; // Python client/api MINOR version, info/notification purposes
 }
 
-
-message StatusRequest
-{
-}
-
-message StatusReply
-{
-    required SDMS.ServiceStatus status      = 1;
-}
-
-message ServerInfoRequest
-{
-}
-
-message ServerInfoReply
-{
-    required string             country     = 1;
-    required string             org         = 2;
-    required string             unit        = 3;
-}
-
+// Request to get client authentication status
+// Reply: AuthStatusReply on success, NackError on error
 message GetAuthStatusRequest
 {
 }
 
-message AuthStatusReply
-{
-    required bool               auth        = 1;
-    optional string             uid         = 2;
-}
-
+// Request to authenticate by password
+// Reply: AuthStatusReply on success, NackError on error
 message AuthenticateByPasswordRequest
 {
     required string             uid         = 1;    // Local user ID
-    required string             password    = 2;    // Password or passcode
+    required string             password    = 2;    // Password
 }
 
+// Request to authenticate by Globus access token
+// Reply: AuthStatusReply on success, NackError on error
 message AuthenticateByTokenRequest
 {
     required string             token       = 1;    // Access token
 }
 
-message DOIViewRequest
+// Reply containing client authentication status
+message AuthStatusReply
 {
-    required string             doi         = 1;
-    optional bool               details     = 2;
+    required bool               auth        = 1; // Authenticated if true
+    optional string             uid         = 2; // DataFed user id
 }
-
-// TODO Does this need to be in anon?
-message UserViewRequest
-{
-    required string             uid         = 1;
-    optional bool               details     = 2;
-}
-
-message UserDataReply
-{
-    repeated SDMS.UserData      user        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
-}
-

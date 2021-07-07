@@ -83,14 +83,11 @@ ClientWorker::setupMsgHandlers()
         uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
         // Requests that require the server to take action
-        SET_MSG_HANDLER( proto_id, StatusRequest, &ClientWorker::procStatusRequest );
         SET_MSG_HANDLER( proto_id, VersionRequest, &ClientWorker::procVersionRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
 
-        // Requests that can be handled by DB client directly
-        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
 
         // Register and setup handlers for the Authenticated interface
 
@@ -122,6 +119,7 @@ ClientWorker::setupMsgHandlers()
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
         SET_MSG_HANDLER_DB( proto_id, GetPermsRequest, GetPermsReply, getPerms );
+        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserSetAccessTokenRequest, AckReply, userSetAccessToken );
         SET_MSG_HANDLER_DB( proto_id, UserCreateRequest, UserDataReply, userCreate );
         SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
@@ -146,7 +144,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
         SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
-        SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollListPublishedRequest, ListingReply, collListPublished );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
@@ -169,8 +166,10 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, TaskViewRequest, TaskDataReply, taskView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
-        SET_MSG_HANDLER_DB( proto_id, ACLBySubjectRequest, ListingReply, aclBySubject );
-        SET_MSG_HANDLER_DB( proto_id, ACLListItemsBySubjectRequest, ListingReply, aclListItemsBySubject );
+        SET_MSG_HANDLER_DB( proto_id, ACLSharedListRequest, ListingReply, aclSharedList );
+        SET_MSG_HANDLER_DB( proto_id, ACLSharedListItemsRequest, ListingReply, aclSharedListItems );
+        //SET_MSG_HANDLER_DB( proto_id, ACLBySubjectRequest, ListingReply, aclBySubject );
+        //SET_MSG_HANDLER_DB( proto_id, ACLListItemsBySubjectRequest, ListingReply, aclListItemsBySubject );
         SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
         SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
         SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
@@ -365,17 +364,6 @@ ClientWorker::dbPassThrough( const std::string & a_uid )
 }
 
 bool
-ClientWorker::procStatusRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( StatusRequest, StatusReply )
-    (void)a_uid;
-
-    reply.set_status( SS_NORMAL );
-
-    PROC_MSG_END
-}
-
-bool
 ClientWorker::procVersionRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( VersionRequest, VersionReply )
@@ -385,8 +373,10 @@ ClientWorker::procVersionRequest( const std::string & a_uid )
     reply.set_major( VER_MAJOR );
     reply.set_mapi_major( VER_MAPI_MAJOR );
     reply.set_mapi_minor( VER_MAPI_MINOR );
-    reply.set_server( VER_SERVER );
-    reply.set_client( VER_CLIENT );
+    reply.set_core( VER_CORE );
+    reply.set_repo( VER_REPO );
+    reply.set_web( VER_WEB );
+    reply.set_client_py( VER_CLIENT_PY );
 
     PROC_MSG_END
 }

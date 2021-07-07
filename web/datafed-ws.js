@@ -57,7 +57,7 @@ var g_host,
     g_ver_major,
     g_ver_mapi_major,
     g_ver_mapi_minor,
-    g_ver_server;
+    g_ver_web;
 
 const nullfr = Buffer.from([]);
 
@@ -87,8 +87,8 @@ function startServer(){
                 reply.mapi_minor < g_ver_mapi_minor || reply.mapi_minor > ( g_ver_mapi_minor + 9 )){
             console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ")" );
         }else{
-            if ( reply.server > g_ver_server || reply.mapi_minor > g_ver_mapi_minor ){
-                console.log( "WARNING: A newer server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.server + ")" );
+            if ( reply.web > g_ver_web || reply.mapi_minor > g_ver_mapi_minor ){
+                console.log( "WARNING: A newer web server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.web + ")" );
             }
 
             g_oauth_credentials = {
@@ -897,14 +897,14 @@ app.get('/api/acl/update', ( a_req, a_resp ) => {
     });
 });
 
-app.get('/api/acl/by_subject', ( a_req, a_resp ) => {
-    sendMessage( "ACLBySubjectRequest", {incUsers:a_req.query.inc_users?true:false,incProjects:a_req.query.inc_projects?true:false}, a_req, a_resp, function( reply ) {
+app.get('/api/acl/shared/list', ( a_req, a_resp ) => {
+    sendMessage( "ACLSharedListRequest", {incUsers:a_req.query.inc_users?true:false,incProjects:a_req.query.inc_projects?true:false}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
-app.get('/api/acl/by_subject/list', ( a_req, a_resp ) => {
-    sendMessage( "ACLListItemsBySubjectRequest", {owner:a_req.query.owner}, a_req, a_resp, function( reply ) {
+app.get('/api/acl/shared/list/items', ( a_req, a_resp ) => {
+    sendMessage( "ACLSharedListItemsRequest", {owner:a_req.query.owner}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -1660,9 +1660,9 @@ protobuf.load("Version.proto", function(err, root) {
     g_ver_major = msg.values.VER_MAJOR;
     g_ver_mapi_major = msg.values.VER_MAPI_MAJOR;
     g_ver_mapi_minor = msg.values.VER_MAPI_MINOR;
-    g_ver_server = msg.values.VER_SERVER;
+    g_ver_web = msg.values.VER_WEB;
     
-    g_version = g_ver_major + "." + g_ver_mapi_major + "." + g_ver_mapi_minor + ":" + g_ver_server;
+    g_version = g_ver_major + "." + g_ver_mapi_major + "." + g_ver_mapi_minor + ":" + g_ver_web;
 
     console.log('Running Version',g_version);
     if ( --g_ready_start == 0 )

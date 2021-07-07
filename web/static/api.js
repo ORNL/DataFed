@@ -422,15 +422,15 @@ export function getCollOffset( coll_id, item_id, page_sz, idx, cb ){
 // ===== ACL URL METHODS
 
 export function aclListSharedItems_url( a_owner ){
-    return "/api/acl/by_subject/list?owner=" + encodeURIComponent( a_owner );
+    return "/api/acl/shared/list/items?owner=" + encodeURIComponent( a_owner );
 }
 
 export function aclListSharedUsers_url(){
-    return "/api/acl/by_subject?inc_users=true";
+    return "/api/acl/shared/list?inc_users=true";
 }
 
 export function aclListSharedProjects_url(){
-    return "/api/acl/by_subject?inc_projects=true";
+    return "/api/acl/shared/list?inc_projects=true";
 }
 
 // ===== ACL METHODS

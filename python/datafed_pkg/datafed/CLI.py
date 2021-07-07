@@ -923,7 +923,7 @@ def _list( ctx, item_id, offset, count, context ):
 
     if  _id[:2] == "p/":
         if _capi.projectGetRole( _id ) == 0:
-            reply = _capi.sharesListItems( _id, offset = offset, count = count, context = context )
+            reply = _capi.sharedListItems( _id, offset = offset, count = count, context = context )
             if _output_mode == _OM_TEXT:
                 click.echo("Listing project shares:")
         else:
@@ -931,7 +931,7 @@ def _list( ctx, item_id, offset, count, context ):
             if _output_mode == _OM_TEXT:
                 click.echo("Listing project root:")
     elif  _id[:2] == "u/":
-        reply = _capi.sharesListItems( _id, offset = offset, count = count, context = context )
+        reply = _capi.sharedListItems( _id, offset = offset, count = count, context = context )
         if _output_mode == _OM_TEXT:
                 click.echo("Listing user shares:")
     else:
@@ -1363,9 +1363,9 @@ def _shares( users, projects ):
 
     # TODO - add project subject when projects shares are added
     if not users and not projects:
-        reply = _capi.sharesListOwners( True, True )
+        reply = _capi.sharedList( True, True )
     else:
-        reply = _capi.sharesListOwners( users, projects )
+        reply = _capi.sharedList( users, projects )
     _generic_reply_handler( reply, _print_listing )
 
 # =============================================================================

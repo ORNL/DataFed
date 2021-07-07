@@ -114,13 +114,21 @@ Server::checkServerVersion()
 
             VersionReply * ver_reply = dynamic_cast<VersionReply*>( reply );
             if ( ver_reply == 0 )
+            {
                 EXCEPT_PARAM( 1, "Invalid response from core server: " << m_config.core_server );
+            }
             
             if ( ver_reply->major() != VER_MAJOR || ver_reply->mapi_major() != VER_MAPI_MAJOR ||
                 VER_MAPI_MINOR > (int)ver_reply->mapi_minor() || ver_reply->mapi_minor() > VER_MAPI_MINOR + 9 )
+            {
                 EXCEPT_PARAM( 1, "Incompatible server version (" << ver_reply->major() << "." << ver_reply->mapi_major() << "." << ver_reply->mapi_minor() << ")" );
+            }
+            else if ( ver_reply->repo() > VER_REPO )
+            {
+                DL_WARN( "A newer repository server version is available (" << ver_reply->major() << "." << ver_reply->mapi_major() << "." << ver_reply->mapi_minor() << ":" << ver_reply->repo() << ")" );
+            }
 
-            DL_INFO( "Core server connection and version OK." );
+            DL_INFO( "Core server connection OK." );
             return;
         }
     }

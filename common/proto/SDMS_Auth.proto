@@ -88,6 +88,25 @@ message GetPermsReply
 // ----------- User Messages --------------------------------------------------
 // ============================================================================
 
+// Request to vew user information. Details can only be requested for
+// authenticate client or by system admins.
+// Reply: UserDataReply on success, NackReply on error
+message UserViewRequest
+{
+    required string             uid         = 1; // DataFed user ID
+    optional bool               details     = 2; // Include details
+}
+
+// Reply containing user information
+message UserDataReply
+{
+    repeated SDMS.UserData      user        = 1;
+    optional uint32             offset      = 2;
+    optional uint32             count       = 3;
+    optional uint32             total       = 4;
+}
+
+
 // Set user access tokens (from Globus OAuth). This message must be called
 // whenever a user logs in via Globus (web portal) in order to update the access
 // and refresh tokens issued by Globus.
@@ -206,13 +225,6 @@ message ListingReply
 // ============================================================================
 // ----------- Data Record Messages -------------------------------------------
 // ============================================================================
-
-// DEPRECATED
-message RecordListRequest
-{
-    optional string             subject     = 1;
-    optional bool               pub         = 2;
-}
 
 // Request to list all records associated with a given repository and user/subject.
 // If the subject is provided sufficient privileges are required.
@@ -396,12 +408,6 @@ message RecordOwnerChangeReply
 // ----------- Raw Data Messages ----------------------------------------------
 // ============================================================================
 
-// DEPRECATED
-message HttpXfrDataReply
-{
-    repeated SDMS.HttpXfrData   xfr         = 1;
-}
-
 // Request to download raw data for one or more records. Auth user must have READ_DATA
 // permission on all requested records. If the orig_fname option is specified, a check
 // will be performed to ensure there are no duplicate filenames, and the request will
@@ -565,15 +571,6 @@ message CollDeleteRequest
     repeated string             id          = 1; // ID/alias of collection to delete
 }
 
-// DEPRECATED
-message CollListRequest
-{
-    optional string             user        = 1;
-    optional bool               details     = 2;
-    optional uint32             offset      = 3;
-    optional uint32             count       = 4;
-}
-
 // Request to write (add/remove) items to a collection. Requires LINK permission.
 // This request does not unlink data records being added to the collection. Any
 // items removed that are not linked elsewhere will be added to the root collection
@@ -727,10 +724,8 @@ message ACLUpdateRequest
 
 // Request to list users/projects owning any ACLs set for client
 // Reply: ListingReply on success, NackError on error
-// TODO: remove subject field
-message ACLBySubjectRequest
+message ACLSharedListRequest
 {
-    optional string             subject         = 1; // DEPRECATED
     optional bool               inc_users       = 2; // Include user ACLs
     optional bool               inc_projects    = 3; // Include project ACLs
 }
@@ -738,9 +733,8 @@ message ACLBySubjectRequest
 // List data records and/or collections that are share with client by the specified
 // owner (user or project).
 // Reply: ListingReply on success, NackError on error
-message ACLListItemsBySubjectRequest
+message ACLSharedListItemsRequest
 {
-    optional string             subject     = 1; // DEPRECATED
     required string             owner       = 2; // User/project ID that is sharing data
 }
 
@@ -1070,22 +1064,6 @@ message RepoAuthzRequest
     required string             client      = 2; // Client ID
     required string             file        = 3; // Path to file in repo
     required string             action      = 4; // GridFTP action
-
-
-// ============================ Topic Messages (DEPRECATED)
-
-// DEPRECATED
-message TopicLinkRequest
-{
-    required string             topic       = 1;
-    required string             id          = 2;
-}
-
-// DEPRECATED
-message TopicUnlinkRequest
-{
-    required string             topic       = 1;
-    required string             id          = 2;
 }
 
 // ============================================================================

@@ -47,7 +47,6 @@ private:
     template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
     bool dbPassThrough( const std::string & a_uid );
     bool procGetAuthStatusRequest( const std::string & a_uid );
-    bool procStatusRequest( const std::string & a_uid );
     bool procVersionRequest( const std::string & a_uid );
     bool procAuthenticateByPasswordRequest( const std::string & a_uid );
     bool procAuthenticateByTokenRequest( const std::string & a_uid );

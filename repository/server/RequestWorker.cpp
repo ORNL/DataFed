@@ -68,7 +68,6 @@ RequestWorker::setupMsgHandlers()
     {
         uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
-        SET_MSG_HANDLER( proto_id, StatusRequest, &RequestWorker::procStatusRequest );
         SET_MSG_HANDLER( proto_id, VersionRequest, &RequestWorker::procVersionRequest );
 
         proto_id = REG_PROTO( SDMS::Auth );
@@ -202,19 +201,6 @@ else { \
 }
 
 
-
-void
-RequestWorker::procStatusRequest()
-{
-    PROC_MSG_BEGIN( Anon::StatusRequest, Anon::StatusReply )
-
-    DL_DEBUG( "Status request" );
-
-    reply.set_status( SS_NORMAL );
-
-    PROC_MSG_END
-}
-
 void
 RequestWorker::procVersionRequest()
 {
@@ -225,8 +211,10 @@ RequestWorker::procVersionRequest()
     reply.set_major( VER_MAJOR );
     reply.set_mapi_major( VER_MAPI_MAJOR );
     reply.set_mapi_minor( VER_MAPI_MINOR );
-    reply.set_server( VER_SERVER );
-    reply.set_client( VER_CLIENT );
+    reply.set_core( VER_CORE );
+    reply.set_repo( VER_REPO );
+    reply.set_web( VER_WEB );
+    reply.set_client_py( VER_CLIENT_PY );
 
     PROC_MSG_END
 }

@@ -160,10 +160,10 @@ class API:
 
         if reply.major != Version_pb2.VER_MAJOR or reply.mapi_major != Version_pb2.VER_MAPI_MAJOR or \
             reply.mapi_minor < Version_pb2.VER_MAPI_MINOR or reply.mapi_minor > ( Version_pb2.VER_MAPI_MINOR + 9 ):
-            raise Exception( "Incompatible server version {}.{}.{}:{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client))
+            raise Exception( "Incompatible server version {}.{}.{}:{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client_py))
 
-        if reply.client > Version_pb2.VER_CLIENT:
-            self.new_client_avail = "{}.{}.{}:{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client)
+        if reply.client_py > Version_pb2.VER_CLIENT_PY:
+            self.new_client_avail = "{}.{}.{}:{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client_py)
         else:
             self.new_client_avail = False
 

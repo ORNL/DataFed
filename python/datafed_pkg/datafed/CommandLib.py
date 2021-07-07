@@ -1604,7 +1604,7 @@ class API:
     # ----------------------------------------------------- Shared Data Methods
     # =========================================================================
 
-    def sharesListOwners( self, inc_users = None, inc_projects = None,
+    def sharedList( self, inc_users = None, inc_projects = None,
                           subject = None ):
         """
         List users and/or that have shared data with client/subject.
@@ -1627,7 +1627,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.ACLBySubjectRequest()
+        msg = auth.ACLSharedListRequest()
 
         if inc_users != None:
             msg.inc_users = inc_users
@@ -1680,7 +1680,7 @@ class API:
         return self._mapi.sendRecv( msg )
     '''
 
-    def sharesListItems( self, owner_id, context = None,
+    def sharedListItems( self, owner_id, context = None,
                          offset = None, count = None ):
         """
         List shared data records and collections by user/project ID
@@ -1708,7 +1708,7 @@ class API:
         """
         # TODO add support for offset & count
 
-        msg = auth.ACLListItemsBySubjectRequest()
+        msg = auth.ACLSharedListItemsRequest()
         msg.owner = owner_id.lower()
         if context != None:
             msg.subject = context.lower()
