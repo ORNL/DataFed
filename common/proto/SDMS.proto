@@ -313,6 +313,7 @@ message RepoData
 
 // -------------------------------------------- ANNOTATION DEFINES
 
+// Defines annotation types
 enum NoteType
 {
     NOTE_QUESTION   = 0;
@@ -321,6 +322,7 @@ enum NoteType
     NOTE_ERROR      = 3;
 }
 
+// Defines annotation state
 enum NoteState
 {
     NOTE_CLOSED     = 0;
@@ -328,27 +330,29 @@ enum NoteState
     NOTE_ACTIVE     = 2;
 }
 
+// Defines annotation user comment data structure
 message NoteComment
 {
-    required string             user    = 1;
-    required uint32             time    = 2;
-    required string             comment = 3;
-    optional NoteType           type    = 4;
-    optional NoteState          state   = 5;
+    required string             user    = 1; // User ID of comment author
+    required uint32             time    = 2; // Timestamp comment was created
+    required string             comment = 3; // Text content of comment
+    optional NoteType           type    = 4; // Note type change
+    optional NoteState          state   = 5; // Note state change
 }
 
+// Defines annotation data structure
 message NoteData
 {
-    required string             id          = 1;
-    required NoteType           type        = 2;
-    required NoteState          state       = 3;
-    required string             subject_id  = 4;
-    required string             title       = 5;
-    repeated NoteComment        comment     = 6;
-    required uint32             ct          = 7;
-    required uint32             ut          = 8;
-    optional string             parent_id   = 9;
-    optional bool               has_child   = 10;
+    required string             id          = 1; // Note ID
+    required NoteType           type        = 2; // Current note type
+    required NoteState          state       = 3; // Current note state
+    required string             subject_id  = 4; // Subject data record or collection ID
+    required string             title       = 5; // Title
+    repeated NoteComment        comment     = 6; // User comments in chronological order
+    required uint32             ct          = 7; // Note create timestamp
+    required uint32             ut          = 8; // Note update timestamp
+    optional string             parent_id   = 9; // Parent note ID (only if inherited)
+    optional bool               has_child   = 10; // Flag indicating presences of dependent note(s)
 }
 
 // -------------------------------------------------- TASK DEFINES

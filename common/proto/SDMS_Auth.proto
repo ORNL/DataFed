@@ -80,7 +80,7 @@ message GetPermsRequest
 // If perms bitmask was specified, granted will only apply to requested permissions
 message GetPermsReply
 {
-    required uint32             granted     = 1;
+    required uint32             granted     = 1; // Granted permissions
 }
 
 
@@ -100,10 +100,10 @@ message UserViewRequest
 // Reply containing user information
 message UserDataReply
 {
-    repeated SDMS.UserData      user        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    repeated SDMS.UserData      user        = 1; // User data
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
 }
 
 
@@ -213,12 +213,14 @@ message UserSetRecentEPRequest
 // ----------- General Data/Collection Messages -------------------------------
 // ============================================================================
 
+// Reply containing general list of items (data record, collections, users,
+// projects, etc). Only common fields are returned.
 message ListingReply
 {
-    repeated ListingData        item        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    repeated ListingData        item        = 1; // Items
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
 }
 
 
@@ -760,7 +762,7 @@ message ProjectViewRequest
 // Reply containing detailed information for one or more projects.
 message ProjectDataReply
 {
-    repeated ProjectData        proj        = 1;
+    repeated ProjectData        proj        = 1; // Project data
 }
 
 // Request to create a new project. Requires client to be a repository administrator.
@@ -1136,71 +1138,95 @@ message QueryDataReply
 // ----------- Annotation Messages --------------------------------------------
 // ============================================================================
 
-message AnnotationListBySubjectRequest
+// Request to list annotations associated with a data record or collection.
+// Reply: NoteDataReply on success, NackError on error
+message NoteListBySubjectRequest
 {
-    required string             subject     = 1;
+    required string             subject     = 1; // Data record or collection ID/alias
 }
 
-message AnnotationViewRequest
+// Request to view details of an annotation
+// Reply: NoteDataReply on success, NackError on error
+message NoteViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Note ID
 }
 
-message AnnotationDataReply
+// Request to create a new annotation and associate with a data record
+// or collection. Creator must have READ_REC permission to create an
+// annotation, and must be the owner/creator of the subject to activate
+// on note creation.
+// Reply: NoteDataReply on success, NackError on error
+message NoteCreateRequest
 {
-    repeated SDMS.NoteData      note    = 1;
-    repeated SDMS.ListingData   update  = 2;
+    required SDMS.NoteType      type        = 1; // Note type
+    required string             subject     = 2; // Subject data record or collection ID/alias
+    required string             title       = 3; // Note title
+    required string             comment     = 4; // Note comments (text)
+    required bool               activate    = 5; // Flag to activate on creation
 }
 
-message AnnotationCreateRequest
+// Request to update an existing annotation. Only owner/creator of note
+// subject may change note title, type, or state.
+// Reply: NoteDataReply on success, NackError on error
+message NoteUpdateRequest
 {
-    required SDMS.NoteType      type        = 1;
-    required string             subject     = 2;
-    required string             title       = 3;
-    required string             comment     = 4;
-    required bool               activate    = 5;
+    required string             id          = 1; // Note ID
+    required string             comment     = 2; // Comments about update
+    optional SDMS.NoteType      new_type    = 3; // Optional new note type
+    optional SDMS.NoteState     new_state   = 4; // Optional new note state
+    optional string             new_title   = 5; // Optional new note title
 }
 
-message AnnotationUpdateRequest
+// Request to edit an existing comment within a note. Only the author of
+// the original comment may update the comment.
+// Reply: NoteDataReply on success, NackError on error
+message NoteCommentEditRequest
 {
-    required string             id          = 1;
-    required string             comment     = 2;
-    optional SDMS.NoteType      new_type    = 3;
-    optional SDMS.NoteState     new_state   = 4;
-    optional string             new_title   = 5;
+    required string             id          = 1; // Note ID
+    required uint32             comment_idx = 2; // Index of comment to edit
+    required string             comment     = 3; // New comment text
 }
 
-message AnnotationCommentEditRequest
+// Reply containing note information and any record/collection updates due to
+// side effects.
+message NoteDataReply
 {
-    required string             id          = 1;
-    required uint32             comment_idx = 2;
-    required string             comment     = 3;
+    repeated SDMS.NoteData      note    = 1; // Note information
+    repeated SDMS.ListingData   update  = 2; // Updated data records / collections
 }
-
 
 // ============================================================================
 // ----------- Task Messages --------------------------------------------------
 // ============================================================================
 
+// Request to view a specific task.
+// Reply: TaskDataReply on success, NackError on error
 message TaskViewRequest
 {
-    required string             task_id     = 1;
+    required string             task_id     = 1; // Task ID
 }
 
+// Request to list tasks for auth client. The 'since' and 'from'/'to' parameters
+// are mutually exclusive.
+// Reply: TaskDataReply on success, NackError on error
 message TaskListRequest
 {
-    optional string             proj_id     = 1;
-    optional uint32             since       = 2;
-    optional uint32             from        = 3;
-    optional uint32             to          = 4;
-    repeated SDMS.TaskStatus    status      = 5;
-    optional uint32             offset      = 6;
-    optional uint32             count       = 7;
+    optional uint32             since       = 1; // Tasks updated since given seconds
+    optional uint32             from        = 2; // Tasks updated starting from timestamp
+    optional uint32             to          = 3; // Tasks updated until timestamp
+    repeated SDMS.TaskStatus    status      = 4; // List of status types to return
+    optional uint32             offset      = 5; // Result offset
+    optional uint32             count       = 6; // Result count
 }
 
+// Reply containing detailed information for one or more tasks.
 message TaskDataReply
 {
-    repeated SDMS.TaskData      task        = 1;
+    repeated SDMS.TaskData      task        = 1; // Task information
+    //optional uint32             offset      = 2; // Offset of this result page
+    //optional uint32             count       = 3; // Count of this result page
+    //optional uint32             total       = 4; // Total number of results
 }
 
 
@@ -1208,27 +1234,30 @@ message TaskDataReply
 // ----------- Tag Messages ---------------------------------------------------
 // ============================================================================
 
-// Returns TagDataReply
+// Request to search for a tag against an ngram index of existing tag names.
+// Reply: TagDataReply on success, NackError on error
 message TagSearchRequest
 {
-    optional string             name        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    optional string             name        = 1; // Partial/full tag name
+    optional uint32             offset      = 2; // Result offset
+    optional uint32             count       = 3; // Result count
 }
 
-// Returns TagDataReply
+// Request to list all existing tags sorted by reference count.
+// Reply: TagDataReply on success, NackError on error
 message TagListByCountRequest
 {
-    optional uint32             offset      = 1;
-    optional uint32             count       = 2;
+    optional uint32             offset      = 1; // Result offset
+    optional uint32             count       = 2; // Result count
 }
 
+// Reply containing statistics
 message TagDataReply
 {
-    repeated SDMS.TagData       tag         = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    repeated SDMS.TagData       tag         = 1; // Tag information
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
 }
 
 
@@ -1236,73 +1265,94 @@ message TagDataReply
 // ----------- Schema / Validation Messages -----------------------------------
 // ============================================================================
 
+// Request to validate metadata against a given metadata schema.
+// Reply: MetadataValidateReply on success, NackError on error
 message MetadataValidateRequest
 {
-    required string             metadata    = 1;
-    required string             sch_id      = 2;
+    required string             metadata    = 1; // Metadata as a JSON string
+    required string             sch_id      = 2; // Schema ID to validate against
 }
 
+// Reply containing metadata errors
 message MetadataValidateReply
 {
-    optional string             errors      = 1;
+    optional string             errors      = 1; // Validation error message
 }
 
+// Request to view a schema. If the resolve option is true, all schema references
+// will be loaded and stored in the '_refs' field of the specified schema.
+// Reply: SchemaDataReply on success, NackError on error
 message SchemaViewRequest
 {
-    required string             id          = 1;
-    optional bool               resolve     = 2;
+    required string             id          = 1; // Schema ID
+    optional bool               resolve     = 2; // Flag to resolve references
 }
 
+// Request to search for schemas.
+// Reply: SchemaDataReply on success, NackError on error
 message SchemaSearchRequest
 {
-    optional string             id          = 1;
-    optional string             text        = 2;
-    optional string             owner       = 3;
-    optional SDMS.SortOption    sort        = 4;
-    optional bool               sort_rev    = 5;
-    optional uint32             offset      = 6;
-    optional uint32             count       = 7;
+    optional string             id          = 1; // Partial schema ID (ngram index)
+    optional string             text        = 2; // Word or phrase to match in description
+    optional string             owner       = 3; // Owner of schema
+    optional SDMS.SortOption    sort        = 4; // Sort order
+    optional bool               sort_rev    = 5; // Flag to reverse sort order
+    optional uint32             offset      = 6; // Result offset
+    optional uint32             count       = 7; // Result count
 }
 
+// Reply containing detailed information for one or more schemas.
 message SchemaDataReply
 {
-    repeated SDMS.SchemaData    schema      = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    repeated SDMS.SchemaData    schema      = 1; // Schema details
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
 }
 
+// Request to create a new schema. Only system admins may set the system flag.
+// Reply: AckReply on success, NackError on error
 message SchemaCreateRequest
 {
-    required string             id          = 1;
-    required string             desc        = 2;
-    required bool               pub         = 3;
-    required bool               sys         = 4;
-    required string             def         = 5;
+    required string             id          = 1; // Schema ID
+    required string             desc        = 2; // Description
+    required bool               pub         = 3; // Public flag
+    required bool               sys         = 4; // System flag
+    required string             def         = 5; // Schema definition (JSON schema specification)
 }
 
-message SchemaReviseRequest
-{
-    required string             id          = 1;
-    optional string             desc        = 2;
-    optional bool               pub         = 3;
-    optional bool               sys         = 4;
-    optional string             def         = 5;
-}
-
+// Request to update an existing schema. Updates are not allowed for schemas that
+// are in use or referenced by other schemas.
+// Reply: AckReply on success, NackError on error
 message SchemaUpdateRequest
 {
-    required string             id          = 1;
-    optional string             id_new      = 2;
-    optional string             desc        = 3;
-    optional bool               pub         = 4;
-    optional bool               sys         = 5;
-    optional string             def         = 6;
+    required string             id          = 1; // Schema ID
+    optional string             id_new      = 2; // Optional new schema ID
+    optional string             desc        = 3; // Optional new description
+    optional bool               pub         = 4; // Optional new public flag
+    optional bool               sys         = 5; // Optional new system flag
+    optional string             def         = 6; // Optional new definition
 }
 
+// Request to revise an existing schema. Revision creates a copy of the original
+// schema with a new revision number and updated fields.
+// Reply: AckReply on success, NackError on error
+message SchemaReviseRequest
+{
+    required string             id          = 1; // Schema ID
+    optional string             desc        = 2; // Optional new description
+    optional bool               pub         = 3; // Optional new public flag
+    optional bool               sys         = 4; // Optional new system flag
+    optional string             def         = 5; // Optional new definition
+}
+
+
+// Request to delete an existing schema. Deletion is not allowed for schema that
+// are in use or are referenced by other schemas.
+// Reply: AckReply on success, NackError on error
 message SchemaDeleteRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Schema ID
 }
 
 
@@ -1310,31 +1360,36 @@ message SchemaDeleteRequest
 // ----------- Catalog / Topic Messages ---------------------------------------
 // ============================================================================
 
-// Returns TopicDataReply
+// Request to list catalog topics. If topic_id is specified, only child topics
+// of that topic are returned; otherwise all top-level topics are returned.
+// Reply: TopicDataReply on success, NackError on error
 message TopicListTopicsRequest
 {
-    optional string             topic_id    = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    optional string             topic_id    = 1; // Optional parent topic
+    optional uint32             offset      = 2; // Result offset
+    optional uint32             count       = 3; // Result count
 }
 
-// Returns TopicDataReply
+// Request to view a specific topic.
+// Reply: TopicDataReply on success, NackError on error
 message TopicViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Topic ID
 }
 
-// Returns TopicDataReply
+// Request to search for topics by category words/phrase.
+// Reply: TopicDataReply on success, NackError on error
 message TopicSearchRequest
 {
-    optional string             phrase      = 1;
+    optional string             phrase      = 1; // Word/phrase to match
 }
 
+// Reply containing details of one or more topics.
 message TopicDataReply
 {
-    repeated TopicData          topic       = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    repeated TopicData          topic       = 1; // Topic details
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
 }
 

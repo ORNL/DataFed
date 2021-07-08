@@ -951,7 +951,7 @@ app.get('/api/note/create', ( a_req, a_resp ) => {
     };
 
     //console.log("note create",params)
-    sendMessage( "AnnotationCreateRequest", params, a_req, a_resp, function( reply ) {
+    sendMessage( "NoteCreateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -971,7 +971,7 @@ app.get('/api/note/update', ( a_req, a_resp ) => {
     if ( a_req.query.new_title )
         params.newTitle = a_req.query.new_title;
 
-    sendMessage( "AnnotationUpdateRequest", params, a_req, a_resp, function( reply ) {
+    sendMessage( "NoteUpdateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
@@ -983,19 +983,19 @@ app.get('/api/note/comment/edit', ( a_req, a_resp ) => {
         commentIdx: a_req.query.comment_idx
     };
 
-    sendMessage( "AnnotationCommentEditRequest", params, a_req, a_resp, function( reply ) {
+    sendMessage( "NoteCommentEditRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.get('/api/note/view', ( a_req, a_resp ) => {
-    sendMessage( "AnnotationViewRequest", { id:a_req.query.id}, a_req, a_resp, function( reply ) {
+    sendMessage( "NoteViewRequest", { id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.get('/api/note/list/by_subject', ( a_req, a_resp ) => {
-    sendMessage( "AnnotationListBySubjectRequest", { subject:a_req.query.subject}, a_req, a_resp, function( reply ) {
+    sendMessage( "NoteListBySubjectRequest", { subject:a_req.query.subject}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });

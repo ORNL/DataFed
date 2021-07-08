@@ -157,11 +157,11 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryCreateRequest, QueryDataReply, queryCreate );
         SET_MSG_HANDLER_DB( proto_id, QueryUpdateRequest, QueryDataReply, queryUpdate );
         SET_MSG_HANDLER_DB( proto_id, QueryDeleteRequest, AckReply, queryDelete );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationCreateRequest, AnnotationDataReply, annotationCreate );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationUpdateRequest, AnnotationDataReply, annotationUpdate );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationCommentEditRequest, AnnotationDataReply, annotationCommentEdit );
+        SET_MSG_HANDLER_DB( proto_id, NoteViewRequest, NoteDataReply, noteView );
+        SET_MSG_HANDLER_DB( proto_id, NoteListBySubjectRequest, NoteDataReply, noteListBySubject );
+        SET_MSG_HANDLER_DB( proto_id, NoteCreateRequest, NoteDataReply, noteCreate );
+        SET_MSG_HANDLER_DB( proto_id, NoteUpdateRequest, NoteDataReply, noteUpdate );
+        SET_MSG_HANDLER_DB( proto_id, NoteCommentEditRequest, NoteDataReply, noteCommentEdit );
         SET_MSG_HANDLER_DB( proto_id, TaskListRequest, TaskDataReply, taskList );
         SET_MSG_HANDLER_DB( proto_id, TaskViewRequest, TaskDataReply, taskView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );

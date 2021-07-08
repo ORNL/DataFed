@@ -146,12 +146,12 @@ public:
     //void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
     //void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
 
-    void annotationCreate( const Auth::AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationUpdate( const Auth::AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationView( const Auth::AnnotationViewRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationPurge( uint32_t a_age_sec );
+    void noteCreate( const Auth::NoteCreateRequest & a_request, Auth::NoteDataReply & a_reply );
+    void noteUpdate( const Auth::NoteUpdateRequest & a_request, Auth::NoteDataReply & a_reply );
+    void noteCommentEdit( const Auth::NoteCommentEditRequest & a_request, Auth::NoteDataReply & a_reply );
+    void noteView( const Auth::NoteViewRequest & a_request, Auth::NoteDataReply & a_reply );
+    void noteListBySubject( const Auth::NoteListBySubjectRequest & a_request, Auth::NoteDataReply & a_reply );
+    void notePurge( uint32_t a_age_sec );
 
     void taskLoadReady( libjson::Value & a_result );
     void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step = 0, std::string * a_err_msg = 0 );
@@ -203,7 +203,7 @@ private:
     void setAllocData( AllocData * a_alloc, const libjson::Value::Object & a_obj );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, const libjson::Value & a_result );
     void setAllocStatsData( AllocStatsData & a_stats, const libjson::Value::Object & a_object );
-    void setNoteDataReply( Auth::AnnotationDataReply & a_reply, const libjson::Value & a_result );
+    void setNoteDataReply( Auth::NoteDataReply & a_reply, const libjson::Value & a_result );
     void setNoteData( NoteData * a_item, const libjson::Value::Object & a_obj );
     void setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Value & a_result );
     void setTaskDataReplyArray( Auth::TaskDataReply & a_reply, const libjson::Value & a_result );

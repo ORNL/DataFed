@@ -268,7 +268,7 @@ Server::dbMaintenance()
         try
         {
             DL_DEBUG( "DB Maint: Purging closed annotations" );
-            db.annotationPurge( m_config.note_purge_age );
+            db.notePurge( m_config.note_purge_age );
         }
         catch( TraceException & e )
         {

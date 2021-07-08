@@ -2666,9 +2666,9 @@ DatabaseAPI::setTopicDataReply( Auth::TopicDataReply & a_reply, const libjson::V
 }
 
 void
-DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteCreate( const NoteCreateRequest & a_request, Auth::NoteDataReply & a_reply )
 {
-    DL_INFO("annotationCreate");
+    DL_INFO("NoteCreate");
 
     Value result;
     vector<pair<string,string>> params;
@@ -2684,9 +2684,9 @@ DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Auth::
 }
 
 void
-DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteUpdate( const NoteUpdateRequest & a_request, Auth::NoteDataReply & a_reply )
 {
-    DL_INFO("annotationUpdate");
+    DL_INFO("NoteUpdate");
 
     Value result;
     vector<pair<string,string>> params;
@@ -2705,7 +2705,7 @@ DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Auth::
 }
 
 void
-DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteCommentEdit( const Auth::NoteCommentEditRequest & a_request, Auth::NoteDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2719,7 +2719,7 @@ DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a
 }
 
 void
-DatabaseAPI::annotationView( const Auth::AnnotationViewRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteView( const Auth::NoteViewRequest & a_request, Auth::NoteDataReply & a_reply )
 {
     Value result;
 
@@ -2729,7 +2729,7 @@ DatabaseAPI::annotationView( const Auth::AnnotationViewRequest & a_request, Auth
 }
 
 void
-DatabaseAPI::annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteListBySubject( const Auth::NoteListBySubjectRequest & a_request, Auth::NoteDataReply & a_reply )
 {
     Value result;
 
@@ -2739,7 +2739,7 @@ DatabaseAPI::annotationListBySubject( const Auth::AnnotationListBySubjectRequest
 }
 
 void
-DatabaseAPI::annotationPurge( uint32_t a_age_sec )
+DatabaseAPI::notePurge( uint32_t a_age_sec )
 {
     Value result;
 
@@ -2747,7 +2747,7 @@ DatabaseAPI::annotationPurge( uint32_t a_age_sec )
 }
 
 void
-DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setNoteDataReply( Auth::NoteDataReply & a_reply, const libjson::Value & a_result )
 {
     Value::ArrayConstIter    i;
 
@@ -3676,8 +3676,6 @@ DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataRe
 {
     vector<pair<string,string>> params;
 
-    if ( a_request.has_proj_id( ))
-        params.push_back({ "proj_id", a_request.proj_id() });
     if ( a_request.has_since( ))
         params.push_back({ "since", to_string( a_request.since() )});
     if ( a_request.has_from( ))
