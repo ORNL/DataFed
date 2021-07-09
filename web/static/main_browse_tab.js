@@ -2219,7 +2219,7 @@ export function init(){
             } else if ( data.node.key == 'saved_queries') {
                 data.result = { url: api.queryList_url( data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key.startsWith("q/") ) {
-                data.result = { url: api.queryExec_url( data.node.key ), cache: false };
+                data.result = { url: api.queryExec_url( data.node.key, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key.startsWith("published")) {
                 data.result = { url: api.collListPublished_url( data.node.data.scope, data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else {

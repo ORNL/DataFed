@@ -642,9 +642,16 @@ app.get('/api/query/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/query/exec', ( a_req, a_resp ) => {
-    //console.log("search:",a_req.body);
-    sendMessage( "QueryExecRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
-        //console.log("qry exec res:",reply);
+    var msg = {
+        id : a_req.query.id
+    };
+
+    if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
+        msg.offset = a_req.query.offset;
+        msg.count = a_req.query.count;
+    }
+
+    sendMessage( "QueryExecRequest", msg, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
