@@ -3928,12 +3928,8 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
 
     a_qry_end += " limit @off,@cnt";
 
-    uint32_t cnt = min(a_request.has_count()?a_request.count():50,100U),
+    uint32_t cnt = a_request.has_count()?a_request.count():50,
              off = a_request.has_offset()?a_request.offset():0;
-
-    if ( off + cnt >= 1000 ){
-        off = 999 - cnt;
-    }
 
     a_params += ",\"off\":" + to_string( off );
     a_params += ",\"cnt\":" + to_string( cnt );
