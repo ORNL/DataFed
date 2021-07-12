@@ -3936,7 +3936,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
     }
 
     a_params += ",\"off\":" + to_string( off );
-    a_params += ",\"cnt\":" + to_string( cnt + 1 ); // Add one to detect more results (truncated by DB)
+    a_params += ",\"cnt\":" + to_string( cnt );
 
     // Get rid of leading delimiter
     a_params[0] = ' ';
