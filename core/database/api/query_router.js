@@ -358,9 +358,9 @@ function execQuery( client, mode, published, query ){
 
     qry += query.qry_end;
 
-    console.log( "execqry" );
-    console.log( "qry", qry );
-    console.log( "params", query.params );
+    //console.log( "execqry" );
+    //console.log( "qry", qry );
+    //console.log( "params", query.params );
 
     // Enforce query paging limits
     if ( query.params.cnt > g_lib.MAX_PAGE_SIZE ){
@@ -378,7 +378,7 @@ function execQuery( client, mode, published, query ){
         result = g_db._query( qry, query.params, {}, {}).toArray(),
         cnt = result.length;
 
-    console.log( "res len:", result.length, "cnt:", query.params.cnt );
+    //console.log( "res len:", result.length, "cnt:", query.params.cnt );
 
     // If result count is at limit, reduce back to specified limit
     if ( result.length == query.params.cnt ){

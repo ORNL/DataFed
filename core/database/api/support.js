@@ -35,7 +35,7 @@ module.exports = ( function() {
 
     obj.MAX_COLL_ITEMS      = 10000;
     obj.MAX_QRY_ITEMS       = 10000;
-    obj.MAX_PAGE_SIZE       = 100;
+    obj.MAX_PAGE_SIZE       = 1000;
     obj.MAX_MD_SIZE         = 102400;
 
     obj.SM_DATA             = 0;
