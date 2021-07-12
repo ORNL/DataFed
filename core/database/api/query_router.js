@@ -378,9 +378,12 @@ function execQuery( client, mode, published, query ){
         result = g_db._query( qry, query.params, {}, {}).toArray(),
         cnt = result.length;
 
+    console.log( "res len:", result.length, "cnt:", query.params.cnt );
+
     // If result count is at limit, reduce back to specified limit
     if ( result.length == query.params.cnt ){
-        result.length = query.params.cnt - 1;
+        query.params.cnt -= 1;
+        result.length = query.params.cnt;
     }
 
     for ( var i in result ){
