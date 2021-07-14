@@ -600,17 +600,17 @@ export function buildObjSrcTree( obj, base, md_exp ){
     return src;
 }
 
-export function addTreePagingNode( a_data ){
+export function addTreePagingNode( a_data, a_no_last, a_pfx = "page" ){
     if ( a_data.response.offset > 0 || a_data.response.total > (a_data.response.offset + a_data.response.count )){
         var page_mx = Math.ceil(a_data.response.total/settings.opts.page_sz) - 1,
             page = Math.floor(a_data.response.offset/settings.opts.page_sz);
 
         a_data.result.push({title:
-            "<button class='btn btn-icon-tiny page-first''" + (page==0?" disabled":"") + "><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> \
-            <button class='btn btn-icon-tiny page-prev'" + (page==0?" disabled":"") + "><span class='ui-icon ui-icon-triangle-1-w'></span></button> \
+            "<button class='btn btn-icon-tiny "+a_pfx+"-first''" + (page==0?" disabled":"") + "><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> \
+            <button class='btn btn-icon-tiny "+a_pfx+"-prev'" + (page==0?" disabled":"") + "><span class='ui-icon ui-icon-triangle-1-w'></span></button> \
             Page " + (page + 1) + " of " + (page_mx + 1) + 
-            " <button class='btn btn-icon-tiny page-next'" + (page>=page_mx?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-e'></span></button> \
-            <button class='btn btn-icon-tiny page-last'" + (page>=page_mx?" disabled":"")+" page='" + page_mx + "'><span class='ui-icon ui-icon-triangle-1-e-stop'></span></button>",
+            " <button class='btn btn-icon-tiny "+a_pfx+"-next'" + (page>=page_mx?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-e'></span></button>" +
+            (a_no_last?"":("<button class='btn btn-icon-tiny "+a_pfx+"-last'" + (page>=page_mx?" disabled":"")+" page='" + page_mx + "'><span class='ui-icon ui-icon-triangle-1-e-stop'></span></button>")),
             folder:false, icon:false, checkbox:false, hasBtn:true });
     }
 }

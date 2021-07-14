@@ -11,7 +11,7 @@ syntax = "proto2";
 
 enum Version
 {
-    option allow_alias = true;
+    option allow_alias = true; // Must be commented out if there are no duplicate values
 
     VER_MAJOR = 1;          // System MAJOR version, no backward compatibility
     VER_MAPI_MAJOR = 3;     // Message API MAJOR version, no backward compatibility

@@ -362,13 +362,28 @@ function execQuery( client, mode, published, query ){
     //console.log( "qry", qry );
     //console.log( "params", query.params );
 
-    var item, count, result = g_db._query( qry, query.params, {}, { fullCount: true }).toArray();
+    // Enforce query paging limits
+    if ( query.params.cnt > g_lib.MAX_PAGE_SIZE ){
+        query.params.cnt = g_lib.MAX_PAGE_SIZE;
+    }
 
-    if ( result.length > query.limit ){
-        result.length = query.limit;
-        count = query.limit + 1;
-    }else{
-        count = result.length;
+    if ( query.params.off + query.params.cnt > g_lib.MAX_QRY_ITEMS ){
+        query.params.off = g_lib.MAX_QRY_ITEMS - query.params.cnt;
+    }
+
+    // Increase limit by 1 to detect more results
+    query.params.cnt += 1;
+
+    var item,
+        result = g_db._query( qry, query.params, {}, {}).toArray(),
+        cnt = result.length;
+
+    //console.log( "res len:", result.length, "cnt:", query.params.cnt );
+
+    // If result count is at limit, reduce back to specified limit
+    if ( result.length == query.params.cnt ){
+        query.params.cnt -= 1;
+        result.length = query.params.cnt;
     }
 
     for ( var i in result ){
@@ -386,7 +401,7 @@ function execQuery( client, mode, published, query ){
         item.notes = g_lib.getNoteMask( client, item );
     }
 
-    result.push({ paging: { off: query.params.off, cnt: result.length, tot: query.params.off + count }});
+    result.push({ paging: { off: query.params.off, cnt: result.length, tot: query.params.off + cnt }});
 
     return result;
 }

@@ -272,7 +272,6 @@ export function copyData( a_src_id, a_dst_id, a_cb ){
 }
 
 export function dataSearch( a_query, a_callback ) {
-    //_asyncGet("/api/dat/search?query="+encodeURIComponent(a_query)+"&scope="+a_scope,null,a_callback);
     _asyncPost("/api/dat/search",a_query,a_callback);
 }
 
@@ -806,8 +805,14 @@ export function queryList_url( a_offset, a_count ){
     return "/api/query/list?offset="+a_offset+"&count="+a_count;
 }
 
-export function queryExec_url( a_id ){
-    return "/api/query/exec?id=" + encodeURIComponent( a_id );
+export function queryExec_url( a_id, a_offset, a_count ){
+    var url = "/api/query/exec?id=" + encodeURIComponent( a_id );
+
+    if ( a_offset != undefined && a_count != undefined ){
+        url += "&offset=" + a_offset + "&count=" + a_count;
+    }
+
+    return url;
 }
 
 export function queryCreate( a_title, a_query, a_callback ) {
