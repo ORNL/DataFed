@@ -14,6 +14,7 @@ COPY core ${DATAFED_SRC_DIR}/core
 COPY repository ${DATAFED_SRC_DIR}/repository
 COPY python ${DATAFED_SRC_DIR}/python
 COPY web ${DATAFED_SRC_DIR}/web
+COPY doc_source ${DATAFED_SRC_DIR}/doc_source
 
 WORKDIR ${DATAFED_SRC_DIR}
 
@@ -27,7 +28,6 @@ RUN yum install -y \
     protobuf-devel \
     boost \
     boost-devel \
-    fuse-devel \
     libcurl \
     libcurl-devel \
     zeromq \
