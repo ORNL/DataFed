@@ -26,6 +26,11 @@ endif()
 
 include_directories( "/usr/include/globus" )
 
+if ( DEFINED ENV{RAPIDJSON_INC} )
+        message( "RAPIDJSON_INC:" $ENV{RAPIDJSON_INC} )
+        include_directories( $ENV{RAPIDJSON_INC} )
+endif()
+
 if ( DEFINED ENV{BOOST_INC} AND DEFINED ENV{BOOST_LIB} )
         message( "BOOST_INC:" $ENV{BOOST_INC} )
         message( "BOOST_LIB:" $ENV{BOOST_LIB} )
@@ -54,6 +59,10 @@ find_library(ZeroMQ_LIBRARY
 
 include_directories( ${ZeroMQ_INCLUDE_DIR} )
 link_directories( ${PC_ZeroMQ_LIBRARY_DIRS} )
+
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
+
 
 if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})
         message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )

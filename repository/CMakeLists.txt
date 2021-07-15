@@ -4,4 +4,4 @@ include_directories(${CMAKE_BINARY_DIR}/common)
 
 add_subdirectory( server )
 add_subdirectory( gridftp )
-add_subdirectory( filesys EXCLUDE_FROM_ALL )
+add_subdirectory( filesys )
