@@ -6,8 +6,8 @@
 #include <thread>
 #include <algorithm>
 #include <zmq.h>
-#include "json.hpp"
-#include "json-schema.hpp"
+#include <nlohmann/json.hpp>
+#include <nlohmann/json-schema.hpp>
 #include "Util.hpp"
 #include "MsgComm.hpp"
 #include "DatabaseAPI.hpp"
