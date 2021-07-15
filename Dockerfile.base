@@ -5,16 +5,7 @@ FROM fedora:34 as build
 
 ARG DATAFED_SRC_DIR
 
-RUN mkdir -p ${DATAFED_SRC_DIR}
-
-COPY CMakeLists.txt ${DATAFED_SRC_DIR}
-COPY common ${DATAFED_SRC_DIR}/common
-COPY core ${DATAFED_SRC_DIR}/core
-COPY repository ${DATAFED_SRC_DIR}/repository
-COPY python ${DATAFED_SRC_DIR}/python
-COPY web ${DATAFED_SRC_DIR}/web
-
-WORKDIR ${DATAFED_SRC_DIR}
+# Install dependencies
 
 RUN yum update -y
 RUN yum install -y \
@@ -33,7 +24,8 @@ RUN yum install -y \
     zeromq-devel \
     globus-common-devel
 
-# nlohmann/json
+# get, build, & install nlohmann/json
+
 RUN wget https://github.com/nlohmann/json/archive/refs/tags/v3.9.1.tar.gz
 RUN tar xvf v3.9.1.tar.gz
 RUN cd json-3.9.1 \
@@ -43,8 +35,8 @@ RUN cd json-3.9.1 \
     && make \
     && make install
 
+# get, build, & install pboettch/json-schema-validator
 
-# pboettch/json-schema-validator
 RUN wget https://github.com/pboettch/json-schema-validator/archive/refs/tags/2.1.0.tar.gz
 RUN tar xvf 2.1.0.tar.gz
 RUN cd json-schema-validator-2.1.0 \
@@ -53,6 +45,19 @@ RUN cd json-schema-validator-2.1.0 \
     && cmake .. \
     && make \
     && make install
+
+# Build DataFed from source
+
+RUN mkdir -p ${DATAFED_SRC_DIR}
+
+WORKDIR ${DATAFED_SRC_DIR}
+
+COPY CMakeLists.txt ${DATAFED_SRC_DIR}
+COPY common ${DATAFED_SRC_DIR}/common
+COPY core ${DATAFED_SRC_DIR}/core
+COPY repository ${DATAFED_SRC_DIR}/repository
+COPY python ${DATAFED_SRC_DIR}/python
+COPY web ${DATAFED_SRC_DIR}/web
 
 RUN mkdir build \
     && cd build \
