@@ -19,6 +19,7 @@ const express = require('express'); // For REST api
 var session = require('express-session');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser'); // cookies for user state
+var http = require('http');
 var https = require('https');
 const constants = require('crypto');
 const helmet = require('helmet');
@@ -57,7 +58,8 @@ var g_host,
     g_ver_major,
     g_ver_mapi_major,
     g_ver_mapi_minor,
-    g_ver_web;
+    g_ver_web,
+    g_tls;
 
 const nullfr = Buffer.from([]);
 
@@ -67,9 +69,12 @@ g_ctx.fill(null);
 function startServer(){
     console.log( "  Host:", g_host );
     console.log( "  Port:", g_port );
-    console.log( "  Server key file:", g_server_key_file );
-    console.log( "  Server cert file:", g_server_cert_file );
-    console.log( "  Server chain file:", g_server_chain_file );
+    console.log( "  TLS:", g_tls?"Yes":"No" );
+    if ( g_tls ){
+        console.log( "  Server key file:", g_server_key_file );
+        console.log( "  Server cert file:", g_server_cert_file );
+        console.log( "  Server chain file:", g_server_chain_file );
+    }
     console.log( "  Server secret:", g_server_secret );
     console.log( "  Core server addr:", g_core_serv_addr );
     console.log( "  Client ID:", g_client_id );
@@ -96,10 +101,10 @@ function startServer(){
                 clientSecret: g_client_secret,
                 authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
                 accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
-                redirectUri: 'https://'+g_host+':'+g_port+'/ui/authn',
+                redirectUri: 'http'+(g_tls?'s':'')+'://'+g_host+':'+g_port+'/ui/authn',
                 scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
             };
-        
+
             g_globus_auth = new ClientOAuth2( g_oauth_credentials );
 
             var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
@@ -111,13 +116,19 @@ function startServer(){
 
             console.log( "Starting web server" );
 
-            var httpsServer = https.createServer({
-                key: privateKey,
-                cert: certificate,
-                ca: chain,
-                secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 
-            }, app );
-            httpsServer.listen( g_port );
+            var server;
+            if ( g_tls ){
+                server = https.createServer({
+                    key: privateKey,
+                    cert: certificate,
+                    ca: chain,
+                    secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3
+                }, app );
+            }else{
+                server = http.createServer({}, app);
+            }
+
+            server.listen( g_port );
         }
     });
 }
@@ -232,7 +243,7 @@ app.get('/ui/logout', (a_req, a_resp) => {
     //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
     a_req.session.destroy( function(){
         a_resp.clearCookie( 'connect.sid' );
-        a_resp.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=https://"+g_host);
+        a_resp.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=http"+(g_tls?"s":"")+"://"+g_host);
     });
 });
 
@@ -345,7 +356,7 @@ function doLogin( a_req, a_resp, a_auth, a_redirect_url ){
                 }
             });
         });
-          
+
         req.on('error', (e) => {
             console.log("Error: Globus introspection failed. User token:", xfr_token );
             //a_resp.clearCookie( 'datafed-id' );
@@ -397,7 +408,7 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
                 delete a_req.session.acc_tok_ttl;
                 delete a_req.session.ref_tok;
                 delete a_req.session.uuids;
-    
+
                 a_resp.redirect( a_req.session.redirect );
             }
         });
@@ -522,7 +533,7 @@ app.get('/api/prj/list', ( a_req, a_resp ) => {
         params.offset = a_req.query.offset;
         params.count = a_req.query.count;
     }
-    
+
     //console.log("proj list:",params);
     sendMessage( "ProjectListRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -860,13 +871,6 @@ app.post('/api/metadata/validate', ( a_req, a_resp ) => {
         //console.log("rec update:",reply);
         a_resp.send(reply);
     });
-});
-
-app.get('/api/doi/view', ( a_req, a_resp ) => {
-    //console.log("DOI:",a_req.query.doi);
-    sendMessage( "DOIViewRequest", { doi: a_req.query.doi }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply);
-    }, true );
 });
 
 app.get('/api/perms/check', ( a_req, a_resp ) => {
@@ -1368,7 +1372,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
             path: '/v0.10/endpoint/' + encodeURIComponent(a_req.query.ep),
             rejectUnauthorized: true,
             headers:{
-                Authorization: ' Bearer ' + reply.access            
+                Authorization: ' Bearer ' + reply.access
             }
         };
 
@@ -1383,7 +1387,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
                 a_resp.json(JSON.parse(data));
             });
         });
-          
+
         req.on('error', (e) => {
             a_resp.status( 500 );
             a_resp.send( "Globus endpoint view failed." );
@@ -1405,7 +1409,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             path: '/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+encodeURIComponent(a_req.query.term),
             rejectUnauthorized: true,
             headers:{
-                Authorization: ' Bearer ' + reply.access            
+                Authorization: ' Bearer ' + reply.access
             }
         };
 
@@ -1421,7 +1425,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
                 a_resp.json(JSON.parse(data));
             });
         });
-          
+
         req.on('error', (e) => {
             a_resp.status( 500 );
             a_resp.send( "Globus endpoint search failed." );
@@ -1453,7 +1457,7 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
             path: '/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path) + '&show_hidden=' + a_req.query.hidden,
             rejectUnauthorized: true,
             headers:{
-                Authorization: ' Bearer ' + reply.access            
+                Authorization: ' Bearer ' + reply.access
             }
         };
 
@@ -1468,7 +1472,7 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
                 a_resp.json(JSON.parse(data));
             });
         });
-          
+
         req.on('error', (e) => {
             a_resp.status( 500 );
             a_resp.send( "Globus endpoint directoy listing failed." );
@@ -1668,7 +1672,7 @@ protobuf.load("Version.proto", function(err, root) {
     g_ver_mapi_major = msg.values.VER_MAPI_MAJOR;
     g_ver_mapi_minor = msg.values.VER_MAPI_MINOR;
     g_ver_web = msg.values.VER_WEB;
-    
+
     g_version = g_ver_major + "." + g_ver_mapi_major + "." + g_ver_mapi_minor + ":" + g_ver_web;
 
     console.log('Running Version',g_version);
@@ -1757,8 +1761,9 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
 function loadSettings(){
     g_host = "datafed.ornl.gov";
     g_port = 443;
-    g_server_key_file = '/etc/datafed/datafed-web-key.pem';
-    g_server_cert_file = '/etc/datafed/datafed-web-cert.pem';
+    g_tls = true;
+    g_server_key_file = '/opt/datafed/datafed-web-key.pem';
+    g_server_cert_file = '/opt/datafed/datafed-web-cert.pem';
     //g_server_chain_file = '/etc/datafed/DigiCertSHA2SecureServerCA.pem';
     g_core_serv_addr = 'tcp://datafed.ornl.gov:7513';
     g_test = false;
@@ -1770,6 +1775,9 @@ function loadSettings(){
         if ( config.server ){
             g_host = config.server.host || g_host;
             g_port = config.server.port || g_port;
+            if ( config.server.tls == "0" || config.server.tls == "false" ){
+                g_tls = false;
+            }
             g_server_key_file = config.server.key_file || g_server_key_file;
             g_server_cert_file = config.server.cert_file || g_server_cert_file;
             g_server_chain_file = config.server.chain_file || g_server_chain_file;

@@ -2,7 +2,13 @@
 <html>
     <head>
         <% include 'head.ect' %>
+        <script type="module" charset="utf-8" src="/index.js"></script>
         <title>DataFed Login</title>
+        <script type="application/json" id="template_data">
+        {
+            "test_mode" : "<%- @test_mode %>"
+        }
+        </script>
     </head>
     <body>
         <div class="col-flex ui-widget-content" style="height:100%;border:none">
@@ -40,7 +46,7 @@
                 <p>This site provides access to DataFed registration and to the DataFed web application where users
                     can browse, manage, and share data using a graphical user interface. A command-line interface and
                     APIs are also available.</p>
-    
+
                 <div style='margin: 2em auto 2em auto;width:17em'>
                     <button class="btn btn-welcome" onclick="window.open('https://ornl.github.io/DataFed/','datafed-docs')">Learn More About DataFed</button>
                 </div>
@@ -64,15 +70,4 @@
             </div>
         </div>
     </body>
-    <script>
-        window.name = 'DataFed Welcome';
-        $(".btn").button();
-
-
-        var g_test_mode = ("<%- @test_mode %>" == "true");
-        if ( g_test_mode ){
-            $("#devmode").show();
-        }
-
-    </script>
 </html>
