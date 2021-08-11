@@ -155,8 +155,35 @@ app.use( session({
     }
 }));
 
+console.log("helmet",helmet.contentSecurityPolicy.getDefaultDirectives());
+
 app.use( cookieParser( g_server_secret ));
-app.use( helmet({ hsts: { maxAge: 31536000 }}));
+app.use(
+    helmet({
+        hsts: {
+            maxAge: 31536000
+        },
+        contentSecurityPolicy:{
+            useDefaults: true,
+            directives: {
+                "script-src": [
+                    "'self'",
+                    "'unsafe-inline'",
+                    "https://cdnjs.cloudflare.com",
+                    "https://cdn.jsdelivr.net",
+                    "https://d3js.org",
+                    "blob:"
+                ],
+                "img-src": [
+                    "'self'",
+                    "https://cdnjs.cloudflare.com",
+                    "data:"
+                ],
+            }
+        }
+    })
+);
+
 app.use( function( req, res, next ){
     res.setHeader('Content-Language','en-US');
     next();
