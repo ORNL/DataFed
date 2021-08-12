@@ -155,8 +155,6 @@ app.use( session({
     }
 }));
 
-console.log("helmet",helmet.contentSecurityPolicy.getDefaultDirectives());
-
 app.use( cookieParser( g_server_secret ));
 app.use(
     helmet({
