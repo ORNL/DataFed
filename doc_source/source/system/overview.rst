@@ -101,7 +101,7 @@ stores. The inherit reliability of the physical storage of a repository is deter
 could range from inexpensive magnetic disks to high-speed solid state drives or even archival-quality geographically
 distribute storage systems. Local administrators control repository policies and determine which DataFed users can
 utilize a repository by granting (or revoking) repository allocations. These local administrative policies and actions
-have impact on DataFed on repositories at other facilities.
+have no impact on DataFed on repositories at other facilities.
 
 Figure 2 shows a DataFed repository in isolation; however, a host facility would typically integrate their DataFed
 repositories with their own local storage and compute resources. For example, a facility would likely have additional
@@ -533,7 +533,7 @@ are applied to items linked within it. The individual permissions are as follows
 * LOCK - Allows locking a record or collection to temporarily suppress all permissions
 
 Multiple user- and group- scoped permissions may be applied. Permissions for a given user are evaluated by combining all
-permission sets for all scopes that apply - including permissions that may be inherited from parent collection hierarchies.
+permissions set for all scopes that apply - including permissions that may be inherited from parent collection hierarchies.
 Because permissions are inherited and additive, the absence of a permission on a given data record or collection is not
 equivalent to denying that permission.
 
