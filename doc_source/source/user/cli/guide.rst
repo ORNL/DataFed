@@ -349,7 +349,7 @@ Uploading Raw Data
    Before attempting to upload raw data, ensure that the Globus endpoint associated with the machine
    where you use DataFed is active.
 
-Here is how we would put raw data into record (via Globus):
+Here is how we would put raw data into a record (via Globus):
 
 .. code:: bash
 
