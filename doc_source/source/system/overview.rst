@@ -601,7 +601,7 @@ Annotations
 
 Annotations are a feature that allows users (with proper permissions) to attach general notifications, questions, warnings, and errors to
 data records. Annotations have several states including "open", "active", and "closed". When an annotation is initially created,
-is in the "open" state by default and only the owner/creator of the data record and the author of the annotation will be able see
+it is in the "open" state by default and only the owner/creator of the data record and the author of the annotation will be able see
 the new annotation. A mechanism is provided to allow the two parties to exchange information, and if deemed suitable by the owner
 of the data record, the annotation can be "activated" which will make it visible to all users that have access to the associated
 record.
@@ -618,7 +618,7 @@ In a future release, users will be notified via email when annotations associate
 Data and Collection Search
 --------------------------
 
-DataFed provides a powerful search feature that allows data records and collections to found within a users personal data space,
+DataFed provides a powerful search feature that allows data records and collections to be found within a users personal data space,
 across projects, and data/collections shared by other users and/or projects. Searches can be saved and will then be accessible
 via the "Saved Queries" feature in the DataFed web portal, the command-line interface, and the Python API. Below is a list of fields
 that can be used for searches and saved queries.
@@ -636,6 +636,6 @@ that can be used for searches and saved queries.
 Catalog
 -------
 
-The DataFed catalog allows collections and data records to be is internally published (without DOI numbers) for use by any
+The DataFed catalog allows collections and data records to be internally published (without DOI numbers) for use by any
 DataFed user. The catalog allows users to browse collections by hierarchical categories and to search for collections and datasets
 directly by filtering relevant field and metadata schema values.
