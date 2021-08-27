@@ -46,6 +46,7 @@ var g_host,
     g_core_sock = zmq.socket('dealer'),
     g_core_serv_addr,
     g_globus_auth,
+    g_redir_url,
     g_oauth_credentials,
     g_ctx = new Array( MAX_CTX ),
     g_ctx_next = 0,
@@ -75,6 +76,7 @@ function startServer(){
         console.log( "  Server cert file:", g_server_cert_file );
         console.log( "  Server chain file:", g_server_chain_file );
     }
+    console.log( "  Redirect URL:", g_redir_url );
     console.log( "  Server secret:", g_server_secret );
     console.log( "  Core server addr:", g_core_serv_addr );
     console.log( "  Client ID:", g_client_id );
@@ -101,23 +103,22 @@ function startServer(){
                 clientSecret: g_client_secret,
                 authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
                 accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
-                redirectUri: 'http'+(g_tls?'s':'')+'://'+g_host+':'+g_port+'/ui/authn',
+                //redirectUri: 'http'+(g_tls?'s':'')+'://'+g_host+':'+g_port+'/ui/authn',
+                redirectUri: g_redir_url,
                 scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
             };
 
             g_globus_auth = new ClientOAuth2( g_oauth_credentials );
 
-            var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
-            var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
-            var chain;
-            if ( g_server_chain_file ){
-                chain = fs.readFileSync( g_server_chain_file, 'utf8');
-            }
-
-            console.log( "Starting web server" );
-
             var server;
             if ( g_tls ){
+                var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
+                var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
+                var chain;
+                if ( g_server_chain_file ){
+                    chain = fs.readFileSync( g_server_chain_file, 'utf8');
+                }
+                console.log( "Starting https server" );
                 server = https.createServer({
                     key: privateKey,
                     cert: certificate,
@@ -125,6 +126,7 @@ function startServer(){
                     secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3
                 }, app );
             }else{
+                console.log( "Starting http server" );
                 server = http.createServer({}, app);
             }
 
@@ -268,7 +270,7 @@ app.get('/ui/logout', (a_req, a_resp) => {
     //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
     a_req.session.destroy( function(){
         a_resp.clearCookie( 'connect.sid' );
-        a_resp.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri=http"+(g_tls?"s":"")+"://"+g_host);
+        a_resp.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri="+g_redir_url);
     });
 });
 
@@ -1789,7 +1791,6 @@ function loadSettings(){
     g_tls = true;
     g_server_key_file = '/opt/datafed/datafed-web-key.pem';
     g_server_cert_file = '/opt/datafed/datafed-web-cert.pem';
-    //g_server_chain_file = '/etc/datafed/DigiCertSHA2SecureServerCA.pem';
     g_core_serv_addr = 'tcp://datafed.ornl.gov:7513';
     g_test = false;
 
@@ -1803,9 +1804,12 @@ function loadSettings(){
             if ( config.server.tls == "0" || config.server.tls == "false" ){
                 g_tls = false;
             }
-            g_server_key_file = config.server.key_file || g_server_key_file;
-            g_server_cert_file = config.server.cert_file || g_server_cert_file;
-            g_server_chain_file = config.server.chain_file || g_server_chain_file;
+            g_redir_url = config.server.redir_url;
+            if ( g_tls ){
+                g_server_key_file = config.server.key_file || g_server_key_file;
+                g_server_cert_file = config.server.cert_file || g_server_cert_file;
+                g_server_chain_file = config.server.chain_file;
+            }
             g_server_secret = config.server.secret;
             g_test = config.server.test || g_test;
         }
@@ -1815,6 +1819,10 @@ function loadSettings(){
         }
         if ( config.core ){
             g_core_serv_addr = config.core.server_address || g_core_serv_addr;
+        }
+
+        if ( !g_redir_url ){
+            g_redir_url = "http"+(g_tls?'s':'')+"://" + g_host + ":" + g_port + "/ui/authn";
         }
     }catch( e ){
         console.log( "Could not open/parse configuration file", process.argv[2] );
