@@ -1,3 +1,11 @@
+$(".btn-help").on( "click", function(){
+    window.open('https://ornl.github.io/DataFed/','datafed-docs');
+});
+
+$(".btn-login").on( "click", function(){
+    location.href = "/ui/login";
+});
+
 $(document).ready(function(){
     window.name = 'DataFed Welcome';
     $(".btn").button();
