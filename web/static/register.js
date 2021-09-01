@@ -1,10 +1,15 @@
 import * as dialogs from "/dialogs.js";
 
-window.retry = function() {
-    window.location = "/ui/logout";
-}
+$(".btn-help").on( "click", function(){
+    window.open('https://ornl.github.io/DataFed/','datafed-docs');
+});
 
-window.register = function() {
+$(".btn-cancel").on( "click", function(){
+    window.location = "/ui/logout";
+});
+
+
+$(".btn-register").on( "click", function(){
     var pw1 = document.getElementById('pw1').value;
     var pw2 = document.getElementById('pw2').value;
 
@@ -12,7 +17,8 @@ window.register = function() {
         dialogs.dlgAlert( "Password Error", "Passwords do not match." );
     else
         window.location = "/ui/do_register?pw="+pw1;
-}
+});
+
 
 $(document).ready(function(){
     var tmpl_data = JSON.parse(document.getElementById('template_data').innerHTML);

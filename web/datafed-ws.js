@@ -46,7 +46,7 @@ var g_host,
     g_core_sock = zmq.socket('dealer'),
     g_core_serv_addr,
     g_globus_auth,
-    g_redir_url,
+    g_extern_url,
     g_oauth_credentials,
     g_ctx = new Array( MAX_CTX ),
     g_ctx_next = 0,
@@ -76,7 +76,7 @@ function startServer(){
         console.log( "  Server cert file:", g_server_cert_file );
         console.log( "  Server chain file:", g_server_chain_file );
     }
-    console.log( "  Redirect URL:", g_redir_url );
+    console.log( "  External URL:", g_extern_url );
     console.log( "  Server secret:", g_server_secret );
     console.log( "  Core server addr:", g_core_serv_addr );
     console.log( "  Client ID:", g_client_id );
@@ -103,8 +103,7 @@ function startServer(){
                 clientSecret: g_client_secret,
                 authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
                 accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
-                //redirectUri: 'http'+(g_tls?'s':'')+'://'+g_host+':'+g_port+'/ui/authn',
-                redirectUri: g_redir_url,
+                redirectUri: g_extern_url + "/ui/authn",
                 scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
             };
 
@@ -152,7 +151,7 @@ app.use( session({
     cookie: {
         httpOnly: true,
         maxAge: 604800000,
-        secure: true,
+        secure: false, //true,
         sameSite: "lax"
     }
 }));
@@ -228,20 +227,18 @@ app.get('/ui/main', (a_req, a_resp) => {
 /* This is the post-Globus registration page where user may enter a password before continuing to main
 */
 app.get('/ui/register', (a_req, a_resp) => {
+    console.log("/ui/register");
+
     if ( !a_req.session.uid ){
+        console.log(" - no uid, go to /");
         a_resp.redirect( '/' );
     } else if ( a_req.session.reg ){
+        console.log(" - already registered, go to /ui/main");
         a_resp.redirect( '/ui/main' );
     } else {
-        console.log( "Registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
+        console.log( " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
-        //a_req.session.name = userinfo.name;
-        //a_req.session.email = userinfo.email;
-        //a_req.session.uuids = userinfo.identities_set;
-        //a_req.session.acc_tok = xfr_token.access_token;
-        //a_req.session.ref_tok = xfr_token.refresh_token;
-        //a_req.session.redirect = a_redirect_url;
 
         a_resp.render('register', { uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
     }
@@ -270,7 +267,7 @@ app.get('/ui/logout', (a_req, a_resp) => {
     //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
     a_req.session.destroy( function(){
         a_resp.clearCookie( 'connect.sid' );
-        a_resp.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri="+g_redir_url);
+        a_resp.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri="+g_extern_url);
     });
 });
 
@@ -281,13 +278,13 @@ app.get('/ui/error', (a_req, a_resp) => {
 /* This is the OAuth redirect URL after a user authenticates with Globus
 */
 app.get('/ui/authn', ( a_req, a_resp ) => {
-    if ( a_req.session.uid && a_req.session.reg ){
+    /*if ( a_req.session.uid && a_req.session.reg ){
         a_resp.redirect( '/ui/main' );
-    } else {
+    } else {*/
         console.log( "Globus authenticated - log in to DataFed" );
 
         doLogin( a_req, a_resp, g_globus_auth, "/ui/main" );
-    }
+    //}
 });
 
 
@@ -297,8 +294,10 @@ the registration page.
 */
 function doLogin( a_req, a_resp, a_auth, a_redirect_url ){
     // Ask Globus for client token (Globus knows user somehow - cookies?)
+    console.log("login: getToken(",a_req.originalUrl,")");
+
     a_auth.code.getToken( a_req.originalUrl ).then( function( client_token ) {
-        var xfr_token = client_token.data.other_tokens[0];
+            var xfr_token = client_token.data.other_tokens[0];
 
         const opts = {
             hostname: 'auth.globus.org',
@@ -1804,7 +1803,7 @@ function loadSettings(){
             if ( config.server.tls == "0" || config.server.tls == "false" ){
                 g_tls = false;
             }
-            g_redir_url = config.server.redir_url;
+            g_extern_url = config.server.extern_url;
             if ( g_tls ){
                 g_server_key_file = config.server.key_file || g_server_key_file;
                 g_server_cert_file = config.server.cert_file || g_server_cert_file;
@@ -1821,8 +1820,8 @@ function loadSettings(){
             g_core_serv_addr = config.core.server_address || g_core_serv_addr;
         }
 
-        if ( !g_redir_url ){
-            g_redir_url = "http"+(g_tls?'s':'')+"://" + g_host + ":" + g_port + "/ui/authn";
+        if ( !g_extern_url ){
+            g_extern_url = "http"+(g_tls?'s':'')+"://" + g_host + ":" + g_port;
         }
     }catch( e ){
         console.log( "Could not open/parse configuration file", process.argv[2] );

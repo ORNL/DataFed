@@ -4,10 +4,14 @@ import * as api from "/api.js";
 import * as settings from "/settings.js";
 import * as dialogs from "/dialogs.js";
 
-window.logout = function() {
+$(".btn-help").on( "click", function(){
+    window.open('https://ornl.github.io/DataFed/','datafed-docs');
+});
+
+$(".btn-logout").on( "click", function(){
     settings.clearUser();
     window.location = "/ui/logout";
-}
+});
 
 window.refreshUI = function( a_ids, a_data, a_reload ){
     browser_tab.refreshUI( a_ids, a_data, a_reload );

@@ -16,8 +16,7 @@
             <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
                 <div style="flex:1 1 100%;font-size:2em;">Scientific Data Federation</div>
                 <div style="flex:none">
-                    <button class="btn" onclick="window.open('https://ornl.github.io/DataFed/index.html','datafed-docs')">Help</button>&nbsp
-                    <button class="btn" onclick="location.href='/ui'">Home</button>
+                    <button class="btn btn-help">Help</button>
                 </div>
             </div>
             <div style="flex:auto;overflow:auto">
@@ -35,12 +34,14 @@
                     <tr><td>Re-enter:</td><td><input type="password" id="pw2"></td></tr>
                     </table>
                     <br><br>
-                    <div style='text-align:center'><button class="btn btn-welcome" onclick="register()" type="button">Continue Registration</button></div>
+                    <div style='text-align:center'><button class="btn btn-register">Continue Registration</button></div>
+                    <br>
+                    <div style='text-align:center'><button class="btn btn-cancel">Cancel Registration</button></div>
                 </div>
                 <div id='uid_bad' style='display:none'>
                     <p class='note'>Invalid Globus user name. Please update your Globus account profile with your full name (first and last), then retry DataFed login.</p>
                     <br><br>
-                    <div style='text-align:center'><button class="btn" onclick="retry()" type="button">Retry Login</button></div>
+                    <div style='text-align:center'><button class="btn btn-retry">Retry Login</button></div>
                 </div>
             </div>
             </div>
