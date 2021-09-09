@@ -150,9 +150,9 @@ app.use( session({
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        maxAge: 604800000,
-        secure: false, //true,
-        sameSite: "lax"
+        maxAge: 432000000, // 5 days in msec
+        secure: false, // can't be true if load balancer in use
+        sameSite: "strict"
     }
 }));
 
