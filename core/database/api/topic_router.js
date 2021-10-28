@@ -69,23 +69,28 @@ router.get('/search', function (req, res) {
     try {
         var tokens = req.queryParams.phrase.match(/(?:[^\s"]+|"[^"]*")+/g),
             qry = "for i in topicview search analyzer((",
-            i, qry_res, result = [],
+            params = {},
+            i, p, qry_res, result = [],
             item, it, topic, path, op = false;
 
         if ( tokens.length == 0 )
             throw [g_lib.ERR_INVALID_PARAM,"Invalid topic search phrase."];
 
+        it = 0;
         for ( i in tokens ){
             if ( op ){
                 qry += " or ";
             }
-            qry += "phrase(i.title,'" + tokens[i] + "')";
+            p = "p" + it;
+            qry += "phrase(i.title,@" + p + ")";
+            params[p] = tokens[i];
             op = true;
+            it++;
         }
 
         qry += "),'text_en') limit 0, 100 return i";
 
-        qry_res = g_db._query( qry, {});
+        qry_res = g_db._query( qry, params );
         while ( qry_res.hasNext() ){
             item = qry_res.next();
             it = item;

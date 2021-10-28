@@ -381,7 +381,7 @@ DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_to
     TRANSLATE_BEGIN()
 
     const Value::Object & obj = result.asObject();
-    
+
     a_acc_tok = obj.getString( "access" );
     a_ref_tok = obj.getString( "refresh" );
     a_expires_in = (uint32_t) obj.getNumber( "expires_in" );
@@ -3137,7 +3137,7 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
         {
             const Value::Object & obj = j->asObject();
             dep = a_schema->add_uses();
-            
+
             dep->set_id( obj.getString( "id" ));
             dep->set_ver( obj.getNumber( "ver" ));
         }
@@ -3151,7 +3151,7 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
         {
             const Value::Object & obj = j->asObject();
             dep = a_schema->add_used_by();
-            
+
             dep->set_id( obj.getString( "id" ));
             dep->set_ver( obj.getNumber( "ver" ));
         }
@@ -3566,8 +3566,8 @@ DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json 
 
 /**
  * @brief Sets TaskDataReply from JSON returned by a taskInit... call
- * @param a_reply 
- * @param a_result 
+ * @param a_reply
+ * @param a_result
  *
  * JSON contains an object with a "task" field containing task fields. This
  * method removes tasks that are nor in READY status from the original JSON
@@ -3590,8 +3590,8 @@ DatabaseAPI::setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Val
 
 /**
  * @brief Sets TaskDataReply from JSON returned by a task management call
- * @param a_reply 
- * @param a_result 
+ * @param a_reply
+ * @param a_result
  *
  * JSON contains an array of task objects containing task fields.
  */
@@ -4204,6 +4204,7 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
     char /*last = 0, next = 0,*/ next_nws = 0;
     string::const_iterator c2;
     bool val_token, last_char = false;
+    int back_cnt = 0; // Counts contiguous backslashes inside quoted strings
 
     for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
     {
@@ -4226,23 +4227,67 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
         switch( state )
         {
         case PS_SINGLE_QUOTE: // Single quote (not escaped)
-            if ( *c == '\'' && *(c-1) != '\\' )
-                state = PS_DEFAULT;
+            // Must account for escaped quotes (\') and preceeding escaped backslashes (\\)
+            // For example:
+            // 'abc\'' - quote is escaped
+            // 'abc\\'' - backslash is escaped, not quote
+            // 'abc\\\''  - backslash and quote are escaped
+            // 'abc\\\\''  - two backslashes are escaped, and quote
+            // The rule is: if the number of preceeding contiguous backslashes is even, then the quote is NOT escaped
+            // This applies to double quotes in the subsequent case as well
+
+            if ( *c == '\\' )
+            {
+                back_cnt++;
+            }
+            else
+            {
+                // If this is NOT an escaped quote, go back to default state
+                if ( *c == '\'' && ( back_cnt % 2 == 0 ))
+                {
+                    state = PS_DEFAULT;
+                }
+                else
+                {
+                    back_cnt = 0;
+                }
+            }
+
             break;
         case PS_DOUBLE_QUOTE: // Double quote (not escaped)
-            if ( *c == '\"' && *(c-1) != '\\' )
-                state = PS_DEFAULT;
+            // See comments in PS_SINGLE_QUOTE case above
+            if ( *c == '\\' )
+            {
+                back_cnt++;
+            }
+            else
+            {
+                // If this is NOT an escaped quote, go back to default state
+                if ( *c == '\'' && ( back_cnt % 2 == 0 ))
+                {
+                    state = PS_DEFAULT;
+                }
+                else
+                {
+                    back_cnt = 0;
+                }
+            }
+
             break;
         case PS_DEFAULT: // Not quoted, not an identifier
             if ( *c == '\'' )
             {
                 state = PS_SINGLE_QUOTE;
+                back_cnt = 0;
+
                 //cout << "single q start\n";
                 break;
             }
             else if ( *c == '\"' )
             {
                 state = PS_DOUBLE_QUOTE;
+                back_cnt = 0;
+
                 //cout << "dbl q start\n";
                 break;
             }
