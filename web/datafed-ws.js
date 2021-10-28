@@ -17,7 +17,7 @@ if ( process.argv.length != 3 ){
 
 const express = require('express'); // For REST api
 var session = require('express-session');
-var bodyParser = require('body-parser');
+//var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser'); // cookies for user state
 var http = require('http');
 var https = require('https');
@@ -140,8 +140,8 @@ express.static.mime.define({'application/javascript': ['js']});
 
 app.use( express.static( __dirname + '/static' ));
 // body size limit = 100*max metadata size, which is 100 Kb
-app.use( bodyParser.json({ type: 'application/json', limit: '1048576'}));
-app.use( bodyParser.text({ type: 'text/plain', limit: '1048576'}));
+app.use( express.json({ type: 'application/json', limit: '1048576'}));
+app.use( express.text({ type: 'text/plain', limit: '1048576'}));
 // Setup session management and cookie settings
 app.use( session({
     secret: g_server_secret,
@@ -151,8 +151,8 @@ app.use( session({
     cookie: {
         httpOnly: true,
         maxAge: 432000000, // 5 days in msec
-        secure: false, // can't be true if load balancer in use
-        sameSite: "strict"
+        secure: true, // can't be true if load balancer in use
+        sameSite: "lax"
     }
 }));
 
@@ -218,6 +218,7 @@ app.get('/ui/main', (a_req, a_resp) => {
         var theme = a_req.cookies['datafed-theme'] || "light";
         a_resp.render( 'main',{user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test});
     }else{
+        console.log("no session",a_req.session);
         // datafed-user cookie not set, so clear datafed-id before redirect
         //a_resp.clearCookie( 'datafed-id' );
         a_resp.redirect( '/' );
@@ -369,7 +370,7 @@ function doLogin( a_req, a_resp, a_auth, a_redirect_url ){
                             setAccessToken( uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
 
                             // TODO Account may be disable from SDMS (active = false)
-
+                            console.log( 'redirect to', a_redirect_url );
                             a_resp.redirect( a_redirect_url );
                         }
                     });
@@ -1538,7 +1539,7 @@ function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
     console.log( "setAccessToken",a_uid, a_acc_tok, a_ref_tok, a_expires_sec);
     sendMessageDirect( "UserSetAccessTokenRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec }, function( reply ){
         // Should be an AckReply
-        console.log("reply:",reply.$type);
+        //console.log("setAccessToken reply:", reply );
     });
 }
 
