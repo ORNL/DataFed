@@ -698,7 +698,7 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
         DL_ERROR( "Invalid metadata schema: " << e.what() );
     }
 
-    
+
     if ( m_validator_err.size() )
     {
         reply.set_errors( m_validator_err );
@@ -722,6 +722,11 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
     DL_INFO("Creating record");
 
     m_validator_err.clear();
+
+    if ( request->has_sch_enforce() && !( request->has_metadata() && request->has_sch_id() ))
+    {
+        EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
+    }
 
     if ( request->has_metadata() && request->has_sch_id() )
     {
@@ -765,10 +770,6 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
         {
             EXCEPT( 1, m_validator_err );
         }
-    }
-    else if ( request->has_sch_enforce() )
-    {
-        EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
     }
 
     m_db_client.recordCreate( *request, reply );

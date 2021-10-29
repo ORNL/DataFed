@@ -1327,7 +1327,7 @@ DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::Listing
         ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
         "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
 
-    //DL_DEBUG("Query: [" << body << "]");
+    DL_DEBUG("Query: [" << body << "]");
 
     dbPost( "qry/exec/direct", {}, &body, result );
 
@@ -3820,39 +3820,6 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
         }
     }
 
-/*
-    switch ( a_request.scope() )
-    {
-        case SS_PERSONAL:
-            a_qry_begin = string("for i in ") + view + " search i.owner == @client" + a_qry_begin;
-            a_params += ",\"client\":\"" + m_client_uid + "\"";
-            break;
-        case SS_PROJECT:
-            if ( !a_request.has_owner() )
-                EXCEPT( 1, "Owner parameter missing for project scope." );
-
-            a_qry_begin = string("for i in ") + view + " search i.owner == @owner" + a_qry_begin;
-            a_params += ",\"owner\":\"" + a_request.owner() + "\"";
-            break;
-        case SS_SHARED:
-            if ( !a_request.has_owner() )
-                EXCEPT( 1, "Owner parameter missing for shared data scope." );
-
-            a_qry_begin = string("for i in ") + view + " search i.owner == @owner" + a_qry_begin;
-            a_params += ",\"owner\":\"" + a_request.owner() + "\"";
-            break;
-        case SS_PUBLIC:
-            if ( a_request.has_owner() )
-            {
-                a_qry_begin = " and i.owner == @owner" + a_qry_begin;
-                a_params += ",\"owner\":\"" + a_request.owner() + "\"";
-            }
-
-            a_qry_begin = string("for i in ") + view + " search i.public == true" + a_qry_begin;
-            break;
-    }
-*/
-
     if ( a_request.coll_size() > 0 )
     {
         a_params += ",\"cols\":[";
@@ -4178,6 +4145,8 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
 
     static set<string> date_funcs = {"date_now","date_timestamp"};
     static set<string> other = {"like","true","false","null","in"};
+    static const char* deftmp = "=<>!~|&+-/*^()0123456789. ";
+    static set<char> defchar(deftmp,deftmp+strlen(deftmp));
 
 
     struct Var
@@ -4201,18 +4170,15 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
     ParseState state = PS_DEFAULT;
     Var v;
     string result,tmp;
-    char /*last = 0, next = 0,*/ next_nws = 0;
+    char next_nws = 0;
     string::const_iterator c2;
     bool val_token, last_char = false;
     int back_cnt = 0; // Counts contiguous backslashes inside quoted strings
 
+    //DL_DEBUG( "parseMeta " << a_query );
+
     for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
     {
-        /*if ( c+1 != a_query.end() )
-            next = *(c+1);
-        else
-            next = 0;*/
-
         next_nws = 0;
         for ( c2 = c + 1; c2 != a_query.end(); c2++ )
         {
@@ -4222,7 +4188,8 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                 break;
             }
         }
-        //cout << "c[" << *c << "]\n";
+
+        DL_DEBUG( "c[" << *c << "]" );
 
         switch( state )
         {
@@ -4245,6 +4212,7 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                 // If this is NOT an escaped quote, go back to default state
                 if ( *c == '\'' && ( back_cnt % 2 == 0 ))
                 {
+                    //DL_DEBUG( "single q end" );
                     state = PS_DEFAULT;
                 }
                 else
@@ -4263,8 +4231,9 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
             else
             {
                 // If this is NOT an escaped quote, go back to default state
-                if ( *c == '\'' && ( back_cnt % 2 == 0 ))
+                if ( *c == '\"' && ( back_cnt % 2 == 0 ))
                 {
+                    //DL_DEBUG( "dbl q end" );
                     state = PS_DEFAULT;
                 }
                 else
@@ -4275,39 +4244,53 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
 
             break;
         case PS_DEFAULT: // Not quoted, not an identifier
-            if ( *c == '\'' )
+            if ( *c == '\'' ) // Start of single-quoted string
             {
                 state = PS_SINGLE_QUOTE;
                 back_cnt = 0;
 
-                //cout << "single q start\n";
-                break;
+                //DL_DEBUG( "single q start" );
+                break; // Avoid token processing
             }
-            else if ( *c == '\"' )
+            else if ( *c == '\"' ) // Start of double-quoted string
             {
                 state = PS_DOUBLE_QUOTE;
                 back_cnt = 0;
 
-                //cout << "dbl q start\n";
-                break;
+                //DL_DEBUG( "dbl q start" );
+                break; // Avoid token processing
             }
-            else if ( !isalpha( *c ))
-                break;
+            else if ( *c == '/' && (*(c+1) == '/' || *(c+1) == '*')) // Start of comment /* or //
+            {
+                //DL_DEBUG( "comment found" );
+                EXCEPT(1,"In-line metadata expression comments are not permitted." );
+            }
+            else if ( defchar.find( *c ) != defchar.end() ) // Check for other allowed characters
+            {
+                // Includes numeric values, operators, and parenthesis
+                break; // Avoid token processing
+            }
+            else if ( !isalpha( *c )) // Tokens must start with a-z, A-Z
+            {
+                EXCEPT(1,"Metadata expression contains invalid character(s)." );
+            }
 
+            // Detected start of a token
             v.start = c - a_query.begin();
-            //cout << "tok start: " << v.start << "\n";
             v.len = 0;
             state = PS_TOKEN;
             // FALL-THROUGH to token processing
             [[gnu::fallthrough]];
         case PS_TOKEN: // Token
-            //if ( spec.find( *c ) != spec.end() )
+            // Tokens may only contain a-z, A-Z, 0-9, '.', and '_'
+            // Tokens must start with a-z, A-Z
+
             val_token = isalnum( *c ) || *c == '.' || *c == '_';
             last_char = (( c + 1 ) == a_query.end());
 
             if ( !val_token || last_char )
             {
-                //cout << "start: " << v.start << ", len: " << v.len << "\n";
+                //cout << "tok start: " << v.start << ", len: " << v.len << "\n";
                 if ( !val_token )
                 {
                     tmp = a_query.substr( v.start, v.len );
@@ -4323,9 +4306,9 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                     tmp = a_query.substr( v.start, v.len + 1 );
                     state = PS_STOP;
                 }
-                //cout << "token[" << tmp << "]" << endl;
+                //DL_DEBUG( "token[" << tmp << "]" );
 
-                // Determine if identifier needs to be prefixed with "v." by testing agains allowed identifiers
+                // Determine if identifier needs to be prefixed with iterator by testing against allowed identifiers
                 if ( tmp == "desc" )
                 {
                     result.append( a_iter );
@@ -4359,14 +4342,6 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                     {
                         result.append( "== null" );
                     }
-                    /*else if ( boost::iequals( tmp, "istrue" ))
-                    {
-                        result.append( "== true" );
-                    }
-                    else if ( boost::iequals( tmp, "isfalse" ))
-                    {
-                        result.append( "== false" );
-                    }*/
                     else
                     {
                         result.append( a_iter );
@@ -4391,31 +4366,20 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
         }
 
         if ( state == PS_STOP )
+        {
             break;
+        }
         else if ( state == PS_DEFAULT )
         {
-            // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
-
-            /*if ( *c == '?' )
-                result += " like ";
-            else if ( *c == '~' )
-                if ( last != '=' )
-                    result += "=~";
-                else
-                    result += '~';
-            else if ( *c == '=' )
-                if ( last != '=' && last != '<' && last != '>' && last != '!' && next != '~' && next != '=' )
-                    result += "==";
-                else
-                    result += '=';
-            else*/
-                result += *c;
+            result += *c;
         }
         else if ( state != PS_TOKEN )
+        {
             result += *c;
-
-        //last = *c;
+        }
     }
+
+    //DL_DEBUG( "done, state: " << (int)state );
 
     if ( state == PS_SINGLE_QUOTE || state == PS_DOUBLE_QUOTE )
     {
