@@ -120,6 +120,7 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
     char    error[CURL_ERROR_SIZE];
     char *  esc_txt;
 
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
     error[0] = 0;
     url.reserve( 512 );
     url.append( a_base_url );
@@ -127,6 +128,7 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
     esc_txt = curl_easy_escape( a_curl, a_url_path.c_str(), 0 );
     url.append( esc_txt );
     curl_free( esc_txt );
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
 
     for ( vector<pair<string,string>>::const_iterator iparam = a_params.begin(); iparam != a_params.end(); ++iparam )
     {
@@ -146,7 +148,8 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
         curl_free( esc_txt );
     }
 
-    //DL_DEBUG( "url: " << url );
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
+    DL_DEBUG( "url: " << url );
 
     //curl_easy_setopt( m_curl, CURLOPT_VERBOSE, 1 );
     curl_easy_setopt( a_curl, CURLOPT_URL, url.c_str() );
@@ -159,7 +162,7 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
     if ( a_body )
     {
         tmp = a_body->toString();
-        //DL_DEBUG( "POST BODY:[" << tmp << "]" );
+        DL_DEBUG( "POST BODY:[" << tmp << "]" );
         curl_easy_setopt( a_curl, CURLOPT_POSTFIELDS, tmp.c_str() );
     }
     else
@@ -167,14 +170,17 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
 
     struct curl_slist *list = 0;
 
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
     if ( a_token.size() )
     {
         string auth_hdr = "Authorization: Bearer ";
         auth_hdr += a_token;
         list = curl_slist_append( list, auth_hdr.c_str() );
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
     }
     else
     {
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
         curl_easy_setopt( a_curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
         curl_easy_setopt( a_curl, CURLOPT_USERNAME, m_config.client_id.c_str() );
         curl_easy_setopt( a_curl, CURLOPT_PASSWORD, m_config.client_secret.c_str() );
@@ -183,27 +189,34 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
     if ( a_body )
     {
         list = curl_slist_append( list, "Content-Type: application/json");
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
     }
 
     if ( list )
     {
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
         curl_easy_setopt( a_curl, CURLOPT_HTTPHEADER, list );
     }
 
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
     CURLcode res = curl_easy_perform( a_curl );
 
     if ( list )
         curl_slist_free_all(list);
 
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
     long http_code = 0;
     curl_easy_getinfo( a_curl, CURLINFO_RESPONSE_CODE, &http_code );
 
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ );
     if ( res != CURLE_OK )
     {
         DL_ERROR( "GlobusAPI::post - CURL error [" << error << "], " << curl_easy_strerror( res ));
         EXCEPT_PARAM( 1, "Globus API call failed." );
     }
 
+    DL_DEBUG("GlobusAPI::post " << __FILE__ << ":" << __LINE__ << " http_code " << http_code );
+    
     return http_code;
 }
 
@@ -229,6 +242,7 @@ GlobusAPI::getSubmissionID( const std::string & a_acc_token )
 
         checkResponsCode( code, resp_obj );
 
+        DL_DEBUG( "GlobusAPI::getSubmissionID resp_obj getString " << resp_obj.getString("value") );
         return resp_obj.getString( "value" );
     }
     catch( libjson::ParseError & e )
@@ -291,6 +305,7 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
     }
 
     string raw_result;
+    DL_DEBUG( "GlobusAPI::transfer" << __FILE__ << ":" << __LINE__ );
     long code = post( m_curl_xfr, m_config.glob_xfr_url + "transfer", "", a_acc_token, {}, &body, raw_result );
 
     try
@@ -298,23 +313,32 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
         if ( !raw_result.size() )
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Empty response. Code: " << code );
 
+        DL_DEBUG( "GlobusAPI::transfer" << __FILE__ << ":" << __LINE__ );
         Value result;
 
         result.fromString( raw_result );
-
+    
+        DL_DEBUG("Raw result " << raw_result );
+        DL_DEBUG( "GlobusAPI::transfer" << __FILE__ << ":" << __LINE__ );
         Value::Object & resp_obj = result.asObject();
 
+        DL_DEBUG( "GlobusAPI::transfer" << __FILE__ << ":" << __LINE__ );
         checkResponsCode( code, resp_obj );
 
+        DL_DEBUG( "GlobusAPI::transfer" << __FILE__ << ":" << __LINE__ );
         Value::ObjectIter i;
 
         string & code = resp_obj.getString( "code" );
+        DL_DEBUG( "GlobusAPI::transfer" << __FILE__ << ":" << __LINE__ );
 
         if ( code.compare( "Accepted" ) != 0 )
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Request not accepted (" << code << ")" );
 
+        DL_DEBUG( "GlobusAPI::transfer" << __FILE__ << ":" << __LINE__ );
         string & task_id = resp_obj.getString( "task_id" );
 
+        DL_DEBUG( "GlobusAPI::transfer" << __FILE__ << ":" << __LINE__ );
+        DL_DEBUG("Task id is " << task_id);
         return task_id;
     }
     catch( libjson::ParseError & e )
@@ -349,29 +373,60 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
 
     // First check task global status for "SUCEEDED", "FAILED", "INACTIVE"
 
+    DL_DEBUG( "GlobusAPI::checkTransferStatus" << __FILE__ << ":" << __LINE__);
     long code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id /*+ "?fields=status,nice_status"*/, a_acc_tok, {}, raw_result );
+    DL_DEBUG( "GlobusAPI::checkTransferStatus" << __FILE__ << ":" << __LINE__);
 
     try
     {
-        if ( !raw_result.size() )
+        DL_DEBUG( "task:["<<raw_result<<"]");
+        if ( !raw_result.size() ) {
+            DL_DEBUG( "Empty response code " << __FILE__ << ":" << __LINE__);
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Empty response. Code: " << code );
+        }
 
         Value result;
-
-        //DL_DEBUG( "task:["<<raw_result<<"]");
-
         result.fromString( raw_result );
 
         Value::Object & resp_obj = result.asObject();
         string & status = resp_obj.getString( "status" );
+        
+        DL_DEBUG("Status: " << status << "" << __FILE__ <<":" << __LINE__);
+        
+        if ( status == "ACTIVE") {
+            DL_DEBUG("ACTIVE!" << __FILE__ <<":" << __LINE__);
 
-        if ( status == "SUCCEEDED" )
+            double faults = resp_obj.getNumber("faults");
+            if(faults > 0.0) {
+
+              string raw_result2;
+              get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id  + "/event_list", a_acc_tok, {}, raw_result2 );
+              Value result2;
+              result2.fromString( raw_result2 );
+              Value::Object & resp_obj2 = result2.asObject();
+              DL_DEBUG("Total Faults found " + to_string(resp_obj2.getNumber("total")));
+
+              Value::Array & data_arr = resp_obj2.getArray("DATA");
+
+              Value::Object & event = data_arr.front().asObject();
+              if( event.getBool("is_error")){
+                DL_DEBUG(event.getString("details"));
+              }
+            }
+
+            a_status = XS_ACTIVE;
+            return false;
+
+        } else if ( status == "SUCCEEDED")
         {
+            DL_DEBUG("SUCCEEDED!" << __FILE__ <<":" << __LINE__);
             a_status = XS_SUCCEEDED;
             return false;
         }
         else if ( status == "FAILED" || status == "INACTIVE" )
         {
+        
+            DL_DEBUG("FAILED or INACTIVE!" << __FILE__ <<":" << __LINE__);
             a_err_msg = resp_obj.getString("nice_status");
             a_status = XS_FAILED;
             return true;
@@ -467,23 +522,32 @@ GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_
 
     string raw_result;
 
+    DL_DEBUG( "GlobusAPI::cancelTask" << __FILE__ << __LINE__ );
     long code = post( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id + "/cancel", a_acc_tok, {}, 0, raw_result );
 
+    DL_DEBUG( "GlobusAPI::cancelTask" << __FILE__ << __LINE__ );
     try
     {
+    DL_DEBUG( "GlobusAPI::cancelTask" << __FILE__ << __LINE__ );
         if ( !raw_result.size() )
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Empty response. Code: " << code );
 
+    DL_DEBUG( "GlobusAPI::cancelTask" << __FILE__ << __LINE__ );
         Value result;
 
         result.fromString( raw_result );
+        DL_DEBUG( "raw result " << raw_result);
+    DL_DEBUG( "GlobusAPI::cancelTask" << __FILE__ << __LINE__ );
 
         Value::Object & resp_obj = result.asObject();
 
+    DL_DEBUG( "GlobusAPI::cancelTask" << __FILE__ << __LINE__ );
         checkResponsCode( code, resp_obj );
 
+    DL_DEBUG( "GlobusAPI::cancelTask" << __FILE__ << __LINE__ );
         string & resp_code = resp_obj.getString( "code" );
 
+    DL_DEBUG( "GlobusAPI::cancelTask" << __FILE__ << __LINE__ );
         if ( resp_code != "Canceled" )
             EXCEPT_PARAM( ID_SERVICE_ERROR, "Unexpected 'code' value returned: " << resp_code );
     }
@@ -505,6 +569,7 @@ GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_
         DL_DEBUG( raw_result );
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus cancel task API call returned unexpected content" );
     }
+    DL_DEBUG( "GlobusAPI::cancelTask" << __FILE__ << __LINE__ );
 }
 
 /**
@@ -670,6 +735,8 @@ GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_ne
     //DL_DEBUG( "wait" );
     //usleep( 1000 );
 
+        std::string output = "scope of token is: " + resp_obj.getString("scope");
+        DL_DEBUG(output);
         a_new_acc_tok = resp_obj.getString( "access_token" );
         a_expires_in = (uint32_t)resp_obj.getNumber( "expires_in" );
     }

@@ -29,7 +29,7 @@ enum Level
 #ifdef DEF_DYNALOG
 
 bool                        g_enabled = true;
-int                         g_level = DL_INFO_LEV;
+int                         g_level = DL_TRACE_LEV;
 bool                        g_use_cerr = true;
 bool                        g_use_syslog = false;
 std::stringstream           g_stream_buf;

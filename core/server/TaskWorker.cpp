@@ -62,48 +62,66 @@ TaskWorker::workerThread()
             {
                 if ( first ){
                     DL_TRACE( "Calling task run (first)" );
+                    DL_DEBUG( "Calling task run (first)" << __FILE__ << ":" << __LINE__  );
                     m_db.taskRun( m_task->task_id, task_cmd, 0 );
+                    DL_DEBUG( "Calling task run (first)" << __FILE__ << ":" << __LINE__ );
                     first = false;
                 }
                 else
                 {
                     DL_TRACE( "Calling task run, step: " << step );
+                    DL_DEBUG( "Calling task run, step: " << step  << " "<< __FILE__ << ":" << __LINE__ );
                     m_db.taskRun( m_task->task_id, task_cmd, err_msg.size()?0:&step, err_msg.size()?&err_msg:0 );
+                    DL_DEBUG( "Calling task run, step: " << step  << " "<< __FILE__ << ":" << __LINE__ );
                 }
 
                 //DL_DEBUG( "task reply: " << task_cmd.toString() );
 
                 const Value::Object & obj = task_cmd.asObject();
 
+                DL_DEBUG( "getNumber" );
                 cmd = (uint32_t)obj.getNumber( "cmd" );
 
+                DL_DEBUG( "getValue params" );
                 const Value & params = obj.getValue( "params" );
 
-                if ( obj.has( "step" ))
+                if ( obj.has( "step" )) {
+                    DL_DEBUG( "asNumber" );
                     step = obj.asNumber();
-                else if ( cmd != TC_STOP )
+                } else if ( cmd != TC_STOP )
                     EXCEPT(1,"Reply missing step value" );
 
                 switch ( cmd )
                 {
                 case TC_RAW_DATA_TRANSFER:
+                    DL_DEBUG( "cmdRawDataTransfer" << __FILE__ << ":" << __LINE__ );
                     retry = cmdRawDataTransfer( params );
+                    DL_DEBUG( "cmdRawDataTransfer" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_RAW_DATA_DELETE:
+                    DL_DEBUG( "cmdRawDataDelete" << __FILE__ << ":" << __LINE__ );
                     retry = cmdRawDataDelete( params );
+                    DL_DEBUG( "cmdRawDataDelete" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_RAW_DATA_UPDATE_SIZE:
+                    DL_DEBUG( "cmdRawDataUpdateSize" << __FILE__ << ":" << __LINE__ );
                     retry = cmdRawDataUpdateSize( params );
+                    DL_DEBUG( "cmdRawDataUpdateSize" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_ALLOC_CREATE:
+                    DL_DEBUG( "cmdAllocCreate" << __FILE__ << ":" << __LINE__ );
                     retry = cmdAllocCreate( params );
+                    DL_DEBUG( "cmdAllocCreate" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_ALLOC_DELETE:
+                    DL_DEBUG( "cmdAllocDelete" << __FILE__ << ":" << __LINE__ );
                     retry = cmdAllocDelete( params );
+                    DL_DEBUG( "cmdAllocDelete" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_STOP:
                     DL_DEBUG( "Task STOP." );
                     m_mgr.newTasks( params );
+                    DL_DEBUG( "Task STOP" << __FILE__ << ":" << __LINE__ );
                     break;
                 default:
                     EXCEPT_PARAM(1,"Invalid task command: " << cmd );
@@ -178,6 +196,7 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
     uint32_t expires_in = obj.getNumber( "acc_tok_exp_in" );
 
     DL_TRACE( ">>>> Token Expires in: " << expires_in );
+    DL_DEBUG( ">>>> Token Expires in: " << expires_in );
 
     if ( expires_in < 3600 )
     {
@@ -241,16 +260,22 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
         do
         {
             sleep( 5 );
+        
+            DL_DEBUG( "checking transfer status" << __FILE__ << ":" << __LINE__ );
 
             if ( m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg ))
             {
                 // Transfer task needs to be cancelled
                 m_glob.cancelTask( glob_task_id, acc_tok );
+                DL_DEBUG( "task canceled" << __FILE__ << ":" << __LINE__ );
             }
         } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
 
-        if ( xfr_status == GlobusAPI::XS_FAILED )
+        DL_DEBUG( "xft_status >= GlobusAPI:XS_SUCCEEDED" << __FILE__ << ":" << __LINE__ );
+        if ( xfr_status == GlobusAPI::XS_FAILED ) {
+            DL_DEBUG( "XS_FAILED" << __FILE__ << ":" << __LINE__ );
             EXCEPT( 1, err_msg );
+        }
     }
     else
     {

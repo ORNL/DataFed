@@ -104,7 +104,7 @@ function startServer(){
                 authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
                 accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
                 redirectUri: g_extern_url + "/ui/authn",
-                scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
+                scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all[*https://auth.globus.org/scopes/322c8478-dace-4571-a9af-ed8197432c39/data_access] offline_access openid'
             };
 
             g_globus_auth = new ClientOAuth2( g_oauth_credentials );
@@ -297,7 +297,12 @@ function doLogin( a_req, a_resp, a_auth, a_redirect_url ){
     console.log("login: getToken(",a_req.originalUrl,")");
 
     a_auth.code.getToken( a_req.originalUrl ).then( function( client_token ) {
+
+      console.log('Client token data ', client_token.data);
+
             var xfr_token = client_token.data.other_tokens[0];
+
+        console.log('Transfer token should be: ', xfr_token);
 
         const opts = {
             hostname: 'auth.globus.org',
@@ -325,6 +330,9 @@ function doLogin( a_req, a_resp, a_auth, a_redirect_url ){
                 if ( res.statusCode >= 200 && res.statusCode < 300 ){
                     var userinfo = JSON.parse( data ),
                         uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
+
+                    console.log('User scope is: ', userinfo.scope);
+                    console.log('Other scopes is: ', userinfo);
                         /*user_ck = {
                             uid: userinfo.username.substr( 0, userinfo.username.indexOf( "@" )),
                             name: userinfo.name,
