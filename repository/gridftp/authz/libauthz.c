@@ -13,7 +13,7 @@
 #include "AuthzWorker.h"
 
 typedef void * globus_gsi_authz_handle_t;
-typedef void (* globus_gsi_authz_cb_t)( void * callback_arg, globus_gsi_authz_handle_t handle, globus_result_t result ); 
+typedef void (* globus_gsi_authz_cb_t)( void * callback_arg, globus_gsi_authz_handle_t handle, globus_result_t result );
 
 
 gss_ctx_id_t    findContext( globus_gsi_authz_handle_t a_handle );
@@ -21,7 +21,7 @@ bool            setContext( globus_gsi_authz_handle_t a_handle, gss_ctx_id_t a_c
 bool            clearContext( globus_gsi_authz_handle_t a_handle );
 
 // TODO This value must be pulled from server config (max concurrency)
-#define MAX_ACTIVE_CTX 25
+#define MAX_ACTIVE_CTX 5
 
 void uuidToStr( unsigned char * a_uuid, char * a_out );
 bool decodeUUID( const char * a_input, char * a_uuid );
@@ -32,8 +32,7 @@ struct ContextHandleEntry
     gss_ctx_id_t                context;
 };
 
-static struct ContextHandleEntry   g_active_contexts[MAX_ACTIVE_CTX];
-
+static struct ContextHandleEntry    g_active_contexts[MAX_ACTIVE_CTX];
 
 void
 uuidToStr( unsigned char * a_uuid, char * a_out )
@@ -166,21 +165,192 @@ clearContext( globus_gsi_authz_handle_t a_handle )
     return true;
 }
 
+// IMPORTANT: The DATAFED_AUTHZ_CFG_FILE env variable must be set in the gridFTP service
+// script (usually /etc/init.d/globus-gridftp-server). This variable points to the
+// configuration file used for DataFed comm settings
+
+static struct Config g_config;
+
+bool
+setConfigVal( const char * a_label, char * a_dest, char * a_src, size_t a_max_len )
+{
+    size_t len = strlen( a_src );
+
+    if ( len == 0 )
+    {
+        syslog( LOG_ERR, "DataFed - '%s' value not set.", a_label );
+        return true;
+    }
+
+    if ( len > a_max_len )
+    {
+        syslog( LOG_ERR, "DataFed - '%s' value too long in authz config file (max %lu).", a_label, a_max_len );
+        return true;
+    }
+
+    strcpy( a_dest, a_src );
+
+    return false;
+}
+
+
+bool
+loadKeyFile( char * a_dest, char * a_filename )
+{
+    FILE * inf = fopen( a_filename, "r" );
+
+    if ( !inf )
+    {
+        syslog( LOG_ERR, "DataFed - Could not open key file: %s", a_filename );
+        return true;
+    }
+
+    if ( !fgets( a_dest, MAX_KEY_LEN, inf ))
+    {
+        syslog( LOG_ERR, "DataFed - Error reading key from file: %s", a_filename );
+        fclose( inf );
+        return true;
+    }
+
+    fclose( inf );
+    return false;
+}
+
+
+bool
+loadConfig()
+{
+    memset( &g_config, 0, sizeof( struct Config ));
+
+    const char * cfg_file = getenv( "DATAFED_AUTHZ_CFG_FILE" );
+
+    if ( !cfg_file )
+    {
+        syslog( LOG_ERR, "DataFed - DATAFED_AUTHZ_CFG_FILE env variable not set." );
+        return true;
+    }
+
+    syslog( LOG_INFO, "DataFed - Loading authz config file: %s", cfg_file );
+
+    FILE * inf = fopen( cfg_file, "r" );
+    if ( inf )
+    {
+        size_t MAX_BUF = 1024;
+        char buf[MAX_BUF];
+        int lc = -1;
+        char * val;
+        bool err;
+
+        while( 1 )
+        {
+            lc++;
+
+            // Stop at EOF
+            if ( !fgets( buf, MAX_BUF, inf ))
+                break;
+
+            buf[strcspn( buf, "\r\n" )] = 0;
+
+            // Skip comments and blank lines
+            if ( strlen( buf ) == 0 || buf[0] == '#' )
+                continue;
+
+            // Content is formatted as "key=value" (no spaces)
+            val = strchr( buf, '=' );
+            if ( !val )
+            {
+                syslog( LOG_ERR, "DataFed - Syntax error in authz config file at line %i.", lc );
+                return true;
+            }
+            else
+            {
+                *val = 0;
+                val++;
+            }
+
+            // Default values
+            g_config.timeout = 10000;
+
+            if ( strcmp( buf, "repo_id" ) == 0 )
+                err = setConfigVal( "repo_id", g_config.repo_id, val, MAX_ID_LEN );
+            else if ( strcmp( buf, "server_address" ) == 0 )
+                err = setConfigVal( "server_address", g_config.server_addr, val, MAX_ADDR_LEN );
+            else if ( strcmp( buf, "user" ) == 0 )
+                err = setConfigVal( "user", g_config.user, val, MAX_ID_LEN );
+            else if ( strcmp( buf, "test_path" ) == 0 )
+                err = setConfigVal( "test_path", g_config.test_path, val, MAX_PATH_LEN );
+            else if ( strcmp( buf, "pub_key" ) == 0 )
+                err = loadKeyFile( g_config.pub_key, val );
+            else if ( strcmp( buf, "priv_key" ) == 0 )
+                err = loadKeyFile( g_config.priv_key, val );
+            else if ( strcmp( buf, "server_key" ) == 0 )
+                err = loadKeyFile( g_config.server_key, val );
+            else if ( strcmp( buf, "timeout" ) == 0 )
+                g_config.timeout = atoi(val);
+            else
+            {
+                err = true;
+                syslog( LOG_ERR, "DataFed - Invalid key, '%s', in authz config file at line %i.", buf, lc );
+            }
+
+            if ( err )
+            {
+                fclose( inf );
+                return true;
+            }
+        }
+
+        fclose( inf );
+
+        char miss[1024];
+        miss[0] = 0;
+
+        if ( g_config.user[0] == 0 )
+            strcat( miss, " user" );
+        if ( g_config.repo_id[0] == 0 )
+            strcat( miss, " repo_id" );
+        if ( g_config.server_addr[0] == 0 )
+            strcat( miss, " server_address" );
+        if ( g_config.pub_key[0] == 0 )
+            strcat( miss, " pub_key" );
+        if ( g_config.priv_key[0] == 0 )
+            strcat( miss, " priv_key" );
+        if ( g_config.server_key[0] == 0 )
+            strcat( miss, " server_key" );
+
+        if ( miss[0] != 0 )
+        {
+            syslog( LOG_ERR, "DataFed - Missing required authz config items:%s", miss );
+            return true;
+        }
+    }
+    else
+    {
+        syslog( LOG_ERR, "DataFed - Could not open authz config file." );
+        return true;
+    }
+
+    return false;
+}
+
 
 globus_result_t
 gsi_authz_init()
 {
     openlog( "gsi_authz", 0, LOG_AUTH );
-    syslog( LOG_INFO, "DataFed Authz module started, version %s\n", getVersion() );
+    syslog( LOG_INFO, "DataFed Authz module started, version %s", getVersion() );
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
 
-    return 0;
+    if ( loadConfig())
+        return GLOBUS_FAILURE;
+
+    return GLOBUS_SUCCESS;
 }
 
 globus_result_t
 gsi_authz_destroy()
 {
-    syslog( LOG_INFO, "gsi_authz_destroy\n" );
+    syslog( LOG_INFO, "gsi_authz_destroy" );
 
     return 0;
 }
@@ -273,7 +443,7 @@ gsi_authz_authorize_async( va_list ap )
     }
 
     syslog( LOG_ERR, "gsi_authz_authorize_async, handle: %p, act: %s, obj: %s", handle, action, object );
-    
+
     OM_uint32 min_stat;
     gss_name_t client = GSS_C_NO_NAME;
     gss_name_t target = GSS_C_NO_NAME;
@@ -347,7 +517,7 @@ gsi_authz_authorize_async( va_list ap )
 
                         if ( client_id )
                         {
-                            if ( checkAuthorization( client_id, object, action ) == 0 )
+                            if ( checkAuthorization( client_id, object, action, &g_config ) == 0 )
                             {
                                 result = GLOBUS_SUCCESS;
                             }
@@ -463,9 +633,9 @@ gsi_map_user( va_list Ap )
 
     syslog( LOG_INFO, "gsi_map_user request service(%s), user (%s)", service, desired_identity );
     #endif
-
-    strncpy( identity_buffer, "cades", buffer_length );
-    buffer_length = 5;
+    memset( identity_buffer, 0, buffer_length );
+    strcat( identity_buffer, g_config.user );
+    buffer_length = strlen( g_config.user );
 
     return GLOBUS_SUCCESS;
 }
