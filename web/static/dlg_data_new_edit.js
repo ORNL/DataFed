@@ -24,14 +24,14 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
         orig_deps = [],
         encrypt_mode = 1,
         parent_coll;
-    
+
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
             <ul>\
                 <li><a href='#tab-dlg-gen'>General</a></li>\
                 <!-- li><a href='#tab-dlg-data'>Data</a></li -->\
                 <li><a href='#tab-dlg-meta'>Metadata</a></li>\
-                <li><a href='#tab-dlg-ref'>References</a></li>\
+                <li><a href='#tab-dlg-ref'>Relationships</a></li>\
             </ul>\
             <div id='tab-dlg-gen' style='padding:1em'>\
                 <table class='form-table'>\
@@ -80,10 +80,10 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 <div class='col-flex' style='height:100%'>\
                     <div style='flex:1 1 auto;overflow:auto'>\
                         <table id='ref-table'>\
-                            <tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>\
+                            <tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove relationship' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>\
                         </table>\
                     </div>\
-                    <div style='flex:none;padding:1em 0 0 .1em'><button title='Add new reference' class='btn add-ref'>Add Reference</button></div>\
+                    <div style='flex:none;padding:1em 0 0 .1em'><button title='Add new relationship' class='btn add-ref'>Add Relationship</button></div>\
                 </div>\
             </div>\
         </div>" );
@@ -118,7 +118,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
     $(".rem-ref",frame).on("click",function(ev){
         remRef(ev);
     });
-    
+
     $("#sch_reset",frame).on("click",function(ev){
         $("#sch_id",frame).val("");
         $("#md_err_msg",frame).text("").hide();
@@ -157,11 +157,11 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             }else{
                 dialogs.dlgAlert( "Validation Error", data );;
             }
-        });      
+        });
     });
 
     function addRef(){
-        var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove reference' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");
+        var row = $("<tr class='ref-row'><td><select><option value='0'>Is derived from</option><option value='1'>Is a component of</option><option value='2'>Is newer version of</option></select></td><td style='width:100%'><input type='text' style='width:100%'></input></td><td><button title='Remove relationship' class='btn rem-ref' style='height:1.3em;padding:0 0.1em'><span class='ui-icon ui-icon-close' style='font-size:.9em'></span></button></td></tr>");
 
         row.insertAfter("#ref-table tr:last",frame);
         $("select",row).selectmenu({width:200});
@@ -314,7 +314,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 if ( sch_id && settings.opts.meta_val ){
                     obj.schValidate = true;
                 }
-    
+
                 if ( a_data && a_mode == DLG_DATA_MODE_EDIT ){
                     util.getUpdatedValue( $("#title",frame).val(), a_data, obj, "title" );
                     util.getUpdatedValue( $("#alias",frame).val(), a_data, obj, "alias" );
@@ -397,7 +397,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                             else
                                 return true;
                         }) != -1 ){
-                            dialogs.dlgAlert( "Data Entry Error", "Duplicate references entered.");
+                            dialogs.dlgAlert( "Data Entry Error", "Duplicate relationships entered.");
                             return;
                         }
                     }
@@ -427,7 +427,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                             return;
                         }else if ( repo_id != 'default' )
                             obj.repoId = repo_id;
-    
+
                         if ( ext_auto.prop("checked") ){
                             obj.extAuto = true;
                         }else{
@@ -474,7 +474,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 caseSensitive: false,
                 readOnly: ( a_mode == DLG_DATA_MODE_EDIT && ( a_upd_perms & model.PERM_WR_REC ) == 0 )?true:false
             });
-        
+
             jsoned = ace.edit( $("#md",frame).get(0), {
                 theme:(settings.theme=="light"?"ace/theme/light":"ace/theme/dark"),
                 mode:"ace/mode/json",
@@ -486,7 +486,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
             util.inputTheme( $('input:text',frame ));
             util.inputTheme( $('textarea',frame ));
             $(".btn",frame).button();
-        
+
             var parent;
             if ( a_data ){
                 $("#title",frame).val(a_data.title);
@@ -497,7 +497,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                 }
 
                 $("#desc",frame).val(a_data.desc);
-                
+
                 if ( a_data.tags && a_data.tags.length ){
                     for ( var t in a_data.tags ){
                         tag_el.tagit("createTag", a_data.tags[t] );
@@ -551,7 +551,7 @@ export function show( a_mode, a_data, a_parent, a_upd_perms, a_cb ){
                         util.inputDisable( $(".add-ref,.rem-ref,.ref-row input", frame ));
                         $(".ref-row select", frame ).selectmenu("disable");
                         // Apply disable style to tag input
-                        $('.ui-widget-content', tag_el ).addClass("ui-state-disabled"); 
+                        $('.ui-widget-content', tag_el ).addClass("ui-state-disabled");
                     }
 
                     if (( a_upd_perms & model.PERM_WR_DATA ) == 0 ){

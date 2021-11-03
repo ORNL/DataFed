@@ -29,6 +29,11 @@ div
     bottom:0!important;
 }
 
+.ui-contextmenu
+{
+    z-index: 10;
+}
+
 li.tagit-new > input
 {
     border: none!important;
@@ -79,7 +84,7 @@ li.tagit-new > input
     overflow-wrap:anywhere;
     white-space:pre-wrap;
     user-select:text!important;
-    -o-user-select:text!important; 
+    -o-user-select:text!important;
     -moz-user-select:text!important;
     -khtml-user-select:text!important;
     -webkit-user-select:text!important;
