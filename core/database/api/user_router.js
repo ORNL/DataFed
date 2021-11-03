@@ -54,12 +54,18 @@ router.get('/create', function (req, res) {
                 write: ["u","c","a","g","acl","owner","ident","uuid","alias","admin"]
             },
             action: function() {
+                var cfg = g_db.config.document("config/system");
+                if ( req.queryParams.secret != cfg.secret ){
+                    console.log("ERROR: user create called with incorrect system secret. uid:", req.queryParams.uid, ", name:", req.queryParams.name );
+                    throw [g_lib.ERR_AUTHN_FAILED, "Invalid system credentials"];
+                }
+
                 var time = Math.floor( Date.now()/1000 ),
                     name = req.queryParams.name.trim(),
                     idx = name.lastIndexOf(" ");
 
                 if ( idx < 1 )
-                    throw [g_lib.ERR_INVALID_PARAM, "Invalid user name (no first/last name) " + name];
+                    throw [g_lib.ERR_INVALID_PARAM, "ERROR: invalid user name (no first/last name) " + name];
 
                 var lname = name.substr( idx + 1 ),
                     fname = name.substr( 0, idx ).trim();
@@ -101,7 +107,7 @@ router.get('/create', function (req, res) {
                 for ( i in req.queryParams.uuids ) {
                     uuid = "uuid/" + req.queryParams.uuids[i];
                     if ( g_db._exists({ _id: uuid }))
-                        throw [g_lib.ERR_IN_USE,"Identity value, "+uuid+", already in use"];
+                        throw [g_lib.ERR_IN_USE,"ERROR: linked identity value, "+uuid+", already in use"];
 
                     g_db.uuid.save({ _key: req.queryParams.uuids[i] }, { returnNew: true });
                     g_db.ident.save({ _from: user._id, _to: uuid });
@@ -125,6 +131,7 @@ router.get('/create', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
+.queryParam('secret', joi.string().required(), "System secret required to authorize this action")
 .queryParam('uid', joi.string().required(), "SDMS user ID (globus) for new user")
 .queryParam('password', joi.string().optional().allow(""), "SDMS account password")
 .queryParam('name', joi.string().required(), "Name")
@@ -640,6 +647,10 @@ router.get('/list/collab', function (req, res) {
 .summary('List collaborators of client')
 .description('List collaborators of client (from groups, projects, and ACLs)');
 
+/* Remove a user account from the system.
+
+Note: must delete ALL data records and projects owned by the user being deleted before deleting the user.
+*/
 router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
