@@ -345,7 +345,11 @@ if ( base_msg ) \
     delete base_msg; \
 } \
 else { \
-    DL_ERROR( "W"<<m_tid<<": buffer parse failed due to unregistered msg type." ); \
+    DL_ERROR( "W"<<m_tid<<": message parse failed (malformed or unregistered msg type)." ); \
+    NackReply nack; \
+    nack.set_err_code( ID_BAD_REQUEST ); \
+    nack.set_err_msg( "Message parse failed (malformed or unregistered msg type)" ); \
+    m_msg_buf.serialize( nack ); \
 } \
 return send_reply;
 

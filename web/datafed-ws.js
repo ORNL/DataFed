@@ -39,7 +39,8 @@ var g_host,
     g_server_key_file,
     g_server_cert_file,
     g_server_chain_file,
-    g_server_secret,
+    g_system_secret,
+    g_session_secret,
     g_test,
     g_msg_by_id = {},
     g_msg_by_name = {},
@@ -77,10 +78,11 @@ function startServer(){
         console.log( "  Server chain file:", g_server_chain_file );
     }
     console.log( "  External URL:", g_extern_url );
-    console.log( "  Server secret:", g_server_secret );
+    //console.log( "  System secret:", g_system_secret );
+    //console.log( "  session secret:", g_session_secret );
     console.log( "  Core server addr:", g_core_serv_addr );
-    console.log( "  Client ID:", g_client_id );
-    console.log( "  Client Secret:", g_client_secret );
+    //console.log( "  Client ID:", g_client_id );
+    //console.log( "  Client Secret:", g_client_secret );
     console.log( "  Test mode:", g_test );
 
     console.log( "Connecting to Core" );
@@ -144,7 +146,7 @@ app.use( express.json({ type: 'application/json', limit: '1048576'}));
 app.use( express.text({ type: 'text/plain', limit: '1048576'}));
 // Setup session management and cookie settings
 app.use( session({
-    secret: g_server_secret,
+    secret: g_session_secret,
     resave: false,
     rolling: true,
     saveUninitialized: false,
@@ -156,7 +158,7 @@ app.use( session({
     }
 }));
 
-app.use( cookieParser( g_server_secret ));
+app.use( cookieParser( g_session_secret ));
 app.use(
     helmet({
         hsts: {
@@ -405,10 +407,19 @@ function doLogin( a_req, a_resp, a_auth, a_redirect_url ){
 app.get('/ui/do_register', ( a_req, a_resp ) => {
     if ( a_req.session.uid && a_req.session.reg ){
         a_resp.redirect( '/ui/main' );
+    } else if ( !a_req.session.uid ){
+        a_resp.redirect( '/ui/welcome' );
     } else {
         console.log( 'Registering user', a_req.session.uid );
 
-        sendMessageDirect( "UserCreateRequest", "sdms", { uid: a_req.session.uid, password: a_req.query.pw, name: a_req.session.name, email: a_req.session.email, uuid: a_req.session.uuids }, function( reply ) {
+        sendMessageDirect( "UserCreateRequest", "", {
+                uid: a_req.session.uid,
+                password: a_req.query.pw,
+                name: a_req.session.name,
+                email: a_req.session.email,
+                uuid: a_req.session.uuids,
+                secret: g_system_secret
+            }, function( reply ) {
             if ( !reply ) {
                 console.log( "Error - User create failed: empty reply" );
                 a_resp.status(500).send( "Error - User create failed (server did not respond)" );
@@ -1810,7 +1821,8 @@ function loadSettings(){
                 g_server_cert_file = config.server.cert_file || g_server_cert_file;
                 g_server_chain_file = config.server.chain_file;
             }
-            g_server_secret = config.server.secret;
+            g_system_secret = config.server.system_secret;
+            g_session_secret = config.server.session_secret;
             g_test = config.server.test || g_test;
         }
         if ( config.oauth ){
@@ -1830,7 +1842,10 @@ function loadSettings(){
         throw e;
     }
 
-    if ( !g_server_secret ){
+    if ( !g_system_secret ){
+        throw "Server system secret not set.";
+    }
+    if ( !g_session_secret ){
         throw "Server session secret not set.";
     }
 }

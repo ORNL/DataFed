@@ -445,7 +445,10 @@ DatabaseAPI::purgeTransferRecords( size_t age )
 void
 DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )
 {
+    DL_INFO( "DataFed user create - uid: " << a_request.uid() << ", name: " << a_request.name() );
+
     vector<pair<string,string>> params;
+    params.push_back({"secret",a_request.secret()});
     params.push_back({"uid",a_request.uid()});
     params.push_back({"name",a_request.name()});
     params.push_back({"email",a_request.email()});
@@ -464,7 +467,17 @@ DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDa
     params.push_back({"uuids",uuids});
 
     Value result;
-    dbGet( "usr/create", params, result );
+
+    // Catch and log any trace exception
+    try
+    {
+        dbGet( "usr/create", params, result );
+    }
+    catch( TraceException & e )
+    {
+        DL_ERROR( e.toString() );
+        throw;
+    }
 
     setUserData( a_reply, result );
 }
