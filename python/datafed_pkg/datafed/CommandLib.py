@@ -1,6 +1,6 @@
 ## @package datafed.CommandLib
 # Provides a high-level client interface to the DataFed server
-# 
+#
 # The DataFed CommandLib module contains a single API class that provides
 # a high-level client interface for interacting with a DataFed server. This
 # module relies on the DataFed MessageLib and Connection modules  for lower-
@@ -1499,7 +1499,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = anon.UserViewRequest()
+        msg = auth.UserViewRequest()
         msg.uid = uid
 
         return self._mapi.sendRecv( msg )
@@ -1644,14 +1644,14 @@ class API:
     def sharedUsersList( self ):
         """
         List users who have shared data the with current user
-        
+
         Users that the current user has shared data with are not listed.
-        
+
         Returns
         -------
         UserDataReply Google protobuf message
             Response from DataFed
-        
+
         Raises
         ------
         Exception : On communication or server error
@@ -1664,12 +1664,12 @@ class API:
     def sharedProjectsList( self ):
         """
         List projects that have shared data with the current user
-        
+
         Returns
         -------
         ProjectDataReply Google protobuf message
             Response from DataFed
-            
+
         Raises
         ------
         Exception : On communication or server error
@@ -2036,7 +2036,7 @@ class API:
                         raise Exception("setContext invalid ID, '" + id2 + "'. Must be a user or a project ID")
                     id2 = "u/" + id2
 
-                msg = anon.UserViewRequest()
+                msg = auth.UserViewRequest()
                 msg.uid = id2
 
             # Don't need reply - just using to throw an except if id/uid is invalid
