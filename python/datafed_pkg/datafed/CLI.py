@@ -1,6 +1,6 @@
 ## @namespace datafed.CLI
 # @brief Provides a high-level client interface to the DataFed server
-# 
+#
 # The DataFed CLI module provides a high-level, text-based client
 # interface for sending commands to, and receiving replies from, a DateFed
 # server. Comands are structured hierarchically, with sub-commands taking
@@ -475,11 +475,11 @@ def _genDocCmd( cmd, ctx, level, parname = None, recurse = True ):
         if rv is not None:
             opts.append(rv)
 
-    doc +=  "\n" + cmd.help + "\n\nUsage::\n\n    " 
+    doc +=  "\n" + cmd.help + "\n\nUsage::\n\n    "
     if cname == "Datafed":
         doc += "datafed"
     else:
-        doc += ctx.command_path 
+        doc += ctx.command_path
 
     #doc += " " + " ".join(tmp) + "\n\nOptions::\n\n"
     doc += " " + " ".join(tmp) + "\n\nOptions:\n\n.. csv-table::\n"
@@ -517,7 +517,7 @@ def _wc( coll_id ):
     Set/print current working collection or path. 'ID' can be a collection ID, alias, user
     or project ID, listing index, previous collection ('-'), or path ('..','/','~'). 'cd' is
     an alias for the 'wc' command.
-    
+
     The 'wc' command can be used to switch to a different user or project context by either
     specifying a user/project ID/alias as the argument, or by specifying a collection ID/alias
     that is owned by another user or project. In either case, if permission is granted, the CLI
@@ -664,11 +664,11 @@ def _dataView( data_id, context ):
 @click.option("-T","--tags",type=str,required=False,help="Tags (comma separated list).")
 @click.option("-r","--raw-data-file",type=str,required=False,help="Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.")
 @click.option("-x","--extension",type=str,required=False,help="Override raw data file extension if provided (default is auto detect).")
-@click.option("-E","--external",is_flag=True,required=False,help="Raw data file is external to DataFed (unmanaged)") 
+@click.option("-E","--external",is_flag=True,required=False,help="Raw data file is external to DataFed (unmanaged)")
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.")
-@click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.") 
-@click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version") 
-@click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors") 
+@click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.")
+@click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version")
+@click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors")
 @click.option("-p","--parent",type=str,required=False, help="Parent collection ID, alias, or listing index. Default is the current working collection.")
 @click.option("-R","--repository",type=str,required=False,help="Repository ID (managed data only). Uses default allocation if not specified.")
 @click.option("-D","--deps",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.")
@@ -724,8 +724,8 @@ def _dataCreate( title, alias, description, tags, raw_data_file, extension, exte
 @click.option("-m","--metadata",type=str,required=False,help="Inline metadata in JSON format.")
 @click.option("-f","--metadata-file",type=str,required=False,help="Path to local metadata file containing JSON.")
 @click.option("-S","--metadata-set",is_flag=True,required=False,help="Set (replace) existing metadata with provided instead of merging.")
-@click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version") 
-@click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors") 
+@click.option("-s","--schema",type=str,required=False,help="Set metadata schema id:version")
+@click.option("-e","--schema-enforce",is_flag=True,required=False,help="Fail on metadata validation errors")
 @click.option("-A","--deps-add",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.")
 @click.option("-R","--deps-rem",multiple=True, type=click.Tuple([click.Choice(['der', 'comp', 'ver']), str]),help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.")
 @_global_context_options
@@ -871,6 +871,8 @@ def _data_batch_create( collection, file, context ):
 
     if collection:
         coll_id = _resolve_coll_id( collection, context )
+    else:
+        coll_id = None
 
     reply = _capi.dataBatchCreate( file, coll_id = coll_id, context = context )
     _generic_reply_handler( reply, _print_batch )
@@ -1132,7 +1134,7 @@ def _queryView( qry_id ):
 @click.option("--schema",type=str,help="Metadata schema ID")
 @click.option("--meta",type=str,help="Metadata expression")
 @click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
-@click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
+@click.option("--owner",type=str,help="Owning user ID (only for public queries)")
 @click.option("--creator",type=str,help="Creating user ID")
 @click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
@@ -1161,7 +1163,7 @@ def _queryCreate( title, coll_mode, coll, id, text, tag, schema, meta, meta_err,
 @click.option("--schema",type=str,help="Metadata schema ID")
 @click.option("--meta",type=str,help="Metadata expression")
 @click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
-@click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
+@click.option("--owner",type=str,help="Owning user ID (only for public queries)")
 @click.option("--creator",type=str,help="Creating user ID")
 @click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
@@ -1216,7 +1218,7 @@ def _queryExec( qry_id, offset, count ):
 @click.option("--schema",type=str,help="Metadata schema ID")
 @click.option("--meta",type=str,help="Metadata expression")
 @click.option("--meta-err",is_flag=True,help="Metadata has validation errors")
-@click.option("--owner",type=str,help="Owninging user ID (only for public queries)")
+@click.option("--owner",type=str,help="Owning user ID (only for public queries)")
 @click.option("--creator",type=str,help="Creating user ID")
 @click.option("--from","time_from",help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option("--to","time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])")
@@ -1632,7 +1634,7 @@ def _verbositySet(level):
     else:
         click.echo(_verbosity_sticky)
 
-        
+
 @_cli.command( name='help' )
 @click.argument("command", required=False, nargs=-1)
 @click.pass_context

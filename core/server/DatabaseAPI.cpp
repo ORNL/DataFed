@@ -968,6 +968,13 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::Re
         body.append( a_request.external()?"true":"false" );
         body.append( "\"" );
     }
+    else
+    {
+        if ( a_request.has_ext() )
+            body += ",\"ext\":\"" + a_request.ext() + "\"";
+        if ( a_request.has_ext_auto() )
+            body += string(",\"ext_auto\":") + (a_request.ext_auto()?"true":"false");
+    }
     if ( a_request.has_source() )
         body += ",\"source\":\"" + a_request.source() + "\"";
     if ( a_request.has_repo_id() )
@@ -983,6 +990,8 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::Re
         body += "]";
     }
     body += "}";
+
+    DL_INFO("dat create: " << body );
 
     dbPost( "dat/create", {}, &body, result );
 
