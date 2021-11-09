@@ -257,6 +257,7 @@ router.post('/revise', function (req, res) {
                     throw [ g_lib.ERR_PERM_DENIED, "Revising a system schema requires admin privileges."];
 
                 sch.ver++;
+                sch.cnt = 0;
 
                 if ( req.body.pub != undefined ){
                     sch.pub = req.body.pub;
