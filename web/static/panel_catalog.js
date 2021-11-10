@@ -402,7 +402,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                             <div><table class='cat-coll-info-table'><tr><td>" + (item.owner.startsWith("u/")
                                 ?"Owner:</td><td>" + item.ownerName
                                 :"Project:</td><td>"+ item.owner.substr(2)) + "</td></tr>\
-                                <tr><td>Collection ID:</td><td>" + item.id + (item.alias?" ("+item.alias+")":"") + "</td></tr>" +
+                                <tr><td>ID / Alias:</td><td>" + item.id + (item.alias?" ("+item.alias+")":"") + "</td></tr>" +
                             "</table></div>\
                         </div>\
                     </div>";
