@@ -175,11 +175,7 @@ app.use(
                     "https://d3js.org",
                     "blob:"
                 ],
-                "img-src": [
-                    "'self'",
-                    "https://cdnjs.cloudflare.com",
-                    "data:"
-                ],
+                "img-src": [ "*", "data:" ]
             }
         }
     })
