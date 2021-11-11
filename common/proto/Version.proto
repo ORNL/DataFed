@@ -14,8 +14,8 @@ enum Version
     option allow_alias = true; // Must be commented out if there are no duplicate values
 
     VER_MAJOR = 1;          // System MAJOR version, no backward compatibility
-    VER_MAPI_MAJOR = 3;     // Message API MAJOR version, no backward compatibility
-    VER_MAPI_MINOR = 1;     // Message API MINOR version, backward compatible
+    VER_MAPI_MAJOR = 4;     // Message API MAJOR version, no backward compatibility
+    VER_MAPI_MINOR = 0;     // Message API MINOR version, backward compatible
     VER_CORE = 0;           // Core server MINOR version, information only
     VER_WEB = 0;            // Web server MINOR version, info/notification purposes
     VER_REPO = 0;           // Repo server MINOR version, info/notification purposes

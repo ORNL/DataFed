@@ -782,12 +782,12 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
     {
         DL_ERROR( "Validation error - update record" );
 
-        //const string & id = obj.getString("id");
         RecordData * data = reply.mutable_data(0);
 
         m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
         // TODO need a def for md_err mask
         data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+        data->set_md_err_msg( m_validator_err );
     }
 
     PROC_MSG_END
@@ -890,6 +890,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
         // Must find and update md_err flag in reply (always 1 data entry)
         RecordData * data = reply.mutable_data(0);
         data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+        data->set_md_err_msg( m_validator_err );
 
         for ( int i = 0; i < reply.update_size(); i++ )
         {
@@ -898,6 +899,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
             {
                 // TODO need a def for md_err mask
                 data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+                break;
             }
         }
     }

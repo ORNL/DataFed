@@ -1837,6 +1837,10 @@ def _print_data( message ):
         click.echo( "{:<15}{:<50}".format('Schema: ', dr.sch_id if dr.sch_id else '(none)' ))
         if dr.sch_id and dr.metadata:
             click.echo( "{:<15}{:<50}".format('Meta Errors: ', "Yes" if dr.md_err_msg else 'No' ))
+            if dr.md_err_msg and _verbosity == 2:
+                click.echo( "" )
+                _wrap_text( dr.md_err_msg, "", 2 )
+                click.echo( "" )
 
         click.echo( "{:<15}{:<50}\n".format('Owner: ', dr.owner[2:]) +
                     "{:<15}{:<50}\n".format('Creator: ', dr.creator[2:]) +
