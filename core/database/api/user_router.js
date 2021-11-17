@@ -60,7 +60,8 @@ router.get('/create', function (req, res) {
                     throw [g_lib.ERR_AUTHN_FAILED, "Invalid system credentials"];
                 }
 
-                var time = Math.floor( Date.now()/1000 ),
+                var i, j, c,
+                    time = Math.floor( Date.now()/1000 ),
                     name = req.queryParams.name.trim(),
                     idx = name.lastIndexOf(" ");
 
@@ -83,14 +84,18 @@ router.get('/create', function (req, res) {
                     ut: time
                 };
 
-                if ( req.queryParams.password )
+                if ( req.queryParams.password ){
+                    g_lib.validatePassword( req.queryParams.password );
                     user_data.password = req.queryParams.password;
+                }
 
-                if ( req.queryParams.email )
+                if ( req.queryParams.email ){
                     user_data.email = req.queryParams.email;
+                }
 
-                if ( req.queryParams.options )
+                if ( req.queryParams.options ){
                     user_data.options = req.queryParams.options;
+                }
 
                 var user = g_db.u.save( user_data, { returnNew: true });
 
@@ -102,7 +107,7 @@ router.get('/create', function (req, res) {
                 g_db.alias.save({ _from: root._id, _to: alias._id });
                 g_db.owner.save({ _from: root._id, _to: user._id });
 
-                var i,uuid;
+                var uuid;
 
                 for ( i in req.queryParams.uuids ) {
                     uuid = "uuid/" + req.queryParams.uuids[i];
@@ -133,7 +138,7 @@ router.get('/create', function (req, res) {
 })
 .queryParam('secret', joi.string().required(), "System secret required to authorize this action")
 .queryParam('uid', joi.string().required(), "SDMS user ID (globus) for new user")
-.queryParam('password', joi.string().optional().allow(""), "SDMS account password")
+.queryParam('password', joi.string().optional().allow(""), "New CLI password")
 .queryParam('name', joi.string().required(), "Name")
 .queryParam('email', joi.string().optional(), "Email")
 .queryParam('options', joi.string().optional(), "Application options (JSON string)")
@@ -168,8 +173,10 @@ router.get('/update', function (req, res) {
 
                 var obj = {};
 
-                if ( req.queryParams.password )
+                if ( req.queryParams.password ){
+                    g_lib.validatePassword( req.queryParams.password );
                     obj.password = req.queryParams.password;
+                }
 
                 if ( req.queryParams.name ){
                     var name = req.queryParams.name.trim();
@@ -219,7 +226,7 @@ router.get('/update', function (req, res) {
 })
 .queryParam('client', joi.string().required(), "Client uid")
 .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-.queryParam('password', joi.string().optional(), "SDMS account password")
+.queryParam('password', joi.string().optional(), "New CLI password")
 .queryParam('name', joi.string().optional(), "New name")
 .queryParam('email', joi.string().optional(), "New email")
 .queryParam('options', joi.string().optional(), "Application options (JSON string)")
