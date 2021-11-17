@@ -41,6 +41,12 @@ textarea
     resize: none;
 }
 
+/* text notice */
+.notice
+{
+    color:#cf7f00;
+}
+
 .btn-icon span
 {
     color:#fff!important;

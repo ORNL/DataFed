@@ -311,10 +311,9 @@ svg text
 
 .btn-welcome
 {
-    width:16em;
+    width:12em;
     padding-top: 0.5em!important;
     padding-bottom: 0.5em!important;
-    margin-bottom: 1em!important;
 }
 
 .btn-refresh
