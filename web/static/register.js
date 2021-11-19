@@ -1,4 +1,5 @@
 import * as dialogs from "/dialogs.js";
+import * as api from "/api.js";
 
 $(".btn-help").on( "click", function(){
     window.open('https://ornl.github.io/DataFed/','datafed-docs');
@@ -13,10 +14,18 @@ $(".btn-register").on( "click", function(){
     var pw1 = document.getElementById('pw1').value;
     var pw2 = document.getElementById('pw2').value;
 
-    if ( pw1 != pw2 )
+    if ( pw1 != pw2 ){
         dialogs.dlgAlert( "Password Error", "Passwords do not match." );
-    else
-        window.location = "/ui/do_register?pw="+pw1;
+    }else{
+        api.userRegister( pw1, function( ok, reply ){
+            console.log("user reg:",ok,reply);
+            if ( ok ){
+                window.location = "/ui/main";
+            }else{
+                dialogs.dlgAlert( "Registration Error", reply );
+            }
+        });
+    }
 });
 
 

@@ -813,12 +813,17 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
     if ( request->has_metadata() || ( request->has_sch_id() && request->sch_id().size() ) || request->has_sch_enforce() )
     {
         //DL_INFO("Has metadata/schema");
-        string metadata = request->has_metadata()?request->metadata():"";
-        string sch_id = request->has_sch_id()?request->sch_id():"";
+        string metadata, cur_metadata, sch_id;
+        bool merge = true;
 
-        // If update does not include metadata AND schema, then we must load the missing parts from DB before we can validate here
-        if ( !request->has_metadata() || !request->has_sch_id() )
+        if ( request->has_mdset() && request->mdset() )
+            merge = false;
+
+        if ( !request->has_metadata() || merge || !request->has_sch_id() )
         {
+            // Request does not include metadata AND schema, or it's a merge, so must load the missing parts
+            // from DB before validation can be done.
+
             RecordViewRequest view_request;
             RecordDataReply view_reply;
 
@@ -826,11 +831,31 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
             m_db_client.recordView( view_request, view_reply );
 
-            if ( !request->has_metadata() )
+            if ( request->has_metadata() && merge )
+            {
+                metadata = request->metadata();
+                cur_metadata = view_reply.data(0).metadata();
+            }
+            else if ( request->has_metadata() )
+            {
+                metadata = request->metadata();
+            }
+            else
+            {
                 metadata = view_reply.data(0).metadata();
+            }
+
 
             if ( !request->has_sch_id() )
                 sch_id = view_reply.data(0).sch_id();
+            else
+                sch_id = request->sch_id();
+        }
+        else
+        {
+            // metadata and schema ID are both in request AND it is not a merge operation
+            metadata = request->metadata();
+            sch_id = request->sch_id();
         }
 
         if ( metadata.size() && sch_id.size() )
@@ -858,6 +883,14 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
                 DL_INFO( "Parse md" );
 
                 nlohmann::json md = nlohmann::json::parse( metadata );
+
+                // Apply merge patch if needed
+                if ( cur_metadata.size() )
+                {
+                    nlohmann::json cur_md = nlohmann::json::parse( cur_metadata );
+                    cur_md.merge_patch( md );
+                    md = cur_md;
+                }
 
                 DL_INFO( "Validating" );
 
