@@ -88,7 +88,7 @@ export function show( item ){
             { title:"Share",inh:a_inh,key:model.PERM_SHARE },
             { title:"Lock",inh:a_inh,key:model.PERM_LOCK }
         ]});
-    
+
         $(a_div_id,frame).fancytree({
             extensions: ["themeroller"],
             themeroller: {
@@ -552,7 +552,7 @@ export function show( item ){
         }
 
         var options = {
-            title: "Sharing for " + (is_coll?"Collection \"":"Data \"") + item.title + "\"",
+            title: "Permissions for " + (is_coll?"Collection \"":"Data \"") + item.title + "\"",
             modal: true,
             width: is_coll?600:500,
             height: 450,
@@ -576,7 +576,8 @@ export function show( item ){
                 }
             }],
             open: function(event,ui){
-                $("#dlg_id",frame).html((item.alias?"("+item.alias+")":"["+item.id.substr(2)+"]") );
+                //$("#dlg_id",frame).html((item.alias?"("+item.alias+")":"["+item.id.substr(2)+"]") );
+                $("#dlg_id",frame).html( item.id + (item.alias?"  ("+item.alias+")":""));
 
                 if ( is_coll && item.topic ){
                     var widget = frame.dialog( "widget" );

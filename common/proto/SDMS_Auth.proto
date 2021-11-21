@@ -1,11 +1,14 @@
-// ALERT: If messages in this proto file are REORDERED or REMOVED, or if the
-// definitions of existing message parameters are CHANGED, then the
-// VER_PROTO_MAJOR enum value in Version.proto must be incremented and backward
-// compatability will be lost. If new messages are APPENDED to the end of this
-// file, or parameters are APPENDED to the end of an existing message defintion,
-// then VER_PROTO_MINOR must be incremented and backward compatability will be
-// maintained. Unused messages and parameters should be marked as deprecated,
-// and these should be removed at the next major version change.
+// ALERT: If messages in this proto file are ADDED or REMOVED, or if the
+// definitions of existing message fields are CHANGED, then the VER_PROTO_MAJOR
+// enum value in Version.proto must be incremented and backward compatibility
+// will be lost. If fields are APPENDED to the end of existing message
+// definitions, then VER_PROTO_MINOR must be incremented and backward
+// compatibility will be maintained. Unused messages and parameters should be
+// marked as deprecated, and these should be removed at the next major version
+// change.
+
+// NOTE: All messages in this protobuf file require an authorized client and will
+// be rejected without processing if otherwise.
 
 syntax = "proto2";
 
@@ -18,1033 +21,1378 @@ enum Protocol
     ID = 2;
 }
 
-// ============================ Setup/Config Messages
 
+// ============================================================================
+// ----------- Setup/Config Messages ------------------------------------------
+// ============================================================================
+
+// Request core server to generate/retrieve user security credentials
+// Reply: GenerateCredentialsReply on success, NackReply on error
 message GenerateCredentialsRequest
 {
-    optional string             domain      = 1;
-    optional uint32             uid         = 2;
+    optional string             domain      = 1; // Reserved for future use (Facility/org domain)
+    optional uint32             uid         = 2; // Reserved for future use (POSIX uid)
 }
 
+// Request core server to revoke (clear) user security credentials for the sending user
+// This will prevent non-interactive login from ALL installed clients for the sending user
+// Reply: AckReply on success, NackReply on error
 message RevokeCredentialsRequest
 {
 }
 
+// Reply containing user security credentials (ZeroMQ keys) that can be used for non-interactive login
+// Note: these keys must be stored securely
 message GenerateCredentialsReply
 {
-    required string             pub_key     = 1;
-    required string             priv_key    = 2;
+    required string             pub_key     = 1; // Public key
+    required string             priv_key    = 2; // Private key
 }
 
-// ============================ Permissions Messages
 
+// ============================================================================
+// ----------- Permissions Messages -------------------------------------------
+// ============================================================================
+
+// Check if specified permission are granted on given resource
+// Reply: CheckPermsReply on success, NackReply on error
 message CheckPermsRequest
 {
-    required string             id          = 1;
-    required uint32             perms       = 2;
+    required string             id          = 1; // Record, collection, or project ID
+    required uint32             perms       = 2; // Requested access permissions
 }
 
+// Reply indicating if all requested permissions are granted
 message CheckPermsReply
 {
-    required bool               granted     = 1;
+    required bool               granted     = 1; // True if all permission granted, false otherwise
 }
 
+// Request current user access permissions for given resource
+// Reply: GetPermsReply on success, NackReply on error
 message GetPermsRequest
 {
-    required string             id          = 1;
-    optional uint32             perms       = 2;
+    required string             id          = 1; // Record, collection, or project ID
+    optional uint32             perms       = 2; // Optional bitmask for permissions to check, gets all if not given
 }
 
+// Reply containing granted permissions for given user/resource
+// If perms bitmask was specified, granted will only apply to requested permissions
 message GetPermsReply
 {
-    required uint32             granted     = 1;
+    required uint32             granted     = 1; // Granted permissions
 }
 
-// ============================ User Messages
 
+// ============================================================================
+// ----------- User Messages --------------------------------------------------
+// ============================================================================
+
+// Request to vew user information. Details can only be requested for
+// authenticate client or by system admins.
+// Reply: UserDataReply on success, NackReply on error
+message UserViewRequest
+{
+    required string             uid         = 1; // DataFed user ID
+    optional bool               details     = 2; // Include details
+}
+
+// Reply containing user information
+message UserDataReply
+{
+    repeated SDMS.UserData      user        = 1; // User data
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
+}
+
+
+// Set user access tokens (from Globus OAuth). This message must be called
+// whenever a user logs in via Globus (web portal) in order to update the access
+// and refresh tokens issued by Globus.
+// Reply: AckReply on success, NackReply on error
 message UserSetAccessTokenRequest
 {
-    required string             access      = 1;
-    required uint32             expires_in  = 2;
-    required string             refresh     = 3;
+    required string             access      = 1; // Access token
+    required uint32             expires_in  = 2; // Access expiration time in seconds
+    required string             refresh     = 3; // Refresh token (never expires)
 }
 
+// Get user access token (from Globus OAuth). This token will allow client to
+// access Globus APIs on behalf of the authenticated user.
+// Reply: UserAccessTokenReply on success, NackReply on error
 message UserGetAccessTokenRequest
 {
 }
 
+// Reply containing the user Globus access token and expiration time (in
+// seconds) for authenticated user.
 message UserAccessTokenReply
 {
-    required string             access      = 1;
-    required uint32             expires_in  = 2;
+    required string             access      = 1; // Globus access token
+    required uint32             expires_in  = 2; // Access token expiration in seconds
 }
 
+// Request to create a new DataFed user account.
+// Reply: AckReply on success, NackReply on error
+// Note: Use of this message is restricted to system service. Any attempted use by non-admin
+// users will be logged.
 message UserCreateRequest
 {
-    required string             uid         = 1;
-    optional string             password    = 2;
-    required string             name        = 3;
-    required string             email       = 4;
-    repeated string             uuid        = 5;
-    optional string             options     = 6;
+    required string             uid         = 1; // User's GlobusID UID (name portion only)
+    optional string             password    = 2; // User-specified DataFed CLI password
+    required string             name        = 3; // Full name as given by Globus
+    required string             email       = 4; // Email address
+    repeated string             uuid        = 5; // UUID for primary Globus account
+    optional string             options     = 6; // DataFed options (JSON string)
+    required string             secret      = 7; // System secret
 }
 
-
+// Request to find DataFed user by one or more Globus UUIDs
+// Reply: UserDataReply on success, NackReply on failure
 message UserFindByUUIDsRequest
 {
-    repeated string             uuid        = 1;
+    repeated string             uuid        = 1; // An identity UUID linked to user's Globus account
 }
 
+// Request to find users matching partial name/UID string (ngram search)
+// Reply: UserDataReply on success, NackReply on failure
 message UserFindByNameUIDRequest
 {
-    required string             name_uid    = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    required string             name_uid    = 1; // String with full/partial name or UID to search for
+    optional uint32             offset      = 2; // Optional result offset
+    optional uint32             count       = 3; // Optional result count
 }
 
+// Request to update a user record
+// Reply: UserDataReply on success, NackReply on failure
 message UserUpdateRequest
 {
-    required string             uid         = 1;
-    optional string             email       = 2;
-    optional string             password    = 3;
-    optional string             options     = 4;
+    required string             uid         = 1; // DataFed UID of user record to update
+    optional string             email       = 2; // Optional new email address
+    optional string             password    = 3; // Optional new DataFed password
+    optional string             options     = 4; // Optional DataFed options (JSON string)
 }
 
+// Request to list all registered users
+// Reply: UserDataReply on success, NackReply on failure
 message UserListAllRequest
 {
-    optional uint32             offset      = 1;
-    optional uint32             count       = 2;
+    optional uint32             offset      = 1; // Optional result offset
+    optional uint32             count       = 2; // Optional result count
 }
 
+// Request to list all users that are collaborators of auth user
+// Collaborators are users on same project(s) and/or with ACLs set to/from auth user
+// Reply: UserDataReply on success, NackReply on failure
 message UserListCollabRequest
 {
-    optional uint32             offset      = 1;
-    optional uint32             count       = 2;
+    optional uint32             offset      = 1; // Optional result offset
+    optional uint32             count       = 2; // Optional result count
 }
 
+// Request to get the list of recent Globus endpoints used by auth user
+// Reply: UserGetRecentEPReply on success, NackReply on failure
 message UserGetRecentEPRequest
 {
 }
 
+// Reply with list of recent Globus endpoints used by auth user
 message UserGetRecentEPReply
 {
-    repeated string             ep          = 1;
+    repeated string             ep          = 1; // Endpoint ID (legacy not UUID)
 }
 
+// Request to set the list of recent Globus endpoints used by auth user
+// This request will replace the stored endpoint list with the one provided
+// Reply: AckReply on success, NackReply on error
 message UserSetRecentEPRequest
 {
-    repeated string             ep          = 1;
+    repeated string             ep          = 1; // Endpoint ID (legacy not UUID)
 }
 
-// ============================ General Data/Collection Messages
 
+// ============================================================================
+// ----------- General Data/Collection Messages -------------------------------
+// ============================================================================
+
+// Reply containing general list of items (data record, collections, users,
+// projects, etc). Only common fields are returned.
 message ListingReply
 {
-    repeated ListingData        item        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    repeated ListingData        item        = 1; // Items
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
 }
 
-// ============================ Data Record Messages
 
-message RecordListRequest
-{
-    optional string             subject     = 1;
-    optional bool               pub         = 2;
-}
+// ============================================================================
+// ----------- Data Record Messages -------------------------------------------
+// ============================================================================
 
+// Request to list all records associated with a given repository and user/subject.
+// If the subject is provided sufficient privileges are required.
+// Reply: ListingReply on success, NackReply on error
 message RecordListByAllocRequest
 {
-    required string             repo        = 1;
-    optional string             subject     = 2;
-    optional uint32             offset      = 3;
-    optional uint32             count       = 4;
+    required string             repo        = 1; // Repository ID
+    optional string             subject     = 2; // Optional project or user ID
+    optional uint32             offset      = 3; // Optional result offset
+    optional uint32             count       = 4; // Optional result count
 }
 
-
+// Request to view a data record. Requires READ_REC permissions. Metadata will be
+// returned if client has READ_META permission.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordViewRequest
 {
-    required string             id          = 1;
-    optional bool               details     = 2;
+    required string             id          = 1; // Record ID or alias
+    optional bool               details     = 2; // Reserved for future use
 }
 
+// Reply containing details of one or more data records in response to original
+// request. If original request resulted in side effects, impacted records will
+// be listed in the update field. This is an optimization to reduce latency for
+// graphical clients that may be displaying multiple/many records that need to
+// be refreshed as a result of the original request.
 message RecordDataReply
 {
-    repeated SDMS.RecordData    data        = 1;
-    repeated SDMS.ListingData   update      = 2;
+    repeated SDMS.RecordData    data        = 1; // Record details
+    repeated SDMS.ListingData   update      = 2; // Optional list of records impacted by side effects
 }
 
+// Request to create a new data record.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordCreateRequest
 {
-    optional string             title       = 1;
-    optional string             desc        = 2;
-    repeated string             tags        = 3;
-    optional string             alias       = 4;
-    optional string             metadata    = 5;
-    optional string             parent_id   = 6;
-    optional bool               external    = 7;
-    optional string             source      = 8;
-    optional string             repo_id     = 9;
-    optional string             ext         = 10;
-    optional bool               ext_auto    = 11;
-    repeated DependencySpecData deps        = 12;
-    optional string             sch_id      = 13;
-    optional bool               sch_enforce = 14;
+    optional string             title       = 1; // Record title (required)
+    optional string             desc        = 2; // Optional description (markdown supported)
+    repeated string             tags        = 3; // Optional list of tags
+    optional string             alias       = 4; // Optional alias
+    optional string             metadata    = 5; // Optional metadata (JSON string)
+    optional string             parent_id   = 6; // Optional parent collection ID or alias (default is root)
+    optional bool               external    = 7; // Optional flag for external (unmanaged) raw data
+    optional string             source      = 8; // Optional raw data source Globus path
+    optional string             repo_id     = 9; // Optional repository ID (default for user/project used if omitted)
+    optional string             ext         = 10; // Optional record extension
+    optional bool               ext_auto    = 11; // Optional flag for automatic extension (based on source file)
+    repeated DependencySpecData deps        = 12; // Optional record dependencies
+    optional string             sch_id      = 13; // Optional metadata schema ID
+    optional bool               sch_enforce = 14; // Optional flag to enforce schema validation (fails on non-compliance)
 }
 
+// Request to create data records in batch. This message will be DEPRECATED.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordCreateBatchRequest
 {
     required string             records     = 1; // JSON array containing records following DB record create schema
 }
 
+// Request to update an existing data record.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordUpdateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    repeated string             tags        = 4;
-    optional bool               tags_clear  = 5;
-    optional string             alias       = 6;
-    optional string             metadata    = 7;
-    optional bool               mdset       = 8;
-    optional string             sch_id      = 9;
-    optional bool               sch_enforce = 10;
-    optional string             source      = 11;
-    optional string             ext         = 12;
-    optional bool               ext_auto    = 13;
+    required string             id          = 1; // Record ID or alias
+    optional string             title       = 2; // Optional title
+    optional string             desc        = 3; // Optional description (markdown supported)
+    repeated string             tags        = 4; // Optional list of tags to add
+    optional bool               tags_clear  = 5; // Optional flag to clear existing tags
+    optional string             alias       = 6; // Optional alias
+    optional string             metadata    = 7; // Optional metadata (JSON string)
+    optional bool               mdset       = 8; // Optional flag to set (replace) metadata if true, or merge if false
+    optional string             sch_id      = 9; // Optional metadata schema ID
+    optional bool               sch_enforce = 10; // Optional flag to enforce schema validation (fails on non-compliance)
+    optional string             source      = 11; // Optional raw data source Globus path
+    optional string             ext         = 12; // Optional record extension
+    optional bool               ext_auto    = 13; // Optional flag for automatic extension (based on source file)
     //optional uint64             size        = 14;
     //optional uint32             dt          = 15;
-    repeated DependencySpecData dep_add     = 16;
-    repeated DependencySpecData dep_rem     = 17;
+    repeated DependencySpecData dep_add     = 16; // Optional new dependencies to add
+    repeated DependencySpecData dep_rem     = 17; // Optional existing dependencies to remove
 }
 
+// Request to update data records in batch. This message will be DEPRECATED.
+// Reply: RecordDataReply on success, NackReply on error
 message RecordUpdateBatchRequest
 {
     required string             records     = 1; // JSON array containing records following DB record update schema
 }
 
+// Request to export data records in batch. This message may be DEPRECATED.
+// Reply: RecordExportReply on success, NackReply on error
 message RecordExportRequest
 {
     repeated string             id          = 1;
 }
 
+// Reply containing JSON representation of data records. This message may be DEPRECATED.
 message RecordExportReply
 {
-    repeated string             record      = 1;
+    repeated string             record      = 1; // JSON string containing data record
 }
 
+// Not used currently
 message RecordLockRequest
 {
     repeated string             id          = 1;
     required bool               lock        = 2;
 }
 
+// Request to delete one or more data records. Deletions are handle by background tasks
+// thus a TaskDataReply is returned containing the TaskID of the delete operation.
+// Reply: TaskDataReply on success, NackReply on error
 message RecordDeleteRequest
 {
-    repeated string             id          = 1;
+    repeated string             id          = 1; // ID/alias of record(s) to delete
 }
 
+// Request to get the dependency graph for a given data record. Returns all ancestor
+// and descendent records that are related by derivation linkage. Lateral provenance
+// relationships of related records are not returned.
+// Reply: ListingReply on success, NackReply on error
 message RecordGetDependencyGraphRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // ID/alias of data record of interest
 }
 
+// Request to change tha allocation of specified records. All records must be owned by
+// the auth user or the specified project. Any records already on destination repo will
+// be ignored. On success, a background task is created to perform the actual allocation
+// change (requires moving raw data and updating records).
+// Reply: RecordAllocChangeReply on success, NackReply on error
 message RecordAllocChangeRequest
 {
-    repeated string             id          = 1;
-    required string             repo_id     = 2;
-    optional string             proj_id     = 3;
-    optional bool               check       = 4;
+    repeated string             id          = 1; // ID/alias of data records and or collections
+    required string             repo_id     = 2; // Destination repository ID
+    optional string             proj_id     = 3; // Optional project ID if data belongs to a project
+    optional bool               check       = 4; // Optional flag to perform initial validation only if true
 }
 
+// Reply containing information about record allocation change, including
+// associated background task.
 message RecordAllocChangeReply
 {
-    required uint32             act_cnt     = 1;
-    required uint64             act_size    = 2;
-    required uint32             tot_cnt     = 3;
-    required uint64             data_limit  = 4;
-    required uint64             data_size   = 5;
-    required uint32             rec_limit   = 6;
-    required uint32             rec_count   = 7;
-    optional SDMS.TaskData      task        = 8;
+    required uint32             act_cnt     = 1; // Actual count of records to changed
+    required uint64             act_size    = 2; // Actual data size (bytes) that will be moved
+    required uint32             tot_cnt     = 3; // Total number of records in request (including those already on destination repo)
+    required uint64             data_limit  = 4; // Dest repo data size limit (bytes)
+    required uint64             data_size   = 5; // Dest repo current data size (bytes)
+    required uint32             rec_limit   = 6; // Dest repo record count limit
+    required uint32             rec_count   = 7; // Dest repo current record count
+    optional SDMS.TaskData      task        = 8; // Background task information
 }
 
+// Request to change tha ownership of specified records. All records must be owned by
+// the auth user or the specified project. Auth user must have CREATE permission on
+// destination collection. On success, a background task is created to perform the
+// actual ownership change (requires moving raw data and updating records).
+// Reply: RecordOwnerChangeReply on success, NackReply on error
 message RecordOwnerChangeRequest
 {
-    repeated string             id          = 1;
-    required string             coll_id     = 2;
-    optional string             repo_id     = 3;
-    optional string             proj_id     = 4;
-    optional bool               check       = 5;
+    repeated string             id          = 1; // ID/alias of data records and or collections
+    required string             coll_id     = 2; // Destination collection ID/alias
+    optional string             repo_id     = 3; // Optional destination repo ID (default will be used if omitted)
+    optional string             proj_id     = 4; // DEPRECATED
+    optional bool               check       = 5; // Optional flag to perform initial validation only if true
 }
 
+// Reply containing information about record ownership change, including
+// associated background task.
 message RecordOwnerChangeReply
 {
-    required uint32             act_cnt     = 1;
-    required uint64             act_size    = 2;
-    required uint32             tot_cnt     = 3;
-    repeated AllocData          alloc       = 4;
-    optional SDMS.TaskData      task        = 8;
+    required uint32             act_cnt     = 1; // Actual count of records to changed
+    required uint64             act_size    = 2; // Actual data size (bytes) that will be moved
+    required uint32             tot_cnt     = 3; // Total number of records in request (including those already owned by destination account)
+    repeated AllocData          alloc       = 4; // List of available allocations (only if check option set to true)
+    optional SDMS.TaskData      task        = 8; // Background task information
 }
 
-// ============================ Raw Data Messages
 
+// ============================================================================
+// ----------- Raw Data Messages ----------------------------------------------
+// ============================================================================
 
-message HttpXfrDataReply
-{
-    repeated SDMS.HttpXfrData   xfr         = 1;
-}
-
-// Download raw data for one or more records
+// Request to download raw data for one or more records. Auth user must have READ_DATA
+// permission on all requested records. If the orig_fname option is specified, a check
+// will be performed to ensure there are no duplicate filenames, and the request will
+// fail if there are. On success, a background task is created to perform the actual
+// data transfer.
+// Reply: DataGetReply on success, NackReply on error
 message DataGetRequest
 {
-    repeated string             id          = 1;
-    optional string             path        = 2;
-    optional Encryption         encrypt     = 3;
-    optional bool               orig_fname  = 4;
-    optional bool               check       = 5;
+    repeated string             id          = 1; // ID/alias of data records and or collections
+    optional string             path        = 2; // Globus path to download to (not required if check option is set)
+    optional Encryption         encrypt     = 3; // Optional encryption mode (none, if available, required)
+    optional bool               orig_fname  = 4; // Optional flag to download to original filenames
+    optional bool               check       = 5; // Optional flag to perform initial validation only if true
 }
 
-// Upload raw data for one record
+// Request to upload raw data to a data records. Auth user must have WRITE_DATA
+// permission on the requested record. On success, a background task is created to
+// perform the actual data transfer.
+// Reply: DataPutReply on success, NackReply on error
 message DataPutRequest
 {
-    required string             id          = 1;
-    optional string             path        = 2;
-    optional Encryption         encrypt     = 3;
-    optional string             ext         = 4;
-    optional bool               check       = 5;
+    required string             id          = 1; // ID/alias of data record
+    optional string             path        = 2; // Globus path to upload from
+    optional Encryption         encrypt     = 3; // Optional encryption mode (none, if available, required)
+    optional string             ext         = 4; // Optional extension override
+    optional bool               check       = 5; // Optional flag to perform initial validation only if true
 }
 
+// Reply containing data download information, including associated background task.
 message DataGetReply
 {
-    repeated ListingData        item        = 1;
-    optional SDMS.TaskData      task        = 2;
+    repeated ListingData        item        = 1; // Basic data for records to be downloaded
+    optional SDMS.TaskData      task        = 2; // Background task information
 }
 
+// Reply containing data upload information, including associated background task.
 message DataPutReply
 {
-    required RecordData         item        = 1;
-    optional SDMS.TaskData      task        = 2;
+    required RecordData         item        = 1; // Basic data for record to be uploaded
+    optional SDMS.TaskData      task        = 2; // Background task information
 }
 
-// Delete raw data only (not record)
+// Not currently used (delete raw data only)
 message DataDeleteRequest
 {
     repeated string             id          = 1;
 }
 
-// Get domain-local path to raw data of a record (for direct access)
+// Not currently used (get domain-local path to raw data of a record for direct access)
 message DataPathRequest
 {
     required string             id          = 1;
     required string             domain      = 2;
 }
 
+// Not currently used (domain-local path to raw data of a record for direct access)
 message DataPathReply
 {
     required string             path        = 1;
 }
 
-// ============================ Search Messages
 
-// Returns ListingReply
+// ============================================================================
+// ----------- Search Messages ------------------------------------------------
+// ============================================================================
+
+// Request to search for data records or collection.
+// Reply: ListingReply on success, NackReply on error
 message SearchRequest
 {
-    required SDMS.SearchMode    mode        = 1;
-    optional bool               published   = 2;
+    required SDMS.SearchMode    mode        = 1; // Mode is data or collections
+    optional bool               published   = 2; // If true, searches public catalog
 
     // Data and Collections
-    optional string             id          = 3;
-    optional string             text        = 4;
-    repeated string             tags        = 5;
-    repeated string             cat_tags    = 6;
-    optional uint32             from        = 7;
-    optional uint32             to          = 8;
-    optional string             owner       = 9; 
-    optional string             creator     = 10;
-    repeated string             coll        = 11;
+    optional string             id          = 3; // Partial ID or alias match (wildcard)
+    optional string             text        = 4; // Words or phrases (english root word match)
+    repeated string             tags        = 5; // Tags
+    repeated string             cat_tags    = 6; // Catalog tags used internally for catalog topics
+    optional uint32             from        = 7; // Matches from updated date/time
+    optional uint32             to          = 8; // Matches to updated date/time
+    optional string             owner       = 9; // User/project ID of owner
+    optional string             creator     = 10; // User ID of creator
+    repeated string             coll        = 11; // Collections to search
 
     // Data scope only
-    optional string             sch_id      = 12;
-    optional string             meta        = 13;
-    optional bool               meta_err    = 14;
+    optional string             sch_id      = 12; // Metadata schema ID
+    optional string             meta        = 13; // Metadata expression
+    optional bool               meta_err    = 14; // Match records with metadata validation errors
 
-    optional SDMS.SortOption    sort        = 15;
-    optional bool               sort_rev    = 16;
-    optional uint32             offset      = 17;
-    optional uint32             count       = 18;
+    optional SDMS.SortOption    sort        = 15; // Sort option (title, ID, etc)
+    optional bool               sort_rev    = 16; // Reverse sort order
+    optional uint32             offset      = 17; // Result offset
+    optional uint32             count       = 18; // Result count
 }
 
-// ============================ Collection Messages
 
+// ============================================================================
+// ----------- Collection Messages --------------------------------------------
+// ============================================================================
+
+// Request to view details of a collection. Requires READ_REC permission.
+// Reply: CollDataReply on success, NackReply on error
 message CollViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Collection ID/alias
 }
 
+// Reply containing details of one or more collections. If original request
+// resulted in side effects, impacted collections will be listed in the update field.
+// This is an optimization to reduce latency for graphical clients that may be
+// displaying multiple/many collections that need to be refreshed as a result
+// of the original request.
 message CollDataReply
 {
-    repeated SDMS.CollData      coll        = 1;
-    repeated SDMS.ListingData   update      = 2;    
+    repeated SDMS.CollData      coll        = 1; // Collection data
+    repeated SDMS.ListingData   update      = 2; // Optional list of records/collections impacted by side effects
 }
 
-// Returns ListingReply
+// Request to read (list) contents of collection (records, child collections). Requires
+// LIST permission.
+// Reply: ListingReply on success, NackError on error
 message CollReadRequest
 {
-    required string             id          = 1;
-    optional bool               details     = 3;
-    optional uint32             offset      = 4;
-    optional uint32             count       = 5;
+    required string             id          = 1; // ID/alias of collection to read
+    optional bool               details     = 3; // DEPRECATED
+    optional uint32             offset      = 4; // Result offset
+    optional uint32             count       = 5; // Result count
 }
 
+// Request to create a new collection. Requires CREATE permission in parent collection.
+// Reply: CollDataReply on success, NackError on error
 message CollCreateRequest
 {
-    optional string             title       = 1;
-    optional string             desc        = 2;
-    optional string             alias       = 3;
-    optional string             parent_id   = 4;
-    optional string             topic       = 6;
-    repeated string             tags        = 7;
+    optional string             title       = 1; // Title of collection
+    optional string             desc        = 2; // Optional description (markdown supported)
+    optional string             alias       = 3; // Optional alias
+    optional string             parent_id   = 4; // Optional parent collection ID/alias (root is default)
+    optional string             topic       = 6; // Optional topic for public collection
+    repeated string             tags        = 7; // Optional tags
 }
 
+// Request to update an existing collection. Requires WRITE_REC permission
+// Reply: CollDataReply on success, NackError on error
 message CollUpdateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    optional string             alias       = 4;
-    optional string             topic       = 6;
-    repeated string             tags        = 7;
-    optional bool               tags_clear  = 8;
+    required string             id          = 1; // ID / alias of collection to update
+    optional string             title       = 2; // Optional title
+    optional string             desc        = 3; // Optional description (markdown supported)
+    optional string             alias       = 4; // Optional alias
+    optional string             topic       = 6; // Optional topic for public collection
+    repeated string             tags        = 7; // Optional tags to add
+    optional bool               tags_clear  = 8; // Optional flag to clear existing tags if true
 }
 
+// Request to delete a collection. Requires DELETE permission. All contained collections
+// will be deleted, as well as any data records that are not linked to other collections.
+// On success, a background task will be started to perform the actual delete operation.
+// Reply: TaskDataReply on success, NackError on error
 message CollDeleteRequest
 {
-    repeated string             id          = 1;
+    repeated string             id          = 1; // ID/alias of collection to delete
 }
 
-message CollListRequest
-{
-    optional string             user        = 1;
-    optional bool               details     = 2;
-    optional uint32             offset      = 3;
-    optional uint32             count       = 4;
-}
-
+// Request to write (add/remove) items to a collection. Requires LINK permission.
+// This request does not unlink data records being added to the collection. Any
+// items removed that are not linked elsewhere will be added to the root collection
+// and returned in the update section of the reply.
+// Reply: ListingReply on success, NackError on error
 message CollWriteRequest
 {
-    required string             id          = 1;
-    repeated string             add         = 2;
-    repeated string             rem         = 3;
-    optional bool               rem_all     = 4;
+    required string             id          = 1; // ID/alias of collection to write to
+    repeated string             add         = 2; // ID/alias of records/collections to add
+    repeated string             rem         = 3; // ID/alias of records/collections to remove
+    optional bool               rem_all     = 4; // DEPRECATED
 }
 
+// Request to move records and child collections from a source collection to a
+// destination collection. Requires LINK permission and same owners for both source
+// and destination collections.
+// Reply: AckReply on success, NackError on error
 message CollMoveRequest
 {
-    required string             src_id      = 1;
-    required string             dst_id      = 2;
-    repeated string             item        = 3;
+    required string             src_id      = 1; // ID/alias of source collection
+    required string             dst_id      = 2; // ID/alias of destination collection
+    repeated string             item        = 3; // ID/alias of items in source collection to move
 }
 
+// Request to get the parent collection path of a given data record or collection.
+// Data records will have multiple paths if linked to multiple collections.
+// Reply: CollPathReply on success, NackError on error
 message CollGetParentsRequest
 {
-    required string             id          = 1;
-    optional bool               inclusive   = 2;
+    required string             id          = 1; // ID/alias of data record or collection
+    optional bool               inclusive   = 2; // Optional flag to include specified id in path
 }
 
+// Reply containing one or more collection paths
 message CollPathReply
 {
-    repeated SDMS.PathData      path        = 1;
+    repeated SDMS.PathData      path        = 1; // List of Collection paths
 }
 
+// Request to get the page of an item in a collection.
+// Reply: CollGetOffsetReply on success, NackError on error
+// TODO: This request should simply return offset not page number
 message CollGetOffsetRequest
 {
-    required string             id          = 1;
-    required string             item        = 2;
-    required uint32             page_sz     = 3;
+    required string             id          = 1; // ID/alias of containing collection
+    required string             item        = 2; // ID/alias of child data record or collection
+    required uint32             page_sz     = 3; // Page size to use for calculation
 }
 
+// Reply containing page number of item in collection
 message CollGetOffsetReply
 {
-    required string             id          = 1;
-    required string             item        = 2;
-    required uint32             offset      = 3;
+    required string             id          = 1; // ID/alias of containing collection
+    required string             item        = 2; // ID/alias of child data record or collection
+    required uint32             offset      = 3; // Page number of item
 }
 
+// Request to list all published collections of user or project.
+// Reply: ListingReply on success, NackError on error
 message CollListPublishedRequest
 {
-    optional string             subject     = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    optional string             subject     = 1; // Optional user/project ID (auth user is default)
+    optional uint32             offset      = 2; // Result offset
+    optional uint32             count       = 3; // Result count
 }
 
-// ============================ Group Messages
 
+// ============================================================================
+// ----------- Group Messages -------------------------------------------------
+// ============================================================================
+
+// Request to create a new group.
+// Reply: GroupDataReply on success, NackError on error
 message GroupCreateRequest
 {
-    required SDMS.GroupData     group       = 1;
+    required SDMS.GroupData     group       = 1; // Group data
 }
 
+// Request to update an existing group.
+// Reply: GroupDataReply on success, NackError on error
 message GroupUpdateRequest
 {
-    required string             uid         = 1;
-    required string             gid         = 2;
-    optional string             title       = 3;
-    optional string             desc        = 4;
-    repeated string             add_uid     = 5;
-    repeated string             rem_uid     = 6;
+    required string             uid         = 1; // User/project ID of group
+    required string             gid         = 2; // Group ID
+    optional string             title       = 3; // Optional title
+    optional string             desc        = 4; // Optional description
+    repeated string             add_uid     = 5; // User IDs to add to group
+    repeated string             rem_uid     = 6; // User IDs to remove from group
 }
 
+// Reply containing group details
 message GroupDataReply
 {
-    repeated SDMS.GroupData     group       = 1;
+    repeated SDMS.GroupData     group       = 1; // Group details
 }
 
+// Request to delete a group belonging to auth user or project. Deleting a project
+// group requires manager permission for associated project.
+// Reply: AckReply on success, NackError on error
+// TODO: uid should be optional and changed to proj_id
 message GroupDeleteRequest
 {
-    required string             uid         = 1;
-    required string             gid         = 2;
+    required string             uid         = 1; // User/project ID of group owner
+    required string             gid         = 2; // Group ID of group
 }
 
+// Request to list all groups belonging to user or project. Listing project groups
+// requires membership in associated project.
+// Reply: GroupDataReply on success, NackError on error
+// TODO: uid should be optional and changed to proj_id
 message GroupListRequest
 {
-    required string             uid         = 1;
+    required string             uid         = 1; // User/project ID of group owner
 }
 
+// Request to view details of specified group. Viewing project group requires
+// membership in associated project.
+// Reply: GroupDataReply on success, NackError on error
+// TODO: uid should be optional and changed to proj_id
 message GroupViewRequest
 {
-    required string             uid         = 1;
-    required string             gid         = 2;
+    required string             uid         = 1; // User/project ID of group owner
+    required string             gid         = 2; // Group ID of group
 }
 
-// ============================ ACL Messages
 
+// ============================================================================
+// ----------- Access Control List (ACL) Messages -----------------------------
+// ============================================================================
+
+// Request to view all ACL rules on a given data record or collection.
+// Reply: ACLDataReply on success, NackError on error
 message ACLViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // ID/alias of data record or collection
 }
 
+// Request to update (replace) ACLs on a data record or collection. ACLs are
+// set using a JSON payload containing an array of rule objects containing
+// the following fields:
+//   id       : User or group ID (required)
+//   grant    : bitmask for local permission grants
+//   inhgrant : bitmask for inherited permission grants (collections only)
+// Reply: ACLDataReply on success, NackError on error
+// TODO: Why is this not using the ACLRule struct for rules?
 message ACLUpdateRequest
 {
-    required string             id          = 1;
-    optional string             rules       = 2;
+    required string             id          = 1; // ID/alias of data record or collection
+    optional string             rules       = 2; // New ACL rules as JSON
 }
 
-// List users/projects owning any ACLs set for client or subject (user or project)
-// Returns ListingReply
-message ACLBySubjectRequest
+// Request to list users/projects owning any ACLs set for client
+// Reply: ListingReply on success, NackError on error
+message ACLSharedListRequest
 {
-    optional string             subject         = 1;
-    optional bool               inc_users       = 2;
-    optional bool               inc_projects    = 3;
+    optional bool               inc_users       = 2; // Include user ACLs
+    optional bool               inc_projects    = 3; // Include project ACLs
 }
 
-// List top-level ACLs set by owner for client or subject (user or project)
-// Returns ListingReply
-message ACLListItemsBySubjectRequest
+// List data records and/or collections that are share with client by the specified
+// owner (user or project).
+// Reply: ListingReply on success, NackError on error
+message ACLSharedListItemsRequest
 {
-    optional string             subject     = 1;
-    required string             owner       = 2;
+    required string             owner       = 2; // User/project ID that is sharing data
 }
 
+// Reply containing ACL information
 message ACLDataReply
 {
-    repeated ACLRule            rule        = 1;
+    repeated ACLRule            rule        = 1; // ACL rules
 }
 
-// ============================ Project Messages
 
+// ============================================================================
+// ----------- Project Messages -----------------------------------------------
+// ============================================================================
+
+// Request to view project details. Requires client to be associated with the
+// project, or be an admin.
+// Reply: ProjectDataReply on success, NackError on error
 message ProjectViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Project ID
 }
 
+// Reply containing detailed information for one or more projects.
 message ProjectDataReply
 {
-    repeated ProjectData        proj        = 1;
+    repeated ProjectData        proj        = 1; // Project data
 }
 
+// Request to create a new project. Requires client to be a repository administrator.
+// The creator becomes the owner of the project.
+// Reply: ProjectDataReply on success, NackError on error
 message ProjectCreateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    repeated string             admin       = 4;
-    repeated string             member      = 5;
+    required string             id          = 1; // Project OD
+    optional string             title       = 2; // Title
+    optional string             desc        = 3; // Description
+    repeated string             admin       = 4; // List of project admins (managers)
+    repeated string             member      = 5; // List of project members
 }
 
+// Request to update an existing project. Requires client to be either the owner
+// or an admin of the specified project. Only the project owner can alter the admin
+// list.
+// Reply: ProjectDataReply on success, NackError on error
 message ProjectUpdateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    optional bool               admin_set   = 4 [default = false];
-    repeated string             admin       = 5;
-    optional bool               member_set  = 6 [default = false];
-    repeated string             member      = 7;
+    required string             id          = 1; // Project ID
+    optional string             title       = 2; // New title
+    optional string             desc        = 3; // New description
+    optional bool               admin_set   = 4 [default = false]; // Clear existing admin list
+    repeated string             admin       = 5; // New admins (user IDs)
+    optional bool               member_set  = 6 [default = false]; // Clear existing member list
+    repeated string             member      = 7; // New members (user IDs)
 }
 
+// Request to delete a project. Client must be the project owner or a
+// system admin. On success a background task is started to perform the
+// actual delete operation.
+// Reply: TaskDataReply on success, NackError on error
 message ProjectDeleteRequest
 {
-    repeated string             id          = 1;
+    repeated string             id          = 1; // Project ID to delete
 }
 
+// Request to list all projects associated with client.
+// Reply: ListingReply on success, NackError on error
 message ProjectListRequest
 {
-    optional string             subject     = 1;
-    optional bool               as_owner    = 2;
-    optional bool               as_admin    = 3;
-    optional bool               as_member   = 4;
-    optional SortOption         sort        = 5;
-    optional bool               sort_rev    = 6;
-    optional uint32             offset      = 7;
-    optional uint32             count       = 8;
+    optional string             subject     = 1; // DEPRECATED
+    optional bool               as_owner    = 2; // Flag to include owned projects
+    optional bool               as_admin    = 3; // Flag to include managed projects
+    optional bool               as_member   = 4; // Flag to include member projects
+    optional SortOption         sort        = 5; // Sort option
+    optional bool               sort_rev    = 6; // Reverse sort order
+    optional uint32             offset      = 7; // Result offset
+    optional uint32             count       = 8; // Result count
 }
 
+// Not currently used
 message ProjectSearchRequest
 {
     required string             text_query  = 1;
     repeated string             scope       = 2;
 }
 
+// Request to get the project role of client or specified user
+// Reply: ProjectGetRoleReply on success, NackError on error
 message ProjectGetRoleRequest
 {
-    required string             id          = 1;
-    optional string             subject     = 2;
+    required string             id          = 1; // Project ID
+    optional string             subject     = 2; // Optional user ID
 }
 
+// Reply containing the project role of a user
 message ProjectGetRoleReply
 {
     required ProjectRole        role        = 1;
 }
 
-// ============================ Repo Messages
 
+// ============================================================================
+// ----------- Repository Messages (Repo) -------------------------------------
+// ============================================================================
+
+// NOTE: The following messages are use by Core and Repo servers only
+
+// Request to delete the raw data of onr or more records from repo
+// Reply: AckReply on success, NackError on error
 message RepoDataDeleteRequest
 {
-    repeated RecordDataLocation loc         = 1;
+    repeated RecordDataLocation loc         = 1; // Record ID and file path
 }
 
+// Request to get the file size of one or more data records from repo
+// Reply: RepoDataSizeReply on success, NackError on error
 message RepoDataGetSizeRequest
 {
-    repeated RecordDataLocation loc         = 1;
+    repeated RecordDataLocation loc         = 1; // Record ID and file path
 }
 
+// Reply to hold raw data size of one or more dat records
 message RepoDataSizeReply
 {
-    repeated RecordDataSize     size        = 1;
+    repeated RecordDataSize     size        = 1; // Record size information
 }
 
+// Request to create a data storage path on a repo
+// Reply: AckReply on success, NackError on error
 message RepoPathCreateRequest
 {
-    required string             path        = 1;
+    required string             path        = 1; // Path to raw data storage directory
 }
 
+// Request to delete a data storage path on a repo
+// Reply: AckReply on success, NackError on error
 message RepoPathDeleteRequest
 {
-    required string             path        = 1;
+    required string             path        = 1; // Path to raw data storage directory
 }
 
+
+// ============================================================================
+// ----------- Repository Messages (Core) -------------------------------------
+// ============================================================================
+
+// Request to list repositories
+// Reply: RepoDataReply on success, NackError on error
 message RepoListRequest
 {
-    optional bool               details     = 1;
-    optional bool               all         = 2;
+    optional bool               details     = 1; // Flag to include detailed repo information
+    optional bool               all         = 2; // Return all repos if true, otherwise only those administered by client
 }
 
+// Request to view details of a repository
+// Reply: RepoDataReply on success, NackError on error
 message RepoViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Repo ID
 }
 
+// Request to create a new repository. Only system admins may send this request.
+// Reply: RepoDataReply on success, NackError on error
 message RepoCreateRequest
 {
-    required string             id          = 1;
-    required string             title       = 2;
-    optional string             desc        = 3;
-    optional string             domain      = 5;
-    required string             path        = 6;
-    optional string             exp_path    = 7;
-    required string             address     = 8;
-    required string             endpoint    = 9;
-    required string             pub_key     = 10;
-    required uint64             capacity    = 11;
-    repeated string             admin       = 12;
+    required string             id          = 1; // ID of repo
+    required string             title       = 2; // Title
+    optional string             desc        = 3; // Description
+    optional string             domain      = 5; // RESERVED
+    required string             path        = 6; // Path to storage directories
+    optional string             exp_path    = 7; // RESERVED
+    required string             address     = 8; // Repo server address
+    required string             endpoint    = 9; // Globus endpoint UUID or legacy name
+    required string             pub_key     = 10; // Public encryption key
+    required uint64             capacity    = 11; // Total data capacity
+    repeated string             admin       = 12; // Repo admin(s)
 }
 
+// Request to update an existing repository. Only system or repos admins may
+// send this request. NOTE: Changing the storage path will not automatically
+// move raw data files - this must be done manually.
+// Reply: RepoDataReply on success, NackError on error
 message RepoUpdateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional string             desc        = 3;
-    optional string             domain      = 5;
-    optional string             path        = 6;
-    optional string             exp_path    = 7;
-    optional string             address     = 8;
-    optional string             endpoint    = 9;
-    optional string             pub_key     = 10;
-    optional uint64             capacity    = 11;
-    repeated string             admin       = 12;
+    required string             id          = 1; // ID of repo
+    optional string             title       = 2; // Title
+    optional string             desc        = 3; // Description
+    optional string             domain      = 5; // RESERVED
+    optional string             path        = 6; // Path to storage directories
+    optional string             exp_path    = 7; // RESERVED
+    optional string             address     = 8; // Repo server address
+    optional string             endpoint    = 9; // Globus endpoint UUID or legacy name
+    optional string             pub_key     = 10; // Public encryption key
+    optional uint64             capacity    = 11; // Total data capacity
+    repeated string             admin       = 12; // Repo admin(s)
 }
 
+// Request to delete a repository. Only system or repos admins may send this
+// request. NOTE: All data records for all allocations must be moved/deleted
+// first or this request will fail.
+// Reply: AckReply on success, NackError on error
 message RepoDeleteRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Repo ID
 }
 
+// Reply containing details of one or more repositories
 message RepoDataReply
 {
-    repeated SDMS.RepoData      repo        = 1;
+    repeated SDMS.RepoData      repo        = 1; // Repo details
 }
 
+// Request to calculate the count and size of data stored in onr or more collections.
+// Reply: RepoCalcSizeReply on success, NackError on error
+// TODO: This request should be in Collection category
 message RepoCalcSizeRequest
 {
-    required bool               recurse     = 1;
-    repeated string             item        = 2;
+    required bool               recurse     = 1; // Recursive flag
+    repeated string             item        = 2; // Data / collection IDs
 }
 
+// Reply containing data size information
 message RepoCalcSizeReply
 {
-    repeated AllocStatsData     stats       = 1;
+    repeated AllocStatsData     stats       = 1; // Data size info
 }
 
+// Request to list all allocations on a repo administered by client.
+// Reply: RepoAllocationsReply on success, NackError on error
 message RepoListAllocationsRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Repo ID
 }
 
+// Request to list allocations of client or project.
+// Reply: RepoAllocationsReply on success, NackError on error
 message RepoListSubjectAllocationsRequest
 {
-    optional string             subject     = 1;
-    optional bool               stats       = 2;
+    optional string             subject     = 1; // Optional project ID
+    optional bool               stats       = 2; // Flag to include allocation statistics
 }
 
+// Request to list allocations belonging to owner of data record or collection.
+// Client must have CREATE permission on collection.
+// Reply: RepoAllocationsReply on success, NackError on error
 message RepoListObjectAllocationsRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Collection ID/alias
 }
 
+// Request to view an allocation of a client or project on a given repo. If a
+// project is specified, client must be associated with the project.
+// Reply: RepoAllocationsReply on success, NackError on error
 message RepoViewAllocationRequest
 {
-    required string             repo        = 1;
-    required string             subject     = 2;
+    required string             repo        = 1; // Repo ID
+    required string             subject     = 2; // Optional project ID
 }
 
+// Reply containing allocation information
 message RepoAllocationsReply
 {
-    repeated AllocData          alloc       = 1;
+    repeated AllocData          alloc       = 1; // Allocation information
 }
 
+// Request to calculate allocation statistics of a user or project on a given
+// repo. Only repo admins may make this request.
+// Reply: RepoAllocationStatsReply on success, NackError on error
 message RepoAllocationStatsRequest
 {
-    required string             repo        = 1;
-    optional string             subject     = 2;
+    required string             repo        = 1; // Repo ID
+    optional string             subject     = 2; // Optional user/project ID
 }
 
+// Reply containing allocation statistics.
 message RepoAllocationStatsReply
 {
-    required AllocStatsData     alloc       = 1;
+    required AllocStatsData     alloc       = 1; // Allocation stats
 }
 
-// Reply is ACK/NACK
+// Request to create a new allocation on a repo for a user or project.
+// Only repo admins may make this request. On success, a background task is
+// started to create the allocation.
+// Reply: TaskDataReply on success, NackError on error
 message RepoAllocationCreateRequest
 {
-    required string             repo        = 1;
-    required string             subject     = 2;
-    required uint64             data_limit  = 3;
-    required uint32             rec_limit   = 4;
+    required string             repo        = 1; // Repo ID
+    required string             subject     = 2; // User/project ID
+    required uint64             data_limit  = 3; // Data size limit (bytes)
+    required uint32             rec_limit   = 4; // Data record limit(count)
 }
 
-// Reply is ACK/NACK
+// Request to update an existing allocation. Only repo admins may make this
+// request.
+// Reply: AckReply on success, NackError on error
+// TODO: Rename this message to RepoAllocationUpdateRequest
 message RepoAllocationSetRequest
 {
-    required string             repo        = 1;
-    required string             subject     = 2;
-    required uint64             data_limit  = 3;
-    required uint32             rec_limit   = 4;
+    required string             repo        = 1; // Repo ID
+    required string             subject     = 2; // User/project ID
+    required uint64             data_limit  = 3; // New data size limit (bytes)
+    required uint32             rec_limit   = 4; // New data record limit (count)
 }
 
-// Reply is ACK/NACK
+// Request to set the default allocation for a user or project. If a
+// project is specified, client must be associated with the project.
+// Reply: AckReply on success, NackError on error
 message RepoAllocationSetDefaultRequest
 {
-    required string             repo        = 1;
-    optional string             subject     = 2;
+    required string             repo        = 1; // Repo ID
+    optional string             subject     = 2; // User/project ID
 }
 
-// Reply is ACK/NACK
+// Request to delete an existing allocation.  Only repo admins may make this
+// request.  On success, a background task is started to create the allocation.
+// Reply: TaskDataReply on success, NackError on error
 message RepoAllocationDeleteRequest
 {
-    required string             repo        = 1;
-    required string             subject     = 2;
+    required string             repo        = 1; // Repo ID
+    required string             subject     = 2; // User/project ID
 }
 
-// Reply is ACK/NACK
+// Request to check authorization for GridFTP action on file in a repo.
+// Reply: AckReply on success, NackError on error
 message RepoAuthzRequest
 {
-    required string             repo        = 1;
-    required string             client      = 2;
-    required string             file        = 3;
-    required string             action      = 4;
+    required string             repo        = 1; // Repo ID
+    required string             client      = 2; // Client ID
+    required string             file        = 3; // Path to file in repo
+    required string             action      = 4; // GridFTP action
 }
 
-// ============================ Topic Messages
+// ============================================================================
+// ----------- Saved Query Messages -------------------------------------------
+// ============================================================================
 
-message TopicLinkRequest
-{
-    required string             topic       = 1;
-    required string             id          = 2;
-}
+// NOTE: All saved query requests are restricted to authenticated client.
 
-message TopicUnlinkRequest
-{
-    required string             topic       = 1;
-    required string             id          = 2;
-}
-
-// ============================ Query Messages
-
+// Request to create a new saved query.
+// Reply: QueryDataReply on success, NackError on error
 message QueryCreateRequest
 {
-    required string             title       = 1;
-    required SearchRequest      query       = 2;
+    required string             title       = 1; // Query title
+    required SearchRequest      query       = 2; // Search parameters
 }
 
+// Request to update an existing saved query.
+// Reply: QueryDataReply on success, NackError on error
 message QueryUpdateRequest
 {
-    required string             id          = 1;
-    optional string             title       = 2;
-    optional SearchRequest      query       = 3;
+    required string             id          = 1; // Query ID
+    optional string             title       = 2; // Optional new title
+    optional SearchRequest      query       = 3; // Optional new search parameters
 }
 
+// Request to
+// Reply: AckReply on success, NackError on error
 message QueryDeleteRequest
 {
-    repeated string             id          = 1;
+    repeated string             id          = 1; // Query ID
 }
 
+// Request to list saved queries.
+// Reply: ListingReply on success, NackError on error
 message QueryListRequest
 {
-    optional uint32             offset      = 1;
-    optional uint32             count       = 2;
+    optional uint32             offset      = 1; // Result offset
+    optional uint32             count       = 2; // Result count
 }
 
+// Request to view a saved query information.
+// Reply: QueryDataReply on success, NackError on error
 message QueryViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Query ID
 }
 
+// Request to execute the specified saved query.
+// Reply: ListingReply on success, NackError on error
 message QueryExecRequest
 {
-    required string             id          = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    required string             id          = 1; // Query ID
+    optional uint32             offset      = 2; // Results offset
+    optional uint32             count       = 3; // Results count
 }
 
+// Reply containing saved query data
 message QueryDataReply
 {
-    required string             id          = 1;
-    required string             title       = 2;
-    required string             owner       = 4;
-    required uint32             ct          = 5;
-    required uint32             ut          = 6;
-    required SearchRequest      query       = 7;
-    //repeated SDMS.QueryData     query       = 1;
+    required string             id          = 1; // Query ID
+    required string             title       = 2; // Title
+    required string             owner       = 4; // Owner user ID
+    required uint32             ct          = 5; // Query create timestamp
+    required uint32             ut          = 6; // Query update timestamp
+    required SearchRequest      query       = 7; // Search parameters
 }
 
-// ============================ Annotation Messages
 
-message AnnotationListBySubjectRequest
+// ============================================================================
+// ----------- Annotation Messages --------------------------------------------
+// ============================================================================
+
+// Request to list annotations associated with a data record or collection.
+// Reply: NoteDataReply on success, NackError on error
+message NoteListBySubjectRequest
 {
-    required string             subject     = 1;
+    required string             subject     = 1; // Data record or collection ID/alias
 }
 
-message AnnotationViewRequest
+// Request to view details of an annotation
+// Reply: NoteDataReply on success, NackError on error
+message NoteViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Note ID
 }
 
-message AnnotationDataReply
+// Request to create a new annotation and associate with a data record
+// or collection. Creator must have READ_REC permission to create an
+// annotation, and must be the owner/creator of the subject to activate
+// on note creation.
+// Reply: NoteDataReply on success, NackError on error
+message NoteCreateRequest
 {
-    repeated SDMS.NoteData      note    = 1;
-    repeated SDMS.ListingData   update  = 2;
+    required SDMS.NoteType      type        = 1; // Note type
+    required string             subject     = 2; // Subject data record or collection ID/alias
+    required string             title       = 3; // Note title
+    required string             comment     = 4; // Note comments (text)
+    required bool               activate    = 5; // Flag to activate on creation
 }
 
-message AnnotationCreateRequest
+// Request to update an existing annotation. Only owner/creator of note
+// subject may change note title, type, or state.
+// Reply: NoteDataReply on success, NackError on error
+message NoteUpdateRequest
 {
-    required SDMS.NoteType      type        = 1;
-    required string             subject     = 2;
-    required string             title       = 3;
-    required string             comment     = 4;
-    required bool               activate    = 5;
+    required string             id          = 1; // Note ID
+    required string             comment     = 2; // Comments about update
+    optional SDMS.NoteType      new_type    = 3; // Optional new note type
+    optional SDMS.NoteState     new_state   = 4; // Optional new note state
+    optional string             new_title   = 5; // Optional new note title
 }
 
-message AnnotationUpdateRequest
+// Request to edit an existing comment within a note. Only the author of
+// the original comment may update the comment.
+// Reply: NoteDataReply on success, NackError on error
+message NoteCommentEditRequest
 {
-    required string             id          = 1;
-    required string             comment     = 2;
-    optional SDMS.NoteType      new_type    = 3;
-    optional SDMS.NoteState     new_state   = 4;
-    optional string             new_title   = 5;
+    required string             id          = 1; // Note ID
+    required uint32             comment_idx = 2; // Index of comment to edit
+    required string             comment     = 3; // New comment text
 }
 
-message AnnotationCommentEditRequest
+// Reply containing note information and any record/collection updates due to
+// side effects.
+message NoteDataReply
 {
-    required string             id          = 1;
-    required uint32             comment_idx = 2;
-    required string             comment     = 3;
+    repeated SDMS.NoteData      note    = 1; // Note information
+    repeated SDMS.ListingData   update  = 2; // Updated data records / collections
 }
 
-// ============================ Task Messages
+// ============================================================================
+// ----------- Task Messages --------------------------------------------------
+// ============================================================================
 
+// Request to view a specific task.
+// Reply: TaskDataReply on success, NackError on error
 message TaskViewRequest
 {
-    required string             task_id     = 1;
+    required string             task_id     = 1; // Task ID
 }
 
+// Request to list tasks for auth client. The 'since' and 'from'/'to' parameters
+// are mutually exclusive.
+// Reply: TaskDataReply on success, NackError on error
 message TaskListRequest
 {
-    optional string             proj_id     = 1;
-    optional uint32             since       = 2;
-    optional uint32             from        = 3;
-    optional uint32             to          = 4;
-    repeated SDMS.TaskStatus    status      = 5;
-    optional uint32             offset      = 6;
-    optional uint32             count       = 7;
+    optional uint32             since       = 1; // Tasks updated since given seconds
+    optional uint32             from        = 2; // Tasks updated starting from timestamp
+    optional uint32             to          = 3; // Tasks updated until timestamp
+    repeated SDMS.TaskStatus    status      = 4; // List of status types to return
+    optional uint32             offset      = 5; // Result offset
+    optional uint32             count       = 6; // Result count
 }
 
+// Reply containing detailed information for one or more tasks.
 message TaskDataReply
 {
-    repeated SDMS.TaskData      task        = 1;
+    repeated SDMS.TaskData      task        = 1; // Task information
+    //optional uint32             offset      = 2; // Offset of this result page
+    //optional uint32             count       = 3; // Count of this result page
+    //optional uint32             total       = 4; // Total number of results
 }
 
 
-// ============================ Tag Messages
+// ============================================================================
+// ----------- Tag Messages ---------------------------------------------------
+// ============================================================================
 
-
-// Returns TagDataReply
+// Request to search for a tag against an ngram index of existing tag names.
+// Reply: TagDataReply on success, NackError on error
 message TagSearchRequest
 {
-    optional string             name        = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    optional string             name        = 1; // Partial/full tag name
+    optional uint32             offset      = 2; // Result offset
+    optional uint32             count       = 3; // Result count
 }
 
-// Returns TagDataReply
+// Request to list all existing tags sorted by reference count.
+// Reply: TagDataReply on success, NackError on error
 message TagListByCountRequest
 {
-    optional uint32             offset      = 1;
-    optional uint32             count       = 2;
+    optional uint32             offset      = 1; // Result offset
+    optional uint32             count       = 2; // Result count
 }
 
+// Reply containing statistics
 message TagDataReply
 {
-    repeated SDMS.TagData       tag         = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    repeated SDMS.TagData       tag         = 1; // Tag information
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
 }
 
 
-// ============================ Schema / Validation Messages
+// ============================================================================
+// ----------- Schema / Validation Messages -----------------------------------
+// ============================================================================
 
+// Request to validate metadata against a given metadata schema.
+// Reply: MetadataValidateReply on success, NackError on error
 message MetadataValidateRequest
 {
-    required string             metadata    = 1;
-    required string             sch_id      = 2;
+    required string             metadata    = 1; // Metadata as a JSON string
+    required string             sch_id      = 2; // Schema ID to validate against
 }
 
+// Reply containing metadata errors
 message MetadataValidateReply
 {
-    optional string             errors      = 1;
+    optional string             errors      = 1; // Validation error message
 }
 
+// Request to view a schema. If the resolve option is true, all schema references
+// will be loaded and stored in the '_refs' field of the specified schema.
+// Reply: SchemaDataReply on success, NackError on error
 message SchemaViewRequest
 {
-    required string             id          = 1;
-    optional bool               resolve     = 2;
+    required string             id          = 1; // Schema ID
+    optional bool               resolve     = 2; // Flag to resolve references
 }
 
+// Request to search for schemas.
+// Reply: SchemaDataReply on success, NackError on error
 message SchemaSearchRequest
 {
-    optional string             id          = 1;
-    optional string             text        = 2;
-    optional string             owner       = 3;
-    optional SDMS.SortOption    sort        = 4;
-    optional bool               sort_rev    = 5;
-    optional uint32             offset      = 6;
-    optional uint32             count       = 7;
+    optional string             id          = 1; // Partial schema ID (ngram index)
+    optional string             text        = 2; // Word or phrase to match in description
+    optional string             owner       = 3; // Owner of schema
+    optional SDMS.SortOption    sort        = 4; // Sort order
+    optional bool               sort_rev    = 5; // Flag to reverse sort order
+    optional uint32             offset      = 6; // Result offset
+    optional uint32             count       = 7; // Result count
 }
 
+// Reply containing detailed information for one or more schemas.
 message SchemaDataReply
 {
-    repeated SDMS.SchemaData    schema      = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    repeated SDMS.SchemaData    schema      = 1; // Schema details
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
 }
 
+// Request to create a new schema. Only system admins may set the system flag.
+// Reply: AckReply on success, NackError on error
 message SchemaCreateRequest
 {
-    required string             id          = 1;
-    required string             desc        = 2;
-    required bool               pub         = 3;
-    required bool               sys         = 4;
-    required string             def         = 5;
+    required string             id          = 1; // Schema ID
+    required string             desc        = 2; // Description
+    required bool               pub         = 3; // Public flag
+    required bool               sys         = 4; // System flag
+    required string             def         = 5; // Schema definition (JSON schema specification)
 }
 
-message SchemaReviseRequest
-{
-    required string             id          = 1;
-    optional string             desc        = 2;
-    optional bool               pub         = 3;
-    optional bool               sys         = 4;
-    optional string             def         = 5;
-}
-
+// Request to update an existing schema. Updates are not allowed for schemas that
+// are in use or referenced by other schemas.
+// Reply: AckReply on success, NackError on error
 message SchemaUpdateRequest
 {
-    required string             id          = 1;
-    optional string             id_new      = 2;
-    optional string             desc        = 3;
-    optional bool               pub         = 4;
-    optional bool               sys         = 5;
-    optional string             def         = 6;
+    required string             id          = 1; // Schema ID
+    optional string             id_new      = 2; // Optional new schema ID
+    optional string             desc        = 3; // Optional new description
+    optional bool               pub         = 4; // Optional new public flag
+    optional bool               sys         = 5; // Optional new system flag
+    optional string             def         = 6; // Optional new definition
 }
 
+// Request to revise an existing schema. Revision creates a copy of the original
+// schema with a new revision number and updated fields.
+// Reply: AckReply on success, NackError on error
+message SchemaReviseRequest
+{
+    required string             id          = 1; // Schema ID
+    optional string             desc        = 2; // Optional new description
+    optional bool               pub         = 3; // Optional new public flag
+    optional bool               sys         = 4; // Optional new system flag
+    optional string             def         = 5; // Optional new definition
+}
+
+
+// Request to delete an existing schema. Deletion is not allowed for schema that
+// are in use or are referenced by other schemas.
+// Reply: AckReply on success, NackError on error
 message SchemaDeleteRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Schema ID
 }
 
 
-// ============================ Catalog / Topic Messages
+// ============================================================================
+// ----------- Catalog / Topic Messages ---------------------------------------
+// ============================================================================
 
-
-
-// Returns TopicDataReply
+// Request to list catalog topics. If topic_id is specified, only child topics
+// of that topic are returned; otherwise all top-level topics are returned.
+// Reply: TopicDataReply on success, NackError on error
 message TopicListTopicsRequest
 {
-    optional string             topic_id    = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
+    optional string             topic_id    = 1; // Optional parent topic
+    optional uint32             offset      = 2; // Result offset
+    optional uint32             count       = 3; // Result count
 }
 
-// Returns TopicDataReply
+// Request to view a specific topic.
+// Reply: TopicDataReply on success, NackError on error
 message TopicViewRequest
 {
-    required string             id          = 1;
+    required string             id          = 1; // Topic ID
 }
 
-// Returns TopicDataReply
+// Request to search for topics by category words/phrase.
+// Reply: TopicDataReply on success, NackError on error
 message TopicSearchRequest
 {
-    optional string             phrase      = 1;
+    optional string             phrase      = 1; // Word/phrase to match
 }
 
+// Reply containing details of one or more topics.
 message TopicDataReply
 {
-    repeated TopicData          topic       = 1;
-    optional uint32             offset      = 2;
-    optional uint32             count       = 3;
-    optional uint32             total       = 4;
+    repeated TopicData          topic       = 1; // Topic details
+    optional uint32             offset      = 2; // Offset of this result page
+    optional uint32             count       = 3; // Count of this result page
+    optional uint32             total       = 4; // Total number of results
 }
 

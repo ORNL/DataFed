@@ -328,8 +328,8 @@ Metadata
 The metadata of a data record is distinct from the built-in record fields such as title and description,
 and is represented using Javascript Object Notation (JSON). JSON was selected because it is human-readable, can represent
 arbitrary structured documents, and is easily validated using JSON-based schemas (see `<https://json-schema.org/>`_). Like
-other fields, metadata is searchable using the powerful built-in query language described in the :ref:`Data Search` section of
-this document.
+other fields, metadata is searchable using the powerful built-in query language described in the :ref:`Data and Collection Search`
+section of this document.
 
 When creating or updating a data record, metadata may be directly specified or a JSON file may be referenced as the metadata source.
 When updating the metadata associated with an existing data record, the user has the option to either replace all of the existing
@@ -392,25 +392,26 @@ equality tests (i.e. == and !=); however the title and description fields are fu
 searches as well. When composing search expressions, the field names as shown in the third column of the table must be used.
 User-specified metadata fields can be searched by prefixing the field names in the associated JSON document with "md.".
 
-==============  ========  ========  =========================================
-Field           Type      Name      Description
-==============  ========  ========  =========================================
-ID              Auto      id        Auto-assigned system-unique identifier
-Alias           Optional  alias     Human-friendly alternative identifier
-Title           Required  title     Title of record
-Description     Optional  desc      Description of record (markdown allowed)
-Tags            Optional  ---       Tag list
-Metadata        Optional  md.*      User-specified JSON document
-Provenance      Optional  ---       Relationship(s) with other data records
-Allocation      Default   ---       Data repository ID of allocation used
-Owner           Auto      owner     User ID of current record owner
-Creator         Auto      creator   User ID of original record creator
-Source          Auto      source    Globus path of source raw data
-Size            Auto      size      Size of raw data, in bytes
-Ext             Optional  ext       Extension of raw data file
-Create Time     Auto      ct        Creation timestamp (Unix)
-Update Time     Auto      ut        Update timestamp (Unix)
-==============  ========  ========  =========================================
+===============  ========  ========  =========================================
+Field            Type      Name      Description
+===============  ========  ========  =========================================
+ID               Auto      id        Auto-assigned system-unique identifier
+Alias            Optional  alias     Human-friendly alternative identifier
+Title            Required  title     Title of record
+Description      Optional  desc      Description of record (markdown allowed)
+Tags             Optional  ---       Tag list
+Metadata Schema  Optional  schema    Schema ID for metadata
+Metadata         Optional  md.*      User-specified JSON document
+Provenance       Optional  ---       Relationship(s) with other data records
+Allocation       Default   ---       Data repository ID of allocation used
+Owner            Auto      owner     User ID of current record owner
+Creator          Auto      creator   User ID of original record creator
+Source           Auto      source    Globus path of source raw data
+Size             Auto      size      Size of raw data, in bytes
+Ext              Optional  ext       Extension of raw data file
+Create Time      Auto      ct        Creation timestamp (Unix)
+Update Time      Auto      ut        Update timestamp (Unix)
+===============  ========  ========  =========================================
 
 
 -----------
@@ -463,7 +464,7 @@ Public Collections
 
 Collections can be set to public access, in which case the collection and all of its contents will become discoverable and
 readable by any DataFed user. Public access is implemented through a DataFed catalog system which allows users to browse
-and search for public collections and datasets. Please refer to the :ref:`Catalog` section for more information.
+and search for public collections and datasets. Please refer to the `Catalog`_ section for more information.
 
 Field Summary
 -------------
@@ -509,7 +510,6 @@ the creating user, becomes the owner of the new record or collection. While user
 records and collections they create within a project, the allocation of the project is used to store and manage any raw
 data associated with these records.
 
-
 ---------------
 Access Controls
 ---------------
@@ -519,11 +519,11 @@ collections. Permissions can be configured to apply to specific users, groups of
 these, and define what specific actions users can take. Collections also allow specification of inherited permissions that
 are applied to items linked within it. The individual permissions are as follows:
 
-* READ REC - Allows reading basic information about a data record or collection.
-* READ META - Allows reading structured metadata of a data record.
+* READ RECORD - Allows reading basic information about a data record or collection.
+* READ METADATA - Allows reading structured metadata of a data record.
 * READ DATA - Allows downloading raw data from a data record.
-* WRITE REC - Allows updating basic information of a data record or collection.
-* WRITE META - Allows updating structured metadata of a data record.
+* WRITE RECORD - Allows updating basic information of a data record or collection.
+* WRITE METADATA - Allows updating structured metadata of a data record.
 * WRITE DATA - Allows uploading raw data to a data record.
 * LIST - Allows listing of items linked within a collection (does not imply reading these items)
 * LINK - Allows linking an unlinking items to/from a collection
@@ -565,17 +565,77 @@ storage allocation may be specified, or a specific storage allocation selected w
 be accessed in a consistent manner no matter which data repository it is stored on; however, the physical proximity of a data
 repository in relation to the point of use of data can impact access latency.
 
+----------------
+Metadata Schemas
+----------------
+
+Metadata schemas are documents that define and validate the allowed fields and field types of the domain-specific metadata
+associated with data records. Schemas can be used to constrain the values of fields, including min/max values, numeric
+ranges, or text patterns, and can also define conditional constraints. Existing schemas can be referenced by new schemas as
+a sub-document, or as a custom type for a local field. When a defined schema is associated with a data record, the domain-
+specific metadata of that record is validated against the schema, and if any errors are found, the data record is flagged
+and the validation errors are stored with the data record for subsequent review. Optionally, a flag can be used in the
+DataFed CLI/API to reject data record create or update requests if the associated metadata does not validate against a
+specified schema.
+
+In DataFed, the metadata schema implementation is based on a modified version of the JSON Schema Specification, version
+'2020-12', available at `<https://json-schema.org/>`_. The primary difference between DataFed's schema implementation and the
+standard is how schemas are identified and referenced. With the official JSON schema specification, schemas are both identified
+and accessed via URIs. This approach allows arbitrary storage, distribution, and reuse of schemas; however, it also introduces
+significant latency and resource costs within DataFed services. For this reason, DataFed instead stores all schemas locally
+and restricts schema references to local schemas only. However, external schemas can still be imported into DataFed and can
+then be referenced with a local identifier.
+
+----
+Tags
+----
+
+Tags are simple words that can be associated with data records and collections. Tags have no inherent meaning in themselves,
+but can be useful for organizing data in a faceted manner, via saved queries, rather than a hierarchical manner through collections.
+Tags are tracked and reference counted, and the web portal features an autocomplete tag entry widget that shows matching available
+tags with current reference counts.
+
+-----------
+Annotations
+-----------
+
+Annotations are a feature that allows users (with proper permissions) to attach general notifications, questions, warnings, and errors to
+data records. Annotations have several states including "open", "active", and "closed". When an annotation is initially created,
+is in the "open" state by default and only the owner/creator of the data record and the author of the annotation will be able see
+the new annotation. A mechanism is provided to allow the two parties to exchange information, and if deemed suitable by the owner
+of the data record, the annotation can be "activated" which will make it visible to all users that have access to the associated
+record.
+
+In addition, if a record has dependent records (via provenance references) and an error or warning annotation is activated,
+then the dependent records will have new annotations automatically created with links to the parent annotation. The owners of the
+dependent records will then have an opportunity to perform an impact assessment and either close or activate the derived annotations.
+This process continues down the provenance relationships as each derived annotation is activated. This mechanism enables a form of
+data "quality assurance" even when the data producers and data consumers are unknown to one other.
+
+In a future release, users will be notified via email when annotations associated with owned or derived records are created or updated.
+
+--------------------------
+Data and Collection Search
+--------------------------
+
+DataFed provides a powerful search feature that allows data records and collections to found within a users personal data space,
+across projects, and data/collections shared by other users and/or projects. Searches can be saved and will then be accessible
+via the "Saved Queries" feature in the DataFed web portal, the command-line interface, and the Python API. Below is a list of fields
+that can be used for searches and saved queries.
+
+* ID/Alias - A full or partial ID or alias with wildcard support
+* Text - Word/phrases within title and/or description (full-text indexed)
+* Tags - Assigned tags
+* Date / Time - "From" and "To" date ranges based on record update timestamp
+* Creator - Creators user ID
+* Metadata Schema - Metadata schema ID
+* Metadata Query - Domain-specific metadata query expression (schema-aware query builder provided)
+* Metadata Errors - Finds records with metadata schema validation errors
+
 -------
 Catalog
 -------
 
-The DataFed catalog allows collections and data records to be is internally published for use by any DataFed user. The catalog
-allows users to browse collections through hierarchical categories and to search for collections and datasets directly by
-filtering field values.
-
-
------------
-Data Search
------------
-
-TBD
+The DataFed catalog allows collections and data records to be is internally published (without DOI numbers) for use by any
+DataFed user. The catalog allows users to browse collections by hierarchical categories and to search for collections and datasets
+directly by filtering relevant field and metadata schema values.

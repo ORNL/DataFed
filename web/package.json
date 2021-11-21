@@ -1,0 +1,35 @@
+{
+  "name": "datafed-ws",
+  "version": "1.2.0-4",
+  "description": "DataFed web service",
+  "main": "sdms-ws.js",
+  "dependencies": {
+    "client-oauth2": "^4.3.3",
+    "cookie-parser": "^1.4.5",
+    "ect": "^0.5.9",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "helmet": "^4.6.0",
+    "ini": "^2.0.0",
+    "protobufjs": "^6.11.2",
+    "zeromq": "^5.2.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ORNL/DataFed.git"
+  },
+  "keywords": [
+    "datafed",
+    "data",
+    "management"
+  ],
+  "author": "Dale Stansberry",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ORNL/DataFed/issues"
+  },
+  "homepage": "https://github.com/ORNL/DataFed#readme"
+}

@@ -10,11 +10,15 @@
 #include "Config.hpp"
 #include "Version.pb.h"
 
-
 using namespace std;
 using namespace SDMS;
 namespace po = boost::program_options;
 
+
+/** @brief Entry point for Core Server
+ *
+ * Parses command line options then creates and runs a CoreServer instance.
+ */
 int main( int a_argc, char ** a_argv )
 {
     try
@@ -24,7 +28,7 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_SERVER );
+        DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE );
 
         Core::Config &  config = Core::Config::getInstance();
         string          cfg_file;
@@ -60,7 +64,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "help" ) )
             {
-                cout << "DataFed Core Server, ver. " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_SERVER << "\n";
+                cout << "DataFed Core Server, ver. " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE << "\n";
                 cout << "Usage: sdms-core [options]\n";
                 cout << opts << endl;
                 return 0;
@@ -68,7 +72,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "version" ))
             {
-                cout << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_SERVER << endl;
+                cout << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE << endl;
                 return 0;
             }
 
@@ -114,6 +118,8 @@ int main( int a_argc, char ** a_argv )
             DL_ERROR( "Options error: " << e.what() );
             return 1;
         }
+
+        // Create and run CoreServer instance. Configuration is held in Config singleton
 
         Core::Server server;
         server.run();

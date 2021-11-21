@@ -91,7 +91,7 @@ router.post('/create', function (req, res) {
                 validateProperties( req.body.def.properties );
 
                 var obj = { cnt: 0, ver: 0, pub: req.body.pub, def: req.body.def };
-        
+
                 if ( req.body.sys ){
                     if ( !client.is_admin )
                         throw [ g_lib.ERR_PERM_DENIED, "Creating a system schema requires admin privileges."];
@@ -101,19 +101,19 @@ router.post('/create', function (req, res) {
                     obj.own_id = client._id;
                     obj.own_nm = client.name;
                 }
-        
+
                 g_lib.procInputParam( req.body, "_sch_id", false, obj );
                 g_lib.procInputParam( req.body, "desc", false, obj );
-        
+
                 var sch = g_db.sch.save( obj, { returnNew: true }).new;
-        
+
                 updateSchemaRefs( sch );
                 fixSchOwnNm( sch );
-        
+
                 delete sch._id;
                 delete sch._key;
                 delete sch._rev;
-        
+
                 res.send([ sch ]);
             }
         });
@@ -184,7 +184,7 @@ router.post('/update', function (req, res) {
                     obj.own_id = null;
                     obj.own_nm = null;
                 }
-            
+
                 g_lib.procInputParam( req.body, "_sch_id", true, obj );
 
                 if ( obj.id && ( sch_old.ver || g_db.sch_ver.firstExample({ _from: sch_old._id }) )){
@@ -257,6 +257,7 @@ router.post('/revise', function (req, res) {
                     throw [ g_lib.ERR_PERM_DENIED, "Revising a system schema requires admin privileges."];
 
                 sch.ver++;
+                sch.cnt = 0;
 
                 if ( req.body.pub != undefined ){
                     sch.pub = req.body.pub;
@@ -396,7 +397,7 @@ router.get('/view', function (req, res) {
         sch.depr = g_db.sch_ver.firstExample({ _from: sch._id })?true:false;
         sch.uses = g_db._query("for i in 1..1 outbound @sch sch_dep return {id:i.id,ver:i.ver}",{sch:sch._id}).toArray();
         sch.used_by = g_db._query("for i in 1..1 inbound @sch sch_dep return {id:i.id,ver:i.ver}",{sch:sch._id}).toArray();
-        
+
         delete sch._id;
         delete sch._key;
         delete sch._rev;
@@ -447,7 +448,8 @@ router.get('/search', function (req, res) {
 
         if ( req.queryParams.text ){
             // TODO handle multiple words/phrases
-            qry += " and analyzer( phrase(i['desc'],'" + req.queryParams.text.toLowerCase() + "'), 'text_en')";
+            qry += " and analyzer( phrase(i['desc'],@text), 'text_en')";
+            par.text = req.queryParams.text.toLowerCase();
         }
 
         if ( req.queryParams.id ){

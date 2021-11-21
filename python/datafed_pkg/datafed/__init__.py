@@ -27,4 +27,4 @@ from . import Version_pb2
 
 name = "datafed"
 
-version = "{}.{}.{}:{}".format(Version_pb2.VER_MAJOR,Version_pb2.VER_MAPI_MAJOR,Version_pb2.VER_MAPI_MINOR,Version_pb2.VER_CLIENT)
+version = "{}.{}.{}:{}".format(Version_pb2.VER_MAJOR,Version_pb2.VER_MAPI_MAJOR,Version_pb2.VER_MAPI_MINOR,Version_pb2.VER_CLIENT_PY)

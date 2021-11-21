@@ -146,7 +146,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         loadTopics();
         loadCollections();
     }
-    
+
     this.getSelectedNodes = function(){
         if ( cat_tree_div.is( ":visible" )){
             return cat_tree.getSelectedNodes();
@@ -402,7 +402,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                             <div><table class='cat-coll-info-table'><tr><td>" + (item.owner.startsWith("u/")
                                 ?"Owner:</td><td>" + item.ownerName
                                 :"Project:</td><td>"+ item.owner.substr(2)) + "</td></tr>\
-                                <tr><td>Collection ID:</td><td>" + item.id + (item.alias?" ("+item.alias+")":"") + "</td></tr>" +
+                                <tr><td>ID / Alias:</td><td>" + item.id + (item.alias?" ("+item.alias+")":"") + "</td></tr>" +
                             "</table></div>\
                         </div>\
                     </div>";
@@ -410,12 +410,10 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     }
 
     function setItems( data ){
-        //console.log("setItems",data);
         var html = "", item;
         if ( data.item && data.item.length ){
             cur_items = {};
 
-            //console.log("cur_items",data);
             for ( var i in data.item ){
                 item = data.item[i];
                 cur_items[item.id] = item;
@@ -454,25 +452,30 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         loadCollections();
     });
 
+    // Back is used to both navigate topic tree and to return from a collection view
     $(".btn-cat-back",cat_panel).on("click",function(){
         if ( cat_tree_div.is( ":visible" )){
+            // A collection was open, close it but do not alter current topic
             closeCollTree();
-        }else{
+
+            // Remove collection name from end of topic path
+            cur_topic.pop();
+            setTopicPath();
+        }else if ( cur_topic.length ){
+            // Search results were open, navigate back/up in topic hierarchy
             cur_sel = null;
             a_parent.updateBtnState();
+
+            // Remove last topic tag
+            topic_tags.pop();
+
+            // Adjust topic path and reload topics
+            cur_topic.pop();
+            setTopicPath();
+            loadTopics( cur_topic.length?cur_topic[cur_topic.length-1].id:null );
         }
 
         cat_coll_div.html( "Loading..." );
-        var top_id = cur_topic.length>1?cur_topic[cur_topic.length-2].id:null
-
-        if ( cur_topic.length ){
-            cur_topic.pop();
-            setTopicPath();
-        }
-
-        topic_tags.pop();
-
-        loadTopics( top_id );
         coll_off = 0;
         loadCollections();
     });
@@ -490,7 +493,6 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             top_res_div.html( "(loading...)" ).show();
 
             api.topicSearch( phrase, function( ok, data ){
-                //console.log("topicSearch handler",data);
                 if ( ok ){
                     setSearchTopics( data );
                 }else{
@@ -503,8 +505,8 @@ function CatalogPanel( a_id, a_frame, a_parent ){
         }
     }
 
-    
-    
+
+
     $(".btn-cat-search",cat_panel).on("click",function(){
         $(".cat-search-div",cat_panel).toggle();
     });
@@ -570,7 +572,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
     this.refreshUI = function( a_ids, a_data, a_reload ){
         // This doesn't work yet
     }
-    
+
     model.registerUpdateListener( function( a_data ){
         var data;
 
@@ -582,11 +584,11 @@ function CatalogPanel( a_id, a_frame, a_parent ){
                     if ( node.key.startsWith("d/") && node.data.size != data.size ){
                         node.data.size = data.size;
                     }
-    
+
                     util.refreshNodeTitle( node, data );
                 }
             });
-    
+
             a_parent.updateBtnState();
         }else{
             // Only care about collections in updates
@@ -600,7 +602,7 @@ function CatalogPanel( a_id, a_frame, a_parent ){
             }
         }
     });
- 
+
 
     function onCollectionsNext(){
         coll_off += settings.opts.page_sz;

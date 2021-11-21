@@ -381,7 +381,7 @@ DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_to
     TRANSLATE_BEGIN()
 
     const Value::Object & obj = result.asObject();
-    
+
     a_acc_tok = obj.getString( "access" );
     a_ref_tok = obj.getString( "refresh" );
     a_expires_in = (uint32_t) obj.getNumber( "expires_in" );
@@ -443,9 +443,12 @@ DatabaseAPI::purgeTransferRecords( size_t age )
 }
 
 void
-DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )
 {
+    DL_INFO( "DataFed user create - uid: " << a_request.uid() << ", name: " << a_request.name() );
+
     vector<pair<string,string>> params;
+    params.push_back({"secret",a_request.secret()});
     params.push_back({"uid",a_request.uid()});
     params.push_back({"name",a_request.name()});
     params.push_back({"email",a_request.email()});
@@ -464,14 +467,24 @@ DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Anon::UserDa
     params.push_back({"uuids",uuids});
 
     Value result;
-    dbGet( "usr/create", params, result );
+
+    // Catch and log any trace exception
+    try
+    {
+        dbGet( "usr/create", params, result );
+    }
+    catch( TraceException & e )
+    {
+        DL_ERROR( e.toString() );
+        throw;
+    }
 
     setUserData( a_reply, result );
 }
 
 
 void
-DatabaseAPI::userView( const Anon::UserViewRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
     params.push_back({"subject",a_request.uid()});
@@ -486,7 +499,7 @@ DatabaseAPI::userView( const Anon::UserViewRequest & a_request, Anon::UserDataRe
 
 
 void
-DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, Auth::UserDataReply & a_reply )
 {
     Value result;
 
@@ -506,7 +519,7 @@ DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, Anon::UserDataRepl
 
 
 void
-DatabaseAPI::userListAll( const UserListAllRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userListAll( const UserListAllRequest & a_request, Auth::UserDataReply & a_reply )
 {
     vector<pair<string,string>> params;
     if ( a_request.has_offset() && a_request.has_count() )
@@ -522,7 +535,7 @@ DatabaseAPI::userListAll( const UserListAllRequest & a_request, Anon::UserDataRe
 }
 
 void
-DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, Auth::UserDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -537,7 +550,7 @@ DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, Anon::User
 }
 
 void
-DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply )
 {
     string uuids = "[";
 
@@ -557,7 +570,7 @@ DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, An
 }
 
 void
-DatabaseAPI::userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Anon::UserDataReply & a_reply )
+DatabaseAPI::userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Auth::UserDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -612,7 +625,7 @@ DatabaseAPI::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, An
 }
 
 void
-DatabaseAPI::setUserData( Anon::UserDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setUserData( Auth::UserDataReply & a_reply, const Value & a_result )
 {
     UserData*               user;
     Value::ArrayConstIter   k;
@@ -955,6 +968,13 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::Re
         body.append( a_request.external()?"true":"false" );
         body.append( "\"" );
     }
+    else
+    {
+        if ( a_request.has_ext() )
+            body += ",\"ext\":\"" + a_request.ext() + "\"";
+        if ( a_request.has_ext_auto() )
+            body += string(",\"ext_auto\":") + (a_request.ext_auto()?"true":"false");
+    }
     if ( a_request.has_source() )
         body += ",\"source\":\"" + a_request.source() + "\"";
     if ( a_request.has_repo_id() )
@@ -970,6 +990,8 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::Re
         body += "]";
     }
     body += "}";
+
+    DL_INFO("dat create: " << body );
 
     dbPost( "dat/create", {}, &body, result );
 
@@ -1327,7 +1349,7 @@ DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::Listing
         ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
         "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
 
-    //DL_DEBUG("Query: [" << body << "]");
+    DL_DEBUG("Query: [" << body << "]");
 
     dbPost( "qry/exec/direct", {}, &body, result );
 
@@ -1335,18 +1357,6 @@ DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::Listing
 }
 
 
-void
-DatabaseAPI::collList( const CollListRequest & a_request, Auth::CollDataReply & a_reply )
-{
-    Value result;
-
-    if ( a_request.has_user() )
-        dbGet( "col/priv/list", {{"subject",a_request.user()}}, result );
-    else
-        dbGet( "col/priv/list", {}, result );
-
-    setCollData( a_reply, result );
-}
 
 void
 DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
@@ -1958,34 +1968,30 @@ DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataR
 }
 
 void
-DatabaseAPI::aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
+DatabaseAPI::aclSharedList( const Auth::ACLSharedListRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
 
-    if ( a_request.has_subject() )
-        params.push_back({"subject",a_request.subject()});
     if ( a_request.has_inc_users() )
         params.push_back({"inc_users",a_request.inc_users()?"true":"false"});
     if ( a_request.has_inc_projects() )
         params.push_back({"inc_projects",a_request.inc_projects()?"true":"false"});
 
-    dbGet( "acl/by_subject", params, result );
+    dbGet( "acl/shared/list", params, result );
 
     setListingDataReply( a_reply, result );
 }
 
 void
-DatabaseAPI::aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Auth::ListingReply & a_reply )
+DatabaseAPI::aclSharedListItems( const Auth::ACLSharedListItemsRequest & a_request,  Auth::ListingReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
 
     params.push_back({"owner",a_request.owner()});
-    if ( a_request.has_subject() )
-        params.push_back({"subject",a_request.subject()});
 
-    dbGet( "acl/by_subject/list", params, result );
+    dbGet( "acl/shared/list/items", params, result );
 
     setListingDataReply( a_reply, result );
 }
@@ -2682,9 +2688,9 @@ DatabaseAPI::setTopicDataReply( Auth::TopicDataReply & a_reply, const libjson::V
 }
 
 void
-DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteCreate( const NoteCreateRequest & a_request, Auth::NoteDataReply & a_reply )
 {
-    DL_INFO("annotationCreate");
+    DL_INFO("NoteCreate");
 
     Value result;
     vector<pair<string,string>> params;
@@ -2700,9 +2706,9 @@ DatabaseAPI::annotationCreate( const AnnotationCreateRequest & a_request, Auth::
 }
 
 void
-DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteUpdate( const NoteUpdateRequest & a_request, Auth::NoteDataReply & a_reply )
 {
-    DL_INFO("annotationUpdate");
+    DL_INFO("NoteUpdate");
 
     Value result;
     vector<pair<string,string>> params;
@@ -2721,7 +2727,7 @@ DatabaseAPI::annotationUpdate( const AnnotationUpdateRequest & a_request, Auth::
 }
 
 void
-DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteCommentEdit( const Auth::NoteCommentEditRequest & a_request, Auth::NoteDataReply & a_reply )
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2735,7 +2741,7 @@ DatabaseAPI::annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a
 }
 
 void
-DatabaseAPI::annotationView( const Auth::AnnotationViewRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteView( const Auth::NoteViewRequest & a_request, Auth::NoteDataReply & a_reply )
 {
     Value result;
 
@@ -2745,7 +2751,7 @@ DatabaseAPI::annotationView( const Auth::AnnotationViewRequest & a_request, Auth
 }
 
 void
-DatabaseAPI::annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply )
+DatabaseAPI::noteListBySubject( const Auth::NoteListBySubjectRequest & a_request, Auth::NoteDataReply & a_reply )
 {
     Value result;
 
@@ -2755,7 +2761,7 @@ DatabaseAPI::annotationListBySubject( const Auth::AnnotationListBySubjectRequest
 }
 
 void
-DatabaseAPI::annotationPurge( uint32_t a_age_sec )
+DatabaseAPI::notePurge( uint32_t a_age_sec )
 {
     Value result;
 
@@ -2763,7 +2769,7 @@ DatabaseAPI::annotationPurge( uint32_t a_age_sec )
 }
 
 void
-DatabaseAPI::setNoteDataReply( Auth::AnnotationDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setNoteDataReply( Auth::NoteDataReply & a_reply, const libjson::Value & a_result )
 {
     Value::ArrayConstIter    i;
 
@@ -3153,7 +3159,7 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
         {
             const Value::Object & obj = j->asObject();
             dep = a_schema->add_uses();
-            
+
             dep->set_id( obj.getString( "id" ));
             dep->set_ver( obj.getNumber( "ver" ));
         }
@@ -3167,7 +3173,7 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
         {
             const Value::Object & obj = j->asObject();
             dep = a_schema->add_used_by();
-            
+
             dep->set_id( obj.getString( "id" ));
             dep->set_ver( obj.getNumber( "ver" ));
         }
@@ -3582,8 +3588,8 @@ DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json 
 
 /**
  * @brief Sets TaskDataReply from JSON returned by a taskInit... call
- * @param a_reply 
- * @param a_result 
+ * @param a_reply
+ * @param a_result
  *
  * JSON contains an object with a "task" field containing task fields. This
  * method removes tasks that are nor in READY status from the original JSON
@@ -3606,8 +3612,8 @@ DatabaseAPI::setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Val
 
 /**
  * @brief Sets TaskDataReply from JSON returned by a task management call
- * @param a_reply 
- * @param a_result 
+ * @param a_reply
+ * @param a_result
  *
  * JSON contains an array of task objects containing task fields.
  */
@@ -3692,8 +3698,6 @@ DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataRe
 {
     vector<pair<string,string>> params;
 
-    if ( a_request.has_proj_id( ))
-        params.push_back({ "proj_id", a_request.proj_id() });
     if ( a_request.has_since( ))
         params.push_back({ "since", to_string( a_request.since() )});
     if ( a_request.has_from( ))
@@ -3837,39 +3841,6 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
             a_qry_filter = parseSearchMetadata( a_request.meta() );
         }
     }
-
-/*
-    switch ( a_request.scope() )
-    {
-        case SS_PERSONAL:
-            a_qry_begin = string("for i in ") + view + " search i.owner == @client" + a_qry_begin;
-            a_params += ",\"client\":\"" + m_client_uid + "\"";
-            break;
-        case SS_PROJECT:
-            if ( !a_request.has_owner() )
-                EXCEPT( 1, "Owner parameter missing for project scope." );
-
-            a_qry_begin = string("for i in ") + view + " search i.owner == @owner" + a_qry_begin;
-            a_params += ",\"owner\":\"" + a_request.owner() + "\"";
-            break;
-        case SS_SHARED:
-            if ( !a_request.has_owner() )
-                EXCEPT( 1, "Owner parameter missing for shared data scope." );
-
-            a_qry_begin = string("for i in ") + view + " search i.owner == @owner" + a_qry_begin;
-            a_params += ",\"owner\":\"" + a_request.owner() + "\"";
-            break;
-        case SS_PUBLIC:
-            if ( a_request.has_owner() )
-            {
-                a_qry_begin = " and i.owner == @owner" + a_qry_begin;
-                a_params += ",\"owner\":\"" + a_request.owner() + "\"";
-            }
-
-            a_qry_begin = string("for i in ") + view + " search i.public == true" + a_qry_begin;
-            break;
-    }
-*/
 
     if ( a_request.coll_size() > 0 )
     {
@@ -4196,6 +4167,8 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
 
     static set<string> date_funcs = {"date_now","date_timestamp"};
     static set<string> other = {"like","true","false","null","in"};
+    static const char* deftmp = "=<>!~|&+-/*^()0123456789. ";
+    static set<char> defchar(deftmp,deftmp+strlen(deftmp));
 
 
     struct Var
@@ -4219,17 +4192,15 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
     ParseState state = PS_DEFAULT;
     Var v;
     string result,tmp;
-    char /*last = 0, next = 0,*/ next_nws = 0;
+    char next_nws = 0;
     string::const_iterator c2;
     bool val_token, last_char = false;
+    int back_cnt = 0; // Counts contiguous backslashes inside quoted strings
+
+    //DL_DEBUG( "parseMeta " << a_query );
 
     for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
     {
-        /*if ( c+1 != a_query.end() )
-            next = *(c+1);
-        else
-            next = 0;*/
-
         next_nws = 0;
         for ( c2 = c + 1; c2 != a_query.end(); c2++ )
         {
@@ -4239,48 +4210,109 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                 break;
             }
         }
-        //cout << "c[" << *c << "]\n";
+
+        DL_DEBUG( "c[" << *c << "]" );
 
         switch( state )
         {
         case PS_SINGLE_QUOTE: // Single quote (not escaped)
-            if ( *c == '\'' && *(c-1) != '\\' )
-                state = PS_DEFAULT;
+            // Must account for escaped quotes (\') and preceeding escaped backslashes (\\)
+            // For example:
+            // 'abc\'' - quote is escaped
+            // 'abc\\'' - backslash is escaped, not quote
+            // 'abc\\\''  - backslash and quote are escaped
+            // 'abc\\\\''  - two backslashes are escaped, and quote
+            // The rule is: if the number of preceeding contiguous backslashes is even, then the quote is NOT escaped
+            // This applies to double quotes in the subsequent case as well
+
+            if ( *c == '\\' )
+            {
+                back_cnt++;
+            }
+            else
+            {
+                // If this is NOT an escaped quote, go back to default state
+                if ( *c == '\'' && ( back_cnt % 2 == 0 ))
+                {
+                    //DL_DEBUG( "single q end" );
+                    state = PS_DEFAULT;
+                }
+                else
+                {
+                    back_cnt = 0;
+                }
+            }
+
             break;
         case PS_DOUBLE_QUOTE: // Double quote (not escaped)
-            if ( *c == '\"' && *(c-1) != '\\' )
-                state = PS_DEFAULT;
+            // See comments in PS_SINGLE_QUOTE case above
+            if ( *c == '\\' )
+            {
+                back_cnt++;
+            }
+            else
+            {
+                // If this is NOT an escaped quote, go back to default state
+                if ( *c == '\"' && ( back_cnt % 2 == 0 ))
+                {
+                    //DL_DEBUG( "dbl q end" );
+                    state = PS_DEFAULT;
+                }
+                else
+                {
+                    back_cnt = 0;
+                }
+            }
+
             break;
         case PS_DEFAULT: // Not quoted, not an identifier
-            if ( *c == '\'' )
+            if ( *c == '\'' ) // Start of single-quoted string
             {
                 state = PS_SINGLE_QUOTE;
-                //cout << "single q start\n";
-                break;
+                back_cnt = 0;
+
+                //DL_DEBUG( "single q start" );
+                break; // Avoid token processing
             }
-            else if ( *c == '\"' )
+            else if ( *c == '\"' ) // Start of double-quoted string
             {
                 state = PS_DOUBLE_QUOTE;
-                //cout << "dbl q start\n";
-                break;
-            }
-            else if ( !isalpha( *c ))
-                break;
+                back_cnt = 0;
 
+                //DL_DEBUG( "dbl q start" );
+                break; // Avoid token processing
+            }
+            else if ( *c == '/' && (*(c+1) == '/' || *(c+1) == '*')) // Start of comment /* or //
+            {
+                //DL_DEBUG( "comment found" );
+                EXCEPT(1,"In-line metadata expression comments are not permitted." );
+            }
+            else if ( defchar.find( *c ) != defchar.end() ) // Check for other allowed characters
+            {
+                // Includes numeric values, operators, and parenthesis
+                break; // Avoid token processing
+            }
+            else if ( !isalpha( *c )) // Tokens must start with a-z, A-Z
+            {
+                EXCEPT(1,"Metadata expression contains invalid character(s)." );
+            }
+
+            // Detected start of a token
             v.start = c - a_query.begin();
-            //cout << "tok start: " << v.start << "\n";
             v.len = 0;
             state = PS_TOKEN;
             // FALL-THROUGH to token processing
             [[gnu::fallthrough]];
         case PS_TOKEN: // Token
-            //if ( spec.find( *c ) != spec.end() )
+            // Tokens may only contain a-z, A-Z, 0-9, '.', and '_'
+            // Tokens must start with a-z, A-Z
+
             val_token = isalnum( *c ) || *c == '.' || *c == '_';
             last_char = (( c + 1 ) == a_query.end());
 
             if ( !val_token || last_char )
             {
-                //cout << "start: " << v.start << ", len: " << v.len << "\n";
+                //cout << "tok start: " << v.start << ", len: " << v.len << "\n";
                 if ( !val_token )
                 {
                     tmp = a_query.substr( v.start, v.len );
@@ -4296,9 +4328,9 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                     tmp = a_query.substr( v.start, v.len + 1 );
                     state = PS_STOP;
                 }
-                //cout << "token[" << tmp << "]" << endl;
+                //DL_DEBUG( "token[" << tmp << "]" );
 
-                // Determine if identifier needs to be prefixed with "v." by testing agains allowed identifiers
+                // Determine if identifier needs to be prefixed with iterator by testing against allowed identifiers
                 if ( tmp == "desc" )
                 {
                     result.append( a_iter );
@@ -4332,14 +4364,6 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                     {
                         result.append( "== null" );
                     }
-                    /*else if ( boost::iequals( tmp, "istrue" ))
-                    {
-                        result.append( "== true" );
-                    }
-                    else if ( boost::iequals( tmp, "isfalse" ))
-                    {
-                        result.append( "== false" );
-                    }*/
                     else
                     {
                         result.append( a_iter );
@@ -4364,31 +4388,20 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
         }
 
         if ( state == PS_STOP )
+        {
             break;
+        }
         else if ( state == PS_DEFAULT )
         {
-            // Map operators to AQL: ? to LIKE, ~ to =~, = to ==
-
-            /*if ( *c == '?' )
-                result += " like ";
-            else if ( *c == '~' )
-                if ( last != '=' )
-                    result += "=~";
-                else
-                    result += '~';
-            else if ( *c == '=' )
-                if ( last != '=' && last != '<' && last != '>' && last != '!' && next != '~' && next != '=' )
-                    result += "==";
-                else
-                    result += '=';
-            else*/
-                result += *c;
+            result += *c;
         }
         else if ( state != PS_TOKEN )
+        {
             result += *c;
-
-        //last = *c;
+        }
     }
+
+    //DL_DEBUG( "done, state: " << (int)state );
 
     if ( state == PS_SINGLE_QUOTE || state == PS_DOUBLE_QUOTE )
     {

@@ -27,13 +27,13 @@ var frame = $("#content"),
     data_tree_div,
     data_tree = null,
     my_root_key,
-    drag_mode = 0,
+    move_mode = 0,
     drag_enabled = true,
     selectScope = null,
     dragging = false,
     hoverTimer,
     keyNav, keyNavMS,
-    pasteItems = [], pasteMode, pasteSourceParent, pasteCollections,
+    pasteItems = [], pasteSourceParent, pasteCollections,
     SS_TREE = 0,
     SS_CAT = 1,
     SS_PROV = 2,
@@ -55,9 +55,9 @@ var resize_container = $("#resize_container");
 
 $("#data-tabs-parent").resizable({
     handles:"e",
-    stop: function(event, ui){     
+    stop: function(event, ui){
         var cellPercentWidth=100 * ui.originalElement.outerWidth()/ resize_container.innerWidth();
-        ui.originalElement.css('width', cellPercentWidth + '%');  
+        ui.originalElement.css('width', cellPercentWidth + '%');
         var nextCell = ui.originalElement.next();
         var nextPercentWidth=100 * nextCell.outerWidth()/resize_container.innerWidth();
         nextCell.css('width', nextPercentWidth + '%');
@@ -540,6 +540,7 @@ function refreshCollectionNodes( node_keys, scope ){
         util.reloadNode(refresh[i]);
 }
 
+/*
 function copyItems( items, dest_node, cb ){
     var item_keys = [];
     for( var i in items )
@@ -557,9 +558,12 @@ function copyItems( items, dest_node, cb ){
             cb();
     });
 }
+*/
 
+/*
 function moveItems( items, dest_node, cb ){
-    //console.log("moveItems",items,dest_node,pasteSourceParent);
+    console.log("moveItems",items,dest_node,pasteSourceParent);
+
     var item_keys = [];
     for( var i in items )
         item_keys.push( items[i].key );
@@ -576,7 +580,7 @@ function moveItems( items, dest_node, cb ){
             cb();
 
     });
-}
+}*/
 
 function dataGet( a_ids, a_cb ){
     util.dataGet( a_ids, a_cb );
@@ -937,9 +941,11 @@ function actionUnlockSelected(){
 }
 
 function actionCutSelected(){
+    console.log("actionCutSelected");
+
     pasteItems = data_tree.getSelectedNodes();
     pasteSourceParent = pasteItems[0].parent;
-    pasteMode = "cut";
+    move_mode = 1;
     pasteCollections = [];
     for ( var i in pasteItems ){
         if ( pasteItems[i].key.startsWith("c/") )
@@ -949,14 +955,15 @@ function actionCutSelected(){
 }
 
 function actionCopySelected(){
-    //console.log("Copy");
+    console.log("actionCopySelected");
+
     if ( select_source == SS_TREE )
         pasteItems = data_tree.getSelectedNodes();
     else
         return;
 
     pasteSourceParent = pasteItems[0].parent;
-    pasteMode = "copy";
+    move_mode = 0;
     pasteCollections = [];
     for ( var i in pasteItems ){
         if ( pasteItems[i].key.startsWith("c/") )
@@ -965,21 +972,137 @@ function actionCopySelected(){
 }
 
 function actionPasteSelected(){
-    function pasteDone(){
+    console.log("actionPasteSelected");
+
+    handlePasteItems( data_tree.activeNode );
+}
+
+function handlePasteItems( a_dest_node ){
+    console.log("handlePasteItems");
+
+    if ( !pasteSourceParent || !pasteSourceParent.data )
+        return;
+
+    drag_enabled = false;
+
+    var i, proj_id, ids = [];
+
+    if ( pasteSourceParent.data.scope != a_dest_node.data.scope ){
+        console.log("Change owner");
+        var coll_id = ( a_dest_node.key == "empty" || a_dest_node.key.startsWith( "d/" ))?a_dest_node.parent.key:a_dest_node.key;
+        proj_id = pasteSourceParent.data.scope.charAt(0) == 'p'?pasteSourceParent.data.scope:null;
+
+        for( i in pasteItems ){
+            ids.push( pasteItems[i].key );
+        }
+
+        api.dataOwnerChange( ids, coll_id, null, proj_id, true, function( ok, reply ){
+            //console.log("chg owner reply:",ok,reply);
+            if ( ok ){
+                dlgOwnerChangeConfirm.show( pasteSourceParent.data.scope, a_dest_node.data.scope, reply, function( repo ){
+                    //console.log("chg owner conf:", repo );
+                    api.dataOwnerChange( ids, coll_id, repo, proj_id, false, function( ok, reply ){
+                        if ( ok ){
+                            //console.log("reply:", reply );
+                            resetTaskPoll();
+                            dialogs.dlgAlert( "Change Record Owner", "Task " + reply.task.id.substr(5) + " created to transfer data records to new owner." );
+                        }else{
+                            dialogs.dlgAlert( "Change Record Owner Error", reply );
+                        }
+                    });
+                });
+            }else{
+                dialogs.dlgAlert( "Change Record Owner Error", reply );
+            }
+            drag_enabled = true;
+        });
+        return;
+    }else if ( a_dest_node.key.startsWith( "repo/" ) || a_dest_node.parent.key.startsWith( "repo/" )){
+        console.log("Change alloc");
+
+        var key = a_dest_node.key.startsWith( "repo/" )?a_dest_node.key:a_dest_node.parent.key;
+        var idx = key.indexOf("/",5);
+        var repo_id = key.substr(0,idx);
+        proj_id = pasteSourceParent.data.scope.charAt(0) == 'p'?pasteSourceParent.data.scope:null;
+
+        for( i in pasteItems ){
+            ids.push( pasteItems[i].key );
+        }
+
+        api.dataAllocChange( ids, repo_id, proj_id, true, function( ok, reply ){
+            if ( ok ){
+                if ( reply.totCnt == 0 ){
+                    dialogs.dlgAlert( "Change Record Allocation Error", "No data records contained in selection." );
+                }else if ( reply.actCnt == 0 ){
+                    dialogs.dlgAlert( "Change Record Allocation Error", "All selected data records already use allocation on '" + repo_id + "'" );
+                }else{
+                    dialogs.dlgConfirmChoice( "Confirm Change Record Allocation", "This operation will transfer " + reply.actCnt + " record(s) (out of "+reply.totCnt +
+                        " selected) with " + util.sizeToString( reply.actSize ) + " of raw data to allocation on '" + repo_id + "'. Current allocation usage is " +
+                        util.sizeToString( reply.dataSize ) + " out of " + util.sizeToString( reply.dataLimit ) + " available and "+reply.recCount+" record(s) out of " +
+                        reply.recLimit+" available. Pending transfers may alter the amount of space available on target allocation.", ["Cancel","Confirm"], function(choice){
+                        if ( choice == 1 ){
+                            api.dataAllocChange( ids, repo_id, proj_id, false, function( ok, reply ){
+                                if ( ok ){
+                                    resetTaskPoll();
+                                    dialogs.dlgAlert("Change Record Allocation","Task " + reply.task.id.substr(5) + " created to move data records to new allocation.");
+                                }else{
+                                    dialogs.dlgAlert( "Change Record Allocation Error", reply );
+                                }
+                            });
+                        }
+                    });
+                }
+                drag_enabled = true;
+            }else{
+                dialogs.dlgAlert( "Change Record Allocation Error", reply );
+                drag_enabled = true;
+            }
+        });
+        return;
+    }else{
+        if ( a_dest_node.key.startsWith("d/")){
+            a_dest_node = a_dest_node.parent;
+        }else if ( a_dest_node.key == "empty" ){
+            a_dest_node = a_dest_node.parent;
+        }
+
+
+        var item_keys = [];
+        for( var i in pasteItems )
+            item_keys.push( pasteItems[i].key );
+
         pasteItems = [];
-        pasteSourceParent = null;
         pasteCollections = null;
-    }
 
-    var node = data_tree.activeNode;
-    if ( node && pasteItems.length ){
+        if ( move_mode ){
+            console.log("move items");
 
-        if ( node.key == "empty" || node.key.startsWith( "d/" ))
-            node = node.parent;
-        if ( pasteMode == "cut" )
-            moveItems( pasteItems, node, pasteDone );
-        else
-            copyItems( pasteItems, node, pasteDone );
+            api.colMoveItems( item_keys, pasteSourceParent.key, a_dest_node.key, function( ok, msg ) {
+                if ( ok ){
+                    refreshCollectionNodes([pasteSourceParent.key,a_dest_node.key],a_dest_node.data.scope);
+                }else{
+                    dialogs.dlgAlert( "Move Error", msg );
+                    //util.setStatusText( "Move Error: " + msg, 1 );
+                }
+
+                pasteSourceParent = null;
+                drag_enabled = true;
+            });
+        }else{
+            console.log("copy/link items");
+
+            api.linkItems( item_keys, a_dest_node.key, function( ok, msg ) {
+                if ( ok ){
+                    refreshCollectionNodes([pasteSourceParent.key,a_dest_node.key],a_dest_node.data.scope);
+                }else{
+                    dialogs.dlgAlert( "Copy Error", msg );
+                    //util.setStatusText( "Copy Error: " + msg, 1 );
+                }
+
+                pasteSourceParent = null;
+                drag_enabled = true;
+            });
+        }
     }
 }
 
@@ -1062,8 +1185,8 @@ function actionEditSelected() {
                         // TODO - Only do this if raw data source is changed
                         resetTaskPoll();
                     });
-                }); 
-            }); 
+                });
+            });
             break;
         case 'q':
             api.queryView( id, function( ok, data ){
@@ -1412,15 +1535,15 @@ function handleQueryResults( data ){
         if ( data.offset > 0 || data.total > (data.offset + data.count )){
             var page_mx = Math.ceil(data.total/settings.opts.page_sz) - 1,
                 page = Math.floor(data.offset/settings.opts.page_sz);
-    
+
             results.push({title:
                 "<button class='btn btn-icon-tiny srch-pg-first''" + (page==0?" disabled":"") + "><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> \
                 <button class='btn btn-icon-tiny srch-pg-prev'" + (page==0?" disabled":"") + "><span class='ui-icon ui-icon-triangle-1-w'></span></button> \
-                Page " + (page + 1) + " of " + (page_mx + 1) + 
+                Page " + (page + 1) + " of " + (page_mx + 1) +
                 " <button class='btn btn-icon-tiny srch-pg-next'" + (page>=page_mx?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-e'></span></button>",
                 folder:false, icon:false, checkbox:false, hasBtn:true });
         }
-    
+
         for ( i in data.item ){
             var item = data.item[i];
             // Results can be data records and/or collections
@@ -1779,7 +1902,7 @@ function treeSelectRange( a_tree, a_node ){
     */
 function pasteAllowed( dest_node, src_node ){
     //console.log("pasteAllowed:",dest_node, src_node);
-    //console.log("pasteAllowed");
+    console.log("pasteAllowed?");
 
     if ( !dest_node.data.notarg && dest_node.data.scope ){
         // Prevent pasting to self or across scopes or from other trees
@@ -1819,10 +1942,10 @@ function pasteAllowed( dest_node, src_node ){
                 }
             }
         }
-        //console.log("OK");
+        console.log("OK");
         return "over";
     }else{
-        //console.log("no 5");
+        console.log("no 5");
         return false;
     }
 }
@@ -2052,18 +2175,18 @@ export function init(){
     //console.log("browser - user from settings:",settings.user);
     var tree_source = [
         //{title:"Favorites",folder:true,icon:"ui-icon ui-icon-heart",lazy:true,nodrag:true,key:"favorites"},
-        {title:"Personal Data",key:"mydata",nodrag:true,icon:"ui-icon ui-icon-person",folder:true,lazy:true,scope:"u/"+settings.user.uid},
-        {title:"Project Data",key:"projects",folder:true,icon:"ui-icon ui-icon-view-icons",checkbox:false,folder:true,lazy:true,offset:0},
-        {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,checkbox:false,key:"shared_all",children:[
-            {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_user"},
-            {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,checkbox:false,folder:true,lazy:true,key:"shared_proj"}
+        {title:"Personal Data",key:"mydata",nodrag:true,notarg:true,icon:"ui-icon ui-icon-person",folder:true,lazy:true,scope:"u/"+settings.user.uid},
+        {title:"Project Data",key:"projects",nodrag:true,notarg:true,folder:true,icon:"ui-icon ui-icon-view-icons",checkbox:false,folder:true,lazy:true,offset:0},
+        {title:"Shared Data",folder:true,icon:"ui-icon ui-icon-circle-plus",nodrag:true,notarg:true,checkbox:false,key:"shared_all",children:[
+            {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,notarg:true,checkbox:false,folder:true,lazy:true,key:"shared_user"},
+            {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,notarg:true,checkbox:false,folder:true,lazy:true,key:"shared_proj"}
         ]},
         /*{title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},*/
-    
-        {title:"Saved Queries",folder:true,icon:"ui-icon ui-icon-zoom",lazy:true,nodrag:true,key:"saved_queries",checkbox:false,offset:0},
+
+        {title:"Saved Queries",folder:true,icon:"ui-icon ui-icon-zoom",lazy:true,nodrag:true,notarg:true,key:"saved_queries",checkbox:false,offset:0},
         //{title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]},
     ];
-    
+
     my_root_key = "c/u_" + settings.user.uid + "_root";
 
     $("#data_tree",frame).fancytree({
@@ -2104,117 +2227,17 @@ export function init(){
                 dragging = true;
 
                 if ( data.originalEvent.ctrlKey || data.originalEvent.metaKey || !node.parent.key.startsWith("c/") ) {
-                    drag_mode = 0;
+                    move_mode = 0;
                 } else {
-                    drag_mode = 1;
+                    move_mode = 1;
                 }
                 return true;
             },
             dragDrop: function(dest_node, data) {
                 dragging = false;
-                drag_enabled = false;
 
-                // data.otherNode = source, node = destination
-                //console.log("drop stop in",dest_node.key,pasteItems);
-
-                //console.log( pasteSourceParent );
-                if ( !pasteSourceParent || !pasteSourceParent.data )
-                    return;
-
-                var i, proj_id, ids = [];
-
-                if ( pasteSourceParent.data.scope != dest_node.data.scope ){
-                    //console.log("Change owner");
-                    var coll_id = ( dest_node.key == "empty" || dest_node.key.startsWith( "d/" ))?dest_node.parent.key:dest_node.key;
-                    proj_id = pasteSourceParent.data.scope.charAt(0) == 'p'?pasteSourceParent.data.scope:null;
-
-                    for( i in pasteItems ){
-                        ids.push( pasteItems[i].key );
-                    }
-
-                    api.dataOwnerChange( ids, coll_id, null, proj_id, true, function( ok, reply ){
-                        //console.log("chg owner reply:",ok,reply);
-                        if ( ok ){
-                            dlgOwnerChangeConfirm.show( pasteSourceParent.data.scope, dest_node.data.scope, reply, function( repo ){
-                                //console.log("chg owner conf:", repo );
-                                api.dataOwnerChange( ids, coll_id, repo, proj_id, false, function( ok, reply ){
-                                    if ( ok ){
-                                        //console.log("reply:", reply );
-                                        resetTaskPoll();
-                                        dialogs.dlgAlert( "Change Record Owner", "Task " + reply.task.id.substr(5) + " created to transfer data records to new owner." );
-                                    }else{
-                                        dialogs.dlgAlert( "Change Record Owner Error", reply );
-                                    }
-                                });
-                            });
-                        }else{
-                            dialogs.dlgAlert( "Change Record Owner Error", reply );
-                        }
-                        drag_enabled = true;
-                    });
-                    return;
-                }else if ( dest_node.key.startsWith( "repo/" ) || dest_node.parent.key.startsWith( "repo/" )){
-                    var key = dest_node.key.startsWith( "repo/" )? dest_node.key:dest_node.parent.key;
-                    var idx = key.indexOf("/",5);
-                    var repo_id = key.substr(0,idx);
-                    proj_id = pasteSourceParent.data.scope.charAt(0) == 'p'?pasteSourceParent.data.scope:null;
-
-                    for( i in pasteItems ){
-                        ids.push( pasteItems[i].key );
-                    }
-
-                    api.dataAllocChange( ids, repo_id, proj_id, true, function( ok, reply ){
-                        if ( ok ){
-                            if ( reply.totCnt == 0 ){
-                                dialogs.dlgAlert( "Change Record Allocation Error", "No data records contained in selection." );
-                            }else if ( reply.actCnt == 0 ){
-                                dialogs.dlgAlert( "Change Record Allocation Error", "All selected data records already use allocation on '" + repo_id + "'" );
-                            }else{
-                                dialogs.dlgConfirmChoice( "Confirm Change Record Allocation", "This operation will transfer " + reply.actCnt + " record(s) (out of "+reply.totCnt +
-                                    " selected) with " + util.sizeToString( reply.actSize ) + " of raw data to allocation on '" + repo_id + "'. Current allocation usage is " +
-                                    util.sizeToString( reply.dataSize ) + " out of " + util.sizeToString( reply.dataLimit ) + " available and "+reply.recCount+" record(s) out of " +
-                                    reply.recLimit+" available. Pending transfers may alter the amount of space available on target allocation.", ["Cancel","Confirm"], function(choice){
-                                    if ( choice == 1 ){
-                                        api.dataAllocChange( ids, repo_id, proj_id, false, function( ok, reply ){
-                                            if ( ok ){
-                                                resetTaskPoll();
-                                                dialogs.dlgAlert("Change Record Allocation","Task " + reply.task.id.substr(5) + " created to move data records to new allocation.");
-                                            }else{
-                                                dialogs.dlgAlert( "Change Record Allocation Error", reply );
-                                            }
-                                        });
-                                    }
-                                });
-                            }
-                            drag_enabled = true;
-                        }else{
-                            dialogs.dlgAlert( "Change Record Allocation Error", reply );
-                            drag_enabled = true;
-                        }
-                    });
-                    return;
-                }else if ( dest_node.key.startsWith("d/")){
-                    dest_node = dest_node.parent;
-                }else if ( dest_node.key == "empty" ){
-                    dest_node = dest_node.parent;
-                }
-
-                function pasteDone(){
-                    pasteItems = [];
-                    pasteSourceParent = null;
-                    pasteCollections = null;
-                }
-
-                if ( drag_mode ){
-                    moveItems( pasteItems, dest_node, /*data.otherNode,*/ pasteDone );
-                }else{
-                    copyItems( pasteItems, dest_node, pasteDone );
-                }
-                drag_enabled = true;
+                handlePasteItems( dest_node );
             },
-            /*dragOver: function(node, data) {
-                //data.dropEffect = data.dropEffectSuggested;
-            },*/
             dragEnter: function(node, data) {
                 //console.log("dragEnter");
                 var allowed = pasteAllowed( node, data.otherNode );
@@ -2299,14 +2322,14 @@ export function init(){
                 var uid = "u/" + settings.user.uid;
                 data.result = [
                     {title:util.generateTitle(data.response),_title:util.escapeHTML(data.response.title),folder:true,expanded:false,lazy:true,checkbox:false,key:my_root_key,offset:0,user:settings.user.uid,scope:uid,nodrag:true,isroot:true,admin:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-book"},
+                    {title:"Public Collections",folder:true,expanded:false,lazy:true,key:"published_u_"+settings.user.uid,offset:0,scope:uid,nodrag:true,notarg:true,checkbox:false,icon:"ui-icon ui-icon-book"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:uid,nodrag:true,notarg:true,checkbox:false}
                 ];
             }else if ( data.node.key.startsWith("p/")){
                 var prj_id = data.node.key.substr(2);
                 data.result = [
                     {title: util.generateTitle( data.response ),_title:util.escapeHTML(data.response.title),folder:true,lazy:true,checkbox:false,key:"c/p_"+prj_id+"_root",offset:0,scope:data.node.key,isroot:true,admin:data.node.data.admin,nodrag:true},
-                    {title:"Published Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-book"},
+                    {title:"Public Collections",folder:true,expanded:false,lazy:true,key:"published_p_"+prj_id,offset:0,scope:data.node.key,nodrag:true,checkbox:false,icon:"ui-icon ui-icon-book"},
                     {title:"Allocations",folder:true,lazy:true,icon:"ui-icon ui-icon-databases",key:"allocs",scope:data.node.key,nodrag:true,checkbox:false}
                 ];
             }else if ( data.node.key == "projects" ){
@@ -2318,7 +2341,7 @@ export function init(){
                         item = data.response.item[i];
                         admin = (item.owner == uid);
                         mgr = (item.creator == uid);
-                        data.result.push({ title: util.generateTitle(item,true),_title:util.escapeHTML(item.title),icon:"ui-icon ui-icon-box",folder:true,key:item.id,scope:item.id,isproj:true, admin: admin, mgr: mgr, nodrag:true,lazy:true});
+                        data.result.push({ title: util.generateTitle(item,true),_title:util.escapeHTML(item.title),icon:"ui-icon ui-icon-box",folder:true,key:item.id,scope:item.id,isproj:true, admin: admin, mgr: mgr,nodrag:true,notarg:true,lazy:true});
                     }
                 }
 
@@ -2414,7 +2437,7 @@ export function init(){
             panel_info.showSelectedInfo( data.node, checkTreeUpdate );
 
             /*if ( searchMode ){
-                updateBtnState();                
+                updateBtnState();
             }*/
         },
         select: function( event, data ) {

@@ -60,28 +60,36 @@ ClientWorker::wait()
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
 #define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
 
+/**
+ * This method configures message handling by creating a map from message type to handler function.
+ * There are currently two protocol levels: anonymous and authenticated. Each is supported by a
+ * Google protobuf interface (in /common/proto). Most requests can be handled directly by the
+ * DB (via DatabaseAPI class), but some require local processing. This method maps the two classes
+ * of requests using the macros SET_MSG_HANDLER (for local) and SET_MSG_HANDLER_DB (for DB only).
+ */
 void
 ClientWorker::setupMsgHandlers()
 {
     static std::atomic_flag lock = ATOMIC_FLAG_INIT;
 
+    // Only perform the processing once as it affects global state in the messaging libraries
     if ( lock.test_and_set() )
         return;
 
     try
     {
+        // Register and setup handlers for the Anonymous interface
+
         uint8_t proto_id = REG_PROTO( SDMS::Anon );
 
-        SET_MSG_HANDLER( proto_id, StatusRequest, &ClientWorker::procStatusRequest );
+        // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, VersionRequest, &ClientWorker::procVersionRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
-        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
 
-        //SET_MSG_HANDLER_DB( proto_id, DOIViewRequest, RecordDataReply, doiView );
-        //SET_MSG_HANDLER_DB( proto_id, CatalogSearchRequest, CatalogSearchReply, catalogSearch );
-        //SET_MSG_HANDLER_DB( proto_id, RecordSearchPublishedRequest, ListingReply, recordSearchPublished );
+
+        // Register and setup handlers for the Authenticated interface
 
         proto_id = REG_PROTO( SDMS::Auth );
 
@@ -111,6 +119,7 @@ ClientWorker::setupMsgHandlers()
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
         SET_MSG_HANDLER_DB( proto_id, GetPermsRequest, GetPermsReply, getPerms );
+        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
         SET_MSG_HANDLER_DB( proto_id, UserSetAccessTokenRequest, AckReply, userSetAccessToken );
         SET_MSG_HANDLER_DB( proto_id, UserCreateRequest, UserDataReply, userCreate );
         SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
@@ -130,13 +139,11 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, RecordExportRequest, RecordExportReply, recordExport );
         SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
         SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
-        //SET_MSG_HANDLER_DB( proto_id, RecordGetDependenciesRequest, ListingReply, recordGetDependencies );
         SET_MSG_HANDLER_DB( proto_id, RecordGetDependencyGraphRequest, ListingReply, recordGetDependencyGraph );
         SET_MSG_HANDLER_DB( proto_id, SearchRequest, ListingReply, generalSearch );
         SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
         SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
         SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
-        SET_MSG_HANDLER_DB( proto_id, CollListRequest, CollDataReply, collList );
         SET_MSG_HANDLER_DB( proto_id, CollListPublishedRequest, ListingReply, collListPublished );
         SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
         SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
@@ -150,21 +157,19 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, QueryCreateRequest, QueryDataReply, queryCreate );
         SET_MSG_HANDLER_DB( proto_id, QueryUpdateRequest, QueryDataReply, queryUpdate );
         SET_MSG_HANDLER_DB( proto_id, QueryDeleteRequest, AckReply, queryDelete );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationViewRequest, AnnotationDataReply, annotationView );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationListBySubjectRequest, AnnotationDataReply, annotationListBySubject );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationCreateRequest, AnnotationDataReply, annotationCreate );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationUpdateRequest, AnnotationDataReply, annotationUpdate );
-        SET_MSG_HANDLER_DB( proto_id, AnnotationCommentEditRequest, AnnotationDataReply, annotationCommentEdit );
+        SET_MSG_HANDLER_DB( proto_id, NoteViewRequest, NoteDataReply, noteView );
+        SET_MSG_HANDLER_DB( proto_id, NoteListBySubjectRequest, NoteDataReply, noteListBySubject );
+        SET_MSG_HANDLER_DB( proto_id, NoteCreateRequest, NoteDataReply, noteCreate );
+        SET_MSG_HANDLER_DB( proto_id, NoteUpdateRequest, NoteDataReply, noteUpdate );
+        SET_MSG_HANDLER_DB( proto_id, NoteCommentEditRequest, NoteDataReply, noteCommentEdit );
         SET_MSG_HANDLER_DB( proto_id, TaskListRequest, TaskDataReply, taskList );
         SET_MSG_HANDLER_DB( proto_id, TaskViewRequest, TaskDataReply, taskView );
         SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
-        SET_MSG_HANDLER_DB( proto_id, ACLBySubjectRequest, ListingReply, aclBySubject );
-        SET_MSG_HANDLER_DB( proto_id, ACLListItemsBySubjectRequest, ListingReply, aclListItemsBySubject );
-        //SET_MSG_HANDLER_DB( proto_id, ACLByUserRequest, UserDataReply, aclByUser );
-        //SET_MSG_HANDLER_DB( proto_id, ACLByUserListRequest, ListingReply, aclByUserList );
-        //SET_MSG_HANDLER_DB( proto_id, ACLByProjRequest, ProjectDataReply, aclByProj );
-        //SET_MSG_HANDLER_DB( proto_id, ACLByProjListRequest, ListingReply, aclByProjList );
+        SET_MSG_HANDLER_DB( proto_id, ACLSharedListRequest, ListingReply, aclSharedList );
+        SET_MSG_HANDLER_DB( proto_id, ACLSharedListItemsRequest, ListingReply, aclSharedListItems );
+        //SET_MSG_HANDLER_DB( proto_id, ACLBySubjectRequest, ListingReply, aclBySubject );
+        //SET_MSG_HANDLER_DB( proto_id, ACLListItemsBySubjectRequest, ListingReply, aclListItemsBySubject );
         SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
         SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
         SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
@@ -190,9 +195,7 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
         SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, TopicDataReply, topicListTopics );
         SET_MSG_HANDLER_DB( proto_id, TopicViewRequest, TopicDataReply, topicView );
-        //SET_MSG_HANDLER_DB( proto_id, TopicListCollectionsRequest, TopicListCollectionsReply, topicListCollections );
         SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, TopicDataReply, topicSearch );
-
     }
     catch( TraceException & e)
     {
@@ -201,7 +204,9 @@ ClientWorker::setupMsgHandlers()
     }
 }
 
-
+/**
+ * ClientWorker message handling thread.
+ */
 void
 ClientWorker::workerThread()
 {
@@ -281,6 +286,9 @@ ClientWorker::workerThread()
     }
 }
 
+// TODO The macros below should be replaced with templates
+
+/// This macro defines the begining of the common message handling code for all local handlers
 
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
 msgclass *request = 0; \
@@ -295,6 +303,8 @@ if ( base_msg ) \
         replyclass reply; \
         try \
         {
+
+/// This macro defines the end of the common message handling code for all local handlers
 
 #define PROC_MSG_END \
             if ( send_reply ) \
@@ -335,11 +345,15 @@ if ( base_msg ) \
     delete base_msg; \
 } \
 else { \
-    DL_ERROR( "W"<<m_tid<<": buffer parse failed due to unregistered msg type." ); \
+    DL_ERROR( "W"<<m_tid<<": message parse failed (malformed or unregistered msg type)." ); \
+    NackReply nack; \
+    nack.set_err_code( ID_BAD_REQUEST ); \
+    nack.set_err_msg( "Message parse failed (malformed or unregistered msg type)" ); \
+    m_msg_buf.serialize( nack ); \
 } \
 return send_reply;
 
-
+/// This method wraps all direct-to-DB message handler calls
 template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
 bool
 ClientWorker::dbPassThrough( const std::string & a_uid )
@@ -354,17 +368,6 @@ ClientWorker::dbPassThrough( const std::string & a_uid )
 }
 
 bool
-ClientWorker::procStatusRequest( const std::string & a_uid )
-{
-    PROC_MSG_BEGIN( StatusRequest, StatusReply )
-    (void)a_uid;
-
-    reply.set_status( SS_NORMAL );
-
-    PROC_MSG_END
-}
-
-bool
 ClientWorker::procVersionRequest( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( VersionRequest, VersionReply )
@@ -374,8 +377,10 @@ ClientWorker::procVersionRequest( const std::string & a_uid )
     reply.set_major( VER_MAJOR );
     reply.set_mapi_major( VER_MAPI_MAJOR );
     reply.set_mapi_minor( VER_MAPI_MINOR );
-    reply.set_server( VER_SERVER );
-    reply.set_client( VER_CLIENT );
+    reply.set_core( VER_CORE );
+    reply.set_repo( VER_REPO );
+    reply.set_web( VER_WEB );
+    reply.set_client_py( VER_CLIENT_PY );
 
     PROC_MSG_END
 }
@@ -393,7 +398,7 @@ ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid )
 
     DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
 
-    m_core.authorizeClient( a_uid, reply.uid() );
+    m_core.authenticateClient( a_uid, reply.uid() );
 
     PROC_MSG_END
 }
@@ -411,7 +416,7 @@ ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid )
 
     DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
 
-    m_core.authorizeClient( a_uid, reply.uid() );
+    m_core.authenticateClient( a_uid, reply.uid() );
 
     PROC_MSG_END
 }
@@ -697,7 +702,7 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
         DL_ERROR( "Invalid metadata schema: " << e.what() );
     }
 
-    
+
     if ( m_validator_err.size() )
     {
         reply.set_errors( m_validator_err );
@@ -721,6 +726,11 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
     DL_INFO("Creating record");
 
     m_validator_err.clear();
+
+    if ( request->has_sch_enforce() && !( request->has_metadata() && request->has_sch_id() ))
+    {
+        EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
+    }
 
     if ( request->has_metadata() && request->has_sch_id() )
     {
@@ -765,10 +775,6 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
             EXCEPT( 1, m_validator_err );
         }
     }
-    else if ( request->has_sch_enforce() )
-    {
-        EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
-    }
 
     m_db_client.recordCreate( *request, reply );
 
@@ -776,12 +782,12 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
     {
         DL_ERROR( "Validation error - update record" );
 
-        //const string & id = obj.getString("id");
         RecordData * data = reply.mutable_data(0);
 
         m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
         // TODO need a def for md_err mask
         data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+        data->set_md_err_msg( m_validator_err );
     }
 
     PROC_MSG_END
@@ -807,12 +813,17 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
     if ( request->has_metadata() || ( request->has_sch_id() && request->sch_id().size() ) || request->has_sch_enforce() )
     {
         //DL_INFO("Has metadata/schema");
-        string metadata = request->has_metadata()?request->metadata():"";
-        string sch_id = request->has_sch_id()?request->sch_id():"";
+        string metadata, cur_metadata, sch_id;
+        bool merge = true;
 
-        // If update does not include metadata AND schema, then we must load the missing parts from DB before we can validate here
-        if ( !request->has_metadata() || !request->has_sch_id() )
+        if ( request->has_mdset() && request->mdset() )
+            merge = false;
+
+        if ( !request->has_metadata() || merge || !request->has_sch_id() )
         {
+            // Request does not include metadata AND schema, or it's a merge, so must load the missing parts
+            // from DB before validation can be done.
+
             RecordViewRequest view_request;
             RecordDataReply view_reply;
 
@@ -820,11 +831,31 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
             m_db_client.recordView( view_request, view_reply );
 
-            if ( !request->has_metadata() )
+            if ( request->has_metadata() && merge )
+            {
+                metadata = request->metadata();
+                cur_metadata = view_reply.data(0).metadata();
+            }
+            else if ( request->has_metadata() )
+            {
+                metadata = request->metadata();
+            }
+            else
+            {
                 metadata = view_reply.data(0).metadata();
+            }
+
 
             if ( !request->has_sch_id() )
                 sch_id = view_reply.data(0).sch_id();
+            else
+                sch_id = request->sch_id();
+        }
+        else
+        {
+            // metadata and schema ID are both in request AND it is not a merge operation
+            metadata = request->metadata();
+            sch_id = request->sch_id();
         }
 
         if ( metadata.size() && sch_id.size() )
@@ -852,6 +883,14 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
                 DL_INFO( "Parse md" );
 
                 nlohmann::json md = nlohmann::json::parse( metadata );
+
+                // Apply merge patch if needed
+                if ( cur_metadata.size() )
+                {
+                    nlohmann::json cur_md = nlohmann::json::parse( cur_metadata );
+                    cur_md.merge_patch( md );
+                    md = cur_md;
+                }
 
                 DL_INFO( "Validating" );
 
@@ -884,6 +923,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
         // Must find and update md_err flag in reply (always 1 data entry)
         RecordData * data = reply.mutable_data(0);
         data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+        data->set_md_err_msg( m_validator_err );
 
         for ( int i = 0; i < reply.update_size(); i++ )
         {
@@ -892,6 +932,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
             {
                 // TODO need a def for md_err mask
                 data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+                break;
             }
         }
     }

@@ -2,77 +2,66 @@
 <html>
     <head>
         <% include 'head.ect' %>
+        <script type="module" charset="utf-8" src="/index.js"></script>
         <title>DataFed Login</title>
+        <script type="application/json" id="template_data">
+        {
+            "test_mode" : "<%- @test_mode %>"
+        }
+        </script>
     </head>
     <body>
         <div class="col-flex ui-widget-content" style="height:100%;border:none">
             <div class="ui-widget-header" style="border:none;flex:none;padding:0.2em .5em">
                 <span class='ui-icon ui-icon-box' style='vertical-align:middle;color:white;font-size:1.6em'></span>
-                <span style="font-size:1.8em;vertical-align:middle">&nbsp;Scientific Data Federation</span>
+                <span style="font-size:1.8em;vertical-align:middle">&nbsp;DataFed - A Scientific Data Federation</span>
                 <div style='float:right;padding:.2em 0 0 0'>
-                    <button class="btn" onclick="window.open('https://ornl.github.io/DataFed/','datafed-docs')">Help</button>&nbsp<button class="btn" onclick="location.href='/ui/login'">Log In / Register</button>
+                    <button class="btn btn-help">Help</button>&nbsp<button class="btn btn-login">Log In / Register</button>
                 </div>
             </div>
             <div style="flex:auto;overflow:auto">
-            <div style="text-align: justify;text-justify: inter-word;margin:2em auto 1em auto;width:40em">
-                <div style='font-size:250%'>Welcome to DataFed!</div>
+            <div style="font-size:110%;text-align:justify;text-justify: inter-word;margin:3em auto 1em auto;width:35em">
+                <div style='font-size:225%'>Welcome to DataFed</div>
                 <hr>
-                <div style='font-size:125%;text-align: left;margin:.5em 0'><i>Forging a Scientific Data Federation for cross-facility research.</i></div>
+                <p>DataFed is a distributed scientific data management system that enhances both research
+                <i>productivity</i> and scientific <i>reproducibility</i> by easing the burdens associated with properly collecting
+                and handling research data.
+                </p>
 
-                <div style='font-size:115%;margin-top:3em'>
-                    <p>DataFed is a scientific data management system for <i>big data</i> providing simple and uniform
-                    data access, organization, discovery, and sharing within and across scientific facilities
-                    - with the goals of enhancing <i>productivity</i> and scientific <i>reproducibility</i>.</p>
+                <div class='row-flex' style='margin:3em 0;align-items:center;justify-content:center'>
+                    <div style='flex:auto'></div>
+                    <button style='flex:none' class="btn btn-welcome btn-login">Log-In / Register</button>
+                    <div style='flex:auto'></div>
+                    <button style='flex:none' class="btn btn-welcome btn-help">Learn More</button>
+                    <div style='flex:auto'></div>
                 </div>
 
-                <div style='margin: 3em auto 3em auto;width:34em'>
-                    <button class="btn btn-welcome" onclick="location.href='/ui/login'">Log-In To Web Portal</button>&nbsp;&nbsp;
-                    <button class="btn btn-welcome" onclick="location.href='/ui/login'">Register For An Account</button>
+                <p>DataFed is domain-agnostic and <a href='https://www.go-fair.org/fair-principles/' target="go_fair">FAIR-pricincipled</a>
+                and provides simple and uniform data access, organization, discovery, and sharing capabilities within
+                (and across) scientific facilities. DataFed <i>federates</i> user accounts and data storage resources
+                administered by individual facilities and leverages <a href="https://www.globus.org/" target="about_globus">Globus</a>
+                for high-performance, reliable, and secure data transport.</p>
+
+                <p>The end result is a virtual "scientific data federation" that enables seamless data access and management
+                within and across member facilities.
+                </p>
+
+                <div class="notice" style="margin:2em auto;width:28em;text-align:left">
+                <i><b>Notice</b> - DataFed is for <u>open data only</u> and does not meet the requirements for protecting
+                HIPPA, ITAR, or other sensitive or controlled information.</i>
                 </div>
 
-                <h3>What is DataFed, Exactly?</h3>
-
-                <p>DataFed is a domain-agnostic, <a href='https://www.go-fair.org/fair-principles/' target="go_fair">FAIR-pricincipled</a>, scientific data management system (SDMS) that federates data storage
-                    resources (located at DOE facilities) into a single, unified data access paradigm. DataFed relies
-                    on <a href="https://www.globus.org/" target="about_globus">Globus</a> for high-performance, reliable, and secure data
-                    transport between (and within) facilities.</p>
-
-                <p>This site provides access to DataFed registration and to the DataFed web application where users
-                    can browse, manage, and share data using a graphical user interface. A command-line interface and
-                    APIs are also available.</p>
-    
-                <div style='margin: 2em auto 2em auto;width:17em'>
-                    <button class="btn btn-welcome" onclick="window.open('https://ornl.github.io/DataFed/','datafed-docs')">Learn More About DataFed</button>
-                </div>
-
-                <h3>Registration</h3>
+                <h4>Registration</h4>
                 <p>DataFed registration is free, but a Globus account with a linked GlobusID identity is required to
                     access DataFed. If you don't have a Globus account, or haven't linked a GlobusID identity, please
-                    sign-up (for free) at <a href="https://www.globusid.org/">GlobusID.org</a> then return to this page to
-                    register for DataFed access.</p>
-
-                    <p>For step-by-step help with registering and setting-up a DataFed account, refer to the DataFed <a href='https://ornl.github.io/DataFed/system/getting_started.html' target="datafed_guide">"Getting Started"</a> guide.</p>
-
-                <h3>Web Browser Compatibility</h3>
-                <p>The DataFed web application requires an HTML5 compliant web browser. <i>Chrome, Firefox,</i> and <i>Safari</i>
-                    have been validated for use with DataFed.
+                    sign-up (for free) at <a href="https://www.globusid.org/" target="datafed_globusid">GlobusID.org</a> then return to this page to
+                    register for DataFed access. For step-by-step instructions, please refer to the DataFed
+                    <a href='https://ornl.github.io/DataFed/system/getting_started.html' target="datafed_guide">"Getting Started"</a> guide.</p>
             </div>
             </div>
             <div class="ui-widget-header" style="flex:none;padding:.25em">
-                User: Not Logged In
                 <div id='devmode' style='float:right;display:none'><span class='ui-state-error'>DEV-MODE</span></div>
             </div>
         </div>
     </body>
-    <script>
-        window.name = 'DataFed Welcome';
-        $(".btn").button();
-
-
-        var g_test_mode = ("<%- @test_mode %>" == "true");
-        if ( g_test_mode ){
-            $("#devmode").show();
-        }
-
-    </script>
 </html>

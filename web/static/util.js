@@ -541,7 +541,7 @@ export function buildObjSrcTree( obj, base, md_exp ){
             skip = true;
 
             for ( i in o ){
-                if ( typeof o[i] === 'object' /*|| typeof o[i] === 'string' */ ){
+                if ( typeof o[i] === 'object' && o[i] !== null ){
                     skip = false;
                     break;
                 }
@@ -550,7 +550,7 @@ export function buildObjSrcTree( obj, base, md_exp ){
             skip = false;
         }
         
-        if ( !skip && typeof obj[k] === 'object' ){
+        if ( !skip && ( typeof obj[k] === 'object' && obj[k] !== null )){
             if ( md_exp ){
                 //console.log("expanded:",md_exp[fkey]);
                 if ( md_exp[fkey] ){

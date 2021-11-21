@@ -25,7 +25,6 @@ public:
 private:
     void        setupMsgHandlers();
     void        workerThread();
-    void        procStatusRequest();
     void        procVersionRequest();
     void        procDataDeleteRequest();
     void        procDataGetSizeRequest();

@@ -163,30 +163,26 @@ router.get('/view', function (req, res) {
 .description('View current ACL on an object (data record or collection)');
 
 
-router.get('/by_subject', function (req, res) {
+router.get('/shared/list', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var subj = req.queryParams.subject || client._id;
 
-        res.send( g_lib.getACLOwnersBySubject( subj, req.queryParams.inc_users, req.queryParams.inc_projects ));
+        res.send( g_lib.getACLOwnersBySubject( client._id, req.queryParams.inc_users, req.queryParams.inc_projects ));
     } catch( e ) {
         g_lib.handleException( e, res );
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().optional(), "Optional subject user/project ID")
 .queryParam('inc_users', joi.boolean().optional(), "Include users")
 .queryParam('inc_projects', joi.boolean().optional(), "Include projects")
 .summary('List users/projects that have shared data or collections with client/subject.')
-.description('List users/projects that have shared data or collections with client/subject. If neither inc_users or inc_projects is specified, both are included.');
+.description('List users/projects that have shared data or collections with client/subject.');
 
 
-router.get('/by_subject/list', function (req, res) {
+router.get('/shared/list/items', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
-        var owner_id, subj = req.queryParams.subject || client._id;
-
-        // TODO Enforce subject permissions
+        var owner_id;
 
         if ( req.queryParams.owner.charAt(0) == 'p' ){
             owner_id = req.queryParams.owner;
@@ -198,9 +194,7 @@ router.get('/by_subject/list', function (req, res) {
             owner_id = g_lib.getUserFromClientID( req.queryParams.owner )._id;
         }
 
-        // TODO This does not work if the subject is a project member
-
-        var i,share,shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,md_err:v.md_err,external:v.external,locked:v.locked}", { client: subj, owner: owner_id }).toArray();
+        var i,share,shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,md_err:v.md_err,external:v.external,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
 
         for ( i in shares ){
             share = shares[i];
@@ -218,7 +212,6 @@ router.get('/by_subject/list', function (req, res) {
     }
 })
 .queryParam('client', joi.string().required(), "Client ID")
-.queryParam('subject', joi.string().optional(), "Optional subject user/project ID")
 .queryParam('owner', joi.string().required(), "Owner ID")
 .summary('Lists data and collections shared with client/subject by owner')
 .description('Lists data and collections shared with client/subject by owner');

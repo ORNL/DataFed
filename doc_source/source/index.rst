@@ -25,7 +25,6 @@ client interfaces and application programming interfaces. The system introductio
 overview documents introduce DataFed-specific terminology and key concepts that are references
 by subsequent documents on this site.
 
-
 .. toctree::
    :maxdepth: 2
    :caption: About DataFed
@@ -75,6 +74,7 @@ by subsequent documents on this site.
 
    dev/project
    dev/design
+   dev/release
    dev/roadmap
 
 

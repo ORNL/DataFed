@@ -3,15 +3,21 @@
     <head>
         <% include 'head.ect' %>
         <title>DataFed Register</title>
+        <script type="application/json" id="template_data">
+        {
+            "uname" : "<%- @uname %>"
+        }
+        </script>
         <script type="module" charset="utf-8" src="/dialogs.js"></script>
+        <script type="module" charset="utf-8" src="/api.js"></script>
+        <script type="module" charset="utf-8" src="/register.js"></script>
     </head>
     <body>
         <div class="col-flex ui-widget-content" style="height:100%;border:none">
             <div class="ui-widget-header row-flex" style="flex:none;align-items:center;padding:.25em .5em">
                 <div style="flex:1 1 100%;font-size:2em;">Scientific Data Federation</div>
                 <div style="flex:none">
-                    <button class="btn" onclick="window.open('https://ornl.github.io/DataFed/index.html','datafed-docs')">Help</button>&nbsp
-                    <button class="btn" onclick="location.href='/ui'">Home</button>
+                    <button class="btn btn-help">Help</button>
                 </div>
             </div>
             <div style="flex:auto;overflow:auto">
@@ -29,12 +35,14 @@
                     <tr><td>Re-enter:</td><td><input type="password" id="pw2"></td></tr>
                     </table>
                     <br><br>
-                    <div style='text-align:center'><button class="btn btn-welcome" onclick="register()" type="button">Continue Registration</button></div>
+                    <div style='text-align:center'><button class="btn btn-register">Continue Registration</button></div>
+                    <br>
+                    <div style='text-align:center'><button class="btn btn-cancel">Cancel Registration</button></div>
                 </div>
                 <div id='uid_bad' style='display:none'>
                     <p class='note'>Invalid Globus user name. Please update your Globus account profile with your full name (first and last), then retry DataFed login.</p>
                     <br><br>
-                    <div style='text-align:center'><button class="btn" onclick="retry()" type="button">Retry Login</button></div>
+                    <div style='text-align:center'><button class="btn btn-retry">Retry Login</button></div>
                 </div>
             </div>
             </div>
@@ -43,37 +51,4 @@
             </div>
         </div>
     </body>
-    <script type='module'>
-        import * as dialogs from "/dialogs.js";
-
-        $(".btn").button();
-        $('input').addClass("ui-widget ui-widget-content");
-
-        var uname = "<%- @uname %>";
-
-        if ( uname.indexOf(' ') == -1 && uname.indexOf(',') == -1 ){
-            //$('#register_btn').button('disable');
-            $("#uid_bad").show();
-
-            dialogs.dlgAlert("Invalid User Name","Your Globus account name (" + uname +
-                ") does not contain distinct first and last names. Please update your Globus account profile and retry DataFed login.");
-        }else{
-            $("#uid_ok").show();
-        }
-
-        window.retry = function() {
-            //location.reload(); /ui/login
-            window.location = "/ui/logout";
-        }
-
-        window.register = function() {
-            var pw1 = document.getElementById('pw1').value;
-            var pw2 = document.getElementById('pw2').value;
-
-            if ( pw1 != pw2 )
-                dialogs.dlgAlert( "Password Error", "Passwords do not match." );
-            else
-                window.location = "/ui/do_register?pw="+pw1;
-        }
-    </script>
 </html>

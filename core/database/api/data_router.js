@@ -74,15 +74,13 @@ function recordCreate( client, record, result ){
             throw [g_lib.ERR_NO_ALLOCATION,"No allocation available"];
 
         // Extension setting only apply to managed data
-        if ( record.ext_auto !== undefined )
-            obj.ext_auto = record.ext_auto;
-        else
-            obj.ext_auto = true;
-
-        if ( !obj.ext_auto && record.ext ){
+        if ( record.ext ){
+            obj.ext_auto = false;
             obj.ext = record.ext;
             if ( obj.ext.length && obj.ext.charAt(0) != "." )
                 obj.ext = "." + obj.ext;
+        }else{
+            obj.ext_auto = true;
         }
     }
 
@@ -181,7 +179,7 @@ function recordCreate( client, record, result ){
     if ( sch_id ){
         data.sch_id = sch_id + ":" + sch_ver;
     }
-    
+
     data.id = data._id;
     data.parent_id = parent_id;
 
@@ -320,7 +318,7 @@ function recordUpdate( client, record, result ){
             perms |= g_lib.PERM_WR_META;
 
         if ( record.title !== undefined || record.alias !== undefined || record.desc !== undefined ||
-            record.tags !== undefined || record.source !== undefined || 
+            record.tags !== undefined || record.source !== undefined ||
             ( record.dep_add && record.dep_add.length ) || ( record.dep_rem && record.dep_rem.length )){
             perms |= g_lib.PERM_WR_REC;
         }
@@ -419,6 +417,8 @@ function recordUpdate( client, record, result ){
                         obj.ext = null;
                     }
                 }
+            }else{
+                obj.ext = null;
             }
         }else{
             g_lib.procInputParam( record, "ext", true, obj );
@@ -817,7 +817,7 @@ router.get('/view', function (req, res) {
             var sch = g_db.sch.document( data.sch_id );
             data.sch_id = sch.id + ":" + sch.ver;
         }
-        
+
         data.deps = g_db._query("for v,e in 1..1 any @data dep let dir=e._from == @data?1:0 sort dir desc, e.type asc return {id:v._id,alias:v.alias,owner:v.owner,md_err:v.md_err,type:e.type,dir:dir}",{data:data_id}).toArray();
         for ( i in data.deps ){
             dep = data.deps[i];
@@ -877,12 +877,12 @@ router.post('/export', function (req, res) {
                     data = g_db.d.document( ids[i] );
 
                     data.deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type}",{data:data._id}).toArray();
-           
+
                     delete data._rev;
                     delete data._key;
                     data.id = data._id;
                     delete data._id;
-            
+
                     results.push( JSON.stringify( data ));
                 }
 
@@ -922,15 +922,15 @@ router.get('/dep/graph/get', function (req, res) {
                 if ( rec.alias && client._id != rec.owner ){
                     rec.alias = rec.owner.charAt(0) + ":" + rec.owner.substr(2) + ":" + rec.alias;
                 }
-                    
+
                 //console.log("calc notes for", rec._id );
                 notes =  g_lib.getNoteMask( client, rec );
-    
+
                 if ( entry[1] ){
                     deps = g_db._query("for v,e in 1..1 outbound @data dep return {id:v._id,type:e.type,dir:1}",{data:entry[0]}).toArray();
 
                     for ( j in deps ){
-                        dep = deps[j]; 
+                        dep = deps[j];
                         //console.log("dep:",dep.id,"ty:",dep.type);
 
                         if ( visited.indexOf(dep.id) < 0 ){
@@ -970,7 +970,7 @@ router.get('/dep/graph/get', function (req, res) {
 
                 if ( entry[1] ){
                     for ( j in deps ){
-                        dep = deps[j]; 
+                        dep = deps[j];
 
                         //console.log("dep:",dep.id,"ty:",dep.type);
 
@@ -1057,7 +1057,7 @@ router.get('/lock', function (req, res) {
 
 
 /** @brief Get raw data path for local direct access, if possible from specified domain
- * 
+ *
  */
 router.get('/path', function (req, res) {
     try {

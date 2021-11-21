@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <% include 'head.ect' %>
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-        <!-- link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.35.0/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.35.0/jquery.fancytree-all.min.js"></script -->
+
+        <% include 'head.ect' %>
+        <script type="application/json" id="template_data">
+        {
+            "test_mode" : "<%- @test_mode %>",
+            "user_uid" : "<%- @user_uid %>",
+            "theme" : "<%- @theme %>"
+        }
+        </script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.37.0/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.37.0/jquery.fancytree-all.min.js"></script>
-        <script src="/jquery/jquery-ui-contextmenu.min.js"></script>
+        <script src="/jquery/jquery.ui-contextmenu.min.js"></script>
         <script src="/ace/ace.js" type="text/javascript" charset="utf-8"></script>
         <script src="/ace/theme-light.js" type="text/javascript" charset="utf-8"></script>
         <script src="/ace/theme-dark.js" type="text/javascript" charset="utf-8"></script>
         <script src="/ace/mode-json.js" type="text/javascript" charset="utf-8"></script>
-
         <script src="/tag/tag-it.js" type="text/javascript" charset="utf-8"></script>
         <link href="/tag/tag-it.css" rel="stylesheet" type="text/css">
-
-        <!-- script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script -->
         <script src="https://d3js.org/d3.v5.min.js"></script>
-
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
+        <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
         <link href="/query_builder.css" rel="stylesheet" type="text/css">
-
         <script type="module" charset="utf-8" src="/model.js"></script>
         <script type="module" charset="utf-8" src="/util.js"></script>
         <script type="module" charset="utf-8" src="/settings.js"></script>
@@ -53,6 +53,7 @@
         <script type="module" charset="utf-8" src="/panel_graph.js"></script>
         <script type="module" charset="utf-8" src="/panel_item_info.js"></script>
         <script type="module" charset="utf-8" src="/main_browse_tab.js"></script>
+        <script type="module" charset="utf-8" src="/main.js"></script>
         <title>DataFed Main</title>
     </head>
     <body>
@@ -63,8 +64,8 @@
             <span style="font-size:1.8em;vertical-align:middle">&nbsp;DataFed - Scientific Data Federation</span>
             <div style='float:right;padding:.2em 0 0 0'>
                 <button id='btn_settings' class='btn btn-icon' title='Application and account settings'><span class='ui-icon ui-icon-gear'></span></button>&nbsp;
-                <button class="btn btn-icon" onclick="window.open('https://ornl.github.io/DataFed/index.html','datafed-docs')" title='DataFed on-line documentation.'><span class='ui-icon ui-icon-circle-help'></span></button>&nbsp;
-                <button class="btn btn-icon" onclick="logout()"><span class='ui-icon ui-icon-logout'></span></button>
+                <button class="btn btn-icon btn-help" title='DataFed on-line documentation.'><span class='ui-icon ui-icon-circle-help'></span></button>&nbsp;
+                <button class="btn btn-icon btn-logout" title='Logout of DataFed'><span class='ui-icon ui-icon-logout'></span></button>
             </div>
         </div>
         <div id="content" class="ui-widget-content" style="flex:1;min-height:0">
@@ -75,74 +76,4 @@
         </div>
     </div>
     </body>
-    <script type='module'>
-        import * as browser_tab from "/main_browse_tab.js";
-        import * as util from "/util.js";
-        import * as api from "/api.js";
-        import * as settings from "/settings.js";
-        import * as dialogs from "/dialogs.js";
-
-        var user_uid = "<%- @user_uid %>";
-        //settings.setUser( "<%- @user_uid %>", "<%- @user_name %>", "<%- @user_email %>" );
-
-        window.name = 'sdms_target';
-
-        $(".btn").button();
-
-        util.tooltipTheme( $("button,input") ); //.tooltip({ show: { effect: "slideDown", delay: 500 }});
-
-        settings.setTheme( "<%- @theme %>" );
-
-        var g_test_mode = ("<%- @test_mode %>" == "true");
-
-
-        window.logout = function() {
-            settings.clearUser();
-            window.location = "/ui/logout";
-        }
-
-        window.refreshUI = function( a_ids, a_data, a_reload ){
-            browser_tab.refreshUI( a_ids, a_data, a_reload );
-        }
-
-        function resizeUI(){
-            browser_tab.windowResized();
-        }
-
-        // Suppress extraneous resize events while drag-resizing
-        var resizeTimer = null;
-        $(window).bind('resize', function() {
-            if (resizeTimer) clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(resizeUI, 100);
-        });
-
-        resizeUI();
-
-        if ( g_test_mode ){
-            $("#mode_label").show();
-        }
-
-        api.userView( user_uid, true, function( ok, user ){
-            if ( ok && user ){
-                settings.setUser( user );
-
-                api.epRecentLoad();
-
-                //document.getElementById("uname").innerHTML = settings.user.name;
-                $( "#uname" ).text( settings.user.nameFirst + " " + settings.user.nameLast );
-
-                if ( settings.user.isAdmin ){
-                    $("#is_admin").show();
-                }
-
-                browser_tab.init();
-
-                util.setStatusText("DataFed Ready");
-            }else{
-                dialogs.dlgAlert("System Error","Unable to access user record");
-            }
-        });
-
-
-    </script>
 </html>

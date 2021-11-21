@@ -1,13 +1,13 @@
-// ALERT: If enums or messages in this proto file are REMOVED, or if the
-// definitions of existing enums or message parameters are CHANGED, then the
-// VER_PROTO_MAJOR enum value in Version.proto must be incremented and backward
-// compatibility will be lost. If new values or fields are APPENDED to the end
-// of an existing definition, then VER_PROTO_MINOR must be incremented and
-// backward compatibility will be maintained. Unused enums, messages, and
-// parameters should be marked as deprecated, and these should be removed at
-// the next major version change.
+// ALERT: If messages in this proto file are ADDED or REMOVED, or if the
+// definitions of existing message fields are CHANGED, then the VER_PROTO_MAJOR
+// enum value in Version.proto must be incremented and backward compatibility
+// will be lost. If fields are APPENDED to the end of existing message
+// definitions, then VER_PROTO_MINOR must be incremented and backward
+// compatibility will be maintained. Unused messages and parameters should be
+// marked as deprecated, and these should be removed at the next major version
+// change.
 
-// ALTER: Any LARGE INTEGER fields in messages are currently defined a DOUBLE
+// ALERT: Any LARGE INTEGER fields in messages are currently defined as DOUBLE
 // instead of INT64 - This is because Javascript does not support 64 bit integers
 // and uses doubles for both integer and floats. As long as an integer does not
 // exceed 53 bits, this approach works.
@@ -19,6 +19,7 @@ package SDMS;
 
 // ============================ Enums
 
+// Used to return error categories. Likely to be deprecated.
 enum ErrorCode
 {
     ID_BAD_REQUEST              = 1;
@@ -31,6 +32,7 @@ enum ErrorCode
     ID_DEST_FILE_ERROR          = 8;
 }
 
+// Used to return status of backend services. Likely to be deprecated.
 enum ServiceStatus
 {
     SS_NORMAL       = 0;
@@ -39,28 +41,14 @@ enum ServiceStatus
     SS_OFFLINE      = 3;
 }
 
-enum CollDelMode
-{
-    CDM_ALL         = 0;
-    CDM_OWNED       = 1;
-}
-
+// Used to specify data or collection search mode in queries
 enum SearchMode
 {
     SM_DATA         = 0;
     SM_COLLECTION   = 1;
 }
 
-/*
-enum SearchScope
-{
-    SS_PERSONAL     = 0;
-    SS_PROJECT      = 1;
-    SS_SHARED       = 2;
-    SS_PUBLIC       = 3;
-}
-*/
-
+// Used to specify dependency relatioships. Likely to be deprecated and replaced with expandable system.
 enum DependencyType
 {
     DEP_IS_DERIVED_FROM         = 0;
@@ -69,12 +57,15 @@ enum DependencyType
     DEP_TYPE_COUNT              = 3;
 }
 
+// Used to indicate dependency direction (IN = offspring, OUT = ancestor)
+// Note that records only store outgoing dependencies to ancestors
 enum DependencyDir
 {
     DEP_IN                      = 0;
     DEP_OUT                     = 1;
 }
 
+// General record/colelction sorting options
 enum SortOption
 {
     SORT_ID                     = 0;
@@ -85,6 +76,8 @@ enum SortOption
     SORT_RELEVANCE              = 5;
 }
 
+// Defines a users role in a project
+// Note that project owners are treated as project admins
 enum ProjectRole
 {
     PROJ_NO_ROLE    = 0;
@@ -95,6 +88,7 @@ enum ProjectRole
 
 // ============================ Data Structures
 
+// Allocation-specific statistics data
 message AllocStatsData
 {
     required string             repo        = 1;
@@ -319,6 +313,7 @@ message RepoData
 
 // -------------------------------------------- ANNOTATION DEFINES
 
+// Defines annotation types
 enum NoteType
 {
     NOTE_QUESTION   = 0;
@@ -327,6 +322,7 @@ enum NoteType
     NOTE_ERROR      = 3;
 }
 
+// Defines annotation state
 enum NoteState
 {
     NOTE_CLOSED     = 0;
@@ -334,27 +330,29 @@ enum NoteState
     NOTE_ACTIVE     = 2;
 }
 
+// Defines annotation user comment data structure
 message NoteComment
 {
-    required string             user    = 1;
-    required uint32             time    = 2;
-    required string             comment = 3;
-    optional NoteType           type    = 4;
-    optional NoteState          state   = 5;
+    required string             user    = 1; // User ID of comment author
+    required uint32             time    = 2; // Timestamp comment was created
+    required string             comment = 3; // Text content of comment
+    optional NoteType           type    = 4; // Note type change
+    optional NoteState          state   = 5; // Note state change
 }
 
+// Defines annotation data structure
 message NoteData
 {
-    required string             id          = 1;
-    required NoteType           type        = 2;
-    required NoteState          state       = 3;
-    required string             subject_id  = 4;
-    required string             title       = 5;
-    repeated NoteComment        comment     = 6;
-    required uint32             ct          = 7;
-    required uint32             ut          = 8;
-    optional string             parent_id   = 9;
-    optional bool               has_child   = 10;
+    required string             id          = 1; // Note ID
+    required NoteType           type        = 2; // Current note type
+    required NoteState          state       = 3; // Current note state
+    required string             subject_id  = 4; // Subject data record or collection ID
+    required string             title       = 5; // Title
+    repeated NoteComment        comment     = 6; // User comments in chronological order
+    required uint32             ct          = 7; // Note create timestamp
+    required uint32             ut          = 8; // Note update timestamp
+    optional string             parent_id   = 9; // Parent note ID (only if inherited)
+    optional bool               has_child   = 10; // Flag indicating presences of dependent note(s)
 }
 
 // -------------------------------------------------- TASK DEFINES
@@ -414,18 +412,6 @@ message TaskData
     optional string                 dest        = 11;
 }
 
-
-message HttpXfrData
-{
-    required string             rec_id      = 1;
-    required string             from        = 3;
-    required string             to          = 4;
-    required uint32             started     = 5;
-    required uint32             updated     = 6;
-    required bool               failed      = 7;
-    optional string             err_msg     = 8; // Only set if status == XFR_FAILED
-}
-
 // -------------------------------------------------- TASK DEFINES
 
 message SchemaData
@@ -442,5 +428,4 @@ message SchemaData
     optional string             def         = 10;
     repeated SchemaData         uses        = 11;
     repeated SchemaData         used_by     = 12;
-    // Add topics?
 }

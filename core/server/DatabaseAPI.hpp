@@ -45,13 +45,13 @@ public:
     void getPerms( const Auth::GetPermsRequest & a_request, Auth::GetPermsReply & a_reply );
 
     void userSetAccessToken( const Auth::UserSetAccessTokenRequest & a_request, Anon::AckReply & a_reply );
-    void userCreate( const Auth::UserCreateRequest & a_request, Anon::UserDataReply & a_reply );
-    void userView( const Anon::UserViewRequest & a_request, Anon::UserDataReply & a_reply );
-    void userUpdate( const Auth::UserUpdateRequest & a_request, Anon::UserDataReply & a_reply );
-    void userListAll( const Auth::UserListAllRequest & a_request, Anon::UserDataReply & a_reply );
-    void userListCollab( const Auth::UserListCollabRequest & a_request, Anon::UserDataReply & a_reply );
-    void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Anon::UserDataReply & a_reply );
-    void userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Anon::UserDataReply & a_reply );
+    void userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply );
+    void userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply );
+    void userUpdate( const Auth::UserUpdateRequest & a_request, Auth::UserDataReply & a_reply );
+    void userListAll( const Auth::UserListAllRequest & a_request, Auth::UserDataReply & a_reply );
+    void userListCollab( const Auth::UserListCollabRequest & a_request, Auth::UserDataReply & a_reply );
+    void userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply );
+    void userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Auth::UserDataReply & a_reply );
     void userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply );
     void userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, Anon::AckReply & a_reply );
 
@@ -87,7 +87,6 @@ public:
 
     void dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply );
 
-    void collList( const Auth::CollListRequest & a_request, Auth::CollDataReply & a_reply );
     void collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply );
     void collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply );
     void collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply );
@@ -110,9 +109,8 @@ public:
 
     void aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply );
     void aclUpdate( const Auth::ACLUpdateRequest & a_request,  Auth::ACLDataReply & a_reply );
-
-    void aclBySubject( const Auth::ACLBySubjectRequest & a_request,  Auth::ListingReply & a_reply );
-    void aclListItemsBySubject( const Auth::ACLListItemsBySubjectRequest & a_request,  Auth::ListingReply & a_reply );
+    void aclSharedList( const Auth::ACLSharedListRequest & a_request,  Auth::ListingReply & a_reply );
+    void aclSharedListItems( const Auth::ACLSharedListItemsRequest & a_request,  Auth::ListingReply & a_reply );
 
     //void aclByUser( const Auth::ACLByUserRequest & a_request,  Auth::UserDataReply & a_reply );
     //void aclByUserList( const Auth::ACLByUserListRequest & a_request,  Auth::ListingReply & a_reply );
@@ -148,12 +146,12 @@ public:
     //void topicLink( const Auth::TopicLinkRequest & a_request, Anon::AckReply & a_reply );
     //void topicUnlink( const Auth::TopicUnlinkRequest & a_request, Anon::AckReply & a_reply );
 
-    void annotationCreate( const Auth::AnnotationCreateRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationUpdate( const Auth::AnnotationUpdateRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationCommentEdit( const Auth::AnnotationCommentEditRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationView( const Auth::AnnotationViewRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply );
-    void annotationPurge( uint32_t a_age_sec );
+    void noteCreate( const Auth::NoteCreateRequest & a_request, Auth::NoteDataReply & a_reply );
+    void noteUpdate( const Auth::NoteUpdateRequest & a_request, Auth::NoteDataReply & a_reply );
+    void noteCommentEdit( const Auth::NoteCommentEditRequest & a_request, Auth::NoteDataReply & a_reply );
+    void noteView( const Auth::NoteViewRequest & a_request, Auth::NoteDataReply & a_reply );
+    void noteListBySubject( const Auth::NoteListBySubjectRequest & a_request, Auth::NoteDataReply & a_reply );
+    void notePurge( uint32_t a_age_sec );
 
     void taskLoadReady( libjson::Value & a_result );
     void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step = 0, std::string * a_err_msg = 0 );
@@ -191,7 +189,7 @@ private:
     long dbPost( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, const std::string * a_body, libjson::Value & a_result );
 
     void setAuthStatus( Anon::AuthStatusReply & a_reply, const libjson::Value & a_result );
-    void setUserData( Anon::UserDataReply & a_reply, const libjson::Value & a_result );
+    void setUserData( Auth::UserDataReply & a_reply, const libjson::Value & a_result );
     void setProjectData( Auth::ProjectDataReply & a_reply, const libjson::Value & a_result );
     void setRecordData( Auth::RecordDataReply & a_reply, const libjson::Value & a_result );
     void setCollData( Auth::CollDataReply & a_reply, const libjson::Value & a_result );
@@ -205,7 +203,7 @@ private:
     void setAllocData( AllocData * a_alloc, const libjson::Value::Object & a_obj );
     void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, const libjson::Value & a_result );
     void setAllocStatsData( AllocStatsData & a_stats, const libjson::Value::Object & a_object );
-    void setNoteDataReply( Auth::AnnotationDataReply & a_reply, const libjson::Value & a_result );
+    void setNoteDataReply( Auth::NoteDataReply & a_reply, const libjson::Value & a_result );
     void setNoteData( NoteData * a_item, const libjson::Value::Object & a_obj );
     void setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Value & a_result );
     void setTaskDataReplyArray( Auth::TaskDataReply & a_reply, const libjson::Value & a_result );

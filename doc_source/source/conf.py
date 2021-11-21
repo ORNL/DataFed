@@ -16,7 +16,6 @@ import sphinx_rtd_theme
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'DataFed'
@@ -34,7 +33,7 @@ release = '1.4'
 # ones.
 
 #extensions = ['sphinx.ext.autodoc','autoapi.extension']
-extensions = ['autoapi.extension']
+extensions = ['autoapi.extension','sphinx.ext.autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -53,18 +52,24 @@ exclude_patterns = []
 html_theme = 'sphinx_rtd_theme'
 html_show_sourcelink = False
 
+  
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
-html_add_permalinks = ''
+html_permalinks = False
+html_css_files = [
+    'css/custom.css'
+]
 
 source_suffix = ['.rst']
 
 master_doc = 'index'
 
+highlight_language = 'none'
+
 autoapi_type = 'python'
 autoapi_dirs = ['../../python/datafed_pkg/datafed']
 #autoapi_generate_api_docs = False
 autoapi_add_toctree_entry = True
+
