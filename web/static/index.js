@@ -12,7 +12,7 @@ $(document).ready(function(){
 
     var tmpl_data = JSON.parse(document.getElementById('template_data').innerHTML);
 
-    if ( tmpl_data.test_mode ){
+    if ( tmpl_data.test_mode == "true" ){
         $("#devmode").show();
     }
 });
