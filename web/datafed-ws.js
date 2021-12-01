@@ -104,7 +104,7 @@ function startServer(){
                 authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
                 accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
                 redirectUri: g_extern_url + "/ui/authn",
-                scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all[*https://auth.globus.org/scopes/322c8478-dace-4571-a9af-ed8197432c39/data_access] offline_access openid'
+                scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
             };
 
             g_globus_auth = new ClientOAuth2( g_oauth_credentials );

@@ -410,7 +410,9 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
 
               Value::Object & event = data_arr.front().asObject();
               if( event.getBool("is_error")){
+                DL_DEBUG("Is error printing error message");
                 DL_DEBUG(event.getString("details"));
+                DL_DEBUG("*******************************");
               }
             }
 
