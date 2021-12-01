@@ -129,7 +129,6 @@ export function show( a_cb ){
                 var close_cnt = 0;
 
                 function do_close(){
-                    //console.log("do_close",close_cnt);
                     if ( --close_cnt <= 0 ){
                         util.setStatusText("Settings saved.");
 
@@ -146,7 +145,6 @@ export function show( a_cb ){
                     settings.setTheme( tmp );
                     $("#jq-theme-css").attr({href : "/jquery-ui-"+tmp+"/jquery-ui.css" });
                     api.themeSave( tmp, function( ok, data ){
-                        //console.log("cb 1");
                         if ( !ok ){
                             dialogs.dlgAlert( "Save Theme Error", data );
                         }else{
@@ -158,7 +156,6 @@ export function show( a_cb ){
                 if ( pw || email || save_opts ){
                     close_cnt++;
                     api.userUpdate( "u/"+settings.user.uid, pw, email, save_opts?opts:null, function( ok, data ){
-                        //console.log("cb 2");
                         if ( !ok ){
                             dialogs.dlgAlert( "Save Settings Error", data );
                         }else{
@@ -171,7 +168,6 @@ export function show( a_cb ){
                 if ( tmp != def_alloc ){
                     close_cnt++;
                     api.setDefaultAlloc( tmp, null, function( ok, data ){
-                        //console.log("cb 3");
                         if ( !ok ){
                             dialogs.dlgAlert("Set Default Allocation Error", data );
                         }else{

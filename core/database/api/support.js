@@ -37,6 +37,7 @@ module.exports = ( function() {
     obj.MAX_QRY_ITEMS       = 10000;
     obj.MAX_PAGE_SIZE       = 1000;
     obj.MAX_MD_SIZE         = 102400;
+    obj.PASSWORD_MIN_LEN    = 10;
 
     obj.SM_DATA             = 0;
     obj.SM_COLLECTION       = 1;
@@ -158,6 +159,7 @@ module.exports = ( function() {
     obj.CHARSET_DOI     = 4;
     obj.CHARSET_SCH_ID  = 5;
 
+    obj.pw_chars = "?#@!$&*:;/+-=~";
     obj.extra_chars = ["_-.","_-.","_-.","-._~:/?#[]@!$&'()*+,;=","/_-:.@()+,=;$!*'%","_-.:"];
 
     obj.field_reqs = {
@@ -260,6 +262,29 @@ module.exports = ( function() {
     obj.isInteger = function( x ) {
         return (typeof x === 'number') && (x % 1 === 0);
     };
+
+    obj.validatePassword = function( pw ){
+        if ( pw.length < obj.PASSWORD_MIN_LEN ){
+            throw [obj.ERR_INVALID_PARAM, "ERROR: password must be at least "+obj.PASSWORD_MIN_LEN+" characters in length."];
+        }
+
+        var i, j = 0, c;
+        for ( i in pw ){
+            c = pw[i];
+            if ( c >= '0' && c <= '9' ){
+                j |= 1;
+            }else if ( obj.pw_chars.indexOf( c ) != -1 ){
+                j |= 2;
+            }
+            if ( j == 3 ){
+                return;
+            }
+        }
+
+        if ( j != 3 ){
+            throw [obj.ERR_INVALID_PARAM, "ERROR: password must contain at least one number (0-9) and one special character ("+obj.pw_chars+")."];
+        }
+    }
 
     /*
     obj.isAlphaNumeric = function(str) {
@@ -585,8 +610,8 @@ module.exports = ( function() {
     };
 
     obj.hasAdminPermUser = function( a_client, a_user_id ) {
-        //if ( a_client._id != a_user_id && !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_user_id, _to: a_client._id }) && !obj.db.admin.firstExample({ _from: a_user_id, _to: a_client._id })){ 
-        if ( a_client._id != a_user_id && !a_client.is_admin ){ 
+        //if ( a_client._id != a_user_id && !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_user_id, _to: a_client._id }) && !obj.db.admin.firstExample({ _from: a_user_id, _to: a_client._id })){
+        if ( a_client._id != a_user_id && !a_client.is_admin ){
             return false;
         } else {
             return true;
@@ -594,7 +619,7 @@ module.exports = ( function() {
     };
 
     obj.hasAdminPermProj = function( a_client, a_proj_id ) {
-        if ( !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_proj_id, _to: a_client._id }))  { 
+        if ( !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_proj_id, _to: a_client._id }))  {
             return false;
         } else {
             return true;
@@ -602,7 +627,7 @@ module.exports = ( function() {
     };
 
     obj.hasManagerPermProj = function( a_client, a_proj_id ) {
-        if ( !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_proj_id, _to: a_client._id }) && !obj.db.admin.firstExample({ _from: a_proj_id, _to: a_client._id }))  { 
+        if ( !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_proj_id, _to: a_client._id }) && !obj.db.admin.firstExample({ _from: a_proj_id, _to: a_client._id }))  {
             return false;
         } else {
             return true;
@@ -655,7 +680,7 @@ module.exports = ( function() {
     };
 
     obj.hasAdminPermRepo = function( a_client, a_repo_id ) {
-        if ( !a_client.is_admin && !obj.db.admin.firstExample({ _from: a_repo_id, _to: a_client._id }))  { 
+        if ( !a_client.is_admin && !obj.db.admin.firstExample({ _from: a_repo_id, _to: a_client._id }))  {
             return false;
         } else {
             return true;
@@ -1067,7 +1092,7 @@ module.exports = ( function() {
                     }else{
                         obj.db.tag.save({ _key: topics[i], count: 1 });
                     }*/
-        
+
                     parent = parent._id;
                 }else{
                     parent = this.topicCreate( topics, i, parent, a_owner_id );
@@ -1606,7 +1631,7 @@ module.exports = ( function() {
                         //console.log("has topic 2");
 
                         perm.inherited |= obj.PERM_PUBLIC;
-        
+
                         if (( a_req_perm & perm.inherited ) == a_req_perm )
                             break;
                     }
@@ -1657,7 +1682,7 @@ module.exports = ( function() {
         var results = [];
 
         /* Get users and projects that have shared data or collections with subject:
-        - Any user that shares a record or collection directly with the subject, or with a group that the subject is a member 
+        - Any user that shares a record or collection directly with the subject, or with a group that the subject is a member
         - Any non-associated project that shares a record or collection directly with the subject, or with a group that the subject is a member
         - Non-associated projects are prejects where the subject is not the owner, an admin, or a member
         */
@@ -1884,7 +1909,7 @@ module.exports = ( function() {
                 comment.comment += "type";
             else
                 comment.comment += "state";
-    
+
         }else{
             upd.state = obj.NOTE_CLOSED;
             comment.comment = "Impact assessment invalidated due to change of state";
@@ -1988,7 +2013,7 @@ module.exports = ( function() {
 
             if ( qry_res.hasNext() ){
                 var time = Math.floor( Date.now()/1000 ), new_note;
-    
+
                 while ( qry_res.hasNext() ){
                     res = qry_res.next();
                     //console.log("dep:",res);
@@ -2118,7 +2143,7 @@ module.exports = ( function() {
                         if ( !cols.has( col )){
                             cols.add( col );
                         }
-                    }    
+                    }
                 }else{
                     perm = obj.getPermissionsLocal( a_client._id, col, true, obj.PERM_RD_REC | obj.PERM_LIST );
 
@@ -2137,7 +2162,7 @@ module.exports = ( function() {
                             if ( !cols.has( col )){
                                 cols.add( col );
                             }
-                        }    
+                        }
                     }else{
                         child = obj.db._query("for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
                         while( child.hasNext()){
@@ -2172,7 +2197,7 @@ module.exports = ( function() {
                     if ( !a_cols.has( col )){
                         a_cols.add( col );
                     }
-                }    
+                }
             }else{
                 col = obj.db.c.document(a_col_id);
 
@@ -2202,7 +2227,7 @@ module.exports = ( function() {
                         if ( !a_cols.has( col )){
                             a_cols.add( col );
                         }
-                    }    
+                    }
                 }else{
                     res = obj.db._query("for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id",{ col: col._id });
                     perm = ( perm.inhgrant | perm.inherited | a_inh_perm );

@@ -13,6 +13,8 @@
 #include "SDMS_Auth.pb.h"
 #include "Version.pb.h"
 
+#include "Config.h"
+
 using namespace std;
 using namespace SDMS::Anon;
 using namespace SDMS::Auth;
@@ -24,78 +26,9 @@ namespace SDMS
 class AuthzWorker
 {
 public:
-    AuthzWorker() : m_timeout( 10000 )
+    AuthzWorker( struct Config * a_config ) :
+        m_config( a_config ), m_test_path_len( strlen( a_config->test_path ))
     {
-        // IMPORTANT: The DATAFED_AUTHZ_CFG_FILE env variable must be set in the gridFTP service
-        // script (usually /etc/init.d/globus-gridftp-server). This variable points to the
-        // configuration file used for DataFed comm settings
-
-        const char * cfg_file = getenv( "DATAFED_AUTHZ_CFG_FILE" );
-
-        if ( !cfg_file )
-            EXCEPT( 1, "DATAFED_AUTHZ_CFG_FILE environment variable not set." );
-
-        DL_INFO( "Reading config file: " << cfg_file );
-
-        ifstream configFile(cfg_file);
-
-        if ( !configFile.is_open() )
-            EXCEPT_PARAM( 1, "Could not open authz config file: " << cfg_file );
-
-        string line,key,val;
-        size_t eq, lc = 0;
-
-        while( getline( configFile, line ))
-        {
-            lc++;
-
-            if ( line.length() == 0 || line.at(0) == '#')
-                continue;
-
-            eq = line.find_first_of("=");
-
-            if ( eq == string::npos )
-                EXCEPT_PARAM( 1, "Invalid syntax in config file at line " << lc );
-
-            key = line.substr(0,eq);
-            val = line.substr(eq+1);
-
-            if (key == "repo_id")
-                m_repo_id = val;
-            else if (key == "server_address")
-                m_server_addr = val;
-            else if (key == "pub_key")
-                m_pub_key = loadKeyFile( val );
-            else if (key == "priv_key")
-                m_priv_key = loadKeyFile( val );
-            else if (key == "server_key")
-                m_server_key = loadKeyFile( val );
-            else if (key == "timeout")
-                m_timeout = stoi(val);
-            else if (key == "test_path" )
-                m_test_path = val;
-            else
-                EXCEPT_PARAM( 1, "Invalid key \"" << key << "\"in config file at line " << lc );
-        }
-
-        configFile.close();
-
-        string miss;
-
-        if ( !m_repo_id.size() )
-            miss += " repo_id";
-        if ( !m_server_addr.size() )
-            miss += " server_address";
-        if ( !m_pub_key.size() )
-            miss += " pub_key";
-        if ( !m_priv_key.size() )
-            miss += " priv_key";
-        if ( !m_server_key.size() )
-            miss += " server_key";
-
-        if ( miss.size() )
-            EXCEPT_PARAM( 1, "Missing required configuration items:" << miss );
-
         REG_PROTO( SDMS::Anon );
         REG_PROTO( SDMS::Auth );
     }
@@ -110,7 +43,7 @@ public:
     {
         DL_DEBUG("Checking auth for " << client_id << " in " << path );
 
-        if ( m_test_path.size() > 0 && strncmp( path, m_test_path.c_str(), m_test_path.size() ) == 0 )
+        if ( m_test_path_len > 0 && strncmp( path, m_config->test_path, m_test_path_len ) == 0 )
         {
             DL_INFO("Allowing request within TEST PATH");
             return 0;
@@ -120,24 +53,24 @@ public:
 
         MsgComm::SecurityContext sec_ctx;
         sec_ctx.is_server = false;
-        sec_ctx.public_key = m_pub_key;
-        sec_ctx.private_key = m_priv_key;
-        sec_ctx.server_key = m_server_key;
-        
+        sec_ctx.public_key = m_config->pub_key;
+        sec_ctx.private_key = m_config->priv_key;
+        sec_ctx.server_key = m_config->server_key;
+
         Auth::RepoAuthzRequest  auth_req;
         MsgBuf::Message *       reply;
         MsgBuf::Frame           frame;
 
-        MsgComm authzcomm(m_server_addr, MsgComm::DEALER, false, &sec_ctx );
+        MsgComm authzcomm(m_config->server_addr, MsgComm::DEALER, false, &sec_ctx );
 
-        auth_req.set_repo(m_repo_id);
+        auth_req.set_repo(m_config->repo_id);
         auth_req.set_client(client_id);
         auth_req.set_file(path);
         auth_req.set_action(action);
-        
+
         authzcomm.send(auth_req);
 
-        if ( !authzcomm.recv( reply, frame, m_timeout ))
+        if ( !authzcomm.recv( reply, frame, m_config->timeout ))
         {
             EXCEPT(1,"Core service did no respond");
         }
@@ -161,25 +94,8 @@ public:
     }
 
 private:
-    string loadKeyFile( const std::string & filename )
-    {
-        ifstream inf( filename.c_str() );
-        if ( !inf.is_open() || !inf.good() )
-            EXCEPT_PARAM( 1, "Could not open file: " << filename );
-        string key;
-        inf >> key;
-        inf.close();
-        return key;
-    }
-
-
-    std::string                     m_pub_key;
-    std::string                     m_priv_key;
-    std::string                     m_server_key;
-    std::string                     m_repo_id;
-    std::string                     m_server_addr;
-    std::string                     m_test_path;
-    uint32_t                        m_timeout;
+    struct Config *     m_config;
+    size_t              m_test_path_len;
 };
 
 } // End namespace SDMS
@@ -194,7 +110,7 @@ extern "C"
         return ver_str.c_str();
     }
 
-    int checkAuthorization( char * client_id, char * object, char * action )
+    int checkAuthorization( char * client_id, char * object, char * action, struct Config * config )
     {
         DL_SET_LEVEL( DynaLog::DL_INFO_LEV );
         DL_SET_CERR_ENABLED(false);
@@ -206,7 +122,7 @@ extern "C"
 
         try
         {
-            SDMS::AuthzWorker worker;
+            SDMS::AuthzWorker worker( config );
             result = worker.checkAuth( client_id, object, action );
         }
         catch( TraceException &e )

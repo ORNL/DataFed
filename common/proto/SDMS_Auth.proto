@@ -135,6 +135,8 @@ message UserAccessTokenReply
 
 // Request to create a new DataFed user account.
 // Reply: AckReply on success, NackReply on error
+// Note: Use of this message is restricted to system service. Any attempted use by non-admin
+// users will be logged.
 message UserCreateRequest
 {
     required string             uid         = 1; // User's GlobusID UID (name portion only)
@@ -143,6 +145,7 @@ message UserCreateRequest
     required string             email       = 4; // Email address
     repeated string             uuid        = 5; // UUID for primary Globus account
     optional string             options     = 6; // DataFed options (JSON string)
+    required string             secret      = 7; // System secret
 }
 
 // Request to find DataFed user by one or more Globus UUIDs
@@ -1091,7 +1094,7 @@ message QueryUpdateRequest
     optional SearchRequest      query       = 3; // Optional new search parameters
 }
 
-// Request to 
+// Request to
 // Reply: AckReply on success, NackError on error
 message QueryDeleteRequest
 {

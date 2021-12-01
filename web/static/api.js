@@ -354,7 +354,7 @@ export function catalogSearch( a_query, a_cb ){
 }
 
 export function projList_url( a_owned, a_admin, a_member, a_sort, a_offset, a_count ){
-    return "/api/prj/list?owner=" + (a_owned?"true":"false") + "&admin=" + (a_admin?"true":"false") + 
+    return "/api/prj/list?owner=" + (a_owned?"true":"false") + "&admin=" + (a_admin?"true":"false") +
         "&member="+ (a_member?"true":"false") + (a_sort!=undefined?"&sort="+a_sort:"") +
         (a_offset!=undefined?"&offset="+a_offset:"") + (a_count!=undefined?"&count="+a_count:"");
 }
@@ -481,6 +481,10 @@ export function userListAll_url( a_offset, a_count ) {
 
 export function userListCollab_url( a_offset, a_count ) {
     return "/api/usr/list/collab" + (( a_offset != undefined && a_count != undefined )?"?offset="+a_offset+"&count="+a_count:"");
+}
+
+export function userRegister( a_password, a_cb ) {
+    _asyncGet( "/api/usr/register" + (a_password?"?pw="+encodeURIComponent(a_password):""), null, a_cb );
 }
 
 export function userFindByName_url( a_search_word, a_offset, a_count ) {
@@ -852,7 +856,7 @@ export function epRecentLoad( a_cb ){
     //console.log("epRecentLoad");
     _asyncGet( "/ui/ep/recent/load", null, function( ok, data ){
         //console.log("epRecentLoad",ok,data);
-        
+
         if ( ok ){
             settings.epSetRecent( data );
         }

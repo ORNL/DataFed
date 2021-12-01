@@ -345,7 +345,11 @@ if ( base_msg ) \
     delete base_msg; \
 } \
 else { \
-    DL_ERROR( "W"<<m_tid<<": buffer parse failed due to unregistered msg type." ); \
+    DL_ERROR( "W"<<m_tid<<": message parse failed (malformed or unregistered msg type)." ); \
+    NackReply nack; \
+    nack.set_err_code( ID_BAD_REQUEST ); \
+    nack.set_err_msg( "Message parse failed (malformed or unregistered msg type)" ); \
+    m_msg_buf.serialize( nack ); \
 } \
 return send_reply;
 
@@ -698,7 +702,7 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
         DL_ERROR( "Invalid metadata schema: " << e.what() );
     }
 
-    
+
     if ( m_validator_err.size() )
     {
         reply.set_errors( m_validator_err );
@@ -722,6 +726,11 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
     DL_INFO("Creating record");
 
     m_validator_err.clear();
+
+    if ( request->has_sch_enforce() && !( request->has_metadata() && request->has_sch_id() ))
+    {
+        EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
+    }
 
     if ( request->has_metadata() && request->has_sch_id() )
     {
@@ -766,10 +775,6 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
             EXCEPT( 1, m_validator_err );
         }
     }
-    else if ( request->has_sch_enforce() )
-    {
-        EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
-    }
 
     m_db_client.recordCreate( *request, reply );
 
@@ -777,12 +782,12 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
     {
         DL_ERROR( "Validation error - update record" );
 
-        //const string & id = obj.getString("id");
         RecordData * data = reply.mutable_data(0);
 
         m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
         // TODO need a def for md_err mask
         data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+        data->set_md_err_msg( m_validator_err );
     }
 
     PROC_MSG_END
@@ -808,12 +813,17 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
     if ( request->has_metadata() || ( request->has_sch_id() && request->sch_id().size() ) || request->has_sch_enforce() )
     {
         //DL_INFO("Has metadata/schema");
-        string metadata = request->has_metadata()?request->metadata():"";
-        string sch_id = request->has_sch_id()?request->sch_id():"";
+        string metadata, cur_metadata, sch_id;
+        bool merge = true;
 
-        // If update does not include metadata AND schema, then we must load the missing parts from DB before we can validate here
-        if ( !request->has_metadata() || !request->has_sch_id() )
+        if ( request->has_mdset() && request->mdset() )
+            merge = false;
+
+        if ( !request->has_metadata() || merge || !request->has_sch_id() )
         {
+            // Request does not include metadata AND schema, or it's a merge, so must load the missing parts
+            // from DB before validation can be done.
+
             RecordViewRequest view_request;
             RecordDataReply view_reply;
 
@@ -821,11 +831,31 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 
             m_db_client.recordView( view_request, view_reply );
 
-            if ( !request->has_metadata() )
+            if ( request->has_metadata() && merge )
+            {
+                metadata = request->metadata();
+                cur_metadata = view_reply.data(0).metadata();
+            }
+            else if ( request->has_metadata() )
+            {
+                metadata = request->metadata();
+            }
+            else
+            {
                 metadata = view_reply.data(0).metadata();
+            }
+
 
             if ( !request->has_sch_id() )
                 sch_id = view_reply.data(0).sch_id();
+            else
+                sch_id = request->sch_id();
+        }
+        else
+        {
+            // metadata and schema ID are both in request AND it is not a merge operation
+            metadata = request->metadata();
+            sch_id = request->sch_id();
         }
 
         if ( metadata.size() && sch_id.size() )
@@ -853,6 +883,14 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
                 DL_INFO( "Parse md" );
 
                 nlohmann::json md = nlohmann::json::parse( metadata );
+
+                // Apply merge patch if needed
+                if ( cur_metadata.size() )
+                {
+                    nlohmann::json cur_md = nlohmann::json::parse( cur_metadata );
+                    cur_md.merge_patch( md );
+                    md = cur_md;
+                }
 
                 DL_INFO( "Validating" );
 
@@ -885,6 +923,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
         // Must find and update md_err flag in reply (always 1 data entry)
         RecordData * data = reply.mutable_data(0);
         data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+        data->set_md_err_msg( m_validator_err );
 
         for ( int i = 0; i < reply.update_size(); i++ )
         {
@@ -893,6 +932,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
             {
                 // TODO need a def for md_err mask
                 data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
+                break;
             }
         }
     }
