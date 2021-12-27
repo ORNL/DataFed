@@ -3187,6 +3187,23 @@ DatabaseAPI::schemaView( const std::string & a_id, libjson::Value & a_result )
     dbGet( "schema/view", {{ "id", a_id }}, a_result );
 }
 
+void
+DatabaseAPI::dailyMessage( const Anon::DailyMessageRequest & a_request, Anon::DailyMessageReply & a_reply )
+{
+    (void) a_request; // Not used
+    libjson::Value result;
+
+    dbGet( "config/msg/daily", {}, result );
+
+    TRANSLATE_BEGIN()
+
+    const Value::Object & obj = result.asObject();
+
+    if ( obj.has( "msg" ) && !obj.value().isNull( ))
+        a_reply.set_message( obj.asString() );
+
+    TRANSLATE_END( result )
+}
 
 void
 DatabaseAPI::taskLoadReady( libjson::Value & a_result )

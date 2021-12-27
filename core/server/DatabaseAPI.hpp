@@ -183,6 +183,8 @@ public:
     void schemaUpdate( const Auth::SchemaUpdateRequest & a_request );
     void schemaDelete( const Auth::SchemaDeleteRequest & a_request, Anon::AckReply & a_reply );
 
+    void dailyMessage( const Anon::DailyMessageRequest & a_request, Anon::DailyMessageReply & a_reply );
+
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, libjson::Value & a_result, bool a_log = true );
     bool dbGetRaw( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, std::string & a_result );

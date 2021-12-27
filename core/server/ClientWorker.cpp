@@ -88,6 +88,9 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
 
+        // Requests that can be handled by DB client directly
+        SET_MSG_HANDLER_DB( proto_id, DailyMessageRequest, DailyMessageReply, dailyMessage );
+
 
         // Register and setup handlers for the Authenticated interface
 

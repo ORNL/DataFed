@@ -80,3 +80,14 @@ message AuthStatusReply
     required bool               auth        = 1; // Authenticated if true
     optional string             uid         = 2; // DataFed user id
 }
+
+// Get the system daily message
+// Reply: DailyMessageReply
+message DailyMessageRequest
+{
+}
+
+message DailyMessageReply
+{
+    optional string             message     = 1; // Daily message, if set
+}
