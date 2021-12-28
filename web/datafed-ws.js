@@ -473,6 +473,12 @@ app.get('/api/usr/register', ( a_req, a_resp ) => {
     }
 });
 
+app.get('/api/msg/daily', ( a_req, a_resp ) => {
+    sendMessageDirect( "DailyMessageRequest", null, {}, function( reply ) {
+        a_resp.json( reply );
+    });
+});
+
 app.get('/api/usr/find/by_uuids', ( a_req, a_resp ) => {
     sendMessage( "UserFindByUUIDsRequest", { uuid: a_req.query.uuids }, a_req, a_resp, function( reply ) {
         a_resp.json( reply.user[0] );

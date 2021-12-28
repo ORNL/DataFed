@@ -1,3 +1,5 @@
+import * as api from "/api.js";
+
 $(".btn-help").on( "click", function(){
     window.open('https://ornl.github.io/DataFed/','datafed-docs');
 });
@@ -10,8 +12,14 @@ $(document).ready(function(){
     window.name = 'DataFed Welcome';
     $(".btn").button();
 
-    var tmpl_data = JSON.parse(document.getElementById('template_data').innerHTML);
+    api.getDailyMessage( function( ok, reply ){
+        if ( ok && reply.message ){
+            $("#msg_daily").text( reply.message );
+            $("#msg_daily_div").show();
+        }
+    });
 
+    var tmpl_data = JSON.parse(document.getElementById('template_data').innerHTML);
     if ( tmpl_data.test_mode == "true" ){
         $("#devmode").show();
     }
