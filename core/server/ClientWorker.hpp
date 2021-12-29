@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <mutex>
 #include <algorithm>
 #include <zmq.h>
 #include <nlohmann/json.hpp>

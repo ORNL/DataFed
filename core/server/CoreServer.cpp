@@ -56,6 +56,9 @@ Server::Server() :
     // Start DB maintenance thread
     m_db_maint_thread = new thread( &Server::dbMaintenance, this );
 
+    // Start DB maintenance thread
+    m_metrics_thread = new thread( &Server::metricsThread, this );
+
     // Create task mgr (starts it's own threads)
     TaskMgr::getInstance();
 }
@@ -288,12 +291,63 @@ Server::dbMaintenance()
     DL_ERROR( "DB maintenance thread exiting" );
 }
 
+void
+Server::metricsThread()
+{
+    chrono::system_clock::duration  purge_per = chrono::seconds( m_config.metrics_period );
+    DatabaseAPI                     db( m_config.db_url, m_config.db_user, m_config.db_pass );
+    map<string,MsgMetrics_t>::iterator u;
+    MsgMetrics_t::iterator m;
+
+    while ( 1 )
+    {
+        try
+        {
+            //DL_DEBUG( "DB Maint: Purging closed annotations" );
+            //db.notePurge( m_config.note_purge_age );
+
+            map<string,MsgMetrics_t> metrics;
+
+            // Lock mutex, copy metrics to local store, create new empty metrics, then release lock
+            {
+                lock_guard<mutex> lock( m_msg_metrics_mutex );
+                // TODO This is not right
+                metrics = std::move( m_msg_metrics );
+            }
+
+            for ( u = metrics.begin(); u != metrics.end(); u++ )
+            {
+                cout << "u " << m->first << "\n";
+
+                for ( m = u->second.begin(); m != u->second.end(); m++ )
+                {
+                    cout << "  m " << m->first << " = " << m->second << "\n";
+                }
+            }
+        }
+        catch( TraceException & e )
+        {
+            DL_ERROR( "Metrics thread:" << e.toString() );
+        }
+        catch( exception & e )
+        {
+            DL_ERROR( "Metrics thread:" << e.what() );
+        }
+        catch( ... )
+        {
+            DL_ERROR( "Metrics thread: Unknown exception" );
+        }
+
+        this_thread::sleep_for( purge_per );
+    }
+    DL_ERROR( "Metrics thread exiting" );
+}
 
 void
 Server::zapHandler()
 {
     DL_INFO( "ZAP handler thread starting" );
-    
+
     try
     {
         void *      ctx = MsgComm::getContext();
@@ -483,5 +537,27 @@ Server::isClientAuthenticated( const std::string & a_client_key, std::string & a
     return false;
 }
 
+void
+Server::metricsUpdateMsgCount( const std::string & a_uid, uint16_t a_msg_type )
+{
+    lock_guard<mutex> lock( m_msg_metrics_mutex );
+    map<string,MsgMetrics_t>::iterator u = m_msg_metrics.find( a_uid );
+    if ( u == m_msg_metrics.end() )
+    {
+        m_msg_metrics[a_uid][a_msg_type] = 1;
+    }
+    else
+    {
+        MsgMetrics_t::iterator m = u->second.find( a_msg_type );
+        if ( m == u->second.end() )
+        {
+            u->second[a_msg_type] = 1;
+        }
+        else
+        {
+            m->second++;
+        }
+    }
+}
 
 }}
