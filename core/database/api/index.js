@@ -20,6 +20,7 @@ router.use( "/repo", require('./repo_router') );
 router.use( "/task", require('./task_router') );
 router.use( "/schema", require('./schema_router') );
 router.use( "/config", require('./config_router') );
+router.use( "/metrics", require('./metrics_router') );
 router.use( "/admin", require('./admin_router') );
 
 module.context.use(router);
