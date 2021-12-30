@@ -22,6 +22,7 @@ graph._addVertexCollection("task"); // Tasks
 graph._addVertexCollection("tag"); // Tags
 graph._addVertexCollection("sch"); // Schemas
 graph._addVertexCollection("config"); // Configuration
+graph._addVertexCollection("metrics"); // Metrics
 
 
 var owner = graph_module._relation("owner", ["d","c","p","g","a","q","task"], ["u","p"]);
@@ -259,3 +260,6 @@ db.t.ensureIndex({ type: "persistent", unique: false, fields: [ "top" ], sparse:
 
 //db.sch.ensureIndex({ type: "hash", unique: true, fields: [ "id" ], sparse: false });
 db.sch.ensureIndex({ type: "hash", unique: true, fields: [ "id", "ver" ], sparse: false });
+
+db.metrics.ensureIndex({ type: "persistent", unique: false, fields: [ "timestamp", "type", "uid" ], sparse: true });
+

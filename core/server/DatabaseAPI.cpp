@@ -3763,6 +3763,61 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
     dbGet( "task/purge", {{"age_sec",to_string( a_age_sec )}}, result );
 }
 
+void
+DatabaseAPI::metricsUpdateMsgCounts( uint32_t a_timestamp, uint32_t a_total, const std::map<std::string,std::map<uint16_t,uint32_t>> & a_metrics )
+{
+    //DL_DEBUG( "metricsUpdateMsgCounts" << a_timestamp << ", " << a_total );
+
+    map<string,std::map<uint16_t,uint32_t>>::const_iterator u;
+    map<uint16_t,uint32_t>::const_iterator m;
+    string body = "{\"timestamp\":" + to_string(a_timestamp) + ",\"total\":" + to_string(a_total) + ",\"uids\":{";
+    bool c = false, cc;
+
+
+    for ( u = a_metrics.begin(); u != a_metrics.end(); u++ )
+    {
+        /*DL_DEBUG( "uid: " << u->first );
+        for ( cc = false, m = u->second.begin(); m != u->second.end(); m++ )
+        {
+            DL_DEBUG( "m: " << m->first << ", c: " << m->second );
+        }*/
+
+        if ( c )
+            body += ",";
+        else
+            c = true;
+
+        body += "\"" + u->first + "\":{\"tot\":" + to_string(u->second.at(0)) + ",\"msg\":{";
+        //DL_DEBUG( "2" );
+
+        for ( cc = false, m = u->second.begin(); m != u->second.end(); m++ )
+        {
+            if ( m->first != 0 )
+            {
+                if ( cc )
+                    body += ",";
+                else
+                    cc = true;
+                //DL_DEBUG( "3" );
+
+                body += "\"" + to_string(m->first) + "\":" + to_string(m->second);
+            }
+        }
+        body += "}}";
+    }
+    //DL_DEBUG( "4" );
+
+    body += "}}";
+
+    libjson::Value result;
+
+    DL_DEBUG( "sending to db. body: " << body );
+
+    dbPost( "metrics/msg_count/update", {}, &body, result );
+
+    //DL_DEBUG( "back from db" );
+}
+
 uint32_t
 DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_qry_begin, std::string & a_qry_end, std::string & a_qry_filter, std::string & a_params )
 {
