@@ -186,6 +186,7 @@ public:
     void dailyMessage( const Anon::DailyMessageRequest & a_request, Anon::DailyMessageReply & a_reply );
 
     void metricsUpdateMsgCounts( uint32_t a_timestamp, uint32_t a_total, const std::map<std::string,std::map<uint16_t,uint32_t>> & a_metrics );
+    void metricsPurge( uint32_t a_timestamp );
 
 private:
     long dbGet( const char * a_url_path, const std::vector<std::pair<std::string,std::string>> &a_params, libjson::Value & a_result, bool a_log = true );

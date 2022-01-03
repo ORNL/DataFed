@@ -262,7 +262,10 @@ ClientWorker::workerThread()
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
-                            m_core.metricsUpdateMsgCount( m_msg_buf.getUID(), msg_type );
+                            // Gather msg metrics except on task lists (web clients poll)
+                            if ( msg_type != task_list_msg_type )
+                                m_core.metricsUpdateMsgCount( m_msg_buf.getUID(), msg_type );
+
                             comm.send( m_msg_buf );
                             /*if ( msg_type != task_list_msg_type )
                             {
