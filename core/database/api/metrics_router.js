@@ -64,3 +64,40 @@ router.get('/msg_count', function (req, res) {
 .queryParam('uid', joi.string().optional(), "User ID (default none)")
 .summary('Update message metrics.')
 .description('Update message metrics.');
+
+router.get('/users/active', function (req, res) {
+    try {
+        var cnt = {}, u, r, qryres = g_db._query(
+            "for i in metrics filter (( i.timestamp + @since ) >= @now ) && i.type == 'msgcnt_user' return {uid:i.uid,tot:i.total}",
+            { now: Math.floor(Date.now()/1000), since: 60*( req.queryParams.since?req.queryParams.since:15 )} ).toArray();
+
+        for ( r in qryres ){
+            u = qryres[r];
+            if ( u.uid in cnt ){
+                cnt[u.uid] += u.tot;
+            }else{
+                cnt[u.uid] = u.tot;
+            }
+        }
+
+        res.json( cnt );
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('since', joi.number().min(0).optional(), "Users active since given minutes ago (default 15)")
+.summary('Get recently active users from metrics.')
+.description('Get recently active users from metrics.');
+
+router.post('/purge', function (req, res) {
+    try {
+        g_db.metrics.save({ timestamp: Math.floor( Date.now()/1000 ), type: "purge", ts: req.queryParams.timestamp });
+
+        g_db._query( "for i in metrics filter i.timestamp < @ts remove i in metrics", { ts: req.queryParams.timestamp });
+    } catch( e ) {
+        g_lib.handleException( e, res );
+    }
+})
+.queryParam('timestamp', joi.number().min(0).required(), "Purge all metrics from before timestamp (Unix epoch)")
+.summary('Purge older metrics.')
+.description('Purge older metrics.');
