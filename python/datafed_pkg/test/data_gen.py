@@ -77,6 +77,9 @@ pub = args.public
 do_del = args.delete
 up_file = args.up
 
+# Prefix SDMS test endpoint path if not a full Globus path
+if up_file and up_file.find("#") == -1:
+    up_file = "u_eiiq2lgi7fd7jfaggqdmnijiya#SDMS-Dev/data/files/" + up_file
 
 def selectRand( a, b, cnt ):
     res = []
@@ -155,7 +158,7 @@ for i in range( start, end + 1 ):
             if api.collectionUpdate( alias, topic = "", context = ctx )[0] == None:
                 print("Timeout on collectionUpdate, coll {}".format(i))
                 exit()
-        
+
         if api.collectionDelete( alias, context = ctx )[0] == None:
             print("Timeout on collectionDelete, coll {}".format(i))
             exit()
@@ -246,7 +249,7 @@ for i in range( start, end + 1 ):
             exit()
 
         if up_file:
-            if api.dataPut( data_alias, "u_eiiq2lgi7fd7jfaggqdmnijiya#SDMS-Dev/data/files/" + up_file, context = ctx )[0] == None:
+            if api.dataPut( data_alias, up_file, context = ctx )[0] == None:
                 print("Timeout on dataPut, coll {}, rec {}".format(i,j))
                 exit()
 
