@@ -565,16 +565,17 @@ export function buildObjSrcTree( obj, base, md_exp ){
             if ( typeof obj[k] === 'string' ){
                 val = "\"" + escapeHTML( obj[k] ) + "\"";
             }else if ( Array.isArray( obj[k] )){
-                val = null;
+                val = "[";
+		var comma = false;
 
                 for ( i in o ){
                     v = o[i];
 
-                    if ( val ){
+                    if ( comma ){
                         val += ", ";
-                    }else{
-                        val = "[";
-                    }
+                    } else {
+			comma = true;
+		    }
 
                     if ( typeof v === 'string' ){
                         vs = "\"" + escapeHTML( v ) + "\"";
