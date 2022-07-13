@@ -101,7 +101,7 @@ stores. The inherit reliability of the physical storage of a repository is deter
 could range from inexpensive magnetic disks to high-speed solid state drives or even archival-quality geographically
 distribute storage systems. Local administrators control repository policies and determine which DataFed users can
 utilize a repository by granting (or revoking) repository allocations. These local administrative policies and actions
-have impact no DataFed on repositories at other facilities.
+have no impact on DataFed on repositories at other facilities.
 
 Figure 2 shows a DataFed repository in isolation; however, a host facility would typically integrate their DataFed
 repositories with their own local storage and compute resources. For example, a facility would likely have additional
@@ -124,7 +124,7 @@ a command-line interface (CLI), and both high- and low-level application program
 way to interact with DataFed is through the web application (see :doc:`DataFed Web Portal </user/web/portal>`), and
 the web application is where users initially register for DataFed accounts.
 
-The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged available on PyPi. Refer
+The DataFed CLI and APIs are all provided through a single Python-based DataFed client packaged and available on PyPi. Refer
 to the :doc:`Client Installation </user/client/install>`, :doc:`CLI User Guide </user/cli/guide>`, and
 :doc:`Python Scripting Guide </user/python/high_level_guide>` for more information.
 
@@ -150,7 +150,7 @@ acquiring a DataFed repository allocation.
   In a future release of DataFed, a searchable directory of available data repositories will be made available and allow
   users to request allocations directly from within DataFed.
 
-DataFed registration utilizes a standard Globus authentication and authorization process. When you begine the registration
+DataFed registration utilizes a standard Globus authentication and authorization process. When you begin the registration
 process from the DataFed welcome page, you will be redirected to Globus for authentication (log-in) using your Globus account.
 Globus will then ask you to authorize DataFed to access your Globus identity and to allow DataFed to transfer data on your behalf.
 Once this process is complete, you will be redirected to a DataFed post-registration page where you will create a DataFed password.
@@ -333,7 +333,7 @@ section of this document.
 
 When creating or updating a data record, metadata may be directly specified or a JSON file may be referenced as the metadata source.
 When updating the metadata associated with an existing data record, the user has the option to either replace all of the existing
-metadata or to merge new metadata with existing metadata. In the case of merging, any keys that are present both the new and
+metadata or to merge new metadata with existing metadata. In the case of merging, any keys that are present in both the new and
 existing metadata will be overwritten by the new values - other existing keys are left unchanged and new keys are inserted.
 
 .. note::
@@ -532,8 +532,8 @@ are applied to items linked within it. The individual permissions are as follows
 * SHARE - Allows setting access controls on records and collections
 * LOCK - Allows locking a record or collection to temporarily suppress all permissions
 
-Multiple user- and group- scoped permission may be applied. Permissions for a given user are evaluated by combining all
-permission set for all scopes that apply - including permissions that may be inherited from parent collection hierarchies.
+Multiple user- and group- scoped permissions may be applied. Permissions for a given user are evaluated by combining all
+permissions set for all scopes that apply - including permissions that may be inherited from parent collection hierarchies.
 Because permissions are inherited and additive, the absence of a permission on a given data record or collection is not
 equivalent to denying that permission.
 
@@ -541,7 +541,7 @@ Access controls are typically applied to parent collections of a collection hier
 inherit the permissions defined by the top-level parent. Collections have both "local" and "inherited" permissions; where
 local permissions control access to the collection record itself, and "inherited" permissions are the permissions passed
 down to all contained data records and sub-collections. Note that because data records can be placed into multiple collections,
-the inherited permissions of *all* associated parent collections are evaluated for each users accessing a given data record.
+the inherited permissions of *all* associated parent collections are evaluated for each user accessing a given data record.
 
 ----------------------
 Repository Allocations
@@ -557,7 +557,7 @@ allocations on data repositories managed by the organization that operates the f
 allocations may be explicitly requested from a DataFed member organizations. DataFed member organizations are free to define
 and enforce their own data storage policies; therefore, users wishing to acquire storage a specific allocation must contact the
 associated organization for information on how to gain access. Even though unaffiliated users with no storage allocation cannot
-use DataFed to create and manage their own data, DataFed is still allows these users to locate, access, and monitor data owned
+use DataFed to create and manage their own data, DataFed still allows these users to locate, access, and monitor data owned
 by other DataFed users or projects.
 
 It is likely that DataFed users may have multiple storage allocations on different data repositories. In this case, a default
@@ -601,7 +601,7 @@ Annotations
 
 Annotations are a feature that allows users (with proper permissions) to attach general notifications, questions, warnings, and errors to
 data records. Annotations have several states including "open", "active", and "closed". When an annotation is initially created,
-is in the "open" state by default and only the owner/creator of the data record and the author of the annotation will be able see
+it is in the "open" state by default and only the owner/creator of the data record and the author of the annotation will be able see
 the new annotation. A mechanism is provided to allow the two parties to exchange information, and if deemed suitable by the owner
 of the data record, the annotation can be "activated" which will make it visible to all users that have access to the associated
 record.
@@ -618,7 +618,7 @@ In a future release, users will be notified via email when annotations associate
 Data and Collection Search
 --------------------------
 
-DataFed provides a powerful search feature that allows data records and collections to found within a users personal data space,
+DataFed provides a powerful search feature that allows data records and collections to be found within a users personal data space,
 across projects, and data/collections shared by other users and/or projects. Searches can be saved and will then be accessible
 via the "Saved Queries" feature in the DataFed web portal, the command-line interface, and the Python API. Below is a list of fields
 that can be used for searches and saved queries.
@@ -636,6 +636,6 @@ that can be used for searches and saved queries.
 Catalog
 -------
 
-The DataFed catalog allows collections and data records to be is internally published (without DOI numbers) for use by any
+The DataFed catalog allows collections and data records to be internally published (without DOI numbers) for use by any
 DataFed user. The catalog allows users to browse collections by hierarchical categories and to search for collections and datasets
 directly by filtering relevant field and metadata schema values.
