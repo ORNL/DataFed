@@ -51,7 +51,7 @@ int main( int a_argc, char ** a_argv )
             if ( opt_map.count( "help" ) )
             {
                 cout << "DataFed Repo Server, ver. " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_REPO << "\n";
-                cout << "Usage: sdms-repo [options]\n";
+                cout << "Usage: datafed-repo [options]\n";
                 cout << opts << endl;
                 return 0;
             }

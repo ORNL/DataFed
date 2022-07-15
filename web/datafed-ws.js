@@ -1836,6 +1836,12 @@ function loadSettings(){
 
     try{
         var config = ini.parse(fs.readFileSync(process.argv[2],'utf-8'));
+    
+        console.log( config );
+        console.log("*****Server part****");
+        console.log( config.server );
+        console.log("*****Server Secret part****");
+        console.log( config.server.system_secret );
         if ( config.server ){
             g_host = config.server.host || g_host;
             g_port = config.server.port || g_port;
@@ -1851,6 +1857,7 @@ function loadSettings(){
             g_system_secret = config.server.system_secret;
             g_session_secret = config.server.session_secret;
             g_test = config.server.test || g_test;
+            
         }
         if ( config.oauth ){
             g_client_id = config.oauth.client_id || g_client_id;

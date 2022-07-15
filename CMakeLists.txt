@@ -83,6 +83,8 @@ set(CMAKE_C_FLAGS "-Wall -Wextra")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
+# Create file glob here because need to be made visible here as well
+file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/*.proto" )
 add_subdirectory( common )
 add_subdirectory( core )
 add_subdirectory( repository )
@@ -93,5 +95,16 @@ add_subdirectory( python EXCLUDE_FROM_ALL )
 # make target = docs
 add_subdirectory( doc_source EXCLUDE_FROM_ALL )
 
+#add_custom_target( datafed-ws.js SOURCES ${PROJECT_SOURCE_DIR}/web/datafed-ws.js)
+# This must be last becaus the scripts should not be run until the binaries are installed
+install( TARGETS datafed-core DESTINATION /opt/datafed/core )
+install( TARGETS datafed-repo DESTINATION /opt/datafed/repo )
+install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
+install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
+install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )
+install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION /opt/datafed/web )
+#install( TARGETS datafed-ws.js DESTINATION /opt/datafed/datafed-ws.js )
+
+install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_datafed_services.sh )")
 # Disabled until unit testing integrated
 #add_subdirectory( test )

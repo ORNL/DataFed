@@ -53,9 +53,14 @@ Get and build the DataFed source code::
     git clone https://github.com/ORNL/DataFed.git
     cd DataFed
     mkdir build
-    cd build
-    cmake ..
-    make
+    cmake -S . -B build
+    cmake --build build
+    sudo cmake --build --target install
+
+Calling the installation command will install the datafed-repo.service,
+datafed-core.service and the datafed-ws.service in the /etc/services folder. It
+will also place the datafed-repo and datafed-core binaries in the /opt/datafed
+folder.
 
 Service Installation & Configuration
 ====================================
