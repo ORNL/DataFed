@@ -1,18 +1,18 @@
 ## @package datafed.Connection
 # Low-level message-oriented communications module
-# 
+#
 # The DataFed Connection class enables sending and receiving Google protobuf
 # messages over ZeroMQ. Protobuf messages are automatically serialized and
 # unserialized, and custom framing is generated to efficiently convey message
 # type, size, and a re-association context value.
 #
 # The Google protobuf library does not provide a mechanism for identifying
-# message types numerically (only by string), so a method is implemented that
-# uses message name alphabetic order to assign a numeric message type. This
-# means that if two end-points have significantly different protobuf file
-# versions, they may not be able to communicate. A version number check is
-# implemented in the MessageLib module to detect this condition and halt
-# automatically.
+# message types numerically (only by string), so a build-time custom tool
+# (pyproto_add_msg_idx.py) is used to generate the mappings from message
+# names to message index (and vice versa) and appends this information as
+# dictionaries to the compiled proto files (xxxx_pb2.py). The
+# registerProtocol() method then loads uses this information to create
+# consistent message type framing for python send/recv methods.
 
 import google.protobuf.reflection
 import zmq

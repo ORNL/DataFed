@@ -213,6 +213,10 @@ loadKeyFile( char * a_dest, char * a_filename )
     }
 
     fclose( inf );
+
+    // Strip trailing CR / LF
+    a_dest[strcspn(a_dest, "\r\n")] = 0;
+
     return false;
 }
 

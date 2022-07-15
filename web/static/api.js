@@ -108,6 +108,10 @@ export function _asyncPostText( a_url, a_text_data, a_callback ) {
     });
 }
 
+export function getDailyMessage( a_cb ){
+    _asyncGet( "/api/msg/daily", null, a_cb );
+}
+
 export function setDefaultAlloc( a_repo, a_subject, a_cb ){
     _asyncGet( "/api/repo/alloc/set/default?repo=" + a_repo + (a_subject?"&subject="+a_subject:""), null, a_cb );
 }

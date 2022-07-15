@@ -223,16 +223,31 @@
     <div id="footer" class='' style="flex:none;padding:0">
         <div id="footer-tabs" style="border:none;padding:0;border-radius:0">
             <ul>
+                <li><a href="#tab-notices">Notices</a></li>
                 <li><a href="#tab-tasks">Tasks</a></li>
                 <li style='display:none'><a href="#tab-repo">Repositories</a></li>
                 <li style='display:none'><a href="#tab-admin">Administration</a></li>
                 <span style='float:right;padding:.1em 0 0 0'>
                     <span id='uname'></span>&nbsp;
                     <span id='is_admin' class='ui-state-error' style='display:none'>&nbsp;<b>ADMIN</b>&nbsp;</span>&nbsp;
-                    <span id='mode_label' class='ui-state-error' style='display:none'>&nbsp;<b>DEV-MODE</b>&nbsp;</span>&nbsp;
+                    <span id='devmode' class='ui-state-error' style='display:none'>&nbsp;DEV-MODE&nbsp;</span>&nbsp;
                     <span style='font-weight:normal'>V-<%- @version %></span>
                 </span>
             </ul>
+            <div id="tab-notices" class="" style="padding:0">
+                <div class="text footer-tab-inner-div" style="padding:0.5em 1em;">
+                    <div class='row-flex'>
+                        <div style='flex:none'><span class='ui-icon ui-icon-alert'></span></div>
+                        <div style='flex:1 1 auto;padding-left:0.5em'>DataFed is for open data, fundamental research and/or open-source applications
+                        and does not meet requirements for protecting HIPPA/ITAR, sensitive, proprietary
+                        or other controlled unclassified information.</div>
+                    </div>
+                    <div id='msg_daily_div' class='row-flex' style='display:none;padding-top:1em'>
+                        <div style='flex:none'><span class='ui-icon ui-icon-alert'></span></div>
+                        <div id='msg_daily' style='flex:1 1 auto;padding-left:0.5em'></div>
+                    </div>
+                </div>
+            </div>
             <div id="tab-tasks" class="" style="padding:0">
                 <div id="task_hist" class="text footer-tab-inner-div" style="padding-top:0"></div>
             </div>

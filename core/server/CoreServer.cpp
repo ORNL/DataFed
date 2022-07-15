@@ -56,6 +56,9 @@ Server::Server() :
     // Start DB maintenance thread
     m_db_maint_thread = new thread( &Server::dbMaintenance, this );
 
+    // Start DB maintenance thread
+    m_metrics_thread = new thread( &Server::metricsThread, this );
+
     // Create task mgr (starts it's own threads)
     TaskMgr::getInstance();
 }
@@ -288,12 +291,83 @@ Server::dbMaintenance()
     DL_ERROR( "DB maintenance thread exiting" );
 }
 
+void
+Server::metricsThread()
+{
+    chrono::system_clock::duration metrics_per = chrono::seconds( m_config.metrics_period );
+    DatabaseAPI db( m_config.db_url, m_config.db_user, m_config.db_pass );
+    map<string,MsgMetrics_t>::iterator u;
+    MsgMetrics_t::iterator m;
+    uint32_t pc, purge_count = m_config.metrics_purge_period / m_config.metrics_period;
+    uint32_t total, subtot;
+    uint32_t timestamp;
+    map<string,MsgMetrics_t> metrics;
+
+    pc = purge_count;
+
+    DL_DEBUG( "metrics: " << m_config.metrics_purge_period << ", " << m_config.metrics_period << ", " << purge_count );
+
+    while ( 1 )
+    {
+        try
+        {
+            //DL_DEBUG( "metrics: updating" );
+
+            // Lock mutex, swap metrics to local store, release lock
+            {
+                lock_guard<mutex> lock( m_msg_metrics_mutex );
+
+                m_msg_metrics.swap(metrics);
+            }
+
+            timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            total = 0;
+
+            for ( u = metrics.begin(); u != metrics.end(); u++ )
+            {
+                subtot = 0;
+                for ( m = u->second.begin(); m != u->second.end(); m++ )
+                {
+                    subtot += m->second;
+                }
+                u->second[0] = subtot; // Store total in 0 (0 is never a valid message type)
+                total += subtot; // Unlikely to overflow (i.e. > 13.3 million msg/sec )
+            }
+            //DL_DEBUG( "metrics: send to db" );
+
+            db.metricsUpdateMsgCounts( timestamp, total, metrics );
+            metrics.clear();
+
+            if ( --pc == 0 )
+            {
+                DL_DEBUG( "metrics: purging" );
+                db.metricsPurge( timestamp - m_config.metrics_purge_age );
+                pc = purge_count;
+            }
+        }
+        catch( TraceException & e )
+        {
+            DL_ERROR( "Metrics thread:" << e.toString() );
+        }
+        catch( exception & e )
+        {
+            DL_ERROR( "Metrics thread:" << e.what() );
+        }
+        catch( ... )
+        {
+            DL_ERROR( "Metrics thread: Unknown exception" );
+        }
+
+        this_thread::sleep_for( metrics_per );
+    }
+    DL_ERROR( "Metrics thread exiting" );
+}
 
 void
 Server::zapHandler()
 {
     DL_INFO( "ZAP handler thread starting" );
-    
+
     try
     {
         void *      ctx = MsgComm::getContext();
@@ -483,5 +557,27 @@ Server::isClientAuthenticated( const std::string & a_client_key, std::string & a
     return false;
 }
 
+void
+Server::metricsUpdateMsgCount( const std::string & a_uid, uint16_t a_msg_type )
+{
+    lock_guard<mutex> lock( m_msg_metrics_mutex );
+    map<string,MsgMetrics_t>::iterator u = m_msg_metrics.find( a_uid );
+    if ( u == m_msg_metrics.end() )
+    {
+        m_msg_metrics[a_uid][a_msg_type] = 1;
+    }
+    else
+    {
+        MsgMetrics_t::iterator m = u->second.find( a_msg_type );
+        if ( m == u->second.end() )
+        {
+            u->second[a_msg_type] = 1;
+        }
+        else
+        {
+            m->second++;
+        }
+    }
+}
 
 }}

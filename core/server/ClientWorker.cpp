@@ -88,6 +88,9 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
         SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
 
+        // Requests that can be handled by DB client directly
+        SET_MSG_HANDLER_DB( proto_id, DailyMessageRequest, DailyMessageReply, dailyMessage );
+
 
         // Register and setup handlers for the Authenticated interface
 
@@ -259,6 +262,10 @@ ClientWorker::workerThread()
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
+                            // Gather msg metrics except on task lists (web clients poll)
+                            if ( msg_type != task_list_msg_type )
+                                m_core.metricsUpdateMsgCount( m_msg_buf.getUID(), msg_type );
+
                             comm.send( m_msg_buf );
                             /*if ( msg_type != task_list_msg_type )
                             {

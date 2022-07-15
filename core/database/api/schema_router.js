@@ -16,7 +16,7 @@ function fixSchOwnNm( a_sch ){
 
     var j, nm = "", tmp = a_sch.own_nm.split(" ");
 
-    console.log("tmp", tmp, tmp.length );
+    //console.log("tmp", tmp, tmp.length );
 
     for ( j = 0; j < tmp.length - 1; j++ ){
         if ( j )
@@ -549,7 +549,7 @@ function validateKey( val ){
 }
 
 function validateProperties( a_props ){
-    console.log("valProps",a_props);
+    //console.log("valProps",a_props);
     var v, v2;
     for ( var k in a_props ){
         validateKey( k );
