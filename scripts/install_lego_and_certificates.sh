@@ -9,7 +9,7 @@ Help()
 {
   echo "$(basename $0) Will install lego and use Let's Encrypt to create certificates."
   echo
-  echo "Syntax: $(basename $0) [-h|t|c|e|d]"
+  echo "Syntax: $(basename $0) [-h|d|e]"
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-d, --domain                      The domain that let's encrypt will generate certificates for."
