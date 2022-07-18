@@ -286,10 +286,7 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
 
     g_globus_auth.code.getToken( a_req.originalUrl ).then( function( client_token ) {
       
-        console.log('Client token data ', client_token.data);
         var xfr_token = client_token.data.other_tokens[0];
-
-        console.log('Transfer token should be: ', xfr_token);
 
         const opts = {
             hostname: 'auth.globus.org',
@@ -317,9 +314,6 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
                 if ( res.statusCode >= 200 && res.statusCode < 300 ){
                     var userinfo = JSON.parse( data ),
                         uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
-
-                    console.log('User scope is: ', userinfo.scope);
-                    console.log('Other scopes is: ', userinfo);
 
                     console.log( 'User', uid, 'authenticated, verifying DataFed account' );
 
@@ -1837,11 +1831,6 @@ function loadSettings(){
     try{
         var config = ini.parse(fs.readFileSync(process.argv[2],'utf-8'));
     
-        console.log( config );
-        console.log("*****Server part****");
-        console.log( config.server );
-        console.log("*****Server Secret part****");
-        console.log( config.server.system_secret );
         if ( config.server ){
             g_host = config.server.host || g_host;
             g_port = config.server.port || g_port;

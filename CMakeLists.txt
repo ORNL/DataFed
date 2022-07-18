@@ -103,8 +103,5 @@ install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
 install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
 install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )
 install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION /opt/datafed/web )
-#install( TARGETS datafed-ws.js DESTINATION /opt/datafed/datafed-ws.js )
 
 install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_datafed_services.sh )")
-# Disabled until unit testing integrated
-#add_subdirectory( test )
