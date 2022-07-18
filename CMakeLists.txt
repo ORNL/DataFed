@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.0.0)
 project( DataFed CXX C )
 
 set(SDMS_MAJOR_VERSION 0)
-set(SDMS_MINOR_VERSION 1)
+set(SDMS_MINOR_VERSION 2)
 set(SDMS_PATCH_VERSION 0)
 set(SDMS_VERSION ${SDMS_MAJOR_VERSION}.${SDMS_MINOR_VERSION}.${SDMS_PATCH_VERSION})
 
@@ -11,6 +11,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(Threads REQUIRED)
+
+OPTION(GLOBUS_VERSION "Globus version to compile repo server with" 5)
+OPTION(INSTALL_REPO_SERVER "Install DataFed Repo Server" FALSE)
+
 #find_package(Protobuf REQUIRED)
 #find_package(Zeromq REQUIRED)
 #find_package(Boost REQUIRED)
@@ -98,7 +102,10 @@ add_subdirectory( doc_source EXCLUDE_FROM_ALL )
 #add_custom_target( datafed-ws.js SOURCES ${PROJECT_SOURCE_DIR}/web/datafed-ws.js)
 # This must be last becaus the scripts should not be run until the binaries are installed
 install( TARGETS datafed-core DESTINATION /opt/datafed/core )
-install( TARGETS datafed-repo DESTINATION /opt/datafed/repo )
+if( INSTALL_REPO_SERVER )
+  # Should only need to do this on the same machine that Globus is installed
+  install( TARGETS datafed-repo DESTINATION /opt/datafed/repo )
+endif()
 install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
 install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
 install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )

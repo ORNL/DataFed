@@ -1,4 +1,5 @@
-cmake_minimum_required (VERSION 3.0.0)
-
-add_subdirectory( globus4 )
-
+if(${GLOBUS_VERSION} EQUAL 5)
+  add_subdirectory( globus5 )
+else()
+  add_subdirectory( globus4 )
+endif()
