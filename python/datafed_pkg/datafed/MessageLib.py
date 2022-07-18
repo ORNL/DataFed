@@ -1,6 +1,6 @@
 ## @package datafed.MessageLib
 # Provides a low-level client interface to the DataFed server
-# 
+#
 # The DataFed MessageLib module contains a single API class that provides
 # a low-level client interface for creating, sending, and receiving
 # messages over a connection with a DataFed server. The DataFed message
@@ -283,6 +283,14 @@ class API:
 
     def getDefaultTimeout( self ):
         return self._timeout
+
+    def getDailyMessage( self ):
+        # Get daily message, if set
+        reply, mt = self.sendRecv( anon.DailyMessageRequest(), 10000 )
+        if reply == None:
+            raise Exception( "Timeout waiting for server connection." )
+
+        return reply.message
 
     ## @brief Synchronously send a message then receive a reply to/from DataFed server.
     #

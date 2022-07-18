@@ -37,8 +37,8 @@ $(document).ready(function(){
     util.tooltipTheme( $("button,input") );
     settings.setTheme( tmpl_data.theme );
 
-    if ( tmpl_data.test_mode ){
-        $("#mode_label").show();
+    if ( tmpl_data.test_mode == "true" ){
+        $("#devmode").show();
     }
 
     resizeUI();

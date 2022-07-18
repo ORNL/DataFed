@@ -25,7 +25,7 @@ class ClientWorker;
  * and serves as a message router for all in-coming messages (both client and other distributed
  * services). The various threads run by the CoreServer include client authentication, message
  * routing, background task processing, and maintenance functions.
- * 
+ *
  * Most DataFed client and server communication is based on message-passing using Google protobuf
  * messages over encrypted ZeroMQ connections. The communication from the web client to the
  * DataFed web service, and the communication between the DatabaseAPI and ArangoDB is based on
@@ -62,8 +62,12 @@ private:
     /// Map of client key to DataFed ID and expiration time
     typedef std::map<std::string,std::pair<std::string,time_t>> trans_client_map_t;
 
+    /// Message request metrics - maps message type to count per metrics period
+    typedef std::map<uint16_t,uint32_t> MsgMetrics_t;
+
     void waitForDB();
     void authenticateClient( const std::string & a_cert_uid, const std::string & a_uid );
+    void metricsUpdateMsgCount( const std::string & a_uid, uint16_t a_msg_type );
     bool isClientAuthenticated( const std::string & a_client_key, std::string & a_uid );
     void loadKeys( const std::string & a_cred_dir );
     void loadRepositoryConfig();
@@ -72,6 +76,7 @@ private:
     void ioInsecure();
     void zapHandler();
     void dbMaintenance();
+    void metricsThread();
 
     Config &                        m_config;               ///< Ref to configuration singleton
     std::thread *                   m_io_secure_thread;     ///< Secure I/O thread handle
@@ -85,6 +90,9 @@ private:
     std::thread *                   m_msg_router_thread;    ///< Main message router thread handle
     std::vector<ClientWorker*>      m_workers;              ///< List of ClientWorker instances
     std::thread *                   m_db_maint_thread;      ///< DB maintenance thread handle
+    std::thread *                   m_metrics_thread;       ///< Metrics gathering thread handle
+    std::map<std::string,MsgMetrics_t> m_msg_metrics;       ///< Map of UID to message request metrics
+    std::mutex                      m_msg_metrics_mutex;    ///< Mutex for metrics updates
 };
 
 

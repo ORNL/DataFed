@@ -3187,6 +3187,23 @@ DatabaseAPI::schemaView( const std::string & a_id, libjson::Value & a_result )
     dbGet( "schema/view", {{ "id", a_id }}, a_result );
 }
 
+void
+DatabaseAPI::dailyMessage( const Anon::DailyMessageRequest & a_request, Anon::DailyMessageReply & a_reply )
+{
+    (void) a_request; // Not used
+    libjson::Value result;
+
+    dbGet( "config/msg/daily", {}, result );
+
+    TRANSLATE_BEGIN()
+
+    const Value::Object & obj = result.asObject();
+
+    if ( obj.has( "msg" ) && !obj.value().isNull( ))
+        a_reply.set_message( obj.asString() );
+
+    TRANSLATE_END( result )
+}
 
 void
 DatabaseAPI::taskLoadReady( libjson::Value & a_result )
@@ -3744,6 +3761,56 @@ DatabaseAPI::taskPurge( uint32_t a_age_sec )
     libjson::Value result;
 
     dbGet( "task/purge", {{"age_sec",to_string( a_age_sec )}}, result );
+}
+
+void
+DatabaseAPI::metricsUpdateMsgCounts( uint32_t a_timestamp, uint32_t a_total, const std::map<std::string,std::map<uint16_t,uint32_t>> & a_metrics )
+{
+    map<string,std::map<uint16_t,uint32_t>>::const_iterator u;
+    map<uint16_t,uint32_t>::const_iterator m;
+    string body = "{\"timestamp\":" + to_string(a_timestamp) + ",\"total\":" + to_string(a_total) + ",\"uids\":{";
+    bool c = false, cc;
+
+
+    for ( u = a_metrics.begin(); u != a_metrics.end(); u++ )
+    {
+        if ( c )
+            body += ",";
+        else
+            c = true;
+
+        body += "\"" + u->first + "\":{\"tot\":" + to_string(u->second.at(0)) + ",\"msg\":{";
+
+        for ( cc = false, m = u->second.begin(); m != u->second.end(); m++ )
+        {
+            if ( m->first != 0 )
+            {
+                if ( cc )
+                    body += ",";
+                else
+                    cc = true;
+
+                body += "\"" + to_string(m->first) + "\":" + to_string(m->second);
+            }
+        }
+        body += "}}";
+    }
+
+    body += "}}";
+
+    libjson::Value result;
+
+    //DL_DEBUG( "sending to db. body: " << body );
+
+    dbPost( "metrics/msg_count/update", {}, &body, result );
+}
+
+void
+DatabaseAPI::metricsPurge( uint32_t a_timestamp )
+{
+    libjson::Value result;
+
+    dbPost( "metrics/purge", {{ "timestamp", to_string(a_timestamp) }}, 0, result );
 }
 
 uint32_t

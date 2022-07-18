@@ -149,8 +149,12 @@ def run():
                 _print_msg( 1, "Authenticated as " + _capi.getAuthUser() )
                 _print_msg( 1, "Use 'exit' command or Ctrl-C to exit shell." )
 
+                msg = _capi._mapi.getDailyMessage()
+                if msg:
+                    _print_msg( 1, "\n" + msg )
+
                 if _verbosity > 1:
-                    _print_msg( 2, "Settings:" )
+                    _print_msg( 2, "\nSettings:" )
                     _capi.cfg.printSettingInfo()
             elif not _interactive:
                 click.echo("{{\"msg_type\":\"ClientError\",\"message\":\"{}\"}}".format(e))

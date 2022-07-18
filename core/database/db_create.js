@@ -21,6 +21,8 @@ graph._addVertexCollection("repo"); // Repository servers
 graph._addVertexCollection("task"); // Tasks
 graph._addVertexCollection("tag"); // Tags
 graph._addVertexCollection("sch"); // Schemas
+graph._addVertexCollection("config"); // Configuration
+graph._addVertexCollection("metrics"); // Metrics
 
 
 var owner = graph_module._relation("owner", ["d","c","p","g","a","q","task"], ["u","p"]);
@@ -85,7 +87,7 @@ var user_name = analyzers.save("user_name","ngram",{
   "max": 5,
   "streamType":"utf8",
   "preserveOriginal":true
-}, ["frequency","norm","position"]); 
+}, ["frequency","norm","position"]);
 
 userview.properties({
   links:{
@@ -103,7 +105,7 @@ var tag_name = analyzers.save("tag_name","ngram",{
   "max": 5,
   "streamType":"utf8",
   "preserveOriginal":true
-}, ["frequency","norm","position"]); 
+}, ["frequency","norm","position"]);
 
 var tagview = db._createView("tagview","arangosearch",{});
 
@@ -123,7 +125,7 @@ var sch_id = analyzers.save("sch_id","ngram",{
   "max": 5,
   "streamType":"utf8",
   "preserveOriginal":true
-}, ["frequency","norm","position"]); 
+}, ["frequency","norm","position"]);
 
 var schemaview = db._createView("schemaview","arangosearch",{});
 
@@ -180,7 +182,7 @@ view = db._createView("collview","arangosearch",{});
 view.properties({
     links: {
       "c": {
-        fields: { 
+        fields: {
           "public": { analyzers: ["identity"] },
           "cat_tags": { analyzers: ["identity"] },
           "tags": { analyzers: ["identity"] },
@@ -258,3 +260,6 @@ db.t.ensureIndex({ type: "persistent", unique: false, fields: [ "top" ], sparse:
 
 //db.sch.ensureIndex({ type: "hash", unique: true, fields: [ "id" ], sparse: false });
 db.sch.ensureIndex({ type: "hash", unique: true, fields: [ "id", "ver" ], sparse: false });
+
+db.metrics.ensureIndex({ type: "persistent", unique: false, fields: [ "timestamp", "type", "uid" ], sparse: true });
+

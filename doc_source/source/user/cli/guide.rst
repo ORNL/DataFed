@@ -349,7 +349,7 @@ Uploading Raw Data
    Before attempting to upload raw data, ensure that the Globus endpoint associated with the machine
    where you use DataFed is active.
 
-Here is how we would put raw data into record (via Globus):
+Here is how we would put raw data into a record (via Globus):
 
 .. code:: bash
 
@@ -367,7 +367,7 @@ Here is how we would put raw data into record (via Globus):
 The ``data put`` initiates a Globus transfer on our behalf from the machine where the command was entered to wherever the default data repository is located.
 In addition, the ``data put`` command prints out the status of the Globus transfer.
 Given the small size of the data file, we elected to wait until the transfer was complete before proceeding - hence the ``wait`` flag.
-Leaving that flag unset would have allowed us to proceed without waiting for the transfer to complete, for example if the size of the file wes very large.
+Leaving that flag unset would have allowed us to proceed without waiting for the transfer to complete, for example if the size of the file was very large.
 
 The output of the ``data view`` command reveals that this record indeed contains a data file as seen in the ``Data Size`` and ``Source`` fields.
 

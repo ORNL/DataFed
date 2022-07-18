@@ -20,21 +20,16 @@
                 </div>
             </div>
             <div style="flex:auto;overflow:auto">
+            <div id='devmode' style='display:none;float:left'><span class='ui-state-error'>DEV-MODE</span></div>
             <div style="font-size:110%;text-align:justify;text-justify: inter-word;margin:3em auto 1em auto;width:35em">
                 <div style='font-size:225%'>Welcome to DataFed</div>
                 <hr>
-                <p>DataFed is a distributed scientific data management system that enhances both research
+                <div style='font-size:80%'>Version <%- @version %></div>
+
+                <p style='padding-top:1em'>DataFed is a distributed scientific data management system that enhances both research
                 <i>productivity</i> and scientific <i>reproducibility</i> by easing the burdens associated with properly collecting
                 and handling research data.
                 </p>
-
-                <div class='row-flex' style='margin:3em 0;align-items:center;justify-content:center'>
-                    <div style='flex:auto'></div>
-                    <button style='flex:none' class="btn btn-welcome btn-login">Log-In / Register</button>
-                    <div style='flex:auto'></div>
-                    <button style='flex:none' class="btn btn-welcome btn-help">Learn More</button>
-                    <div style='flex:auto'></div>
-                </div>
 
                 <p>DataFed is domain-agnostic and <a href='https://www.go-fair.org/fair-principles/' target="go_fair">FAIR-pricincipled</a>
                 and provides simple and uniform data access, organization, discovery, and sharing capabilities within
@@ -46,12 +41,7 @@
                 within and across member facilities.
                 </p>
 
-                <div class="notice" style="margin:2em auto;width:28em;text-align:left">
-                <i><b>Notice</b> - DataFed is for <u>open data only</u> and does not meet the requirements for protecting
-                HIPPA, ITAR, or other sensitive or controlled information.</i>
-                </div>
-
-                <h4>Registration</h4>
+                <p style='padding-top:1em'>Registration</p>
                 <p>DataFed registration is free, but a Globus account with a linked GlobusID identity is required to
                     access DataFed. If you don't have a Globus account, or haven't linked a GlobusID identity, please
                     sign-up (for free) at <a href="https://www.globusid.org/" target="datafed_globusid">GlobusID.org</a> then return to this page to
@@ -60,7 +50,18 @@
             </div>
             </div>
             <div class="ui-widget-header" style="flex:none;padding:.25em">
-                <div id='devmode' style='float:right;display:none'><span class='ui-state-error'>DEV-MODE</span></div>
+                <div style='padding:0.5em 1em'>
+                    <div class='row-flex'>
+                        <div style='flex:none'><span class='ui-icon ui-icon-alert'></span></div>
+                        <div style='flex:1 1 auto;padding-left:0.5em'>DataFed is for open data, fundamental research and/or open-source applications
+                        and does not meet requirements for protecting HIPPA/ITAR, sensitive, proprietary
+                        or other controlled unclassified information.</div>
+                    </div>
+                    <div id='msg_daily_div' class='row-flex' style='display:none;padding-top:1em'>
+                        <div style='flex:none'><span class='ui-icon ui-icon-alert'></span></div>
+                        <div id='msg_daily' style='flex:1 1 auto;padding-left:0.5em'></div>
+                    </div>
+                </div>
             </div>
         </div>
     </body>

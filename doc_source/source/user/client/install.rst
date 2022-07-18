@@ -180,7 +180,7 @@ Programmatic          5 (highest)
 ====================  ===========
 
 Note that most settings do not have default values and must be specified using one of the supported mechanisms.
-The server and client configuration files and directories are exceptions in that the DataFec client will search for a
+The server and client configuration files and directories are exceptions in that the DataFed client will search for a
 ".datafed" folder in the user home directory if these settings are not specified.
 
 Configuring Automatic Authentication

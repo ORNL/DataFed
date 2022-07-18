@@ -32,6 +32,7 @@ var frame = $("#content"),
     selectScope = null,
     dragging = false,
     hoverTimer,
+    tab_close_timer,
     keyNav, keyNavMS,
     pasteItems = [], pasteSourceParent, pasteCollections,
     SS_TREE = 0,
@@ -2040,13 +2041,22 @@ $(".prov-graph-close").click( function(){
 $("#footer-tabs").tabs({
     heightStyle: "auto",
     collapsible: true,
-    active: false,
+    active: 0,
     activate: function(ev,ui){
+        if ( tab_close_timer ){
+            clearTimeout( tab_close_timer );
+        }
+
         if (( ui.newTab.length == 0 && ui.newPanel.length == 0 ) || ( ui.oldTab.length == 0 && ui.oldPanel.length == 0 )){
             windowResized();
         }
     }
 });
+
+// Start an auto-close timer for tabs
+tab_close_timer = setTimeout( function(){
+    $("#footer-tabs").tabs("option", "active", false );
+}, 10000 );
 
 $("#data-tabs").tabs({
     heightStyle:"fill",
@@ -2686,6 +2696,12 @@ export function init(){
 
 task_hist.html( "(no recent transfers)" );
 
+api.getDailyMessage( function( ok, reply ){
+    if ( ok && reply.message ){
+        $("#msg_daily",frame).text( reply.message );
+        $("#msg_daily_div",frame).show();
+    }
+});
 
 export function checkTreeUpdate( a_data, a_source ){
     //console.log("checkTreeUpdate", a_data, a_source );

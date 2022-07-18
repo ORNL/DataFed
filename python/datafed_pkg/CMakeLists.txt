@@ -20,8 +20,11 @@ endforeach()
 
 add_subdirectory( datafed )
 
-add_custom_target( datafed_ver ALL )
-add_dependencies( datafed_ver pydatafed )
+add_custom_target( pydatafed_ver )
+add_dependencies( pydatafed_ver pydatafed_src )
 
-add_custom_command( TARGET datafed_ver POST_BUILD 
+add_custom_command( TARGET pydatafed_ver POST_BUILD
     COMMAND python3 make_ver.py )
+
+add_custom_target( pydatafed )
+add_dependencies( pydatafed pydatafed_src pydatafed_ver )

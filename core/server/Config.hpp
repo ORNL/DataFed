@@ -36,7 +36,10 @@ struct Config
         repo_chunk_size( 100 ),
         repo_timeout( 60000 ),
         note_purge_age( 7*24*3600 ),
-        note_purge_period( 6*3600 )
+        note_purge_period( 6*3600 ),
+        metrics_period( 300 ),
+        metrics_purge_period( 3600 ),
+        metrics_purge_age( 24*3600 )
     {}
 
     std::string     cred_dir;
@@ -60,6 +63,9 @@ struct Config
     uint32_t        repo_timeout;
     uint32_t        note_purge_age;
     uint32_t        note_purge_period;
+    uint32_t        metrics_period;
+    uint32_t        metrics_purge_period;
+    uint32_t        metrics_purge_age;
 
     MsgComm::SecurityContext            sec_ctx;
     std::map<std::string,RepoData*>     repos;
