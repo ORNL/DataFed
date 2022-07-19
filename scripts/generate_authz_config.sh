@@ -12,7 +12,7 @@ Help()
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-r, --repo-id                     The repository id i.e. /repo/core"
-  echo "                                  key of the core server."
+  echo "                                  This is the path in the Globus endpoint."
   echo "-d, --datafed-domain-port         The DataFed fully qualified domain name and port"
   echo "                                  this is the port that is open and listening on"
   echo "                                  the core server. E.g."

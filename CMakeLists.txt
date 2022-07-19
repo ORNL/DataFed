@@ -111,4 +111,5 @@ install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
 install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )
 install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION /opt/datafed/web )
 
+install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
 install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_datafed_services.sh )")

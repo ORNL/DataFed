@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#set -exuf -o pipefail
+set -exuf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-echo ‘The absolute path of this file is ’ $SOURCE
+PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
 # Make sure paths exist
 mkdir -p /opt/datafed/web
@@ -13,20 +13,20 @@ mkdir -p /opt/datafed/repo
 mkdir -p /opt/datafed/keys
 
 # Install web node modules
-cp "$SOURCE/../web/package.json" /opt/datafed/web/
-cp "$SOURCE/../web/package-lock.json" /opt/datafed/web/
+cp "$PROJECT_ROOT/web/package.json" /opt/datafed/web/
+cp "$PROJECT_ROOT/web/package-lock.json" /opt/datafed/web/
 
 export npm_config_cache=/opt/datafed/web
-npm --allow-root --unsafe-perm --prefix /opt/datafed/web install #"$SOURCE/../web/" 
+npm --allow-root --unsafe-perm --prefix /opt/datafed/web install #"$PROJECT_ROOT/web/" 
 # Install javascript web server repo and core server were 
 # already installed by CMake
-cp "$SOURCE/../web/datafed-ws.js" /opt/datafed/web
+cp "$PROJECT_ROOT/web/datafed-ws.js" /opt/datafed/web
 
 # Copy configuration files
-cp "$SOURCE/../config/datafed-core.cfg" /opt/datafed/core
-cp "$SOURCE/../config/datafed-ws.cfg" /opt/datafed/web
-cp "$SOURCE/../config/datafed-repo.cfg" /opt/datafed/repo
-cp "$SOURCE/../config/datafed-authz.cfg" /opt/datafed/authz
+cp "$PROJECT_ROOT/config/datafed-core.cfg" /opt/datafed/core
+cp "$PROJECT_ROOT/config/datafed-ws.cfg" /opt/datafed/web
+cp "$PROJECT_ROOT/config/datafed-repo.cfg" /opt/datafed/repo
+cp "$PROJECT_ROOT/config/datafed-authz.cfg" /opt/datafed/authz
 
 # Generate keys
 /opt/datafed/core/datafed-core --gen-keys
@@ -39,9 +39,9 @@ mv datafed-core-key.priv /opt/datafed/keys/
 #mv datafed-ws-key.priv /opt/datafed/keys/
 
 # Copy services
-cp "$SOURCE/../services/datafed-core.service" /etc/systemd/system
-cp "$SOURCE/../services/datafed-ws.service" /etc/systemd/system
-cp "$SOURCE/../services/datafed-repo.service" /etc/systemd/system
+cp "$PROJECT_ROOT/services/datafed-core.service" /etc/systemd/system
+cp "$PROJECT_ROOT/services/datafed-ws.service" /etc/systemd/system
+cp "$PROJECT_ROOT/services/datafed-repo.service" /etc/systemd/system
 
 sudo systemctl daemon-reload
 
