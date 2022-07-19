@@ -228,15 +228,19 @@ loadConfig()
 
     const char * cfg_file = getenv( "DATAFED_AUTHZ_CFG_FILE" );
 
+    FILE * inf;
     if ( !cfg_file )
     {
-        syslog( LOG_ERR, "DataFed - DATAFED_AUTHZ_CFG_FILE env variable not set." );
-        return true;
+        // If env variable is not set check default location
+        inf = fopen("/opt/datafed/authz/datafed-authz.cfg");
+        if ( ! inf ) {
+          syslog( LOG_ERR, "DataFed - DATAFED_AUTHZ_CFG_FILE env variable not set, and datafed-authz.cfg is not located in default location /opt/datafed/authz" );
+          return true;
+        }
+    } else {
+      syslog( LOG_INFO, "DataFed - Loading authz config file: %s", cfg_file );
+      FILE * inf = fopen( cfg_file, "r" );
     }
-
-    syslog( LOG_INFO, "DataFed - Loading authz config file: %s", cfg_file );
-
-    FILE * inf = fopen( cfg_file, "r" );
     if ( inf )
     {
         size_t MAX_BUF = 1024;

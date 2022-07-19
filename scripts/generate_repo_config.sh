@@ -22,13 +22,21 @@ Help()
   echo "                                  this is the port that is open and listening on"
   echo "                                  the core server. E.g."
   echo "                                  tcp://datafed.ornl.gov:7512"
+  echo "                                  If you want to set it as an env variable you can use"
+  echo "                                  the env variable DATAFED_SERVER_DOMAIN_NAME_AND_PORT"
   echo "                                  NOTE: this does not use https it uses tcp"
 }
 
-DATAFED_CRED_DIR="/opt/datafed/keys/"
-DATAFED_SERVER_DOMAIN_NAME_AND_PORT="tcp://datafed.ornl.gov:7512"
-DATAFED_REPO_EGRESS_PORT="9000"
-DATAFED_REPO_THREADS=2
+if [ -z "${DATAFED_SERVER_DOMAIN_NAME_AND_PORT}" ]
+then
+  local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT="tcp://datafed.ornl.gov:7512"
+else
+  local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT=$(printenv DATAFED_SERVER_DOMAIN_NAME_AND_PORT)
+fi
+
+local_DATAFED_CRED_DIR="/opt/datafed/keys/"
+local_DATAFED_REPO_EGRESS_PORT="9000"
+local_DATAFED_REPO_THREADS=2
 
 VALID_ARGS=$(getopt -o ht:c:e:d: --long 'help',threads:,cred-dir:,egress-port:,datafed-domain-port: -- "$@")
 if [[ $? -ne 0 ]]; then
@@ -43,22 +51,22 @@ while [ : ]; do
         ;;
     -t | --threads)
         echo "Processing 'threads' option. Input argument is '$2'"
-        DATAFED_REPO_THREADS=$2
+        local_DATAFED_REPO_THREADS=$2
         shift 2
         ;;
     -c | --cred-dir)
         echo "Processing 'credential directory' option. Input argument is '$2'"
-        DATAFED_CRED_DIR=$2
+        local_DATAFED_CRED_DIR=$2
         shift 2
         ;;
     -e | --egress-port)
         echo "Processing 'egress port' option. Input argument is '$2'"
-        DATAFED_REPO_EGRESS_PORT=$2
+        local_DATAFED_REPO_EGRESS_PORT=$2
         shift 2
         ;;
     -d | --datafed-domain-port)
         echo "Processing 'DataFed domain and port' option. Input argument is '$2'"
-        DATAFED_SERVER_DOMAIN_NAME_AND_PORT=$2
+        local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT=$2
         shift 2
         ;;
     --) shift; 
@@ -75,10 +83,10 @@ PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 CONFIG_FILE_NAME="datafed-repo.cfg"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
-cred-dir=$DATAFED_CRED_DIR
-server=$DATAFED_SERVER_DOMAIN_NAME_AND_PORT
-port=$DATAFED_REPO_EGRESS_PORT
-threads=$DATAFED_REPO_THREADS
+cred-dir=$local_DATAFED_CRED_DIR
+server=$local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT
+port=$local_DATAFED_REPO_EGRESS_PORT
+threads=$local_DATAFED_REPO_THREADS
 EOF
 
 echo

@@ -28,3 +28,9 @@ sudo systemctl status datafed-repo.service
 
 # Enable services on reboot
 sudo systemctl enable datafed-repo.service
+
+# Update GridFTP so it knows about env variable
+PATTERN1="("
+PATTERN2=";"
+PATH_GRIDFTP_SERVICE=$(sudo systemctl status globus-gridftp-server.service | grep "loaded (" | awk '{print $3}' | sed -e "s/.*$PATTERN1\(.*\)$PATTERN2.*/\1/")
+echo "$PATH_GRIDFTP_SERVICE"
