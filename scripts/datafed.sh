@@ -1,0 +1,29 @@
+#!/bin/env bash
+
+# This is the master DataFed configuration file
+
+# ************************************************
+# Env Variables for Core Server
+# ************************************************
+export DATABASE_PASSWORD=""
+# ************************************************
+# Env Variables for Web Server
+# ************************************************
+export DATAFED_ZEROMQ_SESSION_SECRET=""
+export DATAFED_ZEROMQ_SYSTEM_SECRET=""
+# ************************************************
+# Env Variables for Core & Web Server
+# ************************************************
+export DATAFED_GLOBUS_APP_ID=""
+export DATAFED_GLOBUS_APP_SECRET=""
+
+# ************************************************
+# Env Variables for Repo Server
+# ************************************************
+export DATAFED_SERVER_DOMAIN_NAME_AND_PORT=""
+
+# ************************************************
+# Env Variables for Authz, Web, Repo Server
+# ************************************************
+# If not set will resolve to datafed.ornl.gov
+export DATAFED_DOMAIN=""

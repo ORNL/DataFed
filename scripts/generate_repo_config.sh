@@ -18,20 +18,21 @@ Help()
   echo "-e, --egress-port                 The egress port that needs to be open on the repo"
   echo "                                  server so the repo server can communicate with "
   echo "                                  the datafed server."
-  echo "-d, --datafed-domain-port         The DataFed fully qualified domain name and port"
+  echo "-d, --domain                      The DataFed fully qualified domain name and port"
   echo "                                  this is the port that is open and listening on"
   echo "                                  the core server. E.g."
   echo "                                  tcp://datafed.ornl.gov:7512"
   echo "                                  If you want to set it as an env variable you can use"
-  echo "                                  the env variable DATAFED_SERVER_DOMAIN_NAME_AND_PORT"
+  echo "                                  the env variable DATAFED_DOMAIN."
   echo "                                  NOTE: this does not use https it uses tcp"
 }
 
-if [ -z "${DATAFED_SERVER_DOMAIN_NAME_AND_PORT}" ]
+local_DATAFED_PORT="7512"
+if [ -z "${DATAFED_DOMAIN}" ]
 then
-  local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT="tcp://datafed.ornl.gov:7512"
+  local_DATAFED_DOMAIN="datafed.ornl.gov"
 else
-  local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT=$(printenv DATAFED_SERVER_DOMAIN_NAME_AND_PORT)
+  local_DATAFED_DOMAIN=$(printenv DATAFED_DOMAIN)
 fi
 
 local_DATAFED_CRED_DIR="/opt/datafed/keys/"
@@ -65,8 +66,8 @@ while [ : ]; do
         shift 2
         ;;
     -d | --datafed-domain-port)
-        echo "Processing 'DataFed domain and port' option. Input argument is '$2'"
-        local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT=$2
+        echo "Processing 'DataFed domain' option. Input argument is '$2'"
+        local_DATAFED_DOMAIN=$2
         shift 2
         ;;
     --) shift; 
@@ -84,7 +85,7 @@ CONFIG_FILE_NAME="datafed-repo.cfg"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 cred-dir=$local_DATAFED_CRED_DIR
-server=$local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT
+server=tcp://$local_DATAFED_DOMAIN:${local_DATAFED_PORT}
 port=$local_DATAFED_REPO_EGRESS_PORT
 threads=$local_DATAFED_REPO_THREADS
 EOF
