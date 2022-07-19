@@ -13,11 +13,24 @@ Help()
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-d, --domain                      The domain that let's encrypt will generate certificates for."
+  echo "                                  i.e. datafed-server-test.ornl.gov, can be set with an"
+  echo "                                  environmental variable as well DATAFED_DOMAIN"
   echo "-e, --email                       The email address associated with the certificates."
 }
 
-EMAIL=""
-DOMAIN=""
+if [ -z "$DATAFED_LEGO_EMAIL" ]
+then
+  local_DATAFED_LEGO_EMAIL=""
+else
+  local_DATAFED_LEGO_EMAIL=$(printenv DATAFED_LEGO_EMAIL)
+fi
+
+if [ -z "$DATAFED_DOMAIN" ]
+then
+  local_DATAFED_DOMAIN="datafed.ornl.gov"
+else
+  local_DATAFED_DOMAIN=$(printenv DATAFED_DOMAIN)
+fi
 
 VALID_ARGS=$(getopt -o hd:e: --long 'help',domain:,email: -- "$@")
 if [[ $? -ne 0 ]]; then
@@ -32,12 +45,12 @@ while [ : ]; do
         ;;
     -e | --email)
         echo "Processing 'email' option. Input argument is '$2'"
-        EMAIL=$2
+        local_DATAFED_LEGO_EMAIL=$2
         shift 2
         ;;
     -d | --domain)
         echo "Processing 'domain' option. Input argument is '$2'"
-        DOMAIN=$2
+        local_DATAFED_DOMAIN=$2
         shift 2
         ;;
     --) shift; 
@@ -49,6 +62,18 @@ while [ : ]; do
   esac
 done
 
+if [ -z "$local_DATAFED_LEGO_EMAIL" ]
+then
+  echo "Error DATAFED_LEGO_EMAIL is not defined, this is a required argument"
+  echo "      This variable can be set using the command line option -e, --email"
+  echo "      or with the environment variable DATAFED_LEGO_EMAIL."
+  ERROR_DETECTED=1
+fi
+
+if [ "$ERROR_DETECTED" == "1" ]
+then
+  exit 1
+fi
 
 sudo add-apt-repository ppa:longsleep/golang-backports
 sudo apt-get update
@@ -67,7 +92,7 @@ export PATH=$PATH:${SOURCE}/go/bin
 #
 # NOTE: To run lego you will need to make sure that nothing else is using port 443
 # it will be unable to run if the datafed webserver is also running.
-sudo lego --email="$EMAIL" --domains="$DOMAIN" --tls run
+sudo lego --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --tls run
 
 # Create the folder
 if [ ! -d "/opt/datafed/keys" ]
@@ -76,5 +101,5 @@ then
 fi
 
 # copy the certificates over
-sudo cp ~/.lego/certificates/datafed-server-test.ornl.gov.crt ~/.lego/certificates/datafed-server-test.ornl.gov.key /opt/datafed/keys/
+sudo cp ~/.lego/certificates/$local_DATAFED_DOMAIN.ornl.gov.crt ~/.lego/certificates/$local_DATAFED_DOMAIN.key /opt/datafed/keys/
 

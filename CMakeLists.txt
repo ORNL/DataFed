@@ -99,18 +99,18 @@ add_subdirectory( python EXCLUDE_FROM_ALL )
 # make target = docs
 add_subdirectory( doc_source EXCLUDE_FROM_ALL )
 
-#add_custom_target( datafed-ws.js SOURCES ${PROJECT_SOURCE_DIR}/web/datafed-ws.js)
-# This must be last becaus the scripts should not be run until the binaries are installed
-install( TARGETS datafed-core DESTINATION /opt/datafed/core )
 if( INSTALL_REPO_SERVER )
   # Should only need to do this on the same machine that Globus is installed
   install( TARGETS datafed-repo DESTINATION /opt/datafed/repo )
   install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
+  install( FILES ${PROJECT_SOURCE_DIR}/config/gsi-authz.conf /etc/grid-security )
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_repo_service.sh )")
 else()
+  install( TARGETS datafed-core DESTINATION /opt/datafed/core )
   install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION /opt/datafed/web )
+  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh )")
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_core_service.sh )")
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_web_service.sh )")
