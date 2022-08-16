@@ -6,6 +6,8 @@ Restart=always
 KillSignal=SIGQUIT
 WorkingDirectory=/opt/datafed/core
 ExecStart=/opt/datafed/core/datafed-core --cfg /opt/datafed/core/datafed-core.cfg
+StandardOutput=append:/var/log/datafed/datafed-ws.log
+StandardError=append:/var/log/datafed/datafed-ws.log
 User=cades
 [Install]
 WantedBy=multi-user.target
