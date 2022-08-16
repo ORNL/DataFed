@@ -9,6 +9,7 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 # Make sure paths exist
 mkdir -p /opt/datafed/web
 mkdir -p /opt/datafed/keys
+mkdir -p /var/log/datafed
 
 # Install web node modules
 cp "$PROJECT_ROOT/web/package.json" /opt/datafed/web/
