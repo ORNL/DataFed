@@ -9,6 +9,7 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 # Make sure paths exist
 mkdir -p /opt/datafed/repo
 mkdir -p /opt/datafed/keys
+mkdir -p /var/log/datafed
 
 # Copy configuration files
 cp "$PROJECT_ROOT/config/datafed-repo.cfg" /opt/datafed/repo
