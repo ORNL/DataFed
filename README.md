@@ -14,3 +14,20 @@ Please refer to the [DataFed homepage](https://ornl.github.io/DataFed) for full 
 
 Refer to the "BUILD.md" file for instructions on how to configure and build DataFed.
 
+# Installation Core Server and Web Server
+
+First you will need to configure the datafed.sh file in the /scripts folder. Next simply running the commands
+
+```bash
+cmake -S. -B build
+cmake --build build -j4
+sudo cmake --build build --target install
+```
+
+# Installation of Repo Server
+
+```bash
+cmake -S. -B build -DINSTALL_REPO_SERVER=ON
+cmake --build build -j4
+sudo cmake --build build --target install
+```
