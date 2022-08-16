@@ -232,14 +232,14 @@ loadConfig()
     if ( !cfg_file )
     {
         // If env variable is not set check default location
-        inf = fopen("/opt/datafed/authz/datafed-authz.cfg");
+        inf = fopen("/opt/datafed/authz/datafed-authz.cfg","r");
         if ( ! inf ) {
           syslog( LOG_ERR, "DataFed - DATAFED_AUTHZ_CFG_FILE env variable not set, and datafed-authz.cfg is not located in default location /opt/datafed/authz" );
           return true;
         }
     } else {
       syslog( LOG_INFO, "DataFed - Loading authz config file: %s", cfg_file );
-      FILE * inf = fopen( cfg_file, "r" );
+      inf = fopen( cfg_file, "r" );
     }
     if ( inf )
     {
