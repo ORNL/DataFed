@@ -166,7 +166,7 @@ fi
 
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 
-CONFIG_FILE_NAME="datafed-core.cfg"
+CONFIG_FILE_NAME="datafed-ws.cfg"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 # Note this file can be generated with $(basename $0)
@@ -192,6 +192,11 @@ extern_url=https://${local_DATAFED_SERVER_DOMAIN_NAME}
 # with what is in the datafed-core.cfg file
 client_id=${local_DATAFED_GLOBUS_APP_ID}
 client_secret=${local_DATAFED_GLOBUS_APP_SECRET}
+
+[core]
+# This is the address to talk with the core server which is listening on 
+# port 7513
+server_address=tcp://localhost:7513
 EOF
 
 echo
