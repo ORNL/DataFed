@@ -12,7 +12,8 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(Threads REQUIRED)
 
-OPTION(GLOBUS_VERSION "Globus version to compile repo server with" 5)
+# Globus version to compile repo server with
+set(GLOBUS_VERSION  5)
 OPTION(INSTALL_REPO_SERVER "Install DataFed Repo Server" FALSE)
 
 #find_package(Protobuf REQUIRED)
@@ -103,7 +104,6 @@ if( INSTALL_REPO_SERVER )
   # Should only need to do this on the same machine that Globus is installed
   install( TARGETS datafed-repo DESTINATION /opt/datafed/repo )
   install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
-  install( FILES ${PROJECT_SOURCE_DIR}/config/gsi-authz.conf /etc/grid-security )
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_repo_service.sh )")
 else()
   install( TARGETS datafed-core DESTINATION /opt/datafed/core )

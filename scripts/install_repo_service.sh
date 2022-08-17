@@ -12,11 +12,18 @@ mkdir -p /opt/datafed/keys
 mkdir -p /var/log/datafed
 
 # Copy configuration files
+cp "$PROJECT_ROOT/config/gsi-authz.conf" /etc/grid-security
 cp "$PROJECT_ROOT/config/datafed-repo.cfg" /opt/datafed/repo
 cp "$PROJECT_ROOT/config/datafed-authz.cfg" /opt/datafed/authz
 
-# Generate keys
-/opt/datafed/repo/datafed-repo --gen-keys --cred-dir /opt/datafed/keys
+# Generate keys only if they do not exist
+if [ ! -f /opt/datafed/keys/datafed-repo-key.priv ]
+then
+  /opt/datafed/repo/datafed-repo --gen-keys --cred-dir /opt/datafed/keys
+fi
+
+# Ensure permissions are correctly set on authz library
+chmod 755 /opt/datafed/authz/libdatafed-authz.so
 
 # Copy services
 cp "$PROJECT_ROOT/services/datafed-repo.service" /etc/systemd/system

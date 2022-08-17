@@ -14,12 +14,15 @@ mkdir -p /var/log/datafed
 # Copy configuration files
 cp "$PROJECT_ROOT/config/datafed-core.cfg" /opt/datafed/core
 
-# Generate keys
-/opt/datafed/core/datafed-core --gen-keys
 
-# Move keys to /opt/datafed/keys
-mv datafed-core-key.pub /opt/datafed/keys/
-mv datafed-core-key.priv /opt/datafed/keys/
+# Move keys to /opt/datafed/keys if they do not already exist
+if [ ! -f /opt/datafed/keys/datafed-core-key.priv ]
+then
+  # Generate keys
+  /opt/datafed/core/datafed-core --gen-keys
+  mv datafed-core-key.pub /opt/datafed/keys/
+  mv datafed-core-key.priv /opt/datafed/keys/
+fi
 
 # Copy services
 cp "$PROJECT_ROOT/services/datafed-core.service" /etc/systemd/system

@@ -31,3 +31,14 @@ cmake -S. -B build -DINSTALL_REPO_SERVER=ON
 cmake --build build -j4
 sudo cmake --build build --target install
 ```
+
+## Configuring DataFed Repository on Web UI
+
+You will need to add the repository and supply it with a few items.
+
+1. The repo servers address and port which should have the form
+tcp://datafed-repo.ornl.gov:9000, the repo server should have a fully
+qualified domain name and publily accessible IP address. The port should be the
+same port listed in the datafed-repo.cfg file.
+
+2. When registering the repository server you will also need to provide the datafed repository servers public key which should be automatically generated and installed in /opt/datafed/keys/datafed-repo-key.pub.
