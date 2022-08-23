@@ -19,6 +19,9 @@ Refer to the "BUILD.md" file for instructions on how to configure and build Data
 First you will need to configure the datafed.sh file in the /scripts folder. Next simply running the commands
 
 ```bash
+./scripts/install_dependencies.sh
+./scripts/generate_core_config.sh
+./scripts/generate_ws_config.sh
 cmake -S. -B build
 cmake --build build -j4
 sudo cmake --build build --target install

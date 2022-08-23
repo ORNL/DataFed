@@ -4,6 +4,7 @@ set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
+source ${SOURCE}/datafed.sh
 
 Help()
 {
@@ -62,6 +63,7 @@ while [ : ]; do
   esac
 done
 
+ERROR_DETECTED=0
 if [ -z "$local_DATAFED_LEGO_EMAIL" ]
 then
   echo "Error DATAFED_LEGO_EMAIL is not defined, this is a required argument"
@@ -81,18 +83,7 @@ sudo apt-get install golang-go
 
 #This was verified for go 1.17
 export GO111MODULE=on
-go install github.com/go-acme/lego/v4/cmd/lego@latest
-
-#creates a folder go/bin where lego is installed
-export PATH=$PATH:${SOURCE}/go/bin
-
-# This should create a folder in ~/.lego/certificates, that contains the
-# certificate files you need, we are going to copy them over to the
-# /opt/datafed/keys folder
-#
-# NOTE: To run lego you will need to make sure that nothing else is using port 443
-# it will be unable to run if the datafed webserver is also running.
-sudo lego --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --tls run
+GOBIN=/usr/local/bin/ go install github.com/go-acme/lego/v4/cmd/lego@latest
 
 # Create the folder
 if [ ! -d "/opt/datafed/keys" ]
@@ -100,6 +91,14 @@ then
 	sudo mkdir -p /opt/datafed/keys
 fi
 
-# copy the certificates over
-sudo cp ~/.lego/certificates/$local_DATAFED_DOMAIN.ornl.gov.crt ~/.lego/certificates/$local_DATAFED_DOMAIN.key /opt/datafed/keys/
-
+# This should create a folder in ~/.lego/certificates, that contains the
+# certificate files you need, we are going to copy them over to the
+# /opt/datafed/keys folder
+#
+# NOTE: To run lego you will need to make sure that nothing else is using port 443
+# it will be unable to run if the datafed webserver is also running.
+sudo lego --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path /opt/datafed/keys/ --tls run
+mv /opt/datafed/keys/certificates/datafed-server-test.ornl.gov.crt /opt/datafed/keys/
+mv /opt/datafed/keys/certificates/datafed-server-test.ornl.gov.key /opt/datafed/keys/
+rm -rf /opt/datafed/keys/certificates
+rm -rf /opt/datafed/keys/accounts

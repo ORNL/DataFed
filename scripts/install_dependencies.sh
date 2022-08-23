@@ -26,6 +26,8 @@ if [ -d json ]
 then
 	rm -rf json
 fi
+
+cd ~
 git clone https://github.com/nlohmann/json.git
 cd json
 git checkout v3.10.2
