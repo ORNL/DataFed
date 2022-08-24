@@ -6,7 +6,7 @@ set -xuf -o pipefail
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
-source ${SOURCE}/datafed.sh
+source ${PROJECT_ROOT}/config/datafed.sh
 
 Help()
 {
