@@ -11,15 +11,14 @@ export DATABASE_PASSWORD=""
 # ************************************************
 export DATAFED_ZEROMQ_SESSION_SECRET=""
 export DATAFED_ZEROMQ_SYSTEM_SECRET=""
+# An email address is required by LEGO when 
+# requesting certificates for the domain
 export DATAFED_LEGO_EMAIL=""
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************
 export DATAFED_GLOBUS_APP_ID=""
 export DATAFED_GLOBUS_APP_SECRET=""
-# An email address is required by LEGO when 
-# requesting certificates for the domain
-export DATAFED_LEGO_EMAIL=""
 # ************************************************
 # Env Variables for Repo Server
 # ************************************************
