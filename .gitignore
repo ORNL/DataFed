@@ -1,6 +1,6 @@
 /.idea/
 scripts/datafed.sh
-configure/datafed-core.cfg
-configure/datafed-ws.cfg
-configure/datafed-repo.cfg
+config/datafed-core.cfg
+config/datafed-ws.cfg
+config/datafed-repo.cfg
 build
