@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -exuf -o pipefail
+set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
