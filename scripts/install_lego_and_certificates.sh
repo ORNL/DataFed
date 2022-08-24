@@ -98,7 +98,7 @@ fi
 #
 # NOTE: To run lego you will need to make sure that nothing else is using port 443
 # it will be unable to run if the datafed webserver is also running.
-sudo lego --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path /opt/datafed/keys/ --tls run
+sudo lego --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path /opt/datafed/keys/ --tls run --accept-tos
 mv /opt/datafed/keys/certificates/datafed-server-test.ornl.gov.crt /opt/datafed/keys/
 mv /opt/datafed/keys/certificates/datafed-server-test.ornl.gov.key /opt/datafed/keys/
 rm -rf /opt/datafed/keys/certificates
