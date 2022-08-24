@@ -3,6 +3,7 @@ set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
+source ${SOURCE}/datafed.sh
 
 Help()
 {

@@ -11,6 +11,7 @@ export DATABASE_PASSWORD=""
 # ************************************************
 export DATAFED_ZEROMQ_SESSION_SECRET=""
 export DATAFED_ZEROMQ_SYSTEM_SECRET=""
+export DATAFED_LEGO_EMAIL=""
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************

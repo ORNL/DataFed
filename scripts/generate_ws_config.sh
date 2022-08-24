@@ -6,6 +6,7 @@ set -ef -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
+source ${SOURCE}/datafed.sh
 
 echo "SOURCE Is $SOURCE"
 Help()

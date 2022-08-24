@@ -13,7 +13,7 @@ mkdir -p /var/log/datafed
 
 # Install web node modules
 cp "$PROJECT_ROOT/web/package.json" /opt/datafed/web/
-cp "$PROJECT_ROOT/web/package-lock.json" /opt/datafed/web/
+#cp "$PROJECT_ROOT/web/package-lock.json" /opt/datafed/web/
 
 export npm_config_cache=/opt/datafed/web
 npm --allow-root --unsafe-perm --prefix /opt/datafed/web install #"$PROJECT_ROOT/web/" 

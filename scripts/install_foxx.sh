@@ -6,6 +6,7 @@ set -xuf -o pipefail
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
+source ${SOURCE}/datafed.sh
 
 Help()
 {
@@ -85,7 +86,7 @@ if [[ "$output" =~ .*"sdms".* ]]; then
 	echo "SDMS already exists do nothing"
 else
 	echo "Creating SDMS"
-  arangosh --javascript.execute $(PROJECT_ROOT)/core/database/db_create.js
+  arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute ${PROJECT_ROOT}/core/database/db_create.js
 fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
@@ -109,11 +110,10 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# Install foxx service node module
-npm install --global foxx-cli
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
-
+# Install foxx service node module
+npm install --global foxx-cli
 echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
 
 { # try
@@ -132,3 +132,4 @@ echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
 } || { # catch
   rm ${PATH_TO_PASSWD_FILE}
 }
+
