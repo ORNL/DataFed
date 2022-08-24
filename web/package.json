@@ -2,7 +2,7 @@
   "name": "datafed-ws",
   "version": "1.2.0-4",
   "description": "DataFed web service",
-  "main": "sdms-ws.js",
+  "main": "datafed-ws.js",
   "dependencies": {
     "client-oauth2": "^4.3.3",
     "cookie-parser": "^1.4.5",

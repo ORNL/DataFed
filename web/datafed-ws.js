@@ -317,7 +317,7 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
 
                     console.log( 'User', uid, 'authenticated, verifying DataFed account' );
 
-                    sendMessageDirect( "UserFindByUUIDsRequest", "sdms-ws", { uuid: userinfo.identities_set }, function( reply ) {
+                    sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
                         if ( !reply  ) {
                             console.log( "Error - Find user call failed." );
                             a_resp.redirect( "/ui/error" );
