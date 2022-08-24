@@ -17,7 +17,9 @@ export DATAFED_LEGO_EMAIL=""
 # ************************************************
 export DATAFED_GLOBUS_APP_ID=""
 export DATAFED_GLOBUS_APP_SECRET=""
-
+# An email address is required by LEGO when 
+# requesting certificates for the domain
+export DATAFED_LEGO_EMAIL=""
 # ************************************************
 # Env Variables for Repo Server
 # ************************************************
