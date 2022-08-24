@@ -16,7 +16,7 @@ Refer to the "BUILD.md" file for instructions on how to configure and build Data
 
 # Installation Core Server and Web Server
 
-First you will need to configure the datafed.sh file in the /scripts folder. Next simply running the commands
+First you will need to configure the datafed.sh file in the /config folder. Next simply running the commands
 
 ```bash
 ./scripts/install_dependencies.sh
