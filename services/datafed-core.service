@@ -1,5 +1,7 @@
 [Unit]
 Description=DataFed Core Server
+Requires=arangodb3.service
+After=arangodb3.service
 [Service]
 PIDFile=/tmp/datafed-core.pid
 Restart=always

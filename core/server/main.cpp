@@ -68,7 +68,7 @@ int main( int a_argc, char ** a_argv )
             if ( opt_map.count( "help" ) )
             {
                 cout << "DataFed Core Server, ver. " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE << "\n";
-                cout << "Usage: sdms-core [options]\n";
+                cout << "Usage: datafed-core [options]\n";
                 cout << opts << endl;
                 return 0;
             }

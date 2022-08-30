@@ -92,14 +92,32 @@ then
 	sudo mkdir -p /opt/datafed/keys
 fi
 
+# Check if the datafed-ws server is already running, will need to stop it if we want
+# to use port 443 to start the domain name
+datafed_ws_service=$(systemctl list-unit-files --type service | grep datafed-ws | awk '{print $1}')
+[[ "$datafed_ws_service" == 'datafed-ws.service' ]] && sudo systemctl stop datafed-ws.service
+
 # This should create a folder in ~/.lego/certificates, that contains the
 # certificate files you need, we are going to copy them over to the
 # /opt/datafed/keys folder
 #
 # NOTE: To run lego you will need to make sure that nothing else is using port 443
 # it will be unable to run if the datafed webserver is also running.
-sudo lego --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path /opt/datafed/keys/ --tls run --accept-tos
-mv /opt/datafed/keys/certificates/datafed-server-test.ornl.gov.crt /opt/datafed/keys/
-mv /opt/datafed/keys/certificates/datafed-server-test.ornl.gov.key /opt/datafed/keys/
-rm -rf /opt/datafed/keys/certificates
-rm -rf /opt/datafed/keys/accounts
+#
+# NOTE: Will only run if one of the necessary certificate files is missing
+cert_file="datafed-server-test.ornl.gov.crt"
+key_file="datafed-server-test.ornl.gov.key"
+if [ ! -f "/opt/datafed/keys/$cert_file" ] || [ ! -f "/opt/datafed/keys/$key_file" ]
+then
+  sudo lego --accept-tos --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path /opt/datafed/keys/ --tls run 
+  mv /opt/datafed/keys/certificates/$cert_file /opt/datafed/keys/
+  mv /opt/datafed/keys/certificates/$key_file  /opt/datafed/keys/
+  rm -rf /opt/datafed/keys/certificates
+  rm -rf /opt/datafed/keys/accounts
+else
+  echo "Certificate files already exist - lego will not run."
+  echo "Remove these files if you would like to generate new certs:"
+  echo ""
+  echo "$cert_file"
+  echo "$key_file"
+fi

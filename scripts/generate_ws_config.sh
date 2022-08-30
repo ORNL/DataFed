@@ -14,7 +14,7 @@ Help()
 {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
-  echo "Syntax: $(basename $0) [-h|t|c|f]"
+  echo "Syntax: $(basename $0) [-h|s|i|z|y|w|k]"
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-s, --globus-secret               Globus App secret used by DataFed to authenticate"

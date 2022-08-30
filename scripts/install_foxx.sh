@@ -12,7 +12,7 @@ Help()
 {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
-  echo "Syntax: $(basename $0) [-h|t|c|f]"
+  echo "Syntax: $(basename $0) [-h|u|p|y]"
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-u, --database-user               Database user, needed to log into the database."
@@ -21,6 +21,7 @@ Help()
   echo "                                  provided via the command line it can also be set"
   echo "                                  using the enviromental variable"
   echo "                                  DATABASE_PASSWORD."
+  echo "-y, --system-secret               ZeroMQ system secret"
 }
 
 local_DATABASE_NAME="sdms"
@@ -31,6 +32,13 @@ then
   local_DATABASE_PASSWORD=""
 else
   local_DATABASE_PASSWORD=$(printenv DATABASE_PASSWORD)
+fi
+
+if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]
+then
+  local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
+else
+  local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
 fi
 
 VALID_ARGS=$(getopt -o hu:p --long 'help',database-user:,database-password: -- "$@")
@@ -55,6 +63,11 @@ while [ : ]; do
         local_DATABASE_PASSWORD=$2
         shift 2
         ;;
+    -y | --zeromq-system-secret)
+        echo "Processing 'DataFed ZeroMQ system secret' option. Input argument is '$2'"
+        local_DATAFED_ZEROMQ_SYSTEM_SECRET=$2
+        shift 2
+        ;;
     --) shift; 
         break 
         ;;
@@ -73,6 +86,14 @@ then
   ERROR_DETECTED=1
 fi
 
+if [ -z "$local_DATAFED_ZEROMQ_SYSTEM_SECRET" ]
+then
+  echo "Error DATAFED_ZEROMQ_SYSTEM_SECRET is not defined, this is a required argument"
+  echo "      This variable can be set using the command line option -y, --zeromq-session-secret"
+  echo "      or with the environment variable DATAFED_ZEROMQ_SYSTEM_SECRET."
+  ERROR_DETECTED=1
+fi
+
 if [ "$ERROR_DETECTED" == "1" ]
 then
   exit 1
@@ -87,6 +108,10 @@ if [[ "$output" =~ .*"sdms".* ]]; then
 else
 	echo "Creating SDMS"
   arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute ${PROJECT_ROOT}/core/database/db_create.js
+  # Give time for the database to be created
+  sleep 2
+  arangosh --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
+  arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
 fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
@@ -123,10 +148,12 @@ echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
   if [[ "$existing_services" =~ .*"DataFed".* ]]
   then
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
-    foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api ~/DataFed/core/database/api/
+    foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api ${PROJECT_ROOT}/core/database/api/
   else
-    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api ~/DataFed/core/database/api/
+    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api ${PROJECT_ROOT}/core/database/api/
   fi
+
+  
 
   rm ${PATH_TO_PASSWD_FILE}
 } || { # catch

@@ -84,6 +84,9 @@ router.get('/create', function (req, res) {
                     ut: time
                 };
 
+                console.log("Creating user with user_data");
+                console.log(user_data);
+
                 if ( req.queryParams.password ){
                     g_lib.validatePassword( req.queryParams.password );
                     user_data.password = req.queryParams.password;
@@ -98,7 +101,7 @@ router.get('/create', function (req, res) {
                 }
 
                 var user = g_db.u.save( user_data, { returnNew: true });
-
+                console.log("Saving user_data to 'u'")
                 var root = g_db.c.save({ _key: "u_" + req.queryParams.uid + "_root", is_root: true, owner: user._id, title: "Root Collection", desc: "Root collection for user " + req.queryParams.name + " (" + req.queryParams.uid +")", alias: "root" }, { returnNew: true });
 
                 var alias = g_db.a.save({ _key: "u:" + req.queryParams.uid + ":root" }, { returnNew: true });
