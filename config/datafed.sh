@@ -19,6 +19,7 @@ export DATAFED_LEGO_EMAIL=""
 # ************************************************
 export DATAFED_GLOBUS_APP_ID=""
 export DATAFED_GLOBUS_APP_SECRET=""
+
 # ************************************************
 # Env Variables for Repo Server
 # ************************************************
