@@ -6,6 +6,7 @@
 # Env Variables for Core Server
 # ************************************************
 export DATABASE_PASSWORD=""
+
 # ************************************************
 # Env Variables for Web Server
 # ************************************************
@@ -14,6 +15,7 @@ export DATAFED_ZEROMQ_SYSTEM_SECRET=""
 # An email address is required by LEGO when 
 # requesting certificates for the domain
 export DATAFED_LEGO_EMAIL=""
+
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************
@@ -31,3 +33,44 @@ export DATAFED_SERVER_DOMAIN_NAME_AND_PORT=""
 # ************************************************
 # If not set will resolve to datafed.ornl.gov
 export DATAFED_DOMAIN=""
+
+# ************************************************
+# Env Variables for Globus Connect Server
+# ************************************************
+# The root display name used when setting up the
+# DataFed components of the Globus Connect Server
+#
+# i.e. DATAFED_GCS_ROOT_NAME="CADES GCS Test"
+#
+# This will be used to define the following items
+# 
+# DATAFED_GCS_COLLECTION_MAPPED="$DATAFED_GCS_ROOT_NAME Collection Mapped"
+# DATAFED_GCS_STORAGE_GATEWAY="$DATAFED_GCS_ROOT_NAME Storage Gateway"
+# 
+# So using the example above these would be defined as:
+#
+# DATAFED_GCS_COLLECTION_MAPPED="CADES GCS Test Collection Mapped"
+# DATAFED_GCS_STORAGE_GATEWAY="CADES GCS Test Storage Gateway"
+export DATAFED_GCS_ROOT_NAME=""
+# The POSIX path to the Globus collections.
+#
+# i.e. /home/cades/collections
+#
+# The path will be created if it does not exist
+# The following subfolders will be created automatically
+#
+# MAPPED_COLLECTION_PATH="$GCS_COLLECTION_ROOT_PATH/mapped"
+# GUEST_COLLECTION_PATH="$GCS_COLLECTION_ROOT_PATH/mapped/$DATAFED_ROOT_NAME"
+#
+# So if these variables are defined as:
+# DATAFED_GCS_ROOT_NAME="datafed-home"
+# GCS_COLLECTION_ROOT_PATH="/home/cades/collections"
+#
+# MAPPED_COLLECTION_PATH="/home/cades/collections/mapped"
+# GUEST_COLLECTION_PATH="/home/cades/collections/mapped/datafed-home"
+export GCS_COLLECTION_ROOT_PATH=""
+# The DataFed repo id, this also must be the name
+# of the directory that will be placed in Globus 
+# collection, avoid using spaces in the name.
+# i.e. DATAFED_REPO_ID_AND_DIR="datafed-home"
+export DATAFED_REPO_ID_AND_DIR=""

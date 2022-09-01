@@ -16,6 +16,7 @@ rm -rf /opt/datafed/authz
 
 rm -f /etc/systemd/system/datafed* 
 rm -f /etc/grid-security/gsi-authz.conf
+rm -rf /var/log/datafed
 
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
@@ -35,4 +36,7 @@ else
 fi
 
 # Delete database and API from arangodb
-arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._dropDatabase("sdms");'
+if command -v arangosh &> /dev/null
+then
+  arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._dropDatabase("sdms");'
+fi

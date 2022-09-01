@@ -20,6 +20,7 @@ struct Config
     }
 
     Config():
+        globus_collection_path("/mnt/datafed-repo/"),
         core_server( "tcp://datafed.ornl.gov:7512" ),
         cred_dir( "/etc/datafed/" ),
         port( 9000 ),
@@ -27,6 +28,7 @@ struct Config
         num_req_worker_threads( 4 )
     {}
 
+    std::string     globus_collection_path;
     std::string     core_server;
     std::string     cred_dir;
     uint16_t        port;

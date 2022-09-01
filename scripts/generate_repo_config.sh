@@ -10,7 +10,7 @@ Help()
 {
   echo "$(basename $0) Will set up a configuration file for the repo server"
   echo
-  echo "Syntax: $(basename $0) [-h|t|c|e|d]"
+  echo "Syntax: $(basename $0) [-h|t|c|e|d|g]"
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-t, --threads                     The number of threads available to the repo server"
@@ -27,6 +27,7 @@ Help()
   echo "                                  If you want to set it as an env variable you can use"
   echo "                                  the env variable DATAFED_DOMAIN."
   echo "                                  NOTE: this does not use https it uses tcp"
+  echo "-g, --globus-collection-path      The POSIX path to the Mapped Globus Collection."
 }
 
 local_DATAFED_PORT="7512"
@@ -35,6 +36,13 @@ then
   local_DATAFED_DOMAIN="datafed.ornl.gov"
 else
   local_DATAFED_DOMAIN=$(printenv DATAFED_DOMAIN)
+fi
+
+if [ -z "${GCS_COLLECTION_ROOT_PATH}" ]
+then
+  local_GCS_COLLECTION_ROOT_PATH="/mnt/datafed-repo"
+else
+  local_GCS_COLLECTION_ROOT_PATH=$(printenv GCS_COLLECTION_ROOT_PATH)
 fi
 
 local_DATAFED_CRED_DIR="/opt/datafed/keys/"
@@ -72,6 +80,11 @@ while [ : ]; do
         local_DATAFED_DOMAIN=$2
         shift 2
         ;;
+    -g | --globus-collection-path)
+        echo "Processing 'Globus Collection Path' option. Input argument is '$2'"
+        local_GCS_COLLECTION_ROOT_PATH=$2
+        shift 2
+        ;;
     --) shift; 
         break 
         ;;
@@ -85,11 +98,15 @@ PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 
 CONFIG_FILE_NAME="datafed-repo.cfg"
 
+RELATIVE_PATH_TO_GUEST_ROOT="/mapped"
+PATH_TO_GUEST_ROOT="${local_GCS_COLLECTION_ROOT_PATH}${RELATIVE_PATH_TO_GUEST_ROOT}"
+
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 cred-dir=$local_DATAFED_CRED_DIR
 server=tcp://$local_DATAFED_DOMAIN:${local_DATAFED_PORT}
 port=$local_DATAFED_REPO_EGRESS_PORT
 threads=$local_DATAFED_REPO_THREADS
+globus-collection-path=$PATH_TO_GUEST_ROOT
 EOF
 
 echo

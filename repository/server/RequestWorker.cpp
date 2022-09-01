@@ -230,7 +230,8 @@ RequestWorker::procDataDeleteRequest()
 
         for ( int i = 0; i < request->loc_size(); i++ )
         {
-            boost::filesystem::path data_path( request->loc(i).path() );
+            string local_path = m_config.globus_collection_path + request->loc(i).path();
+            boost::filesystem::path data_path( local_path );
             boost::filesystem::remove( data_path );
         }
     }
@@ -251,7 +252,10 @@ RequestWorker::procDataGetSizeRequest()
     for ( int i = 0; i < request->loc_size(); i++ )
     {
         const RecordDataLocation & item = request->loc(i);
-        boost::filesystem::path data_path( item.path() );
+
+        string local_path = m_config.globus_collection_path + item.path();
+        DL_DEBUG( "Local path " << local_path );
+        boost::filesystem::path data_path( local_path );
 
         data_sz = reply.add_size();
         data_sz->set_id( item.id() );
@@ -264,6 +268,7 @@ RequestWorker::procDataGetSizeRequest()
         {
             data_sz->set_size( 0 );
             DL_ERROR( "DataGetSizeReq - path does not exist: "  << item.path() );
+            DL_ERROR( "DataGetSizeReq - path does not exist: "  << local_path );
         }
     }
 
@@ -276,9 +281,33 @@ RequestWorker::procPathCreateRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoPathCreateRequest, Anon::AckReply )
 
-    DL_DEBUG( "Path create request " << request->path() );
+    DL_INFO( "Path create request " << request->path() );
 
-    boost::filesystem::path data_path( request->path() );
+
+    string sanitized = m_config.globus_collection_path;
+
+    while ( ! sanitized.empty() ) {
+
+      if ( sanitized.back() == '/' ) {
+        sanitized.pop_back();
+      } else {
+        break;
+      }
+    }
+
+    string sanitized_request_path = request->path();
+    while ( ! sanitized_request_path.empty() ) {
+      if ( sanitized_request_path.back() == '/' ) {
+        sanitized_request_path.pop_back();
+      } else {
+        break;
+      }
+    }
+
+    string local_path = sanitized + sanitized_request_path;
+
+    boost::filesystem::path data_path( local_path );
+    DL_DEBUG( "data path " << data_path.relative_path() );
     if ( !boost::filesystem::exists( data_path ))
     {
         boost::filesystem::create_directory( data_path );
@@ -293,9 +322,12 @@ RequestWorker::procPathDeleteRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoPathDeleteRequest, Anon::AckReply )
 
-    DL_DEBUG( "Path delete request " << request->path() );
+    DL_DEBUG( "Relative path delete request " << request->path() );
 
-    boost::filesystem::path data_path( request->path() );
+    string local_path = m_config.globus_collection_path + request->path();
+
+    boost::filesystem::path data_path( local_path );
+    DL_DEBUG( "data path " << data_path.relative_path() );
     if ( boost::filesystem::exists( data_path ))
     {
         boost::filesystem::remove_all( data_path );

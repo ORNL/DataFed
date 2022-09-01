@@ -29,10 +29,22 @@ sudo cmake --build build --target install
 
 # Installation of Repo Server
 
+Before installing DataFed you need to first configure the Globus Connect Server correctly
+
 ```bash
+./scripts/generate_repo_config.sh
+./scripts/generate_authz_config.sh
 cmake -S. -B build -DINSTALL_REPO_SERVER=ON
 cmake --build build -j4
 sudo cmake --build build --target install
+```
+
+Will be installed at this point but, we will need to copy the 
+datafed-core-key.pub to /opt/datafed/keys before the repo
+server will work. Then restart the repo service.
+
+```bash
+sudo systemctl restart datafed-repo.service
 ```
 
 ## Configuring DataFed Repository on Web UI

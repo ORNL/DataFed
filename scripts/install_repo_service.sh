@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -exuf -o pipefail
+set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
@@ -31,8 +31,13 @@ cp "$PROJECT_ROOT/services/datafed-repo.service" /etc/systemd/system
 sudo systemctl daemon-reload
 
 echo "The Globus service should be installed before you use this command"
-sudo systemctl restart datafed-repo.service
-sudo systemctl status datafed-repo.service
+if [ ! -f "/opt/datafed/keys/datafed-core-key.pub" ]
+then
+  echo "Missing /opt/datafed/keys/datafed-core-key.pub you will not be able to run the repo service until the public key is provided"
+else
+  sudo systemctl restart datafed-repo.service
+  sudo systemctl status datafed-repo.service
+fi
 
 # Enable services on reboot
 sudo systemctl enable datafed-repo.service
