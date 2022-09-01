@@ -487,9 +487,17 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
 {
     Config & config = Config::getInstance();
 
+    DL_DEBUG( "a_repo_id is " << a_repo_id )
+
+    std::string registered_repos = ", ";
+
+    for ( auto & RepoPtr : config.repos ) {
+      registered_repos =  RepoPtr.second->id() + " ";
+    }
+
     map<string,RepoData*>::iterator rd = config.repos.find( a_repo_id );
     if ( rd == config.repos.end() )
-        EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id );
+        EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id << " Registered repos are: " << registered_repos );
 
     MsgComm comm( rd->second->address(), MsgComm::DEALER, false, &config.sec_ctx );
 
