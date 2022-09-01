@@ -69,7 +69,10 @@ path_restrictions_file="path_restrictions.json"
 
 RELATIVE_PATH_TO_GUEST_ROOT="/mapped"
 PATH_TO_GUEST_ROOT="${GCS_COLLECTION_ROOT_PATH}${RELATIVE_PATH_TO_GUEST_ROOT}"
-mkdir -p "${PATH_TO_GUEST_ROOT}/${DATAFED_REPO_ID_AND_DIR}"
+
+# Create project/ and /user folders
+mkdir -p "${PATH_TO_GUEST_ROOT}/${DATAFED_REPO_ID_AND_DIR}/user"
+mkdir -p "${PATH_TO_GUEST_ROOT}/${DATAFED_REPO_ID_AND_DIR}/project"
 
 collection_line=$( globus-connect-server collection list | grep "$COLLECTION_NAME" )
 
