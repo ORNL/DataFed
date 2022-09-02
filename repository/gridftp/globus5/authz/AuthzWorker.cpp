@@ -1,6 +1,7 @@
 #include <string>
 #include <fstream>
 #include <cstdlib>
+#include <syslog.h>
 
 
 #include "MsgBuf.hpp"
@@ -33,8 +34,12 @@ public:
 
         const char * cfg_file = getenv( "DATAFED_AUTHZ_CFG_FILE" );
 
-        if ( !cfg_file )
-            EXCEPT( 1, "DATAFED_AUTHZ_CFG_FILE environment variable not set." );
+        if ( !cfg_file ) {
+            DL_INFO("DATAFED_AUTHZ_CFG_FILE environment variable not set. Attempting to read from default location in /opt/datafed/authz/datafed-authz.cfg");
+            cfg_file = "/opt/datafed/authz/datafed-authz.cfg";
+        }
+            
+//            EXCEPT( 1, "DATAFED_AUTHZ_CFG_FILE environment variable not set." );
 
         DL_INFO( "Reading config file: " << cfg_file );
 
@@ -109,11 +114,11 @@ public:
 
     int checkAuth( char * client_id, char * path, char * action )
     {
-        DL_DEBUG("Checking auth for " << client_id << " in " << path );
+        DL_DEBUG("AuthWorker.cpp Checking auth for " << client_id << " in " << path );
 
         if ( m_test_path.size() > 0 && strncmp( path, m_test_path.c_str(), m_test_path.size() ) == 0 )
         {
-            DL_INFO("Allowing request within TEST PATH");
+            DL_INFO("AuthWorker.cpp Allowing request within TEST PATH");
             return 0;
         }
 
@@ -129,17 +134,26 @@ public:
         MsgBuf::Message *       reply;
         MsgBuf::Frame           frame;
 
+        DL_INFO("AuthWorker.cpp Sending authzcomm");
         MsgComm authzcomm(m_server_addr, MsgComm::DEALER, false, &sec_ctx );
-
+ 
+       	string val1 = string("m_repo_id is ") + m_repo_id;	
+	      string val2 = string("path is") + path;
+        DL_INFO(val1);
+        DL_INFO(val2);
         auth_req.set_repo(m_repo_id);
         auth_req.set_client(client_id);
         auth_req.set_file(path);
         auth_req.set_action(action);
         
+        DL_INFO("AuthWorker.cpp Sending message");
         authzcomm.send(auth_req);
+
+        
 
         if ( !authzcomm.recv( reply, frame, m_timeout ))
         {
+            DL_INFO("AuthWorker.cpp Core service did not respond.");
             EXCEPT(1,"Core service did no respond");
         }
         else
@@ -201,7 +215,8 @@ extern "C"
         DL_SET_CERR_ENABLED(false);
         DL_SET_SYSDL_ENABLED(true);
 
-        DL_DEBUG( "AuthzWorker checkAuthorization " << client_id << ", " << object << ", " << action );
+	      string val1 = string("AuthzWorker checkAuthorization ") + string(client_id) + string(", ") + object +  string(", ") + string( action);
+        DL_INFO(val1);
 
         int result = -1;
 

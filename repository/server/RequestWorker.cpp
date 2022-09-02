@@ -226,11 +226,12 @@ RequestWorker::procDataDeleteRequest()
 
     if ( request->loc_size() )
     {
-        DL_DEBUG( "Delete " << request->loc_size() << " file(s), path: " << request->loc(0).path() );
 
         for ( int i = 0; i < request->loc_size(); i++ )
         {
-            string local_path = m_config.globus_collection_path + request->loc(i).path();
+            //string local_path = m_config.globus_collection_path + request->loc(i).path();
+            string local_path = request->loc(i).path();
+            DL_DEBUG( "Delete " << request->loc_size() << " file(s), path: " << local_path );
             boost::filesystem::path data_path( local_path );
             boost::filesystem::remove( data_path );
         }
@@ -253,7 +254,8 @@ RequestWorker::procDataGetSizeRequest()
     {
         const RecordDataLocation & item = request->loc(i);
 
-        string local_path = m_config.globus_collection_path + item.path();
+        //string local_path = m_config.globus_collection_path + item.path();
+        string local_path = item.path();
         DL_DEBUG( "Local path " << local_path );
         boost::filesystem::path data_path( local_path );
 
@@ -284,17 +286,17 @@ RequestWorker::procPathCreateRequest()
     DL_INFO( "Path create request " << request->path() );
 
 
-    string sanitized = m_config.globus_collection_path;
-
-    while ( ! sanitized.empty() ) {
-
-      if ( sanitized.back() == '/' ) {
-        sanitized.pop_back();
-      } else {
-        break;
-      }
-    }
-
+//    string sanitized = m_config.globus_collection_path;
+//
+//    while ( ! sanitized.empty() ) {
+//
+//      if ( sanitized.back() == '/' ) {
+//        sanitized.pop_back();
+//      } else {
+//        break;
+//      }
+//    }
+//
     string sanitized_request_path = request->path();
     while ( ! sanitized_request_path.empty() ) {
       if ( sanitized_request_path.back() == '/' ) {
@@ -303,8 +305,8 @@ RequestWorker::procPathCreateRequest()
         break;
       }
     }
-
-    string local_path = sanitized + sanitized_request_path;
+    //string local_path = sanitized + sanitized_request_path;
+    string local_path = sanitized_request_path;
 
     boost::filesystem::path data_path( local_path );
     DL_DEBUG( "data path " << data_path.relative_path() );
@@ -324,7 +326,8 @@ RequestWorker::procPathDeleteRequest()
 
     DL_DEBUG( "Relative path delete request " << request->path() );
 
-    string local_path = m_config.globus_collection_path + request->path();
+//    string local_path = m_config.globus_collection_path + request->path();
+    string local_path = request->path();
 
     boost::filesystem::path data_path( local_path );
     DL_DEBUG( "data path " << data_path.relative_path() );

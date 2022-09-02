@@ -38,11 +38,11 @@ int main( int a_argc, char ** a_argv )
             ("port,p",po::value<uint16_t>( &config.port ),"Service port")
             ("server,s",po::value<string>( &config.core_server ),"Core server address")
             ("threads,t",po::value<uint32_t>( &config.num_req_worker_threads ),"Number of worker threads")
-            ("globus-collection-path,g",po::value<string>( &config.globus_collection_path ),"Path to Globus collection default value is /mnt/datafed-repo")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
             ("gen-keys",po::bool_switch( &gen_keys ),"Generate new server keys then exit")
             ;
 
+            //("globus-collection-path,g",po::value<string>( &config.globus_collection_path ),"Path to Globus collection default value is /mnt/datafed-repo")
         try
         {
             po::variables_map opt_map;
@@ -79,9 +79,9 @@ int main( int a_argc, char ** a_argv )
                 config.cred_dir += "/";
             }
 
-            if ( config.globus_collection_path.size() && config.globus_collection_path.back() != '/' ) {
-                config.globus_collection_path += "/";
-            }
+            //if ( config.globus_collection_path.size() && config.globus_collection_path.back() != '/' ) {
+            //    config.globus_collection_path += "/";
+            //}
 
             if ( gen_keys )
             {

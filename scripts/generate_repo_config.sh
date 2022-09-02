@@ -106,9 +106,9 @@ cred-dir=$local_DATAFED_CRED_DIR
 server=tcp://$local_DATAFED_DOMAIN:${local_DATAFED_PORT}
 port=$local_DATAFED_REPO_EGRESS_PORT
 threads=$local_DATAFED_REPO_THREADS
-globus-collection-path=$PATH_TO_GUEST_ROOT
 EOF
 
+#globus-collection-path=$PATH_TO_GUEST_ROOT
 echo
 echo "Config file is being placed here: $PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 echo

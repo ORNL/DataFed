@@ -20,14 +20,14 @@ struct Config
     }
 
     Config():
-        globus_collection_path("/mnt/datafed-repo/"),
         core_server( "tcp://datafed.ornl.gov:7512" ),
-        cred_dir( "/etc/datafed/" ),
+        cred_dir( "/opt/datafed/keys" ),
         port( 9000 ),
         timeout( 5 ),
         num_req_worker_threads( 4 )
     {}
 
+    //globus_collection_path("/mnt/datafed-repo/"),
     std::string     globus_collection_path;
     std::string     core_server;
     std::string     cred_dir;

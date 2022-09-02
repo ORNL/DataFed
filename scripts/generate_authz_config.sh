@@ -23,7 +23,7 @@ Help()
   echo "                                  NOTE: this does not use https it uses tcp."
 }
 
-REPO_ID="/repo/core"
+REPO_ID="datafed-home"
 
 if [ -z "DATAFED_DOMAIN" ]
 then
@@ -73,7 +73,7 @@ CONFIG_FILE_NAME="datafed-authz.cfg"
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 server_address=tcp://${local_DATAFED_DOMAIN}:${local_DATAFED_PORT}
 server_key=/opt/datafed/keys/datafed-core-key.pub
-repo_id=$REPO_ID
+repo_id=repo/$DATAFED_REPO_ID_AND_DIR
 pub_key=/opt/datafed/keys/datafed-repo-key.pub
 priv_key=/opt/datafed/keys/datafed-repo-key.priv
 EOF

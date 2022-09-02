@@ -27,6 +27,7 @@ fi
 
 GATEWAY_NAME="${DATAFED_GCS_ROOT_NAME} Storage Gateway"
 COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
+GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 
 gateway_line=$( globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" )
 
@@ -40,7 +41,15 @@ cat << EOF > mapping.json
       "output": "cades",
       "ignore_case": false,
       "literal": false
-    }]
+    },
+    {
+      "source": "{id}",
+      "match": "${DATAFED_GLOBUS_APP_ID}@clients.auth.globus.org",
+      "output": "cades",
+      "ignore_case": false,
+      "literal": true
+    }
+  ]
 }
 EOF
 
@@ -65,8 +74,6 @@ else
 
 fi
 
-path_restrictions_file="path_restrictions.json"
-
 RELATIVE_PATH_TO_GUEST_ROOT="/mapped"
 PATH_TO_GUEST_ROOT="${GCS_COLLECTION_ROOT_PATH}${RELATIVE_PATH_TO_GUEST_ROOT}"
 
@@ -80,24 +87,13 @@ spaces_in_name=$(echo $GATEWAY_NAME | awk '{print gsub("[ \t]",""); exit}')
 columns=$(( $spaces_in_name + 3 ))
 uuid_of_storage_gateway=$( globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" | awk -v col=$columns '{ print $col }')
 
-# Remember the restricted path is relative to the root of the mapped collection
-cat << EOF > $path_restrictions_file
-{
-  "DATA_TYPE": "path_restrictions#1.0.0",
-  "read_write": [
-    "${RELATIVE_PATH_TO_GUEST_ROOT}"
-  ]
-}
-EOF
-
 if [ -z "$collection_line" ]
 then
 
   globus-connect-server collection create \
     "$uuid_of_storage_gateway" \
-    "$PATH_TO_GUEST_ROOT" \
+    "/" \
     "$COLLECTION_NAME" \
-    --sharing-restrict-paths "file:$path_restrictions_file" \
     --allow-guest-collections \
     --enable-anonymous-writes \
     --disable-https
@@ -107,13 +103,15 @@ else
   
   globus-connect-server collection update \
     "$uuid_of_collection" \
-    --sharing-restrict-paths "file:$path_restrictions_file" \
     --allow-guest-collections \
     --enable-anonymous-writes \
     --disable-https
 
 fi
 
-echo "When creating a guest collection it must be created in: $PATH_TO_GUEST_ROOT which should simply be '/'"
+echo "When creating a guest collection it must be created in: $PATH_TO_GUEST_ROOT"
+echo "And the display name should be exactly: $GUEST_COLLECTION_NAME"
+echo "You will also need to add permissions for all Globus users so that they have write access."
+echo ""
 echo "When registering the repository with DataFed the ID must be: $DATAFED_REPO_ID_AND_DIR"
-echo "When registering the repository with DataFed the path is relative to the mapped collection and must be listed as: /$DATAFED_REPO_ID_AND_DIR"
+echo "When registering the repository with DataFed path is abs to the mapped collection and must be listed as: ${PATH_TO_GUEST_ROOT}/${DATAFED_REPO_ID_AND_DIR}"

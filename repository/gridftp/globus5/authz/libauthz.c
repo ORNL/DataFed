@@ -271,7 +271,7 @@ gsi_authz_authorize_async( va_list ap )
         return result;
     }
 
-    syslog( LOG_ERR, "gsi_authz_authorize_async, handle: %p, act: %s, obj: %s", handle, action, object );
+    syslog( LOG_ERR, "libauthz.c gsi_authz_authorize_async nothing happens to object before this in this function, handle: %p, act: %s, obj: %s", handle, action, object );
     
     OM_uint32 min_stat;
     gss_name_t client = GSS_C_NO_NAME;
@@ -350,26 +350,27 @@ gsi_authz_authorize_async( va_list ap )
                             callout_username_id = getenv ("GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID");
 
                             if (callout_username_id !=NULL) {
-                              syslog( LOG_INFO, "GLOBUS_GRIDFTP_MAPPED_USERNAME: %s\n",callout_username);
-                              syslog( LOG_INFO, "GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",callout_username_id);
+                              syslog( LOG_INFO, "libauthz.c GLOBUS_GRIDFTP_MAPPED_USERNAME: %s\n",callout_username);
+                              syslog( LOG_INFO, "libauthz.c GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",callout_username_id);
                               client_id = strdup(callout_username_id);
-                              syslog( LOG_INFO, "client_id: %s\n",client_id);
+                              syslog( LOG_INFO, "libauthz.c client_id: %s\n",client_id);
                             } else {
-                              syslog( LOG_ERR, "GLOBUS_GRIDFTP_MAPPED_USERNAME not set.\n");
+                              syslog( LOG_ERR, "libauthz.c GLOBUS_GRIDFTP_MAPPED_USERNAME not set.\n");
                             }
 
                         }
 
                         if ( client_id )
                         {
-                            if ( checkAuthorization( client_id, object, action ) == 0 )
+                            syslog( LOG_INFO, "libauthz.c calling checkAuthorixation.\n");
+                            if (  checkAuthorization( client_id, object, action ) == 0 )
                             {
                                 result = GLOBUS_SUCCESS;
-                                syslog( LOG_INFO, "checkAuth SUCCESS.\n");
+                                syslog( LOG_INFO, "libauthz.c checkAuth SUCCESS.\n");
                             } else {
                     
-                                syslog( LOG_INFO, "Auth client_id: %s, file: %s, action: %s", client_id, object, action );
-                                syslog( LOG_INFO, "checkAuthorization FAIL.\n");
+                                syslog( LOG_INFO, "libauthz.c Auth client_id: %s, file: %s, action: %s", client_id, object, action );
+                                syslog( LOG_INFO, "libauthz.c checkAuthorization FAIL.\n");
                             }
 
                             free( client_id );
@@ -403,7 +404,7 @@ gsi_authz_authorize_async( va_list ap )
     if ( result != GLOBUS_SUCCESS )
     {
         globus_object_t * error = globus_error_construct_no_authentication( 0, 0 );
-        syslog( LOG_INFO, "Authz: FAILED" );
+        syslog( LOG_INFO, "libauthz.c Authz: FAILED" );
         result = globus_error_put( error );
     }
     else
