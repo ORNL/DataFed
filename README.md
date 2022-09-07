@@ -10,13 +10,16 @@ DataFed includes a suite of services that are built from code housed in this rep
 - Command Line Interface - Utility for accessing data from compute and data environments (interactive and scriptable)
 
 
-Please refer to the [DataFed homepage](https://ornl.github.io/DataFed) for full documentation, papers, and presentations describing the architecture and use cases of DataFed.
+Please refer to the [DataFed homepage](https://ornl.github.io/DataFed) for full
+documentation, papers, and presentations describing the architecture and use
+cases of DataFed.
 
 Refer to the "BUILD.md" file for instructions on how to configure and build DataFed.
 
 # Installation Core Server and Web Server
 
-First you will need to configure the datafed.sh file in the /config folder. Next simply running the commands
+First, you will need to configure the datafed.sh file in the /config folder.
+Next simply running the commands
 
 ```bash
 ./scripts/install_dependencies.sh
@@ -29,14 +32,18 @@ sudo cmake --build build --target install
 
 # Installation of Repo Server
 
-Before installing DataFed you need to first configure the Globus Connect Server correctly.
+Before installing DataFed you need to first configure the Globus Connect Server
+correctly. 
 
-To setup the necessary collections you can run.
+For a Globus 5 server you will need to follow instructions
+[here](https://docs.globus.org/globus-connect-server/v5/quickstart/) at least
+up to the point where you need to create collections and and storage gateways,
+the below script will handle that component.
+
 
 ```bash
 ./scripts/globus/setup_globus.sh
 ```
-
 
 ```bash
 ./scripts/generate_repo_config.sh
