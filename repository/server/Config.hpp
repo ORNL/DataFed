@@ -19,21 +19,14 @@ struct Config
         return inst;
     }
 
-    Config():
-        core_server( "tcp://datafed.ornl.gov:7512" ),
-        cred_dir( "/opt/datafed/keys" ),
-        port( 9000 ),
-        timeout( 5 ),
-        num_req_worker_threads( 4 )
-    {}
+    Config() {}
 
-    //globus_collection_path("/mnt/datafed-repo/"),
     std::string     globus_collection_path;
-    std::string     core_server;
-    std::string     cred_dir;
-    uint16_t        port;
-    uint32_t        timeout;
-    uint32_t        num_req_worker_threads;
+    std::string     core_server = "tcp://datafed.ornl.gov:7512";
+    std::string     cred_dir = "/opt/datafed/keys";
+    uint16_t        port = 9000;
+    uint32_t        timeout = 5;
+    uint32_t        num_req_worker_threads = 4;
 
     MsgComm::SecurityContext            sec_ctx;
 };

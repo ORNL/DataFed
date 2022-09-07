@@ -38,8 +38,7 @@ public_key=$(cat /opt/datafed/keys/datafed-repo-key.pub)
 GATEWAY_NAME="${DATAFED_GCS_ROOT_NAME} Storage Gateway"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 MAPPED_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
-RELATIVE_PATH_TO_GUEST_ROOT="/mapped"
-PATH_TO_GUEST_ROOT="${GCS_COLLECTION_ROOT_PATH}${RELATIVE_PATH_TO_GUEST_ROOT}"
+PATH_TO_GUEST_ROOT="${GCS_COLLECTION_ROOT_PATH}"
 
 uuid_of_collection=$( globus-connect-server collection list | grep "$GUEST_COLLECTION_NAME" | awk '{ print $1 }')
 
