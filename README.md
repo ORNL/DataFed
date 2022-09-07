@@ -29,7 +29,14 @@ sudo cmake --build build --target install
 
 # Installation of Repo Server
 
-Before installing DataFed you need to first configure the Globus Connect Server correctly
+Before installing DataFed you need to first configure the Globus Connect Server correctly.
+
+To setup the necessary collections you can run.
+
+```bash
+./scripts/globus/setup_globus.sh
+```
+
 
 ```bash
 ./scripts/generate_repo_config.sh
@@ -56,4 +63,6 @@ tcp://datafed-repo.ornl.gov:9000, the repo server should have a fully
 qualified domain name and publily accessible IP address. The port should be the
 same port listed in the datafed-repo.cfg file.
 
-2. When registering the repository server you will also need to provide the datafed repository servers public key which should be automatically generated and installed in /opt/datafed/keys/datafed-repo-key.pub.
+2. When registering the repository server you will also need to provide the
+   datafed repository servers public key which should be automatically
+generated and installed in /opt/datafed/keys/datafed-repo-key.pub.
