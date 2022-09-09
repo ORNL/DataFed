@@ -238,10 +238,7 @@ app.get('/ui/register', (a_req, a_resp) => {
         console.log( " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
-        console.log("Printing session info");
-        console.log(a_req.session)
         a_resp.render('register', { uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
-        console.log(" - rendered registration page");
     }
 });
 
@@ -1681,10 +1678,8 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         throw "Invalid message type: " + a_msg_name;
 
     allocRequestContext( null, function( ctx ){
-        console.log("sendMsgDir", a_msg_name, ctx );
 
         var msg_buf = msg.encode(a_msg_data).finish();
-        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
         var frame = Buffer.alloc(8);
         frame.writeUInt32BE( msg_buf.length, 0 );
@@ -1694,7 +1689,6 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
         g_ctx[ctx] = a_cb;
 
-        console.log( "sendMsgDirect:", a_msg_name );
         if ( msg_buf.length )
             g_core_sock.send([ nullfr, frame, msg_buf, a_client ]);
         else

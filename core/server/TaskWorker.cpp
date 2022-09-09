@@ -45,13 +45,9 @@ TaskWorker::workerThread()
     int                step;
     bool               first;
 
-    DL_DEBUG( "Task worker " << id() << " started." )
-
     while( 1 )
     {
         m_task = m_mgr.getNextTask( this );
-
-        DL_DEBUG("Task worker " << id() << " handling new task " << m_task->task_id );
 
         err_msg.clear();
         first = true;
@@ -61,32 +57,24 @@ TaskWorker::workerThread()
             try
             {
                 if ( first ){
-                    DL_TRACE( "Calling task run (first)" );
-                    DL_DEBUG( "Calling task run (first)" << __FILE__ << ":" << __LINE__  );
                     m_db.taskRun( m_task->task_id, task_cmd, 0 );
-                    DL_DEBUG( "Calling task run (first)" << __FILE__ << ":" << __LINE__ );
                     first = false;
                 }
                 else
                 {
                     DL_TRACE( "Calling task run, step: " << step );
-                    DL_DEBUG( "Calling task run, step: " << step  << " "<< __FILE__ << ":" << __LINE__ );
                     m_db.taskRun( m_task->task_id, task_cmd, err_msg.size()?0:&step, err_msg.size()?&err_msg:0 );
-                    DL_DEBUG( "Calling task run, step: " << step  << " "<< __FILE__ << ":" << __LINE__ );
                 }
 
                 //DL_DEBUG( "task reply: " << task_cmd.toString() );
 
                 const Value::Object & obj = task_cmd.asObject();
 
-                DL_DEBUG( "getNumber" );
                 cmd = (uint32_t)obj.getNumber( "cmd" );
 
-                DL_DEBUG( "getValue params" );
                 const Value & params = obj.getValue( "params" );
 
                 if ( obj.has( "step" )) {
-                    DL_DEBUG( "asNumber" );
                     step = obj.asNumber();
                 } else if ( cmd != TC_STOP )
                     EXCEPT(1,"Reply missing step value" );
@@ -94,34 +82,28 @@ TaskWorker::workerThread()
                 switch ( cmd )
                 {
                 case TC_RAW_DATA_TRANSFER:
-                    DL_DEBUG( "cmdRawDataTransfer" << __FILE__ << ":" << __LINE__ );
+                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task DATA TRANSFER.");
                     retry = cmdRawDataTransfer( params );
-                    DL_DEBUG( "cmdRawDataTransfer" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_RAW_DATA_DELETE:
-                    DL_DEBUG( "cmdRawDataDelete" << __FILE__ << ":" << __LINE__ );
+                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task DATA DELETE." );
                     retry = cmdRawDataDelete( params );
-                    DL_DEBUG( "cmdRawDataDelete" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_RAW_DATA_UPDATE_SIZE:
-                    DL_DEBUG( "cmdRawDataUpdateSize" << __FILE__ << ":" << __LINE__ );
+                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task DATA UPDATE SIZE." );
                     retry = cmdRawDataUpdateSize( params );
-                    DL_DEBUG( "cmdRawDataUpdateSize" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_ALLOC_CREATE:
-                    DL_DEBUG( "cmdAllocCreate" << __FILE__ << ":" << __LINE__ );
+                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task ALLOC CREATE." );
                     retry = cmdAllocCreate( params );
-                    DL_DEBUG( "cmdAllocCreate" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_ALLOC_DELETE:
-                    DL_DEBUG( "cmdAllocDelete" << __FILE__ << ":" << __LINE__ );
+                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task ALLOC DELETE." );
                     retry = cmdAllocDelete( params );
-                    DL_DEBUG( "cmdAllocDelete" << __FILE__ << ":" << __LINE__ );
                     break;
                 case TC_STOP:
-                    DL_DEBUG( "Task STOP." );
+                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task STOP." );
                     m_mgr.newTasks( params );
-                    DL_DEBUG( "Task STOP" << __FILE__ << ":" << __LINE__ );
                     break;
                 default:
                     EXCEPT_PARAM(1,"Invalid task command: " << cmd );
@@ -135,7 +117,6 @@ TaskWorker::workerThread()
                 {
                     if ( m_mgr.retryTask( m_task ))
                     {
-                        DL_DEBUG("Task worker " << id() << " aborting task " << m_task->task_id );
                         err_msg = "Maximum task retry period exceeded.";
                         // We give up, exit inner while loop and delete task
                         break;
@@ -176,7 +157,6 @@ TaskWorker::workerThread()
 bool
 TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 {
-    DL_DEBUG( "Task " << m_task->task_id << " cmdRawDataTransfer" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -196,7 +176,6 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
     uint32_t expires_in = obj.getNumber( "acc_tok_exp_in" );
 
     DL_TRACE( ">>>> Token Expires in: " << expires_in );
-    DL_DEBUG( ">>>> Token Expires in: " << expires_in );
 
     if ( expires_in < 3600 )
     {
@@ -224,7 +203,6 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
         // If data is external, also check the other endpoint for encryption state
         if ( type == TT_DATA_GET && obj.getValue( "src_repo_id" ).isNumber() )
         {
-            DL_DEBUG( "Download involves external data" );
             GlobusAPI::EndpointInfo     ep_info2;
 
             m_glob.getEndpointInfo( src_ep, acc_tok, ep_info2 );
@@ -261,19 +239,15 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
         {
             sleep( 5 );
         
-            DL_DEBUG( "checking transfer status" << __FILE__ << ":" << __LINE__ );
 
             if ( m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg ))
             {
                 // Transfer task needs to be cancelled
                 m_glob.cancelTask( glob_task_id, acc_tok );
-                DL_DEBUG( "task canceled" << __FILE__ << ":" << __LINE__ );
             }
         } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
 
-        DL_DEBUG( "xft_status >= GlobusAPI:XS_SUCCEEDED" << __FILE__ << ":" << __LINE__ );
         if ( xfr_status == GlobusAPI::XS_FAILED ) {
-            DL_DEBUG( "XS_FAILED" << __FILE__ << ":" << __LINE__ );
             EXCEPT( 1, err_msg );
         }
     }
@@ -289,7 +263,6 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
 bool
 TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
 {
-    DL_DEBUG( "Task " << m_task->task_id << " cmdRawDataDelete" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -333,7 +306,6 @@ TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
 bool
 TaskWorker::cmdRawDataUpdateSize( const  Value & a_task_params )
 {
-    DL_DEBUG( "Task " << m_task->task_id << " cmdRawDataUpdateSize" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -377,8 +349,6 @@ TaskWorker::cmdRawDataUpdateSize( const  Value & a_task_params )
 bool
 TaskWorker::cmdAllocCreate( const Value & a_task_params )
 {
-    DL_DEBUG( "Task " << m_task->task_id << " cmdAllocCreate" );
-
     const Value::Object & obj = a_task_params.asObject();
 
     const string & repo_id = obj.getString( "repo_id" );
@@ -401,7 +371,6 @@ TaskWorker::cmdAllocCreate( const Value & a_task_params )
 bool
 TaskWorker::cmdAllocDelete( const Value & a_task_params )
 {
-    DL_DEBUG( "Task " << m_task->task_id << " cmdAllocDelete" );
 
     const Value::Object & obj = a_task_params.asObject();
 
@@ -486,8 +455,6 @@ bool
 TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, MsgBuf::Message *& a_reply )
 {
     Config & config = Config::getInstance();
-
-    DL_DEBUG( "a_repo_id is " << a_repo_id )
 
     std::string registered_repos = ", ";
 

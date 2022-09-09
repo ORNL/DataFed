@@ -15,6 +15,10 @@ find_package(Threads REQUIRED)
 # Globus version to compile repo server with
 set(GLOBUS_VERSION  5)
 OPTION(INSTALL_REPO_SERVER "Install DataFed Repo Server" FALSE)
+OPTION(INSTALL_AUTHZ "Install DataFed Authz library" FALSE)
+OPTION(INSTALL_CORE_SERVER "Install DataFed Core Server" TRUE)
+OPTION(INSTALL_WEB_SERVER "Install DataFed Web Server" TRUE)
+OPTION(INSTALL_FOXX "Install Foxx" TRUE)
 
 message( "Building for " ${CMAKE_BUILD_TYPE} )
 
@@ -96,16 +100,27 @@ add_subdirectory( doc_source EXCLUDE_FROM_ALL )
 if( INSTALL_REPO_SERVER )
   # Should only need to do this on the same machine that Globus is installed
   install( TARGETS datafed-repo DESTINATION /opt/datafed/repo )
-  install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_repo_service.sh )")
-else()
+endif()
+
+if( INSTALL_AUTHZ )
+  install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
+endif()
+
+if( INSTALL_CORE_SERVER )
   install( TARGETS datafed-core DESTINATION /opt/datafed/core )
+  install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
+  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh )")
+  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_core_service.sh )")
+endif()
+
+if( INSTALL_WEB_SERVER )
   install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION /opt/datafed/web )
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh )")
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_core_service.sh )")
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_web_service.sh )")
 endif()
 
+if( INSTALL_FOXX ) 
+  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
+endif()

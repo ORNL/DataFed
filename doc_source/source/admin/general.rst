@@ -57,10 +57,12 @@ Get and build the DataFed source code::
     cmake --build build
     sudo cmake --build --target install
 
-Calling the installation command will install the datafed-repo.service,
-datafed-core.service and the datafed-ws.service in the /etc/services folder. It
-will also place the datafed-repo and datafed-core binaries in the /opt/datafed
+Calling the installation command will install the core and web services in the,
+/etc/services folder. It will also place the binaries in the /opt/datafed
 folder.
+
+To also build the repository service and install the authz library you will need to
+provide additional cmake flags.
 
 Service Installation & Configuration
 ====================================

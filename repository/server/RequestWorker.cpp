@@ -272,7 +272,6 @@ RequestWorker::procDataGetSizeRequest()
         } else {
           local_path += sanitized_request_path;
         }
-        DL_DEBUG( "Local path " << local_path );
         boost::filesystem::path data_path( local_path );
 
         data_sz = reply.add_size();
@@ -286,8 +285,8 @@ RequestWorker::procDataGetSizeRequest()
         {
             data_sz->set_size( 0 );
             DL_ERROR( "DataGetSizeReq - path does not exist: "  << item.path() );
-            DL_ERROR( "DataGetSizeReq - path does not exist: "  << local_path );
         }
+        DL_INFO( "FILE SIZE: " << data_sz->size() << ", path to collection: " << m_config.globus_collection_path << ", full path to file: " << local_path );
     }
 
     PROC_MSG_END
@@ -298,8 +297,6 @@ void
 RequestWorker::procPathCreateRequest()
 {
     PROC_MSG_BEGIN( Auth::RepoPathCreateRequest, Anon::AckReply )
-
-    DL_INFO( "Path create request " << request->path() );
 
     string sanitized_request_path = request->path();
     while ( ! sanitized_request_path.empty() ) {
@@ -319,7 +316,7 @@ RequestWorker::procPathCreateRequest()
     //string local_path = sanitized_request_path;
 
     boost::filesystem::path data_path( local_path );
-    DL_DEBUG( "data path " << data_path.relative_path() );
+    DL_INFO( "Creating Path if it does not exist, path to collection: " << m_config.globus_collection_path << ", full path to create: " << local_path );
     if ( !boost::filesystem::exists( data_path ))
     {
         boost::filesystem::create_directory( data_path );
@@ -355,7 +352,7 @@ RequestWorker::procPathDeleteRequest()
     //string local_path = request->path();
 
     boost::filesystem::path data_path( local_path );
-    DL_DEBUG( "data path " << data_path.relative_path() );
+    DL_INFO( "Removing Path if it exists, path to collection: " << m_config.globus_collection_path << ", full path to remove: " << local_path );
     if ( boost::filesystem::exists( data_path ))
     {
         boost::filesystem::remove_all( data_path );

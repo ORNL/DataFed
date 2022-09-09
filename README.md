@@ -48,7 +48,7 @@ the below script will handle that component.
 ```bash
 ./scripts/generate_repo_config.sh
 ./scripts/generate_authz_config.sh
-cmake -S. -B build -DINSTALL_REPO_SERVER=ON
+cmake -S. -B build -DINSTALL_REPO_SERVER=ON -DINSTALL_AUTHZ=ON -DINSTALL_CORE_SERVICE=OFF -DINSTALL_WEB_SERVICE=OFF -DINSTALL_FOXX=OFF
 cmake --build build -j4
 sudo cmake --build build --target install
 ```
