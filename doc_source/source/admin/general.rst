@@ -11,8 +11,8 @@ automate this process as much as possible (via container technology). The servic
 relate to either the DataFed "Central Services" (of which there is only one instance) and DataFed
 "Data Repositories". (These services are listed below.)
 
-The hardware configuration selection depends on desired performace/cost and can range from a single
-node/VM up up to a dedicated high-performacne cluster. The host operating system must be Linux, but
+The hardware configuration selection depends on desired performance/cost and can range from a single
+node/VM up up to a dedicated high-performance cluster. The host operating system must be Linux, but
 the specific distribution is not important.
 
 Central Services:
