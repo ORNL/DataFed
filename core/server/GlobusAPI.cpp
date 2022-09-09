@@ -376,18 +376,24 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
                 DL_DEBUG(event.getString("details"));
                 DL_DEBUG("*******************************");
               }
+
+             
+              const double task_attempts = 3.0;
+              if (resp_obj2.getNumber("total") > task_attempts) {
+                a_err_msg = resp_obj.getString("nice_status");
+                DL_DEBUG("Aborting task exceeded acceptable transfer attempts");
+                a_status = XS_FAILED;
+                return true;
+              }
             }
 
             a_status = XS_ACTIVE;
             return false;
 
-        } else if ( status == "SUCCEEDED")
-        {
+        } else if ( status == "SUCCEEDED") {
             a_status = XS_SUCCEEDED;
             return false;
-        }
-        else if ( status == "FAILED" || status == "INACTIVE" )
-        {
+        } else if ( status == "FAILED" || status == "INACTIVE" ) {
         
             a_err_msg = resp_obj.getString("nice_status");
             a_status = XS_FAILED;
