@@ -16,13 +16,6 @@ find_package(Threads REQUIRED)
 set(GLOBUS_VERSION  5)
 OPTION(INSTALL_REPO_SERVER "Install DataFed Repo Server" FALSE)
 
-#find_package(Protobuf REQUIRED)
-#find_package(Zeromq REQUIRED)
-#find_package(Boost REQUIRED)
-
-#OPTION(CLIENT_ONLY "Build client only" OFF)
-
-
 message( "Building for " ${CMAKE_BUILD_TYPE} )
 
 if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
