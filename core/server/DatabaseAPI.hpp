@@ -1,7 +1,7 @@
 #ifndef DATABASEAPI_HPP
 #define DATABASEAPI_HPP
 
-
+#include <memory>
 #include <string>
 #include <vector>
 #include <curl/curl.h>
@@ -123,7 +123,7 @@ public:
     void groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply );
     void groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply );
 
-    void repoList( std::vector<RepoData*> & a_repos );
+    void repoList( std::vector<RepoData> & a_repos );
     void repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply );
     void repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply );
     void repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply );
@@ -206,7 +206,7 @@ private:
     void setACLData( Auth::ACLDataReply & a_reply, const libjson::Value & a_result );
     void setAllocData( Auth::RepoAllocationsReply & a_reply, const libjson::Value & a_result );
     void setAllocData( AllocData * a_alloc, const libjson::Value::Object & a_obj );
-    void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, const libjson::Value & a_result );
+    void setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> & a_repos, const libjson::Value & a_result );
     void setAllocStatsData( AllocStatsData & a_stats, const libjson::Value::Object & a_object );
     void setNoteDataReply( Auth::NoteDataReply & a_reply, const libjson::Value & a_result );
     void setNoteData( NoteData * a_item, const libjson::Value::Object & a_obj );

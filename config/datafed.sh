@@ -2,6 +2,8 @@
 
 # This is the master DataFed configuration file
 
+export DATAFED_DEFAULT_LOG_PATH=""
+
 # ************************************************
 # Env Variables for Core Server
 # ************************************************

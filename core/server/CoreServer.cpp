@@ -1,3 +1,4 @@
+#include <memory>
 #include <fstream>
 #include <chrono>
 #include <time.h>
@@ -26,12 +27,12 @@ namespace SDMS {
 namespace Core {
 
 Server::Server() :
-    m_config(Config::getInstance()),
-    m_io_secure_thread(0),
-    m_io_insecure_thread(0),
-    m_zap_thread(0),
-    m_msg_router_thread(0),
-    m_db_maint_thread(0)
+    m_config(Config::getInstance())
+//    m_io_secure_thread(0),
+//    m_io_insecure_thread(0),
+//    m_zap_thread(0),
+//    m_msg_router_thread(0)
+//    m_db_maint_thread(0)
 {
     // One-time global libcurl init
     curl_global_init( CURL_GLOBAL_DEFAULT );
@@ -48,16 +49,16 @@ Server::Server() :
     waitForDB();
 
     // Load repository config from DB
-    loadRepositoryConfig();
+    m_config.loadRepositoryConfig();
 
     // Start ZAP handler
-    m_zap_thread = new thread( &Server::zapHandler, this );
+    m_zap_thread = thread( &Server::zapHandler, this );
 
     // Start DB maintenance thread
-    m_db_maint_thread = new thread( &Server::dbMaintenance, this );
+    m_db_maint_thread = thread( &Server::dbMaintenance, this );
 
     // Start DB maintenance thread
-    m_metrics_thread = new thread( &Server::metricsThread, this );
+    m_metrics_thread = thread( &Server::metricsThread, this );
 
     // Create task mgr (starts it's own threads)
     TaskMgr::getInstance();
@@ -69,11 +70,13 @@ Server::~Server()
     // There is no way to cleanly shutdown the server, so this code really has no effect since
     // the o/s cleans-up for us
 
-    m_zap_thread->join();
-    delete m_zap_thread;
+    m_zap_thread.join();
+    //delete m_zap_thread;
 
-    m_db_maint_thread->join();
-    delete m_db_maint_thread;
+    m_db_maint_thread.join();
+    //delete m_db_maint_thread;
+    //
+    m_metrics_thread.join();
 }
 
 void
@@ -106,6 +109,7 @@ Server::waitForDB()
         {
             DatabaseAPI  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
             db_client.serverPing();
+            DL_INFO("DB Ping Success");
             return;
         }
         catch(...)
@@ -118,51 +122,52 @@ Server::waitForDB()
     EXCEPT(1,"Unable to connect to DB");
 }
 
-
-void
-Server::loadRepositoryConfig()
-{
-    DL_INFO("Loading repo configuration");
-
-    DatabaseAPI  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
-
-    vector<RepoData*> repos;
-
-    db_client.repoList( repos );
-
-    for ( vector<RepoData*>::iterator r = repos.begin(); r != repos.end(); ++r )
-    {
-        // Validate repo settings (in case an admin manually edits repo config)
-        if ( (*r)->pub_key().size() != 40 ){
-            DL_ERROR("Ignoring " << (*r)->id() << " - invalid public key: " << (*r)->pub_key() );
-            continue;
-        }
-
-        if ( (*r)->address().compare(0,6,"tcp://") ){
-            DL_ERROR("Ignoring " << (*r)->id() << " - invalid server address: " << (*r)->address() );
-            continue;
-        }
-
-        if ( (*r)->endpoint().size() != 36 ){
-            DL_ERROR("Ignoring " << (*r)->id() << " - invalid endpoint UUID: " << (*r)->endpoint() );
-            continue;
-        }
-
-        if ( (*r)->path().size() == 0 || (*r)->path()[0] != '/' ){
-            DL_ERROR("Ignoring " << (*r)->id() << " - invalid path: " << (*r)->path() );
-            continue;
-        }
-
-        DL_DEBUG("Repo " << (*r)->id() << " OK");
-        DL_DEBUG("UUID: " << (*r)->endpoint() );
-
-        // Cache repo data for data handling
-        m_config.repos[(*r)->id()] = *r;
-
-        // Cache pub key for ZAP handler
-        m_auth_clients[(*r)->pub_key()] = (*r)->id();
-    }
-}
+//
+//void
+//Server::loadRepositoryConfig()
+//{
+//    DL_INFO("Loading repo configuration");
+//
+//    DatabaseAPI  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
+//
+//    vector<std::unique_ptr<RepoData>> repos;
+//
+//    db_client.repoList( repos );
+//
+//    for ( vector<std::unique_ptr<RepoData>>::iterator r = repos.begin(); r != repos.end(); ++r )
+//    {
+//        // Validate repo settings (in case an admin manually edits repo config)
+//        if ( (*r)->pub_key().size() != 40 ){
+//            DL_ERROR("Ignoring " << (*r)->id() << " - invalid public key: " << (*r)->pub_key() );
+//            continue;
+//        }
+//
+//        if ( (*r)->address().compare(0,6,"tcp://") ){
+//            DL_ERROR("Ignoring " << (*r)->id() << " - invalid server address: " << (*r)->address() );
+//            continue;
+//        }
+//
+//        if ( (*r)->endpoint().size() != 36 ){
+//            DL_ERROR("Ignoring " << (*r)->id() << " - invalid endpoint UUID: " << (*r)->endpoint() );
+//            continue;
+//        }
+//
+//        if ( (*r)->path().size() == 0 || (*r)->path()[0] != '/' ){
+//            DL_ERROR("Ignoring " << (*r)->id() << " - invalid path: " << (*r)->path() );
+//            continue;
+//        }
+//
+//        DL_DEBUG("Repo " << (*r)->id() << " OK");
+//        DL_DEBUG("UUID: " << (*r)->endpoint() );
+//
+//        // Cache pub key for ZAP handler
+//        m_auth_clients[(*r)->pub_key()] = (*r)->id();
+//
+//        // Cache repo data for data handling
+//        m_config.repos[(*r)->id()] = std::move(*r);
+//
+//    }
+//}
 
 /**
  * Start and run external interfaces.
@@ -177,13 +182,13 @@ Server::run()
 {
     DL_INFO( "Public/private MAPI starting on ports " << m_config.port << "/" << ( m_config.port + 1))
 
-    m_msg_router_thread = new thread( &Server::msgRouter, this );
-    m_io_secure_thread = new thread( &Server::ioSecure, this );
+    m_msg_router_thread = thread( &Server::msgRouter, this );
+    m_io_secure_thread = thread( &Server::ioSecure, this );
     ioInsecure();
 
-    m_msg_router_thread->join();
-    delete m_msg_router_thread;
-    m_msg_router_thread = 0;
+    m_msg_router_thread.join();
+    //delete m_msg_router_thread;
+    //m_msg_router_thread = 0;
 }
 
 
@@ -209,7 +214,7 @@ Server::msgRouter()
 
     // Ceate worker threads
     for ( uint16_t t = 0; t < m_config.num_client_worker_threads; ++t )
-        m_workers.push_back( new ClientWorker( *this, t+1 ));
+        m_workers.emplace_back( new ClientWorker(*this, t+1) );
 
     // Connect backend to frontend via a proxy
     zmq_proxy_steerable( frontend, backend, 0, control );
@@ -218,13 +223,13 @@ Server::msgRouter()
     zmq_close( control );
 
     // Clean-up workers
-    vector<ClientWorker*>::iterator iwrk;
+    vector<std::shared_ptr<ClientWorker>>::iterator iwrk;
 
     for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
         (*iwrk)->stop();
 
-    for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
-        delete *iwrk;
+    //for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
+    //    delete *iwrk;
 }
 
 void
@@ -383,7 +388,6 @@ Server::zapHandler()
         char        client_key[100];
         string      uid;
         time_t      now, next_purge;
-        auth_client_map_t::iterator     iclient;
         trans_client_map_t::iterator    itrans_client;
         zmq_pollitem_t                  poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
         DatabaseAPI                  db( m_config.db_url, m_config.db_user, m_config.db_pass );
@@ -467,7 +471,9 @@ Server::zapHandler()
                 //cout << "ZAP client key ["<< client_key_text << "]\n";
 
                 // Always accept - but only set UID if it's a known client (by key)
-                if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())
+                auto auth_clients = m_config.getAuthClients();
+                Config::auth_client_map_t::iterator iclient = auth_clients.find( client_key_text );
+                if (iclient != auth_clients.end())
                 {
                     uid = iclient->second;
                     DL_DEBUG( "ZAP: Known pre-authorized client connected: " << uid );

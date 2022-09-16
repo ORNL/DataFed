@@ -9,6 +9,7 @@
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
 #include "DatabaseAPI.hpp"
+#include <memory>
 
 using namespace std;
 
@@ -98,6 +99,7 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
         DL_DEBUG( "get url: " << url );
     }*/
 
+    DL_DEBUG( "get url: " << url );
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
@@ -114,6 +116,7 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
         {
             try
             {
+                DL_DEBUG("from " << __FILE__ << ":" << __LINE__ << " res_json " << res_json); 
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )
@@ -2182,6 +2185,8 @@ void
 DatabaseAPI::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply )
 {
     Value result;
+
+    DL_DEBUG( "Calling repoList: " << __FILE__ << " " << __LINE__ );
     vector<pair<string,string>> params;
     if ( a_request.has_all() )
         params.push_back({"all", a_request.all()?"true":"false"});
@@ -2189,18 +2194,20 @@ DatabaseAPI::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataRe
         params.push_back({"details", a_request.details()?"true":"false"});
 
     dbGet( "repo/list", params, result );
-
-    setRepoData( &a_reply, 0, result );
+    
+    DL_DEBUG("Calling setRepoData " << __FILE__ << __LINE__ );
+    std::vector<RepoData> temp;
+    setRepoData( &a_reply, temp, result );
 }
 
 void
-DatabaseAPI::repoList( std::vector<RepoData*> & a_repos )
+DatabaseAPI::repoList( std::vector<RepoData> & a_repos )
 {
     Value result;
 
     dbGet( "repo/list", {{"all","true"},{"details","true"}}, result );
 
-    setRepoData( 0, &a_repos, result );
+    setRepoData( 0, a_repos, result );
 }
 
 void
@@ -2210,7 +2217,8 @@ DatabaseAPI::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataRe
 
     dbGet( "repo/view", {{"id",a_request.id()}}, result );
 
-    setRepoData( &a_reply, 0, result );
+    std::vector<RepoData> temp;
+    setRepoData( &a_reply, temp, result );
 }
 
 void
@@ -2248,7 +2256,8 @@ DatabaseAPI::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDa
 
     dbPost( "repo/create", {}, &body, result );
 
-    setRepoData( &a_reply, 0, result );
+    std::vector<RepoData> temp;
+    setRepoData( &a_reply, temp, result );
 }
 
 void
@@ -2291,7 +2300,8 @@ DatabaseAPI::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDa
 
     dbPost( "repo/update", {}, &body, result );
 
-    setRepoData( &a_reply, 0, result );
+    std::vector<RepoData> temp;
+    setRepoData( &a_reply, temp, result );
 }
 
 void
@@ -2336,68 +2346,111 @@ DatabaseAPI::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::Re
 
 
 void
-DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData*> * a_repos, const libjson::Value & a_result )
+DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> & a_repos, const libjson::Value & a_result )
 {
-    if ( !a_reply && !a_repos )
-        EXCEPT( ID_INTERNAL_ERROR, "Missing parameters" );
 
-    RepoData *          repo;
+    DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
+//    if ( !a_reply )
+//        EXCEPT( ID_INTERNAL_ERROR, "Missing parameter" );
+
+    //RepoData *          repo;
     Value::ArrayConstIter    k;
 
     TRANSLATE_BEGIN()
 
     const Value::Array & arr = a_result.asArray();
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
     for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
         const Value::Object & obj = i->asObject();
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
-        if ( a_reply )
-            repo = a_reply->add_repo();
-        else
-            repo = new RepoData();
+               //} else {
+            //repo = std::unque_ptr<RepoData>();
+        a_repos.emplace_back();
+        //}
 
-        repo->set_id( obj.getString( "id" ));
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
+        a_repos.back().set_id( obj.getString( "id" ));
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
-        if ( obj.has( "title" ))
-            repo->set_title( obj.asString() );
+        if ( obj.has( "title" )) {
+            a_repos.back().set_title( obj.asString() );
+        }
+        DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
+        if ( obj.has( "desc" )) {
+            a_repos.back().set_desc( obj.asString() );
+        }
 
-        if ( obj.has( "desc" ))
-            repo->set_desc( obj.asString() );
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
+        if ( obj.has( "capacity" )) {
+            a_repos.back().set_capacity( obj.asNumber() ); // TODO Needs to be 64 bit integer (string in JSON)
+        }
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
-        if ( obj.has( "capacity" ))
-            repo->set_capacity( obj.asNumber() ); // TODO Needs to be 64 bit integer (string in JSON)
+        if ( obj.has( "address" )) {
+            a_repos.back().set_address( obj.asString() );
+        }
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
-        if ( obj.has( "address" ))
-            repo->set_address( obj.asString() );
+        if ( obj.has( "endpoint" )) {
+            a_repos.back().set_endpoint( obj.asString() );
+        }
 
-        if ( obj.has( "endpoint" ))
-            repo->set_endpoint( obj.asString() );
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
+        if ( obj.has( "pub_key" )) {
+            a_repos.back().set_pub_key( obj.asString() );
+        }
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
-        if ( obj.has( "pub_key" ))
-            repo->set_pub_key( obj.asString() );
+        if ( obj.has( "path" )) {
+            a_repos.back().set_path( obj.asString() );
+        }
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
-        if ( obj.has( "path" ))
-            repo->set_path( obj.asString() );
+        if ( obj.has( "exp_path" )) {
+            a_repos.back().set_exp_path( obj.asString() );
+        }
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
-        if ( obj.has( "exp_path" ))
-            repo->set_exp_path( obj.asString() );
-
-        if ( obj.has( "domain" ) && !obj.value().isNull( ))
-            repo->set_domain( obj.asString() );
+        if ( obj.has( "domain" ) && !obj.value().isNull( )) {
+            a_repos.back().set_domain( obj.asString() );
+        }
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
         if ( obj.has( "admins" ))
         {
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
             const Value::Array & arr2 = obj.asArray();
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
             for ( k = arr2.begin(); k != arr2.end(); k++ )
             {
-                repo->add_admin( k->asString() );
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
+                a_repos.back().add_admin( k->asString() );
             }
+            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
         }
 
-        if ( a_repos )
-            a_repos->push_back( repo );
+
+         if ( a_reply ) {
+                    //repo = std::make_unique<RepoData>(a_reply->add_repo());
+
+                    // a_reply->add_repo() should return a RepoData * 
+                    //
+              DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
+              // THis is the PROBLEM! What is this function doing!!!!
+              RepoData * repo = a_reply->add_repo();
+
+              *repo = (a_repos.back());
+              DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
+              //a_repos->push_back(std::make_unique<RepoData>());
+              //a_repos->back()
+
+              //DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
+         }
+
     }
 
     TRANSLATE_END( a_result )

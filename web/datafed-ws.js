@@ -1239,6 +1239,7 @@ app.get('/api/repo/list', ( a_req, a_resp ) => {
         params.all = a_req.query.all;
     if ( a_req.query.details )
         params.details = a_req.query.details;
+    console.log("Calling repo list from datafed-ws RepoListRequest");
     sendMessage( "RepoListRequest", params, a_req, a_resp, function( reply ) {
         a_resp.json(reply.repo?reply.repo:[]);
     });
@@ -1609,6 +1610,7 @@ function allocRequestContext( a_resp, a_callback ) {
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
     var client = a_req.session.uid;
+    //console.log("from send message");
     if ( !client ){
         console.log("NO AUTH :", a_msg_name, ":", a_req.connection.remoteAddress );
         throw "Not Authenticated";
@@ -1618,9 +1620,9 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
     //console.log("sendMsg parms:",a_msg_data);
 
-    //    console.log("sendMsg alloc ctx", a_msg_name );
+    //console.log("sendMsg alloc ctx", a_msg_name );
     allocRequestContext( a_resp, function( ctx ){
-        //console.log("sendMsg", a_msg_name, ctx );
+        console.log("sendMsg msg_name ctx and data address ", a_msg_name, ctx, a_msg_data, g_core_serv_addr);
 
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
@@ -1629,7 +1631,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
         //console.log("msg verify:",msg.verify(a_msg_data));
 
         var msg_buf = msg.encode(a_msg_data).finish();
-        //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
+        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
         /* Frame contents (C++)
         uint32_t    size;       // Size of buffer
@@ -1662,7 +1664,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
         //console.log("frame buffer", frame.toString('hex'));
         //console.log("msg buffer", msg_buf.toString('hex'));
-
+        //console.log("Sending to ", g_core_serv_addr);
         //console.log( "sendMsg:", a_msg_name );
         if ( msg_buf.length )
             g_core_sock.send([ nullfr, frame, msg_buf, client ]);
