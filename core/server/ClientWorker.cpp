@@ -30,7 +30,9 @@ ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid ) :
     m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_worker_thread(0), m_run(true),
     m_db_client( m_config.db_url , m_config.db_user, m_config.db_pass )
 {
+    DL_DEBUG("Calling setupMsgHandlers");
     setupMsgHandlers();
+    DL_DEBUG("Creating m_worker_thread");
     m_worker_thread = new thread( &ClientWorker::workerThread, this );
 }
 
@@ -226,6 +228,7 @@ ClientWorker::workerThread()
     nack.set_err_msg( "Authentication required" );
 
     //int delay;
+    DL_DEBUG( "W" << m_tid << " m_run " << m_run);
 
     while ( m_run )
     {
@@ -234,6 +237,7 @@ ClientWorker::workerThread()
             if ( comm.recv( m_msg_buf, true, 1000 ))
             {
                 msg_type = m_msg_buf.getMsgType();
+                DL_DEBUG( "W" << m_tid << " received message" );
 
                 // DEBUG - Inject random delay in message processing
                 /*delay = (rand() % 2000)*1000;
@@ -255,10 +259,11 @@ ClientWorker::workerThread()
                 }
                 else
                 {
+                    DL_DEBUG( "W"<<m_tid<<" getting handler from map" );
                     handler = m_msg_handlers.find( msg_type );
                     if ( handler != m_msg_handlers.end() )
                     {
-                        //DL_TRACE( "W"<<m_tid<<" calling handler" );
+                        DL_TRACE( "W"<<m_tid<<" calling handler/attempting to call function of worker" );
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
@@ -266,15 +271,17 @@ ClientWorker::workerThread()
                             if ( msg_type != task_list_msg_type )
                                 m_core.metricsUpdateMsgCount( m_msg_buf.getUID(), msg_type );
 
+                            DL_DEBUG( "W" << m_tid << " sending msg of type " << msg_type);
                             comm.send( m_msg_buf );
+                            DL_DEBUG( "Message sent ");
                             /*if ( msg_type != task_list_msg_type )
                             {
                                 DL_DEBUG( "W"<<m_tid<<" reply sent." );
                             }*/
                         }
-                    }
-                    else
+                    } else {
                         DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
+                    }
                 }
             }
         }
@@ -291,6 +298,8 @@ ClientWorker::workerThread()
             DL_ERROR( "W" << m_tid << " unknown exception type" );
         }
     }
+
+    DL_DEBUG( "W exiting loop" );
 }
 
 // TODO The macros below should be replaced with templates

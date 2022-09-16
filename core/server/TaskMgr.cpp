@@ -111,18 +111,18 @@ TaskMgr::maintenanceThread()
     {
         // Default timeout is time until next purge
         timeout = purge_next;
-        //DL_INFO( "MAINT: Next purge: " << chrono::duration_cast<chrono::seconds>( purge_next.time_since_epoch()).count() );
-        //DL_INFO( "MAINT: tasks in retry queue: " << m_tasks_retry.size() );
+        DL_INFO( "MAINT: Next purge: " << chrono::duration_cast<chrono::seconds>( purge_next.time_since_epoch()).count() );
+        DL_INFO( "MAINT: tasks in retry queue: " << m_tasks_retry.size() );
 
         // Adjust timeout if a task retry should happen sooner
         t = m_tasks_retry.begin();
         if ( t != m_tasks_retry.end() )
         {
-            //DL_INFO( "MAINT: Check next task retry: " << t->second->task_id );
+            DL_INFO( "MAINT: Check next task retry: " << t->second->task_id );
             if ( t->first < purge_next )
             {
                 timeout = t->first;
-                //DL_INFO( "MAINT: timeout based on next retry: " << chrono::duration_cast<chrono::seconds>( t->first.time_since_epoch()).count() );
+                DL_INFO( "MAINT: timeout based on next retry: " << chrono::duration_cast<chrono::seconds>( t->first.time_since_epoch()).count() );
             }
         }
 
@@ -133,6 +133,7 @@ TaskMgr::maintenanceThread()
 
         if ( timeout > now )
         {
+            DL_INFO( "MAINT: timeout > now then wait_until ");
             m_maint_cvar.wait_until( maint_lock, timeout );
         }
 
@@ -142,6 +143,7 @@ TaskMgr::maintenanceThread()
 
         if ( now >= purge_next )
         {
+            DL_INFO( "MAINT: purgeTaskHistory ");
             purgeTaskHistory();
 
             now = chrono::system_clock::now();

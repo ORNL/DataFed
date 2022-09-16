@@ -45,6 +45,15 @@ else
   local_GCS_COLLECTION_ROOT_PATH=$(printenv GCS_COLLECTION_ROOT_PATH)
 fi
 
+local_DATAFED_LOG_PATH=""
+
+if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
+then
+  local_DATAFED_LOG_PATH="/var/log/datafed"
+else
+  local_DATAFED_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
+fi
+
 local_DATAFED_CRED_DIR="/opt/datafed/keys/"
 local_DATAFED_REPO_EGRESS_PORT="9000"
 local_DATAFED_REPO_THREADS=2
@@ -99,6 +108,7 @@ PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 CONFIG_FILE_NAME="datafed-repo.cfg"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
+log-path=${local_DATAFED_LOG_PATH}
 cred-dir=$local_DATAFED_CRED_DIR
 server=tcp://$local_DATAFED_DOMAIN:${local_DATAFED_PORT}
 port=$local_DATAFED_REPO_EGRESS_PORT

@@ -22,7 +22,7 @@ router.get('/list', function (req, res) {
     }
 
     var result,repo,i;
-
+    console.log("Calling repo list");
     if ( !client ){
         result = g_db._query( "for v in repo return v").toArray();
         for ( i in result ){
@@ -49,6 +49,8 @@ router.get('/list', function (req, res) {
         }
     }
 
+    console.log("Sending back this");
+    console.log(result);
     res.send( result );
 })
 .queryParam('client', joi.string().allow('').optional(), "Client ID")
