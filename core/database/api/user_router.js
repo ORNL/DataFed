@@ -3,7 +3,8 @@
 const   createRouter = require('@arangodb/foxx/router');
 const   router = createRouter();
 const   joi = require('joi');
-
+const   createAuth = require('@arangodb/foxx/auth');
+const   auth = createAuth("pbkdf2");
 const   g_db = require('@arangodb').db;
 const   g_graph = require('@arangodb/general-graph')._graph('sdmsg');
 const   g_lib = require('./support');
@@ -16,8 +17,12 @@ router.get('/authn/password', function (req, res) {
     try {
         const client = g_lib.getUserFromClientID( req.queryParams.client );
 
-        if ( client.password != req.queryParams.pw )
+        const is_verified = auth.verify( client.password, req.queryParams.pw );
+        if ( is_verified === false )
             throw g_lib.ERR_AUTHN_FAILED;
+        
+        //if ( client.password != req.queryParams.pw )
+        //    throw g_lib.ERR_AUTHN_FAILED;
 
         res.send({ "uid": client._id, "authorized": true });
     } catch( e ) {
@@ -86,7 +91,7 @@ router.get('/create', function (req, res) {
 
                 if ( req.queryParams.password ){
                     g_lib.validatePassword( req.queryParams.password );
-                    user_data.password = req.queryParams.password;
+                    user_data.password = auth.create(req.queryParams.password);
                 }
 
                 if ( req.queryParams.email ){
@@ -174,7 +179,7 @@ router.get('/update', function (req, res) {
 
                 if ( req.queryParams.password ){
                     g_lib.validatePassword( req.queryParams.password );
-                    obj.password = req.queryParams.password;
+                    obj.password = auth.create(req.queryParams.password);
                 }
 
                 if ( req.queryParams.name ){
