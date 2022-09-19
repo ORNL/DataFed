@@ -3,7 +3,7 @@ project( DataFed CXX C )
 
 set(DataFed_MAJOR_VERSION 0)
 set(DataFed_MINOR_VERSION 2)
-set(DataFed_PATCH_VERSION 1)
+set(DataFed_PATCH_VERSION 0)
 set(DataFed_VERSION ${DataFed_MAJOR_VERSION}.${DataFed_MINOR_VERSION}.${DataFed_PATCH_VERSION})
 
 set(CMAKE_CXX_STANDARD 14)
@@ -19,6 +19,12 @@ OPTION(INSTALL_AUTHZ "Install DataFed Authz library" FALSE)
 OPTION(INSTALL_CORE_SERVER "Install DataFed Core Server" TRUE)
 OPTION(INSTALL_WEB_SERVER "Install DataFed Web Server" TRUE)
 OPTION(INSTALL_FOXX "Install Foxx" TRUE)
+
+set(BUILD_REPO_SERVER ${INSTALL_REPO_SERVER})
+set(BUILD_AUTHZ ${INSTALL_AUTHZ})
+set(BUILD_CORE_SERVER ${INSTALL_CORE_SERVER})
+set(BUILD_WEB_SERVER ${INSTALL_WEB_SERVER})
+
 
 message( "Building for " ${CMAKE_BUILD_TYPE} )
 
@@ -37,59 +43,67 @@ else()
 	find_package(Boost REQUIRED)
 endif()
 
-## load in pkg-config support
-find_package(PkgConfig)
-## use pkg-config to get hints for 0mq locations
-pkg_check_modules(PC_ZeroMQ QUIET zmq)
+if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ ) 
+  ## load in pkg-config support
+  find_package(PkgConfig)
+  ## use pkg-config to get hints for 0mq locations
+  pkg_check_modules(PC_ZeroMQ QUIET zmq)
 
-## use the hint from above to find where 'zmq.h' is located
-find_path(ZeroMQ_INCLUDE_DIR
-        NAMES zmq.h
-        PATHS ${PC_ZeroMQ_INCLUDE_DIRS}
-        )
+  ## use the hint from above to find where 'zmq.h' is located
+  find_path(ZeroMQ_INCLUDE_DIR
+          NAMES zmq.h
+          PATHS ${PC_ZeroMQ_INCLUDE_DIRS}
+          )
 
-## use the hint from about to find the location of libzmq
-find_library(ZeroMQ_LIBRARY
-        NAMES zmq
-        PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
-        )
+  ## use the hint from about to find the location of libzmq
+  find_library(ZeroMQ_LIBRARY
+          NAMES zmq
+          PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
+          )
 
-include_directories( ${ZeroMQ_INCLUDE_DIR} )
-link_directories( ${PC_ZeroMQ_LIBRARY_DIRS} )
+  include_directories( ${ZeroMQ_INCLUDE_DIR} )
+  link_directories( ${PC_ZeroMQ_LIBRARY_DIRS} )
 
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
+  find_package(nlohmann_json CONFIG REQUIRED)
+  find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
 
+  if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})
+          message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )
+          message( "PBUF_LIB_DIR:" $ENV{PBUF_LIB_DIR} )
+          include_directories( $ENV{PBUF_INC_DIR} )
+          link_directories( $ENV{PBUF_LIB_DIR} )
+    set( Protobuf_LIBRARY $ENV{PBUF_LIB_DIR} )
+  endif()
 
-if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})
-        message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )
-        message( "PBUF_LIB_DIR:" $ENV{PBUF_LIB_DIR} )
-        include_directories( $ENV{PBUF_INC_DIR} )
-        link_directories( $ENV{PBUF_LIB_DIR} )
-	set( Protobuf_LIBRARY $ENV{PBUF_LIB_DIR} )
+  find_package(Protobuf REQUIRED)
+  set( PROTOBUF_IMPORT_DIRS ${PROTOBUF_INCLUDE_DIRS})
+  message( TRACE "PROTOBUF_IMPORT_DIRS:" ${PROTOBUF_IMPORT_DIRS} )
+
+  if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+  endif()
+
+  set(CMAKE_CXX_FLAGS "-Wall -Wextra -DUSE_DYNALOG -D_FILE_OFFSET_BITS=64")
+  set(CMAKE_CXX_FLAGS_DEBUG "-g")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+  set(CMAKE_C_FLAGS "-Wall -Wextra")
+  set(CMAKE_C_FLAGS_DEBUG "-g")
+  set(CMAKE_C_FLAGS_RELEASE "-O3")
+
+  # Create file glob here because need to be made visible here as well
+  file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/*.proto" )
+  add_subdirectory( common )
+
 endif()
 
-find_package(Protobuf REQUIRED)
-set( PROTOBUF_IMPORT_DIRS ${PROTOBUF_INCLUDE_DIRS})
-message( TRACE "PROTOBUF_IMPORT_DIRS:" ${PROTOBUF_IMPORT_DIRS} )
-
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+if( BUILD_CORE_SERVER )
+  add_subdirectory( core )
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -DUSE_DYNALOG -D_FILE_OFFSET_BITS=64")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-
-set(CMAKE_C_FLAGS "-Wall -Wextra")
-set(CMAKE_C_FLAGS_DEBUG "-g")
-set(CMAKE_C_FLAGS_RELEASE "-O3")
-
-# Create file glob here because need to be made visible here as well
-file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/*.proto" )
-add_subdirectory( common )
-add_subdirectory( core )
-add_subdirectory( repository )
+if( BUILD_REPO_SERVER )
+  add_subdirectory( repository )
+endif()
 
 # make target = pydatafed
 add_subdirectory( python EXCLUDE_FROM_ALL )
