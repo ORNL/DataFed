@@ -12,6 +12,11 @@ source ${PROJECT_ROOT}/config/datafed.sh
 PATH_TO_SERVICE_DIR=$(realpath "$SOURCE/../services")
 SERVICE_FILE_NAME="datafed-ws.service"
 
+if [ ! -d "$PATH_TO_SERVICE_DIR" ]
+then
+  mkdir -p "$PATH_TO_SERVICE_DIR"
+fi
+
 local_DATAFED_LOG_PATH=""
 
 if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
