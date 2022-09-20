@@ -89,12 +89,12 @@ else
   local_DATAFED_GCS_ROOT_NAME=$(printenv DATAFED_GCS_ROOT_NAME)
 fi
 
-local_GCS_COLLECTION_ROOT_PATH=""
-if [ -z "${GCS_COLLECTION_ROOT_PATH}" ]
+local_DATAFED_GCS_COLLECTION_ROOT_PATH=""
+if [ -z "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
 then
-  local_GCS_COLLECTION_ROOT_PATH=""
+  local_DATAFED_GCS_COLLECTION_ROOT_PATH=""
 else
-  local_GCS_COLLECTION_ROOT_PATH=$(printenv GCS_COLLECTION_ROOT_PATH)
+  local_DATAFED_GCS_COLLECTION_ROOT_PATH=$(printenv DATAFED_GCS_COLLECTION_ROOT_PATH)
 fi
 
 local_DATAFED_REPO_ID_AND_DIR=""
@@ -108,39 +108,39 @@ fi
 cat << EOF > "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 # This is the master DataFed configuration file
 
-export DATAFED_DEFAULT_LOG_PATH=""
+export DATAFED_DEFAULT_LOG_PATH="$local_DATAFED_DEFAULT_LOG_PATH"
 
 # ************************************************
 # Env Variables for Core Server
 # ************************************************
-export DATABASE_PASSWORD=""
+export DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
 
 # ************************************************
 # Env Variables for Web Server
 # ************************************************
-export DATAFED_ZEROMQ_SESSION_SECRET=""
-export DATAFED_ZEROMQ_SYSTEM_SECRET=""
+export DATAFED_ZEROMQ_SESSION_SECRET="$local_DATAFED_ZEROMQ_SESSION_SECRET"
+export DATAFED_ZEROMQ_SYSTEM_SECRET="$local_DATAFED_ZEROMQ_SYSTEM_SECRET"
 # An email address is required by LEGO when 
 # requesting certificates for the domain
-export DATAFED_LEGO_EMAIL=""
+export DATAFED_LEGO_EMAIL="$local_DATAFED_LEGO_EMAIL"
 
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************
-export DATAFED_GLOBUS_APP_ID=""
-export DATAFED_GLOBUS_APP_SECRET=""
+export DATAFED_GLOBUS_APP_ID="$local_DATAFED_GLOBUS_APP_ID"
+export DATAFED_GLOBUS_APP_SECRET="$local_DATAFED_GLOBUS_APP_SECRET"
 
 # ************************************************
 # Env Variables for Repo Server
 # ************************************************
 # i.e. datafed-server-test.ornl.gov:7512
-export DATAFED_SERVER_DOMAIN_NAME_AND_PORT=""
+export DATAFED_SERVER_DOMAIN_NAME_AND_PORT="$local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT"
 
 # ************************************************
 # Env Variables for Authz, Web, Repo Server
 # ************************************************
 # If not set will resolve to datafed.ornl.gov
-export DATAFED_DOMAIN=""
+export DATAFED_DOMAIN="$local_DATAFED_DOMAIN"
 
 # ************************************************
 # Env Variables for Globus Connect Server
@@ -159,7 +159,7 @@ export DATAFED_DOMAIN=""
 #
 # DATAFED_GCS_COLLECTION_MAPPED="CADES GCS Test Collection Mapped"
 # DATAFED_GCS_STORAGE_GATEWAY="CADES GCS Test Storage Gateway"
-export DATAFED_GCS_ROOT_NAME=""
+export DATAFED_GCS_ROOT_NAME="$local_DATAFED_GCS_ROOT_NAME"
 # The POSIX path to the Globus GUEST collection.
 #
 # i.e. /home/cades/collections/mapped
@@ -177,10 +177,10 @@ export DATAFED_GCS_ROOT_NAME=""
 # "/home/cades/collections/mapped/datafed-home"
 #
 # Will be created
-export GCS_COLLECTION_ROOT_PATH=""
+export GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH"
 # The DataFed repo id, this also must be the name
 # of the directory that will be placed in Globus 
 # collection, avoid using spaces in the name.
 # i.e. DATAFED_REPO_ID_AND_DIR="datafed-home"
-export DATAFED_REPO_ID_AND_DIR=""
+export DATAFED_REPO_ID_AND_DIR="$local_DATAFED_REPO_ID_AND_DIR"
 EOF
