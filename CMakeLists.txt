@@ -14,16 +14,18 @@ find_package(Threads REQUIRED)
 
 # Globus version to compile repo server with
 set(GLOBUS_VERSION  5)
-OPTION(INSTALL_REPO_SERVER "Install DataFed Repo Server" FALSE)
-OPTION(INSTALL_AUTHZ "Install DataFed Authz library" FALSE)
-OPTION(INSTALL_CORE_SERVER "Install DataFed Core Server" TRUE)
-OPTION(INSTALL_WEB_SERVER "Install DataFed Web Server" TRUE)
-OPTION(INSTALL_FOXX "Install Foxx" TRUE)
+OPTION(BUILD_REPO_SERVER "Build DataFed Repo Server" FALSE)
+OPTION(BUILD_AUTHZ "Build DataFed Authz library" FALSE)
+OPTION(BUILD_CORE_SERVER "Build DataFed Core Server" TRUE)
+OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
+OPTION(BUILD_DOCS "Build documentation" TRUE)
+OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
+OPTION(BUILD_FOXX "Build Foxx" TRUE)
 
-set(BUILD_REPO_SERVER ${INSTALL_REPO_SERVER})
-set(BUILD_AUTHZ ${INSTALL_AUTHZ})
-set(BUILD_CORE_SERVER ${INSTALL_CORE_SERVER})
-set(BUILD_WEB_SERVER ${INSTALL_WEB_SERVER})
+set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
+set(INSTALL_AUTHZ ${BUILD_AUTHZ})
+set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
+set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
 
 
 message( "Building for " ${CMAKE_BUILD_TYPE} )
@@ -32,18 +34,22 @@ if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
     add_definitions( -Wall -Wextra )
 endif()
 
-include_directories( "/usr/include/globus" )
-
-if ( DEFINED ENV{BOOST_INC} AND DEFINED ENV{BOOST_LIB} )
-        message( "BOOST_INC:" $ENV{BOOST_INC} )
-        message( "BOOST_LIB:" $ENV{BOOST_LIB} )
-        include_directories( $ENV{BOOST_INC} )
-        link_directories( $ENV{BOOST_LIB} )
-else()
-	find_package(Boost REQUIRED)
-endif()
+# Create file glob here because need to be made visible here as well
+file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/*.proto" )
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ ) 
+
+  include_directories( "/usr/include/globus" )
+
+  if ( DEFINED ENV{BOOST_INC} AND DEFINED ENV{BOOST_LIB} )
+          message( "BOOST_INC:" $ENV{BOOST_INC} )
+          message( "BOOST_LIB:" $ENV{BOOST_LIB} )
+          include_directories( $ENV{BOOST_INC} )
+          link_directories( $ENV{BOOST_LIB} )
+  else()
+    find_package(Boost REQUIRED)
+  endif()
+
   ## load in pkg-config support
   find_package(PkgConfig)
   ## use pkg-config to get hints for 0mq locations
@@ -91,8 +97,6 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ )
   set(CMAKE_C_FLAGS_DEBUG "-g")
   set(CMAKE_C_FLAGS_RELEASE "-O3")
 
-  # Create file glob here because need to be made visible here as well
-  file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/*.proto" )
   add_subdirectory( common )
 
 endif()
@@ -105,11 +109,15 @@ if( BUILD_REPO_SERVER )
   add_subdirectory( repository )
 endif()
 
-# make target = pydatafed
-add_subdirectory( python EXCLUDE_FROM_ALL )
+if( BUILD_PYTHON_CLIENT )
+  # make target = pydatafed
+  add_subdirectory( python EXCLUDE_FROM_ALL )
+endif()
 
-# make target = docs
-add_subdirectory( doc_source EXCLUDE_FROM_ALL )
+if( BUILD_DOCS )
+  # make target = docs
+  add_subdirectory( doc_source EXCLUDE_FROM_ALL )
+endif()
 
 if( INSTALL_REPO_SERVER )
   # Should only need to do this on the same machine that Globus is installed
@@ -132,7 +140,7 @@ if( INSTALL_WEB_SERVER )
   install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION /opt/datafed/web )
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_web_service.sh )")
+  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_ws_service.sh )")
 endif()
 
 if( INSTALL_FOXX ) 

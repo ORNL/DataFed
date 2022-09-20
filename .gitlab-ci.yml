@@ -1,0 +1,9 @@
+stages:
+  - build
+
+build-ws:
+  stage: build
+  tags:
+    - datafed
+  script:
+    - docker build -f dockerfiles/DockerfileDockerfile.web.ubuntu -t datafed-web .
