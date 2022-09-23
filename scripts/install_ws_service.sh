@@ -27,11 +27,18 @@ cp "$PROJECT_ROOT/config/datafed-ws.cfg" /opt/datafed/web
 # Copy services
 cp "$PROJECT_ROOT/services/datafed-ws.service" /etc/systemd/system
 
-sudo systemctl daemon-reload
+systemctl_exists=$( which systemctl )
 
-echo "The ArangoDB service and core service should be up and running before you use this command"
-sudo systemctl restart datafed-ws.service
-sudo systemctl status datafed-ws.service
+if [[ -z systemctl_exists ]]
+then
+  sudo systemctl daemon-reload
 
-# Enable services on reboot
-sudo systemctl enable datafed-ws.service
+  echo "The ArangoDB service and core service should be up and running before you use this command"
+  sudo systemctl restart datafed-ws.service
+  sudo systemctl status datafed-ws.service
+
+  # Enable services on reboot
+  sudo systemctl enable datafed-ws.service
+else
+  echo "Not starting systemctl service because did not find systemctl."
+fi

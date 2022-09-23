@@ -6,9 +6,6 @@ RUN mkdir -p ${BUILD_DIR}
 
 WORKDIR ${BUILD_DIR}
 
-#RUN mkdir static
-#RUN mkdir views
-
 COPY ./web ${BUILD_DIR}/web
 COPY ./CMakeLists.txt ${BUILD_DIR}
 COPY ./config/datafed.sh ${BUILD_DIR}/config/
@@ -19,12 +16,19 @@ COPY ./scripts/install_ws_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_lego_and_certificates.sh ${BUILD_DIR}/scripts/
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
-RUN ${BUILD_DIR}/scripts/install_ws_dependencies.sh &&\
- ${BUILD_DIR}/scripts/generate_ws_config.sh &&\
+RUN ${BUILD_DIR}/scripts/install_ws_dependencies.sh
+
+RUN ${BUILD_DIR}/scripts/generate_ws_config.sh &&\
  ${BUILD_DIR}/scripts/generate_ws_service.sh &&\
  cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \
                     -DBUILD_CORE_SERVER=False -DBUILD_WEB_SERVER=True \
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
                     -DBUILD_FOXX=False &&\
- cmake --build build &&\
- cmake --build build --target install
+ cmake --build build
+
+ENV NVM_INC=/root/.nvm/versions/node/v13.14.0/include/node
+ENV NVM_DIR=/root/.nvm
+ENV PATH=/root/.nvm/versions/node/v13.14.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV NVM_BIN=/root/.nvm/versions/node/v13.14.0/bin
+
+RUN cmake --build build --target install

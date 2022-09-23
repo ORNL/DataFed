@@ -7,3 +7,17 @@ build-ws:
     - datafed
   script:
     - docker build -f dockerfiles/DockerfileDockerfile.web.ubuntu -t datafed-web .
+
+build-core:
+  stage: build
+  tags:
+    - datafed
+  script:
+    - docker build -f dockerfiles/DockerfileDockerfile.core.ubuntu -t datafed-core .
+
+build-repo:
+  stage: build
+  tags:
+    - datafed
+  script:
+    - docker build -f dockerfiles/DockerfileDockerfile.repo.ubuntu -t datafed-repo .
