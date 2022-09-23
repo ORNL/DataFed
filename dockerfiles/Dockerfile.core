@@ -89,3 +89,4 @@ RUN yum install -y \
 ENV DATAFED_CONFIG_DIR ${DATAFED_CONFIG_DIR}
 
 CMD ./datafed-core --cfg ${DATAFED_CONFIG_DIR}/datafed-core.cfg
+
