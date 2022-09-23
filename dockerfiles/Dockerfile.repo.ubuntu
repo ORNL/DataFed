@@ -3,11 +3,13 @@ FROM ubuntu:focal as build
 ARG BUILD_DIR="/source"
 
 RUN mkdir -p ${BUILD_DIR}
+RUN mkdir -p ${BUILD_DIR}/repository/server
 
 WORKDIR ${BUILD_DIR}
 
-COPY ./web ${BUILD_DIR}/web
+COPY ./repository/CMakeLists.txt ${BUILD_DIR}/repository/CMakeLists.txt
 COPY ./CMakeLists.txt ${BUILD_DIR}
+COPY ./repository/server ${BUILD_DIR}/repository/server
 COPY ./config/datafed.sh ${BUILD_DIR}/config/
 COPY ./scripts/install_repo_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_repo_config.sh ${BUILD_DIR}/scripts/
@@ -17,7 +19,7 @@ COPY ./scripts/install_repo_service.sh ${BUILD_DIR}/scripts/
 #SHELL ["/bin/bash", "-l", "-euxo", "pipefail", "-c"]
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
-RUN ${BUILD_DIR}/scripts/install_repo_dependencies.sh
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_repo_dependencies.sh
 
 RUN ${BUILD_DIR}/scripts/generate_ws_config.sh &&\
  ${BUILD_DIR}/scripts/generate_ws_service.sh &&\

@@ -1,7 +1,13 @@
 stages:
   - build
+  - deploy
+
+before_script:
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
 build-ws:
+  variables:
+    IMAGE_TAG: "datafed-web:$CI_COMMIT_REF_NAME"
   stage: build
   tags:
     - datafed
@@ -9,6 +15,8 @@ build-ws:
     - docker build -f dockerfiles/DockerfileDockerfile.web.ubuntu -t datafed-web .
 
 build-core:
+  variables:
+    IMAGE_TAG: "datafed-core:$CI_COMMIT_REF_NAME"
   stage: build
   tags:
     - datafed
@@ -16,8 +24,37 @@ build-core:
     - docker build -f dockerfiles/DockerfileDockerfile.core.ubuntu -t datafed-core .
 
 build-repo:
+  variables:
+    IMAGE_TAG: "datafed-repo:$CI_COMMIT_REF_NAME"
   stage: build
   tags:
     - datafed
   script:
     - docker build -f dockerfiles/DockerfileDockerfile.repo.ubuntu -t datafed-repo .
+
+deploy-ws:
+  variables:
+    IMAGE_TAG: "datafed-web:$CI_COMMIT_REF_NAME"
+  stage: deploy
+  tags:
+    - datafed
+  script:
+    - docker push datafed-web .
+
+deploy-core:
+  variables:
+    IMAGE_TAG: "datafed-core:$CI_COMMIT_REF_NAME"
+  stage: deploy
+  tags:
+    - datafed
+  script:
+    - docker push datafed-core .
+
+deploy-repo:
+  variables:
+    IMAGE_TAG: "datafed-repo:$CI_COMMIT_REF_NAME"
+  stage: deploy
+  tags:
+    - datafed
+  script:
+    - docker push datafed-repo .
