@@ -12,7 +12,7 @@ build-ws:
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/DockerfileDockerfile.web.ubuntu -t datafed-web .
+    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t datafed-web .
 
 build-core:
   variables:
@@ -21,7 +21,7 @@ build-core:
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/DockerfileDockerfile.core.ubuntu -t datafed-core .
+    - docker build -f dockerfiles/Dockerfile.core.ubuntu -t datafed-core .
 
 build-repo:
   variables:
@@ -30,7 +30,7 @@ build-repo:
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/DockerfileDockerfile.repo.ubuntu -t datafed-repo .
+    - docker build -f dockerfiles/Dockerfile.repo.ubuntu -t datafed-repo .
 
 deploy-ws:
   variables:
