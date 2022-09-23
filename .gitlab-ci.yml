@@ -1,9 +1,59 @@
 stages:
+  - build-base
+  - deploy-base
   - build
   - deploy
 
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+build-ws-base:
+  variables:
+    IMAGE_TAG: "datafed-web-base"
+  stage: build-base
+  tags:
+    - datafed
+  script:
+    - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t ${IMAGE_TAG} .
+
+build-core-base:
+  variables:
+    IMAGE_TAG: "datafed-core-base"
+  stage: build-base
+  tags:
+    - datafed
+  script:
+    - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t ${IMAGE_TAG} .
+
+build-repo-base:
+  variables:
+    IMAGE_TAG: "datafed-repo-base"
+  stage: build-base
+  tags:
+    - datafed
+  script:
+    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t ${IMAGE_TAG} .
+
+deploy-ws-base:
+  stage: deploy-base
+  tags:
+    - datafed
+  script:
+    - docker push datafed-web-base .
+
+deploy-core-base:
+  stage: deploy-base
+  tags:
+    - datafed
+  script:
+    - docker push datafed-core-base .
+
+deploy-repo-base:
+  stage: deploy-base
+  tags:
+    - datafed
+  script:
+    - docker push datafed-repo-base .
 
 build-ws:
   variables:
@@ -12,7 +62,7 @@ build-ws:
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t datafed-web .
+    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t ${IMAGE_TAG} .
 
 build-core:
   variables:
@@ -21,7 +71,7 @@ build-core:
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/Dockerfile.core.ubuntu -t datafed-core .
+    - docker build -f dockerfiles/Dockerfile.core.ubuntu -t ${IMAGE_TAG} .
 
 build-repo:
   variables:
@@ -30,7 +80,7 @@ build-repo:
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/Dockerfile.repo.ubuntu -t datafed-repo .
+    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t ${IMAGE_TAG} .
 
 deploy-ws:
   variables:
@@ -39,7 +89,7 @@ deploy-ws:
   tags:
     - datafed
   script:
-    - docker push datafed-web .
+    - docker push ${IMAGE_TAG} .
 
 deploy-core:
   variables:
@@ -48,7 +98,7 @@ deploy-core:
   tags:
     - datafed
   script:
-    - docker push datafed-core .
+    - docker push ${IMAGE_TAG} .
 
 deploy-repo:
   variables:
@@ -57,4 +107,4 @@ deploy-repo:
   tags:
     - datafed
   script:
-    - docker push datafed-repo .
+    - docker push ${IMAGE_TAG} .
