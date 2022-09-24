@@ -7,6 +7,8 @@ stages:
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
+# Building base containers the base containers should have all the required
+# dependencies it should not be necessary to build them every time
 build-ws-base:
   variables:
     IMAGE_TAG: "datafed-web-base"
@@ -34,8 +36,10 @@ build-repo-base:
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t ${IMAGE_TAG} .
 
+# Deploying base containers
 deploy-ws-base:
   stage: deploy-base
+  needs: ["build-ws-base"]
   tags:
     - datafed
   script:
@@ -43,6 +47,7 @@ deploy-ws-base:
 
 deploy-core-base:
   stage: deploy-base
+  needs: ["build-core-base"]
   tags:
     - datafed
   script:
@@ -50,11 +55,13 @@ deploy-core-base:
 
 deploy-repo-base:
   stage: deploy-base
+  needs: ["build-repo-base"]
   tags:
     - datafed
   script:
     - docker push datafed-repo-base .
 
+# Building containers for running services
 build-ws:
   variables:
     IMAGE_TAG: "datafed-web:$CI_COMMIT_REF_NAME"
@@ -82,28 +89,32 @@ build-repo:
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t ${IMAGE_TAG} .
 
+# Deploying containers for running services
 deploy-ws:
+  stage: deploy
+  needs: ["build-ws"]
   variables:
     IMAGE_TAG: "datafed-web:$CI_COMMIT_REF_NAME"
-  stage: deploy
   tags:
     - datafed
   script:
     - docker push ${IMAGE_TAG} .
 
 deploy-core:
+  stage: deploy
+  needs: ["build-core"]
   variables:
     IMAGE_TAG: "datafed-core:$CI_COMMIT_REF_NAME"
-  stage: deploy
   tags:
     - datafed
   script:
     - docker push ${IMAGE_TAG} .
 
 deploy-repo:
+  stage: deploy
+  needs: ["build-repo"]
   variables:
     IMAGE_TAG: "datafed-repo:$CI_COMMIT_REF_NAME"
-  stage: deploy
   tags:
     - datafed
   script:
