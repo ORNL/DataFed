@@ -43,7 +43,7 @@ deploy-ws-base:
   tags:
     - datafed
   script:
-    - docker push datafed-web-base .
+    - docker push datafed-web-base
 
 deploy-core-base:
   stage: deploy-base
@@ -51,7 +51,7 @@ deploy-core-base:
   tags:
     - datafed
   script:
-    - docker push datafed-core-base .
+    - docker push datafed-core-base
 
 deploy-repo-base:
   stage: deploy-base
@@ -59,7 +59,7 @@ deploy-repo-base:
   tags:
     - datafed
   script:
-    - docker push datafed-repo-base .
+    - docker push datafed-repo-base
 
 # Building containers for running services
 build-ws:
@@ -98,7 +98,7 @@ deploy-ws:
   tags:
     - datafed
   script:
-    - docker push ${IMAGE_TAG} .
+    - docker push ${IMAGE_TAG}
 
 deploy-core:
   stage: deploy
@@ -108,7 +108,7 @@ deploy-core:
   tags:
     - datafed
   script:
-    - docker push ${IMAGE_TAG} .
+    - docker push ${IMAGE_TAG}
 
 deploy-repo:
   stage: deploy
@@ -118,4 +118,4 @@ deploy-repo:
   tags:
     - datafed
   script:
-    - docker push ${IMAGE_TAG} .
+    - docker push ${IMAGE_TAG}
