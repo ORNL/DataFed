@@ -17,9 +17,10 @@ build-ws-base:
   tags:
     - datafed
   script:
+    - env
     - docker login -u container-deploy-token -p $CI_RUNNER_DEPLOY_REGISTRY_TOKEN $CI_REGISTRY
     - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
-    - docker push $CI_REGISTRY/dlsw/datafed-web-base
+    - docker push $CI_REGISTRY/${IMAGE_TAG}
 
 #build-core-base:
 #  variables:
