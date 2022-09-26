@@ -1,4 +1,4 @@
-FROM datafed-ws-base:latest as build
+FROM ws-base:latest as build
 
 ARG BUILD_DIR="/source"
 
