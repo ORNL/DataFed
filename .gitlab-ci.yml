@@ -70,7 +70,8 @@ build-ws:
     - datafed
   script:
     - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
-    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t $CI_REGISTRY/${IMAGE_TAG}${BRANCH_LOWER} .
+    - echo "$BRANCH_LOWER"
+    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 build-core:
   variables:
@@ -80,7 +81,8 @@ build-core:
     - datafed
   script:
     - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
-    - docker build -f dockerfiles/Dockerfile.core.ubuntu -t $CI_REGISTRY/${IMAGE_TAG}${BRANCH_LOWER} .
+    - echo "$BRANCH_LOWER"
+    - docker build -f dockerfiles/Dockerfile.core.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 build-repo:
   variables:
@@ -90,7 +92,8 @@ build-repo:
     - datafed
   script:
     - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
-    - docker build -f dockerfiles/Dockerfile.repo.ubuntu -t $CI_REGISTRY/${IMAGE_TAG}${BRANCH_LOWER} .
+    - echo "$BRANCH_LOWER"
+    - docker build -f dockerfiles/Dockerfile.repo.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 # Deploying containers for running services
 deploy-ws:
@@ -102,7 +105,8 @@ deploy-ws:
     - datafed
   script:
     - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
-    - docker push $CI_REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}
+    - echo "$BRANCH_LOWER"
+    - docker push "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
 deploy-core:
   stage: deploy
@@ -113,7 +117,8 @@ deploy-core:
     - datafed
   script:
     - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
-    - docker push $CI_REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}
+    - echo "$BRANCH_LOWER"
+    - docker push "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
 deploy-repo:
   stage: deploy
@@ -124,4 +129,5 @@ deploy-repo:
     - datafed
   script:
     - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
-    - docker push $CI_REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}
+    - echo "$BRANCH_LOWER"
+    - docker push "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
