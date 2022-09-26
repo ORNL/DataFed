@@ -44,7 +44,6 @@ deploy-ws-base:
   tags:
     - datafed
   script:
-    - docker push $CI_REGISTRY/${IMAGE_TAG}
     - docker push $CI_REGISTRY/dlsw/datafed/ws-base
 
 deploy-core-base:
