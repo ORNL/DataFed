@@ -12,30 +12,30 @@ before_script:
 # dependencies it should not be necessary to build them every time
 build-ws-base:
   variables:
-    IMAGE_TAG: "datafed-web-base"
+    IMAGE_TAG: "dlsw/datafed-web-base"
   stage: build-base
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t ${IMAGE_TAG} .
+    - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
 build-core-base:
   variables:
-    IMAGE_TAG: "datafed-core-base"
+    IMAGE_TAG: "dlsw/datafed-core-base"
   stage: build-base
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t ${IMAGE_TAG} .
+    - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
 build-repo-base:
   variables:
-    IMAGE_TAG: "datafed-repo-base"
+    IMAGE_TAG: "dlsw/datafed-repo-base"
   stage: build-base
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t ${IMAGE_TAG} .
+    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
 # Deploying base containers
 deploy-ws-base:
@@ -44,7 +44,7 @@ deploy-ws-base:
   tags:
     - datafed
   script:
-    - docker push datafed-web-base
+    - docker push $CI_REGISTRY/dlsw/datafed-web-base
 
 deploy-core-base:
   stage: deploy-base
@@ -52,7 +52,7 @@ deploy-core-base:
   tags:
     - datafed
   script:
-    - docker push datafed-core-base
+    - docker push $CI_REGISTRY/dlsw/datafed-core-base
 
 deploy-repo-base:
   stage: deploy-base
@@ -60,17 +60,17 @@ deploy-repo-base:
   tags:
     - datafed
   script:
-    - docker push datafed-repo-base
+    - docker push $CI_REGISTRY/dlsw/datafed-repo-base
 
 # Building containers for running services
 build-ws:
   variables:
-    IMAGE_TAG: "datafed-web:$CI_COMMIT_REF_NAME"
+    IMAGE_TAG: "dlsw/datafed-web-$CI_COMMIT_REF_NAME"
   stage: build
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t ${IMAGE_TAG} .
+    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
 build-core:
   variables:
@@ -79,44 +79,44 @@ build-core:
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/Dockerfile.core.ubuntu -t ${IMAGE_TAG} .
+    - docker build -f dockerfiles/Dockerfile.core.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
 build-repo:
   variables:
-    IMAGE_TAG: "datafed-repo:$CI_COMMIT_REF_NAME"
+    IMAGE_TAG: "dlsw/datafed-repo-$CI_COMMIT_REF_NAME"
   stage: build
   tags:
     - datafed
   script:
-    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t ${IMAGE_TAG} .
+    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
 # Deploying containers for running services
 deploy-ws:
   stage: deploy
   needs: ["build-ws"]
   variables:
-    IMAGE_TAG: "datafed-web:$CI_COMMIT_REF_NAME"
+    IMAGE_TAG: "dlsw/datafed-web-$CI_COMMIT_REF_NAME"
   tags:
     - datafed
   script:
-    - docker push ${IMAGE_TAG}
+    - docker push $CI_REGISTRY/${IMAGE_TAG}
 
 deploy-core:
   stage: deploy
   needs: ["build-core"]
   variables:
-    IMAGE_TAG: "datafed-core:$CI_COMMIT_REF_NAME"
+    IMAGE_TAG: "dlsw/datafed-core-$CI_COMMIT_REF_NAME"
   tags:
     - datafed
   script:
-    - docker push ${IMAGE_TAG}
+    - docker push $CI_REGISTRY/${IMAGE_TAG}
 
 deploy-repo:
   stage: deploy
   needs: ["build-repo"]
   variables:
-    IMAGE_TAG: "datafed-repo:$CI_COMMIT_REF_NAME"
+    IMAGE_TAG: "dlsw/datafed-repo-$CI_COMMIT_REF_NAME"
   tags:
     - datafed
   script:
-    - docker push ${IMAGE_TAG}
+    - docker push $CI_REGISTRY/${IMAGE_TAG}
