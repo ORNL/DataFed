@@ -1,4 +1,4 @@
-FROM datafed/repo-base:latest as build
+FROM dlsw/datafed/repo-base:latest as build
 
 ARG BUILD_DIR="/source"
 
