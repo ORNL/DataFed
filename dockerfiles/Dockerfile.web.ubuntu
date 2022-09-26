@@ -1,4 +1,4 @@
-FROM dlsw/datafed/ws-base:latest as build
+FROM code.ornl.gov:4567/dlsw/datafed/ws-base:latest as build
 
 ARG BUILD_DIR="/source"
 
