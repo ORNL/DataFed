@@ -69,7 +69,7 @@ build-ws:
   tags:
     - datafed
   script:
-    - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - docker build -f dockerfiles/Dockerfile.web.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
@@ -80,7 +80,7 @@ build-core:
   tags:
     - datafed
   script:
-    - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - docker build -f dockerfiles/Dockerfile.core.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
@@ -91,7 +91,7 @@ build-repo:
   tags:
     - datafed
   script:
-    - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - docker build -f dockerfiles/Dockerfile.repo.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
@@ -104,7 +104,7 @@ deploy-ws:
   tags:
     - datafed
   script:
-    - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - docker push "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
@@ -116,7 +116,7 @@ deploy-core:
   tags:
     - datafed
   script:
-    - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - docker push "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
@@ -128,6 +128,6 @@ deploy-repo:
   tags:
     - datafed
   script:
-    - BRANCH_LOWER=$(echo "$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - docker push "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
