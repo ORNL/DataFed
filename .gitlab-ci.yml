@@ -18,10 +18,11 @@ build-ws-base:
     - datafed
   script:
     - env
-    - docker login -u container-deploy-token -p $CI_RUNNER_DEPLOY_REGISTRY_TOKEN $CI_REGISTRY
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
     - docker push $CI_REGISTRY/${IMAGE_TAG}
 
+      #- docker login -u container-deploy-token -p $CI_RUNNER_DEPLOY_REGISTRY_TOKEN $CI_REGISTRY
 #build-core-base:
 #  variables:
 #    IMAGE_TAG: "dlsw/datafed-core-base"
@@ -29,7 +30,6 @@ build-ws-base:
 #  tags:
 #    - datafed
 #  script:
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD code.ornl.gov:4567
 #    - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
 #    - docker push code.ornl.gov:4567/dlsw/datafed-web-base
 #
