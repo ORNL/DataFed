@@ -26,7 +26,6 @@ build-core-base:
     - datafed
   script:
     - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-      #    - docker push code.ornl.gov:4567/dlsw/datafed-web-base
 
 build-repo-base:
   variables:
