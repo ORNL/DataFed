@@ -12,7 +12,7 @@ stages:
 # dependencies it should not be necessary to build them every time
 build-ws-base:
   variables:
-    IMAGE_TAG: "dlsw/datafed-web-base"
+    IMAGE_TAG: "dlsw/datafed/web-base"
   stage: build-base
   tags:
     - datafed
