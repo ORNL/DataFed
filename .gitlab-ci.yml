@@ -5,6 +5,7 @@ stages:
   - deploy
 
 before_script:
+  - echo "Registry is $CI_REGISTRY"
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
 # Building base containers the base containers should have all the required
