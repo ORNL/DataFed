@@ -1,6 +1,7 @@
 #ifndef CORESERVER_HPP
 #define CORESERVER_HPP
 
+#include <memory>
 #include <string>
 #include <map>
 #include <thread>
@@ -57,7 +58,7 @@ public:
 
 private:
     /// Map of client key to DataFed ID
-    typedef std::map<std::string,std::string> auth_client_map_t;
+//    typedef std::map<std::string,std::string> auth_client_map_t;
 
     /// Map of client key to DataFed ID and expiration time
     typedef std::map<std::string,std::pair<std::string,time_t>> trans_client_map_t;
@@ -79,18 +80,18 @@ private:
     void metricsThread();
 
     Config &                        m_config;               ///< Ref to configuration singleton
-    std::thread *                   m_io_secure_thread;     ///< Secure I/O thread handle
-    std::thread *                   m_io_insecure_thread;   ///< Insecure I/O thread handle
+    std::thread                    m_io_secure_thread;     ///< Secure I/O thread handle
+    std::thread                    m_io_insecure_thread;   ///< Insecure I/O thread handle
     std::mutex                      m_trans_client_mutex;   ///< Mutex for transient client data access
     std::string                     m_pub_key;              ///< Public key for secure interface
     std::string                     m_priv_key;             ///< Private key for secure interface
-    std::thread *                   m_zap_thread;           ///< ZeroMQ client authentication (ZAP) thread
-    auth_client_map_t               m_auth_clients;         ///< List of known authenticated clients
+    std::thread                   m_zap_thread;           ///< ZeroMQ client authentication (ZAP) thread
+//    auth_client_map_t               m_auth_clients;         ///< List of known authenticated clients
     trans_client_map_t              m_trans_auth_clients;   ///< List of transient authenticated clients
-    std::thread *                   m_msg_router_thread;    ///< Main message router thread handle
-    std::vector<ClientWorker*>      m_workers;              ///< List of ClientWorker instances
-    std::thread *                   m_db_maint_thread;      ///< DB maintenance thread handle
-    std::thread *                   m_metrics_thread;       ///< Metrics gathering thread handle
+    std::thread                    m_msg_router_thread;    ///< Main message router thread handle
+    std::vector<std::shared_ptr<ClientWorker>>      m_workers;              ///< List of ClientWorker instances
+    std::thread                   m_db_maint_thread;      ///< DB maintenance thread handle
+    std::thread                   m_metrics_thread;       ///< Metrics gathering thread handle
     std::map<std::string,MsgMetrics_t> m_msg_metrics;       ///< Map of UID to message request metrics
     std::mutex                      m_msg_metrics_mutex;    ///< Mutex for metrics updates
 };

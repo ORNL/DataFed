@@ -3,6 +3,8 @@ import * as util from "./util.js";
 import * as settings from "./settings.js";
 
 export function _asyncGet( a_url, a_raw_json_data, a_callback, a_timeout ) {
+
+    console.log("calling asyncGet a_timeout is ", a_timeout);
     $.ajax({
         url : a_url,
         global : false,
@@ -20,10 +22,10 @@ export function _asyncGet( a_url, a_raw_json_data, a_callback, a_timeout ) {
             }
         },
         error : function( a_xhr, a_status, a_thrownError ) {
-            //console.log("_asyncGet error handler")
-            //console.log( 'asyncGet error: ', a_xhr );
-            //console.log( 'asyncGet error: ', a_status );
-            //console.log( 'asyncGet error: ', a_thrownError );
+            console.log("_asyncGet error handler")
+            console.log( 'asyncGet error: ', a_xhr );
+            console.log( 'asyncGet error: ', a_status );
+            console.log( 'asyncGet error: ', a_thrownError );
             //console.log( 'asyncGet error: ', a_xhr.responseText );
             if ( a_callback ) {
                 if ( a_xhr.responseText )
@@ -42,6 +44,7 @@ export function _asyncGet( a_url, a_raw_json_data, a_callback, a_timeout ) {
 
 export function _asyncPost( a_url, a_raw_json_data, a_callback ) {
     //console.log("post",a_raw_json_data);
+    console.log("calling asyncPost");
     $.ajax({
         url : a_url,
         //global : false,
@@ -55,9 +58,9 @@ export function _asyncPost( a_url, a_raw_json_data, a_callback ) {
             }
         },
         error : function( a_xhr, a_status, a_thrownError ) {
-            //console.log( 'asyncGet error: ', a_xhr );
-            //console.log( 'asyncGet error: ', a_status );
-            //console.log( 'asyncGet error: ', a_thrownError );
+            console.log( 'asyncPost error: ', a_xhr );
+            console.log( 'asyncPost error: ', a_status );
+            console.log( 'asyncPost error: ', a_thrownError );
             //console.log( 'asyncGet error: ', a_xhr.responseText );
             if ( a_callback ) {
                 if ( a_xhr.responseText )

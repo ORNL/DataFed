@@ -1,0 +1,13 @@
+[Unit]
+Description=DataFed Web Server
+[Service]
+PIDFile=/tmp/datafed-ws.pid
+Restart=always
+KillSignal=SIGQUIT
+WorkingDirectory=/opt/datafed/web
+Environment=NODE_PATH=/opt/datafed/web
+ExecStart=/opt/datafed/web/datafed-ws.js /opt/datafed/web/datafed-ws.cfg
+StandardOutput=append:/var/log/datafed/datafed-ws.log
+StandardError=append:/var/log/datafed/datafed-ws.log
+[Install]
+WantedBy=multi-user.target

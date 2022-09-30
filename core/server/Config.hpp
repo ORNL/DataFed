@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <mutex>
 #include <stdint.h>
 #include "SDMS.pb.h"
 #include "MsgComm.hpp"
@@ -11,8 +12,9 @@ namespace SDMS {
 namespace Core {
 
 
-struct Config
+class Config
 {
+  public:
     static Config & getInstance()
     {
         static Config inst;
@@ -20,12 +22,14 @@ struct Config
     }
 
     //glob_xfr_url("https://transfer.api.globusonline.org/v0.10/"),
+    typedef std::map<std::string,std::string> auth_client_map_t;
 
+  private:
     Config():
         glob_oauth_url("https://auth.globus.org/v2/oauth2/"),
         glob_xfr_url("https://transfer.api.globus.org/v0.10/"),
         port(7512),
-        timeout( 5 ),
+        timeout( 10 ),
         num_client_worker_threads( 4 ),
         num_task_worker_threads( 10 ),
         task_purge_age( 14*24*3600 ),
@@ -42,6 +46,16 @@ struct Config
         metrics_purge_age( 24*3600 )
     {}
 
+    std::map<std::string,RepoData>     m_repos;
+    mutable std::mutex m_repos_mtx;
+
+    auth_client_map_t               m_auth_clients;         ///< List of known authenticated clients
+    mutable std::mutex m_auth_clients_mtx;
+  public:
+    void loadRepositoryConfig();
+    std::map<std::string,RepoData> getRepos() const;
+    auth_client_map_t getAuthClients() const;
+
     std::string     cred_dir;
     std::string     db_url;
     std::string     db_user;
@@ -50,6 +64,7 @@ struct Config
     std::string     glob_xfr_url;
     std::string     client_id;
     std::string     client_secret;
+    std::string     log_path = "";
     uint32_t        port;
     uint32_t        timeout;
     uint32_t        num_client_worker_threads;
@@ -68,7 +83,8 @@ struct Config
     uint32_t        metrics_purge_age;
 
     MsgComm::SecurityContext            sec_ctx;
-    std::map<std::string,RepoData*>     repos;
+
+    /// Map of client key to DataFed ID
 };
 
 }}

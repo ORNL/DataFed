@@ -1,1 +1,7 @@
 /.idea/
+config/datafed.sh
+config/datafed-authz.cfg
+config/datafed-core.cfg
+config/datafed-repo.cfg
+config/datafed-ws.cfg
+build

@@ -238,7 +238,6 @@ app.get('/ui/register', (a_req, a_resp) => {
         console.log( " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
-
         a_resp.render('register', { uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
     }
 });
@@ -285,6 +284,7 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
     */
 
     g_globus_auth.code.getToken( a_req.originalUrl ).then( function( client_token ) {
+      
         var xfr_token = client_token.data.other_tokens[0];
 
         const opts = {
@@ -316,7 +316,7 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
 
                     console.log( 'User', uid, 'authenticated, verifying DataFed account' );
 
-                    sendMessageDirect( "UserFindByUUIDsRequest", "sdms-ws", { uuid: userinfo.identities_set }, function( reply ) {
+                    sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
                         if ( !reply  ) {
                             console.log( "Error - Find user call failed." );
                             a_resp.redirect( "/ui/error" );
@@ -1239,6 +1239,7 @@ app.get('/api/repo/list', ( a_req, a_resp ) => {
         params.all = a_req.query.all;
     if ( a_req.query.details )
         params.details = a_req.query.details;
+    console.log("Calling repo list from datafed-ws RepoListRequest");
     sendMessage( "RepoListRequest", params, a_req, a_resp, function( reply ) {
         a_resp.json(reply.repo?reply.repo:[]);
     });
@@ -1609,6 +1610,7 @@ function allocRequestContext( a_resp, a_callback ) {
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
     var client = a_req.session.uid;
+    //console.log("from send message");
     if ( !client ){
         console.log("NO AUTH :", a_msg_name, ":", a_req.connection.remoteAddress );
         throw "Not Authenticated";
@@ -1618,9 +1620,9 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
     //console.log("sendMsg parms:",a_msg_data);
 
-    //    console.log("sendMsg alloc ctx", a_msg_name );
+    //console.log("sendMsg alloc ctx", a_msg_name );
     allocRequestContext( a_resp, function( ctx ){
-        //console.log("sendMsg", a_msg_name, ctx );
+        console.log("sendMsg msg_name ctx and data address ", a_msg_name, ctx, a_msg_data, g_core_serv_addr);
 
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
@@ -1629,7 +1631,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
         //console.log("msg verify:",msg.verify(a_msg_data));
 
         var msg_buf = msg.encode(a_msg_data).finish();
-        //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
+        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
         /* Frame contents (C++)
         uint32_t    size;       // Size of buffer
@@ -1662,7 +1664,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
         //console.log("frame buffer", frame.toString('hex'));
         //console.log("msg buffer", msg_buf.toString('hex'));
-
+        //console.log("Sending to ", g_core_serv_addr);
         //console.log( "sendMsg:", a_msg_name );
         if ( msg_buf.length )
             g_core_sock.send([ nullfr, frame, msg_buf, client ]);
@@ -1678,10 +1680,8 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         throw "Invalid message type: " + a_msg_name;
 
     allocRequestContext( null, function( ctx ){
-        //console.log("sendMsgDir", a_msg_name, ctx );
 
         var msg_buf = msg.encode(a_msg_data).finish();
-        //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
         var frame = Buffer.alloc(8);
         frame.writeUInt32BE( msg_buf.length, 0 );
@@ -1691,7 +1691,6 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
         g_ctx[ctx] = a_cb;
 
-        //console.log( "sendMsgDirect:", a_msg_name );
         if ( msg_buf.length )
             g_core_sock.send([ nullfr, frame, msg_buf, a_client ]);
         else
@@ -1835,6 +1834,7 @@ function loadSettings(){
 
     try{
         var config = ini.parse(fs.readFileSync(process.argv[2],'utf-8'));
+    
         if ( config.server ){
             g_host = config.server.host || g_host;
             g_port = config.server.port || g_port;
@@ -1850,6 +1850,7 @@ function loadSettings(){
             g_system_secret = config.server.system_secret;
             g_session_secret = config.server.session_secret;
             g_test = config.server.test || g_test;
+            
         }
         if ( config.oauth ){
             g_client_id = config.oauth.client_id || g_client_id;

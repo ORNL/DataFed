@@ -1,0 +1,13 @@
+[Unit]
+Description=DataFed Repo Server
+[Service]
+PIDFile=/tmp/datafed-repo.pid
+Restart=always
+KillSignal=SIGQUIT
+WorkingDirectory=/opt/datafed/repo
+ExecStart=/opt/datafed/repo/datafed-repo --cfg /opt/datafed/repo/datafed-repo.cfg
+User=cades
+StandardOutput=append:/var/log/datafed/datafed-repo.log
+StandardError=append:/var/log/datafed/datafed-repo.log
+[Install]
+WantedBy=multi-user.target

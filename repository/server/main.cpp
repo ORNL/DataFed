@@ -37,6 +37,7 @@ int main( int a_argc, char ** a_argv )
             ("cred-dir,c",po::value<string>( &config.cred_dir ),"Server credentials directory")
             ("port,p",po::value<uint16_t>( &config.port ),"Service port")
             ("server,s",po::value<string>( &config.core_server ),"Core server address")
+            ("globus-collection-path,g",po::value<string>( &config.globus_collection_path ),"Path to Globus collection default value is /mnt/datafed-repo")
             ("threads,t",po::value<uint32_t>( &config.num_req_worker_threads ),"Number of worker threads")
             ("cfg",po::value<string>( &cfg_file ),"Use config file for options")
             ("gen-keys",po::bool_switch( &gen_keys ),"Generate new server keys then exit")
@@ -51,7 +52,7 @@ int main( int a_argc, char ** a_argv )
             if ( opt_map.count( "help" ) )
             {
                 cout << "DataFed Repo Server, ver. " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_REPO << "\n";
-                cout << "Usage: sdms-repo [options]\n";
+                cout << "Usage: datafed-repo [options]\n";
                 cout << opts << endl;
                 return 0;
             }
@@ -74,8 +75,13 @@ int main( int a_argc, char ** a_argv )
                 optfile.close();
             }
 
-            if ( config.cred_dir.size() && config.cred_dir.back() != '/' )
+            if ( config.cred_dir.size() && config.cred_dir.back() != '/' ) {
                 config.cred_dir += "/";
+            }
+
+            if ( config.globus_collection_path.size() && config.globus_collection_path.back() != '/' ) {
+                config.globus_collection_path += "/";
+            }
 
             if ( gen_keys )
             {
@@ -98,6 +104,17 @@ int main( int a_argc, char ** a_argv )
 
                 return 0;
             }
+
+
+            while ( ! config.globus_collection_path.empty() ) {
+              if ( config.globus_collection_path.back() == '/' ) {
+                config.globus_collection_path.pop_back();
+              } else {
+                break;
+              }
+            }
+
+
         }
         catch( po::unknown_option & e )
         {

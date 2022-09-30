@@ -1,4 +1,8 @@
-cmake_minimum_required (VERSION 3.0.0)
 
-add_subdirectory( authz )
-
+if(GLOBUS_VERSION EQUAL 5)
+  message("-- Building Globus 5")
+  add_subdirectory( globus5 )
+else()
+  message("-- Building Globus 4")
+  add_subdirectory( globus4 )
+endif()

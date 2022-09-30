@@ -28,34 +28,85 @@ Data Repository:
 Client Applications:
 - DataFed Python Client
 
-Building DataFed
-================
+Downloading DataFed & Installing Dependencies
+=============================================
 
 To deply DataFed, it must be built from source code hosted on `GitHub <https://github.com/ORNL/DataFed>`_.
 Prior to building DataFed, the build environment must be properly configured as described below
 (the examples are based on Debian). Min/max version restrictions are listed later in the Dependencies section.
 
-Install packages required to build DataFed::
+Downloading DataFed::
 
-    sudo apt install g++
-    sudo apt install git
-    sudo apt install cmake
-    sudo apt install libboost-all-dev
-    sudo apt install protobuf-compiler
-    sudo apt install libzmq3-dev
-    sudo apt install libssl-dev
-    sudo apt install libcurl4-openssl-dev
-    sudo apt install libglobus-common-dev
-    sudo apt install libfuse-dev
+    git clone https://github.com/ORNL/DataFed.git
+
+Install packages required to build DataFed:
+
+* g++
+* git
+* cmake
+* libboost-all-dev
+* protobuf-compiler
+* libzmq3-dev
+* libssl-dev
+* libcurl4-openssl-dev
+* libglobus-common-dev
+* libfuse-dev
+
+This can be done with a helper script::
+
+    ./DataFed/scripts/install_dependencies.sh
+
+The next step is to enter configuration options that are listed in ./config/datafed.sh. These
+options can be used create the required services and configuration files. Below are a list
+of the configuration options:
+
+1. DATAFED_DEFAULT_LOG_PATH - Needed by core, repo, web services
+2. DATABASE_PASSWORD - Needed by core
+3. DATAFED_ZEROMQ_SESSION_SECRET - Needed by web server
+4. DATAFED_ZEROMQ_SYSTEM_SECRET - Needed by web server
+5. DATAFED_LEGO_EMAIL - Needed by web server
+6. DATAFED_GLOBUS_APP_ID - Needed by core server
+7. DATAFED_GLOBUS_APP_SECRET - Needed by core server
+8. DATAFED_SERVER_DOMAIN_NAME_AND_PORT - Needed by repo server
+9. DATAFED_DOMAIN - Needed by repo, web and authz
+10. DATAFED_GCS_ROOT_NAME - Needed by repo and authz by Globus
+11. GCS_COLLECTION_ROOT_PATH - Needed by repo and authz for Globus 
+12. DATAFED_REPO_ID_AND_DIR - Needed for repo and authz
+
+Descriptions of what these variables are can also be found in the ./config/datafed.sh file. Once the 
+necessary variables have been provided a series of scripts have been developed to appropriately
+automatically configure much of the setup.
+
+DataFed Core Service, ArangoDB and Web Configuration
+====================================================
+
+Once items in the ./config/datafed.sh file have been specified
 
 Get and build the DataFed source code::
 
-    git clone https://github.com/ORNL/DataFed.git
     cd DataFed
+    ./scripts/generage_core_config.sh
+    ./scripts/generage_ws_config.sh
+    ./scripts/generage_core_service.sh
+    ./scripts/generage_ws_service.sh
     mkdir build
-    cd build
-    cmake ..
-    make
+    cmake -S . -B build
+    cmake --build build --parallel 6
+    sudo cmake --build --target install
+
+Calling the installation command will install the core and web services in the,
+/etc/systemd/system folder. It will also place the binaries in the /opt/datafed
+folder under a core and web subfolder.
+
+
+
+
+
+To also build the repository service and install the authz library you will need to
+provide additional cmake flags.
+
+
+
 
 Service Installation & Configuration
 ====================================

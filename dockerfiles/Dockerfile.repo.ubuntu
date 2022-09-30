@@ -1,0 +1,27 @@
+FROM code.ornl.gov:4567/dlsw/datafed/repo-base:latest as build
+
+ARG BUILD_DIR="/source"
+
+RUN mkdir -p ${BUILD_DIR}
+RUN mkdir -p ${BUILD_DIR}/repository/server
+
+WORKDIR ${BUILD_DIR}
+
+COPY ./repository/CMakeLists.txt ${BUILD_DIR}/repository/CMakeLists.txt
+COPY ./CMakeLists.txt ${BUILD_DIR}
+COPY ./repository/server ${BUILD_DIR}/repository/server
+COPY ./config/datafed.sh ${BUILD_DIR}/config/
+COPY ./scripts/generate_repo_config.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_repo_service.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/install_repo_service.sh ${BUILD_DIR}/scripts/
+
+RUN ${BUILD_DIR}/scripts/generate_repo_config.sh &&\
+ ${BUILD_DIR}/scripts/generate_repo_service.sh &&\
+ cmake -S. -B build -DBUILD_REPO_SERVER=True -DBUILD_AUTHZ=False \
+                    -DBUILD_CORE_SERVER=False -DBUILD_WEB_SERVER=False \
+                    -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
+                    -DBUILD_FOXX=False &&\
+ cmake --build build
+RUN cmake --build build --target install
+
+CMD ["bash","-c","$(cat datafed-repo.service | grep ExecStart | cut -d '=' -f2)"]

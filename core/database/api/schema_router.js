@@ -16,8 +16,6 @@ function fixSchOwnNm( a_sch ){
 
     var j, nm = "", tmp = a_sch.own_nm.split(" ");
 
-    //console.log("tmp", tmp, tmp.length );
-
     for ( j = 0; j < tmp.length - 1; j++ ){
         if ( j )
             nm += " ";
@@ -28,7 +26,6 @@ function fixSchOwnNm( a_sch ){
 }
 
 function fixSchOwnNmAr( a_sch ){
-    //console.log("fixSchOwnNmAr");
     var sch, tmp, j, nm;
     for ( var i in a_sch ){
         sch = a_sch[i];
@@ -291,24 +288,17 @@ router.post('/revise', function (req, res) {
                 delete sch._key;
                 delete sch._rev;
 
-                //console.log("sch rev",sch);
-
                 var sch_new = g_db.sch.save( sch, { returnNew: true }).new;
-                // /console.log("sch rev 1");
 
                 g_db.sch_ver.save({ _from: old_id, _to: sch_new._id });
-                //console.log("sch rev 2");
 
                 updateSchemaRefs( sch_new );
-                //console.log("sch rev 3");
 
                 fixSchOwnNm( sch_new );
 
                 delete sch_new._id;
                 delete sch_new._key;
                 delete sch_new._rev;
-
-                //console.log("sch rev 4");
 
                 res.send([ sch_new ]);
             }
@@ -481,7 +471,6 @@ router.get('/search', function (req, res) {
 
         for ( var i in result ){
             doc = result[i];
-            //console.log("id:",result[i].id,", score:",result[i].s);
             if ( g_db.sch_dep.firstExample({ _to: doc._id })){
                 doc.ref = true;
             }
@@ -549,7 +538,6 @@ function validateKey( val ){
 }
 
 function validateProperties( a_props ){
-    //console.log("valProps",a_props);
     var v, v2;
     for ( var k in a_props ){
         validateKey( k );
@@ -590,7 +578,6 @@ function updateSchemaRefs( a_sch ){
 
         id = v.substr(0,idx);
         ver = parseInt( v.substr(idx+1) );
-        //console.log("ref",id,ver);
 
         r = g_db.sch.firstExample({ id: id, ver: ver });
 
