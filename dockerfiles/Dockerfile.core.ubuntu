@@ -1,0 +1,26 @@
+FROM code.ornl.gov:4567/dlsw/datafed/core-base:latest as build
+
+ARG BUILD_DIR="/source"
+
+RUN mkdir -p ${BUILD_DIR}
+
+WORKDIR ${BUILD_DIR}
+
+COPY ./core/server ${BUILD_DIR}/core/server
+COPY ./core/CMakeLists.txt ${BUILD_DIR}/core/CMakeLists.txt
+COPY ./CMakeLists.txt ${BUILD_DIR}
+COPY ./config/datafed.sh ${BUILD_DIR}/config/
+COPY ./scripts/generate_core_config.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_core_service.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/install_core_service.sh ${BUILD_DIR}/scripts/
+
+RUN ${BUILD_DIR}/scripts/generate_core_config.sh &&\
+ ${BUILD_DIR}/scripts/generate_core_service.sh &&\
+ cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \
+                    -DBUILD_CORE_SERVER=True -DBUILD_WEB_SERVER=False \
+                    -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
+                    -DBUILD_FOXX=False &&\
+ cmake --build build
+RUN cmake --build build --target install
+
+CMD ["bash","-c","$(cat datafed-core.service | grep ExecStart | cut -d '=' -f2)"]
