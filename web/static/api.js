@@ -4,7 +4,6 @@ import * as settings from "./settings.js";
 
 export function _asyncGet( a_url, a_raw_json_data, a_callback, a_timeout ) {
 
-    console.log("calling asyncGet a_timeout is ", a_timeout);
     $.ajax({
         url : a_url,
         global : false,
@@ -22,11 +21,6 @@ export function _asyncGet( a_url, a_raw_json_data, a_callback, a_timeout ) {
             }
         },
         error : function( a_xhr, a_status, a_thrownError ) {
-            console.log("_asyncGet error handler")
-            console.log( 'asyncGet error: ', a_xhr );
-            console.log( 'asyncGet error: ', a_status );
-            console.log( 'asyncGet error: ', a_thrownError );
-            //console.log( 'asyncGet error: ', a_xhr.responseText );
             if ( a_callback ) {
                 if ( a_xhr.responseText )
                     a_callback( false, a_xhr.responseText );
@@ -43,8 +37,6 @@ export function _asyncGet( a_url, a_raw_json_data, a_callback, a_timeout ) {
 }
 
 export function _asyncPost( a_url, a_raw_json_data, a_callback ) {
-    //console.log("post",a_raw_json_data);
-    console.log("calling asyncPost");
     $.ajax({
         url : a_url,
         //global : false,
@@ -58,10 +50,6 @@ export function _asyncPost( a_url, a_raw_json_data, a_callback ) {
             }
         },
         error : function( a_xhr, a_status, a_thrownError ) {
-            console.log( 'asyncPost error: ', a_xhr );
-            console.log( 'asyncPost error: ', a_status );
-            console.log( 'asyncPost error: ', a_thrownError );
-            //console.log( 'asyncGet error: ', a_xhr.responseText );
             if ( a_callback ) {
                 if ( a_xhr.responseText )
                     a_callback( false, a_xhr.responseText );
@@ -78,7 +66,6 @@ export function _asyncPost( a_url, a_raw_json_data, a_callback ) {
 }
 
 export function _asyncPostText( a_url, a_text_data, a_callback ) {
-    console.log("post",a_text_data);
     $.ajax({
         url : a_url,
         //global : false,
@@ -92,10 +79,6 @@ export function _asyncPostText( a_url, a_text_data, a_callback ) {
             }
         },
         error : function( a_xhr, a_status, a_thrownError ) {
-            //console.log( 'asyncGet error: ', a_xhr );
-            //console.log( 'asyncGet error: ', a_status );
-            //console.log( 'asyncGet error: ', a_thrownError );
-            //console.log( 'asyncGet error: ', a_xhr.responseText );
             if ( a_callback ) {
                 if ( a_xhr.responseText )
                     a_callback( false, a_xhr.responseText );
@@ -164,7 +147,6 @@ export function dataExport( a_ids, a_cb ) {
 
 
 export function dataAllocChange( a_ids, a_repo_id, a_proj_id, a_check, a_cb ){
-    //console.log("change alloc, items", a_ids );
     var url = "/api/dat/alloc_chg?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&repo_id="+encodeURIComponent(a_repo_id);
     if (a_proj_id )
         url += "&proj_id="+encodeURIComponent(a_proj_id);
@@ -176,7 +158,6 @@ export function dataAllocChange( a_ids, a_repo_id, a_proj_id, a_check, a_cb ){
 
 
 export function dataOwnerChange( a_ids, a_coll_id, a_repo_id, a_proj_id, a_check, a_cb ){
-    //console.log("change owner, items", a_ids );
     var url = "/api/dat/owner_chg?id=" + encodeURIComponent(JSON.stringify(a_ids))+"&coll_id="+encodeURIComponent(a_coll_id);
     if (a_repo_id )
         url += "&repo_id="+encodeURIComponent(a_repo_id);
@@ -200,11 +181,9 @@ export function dataPutCheck( a_id, a_cb ){
 export function dataGetDeps( a_ids, a_cb ) {
     _asyncGet( "/api/dat/dep/get?ids=" + encodeURIComponent(a_ids), null, function( ok, data ){
         if ( ok ) {
-            //console.log("viewData ok, data:", data );
             a_cb( data );
         }
         else {
-            //console.log("viewData failed:", data );
             util.setStatusText( "Get Dependencies Error: " + data, true );
             a_cb();
         }
@@ -214,11 +193,9 @@ export function dataGetDeps( a_ids, a_cb ) {
 export function dataGetDepGraph( a_id, a_cb ) {
     _asyncGet( "/api/dat/dep/graph/get?id=" + encodeURIComponent(a_id), null, function( ok, data ){
         if ( ok ) {
-            //console.log("viewData ok, data:", data );
             a_cb( data );
         }
         else {
-            //console.log("viewData failed:", data );
             util.setStatusText("Get Dependency Graph Error: " + data);
             a_cb();
         }
@@ -226,7 +203,6 @@ export function dataGetDepGraph( a_id, a_cb ) {
 }
 
 export function dataCreate( a_record, a_cb ){
-    //console.log("dataCreate");
     _asyncPost( "/api/dat/create", a_record, function( ok, reply ){
         if ( a_cb )
             a_cb( ok, reply );
@@ -238,7 +214,6 @@ export function dataCreate( a_record, a_cb ){
 
 
 export function dataCreateBatch( a_records, a_cb ){
-    //console.log("dataCreateBatch");
     _asyncPostText( "/api/dat/create/batch", a_records, function( ok, reply ){
         if ( a_cb )
             a_cb( ok, reply );
@@ -247,7 +222,6 @@ export function dataCreateBatch( a_records, a_cb ){
 
 
 export function dataUpdate( a_record, a_cb ){
-    console.log("dataUpdate", a_record );
     _asyncPost( "/api/dat/update", a_record, function( ok, reply ){
         if ( a_cb )
             a_cb( ok, reply );
@@ -259,7 +233,6 @@ export function dataUpdate( a_record, a_cb ){
 
 
 export function dataUpdateBatch( a_records, a_cb ){
-    //console.log("dataUpdateBatch");
     _asyncPostText( "/api/dat/update/batch", a_records, function( ok, reply ){
         if ( a_cb )
             a_cb( ok, reply );
@@ -274,7 +247,6 @@ export function sendDataDelete(a_ids,a_cb){
 }
 
 export function copyData( a_src_id, a_dst_id, a_cb ){
-    //console.log("copyData",a_src_id, a_dst_id);
     _asyncGet( "/api/dat/copy?src=" + encodeURIComponent(a_src_id) + "&dst=" + encodeURIComponent(a_dst_id), null, a_cb);
 }
 
@@ -328,7 +300,6 @@ export function collView( a_id, a_cb ) {
 }
 
 export function collCreate( a_record, a_cb ){
-    //console.log("collUpdate", a_record );
     _asyncPost( "/api/col/create", a_record, function( ok, reply ){
         if ( a_cb )
             a_cb( ok, reply );
@@ -339,7 +310,6 @@ export function collCreate( a_record, a_cb ){
 }
 
 export function collUpdate( a_record, a_cb ){
-    //console.log("collUpdate", a_record );
     _asyncPost( "/api/col/update", a_record, function( ok, reply ){
         if ( a_cb )
             a_cb( ok, reply );
@@ -397,30 +367,20 @@ export function linkItems( a_items, a_coll, a_cb ) {
     _asyncGet( "/api/col/link?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll), null, a_cb );
 }
 
-/*
-function unlinkItem( a_item, a_coll, a_cb ) {
-    _asyncGet( "/api/unlink?item="+encodeURIComponent(a_item)+"&coll="+encodeURIComponent(a_coll), null, a_cb );
-}*/
-
 export function unlinkItems( a_items, a_coll, a_cb ) {
-    //console.log("unlinkItems()",a_items);
     _asyncGet( "/api/col/unlink?items="+encodeURIComponent(JSON.stringify(a_items))+"&coll="+encodeURIComponent(a_coll), null, a_cb );
 }
 
 export function colMoveItems( a_items, a_src_id, a_dst_id, a_cb ) {
-    //console.log("colMoveItems", a_items, a_src_id, a_dst_id );
     _asyncGet( "/api/col/move?items="+encodeURIComponent(JSON.stringify(a_items))+"&src_id="+encodeURIComponent(a_src_id)+"&dst_id="+encodeURIComponent(a_dst_id), null, a_cb );
 }
 
 export function getParents( a_id, a_cb ) {
-    //console.log("getParents",a_id);
     _asyncGet( "/api/col/get_parents?id="+encodeURIComponent(a_id), null, a_cb );
 }
 
 export function getCollOffset( coll_id, item_id, page_sz, idx, cb ){
-    //console.log("getCollOffset",coll_id,item_id,page_sz,idx);
     _asyncGet( "/api/col/get_offset?id="+encodeURIComponent(coll_id)+"&item_id="+encodeURIComponent(item_id)+"&page_sz="+page_sz, null, function(ok,data){
-        //console.log("getCollOffset - cb",coll_id,item_id,page_sz,idx);
         cb( ok, data, idx );
     });
 }
@@ -467,14 +427,12 @@ export function aclByProjectList( a_proj_id, a_cb ) {
 
 export function checkPerms( a_id, a_perms, a_cb ){
     _asyncGet( "/api/perms/check?id="+encodeURIComponent(a_id)+(a_perms?("&perms="+a_perms):""), null, function(ok,data){
-        //console.log("checkPerm",a_id,a_perms,ok,data);
         a_cb( ok, ok?data.granted:data );
     });
 }
 
 export function getPerms( a_id, a_perms, a_cb ){
     _asyncGet( "/api/perms/get?id="+encodeURIComponent(a_id)+(a_perms?("&perms="+a_perms):""), null, function(ok,data){
-        //console.log("getPerm",a_id,a_perms,ok,data);
         if ( ok )
             a_cb( data.granted );
         else
@@ -549,16 +507,12 @@ export function annotationCreate( a_subj_id, a_type, a_title, a_comment, a_activ
 }
 
 export function annotationUpdate( a_id, a_comment, a_new_type, a_new_state, a_new_title, a_cb ){
-    //console.log("api.annotationUpdate",a_new_type, a_new_state,a_new_title );
     _asyncGet( "/api/note/update?id="+encodeURIComponent(a_id) + "&comment="+encodeURIComponent(a_comment) +
         (a_new_type!=null?"&new_type="+a_new_type:"") + (a_new_state!=null?"&new_state="+a_new_state:"") +
         (a_new_title!=null?"&new_title="+a_new_title:""), null, function( ok, reply ){
             a_cb( ok, reply );
 
-            //console.log("chk for updates:",reply);
-            //&& ( a_new_type || a_new_state )
             if ( ok && reply.update ){
-                //console.log("updates:",reply.update);
                 model.update( reply.update );
             }
         });
@@ -587,22 +541,18 @@ export function repoView( a_repo, a_cb ){
 }
 
 export function repoCreate( a_repo_data, a_cb ){
-    //console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
     _asyncPost("/api/repo/create",a_repo_data,a_cb);
 }
 
 export function repoUpdate( a_repo_data, a_cb ){
-    //console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
     _asyncPost("/api/repo/update",a_repo_data,a_cb);
 }
 
 export function repoDelete( a_repo_id, a_cb ){
-    //console.log("repo upd:",a_repo, a_title, a_desc, a_capacity);
     _asyncGet("/api/repo/delete?id="+a_repo_id,null,a_cb);
 }
 
 export function repoCalcSize( a_items, a_recursive, a_cb ){
-    //console.log("calcSize, rec:",a_recursive,"items",a_items);
     _asyncGet( "/api/repo/calc_size?recurse=" + a_recursive + "&items="+ encodeURIComponent(JSON.stringify(a_items)), null, function( ok, data ){
         a_cb( ok, data );
     });
@@ -860,10 +810,7 @@ export function epAutocomplete( a_term, a_cb ){
 }
 
 export function epRecentLoad( a_cb ){
-    //console.log("epRecentLoad");
     _asyncGet( "/ui/ep/recent/load", null, function( ok, data ){
-        //console.log("epRecentLoad",ok,data);
-
         if ( ok ){
             settings.epSetRecent( data );
         }
@@ -873,24 +820,12 @@ export function epRecentLoad( a_cb ){
     });
 }
 
-/*
-function epRecentSave( a_cb ){
-    console.log("epRecentSave",g_ep_recent);
-    _asyncPost( "/ui/ep/recent/save",{ep:g_ep_recent}, function( ok, data ){
-        if ( a_cb )
-            a_cb();
-    });
-}
-*/
-
 export function epDirList( a_ep, a_path, a_show_hidden, a_cb ){
-    //console.log("epDirList",a_ep,a_path);
     _asyncGet( "/ui/ep/dir/list?ep=" + encodeURIComponent(a_ep) + "&path=" + encodeURIComponent(a_path) + "&hidden=" + (a_show_hidden?"true":"false"), null, function( ok, data ){
         if ( a_cb ){
             if ( ok )
                 a_cb( data );
             else{
-                //console.log("dir list failed",data);
                 a_cb();
             }
         }

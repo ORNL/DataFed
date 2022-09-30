@@ -48,10 +48,6 @@ TaskWorker::workerThread()
     bool               first;
 
     Config & config = Config::getInstance();
-//    DL_SET_CUSTOM_LOG_ENABLED(true);
-    std::stringstream worker_log_in;
-    worker_log_in << config.log_path << "/datafed-core-task-" << std::this_thread::get_id() << ".log";
-//    DL_SET_LOG_FILE( worker_log_in.str() );
     while( 1 )
     {
         m_task = m_mgr.getNextTask( this );
@@ -463,7 +459,6 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
 {
     Config & config = Config::getInstance();
 
-    DL_DEBUG("TaskWorker Send and recv " << __LINE__);
     config.loadRepositoryConfig();
 
     std::string registered_repos = ", ";
@@ -473,21 +468,17 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
       registered_repos =  repo.second.id() + " ";
     }
 
-    //map<string,std::shared_ptr<RepoData>>::iterator rd = repos.find( a_repo_id );
     if ( !repos.count(a_repo_id) )
         EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id << " Registered repos are: " << registered_repos );
 
     MsgComm comm( repos[a_repo_id].address(), MsgComm::DEALER, false, &config.sec_ctx );
 
-    DL_DEBUG("TaskWorker Send and recv " << __LINE__);
-    DL_DEBUG("TaskWorker Send and recv " << __LINE__);
     comm.send( a_msg );
 
     MsgBuf buffer;
 
     if ( !comm.recv( buffer, false, config.repo_timeout ))
     {
-        DL_DEBUG("TaskWorker Send and recv " << __LINE__);
         DL_ERROR( "Timeout waiting for response from " << a_repo_id );
         cerr.flush();
         return true;
@@ -497,11 +488,9 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
         // Check for NACK
         a_reply = buffer.unserialize();
 
-        DL_DEBUG("TaskWorker Send and recv " << __LINE__);
         Anon::NackReply * nack = dynamic_cast<Anon::NackReply*>( a_reply );
         if ( nack != 0 )
         {
-            DL_DEBUG("TaskWorker Send and recv " << __LINE__);
             ErrorCode code = nack->err_code();
             string  msg = nack->has_err_msg()?nack->err_msg():"Unknown service error";
 
@@ -510,7 +499,6 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
             EXCEPT( code, msg );
         }
 
-        DL_DEBUG("TaskWorker Send and recv " << __LINE__);
         return false;
     }
 }

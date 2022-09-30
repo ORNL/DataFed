@@ -29,7 +29,7 @@ class Config
         glob_oauth_url("https://auth.globus.org/v2/oauth2/"),
         glob_xfr_url("https://transfer.api.globus.org/v0.10/"),
         port(7512),
-        timeout( 10 ),
+        timeout( 5 ),
         num_client_worker_threads( 4 ),
         num_task_worker_threads( 10 ),
         task_purge_age( 14*24*3600 ),
@@ -64,7 +64,6 @@ class Config
     std::string     glob_xfr_url;
     std::string     client_id;
     std::string     client_secret;
-    std::string     log_path = "";
     uint32_t        port;
     uint32_t        timeout;
     uint32_t        num_client_worker_threads;

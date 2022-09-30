@@ -107,6 +107,10 @@ PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 
 CONFIG_FILE_NAME="datafed-repo.cfg"
 
+# The repo servers address and port which should have the form
+# tcp://datafed-repo.ornl.gov:9000, the repo server should have a fully
+# qualified domain name and publily accessible IP address. The port should be the
+# same port listed in the datafed-repo.cfg file.
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 log-path=${local_DATAFED_LOG_PATH}
 cred-dir=$local_DATAFED_CRED_DIR
@@ -116,7 +120,6 @@ threads=$local_DATAFED_REPO_THREADS
 globus-collection-path=$local_GCS_COLLECTION_ROOT_PATH
 EOF
 
-#globus-collection-path=$PATH_TO_GUEST_ROOT
 echo
 echo "Config file is being placed here: $PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 echo

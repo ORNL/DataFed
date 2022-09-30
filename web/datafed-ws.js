@@ -1239,7 +1239,6 @@ app.get('/api/repo/list', ( a_req, a_resp ) => {
         params.all = a_req.query.all;
     if ( a_req.query.details )
         params.details = a_req.query.details;
-    console.log("Calling repo list from datafed-ws RepoListRequest");
     sendMessage( "RepoListRequest", params, a_req, a_resp, function( reply ) {
         a_resp.json(reply.repo?reply.repo:[]);
     });
@@ -1264,7 +1263,6 @@ app.post('/api/repo/update', ( a_req, a_resp ) => {
 });
 
 app.get('/api/repo/delete', ( a_req, a_resp ) => {
-    //console.log("repo del, id",a_req.query.id);
     sendMessage( "RepoDeleteRequest", {id:a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
@@ -1325,7 +1323,6 @@ app.get('/api/repo/alloc/delete', ( a_req, a_resp ) => {
 });
 
 app.get('/api/repo/alloc/set', ( a_req, a_resp ) => {
-    //console.log("alloc set:",a_req.query.repo,a_req.query.subject,a_req.query.data_limit,a_req.query.rec_limit);
     sendMessage( "RepoAllocationSetRequest", {repo:a_req.query.repo,subject:a_req.query.subject,dataLimit:a_req.query.data_limit,recLimit:a_req.query.rec_limit}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1335,8 +1332,6 @@ app.get('/api/repo/alloc/set/default', ( a_req, a_resp ) => {
     var par = {repo:a_req.query.repo};
     if ( a_req.query.subject )
         par.subject = a_req.query.subject;
-
-    //console.log("alloc set def:",par);
 
     sendMessage( "RepoAllocationSetDefaultRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -1353,9 +1348,6 @@ app.get('/api/top/list/topics', ( a_req, a_resp ) => {
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
     }
-
-    //console.log("top qry",a_req.query);
-    //console.log("top par",par);
 
     sendMessage( "TopicListTopicsRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
@@ -1381,7 +1373,6 @@ app.get('/api/top/view', ( a_req, a_resp ) => {
 });
 
 app.get('/api/top/search', ( a_req, a_resp ) => {
-    //console.log("top srch",a_req.query.phrase);
     sendMessage( "TopicSearchRequest", {phrase:a_req.query.phrase}, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
@@ -1424,13 +1415,8 @@ app.post('/api/sch/delete', ( a_req, a_resp ) => {
 });
 
 app.get('/ui/ep/view', ( a_req, a_resp ) => {
-    //console.log("/ui/ep/view", a_req.query.ep );
-
-    //var userinfo = JSON.parse(a_req.cookies['datafed-user']);
 
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
-        //console.log("token reply:", reply );
-
         const opts = {
             hostname: 'transfer.api.globusonline.org',
             method: 'GET',
@@ -1448,7 +1434,6 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
                 data += chunk;
             });
             res.on('end', () => {
-                //console.log('done:',data);
                 a_resp.json(JSON.parse(data));
             });
         });
@@ -1463,10 +1448,8 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
 });
 
 app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
-    //console.log("/ui/eo/autocomp", a_req.query.term);
 
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
-        //console.log("token reply:", reply );
 
         const opts = {
             hostname: 'transfer.api.globusonline.org',
@@ -1486,7 +1469,6 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             });
 
             res.on('end', () => {
-                //console.log('done:',data);
                 a_resp.json(JSON.parse(data));
             });
         });
@@ -1514,7 +1496,6 @@ app.post('/ui/ep/recent/save', ( a_req, a_resp ) => {
 
 app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
-        //console.log("reply:", reply );
 
         const opts = {
             hostname: 'transfer.api.globusonline.org',
@@ -1533,7 +1514,6 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
                 data += chunk;
             });
             res.on('end', () => {
-                //console.log('done:',data);
                 a_resp.json(JSON.parse(data));
             });
         });
@@ -1545,19 +1525,6 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
 
         req.end();
     });
-
-/*        request.get({
-            uri: 'https://transfer.api.globusonline.org/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path) + '&show_hidden=' + a_req.query.hidden,
-            auth: {
-                bearer: reply.access,
-            }
-        }, function( error, response, body ) {
-            //console.log("ep ls err:",error);
-            //console.log("ep ls body sz:",body.length );
-            a_resp.json(JSON.parse(body));
-        });
-    });
-*/
 
 });
 
@@ -1610,7 +1577,6 @@ function allocRequestContext( a_resp, a_callback ) {
 
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
     var client = a_req.session.uid;
-    //console.log("from send message");
     if ( !client ){
         console.log("NO AUTH :", a_msg_name, ":", a_req.connection.remoteAddress );
         throw "Not Authenticated";
@@ -1618,17 +1584,12 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
     a_resp.setHeader('Content-Type', 'application/json');
 
-    //console.log("sendMsg parms:",a_msg_data);
-
-    //console.log("sendMsg alloc ctx", a_msg_name );
     allocRequestContext( a_resp, function( ctx ){
         console.log("sendMsg msg_name ctx and data address ", a_msg_name, ctx, a_msg_data, g_core_serv_addr);
 
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
             throw "Invalid message type: " + a_msg_name;
-
-        //console.log("msg verify:",msg.verify(a_msg_data));
 
         var msg_buf = msg.encode(a_msg_data).finish();
         console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );

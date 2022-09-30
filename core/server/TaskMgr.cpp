@@ -180,8 +180,6 @@ TaskMgr::maintenanceThread()
 void
 TaskMgr::purgeTaskHistory() const
 {
-    DL_INFO( "TaskMgr: purging old task records." );
-
     try
     {
         DatabaseAPI  db( m_config.db_url, m_config.db_user, m_config.db_pass );

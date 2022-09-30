@@ -229,7 +229,6 @@ RequestWorker::procDataDeleteRequest()
 
         for ( int i = 0; i < request->loc_size(); i++ )
         {
-            //string local_path = m_config.globus_collection_path + request->loc(i).path();
             string local_path = request->loc(i).path();
             DL_DEBUG( "Delete " << request->loc_size() << " file(s), path: " << local_path );
             boost::filesystem::path data_path( local_path );
@@ -253,9 +252,6 @@ RequestWorker::procDataGetSizeRequest()
     for ( int i = 0; i < request->loc_size(); i++ )
     {
         const RecordDataLocation & item = request->loc(i);
-
-        //string local_path = m_config.globus_collection_path + item.path();
-        //string local_path = item.path();
 
         string sanitized_request_path = item.path();
         while ( ! sanitized_request_path.empty() ) {
@@ -313,7 +309,6 @@ RequestWorker::procPathCreateRequest()
     } else {
       local_path += sanitized_request_path;
     }
-    //string local_path = sanitized_request_path;
 
     boost::filesystem::path data_path( local_path );
     DL_INFO( "Creating Path if it does not exist, path to collection: " << m_config.globus_collection_path << ", full path to create: " << local_path );
@@ -349,7 +344,6 @@ RequestWorker::procPathDeleteRequest()
     } else {
       local_path += sanitized_request_path;
     }
-    //string local_path = request->path();
 
     boost::filesystem::path data_path( local_path );
     DL_INFO( "Removing Path if it exists, path to collection: " << m_config.globus_collection_path << ", full path to remove: " << local_path );

@@ -105,6 +105,23 @@ else
   local_DATAFED_REPO_ID_AND_DIR=$(printenv DATAFED_REPO_ID_AND_DIR)
 fi
 
+local_DATAFED_WEB_CERT_PATH=""
+if [ -z "${DATAFED_WEB_CERT_PATH}" ]
+then
+local_DATAFED_WEB_CERT_PATH="/opt/datafed/keys/datafed-server-test.ornl.gov.crt"
+else
+  local_DATAFED_WEB_CERT_PATH=$(printenv DATAFED_WEB_CERT_PATH)
+fi
+
+local_DATAFED_WEB_KEY_PATH=""
+if [ -z "${DATAFED_WEB_KEY_PATH}" ]
+then
+  local_DATAFED_WEB_KEY_PATH="/opt/datafed/keys/datafed-server-test.ornl.gov.key"
+else
+  local_DATAFED_WEB_KEY_PATH=$(printenv DATAFED_WEB_KEY_PATH)
+fi
+
+
 cat << EOF > "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 # This is the master DataFed configuration file
 
@@ -123,7 +140,10 @@ export DATAFED_ZEROMQ_SYSTEM_SECRET="$local_DATAFED_ZEROMQ_SYSTEM_SECRET"
 # An email address is required by LEGO when 
 # requesting certificates for the domain
 export DATAFED_LEGO_EMAIL="$local_DATAFED_LEGO_EMAIL"
-
+# Path to the private key - needed for https
+export DATAFED_WEB_KEY_PATH="$local_DATAFED_WEB_KEY_PATH"
+# Path to the certificate - needed for https
+export DATAFED_WEB_CERT_PATH="$local_DATAFED_WEB_CERT_PATH"
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************

@@ -2350,105 +2350,69 @@ DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> &
 {
 
     DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
-//    if ( !a_reply )
-//        EXCEPT( ID_INTERNAL_ERROR, "Missing parameter" );
-
-    //RepoData *          repo;
     Value::ArrayConstIter    k;
 
     TRANSLATE_BEGIN()
 
     const Value::Array & arr = a_result.asArray();
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
     for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
         const Value::Object & obj = i->asObject();
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
-               //} else {
-            //repo = std::unque_ptr<RepoData>();
         a_repos.emplace_back();
-        //}
 
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
         a_repos.back().set_id( obj.getString( "id" ));
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
         if ( obj.has( "title" )) {
             a_repos.back().set_title( obj.asString() );
         }
-        DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
         if ( obj.has( "desc" )) {
             a_repos.back().set_desc( obj.asString() );
         }
 
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
         if ( obj.has( "capacity" )) {
             a_repos.back().set_capacity( obj.asNumber() ); // TODO Needs to be 64 bit integer (string in JSON)
         }
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
         if ( obj.has( "address" )) {
             a_repos.back().set_address( obj.asString() );
         }
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
         if ( obj.has( "endpoint" )) {
             a_repos.back().set_endpoint( obj.asString() );
         }
 
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
         if ( obj.has( "pub_key" )) {
             a_repos.back().set_pub_key( obj.asString() );
         }
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
         if ( obj.has( "path" )) {
             a_repos.back().set_path( obj.asString() );
         }
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
         if ( obj.has( "exp_path" )) {
             a_repos.back().set_exp_path( obj.asString() );
         }
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
         if ( obj.has( "domain" ) && !obj.value().isNull( )) {
             a_repos.back().set_domain( obj.asString() );
         }
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
         if ( obj.has( "admins" ))
         {
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
             const Value::Array & arr2 = obj.asArray();
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
 
             for ( k = arr2.begin(); k != arr2.end(); k++ )
             {
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
                 a_repos.back().add_admin( k->asString() );
             }
-            DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
         }
 
 
          if ( a_reply ) {
-                    //repo = std::make_unique<RepoData>(a_reply->add_repo());
-
-                    // a_reply->add_repo() should return a RepoData * 
-                    //
-              DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
-              // THis is the PROBLEM! What is this function doing!!!!
               RepoData * repo = a_reply->add_repo();
-
               *repo = (a_repos.back());
-              DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
-              //a_repos->push_back(std::make_unique<RepoData>());
-              //a_repos->back()
-
-              //DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
          }
 
     }

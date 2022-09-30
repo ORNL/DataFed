@@ -57,8 +57,6 @@ public:
     void    run();
 
 private:
-    /// Map of client key to DataFed ID
-//    typedef std::map<std::string,std::string> auth_client_map_t;
 
     /// Map of client key to DataFed ID and expiration time
     typedef std::map<std::string,std::pair<std::string,time_t>> trans_client_map_t;
@@ -86,7 +84,6 @@ private:
     std::string                     m_pub_key;              ///< Public key for secure interface
     std::string                     m_priv_key;             ///< Private key for secure interface
     std::thread                   m_zap_thread;           ///< ZeroMQ client authentication (ZAP) thread
-//    auth_client_map_t               m_auth_clients;         ///< List of known authenticated clients
     trans_client_map_t              m_trans_auth_clients;   ///< List of transient authenticated clients
     std::thread                    m_msg_router_thread;    ///< Main message router thread handle
     std::vector<std::shared_ptr<ClientWorker>>      m_workers;              ///< List of ClientWorker instances

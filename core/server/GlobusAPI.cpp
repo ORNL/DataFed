@@ -366,19 +366,18 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
               Value result2;
               result2.fromString( raw_result2 );
               Value::Object & resp_obj2 = result2.asObject();
-              DL_DEBUG("Total Faults found " + to_string(resp_obj2.getNumber("total")));
 
               Value::Array & data_arr = resp_obj2.getArray("DATA");
 
               Value::Object & event = data_arr.front().asObject();
               if( event.getBool("is_error")){
-                DL_DEBUG("Is error printing error message");
+                DL_DEBUG("\nError encountered is_error True printing error message");
                 DL_DEBUG(event.getString("details"));
-                DL_DEBUG("*******************************");
+                DL_DEBUG("\n");
               }
 
              
-              const double task_attempts = 3.0;
+              const double task_attempts = 2.0;
               if (resp_obj2.getNumber("total") > task_attempts) {
                 a_err_msg = resp_obj.getString("nice_status");
                 DL_DEBUG("Aborting task exceeded acceptable transfer attempts");

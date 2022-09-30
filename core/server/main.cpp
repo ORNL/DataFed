@@ -25,8 +25,8 @@ int main( int a_argc, char ** a_argv )
     {
         DL_SET_ENABLED(true);
         DL_SET_LEVEL(DynaLog::DL_TRACE_LEV);
-        DL_SET_CERR_ENABLED(false);
-        DL_SET_SYSDL_ENABLED(true);
+        DL_SET_CERR_ENABLED(true);
+        DL_SET_SYSDL_ENABLED(false);
 
         DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE );
 
@@ -44,7 +44,6 @@ int main( int a_argc, char ** a_argv )
             ("db-url,u",po::value<string>( &config.db_url ),"DB url")
             ("db-user,U",po::value<string>( &config.db_user ),"DB user name")
             ("db-pass,P",po::value<string>( &config.db_pass ),"DB password")
-            ("log-path,l",po::value<string>( &config.log_path ),"Path to write log files.")
             ("glob-oauth-url",po::value<string>( &config.glob_oauth_url ),"Globus authorization API base URL")
             ("glob-xfr-url",po::value<string>( &config.glob_xfr_url ),"Globus transfer API base URL")
             ("client-id",po::value<string>( &config.client_id ),"Client ID")
@@ -94,16 +93,6 @@ int main( int a_argc, char ** a_argv )
 
             if ( config.cred_dir.size() && config.cred_dir.back() != '/' ) {
                 config.cred_dir += "/";
-            }
-
-            std::cout << "Config log_path is " << config.log_path << std::endl;
-            if (config.log_path.size() > 0 ) {
-
-              std::stringstream main_log_in;
-              main_log_in << config.log_path << "/datafed-core.log";
-              //DL_SET_CUSTOM_LOG_ENABLED(true);
-              //DL_SET_LOG_FILE(main_log_in.str());
-              DL_DEBUG("Testing");
             }
 
             if ( gen_keys )

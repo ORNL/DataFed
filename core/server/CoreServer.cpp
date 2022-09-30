@@ -28,11 +28,6 @@ namespace Core {
 
 Server::Server() :
     m_config(Config::getInstance())
-//    m_io_secure_thread(0),
-//    m_io_insecure_thread(0),
-//    m_zap_thread(0),
-//    m_msg_router_thread(0)
-//    m_db_maint_thread(0)
 {
     // One-time global libcurl init
     curl_global_init( CURL_GLOBAL_DEFAULT );
@@ -71,11 +66,7 @@ Server::~Server()
     // the o/s cleans-up for us
 
     m_zap_thread.join();
-    //delete m_zap_thread;
-
     m_db_maint_thread.join();
-    //delete m_db_maint_thread;
-    //
     m_metrics_thread.join();
 }
 
@@ -122,53 +113,6 @@ Server::waitForDB()
     EXCEPT(1,"Unable to connect to DB");
 }
 
-//
-//void
-//Server::loadRepositoryConfig()
-//{
-//    DL_INFO("Loading repo configuration");
-//
-//    DatabaseAPI  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
-//
-//    vector<std::unique_ptr<RepoData>> repos;
-//
-//    db_client.repoList( repos );
-//
-//    for ( vector<std::unique_ptr<RepoData>>::iterator r = repos.begin(); r != repos.end(); ++r )
-//    {
-//        // Validate repo settings (in case an admin manually edits repo config)
-//        if ( (*r)->pub_key().size() != 40 ){
-//            DL_ERROR("Ignoring " << (*r)->id() << " - invalid public key: " << (*r)->pub_key() );
-//            continue;
-//        }
-//
-//        if ( (*r)->address().compare(0,6,"tcp://") ){
-//            DL_ERROR("Ignoring " << (*r)->id() << " - invalid server address: " << (*r)->address() );
-//            continue;
-//        }
-//
-//        if ( (*r)->endpoint().size() != 36 ){
-//            DL_ERROR("Ignoring " << (*r)->id() << " - invalid endpoint UUID: " << (*r)->endpoint() );
-//            continue;
-//        }
-//
-//        if ( (*r)->path().size() == 0 || (*r)->path()[0] != '/' ){
-//            DL_ERROR("Ignoring " << (*r)->id() << " - invalid path: " << (*r)->path() );
-//            continue;
-//        }
-//
-//        DL_DEBUG("Repo " << (*r)->id() << " OK");
-//        DL_DEBUG("UUID: " << (*r)->endpoint() );
-//
-//        // Cache pub key for ZAP handler
-//        m_auth_clients[(*r)->pub_key()] = (*r)->id();
-//
-//        // Cache repo data for data handling
-//        m_config.repos[(*r)->id()] = std::move(*r);
-//
-//    }
-//}
-
 /**
  * Start and run external interfaces.
  *
@@ -187,8 +131,6 @@ Server::run()
     ioInsecure();
 
     m_msg_router_thread.join();
-    //delete m_msg_router_thread;
-    //m_msg_router_thread = 0;
 }
 
 
@@ -228,8 +170,6 @@ Server::msgRouter()
     for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
         (*iwrk)->stop();
 
-    //for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
-    //    delete *iwrk;
 }
 
 void
