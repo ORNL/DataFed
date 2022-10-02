@@ -7,7 +7,7 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
 CONFIG_FILE_NAME="datafed.sh"
-PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
+PATH_TO_CONFIG_DIR=$(realpath "$PROJECT_ROOT/config")
 
 local_DATAFED_DEFAULT_LOG_PATH=""
 if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
@@ -46,7 +46,7 @@ if [ -z "${DATAFED_LEGO_EMAIL}" ]
 then
   local_DATAFED_LEGO_EMAIL=""
 else
-  local_DATAFED_LOG_PATH=$(printenv DATAFED_LEGO_EMAIL)
+  local_DATAFED_LEGO_EMAIL=$(printenv DATAFED_LEGO_EMAIL)
 fi
 
 local_DATAFED_GLOBUS_APP_ID=""

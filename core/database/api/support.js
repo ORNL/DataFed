@@ -1476,7 +1476,7 @@ module.exports = ( function() {
 
         // Evaluate permissions set directly on object
 
-        if ( a_object.acls && ((a_object.acls & 1 ) != 0 )){
+        if ( a_object.acls && ((a_object.acls & 1 ) !== 0 )){
             acls = obj.db._query( "for v, e in 1..1 outbound @object acl filter v._id == @client return e", { object: a_object._id, client: a_client._id } ).toArray();
 
             if ( acls.length ){
@@ -1495,7 +1495,7 @@ module.exports = ( function() {
 
         // Evaluate group permissions on object
 
-        if ( a_object.acls && ((a_object.acls & 2 ) != 0 )){
+        if ( a_object.acls && ((a_object.acls & 2 ) !== 0 )){
             acls = obj.db._query( "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", { object: a_object._id, client: a_client._id } ).toArray();
 
             if ( acls.length ){

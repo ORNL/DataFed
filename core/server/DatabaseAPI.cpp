@@ -3384,7 +3384,7 @@ DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_
 {
     string body = "{\"ids\":[";
 
-    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); i++ )
+    for ( vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end(); ++i )
     {
         if ( i != a_ids.begin() )
             body += ",";
@@ -3789,7 +3789,7 @@ DatabaseAPI::metricsUpdateMsgCounts( uint32_t a_timestamp, uint32_t a_total, con
     bool c = false, cc;
 
 
-    for ( u = a_metrics.begin(); u != a_metrics.end(); u++ )
+    for ( u = a_metrics.begin(); u != a_metrics.end(); ++u )
     {
         if ( c )
             body += ",";
@@ -3798,7 +3798,7 @@ DatabaseAPI::metricsUpdateMsgCounts( uint32_t a_timestamp, uint32_t a_total, con
 
         body += "\"" + u->first + "\":{\"tot\":" + to_string(u->second.at(0)) + ",\"msg\":{";
 
-        for ( cc = false, m = u->second.begin(); m != u->second.end(); m++ )
+        for ( cc = false, m = u->second.begin(); m != u->second.end(); ++m )
         {
             if ( m->first != 0 )
             {
@@ -4203,7 +4203,7 @@ DatabaseAPI::parseSearchTerms( const std::string & a_key, const std::vector<std:
     if ( or_terms.size() > 1 )
         result += "(";
 
-    for ( i = or_terms.begin(); i != or_terms.end(); i++ )
+    for ( i = or_terms.begin(); i != or_terms.end(); ++i )
     {
         if ( i != or_terms.begin() )
             result += " or ";
@@ -4214,7 +4214,7 @@ DatabaseAPI::parseSearchTerms( const std::string & a_key, const std::vector<std:
     if ( or_terms.size() > 1 )
         result += ")";
 
-    for ( i = and_terms.begin(); i != and_terms.end(); i++ )
+    for ( i = and_terms.begin(); i != and_terms.end(); ++i )
     {
         if ( result.size() )
             result += " and ";
@@ -4222,7 +4222,7 @@ DatabaseAPI::parseSearchTerms( const std::string & a_key, const std::vector<std:
         result += "phrase("+a_iter+"['" + a_key + "'],'" + *i + "')";
     }
 
-    for ( i = nand_terms.begin(); i != nand_terms.end(); i++ )
+    for ( i = nand_terms.begin(); i != nand_terms.end(); ++i )
     {
         if ( result.size() )
             result += " and ";

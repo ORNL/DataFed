@@ -268,10 +268,10 @@ Server::metricsThread()
             timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             total = 0;
 
-            for ( u = metrics.begin(); u != metrics.end(); u++ )
+            for ( u = metrics.begin(); u != metrics.end(); ++u )
             {
                 subtot = 0;
-                for ( m = u->second.begin(); m != u->second.end(); m++ )
+                for ( m = u->second.begin(); m != u->second.end(); ++m )
                 {
                     subtot += m->second;
                 }
@@ -360,7 +360,7 @@ Server::zapHandler()
                                 itrans_client = m_trans_auth_clients.erase( itrans_client );
                             }
                             else
-                                itrans_client++;
+                                ++itrans_client;
                         }
 
                         next_purge = now + 30;
