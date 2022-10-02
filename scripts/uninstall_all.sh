@@ -7,8 +7,6 @@ source ${PROJECT_ROOT}/config/datafed.sh
 
 # Will remove datafed components, with the exception of
 # the certificates because we can only call lego so many times
-rm -f /opt/datafed/keys/*priv
-rm -f /opt/datafed/keys/*pub
 rm -rf /opt/datafed/core
 rm -rf /opt/datafed/web
 rm -rf /opt/datafed/repo

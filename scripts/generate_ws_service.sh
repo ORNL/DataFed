@@ -19,7 +19,7 @@ fi
 
 local_DATAFED_LOG_PATH=""
 
-if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
+if [ ! -z "${DATAFED_DEFAULT_LOG_PATH}" ]
 then
   local_DATAFED_LOG_PATH="/var/log/datafed"
 else
@@ -30,7 +30,10 @@ DATAFED_WS_LOG_FILE_PATH="/$local_DATAFED_LOG_PATH/datafed-ws.log"
 
 # Remove double forward slashes
 DATAFED_WS_LOG_FILE_PATH=$( echo "$DATAFED_WS_LOG_FILE_PATH" | sed 's/\/\//\//g')
-
+if [ -d "$PATH_TO_SERVICE_DIR" ]
+then
+  mkdir -p $PATH_TO_SERVICE_DIR
+fi
 cat << EOF > "$PATH_TO_SERVICE_DIR/$SERVICE_FILE_NAME"
 [Unit]
 Description=DataFed Web Server

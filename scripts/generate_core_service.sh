@@ -26,6 +26,10 @@ DATAFED_CORE_LOG_FILE_PATH="/$local_DATAFED_LOG_PATH/datafed-core.log"
 # Remove double forward slashes
 DATAFED_CORE_LOG_FILE_PATH=$( echo "$DATAFED_CORE_LOG_FILE_PATH" | sed 's/\/\//\//g')
 
+if [ ! -d "$PATH_TO_SERVICE_DIR" ]
+then
+  mkdir -p $PATH_TO_SERVICE_DIR
+fi
 cat << EOF > "$PATH_TO_SERVICE_DIR/$SERVICE_FILE_NAME"
 [Unit]
 Description=DataFed Core Server

@@ -47,7 +47,6 @@ TaskWorker::workerThread()
     int                step;
     bool               first;
 
-    Config & config = Config::getInstance();
     while( 1 )
     {
         m_task = m_mgr.getNextTask( this );
