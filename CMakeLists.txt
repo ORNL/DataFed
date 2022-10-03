@@ -55,8 +55,8 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ )
   ## use pkg-config to get hints for 0mq locations
   pkg_check_modules(PC_ZeroMQ QUIET zmq)
 
-  find_package(OpenSSL Crypto REQUIRED)
-
+  find_package(OpenSSL REQUIRED)
+  find_package(Crypto REQUIRED)
   ## use the hint from above to find where 'zmq.h' is located
   find_path(ZeroMQ_INCLUDE_DIR
           NAMES zmq.h
