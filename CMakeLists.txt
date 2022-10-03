@@ -70,9 +70,6 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ )
   include_directories( ${ZeroMQ_INCLUDE_DIR} )
   link_directories( ${PC_ZeroMQ_LIBRARY_DIRS} )
 
-  find_package(nlohmann_json CONFIG REQUIRED)
-  find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
-
   if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})
           message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )
           message( "PBUF_LIB_DIR:" $ENV{PBUF_LIB_DIR} )
@@ -102,6 +99,9 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ )
 endif()
 
 if( BUILD_CORE_SERVER )
+  find_package(nlohmann_json CONFIG REQUIRED)
+  find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
+  find_package(OpenSSL REQUIRED)
   add_subdirectory( core )
 endif()
 

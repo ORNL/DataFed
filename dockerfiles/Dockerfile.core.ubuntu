@@ -6,6 +6,7 @@ RUN mkdir -p ${BUILD_DIR}
 
 WORKDIR ${BUILD_DIR}
 
+COPY ./common ${BUILD_DIR}/common
 COPY ./core/server ${BUILD_DIR}/core/server
 COPY ./core/CMakeLists.txt ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt ${BUILD_DIR}

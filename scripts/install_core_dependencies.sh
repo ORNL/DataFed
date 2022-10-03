@@ -6,7 +6,9 @@ set -e
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo apt-get update
 sudo dpkg --configure -a
-sudo apt-get install -y libtool build-essential g++ gcc cmake libboost-all-dev pkg-config autoconf automake libtool make unzip libcurl4-openssl-dev rapidjson-dev libkrb5-dev git python3-pkg-resources python3-pip
+sudo apt-get install -y libtool build-essential g++ gcc cmake libboost-all-dev \
+pkg-config autoconf automake libtool make unzip libcurl4-openssl-dev \
+rapidjson-dev libkrb5-dev git python3-pkg-resources python3-pip libssl-dev
 sudo apt-get install -y libzmq3-dev 
 
 python3 -m pip install --upgrade pip
