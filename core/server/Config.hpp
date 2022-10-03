@@ -21,7 +21,6 @@ class Config
         return inst;
     }
 
-    //glob_xfr_url("https://transfer.api.globusonline.org/v0.10/"),
     typedef std::map<std::string,std::string> auth_client_map_t;
 
   private:
