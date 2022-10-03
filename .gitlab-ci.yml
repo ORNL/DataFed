@@ -71,6 +71,7 @@ build-ws:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -f dockerfiles/Dockerfile.web.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
@@ -83,6 +84,7 @@ build-core:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
     - docker build -f dockerfiles/Dockerfile.core.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 build-repo:
@@ -94,6 +96,7 @@ build-repo:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
     - docker build -f dockerfiles/Dockerfile.repo.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 # Deploying containers for running services
