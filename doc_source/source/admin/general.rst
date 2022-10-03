@@ -95,7 +95,7 @@ of the configuration options:
 7. DATAFED_WEB_CERT_PATH - Needed by web server
 8. DATAFED_GLOBUS_APP_ID - Needed by core server
 9. DATAFED_GLOBUS_APP_SECRET - Needed by core server
-10. DATAFED_SERVER_DOMAIN_NAME_AND_PORT - Needed by repo server
+10. DATAFED_SERVER_PORT - Needed by repo server
 11. DATAFED_DOMAIN - Needed by repo, web and authz
 12. DATAFED_GCS_ROOT_NAME - Needed by repo and authz by Globus
 13. GCS_COLLECTION_ROOT_PATH - Needed by repo and authz for Globus 

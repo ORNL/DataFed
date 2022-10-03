@@ -10,7 +10,7 @@ Help()
 {
   echo "$(basename $0) Will set up a configuration file for the repo server"
   echo
-  echo "Syntax: $(basename $0) [-h|r|d]"
+  echo "Syntax: $(basename $0) [-h|r|d|p]"
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-r, --repo-id                     The repository id i.e. /repo/core"
@@ -21,6 +21,7 @@ Help()
   echo "                                  datafed.ornl.gov"
   echo "                                  It can also be set using the DATAFED_DOMAIN env variable."
   echo "                                  NOTE: this does not use https it uses tcp."
+  echo "-p, --port                        The DataFed port."
 }
 
 REPO_ID="datafed-home"
@@ -32,9 +33,14 @@ else
   local_DATAFED_DOMAIN=$(printenv DATAFED_DOMAIN)
 fi
 
-# This is the port that is open and listening on"
-# the core server."
-local_DATAFED_PORT="7512"
+if [ -z "DATAFED_SERVER_PORT" ]
+then
+  # This is the port that is open and listening on"
+  # the core server."
+  local_DATAFED_SERVER_PORT="7512"
+else
+  local_DATAFED_SERVER_PORT=$(printenv DATAFED_SERVER_PORT)
+fi
 
 VALID_ARGS=$(getopt -o hr:d: --long 'help',repo-id:,datafed-domain-port: -- "$@")
 if [[ $? -ne 0 ]]; then
@@ -52,9 +58,14 @@ while [ : ]; do
         REPO_ID=$2
         shift 2
         ;;
-    -d | --datafed-domain-port)
-        echo "Processing 'DataFed domain and port' option. Input argument is '$2'"
-        DATAFED_SERVER_DOMAIN_NAME_AND_PORT=$2
+    -d | --domain)
+        echo "Processing 'DataFed domain' option. Input argument is '$2'"
+        local_DATAFED_DOMAIN=$2
+        shift 2
+        ;;
+    -p | --port)
+        echo "Processing 'DataFed port' option. Input argument is '$2'"
+        local_DATAFED_SERVER_PORT=$2
         shift 2
         ;;
     --) shift; 
@@ -71,7 +82,7 @@ PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 CONFIG_FILE_NAME="datafed-authz.cfg"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
-server_address=tcp://${local_DATAFED_DOMAIN}:${local_DATAFED_PORT}
+server_address=tcp://${local_DATAFED_DOMAIN}:${local_DATAFED_SERVER_PORT}
 server_key=/opt/datafed/keys/datafed-core-key.pub
 repo_id=repo/$DATAFED_REPO_ID_AND_DIR
 pub_key=/opt/datafed/keys/datafed-repo-key.pub

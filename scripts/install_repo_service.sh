@@ -25,8 +25,7 @@ cp "$PROJECT_ROOT/services/datafed-repo.service" /etc/systemd/system
 
 
 systemctl_exists=$( which systemctl )
-
-if [[ -z systemctl_exists ]]
+if [[ ! -z $systemctl_exists ]]
 then
   sudo systemctl daemon-reload
 

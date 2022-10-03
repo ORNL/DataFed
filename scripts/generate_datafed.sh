@@ -1,6 +1,6 @@
 #!/bin/env bash
 
-set -euf -o pipefail
+set -ef -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
@@ -65,12 +65,12 @@ else
   local_DATAFED_GLOBUS_APP_SECRET=$(printenv DATAFED_GLOBUS_APP_SECRET)
 fi
 
-local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT=""
-if [ -z "${DATAFED_SERVER_DOMAIN_NAME_AND_PORT}" ]
+local_DATAFED_SERVER_PORT=""
+if [ -z "${DATAFED_SERVER_PORT}" ]
 then
-  local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT=""
+  local_DATAFED_SERVER_PORT=""
 else
-  local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT=$(printenv DATAFED_SERVER_DOMAIN_NAME_AND_PORT)
+  local_DATAFED_SERVER_PORT=$(printenv DATAFED_SERVER_PORT)
 fi
 
 local_DATAFED_DOMAIN=""
@@ -153,8 +153,8 @@ export DATAFED_GLOBUS_APP_SECRET="$local_DATAFED_GLOBUS_APP_SECRET"
 # ************************************************
 # Env Variables for Repo Server
 # ************************************************
-# i.e. datafed-server-test.ornl.gov:7512
-export DATAFED_SERVER_DOMAIN_NAME_AND_PORT="$local_DATAFED_SERVER_DOMAIN_NAME_AND_PORT"
+# i.e. 7512 - ZeroMQ port
+export DATAFED_SERVER_PORT="$local_DATAFED_SERVER_PORT"
 
 # ************************************************
 # Env Variables for Authz, Web, Repo Server
