@@ -38,7 +38,7 @@ build-repo-base:
 
 build-gcs-base:
   variables:
-    IMAGE_TAG: "dlsw/datafed/gcs"
+    IMAGE_TAG: "dlsw/datafed/gcs-base"
   stage: build-base
   tags:
     - datafed
@@ -71,6 +71,13 @@ deploy-repo-base:
     - datafed
   script:
     - docker push $CI_REGISTRY/dlsw/datafed/repo-base
+
+deploy-gcs-base:
+  stage: deploy-base
+  tags:
+    - datafed
+  script:
+    - docker push $CI_REGISTRY/dlsw/datafed/gcs-base
 
 # Building containers for running services
 build-ws:
