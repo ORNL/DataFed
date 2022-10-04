@@ -42,7 +42,6 @@ build-gcs-base:
   stage: build-base
   tags:
     - datafed
-    - globus
   script:
     - git clone https://github.com/globusonline/globus-connect-server-deploy.git
     - ./globus-connect-server-deploy/docker-build-gcs
