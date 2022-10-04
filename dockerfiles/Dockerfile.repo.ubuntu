@@ -25,4 +25,10 @@ RUN ${BUILD_DIR}/scripts/generate_repo_config.sh &&\
  cmake --build build
 RUN cmake --build build --target install
 
+# This port is needed to communicate with the DataFed core server
+EXPOSE 7512
+# Not quite sure what 9000 is doing that 7512 isn't, difference between egress
+# and ingress?
+EXPOSE 9000
+
 CMD ["bash","-c","$(cat datafed-repo.service | grep ExecStart | cut -d '=' -f2)"]

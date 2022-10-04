@@ -34,4 +34,7 @@ RUN npm install client-oauth2
 
 ENV DATAFED_CONFIG_DIR ${DATAFED_CONFIG_DIR}
 
+EXPOSE 443
+EXPOSE 7513
+
 CMD ./datafed-ws.js ${DATAFED_CONFIG_DIR}/datafed-ws.ini
