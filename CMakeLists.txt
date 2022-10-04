@@ -6,7 +6,7 @@ set(DataFed_MINOR_VERSION 2)
 set(DataFed_PATCH_VERSION 0)
 set(DataFed_VERSION ${DataFed_MAJOR_VERSION}.${DataFed_MINOR_VERSION}.${DataFed_PATCH_VERSION})
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
@@ -17,10 +17,12 @@ set(GLOBUS_VERSION  5)
 OPTION(BUILD_REPO_SERVER "Build DataFed Repo Server" FALSE)
 OPTION(BUILD_AUTHZ "Build DataFed Authz library" FALSE)
 OPTION(BUILD_CORE_SERVER "Build DataFed Core Server" TRUE)
-OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
-OPTION(BUILD_DOCS "Build documentation" TRUE)
-OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
-OPTION(BUILD_FOXX "Build Foxx" TRUE)
+OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" False)
+OPTION(BUILD_DOCS "Build documentation" False)
+OPTION(BUILD_PYTHON_CLIENT "Build python client" False)
+OPTION(BUILD_FOXX "Build Foxx" False)
+
+OPTION(ENABLE_TESTS "Enable building tests" TRUE)
 
 set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
@@ -37,6 +39,10 @@ endif()
 # Create file glob here because need to be made visible here as well
 file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/*.proto" )
 
+if( ENABLE_TESTS ) 
+  enable_testing() 
+endif()
+
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ ) 
 
   include_directories( "/usr/include/globus" )
@@ -47,7 +53,7 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ )
           include_directories( $ENV{BOOST_INC} )
           link_directories( $ENV{BOOST_LIB} )
   else()
-    find_package(Boost REQUIRED)
+    find_package(Boost COMPONENTS program_options unit_test_framework filesystem REQUIRED)
   endif()
 
   ## load in pkg-config support
