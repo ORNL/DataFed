@@ -36,6 +36,17 @@ build-repo-base:
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
+build-gcs-base:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/gcs"
+  stage: build-base
+  tags:
+    - datafed
+    - globus
+  script:
+    - git clone https://github.com/globusonline/globus-connect-server-deploy.git
+    - ./globus-connect-server-deploy/docker-build-gcs
+
 # Deploying base containers
 deploy-ws-base:
   stage: deploy-base
