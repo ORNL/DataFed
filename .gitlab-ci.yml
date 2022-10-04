@@ -46,6 +46,7 @@ build-gcs-base:
     - git clone https://github.com/globusonline/globus-connect-server-deploy.git
     - cd ./globus-connect-server-deploy
     - ./docker-build-gcs
+    - docker tag globus-connect-server54:latest $CI_REGISTRY/${IMAGE_TAG}
 
 # Deploying base containers
 deploy-ws-base:
