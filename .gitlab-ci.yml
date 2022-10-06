@@ -49,6 +49,7 @@ build-gcs-authz-base:
     - git clone https://github.com/globusonline/globus-connect-server-deploy.git
     - cd ./globus-connect-server-deploy
     - ./docker-build-gcs
+    - cd ../
     - docker tag globus-connect-server54:latest $CI_REGISTRY/${IMAGE_TAG}
     - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG2} .
 
