@@ -140,6 +140,14 @@ loadSettings();
 
 express.static.mime.define({'application/javascript': ['js']});
 
+// Enforce HSTS
+app.use(function(req, res, next) {
+  if (req.secure) {
+    res.setHeader('Strict-Transport-Security', 'max-age=14400') // 4 hours
+  }
+  next()
+});
+
 app.use( express.static( __dirname + '/static' ));
 // body size limit = 100*max metadata size, which is 100 Kb
 app.use( express.json({ type: 'application/json', limit: '1048576'}));
