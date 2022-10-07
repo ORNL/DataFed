@@ -10,6 +10,9 @@ sudo apt-get install -y libtool build-essential g++ gcc cmake libboost-all-dev \
 autoconf automake make git
 sudo apt-get install -y libzmq3-dev 
 
+python3 -m pip install --upgrade pip
+python3 -m pip install setuptools
+
 if [ -d protobuf ]
 then
 	# sudo required because of egg file
