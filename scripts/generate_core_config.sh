@@ -74,15 +74,6 @@ else
   local_DATABASE_PASSWORD=$(printenv DATABASE_PASSWORD)
 fi
 
-local_DATAFED_LOG_PATH=""
-
-if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
-then
-  local_DATAFED_LOG_PATH="/var/log/datafed"
-else
-  local_DATAFED_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
-fi
-
 VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,api-url:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
@@ -181,7 +172,6 @@ CONFIG_FILE_NAME="datafed-core.cfg"
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 # Note this file can be generated with $(basename $0)
 # Default location to log files
-log-path=${local_DATAFED_LOG_PATH}
 cred-dir=$local_DATAFED_CRED_DIR
 client-threads=$local_DATAFED_CORE_CLIENT_THREADS
 task-threads=$local_DATAFED_CORE_TASK_THREADS
