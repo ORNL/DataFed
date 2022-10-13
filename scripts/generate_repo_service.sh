@@ -40,8 +40,8 @@ KillSignal=SIGQUIT
 WorkingDirectory=/opt/datafed/repo
 ExecStart=/opt/datafed/repo/datafed-repo --cfg /opt/datafed/repo/datafed-repo.cfg
 User=cades
-StandardOutput=append:${DATAFED_WS_LOG_FILE_PATH}
-StandardError=append:${DATAFED_WS_LOG_FILE_PATH}
+StandardOutput=append:${DATAFED_REPO_LOG_FILE_PATH}
+StandardError=append:${DATAFED_REPO_LOG_FILE_PATH}
 [Install]
 WantedBy=multi-user.target
 EOF

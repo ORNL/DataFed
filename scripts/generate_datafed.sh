@@ -12,7 +12,7 @@ PATH_TO_CONFIG_DIR=$(realpath "$PROJECT_ROOT/config")
 local_DATAFED_DEFAULT_LOG_PATH=""
 if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
 then
-  local_DATAFED_DEFAULT_LOG_PATH=""
+  local_DATAFED_DEFAULT_LOG_PATH="/var/log/datafed"
 else
   local_DATAFED_DEFAULT_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
 fi
@@ -125,6 +125,10 @@ fi
 cat << EOF > "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 # This is the master DataFed configuration file
 
+# This is used when generating the service files to determine
+# where the log files will be output.
+# If left unspecified the default location is
+# /var/log/datafed
 export DATAFED_DEFAULT_LOG_PATH="$local_DATAFED_DEFAULT_LOG_PATH"
 
 # ************************************************
