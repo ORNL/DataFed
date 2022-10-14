@@ -112,7 +112,6 @@ CONFIG_FILE_NAME="datafed-repo.cfg"
 # qualified domain name and publily accessible IP address. The port should be the
 # same port listed in the datafed-repo.cfg file.
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
-log-path=${local_DATAFED_LOG_PATH}
 cred-dir=$local_DATAFED_CRED_DIR
 server=tcp://$local_DATAFED_DOMAIN:${local_DATAFED_PORT}
 port=$local_DATAFED_REPO_EGRESS_PORT
