@@ -9,9 +9,9 @@ WORKDIR ${BUILD_DIR}
 COPY ./scripts/generate_authz_config.sh ${BUILD_DIR}/generate_authz_config.sh
 COPY ./config/datafed.sh ${BUILD_DIR}/config/
 COPY ./CMakeLists.txt ${BUILD_DIR}
-COPY ./repo/CMakeLists.txt ${BUILD_DIR}/repo/CMakeLists.txt
-COPY ./repo/gridftp/CMakeLists.txt ${BUILD_DIR}/repo/gridftp/CMakeLists.txt
-COPY ./repo/gridftp/globus5 ${BUILD_DIR}/repo/gridftp/globus5
+COPY ./repository/CMakeLists.txt ${BUILD_DIR}/repository/CMakeLists.txt
+COPY ./repository/gridftp/CMakeLists.txt ${BUILD_DIR}/repository/gridftp/CMakeLists.txt
+COPY ./repository/gridftp/globus5 ${BUILD_DIR}/repository/gridftp/globus5
 COPY ./common ${BUILD_DIR}/common
 
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&\
