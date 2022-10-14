@@ -7,7 +7,7 @@ set -e
 sudo apt-get update
 sudo dpkg --configure -a
 sudo apt-get install -y libtool build-essential g++ gcc cmake libboost-all-dev \
-autoconf automake make git python3-pkg-resources python3-pip 
+autoconf automake make git python3-pkg-resources python3-pip pkg-config
 sudo apt-get install -y libzmq3-dev 
 
 if [ -d protobuf ]
