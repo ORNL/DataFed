@@ -1,0 +1,29 @@
+FROM code.ornl.gov:4567/dlsw/datafed/gcs-authz-base:latest as build
+
+ARG BUILD_DIR="/source"
+
+RUN mkdir -p ${BUILD_DIR}
+
+WORKDIR ${BUILD_DIR}
+
+COPY ./scripts/generate_authz_config.sh ${BUILD_DIR}/scripts/generate_authz_config.sh
+COPY ./config/datafed.sh ${BUILD_DIR}/config/
+COPY ./CMakeLists.txt ${BUILD_DIR}
+COPY ./repository/CMakeLists.txt ${BUILD_DIR}/repository/CMakeLists.txt
+COPY ./repository/gridftp/CMakeLists.txt ${BUILD_DIR}/repository/gridftp/CMakeLists.txt
+COPY ./repository/gridftp/globus5 ${BUILD_DIR}/repository/gridftp/globus5
+COPY ./common ${BUILD_DIR}/common
+
+RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&\
+ cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=True \
+                    -DBUILD_CORE_SERVER=False -DBUILD_WEB_SERVER=False \
+                    -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
+                    -DBUILD_FOXX=False &&\
+ cmake --build build
+RUN cmake --build build --target install
+
+# Rerunning the GCS entrypoint
+# Default command unless overriden with 'docker run --entrypoint'
+ENTRYPOINT ["/entrypoint.sh"]
+# Default options to ENTRYPOINT unless overriden with 'docker run arg1...'
+CMD []

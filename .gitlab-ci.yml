@@ -36,6 +36,23 @@ build-repo-base:
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
+# This build runs two builds, one to build the gcs image provided by Globus
+# The second to build on top of the gcs image and add the authz dependencies
+build-gcs-authz-base:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/gcs-base"
+    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
+  stage: build-base
+  tags:
+    - datafed
+  script:
+    - git clone https://github.com/globusonline/globus-connect-server-deploy.git
+    - cd ./globus-connect-server-deploy
+    - ./docker-build-gcs
+    - cd ../
+    - docker tag globus-connect-server54:latest $CI_REGISTRY/${IMAGE_TAG}
+    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG2} .
+
 # Deploying base containers
 deploy-ws-base:
   stage: deploy-base
@@ -60,6 +77,15 @@ deploy-repo-base:
     - datafed
   script:
     - docker push $CI_REGISTRY/dlsw/datafed/repo-base
+
+deploy-gcs-authz-base:
+  stage: deploy-base
+  needs: ["build-gcs-authz-base"]
+  tags:
+    - datafed
+  script:
+    - docker push $CI_REGISTRY/dlsw/datafed/gcs-base
+    - docker push $CI_REGISTRY/dlsw/datafed/gcs-authz-base
 
 # Building containers for running services
 build-ws:
@@ -99,6 +125,19 @@ build-repo:
     - ./scripts/generate_datafed.sh
     - docker build -f dockerfiles/Dockerfile.repo.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
+build-gcs-authz:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/gcs-authz-"
+  stage: build
+  tags:
+    - datafed
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - docker build -f dockerfiles/Dockerfile.gcs-authz.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
+
+
 # Deploying containers for running services
 deploy-ws:
   stage: deploy
@@ -135,3 +174,16 @@ deploy-repo:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - docker push "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+
+deploy-gcs-authz:
+  stage: deploy
+  needs: ["build-gcs-authz"]
+  variables:
+    IMAGE_TAG: "dlsw/datafed/gcs-authz-"
+  tags:
+    - datafed
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - docker push "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+

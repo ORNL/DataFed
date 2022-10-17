@@ -7,14 +7,13 @@ set -e
 sudo apt-get update
 sudo dpkg --configure -a
 sudo apt-get install -y libtool build-essential g++ gcc cmake libboost-all-dev \
-  pkg-config autoconf automake make unzip git python3-pkg-resources \
-  libssl-dev
-sudo apt-get install -y libzmq3-dev  python3-pip
+autoconf automake make git python3-pkg-resources python3-pip pkg-config \
+libglobus-common-dev
+sudo apt-get install -y libzmq3-dev 
 
 python3 -m pip install --upgrade pip
 python3 -m pip install setuptools
 
-cd ~
 if [ -d protobuf ]
 then
 	# sudo required because of egg file
