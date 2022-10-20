@@ -43,6 +43,9 @@ Server::Server() :
     // Wait for DB connection
     waitForDB();
 
+    // Load test mode setting from DB
+    m_config.loadTestMode();
+
     // Load repository config from DB
     m_config.loadRepositoryConfig();
 

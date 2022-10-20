@@ -9,6 +9,13 @@
 namespace SDMS {
   namespace Core {
 
+    void Config::loadTestMode()
+    {
+        DatabaseAPI  db_client( db_url, db_user, db_pass );
+
+        test_mode = db_client.getTestMode();
+    }
+
     void Config::loadRepositoryConfig() {
       DL_INFO("Loading repo configuration " << __FILE__ << " " <<  __LINE__);
 
@@ -53,8 +60,6 @@ namespace SDMS {
           m_repos_mtx.lock();
           m_repos[r.id()] = r;
           m_repos_mtx.unlock();
-
-
         }
       }
     }

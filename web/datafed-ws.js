@@ -83,7 +83,6 @@ function startServer(){
     console.log( "  Core server addr:", g_core_serv_addr );
     //console.log( "  Client ID:", g_client_id );
     //console.log( "  Client Secret:", g_client_secret );
-    console.log( "  Test mode:", g_test );
 
     console.log( "Connecting to Core" );
 
@@ -98,6 +97,11 @@ function startServer(){
         }else{
             if ( reply.web > g_ver_web || reply.mapi_minor > g_ver_mapi_minor ){
                 console.log( "WARNING: A newer web server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.web + ")" );
+            }
+
+            if ( reply.test_mode ) {
+                g_test = true;
+                console.log( "WARNING: TEST MODE ENABLED!" );
             }
 
             g_oauth_credentials = {
@@ -1813,8 +1817,6 @@ function loadSettings(){
             }
             g_system_secret = config.server.system_secret;
             g_session_secret = config.server.session_secret;
-            g_test = config.server.test || g_test;
-            
         }
         if ( config.oauth ){
             g_client_id = config.oauth.client_id || g_client_id;

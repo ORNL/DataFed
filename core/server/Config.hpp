@@ -43,15 +43,17 @@ class Config
         note_purge_period( 6*3600 ),
         metrics_period( 300 ),
         metrics_purge_period( 3600 ),
-        metrics_purge_age( 24*3600 )
+        metrics_purge_age( 24*3600 ),
+        test_mode( false )
     {}
 
-    std::map<std::string,RepoData>     m_repos;
-    mutable std::mutex m_repos_mtx;
+    std::map<std::string,RepoData>  m_repos;            ///< List of configured repositories
+    mutable std::mutex              m_repos_mtx;
+    auth_client_map_t               m_auth_clients;     ///< List of known authenticated clients
+    mutable std::mutex              m_auth_clients_mtx;
 
-    auth_client_map_t               m_auth_clients;         ///< List of known authenticated clients
-    mutable std::mutex m_auth_clients_mtx;
   public:
+    void loadTestMode();
     void loadRepositoryConfig();
     std::map<std::string,RepoData> getRepos() const;
     auth_client_map_t getAuthClients() const;
@@ -80,10 +82,9 @@ class Config
     uint32_t        metrics_period;
     uint32_t        metrics_purge_period;
     uint32_t        metrics_purge_age;
+    bool            test_mode;
 
     MsgComm::SecurityContext            sec_ctx;
-
-    /// Map of client key to DataFed ID
 };
 
 }}

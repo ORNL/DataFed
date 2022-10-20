@@ -296,6 +296,20 @@ DatabaseAPI::serverPing()
     dbGet( "admin/ping", {}, result );
 }
 
+bool
+DatabaseAPI::getTestMode()
+{
+    Value result;
+
+    dbGet( "config/system", {}, result );
+
+    const Value::Object & obj = result.asObject();
+    if ( obj.has( "test_mode" ))
+        return obj.asBool();
+    else
+        return false;
+}
+
 void
 DatabaseAPI::clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply )
 {
@@ -451,7 +465,14 @@ DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDa
     DL_INFO( "DataFed user create - uid: " << a_request.uid() << ", name: " << a_request.name() );
 
     vector<pair<string,string>> params;
+
+    /*
+    Note: the secret param is specifically required to prevent unauthorized API clients from
+    creating user accounts. Generally, only authorized web services should be able to call this
+    endpoint.
+    */
     params.push_back({"secret",a_request.secret()});
+
     params.push_back({"uid",a_request.uid()});
     params.push_back({"name",a_request.name()});
     params.push_back({"email",a_request.email()});
