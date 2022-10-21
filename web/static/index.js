@@ -20,8 +20,9 @@ $(document).ready(function(){
     });
 
     var tmpl_data = JSON.parse(document.getElementById('template_data').innerHTML);
+    console.log("template data:",tmpl_data);
     if ( tmpl_data.test_mode == "true" ){
-        $("#devmode").show();
+        $("#test_mode").show();
     }
 });
 

@@ -14,6 +14,7 @@ namespace SDMS {
         DatabaseAPI  db_client( db_url, db_user, db_pass );
 
         test_mode = db_client.getTestMode();
+        DL_ERROR("config test mode:" << test_mode);
     }
 
     void Config::loadRepositoryConfig() {

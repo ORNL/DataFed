@@ -38,7 +38,7 @@ $(document).ready(function(){
     settings.setTheme( tmpl_data.theme );
 
     if ( tmpl_data.test_mode == "true" ){
-        $("#devmode").show();
+        $("#test_mode").show();
     }
 
     resizeUI();

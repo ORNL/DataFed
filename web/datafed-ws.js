@@ -30,9 +30,11 @@ var zmq = require("zeromq");
 const app = express();
 var ECT = require('ect'); // for html templates
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
-const ClientOAuth2 = require('client-oauth2');
 
 const MAX_CTX = 50;
+
+// Any config options / vars that need to be shared with loaded modules must go here
+var opts = {};
 
 var g_host,
     g_port,
@@ -41,22 +43,13 @@ var g_host,
     g_server_chain_file,
     g_system_secret,
     g_session_secret,
-    g_test,
     g_msg_by_id = {},
     g_msg_by_name = {},
     g_core_sock = zmq.socket('dealer'),
     g_core_serv_addr,
-    g_globus_auth,
-    g_extern_url,
-    g_oauth_credentials,
     g_ctx = new Array( MAX_CTX ),
     g_ctx_next = 0,
-    g_client_id,
-    g_client_secret,
-    //g_cookie_opts = { httpOnly: true, maxAge: 604800000, secure: true, sameSite: "lax" },
-    //g_cookie_ui_opts = { httpOnly: true, maxAge: 604800000, secure: true, sameSite: "lax", path: "/ui" },
-    g_ready_start = 4,
-    g_version,
+    g_ready_start = 4, // Number of async tasks to be completed before server start (general + 3 proto files loaded)
     g_ver_major,
     g_ver_mapi_major,
     g_ver_mapi_minor,
@@ -68,77 +61,6 @@ const nullfr = Buffer.from([]);
 g_ctx.fill(null);
 
 
-function startServer(){
-    console.log( "  Host:", g_host );
-    console.log( "  Port:", g_port );
-    console.log( "  TLS:", g_tls?"Yes":"No" );
-    if ( g_tls ){
-        console.log( "  Server key file:", g_server_key_file );
-        console.log( "  Server cert file:", g_server_cert_file );
-        console.log( "  Server chain file:", g_server_chain_file );
-    }
-    console.log( "  External URL:", g_extern_url );
-    //console.log( "  System secret:", g_system_secret );
-    //console.log( "  session secret:", g_session_secret );
-    console.log( "  Core server addr:", g_core_serv_addr );
-    //console.log( "  Client ID:", g_client_id );
-    //console.log( "  Client Secret:", g_client_secret );
-
-    console.log( "Connecting to Core" );
-
-    g_core_sock.connect( g_core_serv_addr );
-
-    sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
-        if ( !reply ){
-            console.log( "ERROR: No reply from core server" );
-        }else if ( reply.major != g_ver_major || reply.mapiMajor != g_ver_mapi_major ||
-                reply.mapi_minor < g_ver_mapi_minor || reply.mapi_minor > ( g_ver_mapi_minor + 9 )){
-            console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ")" );
-        }else{
-            if ( reply.web > g_ver_web || reply.mapi_minor > g_ver_mapi_minor ){
-                console.log( "WARNING: A newer web server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.web + ")" );
-            }
-
-            if ( reply.test_mode ) {
-                g_test = true;
-                console.log( "WARNING: TEST MODE ENABLED!" );
-            }
-
-            g_oauth_credentials = {
-                clientId: g_client_id,
-                clientSecret: g_client_secret,
-                authorizationUri: 'https://auth.globus.org/v2/oauth2/authorize',
-                accessTokenUri: 'https://auth.globus.org/v2/oauth2/token',
-                redirectUri: g_extern_url + "/ui/authn",
-                scopes: 'urn:globus:auth:scope:transfer.api.globus.org:all offline_access openid'
-            };
-
-            g_globus_auth = new ClientOAuth2( g_oauth_credentials );
-
-            var server;
-            if ( g_tls ){
-                var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
-                var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
-                var chain;
-                if ( g_server_chain_file ){
-                    chain = fs.readFileSync( g_server_chain_file, 'utf8');
-                }
-                console.log( "Starting https server" );
-                server = https.createServer({
-                    key: privateKey,
-                    cert: certificate,
-                    ca: chain,
-                    secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3
-                }, app );
-            }else{
-                console.log( "Starting http server" );
-                server = http.createServer({}, app);
-            }
-
-            server.listen( g_port );
-        }
-    });
-}
 
 loadSettings();
 
@@ -208,11 +130,10 @@ app.get('/ui/welcome', (a_req, a_resp) => {
     if ( a_req.session.uid && a_req.session.reg )
         a_resp.redirect( '/ui/main' );
     else{
-        console.log("Access welcome from", a_req.connection.remoteAddress );
+        console.log("Access welcome from", a_req.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme']|| "light";
-        console.log("Theme:",theme);
-        a_resp.render('index',{theme:theme,version:g_version,test_mode:g_test});
+        a_resp.render('index',{ theme: theme, version: opts.version, test_mode: opts.test_mode });
     }
 });
 
@@ -221,7 +142,7 @@ app.get('/ui/main', (a_req, a_resp) => {
         console.log( "Access main (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
-        a_resp.render( 'main',{user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test});
+        a_resp.render( 'main',{ user_uid: a_req.session.uid, theme: theme, version: opts.version, test_mode: opts.test_mode });
     }else{
         console.log("no session",a_req.session);
         // datafed-user cookie not set, so clear datafed-id before redirect
@@ -230,151 +151,13 @@ app.get('/ui/main', (a_req, a_resp) => {
     }
 });
 
-/* This is the post-Globus registration page where user may enter a password before continuing to main
-*/
-app.get('/ui/register', (a_req, a_resp) => {
-    console.log("/ui/register");
-
-    if ( !a_req.session.uid ){
-        console.log(" - no uid, go to /");
-        a_resp.redirect( '/' );
-    } else if ( a_req.session.reg ){
-        console.log(" - already registered, go to /ui/main");
-        a_resp.redirect( '/ui/main' );
-    } else {
-        console.log( " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
-
-        var theme = a_req.cookies['datafed-theme'] || "light";
-        a_resp.render('register', { uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
-    }
-});
-
-/* This is the "login/register" URL from welcome page.
-User should be unknown at this point (if session were valid, would be redirected to /ui/main).
-This is the beginning of the OAuth loop through Globus Auth and will redirect to /ui/authn
-*/
-app.get('/ui/login', (a_req, a_resp) => {
-    if ( a_req.session.uid && a_req.session.reg ){
-        a_resp.redirect( '/ui/main' );
-    } else {
-        console.log( "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "log-in" );
-
-        var uri = g_globus_auth.code.getUri();
-        a_resp.redirect(uri);
-    }
-});
 
 
-app.get('/ui/logout', (a_req, a_resp) => {
-    console.log( "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "logout" );
-
-    //a_resp.clearCookie( 'datafed-id' );
-    //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
-    a_req.session.destroy( function(){
-        a_resp.clearCookie( 'connect.sid' );
-        a_resp.redirect("https://auth.globus.org/v2/web/logout?redirect_name=DataFed&redirect_uri="+g_extern_url);
-    });
-});
 
 app.get('/ui/error', (a_req, a_resp) => {
-    a_resp.render('error',{theme:"light",version:g_version,test_mode:g_test});
+    a_resp.render('error',{ theme: "light", version: opts.version, test_mode: opts.test_mode });
 });
 
-/* This is the OAuth redirect URL after a user authenticates with Globus
-*/
-app.get('/ui/authn', ( a_req, a_resp ) => {
-    console.log( "Globus authenticated - log in to DataFed" );
-
-    /* This after Globus authentication. Loads Globus tokens and identity information.
-    The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
-    the registration page.
-    */
-
-    g_globus_auth.code.getToken( a_req.originalUrl ).then( function( client_token ) {
-      
-        var xfr_token = client_token.data.other_tokens[0];
-
-        const opts = {
-            hostname: 'auth.globus.org',
-            method: 'POST',
-            path: '/v2/oauth2/token/introspect',
-            rejectUnauthorized: true,
-            auth: g_oauth_credentials.clientId + ":" + g_oauth_credentials.clientSecret,
-            headers:{
-                'Content-Type' : 'application/x-www-form-urlencoded',
-                'Accept' : 'application/json',
-            }
-        };
-
-        // Request user info from token
-        const req = https.request( opts, (res) => {
-            var data = '';
-
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
-
-            res.on('end', () => {
-                //console.log('tok introspect done, data:', data );
-
-                if ( res.statusCode >= 200 && res.statusCode < 300 ){
-                    var userinfo = JSON.parse( data ),
-                        uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
-
-                    console.log( 'User', uid, 'authenticated, verifying DataFed account' );
-
-                    sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
-                        if ( !reply  ) {
-                            console.log( "Error - Find user call failed." );
-                            a_resp.redirect( "/ui/error" );
-                        } else if ( !reply.user || !reply.user.length ) {
-                            // Not registered
-                            console.log( "User", uid, "not registered" );
-
-                            // Store all data need for registration in session (temporarily)
-                            a_req.session.uid = uid;
-                            a_req.session.name = userinfo.name;
-                            a_req.session.email = userinfo.email;
-                            a_req.session.uuids = userinfo.identities_set;
-                            a_req.session.acc_tok = xfr_token.access_token;
-                            a_req.session.acc_tok_ttl = xfr_token.expires_in;
-                            a_req.session.ref_tok = xfr_token.refresh_token;
-
-                            a_resp.redirect( "/ui/register" );
-                        } else {
-                            console.log( 'User', uid, 'verified, acc:', xfr_token.access_token, ", ref:", xfr_token.refresh_token, ", exp:", xfr_token.expires_in );
-
-                            // Store only data needed for active session
-                            a_req.session.uid = uid;
-                            a_req.session.reg = true;
-
-                            // Refresh Globus access & refresh tokens to Core/DB
-                            setAccessToken( uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
-
-                            // TODO Account may be disable from SDMS (active = false)
-                            a_resp.redirect( "/ui/main" );
-                        }
-                    });
-                }else{
-                    // TODO - Not sure this is required - req.on('error'...) should catch this?
-                    console.log("Error: Globus introspection failed. User token:", xfr_token );
-                    a_resp.redirect( "/ui/error" );
-                }
-            });
-        });
-
-        req.on('error', (e) => {
-            console.log("Error: Globus introspection failed. User token:", xfr_token );
-            a_resp.redirect( "/ui/error" );
-        });
-
-        req.write( 'token=' + client_token.accessToken + '&include=identities_set' );
-        req.end();
-    }, function( reason ){
-        console.log("Error: Globus get token failed. Reason:", reason );
-        a_resp.redirect( "/ui/error" );
-    });
-});
 
 /*
 app.get('/ui/do_register', ( a_req, a_resp ) => {
@@ -1424,7 +1207,7 @@ app.post('/api/sch/delete', ( a_req, a_resp ) => {
 app.get('/ui/ep/view', ( a_req, a_resp ) => {
 
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
-        const opts = {
+        const req_opts = {
             hostname: 'transfer.api.globusonline.org',
             method: 'GET',
             path: '/v0.10/endpoint/' + encodeURIComponent(a_req.query.ep),
@@ -1434,7 +1217,7 @@ app.get('/ui/ep/view', ( a_req, a_resp ) => {
             }
         };
 
-        const req = https.request( opts, (res) => {
+        const req = https.request( req_opts, (res) => {
             var data = '';
 
             res.on('data', (chunk) => {
@@ -1458,7 +1241,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
 
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
 
-        const opts = {
+        const req_opts = {
             hostname: 'transfer.api.globusonline.org',
             method: 'GET',
             path: '/v0.10/endpoint_search?filter_scope=all&fields=display_name,canonical_name,id,description,organization,activated,expires_in,default_directory&filter_fulltext='+encodeURIComponent(a_req.query.term),
@@ -1468,7 +1251,7 @@ app.get('/ui/ep/autocomp', ( a_req, a_resp ) => {
             }
         };
 
-        const req = https.request( opts, (res) => {
+        const req = https.request( req_opts, (res) => {
             var data = '';
 
             res.on('data', (chunk) => {
@@ -1504,7 +1287,7 @@ app.post('/ui/ep/recent/save', ( a_req, a_resp ) => {
 app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
     sendMessage( "UserGetAccessTokenRequest", {}, a_req, a_resp, function( reply ) {
 
-        const opts = {
+        const req_opts = {
             hostname: 'transfer.api.globusonline.org',
             method: 'GET',
             path: '/v0.10/operation/endpoint/' + encodeURIComponent(a_req.query.ep) + '/ls?path=' + encodeURIComponent(a_req.query.path) + '&show_hidden=' + a_req.query.hidden,
@@ -1514,7 +1297,7 @@ app.get('/ui/ep/dir/list', ( a_req, a_resp ) => {
             }
         };
 
-        const req = https.request( opts, (res) => {
+        const req = https.request( req_opts, (res) => {
             var data = '';
 
             res.on('data', (chunk) => {
@@ -1704,9 +1487,9 @@ protobuf.load("Version.proto", function(err, root) {
     g_ver_mapi_minor = msg.values.VER_MAPI_MINOR;
     g_ver_web = msg.values.VER_WEB;
 
-    g_version = g_ver_major + "." + g_ver_mapi_major + "." + g_ver_mapi_minor + ":" + g_ver_web;
+    opts.version = g_ver_major + "." + g_ver_mapi_major + "." + g_ver_mapi_minor + ":" + g_ver_web;
 
-    console.log('Running Version',g_version);
+    console.log('Running Version', opts.version);
     if ( --g_ready_start == 0 )
         startServer();
 });
@@ -1796,7 +1579,6 @@ function loadSettings(){
     g_server_key_file = '/opt/datafed/datafed-web-key.pem';
     g_server_cert_file = '/opt/datafed/datafed-web-cert.pem';
     g_core_serv_addr = 'tcp://datafed.ornl.gov:7513';
-    g_test = false;
 
     console.log( "Reading configuration from file", process.argv[2] );
 
@@ -1809,7 +1591,7 @@ function loadSettings(){
             if ( config.server.tls == "0" || config.server.tls == "false" ){
                 g_tls = false;
             }
-            g_extern_url = config.server.extern_url;
+            opts.extern_url = config.server.extern_url;
             if ( g_tls ){
                 g_server_key_file = config.server.key_file || g_server_key_file;
                 g_server_cert_file = config.server.cert_file || g_server_cert_file;
@@ -1819,15 +1601,15 @@ function loadSettings(){
             g_session_secret = config.server.session_secret;
         }
         if ( config.oauth ){
-            g_client_id = config.oauth.client_id || g_client_id;
-            g_client_secret = config.oauth.client_secret || g_client_secret;
+            opts.globus_client_id = config.oauth.client_id;
+            opts.globus_client_secret = config.oauth.client_secret;
         }
         if ( config.core ){
             g_core_serv_addr = config.core.server_address || g_core_serv_addr;
         }
 
-        if ( !g_extern_url ){
-            g_extern_url = "http"+(g_tls?'s':'')+"://" + g_host + ":" + g_port;
+        if ( !opts.extern_url ){
+            opts.extern_url = "http"+(g_tls?'s':'')+"://" + g_host + ":" + g_port;
         }
     }catch( e ){
         console.log( "Could not open/parse configuration file", process.argv[2] );
@@ -1843,6 +1625,71 @@ function loadSettings(){
     }
 }
 
+function startServer(){
+    console.log( "  Host:", g_host );
+    console.log( "  Port:", g_port );
+    console.log( "  TLS:", g_tls?"Yes":"No" );
+    if ( g_tls ){
+        console.log( "  Server key file:", g_server_key_file );
+        console.log( "  Server cert file:", g_server_cert_file );
+        console.log( "  Server chain file:", g_server_chain_file );
+    }
+    console.log( "  External URL:", opts.extern_url );
+    console.log( "  Core server addr:", g_core_serv_addr );
+
+    console.log( "Connecting to Core" );
+
+    g_core_sock.connect( g_core_serv_addr );
+
+    sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
+        if ( !reply ){
+            console.log( "ERROR: No reply from core server" );
+        }else if ( reply.major != g_ver_major || reply.mapiMajor != g_ver_mapi_major ||
+                reply.mapi_minor < g_ver_mapi_minor || reply.mapi_minor > ( g_ver_mapi_minor + 9 )){
+            console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ")" );
+        }else{
+            if ( reply.web > g_ver_web || reply.mapi_minor > g_ver_mapi_minor ){
+                console.log( "WARNING: A newer web server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.web + ")" );
+            }
+
+            if ( reply.testMode ) {
+                opts.test_mode = true;
+                console.log( "WARNING: TEST MODE ENABLED!" );
+            } else {
+                opts.test_mode = false;
+            }
+
+            // Load all route files
+            var routePath="./routes/";
+            fs.readdirSync(routePath).forEach(function(file) {
+                console.log("loading route",routePath+file);
+                require(routePath+file)( app, opts );
+            });
+
+            var server;
+            if ( g_tls ){
+                var privateKey  = fs.readFileSync( g_server_key_file, 'utf8');
+                var certificate = fs.readFileSync( g_server_cert_file, 'utf8');
+                var chain;
+                if ( g_server_chain_file ){
+                    chain = fs.readFileSync( g_server_chain_file, 'utf8');
+                }
+                console.log( "Starting https server" );
+                server = https.createServer({
+                    key: privateKey,
+                    cert: certificate,
+                    ca: chain,
+                    secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3
+                }, app );
+            }else{
+                console.log( "Starting http server" );
+                server = http.createServer({}, app);
+            }
+
+            server.listen( g_port );
+        }
+    });
+}
 
 if ( --g_ready_start == 0 )
     startServer();
