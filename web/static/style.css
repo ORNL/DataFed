@@ -727,6 +727,12 @@ div.cat-item-title:hover .btn-cat-folder-open
     width:100%;
 }
 
+.center
+{
+    margin-left: auto;
+    margin-right: auto;
+}
+
 td.min-width
 {
     width: 1%;

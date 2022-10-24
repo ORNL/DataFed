@@ -2,6 +2,8 @@
 <html>
     <head>
         <% include 'head.ect' %>
+        <script type="module" charset="utf-8" src="/util.js"></script>
+        <script type="module" charset="utf-8" src="/dialogs.js"></script>
         <script type="module" charset="utf-8" src="/auth_basic_login.js"></script>
         <title>DataFed Login</title>
         <script type="application/json" id="template_data">
@@ -22,15 +24,39 @@
             </div>
             <div style="flex:auto;overflow:auto">
             <div style="font-size:110%;text-align:justify;text-justify: inter-word;margin:3em auto 1em auto;width:35em">
-                <div style='font-size:225%'>DataFed Password Login</div>
+                <div style='font-size:225%'>DataFed Log In / Registration</div>
                 <hr>
                 <div style='font-size:80%'>Version <%- @version %></div>
-
-                User ID: XXX
-                Password: XXX
-
-                <button class="btn btn-login">Log-In</button>
-                <button class="btn btn-register">Register</button>
+                <h2>Log-In</h2>
+                <p>To log-in to an existing account, enter DataFed user ID and DataFed password, then click the "Log In"
+                button. The DataFed password can be changed by accessing the settings dialog from the main DataFed window.</p>
+                <br>
+                <table class="center">
+                    <tr><td>User ID:</td><td><input type="text" id="input1-uid"></input></td></tr>
+                    <tr><td>Password:</td><td><input type="password" id="input1-pw"></input></td></tr>
+                </table>
+                <br><br>
+                <div style="text-align: center;">
+                    <button class="btn btn-login">Log In</button>
+                    <button class="btn btn-cancel">Cancel</button>
+                </div>
+                <br>
+                <h2>Registration</h2>
+                <p>To register a new user, enter the new user ID, password, and password verification, then click the
+                "Register" button. This will create a new user and set the password. If a user with the same ID exists,
+                registration will fail.</p>
+                <br>
+                <table class="center">
+                    <tr><td>User ID:</td><td><input type="text" id="input2-uid"></input></td></tr>
+                    <tr><td>Name:</td><td><input type="text" id="input2-name"></input></td></tr>
+                    <tr><td>Password:</td><td><input type="password" id="input2-pw"></input></td></tr>
+                    <tr><td>(verify):</td><td><input type="password" id="input2-pw-verify"></input></td></tr>
+                </table>
+                <br><br>
+                <div style="text-align: center;">
+                    <button class="btn btn-register">Register</button>
+                    <button class="btn btn-cancel">Cancel</button>
+                </div>
             </div>
             </div>
             <div class="ui-widget-header" style="flex:none;padding:.25em">

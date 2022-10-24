@@ -82,7 +82,7 @@ app.use( session({
     cookie: {
         httpOnly: true,
         maxAge: 432000000, // 5 days in msec
-        secure: true, // can't be true if load balancer in use
+        secure: g_tls, // if tls is true, enable secure cookies
         sameSite: "lax"
     }
 }));
@@ -211,7 +211,7 @@ app.get('/ui/do_register', ( a_req, a_resp ) => {
 */
 
 app.get('/api/usr/register', ( a_req, a_resp ) => {
-    console.log( '/api/usr/register' );
+    console.log( '/api/usr/register', a_req.session );
 
     if ( !a_req.session.uid ){
         console.log( 'Not logged in' );
