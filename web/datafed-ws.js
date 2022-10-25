@@ -25,13 +25,11 @@ const constants = require('crypto');
 const helmet = require('helmet');
 const fs = require('fs');
 const ini = require('ini');
-var protobuf = require("protobufjs");
-var zmq = require("zeromq");
 const app = express();
 var ECT = require('ect'); // for html templates
+var comm = require('comm');
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
 
-const MAX_CTX = 50;
 
 // Any config options / vars that need to be shared with loaded modules must go here
 var opts = {};
@@ -43,22 +41,13 @@ var g_host,
     g_server_chain_file,
     g_system_secret,
     g_session_secret,
-    g_msg_by_id = {},
-    g_msg_by_name = {},
-    g_core_sock = zmq.socket('dealer'),
     g_core_serv_addr,
-    g_ctx = new Array( MAX_CTX ),
-    g_ctx_next = 0,
     g_ready_start = 4, // Number of async tasks to be completed before server start (general + 3 proto files loaded)
     g_ver_major,
     g_ver_mapi_major,
     g_ver_mapi_minor,
     g_ver_web,
     g_tls;
-
-const nullfr = Buffer.from([]);
-
-g_ctx.fill(null);
 
 
 
@@ -1338,144 +1327,7 @@ function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
     });
 }
 
-
-function allocRequestContext( a_resp, a_callback ) {
-    var ctx = g_ctx_next;
-
-    // At max ctx, must search for first free slot
-    if ( ctx == MAX_CTX ) {
-        ctx = g_ctx.indexOf( null );
-        if ( ctx == -1 ) {
-            console.log("ERROR: out of msg contexts!!!");
-            if ( a_resp ) {
-                console.log("SEND FAIL");
-                a_resp.status( 503 );
-                a_resp.send( "DataFed server busy." );
-            }
-        }
-    }
-
-    // Set next ctx value, or flag for search
-    if ( ++g_ctx_next < MAX_CTX ) {
-        if ( g_ctx[g_ctx_next] )
-            g_ctx_next = MAX_CTX;
-    }
-
-    a_callback( ctx );
-}
-
-
-function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
-    var client = a_req.session.uid;
-    if ( !client ){
-        console.log("NO AUTH :", a_msg_name, ":", a_req.connection.remoteAddress );
-        throw "Not Authenticated";
-    }
-
-    a_resp.setHeader('Content-Type', 'application/json');
-
-    allocRequestContext( a_resp, function( ctx ){
-        console.log("sendMsg msg_name ctx and data address ", a_msg_name, ctx, a_msg_data, g_core_serv_addr);
-
-        var msg = g_msg_by_name[a_msg_name];
-        if ( !msg )
-            throw "Invalid message type: " + a_msg_name;
-
-        var msg_buf = msg.encode(a_msg_data).finish();
-        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
-
-        /* Frame contents (C++)
-        uint32_t    size;       // Size of buffer
-        uint8_t     proto_id;
-        uint8_t     msg_id;
-        uint16_t    isContext
-        */
-        var frame = Buffer.alloc(8);
-        frame.writeUInt32BE( msg_buf.length, 0 );
-        frame.writeUInt8( msg._pid, 4 );
-        frame.writeUInt8( msg._mid, 5 );
-        frame.writeUInt16BE( ctx, 6 );
-
-        g_ctx[ctx] = function( a_reply ) {
-            if ( !a_reply ) {
-                console.log("Error - reply handler: empty reply");
-                a_resp.status(500).send( "Empty reply" );
-            } else if ( a_reply.errCode ) {
-                if ( a_reply.errMsg ) {
-                    console.log("Error - reply handler:", a_reply.errMsg);
-                    a_resp.status(500).send( a_reply.errMsg );
-                } else {
-                    a_resp.status(500).send( "error code: " + a_reply.errCode );
-                    console.log("Error - reply handler:", a_reply.errCode);
-                }
-            } else {
-                a_cb( a_reply );
-            }
-        };
-
-        //console.log("frame buffer", frame.toString('hex'));
-        //console.log("msg buffer", msg_buf.toString('hex'));
-        //console.log("Sending to ", g_core_serv_addr);
-        //console.log( "sendMsg:", a_msg_name );
-        if ( msg_buf.length )
-            g_core_sock.send([ nullfr, frame, msg_buf, client ]);
-        else
-            g_core_sock.send([ nullfr, frame, client ]);
-    });
-}
-
-
-function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
-    var msg = g_msg_by_name[a_msg_name];
-    if ( !msg )
-        throw "Invalid message type: " + a_msg_name;
-
-    allocRequestContext( null, function( ctx ){
-
-        var msg_buf = msg.encode(a_msg_data).finish();
-
-        var frame = Buffer.alloc(8);
-        frame.writeUInt32BE( msg_buf.length, 0 );
-        frame.writeUInt8( msg._pid, 4 );
-        frame.writeUInt8( msg._mid, 5 );
-        frame.writeUInt16BE( ctx, 6 );
-
-        g_ctx[ctx] = a_cb;
-
-        if ( msg_buf.length )
-            g_core_sock.send([ nullfr, frame, msg_buf, a_client ]);
-        else
-            g_core_sock.send([ nullfr, frame, a_client ]);
-    });
-}
-
-function processProtoFile( msg ){
-    //var mlist = msg.parent.order;
-    var i, msg_list = [];
-    for ( i in msg.parent.nested )
-        msg_list.push(msg.parent.nested[i]);
-
-    //msg_list.sort();
-
-    var pid = msg.values.ID;
-
-    for ( i = 1; i < msg_list.length; i++ ){
-        msg = msg_list[i];
-        msg._pid = pid;
-        msg._mid = i-1;
-        msg._msg_type = (pid << 8) | (i-1);
-
-        //console.log(msg.name,msg._msg_type);
-
-        g_msg_by_id[ msg._msg_type ] = msg;
-        g_msg_by_name[ msg.name ] = msg;
-    }
-}
-
-protobuf.load("Version.proto", function(err, root) {
-    if ( err )
-        throw err;
-
+comm.loadProto( "Version.proto", null, function( root ) {
     console.log('Version.proto loaded');
 
     var msg = root.lookupEnum( "Version" );
@@ -1494,32 +1346,16 @@ protobuf.load("Version.proto", function(err, root) {
         startServer();
 });
 
-protobuf.load("SDMS_Anon.proto", function(err, root) {
-    if ( err )
-        throw err;
-
+comm.loadProto( "SDMS_Anon.proto", "SDMS.Anon.Protocol", function( root ) {
     console.log('SDMS_Anon.proto loaded');
 
-    var msg = root.lookupEnum( "SDMS.Anon.Protocol" );
-    if ( !msg )
-        throw "Missing Protocol enum in SDMS.Anon proto file";
-
-    processProtoFile( msg );
     if ( --g_ready_start == 0 )
         startServer();
 });
 
 protobuf.load("SDMS_Auth.proto", function(err, root) {
-    if ( err )
-        throw err;
-
     console.log('SDMS_Auth.proto loaded');
 
-    var msg = root.lookupEnum( "SDMS.Auth.Protocol" );
-    if ( !msg )
-        throw "Missing Protocol enum in SDMS.Auth proto file";
-
-    processProtoFile( msg );
     if ( --g_ready_start == 0 )
         startServer();
 });
@@ -1529,48 +1365,6 @@ process.on('unhandledRejection', (reason, p) => {
 });
 
 
-g_core_sock.on('message', function( delim, frame, msg_buf ) {
-    //console.log( "got msg", delim, frame, msg_buf );
-    //console.log( "frame", frame.toString('hex') );
-    /*var mlen =*/ frame.readUInt32BE( 0 );
-    var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
-    var ctx = frame.readUInt16BE( 6 );
-
-    //console.log( "got msg type:", mtype );
-    //console.log( "client len:", client?client.length:0 );
-    //console.log( "msg_buf len:", msg_buf?msg_buf.length:0 );
-    //console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
-
-    var msg_class = g_msg_by_id[mtype];
-    var msg;
-
-    if ( msg_class ) {
-        // Only try to decode if there is a payload
-        if ( msg_buf && msg_buf.length ) {
-            try {
-                msg = msg_class.decode( msg_buf );
-                if ( !msg )
-                    console.log( "ERROR: msg decode failed: no reason" );
-            } catch ( err ) {
-                console.log( "ERROR: msg decode failed:", err );
-            }
-        } else {
-            msg = msg_class;
-        }
-    } else {
-        console.log( "ERROR: unknown msg type:", mtype );
-    }
-
-    var f = g_ctx[ctx];
-    if ( f ) {
-        g_ctx[ctx] = null;
-        //console.log("freed ctx",ctx,"for msg",msg_class.name);
-        g_ctx_next = ctx;
-        f( msg );
-    } else {
-        console.log( "ERROR: no callback found for ctxt", ctx," - msg type:", mtype, ", name:", msg_class.name );
-    }
-});
 
 function loadSettings(){
     g_host = "datafed.ornl.gov";
@@ -1639,7 +1433,8 @@ function startServer(){
 
     console.log( "Connecting to Core" );
 
-    g_core_sock.connect( g_core_serv_addr );
+    comm.connect( g_core_serv_addr );
+
 
     sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
         if ( !reply ){

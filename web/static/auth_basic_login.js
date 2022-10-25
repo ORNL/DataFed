@@ -56,7 +56,16 @@ function handleInputs( is_register )
             });
         });
     } else {
+        api._asyncGet( "/api/usr/login/basic?uid="+encodeURIComponent(uid)+"&pw="+encodeURIComponent(pw1), null, function( ok, reply ){
+            console.log("user login basic", ok, reply );
 
+            if ( ok ){
+                window.location = "/ui/main";
+            }else{
+                dialogs.dlgAlert( "Log-In Error", reply );
+            }
+
+        });
     }
 
     console.log( uid, pw1, pw2 );

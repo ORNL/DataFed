@@ -25,17 +25,20 @@ module.exports=function(app, opts ){
     app.get('/api/usr/login/basic', ( a_req, a_resp ) => {
         console.log("basic auth /api/usr/login");
 
+        // Log-out user if currently authenticated
+        if ( a_req.session ){
+            a_req.session.destroy( function(){
+                a_resp.clearCookie( 'connect.sid' );
+            });
+        }
+
         sendMessage( "AuthenticateByPasswordRequest", { uid: a_req.query.uid, password: a_req.query.password }, a_req, a_resp, function( reply ) {
             if ( reply.authorized ){
                 a_req.session.uid = uid;
                 a_req.session.reg = true;
-                a_req.session.save();
-
-                a_resp.redirect( "/ui/main" );
-            }else{
-                var context = { type: "login", uid: a_req.query.uid, authorized: false };
-                a_resp.render( 'auth_basic_login',{ theme:theme, version:opts.version, test_mode:opts.test_mode, context: context });
             }
+
+            a_resp.send( reply );
         });
     });
     
