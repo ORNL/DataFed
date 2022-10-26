@@ -59,10 +59,12 @@ function handleInputs( is_register )
         api._asyncGet( "/api/usr/login/basic?uid="+encodeURIComponent(uid)+"&pw="+encodeURIComponent(pw1), null, function( ok, reply ){
             console.log("user login basic", ok, reply );
 
-            if ( ok ){
+            if ( ok && reply.auth ){
                 window.location = "/ui/main";
+            }else if ( ok && reply.errMsg ) {
+                dialogs.dlgAlert( "Log-In Error", reply.errMsg );
             }else{
-                dialogs.dlgAlert( "Log-In Error", reply );
+                dialogs.dlgAlert( "Log-In Error", "Log-in failed - unknown reason." );
             }
 
         });

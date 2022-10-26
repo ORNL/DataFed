@@ -1,3 +1,5 @@
+var comm = require('./comm.js');
+
 module.exports=function(app, opts ){
 
     app.get('/ui/login', (a_req, a_resp) => {
@@ -23,19 +25,18 @@ module.exports=function(app, opts ){
     });
 
     app.get('/api/usr/login/basic', ( a_req, a_resp ) => {
-        console.log("basic auth /api/usr/login");
+        console.log("basic auth /api/usr/login", a_req.query.uid, a_req.query.pw );
 
-        // Log-out user if currently authenticated
-        if ( a_req.session ){
-            a_req.session.destroy( function(){
-                a_resp.clearCookie( 'connect.sid' );
-            });
-        }
+        comm.sendMessageDirect( "AuthenticateByPasswordRequest", "", { uid: a_req.query.uid, password: a_req.query.pw }, function( reply ) {
+            console.log("auth reply",reply,a_req.session);
 
-        sendMessage( "AuthenticateByPasswordRequest", { uid: a_req.query.uid, password: a_req.query.password }, a_req, a_resp, function( reply ) {
-            if ( reply.authorized ){
-                a_req.session.uid = uid;
+            if ( reply.auth ){
+                a_req.session.touch();
+                a_req.session.uid = reply.uid;
                 a_req.session.reg = true;
+            }else{
+                delete a_req.session.uid;
+                delete a_req.session.reg;
             }
 
             a_resp.send( reply );
