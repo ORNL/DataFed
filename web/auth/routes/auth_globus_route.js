@@ -1,3 +1,4 @@
+var comm = require('../comm.js');
 const ClientOAuth2 = require('client-oauth2');
 
 var oauth_credentials,
@@ -87,7 +88,7 @@ module.exports = function( app, opts ){
 
                         console.log( 'User', uid, 'authenticated, verifying DataFed account' );
 
-                        sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
+                        comm.sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
                             if ( !reply  ) {
                                 console.log( "Error - Find user call failed." );
                                 a_resp.redirect( "/ui/error" );

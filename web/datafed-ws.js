@@ -148,57 +148,6 @@ app.get('/ui/error', (a_req, a_resp) => {
 });
 
 
-/*
-app.get('/ui/do_register', ( a_req, a_resp ) => {
-    if ( a_req.session.uid && a_req.session.reg ){
-        a_resp.redirect( '/ui/main' );
-    } else if ( !a_req.session.uid ){
-        a_resp.redirect( '/ui/welcome' );
-    } else {
-        console.log( 'Registering user', a_req.session.uid );
-
-        comm.sendMessageDirect( "UserCreateRequest", "", {
-                uid: a_req.session.uid,
-                password: a_req.query.pw,
-                name: a_req.session.name,
-                email: a_req.session.email,
-                uuid: a_req.session.uuids,
-                secret: g_system_secret
-            }, function( reply ) {
-            if ( !reply ) {
-                console.log( "Error - User create failed: empty reply" );
-                a_resp.status(500).send( "Error - User create failed (server did not respond)" );
-            } else if ( reply.errCode ) {
-                if ( reply.errMsg ) {
-                    console.log( "Error - User create failed:", reply.errMsg );
-                    a_resp.status(500).send( "Error - User create failed: " + reply.errMsg );
-                } else {
-                    a_resp.status(500).send( "Error - User create failed: " + reply.errCode );
-                    console.log("Error - User create failed: ", reply.errCode);
-                }
-            } else {
-                // Save access token
-                setAccessToken( a_req.session.uid, a_req.session.acc_tok, a_req.session.ref_tok, a_req.session.acc_tok_ttl );
-
-                // Set session as registered user
-                a_req.session.reg = true;
-
-                // Remove data not needed for active session
-                delete a_req.session.name;
-                delete a_req.session.email;
-                delete a_req.session.uuids;
-                delete a_req.session.acc_tok;
-                delete a_req.session.acc_tok_ttl;
-                delete a_req.session.ref_tok;
-                delete a_req.session.uuids;
-
-                a_resp.redirect( "/ui/main" );
-            }
-        });
-    }
-});
-*/
-
 app.get('/api/usr/register', ( a_req, a_resp ) => {
     console.log( '/api/usr/register', a_req.session );
 

@@ -35,12 +35,9 @@ class CommClass
             throw "Not Authenticated";
         }
     
-        console.log("sendMessage - set headers");
         a_resp.setHeader('Content-Type', 'application/json');
     
         this.#allocRequestContext( a_resp, function( ctx ){
-            console.log("sendMessage - got ctx alloc");
-
             var msg = inst.#msg_by_name[a_msg_name];
             if ( !msg )
                 throw "Invalid message type: " + a_msg_name;

@@ -85,6 +85,20 @@ $(".btn-cancel").on( "click", function(){
     location.href = "/";
 });
 
+$("#input1-pw").on( "keypress", function( e ){
+    var key=e.keyCode || e.which;
+    if (key==13){
+        handleInputs( false );
+    }
+});
+
+$("#input2-pw-verify").on( "keypress", function( e ){
+    var key=e.keyCode || e.which;
+    if (key==13){
+        handleInputs( true );
+    }
+});
+
 $(document).ready(function(){
     window.name = 'DataFed Login (basic)';
 

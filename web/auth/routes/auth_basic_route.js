@@ -1,4 +1,4 @@
-var comm = require('./comm.js');
+var comm = require('../comm.js');
 
 module.exports=function(app, opts ){
 
@@ -50,11 +50,11 @@ module.exports=function(app, opts ){
         // Store all data need for registration in session (temporarily)
         a_req.session.uid = a_req.query.uid;
         a_req.session.name = a_req.query.name;
-        a_req.session.email = "junk";
-        a_req.session.uuids = ["junk"];
-        a_req.session.acc_tok = "junk";
+        a_req.session.email = "test_email";
+        a_req.session.uuids = ["test_uuid_" + a_req.query.uid];
+        a_req.session.acc_tok = "test_acc_token";
         a_req.session.acc_tok_ttl = 100000;
-        a_req.session.ref_tok = "junk";
+        a_req.session.ref_tok = "test_ref_token";
 
         console.log("session uid:",a_req.session.uid);
 

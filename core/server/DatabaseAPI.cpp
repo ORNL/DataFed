@@ -116,7 +116,7 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
         {
             try
             {
-                DL_DEBUG("from " << __FILE__ << ":" << __LINE__ << " res_json " << res_json); 
+                //DL_DEBUG("from " << __FILE__ << ":" << __LINE__ << " res_json " << res_json); 
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )

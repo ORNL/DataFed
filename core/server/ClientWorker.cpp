@@ -259,7 +259,6 @@ ClientWorker::workerThread()
                 }
                 else
                 {
-                    DL_DEBUG( "W"<<m_tid<<" getting handler from map" );
                     handler = m_msg_handlers.find( msg_type );
                     if ( handler != m_msg_handlers.end() )
                     {
@@ -273,7 +272,6 @@ ClientWorker::workerThread()
 
                             DL_DEBUG( "W" << m_tid << " sending msg of type " << msg_type);
                             comm.send( m_msg_buf );
-                            DL_DEBUG( "Message sent ");
                             /*if ( msg_type != task_list_msg_type )
                             {
                                 DL_DEBUG( "W"<<m_tid<<" reply sent." );

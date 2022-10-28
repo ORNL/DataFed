@@ -21,6 +21,7 @@ OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
 OPTION(BUILD_DOCS "Build documentation" TRUE)
 OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
 OPTION(BUILD_FOXX "Build Foxx" TRUE)
+OPTION(BUILD_NO_OAUTH "Build without Globus OAuth (basic auth)" FALSE)
 
 set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
@@ -140,7 +141,32 @@ if( INSTALL_WEB_SERVER )
   install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION /opt/datafed/web )
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_ws_service.sh )")
+
+  if( BUILD_NO_OAUTH )
+    file( GLOB RouteFiles "${PROJECT_SOURCE_DIR}/web/auth/routes/auth_basic*" )
+    file( GLOB StaticFiles "${PROJECT_SOURCE_DIR}/web/auth/static/auth_basic*" )
+    file( GLOB ViewFiles "${PROJECT_SOURCE_DIR}/web/auth/views/auth_basic*" )
+  else()
+    file( GLOB RouteFiles "${PROJECT_SOURCE_DIR}/web/auth/routes/auth_globus*" )
+    file( GLOB StaticFiles "${PROJECT_SOURCE_DIR}/web/auth/static/auth_globus*" )
+    file( GLOB ViewFiles "${PROJECT_SOURCE_DIR}/web/auth/views/auth_globus*" )
+  endif()
+
+  install( FILES ${RouteFiles} DESTINATION /opt/datafed/web/routes )
+  install( FILES ${StaticFiles} DESTINATION /opt/datafed/web/static )
+  install( FILES ${ViewFiles} DESTINATION /opt/datafed/web/views )
+
+  file( GLOB BaseFiles ${PROJECT_SOURCE_DIR}/web/comm.js ${PROJECT_SOURCE_DIR}/web/*.json ${PROJECT_SOURCE_DIR}/config/datafed-ws.cfg )
+  install( FILES ${BaseFiles} DESTINATION /opt/datafed/web )
+  install(
+    FILES ${PROJECT_SOURCE_DIR}/web/datafed-ws.js
+    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+    DESTINATION /opt/datafed/web
+  )
+
+  install( CODE [[execute_process(COMMAND npm --allow-root --unsafe-perm --prefix /opt/datafed/web --cache /opt/datafed/web install)]])
+
+  # install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_ws_service.sh )")
 endif()
 
 if( INSTALL_FOXX ) 
