@@ -296,20 +296,6 @@ DatabaseAPI::serverPing()
     dbGet( "admin/ping", {}, result );
 }
 
-bool
-DatabaseAPI::getTestMode()
-{
-    Value result;
-
-    dbGet( "config/system", {}, result );
-
-    const Value::Object & obj = result.asObject();
-    if ( obj.has( "test_mode" ))
-        return obj.asBool();
-    else
-        return false;
-}
-
 void
 DatabaseAPI::clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply )
 {

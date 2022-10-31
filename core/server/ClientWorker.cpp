@@ -396,11 +396,6 @@ ClientWorker::procVersionRequest( const std::string & a_uid )
     reply.set_web( VER_WEB );
     reply.set_client_py( VER_CLIENT_PY );
 
-    if ( m_config.test_mode )
-    {
-        reply.set_test_mode( true );
-    }
-
     PROC_MSG_END
 }
 

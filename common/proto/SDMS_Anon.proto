@@ -51,7 +51,6 @@ message VersionReply
     required uint32             web         = 5; // Web server MINOR version, info/notification purposes
     required uint32             repo        = 6; // Repo server MINOR version, info/notification purposes
     required uint32             client_py   = 7; // Python client/api MINOR version, info/notification purposes
-    optional bool               test_mode   = 8; // Indicates that the server is running in test only mode, if true
 }
 
 // Request to get client authentication status

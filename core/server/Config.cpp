@@ -9,14 +9,6 @@
 namespace SDMS {
   namespace Core {
 
-    void Config::loadTestMode()
-    {
-        DatabaseAPI  db_client( db_url, db_user, db_pass );
-
-        test_mode = db_client.getTestMode();
-        DL_ERROR("config test mode:" << test_mode);
-    }
-
     void Config::loadRepositoryConfig() {
       DL_INFO("Loading repo configuration " << __FILE__ << " " <<  __LINE__);
 

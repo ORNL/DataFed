@@ -1,6 +1,8 @@
 var comm = require('../comm.js');
 
-module.exports=function(app, opts ){
+module.exports=function( app, opts ){
+
+    opts.test_mode = true;
 
     app.get('/ui/login', (a_req, a_resp) => {
         if ( a_req.session && a_req.session.uid && a_req.session.reg ){

@@ -1396,11 +1396,8 @@ function startServer(){
                 console.log( "WARNING: A newer web server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.web + ")" );
             }
 
-            if ( reply.testMode ) {
-                opts.test_mode = true;
+            if ( opts.test_mode ) {
                 console.log( "WARNING: TEST MODE ENABLED!" );
-            } else {
-                opts.test_mode = false;
             }
 
             // Load all route files

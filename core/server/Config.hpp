@@ -43,8 +43,7 @@ class Config
         note_purge_period( 6*3600 ),
         metrics_period( 300 ),
         metrics_purge_period( 3600 ),
-        metrics_purge_age( 24*3600 ),
-        test_mode( false )
+        metrics_purge_age( 24*3600 )
     {}
 
     std::map<std::string,RepoData>  m_repos;            ///< List of configured repositories
@@ -53,7 +52,6 @@ class Config
     mutable std::mutex              m_auth_clients_mtx;
 
   public:
-    void loadTestMode();
     void loadRepositoryConfig();
     std::map<std::string,RepoData> getRepos() const;
     auth_client_map_t getAuthClients() const;
@@ -82,7 +80,6 @@ class Config
     uint32_t        metrics_period;
     uint32_t        metrics_purge_period;
     uint32_t        metrics_purge_age;
-    bool            test_mode;
 
     MsgComm::SecurityContext            sec_ctx;
 };
