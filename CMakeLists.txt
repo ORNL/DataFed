@@ -9,24 +9,19 @@ set(DataFed_VERSION ${DataFed_MAJOR_VERSION}.${DataFed_MINOR_VERSION}.${DataFed_
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-
+set(CMAKE_SKIP_INTALL_ALL_DEPENDENCY TRUE)
 find_package(Threads REQUIRED)
 
 # Globus version to compile repo server with
 set(GLOBUS_VERSION  5)
-OPTION(BUILD_REPO_SERVER "Build DataFed Repo Server" FALSE)
-OPTION(BUILD_AUTHZ "Build DataFed Authz library" FALSE)
-OPTION(BUILD_CORE_SERVER "Build DataFed Core Server" TRUE)
-OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
-OPTION(BUILD_DOCS "Build documentation" TRUE)
-OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
-OPTION(BUILD_FOXX "Build Foxx" TRUE)
 
-set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
-set(INSTALL_AUTHZ ${BUILD_AUTHZ})
-set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
-set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
-
+OPTION(BUILD_ALL "Build Everything" FALSE)
+OPTION(BUILD_REPO_SERVER "Build DataFed Repo Server" ${BUILD_ALL})
+OPTION(BUILD_AUTHZ "Build DataFed Authz library" ${BUILD_ALL})
+OPTION(BUILD_CORE_SERVER "Build DataFed Core Server" ${BUILD_ALL})
+OPTION(BUILD_DOCS "Build documentation" ${BUILD_ALL})
+OPTION(BUILD_PYTHON_CLIENT "Build python client" ${BUILD_ALL})
+OPTION(BUILD_FOXX "Build Foxx" ${BUILD_ALL})
 
 message( "Building for " ${CMAKE_BUILD_TYPE} )
 
@@ -119,30 +114,28 @@ if( BUILD_DOCS )
   add_subdirectory( doc_source EXCLUDE_FROM_ALL )
 endif()
 
-if( INSTALL_REPO_SERVER )
-  # Should only need to do this on the same machine that Globus is installed
-  install( TARGETS datafed-repo DESTINATION /opt/datafed/repo )
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_repo_service.sh )")
-endif()
+# Web
+add_custom_Target(install-web-server
+  COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/InstallWebServer.cmake
+ ${PROJECT_SOURCE_DIR} 
+  )
+add_custom_Target(install-web-service
+  COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/InstallWebServer.cmake
+  )
 
-if( INSTALL_AUTHZ )
-  install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
-endif()
+# Foxx
+add_custom_Target(install-foxx
+  COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/InstallFoxx.cmake
+  )
 
-if( INSTALL_CORE_SERVER )
-  install( TARGETS datafed-core DESTINATION /opt/datafed/core )
-  install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh )")
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_core_service.sh )")
-endif()
+# Install lego and certificats
+add_custom_Target(install-lego-and-certificats
+  COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh
+  )
 
-if( INSTALL_WEB_SERVER )
-  install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
-  install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )
-  install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION /opt/datafed/web )
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_ws_service.sh )")
-endif()
+# List all install targets
+add_custom_Target(list-install-targets
+  COMMAND echo "${INSTALL_TARGETS_DESC}"
+  )
 
-if( INSTALL_FOXX ) 
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
-endif()
+

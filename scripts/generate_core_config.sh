@@ -9,12 +9,11 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source ${PROJECT_ROOT}/config/datafed.sh
 
-echo "SOURCE Is $SOURCE"
 Help()
 {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
-  echo "Syntax: $(basename $0) [-h|t|c|f]"
+  echo "Syntax: $(basename $0) [-h|t|c|f|b]"
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-t, --threads-task                The number of threads available to the datafed    "
@@ -43,12 +42,14 @@ Help()
   echo "                                  provided via the command line it can also be set"
   echo "                                  using the enviromental variable"
   echo "                                  DATABASE_PASSWORD."
+  echo "-b, --ignore-checks               If you wish to ignore the checks."
 }
 
 # Set defaults use environment variables by default
 local_DATAFED_CRED_DIR="/opt/datafed/keys/"
 local_DATAFED_CORE_CLIENT_THREADS=2
 local_DATAFED_CORE_TASK_THREADS=2
+IGNORE_CHECKS=0
 
 if [ -z "${DATAFED_GLOBUS_APP_ID}" ]
 then
@@ -74,7 +75,7 @@ else
   local_DATABASE_PASSWORD=$(printenv DATABASE_PASSWORD)
 fi
 
-VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,api-url:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
+VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p:b --long 'help',threads-task:,cred-dir:,threads-client:,api-url:,globus-secret:,globus-id:,database-user:,database-password:,ignore-checks: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -126,6 +127,11 @@ while [ : ]; do
         local_DATABASE_PASSWORD=$2
         shift 2
         ;;
+    -b | --ignore-checks)
+        echo "'Ignoring checks' flag has been set."
+        IGNORE_CHECKS=1
+        shift 1
+        ;;
     --) shift; 
         break 
         ;;
@@ -136,33 +142,44 @@ while [ : ]; do
 done
 
 ERROR_DETECTED=0
+ERROR_MSG="\nRunning generate_core_config.sh"
+ERROR_MSG+="\n\nNOTE: If you wish to ignore the checks and generate the config"
+ERROR_MSG+="\nfile anyway use the flag -b or --ignore-checks\n"
 if [ -z "$local_DATAFED_GLOBUS_APP_SECRET" ]
 then
-  echo "Error DATAFED_GLOBUS_APP_SECRET is not defined, this is a required argument."
-  echo "      This variable can be set using the command line option -s, --globus-secret"
-  echo "      or with the environment variable DATAFED_GLOBUS_APP_SECRET."
+  ERROR_MSG+="\nError DATAFED_GLOBUS_APP_SECRET is not defined, this is a required argument."
+  ERROR_MSG+="\n      This variable can be set using the command line option -s, --globus-secret"
+  ERROR_MSG+="\n      or with the environment variable DATAFED_GLOBUS_APP_SECRET."
   ERROR_DETECTED=1
 fi
 
 if [ -z "$local_DATAFED_GLOBUS_APP_ID" ]
 then
-  echo "Error DATAFED_GLOBUS_APP_ID is not defined, this is a required argument"
-  echo "      This variable can be set using the command line option -i, --globus-id"
-  echo "      or with the environment variable DATAFED_GLOBUS_APP_ID."
+  ERROR_MSG+="\nError DATAFED_GLOBUS_APP_ID is not defined, this is a required argument"
+  ERROR_MSG+="\n      This variable can be set using the command line option -i, --globus-id"
+  ERROR_MSG+="\n      or with the environment variable DATAFED_GLOBUS_APP_ID."
   ERROR_DETECTED=1
 fi
 
 if [ -z "$local_DATABASE_PASSWORD" ]
 then
-  echo "Error DATABASE_PASSWORD is not defined, this is a required argument"
-  echo "      This variable can be set using the command line option -p, --database-password"
-  echo "      or with the environment variable DATABASE_PASSWORD."
+  ERROR_MSG+="\nError DATABASE_PASSWORD is not defined, this is a required argument"
+  ERROR_MSG+="\n      This variable can be set using the command line option -p, --database-password"
+  ERROR_MSG+="\n      or with the environment variable DATABASE_PASSWORD."
   ERROR_DETECTED=1
 fi
 
 if [ "$ERROR_DETECTED" == "1" ]
 then
-  exit 1
+  if [ "$IGNORE_CHECKS" == "0" ]
+  then 
+    echo "$ERROR_MSG"
+    exit 1
+  else
+    echo "Errors have been detected in the core configuration but are being"
+    echo "ignored, disregard if this is intentional, or if configuration will"
+    echo "be entered manually after initial geneartion."
+  fi
 fi
 
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
@@ -170,7 +187,10 @@ PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 CONFIG_FILE_NAME="datafed-core.cfg"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
-# Note this file can be generated with $(basename $0)
+# NOTE:    This file is generated with $(basename $0)
+# WARNING: Do not make changes directly here, it is 
+#          best to make changes in the datafed.sh file
+#          to avoid overwriting this config file by accident
 # Default location to log files
 cred-dir=$local_DATAFED_CRED_DIR
 client-threads=$local_DATAFED_CORE_CLIENT_THREADS

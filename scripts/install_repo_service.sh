@@ -7,18 +7,18 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
 # Make sure paths exist
-mkdir -p /opt/datafed/repo
-mkdir -p /opt/datafed/keys
-mkdir -p /var/log/datafed
+#mkdir -p /opt/datafed/repo
+#mkdir -p /opt/datafed/keys
+#mkdir -p /var/log/datafed
 
 # Copy configuration files
-cp "$PROJECT_ROOT/config/datafed-repo.cfg" /opt/datafed/repo
+#cp "$PROJECT_ROOT/config/datafed-repo.cfg" /opt/datafed/repo
 
 # Generate keys only if they do not exist
-if [ ! -f /opt/datafed/keys/datafed-repo-key.priv ]
-then
-  /opt/datafed/repo/datafed-repo --gen-keys --cred-dir /opt/datafed/keys
-fi
+#if [ ! -f /opt/datafed/keys/datafed-repo-key.priv ]
+#then
+#  /opt/datafed/repo/datafed-repo --gen-keys --cred-dir /opt/datafed/keys
+#fi
 
 # Copy services
 cp "$PROJECT_ROOT/services/datafed-repo.service" /etc/systemd/system
