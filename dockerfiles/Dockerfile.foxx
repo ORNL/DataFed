@@ -1,0 +1,12 @@
+FROM arangodb:3.10.1 as build
+
+ARG BUILD_DIR="/source"
+
+RUN mkdir -p ${BUILD_DIR}
+
+WORKDIR ${BUILD_DIR}
+
+COPY ./config/datafed.sh ${BUILD_DIR}/config/datafed.sh
+COPY ./scripts/install_foxx.sh ${BUILD_DIR}/scripts/install_foxx.sh
+
+RUN /bin/sh ${BUILD_DIR}/scripts/install_foxx.sh
