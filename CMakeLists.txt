@@ -23,7 +23,24 @@ OPTION(BUILD_DOCS "Build documentation" ${BUILD_ALL})
 OPTION(BUILD_PYTHON_CLIENT "Build python client" ${BUILD_ALL})
 OPTION(BUILD_FOXX "Build Foxx" ${BUILD_ALL})
 
-message( "Building for " ${CMAKE_BUILD_TYPE} )
+message(STATUS "")
+message(STATUS "BUILD_ALL:           ${BUILD_ALL}")
+message(STATUS "BUILD_REPO_SERVER:   ${BUILD_REPO_SERVER}")
+message(STATUS "BUILD_AUTHZ:         ${BUILD_AUTHZ}")
+message(STATUS "BUILD_CORE_SERVER:   ${BUILD_CORE_SERVER}")
+message(STATUS "BUILD_DOCS:          ${BUILD_DOCS}")
+message(STATUS "BUILD_PYTHON_CLIENT: ${BUILD_PYTHON_CLIENT}")
+message(STATUS "BUILD_FOXX:          ${BUILD_FOXX}")
+message(STATUS "")
+
+# CMake Policies - this one prevents boost from complaining
+cmake_policy(SET "CMP0057" NEW)
+
+# Specify where the binaries should be built so we can explicitly 
+# copy them using custom install targets
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
     add_definitions( -Wall -Wextra )
@@ -36,13 +53,16 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ )
 
   include_directories( "/usr/include/globus" )
 
+  find_package(Threads)
+
   if ( DEFINED ENV{BOOST_INC} AND DEFINED ENV{BOOST_LIB} )
           message( "BOOST_INC:" $ENV{BOOST_INC} )
           message( "BOOST_LIB:" $ENV{BOOST_LIB} )
           include_directories( $ENV{BOOST_INC} )
           link_directories( $ENV{BOOST_LIB} )
   else()
-    find_package(Boost REQUIRED)
+    find_package(Boost REQUIRED PATHS /usr/local/lib COMPONENTS program_options
+      system filesystem)
   endif()
 
   ## load in pkg-config support
@@ -97,10 +117,15 @@ if( BUILD_CORE_SERVER )
   find_package(nlohmann_json CONFIG REQUIRED)
   find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
   find_package(OpenSSL REQUIRED)
+  # make target = install-core-server
+  # make target = install-core-service
   add_subdirectory( core )
 endif()
 
 if( BUILD_REPO_SERVER OR BUILD_AUTHZ)
+  # make target = install-repo-server
+  # make target = install-repo-service
+  # make target = install-authz
   add_subdirectory( repository )
 endif()
 
@@ -114,16 +139,17 @@ if( BUILD_DOCS )
   add_subdirectory( doc_source EXCLUDE_FROM_ALL )
 endif()
 
-# Web
+# make target install-web-server
 add_custom_Target(install-web-server
   COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/InstallWebServer.cmake
  ${PROJECT_SOURCE_DIR} 
   )
 add_custom_Target(install-web-service
-  COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/InstallWebServer.cmake
+  COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/InstallWebService.cmake
+  DEPENDS install-web-server
   )
 
-# Foxx
+# make target install-foxx
 add_custom_Target(install-foxx
   COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/InstallFoxx.cmake
   )
@@ -132,10 +158,3 @@ add_custom_Target(install-foxx
 add_custom_Target(install-lego-and-certificats
   COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh
   )
-
-# List all install targets
-add_custom_Target(list-install-targets
-  COMMAND echo "${INSTALL_TARGETS_DESC}"
-  )
-
-

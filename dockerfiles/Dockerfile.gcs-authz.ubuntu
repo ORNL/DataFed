@@ -20,7 +20,7 @@ RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&\
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
                     -DBUILD_FOXX=False &&\
  cmake --build build
-RUN cmake --build build --target install
+RUN cmake --build build --target install-authz
 
 # Rerunning the GCS entrypoint
 # Default command unless overriden with 'docker run --entrypoint'

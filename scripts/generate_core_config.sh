@@ -75,13 +75,12 @@ else
   local_DATABASE_PASSWORD=$(printenv DATABASE_PASSWORD)
 fi
 
-VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p:b --long 'help',threads-task:,cred-dir:,threads-client:,api-url:,globus-secret:,globus-id:,database-user:,database-password:,ignore-checks: -- "$@")
+VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p:b --long 'help',threads-task:,cred-dir:,threads-client:,api-url:,globus-secret:,globus-id:,database-user:,database-password:,ignore-checks -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
-  echo "$1"
   case "$1" in
     -h | --help)
         Help

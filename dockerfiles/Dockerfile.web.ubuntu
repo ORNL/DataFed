@@ -29,4 +29,4 @@ ENV NVM_DIR=/root/.nvm
 ENV PATH=/root/.nvm/versions/node/v13.14.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV NVM_BIN=/root/.nvm/versions/node/v13.14.0/bin
 
-RUN cmake --build build --target install
+RUN cmake --build build --target install-web-server --target install-web-service
