@@ -36,16 +36,6 @@ build-repo-base:
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
-build-foxx:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/foxx"
-  stage: build-base
-  tags:
-    - datafed
-  script:
-    - docker build -f dockerfiles/Dockerfile.foxx -t $CI_REGISTRY/${IMAGE_TAG} .
-
-
 # This build runs two builds, one to build the gcs image provided by Globus
 # The second to build on top of the gcs image and add the authz dependencies
 build-gcs-authz-base:
@@ -97,14 +87,6 @@ deploy-gcs-authz-base:
     - docker push $CI_REGISTRY/dlsw/datafed/gcs-base
     - docker push $CI_REGISTRY/dlsw/datafed/gcs-authz-base
 
-deploy-foxx:
-  stage: deploy-base
-  needs: ["build-foxx"]
-  tags:
-    - datafed
-  script:
-    - docker push $CI_REGISTRY/dlsw/datafed/foxx
-
 # Building containers for running services
 build-ws:
   variables:
@@ -155,6 +137,14 @@ build-gcs-authz:
     - ./scripts/generate_datafed.sh
     - docker build -f dockerfiles/Dockerfile.gcs-authz.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
 
+build-foxx:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/foxx"
+  stage: build
+  tags:
+    - datafed
+  script:
+    - docker build -f dockerfiles/Dockerfile.foxx -t $CI_REGISTRY/${IMAGE_TAG} .
 
 # Deploying containers for running services
 deploy-ws:
@@ -204,4 +194,13 @@ deploy-gcs-authz:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - docker push "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+
+deploy-foxx:
+  stage: deploy
+  needs: ["build-foxx"]
+  tags:
+    - datafed
+  script:
+    - docker push $CI_REGISTRY/dlsw/datafed/foxx
+
 
