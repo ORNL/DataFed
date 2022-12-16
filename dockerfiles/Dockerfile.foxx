@@ -4,9 +4,18 @@ ARG BUILD_DIR="/source"
 
 RUN mkdir -p ${BUILD_DIR}
 
+RUN apk add bash curl npm
+
 WORKDIR ${BUILD_DIR}
 
 COPY ./config/datafed.sh ${BUILD_DIR}/config/datafed.sh
 COPY ./scripts/install_foxx.sh ${BUILD_DIR}/scripts/install_foxx.sh
+COPY ./dockerfiles/foxx-entrypoint.sh ${BUILD_DIR}/dockerfiles/foxx-entrypoint.sh
+COPY ./core/database ${BUILD_DIR}/core/database
+COPY ./external/getopts_long/lib/getopts_long.bash ${BUILD_DIR}/external/getopts_long/lib/getopts_long.bash
 
-RUN /bin/sh ${BUILD_DIR}/scripts/install_foxx.sh
+RUN chmod a+x /source/dockerfiles/foxx-entrypoint.sh
+ENTRYPOINT [ "/source/dockerfiles/foxx-entrypoint.sh" ]
+
+EXPOSE 8529
+CMD [ "arangod" ]
