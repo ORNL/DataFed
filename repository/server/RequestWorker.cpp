@@ -253,7 +253,7 @@ RequestWorker::procDataGetSizeRequest()
     {
         const RecordDataLocation & item = request->loc(i);
 
-        string sanitized_request_path = item.path();
+        /*string sanitized_request_path = item.path();
         while ( ! sanitized_request_path.empty() ) {
           if ( sanitized_request_path.back() == '/' ) {
             sanitized_request_path.pop_back();
@@ -268,7 +268,9 @@ RequestWorker::procDataGetSizeRequest()
         } else {
           local_path += sanitized_request_path;
         }
-        boost::filesystem::path data_path( local_path );
+	*/
+
+        boost::filesystem::path data_path( item.path() /*local_path*/ );
 
         data_sz = reply.add_size();
         data_sz->set_id( item.id() );
@@ -279,10 +281,11 @@ RequestWorker::procDataGetSizeRequest()
         }
         else
         {
-            data_sz->set_size( 0 );
-            DL_ERROR( "DataGetSizeReq - path does not exist: "  << item.path() );
+	    EXCEPT_PARAM( 1, "Repo Server - DataGetSizeReq path not found: " << data_path );
+            //data_sz->set_size( 0 );
+            //DL_ERROR( "DataGetSizeReq - path does not exist: "  << item.path() );
         }
-        DL_INFO( "FILE SIZE: " << data_sz->size() << ", path to collection: " << m_config.globus_collection_path << ", full path to file: " << local_path );
+        DL_INFO( "FILE SIZE: " << data_sz->size() << ", path to file: " << data_path );
     }
 
     PROC_MSG_END
