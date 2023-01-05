@@ -2228,7 +2228,8 @@ DatabaseAPI::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDa
 
     string body = "{\"id\":\"" + a_request.id() + "\"";
     body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
-    body += ",\"path\":\"" + escapeJSON( a_request.path() ) + "\"";
+    body += ",\"base_path\":\"" + escapeJSON( a_request.base_path() ) + "\"";
+    body += ",\"repo_path\":\"" + escapeJSON( a_request.repo_path() ) + "\"";
     body += ",\"pub_key\":\"" + escapeJSON( a_request.pub_key() ) + "\"";
     body += ",\"address\":\"" + a_request.address() + "\"";
     body += ",\"endpoint\":\"" + a_request.endpoint() + "\"";
@@ -2236,10 +2237,6 @@ DatabaseAPI::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDa
 
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
-    if ( a_request.has_domain() )
-        body += ",\"domain\":\"" + a_request.domain() + "\"";
-    if ( a_request.has_exp_path() )
-        body += ",\"exp_path\":\"" + escapeJSON( a_request.exp_path() ) + "\"";
 
     if ( a_request.admin_size() > 0 )
     {
@@ -2266,24 +2263,16 @@ DatabaseAPI::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDa
     Value result;
 
     string body = "{\"id\":\"" + a_request.id() + "\"";
-    if ( a_request.has_title() )
-        body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+    body += ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
+    body += ",\"base_path\":\"" + escapeJSON( a_request.base_path() ) + "\"";
+    body += ",\"repo_path\":\"" + escapeJSON( a_request.repo_path() ) + "\"";
+    body += ",\"pub_key\":\"" + escapeJSON( a_request.pub_key() ) + "\"";
+    body += ",\"address\":\"" + a_request.address() + "\"";
+    body += ",\"endpoint\":\"" + a_request.endpoint() + "\"";
+    body += ",\"capacity\":\"" + to_string( a_request.capacity() )+ "\"";
+
     if ( a_request.has_desc() )
         body += ",\"desc\":\"" + escapeJSON( a_request.desc() ) + "\"";
-    if ( a_request.has_path() )
-        body += ",\"path\":\"" + escapeJSON( a_request.path() ) + "\"";
-    if ( a_request.has_exp_path() )
-        body += ",\"exp_path\":\"" + escapeJSON( a_request.exp_path() ) + "\"";
-    if ( a_request.has_domain() )
-        body += ",\"domain\":\"" + a_request.domain() + "\"";
-    if ( a_request.has_pub_key() )
-        body += ",\"pub_key\":\"" + escapeJSON( a_request.pub_key() ) + "\"";
-    if ( a_request.has_address() )
-        body += ",\"address\":\"" + a_request.address() + "\"";
-    if ( a_request.has_endpoint() )
-        body += ",\"endpoint\":\"" + a_request.endpoint() + "\"";
-    if ( a_request.has_capacity() )
-        body += ",\"capacity\":\"" + to_string( a_request.capacity() )+ "\"";
 
     if ( a_request.admin_size() > 0 )
     {
@@ -2387,16 +2376,12 @@ DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> &
             a_repos.back().set_pub_key( obj.asString() );
         }
 
-        if ( obj.has( "path" )) {
-            a_repos.back().set_path( obj.asString() );
+        if ( obj.has( "base_path" )) {
+            a_repos.back().set_base_path( obj.asString() );
         }
 
-        if ( obj.has( "exp_path" )) {
-            a_repos.back().set_exp_path( obj.asString() );
-        }
-
-        if ( obj.has( "domain" ) && !obj.value().isNull( )) {
-            a_repos.back().set_domain( obj.asString() );
+        if ( obj.has( "repo_path" )) {
+            a_repos.back().set_repo_path( obj.asString() );
         }
 
         if ( obj.has( "admins" ))

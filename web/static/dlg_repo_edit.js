@@ -19,9 +19,8 @@ export function show( a_repo_id, a_cb ){
                         <tr><td style='vertical-align:top'>Srvr. Address: <span class='note'>*</span></td><td><input type='text' id='addr' style='width:100%'></input></td></tr>\
                         <tr><td style='vertical-align:top'>Public Key: <span class='note'>*</span></td><td><input type='text' id='pub_key' style='width:100%'></input></td></tr>\
                         <tr><td style='vertical-align:top'>End-point ID: <span class='note'>*</span></td><td><input type='text' id='ep_id' style='width:100%'></input></td></tr>\
-                        <tr><td style='vertical-align:middle'>Path: <span class='note'>*</span></td><td><input type='text' id='path' style='width:100%'></input></td></tr>\
-                        <tr><td style='vertical-align:middle'>Domain:</td><td><input type='text' id='domain' style='width:100%'></input></td></tr>\
-                        <tr><td style='vertical-align:middle'>Export Path:</td><td><input type='text' id='exp_path' style='width:100%'></input></td></tr>\
+                        <tr><td style='vertical-align:middle'>Base Path: <span class='note'>*</span></td><td><input type='text' id='base_path' style='width:100%'></input></td></tr>\
+                        <tr><td style='vertical-align:middle'>Repo Path: <span class='note'>*</span></td><td><input type='text' id='repo_path' style='width:100%'></input></td></tr>\
                         <tr><td style='vertical-align:middle'>Capacity: <span class='note'>*</span></td><td><input type='text' id='capacity' style='width:100%'></input></td></tr>\
                     </table>\
                 </div>\
@@ -59,15 +58,13 @@ export function show( a_repo_id, a_cb ){
 
     var frame = $(document.createElement('div'));
     var repo = null;
-    var changed = 0;
 
     frame.html( content );
 
     util.inputTheme($('input',frame));
     util.inputTheme($('textarea',frame));
 
-    function repoInputChanged( a_bit ){
-        changed |= a_bit;
+    function repoInputChanged(){
         $("#apply_btn").button("option","disabled",false);
     }
 
@@ -79,9 +76,8 @@ export function show( a_repo_id, a_cb ){
             $("#addr",frame).val(repo.address);
             $("#pub_key",frame).val(repo.pubKey);
             $("#ep_id",frame).val(repo.endpoint);
-            $("#domain",frame).val(repo.domain );
-            $("#path",frame).val(repo.path );
-            $("#exp_path",frame).val(repo.expPath );
+            $("#base_path",frame).val(repo.basePath );
+            $("#repo_path",frame).val(repo.repoPath );
             $("#capacity",frame).val(repo.capacity );
             var admin;
             for ( var i in repo.admin ){
@@ -118,15 +114,15 @@ export function show( a_repo_id, a_cb ){
     $(".btn",frame).button();
 
     if ( a_repo_id ){
-        $("#title",frame).on('input', function(){ repoInputChanged(1); });
-        $("#desc",frame).on('input', function(){ repoInputChanged(2); });
-        $("#domain",frame).on('input', function(){ repoInputChanged(4); });
-        $("#capacity",frame).on('input', function(){ repoInputChanged(8); });
-        $("#path",frame).on('input', function(){ repoInputChanged(0x10); });
-        $("#exp_path",frame).on('input', function(){ repoInputChanged(0x20); });
-        $("#pub_key",frame).on('input', function(){ repoInputChanged(0x40); });
-        $("#addr",frame).on('input', function(){ repoInputChanged(0x80); });
-        $("#ep_id",frame).on('input', function(){ repoInputChanged(0x100); });
+        // TODO There's probably a better way to detect a change to enable the apply/save button
+        $("#title",frame).on('input', function(){ repoInputChanged(); });
+        $("#desc",frame).on('input', function(){ repoInputChanged(); });
+        $("#capacity",frame).on('input', function(){ repoInputChanged(); });
+        $("#base_path",frame).on('input', function(){ repoInputChanged(); });
+        $("#repo_path",frame).on('input', function(){ repoInputChanged(); });
+        $("#pub_key",frame).on('input', function(){ repoInputChanged(); });
+        $("#addr",frame).on('input', function(){ repoInputChanged(); });
+        $("#ep_id",frame).on('input', function(){ repoInputChanged(); });
     }
 
     $("#add_adm_btn",frame).click( function(){
@@ -142,7 +138,7 @@ export function show( a_repo_id, a_cb ){
                 uid = uids[i];
                 admin_tree.rootNode.addNode({title: uid.substr(2),icon:"ui-icon ui-icon-person",key: uid });
             }
-            repoInputChanged(16);
+            repoInputChanged();
         });
     });
 
@@ -152,7 +148,7 @@ export function show( a_repo_id, a_cb ){
             node.remove();
             $("#rem_adm_btn",frame).button("option", "disabled", true);
         }
-        repoInputChanged(0x200);
+        repoInputChanged();
     });
 
     $("#add_alloc_btn",frame).click( function(){
@@ -188,7 +184,7 @@ export function show( a_repo_id, a_cb ){
                     node.data.alloc.totalSz = data.totalSz;
                     updateAllocTitle( node );
 
-                    var msg =
+                    var msg =a_repo_id
                     "<table class='info_table'>\
                     <tr><td>No. of Records:</td><td>" + data.recCount + "</td></tr>\
                     <tr><td>No. of Files:</td><td>" + data.fileCount + "</td></tr>\
@@ -274,97 +270,60 @@ export function show( a_repo_id, a_cb ){
             }
         },{
             id: 'apply_btn',
-            text: a_repo_id?"Apply Changes":"Save",
+            text: "Save",
             click: function() {
                 var obj, cap;
+
+                obj = {
+                    title: $("#title",frame).val().trim(),
+                    desc: $("#desc",frame).val().trim(),
+                    address: $("#addr",frame).val(),
+                    pubKey: $("#pub_key",frame).val(),
+                    endpoint: $("#ep_id",frame).val(),
+                    basePath: $("#base_path",frame).val(),
+                    repoPath: $("#repo_path",frame).val()
+                };
+
                 if ( a_repo_id ){
-                    obj = {id:repo.id};
-                    util.getUpdatedValue( $("#title",frame).val(), repo, obj, "title" );
-                    util.getUpdatedValue( $("#desc",frame).val(), repo, obj, "desc" );
-                    util.getUpdatedValue( $("#addr",frame).val(), repo, obj, "address" );
-                    util.getUpdatedValue( $("#pub_key",frame).val(), repo, obj, "pubKey" );
-                    util.getUpdatedValue( $("#ep_id",frame).val(), repo, obj, "endpoint" );
-                    util.getUpdatedValue( $("#path",frame).val(), repo, obj, "path" );
-                    util.getUpdatedValue( $("#domain",frame).val(), repo, obj, "domain" );
-                    util.getUpdatedValue( $("#exp_path",frame).val(), repo, obj, "expPath" );
+                    obj.id = a_repo_id;
+                } else {
+                    obj.id = $("#id",frame).val();
+                }
 
-                    cap = util.parseSize( $("#capacity",frame).val() );
-                    if ( cap == null ){
-                        dialogs.dlgAlert("Data Entry Error","Invalid repo capacity value." );
-                        return;
-                    }
-                    if ( cap != repo.capacity )
-                        obj.capacity = cap;
+                if ( !obj.id || !obj.title || !obj.address || !obj.pubKey || !obj.endpoint || !obj.basePath || !obj.repoPath ){
+                    dialogs.dlgAlert("Data Entry Error","Missing required fields." );
+                    return;
+                }
 
-                    var admins = [];
-                    admin_tree.visit( function(node){
-                        admins.push( node.key );
-                    });
+                cap = util.parseSize( $("#capacity",frame).val() );
+                if ( cap == null ){
+                    dialogs.dlgAlert("Data Entry Error","Invalid repo capacity value." );
+                    return;
+                }
+                obj.capacity = cap;
 
-                    if ( admins.length == 0 ){
-                        dialogs.dlgAlert("Data Entry Error","Must specify at least one repo admin." );
-                        return;
-                    }
+                obj.admin = [];
+                admin_tree.visit( function(node){
+                    obj.admin.push( node.key );
+                });
 
-                    if ( admins.length != repo.admin.length )
-                        obj.admin = admins;
-                    else{
-                        for ( var i in admins ){
-                            if ( admins[i] != repo.admin[i] ){
-                                obj.admin = admins;
-                                break;
-                            }
-                        }
-                    }
+                if ( obj.admin.length == 0 ){
+                    dialogs.dlgAlert("Data Entry Error","Must specify at least one repo admin." );
+                    return;
+                }
 
+                if ( a_repo_id ){
                     console.log("repo update:",obj);
 
-                    if ( changed ){
-                        api.repoUpdate( obj, function( ok, data ){
-                            if ( ok ){
-                                changed = 0;
-                                $("#apply_btn").button("option", "disabled", true);
-                            }else{
-                                dialogs.dlgAlert( "Repo Update Failed", data );
-                            }
-                        });
-                    }
-                }else{
-                    obj = {
-                        id: $("#id",frame).val(),
-                        title: $("#title",frame).val(),
-                        address: $("#addr",frame).val(),
-                        pubKey: $("#pub_key",frame).val(),
-                        endpoint: $("#ep_id",frame).val(),
-                        path: $("#path",frame).val()
-                    };
-
-                    var tmp = $("#desc",frame).val().trim();
-                    if ( tmp )
-                        obj.desc = tmp;
-                    tmp = $("#domain",frame).val().trim();
-                    if ( tmp )
-                        obj.domain = tmp;
-                    tmp = $("#exp_path",frame).val().trim();
-                    if ( tmp )
-                        obj.exp_path = tmp;
-
-                    cap = util.parseSize( $("#capacity",frame).val() );
-                    if ( cap == null ){
-                        dialogs.dlgAlert("Data Entry Error","Invalid repo capacity value." );
-                        return;
-                    }
-                    obj.capacity = cap;
-
-                    obj.admin = [];
-                    admin_tree.visit( function(node){
-                        obj.admin.push( node.key );
+                    api.repoUpdate( obj, function( ok, data ){
+                        if ( ok ){
+                            $("#apply_btn").button("option", "disabled", true);
+                        }else{
+                            dialogs.dlgAlert( "Repo Update Failed", data );
+                        }
                     });
-
-                    if ( obj.admin.length == 0 ){
-                        dialogs.dlgAlert("Data Entry Error","Must specify at least one repo admin." );
-                        return;
-                    }
+                }else{
+                    console.log("repo create:",obj);
 
                     var inst = $(this);
 
@@ -410,10 +369,6 @@ export function show( a_repo_id, a_cb ){
                 $(".edit-only",frame).hide();
             }
         
-            //if ( a_repo_id ){
-            //    $("#apply_btn").button("option", "disabled", true);
-           // }
-
             var widget = frame.dialog( "widget" );
             $(".ui-dialog-buttonpane",widget).append("<span class='note' style='padding:1em;line-height:200%'>* Required fields</span>");
         },

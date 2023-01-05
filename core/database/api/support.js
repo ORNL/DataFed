@@ -256,7 +256,7 @@ module.exports = ( function() {
                 }
             }else if ( spec.required )
                 throw [obj.ERR_MISSING_REQ_PARAM,"Missing required field '" + spec.label + "'."];
-            }
+        }
     };
 
     obj.isInteger = function( x ) {

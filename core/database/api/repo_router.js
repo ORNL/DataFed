@@ -79,6 +79,57 @@ router.get('/view', function (req, res) {
 .summary('View repo server record')
 .description('View repo server record');
 
+function parseRepoDoc( repo ){
+
+    var obj = {
+        capacity: repo.capacity,
+        pub_key: repo.pub_key.trim(),
+        address: repo.address.trim(),
+        endpoint: repo.endpoint.trim(),
+        base_path: repo.base_path.trim(),
+        repo_path: repo.repo_path.trim()
+    };
+
+    g_lib.procInputParam( repo, "title", false, obj );
+    g_lib.procInputParam( repo, "summary", false, obj );
+    g_lib.procInputParam( repo, "domain", false, obj );
+
+    if ( obj.pub_key.length != 40 ){
+        throw [ g_lib.ERR_INVALID_PARAM, "Public key size is invalie (must be 40 characters)" ];
+    }
+
+    // TODO Should validate full address (tcp://xxxx:port)
+    if ( !obj.address.startsWith("tcp://") ){
+        throw [ g_lib.ERR_INVALID_PARAM, "Missing/invalid server protocol (must be tcp://)" ];
+    }
+
+    // TODO Should validate UUID format
+    if ( obj.endpoint.length != 36 ){
+        throw [ g_lib.ERR_INVALID_PARAM, "Endpoint ID invalid (must be 36 characters)" ];
+    }
+
+    // Add leading /
+    if ( !obj.base_path.startsWith("/")){
+        obj.base_path = "/" + obj.base_path;
+    }
+
+    // Remove trailing / for nont-root paths (i.e. /data/)
+    if ( obj.base_path.length > 1 && obj.base_path.endsWith("/")){
+        obj.base_path.slice(0, -1);
+    }
+
+    // Add leading /
+    if ( !obj.repo_path.startsWith("/")){
+        obj.repo_path = "/" + obj.repo_path;
+    }
+
+    // Add trailing /
+    if ( !obj.repo_path.endsWith("/")){
+        obj.repo_path += "/";
+    }
+
+    return obj;
+}
 
 router.post('/create', function (req, res) {
     try {
@@ -92,48 +143,26 @@ router.post('/create', function (req, res) {
                 if ( !client.is_admin )
                     throw g_lib.ERR_PERM_DENIED;
 
-                var obj = {
-                    capacity: req.body.capacity,
-                    pub_key: req.body.pub_key,
-                    address: req.body.address,
-                    endpoint: req.body.endpoint,
-                    path: req.body.path
-                };
+                var obj = parseRepoDoc( req.body );
 
                 g_lib.procInputParam( req.body, "id", false, obj );
-                g_lib.procInputParam( req.body, "title", false, obj );
-                g_lib.procInputParam( req.body, "summary", false, obj );
-                g_lib.procInputParam( req.body, "domain", false, obj );
-
-                if ( !obj.path.startsWith("/"))
-                    throw [ g_lib.ERR_INVALID_PARAM, "Repository path must be an absolute path file system path." ];
-
-                if ( !obj.path.endsWith("/"))
-                    obj.path += "/";
-
-                var idx = obj.path.lastIndexOf( "/", obj.path.length - 2 );
-                if ( obj.path.substr( idx + 1, obj.path.length - idx - 2 ) != obj._key )
-                    throw [ g_lib.ERR_INVALID_PARAM, "Last part of repository path must be repository ID suffix (" + obj._key + ")" ];
-
-                if ( req.body.exp_path ){
-                    obj.exp_path = req.body.exp_path;
-                    if ( !obj.exp_path.endsWith("/"))
-                        obj.path += "/";
-                }
 
                 var repo = g_db.repo.save( obj, { returnNew: true });
 
                 for ( var i in req.body.admins ) {
-                    if ( !g_db._exists( req.body.admins[i] ))
+                    if ( !g_db._exists( req.body.admins[i] )){
                         throw [g_lib.ERR_NOT_FOUND,"User, "+req.body.admins[i]+", not found"];
+                    }
 
                     g_db.admin.save({ _from: repo._id, _to: req.body.admins[i] });
                 }
 
                 repo.new.id = repo.new._id;
+
                 delete repo.new._id;
                 delete repo.new._key;
                 delete repo.new._rev;
+
                 res.send([repo.new]);
             }
         });
@@ -146,18 +175,16 @@ router.post('/create', function (req, res) {
     id: joi.string().required(),
     title: joi.string().required(),
     desc: joi.string().optional(),
-    domain: joi.string().optional(),
-    capacity: joi.number().integer().min(0).required(),
+    capacity: joi.number().integer().min(1).required(),
     pub_key: joi.string().required(),
     address: joi.string().required(),
     endpoint: joi.string().required(),
-    path: joi.string().required(),
-    exp_path: joi.string().optional(),
+    base_path: joi.string().required(),
+    repo_path: joi.string().required(),
     admins: joi.array().items(joi.string()).required()
 }).required(), 'Repo fields')
 .summary('Create a repo server record')
 .description('Create a repo server record.');
-// TODO Add base path to repo
 
 
 router.post('/update', function (req, res) {
@@ -170,46 +197,9 @@ router.post('/update', function (req, res) {
             action: function() {
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
                 g_lib.ensureAdminPermRepo( client, req.body.id );
-                var obj = {};
 
-                g_lib.procInputParam( req.body, "title", true, obj );
-                g_lib.procInputParam( req.body, "summary", true, obj );
-                g_lib.procInputParam( req.body, "domain", true, obj );
-
-                if ( req.body.path ){
-                    if ( !req.body.path.startsWith("/"))
-                        throw [ g_lib.ERR_INVALID_PARAM, "Repository path must be an absolute path file system path." ];
-
-                    obj.path = req.body.path;
-                    if ( !obj.path.endsWith("/"))
-                        obj.path += "/";
-
-                    // Last part of storage path MUST end with the repo ID
-                    var idx = obj.path.lastIndexOf( "/", obj.path.length - 2 );
-                    var key = req.body.id.substr( 5 );
-                    if ( obj.path.substr( idx + 1, obj.path.length - idx - 2 ) != key )
-                        throw [ g_lib.ERR_INVALID_PARAM, "Last part of repository path must be repository ID suffix (" + key + ")" ];
-                }
-
-                if ( req.body.exp_path ){
-                    obj.exp_path = req.body.exp_path;
-                    if ( !obj.exp_path.endsWith("/"))
-                        obj.exp_path += "/";
-                }
-
-                if ( req.body.capacity )
-                    obj.capacity = req.body.capacity;
-
-                if ( req.body.pub_key )
-                    obj.pub_key = req.body.pub_key;
-
-                if ( req.body.address )
-                    obj.address = req.body.address;
-
-                if ( req.body.endpoint )
-                    obj.endpoint = req.body.endpoint;
-
-                var repo = g_db._update( req.body.id, obj, {returnNew: true});
+                var obj = parseRepoDoc( req.body );
+                var repo = g_db._update( req.body.id, obj, { returnNew: true });
 
                 if ( req.body.admins ){
                     g_db.admin.removeByExample({_from: req.body.id});
@@ -221,6 +211,7 @@ router.post('/update', function (req, res) {
                 }
 
                 repo.new.id = repo.new._id;
+
                 delete repo.new._id;
                 delete repo.new._key;
                 delete repo.new._rev;
@@ -235,15 +226,14 @@ router.post('/update', function (req, res) {
 .queryParam('client', joi.string().required(), "Client ID")
 .body(joi.object({
     id: joi.string().required(),
-    title: joi.string().optional(),
+    title: joi.string().required(),
     desc: joi.string().optional(),
-    domain: joi.string().optional(),
-    capacity: joi.number().optional(),
-    pub_key: joi.string().optional(),
-    address: joi.string().optional(),
-    endpoint: joi.string().optional(),
-    path: joi.string().optional(),
-    exp_path: joi.string().optional(),
+    capacity: joi.number().integer().min(1).required(),
+    pub_key: joi.string().required(),
+    address: joi.string().required(),
+    endpoint: joi.string().required(),
+    base_path: joi.string().required(),
+    repo_path: joi.string().required(),
     admins: joi.array().items(joi.string()).optional()
 }).required(), 'Repo fields')
 .summary('Update a repo server record')

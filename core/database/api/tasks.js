@@ -38,7 +38,7 @@ var tasks_func = function() {
         }
 
         var repo = g_db.repo.document( a_repo_id );
-        var path = repo.path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
+        var path = repo.base_path + repo.repo_path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
         var state = { repo_id: a_repo_id, subject: a_subject_id, data_limit: a_data_limit, rec_limit: a_rec_limit, repo_path: path };
         var task = obj._createTask( a_client._id, g_lib.TT_ALLOC_CREATE, 2, state );
 
@@ -106,7 +106,7 @@ var tasks_func = function() {
             throw [g_lib.ERR_IN_USE, "A duplicate allocation delete task was found." ];
         }
 
-        var path = repo.path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
+        var path = repo.base_path + repo.repo_path + (a_subject_id.charAt(0) == "p"?"project/":"user/") + a_subject_id.substr(2) + "/";
         var state = { repo_id: a_repo_id, subject: a_subject_id, repo_path: path };
         var task = obj._createTask( a_client._id, g_lib.TT_ALLOC_DEL, 2, state );
 
@@ -358,10 +358,12 @@ var tasks_func = function() {
                 }
             }
 
+            var repo = g_db.repo.document( xfr.dst_repo_id );
+
             // Request data size update
             params = {
                 repo_id: xfr.dst_repo_id,
-                repo_path: xfr.dst_repo_path,
+                repo_path: repo.base_path + xfr.dst_repo_path,
                 ids: [xfr.files[0].id]
             };
             reply = { cmd: g_lib.TC_RAW_DATA_UPDATE_SIZE, params: params, step: a_task.step };
@@ -1201,7 +1203,7 @@ var tasks_func = function() {
 
             var repo = g_db.repo.document( a_remote );
             rem_ep = repo.endpoint;
-            rem_path = repo.path + (a_dst_owner.charAt(0)=="u"?"user/":"project/") + a_dst_owner.substr(2) + "/";
+            rem_path = repo.repo_path + (a_dst_owner.charAt(0)=="u"?"user/":"project/") + a_dst_owner.substr(2) + "/";
         }
 
         if ( a_mode  == g_lib.TT_DATA_GET){
@@ -1209,7 +1211,7 @@ var tasks_func = function() {
         }
 
         if ( a_data.length ){
-            var loc, locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, d_ext: i.ext, d_src: i.source, r_id: v._id, r_ep: v.endpoint, r_path: v.path, uid: e.uid }", { data: a_data });
+            var loc, locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, d_sz: i.size, d_ext: i.ext, d_src: i.source, r_id: v._id, r_ep: v.endpoint, r_path: v.repo_path, uid: e.uid }", { data: a_data });
 
             //console.log("locs hasNext",locs.hasNext());
 
@@ -1427,7 +1429,7 @@ var tasks_func = function() {
     obj._buildDeleteDoc = function( a_data ){
         var loc, locs, doc = [], repo_map = {};
 
-        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, r_id: v._id, r_path: v.path, uid: e.uid }", { data: a_data });
+        locs = g_db._query("for i in @data for v,e in 1..1 outbound i loc return { d_id: i._id, r_id: v._id, r_path: v.repo_path, uid: e.uid }", { data: a_data });
 
         //console.log("locs hasNext",locs.hasNext());
 
