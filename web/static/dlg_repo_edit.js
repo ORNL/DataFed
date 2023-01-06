@@ -184,7 +184,7 @@ export function show( a_repo_id, a_cb ){
                     node.data.alloc.totalSz = data.totalSz;
                     updateAllocTitle( node );
 
-                    var msg =a_repo_id
+                    var msg =
                     "<table class='info_table'>\
                     <tr><td>No. of Records:</td><td>" + data.recCount + "</td></tr>\
                     <tr><td>No. of Files:</td><td>" + data.fileCount + "</td></tr>\
