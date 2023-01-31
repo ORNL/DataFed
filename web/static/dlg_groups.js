@@ -33,7 +33,7 @@ export function show( a_uid, a_excl, cb, select ){
     function addGroup(){
         dlgGroupEdit.show( a_uid, a_excl, null, function( group ){
             if ( group ){
-                var node = group_tree.rootNode.addNode({title: group.title + " (" +group.gid + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
+                var node = group_tree.rootNode.addNode({title: util.escapeHTML( group.title ) + " (" + util.escapeHTML( group.gid ) + ")",folder:true,lazy:true,icon:false,key:"g/"+group.gid });
                 if ( select )
                     node.setSelected();
             }

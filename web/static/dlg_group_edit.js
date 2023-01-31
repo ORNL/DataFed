@@ -46,7 +46,7 @@ export function show( a_uid, a_excl, a_group, cb ){
                 for ( i in uids ){
                     id = uids[i];
                     if ( a_excl.indexOf( id ) == -1 && !mem_tree.getNodeByKey( id )){
-                        mem_tree.rootNode.addNode({title: id.substr(2),icon:false,key:id });
+                        mem_tree.rootNode.addNode({title: util.escapeHTML( id.substr(2) ),icon:false,key:id });
                         group.member.push(id);
                     }
                 }
@@ -87,7 +87,7 @@ export function show( a_uid, a_excl, a_group, cb ){
             $("#btn_clear",frame).button("enable" );
 
             for ( var i in group.member ){
-                src.push({ title: group.member[i].substr(2), icon: false, key: group.member[i]});
+                src.push({ title: util.escapeHTML( group.member[i].substr(2) ), icon: false, key: group.member[i]});
             }
         }else{
             group.member = [];
