@@ -65,7 +65,7 @@ export function show( a_uid, a_excl, cb, select ){
                 if ( ok ){
                     dlgGroupEdit.show( a_uid, a_excl, group, function( group_new ){
                         if ( group_new ){
-                            node.setTitle( group_new.title + " (" +group_new.gid + ")");
+                            node.setTitle( util.escapeHTML( group_new.title ) + " (" + util.escapeHTML( group_new.gid ) + ")");
                             node.resetLazy();
                         }
                     });

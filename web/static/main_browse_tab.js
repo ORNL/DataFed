@@ -2378,7 +2378,7 @@ export function init(){
                     var qry;
                     for ( i in data.response ) {
                         qry = data.response[i];
-                        data.result.push({ title: qry.title+"",icon:false,folder:true,key:qry.id,lazy:true,offset:0,checkbox:false,nodrag:true});
+                        data.result.push({ title: util.escapeHTML( qry.title ),icon:false,folder:true,key:qry.id,lazy:true,offset:0,checkbox:false,nodrag:true});
                     }
                 }
             } else if ( data.node.key == "allocs" ) {

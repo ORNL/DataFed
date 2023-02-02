@@ -118,7 +118,7 @@ export function show( a_uid, a_excl, a_group, cb ){
     var mem_tree = $.ui.fancytree.getTree($("#member_list",frame));
 
     var options = {
-        title: a_group?"Edit Group '"+a_group.gid+"'":"New Group",
+        title: a_group?"Edit Group '"+ util.escapeHTML( a_group.gid ) +"'":"New Group",
         modal: true,
         width: 600,
         height: 450,
