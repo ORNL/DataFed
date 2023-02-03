@@ -58,7 +58,7 @@ ClientWorker::wait()
 }
 
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
-#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
+#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) std::cout << "[ClientWorker.cpp] Calling dbpass from function :" <<  __func__ << std::endl; m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
 
 /**
  * This method configures message handling by creating a map from message type to handler function.
@@ -233,6 +233,7 @@ ClientWorker::workerThread()
         {
             if ( comm.recv( m_msg_buf, true, 1000 ))
             {
+                std::cout << "Worker Thread running received message" << std::endl;
                 msg_type = m_msg_buf.getMsgType();
 
                 // DEBUG - Inject random delay in message processing
@@ -241,11 +242,25 @@ ClientWorker::workerThread()
                 {
                     usleep( delay );
                 }*/
-
+                // This should always be grabbing the public key not the uid directly
                 if ( msg_type != task_list_msg_type )
                 {
                     DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
                 }
+
+
+                std::string uid;
+                if ( m_db_client.uidByPubKey( m_msg_buf.getPublicKey(), uid ) )
+                {
+                  DL_DEBUG( "[ClientWorker] getUID Known client connected: " << uid );
+                  m_msg_buf.setUID(uid);
+                }
+                else
+                {
+                  uid = string("anon_") + m_msg_buf.getPublicKey();
+                  DL_DEBUG( "[ClientWorker] getUID Unknown client connected: " << uid );
+                }
+
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
@@ -258,7 +273,8 @@ ClientWorker::workerThread()
                     handler = m_msg_handlers.find( msg_type );
                     if ( handler != m_msg_handlers.end() )
                     {
-                        //DL_TRACE( "W"<<m_tid<<" calling handler" );
+                        //DL_TRACE( "W"<m_tid<<" calling handler" );
+                      std::cout << "[ClientWorker.cpp][workerThread] Getting uid from m_msg_buf " << m_msg_buf.getUID() << std::endl;
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
@@ -280,15 +296,15 @@ ClientWorker::workerThread()
         }
         catch( TraceException & e )
         {
-            DL_ERROR( "W" << m_tid << " " << e.toString() );
+            DL_ERROR( "W" << m_tid << " [workerThread] " << e.toString() );
         }
         catch( exception & e )
         {
-            DL_ERROR( "W" << m_tid << " " << e.what() );
+            DL_ERROR( "W" << m_tid << " [workerThread] " << e.what() );
         }
         catch( ... )
         {
-            DL_ERROR( "W" << m_tid << " unknown exception type" );
+            DL_ERROR( "W" << m_tid << " [workerThread] unknown exception type" );
         }
     }
 }
@@ -319,7 +335,7 @@ if ( base_msg ) \
         } \
         catch( TraceException &e ) \
         { \
-            DL_ERROR( "W"<<m_tid<<" " << e.toString() ); \
+            DL_ERROR( "W"<<m_tid<<" [" << __func__ << "] " << e.toString() ); \
             if ( send_reply ) { \
                 NackReply nack; \
                 nack.set_err_code( (ErrorCode) e.getErrorCode() ); \
@@ -328,7 +344,7 @@ if ( base_msg ) \
         } \
         catch( exception &e ) \
         { \
-            DL_ERROR( "W"<<m_tid<<" " << e.what() ); \
+            DL_ERROR( "W"<<m_tid<<" [" << __func__ << " " << e.what() ); \
             if ( send_reply ) { \
                 NackReply nack; \
                 nack.set_err_code( ID_INTERNAL_ERROR ); \
@@ -337,7 +353,7 @@ if ( base_msg ) \
         } \
         catch(...) \
         { \
-            DL_ERROR( "W"<<m_tid<<" unkown exception while processing message!" ); \
+            DL_ERROR( "W"<<m_tid<<" [" << __func__ << "] unkown exception while processing message!" ); \
             if ( send_reply ) { \
                 NackReply nack; \
                 nack.set_err_code( ID_INTERNAL_ERROR ); \
@@ -366,6 +382,7 @@ bool
 ClientWorker::dbPassThrough( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RQ, RP )
+    DL_DEBUG("dbPassThrough: a_uid " << a_uid);
 
     m_db_client.setClient( a_uid );
 
@@ -431,6 +448,7 @@ ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid )
 bool
 ClientWorker::procGetAuthStatusRequest( const std::string & a_uid )
 {
+    std::cout << "[ClientWorker] procGetAuthStatusRequest a_uid " << a_uid << std::endl;
     (void)a_uid;
     PROC_MSG_BEGIN( GetAuthStatusRequest, AuthStatusReply )
 

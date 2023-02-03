@@ -147,7 +147,7 @@ public:
      * TraceExceptions. The receiver is responsible for freeing the memory
      * associated with the received message.
      */
-    bool            recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, std::string & a_uid, uint32_t a_timeout = 0 );
+//    bool            recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, std::string & a_uid, uint32_t a_timeout = 0 );
 
     /**
      * @brief Receive a message into a MsgBuf instance with optional timeout

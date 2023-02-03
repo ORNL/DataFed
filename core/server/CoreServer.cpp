@@ -9,7 +9,7 @@
 #include "ClientWorker.hpp"
 #include "MsgComm.hpp"
 #include "DatabaseAPI.hpp"
-
+#include <iostream>
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
 #define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
@@ -43,7 +43,8 @@ Server::Server() :
     m_config.sec_ctx.is_server = true;
     m_config.sec_ctx.public_key = m_pub_key;
     m_config.sec_ctx.private_key = m_priv_key;
-
+    std::cout << "Public key " << m_pub_key << std::endl;
+    std::cout << "Private key " << m_priv_key << std::endl;
     // Wait for DB connection
     waitForDB();
 
@@ -159,6 +160,7 @@ Server::loadRepositoryConfig()
         // Cache repo data for data handling
         m_config.repos[(*r)->id()] = *r;
 
+        std::cout << "Caching auth_clients public key: " << (*r)->pub_key() << " with id: " << (*r)->id() << std::endl;
         // Cache pub key for ZAP handler
         m_auth_clients[(*r)->pub_key()] = (*r)->id();
     }
@@ -176,6 +178,11 @@ void
 Server::run()
 {
     DL_INFO( "Public/private MAPI starting on ports " << m_config.port << "/" << ( m_config.port + 1))
+
+    int major, minor, patch;
+    zmq_version (&major, &minor, &patch);
+    std::cout << "zeromq version is " << major << "." << minor << "." << patch << std::endl;
+
 
     m_msg_router_thread = new thread( &Server::msgRouter, this );
     m_io_secure_thread = new thread( &Server::ioSecure, this );
@@ -202,6 +209,7 @@ Server::msgRouter()
 
     zmq_bind( backend, "inproc://workers" );
 
+    std::cout << "[CoreServer.cpp] msgRouter ctx " << std::endl;
     void *control = zmq_socket( ctx, ZMQ_SUB );
     zmq_setsockopt( control, ZMQ_LINGER, &linger, sizeof( int ));
     zmq_connect( control, "inproc://control" );
@@ -232,6 +240,7 @@ Server::ioSecure()
 {
     try
     {
+        std::cout << "ioSecure started with sec_ctx" << std::endl;
         MsgComm frontend( "tcp://*:" + to_string(m_config.port), MsgComm::ROUTER, true, &m_config.sec_ctx );
         MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
@@ -464,7 +473,7 @@ Server::zapHandler()
                     "\n\tclient_key: " << client_key_text << "\n";
                 */
 
-                //cout << "ZAP client key ["<< client_key_text << "]\n";
+                cout << "ZAP client key ["<< client_key_text << "]\n";
 
                 // Always accept - but only set UID if it's a known client (by key)
                 if (( iclient = m_auth_clients.find( client_key_text )) != m_auth_clients.end())
@@ -478,22 +487,31 @@ Server::zapHandler()
                 }
                 else
                 {
-                    if ( db.uidByPubKey( client_key_text, uid ) )
-                    {
-                        DL_DEBUG( "ZAP: Known client connected: " << uid );
-                    }
-                    else
-                    {
-                        uid = string("anon_") + client_key_text;
-                        DL_DEBUG( "ZAP: Unknown client connected: " << uid );
-                    }
+                    std::cout << "[CoreServer.cpp] Did not find public key in recent attempts, getting from db" << std::endl;
+                    std::cout << "[CoreServer.cpp] uid before getting from database " << uid << std::endl;
+                    // This block needs to be moved elsewhere
+                    //if ( db.uidByPubKey( client_key_text, uid ) )
+                    //{
+                    //    DL_DEBUG( "ZAP: Known client connected: " << uid );
+                    //}
+                    //else
+                    //{
+                    //    uid = string("anon_") + client_key_text;
+                    //    DL_DEBUG( "ZAP: Unknown client connected: " << uid );
+                    //}
+                    std::cout << "[CoreServer.cpp] uid after getting from database " << uid << std::endl;
                 }
 
+                std::cout << "[CoreServer.cpp] sending to socket, request_id " << request_id << std::endl;
+                std::cout << "[CoreServer.cpp] uid " << uid << std::endl;
                 zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
                 zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
                 zmq_send( socket, "200", 3, ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
-                zmq_send( socket, uid.c_str(), uid.size(), ZMQ_SNDMORE );
+                //zmq_send( socket, "FOOBAR", string("FOOBAR").size(), ZMQ_SNDMORE );
+                //zmq_send( socket, uid.c_str(), uid.size(), ZMQ_SNDMORE );
+                std::string client_key_text_str = string(client_key_text);
+                zmq_send( socket, client_key_text_str.c_str(), client_key_text_str.size(), ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, 0 );
 
             }
@@ -528,14 +546,13 @@ Server::zapHandler()
     DL_INFO( "ZAP handler thread exiting" );
 }
 
-
 void
 Server::authenticateClient( const std::string & a_cert_uid, const std::string & a_uid )
 {
     if ( strncmp( a_cert_uid.c_str(), "anon_", 5 ) == 0 )
     {
         lock_guard<mutex> lock( m_trans_client_mutex );
-
+        std::cout << "Client is authenticated storing briefly: " << a_cert_uid.substr( 5 ) << " a_uid " << a_uid << std::endl;
         m_trans_auth_clients[a_cert_uid.substr( 5 )] = make_pair<>( a_uid, time(0) + 30 );
     }
 }
@@ -544,15 +561,17 @@ bool
 Server::isClientAuthenticated( const std::string & a_client_key, std::string & a_uid )
 {
     lock_guard<mutex> lock( m_trans_client_mutex );
-
+    std::cout << "[CoreServer.cpp] isClientAuthenticated - a_client_key is: " << a_client_key << " ";
     trans_client_map_t::iterator i = m_trans_auth_clients.find( a_client_key );
     if ( i != m_trans_auth_clients.end())
     {
         a_uid = i->second.first;
+        std::cout << "Found: " << a_uid << " in m_trans_auth_clients, now erasing" << std::endl;
         m_trans_auth_clients.erase( i );
 
         return true;
     }
+    std::cout << "Not Found" << std::endl;
 
     return false;
 }

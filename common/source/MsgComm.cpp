@@ -4,7 +4,7 @@
 #include "TraceException.hpp"
 #include "MsgComm.hpp"
 #include "Util.hpp"
-
+#include <iostream>
 using namespace std;
 
 
@@ -149,7 +149,7 @@ MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_tim
     return false;
 }
 
-bool
+/*bool
 MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, std::string & a_uid, uint32_t a_timeout )
 {
     MsgBuf buf;
@@ -163,7 +163,7 @@ MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, std::string & 
     }
 
     return false;
-}
+}*/
 
 bool
 MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
@@ -263,30 +263,44 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
     }
 
     // Only servers recv client UID
+    std::cout << "[MsgBuf:recv] a_proc_uid: " << a_proc_uid << std::endl;
     if ( a_proc_uid )
     {
         // If the UID metadata is set, use is; otherwise get the UID from the message
-        const char * uid = zmq_msg_gets( &msg, "User-Id");
-        //std::cout << "UID (meta): " << (uid?uid:"null") << "\n";
-        if ( uid )
-            a_msg_buf.setUID( uid, strlen( uid ));
-        else
-        {
+
+        // Grabbing from metadata - not the payload
+        // Left-over this will not work see here https://stackoverflow.com/questions/36181016/zeromq-zmqpp-forward-metadata-with-message
+        //const char * uid = zmq_msg_gets( &msg, "User-Id");
+        //std::cout << "[MsgBuf:recv] UID (meta): " << (uid?uid:"null") << "\n"; 
+        //if ( uid ) {
+        //  std::cout << "[MsgBuf:recv] setUID to: " << uid << std::endl;
+        //    a_msg_buf.setUID( uid, strlen( uid ));
+        // Should actually get rid of this whole else case. The uid should always have been set
+        //} else {
             zmq_msg_init( &msg );
 
-            if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
-                EXCEPT( 1, "RCV zmq_msg_recv (uid) failed." );
+            if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 ) {
+                //EXCEPT( 1, "RCV zmq_msg_recv (uid) failed." );
+                EXCEPT( 1, "RCV zmq_msg_recv (public key) failed." );
+            }
 
             if ( zmq_msg_size( &msg ))
             {
+                // Should send public key not username, and map it to the user id. 
                 //std::cout << "UID (msg): " << (char*)zmq_msg_data( &msg ) << "\n";
-                a_msg_buf.setUID( (char*) zmq_msg_data( &msg ), zmq_msg_size( &msg ));
+                //char * new_uid = (char*) zmq_msg_data( &msg );
+                char * new_pub_key = (char*) zmq_msg_data( &msg );
+                std::cout << "[MsgBuf:recv] grabbing_additional msg setting to: " << new_pub_key << std::endl;
+                //a_msg_buf.setUID( (char*) zmq_msg_data( &msg ), zmq_msg_size( &msg ));
+                a_msg_buf.setPublicKey( new_pub_key, zmq_msg_size( &msg ));
             }
-            else
-                a_msg_buf.clearUID();
+            else {
+                //a_msg_buf.clearUID();
+                a_msg_buf.clearPublicKey();
+            }
 
             zmq_msg_close( &msg );
-        }
+        //}
     }
 
     return true;
@@ -426,6 +440,7 @@ MsgComm::proxy( MsgComm & a_backend )
                         // Send UID frame, or empty frame if no UID set
                         if ( uid && ((len = strlen(uid)) > 0 ))
                         {
+                            std::cout << "[MsgComm.cpp] uid: " << uid << std::endl;
                             zmq_msg_init_size( &uid_msg, len );
                             memcpy( zmq_msg_data( &uid_msg ), uid, len );
                         }
