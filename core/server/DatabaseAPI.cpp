@@ -1341,7 +1341,6 @@ DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathRe
 void
 DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::ListingReply & a_reply )
 {
-    std::cout << "generalSearch" << std::endl;
     Value result;
     string qry_begin, qry_end, qry_filter, params;
 
@@ -1461,8 +1460,6 @@ void
 DatabaseAPI::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
 {
     Value result;
-    std::cout << "[DatabaseAPI.cpp] collView" << std::endl;
-    std::cout << "request id: " << a_request.id() << std::endl;
     dbGet( "col/view", {{"id",a_request.id()}}, result );
 
     setCollData( a_reply, result );
@@ -1471,8 +1468,6 @@ DatabaseAPI::collView( const Auth::CollViewRequest & a_request, Auth::CollDataRe
 void
 DatabaseAPI::collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply )
 {
-    std::cout << "[DatabaseAPI.cpp] collRead" << std::endl;
-    std::cout << "request id: " << a_request.id() << std::endl;
     Value result;
     vector<pair<string,string>> params;
     params.push_back({"id",a_request.id()});
@@ -2439,7 +2434,6 @@ void
 DatabaseAPI::repoListObjectAllocations( const Auth::RepoListObjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
 {
     Value result;
-    std::cout << "repoListObjectAllocations" << std::endl;
     dbGet( "repo/alloc/list/by_object", {{"object",a_request.id()}}, result );
 
     setAllocData( a_reply, result );

@@ -48,8 +48,6 @@ router.get('/gridftp', function (req, res) {
                     throw [g_lib.ERR_INVALID_PARAM,"Invalid gridFTP action: ", req.queryParams.act];
             }
 
-            console.log( "req_perm: ", req_perm );
-
             if ( !g_lib.hasAdminPermObject( client, data_id )) {
                 var data = g_db.d.document( data_id );
                 if ( !g_lib.hasPermissions( client, data, req_perm ))

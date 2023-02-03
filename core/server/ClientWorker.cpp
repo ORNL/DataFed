@@ -244,6 +244,7 @@ ClientWorker::workerThread()
                 // This should always be grabbing the public key not the uid directly
                 if ( msg_type != task_list_msg_type )
                 {
+                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getPublicKey() <<"]" );
                     DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
                 }
 
