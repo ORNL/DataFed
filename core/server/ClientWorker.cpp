@@ -58,7 +58,7 @@ ClientWorker::wait()
 }
 
 #define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
-#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) std::cout << "[ClientWorker.cpp] Calling dbpass from function :" <<  __func__ << std::endl; m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
+#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
 
 /**
  * This method configures message handling by creating a map from message type to handler function.
@@ -274,7 +274,6 @@ ClientWorker::workerThread()
                     if ( handler != m_msg_handlers.end() )
                     {
                         //DL_TRACE( "W"<m_tid<<" calling handler" );
-                      std::cout << "[ClientWorker.cpp][workerThread] Getting uid from m_msg_buf " << m_msg_buf.getUID() << std::endl;
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
@@ -448,7 +447,6 @@ ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid )
 bool
 ClientWorker::procGetAuthStatusRequest( const std::string & a_uid )
 {
-    std::cout << "[ClientWorker] procGetAuthStatusRequest a_uid " << a_uid << std::endl;
     (void)a_uid;
     PROC_MSG_BEGIN( GetAuthStatusRequest, AuthStatusReply )
 

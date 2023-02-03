@@ -133,23 +133,6 @@ public:
     bool            recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_timeout = 0 );
 
     /**
-     * @brief Receive a message, frame, and UID with optional timeout
-     * 
-     * @param a_msg - Message pointer to receive payload
-     * @param a_frame - Frame instance to receive message frame
-     * @param a_uid - String to receive incoming UID
-     * @param a_timeout - Optional timeout in milliseconds (0 = wait forever)
-     * @return true if message received
-     * @return false if timeout expires
-     * 
-     * Receive a message with framing information, UID, and optional timeout.
-     * Malformed incoming messages or communication errors may throw
-     * TraceExceptions. The receiver is responsible for freeing the memory
-     * associated with the received message.
-     */
-//    bool            recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, std::string & a_uid, uint32_t a_timeout = 0 );
-
-    /**
      * @brief Receive a message into a MsgBuf instance with optional timeout
      * 
      * @param a_message - MsgBuf instance to receive message
