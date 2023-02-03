@@ -30,9 +30,7 @@ ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid ) :
     m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_worker_thread(0), m_run(true),
     m_db_client( m_config.db_url , m_config.db_user, m_config.db_pass )
 {
-    DL_DEBUG("Calling setupMsgHandlers");
     setupMsgHandlers();
-    DL_DEBUG("Creating m_worker_thread");
     m_worker_thread = new thread( &ClientWorker::workerThread, this );
 }
 
@@ -228,7 +226,6 @@ ClientWorker::workerThread()
     nack.set_err_msg( "Authentication required" );
 
     //int delay;
-    DL_DEBUG( "W" << m_tid << " m_run " << m_run);
 
     while ( m_run )
     {
@@ -237,7 +234,6 @@ ClientWorker::workerThread()
             if ( comm.recv( m_msg_buf, true, 1000 ))
             {
                 msg_type = m_msg_buf.getMsgType();
-                DL_DEBUG( "W" << m_tid << " received message" );
 
                 // DEBUG - Inject random delay in message processing
                 /*delay = (rand() % 2000)*1000;
@@ -245,11 +241,26 @@ ClientWorker::workerThread()
                 {
                     usleep( delay );
                 }*/
-
+                // This should always be grabbing the public key not the uid directly
                 if ( msg_type != task_list_msg_type )
                 {
+                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getPublicKey() <<"]" );
                     DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
                 }
+
+
+                std::string uid;
+                if ( m_db_client.uidByPubKey( m_msg_buf.getPublicKey(), uid ) )
+                {
+                  DL_DEBUG( "[ClientWorker] getUID Known client connected: " << uid );
+                  m_msg_buf.setUID(uid);
+                }
+                else
+                {
+                  uid = string("anon_") + m_msg_buf.getPublicKey();
+                  DL_DEBUG( "[ClientWorker] getUID Unknown client connected: " << uid );
+                }
+
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
@@ -259,11 +270,10 @@ ClientWorker::workerThread()
                 }
                 else
                 {
-                    DL_DEBUG( "W"<<m_tid<<" getting handler from map" );
                     handler = m_msg_handlers.find( msg_type );
                     if ( handler != m_msg_handlers.end() )
                     {
-                        DL_TRACE( "W"<<m_tid<<" calling handler/attempting to call function of worker" );
+                        //DL_TRACE( "W"<<m_tid<<" calling handler" );
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
@@ -271,35 +281,31 @@ ClientWorker::workerThread()
                             if ( msg_type != task_list_msg_type )
                                 m_core.metricsUpdateMsgCount( m_msg_buf.getUID(), msg_type );
 
-                            DL_DEBUG( "W" << m_tid << " sending msg of type " << msg_type);
                             comm.send( m_msg_buf );
-                            DL_DEBUG( "Message sent ");
                             /*if ( msg_type != task_list_msg_type )
                             {
                                 DL_DEBUG( "W"<<m_tid<<" reply sent." );
                             }*/
                         }
-                    } else {
-                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
                     }
+                    else
+                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
                 }
             }
         }
         catch( TraceException & e )
         {
-            DL_ERROR( "W" << m_tid << " " << e.toString() );
+            DL_ERROR( "W" << m_tid << " [workerThread] " << e.toString() );
         }
         catch( exception & e )
         {
-            DL_ERROR( "W" << m_tid << " " << e.what() );
+            DL_ERROR( "W" << m_tid << " [workerThread] " << e.what() );
         }
         catch( ... )
         {
-            DL_ERROR( "W" << m_tid << " unknown exception type" );
+            DL_ERROR( "W" << m_tid << " [workerThread] unknown exception type" );
         }
     }
-
-    DL_DEBUG( "W exiting loop" );
 }
 
 // TODO The macros below should be replaced with templates
@@ -328,7 +334,7 @@ if ( base_msg ) \
         } \
         catch( TraceException &e ) \
         { \
-            DL_ERROR( "W"<<m_tid<<" " << e.toString() ); \
+            DL_ERROR( "W"<<m_tid<<" [" << __func__ << "] " << e.toString() ); \
             if ( send_reply ) { \
                 NackReply nack; \
                 nack.set_err_code( (ErrorCode) e.getErrorCode() ); \
@@ -337,7 +343,7 @@ if ( base_msg ) \
         } \
         catch( exception &e ) \
         { \
-            DL_ERROR( "W"<<m_tid<<" " << e.what() ); \
+            DL_ERROR( "W"<<m_tid<<" [" << __func__ << " " << e.what() ); \
             if ( send_reply ) { \
                 NackReply nack; \
                 nack.set_err_code( ID_INTERNAL_ERROR ); \
@@ -346,7 +352,7 @@ if ( base_msg ) \
         } \
         catch(...) \
         { \
-            DL_ERROR( "W"<<m_tid<<" unkown exception while processing message!" ); \
+            DL_ERROR( "W"<<m_tid<<" [" << __func__ << "] unkown exception while processing message!" ); \
             if ( send_reply ) { \
                 NackReply nack; \
                 nack.set_err_code( ID_INTERNAL_ERROR ); \
