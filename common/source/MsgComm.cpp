@@ -148,22 +148,6 @@ MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_tim
     return false;
 }
 
-/*bool
-MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, std::string & a_uid, uint32_t a_timeout )
-{
-    MsgBuf buf;
-
-    if ( recv( buf, true, a_timeout ))
-    {
-        a_frame = buf.getFrame();
-        a_msg = buf.unserialize();
-        a_uid = buf.getUID();
-        return true;
-    }
-
-    return false;
-}*/
-
 bool
 MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
 {
@@ -427,7 +411,6 @@ MsgComm::proxy( MsgComm & a_backend )
                         // Send UID frame, or empty frame if no UID set
                         if ( uid && ((len = strlen(uid)) > 0 ))
                         {
-                            std::cout << "[MsgComm.cpp] uid: " << uid << std::endl;
                             zmq_msg_init_size( &uid_msg, len );
                             memcpy( zmq_msg_data( &uid_msg ), uid, len );
                         }
