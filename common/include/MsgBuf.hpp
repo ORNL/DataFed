@@ -100,7 +100,8 @@ public:
      * This constructor version is used by trusted agents that need to send/
      * recv messages on behalf of a user specified by UID.
      */
-    MsgBuf( const std::string & a_uid, uint16_t a_context = 0, uint32_t a_capacity = 0 ) : m_buffer(0), m_capacity(0), m_uid(a_uid)
+    MsgBuf( const std::string & a_uid, uint16_t a_context = 0, uint32_t a_capacity = 0 ) : 
+      m_buffer(0), m_capacity(0), m_uid(a_uid), m_pub_key("")
     {
         m_frame.context = a_context;
         m_route[0] = 0;
@@ -125,6 +126,7 @@ public:
     {
         m_route[0] = 0;
         m_uid.clear();
+        m_pub_key.clear();
         m_frame.clear();
 
         if ( m_buffer )
@@ -240,6 +242,34 @@ public:
     inline void clearUID()
     {
         m_uid.clear();
+    }
+
+    /// Get public key as string
+    inline const std::string & getPublicKey() const
+    {
+        return m_pub_key;
+    }
+
+    /// Set public key from char buffer
+    inline void setPublicKey( const char * a_pub_key, size_t a_len = 0 )
+    {
+        if ( a_len ) {
+            m_pub_key.assign( a_pub_key, a_len );
+        } else {
+            m_pub_key = a_pub_key; // Null-term str
+        }
+    }
+
+    /// Set Public Key from string
+    inline void setPublicKey( const std::string & a_pub_key )
+    {
+        m_pub_key = a_pub_key;
+    }
+
+    /// Clear the public key
+    inline void clearPublicKey()
+    {
+        m_pub_key.clear();
     }
 
     /// Acquire (take ownership of) contained buffer
@@ -459,6 +489,7 @@ private:
     uint32_t    m_capacity;
     uint8_t     m_route[MAX_ROUTE_LEN]; // Byte 0 = length
     std::string m_uid;
+    std::string m_pub_key;
 };
 
 

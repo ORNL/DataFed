@@ -4,7 +4,6 @@
 #include "TraceException.hpp"
 #include "MsgComm.hpp"
 #include "Util.hpp"
-
 using namespace std;
 
 
@@ -150,22 +149,6 @@ MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, uint32_t a_tim
 }
 
 bool
-MsgComm::recv( MsgBuf::Message *& a_msg, MsgBuf::Frame & a_frame, std::string & a_uid, uint32_t a_timeout )
-{
-    MsgBuf buf;
-
-    if ( recv( buf, true, a_timeout ))
-    {
-        a_frame = buf.getFrame();
-        a_msg = buf.unserialize();
-        a_uid = buf.getUID();
-        return true;
-    }
-
-    return false;
-}
-
-bool
 MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
 {
     zmq_msg_t msg;
@@ -265,28 +248,30 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
     // Only servers recv client UID
     if ( a_proc_uid )
     {
-        // If the UID metadata is set, use is; otherwise get the UID from the message
-        const char * uid = zmq_msg_gets( &msg, "User-Id");
-        //std::cout << "UID (meta): " << (uid?uid:"null") << "\n";
-        if ( uid )
-            a_msg_buf.setUID( uid, strlen( uid ));
-        else
-        {
-            zmq_msg_init( &msg );
+      // If the UID metadata is set, use is; otherwise get the UID from the message
 
-            if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 )
-                EXCEPT( 1, "RCV zmq_msg_recv (uid) failed." );
+      // Grabbing from metadata - not the payload
+      // this will not work see link below about discussion
+      // https://stackoverflow.com/questions/36181016/zeromq-zmqpp-forward-metadata-with-message
+      // const char * uid = zmq_msg_gets( &msg, "User-Id");
 
-            if ( zmq_msg_size( &msg ))
-            {
-                //std::cout << "UID (msg): " << (char*)zmq_msg_data( &msg ) << "\n";
-                a_msg_buf.setUID( (char*) zmq_msg_data( &msg ), zmq_msg_size( &msg ));
-            }
-            else
-                a_msg_buf.clearUID();
+      zmq_msg_init( &msg );
 
-            zmq_msg_close( &msg );
-        }
+      if ((zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 ) {
+        EXCEPT( 1, "RCV zmq_msg_recv (public key) failed." );
+      }
+
+      if ( zmq_msg_size( &msg ))
+      {
+        // Should send public key not username, and map it to the user id. 
+        char * new_pub_key = (char*) zmq_msg_data( &msg );
+        a_msg_buf.setPublicKey( new_pub_key, zmq_msg_size( &msg ));
+      }
+      else {
+        a_msg_buf.clearPublicKey();
+      }
+
+      zmq_msg_close( &msg );
     }
 
     return true;
