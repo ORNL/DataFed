@@ -381,7 +381,6 @@ bool
 ClientWorker::dbPassThrough( const std::string & a_uid )
 {
     PROC_MSG_BEGIN( RQ, RP )
-    DL_DEBUG("dbPassThrough: a_uid " << a_uid);
 
     m_db_client.setClient( a_uid );
 
