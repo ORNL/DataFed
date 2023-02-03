@@ -233,7 +233,6 @@ ClientWorker::workerThread()
         {
             if ( comm.recv( m_msg_buf, true, 1000 ))
             {
-                std::cout << "Worker Thread running received message" << std::endl;
                 msg_type = m_msg_buf.getMsgType();
 
                 // DEBUG - Inject random delay in message processing
@@ -273,7 +272,7 @@ ClientWorker::workerThread()
                     handler = m_msg_handlers.find( msg_type );
                     if ( handler != m_msg_handlers.end() )
                     {
-                        //DL_TRACE( "W"<m_tid<<" calling handler" );
+                        //DL_TRACE( "W"<<m_tid<<" calling handler" );
 
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {

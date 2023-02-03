@@ -262,19 +262,18 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
     }
 
     // Only servers recv client UID
-    std::cout << "[MsgBuf:recv] a_proc_uid: " << a_proc_uid << std::endl;
     if ( a_proc_uid )
     {
       // If the UID metadata is set, use is; otherwise get the UID from the message
 
       // Grabbing from metadata - not the payload
-      // Left-over this will not work see here https://stackoverflow.com/questions/36181016/zeromq-zmqpp-forward-metadata-with-message
+      // this will not work see link below about discussion
+      // https://stackoverflow.com/questions/36181016/zeromq-zmqpp-forward-metadata-with-message
       // const char * uid = zmq_msg_gets( &msg, "User-Id");
 
       zmq_msg_init( &msg );
 
-      if (( rc = zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 ) {
-        //EXCEPT( 1, "RCV zmq_msg_recv (uid) failed." );
+      if ((zmq_msg_recv( &msg, m_socket, ZMQ_DONTWAIT )) < 0 ) {
         EXCEPT( 1, "RCV zmq_msg_recv (public key) failed." );
       }
 
@@ -282,7 +281,6 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
       {
         // Should send public key not username, and map it to the user id. 
         char * new_pub_key = (char*) zmq_msg_data( &msg );
-        std::cout << "[MsgBuf:recv] grabbing_additional msg setting to: " << new_pub_key << std::endl;
         a_msg_buf.setPublicKey( new_pub_key, zmq_msg_size( &msg ));
       }
       else {

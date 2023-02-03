@@ -51,39 +51,28 @@ router.get('/gridftp', function (req, res) {
             console.log( "req_perm: ", req_perm );
 
             if ( !g_lib.hasAdminPermObject( client, data_id )) {
-                console.log("Does not have Admin Permi to Object")
                 var data = g_db.d.document( data_id );
                 if ( !g_lib.hasPermissions( client, data, req_perm ))
-                    console.log("Permission denied")
                     throw g_lib.ERR_PERM_DENIED;
             }
         }
 
         // Verify repo and path are correct for record
         // Note: only managed records have an allocations and this gridftp auth call is only made for managed records
-        //console.log("Grabbing file: ", req.queryParams.file)
         var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
-        //console.log("Grabbing path of file: ", path)
         var loc = g_db.loc.firstExample({_from: data_id});
-        console.log("Ouput of loc: ", loc);
         if ( !loc ) {
-            console.log("A lock on the data permission denied");
             throw g_lib.ERR_PERM_DENIED;
         }
 
         var alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc._to });
-        console.log("Content of alloc, ", alloc);
         if ( !alloc ) {
-            console.log("Permission denied no allocation")
             throw g_lib.ERR_PERM_DENIED;
         }
 
         if ( alloc.path + data_key != path ){
-        //if ( ! req.queryParams.file.endsWith(alloc.path + data_key) ){
-            console.log("Alloc.path + data_key (", alloc.path + data_key, ")do not match path");
             // This may be due to an alloc/owner change
             // Allow IF new path matches
-            //console.log("authz loc info:", loc );
 
             if ( !loc.new_repo )
                 throw g_lib.ERR_PERM_DENIED;
@@ -93,7 +82,6 @@ router.get('/gridftp', function (req, res) {
             //console.log("path:", path, "alloc path:", alloc.path + data_key );
 
             if ( !alloc || ( alloc.path + data_key != path ))
-            //if ( !alloc || ! req.queryParams.file.endsWith(alloc.path + data_key ))
                 throw g_lib.ERR_PERM_DENIED;
         }
 
