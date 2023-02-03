@@ -422,24 +422,13 @@ Server::zapHandler()
                 {
                     DL_DEBUG( "ZAP: Known transient client connected: " << uid );
                 }
-                else
-                {
-                    if ( db.uidByPubKey( client_key_text, uid ) )
-                    {
-                        DL_DEBUG( "ZAP: Known client connected: " << uid );
-                    }
-                    else
-                    {
-                        uid = string("anon_") + client_key_text;
-                        DL_DEBUG( "ZAP: Unknown client connected: " << uid );
-                    }
-                }
 
                 zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
                 zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
                 zmq_send( socket, "200", 3, ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
-                zmq_send( socket, uid.c_str(), uid.size(), ZMQ_SNDMORE );
+                std::string client_key_text_str = string(client_key_text);
+                zmq_send( socket, client_key_text_str.c_str(), client_key_text_str.size(), ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, 0 );
 
             }

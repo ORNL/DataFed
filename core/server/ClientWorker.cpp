@@ -248,7 +248,6 @@ ClientWorker::workerThread()
                     DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
                 }
 
-
                 std::string uid;
                 if ( m_db_client.uidByPubKey( m_msg_buf.getPublicKey(), uid ) )
                 {
@@ -260,7 +259,6 @@ ClientWorker::workerThread()
                   uid = string("anon_") + m_msg_buf.getPublicKey();
                   DL_DEBUG( "[ClientWorker] getUID Unknown client connected: " << uid );
                 }
-
 
                 if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
                 {
