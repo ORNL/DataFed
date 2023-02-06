@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include "TraceException.hpp"
 #include "MsgComm.hpp"
+#include "IIdentityMap.hpp"
 #include "Util.hpp"
 
 using namespace std;
@@ -306,7 +307,7 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
  * TODO: provide callback for error handling? (currently logs errors)
  */
 void
-MsgComm::proxy( MsgComm & a_backend )
+MsgComm::proxy( MsgComm & a_backend, const IIdentityMap & identity_mapper )
 {
     const size_t    max_parts = 20;
     zmq_msg_t       out_msg;
@@ -316,7 +317,6 @@ MsgComm::proxy( MsgComm & a_backend )
     size_t          i,nparts;
     int             rc;
     size_t          len;
-    const char *    uid;
     //uint32_t        msg_size;
     void *          out_sock = a_backend.m_socket;
     zmq_pollitem_t  items[] = {{ m_socket, 0, ZMQ_POLLIN, 0}, { out_sock, 0, ZMQ_POLLIN, 0 }};
@@ -416,7 +416,7 @@ MsgComm::proxy( MsgComm & a_backend )
                     else
                     {
                         // Must get ZAP user-id from non-routing msg parts - last part (p_msg-1) is always safe
-                        uid = zmq_msg_gets( p_msg-1, "User-Id");
+                        const char * uid_or_key = zmq_msg_gets( p_msg-1, "User-Id");
                         //cout << "proxy uid [" << (uid?uid:"NULL") << "]\n";
 
                         // Send all received message parts
@@ -424,10 +424,15 @@ MsgComm::proxy( MsgComm & a_backend )
                             zmq_msg_send( p_msg, out_sock, ZMQ_SNDMORE );
 
                         // Send UID frame, or empty frame if no UID set
-                        if ( uid && ((len = strlen(uid)) > 0 ))
+                        if ( uid_or_key && ((len = strlen(uid_or_key)) > 0 ))
                         {
+
+                            std::string uid = "";
+                            if ( identity_mapper.hasKey(uid_or_key) ) {
+                               uid = identity_mapper.getId(uid_or_key);
+                            }
                             zmq_msg_init_size( &uid_msg, len );
-                            memcpy( zmq_msg_data( &uid_msg ), uid, len );
+                            memcpy( zmq_msg_data( &uid_msg ), uid.c_str(), len );
                         }
                         else
                         {

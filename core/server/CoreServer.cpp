@@ -88,6 +88,17 @@ Server::loadKeys( const std::string & a_cred_dir )
     inf.close();
 }
 
+bool
+Server::hasKey(const std::string & public_key ) const noexcept {
+  lock_guard<mutex> lock( m_trans_client_mutex );
+  return m_trans_auth_clients_to_key.count(public_key);
+}
+
+std::string
+Server::getId(const std::string & public_key ) const noexcept {
+  lock_guard<mutex> lock( m_trans_client_mutex );
+  return m_trans_auth_clients_to_key.at(public_key);
+}
 
 void
 Server::waitForDB()
@@ -181,7 +192,7 @@ Server::ioSecure()
         MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
         // Must use custom proxy to inject ZAP User-Id into message frame
-        frontend.proxy( backend );
+        frontend.proxy( backend, *this );
     }
     catch( exception & e)
     {
@@ -357,6 +368,7 @@ Server::zapHandler()
                             if ( itrans_client->second.second < now )
                             {
                                 DL_DEBUG( "ZAP: Purging client " << itrans_client->second.first );
+                                m_trans_auth_clients_to_key.erase(itrans_client->second.first);
                                 itrans_client = m_trans_auth_clients.erase( itrans_client );
                             }
                             else
@@ -481,8 +493,8 @@ Server::authenticateClient( const std::string & a_cert_uid, const std::string & 
     if ( strncmp( a_cert_uid.c_str(), "anon_", 5 ) == 0 )
     {
         lock_guard<mutex> lock( m_trans_client_mutex );
-
         m_trans_auth_clients[a_cert_uid.substr( 5 )] = make_pair<>( a_uid, time(0) + 30 );
+        m_trans_auth_clients_to_key[a_uid] = a_cert_uid.substr( 5 );
     }
 }
 
@@ -496,7 +508,7 @@ Server::isClientAuthenticated( const std::string & a_client_key, std::string & a
     {
         a_uid = i->second.first;
         m_trans_auth_clients.erase( i );
-
+        m_trans_auth_clients_to_key.erase(a_uid);
         return true;
     }
 

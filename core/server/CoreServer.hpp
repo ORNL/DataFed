@@ -6,11 +6,13 @@
 #include <map>
 #include <thread>
 #include <mutex>
+#include <unordered_map>
 #include <condition_variable>
 #include <stdint.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include "Config.hpp"
+#include "IIdentityMap.hpp"
 #include "ICoreServer.hpp"
 
 
@@ -41,7 +43,7 @@ class ClientWorker;
  * The ICoreServer interface class exposes an authenticateClient method to client workers for
  * manual (password) and token-based authentication.
  */
-class Server : public ICoreServer
+class Server : public ICoreServer, public IIdentityMap
 {
 public:
     /// CoreServer constructor (uses Config singleton)
@@ -64,6 +66,10 @@ private:
     /// Message request metrics - maps message type to count per metrics period
     typedef std::map<uint16_t,uint32_t> MsgMetrics_t;
 
+    // IIdentityMap methods
+    virtual bool hasKey( const std::string & public_key ) const noexcept final;
+    virtual std::string getId( const std::string & public_key ) const noexcept final;
+
     void waitForDB();
     void authenticateClient( const std::string & a_cert_uid, const std::string & a_uid );
     void metricsUpdateMsgCount( const std::string & a_uid, uint16_t a_msg_type );
@@ -80,11 +86,12 @@ private:
     Config &                        m_config;               ///< Ref to configuration singleton
     std::thread                    m_io_secure_thread;     ///< Secure I/O thread handle
     std::thread                    m_io_insecure_thread;   ///< Insecure I/O thread handle
-    std::mutex                      m_trans_client_mutex;   ///< Mutex for transient client data access
+    mutable std::mutex                      m_trans_client_mutex;   ///< Mutex for transient client data access
     std::string                     m_pub_key;              ///< Public key for secure interface
     std::string                     m_priv_key;             ///< Private key for secure interface
     std::thread                   m_zap_thread;           ///< ZeroMQ client authentication (ZAP) thread
     trans_client_map_t              m_trans_auth_clients;   ///< List of transient authenticated clients
+    std::unordered_map<std::string,std::string> m_trans_auth_clients_to_key; ///< List of transient authenticated clients as a map key is the public key value is the uid
     std::thread                    m_msg_router_thread;    ///< Main message router thread handle
     std::vector<std::shared_ptr<ClientWorker>>      m_workers;              ///< List of ClientWorker instances
     std::thread                   m_db_maint_thread;      ///< DB maintenance thread handle
