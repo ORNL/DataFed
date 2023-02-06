@@ -5,7 +5,7 @@ import * as dlgPickUser from "./dlg_pick_user.js";
 import * as dlgGroups from "./dlg_groups.js";
 import * as dlgGroupEdit from "./dlg_group_edit.js";
 import * as settings from "./settings.js";
-
+import * as util from "./util.js";
 
 export function show( item ){
     const content =
@@ -383,7 +383,7 @@ export function show( item ){
                             group = groups.find( function(elem){ return elem.gid == gid; } );
                             if ( group ){
                                 node.resetLazy();
-                                node.setTitle( group.title + " (" + gid + ")");
+                                node.setTitle( utils.escapeHTML( group.title ) + " (" + gid + ")");
                             }else{
                                 new_rules.splice(i,1);
                                 node.remove();
@@ -408,7 +408,7 @@ export function show( item ){
                             if ( ok ){
                                 gid = gid.substr(2);
                                 group = groups.find( function(elem){ return elem.gid == gid; } );
-                                rule_tree.rootNode.children[1].addNode({title:group.title + " (" + gid + ")",icon:"ui-icon ui-icon-persons",key:"g/"+gid,rule:rule,folder:true,lazy:true });
+                                rule_tree.rootNode.children[1].addNode({title:util.escapeHTML(group.title) + " (" + gid + ")",icon:"ui-icon ui-icon-persons",key:"g/"+gid,rule:rule,folder:true,lazy:true });
                             }else
                                 rule_tree.rootNode.children[1].addNode({title:gid.substr(2),icon:"ui-icon ui-icon-persons",key:gid,rule:rule,folder:true,lazy:true });
                         }
@@ -427,7 +427,7 @@ export function show( item ){
                 if ( ok ){
                     dlgGroupEdit.show( uid, excl, reply.group[0], function( group_new ){
                         if ( group_new ){
-                            node.setTitle( group_new.title + " (" +group_new.gid + ")");
+                            node.setTitle( util.escapeHTML( group_new.title ) + " (" +group_new.gid + ")");
                             node.resetLazy();
                         }
                     });
@@ -608,9 +608,9 @@ export function show( item ){
                         if ( data.node.key.startsWith("g/")){
                             data.result = [];
                             var grp = data.response.group[0];
-                            data.node.setTitle( grp.title + " (" + grp.gid + ")" );
+                            data.node.setTitle( util.escapeHTML( grp.title ) + " (" + grp.gid + ")" );
                             if ( grp.desc )
-                                data.result.push({title: "["+grp.desc+"]", icon: false });
+                                data.result.push({title: "["+ util.escapeHTML( grp.desc ) +"]", icon: false });
 
                             if ( grp.member && grp.member.length ){
                                 for ( var i in grp.member ) {
