@@ -1,0 +1,23 @@
+name: Unit-Testing
+
+on: push
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update ubuntu
+        run: sudo apt-get update
+      - name: Install dependencies
+        run: |
+          sudo ./scripts/install_core_dependencies.sh
+      - name: Build
+        run: |
+        	cmake -S. -B build
+					cmake --build build -j4 
+      - name: Run tests
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cmake --build build --target test
