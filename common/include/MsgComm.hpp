@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <zmq.h>
 #include "MsgBuf.hpp"
-#include "IIdentityMap.hpp"
+#include "IAuthenticationManager.hpp"
 
 /**
  * @brief Message communicator class wrapping protobuf and zeromq
@@ -176,7 +176,7 @@ public:
      * and will extract and insert the UID (if found) into the framing of the
      * message sent to the backend connection.
      */
-    void            proxy( MsgComm & a_backend, const IIdentityMap & identity_mapper);
+    void            proxy( MsgComm & a_backend, IAuthenticationManager & authentication_manager);
 
     /**
      * @brief Get the Socket object

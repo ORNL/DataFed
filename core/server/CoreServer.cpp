@@ -10,7 +10,9 @@
 #include "ClientWorker.hpp"
 #include "MsgComm.hpp"
 #include "DatabaseAPI.hpp"
-
+#include "PublicKeyTypes.hpp"
+#include "Condition.hpp"
+#include <vector>
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
 #define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
@@ -43,8 +45,34 @@ Server::Server() :
     // Wait for DB connection
     waitForDB();
 
+    std::map<PublicKeyType, time_t> purge_intervals;
+    const time_t seconds_30 = 30;
+    const time_t hours_eight = 60; //*60*8;
+    purge_intervals[PublicKeyType::TRANSIENT] = seconds_30;
+    purge_intervals[PublicKeyType::SESSION] = hours_eight;
+      
+    std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>> purge_conditions;
+
+    const size_t accesses_to_promote = 2;
+    const PublicKeyType promote_from = PublicKeyType::TRANSIENT;
+    const PublicKeyType promote_to =PublicKeyType::SESSION;
+
+    purge_conditions[PublicKeyType::TRANSIENT].emplace_back(std::make_unique<Promote>(accesses_to_promote, promote_from, promote_to ));
+
+    const size_t accesses_to_reset = 1;
+    const PublicKeyType key_type_to_apply_reset = PublicKeyType::SESSION;
+
+    purge_conditions[PublicKeyType::SESSION].emplace_back(std::make_unique<Reset>(accesses_to_reset, key_type_to_apply_reset));
+
     // Load repository config from DB
-    m_config.loadRepositoryConfig();
+    m_config.loadRepositoryConfig(m_auth_manager);
+
+    // Must occur after loading config settings
+    m_auth_manager = AuthenticationManager(purge_intervals,
+        std::move(purge_conditions),
+        m_config.db_url,
+        m_config.db_user,
+        m_config.db_pass);
 
     // Start ZAP handler
     m_zap_thread = thread( &Server::zapHandler, this );
@@ -57,6 +85,9 @@ Server::Server() :
 
     // Create task mgr (starts it's own threads)
     TaskMgr::getInstance();
+
+    //m_transient_next_purge = time(0) + m_transient_purge_interval;
+    //m_session_next_purge = time(0) + m_session_purge_interval;
 }
 
 
@@ -88,17 +119,6 @@ Server::loadKeys( const std::string & a_cred_dir )
     inf.close();
 }
 
-bool
-Server::hasKey(const std::string & public_key ) const noexcept {
-  lock_guard<mutex> lock( m_trans_client_mutex );
-  return m_trans_auth_clients_to_key.count(public_key);
-}
-
-std::string
-Server::getId(const std::string & public_key ) const noexcept {
-  lock_guard<mutex> lock( m_trans_client_mutex );
-  return m_trans_auth_clients_to_key.at(public_key);
-}
 
 void
 Server::waitForDB()
@@ -192,7 +212,7 @@ Server::ioSecure()
         MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
         // Must use custom proxy to inject ZAP User-Id into message frame
-        frontend.proxy( backend, *this );
+        frontend.proxy( backend, m_auth_manager );
     }
     catch( exception & e)
     {
@@ -327,7 +347,6 @@ Server::zapHandler()
     try
     {
         void *      ctx = MsgComm::getContext();
-        char        client_key_text[41];
         void *      socket = zmq_socket( ctx, ZMQ_REP );
         int         rc;
         char        version[100];
@@ -337,16 +356,10 @@ Server::zapHandler()
         char        identity_property[100];
         char        mechanism[100];
         char        client_key[100];
-        string      uid;
-        time_t      now, next_purge;
-        trans_client_map_t::iterator    itrans_client;
         zmq_pollitem_t                  poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
-        DatabaseAPI                  db( m_config.db_url, m_config.db_user, m_config.db_pass );
 
         if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
             EXCEPT( 1, "Bind on ZAP failed." );
-
-        next_purge = time(0) + 30;
 
         while ( 1 )
         {
@@ -355,29 +368,8 @@ Server::zapHandler()
                 if (( rc = zmq_poll( poll_items, 1, 10000 )) == -1 )
                     EXCEPT( 1, "Poll on ZAP socket failed." );
 
-                if ( m_trans_auth_clients.size() )
-                {
-                    now = time( 0 );
-                    if ( now > next_purge )
-                    {
-                        DL_DEBUG( "ZAP: Purging expired transient clients" );
-                        lock_guard<mutex> lock( m_trans_client_mutex );
-
-                        for ( itrans_client = m_trans_auth_clients.begin(); itrans_client != m_trans_auth_clients.end(); )
-                        {
-                            if ( itrans_client->second.second < now )
-                            {
-                                DL_DEBUG( "ZAP: Purging client " << itrans_client->second.first );
-                                m_trans_auth_clients_to_key.erase(itrans_client->second.first);
-                                itrans_client = m_trans_auth_clients.erase( itrans_client );
-                            }
-                            else
-                                ++itrans_client;
-                        }
-
-                        next_purge = now + 30;
-                    }
-                }
+                m_auth_manager.purge(PublicKeyType::TRANSIENT);
+                m_auth_manager.purge(PublicKeyType::SESSION);
 
                 if ( !(poll_items[0].revents & ZMQ_POLLIN ))
                     continue;
@@ -407,51 +399,16 @@ Server::zapHandler()
                 if ( rc != 32 )
                     EXCEPT( 1, "Invalid client_key length." );
 
+                char client_key_text[41];
                 if ( !zmq_z85_encode( client_key_text, (uint8_t*)client_key, 32 ))
                     EXCEPT( 1, "Encode of client_key failed." );
-
-                /* cout << "ZAP request:" <<
-                    "\n\tversion: " << version <<
-                    "\n\trequest_id: " << request_id <<
-                    "\n\tdomain: " << domain <<
-                    "\n\taddress: " << address <<
-                    "\n\tidentity_property: " << identity_property <<
-                    "\n\tmechanism: " << mechanism <<
-                    "\n\tclient_key: " << client_key_text << "\n";
-                */
-
-                //cout << "ZAP client key ["<< client_key_text << "]\n";
-
-                // Always accept - but only set UID if it's a known client (by key)
-                auto auth_clients = m_config.getAuthClients();
-                Config::auth_client_map_t::iterator iclient = auth_clients.find( client_key_text );
-                if (iclient != auth_clients.end())
-                {
-                    uid = iclient->second;
-                    DL_DEBUG( "ZAP: Known pre-authorized client connected: " << uid );
-                }
-                else if ( isClientAuthenticated( client_key_text, uid ))
-                {
-                    DL_DEBUG( "ZAP: Known transient client connected: " << uid );
-                }
-                else
-                {
-                    if ( db.uidByPubKey( client_key_text, uid ) )
-                    {
-                        DL_DEBUG( "ZAP: Known client connected: " << uid );
-                    }
-                    else
-                    {
-                        uid = string("anon_") + client_key_text;
-                        DL_DEBUG( "ZAP: Unknown client connected: " << uid );
-                    }
-                }
 
                 zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
                 zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
                 zmq_send( socket, "200", 3, ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
-                zmq_send( socket, uid.c_str(), uid.size(), ZMQ_SNDMORE );
+                DL_DEBUG("ZAP handler client_key_text: " << client_key_text );
+                zmq_send( socket, client_key_text, strlen(client_key_text), ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, 0 );
 
             }
@@ -487,32 +444,17 @@ Server::zapHandler()
 }
 
 
+// Triggered by client worker
 void
 Server::authenticateClient( const std::string & a_cert_uid, const std::string & a_uid )
 {
+    std::cout << __FILE__ << " **********************************************" << std::endl;
+    std::cout << __FILE__ << " Authenticating client " << a_cert_uid << std::endl;
     if ( strncmp( a_cert_uid.c_str(), "anon_", 5 ) == 0 )
     {
-        lock_guard<mutex> lock( m_trans_client_mutex );
-        m_trans_auth_clients[a_cert_uid.substr( 5 )] = make_pair<>( a_uid, time(0) + 30 );
-        m_trans_auth_clients_to_key[a_uid] = a_cert_uid.substr( 5 );
+        std::cout << __FILE__ << "adding key to transient key map" << std::endl;
+        m_auth_manager.addKey( PublicKeyType::TRANSIENT, a_cert_uid.substr( 5 ), a_uid);
     }
-}
-
-bool
-Server::isClientAuthenticated( const std::string & a_client_key, std::string & a_uid )
-{
-    lock_guard<mutex> lock( m_trans_client_mutex );
-
-    trans_client_map_t::iterator i = m_trans_auth_clients.find( a_client_key );
-    if ( i != m_trans_auth_clients.end())
-    {
-        a_uid = i->second.first;
-        m_trans_auth_clients.erase( i );
-        m_trans_auth_clients_to_key.erase(a_uid);
-        return true;
-    }
-
-    return false;
 }
 
 void

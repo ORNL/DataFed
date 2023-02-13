@@ -1,12 +1,13 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
-
+#pragma once
 #include <string>
 #include <map>
 #include <mutex>
 #include <stdint.h>
 #include "SDMS.pb.h"
 #include "MsgComm.hpp"
+#include "AuthenticationManager.hpp"
 
 namespace SDMS {
 namespace Core {
@@ -22,7 +23,7 @@ class Config
     }
 
     //glob_xfr_url("https://transfer.api.globusonline.org/v0.10/"),
-    typedef std::map<std::string,std::string> auth_client_map_t;
+    //typedef std::map<std::string,std::string> auth_client_map_t;
 
   private:
     Config():
@@ -49,12 +50,9 @@ class Config
     std::map<std::string,RepoData>     m_repos;
     mutable std::mutex m_repos_mtx;
 
-    auth_client_map_t               m_auth_clients;         ///< List of known authenticated clients
-    mutable std::mutex m_auth_clients_mtx;
   public:
-    void loadRepositoryConfig();
+    void loadRepositoryConfig(AuthenticationManager & auth_manager);
     std::map<std::string,RepoData> getRepos() const;
-    auth_client_map_t getAuthClients() const;
 
     std::string     cred_dir;
     std::string     db_url;

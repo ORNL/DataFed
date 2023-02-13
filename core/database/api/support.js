@@ -481,8 +481,9 @@ module.exports = ( function() {
 
     obj.uidFromPubKey = function( a_pub_key ) {
         //var result = obj.db._query( "for i in accn filter i.pub_key == @key let u = (for v in inbound i._id ident return v._key) return u[0]", { key: a_pub_key }).toArray();
+        console.log("uidFromPubKey");
         var result = obj.db._query( "for i in u filter i.pub_key == @key return i._id", { key: a_pub_key }).toArray();
-
+        console.log(result);
         if ( result.length != 1 )
             throw [obj.ERR_NOT_FOUND,"No user matching authentication key found"];
 

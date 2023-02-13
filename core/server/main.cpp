@@ -2,7 +2,6 @@
 #include <fstream>
 #include <unistd.h>
 #include <boost/program_options.hpp>
-#define DEF_DYNALOG
 #include "DynaLog.hpp"
 #include "TraceException.hpp"
 #include "Util.hpp"

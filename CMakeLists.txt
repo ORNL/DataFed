@@ -21,6 +21,7 @@ OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
 OPTION(BUILD_DOCS "Build documentation" TRUE)
 OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
 OPTION(BUILD_FOXX "Build Foxx" TRUE)
+OPTION(BUILD_TESTS "Build Tests" TRUE)
 
 set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
@@ -47,9 +48,14 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ )
           include_directories( $ENV{BOOST_INC} )
           link_directories( $ENV{BOOST_LIB} )
   else()
-    find_package(Boost REQUIRED)
+    find_package(Boost REQUIRED COMPONENTS unit_test_framework)
   endif()
 
+  if ( BUILD_TESTS ) 
+    include(CTest)
+    ENABLE_TESTING()
+    set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
+  endif()
   ## load in pkg-config support
   find_package(PkgConfig)
   ## use pkg-config to get hints for 0mq locations

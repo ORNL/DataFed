@@ -1,6 +1,6 @@
 #ifndef DYNADL_HPP
 #define DYNADL_HPP
-
+#pragma once
 
 #ifdef USE_DYNALOG
 

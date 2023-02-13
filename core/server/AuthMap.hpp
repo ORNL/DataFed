@@ -1,0 +1,119 @@
+#ifndef IDENTITYMAP_HPP
+#define IDENTITYMAP_HPP
+#pragma once
+
+// Local includes
+#include "AuthMap.hpp"
+#include "PublicKeyTypes.hpp"
+
+// Local common includes
+#include "IAuthenticationManager.hpp"
+
+// Standard includes
+#include <map>
+#include <mutex>
+#include <string>
+#include <vector>
+
+namespace SDMS {
+namespace Core {
+
+class AuthMap
+{
+  public:
+    struct AuthElement {
+      std::string uid = "";
+      time_t expiration_time = 0;
+      size_t access_count = 0;
+    };
+
+    typedef std::map<std::string,AuthElement> client_map_t;
+    typedef std::map<std::string,std::string> persistent_client_map_t;
+
+  private:
+
+    time_t m_trans_active_increment = 0;
+    time_t m_session_active_increment = 0;
+
+    mutable std::mutex m_trans_clients_mtx;     ///< Mutex for transient client data access
+    mutable std::mutex m_session_clients_mtx;   ///< Mutex for session client data access
+    mutable std::mutex m_persistent_clients_mtx; ///< Mutex for persistent client data access
+
+    client_map_t m_trans_auth_clients;            ///< Map of transient authenticated clients
+    client_map_t m_session_auth_clients;          ///< Map of session authenticated clients
+    persistent_client_map_t m_persistent_auth_clients; ///< Map of known persistent authenticated clients
+
+    std::string m_db_url;
+    std::string m_db_user;
+    std::string m_db_pass;
+
+public:
+    AuthMap() {};
+
+    AuthMap(
+        time_t trans_active_inc,
+        time_t session_active_inc,
+        const std::string & db_url,
+        const std::string & db_user,
+        const std::string & db_pass) : 
+      m_trans_active_increment(trans_active_inc),
+      m_session_active_increment(session_active_inc),
+      m_db_url(db_url),
+      m_db_user(db_user),
+      m_db_pass(db_pass) {};
+
+    AuthMap(const AuthMap & );
+
+    AuthMap & operator=(const AuthMap&& );
+    /***********************************************************************************
+     * Getters
+     ***********************************************************************************/
+
+    /**
+     * Determines if the key has the specified type
+     **/
+    bool hasKeyType(const PublicKeyType pub_key_type, const std::string & public_key) const;
+
+    /**
+     * Will grab all the public keys that have expired.
+     **/
+    std::vector<std::string> getExpiredKeys(const PublicKeyType pub_key_type, const time_t threshold) const noexcept;
+
+    size_t getAccessCount(const PublicKeyType pub_key_type, const std::string & public_key ) const;
+
+    std::string getUID(const PublicKeyType pub_key_type, const std::string & public_key ) const;
+    /**
+     * Will return the number of keys.
+     **/
+    size_t size(const PublicKeyType pub_key_type) const;
+
+    bool hasKey(const PublicKeyType pub_key_type, const std::string & public_key ) const;
+
+    /***********************************************************************************
+     * Manipulators
+     ***********************************************************************************/
+    void incrementKeyAccessCounter(const PublicKeyType pub_key_type, const std::string & public_key);
+
+    /**
+     * Adds the key
+     *
+     * Example
+     *
+     * ```c++
+     * AuthMap auth_map(30,60*60, "https://db_/api_/sdms/..blah", "henry", "42");
+     * auth_map.addKey(PublicKeyType::TRANSIENT, "243djgq349j08xd24393#", "u/henry");
+     * ```
+     **/
+    void addKey(const PublicKeyType pub_key_type, const std::string & public_key, const std::string & id );
+
+    void removeKey( const PublicKeyType pub_key_type, const std::string & public_key);
+
+    /**
+     * Will reset the access counter of the key to 0.
+     **/
+    void resetKey(const PublicKeyType pub_key_type, const std::string & public_key);
+};
+
+} // Core
+} // SDMS
+#endif // IDENTITYMAP

@@ -401,7 +401,7 @@ router.get('/keys/get', function( req, res ) {
 router.get('/find/by_pub_key', function (req, res) {
     try {
         var uid = g_lib.uidFromPubKey( req.queryParams.pub_key );
-
+        console.log("uid found from database ", uid, " for pub key ", req.queryParams.pub_key)
         res.send(uid);
     } catch( e ) {
         g_lib.handleException( e, res );

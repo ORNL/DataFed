@@ -1,4 +1,5 @@
 
+#define DEF_DYNALOG
 #include <vector>
 #include <memory>
 #include <mutex>
@@ -9,7 +10,7 @@
 namespace SDMS {
   namespace Core {
 
-    void Config::loadRepositoryConfig() {
+    void Config::loadRepositoryConfig(AuthenticationManager & auth_manager) {
       DL_INFO("Loading repo configuration " << __FILE__ << " " <<  __LINE__);
 
       DatabaseAPI  db_client( db_url, db_user, db_pass );
@@ -45,9 +46,7 @@ namespace SDMS {
           DL_DEBUG("UUID: " << r.endpoint() );
 
           // Cache pub key for ZAP handler
-          m_auth_clients_mtx.lock();
-          m_auth_clients[r.pub_key()] = r.id();
-          m_auth_clients_mtx.unlock();
+          auth_manager.addKey(PublicKeyType::PERSISTENT, r.pub_key(), r.id());
 
           // Cache repo data for data handling
           m_repos_mtx.lock();
@@ -64,11 +63,6 @@ namespace SDMS {
       std::map<std::string,RepoData> repos = m_repos;
       return repos;
     } 
-
-    Config::auth_client_map_t Config::getAuthClients() const {
-      std::lock_guard<std::mutex> lock(m_auth_clients_mtx);
-      auth_client_map_t copy_of_clients = m_auth_clients;
-      return copy_of_clients;
-    }
+    
   } // namespace Core
 }

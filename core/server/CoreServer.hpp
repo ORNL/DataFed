@@ -6,13 +6,12 @@
 #include <map>
 #include <thread>
 #include <mutex>
-#include <unordered_map>
 #include <condition_variable>
 #include <stdint.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include "Config.hpp"
-#include "IIdentityMap.hpp"
+#include "AuthenticationManager.hpp"
 #include "ICoreServer.hpp"
 
 
@@ -43,7 +42,7 @@ class ClientWorker;
  * The ICoreServer interface class exposes an authenticateClient method to client workers for
  * manual (password) and token-based authentication.
  */
-class Server : public ICoreServer, public IIdentityMap
+class Server : public ICoreServer
 {
 public:
     /// CoreServer constructor (uses Config singleton)
@@ -60,17 +59,35 @@ public:
 
 private:
 
-    /// Map of client key to DataFed ID and expiration time
-    typedef std::map<std::string,std::pair<std::string,time_t>> trans_client_map_t;
+    /***************************************************/
+    /* AuthenticationManagager */
+    // Variables
+    // Purge transient clients every 5 seconds
+    //const time_t m_transient_purge_interval = 10;  
+    //time_t m_transient_next_purge = 0;
+    AuthenticationManager m_auth_manager;
+    // At what point do we move an approved transient key to a session key
+    //size_t m_transient_to_session_count_threshold = 4;
+
+    // Purge session every 12 hours
+    //const time_t m_session_purge_interval = 20; // 60*60*12;  
+    //time_t m_session_next_purge = 0;
+    
+    // Methods
+    //virtual void incrementKeyAccessCounter(const std::string & public_key) final;
+    //virtual bool hasKey(const std::string & public_key ) const final;
+    //virtual std::string getUID(const std::string & public_key ) const final;
+    /***************************************************/
 
     /// Message request metrics - maps message type to count per metrics period
     typedef std::map<uint16_t,uint32_t> MsgMetrics_t;
 
-    // IIdentityMap methods
-    virtual bool hasKey( const std::string & public_key ) const noexcept final;
-    virtual std::string getId( const std::string & public_key ) const noexcept final;
-
     void waitForDB();
+
+    /**
+     * This method is called after a public key has been authenticated, the key is then made
+     * an authorized transient key.
+     **/
     void authenticateClient( const std::string & a_cert_uid, const std::string & a_uid );
     void metricsUpdateMsgCount( const std::string & a_uid, uint16_t a_msg_type );
     bool isClientAuthenticated( const std::string & a_client_key, std::string & a_uid );
@@ -86,18 +103,16 @@ private:
     Config &                        m_config;               ///< Ref to configuration singleton
     std::thread                    m_io_secure_thread;     ///< Secure I/O thread handle
     std::thread                    m_io_insecure_thread;   ///< Insecure I/O thread handle
-    mutable std::mutex                      m_trans_client_mutex;   ///< Mutex for transient client data access
     std::string                     m_pub_key;              ///< Public key for secure interface
     std::string                     m_priv_key;             ///< Private key for secure interface
     std::thread                   m_zap_thread;           ///< ZeroMQ client authentication (ZAP) thread
-    trans_client_map_t              m_trans_auth_clients;   ///< List of transient authenticated clients
-    std::unordered_map<std::string,std::string> m_trans_auth_clients_to_key; ///< List of transient authenticated clients as a map key is the public key value is the uid
     std::thread                    m_msg_router_thread;    ///< Main message router thread handle
     std::vector<std::shared_ptr<ClientWorker>>      m_workers;              ///< List of ClientWorker instances
     std::thread                   m_db_maint_thread;      ///< DB maintenance thread handle
     std::thread                   m_metrics_thread;       ///< Metrics gathering thread handle
     std::map<std::string,MsgMetrics_t> m_msg_metrics;       ///< Map of UID to message request metrics
     std::mutex                      m_msg_metrics_mutex;    ///< Mutex for metrics updates
+    AuthMap m_auth_mapper;
 };
 
 
