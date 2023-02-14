@@ -1,7 +1,5 @@
 name: Unit-Testing
-
 on: push
-
 jobs:
   unit-test:
     runs-on: ubuntu-latest
@@ -15,8 +13,8 @@ jobs:
           sudo ./scripts/install_core_dependencies.sh
       - name: Build
         run: |
-        	cmake -S. -B build
-        	cmake --build build -j4
+          cmake -S. -B build
+          cmake --build build -j4
       - name: Run tests
         if: github.ref == 'refs/heads/main'
         run: |
