@@ -458,8 +458,6 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
 {
     Config & config = Config::getInstance();
 
-    //config.loadRepositoryConfig();
-
     std::string registered_repos = ", ";
 
     auto repos = config.getRepos();

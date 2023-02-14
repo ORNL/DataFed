@@ -86,8 +86,6 @@ Server::Server() :
     // Create task mgr (starts it's own threads)
     TaskMgr::getInstance();
 
-    //m_transient_next_purge = time(0) + m_transient_purge_interval;
-    //m_session_next_purge = time(0) + m_session_purge_interval;
 }
 
 
@@ -407,7 +405,6 @@ Server::zapHandler()
                 zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
                 zmq_send( socket, "200", 3, ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
-                DL_DEBUG("ZAP handler client_key_text: " << client_key_text );
                 zmq_send( socket, client_key_text, strlen(client_key_text), ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, 0 );
 
@@ -448,11 +445,8 @@ Server::zapHandler()
 void
 Server::authenticateClient( const std::string & a_cert_uid, const std::string & a_uid )
 {
-    std::cout << __FILE__ << " **********************************************" << std::endl;
-    std::cout << __FILE__ << " Authenticating client " << a_cert_uid << std::endl;
     if ( strncmp( a_cert_uid.c_str(), "anon_", 5 ) == 0 )
     {
-        std::cout << __FILE__ << "adding key to transient key map" << std::endl;
         m_auth_manager.addKey( PublicKeyType::TRANSIENT, a_cert_uid.substr( 5 ), a_uid);
     }
 }

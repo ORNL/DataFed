@@ -265,7 +265,6 @@ ClientWorker::workerThread()
                     {
                         DL_TRACE( "W"<<m_tid<<" calling handler/attempting to call function of worker" );
 
-                        DL_DEBUG( "W"<<m_tid<<" handler->second getUID is " << m_msg_buf.getUID() );
                         if ( (this->*handler->second)( m_msg_buf.getUID() ))
                         {
                             // Gather msg metrics except on task lists (web clients poll)
@@ -471,7 +470,6 @@ ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid )
 
     string pub_key, priv_key;
 
-    DL_INFO("Calling userGetKeys " << __FILE__ );
     if ( !m_db_client.userGetKeys( pub_key, priv_key ))
     {
         char public_key[41];

@@ -19,7 +19,6 @@ namespace SDMS {
         const std::string & db_pass) : 
       m_purge_interval(purge_intervals),
       m_purge_conditions(std::move(purge_conditions)) {
-      std::cout << __FILE__ << " Creating AuthMap with url: " << db_url << " user: " << db_user << " pass: " << db_pass << std::endl;
       m_auth_mapper = std::move(AuthMap(
         m_purge_interval[PublicKeyType::TRANSIENT],
         m_purge_interval[PublicKeyType::SESSION],
@@ -37,21 +36,16 @@ namespace SDMS {
     void AuthenticationManager::purge(
         const PublicKeyType pub_key_type) {
 
-      std::cout << "CHecking size of AuthMap: " << m_auth_mapper.size(pub_key_type) << std::endl;
       if( m_auth_mapper.size( pub_key_type ) ) {
         const time_t now = time( 0 );
-        std::cout << "Maybe purge now: " << now << " next_purge is " << m_next_purge[pub_key_type] << std::endl;
         if ( now >= m_next_purge[pub_key_type] ) {
           const std::vector<std::string> expired_keys = m_auth_mapper.getExpiredKeys(pub_key_type, now);
           for ( const auto & pub_key : expired_keys ) {
-            std::cout << "Expired key found " << pub_key << std::endl;
             if( m_purge_conditions[pub_key_type].size() ) {
               for ( std::unique_ptr<Condition> & condition : m_purge_conditions[pub_key_type] ) {
-                std::cout << "Running Condition" << std::endl;
                 condition->enforce(m_auth_mapper, pub_key); 
               }
             } else {
-              std::cout << "Should remove key now " << pub_key << std::endl;
               m_auth_mapper.removeKey(pub_key_type, pub_key);
             }
           }
@@ -72,13 +66,10 @@ namespace SDMS {
     bool
       AuthenticationManager::hasKey(const std::string & public_key ) const {
         if( m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key) ) {
-          std::cout << "has key TRANSIENT true" << std::endl;
           return true;
         } else if( m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key) ) {
-          std::cout << "has key SESSION true" << std::endl;
           return true;
         } else if( m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key) ) {
-          std::cout << "has key PERSISTENT true" << std::endl;
           return true;
         }
         return false;

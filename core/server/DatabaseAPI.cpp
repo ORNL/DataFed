@@ -116,7 +116,6 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
         {
             try
             {
-                DL_DEBUG("from " << __FILE__ << ":" << __LINE__ << " res_json " << res_json); 
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )
@@ -191,8 +190,6 @@ DatabaseAPI::dbGetRaw( const char * a_url_path, const vector<pair<string,string>
 
     long http_code = 0;
     curl_easy_getinfo( m_curl, CURLINFO_RESPONSE_CODE, &http_code );
-    std::cout << "http code is " << http_code << std::endl;
-    std::cout << "Error is: " << error << std::endl;
     if ( res == CURLE_OK && ( http_code >= 200 && http_code < 300 ))
         return true;
     else
@@ -302,7 +299,6 @@ DatabaseAPI::clientAuthenticateByPassword( const std::string & a_password, Anon:
 {
     Value result;
 
-    DL_DEBUG( "/usr/authn/password " << __LINE__ );
     dbGet( "usr/authn/password", {{"pw",a_password}}, result );
     setAuthStatus( a_reply, result );
 }
@@ -311,7 +307,6 @@ void
 DatabaseAPI::clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply )
 {
     Value result;
-    DL_DEBUG( "/usr/authn/token " << __LINE__ );
 
     dbGet( "usr/authn/token", {{"token",a_token}}, result );
     setAuthStatus( a_reply, result );
@@ -330,16 +325,13 @@ DatabaseAPI::clientLinkIdentity( const std::string & a_identity )
 {
     Value result;
 
-    DL_DEBUG( "/usr/ident/add " << __LINE__ );
     dbGet( "usr/ident/add", {{"ident",a_identity}}, result );
 }
 
 bool
 DatabaseAPI::uidByPubKey( const std::string & a_pub_key, std::string & a_uid )
 {
-    DL_DEBUG( "/usr/find/by_pub_key " << __LINE__ );
     bool found = dbGetRaw( "usr/find/by_pub_key", {{"pub_key",a_pub_key}}, a_uid );
-    std::cout << __FILE__ << " Found: " << found << " uidByPubKey: " << a_pub_key << " uid is " << a_uid << std::endl;
     return found;
 }
 
@@ -348,7 +340,6 @@ DatabaseAPI::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
 {
     Value result;
 
-    DL_DEBUG( "/usr/keys/get " << __LINE__ );
     dbGet( "usr/keys/get", {}, result );
 
     const Value::Object & obj = result.asArray()[0].asObject();
@@ -371,7 +362,6 @@ DatabaseAPI::userSetKeys( const std::string & a_pub_key, const std::string & a_p
 {
     Value result;
 
-    DL_DEBUG( "/usr/keys/set " << __LINE__ );
     dbGet( "usr/keys/set", {{"pub_key",a_pub_key},{"priv_key",a_priv_key}}, result );
 }
 
@@ -380,7 +370,6 @@ DatabaseAPI::userClearKeys()
 {
     Value result;
 
-    DL_DEBUG( "/usr/keys/clear " << __LINE__ );
     dbGet( "usr/keys/clear", {}, result );
 }
 
@@ -389,7 +378,6 @@ void
 DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expires_in )
 {
     Value result;
-    DL_DEBUG( "/usr/token/get " << __LINE__ );
     dbGet( "usr/token/get", {}, result );
 
     TRANSLATE_BEGIN()
@@ -2197,7 +2185,6 @@ DatabaseAPI::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataRe
 {
     Value result;
 
-    DL_DEBUG( "Calling repoList: " << __FILE__ << " " << __LINE__ );
     vector<pair<string,string>> params;
     if ( a_request.has_all() )
         params.push_back({"all", a_request.all()?"true":"false"});
@@ -2206,7 +2193,6 @@ DatabaseAPI::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataRe
 
     dbGet( "repo/list", params, result );
     
-    DL_DEBUG("Calling setRepoData " << __FILE__ << __LINE__ );
     std::vector<RepoData> temp;
     setRepoData( &a_reply, temp, result );
 }
@@ -2360,7 +2346,6 @@ void
 DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> & a_repos, const libjson::Value & a_result )
 {
 
-    DL_INFO("setRepoData " << __FILE__ << " " << __LINE__);
     Value::ArrayConstIter    k;
 
     TRANSLATE_BEGIN()
@@ -2584,7 +2569,6 @@ DatabaseAPI::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & 
 {
     Value result;
 
-    DL_DEBUG( "/authz/perm/check " << __LINE__ );
     dbGet( "authz/perm/check", {{ "id", a_request.id()},{ "perms", to_string( a_request.perms()) }}, result );
 
     TRANSLATE_BEGIN()
@@ -2603,7 +2587,6 @@ DatabaseAPI::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_repl
     if ( a_request.has_perms() )
         params.push_back({ "perms", to_string( a_request.perms()) });
 
-    DL_DEBUG( "/authz/perm/get " << __LINE__ );
     dbGet( "authz/perm/get", params, result );
 
     TRANSLATE_BEGIN()
