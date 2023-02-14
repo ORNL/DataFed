@@ -59,25 +59,8 @@ public:
 
 private:
 
-    /***************************************************/
-    /* AuthenticationManagager */
-    // Variables
-    // Purge transient clients every 5 seconds
-    //const time_t m_transient_purge_interval = 10;  
-    //time_t m_transient_next_purge = 0;
+    /// Used to manage purging and public auth keys
     AuthenticationManager m_auth_manager;
-    // At what point do we move an approved transient key to a session key
-    //size_t m_transient_to_session_count_threshold = 4;
-
-    // Purge session every 12 hours
-    //const time_t m_session_purge_interval = 20; // 60*60*12;  
-    //time_t m_session_next_purge = 0;
-    
-    // Methods
-    //virtual void incrementKeyAccessCounter(const std::string & public_key) final;
-    //virtual bool hasKey(const std::string & public_key ) const final;
-    //virtual std::string getUID(const std::string & public_key ) const final;
-    /***************************************************/
 
     /// Message request metrics - maps message type to count per metrics period
     typedef std::map<uint16_t,uint32_t> MsgMetrics_t;
@@ -112,7 +95,6 @@ private:
     std::thread                   m_metrics_thread;       ///< Metrics gathering thread handle
     std::map<std::string,MsgMetrics_t> m_msg_metrics;       ///< Map of UID to message request metrics
     std::mutex                      m_msg_metrics_mutex;    ///< Mutex for metrics updates
-    AuthMap m_auth_mapper;
 };
 
 

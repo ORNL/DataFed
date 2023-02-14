@@ -71,6 +71,15 @@ public:
 
     /**
      * Determines if the key has the specified type
+     *
+     * There are 3 supported types:
+     * 1. TRANSIENT
+     * 2. SESSION
+     * 3. PERSISTENT
+     *
+     * Will return true if the public key does have the type, if the type is a user persistent
+     * type it will return true if it can verify with the database, if the database in unreachable
+     * it will return false.
      **/
     bool hasKeyType(const PublicKeyType pub_key_type, const std::string & public_key) const;
 
@@ -79,11 +88,19 @@ public:
      **/
     std::vector<std::string> getExpiredKeys(const PublicKeyType pub_key_type, const time_t threshold) const noexcept;
 
+    /**
+     * Return how many times the key has been accessed since the count was last reset.
+     **/
     size_t getAccessCount(const PublicKeyType pub_key_type, const std::string & public_key ) const;
 
-    std::string getUID(const PublicKeyType pub_key_type, const std::string & public_key ) const;
     /**
-     * Will return the number of keys.
+     * Will return the users Unique ID if it exists, will throw an error if it does not exist. Best to 
+     * call hasKey first.
+     **/
+    std::string getUID(const PublicKeyType pub_key_type, const std::string & public_key ) const;
+
+    /**
+     * Will return the number of keys of the provided type. Does not currently support the Persistent keys
      **/
     size_t size(const PublicKeyType pub_key_type) const;
 
@@ -92,10 +109,14 @@ public:
     /***********************************************************************************
      * Manipulators
      ***********************************************************************************/
+
+    /**
+     * Increase the recorded times the the public key has been accessed by one.
+     **/
     void incrementKeyAccessCounter(const PublicKeyType pub_key_type, const std::string & public_key);
 
     /**
-     * Adds the key
+     * Adds the key to the AuthMap object
      *
      * Example
      *
@@ -109,7 +130,9 @@ public:
     void removeKey( const PublicKeyType pub_key_type, const std::string & public_key);
 
     /**
-     * Will reset the access counter of the key to 0.
+     * Will reset the access counter of the key to 0 and the allowed expiration time of the key..
+     *
+     * Persistent keys are not supported with this function.
      **/
     void resetKey(const PublicKeyType pub_key_type, const std::string & public_key);
 };

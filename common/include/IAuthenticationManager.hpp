@@ -21,16 +21,15 @@ class IAuthenticationManager
 {
 public:
     /** 
-     * Increments the number of times that the key has been accessed, this is used by the transient key to 
-     * know when it needs to be converted to a session key.
-     *
-     * It is used by the session key to know if it has been accesses within an allotted purge time frame.
-     * If the count is above one then the session key not be purged.
+     * Increments the number of times that the key has been accessed, this is useful information when
+     * deciding if a key should be purged.
      **/
     virtual void incrementKeyAccessCounter(const std::string & public_key) = 0;
 
     /**
-     * Will return true if the public key is known is associated with a user account.
+     * Will return true if the public key is known. This is also dependent on the the ability of 
+     * the AuthenticationManager to connect with the database, it will return false if the public key
+     * is only on the database and it cannot connect to it.
      *
      * Will look at all keys:
      * - TRANSIENT
@@ -40,12 +39,12 @@ public:
     virtual bool hasKey(const std::string & pub_key) const = 0;
 
     /**
-     * Will the id or throw an error
+     * Will get the unique id or throw an error
      *
      * Will look at all keys:
      * - TRANSIENT
      * - SESSION
-     * - PERSISTENT
+     * - PERSISTENT - user or repo
      **/
     virtual std::string getUID(const std::string & pub_key) const = 0;
 };

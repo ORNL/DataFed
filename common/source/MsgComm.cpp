@@ -197,7 +197,6 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
 
         len = zmq_msg_size( &msg );
       
-        std::cout << "[MscComm] recv function, msg size " << len << std::endl;
         // Stop when delimiter is read
         if ( !len )
             break;
@@ -233,7 +232,6 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
     MsgBuf::Frame & frame = a_msg_buf.getFrame();
 
     frame.size = ntohl( *((uint32_t*) src ));
-    std::cout << "[MscComm] recv function, getFrame size " << frame.size << std::endl;
     frame.proto_id = *(src+4);
     frame.msg_id = *(src+5);
     frame.context = ntohs( *((uint16_t*)( src + 6 )));
@@ -265,15 +263,12 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
         zmq_msg_close( &msg );
     }
 
-    std::cout << "[MscComm] recv function, a_proc_uid " << a_proc_uid << std::endl;
     // Only servers recv client UID
     if ( a_proc_uid )
     {
         // If the UID metadata is set, use is; otherwise get the UID from the message
         const char * uid = zmq_msg_gets( &msg, "User-Id");
-        std::cout << "UID (meta): " << (uid?uid:"null") << std::endl;
         if ( uid ) {
-            std::cout << "RECV mesgBuf setting uid " << std::string(uid) << std::endl;
             a_msg_buf.setUID( uid, strlen( uid ));
         } else {
             zmq_msg_init( &msg );
@@ -282,7 +277,6 @@ MsgComm::recv( MsgBuf & a_msg_buf, bool a_proc_uid, uint32_t a_timeout )
                 EXCEPT( 1, "RCV zmq_msg_recv (uid) failed." );
 
             if ( zmq_msg_size( &msg )) {
-                std::cout << "UID (msg): " << (char*)zmq_msg_data( &msg ) << std::endl;
                 a_msg_buf.setUID( (char*) zmq_msg_data( &msg ), zmq_msg_size( &msg ));
             } else {
                 a_msg_buf.clearUID();
@@ -350,7 +344,6 @@ MsgComm::proxy( MsgComm & a_backend, IAuthenticationManager & authentication_man
                             //rc = zmq_msg_recv( &out_msg, out_sock, ZMQ_DONTWAIT );
                             if( rc > -1 ){
                               std::string temp_str = std::string((char*) zmq_msg_data(&out_msg), zmq_msg_size(&out_msg));
-                              std::cout << "RECV 1 " << temp_str << std::endl;
                             }
 
                         } while ( rc < 0 && errno == EAGAIN );
@@ -402,11 +395,7 @@ MsgComm::proxy( MsgComm & a_backend, IAuthenticationManager & authentication_man
 
                         do {
                             rc = zmq_msg_recv( p_msg, m_socket, ZMQ_DONTWAIT );
-                            size_t temp_len = zmq_msg_size(p_msg);
                             std::string p_data = std::string((char *) zmq_msg_data(p_msg), zmq_msg_size(p_msg));
-                            //std::vector<char> inMsg(zmq_msg_size(&p_msg));
-                            //std::memcpy(inMsg.data(), zmq_msg_data(&p_msg), zmq_msg_size(&p_msg));
-                            std::cout << "Len " << temp_len << " P_msg is " << p_data << std::endl;
                         } while ( rc < 0 && errno == EAGAIN );
 
                         if ( rc < 0 )
@@ -435,11 +424,11 @@ MsgComm::proxy( MsgComm & a_backend, IAuthenticationManager & authentication_man
                         const bool key_as_last_msg = nparts > 3? true: false;
                         const size_t index_last_msg = nparts - 1;
                         zmq_msg_t * msg_part_key = nullptr;
-
                         zmq_msg_t * msg_part = nullptr;
+
+                        // Route all the parts of the message except the part that is supposed to be the key
                         for( i = 0, msg_part = in_msg; i < nparts; i++, msg_part++) {
                           if ( key_as_last_msg && i == index_last_msg ) {
-                            std::cout << "[MsgBuf] sending part " << i << std::endl;
                             msg_part_key = msg_part;
                           } else {
                             zmq_msg_send( msg_part, out_sock, ZMQ_SNDMORE );
@@ -452,30 +441,26 @@ MsgComm::proxy( MsgComm & a_backend, IAuthenticationManager & authentication_man
                         std::string pub_key = "";
                         if( key_as_last_msg ) {
                           // If the last msg could be a key it should be used to get the user id
-                          std::cout << "[MsgBuf::proxy] get from last message" << std::endl;
                           pub_key = std::string((const char *) zmq_msg_data(msg_part_key),zmq_msg_size(msg_part_key));
-                          std::cout << "[MsgBuf::proxy] Pub key is: " << pub_key << std::endl;
                         } else {
                           // Attempt to get the public key from "User-Id" field and map it to a
                           // uid, do not pass "User-Id" directly to the uid variable without 
-                          // mapping this is insecure
-                          std::cout << "[MsgBuf::proxy] getting key from 'User-Id' attribute" << std::endl;
+                          // mapping as that would be insecure
                           const char * uid_or_key = zmq_msg_gets( last_msg_part, "User-Id");
-                          std::cout << "[MsgBuf::proxy] uid_or_key: " << uid_or_key << std::endl;
-                          // Assuming it is a key
+
                           if ( uid_or_key == nullptr ) {
                             EXCEPT( 1, "'User-Id' attribute not defined and no key was passed in." );
                           }
+
+                          // Assuming it is a key
                           pub_key = std::string(uid_or_key); 
+
                           // Sanitize if prefix "anon_" is attached.
                           const std::string prefix = "anon_";
                           if( pub_key.rfind(prefix,0) == 0) {
                             pub_key = pub_key.substr(prefix.length());
                           }
-                          std::cout << "[MsgBuf::proxy] sanitized pub_key: " << uid_or_key << std::endl;
                         }
-
-                        std::cout << "Attempting to map the following key to a uid: " << pub_key << std::endl;
 
                         std::string uid = "";
                         bool mapping_key_succeeded = false;
@@ -486,26 +471,19 @@ MsgComm::proxy( MsgComm & a_backend, IAuthenticationManager & authentication_man
                         }
 
                         if( mapping_key_succeeded ) { 
-                          std::cout << "Mapped key to uid: " << uid << std::endl;
                           // At this point uid should be a valid user id
                           zmq_msg_init_size( &uid_msg, uid.size());
-
-                          std::cout << "[MsgBuf] appending uid of size " << uid.size() << std::endl;
                           memcpy( zmq_msg_data(&uid_msg), uid.c_str(), uid.size());
                         } else if ( pub_key.length() > 0 ){
                           // At this point we have a key but were unable to map it so we will assume it
                           // is anonymous access
                           std::string anon = "anon_" + pub_key;
                           zmq_msg_init_size( &uid_msg, anon.size());
-                          std::cout << "[MsgBuf] Anonymous access detected " << uid.size() << std::endl;
                           memcpy( zmq_msg_data(&uid_msg), anon.c_str(), anon.size());
-
                         } else {
                           zmq_msg_init( &uid_msg );
                         }
-                        std::cout << "[MsgBuf] sending last message" << std::endl;
                         zmq_msg_send( &uid_msg, out_sock, 0 );
-
                     }
                 }
             }

@@ -126,14 +126,11 @@ namespace Core {
 
 
   void AuthMap::addKey(const PublicKeyType pub_key_type, const std::string & public_key, const std::string & id) {
-    std::cout << __FILE__ << " Adding key" << std::endl;
     if( pub_key_type == PublicKeyType::TRANSIENT) {
-        std::cout << __FILE__ << " Adding TRANSIENT key" << std::endl;
         lock_guard<mutex> lock( m_trans_clients_mtx );
         AuthElement element = { id, time(0) + m_trans_active_increment, 0 };
         m_trans_auth_clients[public_key] = element;
     } else if( pub_key_type == PublicKeyType::SESSION) {
-        std::cout << __FILE__ << " Adding SESSION key" << std::endl;
         lock_guard<mutex> lock( m_session_clients_mtx );
         AuthElement element = { id, time(0) + m_session_active_increment, 0 };
         m_session_auth_clients[public_key] = element;
@@ -178,7 +175,6 @@ AuthMap::hasKey(const PublicKeyType pub_key_type, const std::string & public_key
   if ( pub_key_type == PublicKeyType::TRANSIENT ) {
     lock_guard<mutex> lock( m_trans_clients_mtx );
     if ( m_trans_auth_clients.count(public_key) ) {
-      std::cout << "Transient key access count " << m_trans_auth_clients.at(public_key).access_count;
       return true; 
     }
   } else if ( pub_key_type == PublicKeyType::SESSION ) {
@@ -189,12 +185,9 @@ AuthMap::hasKey(const PublicKeyType pub_key_type, const std::string & public_key
     if( m_persistent_auth_clients.count(public_key) ) return true;
      
     // Check to see if it is a user key
-    std::cout << "Creating db instance with url: " << m_db_url << " user: " << m_db_user << " pass: " << m_db_pass << std::endl;
     DatabaseAPI db( m_db_url, m_db_user, m_db_pass );
     std::string uid;
-    std::cout << "Calling database" << std::endl;
     if( db.uidByPubKey( public_key, uid) ) {
-      std::cout << "hasKey() Found, uid is: " << uid << std::endl;
       return true;
     }
   } else {
@@ -229,11 +222,9 @@ AuthMap::getUID(const PublicKeyType pub_key_type, const std::string & public_key
     }
 
     // It must be a persistent user key
-    std::cout << "Creating db instance with url: " << m_db_url << " user: " << m_db_user << " pass: " << m_db_pass << std::endl;
     DatabaseAPI db( m_db_url, m_db_user, m_db_pass );
     std::string uid;
     if( db.uidByPubKey( public_key, uid) ) {
-      std::cout << "AuthMap getUID found key: " << public_key << " uid is: " << uid << std::endl;
       return uid;
     }  else {
       EXCEPT( 1, "Missing persistent public key unable to map to user id or repo id. Possibly, cannot connect to database." );
