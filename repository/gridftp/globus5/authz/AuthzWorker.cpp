@@ -141,9 +141,13 @@ public:
         auth_req.set_action(action);
         
         DL_INFO("AuthWorker.cpp Sending message");
-        authzcomm.send(auth_req);
 
-        
+        MsgBuf send_request;
+        send_request.serialize(auth_req);
+        send_request.setUID(m_pub_key);
+
+        //authzcomm.send(auth_req);
+        authzcomm.send(send_request, true);
 
         if ( !authzcomm.recv( reply, frame, m_timeout ))
         {

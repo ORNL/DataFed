@@ -99,9 +99,15 @@ Server::checkServerVersion()
     for( int i = 0; i < 10; i++ )
     {
         MsgComm comm( m_config.core_server, MsgComm::DEALER, false, &sec_ctx );
+
+        MsgBuf send_request;
+        send_request.serialize(msg);
+        send_request.setUID(pub_key);
+
         MsgBuf buffer;
 
-        comm.send( msg );
+        //comm.send( msg );
+        comm.send( send_request, true );
 
         if ( !comm.recv( buffer, false, 20000 ))
         {
