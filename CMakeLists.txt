@@ -6,7 +6,7 @@ set(DataFed_MINOR_VERSION 2)
 set(DataFed_PATCH_VERSION 0)
 set(DataFed_VERSION ${DataFed_MAJOR_VERSION}.${DataFed_MINOR_VERSION}.${DataFed_PATCH_VERSION})
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
@@ -17,6 +17,7 @@ set(GLOBUS_VERSION  5)
 OPTION(BUILD_REPO_SERVER "Build DataFed Repo Server" FALSE)
 OPTION(BUILD_AUTHZ "Build DataFed Authz library" FALSE)
 OPTION(BUILD_CORE_SERVER "Build DataFed Core Server" TRUE)
+OPTION(BUILD_COMMON "Build DataFed common library" TRUE)
 OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
 OPTION(BUILD_DOCS "Build documentation" TRUE)
 OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
@@ -38,7 +39,7 @@ endif()
 # Create file glob here because need to be made visible here as well
 file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/*.proto" )
 
-if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ ) 
+if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON) 
 
   include_directories( "/usr/include/globus" )
 
@@ -100,8 +101,13 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ )
   set(CMAKE_C_FLAGS_DEBUG "-g")
   set(CMAKE_C_FLAGS_RELEASE "-O3")
 
-  add_subdirectory( common )
+  # If it wasn't being built beforehand by default it must be now
+  set(BUILD_COMMON TRUE)
 
+endif()
+
+if( BUILD_COMMON ) 
+  add_subdirectory( common )
 endif()
 
 if( BUILD_CORE_SERVER )

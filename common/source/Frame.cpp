@@ -1,0 +1,106 @@
+// Local private includes
+#include "Frame.hpp"
+
+// Local public includes
+#include "IMessage.hpp"
+#include "ProtoBufMap.hpp"
+#include "TraceException.hpp"
+
+// Third party includes
+#include <zmq.hpp>
+
+// Standard includes
+#include <arpa/inet.h>
+#include <cstdint>
+
+
+namespace SDMS {
+
+  namespace g_constants = constants::message::google;
+
+  /**
+   * Make sure that zmq_msg_init is not called on this message before it
+   * is passed in.
+   **/
+  void FrameConverter::copy(CopyDirection direction, zmq_msg_t & zmq_msg, Frame & frame){
+    if( direction == CopyDirection::FROM_FRAME){
+      zmq_msg_init_size( &zmq_msg, 8 );
+
+      if ( zmq_msg_size( &zmq_msg ) != sizeof( Frame )) {
+        EXCEPT_PARAM( 1, "Unable to copy frame to zmq_msg sizes are inconsistent Frame: " << sizeof( Frame ) << " zmq_msg " << zmq_msg_size( &zmq_msg ) );
+      }
+      unsigned char * msg_frame_allocation = (unsigned char *)zmq_msg_data( &zmq_msg );
+      *((uint32_t*) msg_frame_allocation) = htonl( frame.size );
+      *(msg_frame_allocation+4) = frame.proto_id;
+      *(msg_frame_allocation+5) = frame.msg_id;
+      *((uint16_t*)(msg_frame_allocation+6)) = htons( frame.context );
+    } else {
+      if ( zmq_msg_size( &zmq_msg ) != sizeof( Frame )) {
+        EXCEPT_PARAM( 1, "Unable to copy zmq_msg to Frame sizes are inconsistent Frame: " << sizeof( Frame ) << " zmq_msg " << zmq_msg_size( &zmq_msg ) );
+      }
+      unsigned char * msg_frame_allocation = (unsigned char *)zmq_msg_data( &zmq_msg );
+      frame.size = ntohl( *((uint32_t*) msg_frame_allocation) );
+      frame.proto_id = *(msg_frame_allocation+4);
+      frame.msg_id = *(msg_frame_allocation+5);
+      frame.context = ntohs( *((uint16_t*)(msg_frame_allocation+6)));
+    }
+  }
+
+  void FrameConverter::copy(
+      CopyDirection direction,
+      IMessage & msg,
+      const Frame & frame) {
+    if( direction == CopyDirection::FROM_FRAME ) {
+      msg.set(g_constants::FRAME_SIZE, frame.size);
+      msg.set(g_constants::PROTO_ID, frame.proto_id);
+      msg.set(g_constants::MSG_ID, frame.msg_id);
+      msg.set(g_constants::MSG_TYPE, frame.getMsgType());
+      msg.set(g_constants::CONTEXT, frame.context);
+    } else {
+      EXCEPT(1, "Unsupported copy direction for FrameConverter working on IMessage instance");
+    }
+  }
+
+  Frame FrameFactory::create(::google::protobuf::Message & a_msg, ProtoBufMap & proto_map ) {
+    Frame frame; 
+    auto msg_type = proto_map.getMessageType(a_msg);
+    frame.proto_id = msg_type >> 8;
+    frame.msg_id = msg_type & 0xFF;
+    frame.size = a_msg.ByteSizeLong();
+    return frame;
+  }
+
+  Frame FrameFactory::create(const IMessage & msg ) {
+    Frame frame; 
+    if(msg.exists(g_constants::FRAME_SIZE)) { 
+      frame.size = std::get<uint32_t>(msg.get(g_constants::FRAME_SIZE));
+    } else {
+      EXCEPT_PARAM(1, "constant is not defined cannot create Frame from IMessage, missing: " << g_constants::FRAME_SIZE );
+    }
+    if(msg.exists(g_constants::PROTO_ID)) { 
+      frame.proto_id = std::get<uint8_t>(msg.get(g_constants::PROTO_ID));
+    } else {
+      EXCEPT_PARAM(1, "constant is not defined cannot create Frame from IMessage, missing: " << g_constants::PROTO_ID );
+    }
+    if(msg.exists(g_constants::MSG_ID)) { 
+      frame.msg_id = std::get<uint8_t>(msg.get(g_constants::MSG_ID));
+    } else {
+      EXCEPT_PARAM(1, "constant is not defined cannot create Frame from IMessage, missing: " << g_constants::MSG_ID );
+    }
+    if(msg.exists(g_constants::CONTEXT)) { 
+      frame.context = std::get<uint16_t>(msg.get(g_constants::CONTEXT)); 
+    } else {
+      EXCEPT_PARAM(1, "constant is not defined cannot create Frame from IMessage, missing: " << g_constants::CONTEXT );
+    }
+    return frame;
+  }
+
+  Frame FrameFactory::create(zmq_msg_t & zmq_msg) {
+    Frame frame;
+    FrameConverter converter;
+    converter.copy(FrameConverter::CopyDirection::TO_FRAME, zmq_msg, frame);
+    return frame;
+  }
+
+}
+

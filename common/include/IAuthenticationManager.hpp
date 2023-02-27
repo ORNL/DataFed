@@ -6,6 +6,8 @@
 // Standard imports
 #include <string>
 
+namespace SDMS {
+
 /**
  * Interface class for managing authenticating
  *
@@ -49,5 +51,6 @@ public:
     virtual std::string getUID(const std::string & pub_key) const = 0;
 };
 
+} // namespace SDMS
 
 #endif // IAUTHENTICATION_MANAGER
