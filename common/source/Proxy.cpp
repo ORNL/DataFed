@@ -79,8 +79,12 @@ namespace SDMS {
         // 
         //                                              <- POLL_IN
         // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock - Inter App
-        //std::cout << "Proxy polling for messages from server" << std::endl;
+        std::cout << m_communicators[SocketRole::CLIENT]->id() << " poll" << std::endl;
         auto resp_from_client_socket = m_communicators[SocketRole::CLIENT]->poll(MessageType::GOOGLE_PROTOCOL_BUFFER);
+
+        if(resp_from_client_socket.error){
+          std::cout << m_communicators[SocketRole::CLIENT]->id() << " error detected: " << resp_from_client_socket.error_msg << std::endl;
+        }
         //std::cout << "Done proxy polling for messages from server" << std::endl;
 
         // Coming from the server socket that is local so communication flow is
@@ -89,13 +93,18 @@ namespace SDMS {
         //                              POLL_IN  -> 
         // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock - Inter App
         //std::cout << "Proxy polling for messages from  client" << std::endl;
+        std::cout << m_communicators[SocketRole::SERVER]->id() << " poll" << std::endl;
         auto resp_from_server_socket = m_communicators[SocketRole::SERVER]->poll(MessageType::GOOGLE_PROTOCOL_BUFFER);
+        if(resp_from_server_socket.error){
+          std::cout << m_communicators[SocketRole::SERVER]->id() << " error detected: " << resp_from_server_socket.error_msg << std::endl;
+        }
         //std::cout << "Done proxy polling for messages from  client" << std::endl;
 
         // Essentially just route with out doing anything if flow is towards the
         // public
         if(resp_from_client_socket.error == false and resp_from_client_socket.time_out == false ){
           //std::cout << "Proxy sending messages via proxy from server to client" << std::endl;
+          std::cout << m_communicators[SocketRole::SERVER]->id() << " send" << std::endl;
           m_communicators[SocketRole::SERVER]->send(*resp_from_client_socket.message);
         }
 
@@ -111,15 +120,15 @@ namespace SDMS {
         if(resp_from_server_socket.error == false and resp_from_server_socket.time_out == false) {
           for( auto & in_operator : m_incoming_operators ) {
             //std::cout << "Proxy operating on messages from client" << std::endl;
+            std::cout << m_communicators[SocketRole::SERVER]->id() << " running operators" << std::endl;
             in_operator->execute(*resp_from_server_socket.message);
           }
-        }
 
-        if(resp_from_server_socket.error == false and resp_from_server_socket.time_out == false ){
           //std::cout << "Proxy sending messages via proxy from client to server" << std::endl;
 //          std::cout << "Frame size is " << resp_from_server_socket.message->get("frame_size") << std::endl;
  //         std::cout << "Frame proto_id is " << resp_from_server_socket.message->get("proto_id") << std::endl;
   //        std::cout << "Frame msg_id is " << resp_from_server_socket.message->get("msg_id") << std::endl;
+          std::cout << m_communicators[SocketRole::CLIENT]->id() << " send" << std::endl;
           m_communicators[SocketRole::CLIENT]->send(*resp_from_server_socket.message);
         }
 
@@ -130,7 +139,8 @@ namespace SDMS {
       } catch( ... ) {
         std::cerr << "Proxy::run - unknown exception" << "\n";
       }
-    } // while(1)
+    } // while( m_run_infinite ...etc)
+    std::cout << "Proxy is gracefully exiting after timeout." << std::endl;
   } // run()
 
 } // namespace SDMS

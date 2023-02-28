@@ -55,6 +55,7 @@ namespace SDMS {
       virtual ICommunicator::Response receive(const MessageType) final;
 
       virtual const std::string id() const noexcept final;
+      virtual const std::string address() const noexcept final;
   };
 
 } // namespace SDMS

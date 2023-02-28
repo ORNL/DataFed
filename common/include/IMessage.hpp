@@ -3,10 +3,10 @@
 #pragma once
 
 // Standard includes
+#include <list>
 #include <memory>
 #include <string>
 #include <variant>
-#include <vector>
 
 // Forward declaration
 namespace google { namespace protobuf { class Message; } };
@@ -18,9 +18,20 @@ namespace SDMS {
     STRING
   };
 
+
+  /**
+   * The message is on its way to a server this it is a REQUEST
+   * The message is on its way from a server then it is a RESPONSE
+   **/
+  enum class MessageState {
+    REQUEST,
+    RESPONSE
+  };
+
   enum class MessageAttribute {
     ID,
-    KEY
+    KEY,
+    STATE
   };
 
   inline const std::string toString(const MessageAttribute attribute) {
@@ -64,16 +75,19 @@ namespace SDMS {
       virtual void setPayload(std::variant<std::unique_ptr<::google::protobuf::Message> ,std::string>) = 0;
       virtual void addRoute(const std::string & route) = 0; 
 
+      virtual void setRoutes(const std::list<std::string> & routes) = 0; 
 
       virtual void set(MessageAttribute, const std::string &) = 0;
+      virtual void set(MessageAttribute, MessageState) = 0;
 
       virtual void set(std::string attribute_name, std::variant<uint8_t, uint16_t, uint32_t> ) = 0; 
       /**
        * Getters
        **/
-      virtual std::string get(MessageAttribute) const = 0;
-      virtual const std::vector<std::string> & getRoutes() const = 0;
-      virtual std::vector<std::string> & getRoutes() = 0;
+      virtual std::variant<std::string, MessageState> get(MessageAttribute) const = 0;
+      //virtual MessageDirection get(MessageAttribute) const = 0;
+      virtual const std::list<std::string> & getRoutes() const = 0;
+      virtual std::list<std::string> & getRoutes() = 0;
       virtual MessageType type() const noexcept = 0; 
       virtual std::variant<uint8_t, uint16_t, uint32_t> get(const std::string & attribute_name) const = 0; 
 

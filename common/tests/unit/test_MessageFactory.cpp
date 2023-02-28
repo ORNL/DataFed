@@ -1,40 +1,62 @@
 #define BOOST_TEST_MAIN
 
-#define BOOST_TEST_MODULE authmap
+#define BOOST_TEST_MODULE messagefactory
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "AuthMap.hpp"
+// Local public includes
+#include "MessageFactory.hpp"
+#include "ProtoBufMap.hpp"
 
-using namespace SDMS::Core;
+// Proto file includes
+#include <SDMS_Anon.pb.h>
 
-BOOST_AUTO_TEST_SUITE(AuthMapTest)
+using namespace SDMS;
 
-BOOST_AUTO_TEST_CASE( testing_AuthMap ) {
-  time_t active_transient_key_time = 30;
-  time_t active_session_key_time = 30; 
-  std::string db_url = "https://db/sdms/blah";
-  std::string db_user = "greatestone";
-  std::string db_pass = "1234";
+BOOST_AUTO_TEST_SUITE(MessageFactoryTest)
 
-  AuthMap auth_map(
-      active_transient_key_time,
-      active_session_key_time,
-      db_url,
-      db_user,
-      db_pass);
+BOOST_AUTO_TEST_CASE( testing_MessageFactory ) {
 
-  BOOST_TEST( auth_map.size(PublicKeyType::TRANSIENT) == 0 );
-  std::string new_pub_key = "ugh";
-  std::string user_id = "u/bob";
-  auth_map.addKey(PublicKeyType::TRANSIENT, new_pub_key, user_id);
-  BOOST_TEST( auth_map.size(PublicKeyType::TRANSIENT) == 1 );
+  MessageFactory msg_factory;
 
-  BOOST_TEST( auth_map.hasKey(PublicKeyType::TRANSIENT, new_pub_key) );
-  BOOST_TEST( auth_map.hasKey(PublicKeyType::SESSION, new_pub_key) == false );
-  BOOST_TEST( auth_map.hasKey(PublicKeyType::PERSISTENT, new_pub_key) == false );
+  auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+  
+  std::string user_id = "hermes";
+  std::string key = "skeleton";
 
-  BOOST_TEST( auth_map.getUID(PublicKeyType::TRANSIENT, new_pub_key) == user_id ); 
+  message->set(MessageAttribute::ID, user_id);
+  message->set(MessageAttribute::KEY, key);
+  message->set(MessageAttribute::STATE, MessageState::REQUEST);
+
+  auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
+  std::string token = "golden_chest";
+  auth_by_token_req->set_token(token);
+
+  ProtoBufMap proto_map;
+  uint16_t protobuf_msg_type = proto_map.getMessageType(*auth_by_token_req);
+
+  message->setPayload(std::move(auth_by_token_req));
+
+  std::string route = "MtOlympia";
+  message->addRoute(route);
+    
+  BOOST_CHECK(message->type() == MessageType::GOOGLE_PROTOCOL_BUFFER);
+  BOOST_CHECK(std::get<std::string>(message->get(MessageAttribute::ID)).compare(user_id)==0); 
+  BOOST_CHECK(std::get<std::string>(message->get(MessageAttribute::KEY)).compare(key) == 0);
+  BOOST_CHECK(std::get<MessageState>(message->get(MessageAttribute::STATE)) == MessageState::REQUEST);
+  BOOST_CHECK(std::get<uint16_t>(message->get(constants::message::google::MSG_TYPE))==protobuf_msg_type);
+  BOOST_CHECK(message->getRoutes().size() == 1);
+  BOOST_CHECK(message->getRoutes().front().compare(route) == 0);
+
+  /**
+   * Payload will be empty in the response_message and so will the frame
+   * but should include the routes
+   **/
+  auto response_message = msg_factory.createResponseEnvelope(*message);
+
+  BOOST_CHECK(response_message->getRoutes().size() == 1);
+  BOOST_CHECK(response_message->getRoutes().front().compare(route) == 0);
+  BOOST_CHECK(std::get<MessageState>(response_message->get(MessageAttribute::STATE)) == MessageState::RESPONSE);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

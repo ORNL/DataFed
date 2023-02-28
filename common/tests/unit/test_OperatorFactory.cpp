@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( testing_OperatorFactoryAnon ) {
   //
   // After running execute the UID will be "anon_bad_key"
   auth_operator->execute(*msg);
-  BOOST_CHECK(msg->get(MessageAttribute::ID) == "anon" );
+  BOOST_CHECK(std::get<std::string>(msg->get(MessageAttribute::ID)).compare("anon") == 0 );
 
   // Should not have been incremented because it is an unknown anonymous user
   // key
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE( testing_OperatorFactoryKnown ) {
   //
   // After running execute the UID will be "anon_George"
   auth_operator->execute(*msg);
-  BOOST_CHECK(msg->get(MessageAttribute::ID) == "authenticated_uid" );
+  BOOST_CHECK(std::get<std::string>(msg->get(MessageAttribute::ID)).compare("authenticated_uid") == 0 );
 
   // Should be incremented because user key was known
   BOOST_CHECK(dummy_manager.getAccessCount("skeleton_key") == 1);
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE( testing_RouterBookKeepingOperator ) {
   // Should add "my_nice_proxy_id" to the routes
   router_book_keeping_operator->execute(*msg);
   BOOST_CHECK(msg->getRoutes().size() == 1);
-  BOOST_CHECK(msg->getRoutes().at(0).compare(client_id) == 0);
+  BOOST_CHECK(msg->getRoutes().front().compare(client_id) == 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

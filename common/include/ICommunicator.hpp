@@ -50,6 +50,7 @@ namespace SDMS {
       virtual Response receive(const MessageType) = 0;
 
       virtual const std::string id() const noexcept = 0;
+      virtual const std::string address() const noexcept = 0;
   };
 
 } // namespace SDMS

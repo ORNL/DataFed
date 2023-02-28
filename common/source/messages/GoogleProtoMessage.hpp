@@ -11,10 +11,10 @@
 #include <google/protobuf/descriptor.h>
 
 // Standard includes
+#include <list>
 #include <memory>
 #include <string>
 #include <variant>
-#include <vector>
 #include <unordered_map>
 
 namespace SDMS {
@@ -42,7 +42,12 @@ class GoogleProtoMessage : public IMessage {
 
 
   private:
-    std::vector<std::string> m_routes;
+
+    MessageState m_state = MessageState::REQUEST;
+
+    /// List instead of vector because need to add to front, routes are small
+    /// so vector cache optimization really wouldn't really make a difference
+    std::list<std::string> m_routes;
     std::unordered_map<MessageAttribute, std::string> m_attributes;
 
     std::unordered_map<std::string, std::variant<uint8_t, uint16_t, uint32_t>> m_dyn_attributes;
@@ -62,16 +67,22 @@ class GoogleProtoMessage : public IMessage {
     virtual void addRoute(const std::string & route) final {
       m_routes.push_back(route);
     }
+
+    virtual void setRoutes(const std::list<std::string> & routes) final {
+      m_routes = routes;
+    }
+
     virtual void setPayload(std::variant<std::unique_ptr<::google::protobuf::Message>,std::string>) final;
     virtual void set(MessageAttribute, const std::string &) final;
+    virtual void set(MessageAttribute, MessageState) final;
     virtual void set(std::string attribute_name, std::variant<uint8_t, uint16_t, uint32_t> ) final; 
     /**
      * Getters
      **/
-    virtual std::string get(MessageAttribute) const final;
+    virtual std::variant<std::string, MessageState> get(MessageAttribute) const final;
     virtual std::variant<uint8_t, uint16_t, uint32_t> get(const std::string & attribute_name) const final; 
-    virtual const std::vector<std::string> & getRoutes() const final { return m_routes; }
-    virtual std::vector<std::string> & getRoutes() final { return m_routes; }
+    virtual const std::list<std::string> & getRoutes() const final { return m_routes; }
+    virtual std::list<std::string> & getRoutes() final { return m_routes; }
     virtual MessageType type() const noexcept final { return MessageType::GOOGLE_PROTOCOL_BUFFER; }
     virtual std::variant<
       ::google::protobuf::Message*,

@@ -10,7 +10,6 @@
 #include <memory>
 #include <string>
 #include <variant>
-#include <vector>
 #include <unordered_map>
 
 namespace SDMS {
@@ -62,6 +61,14 @@ namespace SDMS {
     }
   }
 
+  void GoogleProtoMessage::set(MessageAttribute attribute_type, MessageState state) {
+    if( attribute_type == MessageAttribute::STATE ) {
+      m_state = state;
+    } else {
+      EXCEPT(1, "Attempt to add unsupported attribute to GoogleProtoMessage.");
+    }
+  }
+
   void GoogleProtoMessage::set(std::string attribute_name, std::variant<uint8_t, uint16_t, uint32_t> value) {
     if( m_dyn_attributes.count(attribute_name) ) {
       m_dyn_attributes[attribute_name] = value;
@@ -73,8 +80,10 @@ namespace SDMS {
   /**
    * Getters
    **/
-  std::string GoogleProtoMessage::get(MessageAttribute attribute_type) const {
-    if(exists(attribute_type) ) {
+  std::variant<std::string, MessageState> GoogleProtoMessage::get(MessageAttribute attribute_type) const {
+    if( attribute_type == MessageAttribute::STATE ) {
+      return m_state;
+    } else if(exists(attribute_type) ) {
       return m_attributes.at(attribute_type);
     } else {
       EXCEPT_PARAM(1, "Attempt to get unsupported attribute type from GoogleProtoMessage." << toString(attribute_type) );

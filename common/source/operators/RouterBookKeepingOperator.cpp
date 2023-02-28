@@ -23,7 +23,7 @@ namespace SDMS {
   }
 
   void RouterBookKeepingOperator::execute( IMessage & message ) {
-    message.getRoutes().push_back(m_client_socket_id);
+    message.getRoutes().push_front(m_client_socket_id);
   }
 
 } // namespace SDMS

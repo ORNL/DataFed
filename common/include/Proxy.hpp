@@ -27,8 +27,8 @@ class Proxy {
   private:
 
 
-    uint32_t m_timeout_on_receive_milliseconds = 10;
-    long m_timeout_on_poll_milliseconds = 10;
+    uint32_t m_timeout_on_receive_milliseconds = 50;
+    long m_timeout_on_poll_milliseconds = 50;
     std::vector<std::unique_ptr<IOperator>> m_incoming_operators;
     std::unordered_map<SocketRole, std::unique_ptr<ICommunicator>> m_communicators;
     bool m_run_infinite_loop = true;
