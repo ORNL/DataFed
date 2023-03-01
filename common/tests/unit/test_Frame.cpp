@@ -59,6 +59,7 @@ BOOST_AUTO_TEST_CASE( testing_FrameConverter ) {
   FrameConverter converter;
 
   zmq_msg_t zmq_msg;
+  zmq_msg_init_size( &zmq_msg, 8 );
   converter.copy(FrameConverter::CopyDirection::FROM_FRAME, zmq_msg, frame);
 
   Frame frame_new;
@@ -89,6 +90,31 @@ BOOST_AUTO_TEST_CASE( testing_FrameFactory ) {
 
   BOOST_CHECK(frame.size == expected_size);
   BOOST_CHECK(frame.getMsgType() == expected_msg_type);
+}
+
+BOOST_AUTO_TEST_CASE( testing_FrameFactory_EmptyPayload ) {
+
+
+  MessageFactory msg_factory;
+  auto msg = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+
+  FrameFactory factory;
+  Frame frame = factory.create(*msg);
+
+  BOOST_CHECK(frame.size == 0);
+  BOOST_CHECK(frame.proto_id == 0);
+  BOOST_CHECK(frame.msg_id == 0);
+  BOOST_CHECK(frame.getMsgType() == 0);
+
+  auto msg_new = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+  FrameConverter converter;
+  Frame frame_new;
+  converter.copy(FrameConverter::CopyDirection::FROM_FRAME, *msg_new, frame_new);
+
+  BOOST_CHECK(frame_new.size == 0);
+  BOOST_CHECK(frame_new.proto_id == 0);
+  BOOST_CHECK(frame_new.msg_id == 0);
+  BOOST_CHECK(frame_new.getMsgType() == 0);
 }
 
 BOOST_AUTO_TEST_CASE( testing_FrameFactory2 ) {

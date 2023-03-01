@@ -43,6 +43,7 @@ namespace SDMS {
           uint32_t timeout_on_receive_milliseconds,
           long timeout_on_poll_milliseconds);
 
+      virtual ~ZeroMQCommunicator() final;
       /**
        * Poll for incoming messages at the sockets
        *

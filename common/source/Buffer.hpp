@@ -36,7 +36,9 @@ namespace SDMS {
             EXCEPT(1, "Cannot reserve proposed capacity exceeds max allowable");
           }
           m_buffer.reset();
-          m_buffer = std::move(std::unique_ptr<char[]>(new char[new_capacity]));
+          if( new_capacity > 0 ) {
+            m_buffer = std::move(std::unique_ptr<char[]>(new char[new_capacity]));
+          }
           m_capacity = new_capacity;
         }
       }
@@ -65,35 +67,38 @@ namespace SDMS {
 
   template<typename T>
     inline void copyToBuffer(Buffer & buffer, const T data, size_t size) {
-      buffer.reserve(size);
-      if constexpr( std::is_base_of<::google::protobuf::Message,std::remove_pointer_t<T>>::value ) {
-        try {
-          if ( !data->IsInitialized() ) {
-            EXCEPT( 1, "Cannot copy message to buffer it is missing required fields" );
+      if(size > 0) {
+        buffer.reserve(size);
+        if constexpr( std::is_base_of<::google::protobuf::Message,std::remove_pointer_t<T>>::value ) {
+          try {
+            if ( !data->IsInitialized() ) {
+              EXCEPT( 1, "Cannot copy message to buffer it is missing required fields" );
+            }
+            if ( !data->SerializeToArray( buffer.m_buffer.get(), size )) {
+              EXCEPT( 1, "SerializeToArray for message failed." );
+            }
+          } catch (...) {
+            EXCEPT(1, "memcpy failed in buffer for google protobuf message.");
           }
-          if ( !data->SerializeToArray( buffer.m_buffer.get(), size )) {
-            EXCEPT( 1, "SerializeToArray for message failed." );
-          }
-          buffer.m_size = size;
-        } catch (...) {
-          EXCEPT(1, "memcpy failed in buffer for google protobuf message.");
+        } else {
+          memcpy( buffer.m_buffer.get(), data, size);
         }
-      } else {
-        memcpy( buffer.m_buffer.get(), data, size);
-        buffer.m_size = size;
       }
+      buffer.m_size = size;
     }
 
   template<typename T>
     inline void copyFromBuffer(T data, const Buffer & buffer) {
-      if constexpr( std::is_base_of<::google::protobuf::Message, std::remove_pointer_t<T>>::value ) {
-        try {
-          data->ParseFromArray( (void *) buffer.m_buffer.get(), buffer.m_size);
-        } catch (...) {
-          EXCEPT(1, "memcpy failed in buffer.");
+      if( buffer.m_size > 0 ) {
+        if constexpr( std::is_base_of<::google::protobuf::Message, std::remove_pointer_t<T>>::value ) {
+          try {
+            data->ParseFromArray( (void *) buffer.m_buffer.get(), buffer.m_size);
+          } catch (...) {
+            EXCEPT(1, "memcpy failed in buffer.");
+          }
+        } else {
+          memcpy( data, buffer.m_buffer.get(), buffer.m_size);
         }
-      } else {
-        memcpy( data, buffer.m_buffer.get(), buffer.m_size);
       }
     }
 

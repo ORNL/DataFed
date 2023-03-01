@@ -19,14 +19,16 @@ namespace SDMS {
   namespace g_constants = constants::message::google;
 
   /**
-   * Make sure that zmq_msg_init is not called on this message before it
-   * is passed in.
+   * Must call msg_init before passing in .
+   *
+   * Recommend the call below because the frame is 8 bytes:
+   *
+   * zmq_msg_init_size( &zmq_msg, 8 );
    **/
   void FrameConverter::copy(CopyDirection direction, zmq_msg_t & zmq_msg, Frame & frame){
     if( direction == CopyDirection::FROM_FRAME){
-      zmq_msg_init_size( &zmq_msg, 8 );
-
       if ( zmq_msg_size( &zmq_msg ) != sizeof( Frame )) {
+
         EXCEPT_PARAM( 1, "Unable to copy frame to zmq_msg sizes are inconsistent Frame: " << sizeof( Frame ) << " zmq_msg " << zmq_msg_size( &zmq_msg ) );
       }
       unsigned char * msg_frame_allocation = (unsigned char *)zmq_msg_data( &zmq_msg );
@@ -34,15 +36,22 @@ namespace SDMS {
       *(msg_frame_allocation+4) = frame.proto_id;
       *(msg_frame_allocation+5) = frame.msg_id;
       *((uint16_t*)(msg_frame_allocation+6)) = htons( frame.context );
-    } else {
+    } else { // TO_FRAME
+      std::cout << "FrameConverter::size " << __LINE__ << " sizeof(Frame) " << sizeof(Frame) << std::endl;
       if ( zmq_msg_size( &zmq_msg ) != sizeof( Frame )) {
         EXCEPT_PARAM( 1, "Unable to copy zmq_msg to Frame sizes are inconsistent Frame: " << sizeof( Frame ) << " zmq_msg " << zmq_msg_size( &zmq_msg ) );
       }
+      std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       unsigned char * msg_frame_allocation = (unsigned char *)zmq_msg_data( &zmq_msg );
+      std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       frame.size = ntohl( *((uint32_t*) msg_frame_allocation) );
+      std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       frame.proto_id = *(msg_frame_allocation+4);
+      std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       frame.msg_id = *(msg_frame_allocation+5);
+      std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       frame.context = ntohs( *((uint16_t*)(msg_frame_allocation+6)));
+      std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
     }
   }
 
@@ -51,10 +60,15 @@ namespace SDMS {
       IMessage & msg,
       const Frame & frame) {
     if( direction == CopyDirection::FROM_FRAME ) {
+      std::cout << "FrameConverter::copy - " << __LINE__ << std::endl;
       msg.set(g_constants::FRAME_SIZE, frame.size);
+      std::cout << "FrameConverter::copy - " << __LINE__ << std::endl;
       msg.set(g_constants::PROTO_ID, frame.proto_id);
+      std::cout << "FrameConverter::copy - " << __LINE__ << std::endl;
       msg.set(g_constants::MSG_ID, frame.msg_id);
+      std::cout << "FrameConverter::copy - " << __LINE__ << std::endl;
       msg.set(g_constants::MSG_TYPE, frame.getMsgType());
+      std::cout << "FrameConverter::copy - " << __LINE__ << std::endl;
       msg.set(g_constants::CONTEXT, frame.context);
     } else {
       EXCEPT(1, "Unsupported copy direction for FrameConverter working on IMessage instance");
@@ -97,8 +111,11 @@ namespace SDMS {
 
   Frame FrameFactory::create(zmq_msg_t & zmq_msg) {
     Frame frame;
-    FrameConverter converter;
-    converter.copy(FrameConverter::CopyDirection::TO_FRAME, zmq_msg, frame);
+    // No need for conversion if the message size is 0 just use default frame
+    if( zmq_msg_size( &zmq_msg ) > 0 ) {
+      FrameConverter converter;
+      converter.copy(FrameConverter::CopyDirection::TO_FRAME, zmq_msg, frame);
+    }
     return frame;
   }
 

@@ -23,7 +23,8 @@ class ProxyBasicZMQ : public IServer {
     std::unique_ptr<ISocket> m_server_socket;
     bool m_run_infinite_loop = true;
     std::chrono::duration<double> m_run_duration;
-
+    // If need more print statements to debug turn on
+    bool m_debug_output = true;
     int m_client_zmq_type;
     int m_server_zmq_type;
   public:

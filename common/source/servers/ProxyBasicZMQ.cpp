@@ -87,46 +87,68 @@ namespace SDMS {
 
     void ProxyBasicZMQ::run() {
 
-
       void * ctx = getContext();
-			void *router_frontend_socket = zmq_socket (ctx, ZMQ_ROUTER);
-			assert (router_frontend_socket);
-			int rc = zmq_bind (router_frontend_socket, "inproc://frontend");
-			assert (rc == 0);
-
-			// Backend socket talks to workers over inproc
-			void *dealer_backend_socket = zmq_socket (ctx, ZMQ_DEALER);
-			assert (dealer_backend_socket);
-			rc = zmq_bind (dealer_backend_socket, "inproc://backend");
-			assert (rc == 0);
-
-			// Control socket receives terminate command from main over inproc
-			void *control_socket = zmq_socket (ctx, ZMQ_SUB);
-			assert (control_socket);
-			rc = zmq_setsockopt (control_socket, ZMQ_SUBSCRIBE, "", 0);
-			assert (rc == 0);
-			rc = zmq_connect (control_socket, "inproc://control");
-			assert (rc == 0);
 
 
-			// Control socket receives terminate command from main over inproc
-			void *capture_socket = zmq_socket (ctx, ZMQ_PUB);
-			assert (capture_socket);
-			assert (rc == 0);
-			rc = zmq_connect (capture_socket, "inproc://capture");
-			assert (rc == 0);
+			/** 
+       * Control socket receives terminate command from main over inproc
+       *
+       * In the case that we need to exit early or run the proxy for a fixed 
+       * amount of time.
+       *
+       * WARNING the order matters the SUB only works for sockets bind and or
+       * connects made to it after it has been created and connected
+       **/
+      void *control_socket = nullptr;
+      if( m_run_infinite_loop == false ) {
+        control_socket = zmq_socket (ctx, ZMQ_SUB);
+        if( not control_socket) {
+          EXCEPT(1, "Problem creating control socket");
+        }
+        int rc = zmq_setsockopt (control_socket, ZMQ_SUBSCRIBE, "", 0);
+        if( rc ) {
+          EXCEPT(1, "Problem subscribing control socket");
+        }
+        rc = zmq_connect (control_socket, "inproc://control");
+        if( rc ) {
+          EXCEPT(1, "Problem connecting control socket");
+        }
+        int linger = 0;
+        zmq_setsockopt(control_socket, ZMQ_LINGER, &linger, sizeof(linger));
+      }
 
+      void *capture_socket = nullptr;
+      if( m_debug_output ) {
+        capture_socket = zmq_socket (ctx, ZMQ_PUB);
+        if( not capture_socket) {
+          EXCEPT(1, "Problem creating capture socket");
+        }
+        int rc = zmq_connect (capture_socket, "inproc://capture");
+        if( rc ) {
+          EXCEPT(1, "Problem connecting capture socket");
+        }
+        int linger = 0;
+        zmq_setsockopt(capture_socket, ZMQ_LINGER, &linger, sizeof(linger));
+      }
 
-			// Launch pool of worker threads, precise number is not critical
-			auto terminate_call = [](){
+			/**
+       * Lambda is only needed if the proxy is not being run for an infinite
+       * loop.
+       **/
+			auto terminate_call = [](std::chrono::duration<double> duration){
       	void * context = getContext();
 				auto control_local = zmq_socket(context, ZMQ_PUB);
-				int rc_local = zmq_bind( control_local, "inproc://control");
-        std::this_thread::sleep_for (std::chrono::milliseconds(500));
+        std::cout << "CONTROL: Sleeping" << std::endl;
+        std::this_thread::sleep_for (duration);
+				zmq_bind( control_local, "inproc://control");
+        std::cout << "CONTROL: TERMINATE" << std::endl;
 				std::string command = "TERMINATE";
-				auto return_val = zmq_send(control_local, command.c_str(), command.size(), 0);
+				zmq_send(control_local, command.c_str(), command.size(), 0);
+        int rc_local = zmq_close (control_local);
+        if( rc_local ) {
+          EXCEPT(1, "Problem closing control socket from PUBLISHING thread");
+        }
 			};
-
 
       /**
        * Thread is for debugging purposes mostly, for logging the messages
@@ -135,7 +157,7 @@ namespace SDMS {
 			auto proxy_log_call = [](){
       	void * context = getContext();
 				auto capture_local = zmq_socket(context, ZMQ_SUB);
-				int rc_local = zmq_bind( capture_local, "inproc://capture");
+				zmq_bind( capture_local, "inproc://capture");
 			  zmq_setsockopt (capture_local, ZMQ_SUBSCRIBE, "", 0);
         zmq_pollitem_t  items[] = {{ capture_local, 0, ZMQ_POLLIN, 0}};
         const int num_items_in_array = 1;
@@ -145,9 +167,9 @@ namespace SDMS {
         bool terminate = false;
         while( true ) {
           events_detected = zmq_poll( items, num_items_in_array, timeout_milliseconds );
-
+          std::cout << "CAPTURE: events " << events_detected << std::endl;
           if ( events_detected > 0) {
-
+            
             zmq_msg_t zmq_msg;
             zmq_msg_init( &zmq_msg );
 
@@ -170,28 +192,94 @@ namespace SDMS {
             if( terminate ) { break; }
           }
         } 
+        int rc_local = zmq_close (capture_local);
+        if( rc_local ) {
+          EXCEPT(1, "Problem closing capture socket from SUBSCRIBING thread");
+        }
+
 			};
 
-			std::thread control_thread(terminate_call);
-			std::thread capture_thread(proxy_log_call);
+      std::thread control_thread;
+      if( m_run_infinite_loop == false) {
+        std::cout << "**************************************" << std::endl;
+        std::cout << "Launching control thread for duration " << m_run_duration.count() << std::endl;
+        control_thread = std::thread(terminate_call, m_run_duration);
+      }
+
+      std::thread capture_thread;
+      if( m_debug_output ) {
+        std::cout << "Running CAPTURE Thread" << std::endl;
+			  capture_thread = std::thread(proxy_log_call);
+      }
+
+			void *router_frontend_socket = zmq_socket (ctx, ZMQ_ROUTER);
+			if( not router_frontend_socket) {
+        EXCEPT(1, "Problem creating frontend ROUTER socket");
+      }
+      int router_linger = 0;
+      zmq_setsockopt(router_frontend_socket, ZMQ_LINGER, &router_linger, sizeof(int));
+      /**
+       * NOTE
+       *
+       * The socket on the proxy that will connect with the frontend is a
+       * server socket. The proxy serves the frontend.
+       **/
+			int rc = zmq_bind (router_frontend_socket, m_server_socket->getAddress().c_str());
+			if( rc ) {
+        EXCEPT_PARAM(1, "Problem binding frontend ROUTER socket, address: " << m_server_socket->getAddress());
+      }
+
+			// Backend socket talks to workers over inproc
+			void *dealer_backend_socket = zmq_socket (ctx, ZMQ_DEALER);
+      if( not router_frontend_socket) {
+        EXCEPT(1, "Problem creating backend DEALER socket");
+      }
+      int dealer_linger = 0;
+      zmq_setsockopt(dealer_backend_socket, ZMQ_LINGER, &dealer_linger, sizeof(int));
+      /**
+       * NOTE
+       *
+       * The socket on the proxy that will connect with the backend is a
+       * client socket. The proxy acts like a client to the backend.
+       **/
+			rc = zmq_bind (dealer_backend_socket, m_client_socket->getAddress().c_str());
+			if( rc ) {
+        EXCEPT_PARAM(1, "Problem binding backend DEALER socket, address: " << m_client_socket->getAddress());
+      }
+
 			// Connect backend to frontend via a proxy
 			zmq_proxy_steerable (router_frontend_socket, dealer_backend_socket, capture_socket, control_socket);
 
       // Give the threads a chance to finish what they are doing
       std::this_thread::sleep_for (std::chrono::milliseconds(100));
-      capture_thread.join();
-			control_thread.join();
+      if( m_debug_output ) {
+        capture_thread.join();
+      }
+      if( m_run_infinite_loop == false) {
+			  control_thread.join();
+      }
 
 			rc = zmq_close (router_frontend_socket);
-			assert (rc == 0);
+      if( rc ) {
+        EXCEPT(1, "Problem closing frontend router socket");
+      }
 			rc = zmq_close (dealer_backend_socket);
-			assert (rc == 0);
-			rc = zmq_close (control_socket);
-			assert (rc == 0);
-			rc = zmq_close (capture_socket);
-			assert (rc == 0);
+      if( rc ) {
+        EXCEPT(1, "Problem closing backend router socket");
+      }
+      if( m_debug_output ) {
+			  rc = zmq_close (capture_socket);
+        if( rc ) {
+          EXCEPT(1, "Problem closing capture socket");
+        }
+      }
 
-      
+      if( m_run_infinite_loop == false) {
+			  rc = zmq_close (control_socket);
+        if( rc ) {
+          EXCEPT(1, "Problem closing control socket");
+        }
+      }
     }
 
 } // namespace SDMS

@@ -51,6 +51,8 @@ namespace SDMS {
 
       virtual const std::string id() const noexcept = 0;
       virtual const std::string address() const noexcept = 0;
+
+      virtual ~ICommunicator() {};
   };
 
 } // namespace SDMS
