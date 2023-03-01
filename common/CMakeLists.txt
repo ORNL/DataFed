@@ -5,6 +5,8 @@ file( GLOB Sources "source/*.cpp"
   "source/communicators/*.cpp"
   "source/messages/*.cpp"
   "source/operators/*.cpp"
+  "source/servers/*.cpp"
+  "source/support/zeromq/*.cpp"
   "source/sockets/*.cpp")
 
 PROTOBUF_GENERATE_CPP( ProtoSourcesCpp ProtoHeadersCpp ${ProtoFiles} )

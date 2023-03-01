@@ -16,20 +16,35 @@ namespace SDMS {
     SYNCHRONOUS
   };
 
+
+  /**
+   * TRANSIENT connection comes and goes
+   * PERSISTENT connection persists
+   **/
+  enum class SocketConnectionLife {
+    INTERMITTENT,
+    PERSISTENT
+  };
+
+  /**
+   * CLIENT - makes/initiates requests
+   * SERVER - responds to requests
+   **/
   enum class SocketClassType {
     CLIENT,
     SERVER
   };
 
+  enum class URIScheme {
+    TCP,
+    HTTPS,
+    HTTP,
+    INPROC
+  };
+
   enum class SocketDirectionalityType {
     UNIDIRECTIONAL,
     BIDIRECTIONAL
-  };
-
-  enum class URIScheme {
-    HTTPS,
-    INPROC,
-    TCP
   };
 
   /**
@@ -42,9 +57,10 @@ namespace SDMS {
     SocketClassType class_type;
     SocketDirectionalityType direction_type;
     SocketCommunicationType communication_type;
+    SocketConnectionLife connection_life;
     ProtocolType protocol_type;
     std::string host;
-    uint16_t port;
+    std::optional<uint16_t> port;
     std::optional<std::string> local_id;
   };
 

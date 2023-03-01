@@ -21,9 +21,10 @@ class ZeroMQSocket : public ISocket {
     SocketClassType m_socket_class_type;
     SocketCommunicationType m_socket_communication_type;
     SocketDirectionalityType m_socket_directionality_type;
+    SocketConnectionLife m_socket_life;
     std::string m_host = "";
     std::string m_id = "";
-    uint16_t m_port = -1;
+    std::optional<uint16_t> m_port;
     ZeroMQSocketCredentials m_credentials;
 
   public:
@@ -47,6 +48,10 @@ class ZeroMQSocket : public ISocket {
 
     virtual SocketDirectionalityType getSocketDirectionalityType() const noexcept final {
       return m_socket_directionality_type;
+    };
+
+    virtual SocketConnectionLife getSocketConnectionLife() const noexcept final {
+      return m_socket_life;
     };
 
     virtual ProtocolType getProtocolType() const noexcept final {

@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE( testing_SocketFactory ) {
   SocketFactory factory;
   std::unique_ptr<ISocket> socket = factory.create(socket_options, *credentials);
 
-  BOOST_CHECK(socket->getAddress() == "tcp://" + socket_options.host + ":" + std::to_string(socket_options.port));
+  BOOST_CHECK(socket->getAddress() == "tcp://" + socket_options.host + ":" + std::to_string(*socket_options.port));
   BOOST_CHECK(socket->getSocketClassType() == SocketClassType::SERVER);
   BOOST_CHECK(socket->getSocketDirectionalityType() == SocketDirectionalityType::BIDIRECTIONAL);
   BOOST_CHECK(socket->getSocketCommunicationType() == SocketCommunicationType::ASYNCHRONOUS);

@@ -12,7 +12,7 @@
 #include "MessageFactory.hpp"
 #include "OperatorFactory.hpp"
 #include "OperatorTypes.hpp"
-#include "Proxy.hpp"
+#include "servers/Proxy.hpp"
 #include "SocketOptions.hpp"
 
 // Proto file includes
@@ -43,6 +43,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
     socket_options.class_type = SocketClassType::SERVER; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::SYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::PERSISTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = channel_between_proxy_and_backend;
     socket_options.port = 1341;
@@ -81,6 +82,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
     socket_options.class_type = SocketClassType::CLIENT; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = channel_between_proxy_and_frontend;
     socket_options.port = 1341;
@@ -119,8 +121,8 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
   std::unique_ptr<std::thread> proxy_thread = std::unique_ptr<std::thread>(new std::thread(
         [](const std::string proxy_client_id, const std::string proxy_server_id) { 
 
-        std::unordered_map<Proxy::SocketRole, SocketOptions> socket_options;
-        std::unordered_map<Proxy::SocketRole, ICredentials *> socket_credentials;
+        std::unordered_map<SocketRole, SocketOptions> socket_options;
+        std::unordered_map<SocketRole, ICredentials *> socket_credentials;
 
         const std::string channel_between_proxy_and_backend = "channeltobackend";
         const std::string channel_between_proxy_and_frontend = "channeltofrontend";
@@ -136,11 +138,12 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
         client_socket_options.class_type = SocketClassType::CLIENT; 
         client_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
         client_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+        client_socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
         client_socket_options.protocol_type = ProtocolType::ZQTP; 
         client_socket_options.host = channel_between_proxy_and_backend;
         client_socket_options.port = 1341;
         client_socket_options.local_id = proxy_client_id;
-        socket_options[Proxy::SocketRole::CLIENT] = client_socket_options;
+        socket_options[SocketRole::CLIENT] = client_socket_options;
 
         std::string public_key = "my_pub_key";
         std::string secret_key = "my_priv_key";
@@ -153,7 +156,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
         cred_options[CredentialType::SERVER_KEY] = server_key;
 
         client_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-        socket_credentials[Proxy::SocketRole::CLIENT] = client_credentials.get();
+        socket_credentials[SocketRole::CLIENT] = client_credentials.get();
         }
 
         // Credentials are allocated on the heap, to ensure they last until the end of
@@ -168,11 +171,12 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
           server_socket_options.class_type = SocketClassType::SERVER; 
           server_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
           server_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+          server_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
           server_socket_options.protocol_type = ProtocolType::ZQTP; 
           server_socket_options.host = channel_between_proxy_and_frontend;
           server_socket_options.port = 1341;
           server_socket_options.local_id = proxy_server_id;
-          socket_options[Proxy::SocketRole::SERVER] = server_socket_options;
+          socket_options[SocketRole::SERVER] = server_socket_options;
 
           std::string public_key = "my_pub_key";
           std::string secret_key = "my_priv_key";
@@ -185,7 +189,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
           cred_options[CredentialType::SERVER_KEY] = server_key;
 
           server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-          socket_credentials[Proxy::SocketRole::SERVER] = server_credentials.get();
+          socket_credentials[SocketRole::SERVER] = server_credentials.get();
 
         }
 
@@ -284,6 +288,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
     socket_options.class_type = SocketClassType::SERVER; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::PERSISTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = channel_between_proxy_and_backend;
     socket_options.port = 1341;
@@ -322,6 +327,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
     socket_options.class_type = SocketClassType::CLIENT; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = channel_between_proxy_and_frontend;
     socket_options.port = 1341;
@@ -360,8 +366,8 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
   std::unique_ptr<std::thread> proxy_thread = std::unique_ptr<std::thread>(new std::thread(
         [](const std::string proxy_client_id, const std::string proxy_server_id) { 
 
-        std::unordered_map<Proxy::SocketRole, SocketOptions> socket_options;
-        std::unordered_map<Proxy::SocketRole, ICredentials *> socket_credentials;
+        std::unordered_map<SocketRole, SocketOptions> socket_options;
+        std::unordered_map<SocketRole, ICredentials *> socket_credentials;
 
         const std::string channel_between_proxy_and_backend = "channeltobackend2";
         const std::string channel_between_proxy_and_frontend = "channeltofrontend2";
@@ -377,11 +383,12 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
         client_socket_options.class_type = SocketClassType::CLIENT; 
         client_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
         client_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+        client_socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
         client_socket_options.protocol_type = ProtocolType::ZQTP; 
         client_socket_options.host = channel_between_proxy_and_backend;
         client_socket_options.port = 1341;
         client_socket_options.local_id = proxy_client_id;
-        socket_options[Proxy::SocketRole::CLIENT] = client_socket_options;
+        socket_options[SocketRole::CLIENT] = client_socket_options;
 
         std::string public_key = "my_pub_key";
         std::string secret_key = "my_priv_key";
@@ -394,7 +401,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
         cred_options[CredentialType::SERVER_KEY] = server_key;
 
         client_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-        socket_credentials[Proxy::SocketRole::CLIENT] = client_credentials.get();
+        socket_credentials[SocketRole::CLIENT] = client_credentials.get();
         }
 
         // Credentials are allocated on the heap, to ensure they last until the end of
@@ -409,11 +416,12 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
           server_socket_options.class_type = SocketClassType::SERVER; 
           server_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
           server_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+          server_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
           server_socket_options.protocol_type = ProtocolType::ZQTP; 
           server_socket_options.host = channel_between_proxy_and_frontend;
           server_socket_options.port = 1341;
           server_socket_options.local_id = proxy_server_id;
-          socket_options[Proxy::SocketRole::SERVER] = server_socket_options;
+          socket_options[SocketRole::SERVER] = server_socket_options;
 
           std::string public_key = "my_pub_key";
           std::string secret_key = "my_priv_key";
@@ -426,7 +434,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
           cred_options[CredentialType::SERVER_KEY] = server_key;
 
           server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-          socket_credentials[Proxy::SocketRole::SERVER] = server_credentials.get();
+          socket_credentials[SocketRole::SERVER] = server_credentials.get();
 
         }
 
@@ -511,6 +519,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
     socket_options.class_type = SocketClassType::SERVER; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::PERSISTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = channel_between_proxy_and_backend;
     socket_options.port = 1341;
@@ -549,6 +558,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
     socket_options.class_type = SocketClassType::CLIENT; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = channel_between_proxy_and_frontend;
     socket_options.port = 1341;
@@ -590,8 +600,8 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
           const std::string proxy_server_id,
           std::chrono::duration<double> test_duration) { 
 
-        std::unordered_map<Proxy::SocketRole, SocketOptions> socket_options;
-        std::unordered_map<Proxy::SocketRole, ICredentials *> socket_credentials;
+        std::unordered_map<SocketRole, SocketOptions> socket_options;
+        std::unordered_map<SocketRole, ICredentials *> socket_credentials;
 
         const std::string channel_between_proxies = "channelbetween_proxies_chain";
         const std::string channel_between_proxy_and_frontend = "channeltofrontend_chain";
@@ -607,11 +617,12 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
         client_socket_options.class_type = SocketClassType::CLIENT; 
         client_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
         client_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+        client_socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
         client_socket_options.protocol_type = ProtocolType::ZQTP; 
         client_socket_options.host = channel_between_proxies;
         client_socket_options.port = 1341;
         client_socket_options.local_id = proxy_client_id;
-        socket_options[Proxy::SocketRole::CLIENT] = client_socket_options;
+        socket_options[SocketRole::CLIENT] = client_socket_options;
 
         std::string public_key = "my_pub_key";
         std::string secret_key = "my_priv_key";
@@ -624,7 +635,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
         cred_options[CredentialType::SERVER_KEY] = server_key;
 
         client_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-        socket_credentials[Proxy::SocketRole::CLIENT] = client_credentials.get();
+        socket_credentials[SocketRole::CLIENT] = client_credentials.get();
         }
 
         // Credentials are allocated on the heap, to ensure they last until the end of
@@ -639,11 +650,12 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
           server_socket_options.class_type = SocketClassType::SERVER; 
           server_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
           server_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+          server_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
           server_socket_options.protocol_type = ProtocolType::ZQTP; 
           server_socket_options.host = channel_between_proxy_and_frontend;
           server_socket_options.port = 1341;
           server_socket_options.local_id = proxy_server_id;
-          socket_options[Proxy::SocketRole::SERVER] = server_socket_options;
+          socket_options[SocketRole::SERVER] = server_socket_options;
 
           std::string public_key = "my_pub_key";
           std::string secret_key = "my_priv_key";
@@ -656,7 +668,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
           cred_options[CredentialType::SERVER_KEY] = server_key;
 
           server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-          socket_credentials[Proxy::SocketRole::SERVER] = server_credentials.get();
+          socket_credentials[SocketRole::SERVER] = server_credentials.get();
 
         }
 
@@ -678,8 +690,8 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
           const std::string proxy_server_id2,
           std::chrono::duration<double> test_duration) { 
 
-        std::unordered_map<Proxy::SocketRole, SocketOptions> socket_options;
-        std::unordered_map<Proxy::SocketRole, ICredentials *> socket_credentials;
+        std::unordered_map<SocketRole, SocketOptions> socket_options;
+        std::unordered_map<SocketRole, ICredentials *> socket_credentials;
 
         const std::string channel_between_proxy_and_backend = "channeltobackend_chain";
         const std::string channel_between_proxies = "channelbetween_proxies_chain";
@@ -695,11 +707,12 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
         client_socket_options.class_type = SocketClassType::CLIENT; 
         client_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
         client_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+        client_socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
         client_socket_options.protocol_type = ProtocolType::ZQTP; 
         client_socket_options.host = channel_between_proxy_and_backend;
         client_socket_options.port = 1341;
         client_socket_options.local_id = proxy_client_id2;
-        socket_options[Proxy::SocketRole::CLIENT] = client_socket_options;
+        socket_options[SocketRole::CLIENT] = client_socket_options;
 
         std::string public_key = "my_pub_key";
         std::string secret_key = "my_priv_key";
@@ -712,7 +725,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
         cred_options[CredentialType::SERVER_KEY] = server_key;
 
         client_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-        socket_credentials[Proxy::SocketRole::CLIENT] = client_credentials.get();
+        socket_credentials[SocketRole::CLIENT] = client_credentials.get();
         }
 
         // Credentials are allocated on the heap, to ensure they last until the end of
@@ -727,11 +740,12 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
           server_socket_options.class_type = SocketClassType::SERVER; 
           server_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
           server_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+          server_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
           server_socket_options.protocol_type = ProtocolType::ZQTP; 
           server_socket_options.host = channel_between_proxies;
           server_socket_options.port = 1341;
           server_socket_options.local_id = proxy_server_id2;
-          socket_options[Proxy::SocketRole::SERVER] = server_socket_options;
+          socket_options[SocketRole::SERVER] = server_socket_options;
 
           std::string public_key = "my_pub_key";
           std::string secret_key = "my_priv_key";
@@ -744,7 +758,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
           cred_options[CredentialType::SERVER_KEY] = server_key;
 
           server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-          socket_credentials[Proxy::SocketRole::SERVER] = server_credentials.get();
+          socket_credentials[SocketRole::SERVER] = server_credentials.get();
 
         }
 

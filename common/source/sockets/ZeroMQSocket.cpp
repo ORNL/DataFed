@@ -45,9 +45,12 @@ ZeroMQSocket::ZeroMQSocket(
   m_socket_class_type(socket_options.class_type),
   m_socket_communication_type(socket_options.communication_type),
   m_socket_directionality_type(socket_options.direction_type),
-  m_host(socket_options.host),
-  m_port(socket_options.port) {
+  m_socket_life(socket_options.connection_life),
+  m_host(socket_options.host) {
 
+  if(socket_options.port){
+    m_port = *socket_options.port;
+  }
   if( socket_options.local_id ) {
     m_id = *socket_options.local_id;
   } else {
@@ -69,11 +72,15 @@ ZeroMQSocket::ZeroMQSocket(
 }
 
 std::string ZeroMQSocket::getAddress() const noexcept {
-  std::string prefix = "inproc://";
+  std::string address = "inproc://";
   if(m_scheme == URIScheme::TCP) { 
-    prefix = "tcp://";
+    address = "tcp://";
+  }
+  address += m_host;
+  if( m_port ) {
+    address += ":" + std::to_string( *m_port );
   } 
-  return prefix + m_host + ":" + std::to_string( m_port );
+  return address;
 }
 
 std::variant<std::string> ZeroMQSocket::get(const CredentialType credential_type) const {

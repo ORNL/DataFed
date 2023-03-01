@@ -46,6 +46,16 @@ namespace SDMS {
         EXCEPT(1, "Proxy must have socket credentials for SERVER"); 
       }
 
+      if( socket_options.at(SocketRole::CLIENT).connection_life == SocketConnectionLife::PERSISTENT ){
+        if( socket_options.at(SocketRole::CLIENT).class_type != SocketClassType::SERVER ) {
+          EXCEPT_PARAM( 1, "Custom proxy does not yet support persistent connections for any socket class but server." );
+        }
+      } else {
+        if( socket_options.at(SocketRole::CLIENT).class_type != SocketClassType::CLIENT ) {
+          EXCEPT_PARAM( 1, "Custom proxy does not yet support intermittent connections for any socket class but client." );
+        }
+      }
+
       CommunicatorFactory communication_factory;
 
       std::cout << "Creating proxy CLIENT" << std::endl;

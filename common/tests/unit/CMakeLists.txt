@@ -6,12 +6,14 @@ foreach(PROG
     test_MessageFactory
     test_OperatorFactory
     test_ProtoBufFactory
+    test_ProtoBufMap
     test_Proxy
+    test_ProxyBasicZMQ
     test_SocketFactory
 )
 
   include_directories(${CMAKE_SOURCE_DIR}/common/source)
-  file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)
+  file(GLOB ${PROG}_SOURCES ${PROG}.cpp)
   add_executable(unit_${PROG} ${${PROG}_SOURCES})
   target_link_libraries(unit_${PROG} Boost::unit_test_framework common -lzmq -lprotobuf -lpthread)
   target_compile_definitions(unit_${PROG} PRIVATE BOOST_TEST_DYN_LINK)

@@ -10,7 +10,6 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json-schema.hpp>
 #include "Util.hpp"
-#include "MsgComm.hpp"
 #include "DatabaseAPI.hpp"
 #include "ICoreServer.hpp"
 #include "GlobusAPI.hpp"
@@ -104,7 +103,6 @@ private:
     std::thread *       m_worker_thread;    ///< Local thread handle
     bool                m_run;              ///< Thread run flag
     DatabaseAPI         m_db_client;        ///< Local DB client instance
-    MsgBuf              m_msg_buf;          ///< Reusable message buffer
     GlobusAPI           m_globus_api;       ///< Local GlobusAPI instance
     std::string         m_validator_err;    ///< String buffer for metadata validation errors
 

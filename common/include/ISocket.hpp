@@ -22,6 +22,7 @@ class ISocket {
     virtual SocketClassType getSocketClassType() const noexcept = 0;
     virtual SocketCommunicationType getSocketCommunicationType() const noexcept = 0;
     virtual SocketDirectionalityType getSocketDirectionalityType() const noexcept = 0;
+    virtual SocketConnectionLife getSocketConnectionLife() const noexcept = 0;
 
     virtual ProtocolType getProtocolType() const noexcept = 0;
     virtual std::string getAddress() const noexcept = 0;

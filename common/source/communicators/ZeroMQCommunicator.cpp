@@ -1,7 +1,9 @@
 // Local private includes
 #include "ZeroMQCommunicator.hpp"
-#include "../Frame.hpp"
-#include "../ProtoBufFactory.hpp"
+#include "Frame.hpp"
+#include "ProtoBufFactory.hpp"
+#include "support/zeromq/Context.hpp"
+#include "support/zeromq/SocketTranslator.hpp"
 
 // Local public includes
 #include "IMessage.hpp"
@@ -43,14 +45,6 @@ namespace SDMS {
       (void) a_hint;
       delete (char*) a_data;
     }*/
-
-    /**
-     * Singleton Pattern for Security Context of zmq.
-     **/
-    void * getContext() {
-      static void * context = zmq_ctx_new();
-      return context;
-    }
 
     void sendDelimiter(void * outgoing_zmq_socket) {
       // Send NULL delimiter
@@ -436,71 +430,6 @@ namespace SDMS {
     }
 
 
-    /**
-     * Specifies the type of Socket
-     *
-     * DEALER - Like REQUEST Socket but asynchronous, intended for clients
-     *  1. Bidirectional
-     *  2. Send/recieve unrestricted
-     *  3. Outgoing routing strategy Round-robin
-     *  4. Incoming routing strategy Fair-queud
-     *
-     * ROUTER - Like REPLY socket but asynchronous and able to distinguish connected
-     * agents. Intended for server, has to be able to distinguish between the
-     * different connected clients so it knows who to respond to.
-     *  1. Bidirectional
-     *  2. Unrestricted send and recv
-     *  3. Outgoing routing strategy Multiple Unicast - 
-     *  4. Incoming routing strategy Fair-queued
-     *
-     * When creating a client socket you can assign an id sock.identity = "name"
-     * If this has not been done the router will create a random identity and 
-     * assign it to that socket.
-     *
-     * SUBSCRIBE
-     *  1. Unidirectional
-     *  2. Receive only
-     *  3. Incoming routing strategy Fair-queued
-     *  4. Outgoing routing N/A
-     *
-     * REPLIER
-     *  1. Bidirectional
-     *  2. Communication pattern (Receive, Send), (Receive, Send), ... 
-     *     Receive, Send occur in pairs to one client at a time. 
-     *  3. Ougoing routing strategy Fair-robin
-     *  4. Incoming routing strategy Last peer
-     **/
-    int categorizeZMQSocket(ISocket * socket) {
-      std::unordered_map<
-        SocketClassType,
-        std::unordered_map<SocketCommunicationType,
-        std::unordered_map<SocketDirectionalityType, int>>>
-          categorizer;
-
-      const auto sync = SocketCommunicationType::SYNCHRONOUS;
-      const auto async = SocketCommunicationType::ASYNCHRONOUS;
-      const auto client = SocketClassType::CLIENT;
-      const auto server = SocketClassType::SERVER;
-      const auto unidirection = SocketDirectionalityType::UNIDIRECTIONAL;
-      const auto bidirection = SocketDirectionalityType::BIDIRECTIONAL;
-
-      categorizer[client][sync][bidirection] = ZMQ_REQ;
-      categorizer[client][async][unidirection] = ZMQ_SUB;
-      categorizer[client][async][bidirection] = ZMQ_DEALER;
-      categorizer[server][sync][bidirection] = ZMQ_REP;
-      categorizer[server][async][unidirection] = ZMQ_PUB;
-      categorizer[server][async][bidirection] = ZMQ_ROUTER;
-
-      const auto class_type = socket->getSocketClassType();
-      const auto communication_type = socket->getSocketCommunicationType();
-      const auto direction_type = socket->getSocketDirectionalityType();
-
-      if( categorizer.at(class_type).at(communication_type).count(direction_type) == 0){
-        EXCEPT( 1, "Unsupported socket type specified.");
-      }
-
-      return categorizer.at(class_type).at(communication_type).at(direction_type);
-    }
   } // namespace
 
   /******************************************************************************
@@ -512,7 +441,7 @@ namespace SDMS {
     const int num_items_in_array = 1;
     int events_detected = 0;
     events_detected = zmq_poll( items, num_items_in_array, timeout_milliseconds );
-
+    std::cout << "Events detected " << events_detected;
     Response response;
     if ( events_detected == -1 ) {
       response.error = true;
@@ -521,6 +450,10 @@ namespace SDMS {
       return response;
     } else if ( events_detected == 0) {
       response.time_out = true;
+      std::string error_msg = std::string(zmq_strerror(zmq_errno()));
+      if(error_msg.size()){
+        response.error_msg += " msg: " + error_msg;
+      }
       return response;
     } else {
       response.events = events_detected;
@@ -542,7 +475,7 @@ namespace SDMS {
     auto socket_factory = SocketFactory();
     m_socket = socket_factory.create(socket_options, credentials);
     m_zmq_ctx = getContext();
-    m_zmq_socket_type = categorizeZMQSocket(m_socket.get());
+    m_zmq_socket_type = translateToZMQSocket(m_socket.get());
     m_zmq_socket = zmq_socket( m_zmq_ctx, m_zmq_socket_type);
 
     // -1 - Leave to OS
@@ -572,17 +505,15 @@ namespace SDMS {
 
     zmq_setsockopt( m_zmq_socket, ZMQ_IDENTITY, id.c_str(), id.size());
 
-    if ( m_socket->getSocketClassType() == SocketClassType::SERVER ) {
-      //std::cout << "Socket is Server, id is " << id << " Binding to " << m_socket->getAddress() << std::endl;
+    if( m_socket->getSocketConnectionLife() == SocketConnectionLife::PERSISTENT ){
       bool failure = zmq_bind( m_zmq_socket, m_socket->getAddress().c_str()) != 0;
       if ( failure ) {
-        EXCEPT_PARAM( 1, "ZeroMQ bind to address '" << m_socket->getAddress() << "' failed." );
+        EXCEPT_PARAM( 1, "ZeroMQ bind to address '" << m_socket->getAddress() << "' failed. zmq error msg: " << zmq_strerror(zmq_errno()) );
       }
     } else {
-      //std::cout << "Socket is Client, id is " << id << " Connecting to " << m_socket->getAddress() << std::endl;
       bool failure = zmq_connect( m_zmq_socket, m_socket->getAddress().c_str()) != 0;
       if ( failure ) {
-        EXCEPT_PARAM( 1, "ZeroMQ connect to address '" << m_socket->getAddress() << "' failed." );
+        EXCEPT_PARAM( 1, "ZeroMQ connect to address '" << m_socket->getAddress() << "' failed. zmq error msg: " << zmq_strerror(zmq_errno())  );
       }
     }
     if ( m_zmq_socket_type == ZMQ_SUB ){
@@ -639,17 +570,12 @@ namespace SDMS {
 
   ICommunicator::Response ZeroMQCommunicator::receive(const MessageType message_type) {
 
-    //std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-    //std::cout << "receive Communicator id " << id() << " m_timeout_on_receive_milliseconds " << m_timeout_on_receive_milliseconds << std::endl;
     std::cout << id() << " polling " << address() << std::endl;
     Response response = m_poll(m_timeout_on_receive_milliseconds);
-    //std::cout << "Non poll receive called" << std::endl;
     if( response.error == false and response.time_out == false) {
-      //std::cout << "Creating response message" << std::endl;
       response.message = m_msg_factory.create(message_type);
       std::cout << id() << " receiveRoute address: " << address() << std::endl;
       receiveRoute(*response.message, m_zmq_socket, m_zmq_socket_type);
-      //receiveRoute(*response.message, m_zmq_socket);
       std::cout << id() << " receiveFrame address: " << address() << std::endl;
       receiveFrame(*response.message, m_zmq_socket);
       std::cout << id() << " receiveBody address: " << address() << std::endl;
@@ -670,15 +596,9 @@ namespace SDMS {
   }
 
   const std::string ZeroMQCommunicator::id() const noexcept {
-    //std::cout << __FILE__ << ":" << __LINE__ << std::endl;
     char id_buffer [constants::communicator::MAX_COMMUNICATOR_IDENTITY_SIZE];
-    //std::cout << __FILE__ << ":" << __LINE__ << std::endl;
     size_t id_size = constants::communicator::MAX_COMMUNICATOR_IDENTITY_SIZE;
-    //std::cout << __FILE__ << ":" << __LINE__ << std::endl;
     zmq_getsockopt( m_zmq_socket, ZMQ_IDENTITY, id_buffer, &id_size);
-    //std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-    //std::cout << "id_size " << id_size << std::endl;
-    //std::cout << "id_buffer " << id_buffer << std::endl;
     return std::string(id_buffer, id_size);
   }
 

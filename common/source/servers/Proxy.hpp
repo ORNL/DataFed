@@ -5,6 +5,7 @@
 // Local public includes
 #include "ICommunicator.hpp"
 #include "IOperator.hpp"
+#include "IServer.hpp"
 #include "ISocket.hpp"
 #include "SocketOptions.hpp"
 
@@ -16,14 +17,7 @@
 
 namespace SDMS {
 
-class Proxy {
-  public:
-    enum class SocketRole {
-      CLIENT,
-      SERVER,
-      MONITOR
-    };
-
+class Proxy : public IServer {
   private:
 
 
@@ -45,15 +39,16 @@ class Proxy {
       const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
       std::vector<std::unique_ptr<IOperator>> incoming_operators);
 
+    virtual ServerType type() const noexcept final { return ServerType::PROXY_CUSTOM; }
     /**
      * By default will run forever you can specify a time to run the for instead
      * 
      * std::chrono::duration<double> duration = std::chrono::seconds(1);
      * setRunDuration(duration)
      **/
-    void setRunDuration(std::chrono::duration<double> duration);
+    virtual void setRunDuration(std::chrono::duration<double> duration) final;
 
-    void run();
+    virtual void run() final;
 };
 
 } // namespace SDMS

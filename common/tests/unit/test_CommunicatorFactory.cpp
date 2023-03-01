@@ -37,6 +37,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactory ) {
     socket_options.class_type = SocketClassType::SERVER; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::PERSISTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = "test_channel";
     socket_options.port = 1341;
@@ -75,6 +76,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactory ) {
     socket_options.class_type = SocketClassType::CLIENT; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = "test_channel";
     socket_options.port = 1341;
@@ -168,6 +170,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactoryReply ) {
     socket_options.class_type = SocketClassType::SERVER; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::PERSISTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = "test_channel2";
     socket_options.port = 1341;
@@ -206,6 +209,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactoryReply ) {
     socket_options.class_type = SocketClassType::CLIENT; 
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = "test_channel2";
     socket_options.port = 1341;
