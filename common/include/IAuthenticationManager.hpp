@@ -49,6 +49,11 @@ public:
      * - PERSISTENT - user or repo
      **/
     virtual std::string getUID(const std::string & pub_key) const = 0;
+
+    /**
+     * Purge keys if needed
+     **/
+    virtual void purge() = 0;
 };
 
 } // namespace SDMS

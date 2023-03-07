@@ -5,7 +5,6 @@
 #include "DatabaseAPI.hpp"
 #include "TaskMgr.hpp"
 #include "TaskWorker.hpp"
-#include "MsgComm.hpp"
 #include "Config.hpp"
 #include "SDMS.pb.h"
 #include <libjson.hpp>

@@ -15,6 +15,14 @@
 #include "GlobusAPI.hpp"
 #include <DynaLog.hpp>
 
+// DataFed Common public includes
+#include "IMessage.hpp"
+#include "IMessageMapper.hpp"
+#include "MessageFactory.hpp"
+
+// Standard includes
+#include <memory>
+
 namespace SDMS {
 namespace Core {
 
@@ -45,33 +53,35 @@ private:
     void setupMsgHandlers();
     void workerThread();
     template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
-    bool dbPassThrough( const std::string & a_uid );
-    bool procGetAuthStatusRequest( const std::string & a_uid );
-    bool procVersionRequest( const std::string & a_uid );
-    bool procAuthenticateByPasswordRequest( const std::string & a_uid );
-    bool procAuthenticateByTokenRequest( const std::string & a_uid );
-    bool procGenerateCredentialsRequest( const std::string & a_uid );
-    bool procRevokeCredentialsRequest( const std::string & a_uid );
-    bool procDataGetRequest( const std::string & a_uid );
-    bool procDataPutRequest( const std::string & a_uid );
-    bool procDataCopyRequest( const std::string & a_uid );
-    bool procRecordCreateRequest( const std::string & a_uid );
-    bool procRecordUpdateRequest( const std::string & a_uid );
-    bool procRecordUpdateBatchRequest( const std::string & a_uid );
-    bool procRecordDeleteRequest( const std::string & a_uid );
-    bool procRecordAllocChangeRequest( const std::string & a_uid );
-    bool procRecordOwnerChangeRequest( const std::string & a_uid );
-    bool procCollectionDeleteRequest( const std::string & a_uid );
-    bool procProjectDeleteRequest( const std::string & a_uid );
-    bool procProjectSearchRequest( const std::string & a_uid );
-    bool procRepoAllocationCreateRequest( const std::string & a_uid );
-    bool procRepoAllocationDeleteRequest( const std::string & a_uid );
-    bool procRepoAuthzRequest( const std::string & a_uid );
-    bool procUserGetAccessTokenRequest( const std::string & a_uid );
-    bool procMetadataValidateRequest( const std::string & a_uid );
-    bool procSchemaCreateRequest( const std::string & a_uid );
-    bool procSchemaReviseRequest( const std::string & a_uid );
-    bool procSchemaUpdateRequest( const std::string & a_uid );
+    std::unique_ptr<IMessage> dbPassThrough( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+
+    std::unique_ptr<IMessage> procGetAuthStatusRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  );
+    std::unique_ptr<IMessage> procVersionRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  );
+    std::unique_ptr<IMessage> procAuthenticateByPasswordRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procAuthenticateByTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  );
+    std::unique_ptr<IMessage> procGenerateCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  );
+    std::unique_ptr<IMessage> procRevokeCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  );
+    std::unique_ptr<IMessage> procDataGetRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procDataPutRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procDataCopyRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRecordCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRecordUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRecordUpdateBatchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRecordDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRecordAllocChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRecordOwnerChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procCollectionDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procProjectDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procProjectSearchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRepoAllocationCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRepoAllocationDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRepoAuthzRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procUserGetAccessTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procMetadataValidateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procSchemaCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procSchemaReviseRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procSchemaUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+
     void schemaEnforceRequiredProperties( const nlohmann::json & a_schema );
     void recordCollectionDelete( const std::vector<std::string> & a_ids, Auth::TaskDataReply & a_reply );
     void handleTaskResponse( libjson::Value & a_result );
@@ -81,7 +91,8 @@ private:
         return find_if(str.begin(), str.end(), []( char c ){ return !isalnum(c); }) != str.end();
     }
 
-    typedef bool (ClientWorker::*msg_fun_t)( const std::string & a_uid );
+    //typedef bool (ClientWorker::*msg_fun_t)( const std::string & a_uid );
+    typedef std::unique_ptr<IMessage> (ClientWorker::*msg_fun_t)( const std::string & a_uid, std::unique_ptr<IMessage> && request );
 
     void schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value );
 
@@ -106,6 +117,8 @@ private:
     GlobusAPI           m_globus_api;       ///< Local GlobusAPI instance
     std::string         m_validator_err;    ///< String buffer for metadata validation errors
 
+    MessageFactory m_msg_factory;
+    std::unique_ptr<IMessageMapper> m_msg_mapper;
     /// Map of message type to message handler functions
     static std::map<uint16_t,msg_fun_t> m_msg_handlers;
 };

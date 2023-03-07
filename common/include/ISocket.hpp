@@ -9,7 +9,6 @@
 
 // Standard includes
 #include <string>
-#include <variant>
 
 namespace SDMS {
 
@@ -26,8 +25,9 @@ class ISocket {
 
     virtual ProtocolType getProtocolType() const noexcept = 0;
     virtual std::string getAddress() const noexcept = 0;
-    virtual std::variant<std::string> get(const CredentialType credential_type) const = 0;
+    virtual std::string get(const CredentialType credential_type) const = 0;
 
+    virtual bool hasCredentials() const noexcept = 0;
     /**
      * Get an identifier to the local socket host/thread/process, requires
      * users setting the local_id in the socket options otherwise a random

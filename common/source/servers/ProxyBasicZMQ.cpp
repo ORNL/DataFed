@@ -19,6 +19,17 @@
 
 namespace SDMS {
 
+
+	std::string sanitize(std::string val, const std::string pattern, const std::string replacement) {
+		for (auto at = val.find(pattern, 0);
+				at != std::string::npos;
+				at = val.find(pattern, at + replacement.length())) {
+
+			val.replace(at, pattern.length(), replacement);
+		}
+		return val;
+	}
+
     /// Convenience constructor
     ProxyBasicZMQ::ProxyBasicZMQ(
       const std::unordered_map<SocketRole, SocketOptions> & socket_options,
@@ -72,6 +83,16 @@ namespace SDMS {
       m_client_socket = sock_factory.create(socket_options.at(SocketRole::CLIENT), *socket_credentials.at(SocketRole::CLIENT));
       m_server_socket = sock_factory.create(socket_options.at(SocketRole::SERVER), *socket_credentials.at(SocketRole::SERVER));
 
+      m_addresses[SocketRole::CLIENT] = m_client_socket->getAddress();
+      m_addresses[SocketRole::SERVER] = m_server_socket->getAddress();
+
+      m_client_host = socket_options.at(SocketRole::CLIENT).host;
+      m_server_host = socket_options.at(SocketRole::SERVER).host;
+      if( m_debug_output ) {
+        m_addresses[SocketRole::MONITOR] = "inproc://monitor_";
+        m_addresses[SocketRole::MONITOR] += sanitize(m_client_host,"*","all") + "_";
+        m_addresses[SocketRole::MONITOR] += sanitize(m_server_host,"*","all");
+      }
     }
 
     /**
@@ -83,6 +104,14 @@ namespace SDMS {
     void ProxyBasicZMQ::setRunDuration(std::chrono::duration<double> duration) {
       m_run_duration = duration;
 			m_run_infinite_loop = false;
+
+      m_addresses[SocketRole::CONTROL] = "inproc://control_";
+
+			/*
+			 * Replace '*' with 'all'
+       */
+      m_addresses[SocketRole::CONTROL] += sanitize(m_client_host,"*","all") + "_";
+      m_addresses[SocketRole::CONTROL] += sanitize(m_server_host,"*","all");
     }
 
     void ProxyBasicZMQ::run() {
@@ -109,11 +138,11 @@ namespace SDMS {
         if( rc ) {
           EXCEPT(1, "Problem subscribing control socket");
         }
-        rc = zmq_connect (control_socket, "inproc://control");
+        rc = zmq_connect (control_socket, m_addresses[SocketRole::CONTROL].c_str() );
         if( rc ) {
           EXCEPT(1, "Problem connecting control socket");
         }
-        int linger = 0;
+        int linger = 100;
         zmq_setsockopt(control_socket, ZMQ_LINGER, &linger, sizeof(linger));
       }
 
@@ -123,11 +152,11 @@ namespace SDMS {
         if( not capture_socket) {
           EXCEPT(1, "Problem creating capture socket");
         }
-        int rc = zmq_connect (capture_socket, "inproc://capture");
+        int rc = zmq_connect (capture_socket, m_addresses[SocketRole::MONITOR].c_str());
         if( rc ) {
           EXCEPT(1, "Problem connecting capture socket");
         }
-        int linger = 0;
+        int linger = 100;
         zmq_setsockopt(capture_socket, ZMQ_LINGER, &linger, sizeof(linger));
       }
 
@@ -135,12 +164,12 @@ namespace SDMS {
        * Lambda is only needed if the proxy is not being run for an infinite
        * loop.
        **/
-			auto terminate_call = [](std::chrono::duration<double> duration){
+			auto terminate_call = [](std::chrono::duration<double> duration, const std::string address){
       	void * context = getContext();
 				auto control_local = zmq_socket(context, ZMQ_PUB);
         std::cout << "CONTROL: Sleeping" << std::endl;
         std::this_thread::sleep_for (duration);
-				zmq_bind( control_local, "inproc://control");
+				zmq_bind( control_local, address.c_str());
         std::cout << "CONTROL: TERMINATE" << std::endl;
 				std::string command = "TERMINATE";
 				zmq_send(control_local, command.c_str(), command.size(), 0);
@@ -154,10 +183,10 @@ namespace SDMS {
        * Thread is for debugging purposes mostly, for logging the messages
        * that are sent through the steerable proxy.
        **/
-			auto proxy_log_call = [](){
+			auto proxy_log_call = [](const std::string address){
       	void * context = getContext();
 				auto capture_local = zmq_socket(context, ZMQ_SUB);
-				zmq_bind( capture_local, "inproc://capture");
+				zmq_bind( capture_local, address.c_str());
 			  zmq_setsockopt (capture_local, ZMQ_SUBSCRIBE, "", 0);
         zmq_pollitem_t  items[] = {{ capture_local, 0, ZMQ_POLLIN, 0}};
         const int num_items_in_array = 1;
@@ -203,20 +232,20 @@ namespace SDMS {
       if( m_run_infinite_loop == false) {
         std::cout << "**************************************" << std::endl;
         std::cout << "Launching control thread for duration " << m_run_duration.count() << std::endl;
-        control_thread = std::thread(terminate_call, m_run_duration);
+        control_thread = std::thread(terminate_call, m_run_duration, m_addresses[SocketRole::CONTROL]);
       }
 
       std::thread capture_thread;
       if( m_debug_output ) {
         std::cout << "Running CAPTURE Thread" << std::endl;
-			  capture_thread = std::thread(proxy_log_call);
+			  capture_thread = std::thread(proxy_log_call, m_addresses[SocketRole::MONITOR]);
       }
 
 			void *router_frontend_socket = zmq_socket (ctx, ZMQ_ROUTER);
 			if( not router_frontend_socket) {
         EXCEPT(1, "Problem creating frontend ROUTER socket");
       }
-      int router_linger = 0;
+      int router_linger = 100;
       zmq_setsockopt(router_frontend_socket, ZMQ_LINGER, &router_linger, sizeof(int));
       /**
        * NOTE
@@ -234,7 +263,7 @@ namespace SDMS {
       if( not router_frontend_socket) {
         EXCEPT(1, "Problem creating backend DEALER socket");
       }
-      int dealer_linger = 0;
+      int dealer_linger = 100;
       zmq_setsockopt(dealer_backend_socket, ZMQ_LINGER, &dealer_linger, sizeof(int));
       /**
        * NOTE

@@ -6,8 +6,16 @@
 #include <mutex>
 #include <stdint.h>
 #include "SDMS.pb.h"
-#include "MsgComm.hpp"
+//#include "MsgComm.hpp"
+
+// Core local private includes
 #include "AuthenticationManager.hpp"
+
+// DataFed Common public includes
+#include "ICredentials.hpp"
+
+// Standard includes
+#include <memory>
 
 namespace SDMS {
 namespace Core {
@@ -78,7 +86,8 @@ class Config
     uint32_t        metrics_purge_period;
     uint32_t        metrics_purge_age;
 
-    MsgComm::SecurityContext            sec_ctx;
+    //MsgComm::SecurityContext            sec_ctx;
+    std::unique_ptr<ICredentials> sec_ctx;
 
     /// Map of client key to DataFed ID
 };

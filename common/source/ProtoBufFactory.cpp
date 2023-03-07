@@ -32,7 +32,7 @@ namespace SDMS {
 
     ::google::protobuf::Message * mutable_msg = prototype_msg->New();
 
-    if (mutable_msg == NULL) {
+    if (mutable_msg == nullptr) {
       EXCEPT(1, "Failed in prototype_msg->New(); to create mutable message");
     }
 

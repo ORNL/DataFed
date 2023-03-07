@@ -22,6 +22,7 @@ class RouterBookKeepingOperator : public IOperator {
   public:    
     explicit RouterBookKeepingOperator(std::any options );
 
+		static std::unique_ptr<IOperator> create(std::any options);
   private:
 
     std::string m_client_socket_id;
@@ -29,7 +30,14 @@ class RouterBookKeepingOperator : public IOperator {
     virtual OperatorType type() const noexcept final { return OperatorType::RouterBookKeeping; }
   
     virtual void execute(IMessage & message) final;
+  
+
 };
+
+inline std::unique_ptr<IOperator>
+RouterBookKeepingOperator::create(std::any options) {
+  return std::make_unique<RouterBookKeepingOperator>(options);
+}
 
 } // namespace SDMS
 

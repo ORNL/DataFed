@@ -9,21 +9,24 @@
 #include "ProtocolTypes.hpp"
 #include "SocketFactory.hpp"
 #include "SocketOptions.hpp"
-
+#include "TraceException.hpp"
 
 // Standard includes
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <variant>
 
 using namespace SDMS;
+
+const std::string public_key = "pF&3ZS3rd2HYesV&KbDEb7T@RaHhcZD@FDwqef9f"; // 40 chars
+const std::string secret_key = "*XFVZrCnhPd5DrQTZ!V%zqZoPfs@8pcP23l3kfei"; // 40 chars
+const std::string server_key = "Wce6y$B4vXjM$xnM^tRGJGP^ads5hxkDSULJWM&9"; // 40 chars
 
 BOOST_AUTO_TEST_SUITE(SocketFactoryTest)
 
 class DummyCredential : public ICredentials {
   public:
-    DummyCredential(std::string & pub_key ) : m_pub_key(pub_key) {};
+    DummyCredential(const std::string & pub_key ) : m_pub_key(pub_key) {};
 
   private:
     std::string m_pub_key = "";
@@ -32,7 +35,7 @@ class DummyCredential : public ICredentials {
       return ProtocolType::ZQTP;
     }
 
-    virtual std::variant<std::string> get(const CredentialType cred) const final {
+    virtual std::string get(const CredentialType cred) const final {
       if( cred == CredentialType::PUBLIC_KEY) {
         // Because this is a const method m_pub_key will be const
         // need to make a copy that is non constant.
@@ -40,6 +43,14 @@ class DummyCredential : public ICredentials {
         return val;
       }
       return std::string(""); 
+    }
+
+
+    inline virtual bool has(CredentialType type) const noexcept final {
+      if(type == CredentialType::PUBLIC_KEY) {
+        return true;
+      }
+      return false;
     }
 };
 
@@ -54,7 +65,6 @@ BOOST_AUTO_TEST_CASE( testing_SocketFactoryThrow ) {
   socket_options.host = "localhost";
   socket_options.port = 1341;
 
-  std::string public_key = "my_secret_key";
   DummyCredential credentials(public_key);
   SocketFactory factory;
 
@@ -73,15 +83,50 @@ BOOST_AUTO_TEST_CASE( testing_SocketFactory ) {
   socket_options.host = "localhost";
   socket_options.port = 1341;
 
-  std::string public_key = "my_pub_key";
-  std::string secret_key = "my_priv_key";
-  std::string server_key = "my_serv_key";
-  CredentialFactory cred_factory;
  
-  std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+  std::unordered_map<CredentialType, std::string> cred_options;
   cred_options[CredentialType::PUBLIC_KEY] = public_key;
   cred_options[CredentialType::PRIVATE_KEY] = secret_key;
   cred_options[CredentialType::SERVER_KEY] = server_key;
+
+  CredentialFactory cred_factory;
+  auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+
+  SocketFactory factory;
+  std::unique_ptr<ISocket> socket = factory.create(socket_options, *credentials);
+
+  BOOST_CHECK(socket->getAddress() == "tcp://" + socket_options.host + ":" + std::to_string(*socket_options.port));
+  BOOST_CHECK(socket->getSocketClassType() == SocketClassType::SERVER);
+  BOOST_CHECK(socket->getSocketDirectionalityType() == SocketDirectionalityType::BIDIRECTIONAL);
+  BOOST_CHECK(socket->getSocketCommunicationType() == SocketCommunicationType::ASYNCHRONOUS);
+  BOOST_CHECK(socket->getProtocolType() == ProtocolType::ZQTP);
+
+  std::string cred_pub = socket->get(CredentialType::PUBLIC_KEY);
+  std::string cred_priv = socket->get(CredentialType::PRIVATE_KEY);
+  std::string cred_serv = socket->get(CredentialType::SERVER_KEY);
+
+  BOOST_CHECK(cred_pub == public_key);
+  BOOST_CHECK(cred_priv == secret_key);
+  BOOST_CHECK(cred_serv == server_key);
+
+}
+
+BOOST_AUTO_TEST_CASE( testing_SocketFactory_NoServerKey ) {
+
+  SocketOptions socket_options;
+  socket_options.scheme = URIScheme::TCP;
+  socket_options.class_type = SocketClassType::SERVER; 
+  socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+  socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+  socket_options.protocol_type = ProtocolType::ZQTP; 
+  socket_options.host = "localhost";
+  socket_options.port = 1341;
+
+  CredentialFactory cred_factory;
+ 
+  std::unordered_map<CredentialType, std::string> cred_options;
+  cred_options[CredentialType::PUBLIC_KEY] = public_key;
+  cred_options[CredentialType::PRIVATE_KEY] = secret_key;
 
   auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
@@ -94,16 +139,36 @@ BOOST_AUTO_TEST_CASE( testing_SocketFactory ) {
   BOOST_CHECK(socket->getSocketCommunicationType() == SocketCommunicationType::ASYNCHRONOUS);
   BOOST_CHECK(socket->getProtocolType() == ProtocolType::ZQTP);
 
-  std::string cred_pub = std::get<std::string>(socket->get(CredentialType::PUBLIC_KEY));
-  std::string cred_priv = std::get<std::string>(socket->get(CredentialType::PRIVATE_KEY));
-  std::string cred_serv = std::get<std::string>(socket->get(CredentialType::SERVER_KEY));
+  std::string cred_pub = socket->get(CredentialType::PUBLIC_KEY);
+  std::string cred_priv = socket->get(CredentialType::PRIVATE_KEY);
+  BOOST_CHECK_THROW(std::string cred_serv = socket->get(CredentialType::SERVER_KEY), TraceException);
 
-  BOOST_CHECK(cred_pub == public_key);
-  BOOST_CHECK(cred_priv == secret_key);
-  BOOST_CHECK(cred_serv == server_key);
+  BOOST_CHECK(cred_pub.compare(public_key) == 0);
+  BOOST_CHECK(cred_priv.compare(secret_key) == 0);
 
 }
 
+BOOST_AUTO_TEST_CASE( testing_SocketFactory_NoCredentials ) {
+
+  SocketOptions socket_options;
+  socket_options.scheme = URIScheme::TCP;
+  socket_options.class_type = SocketClassType::SERVER; 
+  socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+  socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+  socket_options.connection_security = SocketConnectionSecurity::SECURE;
+  socket_options.protocol_type = ProtocolType::ZQTP; 
+  socket_options.host = "localhost";
+  socket_options.port = 1341;
+
+  CredentialFactory cred_factory;
+ 
+  std::unordered_map<CredentialType, std::string> cred_options;
+  auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+
+  SocketFactory factory;
+  std::unique_ptr<ISocket> socket = factory.create(socket_options, *credentials);
+  BOOST_CHECK(socket->hasCredentials() == false);
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 

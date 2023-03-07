@@ -37,6 +37,12 @@ class DummyAuthManager : public IAuthenticationManager {
       return "authenticated_uid";
     }
 
+    virtual void purge() final {
+      std::cout << "Purge not implemented" << std::endl;
+    }
+
+
+
   public:
     /**
      * Method for adding known keys

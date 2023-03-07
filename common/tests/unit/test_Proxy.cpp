@@ -27,6 +27,10 @@
 
 using namespace SDMS;
 
+const std::string public_key = "pF&3ZS3rd2HYesV&KbDEb7T@RaHhcZD@FDwqef9f"; // 40 chars
+const std::string secret_key = "*XFVZrCnhPd5DrQTZ!V%zqZoPfs@8pcP23l3kfei"; // 40 chars
+const std::string server_key = "Wce6y$B4vXjM$xnM^tRGJGP^ads5hxkDSULJWM&9"; // 40 chars
+
 BOOST_AUTO_TEST_SUITE(ProxyTest)
 
 BOOST_AUTO_TEST_CASE( testing_Proxy ) {
@@ -49,12 +53,9 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
     socket_options.port = 1341;
     socket_options.local_id = server_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
 
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -88,12 +89,9 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
     socket_options.port = 1341;
     socket_options.local_id = client_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
 
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -145,12 +143,9 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
         client_socket_options.local_id = proxy_client_id;
         socket_options[SocketRole::CLIENT] = client_socket_options;
 
-        std::string public_key = "my_pub_key";
-        std::string secret_key = "my_priv_key";
-        std::string server_key = "my_serv_key";
         CredentialFactory cred_factory;
 
-        std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+        std::unordered_map<CredentialType, std::string> cred_options;
         cred_options[CredentialType::PUBLIC_KEY] = public_key;
         cred_options[CredentialType::PRIVATE_KEY] = secret_key;
         cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -178,12 +173,9 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
           server_socket_options.local_id = proxy_server_id;
           socket_options[SocketRole::SERVER] = server_socket_options;
 
-          std::string public_key = "my_pub_key";
-          std::string secret_key = "my_priv_key";
-          std::string server_key = "my_serv_key";
           CredentialFactory cred_factory;
 
-          std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+          std::unordered_map<CredentialType, std::string> cred_options;
           cred_options[CredentialType::PUBLIC_KEY] = public_key;
           cred_options[CredentialType::PRIVATE_KEY] = secret_key;
           cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -294,12 +286,9 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
     socket_options.port = 1341;
     socket_options.local_id = server_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
 
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -333,12 +322,9 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
     socket_options.port = 1341;
     socket_options.local_id = client_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
 
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -390,12 +376,9 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
         client_socket_options.local_id = proxy_client_id;
         socket_options[SocketRole::CLIENT] = client_socket_options;
 
-        std::string public_key = "my_pub_key";
-        std::string secret_key = "my_priv_key";
-        std::string server_key = "my_serv_key";
         CredentialFactory cred_factory;
 
-        std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+        std::unordered_map<CredentialType, std::string> cred_options;
         cred_options[CredentialType::PUBLIC_KEY] = public_key;
         cred_options[CredentialType::PRIVATE_KEY] = secret_key;
         cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -423,12 +406,9 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
           server_socket_options.local_id = proxy_server_id;
           socket_options[SocketRole::SERVER] = server_socket_options;
 
-          std::string public_key = "my_pub_key";
-          std::string secret_key = "my_priv_key";
-          std::string server_key = "my_serv_key";
           CredentialFactory cred_factory;
 
-          std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+          std::unordered_map<CredentialType, std::string> cred_options;
           cred_options[CredentialType::PUBLIC_KEY] = public_key;
           cred_options[CredentialType::PRIVATE_KEY] = secret_key;
           cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -525,12 +505,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
     socket_options.port = 1341;
     socket_options.local_id = server_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
 
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -564,12 +541,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
     socket_options.port = 1341;
     socket_options.local_id = client_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
 
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -624,12 +598,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
         client_socket_options.local_id = proxy_client_id;
         socket_options[SocketRole::CLIENT] = client_socket_options;
 
-        std::string public_key = "my_pub_key";
-        std::string secret_key = "my_priv_key";
-        std::string server_key = "my_serv_key";
         CredentialFactory cred_factory;
 
-        std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+        std::unordered_map<CredentialType, std::string> cred_options;
         cred_options[CredentialType::PUBLIC_KEY] = public_key;
         cred_options[CredentialType::PRIVATE_KEY] = secret_key;
         cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -657,12 +628,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
           server_socket_options.local_id = proxy_server_id;
           socket_options[SocketRole::SERVER] = server_socket_options;
 
-          std::string public_key = "my_pub_key";
-          std::string secret_key = "my_priv_key";
-          std::string server_key = "my_serv_key";
           CredentialFactory cred_factory;
 
-          std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+          std::unordered_map<CredentialType, std::string> cred_options;
           cred_options[CredentialType::PUBLIC_KEY] = public_key;
           cred_options[CredentialType::PRIVATE_KEY] = secret_key;
           cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -714,12 +682,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
         client_socket_options.local_id = proxy_client_id2;
         socket_options[SocketRole::CLIENT] = client_socket_options;
 
-        std::string public_key = "my_pub_key";
-        std::string secret_key = "my_priv_key";
-        std::string server_key = "my_serv_key";
         CredentialFactory cred_factory;
 
-        std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+        std::unordered_map<CredentialType, std::string> cred_options;
         cred_options[CredentialType::PUBLIC_KEY] = public_key;
         cred_options[CredentialType::PRIVATE_KEY] = secret_key;
         cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -747,12 +712,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
           server_socket_options.local_id = proxy_server_id2;
           socket_options[SocketRole::SERVER] = server_socket_options;
 
-          std::string public_key = "my_pub_key";
-          std::string secret_key = "my_priv_key";
-          std::string server_key = "my_serv_key";
           CredentialFactory cred_factory;
 
-          std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+          std::unordered_map<CredentialType, std::string> cred_options;
           cred_options[CredentialType::PUBLIC_KEY] = public_key;
           cred_options[CredentialType::PRIVATE_KEY] = secret_key;
           cred_options[CredentialType::SERVER_KEY] = server_key;

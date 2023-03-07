@@ -10,8 +10,8 @@
 #include <unistd.h>
 
 #include "Config.hpp"
-#include "MsgBuf.hpp"
-#include "MsgComm.hpp"
+//#include "MsgBuf.hpp"
+//#include "MsgComm.hpp"
 #include "RequestWorker.hpp"
 
 namespace SDMS {

@@ -79,7 +79,7 @@ private:
     void msgRouter();
     void ioSecure();
     void ioInsecure();
-    void zapHandler();
+    //void zapHandler();
     void dbMaintenance();
     void metricsThread();
 
@@ -88,7 +88,7 @@ private:
     std::thread                    m_io_insecure_thread;   ///< Insecure I/O thread handle
     std::string                     m_pub_key;              ///< Public key for secure interface
     std::string                     m_priv_key;             ///< Private key for secure interface
-    std::thread                   m_zap_thread;           ///< ZeroMQ client authentication (ZAP) thread
+    //std::thread                   m_zap_thread;           ///< ZeroMQ client authentication (ZAP) thread
     std::thread                    m_msg_router_thread;    ///< Main message router thread handle
     std::vector<std::shared_ptr<ClientWorker>>      m_workers;              ///< List of ClientWorker instances
     std::thread                   m_db_maint_thread;      ///< DB maintenance thread handle

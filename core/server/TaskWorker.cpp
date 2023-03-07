@@ -6,6 +6,17 @@
 #include "ITaskMgr.hpp"
 #include "TaskWorker.hpp"
 
+// Common public includes
+#include "CommunicatorFactory.hpp"
+#include "CredentialFactory.hpp"
+#include "ICommunicator.hpp"
+#include "IMessage.hpp"
+#include "MessageFactory.hpp"
+#include "SocketOptions.hpp"
+
+// Standard includes
+#include <memory>
+
 using namespace std;
 using namespace libjson;
 
@@ -22,6 +33,12 @@ TaskWorker::TaskWorker( ITaskMgr & a_mgr, uint32_t a_worker_id ) :
     m_db( Config::getInstance().db_url , Config::getInstance().db_user, Config::getInstance().db_pass )
 {
     m_thread = new thread( &TaskWorker::workerThread, this );
+
+    //m_execute[TC_RAW_DATA_TRANSFER] = &cmdRawDataTransfer;
+    m_execute[TC_RAW_DATA_DELETE] = &cmdRawDataDelete;
+    m_execute[TC_RAW_DATA_UPDATE_SIZE] = &cmdRawDataUpdateSize;
+    m_execute[TC_ALLOC_CREATE] = &cmdAllocCreate;
+    m_execute[TC_ALLOC_DELETE] = &cmdAllocDelete;
 }
 
 TaskWorker::~TaskWorker()
@@ -39,7 +56,6 @@ TaskWorker::~TaskWorker()
 void
 TaskWorker::workerThread()
 {
-    bool               retry = false;
     string             err_msg;
     Value              task_cmd;
     Value::ObjectIter  iter;
@@ -81,41 +97,20 @@ TaskWorker::workerThread()
                 } else if ( cmd != TC_STOP )
                     EXCEPT(1,"Reply missing step value" );
 
-                switch ( cmd )
-                {
-                case TC_RAW_DATA_TRANSFER:
-                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task DATA TRANSFER.");
-                    retry = cmdRawDataTransfer( params );
-                    break;
-                case TC_RAW_DATA_DELETE:
-                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task DATA DELETE." );
-                    retry = cmdRawDataDelete( params );
-                    break;
-                case TC_RAW_DATA_UPDATE_SIZE:
-                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task DATA UPDATE SIZE." );
-                    retry = cmdRawDataUpdateSize( params );
-                    break;
-                case TC_ALLOC_CREATE:
-                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task ALLOC CREATE." );
-                    retry = cmdAllocCreate( params );
-                    break;
-                case TC_ALLOC_DELETE:
-                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task ALLOC DELETE." );
-                    retry = cmdAllocDelete( params );
-                    break;
-                case TC_STOP:
-                    DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step << ", Task STOP." );
+                //bool retry = false;
+                ICommunicator::Response response;
+                if(m_execute.count(cmd)) {
+                  DL_DEBUG( "TASK_ID: " << m_task->task_id << ", Step: " << step );
+                  response = m_execute[cmd](*this, params);
+                
+                } else if( cmd == TC_STOP) {
                     m_mgr.newTasks( params );
                     break;
-                default:
-                    EXCEPT_PARAM(1,"Invalid task command: " << cmd );
+                } else {
+                  EXCEPT_PARAM(1,"Invalid task command: " << cmd );
                 }
 
-                // Done processing - exit inner while loop
-                if ( cmd == TC_STOP )
-                    break;
-
-                if ( retry )
+                if ( response.error or response.time_out )
                 {
                     if ( m_mgr.retryTask( m_task ))
                     {
@@ -155,9 +150,8 @@ TaskWorker::workerThread()
     } // End of outer while loop
 }
 
-
-bool
-TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
+ICommunicator::Response
+TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params )
 {
 
     const Value::Object & obj = a_task_params.asObject();
@@ -183,9 +177,9 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
     {
         DL_DEBUG( "Refreshing access token for " << uid << " (expires in " << expires_in << ")" );
 
-        m_glob.refreshAccessToken( ref_tok, acc_tok, expires_in );
-        m_db.setClient( uid );
-        m_db.userSetAccessToken( acc_tok, expires_in, ref_tok );
+        me.m_glob.refreshAccessToken( ref_tok, acc_tok, expires_in );
+        me.m_db.setClient( uid );
+        me.m_db.userSetAccessToken( acc_tok, expires_in, ref_tok );
     }
 
     if ( type == TT_DATA_GET || type == TT_DATA_PUT )
@@ -193,25 +187,25 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
         const string & ep = (type == TT_DATA_GET)?dst_ep:src_ep;
 
         // Check destination endpoint
-        m_glob.getEndpointInfo( ep, acc_tok, ep_info );
+        me.m_glob.getEndpointInfo( ep, acc_tok, ep_info );
         if ( !ep_info.activated )
             EXCEPT_PARAM( 1, "Globus endpoint " << ep << " requires activation." );
 
         // TODO Notify if ep activation expiring soon
 
         // Calculate encryption state based on non-datafed endpoint
-        encrypted = checkEncryption( ep_info, encrypt );
+        encrypted = me.checkEncryption( ep_info, encrypt );
 
         // If data is external, also check the other endpoint for encryption state
         if ( type == TT_DATA_GET && obj.getValue( "src_repo_id" ).isNumber() )
         {
             GlobusAPI::EndpointInfo     ep_info2;
 
-            m_glob.getEndpointInfo( src_ep, acc_tok, ep_info2 );
+            me.m_glob.getEndpointInfo( src_ep, acc_tok, ep_info2 );
             if ( !ep_info.activated )
                 EXCEPT_PARAM( 1, "Globus endpoint " << ep << " requires activation." );
 
-            encrypted = checkEncryption( ep_info, ep_info2, encrypt );
+            encrypted = me.checkEncryption( ep_info, ep_info2, encrypt );
         }
     }
 
@@ -230,7 +224,7 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
     {
         DL_DEBUG( "Begin transfer of " << files_v.size() << " files" );
 
-        string glob_task_id = m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok );
+        string glob_task_id = me.m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok );
 
         // Monitor Globus transfer
 
@@ -242,10 +236,10 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
             sleep( 5 );
         
 
-            if ( m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg ))
+            if ( me.m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg ))
             {
                 // Transfer task needs to be cancelled
-                m_glob.cancelTask( glob_task_id, acc_tok );
+                me.m_glob.cancelTask( glob_task_id, acc_tok );
             }
         } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
 
@@ -258,19 +252,22 @@ TaskWorker::cmdRawDataTransfer( const Value & a_task_params )
         DL_DEBUG( "No files to transfer" );
     }
 
-    return false;
+    ICommunicator::Response response;
+    // Always assume timed out if gets here
+    response.time_out = true;
+    return response;
 }
 
 
-bool
-TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
+ICommunicator::Response
+TaskWorker::cmdRawDataDelete(TaskWorker & me, const  Value & a_task_params )
 {
 
     const Value::Object & obj = a_task_params.asObject();
 
-    Auth::RepoDataDeleteRequest     del_req;
-    RecordDataLocation *            loc;
-    MsgBuf::Message *               reply;
+    //Auth::RepoDataDeleteRequest     del_req;
+    //RecordDataLocation *            loc;
+    //MsgBuf::Message *               reply;
     const string &                  repo_id = obj.getString( "repo_id" );
     const string &                  path = obj.getString( "repo_path" );
     const Value::Array &            ids = obj.getArray( "ids" );
@@ -279,34 +276,37 @@ TaskWorker::cmdRawDataDelete( const  Value & a_task_params )
     size_t                          chunk = Config::getInstance().repo_chunk_size;
 
     // Issue #603 - break large requests into chunks to reduce likelihood of timeouts
-
+    MessageFactory msg_factory;
+    ICommunicator::Response resp;
 
     while ( i < sz )
     {
         j = min( i + chunk, sz );
 
+        auto message_req = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+
+        auto del_req = std::make_unique<Auth::RepoDataDeleteRequest>();//     del_req;
         for ( ; i < j; i++, id++ )
         {
-            loc = del_req.add_loc();
+            RecordDataLocation * loc = del_req->add_loc();
             loc->set_id( id->asString() );
             loc->set_path( path + id->asString().substr(2) );
         }
+        message_req->setPayload(std::move(del_req));
 
-        if ( repoSendRecv( repo_id, del_req, reply ))
-        {
-            return true;
+        resp = me.repoSendRecv( repo_id, std::move(message_req));
+        if( resp.error or resp.time_out) {
+            return resp;
         }
 
-        delete reply;
-        del_req.clear_loc();
+        //del_req.clear_loc();
     }
-
-    return false;
+    return resp;
 }
 
 
-bool
-TaskWorker::cmdRawDataUpdateSize( const  Value & a_task_params )
+ICommunicator::Response
+TaskWorker::cmdRawDataUpdateSize(TaskWorker & me, const  Value & a_task_params )
 {
 
     const Value::Object & obj = a_task_params.asObject();
@@ -314,64 +314,62 @@ TaskWorker::cmdRawDataUpdateSize( const  Value & a_task_params )
     const string &                  repo_id = obj.getString( "repo_id" );
     const string &                  path = obj.getString( "repo_path" );
     const Value::Array &            ids = obj.getArray( "ids" );
-    Auth::RepoDataGetSizeRequest    sz_req;
-    Auth::RepoDataSizeReply *       sz_rep;
-    RecordDataLocation *            loc;
-    MsgBuf::Message *               reply;
+    auto size_req = std::make_unique<Auth::RepoDataGetSizeRequest>(); //   sz_req;
+    //RecordDataLocation *            loc;
 
-    for ( Value::ArrayConstIter id = ids.begin(); id != ids.end(); id++ )
-    {
-        loc = sz_req.add_loc();
+    MessageFactory msg_factory;
+    auto message_req = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+
+    for ( Value::ArrayConstIter id = ids.begin(); id != ids.end(); id++ ) {
+        RecordDataLocation * loc = size_req->add_loc();
         loc->set_id( id->asString() );
         loc->set_path( path + id->asString().substr(2) );
     }
 
-    if ( repoSendRecv( repo_id, sz_req, reply ))
-        return true;
+    message_req->setPayload(std::move(size_req));
 
-    if (( sz_rep = dynamic_cast<Auth::RepoDataSizeReply*>( reply )) != 0 )
-    {
-        if ( sz_rep->size_size() != (int)ids.size() )
+    ICommunicator::Response response = me.repoSendRecv( repo_id, std::move(message_req) );
+    //if( response.time_out == false and response.error == false ) {
+    //  return response;
+    //}
+    //if ( repoSendRecv( repo_id, sz_req, reply ))
+    //    return true;
+    if( response.time_out == false and response.error == false ) {
+      auto proto_msg = std::get<google::protobuf::Message*>(response.message->getPayload());
+      auto size_reply = dynamic_cast<Auth::RepoDataSizeReply*>(proto_msg);
+      if ( size_reply->size_size() != (int)ids.size() ) {
             EXCEPT_PARAM( 1, "Mismatched result size with RepoDataSizeReply from repo: " << repo_id );
+      }
 
-        m_db.recordUpdateSize( *sz_rep );
-
-        delete reply;
-    }
-    else
-    {
-        delete reply;
-        EXCEPT_PARAM( 1, "Unexpected reply to RepoDataSizeReply from repo: " << repo_id );
+      me.m_db.recordUpdateSize( *size_reply );
+    } else {
+      EXCEPT_PARAM( 1, "Unexpected reply to RepoDataSizeReply from repo: " << repo_id );
     }
 
-    return false;
+    return response;
 }
 
 
-bool
-TaskWorker::cmdAllocCreate( const Value & a_task_params )
+ICommunicator::Response
+TaskWorker::cmdAllocCreate(TaskWorker & me, const Value & a_task_params )
 {
     const Value::Object & obj = a_task_params.asObject();
 
     const string & repo_id = obj.getString( "repo_id" );
     const string & path = obj.getString( "repo_path" );
 
-    Auth::RepoPathCreateRequest     req;
-    MsgBuf::Message *               reply;
+    MessageFactory msg_factory;
+    auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
-    req.set_path( path );
-
-    if ( repoSendRecv( repo_id, req, reply ))
-        return true;
-
-    delete reply;
-
-    return false;
+    auto req = std::make_unique<Auth::RepoPathCreateRequest>();
+    req->set_path( path );
+    message->setPayload(std::move(req));
+    return me.repoSendRecv( repo_id, std::move(message) );
 }
 
 
-bool
-TaskWorker::cmdAllocDelete( const Value & a_task_params )
+ICommunicator::Response
+TaskWorker::cmdAllocDelete(TaskWorker & me, const Value & a_task_params )
 {
 
     const Value::Object & obj = a_task_params.asObject();
@@ -379,17 +377,14 @@ TaskWorker::cmdAllocDelete( const Value & a_task_params )
     const string & repo_id = obj.getString( "repo_id" );
     const string & path = obj.getString( "repo_path" );
 
-    Auth::RepoPathDeleteRequest         req;
-    MsgBuf::Message *                   reply;
+    MessageFactory msg_factory;
+    auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
-    req.set_path( path );
+    auto req = std::make_unique<Auth::RepoPathDeleteRequest>();
+    req->set_path( path );
+    message->setPayload(std::move(req));
 
-    if ( repoSendRecv( repo_id, req, reply ))
-        return true;
-
-    delete reply;
-
-    return false;
+    return me.repoSendRecv( repo_id, std::move(message) );
 }
 
 
@@ -453,8 +448,8 @@ TaskWorker::checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info1, const G
     return false;
 }
 
-bool
-TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, MsgBuf::Message *& a_reply )
+ICommunicator::Response
+TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> && a_msg)
 {
     Config & config = Config::getInstance();
 
@@ -468,36 +463,71 @@ TaskWorker::repoSendRecv( const string & a_repo_id, MsgBuf::Message & a_msg, Msg
     if ( !repos.count(a_repo_id) )
         EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id << " Registered repos are: " << registered_repos );
 
-    MsgComm comm( repos[a_repo_id].address(), MsgComm::DEALER, false, &config.sec_ctx );
 
-    comm.send( a_msg );
+  // Need to be able to split repos into host and scheme and port
+  const std::string client_id = "task_worker-" + id();
+  auto client = [&](const std::string & repo_address, const std::string & socket_id) {
+    AddressSplitter splitter(repo_address);
 
-    MsgBuf buffer;
+    /// Creating input parameters for constructing Communication Instance
+    SocketOptions socket_options;
+    socket_options.scheme = splitter.scheme();
+    socket_options.scheme = URIScheme::TCP;
+    socket_options.class_type = SocketClassType::CLIENT; 
+    socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+    socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
+    socket_options.protocol_type = ProtocolType::ZQTP; 
+    socket_options.host = splitter.host();
+    socket_options.port = splitter.port();
+    socket_options.local_id = socket_id;
 
-    if ( !comm.recv( buffer, false, config.repo_timeout ))
-    {
+    CredentialFactory cred_factory;
+   
+    std::unordered_map<CredentialType, std::string> cred_options;
+    cred_options[CredentialType::PUBLIC_KEY] = config.sec_ctx->get(CredentialType::PUBLIC_KEY);
+    cred_options[CredentialType::PRIVATE_KEY] = config.sec_ctx->get(CredentialType::PRIVATE_KEY);
+    cred_options[CredentialType::SERVER_KEY] = config.sec_ctx->get(CredentialType::SERVER_KEY);
+
+    auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+
+    uint32_t timeout_on_receive = 10;
+    long timeout_on_poll = 10;
+
+    // When creating a communication channel with a server application we need
+    // to locally have a client socket. So though we have specified a client
+    // socket we will actually be communicating with the server.
+    CommunicatorFactory communicator_factory;
+    return communicator_factory.create(
+        socket_options,
+        *credentials,
+        timeout_on_receive,
+        timeout_on_poll);
+
+  }(repos.at(a_repo_id).address(), client_id); // Pass the address into the lambda
+
+
+    client->send( *a_msg );
+
+    ICommunicator::Response response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+    if( response.time_out ) {
         DL_ERROR( "Timeout waiting for response from " << a_repo_id );
         cerr.flush();
-        return true;
+        return response;
+    } else if(response.error) {
+        DL_ERROR( "Error while waiting for response from " << a_repo_id << " " << response.error_msg );
+        cerr.flush();
+        return response;
     }
-    else
-    {
-        // Check for NACK
-        a_reply = buffer.unserialize();
 
-        Anon::NackReply * nack = dynamic_cast<Anon::NackReply*>( a_reply );
-        if ( nack != 0 )
-        {
-            ErrorCode code = nack->err_code();
-            string  msg = nack->has_err_msg()?nack->err_msg():"Unknown service error";
-
-            delete a_reply;
-
-            EXCEPT( code, msg );
-        }
-
-        return false;
+    auto proto_msg = std::get<google::protobuf::Message*>( response.message->getPayload() ); 
+    auto nack = dynamic_cast<Anon::NackReply *>(proto_msg);
+    if( nack != 0) {
+      ErrorCode code = nack->err_code();
+      string  msg = nack->has_err_msg()?nack->err_msg():"Unknown service error";
+      EXCEPT( code, msg );
     }
+    return response;
 }
 
 }}

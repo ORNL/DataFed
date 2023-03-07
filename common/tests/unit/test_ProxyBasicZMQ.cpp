@@ -30,6 +30,11 @@
 
 using namespace SDMS;
 
+
+const std::string public_key = "gH1mt*%<[]e.7N6xooFI03j1h[2!wd?o!QE4[+Ra"; // 40 chars
+const std::string secret_key = "db2LbwJxCP<4kH7sIQiH/#y]<&F0Bn7tz4F3rTSx"; // 40 chars
+const std::string server_key = "AX0D+@G+P$Wv.<W^bu05y<4I++lKN!4<j+=wxe}0"; // 40 chars
+
 BOOST_AUTO_TEST_SUITE(ProxyBasicZMQTest)
 
 BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ ) {
@@ -57,12 +62,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ ) {
     //socket_options.port = 1341;
     socket_options.local_id = server_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
 
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -96,12 +98,8 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ ) {
     //socket_options.port = 1341;
     socket_options.local_id = client_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
-
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -154,12 +152,8 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ ) {
         client_socket_options.local_id = proxy_client_id;
         socket_options[SocketRole::CLIENT] = client_socket_options;
 
-        std::string public_key = "my_pub_key";
-        std::string secret_key = "my_priv_key";
-        std::string server_key = "my_serv_key";
         CredentialFactory cred_factory;
-
-        std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+        std::unordered_map<CredentialType, std::string> cred_options;
         cred_options[CredentialType::PUBLIC_KEY] = public_key;
         cred_options[CredentialType::PRIVATE_KEY] = secret_key;
         cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -187,12 +181,8 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ ) {
           server_socket_options.local_id = proxy_server_id;
           socket_options[SocketRole::SERVER] = server_socket_options;
 
-          std::string public_key = "my_pub_key";
-          std::string secret_key = "my_priv_key";
-          std::string server_key = "my_serv_key";
           CredentialFactory cred_factory;
-
-          std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+          std::unordered_map<CredentialType, std::string> cred_options;
           cred_options[CredentialType::PUBLIC_KEY] = public_key;
           cred_options[CredentialType::PRIVATE_KEY] = secret_key;
           cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -281,6 +271,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
   const std::string backend_channel = "proxy_backend_2";
   CommunicatorFactory factory;
 
+  std::cout << __FILE__ << ":" << __LINE__ <<std::endl;
   const std::string server_id = "overlord";
   auto server = [&](const std::string backend_channel) {
     /// Creating input parameters for constructing Communication Instance
@@ -295,12 +286,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
     //socket_options.port = 1341;
     socket_options.local_id = server_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
 
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -334,12 +322,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
     //socket_options.port = 1341;
     socket_options.local_id = client_id;
 
-    std::string public_key = "my_pub_key";
-    std::string secret_key = "my_priv_key";
-    std::string server_key = "my_serv_key";
     CredentialFactory cred_factory;
 
-    std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+    std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = public_key;
     cred_options[CredentialType::PRIVATE_KEY] = secret_key;
     cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -360,6 +345,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
         timeout_on_poll);
   }(frontend_channel);
 
+  std::cout << __FILE__ << ":" << __LINE__ <<std::endl;
 
   /// Start the proxy
   const std::string proxy_client_id = "MiddleMan_client_socket";
@@ -392,12 +378,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
         client_socket_options.local_id = proxy_client_id;
         socket_options[SocketRole::CLIENT] = client_socket_options;
 
-        std::string public_key = "my_pub_key";
-        std::string secret_key = "my_priv_key";
-        std::string server_key = "my_serv_key";
         CredentialFactory cred_factory;
 
-        std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+        std::unordered_map<CredentialType, std::string> cred_options;
         cred_options[CredentialType::PUBLIC_KEY] = public_key;
         cred_options[CredentialType::PRIVATE_KEY] = secret_key;
         cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -425,12 +408,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
           server_socket_options.local_id = proxy_server_id;
           socket_options[SocketRole::SERVER] = server_socket_options;
 
-          std::string public_key = "my_pub_key";
-          std::string secret_key = "my_priv_key";
-          std::string server_key = "my_serv_key";
           CredentialFactory cred_factory;
 
-          std::unordered_map<CredentialType, std::variant<std::string>> cred_options;
+          std::unordered_map<CredentialType, std::string> cred_options;
           cred_options[CredentialType::PUBLIC_KEY] = public_key;
           cred_options[CredentialType::PRIVATE_KEY] = secret_key;
           cred_options[CredentialType::SERVER_KEY] = server_key;
@@ -449,6 +429,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
         // Pass the arguments to the Thread
         }, proxy_client_id, proxy_server_id, backend_channel, frontend_channel
   ));
+  std::cout << __FILE__ << ":" << __LINE__ <<std::endl;
 
   const std::string id = "royal_messenger";
   const std::string key = "skeleton";

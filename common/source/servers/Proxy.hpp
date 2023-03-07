@@ -12,6 +12,7 @@
 // Standard includes
 #include <chrono>
 #include <memory>
+#include <string>
 #include <vector>
 #include <unordered_map>
 
@@ -28,6 +29,7 @@ class Proxy : public IServer {
     bool m_run_infinite_loop = true;
     std::chrono::duration<double> m_run_duration;
 
+    std::unordered_map<SocketRole, std::string> m_addresses;
   public:
     /// Convenience constructor
     Proxy(
@@ -49,6 +51,11 @@ class Proxy : public IServer {
     virtual void setRunDuration(std::chrono::duration<double> duration) final;
 
     virtual void run() final;
+    
+    virtual std::unordered_map<SocketRole, std::string> getAddresses() const final {
+      return m_addresses;
+    }
+
 };
 
 } // namespace SDMS

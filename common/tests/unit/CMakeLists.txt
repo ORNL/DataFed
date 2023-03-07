@@ -10,6 +10,7 @@ foreach(PROG
     test_Proxy
     test_ProxyBasicZMQ
     test_SocketFactory
+    test_SocketOptions
 )
 
   include_directories(${CMAKE_SOURCE_DIR}/common/source)

@@ -174,7 +174,10 @@ gsi_authz_init()
     syslog( LOG_INFO, "DataFed Authz module started, version %s\n", getVersion() );
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
 
-    return 0;
+    if( initAuthzConfig() ) {
+      return GLOBUS_FAILURE;
+    }
+    return GLOBUS_SUCCESS;
 }
 
 globus_result_t
@@ -490,8 +493,11 @@ gsi_map_user( va_list Ap )
     syslog( LOG_INFO, "gsi_map_user request service(%s), user (%s)", service, desired_identity );
     #endif
 
-    strncpy( identity_buffer, "cades", buffer_length );
-    buffer_length = 5;
+    //strncpy( identity_buffer, "cades", buffer_length );
+    //buffer_length = 5;
+    memset( identity_buffer, 0, buffer_length );
+    strcat( identity_buffer, getLocalUserName() );
+    buffer_length = strlen( getLocalUserName() );
 
     return GLOBUS_SUCCESS;
 }

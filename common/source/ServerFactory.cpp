@@ -17,6 +17,15 @@ namespace SDMS {
   std::unique_ptr<IServer> ServerFactory::create(
       ServerType server_type,
       const std::unordered_map<SocketRole, SocketOptions> & socket_options,
+      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials) {
+
+    return create(server_type, socket_options, socket_credentials, std::vector<std::unique_ptr<IOperator>>());
+  }
+
+
+  std::unique_ptr<IServer> ServerFactory::create(
+      ServerType server_type,
+      const std::unordered_map<SocketRole, SocketOptions> & socket_options,
       const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
       std::vector<std::unique_ptr<IOperator>> incoming_operators) {
 

@@ -11,6 +11,11 @@
 #include "TaskMgr.hpp"
 #include "libjson.hpp"
 
+// DataFed Common includes
+#include "CredentialFactory.hpp"
+#include "CommunicatorFactory.hpp"
+#include "ProtoBufMap.hpp"
+
 using namespace std;
 
 namespace SDMS {
@@ -34,6 +39,8 @@ ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid ) :
     setupMsgHandlers();
     DL_DEBUG("Creating m_worker_thread");
     m_worker_thread = new thread( &ClientWorker::workerThread, this );
+    // This should be hidden behind a factory or some other builder
+    m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
 }
 
 ClientWorker::~ClientWorker()
@@ -59,8 +66,8 @@ ClientWorker::wait()
     }
 }
 
-#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
-#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[MsgBuf::findMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
+#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[m_msg_mapper->getMessageType( proto_id, #msg )] = func
+#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[m_msg_mapper->getMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
 
 /**
  * This method configures message handling by creating a map from message type to handler function.
@@ -82,7 +89,7 @@ ClientWorker::setupMsgHandlers()
     {
         // Register and setup handlers for the Anonymous interface
 
-        uint8_t proto_id = REG_PROTO( SDMS::Anon );
+        uint8_t proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_ANONONYMOUS); //REG_PROTO( SDMS::Anon );
 
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, VersionRequest, &ClientWorker::procVersionRequest );
@@ -95,8 +102,7 @@ ClientWorker::setupMsgHandlers()
 
 
         // Register and setup handlers for the Authenticated interface
-
-        proto_id = REG_PROTO( SDMS::Auth );
+        proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_AUTHORIZED);
 
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &ClientWorker::procGenerateCredentialsRequest );
@@ -215,17 +221,45 @@ ClientWorker::setupMsgHandlers()
 void
 ClientWorker::workerThread()
 {
-    DL_DEBUG( "W" << m_tid << " thread started" );
 
-    MsgComm         comm( "inproc://workers", MsgComm::DEALER, false );
-    uint16_t        msg_type;
-    map<uint16_t,msg_fun_t>::iterator handler;
+  DL_DEBUG( "W" << m_tid << " thread started" );
+  CommunicatorFactory factory;
 
-    uint16_t task_list_msg_type = MsgBuf::findMessageType( 2, "TaskListRequest" );
+  const std::string client_id = "client_worker_" + std::to_string(m_tid);
+  auto client = [&]() {
+    /// Creating input parameters for constructing Communication Instance
+    SocketOptions socket_options;
+    socket_options.scheme = URIScheme::INPROC;
+    socket_options.class_type = SocketClassType::CLIENT; 
+    socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+    socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
+    socket_options.connection_security = SocketConnectionSecurity::INSECURE;
+    socket_options.protocol_type = ProtocolType::ZQTP; 
+    socket_options.host = "workers";
+    socket_options.local_id = client_id;
 
-    Anon::NackReply nack;
-    nack.set_err_code( ID_AUTHN_REQUIRED );
-    nack.set_err_msg( "Authentication required" );
+    std::unordered_map<CredentialType, std::string> cred_options;
+
+    CredentialFactory cred_factory;
+    auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+
+    uint32_t timeout_on_receive = 10;
+    long timeout_on_poll = 10;
+
+    // When creating a communication channel with a server application we need
+    // to locally have a client socket. So though we have specified a client
+    // socket we will actually be communicating with the server.
+    return factory.create(
+        socket_options,
+        *credentials,
+        timeout_on_receive,
+        timeout_on_poll);
+  }();
+
+    ProtoBufMap proto_map;
+    uint16_t task_list_msg_type = proto_map.getMessageType( 2, "TaskListRequest");
+
 
     //int delay;
     DL_DEBUG( "W" << m_tid << " m_run " << m_run);
@@ -234,9 +268,12 @@ ClientWorker::workerThread()
     {
         try
         {
-            if ( comm.recv( m_msg_buf, true, 1000 ))
-            {
-                msg_type = m_msg_buf.getMsgType();
+            ICommunicator::Response response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+            if ( response.time_out == false and response.error == false) {
+
+                IMessage & message = *response.message;
+                uint16_t msg_type = std::get<uint16_t>(message.get(constants::message::google::MSG_TYPE));
+                //msg_type = m_msg_buf.getMsgType();
                 DL_DEBUG( "W" << m_tid << " received message" );
 
                 // DEBUG - Inject random delay in message processing
@@ -246,33 +283,44 @@ ClientWorker::workerThread()
                     usleep( delay );
                 }*/
 
+                const std::string uid = std::get<std::string>(message.get(MessageAttribute::ID));
                 if ( msg_type != task_list_msg_type )
                 {
-                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
+                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< uid <<"]" );
                 }
-
-                if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
-                {
+       
+                if(uid.compare("anon") == 0 && msg_type > 0x1FF ){
                     DL_WARN( "W" << m_tid << " unauthorized access attempt from anon user" );
-                    m_msg_buf.serialize( nack );
-                    comm.send( m_msg_buf );
+                    auto response_msg = m_msg_factory.createResponseEnvelope(message);
+
+                    // I know this is not great... allocating memory here slow 
+                    // This will need to be fixed
+                    auto nack = std::make_unique<Anon::NackReply>();
+                    nack->set_err_code( ID_AUTHN_REQUIRED );
+                    nack->set_err_msg( "Authentication required" );
+                    response_msg->setPayload(std::move(nack));
+                    client->send(*response_msg); 
                 }
                 else
                 {
                     DL_DEBUG( "W"<<m_tid<<" getting handler from map" );
-                    handler = m_msg_handlers.find( msg_type );
-                    if ( handler != m_msg_handlers.end() )
-                    {
+                    if( m_msg_handlers.count( msg_type ) ) {
+
+                        auto handler = m_msg_handlers.find( msg_type );
+
                         DL_TRACE( "W"<<m_tid<<" calling handler/attempting to call function of worker" );
 
-                        if ( (this->*handler->second)( m_msg_buf.getUID() ))
+                        // Have to move the actual unique_ptr, change ownership not simply passing a reference
+                        auto response_msg = (this->*handler->second)( uid, std::move(response.message) );
+                        if ( response_msg )
                         {
                             // Gather msg metrics except on task lists (web clients poll)
                             if ( msg_type != task_list_msg_type )
-                                m_core.metricsUpdateMsgCount( m_msg_buf.getUID(), msg_type );
+                                m_core.metricsUpdateMsgCount( uid, msg_type );
 
                             DL_DEBUG( "W" << m_tid << " sending msg of type " << msg_type);
-                            comm.send( m_msg_buf );
+                            // The freaking handlers touch everything.
+                            client->send(*response_msg );
                             DL_DEBUG( "Message sent ");
                             /*if ( msg_type != task_list_msg_type )
                             {
@@ -301,90 +349,234 @@ ClientWorker::workerThread()
 
     DL_DEBUG( "W exiting loop" );
 }
+////////////////Start of old code
+//
+//    DL_DEBUG( "W" << m_tid << " thread started" );
+//
+//    //MsgComm         comm( "inproc://workers", MsgComm::DEALER, false );
+//    uint16_t        msg_type;
+//    map<uint16_t,msg_fun_t>::iterator handler;
+//
+//    uint16_t task_list_msg_type = MsgBuf::findMessageType( 2, "TaskListRequest" );
+//
+//    Anon::NackReply nack;
+//    nack.set_err_code( ID_AUTHN_REQUIRED );
+//    nack.set_err_msg( "Authentication required" );
+//
+//    //int delay;
+//    DL_DEBUG( "W" << m_tid << " m_run " << m_run);
+//
+//    while ( m_run )
+//    {
+//        try
+//        {
+//            if ( comm.recv( m_msg_buf, true, 1000 ))
+//            {
+//                msg_type = m_msg_buf.getMsgType();
+//                DL_DEBUG( "W" << m_tid << " received message" );
+//
+//                // DEBUG - Inject random delay in message processing
+//                /*delay = (rand() % 2000)*1000;
+//                if ( delay )
+//                {
+//                    usleep( delay );
+//                }*/
+//
+//                if ( msg_type != task_list_msg_type )
+//                {
+//                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
+//                }
+//
+//                if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
+//                {
+//                    DL_WARN( "W" << m_tid << " unauthorized access attempt from anon user" );
+//                    m_msg_buf.serialize( nack );
+//                    comm.send( m_msg_buf );
+//                }
+//                else
+//                {
+//                    DL_DEBUG( "W"<<m_tid<<" getting handler from map" );
+//                    handler = m_msg_handlers.find( msg_type );
+//                    if ( handler != m_msg_handlers.end() )
+//                    {
+//                        DL_TRACE( "W"<<m_tid<<" calling handler/attempting to call function of worker" );
+//
+//                        if ( (this->*handler->second)( m_msg_buf.getUID() ))
+//                        {
+//                            // Gather msg metrics except on task lists (web clients poll)
+//                            if ( msg_type != task_list_msg_type )
+//                                m_core.metricsUpdateMsgCount( m_msg_buf.getUID(), msg_type );
+//
+//                            DL_DEBUG( "W" << m_tid << " sending msg of type " << msg_type);
+//                            comm.send( m_msg_buf );
+//                            DL_DEBUG( "Message sent ");
+//                            /*if ( msg_type != task_list_msg_type )
+//                            {
+//                                DL_DEBUG( "W"<<m_tid<<" reply sent." );
+//                            }*/
+//                        }
+//                    } else {
+//                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
+//                    }
+//                }
+//            }
+//        }
+//        catch( TraceException & e )
+//        {
+//            DL_ERROR( "W" << m_tid << " " << e.toString() );
+//        }
+//        catch( exception & e )
+//        {
+//            DL_ERROR( "W" << m_tid << " " << e.what() );
+//        }
+//        catch( ... )
+//        {
+//            DL_ERROR( "W" << m_tid << " unknown exception type" );
+//        }
+//    }
+//
+//    DL_DEBUG( "W exiting loop" );
+//}
 
 // TODO The macros below should be replaced with templates
 
 /// This macro defines the begining of the common message handling code for all local handlers
-
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
 msgclass *request = 0; \
 bool send_reply = true; \
-::google::protobuf::Message *base_msg = m_msg_buf.unserialize(); \
+::google::protobuf::Message *base_msg = std::get<google::protobuf::Message*>(msg_request->getPayload()); \
 if ( base_msg ) \
 { \
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
         DL_TRACE( "Rcvd [" << request->DebugString() << "]"); \
-        replyclass reply; \
+        std::unique_ptr<google::protobuf::Message> reply_ptr = std::make_unique<replyclass>(); \
+        replyclass & reply = *(dynamic_cast<replyclass *>(reply_ptr.get())); \
         try \
         {
+
 
 /// This macro defines the end of the common message handling code for all local handlers
 
 #define PROC_MSG_END \
-            if ( send_reply ) \
-                m_msg_buf.serialize( reply ); \
-        } \
-        catch( TraceException &e ) \
-        { \
+            if ( send_reply ) { \
+                auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
+                msg_reply->setPayload(std::move(reply_ptr)); \
+                return msg_reply; \
+            } \
+        } catch( TraceException &e ) { \
             DL_ERROR( "W"<<m_tid<<" " << e.toString() ); \
             if ( send_reply ) { \
-                NackReply nack; \
-                nack.set_err_code( (ErrorCode) e.getErrorCode() ); \
-                nack.set_err_msg( e.toString( true ) ); \
-                m_msg_buf.serialize( nack ); }\
-        } \
-        catch( exception &e ) \
-        { \
+                auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
+                auto nack = std::make_unique<NackReply>(); \
+                nack->set_err_code( (ErrorCode) e.getErrorCode() ); \
+                nack->set_err_msg( e.toString( true ) ); \
+                msg_reply->setPayload(std::move(nack)); \
+                return msg_reply; \
+            } \
+        } catch( exception &e ) { \
             DL_ERROR( "W"<<m_tid<<" " << e.what() ); \
             if ( send_reply ) { \
-                NackReply nack; \
-                nack.set_err_code( ID_INTERNAL_ERROR ); \
-                nack.set_err_msg( e.what() ); \
-                m_msg_buf.serialize( nack ); } \
-        } \
-        catch(...) \
-        { \
+                auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
+                auto nack = std::make_unique<NackReply>(); \
+                nack->set_err_code( ID_INTERNAL_ERROR ); \
+                nack->set_err_msg( e.what() ); \
+                msg_reply->setPayload(std::move(nack)); \
+                return msg_reply; \
+            } \
+        } catch(...) { \
             DL_ERROR( "W"<<m_tid<<" unkown exception while processing message!" ); \
             if ( send_reply ) { \
-                NackReply nack; \
-                nack.set_err_code( ID_INTERNAL_ERROR ); \
-                nack.set_err_msg( "Unknown exception type" ); \
-                m_msg_buf.serialize( nack ); } \
+                auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
+                auto nack = std::make_unique<NackReply>(); \
+                nack->set_err_code( ID_INTERNAL_ERROR ); \
+                nack->set_err_msg( "Unknown exception type" ); \
+                msg_reply->setPayload(std::move(nack)); \
+                return msg_reply; \
+            } \
         } \
         DL_TRACE( "Sent: " << reply.DebugString()); \
-    } \
-    else { \
+    } else { \
         DL_ERROR( "W"<<m_tid<<": dynamic cast of msg buffer failed!" );\
     } \
-    delete base_msg; \
-} \
-else { \
+} else { \
     DL_ERROR( "W"<<m_tid<<": message parse failed (malformed or unregistered msg type)." ); \
-    NackReply nack; \
-    nack.set_err_code( ID_BAD_REQUEST ); \
-    nack.set_err_msg( "Message parse failed (malformed or unregistered msg type)" ); \
-    m_msg_buf.serialize( nack ); \
+    auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
+    auto nack = std::make_unique<NackReply>(); \
+    nack->set_err_code( ID_BAD_REQUEST ); \
+    nack->set_err_msg( "Message parse failed (malformed or unregistered msg type)" ); \
+    msg_reply->setPayload(std::move(nack)); \
+    return msg_reply; \
 } \
-return send_reply;
+return std::unique_ptr<IMessage>();
 
+
+
+//#define PROC_MSG_END \
+//            if ( send_reply ) \
+//                m_msg_buf.serialize( reply ); \
+//        } \
+//        catch( TraceException &e ) \
+//        { \
+//            DL_ERROR( "W"<<m_tid<<" " << e.toString() ); \
+//            if ( send_reply ) { \
+//                NackReply nack; \
+//                nack.set_err_code( (ErrorCode) e.getErrorCode() ); \
+//                nack.set_err_msg( e.toString( true ) ); \
+//                m_msg_buf.serialize( nack ); }\
+//        } \
+//        catch( exception &e ) \
+//        { \
+//            DL_ERROR( "W"<<m_tid<<" " << e.what() ); \
+//            if ( send_reply ) { \
+//                NackReply nack; \
+//                nack.set_err_code( ID_INTERNAL_ERROR ); \
+//                nack.set_err_msg( e.what() ); \
+//                m_msg_buf.serialize( nack ); } \
+//        } \
+//        catch(...) \
+//        { \
+//            DL_ERROR( "W"<<m_tid<<" unkown exception while processing message!" ); \
+//            if ( send_reply ) { \
+//                NackReply nack; \
+//                nack.set_err_code( ID_INTERNAL_ERROR ); \
+//                nack.set_err_msg( "Unknown exception type" ); \
+//                m_msg_buf.serialize( nack ); } \
+//        } \
+//        DL_TRACE( "Sent: " << reply.DebugString()); \
+//    } \
+//    else { \
+//        DL_ERROR( "W"<<m_tid<<": dynamic cast of msg buffer failed!" );\
+//    } \
+//    delete base_msg; \
+//} \
+//else { \
+//    DL_ERROR( "W"<<m_tid<<": message parse failed (malformed or unregistered msg type)." ); \
+//    NackReply nack; \
+//    nack.set_err_code( ID_BAD_REQUEST ); \
+//    nack.set_err_msg( "Message parse failed (malformed or unregistered msg type)" ); \
+//    m_msg_buf.serialize( nack ); \
+//} \
+//return send_reply;
+//
 /// This method wraps all direct-to-DB message handler calls
 template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
-bool
-ClientWorker::dbPassThrough( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::dbPassThrough( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  )
 {
     PROC_MSG_BEGIN( RQ, RP )
 
     m_db_client.setClient( a_uid );
 
+    // Both request and reply here need to be Goolge protocol buffer classes
     (m_db_client.*func)( *request, reply );
 
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procVersionRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procVersionRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( VersionRequest, VersionReply )
     (void)a_uid;
@@ -401,8 +593,8 @@ ClientWorker::procVersionRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( AuthenticateByPasswordRequest, AuthStatusReply )
@@ -419,8 +611,8 @@ ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( AuthenticateByTokenRequest, AuthStatusReply )
@@ -437,8 +629,8 @@ ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procGetAuthStatusRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procGetAuthStatusRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( GetAuthStatusRequest, AuthStatusReply )
@@ -458,8 +650,8 @@ ClientWorker::procGetAuthStatusRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
@@ -496,8 +688,8 @@ ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( RevokeCredentialsRequest, AckReply )
@@ -511,8 +703,8 @@ ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procDataGetRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procDataGetRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( DataGetRequest, DataGetReply )
 
@@ -528,8 +720,8 @@ ClientWorker::procDataGetRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procDataPutRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procDataPutRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( DataPutRequest, DataPutReply )
 
@@ -569,8 +761,8 @@ ClientWorker::schemaEnforceRequiredProperties( const nlohmann::json & a_schema )
         EXCEPT(1,"Schema type must be 'object'.");
 }
 
-bool
-ClientWorker::procSchemaCreateRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procSchemaCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( SchemaCreateRequest, AckReply )
 
@@ -600,8 +792,8 @@ ClientWorker::procSchemaCreateRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procSchemaReviseRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procSchemaReviseRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( SchemaReviseRequest, AckReply )
 
@@ -633,8 +825,8 @@ ClientWorker::procSchemaReviseRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procSchemaUpdateRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procSchemaUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( SchemaUpdateRequest, AckReply )
 
@@ -666,8 +858,8 @@ ClientWorker::procSchemaUpdateRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procMetadataValidateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     DL_INFO( "Meta validate" );
 
@@ -728,8 +920,8 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procRecordCreateRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRecordCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( RecordCreateRequest, RecordDataReply )
 
@@ -810,8 +1002,8 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRecordUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( RecordUpdateRequest, RecordDataReply )
 
@@ -957,8 +1149,8 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procRecordUpdateBatchRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRecordUpdateBatchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( RecordUpdateBatchRequest, RecordDataReply )
 
@@ -974,8 +1166,8 @@ ClientWorker::procRecordUpdateBatchRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procRecordDeleteRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRecordDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( RecordDeleteRequest, TaskDataReply )
 
@@ -993,8 +1185,8 @@ ClientWorker::procRecordDeleteRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procCollectionDeleteRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procCollectionDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( CollDeleteRequest, TaskDataReply )
 
@@ -1023,8 +1215,8 @@ ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids, Ta
 }
 
 
-bool
-ClientWorker::procRecordAllocChangeRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRecordAllocChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( RecordAllocChangeRequest, RecordAllocChangeReply )
 
@@ -1040,8 +1232,8 @@ ClientWorker::procRecordAllocChangeRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procRecordOwnerChangeRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRecordOwnerChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( RecordOwnerChangeRequest, RecordOwnerChangeReply )
 
@@ -1057,8 +1249,8 @@ ClientWorker::procRecordOwnerChangeRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procProjectDeleteRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procProjectDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( ProjectDeleteRequest, TaskDataReply )
 
@@ -1073,8 +1265,8 @@ ClientWorker::procProjectDeleteRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procRepoAllocationCreateRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRepoAllocationCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( RepoAllocationCreateRequest, TaskDataReply )
 
@@ -1089,8 +1281,8 @@ ClientWorker::procRepoAllocationCreateRequest( const std::string & a_uid )
     PROC_MSG_END
 }
 
-bool
-ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( RepoAllocationDeleteRequest, TaskDataReply )
 
@@ -1106,8 +1298,8 @@ ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procProjectSearchRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procProjectSearchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     (void) a_uid;
 
@@ -1130,8 +1322,8 @@ ClientWorker::procProjectSearchRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procRepoAuthzRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procRepoAuthzRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     (void)a_uid;
     PROC_MSG_BEGIN( RepoAuthzRequest, AckReply )
@@ -1145,8 +1337,8 @@ ClientWorker::procRepoAuthzRequest( const std::string & a_uid )
 }
 
 
-bool
-ClientWorker::procUserGetAccessTokenRequest( const std::string & a_uid )
+std::unique_ptr<IMessage>
+ClientWorker::procUserGetAccessTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
     PROC_MSG_BEGIN( UserGetAccessTokenRequest, UserAccessTokenReply )
 

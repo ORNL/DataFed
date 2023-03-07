@@ -32,19 +32,6 @@ namespace SDMS {
    ******************************************************************************/
   namespace {
 
-    /// Framing structure that wraps a serialized message
-
-    /**
-     * The way this is currently being used is a code smell because zmq is using
-     * it to free memory in a class when that class should be responsible for it.
-     *
-     * Maybe in the future just pass a dummy function that does nothing.
-     **/
-/*    void freeBuffer( void * a_data, void * a_hint )
-    {
-      (void) a_hint;
-      delete (char*) a_data;
-    }*/
 
     void sendDelimiter(void * outgoing_zmq_socket) {
       // Send NULL delimiter
@@ -285,16 +272,6 @@ namespace SDMS {
         // Skip any leading 0s and contiue 
         
       }
-      /*std::cout << "receiveFrame bytes " << number_of_bytes << std::endl;
-      FrameFactory frame_factory;
-      std::cout << "recieveFrame:: create" << std::endl;
-      Frame frame = frame_factory.create(zmq_msg); // THIS IS THE ERROR
-      std::cout << "recieveFrame:: create" << std::endl;
-      FrameConverter converter;
-      std::cout << "recieveFrame:: convert from frame to msg" << std::endl;
-      converter.copy(FrameConverter::CopyDirection::FROM_FRAME, msg, frame);
-      std::cout << "recieveFrame:: complete" << std::endl;
-      */
     }
 
     void sendFrame(IMessage & msg, void * outgoing_zmq_socket) {
@@ -530,6 +507,7 @@ namespace SDMS {
       long timeout_on_poll_milliseconds) :
         m_timeout_on_receive_milliseconds(timeout_on_receive_milliseconds),
         m_timeout_on_poll_milliseconds(timeout_on_poll_milliseconds) {
+
 
     auto socket_factory = SocketFactory();
     m_socket = socket_factory.create(socket_options, credentials);

@@ -7,8 +7,12 @@
 
 // Standard includes
 #include <chrono>
+#include <string>
+#include <unordered_map>
 
 namespace SDMS {
+  
+  enum class SocketRole;
 
 class IServer {
 
@@ -24,6 +28,9 @@ class IServer {
     virtual void setRunDuration(std::chrono::duration<double> duration) = 0;
 
     virtual void run() = 0;
+
+    virtual std::unordered_map<SocketRole, std::string> getAddresses() const = 0;
+
 };
 
 } // namespace SDMS

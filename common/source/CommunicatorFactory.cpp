@@ -1,6 +1,7 @@
 
 // Local private includes
 #include "communicators/ZeroMQCommunicator.hpp"
+#include "communicators/ZeroMQCommunicatorSecure.hpp"
 #include "sockets/ZeroMQSocket.hpp"
 
 // Local public includes
@@ -18,11 +19,21 @@ namespace SDMS {
       long timeout_on_poll) const {
 
     if(socket_options.protocol_type == ProtocolType::ZQTP ) {
-      return std::unique_ptr<ICommunicator>(new ZeroMQCommunicator(
-            socket_options,
-            credentials,
-            timeout_on_receive,
-            timeout_on_poll));
+      if(socket_options.connection_security == SocketConnectionSecurity::INSECURE){
+        std::cout << __FILE__ << ":" << __LINE__ << " INSECURE CONSTRUCTOR " << std::endl;
+        return std::unique_ptr<ICommunicator>(new ZeroMQCommunicator(
+              socket_options,
+              credentials,
+              timeout_on_receive,
+              timeout_on_poll));
+      } else {
+        std::cout << __FILE__ << ":" << __LINE__ << " SECURE CONSTRUCTOR " << std::endl;
+        return std::unique_ptr<ICommunicator>(new ZeroMQCommunicatorSecure(
+              socket_options,
+              credentials,
+              timeout_on_receive,
+              timeout_on_poll));
+      }
     }
     return std::unique_ptr<ICommunicator>();
   }

@@ -38,6 +38,30 @@ namespace SDMS {
   } // namespace - local file scope
 
 ZeroMQSocket::ZeroMQSocket(
+        const SocketOptions & socket_options
+        ) : 
+  m_scheme(socket_options.scheme),
+  m_socket_class_type(socket_options.class_type),
+  m_socket_communication_type(socket_options.communication_type),
+  m_socket_directionality_type(socket_options.direction_type),
+  m_socket_life(socket_options.connection_life),
+  m_host(socket_options.host) {
+
+  if(socket_options.port){
+    m_port = *socket_options.port;
+  }
+  if( socket_options.local_id ) {
+    m_id = *socket_options.local_id;
+  } else {
+    m_id = generateRandomID();
+  }
+
+  if(m_scheme != URIScheme::INPROC and m_scheme != URIScheme::TCP ){
+    EXCEPT(1, "Unsupported scheme detected for ZeroMQSocket");
+  }
+}
+
+ZeroMQSocket::ZeroMQSocket(
         const SocketOptions & socket_options,
         const ICredentials & socket_credentials
         ) : 
@@ -61,14 +85,19 @@ ZeroMQSocket::ZeroMQSocket(
     EXCEPT(1, "Unsupported scheme detected for ZeroMQSocket");
   }
 
+  if(socket_credentials.getType() != ProtocolType::ZQTP ){
+    EXCEPT(1, "Unsupported Credential type provided when creating ZeroMQSocket");
+  }
   // Make sure that the credentials are expected
   try {
     m_credentials = dynamic_cast<const ZeroMQSocketCredentials &>(socket_credentials); 
+
   } catch ( std::exception & e) {
     std::string error_msg = "Error in constructing ZeroMQSocket, unssuported Credentials were provided: ";
     error_msg += e.what();
     EXCEPT(1, error_msg);
   }
+  
 }
 
 std::string ZeroMQSocket::getAddress() const noexcept {
@@ -83,8 +112,11 @@ std::string ZeroMQSocket::getAddress() const noexcept {
   return address;
 }
 
-std::variant<std::string> ZeroMQSocket::get(const CredentialType credential_type) const {
-  return m_credentials.get(credential_type);
+std::string ZeroMQSocket::get(const CredentialType credential_type) const {
+  if( hasCredentials() ) {
+    return m_credentials->get(credential_type);
+  } 
+  EXCEPT_PARAM(1, "Cannot get credentials from ZeroMQSocket they have not been defined");
 }
 
 std::string ZeroMQSocket::getID() const noexcept {

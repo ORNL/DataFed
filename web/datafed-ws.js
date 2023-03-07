@@ -1631,9 +1631,9 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
         //console.log("Sending to ", g_core_serv_addr);
         //console.log( "sendMsg:", a_msg_name );
         if ( msg_buf.length )
-            g_core_sock.send([ nullfr, frame, msg_buf, client ]);
+            g_core_sock.send([ nullfr, frame, msg_buf, client, nullfr ]);
         else
-            g_core_sock.send([ nullfr, frame, client ]);
+            g_core_sock.send([ nullfr, frame, nullfr, client, nullfr ]);
     });
 }
 
@@ -1648,6 +1648,7 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         var msg_buf = msg.encode(a_msg_data).finish();
 
         var frame = Buffer.alloc(8);
+        // A protobuf message doesn't have to have a payload
         frame.writeUInt32BE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
         frame.writeUInt8( msg._mid, 5 );
@@ -1656,9 +1657,10 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         g_ctx[ctx] = a_cb;
 
         if ( msg_buf.length )
-            g_core_sock.send([ nullfr, frame, msg_buf, a_client ]);
+            // ZeroMQ socket g_core_sock - not Dale's code it is a library
+            g_core_sock.send([ nullfr, frame, msg_buf, a_client, nullfr ]);
         else
-            g_core_sock.send([ nullfr, frame, a_client ]);
+            g_core_sock.send([ nullfr, frame, a_client, nullfr, nullfr ]);
     });
 }
 
@@ -1741,7 +1743,8 @@ process.on('unhandledRejection', (reason, p) => {
     console.log( 'Error - unhandled rejection at: Promise', p, 'reason:', reason );
 });
 
-
+// This is the reply part 
+// on - method is a way of subscribing to events
 g_core_sock.on('message', function( delim, frame, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );
     //console.log( "frame", frame.toString('hex') );
@@ -1761,6 +1764,7 @@ g_core_sock.on('message', function( delim, frame, msg_buf ) {
         // Only try to decode if there is a payload
         if ( msg_buf && msg_buf.length ) {
             try {
+                // This is unserializing the protocol message
                 msg = msg_class.decode( msg_buf );
                 if ( !msg )
                     console.log( "ERROR: msg decode failed: no reason" );

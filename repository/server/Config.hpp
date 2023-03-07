@@ -5,7 +5,10 @@
 #include <map>
 #include <stdint.h>
 #include "SDMS.pb.h"
-#include "MsgComm.hpp"
+//#include "MsgComm.hpp"
+
+// Common public includes
+#include "ICredentials.hpp"
 
 namespace SDMS {
 namespace Repo {
@@ -28,7 +31,8 @@ struct Config
     uint32_t        timeout = 5;
     uint32_t        num_req_worker_threads = 4;
 
-    MsgComm::SecurityContext            sec_ctx;
+    std::unique_ptr<ICredentials> sec_ctx;
+    //MsgComm::SecurityContext            sec_ctx;
 };
 
 }}

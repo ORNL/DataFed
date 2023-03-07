@@ -37,6 +37,7 @@ class AuthenticationOperator : public IOperator {
   public:    
     explicit AuthenticationOperator(std::any & options );
     explicit AuthenticationOperator(IAuthenticationManager & auth_manager ) : m_authentication_manager(&auth_manager) {};
+		static std::unique_ptr<IOperator> create(std::any options);
 
   private:
 
@@ -45,8 +46,13 @@ class AuthenticationOperator : public IOperator {
     virtual OperatorType type() const noexcept final { return OperatorType::Authenticator; }
   
     virtual void execute(IMessage & message) final;
+
 };
 
+inline std::unique_ptr<IOperator>
+AuthenticationOperator::create(std::any options) {
+  return std::make_unique<AuthenticationOperator>(options);
+}
 } // namespace SDMS
 
 #endif // AUTHENTICATION_OPERATOR_HPP

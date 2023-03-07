@@ -10,9 +10,6 @@
 #include "ICredentials.hpp"
 #include "ProtocolTypes.hpp"
 
-// Standard includes
-#include <variant>
-
 namespace SDMS {
 
 class ZeroMQSocket : public ISocket {
@@ -25,13 +22,18 @@ class ZeroMQSocket : public ISocket {
     std::string m_host = "";
     std::string m_id = "";
     std::optional<uint16_t> m_port;
-    ZeroMQSocketCredentials m_credentials;
+
+    std::optional<ZeroMQSocketCredentials> m_credentials;
 
   public:
 
     ZeroMQSocket(
         const SocketOptions & socket_options,
         const ICredentials & socket_credentials
+        );
+
+    ZeroMQSocket(
+        const SocketOptions & socket_options
         );
 
     /*********************************************************
@@ -60,9 +62,22 @@ class ZeroMQSocket : public ISocket {
 
     virtual std::string getAddress() const noexcept final;
 
-    virtual std::variant<std::string> get(const CredentialType credential_type) const final;
+    virtual std::string get(const CredentialType credential_type) const final;
     
     virtual std::string getID() const noexcept final;
+
+    inline virtual bool hasCredentials() const noexcept final { 
+      if(m_credentials) {
+        if( m_credentials->has(CredentialType::PUBLIC_KEY)) {
+          return true; 
+        } else if( m_credentials->has(CredentialType::PRIVATE_KEY)) {
+          return true;
+        } else if(m_credentials->has(CredentialType::SERVER_KEY)) {
+          return true;
+        }
+      }
+      return false;
+    }
 };
 
 } // namespace SDMS

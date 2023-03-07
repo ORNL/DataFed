@@ -41,6 +41,7 @@ namespace SDMS {
         m_msg_type_map[desc] = msg_type;
 
       }
+      m_protocol_ids[MessageProtocol::GOOGLE_ANONONYMOUS] = id;
     }
     {
       auto a_enum_desc = Auth::Protocol_descriptor();
@@ -68,6 +69,7 @@ namespace SDMS {
         m_msg_type_map[desc] = msg_type;
 
       }
+      m_protocol_ids[MessageProtocol::GOOGLE_AUTHORIZED] = id;
     }
   }
 
@@ -106,5 +108,12 @@ namespace SDMS {
     }
   }
 
+  uint8_t ProtoBufMap::getProtocolID(MessageProtocol msg_protocol) const {
+    if( m_protocol_ids.count(msg_protocol) ) {
+      return m_protocol_ids.at(msg_protocol);
+    } else {
+      EXCEPT(1, "Unsupported MessageProtocol specified, cannot map to a protocol id");
+    }
+  }
 }
 

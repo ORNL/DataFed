@@ -29,8 +29,8 @@ public:
     AuthzWorker( struct Config * a_config ) :
         m_config( a_config ), m_test_path_len( strlen( a_config->test_path ))
     {
-        REG_PROTO( SDMS::Anon );
-        REG_PROTO( SDMS::Auth );
+        //REG_PROTO( SDMS::Anon );
+        //REG_PROTO( SDMS::Auth );
     }
 
     ~AuthzWorker()

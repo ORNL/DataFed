@@ -71,7 +71,11 @@ namespace SDMS {
           *socket_credentials.at(SocketRole::SERVER),
           m_timeout_on_receive_milliseconds,
           m_timeout_on_poll_milliseconds);
+
+      m_addresses[SocketRole::CLIENT] = m_communicators[SocketRole::CLIENT]->address();
+      m_addresses[SocketRole::SERVER] = m_communicators[SocketRole::SERVER]->address();
     }
+
 
   void Proxy::setRunDuration(std::chrono::duration<double> duration) {
     m_run_infinite_loop = false;

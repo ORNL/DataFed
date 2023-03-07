@@ -22,7 +22,7 @@
 namespace SDMS {
 
   class ZeroMQCommunicator : public ICommunicator {
-    private:
+    protected:
       std::unique_ptr<ISocket> m_socket;
       uint16_t m_zmq_context;
       void * m_zmq_socket = nullptr;
@@ -36,14 +36,20 @@ namespace SDMS {
       ProtoBufFactory m_protocol_factory;
       ICommunicator::Response m_poll(uint32_t timeout_milliseconds);
 
+      void zmqCurveSetup(const ICredentials & credentials);
+
     public:
+
+      /** To be used by children*/
+      ZeroMQCommunicator() {};
+
       ZeroMQCommunicator(
           const SocketOptions & socket_options,
           const ICredentials & credentials,
           uint32_t timeout_on_receive_milliseconds,
           long timeout_on_poll_milliseconds);
 
-      virtual ~ZeroMQCommunicator() final;
+      virtual ~ZeroMQCommunicator();
       /**
        * Poll for incoming messages at the sockets
        *

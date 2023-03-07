@@ -8,11 +8,20 @@
 #include "CoreServer.hpp"
 #include "TaskMgr.hpp"
 #include "ClientWorker.hpp"
-#include "MsgComm.hpp"
 #include "DatabaseAPI.hpp"
 #include "PublicKeyTypes.hpp"
 #include "Condition.hpp"
 #include <vector>
+
+// DataFed Common includes
+#include "IServer.hpp"
+#include "CredentialFactory.hpp"
+#include "OperatorFactory.hpp"
+#include "ServerFactory.hpp"
+#include "SocketOptions.hpp"
+
+// Standard includes
+#include <memory>
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
 #define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
@@ -38,9 +47,15 @@ Server::Server() :
     loadKeys( m_config.cred_dir );
 
     // Configure ZMQ security context
-    m_config.sec_ctx.is_server = true;
-    m_config.sec_ctx.public_key = m_pub_key;
-    m_config.sec_ctx.private_key = m_priv_key;
+    //m_config.sec_ctx.is_server = true;
+    CredentialFactory cred_factory;
+    std::unordered_map<CredentialType, std::string> params;
+    params[CredentialType::PUBLIC_KEY] = m_pub_key;
+    params[CredentialType::PRIVATE_KEY] = m_priv_key;
+    //params[CredentialType::SERVER_KEY] = std::string("");
+    m_config.sec_ctx = cred_factory.create(ProtocolType::ZQTP, params);
+    //m_config.sec_ctx.public_key = m_pub_key;
+    //m_config.sec_ctx.private_key = m_priv_key;
 
     // Wait for DB connection
     waitForDB();
@@ -68,14 +83,14 @@ Server::Server() :
     m_config.loadRepositoryConfig(m_auth_manager);
 
     // Must occur after loading config settings
-    m_auth_manager = AuthenticationManager(purge_intervals,
+    m_auth_manager = std::move(AuthenticationManager(purge_intervals,
         std::move(purge_conditions),
         m_config.db_url,
         m_config.db_user,
-        m_config.db_pass);
+        m_config.db_pass));
 
-    // Start ZAP handler
-    m_zap_thread = thread( &Server::zapHandler, this );
+    // Start ZAP handler must be started before any other socket binds are called
+    //m_zap_thread = thread( &Server::zapHandler, this );
 
     // Start DB maintenance thread
     m_db_maint_thread = thread( &Server::dbMaintenance, this );
@@ -94,7 +109,7 @@ Server::~Server()
     // There is no way to cleanly shutdown the server, so this code really has no effect since
     // the o/s cleans-up for us
 
-    m_zap_thread.join();
+    //m_zap_thread.join();
     m_db_maint_thread.join();
     m_metrics_thread.join();
 }
@@ -163,7 +178,91 @@ Server::run()
 }
 
 
-void
+  void
+Server::msgRouter()
+{
+  std::unordered_map<SocketRole, SocketOptions> socket_options;
+  std::unordered_map<SocketRole, ICredentials *> socket_credentials;
+
+  // Credentials are allocated on the heap, to ensure they last until the end of
+  // the test they must be defined outside of the scope block below
+  std::unique_ptr<ICredentials> client_credentials;
+
+  { // Proxy Client Credentials and Socket Options - these options are used
+    // to define the client socket that the proxy will use to communicate with
+    // the backend. The proxy acts like a client to the backend
+    SocketOptions client_socket_options;
+    client_socket_options.scheme = URIScheme::INPROC;
+    client_socket_options.class_type = SocketClassType::CLIENT; 
+    client_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+    client_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    client_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
+    client_socket_options.connection_security = SocketConnectionSecurity::INSECURE;
+    client_socket_options.protocol_type = ProtocolType::ZQTP; 
+    client_socket_options.host = "workers";
+    //        client_socket_options.port = 1341;
+    client_socket_options.local_id = "core_message_routing_client";
+    socket_options[SocketRole::CLIENT] = client_socket_options;
+
+    CredentialFactory cred_factory;
+    std::unordered_map<CredentialType, std::string> cred_options;
+
+    client_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+    socket_credentials[SocketRole::CLIENT] = client_credentials.get();
+  }
+
+  // Credentials are allocated on the heap, to ensure they last until the end of
+  // the test they must be defined outside of the scope block below
+  std::unique_ptr<ICredentials> server_credentials;
+
+  { // Proxy Server Credentials and Socket Options - these options are used
+    // to define the server socket that the proxy will use to communicate with
+    // the frontend. The proxy acts like a server to the frontend
+    SocketOptions server_socket_options;
+    server_socket_options.scheme = URIScheme::INPROC;
+    server_socket_options.class_type = SocketClassType::SERVER; 
+    server_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+    server_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    server_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
+    server_socket_options.connection_security = SocketConnectionSecurity::INSECURE;
+    server_socket_options.protocol_type = ProtocolType::ZQTP; 
+    server_socket_options.host = "msg_proc";
+    //server_socket_options.port = 1341;
+    server_socket_options.local_id = "core_message_routing_server";
+    socket_options[SocketRole::SERVER] = server_socket_options;
+
+    CredentialFactory cred_factory;
+
+    std::unordered_map<CredentialType, std::string> cred_options;
+
+    server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+    socket_credentials[SocketRole::SERVER] = server_credentials.get();
+
+  }
+
+  ServerFactory server_factory;
+  auto proxy = server_factory.create(
+      ServerType::PROXY_BASIC_ZMQ,
+      socket_options,
+      socket_credentials);
+
+  //ProxyBasicZMQ proxy(socket_options, socket_credentials);
+
+  // Ceate worker threads
+  for ( uint16_t t = 0; t < m_config.num_client_worker_threads; ++t )
+      m_workers.emplace_back( new ClientWorker(*this, t+1) );
+
+  proxy->run();
+
+  // Clean-up workers
+  vector<std::shared_ptr<ClientWorker>>::iterator iwrk;
+
+  for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
+      (*iwrk)->stop();
+
+}
+
+/*void
 Server::msgRouter()
 {
     void * ctx = MsgComm::getContext();
@@ -199,18 +298,100 @@ Server::msgRouter()
     for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
         (*iwrk)->stop();
 
-}
+}*/
 
 void
 Server::ioSecure()
 {
     try
     {
-        MsgComm frontend( "tcp://*:" + to_string(m_config.port), MsgComm::ROUTER, true, &m_config.sec_ctx );
-        MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
+
+
+        std::unordered_map<SocketRole, SocketOptions> socket_options;
+        std::unordered_map<SocketRole, ICredentials *> socket_credentials;
+
+        // Credentials are allocated on the heap, to ensure they last until the end of
+        // the test they must be defined outside of the scope block below
+        std::unique_ptr<ICredentials> client_credentials;
+
+        { // Proxy Client Credentials and Socket Options - these options are used
+          // to define the client socket that the proxy will use to communicate with
+          // the backend. The proxy acts like a client to the backend
+          SocketOptions client_socket_options;
+          client_socket_options.scheme = URIScheme::INPROC;
+          client_socket_options.class_type = SocketClassType::CLIENT; 
+          client_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+          client_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+          client_socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
+					// Does not need to be secure, msg_proc is facing inside and is using INPROC
+          client_socket_options.connection_security = SocketConnectionSecurity::INSECURE;
+          client_socket_options.protocol_type = ProtocolType::ZQTP; 
+          client_socket_options.host = "msg_proc";
+          //client_socket_options.port = 1341;
+          client_socket_options.local_id = "internal_facing_secure_proxy_client";
+          socket_options[SocketRole::CLIENT] = client_socket_options;
+
+          CredentialFactory cred_factory;
+
+          std::unordered_map<CredentialType, std::string> cred_options;
+
+          client_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+          socket_credentials[SocketRole::CLIENT] = client_credentials.get();
+        }
+
+        // Credentials are allocated on the heap, to ensure they last until the end of
+        // the test they must be defined outside of the scope block below
+        std::unique_ptr<ICredentials> server_credentials;
+
+        { // Proxy Server Credentials and Socket Options - these options are used
+          // to define the server socket that the proxy will use to communicate with
+          // the frontend. The proxy acts like a server to the frontend
+          SocketOptions server_socket_options;
+          server_socket_options.scheme = URIScheme::TCP;
+          server_socket_options.class_type = SocketClassType::SERVER; 
+          server_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+          server_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+          server_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
+          server_socket_options.connection_security = SocketConnectionSecurity::SECURE;
+          server_socket_options.protocol_type = ProtocolType::ZQTP; 
+          server_socket_options.host = "*";
+          server_socket_options.port = m_config.port;
+          server_socket_options.local_id = "external_facing_secure_proxy_server";
+          socket_options[SocketRole::SERVER] = server_socket_options;
+
+          CredentialFactory cred_factory;
+
+          std::unordered_map<CredentialType, std::string> cred_options;
+          cred_options[CredentialType::PUBLIC_KEY] = m_config.sec_ctx->get(CredentialType::PUBLIC_KEY);
+          cred_options[CredentialType::PRIVATE_KEY] = m_config.sec_ctx->get(CredentialType::PRIVATE_KEY);
+          cred_options[CredentialType::SERVER_KEY] = m_config.sec_ctx->get(CredentialType::SERVER_KEY);
+
+          server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+          socket_credentials[SocketRole::SERVER] = server_credentials.get();
+
+        }
+
+        std::any argument = dynamic_cast<IAuthenticationManager *>(&m_auth_manager);
+        OperatorFactory operator_factory;
+        std::vector<std::unique_ptr<IOperator>> operators;
+        operators.push_back(
+          operator_factory.create(OperatorType::Authenticator, argument)
+        );
+
+        ServerFactory server_factory;
+        auto proxy = server_factory.create(
+            ServerType::PROXY_CUSTOM,
+            socket_options,
+            socket_credentials,
+            std::move(operators));
+
+        proxy->run();
+
+
+/*
 
         // Must use custom proxy to inject ZAP User-Id into message frame
-        frontend.proxy( backend, m_auth_manager );
+        frontend.proxy( backend, m_auth_manager );*/
     }
     catch( exception & e)
     {
@@ -223,10 +404,84 @@ Server::ioInsecure()
 {
     try
     {
-        MsgComm frontend( "tcp://*:" + to_string(m_config.port + 1), MsgComm::ROUTER, true );
-        MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
 
-        zmq_proxy( frontend.getSocket(), backend.getSocket(), 0 );
+  std::unordered_map<SocketRole, SocketOptions> socket_options;
+  std::unordered_map<SocketRole, ICredentials *> socket_credentials;
+
+  // Credentials are allocated on the heap, to ensure they last until the end of
+  // the test they must be defined outside of the scope block below
+  std::unique_ptr<ICredentials> client_credentials;
+
+  { // Proxy Client Credentials and Socket Options - these options are used
+    // to define the client socket that the proxy will use to communicate with
+    // the backend. The proxy acts like a client to the backend
+    SocketOptions client_socket_options;
+    client_socket_options.scheme = URIScheme::INPROC;
+    client_socket_options.class_type = SocketClassType::CLIENT; 
+    client_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+    client_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    client_socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
+    client_socket_options.connection_security = SocketConnectionSecurity::INSECURE;
+    client_socket_options.protocol_type = ProtocolType::ZQTP; 
+    client_socket_options.host = "msg_proc";
+    //        client_socket_options.port = 1341;
+    client_socket_options.local_id = "internal_facing_insecure_proxy_client";
+    socket_options[SocketRole::CLIENT] = client_socket_options;
+
+    CredentialFactory cred_factory;
+    std::unordered_map<CredentialType, std::string> cred_options;
+    cred_options[CredentialType::PUBLIC_KEY] = "";
+    cred_options[CredentialType::PRIVATE_KEY] = "";
+    cred_options[CredentialType::SERVER_KEY] = "";
+
+    client_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+    socket_credentials[SocketRole::CLIENT] = client_credentials.get();
+  }
+
+  // Credentials are allocated on the heap, to ensure they last until the end of
+  // the test they must be defined outside of the scope block below
+  std::unique_ptr<ICredentials> server_credentials;
+
+  { // Proxy Server Credentials and Socket Options - these options are used
+    // to define the server socket that the proxy will use to communicate with
+    // the frontend. The proxy acts like a server to the frontend
+    SocketOptions server_socket_options;
+    server_socket_options.scheme = URIScheme::TCP;
+    server_socket_options.class_type = SocketClassType::SERVER; 
+    server_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+    server_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
+    server_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
+    server_socket_options.connection_security = SocketConnectionSecurity::INSECURE;
+    server_socket_options.protocol_type = ProtocolType::ZQTP; 
+    server_socket_options.host = "*";
+    server_socket_options.port = m_config.port + 1;
+    server_socket_options.local_id = "external_facing_secure_proxy_server";
+    socket_options[SocketRole::SERVER] = server_socket_options;
+
+    CredentialFactory cred_factory;
+
+    std::unordered_map<CredentialType, std::string> cred_options;
+    cred_options[CredentialType::PUBLIC_KEY] = "";
+    cred_options[CredentialType::PRIVATE_KEY] = "";
+    cred_options[CredentialType::SERVER_KEY] = "";
+
+    server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
+    socket_credentials[SocketRole::SERVER] = server_credentials.get();
+
+  }
+
+  ServerFactory server_factory;
+  auto proxy = server_factory.create(
+      ServerType::PROXY_BASIC_ZMQ,
+      socket_options,
+      socket_credentials);
+
+  proxy->run();
+
+//        MsgComm frontend( "tcp://*:" + to_string(m_config.port + 1), MsgComm::ROUTER, true );
+ /*       MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
+
+        zmq_proxy( frontend.getSocket(), backend.getSocket(), 0 );*/
     }
     catch( exception & e)
     {
@@ -337,6 +592,8 @@ Server::metricsThread()
     DL_ERROR( "Metrics thread exiting" );
 }
 
+// This does nothing for us
+/*
 void
 Server::zapHandler()
 {
@@ -344,7 +601,8 @@ Server::zapHandler()
 
     try
     {
-        void *      ctx = MsgComm::getContext();
+        //void *      ctx = MsgComm::getContext();
+        void *      ctx = getContext();
         void *      socket = zmq_socket( ctx, ZMQ_REP );
         int         rc;
         char        version[100];
@@ -403,6 +661,7 @@ Server::zapHandler()
 
                 zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
                 zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
+								// A value of 200 means accept a value of 400 means deny
                 zmq_send( socket, "200", 3, ZMQ_SNDMORE );
                 zmq_send( socket, "", 0, ZMQ_SNDMORE );
                 zmq_send( socket, client_key_text, strlen(client_key_text), ZMQ_SNDMORE );
@@ -438,14 +697,14 @@ Server::zapHandler()
         DL_ERROR( "ZAP handler: unknown exception type" );
     }
     DL_INFO( "ZAP handler thread exiting" );
-}
+}*/ 
 
 
 // Triggered by client worker
 void
 Server::authenticateClient( const std::string & a_cert_uid, const std::string & a_uid )
 {
-    if ( strncmp( a_cert_uid.c_str(), "anon_", 5 ) == 0 )
+    if ( a_cert_uid.compare("anon") == 0 )
     {
         m_auth_manager.addKey( PublicKeyType::TRANSIENT, a_cert_uid.substr( 5 ), a_uid);
     }

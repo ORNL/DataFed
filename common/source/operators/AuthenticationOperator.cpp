@@ -25,6 +25,8 @@ namespace SDMS {
       EXCEPT( 1, "'KEY' attribute not defined." );
     }
 
+    m_authentication_manager->purge();
+
     std::string key = std::get<std::string>(message.get(MessageAttribute::KEY));
 
     std::string uid = "anon";

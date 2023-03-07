@@ -3,6 +3,8 @@
 #define OPERATOR_TYPES_HPP
 #pragma once
 
+#include <string>
+
 namespace SDMS {
 
 enum class OperatorType {

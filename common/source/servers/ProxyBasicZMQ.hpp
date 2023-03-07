@@ -11,6 +11,7 @@
 // Standard includes
 #include <chrono>
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 namespace SDMS {
@@ -27,6 +28,10 @@ class ProxyBasicZMQ : public IServer {
     bool m_debug_output = true;
     int m_client_zmq_type;
     int m_server_zmq_type;
+
+    std::unordered_map<SocketRole, std::string> m_addresses;
+    std::string m_client_host = "";
+    std::string m_server_host = "";
   public:
     /// Convenience constructor
     ProxyBasicZMQ(
@@ -43,6 +48,10 @@ class ProxyBasicZMQ : public IServer {
     virtual void setRunDuration(std::chrono::duration<double> duration) final;
 
     virtual void run() final;
+    
+    virtual std::unordered_map<SocketRole, std::string> getAddresses() const final {
+      return m_addresses;
+    }
 };
 
 } // namespace SDMS

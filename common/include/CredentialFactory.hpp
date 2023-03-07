@@ -9,7 +9,6 @@
 // Standard includes
 #include <memory>
 #include <unordered_map>
-#include <variant>
 
 namespace SDMS {
 
@@ -17,7 +16,7 @@ class CredentialFactory {
   public:
     std::unique_ptr<ICredentials> create(
         const ProtocolType,
-        const std::unordered_map<CredentialType, std::variant<std::string>> & options) const;
+        const std::unordered_map<CredentialType, std::string> & options) const;
 };
 
 } // namespace SDMS

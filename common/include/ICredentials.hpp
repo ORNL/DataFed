@@ -7,7 +7,6 @@
 
 // Standard includes
 #include <string>
-#include <variant>
 
 namespace SDMS {
 
@@ -20,7 +19,8 @@ namespace SDMS {
   class ICredentials {
     public:
       virtual ProtocolType getType() const noexcept = 0;
-      virtual std::variant<std::string> get(const CredentialType) const = 0;
+      virtual std::string get(const CredentialType) const = 0;
+      virtual bool has(CredentialType) const noexcept = 0;
 
   };
 

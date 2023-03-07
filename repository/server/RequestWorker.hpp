@@ -1,13 +1,21 @@
 #ifndef REQUESTWORKER_HPP
 #define REQUESTWORKER_HPP
+#pragma once
 
-#include <string>
-#include <vector>
-#include <thread>
-#include <algorithm>
-#include <zmq.h>
-#include "MsgComm.hpp"
+// Local public includes
 #include "Config.hpp"
+
+// Common public includes
+#include "IMessage.hpp"
+#include "IMessageMapper.hpp"
+#include "MessageFactory.hpp"
+
+// Standard includes
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace SDMS {
 namespace Repo {
@@ -25,11 +33,12 @@ public:
 private:
     void        setupMsgHandlers();
     void        workerThread();
-    void        procVersionRequest();
-    void        procDataDeleteRequest();
-    void        procDataGetSizeRequest();
-    void        procPathCreateRequest();
-    void        procPathDeleteRequest();
+
+    std::unique_ptr<IMessage>    procVersionRequest    (std::unique_ptr<IMessage> && );
+    std::unique_ptr<IMessage>    procDataDeleteRequest (std::unique_ptr<IMessage> && );
+    std::unique_ptr<IMessage>    procDataGetSizeRequest(std::unique_ptr<IMessage> && );
+    std::unique_ptr<IMessage>    procPathCreateRequest (std::unique_ptr<IMessage> && );
+    std::unique_ptr<IMessage>    procPathDeleteRequest (std::unique_ptr<IMessage> && );
 
 
     Config &            m_config;
@@ -37,10 +46,14 @@ private:
     std::thread *       m_worker_thread;
     bool                m_run;
 
-    MsgBuf              m_msg_buf;
+    //MsgBuf              m_msg_buf;
 
-    typedef void (RequestWorker::*msg_fun_t)();
+    typedef std::unique_ptr<IMessage> (RequestWorker::*msg_fun_t)(std::unique_ptr<IMessage> && request );
+    //typedef void (RequestWorker::*msg_fun_t)();
     static std::map<uint16_t,msg_fun_t> m_msg_handlers;
+
+    std::unique_ptr<IMessageMapper> m_msg_mapper;
+    MessageFactory m_msg_factory;
 };
 
 }}

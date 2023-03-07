@@ -1,5 +1,6 @@
 #ifndef TASKWORKER_HPP
 #define TASKWORKER_HPP
+#pragma once
 
 #include <string>
 #include <thread>
@@ -7,6 +8,14 @@
 #include "GlobusAPI.hpp"
 #include "ITaskMgr.hpp"
 #include "ITaskWorker.hpp"
+
+// Common public includes
+#include "ICommunicator.hpp"
+#include "IMessage.hpp"
+
+// Standard includes
+#include <memory>
+#include <unordered_map>
 
 namespace SDMS {
 namespace Core {
@@ -20,16 +29,24 @@ public:
 
 private:
 
+
+    typedef ICommunicator::Response (*task_function_t)(TaskWorker & me,  const libjson::Value & a_task_params);
+
+    // uint32_t - TaskCommand enum 
+    std::unordered_map<uint32_t,task_function_t > m_execute;
+
     void        workerThread();
-    bool        cmdRawDataTransfer( const libjson::Value & a_task_params );
-    bool        cmdRawDataDelete( const libjson::Value & a_task_params );
-    bool        cmdRawDataUpdateSize( const libjson::Value & a_task_params );
-    bool        cmdAllocCreate( const libjson::Value & a_task_params );
-    bool        cmdAllocDelete( const libjson::Value & a_task_params );
+
+    // Must be static to store function pointers in a map
+    static ICommunicator::Response        cmdRawDataTransfer(TaskWorker & me, const libjson::Value & a_task_params );
+    static ICommunicator::Response        cmdRawDataDelete(TaskWorker & me, const libjson::Value & a_task_params );
+    static ICommunicator::Response        cmdRawDataUpdateSize(TaskWorker & me, const libjson::Value & a_task_params );
+    static ICommunicator::Response        cmdAllocCreate(TaskWorker & me, const libjson::Value & a_task_params );
+    static ICommunicator::Response        cmdAllocDelete(TaskWorker & me, const libjson::Value & a_task_params );
 
     bool        checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info, Encryption a_encrypt );
     bool        checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info1, const GlobusAPI::EndpointInfo & a_ep_info2, Encryption a_encrypt );
-    bool        repoSendRecv( const std::string & a_repo_id, MsgBuf::Message & a_msg, MsgBuf::Message *& a_reply );
+    ICommunicator::Response repoSendRecv( const std::string & a_repo_id, std::unique_ptr<IMessage> && a_msg );
 
     ITaskMgr &                  m_mgr;
     std::thread *               m_thread;

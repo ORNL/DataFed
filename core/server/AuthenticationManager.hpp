@@ -13,6 +13,7 @@
 // Standard includes
 #include <memory>
 #include <map>
+#include <mutex>
 #include <vector>
 
 namespace SDMS {
@@ -28,9 +29,14 @@ class AuthenticationManager : public IAuthenticationManager {
     std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>> m_purge_conditions;
 
     AuthMap m_auth_mapper;
+
+    mutable std::mutex m_lock;
 public:
 
     AuthenticationManager() {};
+
+    AuthenticationManager & operator=(AuthenticationManager&& other);
+
 
     AuthenticationManager(
         std::map<PublicKeyType, time_t> purge_intervals,
@@ -53,6 +59,12 @@ public:
      * The session key counter will be set back to 0 if it has been used and is not purged.
      **/
     virtual void purge(const PublicKeyType pub_key_type) final;
+
+    /**
+     * Calls purge for both TRANSIENT and SESSION keys. If they need to be 
+     * purged they are.
+     */
+    virtual void purge() final;
 
     /**
      * Will return true if the public key is known is associated with a user account.
