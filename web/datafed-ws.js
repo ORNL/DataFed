@@ -1631,9 +1631,9 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
         //console.log("Sending to ", g_core_serv_addr);
         //console.log( "sendMsg:", a_msg_name );
         if ( msg_buf.length )
-            g_core_sock.send([ nullfr, frame, msg_buf, client, nullfr ]);
+            g_core_sock.send([ nullfr, frame, msg_buf, nullfr, client ]);
         else
-            g_core_sock.send([ nullfr, frame, nullfr, client, nullfr ]);
+            g_core_sock.send([ nullfr, frame, nullfr, nullfr, client ]);
     });
 }
 
@@ -1658,9 +1658,9 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
         if ( msg_buf.length )
             // ZeroMQ socket g_core_sock - not Dale's code it is a library
-            g_core_sock.send([ nullfr, frame, msg_buf, a_client, nullfr ]);
+            g_core_sock.send([ nullfr, frame, msg_buf, nullfr, a_client ]);
         else
-            g_core_sock.send([ nullfr, frame, a_client, nullfr, nullfr ]);
+            g_core_sock.send([ nullfr, frame, nullfr, nullfr, a_client ]);
     });
 }
 
