@@ -16,6 +16,5 @@ jobs:
           cmake -S. -B build
           cmake --build build -j4
       - name: Run tests
-        if: github.ref == 'refs/heads/main'
         run: |
           cmake --build build --target test
