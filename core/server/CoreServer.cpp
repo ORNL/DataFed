@@ -362,9 +362,9 @@ Server::ioSecure()
           CredentialFactory cred_factory;
 
           std::unordered_map<CredentialType, std::string> cred_options;
-          cred_options[CredentialType::PUBLIC_KEY] = m_config.sec_ctx->get(CredentialType::PUBLIC_KEY);
+          //cred_options[CredentialType::PUBLIC_KEY] = m_config.sec_ctx->get(CredentialType::PUBLIC_KEY);
           cred_options[CredentialType::PRIVATE_KEY] = m_config.sec_ctx->get(CredentialType::PRIVATE_KEY);
-          cred_options[CredentialType::SERVER_KEY] = m_config.sec_ctx->get(CredentialType::SERVER_KEY);
+          //cred_options[CredentialType::SERVER_KEY] = m_config.sec_ctx->get(CredentialType::SERVER_KEY);
 
           server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
           socket_credentials[SocketRole::SERVER] = server_credentials.get();
@@ -430,9 +430,9 @@ Server::ioInsecure()
 
     CredentialFactory cred_factory;
     std::unordered_map<CredentialType, std::string> cred_options;
-    cred_options[CredentialType::PUBLIC_KEY] = "";
-    cred_options[CredentialType::PRIVATE_KEY] = "";
-    cred_options[CredentialType::SERVER_KEY] = "";
+    //cred_options[CredentialType::PUBLIC_KEY] = "";
+    //cred_options[CredentialType::PRIVATE_KEY] = "";
+    //cred_options[CredentialType::SERVER_KEY] = "";
 
     client_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
     socket_credentials[SocketRole::CLIENT] = client_credentials.get();
@@ -461,9 +461,9 @@ Server::ioInsecure()
     CredentialFactory cred_factory;
 
     std::unordered_map<CredentialType, std::string> cred_options;
-    cred_options[CredentialType::PUBLIC_KEY] = "";
-    cred_options[CredentialType::PRIVATE_KEY] = "";
-    cred_options[CredentialType::SERVER_KEY] = "";
+    //cred_options[CredentialType::PUBLIC_KEY] = "";
+    //cred_options[CredentialType::PRIVATE_KEY] = "";
+    //cred_options[CredentialType::SERVER_KEY] = "";
 
     server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
     socket_credentials[SocketRole::SERVER] = server_credentials.get();

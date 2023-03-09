@@ -35,12 +35,12 @@ ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid ) :
     m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_worker_thread(0), m_run(true),
     m_db_client( m_config.db_url , m_config.db_user, m_config.db_pass )
 {
+    // This should be hidden behind a factory or some other builder
+    m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
     DL_DEBUG("Calling setupMsgHandlers");
     setupMsgHandlers();
     DL_DEBUG("Creating m_worker_thread");
     m_worker_thread = new thread( &ClientWorker::workerThread, this );
-    // This should be hidden behind a factory or some other builder
-    m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
 }
 
 ClientWorker::~ClientWorker()
@@ -90,7 +90,7 @@ ClientWorker::setupMsgHandlers()
         // Register and setup handlers for the Anonymous interface
 
         uint8_t proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_ANONONYMOUS); //REG_PROTO( SDMS::Anon );
-
+        std::cout << "Setting up MSGHandler with proto_id " << proto_id << std::endl;
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, VersionRequest, &ClientWorker::procVersionRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
@@ -589,7 +589,7 @@ ClientWorker::procVersionRequest( const std::string & a_uid, std::unique_ptr<IMe
     reply.set_repo( VER_REPO );
     reply.set_web( VER_WEB );
     reply.set_client_py( VER_CLIENT_PY );
-
+    std::cout << "Setting version info " << VER_MAJOR << "." << VER_MAPI_MAJOR << std::endl;
     PROC_MSG_END
 }
 

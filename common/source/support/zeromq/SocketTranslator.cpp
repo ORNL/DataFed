@@ -33,6 +33,23 @@ namespace SDMS {
       }
   }
 
+  std::string zmqSocketTypeToString(int zmq_enum_val) {
+    if( zmq_enum_val == ZMQ_REQ) {
+      return std::string("ZMQ_REQ");
+    } else if (zmq_enum_val == ZMQ_SUB) { 
+      return std::string("ZMQ_SUB"); 
+    } else if (zmq_enum_val == ZMQ_DEALER) { 
+      return std::string("ZMQ_DEALER"); 
+    } else if (zmq_enum_val == ZMQ_REP) { 
+      return std::string("ZMQ_REP"); 
+    } else if (zmq_enum_val == ZMQ_PUB) { 
+      return std::string("ZMQ_PUB"); 
+    } else if (zmq_enum_val == ZMQ_ROUTER) { 
+      return std::string("ZMQ_ROUTER"); 
+    }
+    return "Unknown ZMQ type may not yet be registered";
+  }
+
 	int translateToZMQSocket(ISocket * socket) {
 
 	  const auto categorizer = getCategorizer();

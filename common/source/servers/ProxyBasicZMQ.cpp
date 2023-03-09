@@ -45,12 +45,12 @@ namespace SDMS {
       
     	m_client_zmq_type = translateToZMQSocket(socket_options.at(SocketRole::CLIENT));
 			if( m_client_zmq_type != ZMQ_DEALER){
-				EXCEPT(1, "ProxyBasicZMQ frontend currently only supports DEALER type");
+				EXCEPT_PARAM(1, "ProxyBasicZMQ frontend currently only supports DEALER type, the type provided is: " << zmqSocketTypeToString(m_client_zmq_type));
 			}	
 
 			m_server_zmq_type = translateToZMQSocket(socket_options.at(SocketRole::SERVER));
 			if( m_server_zmq_type != ZMQ_ROUTER){
-				EXCEPT(1, "ProxyBasicZMQ backend currently only supports ROUTER type");
+				EXCEPT_PARAM(1, "ProxyBasicZMQ backend currently only supports ROUTER type, the type provided is: " << zmqSocketTypeToString(m_server_zmq_type));
 			}
 
 			if( socket_options.at(SocketRole::SERVER).protocol_type != ProtocolType::ZQTP ) {
@@ -61,8 +61,8 @@ namespace SDMS {
 				EXCEPT(1, "ProxyBasicZMQ client currently only supports ZQTP protocol");
 			}	
 
-			if( socket_options.at(SocketRole::SERVER).scheme != URIScheme::INPROC ) {
-				EXCEPT(1, "ProxyBasicZMQ server currently only supports inproc scheme");
+			if( socket_options.at(SocketRole::SERVER).scheme != URIScheme::INPROC and socket_options.at(SocketRole::SERVER).scheme != URIScheme::TCP) {
+				EXCEPT(1, "ProxyBasicZMQ server currently only supports inproc and TCP scheme");
 			}
 		
 			if( socket_options.at(SocketRole::CLIENT).scheme != URIScheme::INPROC ) {
@@ -241,6 +241,7 @@ namespace SDMS {
 			  capture_thread = std::thread(proxy_log_call, m_addresses[SocketRole::MONITOR]);
       }
 
+      std::cout << "Creating ROUTER socket" << std::endl;
 			void *router_frontend_socket = zmq_socket (ctx, ZMQ_ROUTER);
 			if( not router_frontend_socket) {
         EXCEPT(1, "Problem creating frontend ROUTER socket");
@@ -253,12 +254,14 @@ namespace SDMS {
        * The socket on the proxy that will connect with the frontend is a
        * server socket. The proxy serves the frontend.
        **/
+      std::cout << "Binding ROUTER to address: " << m_server_socket->getAddress() << std::endl;
 			int rc = zmq_bind (router_frontend_socket, m_server_socket->getAddress().c_str());
 			if( rc ) {
-        EXCEPT_PARAM(1, "Problem binding frontend ROUTER socket, address: " << m_server_socket->getAddress());
+        EXCEPT_PARAM(1, "Problem binding frontend ROUTER socket, address: " << m_server_socket->getAddress() << " zmq_error: " << zmq_strerror(zmq_errno()));
       }
 
 			// Backend socket talks to workers over inproc
+      std::cout << "Creating DEALER socket" << std::endl;
 			void *dealer_backend_socket = zmq_socket (ctx, ZMQ_DEALER);
       if( not router_frontend_socket) {
         EXCEPT(1, "Problem creating backend DEALER socket");
@@ -271,6 +274,7 @@ namespace SDMS {
        * The socket on the proxy that will connect with the backend is a
        * client socket. The proxy acts like a client to the backend.
        **/
+      std::cout << "Binding DEALER socket to address: " << m_client_socket->getAddress() << std::endl;
 			rc = zmq_bind (dealer_backend_socket, m_client_socket->getAddress().c_str());
 			if( rc ) {
         EXCEPT_PARAM(1, "Problem binding backend DEALER socket, address: " << m_client_socket->getAddress());

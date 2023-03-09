@@ -69,19 +69,23 @@ namespace SDMS {
     inline void copyToBuffer(Buffer & buffer, const T data, size_t size) {
       if(size > 0) {
         buffer.reserve(size);
-        if constexpr( std::is_base_of<::google::protobuf::Message,std::remove_pointer_t<T>>::value ) {
-          try {
-            if ( !data->IsInitialized() ) {
-              EXCEPT( 1, "Cannot copy message to buffer it is missing required fields" );
+        try {
+          if constexpr( std::is_base_of<::google::protobuf::Message,std::remove_pointer_t<T>>::value ) {
+            try {
+              if ( !data->IsInitialized() ) {
+                EXCEPT( 1, "Cannot copy message to buffer it is missing required fields" );
+              }
+              if ( !data->SerializeToArray( buffer.m_buffer.get(), size )) {
+                EXCEPT( 1, "SerializeToArray for message failed." );
+              }
+            } catch (...) {
+              EXCEPT(1, "memcpy failed in buffer for google protobuf message.");
             }
-            if ( !data->SerializeToArray( buffer.m_buffer.get(), size )) {
-              EXCEPT( 1, "SerializeToArray for message failed." );
-            }
-          } catch (...) {
-            EXCEPT(1, "memcpy failed in buffer for google protobuf message.");
+          } else {
+            memcpy( buffer.m_buffer.get(), data, size);
           }
-        } else {
-          memcpy( buffer.m_buffer.get(), data, size);
+        } catch (...) {
+          EXCEPT_PARAM(1, "Error when copying data to buffer");
         }
       }
       buffer.m_size = size;
@@ -90,14 +94,18 @@ namespace SDMS {
   template<typename T>
     inline void copyFromBuffer(T data, const Buffer & buffer) {
       if( buffer.m_size > 0 ) {
-        if constexpr( std::is_base_of<::google::protobuf::Message, std::remove_pointer_t<T>>::value ) {
-          try {
-            data->ParseFromArray( (void *) buffer.m_buffer.get(), buffer.m_size);
-          } catch (...) {
-            EXCEPT(1, "memcpy failed in buffer.");
+        try {
+          if constexpr( std::is_base_of<::google::protobuf::Message, std::remove_pointer_t<T>>::value ) {
+            try {
+              data->ParseFromArray( (void *) buffer.m_buffer.get(), buffer.m_size);
+            } catch (...) {
+              EXCEPT(1, "memcpy failed in buffer.");
+            }
+          } else {
+            memcpy( data, buffer.m_buffer.get(), buffer.m_size);
           }
-        } else {
-          memcpy( data, buffer.m_buffer.get(), buffer.m_size);
+        } catch (...) {
+          EXCEPT_PARAM(1, "Error when copying data from buffer.");
         }
       }
     }

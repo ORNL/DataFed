@@ -19,3 +19,7 @@ Refer to the "BUILD.md" file for instructions on how to configure and build Data
 # Installation Core Server and Web Server
 
 Please see documentation at doc_source/source/admin/general.rst for installation instructions.
+
+# Warning
+
+If encountering strange seg faults with zmq, it is possible that it is caused by reusing an address when creating a socket.

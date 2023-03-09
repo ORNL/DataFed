@@ -13,7 +13,7 @@ jobs:
           sudo ./scripts/install_core_dependencies.sh
       - name: Build
         run: |
-          cmake -S. -B build
+          cmake -S. -B build -DCMAKE_BUILD_TYPE=Debug
           cmake --build build -j4
       - name: Run tests
         run: |

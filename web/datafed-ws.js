@@ -86,10 +86,12 @@ function startServer(){
     console.log( "  Test mode:", g_test );
 
     console.log( "Connecting to Core" );
-
+    console.log(g_core_serv_addr);
     g_core_sock.connect( g_core_serv_addr );
-
+    console.log("VersionRequest");
     sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
+        console.log("Reply is");
+        console.log(reply);
         if ( !reply ){
             console.log( "ERROR: No reply from core server" );
         }else if ( reply.major != g_ver_major || reply.mapiMajor != g_ver_mapi_major ||
@@ -1630,16 +1632,38 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
         //console.log("msg buffer", msg_buf.toString('hex'));
         //console.log("Sending to ", g_core_serv_addr);
         //console.log( "sendMsg:", a_msg_name );
-        if ( msg_buf.length )
-            g_core_sock.send([ nullfr, frame, msg_buf, nullfr, client ]);
-        else
-            g_core_sock.send([ nullfr, frame, nullfr, nullfr, client ]);
+        var route_count = Buffer.alloc(4);
+        route_count.writeUInt32BE( 0, 0 );
+        if ( msg_buf.length ) {
+            console.log("sending multipart message bam");
+            //g_core_sock.send([ nullfr, nullfr, frame, msg_buf, nullfr, client ]);
+            g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
+            g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send("no key" ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(msg_buf);
+        } else {
+            console.log("sending multipart message boom");
+            //g_core_sock.send([ nullfr, nullfr, frame, nullfr, nullfr, client ]);
+            g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
+            g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send("no key" ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(a_client ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(frame );
+
+        }
+
     });
 }
 
 
 function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
+    console.log("Sending MessageDirect");
     var msg = g_msg_by_name[a_msg_name];
+    console.log(msg);
     if ( !msg )
         throw "Invalid message type: " + a_msg_name;
 
@@ -1656,11 +1680,43 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
 
         g_ctx[ctx] = a_cb;
 
-        if ( msg_buf.length )
+        console.log("a_client is");
+        console.log(a_client);
+        console.log("Buffer length");
+        console.log(msg_buf.length);
+
+        var route_count = Buffer.alloc(4);
+        route_count.writeUInt32BE( 0, 0 );
+
+        if ( msg_buf.length ) {
             // ZeroMQ socket g_core_sock - not Dale's code it is a library
-            g_core_sock.send([ nullfr, frame, msg_buf, nullfr, a_client ]);
-        else
-            g_core_sock.send([ nullfr, frame, nullfr, nullfr, a_client ]);
+            //g_core_sock.send([ nullfr, nullfr, frame, msg_buf, nullfr, a_client ]);
+            console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, nullfr, frame, msg_buf, '', a_client ]");
+
+
+            g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
+            //g_core_sock.send(0 ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(msg_buf);
+        } else {
+            console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, nullfr, frame, nullfr, '', a_client ]");
+            //g_core_sock.send([ nullfr, "" ,nullfr, frame, nullfr, nullfr, a_client ]);
+            //g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
+            //g_core_sock.send(0 ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
+            //g_core_sock.send("dummy_route" ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(nullfr);
+        }
+        console.log("Message was sent");
     });
 }
 
@@ -1745,10 +1801,17 @@ process.on('unhandledRejection', (reason, p) => {
 
 // This is the reply part 
 // on - method is a way of subscribing to events
-g_core_sock.on('message', function( delim, frame, msg_buf ) {
+g_core_sock.on('message', function( delim, header, route_count, delim2, key, id, frame, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );
     //console.log( "frame", frame.toString('hex') );
-    /*var mlen =*/ frame.readUInt32BE( 0 );
+    /*var mlen =*/ 
+    console.log("Receiving messages");
+    console.log(delim); 
+    console.log("header");
+    console.log(header.toString());
+    console.log(key.toString());
+    console.log(id.toString());
+    frame.readUInt32BE( 0 );
     var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
     var ctx = frame.readUInt16BE( 6 );
 

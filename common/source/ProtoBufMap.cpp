@@ -29,6 +29,7 @@ namespace SDMS {
         EXCEPT( EC_PROTO_INIT, "Protocol enum missing required ID field." );
 
       uint16_t id = val_desc->number();
+      std::cout << "PROTOCOL id is " << id << std::endl;
       m_file_descriptor_map[id] = file;
 
       int                     count = file->message_type_count();
@@ -57,6 +58,7 @@ namespace SDMS {
         EXCEPT( EC_PROTO_INIT, "Protocol enum missing required ID field." );
 
       uint16_t id = val_desc->number();
+      std::cout << "PROTOCOL id is " << id << std::endl;
       m_file_descriptor_map[id] = file;
 
       int                     count = file->message_type_count();
@@ -84,6 +86,7 @@ namespace SDMS {
 
   uint16_t ProtoBufMap::getMessageType(uint8_t a_proto_id, const std::string & a_message_name) {
 
+        std::cout << "PROTOCOL id is " << a_proto_id << std::endl;
         if( m_file_descriptor_map.count( a_proto_id ) == 0 ) {
             EXCEPT_PARAM( EC_INVALID_PARAM, "Protocol ID " << a_proto_id << " has not been registered." );
         }
@@ -110,7 +113,7 @@ namespace SDMS {
 
   uint8_t ProtoBufMap::getProtocolID(MessageProtocol msg_protocol) const {
     if( m_protocol_ids.count(msg_protocol) ) {
-      return m_protocol_ids.at(msg_protocol);
+      return static_cast<uint8_t>(m_protocol_ids.at(msg_protocol));
     } else {
       EXCEPT(1, "Unsupported MessageProtocol specified, cannot map to a protocol id");
     }

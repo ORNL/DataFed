@@ -53,6 +53,10 @@ namespace SDMS {
     int translateToZMQSocket(ISocket * socket);
     int translateToZMQSocket(const SocketOptions & options);
 
+    /**
+     * Convert a zmq socket type to printable string.
+     **/
+    std::string zmqSocketTypeToString(int zmq_enum_val);
 } // namespace SDMS
 
 #endif // SOCKETTRANSLATOR_HPP

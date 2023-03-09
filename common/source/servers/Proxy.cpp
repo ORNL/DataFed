@@ -46,11 +46,7 @@ namespace SDMS {
         EXCEPT(1, "Proxy must have socket credentials for SERVER"); 
       }
 
-      if( socket_options.at(SocketRole::CLIENT).connection_life == SocketConnectionLife::PERSISTENT ){
-        if( socket_options.at(SocketRole::CLIENT).class_type != SocketClassType::SERVER ) {
-          EXCEPT_PARAM( 1, "Custom proxy does not yet support persistent connections for any socket class but server." );
-        }
-      } else {
+      if( socket_options.at(SocketRole::CLIENT).connection_life == SocketConnectionLife::INTERMITTENT ){
         if( socket_options.at(SocketRole::CLIENT).class_type != SocketClassType::CLIENT ) {
           EXCEPT_PARAM( 1, "Custom proxy does not yet support intermittent connections for any socket class but client." );
         }
@@ -58,14 +54,14 @@ namespace SDMS {
 
       CommunicatorFactory communication_factory;
 
-      std::cout << "Creating proxy CLIENT" << std::endl;
+      //std::cout << "Creating proxy CLIENT" << std::endl;
       m_communicators[SocketRole::CLIENT] = communication_factory.create(
           socket_options.at(SocketRole::CLIENT),
           *socket_credentials.at(SocketRole::CLIENT),
           m_timeout_on_receive_milliseconds,
           m_timeout_on_poll_milliseconds);
       
-      std::cout << "Creating proxy SERVER" << std::endl;
+      //std::cout << "Creating proxy SERVER" << std::endl;
       m_communicators[SocketRole::SERVER] = communication_factory.create(
           socket_options.at(SocketRole::SERVER),
           *socket_credentials.at(SocketRole::SERVER),
@@ -93,7 +89,7 @@ namespace SDMS {
         // 
         //                                              <- POLL_IN
         // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock - Inter App
-        std::cout << m_communicators[SocketRole::CLIENT]->id() << " poll" << std::endl;
+        //std::cout << m_communicators[SocketRole::CLIENT]->id() << " poll" << std::endl;
         auto resp_from_client_socket = m_communicators[SocketRole::CLIENT]->poll(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
         if(resp_from_client_socket.error){
@@ -107,7 +103,7 @@ namespace SDMS {
         //                              POLL_IN  -> 
         // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock - Inter App
         //std::cout << "Proxy polling for messages from  client" << std::endl;
-        std::cout << m_communicators[SocketRole::SERVER]->id() << " poll" << std::endl;
+        //std::cout << m_communicators[SocketRole::SERVER]->id() << " poll" << std::endl;
         auto resp_from_server_socket = m_communicators[SocketRole::SERVER]->poll(MessageType::GOOGLE_PROTOCOL_BUFFER);
         if(resp_from_server_socket.error){
           std::cout << m_communicators[SocketRole::SERVER]->id() << " error detected: " << resp_from_server_socket.error_msg << std::endl;

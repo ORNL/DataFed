@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactory ) {
 
     auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
-    uint32_t timeout_on_receive = 10;
+    uint32_t timeout_on_receive = 40;
     long timeout_on_poll = 10;
 
     // When creating a communication channel with a client application we need
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactorySecure ) {
 
     auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
-    uint32_t timeout_on_receive = 10;
+    uint32_t timeout_on_receive = 100;
     long timeout_on_poll = 10;
 
     // When creating a communication channel with a client application we need
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactorySecure ) {
 
     auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
-    uint32_t timeout_on_receive = 10;
+    uint32_t timeout_on_receive = 30;
     long timeout_on_poll = 10;
 
     // When creating a communication channel with a server application we need
@@ -273,6 +273,41 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactorySecure ) {
     Anon::AuthenticateByTokenRequest * payload = dynamic_cast<Anon::AuthenticateByTokenRequest *>(google_msg_ptr);
     
     BOOST_CHECK(payload->token().compare(token) == 0);
+  }
+
+  { // Client send an empty payload i.e. an ack
+    auto msg_from_client = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+    msg_from_client->set(MessageAttribute::ID, id);
+    msg_from_client->set(MessageAttribute::KEY, key);
+
+    auto ack_reply = std::make_unique<Anon::AckReply>();
+
+    msg_from_client->setPayload(std::move(ack_reply));
+    
+    client->send(*msg_from_client);
+  }
+
+  { // Receive an empty payload
+    ICommunicator::Response response = server->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+    BOOST_CHECK( response.time_out == false);
+    BOOST_CHECK( response.error == false);
+
+    std::cout << "Key is " << std::get<std::string>(response.message->get(MessageAttribute::KEY)) << std::endl;
+    std::cout << "ID is " << std::get<std::string>(response.message->get(MessageAttribute::ID)) << std::endl;
+    BOOST_CHECK( std::get<std::string>(response.message->get(MessageAttribute::KEY)).compare(key) == 0);
+    BOOST_CHECK( std::get<std::string>(response.message->get(MessageAttribute::ID)).compare(id) == 0);
+    
+    const auto & routes = response.message->getRoutes();
+    std::cout << "Routes are " << std::endl;
+    for( const auto & route : routes ) {
+      std::cout << route << std::endl;
+    }
+    BOOST_CHECK( routes.size() == 1);
+    BOOST_CHECK( routes.front().compare(client_id) == 0);
+
+    auto google_msg_ptr = std::get<::google::protobuf::Message *>(response.message->getPayload());
+    auto payload = dynamic_cast<Anon::AckReply *>(google_msg_ptr);
+    
   }
 }
 

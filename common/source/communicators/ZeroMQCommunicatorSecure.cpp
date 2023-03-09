@@ -39,17 +39,17 @@ namespace SDMS {
 
       uint8_t private_key[32];
       if ( !zmq_z85_decode( private_key, local_priv_key.c_str() )) {
-        EXCEPT_PARAM( 1, "Decode private key failed. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "Decode private key failed when constructing ZeroMQ Server. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
       if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SECRETKEY, private_key, 32 )) == -1 ) {
-        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_SECRETKEY failed. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_SECRETKEY failed when constructing ZeroMQ Server. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
       int curve_server = 1;
 
       if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SERVER, &curve_server, sizeof(curve_server))) == -1 ) {
-        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_SERVER failed. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_SERVER failed when constructing ZeroMQ Server. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
     } else if( m_socket->getSocketClassType() == SocketClassType::CLIENT ) {
@@ -69,30 +69,30 @@ namespace SDMS {
 
       uint8_t private_key[32];
       if ( !zmq_z85_decode( private_key, local_priv_key.c_str() )) {
-        EXCEPT_PARAM( 1, "Decode private key failed. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "Decode private key failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
       uint8_t public_key[32];
       if ( !zmq_z85_decode( public_key, local_pub_key.c_str() )) {
-        EXCEPT_PARAM( 1, "Decode public key failed. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "Decode public key failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
       uint8_t server_key[32];
       if ( !zmq_z85_decode( server_key, local_serv_key.c_str() )) {
         std::cout << "Local server public key " << local_serv_key << std::endl;
-        EXCEPT_PARAM( 1, "Decode server public key failed. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "Decode server public key failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
       if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SECRETKEY, public_key, 32 )) == -1 ) {
-        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_PUBLICKEY failed. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_PUBLICKEY failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
       if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_PUBLICKEY, public_key, 32 )) == -1 ) {
-        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_PUBLICKEY failed. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_PUBLICKEY failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
       if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SERVERKEY, server_key, 32 )) == -1 ) {
-        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_PUBLICKEY failed. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_PUBLICKEY failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
       /*std::cout << "server_key " << server_key << std::endl;
       if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SERVERKEY, server_key.c_str(), 40 )) == -1 ) {

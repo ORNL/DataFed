@@ -131,5 +131,31 @@ BOOST_AUTO_TEST_CASE( testing_Buffer_googleprotobuf ) {
   BOOST_CHECK( new_auth_by_pass_req->uid().compare(uid) == 0);
 
 }
+
+BOOST_AUTO_TEST_CASE( testing_Buffer_googleprotobuf_empty_payload ) {
+
+  ProtoBufMap proto_map;
+  ProtoBufFactory proto_factory;
+
+  SDMS::Anon::AckReply ack_reply;
+
+  Buffer buffer;
+  std::cout << "Calling Copy to buffer" << std::endl;
+  size_t size = ack_reply.ByteSizeLong();
+  copyToBuffer(buffer, &ack_reply, size);
+
+  BOOST_CHECK( buffer.size() == buffer.capacity() );
+  BOOST_CHECK( buffer.size() == ack_reply.ByteSizeLong());
+
+  // Create a new message and copy the buffer into it
+  uint16_t msg_type = proto_map.getMessageType(ack_reply); 
+  std::unique_ptr<::google::protobuf::Message> new_msg = proto_factory.create(msg_type);
+
+  copyFromBuffer(new_msg.get(), buffer);  
+
+  auto new_auth_by_pass_req = dynamic_cast<SDMS::Anon::AckReply *>(new_msg.get());
+
+
+}
 BOOST_AUTO_TEST_SUITE_END()
 

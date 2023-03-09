@@ -42,10 +42,23 @@ namespace SDMS {
         EXCEPT( 1, "zmq_msg_send (delimiter) failed." );
       }
       //std::cout << "sendDeliminter number of bytes" << number_of_bytes << std::endl;
-      std::cout << "0" << std::endl;
+      std::cout << "null" << std::endl;
       zmq_msg_close( &zmq_msg );
     }
 
+    void sendFinalDelimiter(void * outgoing_zmq_socket) {
+      // Send NULL delimiter
+      zmq_msg_t zmq_msg;
+      zmq_msg_init( &zmq_msg );
+      int number_of_bytes = 0;
+      // INDICATES no more parts
+      if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, 0 )) < 0 ) {
+        EXCEPT( 1, "zmq_msg_send (delimiter) failed." );
+      }
+      //std::cout << "sendDeliminter number of bytes" << number_of_bytes << std::endl;
+      std::cout << "null" << std::endl;
+      zmq_msg_close( &zmq_msg );
+    }
     /** Note exactly sure what information is in the route? Or even if this is being
      * used anywhere?
      *
@@ -126,16 +139,183 @@ namespace SDMS {
      * The only time we can expect an additional prefixed message is if the
      * server is of the ROUTER type.
      **/
+          // null
+          // "BEGIN DATAFED" - String
+          // 0 - number of routes
+          // null
+          // Frame starts here - function will not read
+          //
+          // If there was a route
+          //
+          // null
+          // "BEGIN DATAFED" - String
+          // 1 - number of routes
+          // Route 1
+          // null
+          // Frame - function will not read
+          //
+          // Or
+          //
+          // null
+          // "BEGIN DATAFED" - String
+          // 2 - number of routes
+          // Route 1
+          // Route 2
+          // null
+          // Frame - function will not read
+          //
+          // Or
+          //
+          // Route 1
+          // null
+          // "BEGIN DATAFED" - String
+          // - number of routes
+          // Route 2
+          // Route 3
+          // null
+          // Frame - function will not read
+          //
+          // Or
+          //
+          // Route 1
+          // null
+          // "BEGIN DATAFED" - String
+          // 0 - number of routes
+          // null
+          // Frame - function will not read
     void receiveRoute(IMessage & msg, void * incoming_zmq_socket, const int zmq_socket_type) {
 
       // Number of delimiters in routing section
-      int number_of_delimiters = 0;
-      if( zmq_socket_type == ZMQ_ROUTER ) {
-        number_of_delimiters = 1;
+      //int number_of_delimiters = 0;
+      //if( zmq_socket_type == ZMQ_ROUTER ) {
+     //   number_of_delimiters = 1;
+      //}
+    
+      // If the first frame is not empty assume it is a route that was provided by the internals of zmq
+      std::string previous_route = "";
+      bool zmq_provided_route_detected = false;
+      std::string received_part = "";
+      while ( received_part.compare("BEGIN_DATAFED")!=0 ){
+        zmq_msg_t zmq_msg;
+        zmq_msg_init( &zmq_msg );
+        int number_of_bytes = 0;
+        if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
+          EXCEPT( 1, "receiveRoute zmq_msg_recv (route) failed." );
+        }
+        size_t len = zmq_msg_size( &zmq_msg );
+        //std::cout << "Initial message part size " << len << std::endl;
+        if(len) {
+          if ( len > 255 ) {
+            EXCEPT( 1, "Message route segment exceeds max allowed length." );
+          }
+          zmq_provided_route_detected = true;
+          received_part = std::string((char*) zmq_msg_data(&zmq_msg), zmq_msg_size(&zmq_msg));
+          if(received_part.compare("BEGIN_DATAFED") == 0 ) {
+            std::cout << "BEGIN_DATAFED" << std::endl;
+            zmq_msg_close( &zmq_msg );
+            break;
+          } else {
+            previous_route = received_part;
+            std::cout << received_part << std::endl;
+            msg.addRoute(received_part);
+          }
+        } else {
+          std::cout << "null" << std::endl;
+        }
+        zmq_msg_close( &zmq_msg );
       }
-     
-      std::cout << "receiveRoute number of expected deliminters " << number_of_delimiters << std::endl;
-      int count = 0;
+
+      // This will mean that the following message part should be a null frame
+      /*if( zmq_provided_route_detected ){
+        zmq_msg_t zmq_msg;
+        zmq_msg_init( &zmq_msg );
+        int number_of_bytes = 0;
+        if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
+          EXCEPT( 1, "receiveRoute zmq_msg_recv (route) failed." );
+        }
+        size_t len = zmq_msg_size( &zmq_msg );
+        if(len != 0) {
+            std::string val((char*) zmq_msg_data(&zmq_msg), zmq_msg_size(&zmq_msg));
+            std::cout << "null" << " - should be null has size = " << len << " val is " << val << std::endl;
+            EXCEPT( 1, "Expected a null frame following zmq_provided socket identifier." );
+        } else {
+          std::cout << "null" <<  std::endl;
+        }
+        zmq_msg_close( &zmq_msg );
+      }*/
+
+      // The next message should be a number indicating how many additional routes will follow
+      //std::cout << "receiveRoute number of expected deliminters " << number_of_delimiters << std::endl;
+      uint32_t number_of_routes = 0;
+      {
+        zmq_msg_t zmq_msg;
+        zmq_msg_init( &zmq_msg );
+        int number_of_bytes = 0;
+        if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
+          EXCEPT( 1, "receiveRoute zmq_msg_recv (route) failed." );
+        }
+        size_t len = zmq_msg_size( &zmq_msg );
+
+        //std::cout << "Should be receiving a uint32_t " << len << " size of uint32_t shoudl be " << sizeof(uint32_t) << std::endl;
+        if(len != sizeof(uint32_t)) {
+            EXCEPT( 1, "Expected a number indicating the number of routes to follow but nothing was provided." );
+        }
+
+        unsigned char * msg_router_count_allocation = (unsigned char *)zmq_msg_data( &zmq_msg );
+        number_of_routes = ntohl( *((uint32_t*) msg_router_count_allocation) );
+        std::cout << number_of_routes << std::endl; 
+        zmq_msg_close( &zmq_msg );
+      }
+      //std::cout << "Number of routes is " << number_of_routes << std::endl;
+      // Start a while loop for the number of routes that have been indicated
+      for(uint32_t route_i = 0; route_i < number_of_routes; ++route_i) {
+        zmq_msg_t zmq_msg;
+        zmq_msg_init( &zmq_msg );
+        
+        int number_of_bytes = 0;
+        if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
+          EXCEPT( 1, "receiveRoute zmq_msg_recv (route) failed." );
+        }
+        size_t len = zmq_msg_size( &zmq_msg );
+        //std::cout << "Len is " << len << std::endl;
+
+        // Stop when delimiter is read
+        if ( len == 0) {
+          EXCEPT( 1, "Message route should not be an empty message." );
+        }
+
+        if ( len > 255 ) {
+          EXCEPT( 1, "Message route segment exceeds max allowed length." );
+        }
+        
+        std::string new_route((char*) zmq_msg_data(&zmq_msg), zmq_msg_size(&zmq_msg));
+        // Only add the next route if it has a different name
+        if ( previous_route.compare(new_route) != 0 ) {
+          msg.addRoute(new_route);
+          previous_route = new_route;
+        }
+        std::cout << new_route << std::endl;
+        zmq_msg_close( &zmq_msg );
+       
+      }
+
+      // Finally read the final empty frame
+      {
+        zmq_msg_t zmq_msg;
+        zmq_msg_init( &zmq_msg );
+        int number_of_bytes = 0;
+        if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
+          EXCEPT( 1, "receiveRoute zmq_msg_recv (route) failed." );
+        }
+        size_t len = zmq_msg_size( &zmq_msg );
+        if(len != 0) {
+            EXCEPT( 1, "Expected a null frame following route section." );
+        }
+        std::cout << "null" << std::endl;
+        zmq_msg_close( &zmq_msg );
+
+      }
+/*      int count = 0;
       std::string previous_route = "";
       while ( 1 ) {
         zmq_msg_t zmq_msg;
@@ -143,10 +323,10 @@ namespace SDMS {
         
         int number_of_bytes = 0;
         if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
-          EXCEPT( 1, "zmq_msg_recv (route) failed." );
+          EXCEPT( 1, "receiveRoute zmq_msg_recv (route) failed." );
         }
         size_t len = zmq_msg_size( &zmq_msg );
-        //std::cout << "Len is " << len << std::endl;
+        std::cout << "Len is " << len << std::endl;
 
         // Stop when delimiter is read
         if ( len ) {
@@ -163,31 +343,7 @@ namespace SDMS {
           std::cout << "receiveRoute number of bytes " << number_of_bytes << " route " << msg.getRoutes().back() << std::endl;
           zmq_msg_close( &zmq_msg );
         } else { // Ignore two empty lines and then exits
-          // 0
-          // 0
-          // Frame starts here
-          //
-          // If there was a route
-          //
-          // 0
-          // Route 1
-          // 0
-          // Frame
-          //
-          // Or
-          //
-          // 0
-          // Route 1
-          // Route 2
-          // 0
-          //
-          // Or
-          //
-          // Route 1
-          // 0
-          // Route 2
-          // Route 3
-          // 0
+
           if ( count == number_of_delimiters ) {
             zmq_msg_close( &zmq_msg );
             break;
@@ -196,15 +352,101 @@ namespace SDMS {
             zmq_msg_close( &zmq_msg );
           }
         }
-      } 
+      } */
     }
 
     void sendRoute(IMessage & msg, void * outgoing_zmq_socket, const int zmq_socket_type) {
-      if( msg.getRoutes().size() == 0) {
-        std::cout << "No routes detected in message" << std::endl;
+
+
+      // If this is a response then we need to attach the identity of the server that the response needs to be sent to
+      auto routes = msg.getRoutes();
+
+      // The ZMQ ROUTER always needs to know who to send too. 
+      if( std::get<MessageState>(msg.get(MessageAttribute::STATE)) == MessageState::RESPONSE or zmq_socket_type == ZMQ_ROUTER) {
+         // zmq_socket_type != ZMQ_ROUTER) {
+        while(routes.size() != 0 ) {
+            //          EXCEPT( 1, "Cannot generate response identity of client socket is unknown." );
+            //        }
+
+          auto route = routes.front();
+          zmq_msg_t zmq_msg;
+          zmq_msg_init_size( &zmq_msg, route.size() );
+
+          std::cout << route << std::endl;
+          //std::cout << "sendRoute: attempting to send identity: " << route << " string size is " << route.size() << std::endl;
+          memcpy( zmq_msg_data( &zmq_msg ), route.data(), route.size() );
+          int number_of_bytes = 0;
+          if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE )) < 0 ) {
+            EXCEPT( 1, "sendRoute zmq_msg_send (route) failed." );
+          }
+          //std::cout << "sendRoute number of bytes " << number_of_bytes << " route: " << route << std::endl;
+          //std::cout << route << std::endl;
+
+          zmq_msg_close( &zmq_msg );
+          routes.pop_front();
+        }
       }
-      if( msg.getRoutes().size() == 0) {
+      
+      //std::cout << "Sending delimiter" << std::endl;
+      sendDelimiter(outgoing_zmq_socket);
+      { // Send header
+        zmq_msg_t zmq_msg;
+        std::string header = "BEGIN_DATAFED";
+        zmq_msg_init_size( &zmq_msg, header.size() );
+        memcpy( zmq_msg_data( &zmq_msg ), header.data(), header.size() );
+        int number_of_bytes = 0;
+        if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE )) < 0 ) {
+          EXCEPT( 1, "sendRoute count zmq_msg_send (route) failed." );
+        }
+        zmq_msg_close( &zmq_msg );
+        std::cout << header << std::endl;
+      }
+
+      {// Send number of routes
+        uint32_t number_of_routes = routes.size();
+        zmq_msg_t zmq_msg;
+        zmq_msg_init_size( &zmq_msg, sizeof(uint32_t) );
+        unsigned char * msg_route_count_allocation = (unsigned char *)zmq_msg_data( &zmq_msg );
+        *((uint32_t*) msg_route_count_allocation) = htonl( number_of_routes );
+        
+        std::cout << number_of_routes << " - number of routes" << std::endl;
+        int number_of_bytes = 0;
+        if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE )) < 0 ) {
+          EXCEPT( 1, "sendRoute count zmq_msg_send (route) failed." );
+        }
+        zmq_msg_close( &zmq_msg );
+      }
+
+      //     for (; route_index < routes.size(); ++route_index ) { //auto & route : msg.getRoutes() ) { 
+      for( auto & route : routes ) {
+        //        auto route = routes.at(route_index);
+
+        if( route.size() == 0) {
+          EXCEPT( 1, "sendRoute zmq_msg_send (route) failed. Cannot send a route of size 0" );
+        }
+
+        zmq_msg_t zmq_msg;
+        zmq_msg_init_size( &zmq_msg, route.size() );
+
+        //std::cout << "sendRoute: attempting to send identity: " << route << " string size is " << route.size() << std::endl;
+        memcpy( zmq_msg_data( &zmq_msg ), route.data(), route.size() );
+        int number_of_bytes = 0;
+        if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE )) < 0 ) {
+          EXCEPT( 1, "sendRoute zmq_msg_send (route) failed." );
+        }
+        //std::cout << "sendRoute number of bytes " << number_of_bytes << " route: " << route << std::endl;
+        std::cout << route << std::endl;
+
+        zmq_msg_close( &zmq_msg );
+      } 
+
+      sendDelimiter(outgoing_zmq_socket);
+      //if( msg.getRoutes().size() == 0) {
+        //std::cout << "No routes detected in message" << std::endl;
+      //}
+/*      if( msg.getRoutes().size() == 0) {
         sendDelimiter(outgoing_zmq_socket);
+        
         sendDelimiter(outgoing_zmq_socket);
       } else {
         if( std::get<MessageState>(msg.get(MessageAttribute::STATE)) == MessageState::REQUEST and
@@ -216,7 +458,7 @@ namespace SDMS {
         for (auto & route : msg.getRoutes() ) { 
 
           if( route.size() == 0) {
-            EXCEPT( 1, "zmq_msg_send (route) failed. Cannot send a route of size 0" );
+            EXCEPT( 1, "sendRoute zmq_msg_send (route) failed. Cannot send a route of size 0" );
           }
 
           zmq_msg_t zmq_msg;
@@ -226,15 +468,15 @@ namespace SDMS {
           memcpy( zmq_msg_data( &zmq_msg ), route.data(), route.size() );
           int number_of_bytes = 0;
           if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE )) < 0 ) {
-            EXCEPT( 1, "zmq_msg_send (route) failed." );
+            EXCEPT( 1, "sendRoute zmq_msg_send (route) failed." );
           }
           //std::cout << "sendRoute number of bytes " << number_of_bytes << " route: " << route << std::endl;
-          std::cout << route << std::endl;
+          //std::cout << route << std::endl;
 
           zmq_msg_close( &zmq_msg );
         } 
         sendDelimiter(outgoing_zmq_socket);
-      }
+      }*/
     }
 
     /**
@@ -250,15 +492,15 @@ namespace SDMS {
         if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
           EXCEPT_PARAM( 1, "RCV zmq_msg_recv (frame) failed: " << zmq_strerror(zmq_errno()) );
         } else if ( number_of_bytes == 8 ){
-          std::cout << "receiveFrame bytes " << number_of_bytes << std::endl;
+          //std::cout << "receiveFrame bytes " << number_of_bytes << std::endl;
           FrameFactory frame_factory;
-          std::cout << "recieveFrame:: create" << std::endl;
+          //std::cout << "recieveFrame:: create" << std::endl;
           Frame frame = frame_factory.create(zmq_msg); // THIS IS THE ERROR
-          std::cout << "recieveFrame:: create" << std::endl;
+          //std::cout << "recieveFrame:: create" << std::endl;
           FrameConverter converter;
-          std::cout << "recieveFrame:: convert from frame to msg" << std::endl;
+          //std::cout << "recieveFrame:: convert from frame to msg" << std::endl;
           converter.copy(FrameConverter::CopyDirection::FROM_FRAME, msg, frame);
-          std::cout << "recieveFrame:: complete" << std::endl;
+          //std::cout << "recieveFrame:: complete" << std::endl;
           zmq_msg_close( &zmq_msg );
           // Break out of loop after reading in frame
           break;
@@ -289,7 +531,7 @@ namespace SDMS {
 
       int number_of_bytes = 0;
 
-      std::cout << "sendFrame:: message size " <<  zmq_msg_size( &zmq_msg ) << std::endl;
+      //std::cout << "sendFrame:: message size " <<  zmq_msg_size( &zmq_msg ) << std::endl;
       // Should always be sending a key
       if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0 ) {
         EXCEPT( 1, "zmq_msg_send (frame) failed." );
@@ -308,8 +550,10 @@ namespace SDMS {
         ProtoBufFactory & factory,
         void * incoming_zmq_socket) {
 
+      std::cout << "Receiving body msg.exists(FRame_SIZE) " << msg.exists(FRAME_SIZE) << std::endl;
       if( msg.exists(FRAME_SIZE) ) {
         uint32_t frame_size = std::get<uint32_t>(msg.get(FRAME_SIZE)); 
+
         std::cout << "receiveBody:: framse size is " << frame_size << std::endl;
         zmq_msg_t zmq_msg;
         zmq_msg_init( &zmq_msg );
@@ -328,13 +572,21 @@ namespace SDMS {
         if( frame_size > 0 ) {
           copyToBuffer( buffer, zmq_msg_data(&zmq_msg), frame_size );
           uint16_t desc_type = std::get<uint16_t>(msg.get(MSG_TYPE));
+          std::cout << "Desc type is " << desc_type << std::endl;
           std::unique_ptr<proto::Message> payload = factory.create( desc_type );
+          if( payload == nullptr ) {
+            EXCEPT(1, "No payload was assigned something is wrong");
+          }
           copyFromBuffer(payload.get(), buffer);
           msg.setPayload(std::move(payload));
         }
+
+        if( zmq_msg_more(&zmq_msg) ) {
+          EXCEPT( 1, "There should not be additional messages after the body has been sent but there are...!" );
+        }
         zmq_msg_close( &zmq_msg );
       } else {
-        std::cout << "Frame of size 0 so no body" << std::endl;
+        //std::cout << "Frame of size 0 so no body" << std::endl;
       }
     }
 
@@ -342,34 +594,51 @@ namespace SDMS {
       
       if( msg.exists(FRAME_SIZE) ) {
 
-        zmq_msg_t zmq_msg;
-
         uint32_t frame_size = std::get<uint32_t>(msg.get(FRAME_SIZE)); 
-        zmq_msg_init_size( &zmq_msg, frame_size );
+        if( frame_size > 0 ) {
+          zmq_msg_t zmq_msg;
 
-        proto::Message * payload;
-        try {
-          payload = std::get<proto::Message *>(msg.getPayload());
-        } catch ( std::bad_variant_access const & ex)  {
-          EXCEPT( 1, ex.what() );
+          zmq_msg_init_size( &zmq_msg, frame_size );
+
+          std::cout << "sendBody getPayload" << std::endl;
+          proto::Message * payload;
+          try {
+            payload = std::get<proto::Message *>(msg.getPayload());
+          } catch ( std::bad_variant_access const & ex)  {
+            EXCEPT( 1, ex.what() );
+          }
+
+          //if( payload == nullptr ) {
+          //  EXCEPT( 1, "Payload is empty");
+          //}
+          std::cout << "sendBody ByteSizeLong" << std::endl;
+          std::cout << "Frame size is " << frame_size << std::endl;
+          if( payload  ) {
+            auto size = payload->ByteSizeLong();
+            std::cout << "Sending payload of size " << size << std::endl;
+            if( size != frame_size ) {
+              EXCEPT_PARAM( 1, "Frame and message sizes differ message size: " << size << " frame size: " << frame_size );
+            }
+
+            copyToBuffer<proto::Message *>(buffer, payload, size);
+            copyFromBuffer<void *>(zmq_msg_data( &zmq_msg ), buffer);
+            std::cout << "Copy to zmq_msg success " << std::endl;
+            int number_of_bytes = 0;
+            if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, 0 )) < 0 ) {
+              EXCEPT( 1, "zmq_msg_send (body) failed." );
+            }
+            std::cout << "sendBody number of bytes " << number_of_bytes << std::endl;
+          } else {
+            EXCEPT(1,"Payload not defined... something went wrong");
+          }
+
+          zmq_msg_close( &zmq_msg );
+        }  else {
+
+          sendFinalDelimiter(outgoing_zmq_socket);
         }
-
-        auto size = payload->ByteSizeLong();
-        if( size != frame_size ) {
-            EXCEPT_PARAM( 1, "Frame and message sizes differ message size: " << size << " frame size: " << frame_size );
-        }
-
-        copyToBuffer<proto::Message *>(buffer, payload, size);
-        copyFromBuffer<void *>(zmq_msg_data( &zmq_msg ), buffer);
-
-        int number_of_bytes = 0;
-        if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE )) < 0 ) {
-          EXCEPT( 1, "zmq_msg_send (body) failed." );
-        }
-        std::cout << "sendBody number of bytes " << number_of_bytes << std::endl;
-        zmq_msg_close( &zmq_msg );
       } else {
-        std::cout << "Not sending body size 0" << std::endl;
+        sendFinalDelimiter(outgoing_zmq_socket);
       }
     }
 
@@ -379,12 +648,13 @@ namespace SDMS {
       zmq_msg_init( &zmq_msg );
       int number_of_bytes = 0;
       if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
-        EXCEPT( 1, "RCV zmq_msg_recv (uid) failed." );
+        EXCEPT( 1, "RCV zmq_msg_recv (key) failed." );
       }
       std::cout << "receiveKey number of bytes " << number_of_bytes << std::endl;
 
       if ( zmq_msg_size( &zmq_msg )) {
         std::string key = std::string((char*) zmq_msg_data( &zmq_msg ), zmq_msg_size( &zmq_msg ));
+        std::cout << "Key is " << key << std::endl;
         msg.set(MessageAttribute::KEY, key);
       }
 
@@ -404,8 +674,10 @@ namespace SDMS {
         zmq_msg_init_size( &zmq_msg, key.size() );
         memcpy( zmq_msg_data( &zmq_msg ), key.c_str(), key.size() );
       } else {
-        std::cout << "Sending empty key" << std::endl;
-        zmq_msg_init( &zmq_msg );
+        //std::cout << "Sending empty key" << std::endl;
+        std::string no_key("no key");
+        zmq_msg_init_size( &zmq_msg, no_key.size() );
+        memcpy( zmq_msg_data( &zmq_msg ), no_key.c_str(), no_key.size() );
       }
 
       int number_of_bytes = 0;
@@ -413,7 +685,7 @@ namespace SDMS {
         EXCEPT( 1, "zmq_msg_send (uid) failed." );
       }
 
-      std::cout << "sendKey number of bytes " << number_of_bytes << std::endl;
+      //std::cout << "sendKey number of bytes " << number_of_bytes << std::endl;
       zmq_msg_close( &zmq_msg );
     }
 
@@ -425,8 +697,8 @@ namespace SDMS {
       if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
         EXCEPT( 1, "RCV zmq_msg_recv (uid) failed." );
       }
-      std::cout << "receiveId::  number of bytes " << number_of_bytes << std::endl;
-      std::cout << "receiveID:: message size " <<zmq_msg_size( &zmq_msg )<< std::endl;
+      //std::cout << "receiveId::  number of bytes " << number_of_bytes << std::endl;
+      //std::cout << "receiveID:: message size " <<zmq_msg_size( &zmq_msg )<< std::endl;
 
       if ( zmq_msg_size( &zmq_msg )) {
         std::string id = std::string((char*) zmq_msg_data( &zmq_msg ), zmq_msg_size( &zmq_msg ));
@@ -436,13 +708,14 @@ namespace SDMS {
 
       // Check to see if there are more parts if there are we are not currently set
       // up to handle it so you should throw an error
-      std::cout << "receiveID:: more" << std::endl;
-      if( zmq_msg_more(&zmq_msg) ) {
-        EXCEPT( 1, "There should not be additional messages after the id has been sent but there are...!" );
+      //std::cout << "receiveID:: more" << std::endl;
+      //
+      if( !zmq_msg_more(&zmq_msg) ) {
+        EXCEPT( 1, "Should be receiving messages after id. The frame should follow but is not." );
       }
-      std::cout << "receiveID:: calling close " << std::endl;
+      //std::cout << "receiveID:: calling close " << std::endl;
       zmq_msg_close( &zmq_msg );
-      std::cout << "receiveID:: done" << std::endl;
+      //std::cout << "receiveID:: done" << std::endl;
     }
 
     void sendID(IMessage & msg, void * outgoing_zmq_socket) {
@@ -453,15 +726,17 @@ namespace SDMS {
         zmq_msg_init_size( &zmq_msg, id.size() );
         memcpy( zmq_msg_data( &zmq_msg ), id.c_str(), id.size() );
       } else {
-        std::cout << "Sending empty key" << std::endl;
-        zmq_msg_init( &zmq_msg );
+        //std::cout << "Sending empty key" << std::endl;
+        std::string no_id("no id");
+        zmq_msg_init_size( &zmq_msg, no_id.size() );
+        memcpy( zmq_msg_data( &zmq_msg ), no_id.c_str(), no_id.size() );
       }
 
       int number_of_bytes = 0;
-      if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, 0 )) < 0 ) {
+      if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket,ZMQ_SNDMORE )) < 0 ) {
         EXCEPT( 1, "zmq_msg_send (uid) failed." );
       }
-      std::cout << "sendId number of bytes " << number_of_bytes << std::endl;
+      //std::cout << "sendId number of bytes " << number_of_bytes << std::endl;
       zmq_msg_close( &zmq_msg );
     }
 
@@ -477,7 +752,7 @@ namespace SDMS {
     const int num_items_in_array = 1;
     int events_detected = 0;
     events_detected = zmq_poll( items, num_items_in_array, timeout_milliseconds );
-    std::cout << "Events detected " << events_detected;
+    //std::cout << "Events detected " << events_detected << std::endl;;
     Response response;
     if ( events_detected == -1 ) {
       response.error = true;
@@ -563,7 +838,7 @@ namespace SDMS {
   }
 
   ZeroMQCommunicator::~ZeroMQCommunicator() {
-    std::cout << "Closing zmq communicator socket" << std::endl;
+    //std::cout << "Closing zmq communicator socket" << std::endl;
     int rc = zmq_close(m_zmq_socket);
     if( rc ) {
       std::cout << "Problem closing socket: " << m_socket->getAddress().c_str() << std::endl;;
@@ -572,12 +847,16 @@ namespace SDMS {
 
   ICommunicator::Response ZeroMQCommunicator::poll(const MessageType message_type) {
     //std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-    std::cout << id() << " polling " << address() << std::endl;
+    //std::cout << id() << " polling " << address() << std::endl;
     Response response = m_poll(m_timeout_on_poll_milliseconds);
     if( response.error == false and response.time_out == false) {
       response.message = m_msg_factory.create(message_type);
       std::cout << id() << " receiveRoute address: " << address() << std::endl;
       receiveRoute(*response.message, m_zmq_socket, m_zmq_socket_type);
+      std::cout << id() << " receiveKey address: " << address() << std::endl;
+      receiveKey(*response.message, m_zmq_socket);
+      std::cout << id() << " receiveID address: " << address() << std::endl;
+      receiveID(*response.message, m_zmq_socket);
       std::cout << id() << " receiveFrame address: " << address() << std::endl;
       receiveFrame(*response.message, m_zmq_socket);
       std::cout << id() << " receiveBody address: " << address() << std::endl;
@@ -586,15 +865,12 @@ namespace SDMS {
         m_buffer,
         m_protocol_factory,
         m_zmq_socket);
-      std::cout << id() << " receiveKey address: " << address() << std::endl;
-      receiveKey(*response.message, m_zmq_socket);
-      std::cout << id() << " receiveID address: " << address() << std::endl;
-      receiveID(*response.message, m_zmq_socket);
+
     } else {
       if( response.error ) {
-        std::cout << id() << " Error msg: " << response.error_msg << std::endl;
+        //std::cout << id() << " Error msg: " << response.error_msg << std::endl;
       } else if (response.time_out){
-        std::cout << id() << " Timeout after milliseconds: " << m_timeout_on_poll_milliseconds << std::endl;
+        //std::cout << id() << " Timeout after milliseconds: " << m_timeout_on_poll_milliseconds << std::endl;
       }
     }
     return response;
@@ -603,24 +879,28 @@ namespace SDMS {
   void ZeroMQCommunicator::send(IMessage & message) {
     std::cout << id() << " Sending route address: " << address() << std::endl;
     sendRoute(message, m_zmq_socket, m_zmq_socket_type);
-    std::cout << id() << " Sending Frame address: " << address() << std::endl;
-    sendFrame(message, m_zmq_socket);
-    std::cout << id() << " Sending Body address: " << address() << std::endl;
-    sendBody(message, m_buffer, m_zmq_socket);
     std::cout << id() << " Sending Key address: " << address() << std::endl;
     sendKey(message, m_zmq_socket);
     std::cout << id() << " Sending ID address: " << address() << std::endl;
     sendID(message, m_zmq_socket);
+    std::cout << id() << " Sending Frame address: " << address() << std::endl;
+    sendFrame(message, m_zmq_socket);
+    std::cout << id() << " Sending Body address: " << address() << std::endl;
+    sendBody(message, m_buffer, m_zmq_socket);
   }
 
   ICommunicator::Response ZeroMQCommunicator::receive(const MessageType message_type) {
 
-    std::cout << id() << " polling " << address() << std::endl;
+    //std::cout << id() << " polling " << address() << std::endl;
     Response response = m_poll(m_timeout_on_receive_milliseconds);
     if( response.error == false and response.time_out == false) {
       response.message = m_msg_factory.create(message_type);
       std::cout << id() << " receiveRoute address: " << address() << std::endl;
       receiveRoute(*response.message, m_zmq_socket, m_zmq_socket_type);
+      std::cout << id() << " receiveKey address: " << address() << std::endl;
+      receiveKey(*response.message, m_zmq_socket);
+      std::cout << id() << " receiveID address: " << address() << std::endl;
+      receiveID(*response.message, m_zmq_socket);
       std::cout << id() << " receiveFrame address: " << address() << std::endl;
       receiveFrame(*response.message, m_zmq_socket);
       std::cout << id() << " receiveBody address: " << address() << std::endl;
@@ -629,10 +909,7 @@ namespace SDMS {
         m_buffer,
         m_protocol_factory,
         m_zmq_socket);
-      std::cout << id() << " receiveKey address: " << address() << std::endl;
-      receiveKey(*response.message, m_zmq_socket);
-      std::cout << id() << " receiveID address: " << address() << std::endl;
-      receiveID(*response.message, m_zmq_socket);
+
     } else {
       //std::cout << "Message received" << std::endl;
     }
