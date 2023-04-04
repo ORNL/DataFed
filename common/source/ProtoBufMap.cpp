@@ -15,6 +15,7 @@ namespace SDMS {
  
   ProtoBufMap::ProtoBufMap() {
     // These two code blocks should be templatized to make them DRY
+
     {
       auto a_enum_desc = Anon::Protocol_descriptor();
       if ( a_enum_desc->name() != "Protocol" )
@@ -29,7 +30,7 @@ namespace SDMS {
         EXCEPT( EC_PROTO_INIT, "Protocol enum missing required ID field." );
 
       uint16_t id = val_desc->number();
-      std::cout << "PROTOCOL id is " << id << std::endl;
+      //std::cout << __FILE__ << ":" << __LINE__ << " PROTOCOL id is " << id << std::endl;
       m_file_descriptor_map[id] = file;
 
       int                     count = file->message_type_count();
@@ -39,8 +40,8 @@ namespace SDMS {
       {
         const proto::Descriptor * desc = file->message_type(i);
         m_descriptor_map[msg_type] = desc;
+        // Register Message types from  Anon
         m_msg_type_map[desc] = msg_type;
-
       }
       m_protocol_ids[MessageProtocol::GOOGLE_ANONONYMOUS] = id;
     }
@@ -58,7 +59,8 @@ namespace SDMS {
         EXCEPT( EC_PROTO_INIT, "Protocol enum missing required ID field." );
 
       uint16_t id = val_desc->number();
-      std::cout << "PROTOCOL id is " << id << std::endl;
+      //std::cout << "PROTOCOL id is " << id << std::endl;
+      //std::cout << __FILE__ << ":" << __LINE__ << " PROTOCOL id is " << id << std::endl;
       m_file_descriptor_map[id] = file;
 
       int                     count = file->message_type_count();
@@ -84,9 +86,17 @@ namespace SDMS {
     return m_msg_type_map.at(desc);
   }
 
+  std::string ProtoBufMap::toString(uint16_t msg_type) const {
+    if( m_descriptor_map.count(msg_type) ) {
+      return m_descriptor_map.at(msg_type)->name();
+    }
+    EXCEPT_PARAM(1, "Provided message type is unknown cannot retrieve name.");
+  }
+
   uint16_t ProtoBufMap::getMessageType(uint8_t a_proto_id, const std::string & a_message_name) {
 
-        std::cout << "PROTOCOL id is " << a_proto_id << std::endl;
+        //std::cout << "PROTOCOL id is " << a_proto_id << std::endl;
+        //std::cout << __FILE__ << ":" << __LINE__ << " PROTOCOL id is " << static_cast<uint16_t>(a_proto_id) << std::endl;
         if( m_file_descriptor_map.count( a_proto_id ) == 0 ) {
             EXCEPT_PARAM( EC_INVALID_PARAM, "Protocol ID " << a_proto_id << " has not been registered." );
         }

@@ -32,5 +32,15 @@ BOOST_AUTO_TEST_CASE( testing_ProtoBufFactory ) {
   auto msg = proto_factory.create(msg_type);
   std::cout << "VersionRequest msg_type of VersionRequest, " << msg_type << " and " << proto_map.getMessageType(*msg) << std::endl;
 }
+
+BOOST_AUTO_TEST_CASE( testing_ProtoBufMap_toString) {
+  ProtoBufMap proto_map;
+  SDMS::Anon::VersionRequest version_request;
+  uint16_t msg_type = proto_map.getMessageType(version_request); 
+  auto name = proto_map.toString(msg_type);
+  BOOST_CHECK( name.compare("VersionRequest") == 0);
+
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 

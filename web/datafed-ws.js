@@ -1575,7 +1575,7 @@ function allocRequestContext( a_resp, a_callback ) {
         if ( g_ctx[g_ctx_next] )
             g_ctx_next = MAX_CTX;
     }
-
+    console.log("Context is now: ", g_ctx_next);
     a_callback( ctx );
 }
 
@@ -1590,14 +1590,14 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
     a_resp.setHeader('Content-Type', 'application/json');
 
     allocRequestContext( a_resp, function( ctx ){
-        console.log("sendMsg msg_name ctx and data address ", a_msg_name, ctx, a_msg_data, g_core_serv_addr);
+        //console.log("sendMsg msg_name ctx and data address ", a_msg_name, ctx, a_msg_data, g_core_serv_addr);
 
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
             throw "Invalid message type: " + a_msg_name;
 
         var msg_buf = msg.encode(a_msg_data).finish();
-        console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
+        //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
         /* Frame contents (C++)
         uint32_t    size;       // Size of buffer
@@ -1609,8 +1609,11 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
         frame.writeUInt32BE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
         frame.writeUInt8( msg._mid, 5 );
+        //console.log("Writing ctx to frame, ", ctx);
         frame.writeUInt16BE( ctx, 6 );
+        console.log("MsgType is: ", msg._msg_type ," Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
 
+        //console.log("Creating callback for ctx: ", ctx);
         g_ctx[ctx] = function( a_reply ) {
             if ( !a_reply ) {
                 console.log("Error - reply handler: empty reply");
@@ -1624,6 +1627,8 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
                     console.log("Error - reply handler:", a_reply.errCode);
                 }
             } else {
+                console.log("Sending a_reply as callback");
+                console.log(a_reply);
                 a_cb( a_reply );
             }
         };
@@ -1635,24 +1640,26 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
         var route_count = Buffer.alloc(4);
         route_count.writeUInt32BE( 0, 0 );
         if ( msg_buf.length ) {
-            console.log("sending multipart message bam");
+            //console.log("sending multipart message bam");
             //g_core_sock.send([ nullfr, nullfr, frame, msg_buf, nullfr, client ]);
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send("no key" ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
+            g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
+            console.log("1 MsgType is: ", msg._msg_type ," Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
             g_core_sock.send(msg_buf);
         } else {
-            console.log("sending multipart message boom");
+            //console.log("sending multipart message boom");
             //g_core_sock.send([ nullfr, nullfr, frame, nullfr, nullfr, client ]);
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send("no key" ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send(a_client ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(client ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame );
+            console.log("2 MsgType is: ", msg._msg_type ," Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
 
         }
 
@@ -1661,9 +1668,9 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
 
 function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
-    console.log("Sending MessageDirect");
+    //console.log("Sending MessageDirect");
     var msg = g_msg_by_name[a_msg_name];
-    console.log(msg);
+    //console.log(msg);
     if ( !msg )
         throw "Invalid message type: " + a_msg_name;
 
@@ -1676,14 +1683,17 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         frame.writeUInt32BE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
         frame.writeUInt8( msg._mid, 5 );
+        //console.log("MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", 5, " buffer size ", msg_buf.length);
         frame.writeUInt16BE( ctx, 6 );
+        console.log("0 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
 
+        //console.log("Registering ctx with value ", ctx);
         g_ctx[ctx] = a_cb;
 
-        console.log("a_client is");
-        console.log(a_client);
-        console.log("Buffer length");
-        console.log(msg_buf.length);
+        //console.log("a_client is");
+        //console.log(a_client);
+        //console.log("Buffer length");
+        //console.log(msg_buf.length);
 
         var route_count = Buffer.alloc(4);
         route_count.writeUInt32BE( 0, 0 );
@@ -1691,7 +1701,7 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         if ( msg_buf.length ) {
             // ZeroMQ socket g_core_sock - not Dale's code it is a library
             //g_core_sock.send([ nullfr, nullfr, frame, msg_buf, nullfr, a_client ]);
-            console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, nullfr, frame, msg_buf, '', a_client ]");
+            //console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, 'no_id', 'no_key', frame, msg_buf, '', a_client ]");
 
 
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
@@ -1702,8 +1712,9 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
             g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(msg_buf);
+            console.log("1 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
         } else {
-            console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, nullfr, frame, nullfr, '', a_client ]");
+            //console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, nullfr, frame, nullfr, '', a_client ]");
             //g_core_sock.send([ nullfr, "" ,nullfr, frame, nullfr, nullfr, a_client ]);
             //g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
@@ -1715,8 +1726,9 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
             g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr);
+            console.log("2 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
         }
-        console.log("Message was sent");
+        //console.log("Message was sent");
     });
 }
 
@@ -1805,12 +1817,12 @@ g_core_sock.on('message', function( delim, header, route_count, delim2, key, id,
     //console.log( "got msg", delim, frame, msg_buf );
     //console.log( "frame", frame.toString('hex') );
     /*var mlen =*/ 
-    console.log("Receiving messages");
-    console.log(delim); 
-    console.log("header");
-    console.log(header.toString());
-    console.log(key.toString());
-    console.log(id.toString());
+    //console.log("Receiving messages");
+    //console.log(delim); 
+    //console.log("header");
+    //console.log(header.toString());
+    //console.log(key.toString());
+    //console.log(id.toString());
     frame.readUInt32BE( 0 );
     var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
     var ctx = frame.readUInt16BE( 6 );
@@ -1825,12 +1837,15 @@ g_core_sock.on('message', function( delim, header, route_count, delim2, key, id,
 
     if ( msg_class ) {
         // Only try to decode if there is a payload
+        //console.log("len ", msg_buf.length);
         if ( msg_buf && msg_buf.length ) {
             try {
                 // This is unserializing the protocol message
+                //console.log("Decoding message, ", mtype);
                 msg = msg_class.decode( msg_buf );
-                if ( !msg )
+                if ( !msg ) {
                     console.log( "ERROR: msg decode failed: no reason" );
+                }
             } catch ( err ) {
                 console.log( "ERROR: msg decode failed:", err );
             }
@@ -1844,10 +1859,11 @@ g_core_sock.on('message', function( delim, header, route_count, delim2, key, id,
     var f = g_ctx[ctx];
     if ( f ) {
         g_ctx[ctx] = null;
-        //console.log("freed ctx",ctx,"for msg",msg_class.name);
+        console.log("freed ctx",ctx,"for msg",msg_class.name);
         g_ctx_next = ctx;
         f( msg );
     } else {
+        g_ctx[ctx] = null;
         console.log( "ERROR: no callback found for ctxt", ctx," - msg type:", mtype, ", name:", msg_class.name );
     }
 });

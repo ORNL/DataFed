@@ -213,11 +213,14 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
   const std::string id = "royal_messenger";
   const std::string key = "skeleton";
   const std::string token = "chest_of_gold";
+  // This is so the client knows when the response is sent what request it is associated with
+  const uint16_t context = 2;
   MessageFactory msg_factory;
   { // Client send
     auto msg_from_client = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
+    msg_from_client->set(constants::message::google::CONTEXT, context);
     auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
     msg_from_client->setPayload(std::move(auth_by_token_req));
@@ -250,6 +253,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
 
     BOOST_CHECK(std::get<std::string>(response.message->get(MessageAttribute::ID)).compare(id) == 0);
     BOOST_CHECK(std::get<std::string>(response.message->get(MessageAttribute::KEY)).compare(key) == 0);
+    BOOST_CHECK(std::get<uint16_t>(response.message->get(constants::message::google::CONTEXT)) == context);
 
   } // Server receive
   proxy_thread->join();

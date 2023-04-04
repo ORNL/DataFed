@@ -23,11 +23,12 @@ BOOST_AUTO_TEST_CASE( testing_MessageFactory ) {
   
   std::string user_id = "hermes";
   std::string key = "skeleton";
+  const uint16_t context = 1;
 
   message->set(MessageAttribute::ID, user_id);
   message->set(MessageAttribute::KEY, key);
   message->set(MessageAttribute::STATE, MessageState::REQUEST);
-
+  message->set(constants::message::google::CONTEXT, context);
   auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
   std::string token = "golden_chest";
   auth_by_token_req->set_token(token);
@@ -45,6 +46,7 @@ BOOST_AUTO_TEST_CASE( testing_MessageFactory ) {
   BOOST_CHECK(std::get<std::string>(message->get(MessageAttribute::KEY)).compare(key) == 0);
   BOOST_CHECK(std::get<MessageState>(message->get(MessageAttribute::STATE)) == MessageState::REQUEST);
   BOOST_CHECK(std::get<uint16_t>(message->get(constants::message::google::MSG_TYPE))==protobuf_msg_type);
+  BOOST_CHECK(std::get<uint16_t>(message->get(constants::message::google::CONTEXT))==context);
   BOOST_CHECK(message->getRoutes().size() == 1);
   BOOST_CHECK(message->getRoutes().front().compare(route) == 0);
 
@@ -57,6 +59,7 @@ BOOST_AUTO_TEST_CASE( testing_MessageFactory ) {
   BOOST_CHECK(response_message->getRoutes().size() == 1);
   BOOST_CHECK(response_message->getRoutes().front().compare(route) == 0);
   BOOST_CHECK(std::get<MessageState>(response_message->get(MessageAttribute::STATE)) == MessageState::RESPONSE);
+  BOOST_CHECK(std::get<uint16_t>(response_message->get(constants::message::google::CONTEXT))==context);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

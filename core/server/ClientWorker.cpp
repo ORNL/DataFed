@@ -274,7 +274,7 @@ ClientWorker::workerThread()
                 IMessage & message = *response.message;
                 uint16_t msg_type = std::get<uint16_t>(message.get(constants::message::google::MSG_TYPE));
                 //msg_type = m_msg_buf.getMsgType();
-                DL_DEBUG( "W" << m_tid << " received message" );
+                DL_DEBUG( "W" << m_tid << " received message: " << proto_map.toString(msg_type) );
 
                 // DEBUG - Inject random delay in message processing
                 /*delay = (rand() % 2000)*1000;
@@ -300,15 +300,13 @@ ClientWorker::workerThread()
                     nack->set_err_msg( "Authentication required" );
                     response_msg->setPayload(std::move(nack));
                     client->send(*response_msg); 
-                }
-                else
-                {
-                    DL_DEBUG( "W"<<m_tid<<" getting handler from map" );
+                } else {
+                    DL_DEBUG( "W"<<m_tid<<" getting handler from map: msg_type = "  << proto_map.toString(msg_type));
                     if( m_msg_handlers.count( msg_type ) ) {
 
                         auto handler = m_msg_handlers.find( msg_type );
 
-                        DL_TRACE( "W"<<m_tid<<" calling handler/attempting to call function of worker" );
+                        DL_TRACE( "W"<< m_tid <<" calling handler/attempting to call function of worker" );
 
                         // Have to move the actual unique_ptr, change ownership not simply passing a reference
                         auto response_msg = (this->*handler->second)( uid, std::move(response.message) );
@@ -318,7 +316,7 @@ ClientWorker::workerThread()
                             if ( msg_type != task_list_msg_type )
                                 m_core.metricsUpdateMsgCount( uid, msg_type );
 
-                            DL_DEBUG( "W" << m_tid << " sending msg of type " << msg_type);
+                            DL_DEBUG( "W" << m_tid << " sending msg of type " << proto_map.toString(msg_type));
                             // The freaking handlers touch everything.
                             client->send(*response_msg );
                             DL_DEBUG( "Message sent ");

@@ -14,11 +14,11 @@ sudo apt-get install -y cmake curl python3 g++
 # 1. Install nvm which will allow us to update node
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 
+NODE_VERSION="v14.21.3"
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-nvm install 13
-nvm use 13
+nvm install $NODE_VERSION
+nvm use $NODE_VERSION
 
-npm install . express express-session cookie-parser helmet ini protobufjs zeromq ect client-oauth2
+npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web

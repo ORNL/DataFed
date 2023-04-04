@@ -32,7 +32,9 @@ namespace SDMS {
       ProtoBufMap();
 
       const ::google::protobuf::Descriptor * getDescriptorType(uint16_t message_type) const;
+      bool exists(uint16_t message_type) const { return m_descriptor_map.count(message_type) > 0; }
       uint16_t getMessageType(::google::protobuf::Message &);
+      std::string toString(uint16_t MessageType) const;
       virtual uint16_t getMessageType(uint8_t a_proto_id, const std::string & a_message_name) final;
       virtual uint8_t getProtocolID(MessageProtocol) const final;
 

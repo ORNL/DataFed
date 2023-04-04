@@ -22,6 +22,8 @@ Help()
   echo "                                  using the enviromental variable"
   echo "                                  DATABASE_PASSWORD."
   echo "-y, --system-secret               ZeroMQ system secret"
+  echo
+  echo "NOTE: Do not run this script with sudo!"
 }
 
 local_DATABASE_NAME="sdms"
@@ -130,15 +132,17 @@ fi
 ## Get the size of the file in bytes
 #bytes=$(wc -c < datafed.zip)
 
-# This is to ensure we are using the right version of node
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+NODE_VERSION="v14.21.3"
 
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+
+nvm install $NODE_VERSION
+nvm use $NODE_VERSION
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
 # Install foxx service node module
-npm install --global foxx-cli
+$NVM_DIR/nvm-exec npm install --global foxx-cli
 echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
 
 { # try

@@ -3,6 +3,10 @@
 # Exit on error
 set -e
 
+SCRIPT=$(realpath "$0")
+SOURCE=$(dirname "$SCRIPT")
+PROJECT_ROOT=$(realpath ${SOURCE}/..)
+
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo apt-get update
 sudo dpkg --configure -a
@@ -15,12 +19,12 @@ sudo apt-get install -y libzmq3-dev
 # 1. Install nvm which will allow us to update node
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 
+NODE_VERSION="v14.21.3"
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-nvm install 13
-nvm use 13
+nvm install $NODE_VERSION
+nvm use $NODE_VERSION
 
 if [ -d json ]
 then
@@ -92,7 +96,7 @@ cmake --build build -j 4
 sudo cmake --build build --target install
 cd ~
 
-npm install . express express-session cookie-parser helmet ini protobufjs zeromq ect client-oauth2
+npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web
 
 curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key
 sudo apt-key add - < Release.key

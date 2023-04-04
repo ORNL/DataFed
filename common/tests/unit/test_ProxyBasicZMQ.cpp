@@ -479,13 +479,26 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
   proxy_thread->join();
   std::cout << __FILE__ << ":" << __LINE__ <<std::endl;
   }
-  std::cout << "GET CONTEXT and exit" << std::endl;
+  //std::cout << "GET CONTEXT and exit" << std::endl;
 
   //auto context = getContext();
   //zmq_ctx_destroy(context);
 }
 
 BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_TCPServer_Reply ) {
+
+  // General guidelines for graceful execution of test
+  //
+  // duration_to_wait_for_response * 2 + duration_before_sending_message_to_proxy < proxy_run_duration < duration_before_closing_threads
+  //
+  // If hitting a timeout error consider increasing the response time 
+  std::chrono::duration<double> proxy_run_duration = std::chrono::milliseconds(1050);
+  // Hopefully the proxy has been up and running for 250 milliseconds before we send the actual request
+  auto duration_before_sending_message_to_proxy = std::chrono::milliseconds(250);
+  // Wait for 400 seconds after the send has been called for a response
+  auto duration_to_wait_for_response = std::chrono::milliseconds(400);
+  // Ensure the proxy is closed before calling thread join (proxy_run_duration) < (duration_before_closing_threads)
+  auto duration_before_closing_threads = proxy_run_duration + std::chrono::milliseconds(1300);
 
   { // Extra scope here is so that the destructors of all items will be called
     // you can then run zmq_ctx_destroy(context) to ensure that all sockets
@@ -569,7 +582,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_TCPServer_Reply ) {
   std::unique_ptr<std::thread> proxy_thread = std::unique_ptr<std::thread>(new std::thread(
         [](const std::string proxy_client_id,
           const std::string proxy_server_id,
-          const std::string backend_channel) { 
+          const std::string backend_channel,
+          std::chrono::duration<double> proxy_run_duration
+          ) { 
 
         std::unordered_map<SocketRole, SocketOptions> socket_options;
         std::unordered_map<SocketRole, ICredentials *> socket_credentials;
@@ -628,12 +643,12 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_TCPServer_Reply ) {
 
         ProxyBasicZMQ proxy(socket_options, socket_credentials);
 
-        std::chrono::duration<double> duration = std::chrono::milliseconds(3000);
-        proxy.setRunDuration(duration);
+        // The proxy run duration should be less than the duration that we wait to finish the test
+        proxy.setRunDuration(proxy_run_duration);
         proxy.run();
 
         // Pass the arguments to the Thread
-        }, proxy_client_id, proxy_server_id, backend_channel
+        }, proxy_client_id, proxy_server_id, backend_channel,proxy_run_duration
   ));
   std::cout << __FILE__ << ":" << __LINE__ <<std::endl;
 
@@ -641,25 +656,26 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_TCPServer_Reply ) {
   const std::string key = "skeleton";
   const std::string token = "chest_of_gold";
   const std::string error_msg = "testing_no_error";
+  const uint16_t context = 1;
   MessageFactory msg_factory;
 
-   // Client send
-    auto msg_from_client = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
-    msg_from_client->set(MessageAttribute::ID, id);
-    msg_from_client->set(MessageAttribute::KEY, key);
-    auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
-    auth_by_token_req->set_token(token);
-    msg_from_client->setPayload(std::move(auth_by_token_req));
+  // Client send
+  auto msg_from_client = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+  msg_from_client->set(MessageAttribute::ID, id);
+  msg_from_client->set(MessageAttribute::KEY, key);
+  msg_from_client->set(constants::message::google::CONTEXT, context);
+  auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
+  auth_by_token_req->set_token(token);
+  msg_from_client->setPayload(std::move(auth_by_token_req));
 
-    std::this_thread::sleep_for (std::chrono::milliseconds(300));
-    client->send(*msg_from_client);
-   // Client send
+  std::this_thread::sleep_for (std::chrono::milliseconds(duration_before_sending_message_to_proxy));
+  client->send(*msg_from_client);
+  // Client send
 
   // Server receive
     ICommunicator::Response response = server->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
-    std::chrono::duration<double> duration = std::chrono::milliseconds(300);
-    auto end_time = std::chrono::steady_clock::now() + duration;
+    auto end_time = std::chrono::steady_clock::now() + duration_to_wait_for_response;
     while ( response.time_out and end_time > std::chrono::steady_clock::now() ) {
       response = server->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
     }
@@ -696,7 +712,11 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_TCPServer_Reply ) {
 
     // Server receive
 
+    end_time = std::chrono::steady_clock::now() + duration_to_wait_for_response;
     auto msg_from_server = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+    while ( msg_from_server.time_out and end_time > std::chrono::steady_clock::now() ) {
+      msg_from_server = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+    }
     std::cout << "RECEIVED ******************************" << std::endl;
     BOOST_CHECK( msg_from_server.time_out == false);
     BOOST_CHECK( msg_from_server.error == false);
@@ -712,7 +732,7 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_TCPServer_Reply ) {
     BOOST_CHECK( response_payload->err_msg().compare(error_msg) == 0);
     
     std::cout << __FILE__ << ":" << __LINE__ <<std::endl;
-    std::this_thread::sleep_for (std::chrono::milliseconds(1500));
+    std::this_thread::sleep_for (duration_before_closing_threads);
     std::cout << __FILE__ << ":" << __LINE__ <<std::endl;
     proxy_thread->join();
     std::cout << __FILE__ << ":" << __LINE__ <<std::endl;

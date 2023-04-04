@@ -44,7 +44,9 @@ namespace SDMS {
       m_dyn_attributes[constants::message::google::PROTO_ID] = frame.proto_id;
       m_dyn_attributes[constants::message::google::MSG_ID] = frame.msg_id;
       m_dyn_attributes[constants::message::google::MSG_TYPE] = frame.getMsgType();
-      m_dyn_attributes[constants::message::google::CONTEXT] = frame.context;
+      // Do not overload the context because this is not associated with the message payload but with 
+      // the response
+      //m_dyn_attributes[constants::message::google::CONTEXT] = frame.context;
       m_payload = std::move(std::get<std::unique_ptr<::google::protobuf::Message>>(payload));
     } else {
       EXCEPT(1, "Attempt to add unsupported payload to GoogleProtoMessage.");
