@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactorySecure ) {
     /// Creating input parameters for constructing Communication Instance
     SocketOptions socket_options = generateCommonOptions("test_channel");
     socket_options.connection_security = SocketConnectionSecurity::SECURE;
-    socket_options.port = 1341;
+    socket_options.port = 1342;
     socket_options.local_id = server_id;
 
     CredentialFactory cred_factory;
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactorySecure ) {
     socket_options.connection_security = SocketConnectionSecurity::SECURE;
     socket_options.class_type = SocketClassType::CLIENT; 
     socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
-    socket_options.port = 1341;
+    socket_options.port = 1342;
     socket_options.local_id = client_id;
 
     CredentialFactory cred_factory;
@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactoryReply ) {
     socket_options.connection_life = SocketConnectionLife::PERSISTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = "test_channel2";
-    socket_options.port = 1341;
+    socket_options.port = 1343;
     socket_options.local_id = server_id;
 
     CredentialFactory cred_factory;
@@ -363,7 +363,7 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactoryReply ) {
     socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = "test_channel2";
-    socket_options.port = 1341;
+    socket_options.port = 1343;
     socket_options.local_id = client_id;
 
     CredentialFactory cred_factory;

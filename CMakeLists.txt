@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0.0)
+cmake_minimum_required (VERSION 3.17.0)
 project( DataFed CXX C )
 
 set(DataFed_MAJOR_VERSION 0)
@@ -28,7 +28,7 @@ set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
 set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
 set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
-
+# Tests to run with 2 processors
 
 message( "Building for " ${CMAKE_BUILD_TYPE} )
 

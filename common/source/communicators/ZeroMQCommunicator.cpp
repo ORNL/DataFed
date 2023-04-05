@@ -646,7 +646,7 @@ namespace SDMS {
             if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, 0 )) < 0 ) {
               EXCEPT( 1, "zmq_msg_send (body) failed." );
             }
-            //std::cout << "sendBody number of bytes " << number_of_bytes << std::endl;
+            std::cout << "sendBody number of bytes " << number_of_bytes << std::endl;
           } else {
             EXCEPT(1,"Payload not defined... something went wrong");
           }
@@ -839,7 +839,7 @@ namespace SDMS {
     if( m_socket->getSocketConnectionLife() == SocketConnectionLife::PERSISTENT ){
       bool failure = zmq_bind( m_zmq_socket, m_socket->getAddress().c_str()) != 0;
       if ( failure ) {
-        EXCEPT_PARAM( 1, "ZeroMQ bind to address '" << m_socket->getAddress() << "' failed. zmq error msg: " << zmq_strerror(zmq_errno()) );
+        EXCEPT_PARAM( 1, "ZeroMQ bind to address '" << m_socket->getAddress() << "' failed. Be aware if using TCP it you must pick a recognized name for the domain... i.e. '127.0.0.1'.\n zmq error msg: " << zmq_strerror(zmq_errno()) );
       }
     } else {
       bool failure = zmq_connect( m_zmq_socket, m_socket->getAddress().c_str()) != 0;

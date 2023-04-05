@@ -21,3 +21,4 @@ foreach(PROG
   add_test(unit_${PROG} unit_${PROG})
    
 endforeach(PROG)
+

@@ -21,6 +21,11 @@ namespace SDMS {
       std::unordered_map<CredentialType, std::string> generate(const ProtocolType, const KeyType);
   };
 
+  class KeyPairValidator {
+    public:
+      bool validate( const std::string & public_key, const std::string & prviate_key) const;
+  };
+
 } // namespace SDMS
 
 #endif // KEY_GENERATOR_HPP

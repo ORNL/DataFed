@@ -32,6 +32,13 @@ namespace SDMS {
 
     // SERVER only needs private key
     if( m_socket->getSocketClassType() == SocketClassType::SERVER ) {
+      
+      int curve_server = 1;
+
+      if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SERVER, &curve_server, sizeof(curve_server))) == -1 ) {
+        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_SERVER failed when constructing ZeroMQ Server. ZMQ msg: " << zmq_strerror(zmq_errno()) );
+      }
+
       if( not credentials.has(CredentialType::PRIVATE_KEY )) {
         EXCEPT_PARAM( 1, "Unable to setup ZeroMQ Server Communicator missing private key." );
       }
@@ -42,14 +49,9 @@ namespace SDMS {
         EXCEPT_PARAM( 1, "Decode private key failed when constructing ZeroMQ Server. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
+      // This is the servers private key
       if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SECRETKEY, private_key, 32 )) == -1 ) {
         EXCEPT_PARAM( 1, "Set ZMQ_CURVE_SECRETKEY failed when constructing ZeroMQ Server. ZMQ msg: " << zmq_strerror(zmq_errno()) );
-      }
-
-      int curve_server = 1;
-
-      if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SERVER, &curve_server, sizeof(curve_server))) == -1 ) {
-        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_SERVER failed when constructing ZeroMQ Server. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
     } else if( m_socket->getSocketClassType() == SocketClassType::CLIENT ) {
@@ -83,21 +85,20 @@ namespace SDMS {
         EXCEPT_PARAM( 1, "Decode server public key failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
-      if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SECRETKEY, public_key, 32 )) == -1 ) {
+      // This is the clients private key
+      if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SECRETKEY, private_key, 32 )) == -1 ) {
         EXCEPT_PARAM( 1, "Set ZMQ_CURVE_PUBLICKEY failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
+      // This is the clients public key
       if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_PUBLICKEY, public_key, 32 )) == -1 ) {
         EXCEPT_PARAM( 1, "Set ZMQ_CURVE_PUBLICKEY failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
+      // This is the servers public key
       if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SERVERKEY, server_key, 32 )) == -1 ) {
         EXCEPT_PARAM( 1, "Set ZMQ_CURVE_PUBLICKEY failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
-      /*std::cout << "server_key " << server_key << std::endl;
-      if (( rc = zmq_setsockopt( m_zmq_socket, ZMQ_CURVE_SERVERKEY, server_key.c_str(), 40 )) == -1 ) {
-        EXCEPT_PARAM( 1, "Set ZMQ_CURVE_SERVERKEY failed." << zmq_strerror(zmq_errno()));
-      }*/
     }
   }
 
@@ -114,7 +115,6 @@ namespace SDMS {
       EXCEPT(1, "ZeroMQ was not built with curve support cannot create secure connections.");
     }
       
-    std::cout << __FILE__ << ":" << __LINE__ << " SECURE CONSTRUCTOR " << std::endl;
     m_timeout_on_receive_milliseconds = timeout_on_receive_milliseconds;
     m_timeout_on_poll_milliseconds = timeout_on_poll_milliseconds;
 
@@ -125,7 +125,6 @@ namespace SDMS {
     m_zmq_socket = zmq_socket( m_zmq_ctx, m_zmq_socket_type);
 
 		// Order matters must occur after m_zmq_socket has be been created
-    std::cout << __FILE__ << ":" << __LINE__ << " SECURE CONSTRUCTOR " << std::endl;
     zmqCurveSetup(credentials);
     // -1 - Leave to OS
     // Not sure what 0 and 1 do other than mean you are going to overide 
@@ -166,7 +165,6 @@ namespace SDMS {
       }
     }
     if ( m_zmq_socket_type == ZMQ_SUB ){
-      //std::cout << "Subscribing " << id << " " << m_socket->getAddress() << std::endl;
       bool failure = zmq_setsockopt( m_zmq_socket, ZMQ_SUBSCRIBE, "", 0) != 0;
       if ( failure ) {
         EXCEPT_PARAM( 1, "ZeroMQ connect to address '" << m_socket->getAddress() << "' failed." );
