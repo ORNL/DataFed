@@ -34,10 +34,11 @@ map<uint16_t,RequestWorker::msg_fun_t> RequestWorker::m_msg_handlers;
 RequestWorker::RequestWorker( size_t a_tid ) :
     m_config(Config::getInstance()), m_tid(a_tid), m_worker_thread(0), m_run(true)
 {
+    m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
     setupMsgHandlers();
+    std::cout << __LINE__ << " creating workerThread " << std::endl;
     m_worker_thread = new thread( &RequestWorker::workerThread, this );
 
-    m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
 }
 
 RequestWorker::~RequestWorker()
@@ -142,11 +143,20 @@ RequestWorker::workerThread()
     //uint16_t    msg_type;
     //   handler;
 
+    std::cout << "Worker thread W" << m_tid << " Listening on address " << client->address() << std::endl;
+
+    int count = 0;
+
     while ( m_run )
     {
         try
         {
             ICommunicator::Response response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+            ++count;
+            if( count > 1000 ) {
+               count = 0; 
+               std::cout << "Client attempting to receive message on " << client->address() << " client id is " << client->id() << std::endl;
+            }
             if ( response.time_out == false and response.error == false) {
             //if ( comm.recv( m_msg_buf, true, 1000 ))
             // {
@@ -173,16 +183,17 @@ RequestWorker::workerThread()
                     DL_TRACE( "W"<<m_tid<<" calling handler" );
 
                     auto send_message = (this->*handler->second)(std::move(response.message));
-
+          
+                    std::cout << "Sending message from repo server" << std::endl;
                     client->send(*(send_message));
                     //comm.send( m_msg_buf );
 
                     DL_TRACE( "W" << m_tid << " reply sent." );
-                }
-                else
-                {
+                } else {
                     DL_ERROR( "W" << m_tid << " recvd unregistered msg type: " << msg_type );
                 }
+            } else if(response.error) {
+              std::cout << "Error detected " << response.error_msg << std::endl;
             }
         }
         catch( TraceException & e )
@@ -204,15 +215,19 @@ RequestWorker::workerThread()
 
 #define PROC_MSG_BEGIN( msgclass, replyclass ) \
 msgclass *request = 0; \
+std::cout << __LINE__ << " PROC_MSG_BEGIN" << std::endl; \
 ::google::protobuf::Message *base_msg = std::get<google::protobuf::Message*>(msg_request->getPayload()); \
 if ( base_msg ) \
 { \
+    std::cout << __LINE__ << " PROC_MSG_BEGIN" << std::endl; \
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
+        std::cout << __LINE__ << " PROC_MSG_BEGIN" << std::endl; \
         DL_TRACE( "Rcvd [" << request->DebugString() << "]"); \
         std::unique_ptr<google::protobuf::Message> reply_ptr = std::make_unique<replyclass>(); \
         replyclass & reply = *(dynamic_cast<replyclass *>(reply_ptr.get())); \
+        std::cout << __LINE__ << " PROC_MSG_BEGIN" << std::endl; \
         try \
         {
 
@@ -408,6 +423,7 @@ RequestWorker::procPathCreateRequest(std::unique_ptr<IMessage> && msg_request)
 {
     PROC_MSG_BEGIN( Auth::RepoPathCreateRequest, Anon::AckReply )
 
+    std::cout << __LINE__ << " Calling procPathCreateRequest" << std::endl;
     string sanitized_request_path = request->path();
     while ( ! sanitized_request_path.empty() ) {
       if ( sanitized_request_path.back() == '/' ) {
@@ -416,7 +432,7 @@ RequestWorker::procPathCreateRequest(std::unique_ptr<IMessage> && msg_request)
         break;
       }
     }
-
+    std::cout << __LINE__ << std::endl;
     string local_path = m_config.globus_collection_path;
     if ( sanitized_request_path.front() != '/' ) {
       local_path += "/" + sanitized_request_path;
@@ -430,6 +446,7 @@ RequestWorker::procPathCreateRequest(std::unique_ptr<IMessage> && msg_request)
     {
         boost::filesystem::create_directory( data_path );
     }
+    std::cout << __LINE__ << std::endl;
 
     PROC_MSG_END
 }

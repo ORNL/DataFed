@@ -82,8 +82,11 @@ namespace SDMS {
 
     auto end_time = std::chrono::steady_clock::now() + m_run_duration;
 
+    int count = 0;
+
     while ( m_run_infinite_loop or (end_time > std::chrono::steady_clock::now()) ) { 
       try {
+        count++;
         // Coming from the client socket that is local so communication flow is
         // going from an internal thread/process
         // 
@@ -96,7 +99,13 @@ namespace SDMS {
           std::cout << m_communicators[SocketRole::CLIENT]->id() << " error detected: " << resp_from_client_socket.error_msg << std::endl;
         }
         //std::cout << "Done proxy polling for messages from server" << std::endl;
-
+        
+        if( count > 100 ) {
+          std::cout << "Proxy running..." << std::endl;
+          std::cout << "Client id is: " << m_communicators[SocketRole::CLIENT]->id() << " Client address is: " << m_communicators[SocketRole::CLIENT]->address() << std::endl;
+          std::cout << "Server id is: " << m_communicators[SocketRole::SERVER]->id() << " Client address is: " << m_communicators[SocketRole::SERVER]->address() << std::endl;
+          count = 0;
+        }
         // Coming from the server socket that is local so communication flow is
         // coming from a public client thread/process
         // 

@@ -487,6 +487,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
     std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = config.sec_ctx->get(CredentialType::PUBLIC_KEY);
     cred_options[CredentialType::PRIVATE_KEY] = config.sec_ctx->get(CredentialType::PRIVATE_KEY);
+    std::cout << __LINE__ << "Grabbing server key from TaskWorker" << std::endl;
     cred_options[CredentialType::SERVER_KEY] = config.sec_ctx->get(CredentialType::SERVER_KEY);
 
     auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
