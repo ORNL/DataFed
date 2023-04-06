@@ -453,7 +453,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
 {
     Config & config = Config::getInstance();
 
-    std::string registered_repos = ", ";
+    std::string registered_repos = "";
 
     auto repos = config.getRepos();
     for ( auto & repo : repos ) {
@@ -466,7 +466,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
 
   // Need to be able to split repos into host and scheme and port
   const std::string client_id = "task_worker-" + id();
-  auto client = [&](const std::string & repo_address, const std::string & socket_id) {
+  auto client = [&](const std::string & repo_address,const std::string & repo_pub_key, const std::string & socket_id) {
     AddressSplitter splitter(repo_address);
 
     /// Creating input parameters for constructing Communication Instance
@@ -477,6 +477,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
     socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
     socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
+    socket_options.connection_security = SocketConnectionSecurity::SECURE;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = splitter.host();
     socket_options.port = splitter.port();
@@ -487,12 +488,17 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
     std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = config.sec_ctx->get(CredentialType::PUBLIC_KEY);
     cred_options[CredentialType::PRIVATE_KEY] = config.sec_ctx->get(CredentialType::PRIVATE_KEY);
-    cred_options[CredentialType::SERVER_KEY] = config.sec_ctx->get(CredentialType::SERVER_KEY);
+    // Cannot grab the public key from sec_ctx because we have several repos to pick from 
+    //cred_options[CredentialType::SERVER_KEY] = config.sec_ctx->get(CredentialType::SERVER_KEY);
+    cred_options[CredentialType::SERVER_KEY] = repo_pub_key;
 
+    std::cout << "Core server Client to repo server public key " << cred_options[CredentialType::PUBLIC_KEY] << std::endl;
+    std::cout << "Core server Client to repo server private key " << cred_options[CredentialType::PRIVATE_KEY] << std::endl;
+    std::cout << "Core server Client to repo server Repo public key " << cred_options[CredentialType::SERVER_KEY] << std::endl;
     auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
-    uint32_t timeout_on_receive = 10;
-    long timeout_on_poll = 10;
+    uint32_t timeout_on_receive = 30;
+    long timeout_on_poll = 30;
 
     // When creating a communication channel with a server application we need
     // to locally have a client socket. So though we have specified a client
@@ -504,14 +510,14 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
         timeout_on_receive,
         timeout_on_poll);
 
-  }(repos.at(a_repo_id).address(), client_id); // Pass the address into the lambda
+  }(repos.at(a_repo_id).address(), repos.at(a_repo_id).pub_key(), client_id); // Pass the address into the lambda
 
 
     client->send( *a_msg );
 
     ICommunicator::Response response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
     if( response.time_out ) {
-        DL_ERROR( "Timeout waiting for response from " << a_repo_id );
+        DL_ERROR( "Timeout waiting for response from " << a_repo_id << " address " << client->address() );
         cerr.flush();
         return response;
     } else if(response.error) {

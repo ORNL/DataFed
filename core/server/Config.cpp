@@ -19,6 +19,7 @@ namespace SDMS {
 
       db_client.repoList( temp_repos );
 
+      std::cout << "Registered repos are\n" << std::endl;
       for ( RepoData & r : temp_repos ) {
         {
           // Validate repo settings (in case an admin manually edits repo config)
@@ -42,14 +43,14 @@ namespace SDMS {
             continue;
           }
 
-          DL_DEBUG("Repo " << r.id() << " OK");
-          DL_DEBUG("UUID: " << r.endpoint() );
+          DL_DEBUG("Repo " << r.id() << " OK - UUID: " << r.endpoint());
 
           // Cache pub key for ZAP handler
           auth_manager.addKey(PublicKeyType::PERSISTENT, r.pub_key(), r.id());
 
           // Cache repo data for data handling
           m_repos_mtx.lock();
+          //std::cout << r.id() << std::endl;
           m_repos[r.id()] = r;
           m_repos_mtx.unlock();
 
