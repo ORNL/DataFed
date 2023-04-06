@@ -73,13 +73,17 @@ Server::run()
     DL_INFO( "Public/private MAPI starting on port " << m_config.port )
 
     // Create worker threads
-    for ( uint16_t t = 0; t < m_config.num_req_worker_threads; ++t )
+    for ( uint16_t t = 0; t < m_config.num_req_worker_threads; ++t ) {
+        std::cout << "Creating worker " << t << " out of " << m_config.num_req_worker_threads << std::endl;
         m_req_workers.push_back( new RequestWorker( t+1 ));
+    }
 
+    std::cout << __LINE__ << std::endl;
     // Create secure interface and run message pump
     // NOTE: Normally ioSecure will not return
     ioSecure();
 
+    std::cout << __LINE__ << std::endl;
     // Clean-up workers
     vector<RequestWorker*>::iterator iwrk;
 
@@ -120,7 +124,7 @@ Server::checkServerVersion()
     //sec_ctx.public_key = pub_key;
     //sec_ctx.private_key = priv_key;
 
-    std::string repo_thread_id = "repository_main_socket";
+    std::string repo_thread_id = "repository_main_socket_client";
     auto client = [&](
         const std::string & socket_id,
         const std::string & address,
@@ -241,9 +245,11 @@ Server::loadKeys()
 void
 Server::ioSecure()
 {
+    std::cout << __LINE__ << std::endl;
     try
     {
 
+    std::cout << __LINE__ << std::endl;
         std::unordered_map<SocketRole, SocketOptions> socket_options;
         std::unordered_map<SocketRole, ICredentials *> socket_credentials;
 
@@ -261,7 +267,7 @@ Server::ioSecure()
         client_socket_options.class_type = SocketClassType::CLIENT; 
         client_socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
         client_socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
-        client_socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
+        client_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
         client_socket_options.protocol_type = ProtocolType::ZQTP; 
         client_socket_options.host = "workers";
         client_socket_options.local_id = "main_repository_server_interal_facing_socket";
@@ -274,6 +280,7 @@ Server::ioSecure()
         socket_credentials[SocketRole::CLIENT] = client_credentials.get();
         }
 
+    std::cout << __LINE__ << std::endl;
         // Credentials are allocated on the heap, to ensure they last until the end of
         // the test they must be defined outside of the scope block below
         std::unique_ptr<ICredentials> server_credentials;
@@ -300,6 +307,7 @@ Server::ioSecure()
           cred_options[CredentialType::PRIVATE_KEY] = m_config.sec_ctx->get(CredentialType::PRIVATE_KEY);
           cred_options[CredentialType::SERVER_KEY] = m_config.sec_ctx->get(CredentialType::SERVER_KEY);
 
+          std::cout << "PRIVATE KEY for repo secure connection to core server " << cred_options[CredentialType::PRIVATE_KEY] << std::endl;
           server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
           socket_credentials[SocketRole::SERVER] = server_credentials.get();
 
@@ -319,14 +327,22 @@ Server::ioSecure()
         //OperatorFactory oper_factory;
         //std::any router_id_to_add = proxy_client_id;
 
+    std::cout << __LINE__ << std::endl;
         ServerFactory server_factory;
         auto proxy = server_factory.create(ServerType::PROXY_CUSTOM ,socket_options, socket_credentials);
         //Proxy proxy(socket_options, socket_credentials, std::move(incoming_operators));
+    std::cout << __LINE__ << " Created proxy target addresses are:" << std::endl;
+
+        for( auto & addr : proxy->getAddresses() ) {
+          std::cout << addr.second << std::endl;
+        }
 
         //std::chrono::duration<double> duration = std::chrono::milliseconds(30);
         //proxy.setRunDuration(duration);
+    std::cout << __LINE__ << " running secure proxy..." << std::endl;
         proxy->run();
 
+    std::cout << __LINE__ << std::endl;
 
 
 

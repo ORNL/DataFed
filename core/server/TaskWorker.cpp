@@ -490,6 +490,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
     cred_options[CredentialType::PRIVATE_KEY] = config.sec_ctx->get(CredentialType::PRIVATE_KEY);
     // Cannot grab the public key from sec_ctx because we have several repos to pick from 
     //cred_options[CredentialType::SERVER_KEY] = config.sec_ctx->get(CredentialType::SERVER_KEY);
+    std::cout << __LINE__ << "Grabbing server key from TaskWorker" << std::endl;
     cred_options[CredentialType::SERVER_KEY] = repo_pub_key;
 
     std::cout << "Core server Client to repo server public key " << cred_options[CredentialType::PUBLIC_KEY] << std::endl;
