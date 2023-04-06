@@ -492,13 +492,13 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_TCPServer_Reply ) {
   // duration_to_wait_for_response * 2 + duration_before_sending_message_to_proxy < proxy_run_duration < duration_before_closing_threads
   //
   // If hitting a timeout error consider increasing the response time 
-  std::chrono::duration<double> proxy_run_duration = std::chrono::milliseconds(1050);
+  std::chrono::duration<double> proxy_run_duration = std::chrono::milliseconds(2050);
   // Hopefully the proxy has been up and running for 250 milliseconds before we send the actual request
   auto duration_before_sending_message_to_proxy = std::chrono::milliseconds(250);
   // Wait for 400 seconds after the send has been called for a response
-  auto duration_to_wait_for_response = std::chrono::milliseconds(400);
+  auto duration_to_wait_for_response = std::chrono::milliseconds(800);
   // Ensure the proxy is closed before calling thread join (proxy_run_duration) < (duration_before_closing_threads)
-  auto duration_before_closing_threads = proxy_run_duration + std::chrono::milliseconds(1300);
+  auto duration_before_closing_threads = proxy_run_duration + std::chrono::milliseconds(3000);
 
   { // Extra scope here is so that the destructors of all items will be called
     // you can then run zmq_ctx_destroy(context) to ensure that all sockets

@@ -12,6 +12,21 @@ else
   MAX_TEST_TIME_SEC=$3
 fi
 
+# Check that pcap group exists and the user is part of it
+if [ $(getent group pcap) ]
+then
+  if id -nG "$USER" | grep -qw "pcap"
+  then
+    echo "CONTINUE"
+  else
+    echo "SKIPPING - user does not belong to pcap group cannot run tcp_secure test"
+    exit 0
+  fi
+else
+  echo "SKIPPING - pcap group does not exist cannot run tcp_secure test"
+  exit 0
+fi
+
 echo 
 echo "Running with:"
 echo "TCPDUMP:       ${TCPDUMP_CMD}"
@@ -29,6 +44,6 @@ then
   echo "SUCCESS - the connection is expected to be insecure"
   exit 0
 else
-  echo "FAILED - the connection is secure, but we were expecting an insecure connection"
+  echo "FAILED - the connection is unreadable, either it is encrypted when it should not be or there is an error."
   exit 1
 fi
