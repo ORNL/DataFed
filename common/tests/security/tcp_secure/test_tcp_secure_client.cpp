@@ -12,6 +12,9 @@
 #include <SDMS_Anon.pb.h>
 #include <SDMS_Auth.pb.h>
 
+// Third party includes
+#include <boost/program_options.hpp>
+
 // Standard includes
 #include <iostream>
 #include <memory>
@@ -19,8 +22,33 @@
 #include <unistd.h>
 
 using namespace SDMS;
+namespace po = boost::program_options;
 
-int main() {
+int main(int a_argc, char ** a_argv ) {
+
+  bool secure_connection = true;
+  uint32_t pause_time = 0;
+
+  po::options_description opts( "Options" );
+
+  opts.add_options()
+    ("help,?", "Show help")
+    ("insecure,i","Run with insecure communication")
+    ("pause,p",po::value<uint32_t>( &pause_time ),"Pause before running (seconds)");
+
+  po::variables_map opt_map;
+  po::store( po::command_line_parser( a_argc, a_argv ).options( opts ).run(), opt_map );
+  po::notify( opt_map );
+
+  if ( opt_map.count( "help" ) ){
+    std::cout << "tcp security test client\n";
+    std::cout << "Usage: test_tcp_secure_client [options]\n";
+    std::cout << opts << std::endl;
+    return 0;
+  }
+  if ( opt_map.count("insecure") ){
+    secure_connection = false;
+  }
 
   CommunicatorFactory comm_factory;
 
@@ -56,14 +84,18 @@ int main() {
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = channel;
     socket_options.scheme = URIScheme::TCP;
-    socket_options.connection_security = SocketConnectionSecurity::SECURE;
+    if( secure_connection ) {
+      socket_options.connection_security = SocketConnectionSecurity::SECURE;
+    } else {
+      socket_options.connection_security = SocketConnectionSecurity::INSECURE;
+    }
     socket_options.class_type = SocketClassType::CLIENT; 
     socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
     socket_options.port = port;
     socket_options.local_id = client_id;
 
     CredentialFactory cred_factory;
-   
+
     std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PUBLIC_KEY] = client_public_key;
     cred_options[CredentialType::PRIVATE_KEY] = client_secret_key;
@@ -86,9 +118,12 @@ int main() {
 
   std::cout << "Client created: " << client->id() << std::endl;
   std::cout << "Client properties" << std::endl;
-  std::cout << "Client Public key " << client_public_key << std::endl;
-  std::cout << "Client Secret key " << client_secret_key << std::endl;
-  std::cout << "Server Public key " << server_public_key << std::endl;
+  std::cout << "Secure connection " << secure_connection << std::endl;
+  if( secure_connection ) {
+    std::cout << "Client Public key " << client_public_key << std::endl;
+    std::cout << "Client Secret key " << client_secret_key << std::endl;
+    std::cout << "Server Public key " << server_public_key << std::endl;
+  }
   std::cout << "Address           " << client->address() << std::endl;
   std::cout << std::endl;
 
@@ -98,33 +133,36 @@ int main() {
   std::cout << "key:    " << key << std::endl;
   std::cout << "token:  " << token << std::endl;
 
+  // Before beginning sleep for 1 second
+  sleep(pause_time);
+
   MessageFactory msg_factory;
   { // Client send
     auto msg_from_client = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
-		
-		uint16_t context = 0;
+
+    uint16_t context = 0;
     msg_from_client->set(constants::message::google::CONTEXT, context);
 
     auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
 
     msg_from_client->setPayload(std::move(auth_by_token_req));
-		client->send(*msg_from_client);
+    client->send(*msg_from_client);
   }
   std::cout << client->id() << " Message sent..." << std::endl;
 
   std::cout << client->id() << " Waiting for response from server..." << std::endl;
   { // Receive a NACK response 
     ICommunicator::Response response_client = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
-   
+
     int retry_count = 0;
     while( response_client.time_out == true && retry_count < max_retries ) {
       response_client = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
       retry_count++;
     }
-    
+
     if( response_client.time_out == true ) {
       std::cout << client->id() << " FAILED" << std::endl;
       EXCEPT_PARAM(1, "TCP Secure test failed client never received a response from server.");      
@@ -152,5 +190,5 @@ int main() {
     }
   } 
   std::cout << client->id() << " SUCCESS" << std::endl;
-	return 0;
+  return 0;
 }

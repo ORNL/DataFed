@@ -12,14 +12,45 @@
 #include <SDMS_Anon.pb.h>
 #include <SDMS_Auth.pb.h>
 
+// Third party includes
+#include <boost/program_options.hpp>
+
 // Standard includes
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unistd.h>
 
 using namespace SDMS;
+namespace po = boost::program_options;
 
-int main() {
+int main(int a_argc, char ** a_argv ) {
+
+  bool secure_connection = true;
+  uint32_t pause_time = 0;
+
+  po::options_description opts( "Options" );
+
+  opts.add_options()
+    ("help,?", "Show help")
+    ("insecure,i","Run with insecure communication")
+    ("fail,f","Run with insecure communication")
+    ("pause,p",po::value<uint32_t>( &pause_time ),"Pause before running (seconds)");
+
+  po::variables_map opt_map;
+  po::store( po::command_line_parser( a_argc, a_argv ).options( opts ).run(), opt_map );
+  po::notify( opt_map );
+
+  if ( opt_map.count( "help" ) ){
+    std::cout << "tcp security test server\n";
+    std::cout << "Usage: test_tcp_secure_server [options]\n";
+    std::cout << opts << std::endl;
+    return 0;
+  }
+  if ( opt_map.count("insecure") ){
+    secure_connection = false;
+  }
+
 
   CommunicatorFactory comm_factory;
 
@@ -57,12 +88,16 @@ int main() {
     socket_options.connection_life = SocketConnectionLife::PERSISTENT;
     socket_options.protocol_type = ProtocolType::ZQTP; 
     socket_options.host = channel;
-    socket_options.connection_security = SocketConnectionSecurity::SECURE;
+    if( secure_connection ) {
+      socket_options.connection_security = SocketConnectionSecurity::SECURE;
+    } else {
+      socket_options.connection_security = SocketConnectionSecurity::INSECURE;
+    }
     socket_options.port = port;
     socket_options.local_id = server_id;
 
     CredentialFactory cred_factory;
-   
+
     std::unordered_map<CredentialType, std::string> cred_options;
     cred_options[CredentialType::PRIVATE_KEY] = server_private_key;
 
@@ -83,12 +118,18 @@ int main() {
 
   std::cout << "Server created: " << server->id() << std::endl;
   std::cout << "Server properties" << std::endl;
-  std::cout << "Server private key " << server_private_key << std::endl;
+  std::cout << "Secure connection  " << secure_connection << std::endl;
+  if( secure_connection ) {
+    std::cout << "Server private key " << server_private_key << std::endl;
+  }
   std::cout << "Address            " << server->address() << std::endl;
+
+  // Before beginning sleep for 1 second
+  sleep(pause_time);
 
   { // Server receive
     ICommunicator::Response response = server->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
- 
+
     int retry_count = 0;
     while( response.time_out == true && retry_count < max_retries ) {
       response = server->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
@@ -122,12 +163,12 @@ int main() {
 
     auto google_msg_ptr = std::get<::google::protobuf::Message *>(response.message->getPayload());
     Anon::AuthenticateByTokenRequest * payload = dynamic_cast<Anon::AuthenticateByTokenRequest *>(google_msg_ptr);
-    
+
     if(payload->token().compare(token) != 0) {
       std::cout << server->id() << " FAILED" << std::endl;
       EXCEPT_PARAM(1, "Error detected in server, expected message content is incorrect. Actual token value is " << payload->token() << " Expected token value is " << token);
     }
-    
+
     MessageFactory msg_factory;
     // Server send a reply
     auto nack_msg = msg_factory.createResponseEnvelope(*response.message);
