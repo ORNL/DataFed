@@ -562,16 +562,17 @@ namespace SDMS {
   
         int number_of_bytes = 0;
         if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
-          EXCEPT( 1, "RCV zmq_msg_recv (body) failed." );
+          EXCEPT_PARAM( 1, "RCV zmq_msg_recv (body) failed. Frame size: " << frame_size << " received " << number_of_bytes );
         }
-        //std::cout << "receiveBody bytes " << number_of_bytes << std::endl;
-
-        if ( zmq_msg_size( &zmq_msg ) != frame_size ) {
-          EXCEPT_PARAM( 1, "RCV Invalid message body received. Expected: " << frame_size << ", got: " << zmq_msg_size( &zmq_msg ) );
-        }
-      
+  
         // Only set payload if there is a payload
         if( frame_size > 0 ) {
+          //std::cout << "receiveBody bytes " << number_of_bytes << std::endl;
+
+          if ( zmq_msg_size( &zmq_msg ) != frame_size ) {
+            EXCEPT_PARAM( 1, "RCV Invalid message body received. Expected: " << frame_size << ", got: " << zmq_msg_size( &zmq_msg ) );
+          }
+ 
           copyToBuffer( buffer, zmq_msg_data(&zmq_msg), frame_size );
           uint16_t desc_type = std::get<uint16_t>(msg.get(MSG_TYPE));
           //std::cout << "Desc type is " << desc_type << std::endl;

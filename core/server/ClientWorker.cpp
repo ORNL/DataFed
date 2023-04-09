@@ -244,8 +244,8 @@ ClientWorker::workerThread()
     CredentialFactory cred_factory;
     auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
-    uint32_t timeout_on_receive = 10;
-    long timeout_on_poll = 10;
+    uint32_t timeout_on_receive = 1000;
+    long timeout_on_poll = 1000;
 
     // When creating a communication channel with a server application we need
     // to locally have a client socket. So though we have specified a client
