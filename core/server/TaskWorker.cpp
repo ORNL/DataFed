@@ -1,5 +1,5 @@
-#include <memory>
-#include <sstream>
+
+// Local private includes
 #include "unistd.h"
 #include "DynaLog.hpp"
 #include "Config.hpp"
@@ -16,6 +16,7 @@
 
 // Standard includes
 #include <memory>
+#include <sstream>
 
 using namespace std;
 using namespace libjson;
@@ -34,7 +35,7 @@ TaskWorker::TaskWorker( ITaskMgr & a_mgr, uint32_t a_worker_id ) :
 {
     m_thread = new thread( &TaskWorker::workerThread, this );
 
-    //m_execute[TC_RAW_DATA_TRANSFER] = &cmdRawDataTransfer;
+    m_execute[TC_RAW_DATA_TRANSFER] = &cmdRawDataTransfer;
     m_execute[TC_RAW_DATA_DELETE] = &cmdRawDataDelete;
     m_execute[TC_RAW_DATA_UPDATE_SIZE] = &cmdRawDataUpdateSize;
     m_execute[TC_ALLOC_CREATE] = &cmdAllocCreate;
@@ -460,12 +461,23 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
       registered_repos =  repo.second.id() + " ";
     }
 
-    if ( !repos.count(a_repo_id) )
+    if ( !repos.count(a_repo_id) ) {
         EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id << " Registered repos are: " << registered_repos );
-
+    }
 
   // Need to be able to split repos into host and scheme and port
-  const std::string client_id = "task_worker-" + id();
+    std::cout << "ID is " << id() << std::endl;
+      //const std::string client_id = "task_worker-" + id();
+    const std::string client_id = [&]() {
+      std::stringstream ss;
+      ss << "task_worker-";
+      ss << id();
+      std::string str;
+      ss >> str;
+      return str;
+    }();
+
+  std::cout << "Client ID of task worker is: " << client_id << std::endl;
   auto client = [&](const std::string & repo_address,const std::string & repo_pub_key, const std::string & socket_id) {
     AddressSplitter splitter(repo_address);
 
@@ -482,6 +494,8 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
     socket_options.host = splitter.host();
     socket_options.port = splitter.port();
     socket_options.local_id = socket_id;
+    std::cout << "Setting local socket id to " << socket_id << std::endl;
+    std::cout << "Setting local socket id to " << *socket_options.local_id << std::endl;
 
     CredentialFactory cred_factory;
    
@@ -498,8 +512,9 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
     std::cout << "Core server Client to repo server Repo public key " << cred_options[CredentialType::SERVER_KEY] << std::endl;
     auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
-    uint32_t timeout_on_receive = 30;
-    long timeout_on_poll = 30;
+    
+    uint32_t timeout_on_receive = Config::getInstance().repo_timeout;
+    long timeout_on_poll = Config::getInstance().repo_timeout;
 
     // When creating a communication channel with a server application we need
     // to locally have a client socket. So though we have specified a client
@@ -514,8 +529,10 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
   }(repos.at(a_repo_id).address(), repos.at(a_repo_id).pub_key(), client_id); // Pass the address into the lambda
 
 
+    std::cout << "Client " << client->id() << " sending msg" << std::endl; 
     client->send( *a_msg );
 
+    std::cout << "Client " << client->id() << " waiting to receive response msg" << std::endl; 
     ICommunicator::Response response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
     if( response.time_out ) {
         DL_ERROR( "Timeout waiting for response from " << a_repo_id << " address " << client->address() );

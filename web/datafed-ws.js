@@ -1628,7 +1628,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
                 }
             } else {
                 console.log("Sending a_reply as callback");
-                console.log(a_reply);
+                //console.log(a_reply);
                 a_cb( a_reply );
             }
         };
@@ -1640,7 +1640,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
         var route_count = Buffer.alloc(4);
         route_count.writeUInt32BE( 0, 0 );
         if ( msg_buf.length ) {
-            //console.log("sending multipart message bam");
+            console.log("sending multipart message bam");
             //g_core_sock.send([ nullfr, nullfr, frame, msg_buf, nullfr, client ]);
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
@@ -1648,17 +1648,18 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
-            console.log("1 MsgType is: ", msg._msg_type ," Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
             g_core_sock.send(msg_buf);
+            console.log("1 MsgType is: ", msg._msg_type ," Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
         } else {
-            //console.log("sending multipart message boom");
+            console.log("sending multipart message boom");
             //g_core_sock.send([ nullfr, nullfr, frame, nullfr, nullfr, client ]);
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(client ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send(frame );
+            g_core_sock.send(frame ,zmq.ZMQ_SNDMORE );
+            g_core_sock.send(nullfr);
             console.log("2 MsgType is: ", msg._msg_type ," Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
 
         }
@@ -1704,29 +1705,29 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
             //console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, 'no_id', 'no_key', frame, msg_buf, '', a_client ]");
 
 
-            g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             //g_core_sock.send(0 ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(msg_buf);
-            console.log("1 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
+            console.log("3 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
         } else {
             //console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, nullfr, frame, nullfr, '', a_client ]");
             //g_core_sock.send([ nullfr, "" ,nullfr, frame, nullfr, nullfr, a_client ]);
             //g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             //g_core_sock.send(0 ,zmq.ZMQ_SNDMORE);
+            //g_core_sock.send("dummy_route" ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
-            //g_core_sock.send("dummy_route" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
-            g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(frame,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr);
-            console.log("2 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
+            console.log("4 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
         }
         //console.log("Message was sent");
     });
