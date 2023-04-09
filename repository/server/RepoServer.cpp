@@ -15,8 +15,12 @@
 #include "IServer.hpp"
 #include "KeyGenerator.hpp"
 #include "MessageFactory.hpp"
+#include "OperatorFactory.hpp"
 #include "ServerFactory.hpp"
 #include "TraceException.hpp"
+
+// Standard includes
+#include <any>
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
 #define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
@@ -259,6 +263,7 @@ Server::ioSecure()
         // the test they must be defined outside of the scope block below
         std::unique_ptr<ICredentials> client_credentials;
 
+        std::string client_id = "main_repository_server_interal_facing_socket";
         { // Proxy Client Credentials and Socket Options - these options are used
         // to define the client socket that the proxy will use to communicate with
         // the backend. The proxy acts like a client to the backend
@@ -270,7 +275,7 @@ Server::ioSecure()
         client_socket_options.connection_life = SocketConnectionLife::PERSISTENT;
         client_socket_options.protocol_type = ProtocolType::ZQTP; 
         client_socket_options.host = "workers";
-        client_socket_options.local_id = "main_repository_server_interal_facing_socket";
+        client_socket_options.local_id = client_id;
         socket_options[SocketRole::CLIENT] = client_socket_options;
 
         CredentialFactory cred_factory;
@@ -327,10 +332,14 @@ Server::ioSecure()
         //OperatorFactory oper_factory;
         //std::any router_id_to_add = proxy_client_id;
 
+        //OperatorFactory oper_factory;
+        //std::any router_id_to_add = client_id;
+        //std::vector<std::unique_ptr<IOperator>> incoming_operators;
+        //incoming_operators.push_back( oper_factory.create(OperatorType::RouterBookKeeping, router_id_to_add) );
     std::cout << __LINE__ << std::endl;
         ServerFactory server_factory;
         auto proxy = server_factory.create(ServerType::PROXY_CUSTOM ,socket_options, socket_credentials);
-        //Proxy proxy(socket_options, socket_credentials, std::move(incoming_operators));
+        //auto proxy = server_factory.create(ServerType::PROXY_CUSTOM ,socket_options, socket_credentials, std::move(incoming_operators));
     std::cout << __LINE__ << " Created proxy target addresses are:" << std::endl;
 
         for( auto & addr : proxy->getAddresses() ) {
@@ -343,9 +352,6 @@ Server::ioSecure()
         proxy->run();
 
     std::cout << __LINE__ << std::endl;
-
-
-
 
         
         //MsgComm frontend( "tcp://*:" + to_string(m_config.port), MsgComm::ROUTER, true, &m_config.sec_ctx );
