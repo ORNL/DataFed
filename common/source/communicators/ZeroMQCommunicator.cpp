@@ -373,8 +373,8 @@ namespace SDMS {
           zmq_msg_t zmq_msg;
           zmq_msg_init_size( &zmq_msg, route.size() );
 
-          //std::cout << route << std::endl;
-          //std::cout << "sendRoute: attempting to send identity: " << route << " string size is " << route.size() << std::endl;
+          std::cout << route << std::endl;
+          std::cout << "sendRoute: attempting to send msg to identity: " << route << " string size is " << route.size() << std::endl;
           memcpy( zmq_msg_data( &zmq_msg ), route.data(), route.size() );
           int number_of_bytes = 0;
           if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE )) < 0 ) {

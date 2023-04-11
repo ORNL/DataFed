@@ -192,9 +192,7 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
         //
         // "MiddleMan_client_socket" as a prepended message on its way to the 
         // backend server, I think this is only necessary because we have
-        // specifiedt that the Server is connecting Synchronously with the proxy
-
-
+        // specified that the Server is connecting Synchronously with the proxy
         OperatorFactory oper_factory;
         std::any router_id_to_add = proxy_client_id;
         std::vector<std::unique_ptr<IOperator>> incoming_operators;

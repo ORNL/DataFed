@@ -83,27 +83,28 @@ namespace SDMS {
             key = line.substr(0,eq);
             val = line.substr(eq+1);
 
-            if (key == "repo_id")
+            if (key == "repo_id") {
                 m_repo_id = val;
-            else if (key == "server_address")
+            } else if (key == "server_address") {
                 m_server_addr = val;
-            else if (key == "user")
+            } else if (key == "user") {
                 m_user = val;
-            else if (key == "pub_key")
+            } else if (key == "pub_key") {
                 //m_pub_key = loadKeyFile( val );
                 cred_options[CredentialType::PUBLIC_KEY] = loadKeyFile( val);
-            else if (key == "priv_key")
+            } else if (key == "priv_key") {
                 //m_priv_key = loadKeyFile( val );
                 cred_options[CredentialType::PRIVATE_KEY] = loadKeyFile( val);
-            else if (key == "server_key")
+            } else if (key == "server_key") {
                 //m_server_key = loadKeyFile( val );
                 cred_options[CredentialType::SERVER_KEY] = loadKeyFile( val);
-            else if (key == "timeout")
+            } else if (key == "timeout") {
                 m_timeout = stoi(val);
-            else if (key == "test_path" )
+            }else if (key == "test_path" ) {
                 m_test_path = val;
-            else
+            } else {
                 EXCEPT_PARAM( 1, "Invalid key \"" << key << "\"in config file at line " << lc );
+            }
         }
 
         configFile.close();
