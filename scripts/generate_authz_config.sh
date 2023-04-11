@@ -1,5 +1,7 @@
 #!/bin/env bash
-set -euf -o pipefail
+# Cannot run with -u because we check for unbound variables
+# and the script will exit prematurely if '-u' is set
+set -ef -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
@@ -22,6 +24,8 @@ Help()
   echo "                                  It can also be set using the DATAFED_DOMAIN env variable."
   echo "                                  NOTE: this does not use https it uses tcp."
   echo "-p, --port                        The DataFed port."
+  echo "-u, --user                        The user the authz module will run as."
+  echo "-g, --globus-collection-path      The POSIX path to the Guest Globus Collection."
 }
 
 REPO_ID="datafed-home"
@@ -42,7 +46,26 @@ else
   local_DATAFED_SERVER_PORT=$(printenv DATAFED_SERVER_PORT)
 fi
 
-VALID_ARGS=$(getopt -o hr:d: --long 'help',repo-id:,datafed-domain-port: -- "$@")
+if [ -z "${GCS_COLLECTION_ROOT_PATH}" ]
+then
+  local_GCS_COLLECTION_ROOT_PATH="/mnt/datafed-repo/mapped"
+else
+  local_GCS_COLLECTION_ROOT_PATH=$(printenv GCS_COLLECTION_ROOT_PATH)
+fi
+
+echo "HERE"
+if [ -z $DATAFED_AUTHZ_USER ]
+then
+  echo "HERE DATAFED_AUTHZ_USER is not defined"
+  local_DATAFED_AUTHZ_USER="$USER"
+else
+  echo "HERE3 DATAFED_AUTHZ_USER is defined"
+  local_DATAFED_AUTHZ_USER=$(printenv DATAFED_AUTHZ_USER)
+fi
+
+echo "1HERE"
+
+VALID_ARGS=$(getopt -o hr:d:g: --long 'help',repo-id:,user:,domain:,globus-collection-path -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -68,6 +91,16 @@ while [ : ]; do
         local_DATAFED_SERVER_PORT=$2
         shift 2
         ;;
+    -u | --user)
+        echo "Processing 'DataFed user' option. Input argument is '$2'"
+        local_DATAFED_AUTHZ_USER=$2
+        shift 2
+        ;;
+    -g | --globus-collection-path)
+        echo "Processing 'Globus Collection Path' option. Input argument is '$2'"
+        local_GCS_COLLECTION_ROOT_PATH=$2
+        shift 2
+        ;;
     --) shift; 
         break 
         ;;
@@ -77,9 +110,11 @@ while [ : ]; do
   esac
 done
 
+echo "2HERE"
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 
 CONFIG_FILE_NAME="datafed-authz.cfg"
+echo "3HERE"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 server_address=tcp://${local_DATAFED_DOMAIN}:${local_DATAFED_SERVER_PORT}
@@ -87,6 +122,8 @@ server_key=/opt/datafed/keys/datafed-core-key.pub
 repo_id=repo/$DATAFED_REPO_ID_AND_DIR
 pub_key=/opt/datafed/keys/datafed-repo-key.pub
 priv_key=/opt/datafed/keys/datafed-repo-key.priv
+user=$local_DATAFED_AUTHZ_USER
+globus-collection-path=$local_GCS_COLLECTION_ROOT_PATH
 EOF
 
 echo
