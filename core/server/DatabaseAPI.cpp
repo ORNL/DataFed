@@ -3230,11 +3230,15 @@ DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_rep
 {
     vector<pair<string,string>> params;
     params.push_back({"task_id",a_task_id});
-    if ( a_err_msg )
+    std::cout << "Calling taskRun from DatabaseAPI task id: " << a_task_id;
+    if ( a_err_msg ) {
         params.push_back({ "err_msg", *a_err_msg });
-    else if ( a_step )
+        std::cout <<  " err_msg is: " << a_err_msg;
+    } else if ( a_step ) {
         params.push_back({ "step", to_string( *a_step )});
-
+        std::cout << " step is " << *a_step;
+    }
+    std::cout  << std::endl;
     dbGet( "task/run", params, a_task_reply );
 }
 

@@ -69,9 +69,11 @@ router.get('/run', function (req, res) {
                 if ( task.status == g_lib.TS_READY ){
                     g_tasks.taskReady( task._id );
                 } else if ( task.status == g_lib.TS_RUNNING ){
+                    console.log("task/run: ",task._id," - step is: ", req.queryParams.step );
                     if ( req.queryParams.step != undefined && req.queryParams.step == task.step ){
                         // This confirms previous step was completed, so update step number
                         task.step++;
+                        console.log("task/run: ", task._id, " - step after incrementing is: ", task.step);
                         g_db.task.update( task._id, { step: task.step, ut: Math.floor( Date.now()/1000 ) }, { waitForSync: true });
                     } else if ( req.queryParams.step != undefined && req.queryParams.step >= task.steps ){
                         throw [ g_lib.ERR_INVALID_PARAM, "Called run on task " + task._id + " with invalid step: " + req.queryParams.step ];

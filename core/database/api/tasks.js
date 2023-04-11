@@ -286,6 +286,7 @@ var tasks_func = function() {
         if ( a_task.step < 0 )
             return;
 
+        console.log("taskRunDataPut begin Step: ", a_task.step);
         if ( a_task.step == 0 ){
             //console.log("taskRunDataPut - do setup");
             obj._transact( function(){
@@ -364,6 +365,9 @@ var tasks_func = function() {
                 repo_path: xfr.dst_repo_path,
                 ids: [xfr.files[0].id]
             };
+
+            console.log("Printing params in task update size");
+            console.log(params);
             reply = { cmd: g_lib.TC_RAW_DATA_UPDATE_SIZE, params: params, step: a_task.step };
         } else {
             //console.log("taskRunDataPut - complete task");
@@ -373,6 +377,8 @@ var tasks_func = function() {
             }, [], ["task"],["lock","block"] );
         }
 
+        console.log("taskRunDataPut final reply");
+        console.log(reply);
         return reply;
     };
 

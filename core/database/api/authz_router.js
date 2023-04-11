@@ -32,16 +32,22 @@ router.get('/gridftp', function (req, res) {
             var req_perm = 0;
             switch ( req.queryParams.act ) {
                 case "read":
+                    console.log("Client: ", client, " read permissions?");
                     req_perm = g_lib.PERM_RD_DATA;
                     break;
                 case "write":
+                    console.log("Client: ", client, " write permissions?");
                 case "create":
+                    console.log("Client: ", client, " create permissions?");
                     req_perm = g_lib.PERM_WR_DATA;
                     break;
                 case "delete":
+                    console.log("Client: ", client, " delete permissions?");
                     throw g_lib.ERR_PERM_DENIED;
                 case "chdir":
+                    console.log("Client: ", client, " chdir permissions?");
                 case "lookup":
+                    console.log("Client: ", client, " lookup permissions?");
                     // For TESTING, allow these actions
                     return;
                 default:
@@ -50,19 +56,23 @@ router.get('/gridftp', function (req, res) {
 
             if ( !g_lib.hasAdminPermObject( client, data_id )) {
                 var data = g_db.d.document( data_id );
-                if ( !g_lib.hasPermissions( client, data, req_perm ))
+                if ( !g_lib.hasPermissions( client, data, req_perm )) {
+                    console.log("Client: ", client, " does not have permission!");
                     throw g_lib.ERR_PERM_DENIED;
+                }
             }
         }
 
         // Verify repo and path are correct for record
         // Note: only managed records have an allocations and this gridftp auth call is only made for managed records
-        var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
+        //var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
+        var path = req.queryParams.file;
         var loc = g_db.loc.firstExample({_from: data_id});
         if ( !loc )
             throw g_lib.ERR_PERM_DENIED;
 
         var alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc._to });
+        console.log("path:", path, " alloc path:", alloc.path + data_key, " loc: ", loc );
         if ( !alloc )
             throw g_lib.ERR_PERM_DENIED;
 
@@ -76,7 +86,6 @@ router.get('/gridftp', function (req, res) {
 
             alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });
 
-            //console.log("path:", path, "alloc path:", alloc.path + data_key );
 
             if ( !alloc || ( alloc.path + data_key != path ))
                 throw g_lib.ERR_PERM_DENIED;
