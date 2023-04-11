@@ -217,7 +217,7 @@ namespace SDMS {
             break;
           } else {
             previous_route = received_part;
-            std::cout << received_part << std::endl;
+            //std::cout << received_part << std::endl;
             msg.addRoute(received_part);
           }
         } else {
@@ -500,7 +500,7 @@ namespace SDMS {
           FrameConverter converter;
           //std::cout << "recieveFrame:: convert from frame to msg" << std::endl;
           converter.copy(FrameConverter::CopyDirection::FROM_FRAME, msg, frame);
-          std::cout << "Context after copying to message is " << std::get<uint16_t>(msg.get(constants::message::google::CONTEXT)) << std::endl;
+          //std::cout << "Context after copying to message is " << std::get<uint16_t>(msg.get(constants::message::google::CONTEXT)) << std::endl;
           //std::cout << "recieveFrame:: complete" << std::endl;
           zmq_msg_close( &zmq_msg );
           //std::cout << "receiveFrame context is : " << frame.context << std::endl;
@@ -592,7 +592,7 @@ namespace SDMS {
           ProtoBufMap proto_map;
           if( proto_map.exists(msg_type) ) {
             std::cout << "poll received message of type: " << proto_map.toString(msg_type) << std::endl;
-            std::cout << "Desc type is " << msg_type << std::endl;
+            //std::cout << "Desc type is " << msg_type << std::endl;
             std::unique_ptr<proto::Message> payload = factory.create( msg_type );
             msg.setPayload(std::move(payload));
           } else {
@@ -647,7 +647,7 @@ namespace SDMS {
             if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, 0 )) < 0 ) {
               EXCEPT( 1, "zmq_msg_send (body) failed." );
             }
-            std::cout << "sendBody number of bytes " << number_of_bytes << std::endl;
+            //std::cout << "sendBody number of bytes " << number_of_bytes << std::endl;
           } else {
             EXCEPT(1,"Payload not defined... something went wrong");
           }

@@ -1326,6 +1326,8 @@ ClientWorker::procRepoAuthzRequest( const std::string & a_uid, std::unique_ptr<I
     (void)a_uid;
     PROC_MSG_BEGIN( RepoAuthzRequest, AckReply )
 
+    std::cout << "\n****************************************************************" << std::endl;
+    std::cout << "RepoAuthzRequest encountered\n" << std::endl;
     DL_INFO( "AUTHZ repo: " << a_uid << ", usr: " << request->client() /*<< ", repo: " << request->repo()*/ << ", file: " << request->file() << ", act: " << request->action() );
 
     m_db_client.setClient( request->client() );

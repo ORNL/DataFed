@@ -76,12 +76,15 @@ TaskWorker::workerThread()
             try
             {
                 if ( first ){
+                    std::cout << "Calling taskRun: " << m_task->task_id << " running from start." << std::endl;
                     m_db.taskRun( m_task->task_id, task_cmd, 0 );
                     first = false;
                 }
                 else
                 {
                     DL_TRACE( "Calling task run, step: " << step );
+                    std::cout << "Calling taskRun: " << m_task->task_id << " at step: " << step << " err_msg is: " << err_msg << std::endl;
+
                     m_db.taskRun( m_task->task_id, task_cmd, err_msg.size()?0:&step, err_msg.size()?&err_msg:0 );
                 }
 
@@ -224,9 +227,9 @@ TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params )
     if ( files_v.size() )
     {
         DL_DEBUG( "Begin transfer of " << files_v.size() << " files" );
-
+        std::cout << "Check transfer status of task: src_ep " << src_ep << " dest ep " << dst_ep << std::endl;
         string glob_task_id = me.m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok );
-
+        std::cout << "glob_task_id is " << glob_task_id << std::endl;
         // Monitor Globus transfer
 
         GlobusAPI::XfrStatus    xfr_status;
@@ -234,19 +237,22 @@ TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params )
 
         do
         {
+            std::cout << "Sleeping 5 seconds" << std::endl;
             sleep( 5 );
-        
-
-            if ( me.m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg ))
-            {
+       
+            std::cout << "\n!!!!!!!!!!!!!!!!!!!!!!!!! checkTransferStatus\n" << std::endl; 
+            if ( me.m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg )){
                 // Transfer task needs to be cancelled
+              std::cout << "Cancel task " << glob_task_id << std::endl;
                 me.m_glob.cancelTask( glob_task_id, acc_tok );
             }
         } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
 
         if ( xfr_status == GlobusAPI::XS_FAILED ) {
+            std::cout << "Failed!" << std::endl;
             EXCEPT( 1, err_msg );
         }
+        std::cout << "maybe succeeded?" << std::endl;
     }
     else
     {
@@ -254,8 +260,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params )
     }
 
     ICommunicator::Response response;
-    // Always assume timed out if gets here
-    response.time_out = true;
+    response.time_out = false;
     return response;
 }
 

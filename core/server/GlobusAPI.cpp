@@ -332,15 +332,16 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
 
 
 bool
-GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string & a_acc_tok, XfrStatus & a_status, std::string & a_err_msg )
-{
+GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string & a_acc_tok, XfrStatus & a_status, std::string & a_err_msg ){
 
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! checkTransferStatus " << std::endl;
     a_status = XS_INIT;
     a_err_msg.clear();
     string raw_result;
 
     // First check task global status for "SUCEEDED", "FAILED", "INACTIVE"
 
+    std::cout << "Checking globus status of task_id " << a_task_id << std::endl;
     long code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id /*+ "?fields=status,nice_status"*/, a_acc_tok, {}, raw_result );
 
     try
@@ -358,9 +359,11 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
         
         if ( status == "ACTIVE") {
 
+            std::cout << "task id " << a_task_id << " status is ACTIVE" << std::endl;
             double faults = resp_obj.getNumber("faults");
             if(faults > 0.0) {
 
+              std::cout << "faults encountered for task: " << a_task_id << " faults " << faults <<  std::endl;
               string raw_result2;
               get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id  + "/event_list", a_acc_tok, {}, raw_result2 );
               Value result2;
@@ -371,6 +374,7 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
 
               Value::Object & event = data_arr.front().asObject();
               if( event.getBool("is_error")){
+                std::cout << "Error encountered for task: " << a_task_id << std::endl;
                 DL_DEBUG("\nError encountered is_error True printing error message");
                 DL_DEBUG(event.getString("details"));
                 DL_DEBUG("\n");
