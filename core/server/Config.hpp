@@ -55,10 +55,13 @@ class Config
     {}
 
     std::map<std::string,RepoData>     m_repos;
+    bool m_trigger_repo_refresh = true; // Default on startup
     mutable std::mutex m_repos_mtx;
 
   public:
     void loadRepositoryConfig(AuthenticationManager & auth_manager);
+    void triggerRepoCacheRefresh();
+
     std::map<std::string,RepoData> getRepos() const;
 
     std::string     cred_dir;

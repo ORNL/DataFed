@@ -204,7 +204,7 @@ namespace SDMS {
           EXCEPT( 1, "receiveRoute zmq_msg_recv (route) failed." );
         }
         size_t len = zmq_msg_size( &zmq_msg );
-        //std::cout << "Initial message part size " << len << std::endl;
+        std::cout << "Initial message part size " << len << std::endl;
         if(len) {
           if ( len > 255 ) {
             EXCEPT( 1, "Message route segment exceeds max allowed length." );
@@ -212,16 +212,16 @@ namespace SDMS {
           zmq_provided_route_detected = true;
           received_part = std::string((char*) zmq_msg_data(&zmq_msg), zmq_msg_size(&zmq_msg));
           if(received_part.compare("BEGIN_DATAFED") == 0 ) {
-            //std::cout << "BEGIN_DATAFED" << std::endl;
+            std::cout << "BEGIN_DATAFED" << std::endl;
             zmq_msg_close( &zmq_msg );
             break;
           } else {
             previous_route = received_part;
-            //std::cout << received_part << std::endl;
+            std::cout << received_part << std::endl;
             msg.addRoute(received_part);
           }
         } else {
-          //std::cout << "null" << std::endl;
+          std::cout << "null" << std::endl;
         }
         zmq_msg_close( &zmq_msg );
       }
@@ -257,7 +257,7 @@ namespace SDMS {
         }
         size_t len = zmq_msg_size( &zmq_msg );
 
-        //std::cout << "Should be receiving a uint32_t " << len << " size of uint32_t shoudl be " << sizeof(uint32_t) << std::endl;
+        std::cout << "Should be receiving a uint32_t " << len << " size of uint32_t shoudl be " << sizeof(uint32_t) << std::endl;
         if(len != sizeof(uint32_t)) {
             EXCEPT( 1, "Expected a number indicating the number of routes to follow but nothing was provided." );
         }
@@ -493,7 +493,7 @@ namespace SDMS {
         if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
           EXCEPT_PARAM( 1, "RCV zmq_msg_recv (frame) failed: " << zmq_strerror(zmq_errno()) );
         } else if ( number_of_bytes == 8 ){
-          //std::cout << "receiveFrame bytes " << number_of_bytes << std::endl;
+          std::cout << "receiveFrame bytes " << number_of_bytes << std::endl;
           FrameFactory frame_factory;
           //std::cout << "recieveFrame:: create" << std::endl;
           Frame frame = frame_factory.create(zmq_msg); // THIS IS THE ERROR
@@ -567,7 +567,7 @@ namespace SDMS {
   
         // Only set payload if there is a payload
         if( frame_size > 0 ) {
-          //std::cout << "receiveBody bytes " << number_of_bytes << std::endl;
+          std::cout << "receiveBody bytes " << number_of_bytes << std::endl;
 
           if ( zmq_msg_size( &zmq_msg ) != frame_size ) {
             EXCEPT_PARAM( 1, "RCV Invalid message body received. Expected: " << frame_size << ", got: " << zmq_msg_size( &zmq_msg ) );
@@ -670,7 +670,7 @@ namespace SDMS {
       if (( number_of_bytes = zmq_msg_recv( &zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT )) < 0 ) {
         EXCEPT( 1, "RCV zmq_msg_recv (key) failed." );
       }
-      //std::cout << "receiveKey number of bytes " << number_of_bytes << std::endl;
+      std::cout << "receiveKey number of bytes " << number_of_bytes << std::endl;
 
       if ( zmq_msg_size( &zmq_msg )) {
         std::string key = std::string((char*) zmq_msg_data( &zmq_msg ), zmq_msg_size( &zmq_msg ));
@@ -718,7 +718,7 @@ namespace SDMS {
         EXCEPT( 1, "RCV zmq_msg_recv (uid) failed." );
       }
       //std::cout << "receiveId::  number of bytes " << number_of_bytes << std::endl;
-      //std::cout << "receiveID:: message size " <<zmq_msg_size( &zmq_msg )<< std::endl;
+      std::cout << "receiveID:: message size " <<zmq_msg_size( &zmq_msg )<< std::endl;
 
       if ( zmq_msg_size( &zmq_msg )) {
         std::string id = std::string((char*) zmq_msg_data( &zmq_msg ), zmq_msg_size( &zmq_msg ));

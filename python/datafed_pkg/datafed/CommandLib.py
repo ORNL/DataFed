@@ -74,6 +74,7 @@ class API:
             raise Exception( "CommandLib API options parameter must be a dictionary." )
 
         self._uid = None
+        print(f"cur_sel set to None")
         self._cur_sel = None
         self._cur_ep = None
         self._cur_alias_prefix = ""
@@ -88,6 +89,7 @@ class API:
         if auth:
             self._uid = uid
             self._cur_sel = uid
+            print(f"cur_sel set to {self._cur_sel}")
 
         self._cur_ep = self.cfg.get( "default_ep" )
 
@@ -153,6 +155,7 @@ class API:
 
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
+        print(f"cur_sel set to self._mapi._uid {self._cur_sel}")
 
     def generateCredentials( self ):
         """
@@ -175,6 +178,122 @@ class API:
 
         return self._mapi.sendRecv( msg )
 
+    # =========================================================================
+    # ------------------------------------------------------------ Repo Methods
+    # =========================================================================
+    def repoCreate( self, repo_id, title=None, desc=None, domain=None, capacity=None, pub_key=None, address=None, endpoint=None, path=None, exp_path=None, admins=[] ):
+        """
+        Create a repository
+
+
+        Parameters
+        ----------
+        repo_id : str
+            The id of the data repository i.e. "datafed-home" internally this will be represented as "repo/datafed-home"
+        title : str
+            A title describing the repository
+        desc : str
+            A detailed description of the repository
+        domain : str
+            May not be needed, used by FUSE
+        capacity : str
+            The size of the repository in bytes
+        pub_key : str
+            The public key of the repo so the core server and repository server can communicate
+        address : str
+            The tcp address of the repository server, given the domain and the port i.e. "tcp://my-repo-server.cu.edu:9000"
+        endpoint : str
+            The globus UUID associated with the repository with the following format "XXXXYYYYXXXX-XXXX-XXXX-XXXX-XXXXYYYY"
+        path : str
+            The relative POSIX path as seen from the globus collection (endpoint) to the repositories folder which is controled by the datafed repo server. i.e. if I have a POSIX path /home/tony_stark/inventions/datafed-home and the endpoint path pointed to /home/tony_stark/inventions then the POSIX path could be set to /datafed-home, NOTE the last folder in the path must have the same name as the repo_id.
+        exp_path : str
+        admins : list[str]
+            A list of DataFed users that will have repository admin rights on the repository. i.e. ["u/tony_stark", "u/pepper"]
+
+        Returns
+        -------
+        msg : RepoDataReply Google protobuf message response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
+        msg = auth.RepoCreateRequest()
+        msg.id = repo_id 
+        msg.title = title
+        msg.desc = desc
+        msg.domain = domain
+        msg.exp_path = exp_path
+        msg.address = address
+        msg.endpoint = endpoint
+        msg.pub_key = pub_key
+        msg.path = path
+        msg.capacity = capacity
+        
+        if isinstance( admins, list ):
+            for admin in admins:
+                msg.admin.append( admin)
+
+        return self._mapi.sendRecv( msg )
+
+    def repoList( self, list_all : bool = False ):
+        """
+        List all repositories
+
+        By default will only list the repos associated with the user.
+        """
+        msg = auth.RepoListRequest()
+        msg.all = list_all
+        return self._mapi.sendRecv( msg )
+
+    def repoDelete( self, repo_id ):
+        """
+        Delete a repository
+
+        Parameters
+        ----------
+        repo_id : str
+            The id of the data repository
+
+        Returns
+        -------
+        msg : AckReply
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
+        msg = auth.RepoDeleteRequest()
+        msg.id = repo_id
+        return self._mapi.sendRecv( msg )
+
+    def repoAllocationCreate(self, repo_id, subject, data_limit, rec_limit):
+
+        if not repo_id.startswith("repo/"):
+            repo_id = "repo/" + repo_id 
+
+        msg = auth.RepoAllocationCreateRequest()
+        msg.repo = repo_id 
+        msg.subject = subject
+        msg.data_limit = data_limit
+        msg.rec_limit = rec_limit
+        return self._mapi.sendRecv( msg )
+
+    def repoListAllocations(self, repo_id):
+        if not repo_id.startswith("repo/"):
+            repo_id = "repo/" + repo_id 
+
+        msg = auth.RepoListAllocationsRequest()
+        msg.repo = repo_id 
+        return self._mapi.sendRecv( msg )
+
+    def repoAllocationDelete(self, repo_id, subject): 
+        if not repo_id.startswith("repo/"):
+            repo_id = "repo/" + repo_id 
+        msg = auth.RepoAllocationDeleteRequest()
+        msg.repo = repo_id
+        msg.subject = subject
+        return self._mapi.sendRecv( msg )
 
     # =========================================================================
     # ------------------------------------------------------------ Data Methods

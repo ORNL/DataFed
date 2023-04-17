@@ -262,6 +262,7 @@ TaskMgr::addNewTaskAndScheduleWorker( const std::string & a_task_id )
 {
     // TODO Add logic to limit max number of ready tasks in memory
 
+    DL_DEBUG("Adding task " << a_task_id );
     m_tasks_ready.push_back( new Task( a_task_id ));
 
     if ( m_worker_next )

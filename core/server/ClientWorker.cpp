@@ -127,6 +127,11 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER( proto_id, SchemaUpdateRequest, &ClientWorker::procSchemaUpdateRequest );
         SET_MSG_HANDLER( proto_id, MetadataValidateRequest, &ClientWorker::procMetadataValidateRequest );
 
+        // Requires updating repo cache
+        SET_MSG_HANDLER( proto_id, RepoCreateRequest, &ClientWorker::procRepoCreate);
+        SET_MSG_HANDLER( proto_id, RepoUpdateRequest, &ClientWorker::procRepoUpdate);
+        SET_MSG_HANDLER( proto_id, RepoDeleteRequest, &ClientWorker::procRepoDelete);
+
         // Requests that can be handled by DB client directly
         SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
         SET_MSG_HANDLER_DB( proto_id, GetPermsRequest, GetPermsReply, getPerms );
@@ -188,9 +193,9 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, GroupViewRequest, GroupDataReply, groupView );
         SET_MSG_HANDLER_DB( proto_id, RepoListRequest, RepoDataReply, repoList );
         SET_MSG_HANDLER_DB( proto_id, RepoViewRequest, RepoDataReply, repoView );
-        SET_MSG_HANDLER_DB( proto_id, RepoCreateRequest, RepoDataReply, repoCreate );
-        SET_MSG_HANDLER_DB( proto_id, RepoUpdateRequest, RepoDataReply, repoUpdate );
-        SET_MSG_HANDLER_DB( proto_id, RepoDeleteRequest, AckReply, repoDelete );
+        //SET_MSG_HANDLER_DB( proto_id, RepoCreateRequest, RepoDataReply, repoCreate );
+        //SET_MSG_HANDLER_DB( proto_id, RepoUpdateRequest, RepoDataReply, repoUpdate );
+        //SET_MSG_HANDLER_DB( proto_id, RepoDeleteRequest, AckReply, repoDelete );
         SET_MSG_HANDLER_DB( proto_id, RepoCalcSizeRequest, RepoCalcSizeReply, repoCalcSize );
         SET_MSG_HANDLER_DB( proto_id, RepoListAllocationsRequest, RepoAllocationsReply, repoListAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoListSubjectAllocationsRequest, RepoAllocationsReply, repoListSubjectAllocations );
@@ -573,6 +578,46 @@ ClientWorker::dbPassThrough( const std::string & a_uid, std::unique_ptr<IMessage
     PROC_MSG_END
 }
 
+
+std::unique_ptr<IMessage>
+ClientWorker::procRepoCreate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+{
+    PROC_MSG_BEGIN( RepoCreateRequest, RepoDataReply )
+
+    m_db_client.setClient( a_uid );
+
+    // Both request and reply here need to be Google protocol buffer classes
+    m_db_client.repoCreate( *request, reply );
+
+    m_config.triggerRepoCacheRefresh();
+    PROC_MSG_END;
+}
+
+std::unique_ptr<IMessage>
+ClientWorker::procRepoUpdate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+{
+    PROC_MSG_BEGIN( RepoUpdateRequest, RepoDataReply )
+
+    m_db_client.setClient( a_uid );
+    // Both request and reply here need to be Google protocol buffer classes
+    m_db_client.repoUpdate( *request, reply );
+    
+    m_config.triggerRepoCacheRefresh();
+    PROC_MSG_END
+}
+
+std::unique_ptr<IMessage>
+ClientWorker::procRepoDelete( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+{
+    PROC_MSG_BEGIN( RepoDeleteRequest, AckReply )
+    m_db_client.setClient( a_uid );
+
+    // Both request and reply here need to be Google protocol buffer classes
+    m_db_client.repoDelete( *request, reply );
+    m_config.triggerRepoCacheRefresh();
+    PROC_MSG_END
+}
+
 std::unique_ptr<IMessage>
 ClientWorker::procVersionRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
 {
@@ -604,7 +649,7 @@ ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid, std:
 
     DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
 
-    m_core.authenticateClient( a_uid, reply.uid() );
+    m_core.authenticateClient( a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)), reply.uid() );
 
     PROC_MSG_END
 }
@@ -622,7 +667,7 @@ ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid, std::un
 
     DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
 
-    m_core.authenticateClient( a_uid, reply.uid() );
+    m_core.authenticateClient( a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)), reply.uid() );
 
     PROC_MSG_END
 }
@@ -633,7 +678,7 @@ ClientWorker::procGetAuthStatusRequest( const std::string & a_uid, std::unique_p
     (void)a_uid;
     PROC_MSG_BEGIN( GetAuthStatusRequest, AuthStatusReply )
 
-    if ( strncmp( a_uid.c_str(), "anon_", 5 ) == 0 )
+    if ( strncmp( a_uid.c_str(), "anon", 4 ) == 0 )
     {
         DL_INFO(a_uid << " not authorized");
         reply.set_auth( false );

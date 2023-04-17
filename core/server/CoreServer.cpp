@@ -96,6 +96,9 @@ Server::Server() :
     m_db_maint_thread = thread( &Server::dbMaintenance, this );
 
     // Start DB maintenance thread
+    m_repo_cache_thread = thread( &Server::repoCacheThread, this );
+
+    // Start DB maintenance thread
     m_metrics_thread = thread( &Server::metricsThread, this );
 
     // Create task mgr (starts it's own threads)
@@ -111,6 +114,7 @@ Server::~Server()
 
     //m_zap_thread.join();
     m_db_maint_thread.join();
+    m_repo_cache_thread.join();
     m_metrics_thread.join();
 }
 
@@ -521,6 +525,30 @@ Server::dbMaintenance()
 }
 
 void
+Server::repoCacheThread()
+{
+    // Check to see if repo cache needs to be updated every 60 seconds
+    chrono::system_clock::duration  repo_cache_poll = chrono::seconds( 60 );
+
+    while ( 1 )
+    {
+        try
+        {
+
+            DL_DEBUG( "Checking if Repo Cache needs Updating" );
+            m_config.loadRepositoryConfig(m_auth_manager);
+
+        } catch( ... ) {
+            DL_ERROR( "Repo Cache Updating... unknown exception" );
+        }
+
+        this_thread::sleep_for( repo_cache_poll );
+    }
+    DL_ERROR( "DB maintenance thread exiting" );
+
+}
+
+void
 Server::metricsThread()
 {
     chrono::system_clock::duration metrics_per = chrono::seconds( m_config.metrics_period );
@@ -701,12 +729,14 @@ Server::zapHandler()
 
 
 // Triggered by client worker
-void
-Server::authenticateClient( const std::string & a_cert_uid, const std::string & a_uid )
+  void
+Server::authenticateClient( const std::string & a_cert_uid, const std::string & a_key, const std::string & a_uid )
 {
+
+    DL_INFO("authenticateClient a_cert_uid is " << a_cert_uid << " a_uid is " << a_uid );
     if ( a_cert_uid.compare("anon") == 0 )
     {
-        m_auth_manager.addKey( PublicKeyType::TRANSIENT, a_cert_uid.substr( 5 ), a_uid);
+        m_auth_manager.addKey( PublicKeyType::TRANSIENT, a_key, a_uid);
     }
 }
 

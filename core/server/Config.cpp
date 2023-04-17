@@ -13,12 +13,24 @@ namespace SDMS {
     void Config::loadRepositoryConfig(AuthenticationManager & auth_manager) {
       DL_INFO("Loading repo configuration " << __FILE__ << " " <<  __LINE__);
 
+      // Only load the repository config if it needs to be refreshed
+      m_repos_mtx.lock();
+      if( m_trigger_repo_refresh == false ) {
+        m_repos_mtx.unlock();
+        return;
+      } else {
+        m_repos_mtx.unlock();
+      }
+
       DatabaseAPI  db_client( db_url, db_user, db_pass );
 
       std::vector<RepoData> temp_repos;
 
       db_client.repoList( temp_repos );
 
+      // Find which repos are temp_repos that are no longer in m_repos
+
+      
       std::cout << "Registered repos are\n" << std::endl;
       for ( RepoData & r : temp_repos ) {
         {
@@ -52,11 +64,18 @@ namespace SDMS {
           m_repos_mtx.lock();
           //std::cout << r.id() << std::endl;
           m_repos[r.id()] = r;
+          m_trigger_repo_refresh = false;
           m_repos_mtx.unlock();
 
 
         }
       }
+    }
+
+    // NOTE this would be better as an observer pattern using a separate object
+    void Config::triggerRepoCacheRefresh() {
+      std::lock_guard<std::mutex> lock(m_repos_mtx);
+      m_trigger_repo_refresh = true;
     }
 
     std::map<std::string,RepoData> Config::getRepos() const {

@@ -28,7 +28,9 @@ set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
 set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
 set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
-# Tests to run with 2 processors
+
+# To be safe this is by default turned off
+set(ENABLE_END_TO_END_TESTS FALSE)
 
 message( "Building for " ${CMAKE_BUILD_TYPE} )
 
@@ -158,4 +160,12 @@ endif()
 
 if( INSTALL_FOXX ) 
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
+endif()
+
+if( ENABLE_END_TO_END_TESTS )
+  if( BUILD_PYTHON_CLIENT )  
+    add_subdirectory(tests/end-to-end)
+  else()
+    message(WARNING "Cannot run end-to-end tests requires building the python client which has not been enabled")
+  endif()
 endif()
