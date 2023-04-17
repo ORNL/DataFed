@@ -13,7 +13,9 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # Globus version to compile repo server with
-set(GLOBUS_VERSION  5)
+if( NOT DEFINED GLOBUS_VERSION )
+  set(GLOBUS_VERSION  5)
+endif()
 OPTION(BUILD_REPO_SERVER "Build DataFed Repo Server" FALSE)
 OPTION(BUILD_AUTHZ "Build DataFed Authz library" FALSE)
 OPTION(BUILD_CORE_SERVER "Build DataFed Core Server" TRUE)
@@ -142,6 +144,7 @@ endif()
 
 if( INSTALL_AUTHZ )
   install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
+  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_authz.sh )")
 endif()
 
 if( INSTALL_CORE_SERVER )

@@ -1,6 +1,5 @@
-
-// Local private authz includes
-#include "AuthzWorker.hpp"
+// Local private includes
+#include "Config.h"
 
 // Common public includes
 #include "CommunicatorFactory.hpp"
@@ -26,9 +25,6 @@
 #include <cstdlib>
 #include <syslog.h>
 
-//#include "MsgBuf.hpp"
-//#include "MsgComm.hpp"
-
 using namespace std;
 using namespace SDMS::Anon;
 using namespace SDMS::Auth;
@@ -36,146 +32,113 @@ using namespace SDMS::Auth;
 
 namespace SDMS {
 
-    string loadKeyFile( const std::string & filename ) {
-        ifstream inf( filename.c_str() );
-        if ( !inf.is_open() || !inf.good() )
-            EXCEPT_PARAM( 1, "Could not open file: " << filename );
-        string key;
-        inf >> key;
-        inf.close();
-        return key;
-    }
-
-    void AuthzWorker::init() {
-        const char * cfg_file = getenv( "DATAFED_AUTHZ_CFG_FILE" );
-
-        AuthzWorker::m_timeout = 10000;
-
-        if ( !cfg_file ) {
-            DL_INFO("DATAFED_AUTHZ_CFG_FILE environment variable not set. Attempting to read from default location in /opt/datafed/authz/datafed-authz.cfg");
-            cfg_file = "/opt/datafed/authz/datafed-authz.cfg";
-        }
-            
-        DL_INFO( "Reading config file: " << cfg_file );
-
-        ifstream configFile(cfg_file);
-
-        if ( !configFile.is_open() )
-            EXCEPT_PARAM( 1, "Could not open authz config file: " << cfg_file );
-
-        string line,key,val;
-        size_t eq, lc = 0;
-
-        std::unordered_map<CredentialType, std::string> cred_options;
-
-        while( getline( configFile, line ))
-        {
-            lc++;
-
-            if ( line.length() == 0 || line.at(0) == '#')
-                continue;
-
-            eq = line.find_first_of("=");
-
-            if ( eq == string::npos )
-                EXCEPT_PARAM( 1, "Invalid syntax in config file at line " << lc );
-
-            key = line.substr(0,eq);
-            val = line.substr(eq+1);
-
-            if (key == "repo_id") {
-                m_repo_id = val;
-            } else if (key == "server_address") {
-                m_server_addr = val;
-            } else if (key == "user") {
-                m_user = val;
-            } else if (key == "pub_key") {
-                //m_pub_key = loadKeyFile( val );
-                cred_options[CredentialType::PUBLIC_KEY] = loadKeyFile( val);
-            } else if (key == "priv_key") {
-                //m_priv_key = loadKeyFile( val );
-                cred_options[CredentialType::PRIVATE_KEY] = loadKeyFile( val);
-            } else if (key == "server_key") {
-                //m_server_key = loadKeyFile( val );
-                cred_options[CredentialType::SERVER_KEY] = loadKeyFile( val);
-            } else if (key == "timeout") {
-                m_timeout = stoi(val);
-            }else if (key == "test_path" ) {
-                m_test_path = val;
-            } else {
-                EXCEPT_PARAM( 1, "Invalid key \"" << key << "\"in config file at line " << lc );
-            }
-        }
-
-        configFile.close();
-
-        string miss;
-
-        if ( !m_repo_id.size() )
-            miss += " repo_id";
-        if ( cred_options.count(CredentialType::SERVER_KEY) == 0 ) {
-            miss += " server_address";
-        } else {
-            if(cred_options.at(CredentialType::SERVER_KEY).size() == 0 ){
-              miss += " server_address";
-            }
-        }
-        if ( cred_options.count(CredentialType::PUBLIC_KEY) == 0 ) {
-            miss += " pub_key";
-        } else {
-            if(cred_options.at(CredentialType::PUBLIC_KEY).size() == 0 ){
-              miss += " pub_key";
-            }
-        }
-        if ( cred_options.count(CredentialType::PRIVATE_KEY) == 0 ) {
-            miss += " priv_key";
-        } else {
-            if(cred_options.at(CredentialType::PRIVATE_KEY).size() == 0 ){
-              miss += " priv_key";
-            }
-        }
-        if ( miss.size() )
-            EXCEPT_PARAM( 1, "Missing required configuration items:" << miss );
-
-        CredentialFactory cred_factory;
-        m_sec_ctx = cred_factory.create(ProtocolType::ZQTP, cred_options);
-
-
-    }
-
-  /*  AuthzWorker::AuthzWorker() 
-    {
-            //REG_PROTO( SDMS::Anon );
+class AuthzWorker {
+public:
+    AuthzWorker( struct Config * a_config ) :
+        m_config( a_config ),
+        m_globus_collection_path_len(strlen(a_config->globus_collection_path)),
+        m_test_path_len( strlen( a_config->test_path )) {
+        //REG_PROTO( SDMS::Anon );
         //REG_PROTO( SDMS::Auth );
-    }*/
-
-    const char * AuthzWorker::user() { 
-      return m_user.c_str();
     }
 
-    int AuthzWorker::checkAuth( char * client_id, char * path, char * action )
+    ~AuthzWorker()
     {
-        DL_DEBUG("AuthWorker.cpp Checking auth for " << client_id << " in " << path );
+    }
 
-        if ( m_test_path.size() > 0 && strncmp( path, m_test_path.c_str(), m_test_path.size() ) == 0 )
-        {
-            DL_INFO("AuthWorker.cpp Allowing request within TEST PATH");
+    AuthzWorker& operator=( const AuthzWorker & ) = delete;
+
+    int checkAuth( char * client_id, char * path, char * action )
+    {
+        DL_DEBUG("Checking auth for " << client_id << " in " << path );
+
+				DL_INFO("provided path is: " << path << " expected globus root POSIX path is: " << m_config->globus_collection_path );
+        if ( m_test_path_len > 0 && strncmp( path, m_config->test_path, m_test_path_len ) == 0 ) {
+            DL_INFO("Allowing request within TEST PATH");
             return 0;
         }
 
-        //int result = 1;
+        if( m_globus_collection_path_len == 0 ) {
+            DL_INFO("AuthWorker.cpp globus-collection-path is not defined, must be defined.");
+            EXCEPT(1,"Globus collection path is not defined");
+        }
+
+        // This should point to the root of the globus collection on the POSIX system
+        // It must be stripped from the path
+        // Expecting a path with the following form
+        // ftp://hostname/globus_collection_root_path
+        
+        // Start by making sure the format is as expected  
+      
+        std::string scheme = "ftp://"; 
+        //std::string local_globus_path_root = "ftp://";
+        std::string local_path = path;
+        if( local_path.substr(0,scheme.length()).compare(scheme) != 0 ) {
+            DL_INFO("AuthWorker.cpp provided path is not prefixed by expected ftp:// prefix.");
+            EXCEPT(1,"Format error detected in path");
+        }
+
+        // 2 grab substr after third backslash (and including backslash) should remove ftp://hostname
+
+        char backslash = '/';
+        int count = 0;
+        size_t index = 0;
+
+				for (size_t i = 0; i < local_path.length(); i++) {
+					if (local_path[i] == backslash) {
+						count++;
+						if (count == 3) {
+							index = i;
+							break;
+						}
+					}
+				}
+
+				if(count != 3 ) {
+            DL_INFO("AuthWorker.cpp provided path is not prefixed by expected ftp://hostname/ prefix.");
+						DL_INFO("Local path is " << local_path );
+            DL_INFO("count is " << count);
+            EXCEPT(1,"Format error detected in path");
+				}
+
+				// extract the substring after the third occurrence of the character
+				local_path = local_path.substr(index);
+
+				//std::string repo_prefix = "repo/";
+				//std::string repo_id = m_config->repo_id;
+        std::string local_globus_path_root = std::string(m_config->globus_collection_path); // + repo_id.substr(repo_prefix.length()-1);
+        if(local_globus_path_root.length() > local_path.length() ) {
+            DL_INFO("AuthWorker.cpp provided path is not prefixed by globus_root_collection_path.");
+            DL_INFO("Provided path is: " << local_path << " root of globus collection is " << local_globus_path_root);
+            EXCEPT(1,"Path to data item is not within the collection");
+        } 
+
+        auto prefix = local_path.substr(0, local_globus_path_root.length());
+        if( prefix.compare(local_globus_path_root) != 0 ) {
+            DL_INFO("AuthWorker.cpp provided path is not prefixed by globus_root_collection_path.");
+            DL_INFO("Provided path is: " << local_path << " root of globus collection is " << local_globus_path_root);
+            EXCEPT(1,"Path to data item is not within the collection");
+        }
+
+        auto sanitized_path = local_path.substr(prefix.length());
+        int result = 1;
+        
 
         //MsgComm::SecurityContext sec_ctx;
         //sec_ctx.is_server = false;
-        
-        //MsgBuf::Message *       reply;
-        //MsgBuf::Frame           frame;
+        //sec_ctx.public_key = m_config->pub_key;
+        //sec_ctx.private_key = m_config->priv_key;
+        //sec_ctx.server_key = m_config->server_key;
 
-        DL_INFO("AuthWorker.cpp Sending authzcomm");
+    std::unique_ptr<SDMS::ICredentials>   m_sec_ctx;
 
+    std::unordered_map<CredentialType, std::string> cred_options;
+    cred_options[CredentialType::PUBLIC_KEY] = m_config->pub_key;
+    cred_options[CredentialType::PRIVATE_KEY]  = m_config->priv_key;
+    cred_options[CredentialType::SERVER_KEY] = m_config->server_key;
+    CredentialFactory cred_factory;
+    m_sec_ctx = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
-    //sec_ctx.public_key = pub_key;
-    //sec_ctx.private_key = priv_key;
 
     std::string authz_thread_id = "authz_client_socket";
     auto client = [&](
@@ -212,39 +175,46 @@ namespace SDMS {
           credentials,
           timeout_on_receive,
           timeout_on_poll);
-  }(authz_thread_id, m_server_addr, *m_sec_ctx);
+  }(authz_thread_id, m_config->server_addr, *m_sec_ctx);
 
 
 
-        //MsgComm authzcomm(m_server_addr, MsgComm::DEALER, false, &sec_ctx );
- 
+
+
+//        Auth::RepoAuthzRequest  auth_req;
+//        MsgBuf::Message *       reply;
+ //       MsgBuf::Frame           frame;
+
+//        MsgComm authzcomm(m_config->server_addr, MsgComm::DEALER, false, &sec_ctx );
+
         auto auth_req = std::make_unique<Auth::RepoAuthzRequest>();//  auth_req;
-       	string val1 = string("m_repo_id is ") + m_repo_id;	
-	      string val2 = string("path is") + path;
+       	string val1 = string("m_repo_id is ") + m_config->repo_id;	
+	      string val2 = string("path is") + sanitized_path;
         DL_INFO(val1);
         DL_INFO(val2);
-        auth_req->set_repo(m_repo_id);
+ 
+
+        auth_req->set_repo(m_config->repo_id);
         auth_req->set_client(client_id);
-        auth_req->set_file(path);
+        auth_req->set_file(sanitized_path);
         auth_req->set_action(action);
-        
-        DL_INFO("AuthWorker.cpp Sending message");
 
         MessageFactory msg_factory;
         auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
-        message->set(MessageAttribute::KEY, m_pub_key);
+        message->set(MessageAttribute::KEY, cred_options[CredentialType::PUBLIC_KEY]);
         message->setPayload(std::move(auth_req));
-        //MsgBuf send_request;
-        //send_request.serialize(auth_req);
-        //send_request.setUID(m_pub_key);
 
-        //authzcomm.send(auth_req);
+        DL_INFO("SendingRepoAuthzRequest");
         client->send(*message);
+        DL_INFO("PUB KEY:  " << cred_options[CredentialType::PUBLIC_KEY]);
+        DL_INFO("PRIV KEY: " << cred_options[CredentialType::PRIVATE_KEY]);
+        DL_INFO("SERV KEY: " << cred_options[CredentialType::SERVER_KEY]);
+        DL_INFO("Sending request to core service at address." << client->address());
 
         auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
         if( response.time_out ) {
-            DL_INFO("AuthWorker.cpp Core service did not respond.");
-            EXCEPT(1,"Core service did no respond");
+            DL_INFO("AuthWorker.cpp Core service did not respond within timeout.");
+            EXCEPT(1,"Core service did not respond");
         } else if( response.error ) {
             DL_INFO("AuthWorker.cpp there was an error when communicating with the core service.");
         } else {
@@ -257,17 +227,19 @@ namespace SDMS {
             }
         }
         return 1;
-    }
-        /*if ( !authzcomm.recv( reply, frame, m_timeout ))
+
+
+        //authzcomm.send(auth_req);
+
+/*        if ( !authzcomm.recv( reply, frame, m_config->timeout ))
         {
-            DL_INFO("AuthWorker.cpp Core service did not respond.");
             EXCEPT(1,"Core service did no respond");
         }
         else
         {
             DL_DEBUG( "Got response, msg type: " << frame.getMsgType() );
-*/
-/*            Anon::NackReply * nack = dynamic_cast<Anon::NackReply*>( reply );
+
+            Anon::NackReply * nack = dynamic_cast<Anon::NackReply*>( reply );
             if ( !nack )
             {
                 result = 0;
@@ -280,13 +252,20 @@ namespace SDMS {
             delete reply;
         }*/
         //return result;
-    //}
+    }
 
+private:
+    struct Config *     m_config;
+    size_t              m_test_path_len;
+    size_t              m_globus_collection_path_len;
+};
 
 } // End namespace SDMS
 
+
 extern "C"
 {
+    // The same
     const char * getVersion()
     {
         static std::string ver_str = std::to_string(VER_MAJOR) + "." + std::to_string(VER_MAPI_MAJOR) + "." + std::to_string(VER_MAPI_MINOR) + ":" + std::to_string(VER_REPO);
@@ -294,33 +273,20 @@ extern "C"
         return ver_str.c_str();
     }
 
-    int initAuthzConfig() {
-      try {
-        SDMS::AuthzWorker::init();
-        return 0;
-      } catch (...) {
-        return 1;
-      }
-    }
-
-    const char * getLocalUserName() {
-      return SDMS::AuthzWorker::user();
-    }
-
-    int checkAuthorization( char * client_id, char * object, char * action )
+    // The same
+    int checkAuthorization( char * client_id, char * object, char * action, struct Config * config )
     {
         DL_SET_LEVEL( DynaLog::DL_INFO_LEV );
         DL_SET_CERR_ENABLED(false);
         DL_SET_SYSDL_ENABLED(true);
 
-	      string val1 = string("AuthzWorker checkAuthorization ") + string(client_id) + string(", ") + object +  string(", ") + string( action);
-        DL_INFO(val1);
+        DL_DEBUG( "AuthzWorker checkAuthorization " << client_id << ", " << object << ", " << action );
 
         int result = -1;
 
         try
         {
-            SDMS::AuthzWorker worker;
+            SDMS::AuthzWorker worker( config );
             result = worker.checkAuth( client_id, object, action );
         }
         catch( TraceException &e )

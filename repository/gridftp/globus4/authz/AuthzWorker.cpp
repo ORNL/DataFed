@@ -2,8 +2,9 @@
 #include <fstream>
 #include <cstdlib>
 
-#include "MsgBuf.hpp"
-#include "MsgComm.hpp"
+//#include "MsgBuf.hpp"
+//#include "MsgComm.hpp"
+#include "TraceException.hpp"
 #include "Util.hpp"
 #define DEF_DYNALOG
 #include "DynaLog.hpp"
@@ -51,26 +52,26 @@ public:
 
         int result = 1;
 
-        MsgComm::SecurityContext sec_ctx;
-        sec_ctx.is_server = false;
-        sec_ctx.public_key = m_config->pub_key;
-        sec_ctx.private_key = m_config->priv_key;
-        sec_ctx.server_key = m_config->server_key;
+        //MsgComm::SecurityContext sec_ctx;
+        //sec_ctx.is_server = false;
+        //sec_ctx.public_key = m_config->pub_key;
+        //sec_ctx.private_key = m_config->priv_key;
+        //sec_ctx.server_key = m_config->server_key;
 
         Auth::RepoAuthzRequest  auth_req;
-        MsgBuf::Message *       reply;
-        MsgBuf::Frame           frame;
+//        MsgBuf::Message *       reply;
+ //       MsgBuf::Frame           frame;
 
-        MsgComm authzcomm(m_config->server_addr, MsgComm::DEALER, false, &sec_ctx );
+//        MsgComm authzcomm(m_config->server_addr, MsgComm::DEALER, false, &sec_ctx );
 
         auth_req.set_repo(m_config->repo_id);
         auth_req.set_client(client_id);
         auth_req.set_file(path);
         auth_req.set_action(action);
 
-        authzcomm.send(auth_req);
+        //authzcomm.send(auth_req);
 
-        if ( !authzcomm.recv( reply, frame, m_config->timeout ))
+/*        if ( !authzcomm.recv( reply, frame, m_config->timeout ))
         {
             EXCEPT(1,"Core service did no respond");
         }
@@ -89,7 +90,7 @@ public:
             }
 
             delete reply;
-        }
+        }*/
         return result;
     }
 

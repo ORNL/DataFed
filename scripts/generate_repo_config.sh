@@ -58,7 +58,7 @@ local_DATAFED_CRED_DIR="/opt/datafed/keys/"
 local_DATAFED_REPO_EGRESS_PORT="9000"
 local_DATAFED_REPO_THREADS=2
 
-VALID_ARGS=$(getopt -o ht:c:e:d: --long 'help',threads:,cred-dir:,egress-port:,datafed-domain-port: -- "$@")
+VALID_ARGS=$(getopt -o ht:c:e:d:g: --long 'help',threads:,cred-dir:,egress-port:,globus-collection-path:,datafed-domain-port: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -84,7 +84,7 @@ while [ : ]; do
         local_DATAFED_REPO_EGRESS_PORT=$2
         shift 2
         ;;
-    -d | --datafed-domain-port)
+    -d | --domain)
         echo "Processing 'DataFed domain' option. Input argument is '$2'"
         local_DATAFED_DOMAIN=$2
         shift 2
