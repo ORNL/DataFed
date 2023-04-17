@@ -149,6 +149,7 @@ fi
 
 if [ "$local_GENERATE_REPO_FORM_JSON" = "TRUE" ]
 then
+  # JSON treats backslash as a special character it will need to be represented as \\ when printed in JSON
   OUTPUT_SCRIPT_NAME="${DATAFED_REPO_ID_AND_DIR}-repo-form.json"
   echo "Creating ${OUTPUT_SCRIPT_NAME} script"
   echo "{" > ${OUTPUT_SCRIPT_NAME}
@@ -158,10 +159,10 @@ then
   echo "  \"address\": \"tcp://$repo_domain_name:$local_DATAFED_REPO_EGRESS_PORT\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"pub_key\": \"$public_key\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"endpoint\": \"$uuid_of_collection\"," >> ${OUTPUT_SCRIPT_NAME}
-  echo "  \"path\": \"\\$DATAFED_REPO_ID_AND_DIR\"," >> ${OUTPUT_SCRIPT_NAME}
+  echo "  \"path\": \"/$DATAFED_REPO_ID_AND_DIR\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"domain\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"exp_path\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
-  echo "  \"capacity\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
+  echo "  \"capacity\": 0," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"admins\": [\"\"]" >> ${OUTPUT_SCRIPT_NAME}
   echo "}" >> ${OUTPUT_SCRIPT_NAME}
 fi
