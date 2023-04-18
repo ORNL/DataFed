@@ -18,25 +18,4 @@ rm -f /etc/grid-security/gsi-authz.conf
 # is used to install a particular component then this will not suffice
 rm -rf ${DATAFED_DEFAULT_LOG_PATH}
 
-local_DATABASE_NAME="sdms"
-local_DATABASE_USER="root"
-
-if [ -z "${DATABASE_PASSWORD}" ]
-then
-  local_DATABASE_PASSWORD=""
-else
-  local_DATABASE_PASSWORD=$(printenv DATABASE_PASSWORD)
-fi
-
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]
-then
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-else
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
-fi
-
-# Delete database and API from arangodb
-if command -v arangosh &> /dev/null
-then
-  arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._dropDatabase("sdms");'
-fi
+${PROJECT_ROOT}/scripts/clear_db.sh

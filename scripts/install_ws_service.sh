@@ -27,6 +27,15 @@ cp "$PROJECT_ROOT/config/datafed-ws.cfg" ${DATAFED_INSTALL_PATH}/web
 # Copy services
 cp "$PROJECT_ROOT/services/datafed-ws.service" /etc/systemd/system
 
+# Make sure that the datafed-core-pub.key exists in the web/static folder
+if [[ -z  "/opt/datafed/keys/datafed-core-key.pub" ]]
+then
+  echo "ERROR unable to locate datafed-core-key.pub in /opt/datafed/keys the public key is needed by the web server exiting"
+  exit 1
+fi
+
+cp /opt/datafed/keys/datafed-core-key.pub "$PROJECT_ROOT/web/static/"
+
 systemctl_exists=$( which systemctl )
 
 if [[ ! -z $systemctl_exists ]]

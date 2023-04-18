@@ -55,6 +55,9 @@ private:
     template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
     std::unique_ptr<IMessage> dbPassThrough( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
 
+    std::unique_ptr<IMessage> procRepoCreate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRepoUpdate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
+    std::unique_ptr<IMessage> procRepoDelete( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );
     std::unique_ptr<IMessage> procGetAuthStatusRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  );
     std::unique_ptr<IMessage> procVersionRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  );
     std::unique_ptr<IMessage> procAuthenticateByPasswordRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request );

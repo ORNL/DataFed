@@ -55,13 +55,15 @@ class Connection:
         zmq_ctxt = None ):
 
         #print("Connection Init")
+        # Unfortunately we cannot get the public key out once we put it in zmq
+        self._pub_key = client_pub_key
 
         self._msg_desc_by_type = {}
         self._msg_desc_by_name = {}
         self._msg_type_by_desc = {}
 
         self._address = 'tcp://{0}:{1}'.format( server_host, server_port )
-
+        print(f"Address is {self._address}")
         # init zeromq
         if zmq_ctxt:
             self._zmq_ctxt = zmq_ctxt
@@ -143,10 +145,33 @@ class Connection:
     #
     def recv( self, a_timeout=1000 ):
         # Wait for data to arrive
+        print("calling poll")
         ready = self._socket.poll( a_timeout )
         if ready > 0:
             # receive null frame
-            nf = self._socket.recv( 0 )
+            print("recv initial string")
+            nf = self._socket.recv_string( 0 )
+
+            header = "" 
+            while header != "BEGIN_DATAFED":
+                header = self._socket.recv_string(0)
+                print(f"Received header: {header}")
+
+            msg = self._socket.recv(0)
+            route_count = struct.unpack("!i", msg)[0]
+            print(f"Received route count {route_count}")
+
+            for i in range(0, route_count):
+                route = self._socket.recv(0)
+                print(f"Received route: {route}")
+
+            null_packet = self._socket.recv(0)
+            print(f"Received null_packte: {null_packet}")
+    
+            key = self._socket.recv_string(0)
+            print(f"Received key: {key}")
+            client = self._socket.recv_string(0)
+            print(f"Received : {client}")
 
             # receive custom frame header and unpack
             frame_data = self._socket.recv( 0 )
@@ -166,9 +191,12 @@ class Connection:
                 reply = google.protobuf.reflection.ParseMessage( desc, data )
             else:
                 # No content, just create message instance
+                print(f"received no content frame was less than 0")
+                data = self._socket.recv( 0 )
                 reply = google.protobuf.reflection.MakeClass( desc )()
 
-
+            print("Reply is")
+            print(reply)
             return reply, desc.name, frame_values[3]
         else:
             return None, None, None
@@ -189,9 +217,21 @@ class Connection:
         msg_type = self._msg_type_by_desc[message.DESCRIPTOR]
 
         # Initial Null frame
+        print("Send BEGIN_DATAFED string")
+        self._socket.send_string("BEGIN_DATAFED", zmq.SNDMORE)
+        route_count = 0;
+        # !i - The ! - is for network byte order, the 'i' is for an integer
+        print("Send route_count")
+        self._socket.send(struct.pack("!i",route_count), zmq.SNDMORE)
+        print("Send b''")
         self._socket.send( b'', zmq.SNDMORE )
+        print("Send public key as string")
+        self._socket.send_string( self._pub_key, zmq.SNDMORE )
+        print("send 'no-user' as string")
+        self._socket.send_string( 'no_user', zmq.SNDMORE )
 
         # Serialize
+        print("Send data")
         data = message.SerializeToString()
         data_sz = len( data )
 
@@ -200,11 +240,19 @@ class Connection:
 
         if data_sz > 0:
             # Send frame and payload
+            print("Send frame")
             self._socket.send( frame, zmq.SNDMORE )
+            print("Send body")
+            print(message)
             self._socket.send( data, 0 )
         else:
             # Send frame (no payload)
-            self._socket.send( frame, 0 )
+            print("Send frame")
+            self._socket.send( frame, zmq.SNDMORE )
+            print("Send empty body")
+            self._socket.send( b'', 0)
+
+        print("Done")
 
     ##
     # @brief Reset connection

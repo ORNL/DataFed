@@ -71,7 +71,7 @@ private:
      * This method is called after a public key has been authenticated, the key is then made
      * an authorized transient key.
      **/
-    void authenticateClient( const std::string & a_cert_uid, const std::string & a_uid );
+    void authenticateClient( const std::string & a_cert_uid, const std::string & a_key, const std::string & a_uid );
     void metricsUpdateMsgCount( const std::string & a_uid, uint16_t a_msg_type );
     bool isClientAuthenticated( const std::string & a_client_key, std::string & a_uid );
     void loadKeys( const std::string & a_cred_dir );
@@ -82,6 +82,7 @@ private:
     //void zapHandler();
     void dbMaintenance();
     void metricsThread();
+    void repoCacheThread();
 
     Config &                        m_config;               ///< Ref to configuration singleton
     std::thread                    m_io_secure_thread;     ///< Secure I/O thread handle
@@ -93,6 +94,7 @@ private:
     std::vector<std::shared_ptr<ClientWorker>>      m_workers;              ///< List of ClientWorker instances
     std::thread                   m_db_maint_thread;      ///< DB maintenance thread handle
     std::thread                   m_metrics_thread;       ///< Metrics gathering thread handle
+    std::thread                   m_repo_cache_thread;  ///< Thread for updating the repo cache
     std::map<std::string,MsgMetrics_t> m_msg_metrics;       ///< Map of UID to message request metrics
     std::mutex                      m_msg_metrics_mutex;    ///< Mutex for metrics updates
 };

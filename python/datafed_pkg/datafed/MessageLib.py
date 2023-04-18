@@ -217,6 +217,7 @@ class API:
     def manualAuthByPassword( self, uid, password ):
         msg = anon.AuthenticateByPasswordRequest()
         msg.uid = uid
+        print(f"manual Auth By Password uid is {uid}")
         msg.password = password
         self.sendRecv( msg )
 
@@ -229,6 +230,7 @@ class API:
             raise Exception("Password authentication failed")
 
         self._auth = True
+        print(f"reply uid is setting to mapi._uid: {reply.uid}")
         self._uid = reply.uid
 
     def manualAuthByToken( self, token ):
