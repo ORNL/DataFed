@@ -30,6 +30,7 @@ if [ ! -d "$PATH_TO_SERVICE_DIR" ]
 then
   mkdir -p $PATH_TO_SERVICE_DIR
 fi
+
 cat << EOF > "$PATH_TO_SERVICE_DIR/$SERVICE_FILE_NAME"
 [Unit]
 Description=DataFed Core Server
@@ -39,11 +40,11 @@ After=arangodb3.service
 PIDFile=/tmp/datafed-core.pid
 Restart=always
 KillSignal=SIGQUIT
-WorkingDirectory=/opt/datafed/core
-ExecStart=/opt/datafed/core/datafed-core --cfg /opt/datafed/core/datafed-core.cfg
+WorkingDirectory=${DATAFED_INSTALL_PATH}/core
+ExecStart=${DATAFED_INSTALL_PATH}/core/datafed-core --cfg ${DATAFED_INSTALL_PATH}/core/datafed-core.cfg
 StandardOutput=append:${DATAFED_CORE_LOG_FILE_PATH}
 StandardError=append:${DATAFED_CORE_LOG_FILE_PATH}
-User=cades
+User=${DATAFED_CORE_USER}
 [Install]
 WantedBy=multi-user.target
 EOF

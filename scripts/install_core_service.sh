@@ -5,23 +5,24 @@ set -euf -o pipefail
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
+source ${PROJECT_ROOT}/config/datafed.sh
 
 # Make sure paths exist
-mkdir -p /opt/datafed/core
-mkdir -p /opt/datafed/keys
-mkdir -p /var/log/datafed
+mkdir -p ${DATAFED_INSTALL_PATH}/core
+mkdir -p ${DATAFED_INSTALL_PATH}/keys
+mkdir -p ${DATAFED_DEFAULT_LOG_PATH}
 
 # Copy configuration files
-cp "$PROJECT_ROOT/config/datafed-core.cfg" /opt/datafed/core
+cp "$PROJECT_ROOT/config/datafed-core.cfg" ${DATAFED_INSTALL_PATH}/core
 
 
 # Move keys to /opt/datafed/keys if they do not already exist
-if [ ! -f /opt/datafed/keys/datafed-core-key.priv ]
+if [ ! -f ${DATAFED_INSTALL_PATH}/keys/datafed-core-key.priv ]
 then
   # Generate keys
-  /opt/datafed/core/datafed-core --gen-keys
-  mv datafed-core-key.pub /opt/datafed/keys/
-  mv datafed-core-key.priv /opt/datafed/keys/
+  ${DATAFED_INSTALL_PATH}/core/datafed-core --gen-keys
+  mv datafed-core-key.pub ${DATAFED_INSTALL_PATH}/keys/
+  mv datafed-core-key.priv ${DATAFED_INSTALL_PATH}/keys/
 fi
 
 # Copy services

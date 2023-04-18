@@ -9,6 +9,14 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 CONFIG_FILE_NAME="datafed.sh"
 PATH_TO_CONFIG_DIR=$(realpath "$PROJECT_ROOT/config")
 
+local_DATAFED_INSTALL_PATH=""
+if [ -z "${DATAFED_INSTALL_PATH}" ]
+then
+  local_DATAFED_INSTALL_PATH="/opt/datafed"
+else
+  local_DATAFED_INSTALL_PATH=$(printenv DATAFED_INSTALL_PATH)
+fi
+
 local_DATAFED_DEFAULT_LOG_PATH=""
 if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
 then
@@ -130,12 +138,16 @@ cat << EOF > "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 # If left unspecified the default location is
 # /var/log/datafed
 export DATAFED_DEFAULT_LOG_PATH="$local_DATAFED_DEFAULT_LOG_PATH"
-
+# This is the folder where datafed will be installed
+# by default it will install to:
+# /opt/datafed
+export DATAFED_INSTALL_PATH=$local_DATAFED_INSTALL_PATH
 # ************************************************
 # Env Variables for Core Server
 # ************************************************
 export DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
-
+# The user account the datafed core application will run under
+export DATAFED_CORE_USER=""
 # ************************************************
 # Env Variables for Web Server
 # ************************************************
@@ -148,6 +160,8 @@ export DATAFED_LEGO_EMAIL="$local_DATAFED_LEGO_EMAIL"
 export DATAFED_WEB_KEY_PATH="$local_DATAFED_WEB_KEY_PATH"
 # Path to the certificate - needed for https
 export DATAFED_WEB_CERT_PATH="$local_DATAFED_WEB_CERT_PATH"
+# The user account the datafed web application will run under
+export DATAFED_WEB_USER=""
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************
@@ -159,12 +173,14 @@ export DATAFED_GLOBUS_APP_SECRET="$local_DATAFED_GLOBUS_APP_SECRET"
 # ************************************************
 # i.e. 7512 - ZeroMQ port
 export DATAFED_SERVER_PORT="$local_DATAFED_SERVER_PORT"
-
 # ************************************************
 # Env Variables for Authz, Web, Repo Server
 # ************************************************
 # If not set will resolve to datafed.ornl.gov
 export DATAFED_DOMAIN="$local_DATAFED_DOMAIN"
+# DataFed Repository POSIX user account that DataFed users will be mapped too
+# from Globus, so the posix account all globus users will map too
+export DATAFED_GLOBUS_REPO_USER=""
 
 # ************************************************
 # Env Variables for Globus Connect Server
@@ -207,4 +223,8 @@ export GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH"
 # collection, avoid using spaces in the name.
 # i.e. DATAFED_REPO_ID_AND_DIR="datafed-home"
 export DATAFED_REPO_ID_AND_DIR="$local_DATAFED_REPO_ID_AND_DIR"
+# Institutionally allowed domains, users that have accounts in these domains
+# will have the ability to store data on the repository.
+# i.e. ornl.gov, or cu.edu
+export DATAFED_GLOBUS_ALLOWED_DOMAINS=""
 EOF

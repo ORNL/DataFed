@@ -38,14 +38,14 @@ cat << EOF > mapping.json
     {
       "source": "{username}",
       "match": "(.*)",
-      "output": "cades",
+      "output": "${DATAFED_GLOBUS_REPO_USER}",
       "ignore_case": false,
       "literal": false
     },
     {
       "source": "{id}",
       "match": "${DATAFED_GLOBUS_APP_ID}@clients.auth.globus.org",
-      "output": "cades",
+      "output": "${DATAFED_GLOBUS_REPO_USER}",
       "ignore_case": false,
       "literal": true
     }

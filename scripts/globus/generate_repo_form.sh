@@ -40,7 +40,7 @@ then
 fi
 
 # Check that the repo service has been installed
-if [ ! -f "/opt/datafed/keys/datafed-repo-key.pub" ]
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.pub" ]
 then
   echo "Cannot generate repository form if the repo service has not been installed."
   echo "NOTE: This script should be run from the same machine as the repo service"
@@ -88,7 +88,7 @@ while [ : ]; do
 done
 
 
-public_key=$(cat /opt/datafed/keys/datafed-repo-key.pub)
+public_key=$(cat ${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.pub)
 
 GATEWAY_NAME="${DATAFED_GCS_ROOT_NAME} Storage Gateway"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
