@@ -1,5 +1,9 @@
 cmake_minimum_required (VERSION 3.0.0)
 
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/Version.hpp.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Version.hpp"
+  @ONLY)
 file( GLOB Sources "*.cpp" "*.c" )
 add_library( datafed-authz SHARED ${Sources} )
 SET_TARGET_PROPERTIES( datafed-authz PROPERTIES LINKER_LANGUAGE CXX )

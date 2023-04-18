@@ -1,0 +1,16 @@
+#ifndef AUTHZ_VERSION_HPP
+#define AUTHZ_VERSION_HPP
+#pragma once
+
+namespace SDMS {
+  namespace authz {
+    namespace version {
+      constexpr int MAJOR = @DATAFED_AUTHZ_MAJOR@;
+      constexpr int MINOR = @DATAFED_AUTHZ_MINOR@;
+      constexpr int PATCH = @DATAFED_AUTHZ_PATCH@;
+    }
+  }
+}
+
+#endif // AUTHZ_VERSION_HPP
+

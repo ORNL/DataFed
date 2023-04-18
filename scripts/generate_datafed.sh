@@ -84,7 +84,7 @@ fi
 local_DATAFED_DOMAIN=""
 if [ -z "${DATAFED_DOMAIN}" ]
 then
-  local_DATAFED_DOMAIN=""
+  local_DATAFED_DOMAIN="datafed.ornl.gov"
 else
   local_DATAFED_DOMAIN=$(printenv DATAFED_DOMAIN)
 fi
@@ -116,7 +116,7 @@ fi
 local_DATAFED_WEB_CERT_PATH=""
 if [ -z "${DATAFED_WEB_CERT_PATH}" ]
 then
-local_DATAFED_WEB_CERT_PATH="/opt/datafed/keys/datafed-server-test.ornl.gov.crt"
+local_DATAFED_WEB_CERT_PATH="${local_DATAFED_INSTALL_PATH}/keys/${local_DATAFED_DOMAIN}.crt"
 else
   local_DATAFED_WEB_CERT_PATH=$(printenv DATAFED_WEB_CERT_PATH)
 fi
@@ -124,7 +124,7 @@ fi
 local_DATAFED_WEB_KEY_PATH=""
 if [ -z "${DATAFED_WEB_KEY_PATH}" ]
 then
-  local_DATAFED_WEB_KEY_PATH="/opt/datafed/keys/datafed-server-test.ornl.gov.key"
+  local_DATAFED_WEB_KEY_PATH="${local_DATAFED_INSTALL_PATH}/keys/${local_DATAFED_DOMAIN}.key"
 else
   local_DATAFED_WEB_KEY_PATH=$(printenv DATAFED_WEB_KEY_PATH)
 fi
@@ -141,27 +141,7 @@ export DATAFED_DEFAULT_LOG_PATH="$local_DATAFED_DEFAULT_LOG_PATH"
 # This is the folder where datafed will be installed
 # by default it will install to:
 # /opt/datafed
-export DATAFED_INSTALL_PATH=$local_DATAFED_INSTALL_PATH
-# ************************************************
-# Env Variables for Core Server
-# ************************************************
-export DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
-# The user account the datafed core application will run under
-export DATAFED_CORE_USER=""
-# ************************************************
-# Env Variables for Web Server
-# ************************************************
-export DATAFED_ZEROMQ_SESSION_SECRET="$local_DATAFED_ZEROMQ_SESSION_SECRET"
-export DATAFED_ZEROMQ_SYSTEM_SECRET="$local_DATAFED_ZEROMQ_SYSTEM_SECRET"
-# An email address is required by LEGO when 
-# requesting certificates for the domain
-export DATAFED_LEGO_EMAIL="$local_DATAFED_LEGO_EMAIL"
-# Path to the private key - needed for https
-export DATAFED_WEB_KEY_PATH="$local_DATAFED_WEB_KEY_PATH"
-# Path to the certificate - needed for https
-export DATAFED_WEB_CERT_PATH="$local_DATAFED_WEB_CERT_PATH"
-# The user account the datafed web application will run under
-export DATAFED_WEB_USER=""
+export DATAFED_INSTALL_PATH="$local_DATAFED_INSTALL_PATH"
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************
@@ -182,6 +162,26 @@ export DATAFED_DOMAIN="$local_DATAFED_DOMAIN"
 # from Globus, so the posix account all globus users will map too
 export DATAFED_GLOBUS_REPO_USER=""
 
+# ************************************************
+# Env Variables for Core Server
+# ************************************************
+export DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
+# The user account the datafed core application will run under
+export DATAFED_CORE_USER=""
+# ************************************************
+# Env Variables for Web Server
+# ************************************************
+export DATAFED_ZEROMQ_SESSION_SECRET="$local_DATAFED_ZEROMQ_SESSION_SECRET"
+export DATAFED_ZEROMQ_SYSTEM_SECRET="$local_DATAFED_ZEROMQ_SYSTEM_SECRET"
+# An email address is required by LEGO when 
+# requesting certificates for the domain
+export DATAFED_LEGO_EMAIL="$local_DATAFED_LEGO_EMAIL"
+# Path to the private key - needed for https
+export DATAFED_WEB_KEY_PATH="$local_DATAFED_WEB_KEY_PATH"
+# Path to the certificate - needed for https
+export DATAFED_WEB_CERT_PATH="$local_DATAFED_WEB_CERT_PATH"
+# The user account the datafed web application will run under
+export DATAFED_WEB_USER=""
 # ************************************************
 # Env Variables for Globus Connect Server
 # ************************************************

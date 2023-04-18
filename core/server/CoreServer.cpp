@@ -1,27 +1,29 @@
-#include <memory>
-#include <fstream>
-#include <chrono>
-#include <time.h>
-#include <curl/curl.h>
-#include "DynaLog.hpp"
-#include "Util.hpp"
-#include "CoreServer.hpp"
-#include "TaskMgr.hpp"
+// Local private includes
 #include "ClientWorker.hpp"
-#include "DatabaseAPI.hpp"
-#include "PublicKeyTypes.hpp"
 #include "Condition.hpp"
-#include <vector>
+#include "CoreServer.hpp"
+#include "DatabaseAPI.hpp"
+#include "TaskMgr.hpp"
+#include "PublicKeyTypes.hpp"
 
 // DataFed Common includes
-#include "IServer.hpp"
+#include "DynaLog.hpp"
 #include "CredentialFactory.hpp"
+#include "IServer.hpp"
 #include "OperatorFactory.hpp"
 #include "ServerFactory.hpp"
 #include "SocketOptions.hpp"
+#include "Util.hpp"
+
+// Third party includes
+#include <curl/curl.h>
 
 // Standard includes
+#include <chrono>
+#include <fstream>
 #include <memory>
+#include <time.h>
+#include <vector>
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
 #define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)

@@ -10,6 +10,8 @@
 #include <SDMS_Auth.pb.h>
 #include "TaskMgr.hpp"
 #include "libjson.hpp"
+// Local DataFed includes
+#include "Version.hpp"
 
 // DataFed Common includes
 #include "CredentialFactory.hpp"
@@ -625,14 +627,27 @@ ClientWorker::procVersionRequest( const std::string & a_uid, std::unique_ptr<IMe
     (void)a_uid;
     DL_INFO( "Ver request" );
 
-    reply.set_major( VER_MAJOR );
-    reply.set_mapi_major( VER_MAPI_MAJOR );
-    reply.set_mapi_minor( VER_MAPI_MINOR );
-    reply.set_core( VER_CORE );
-    reply.set_repo( VER_REPO );
-    reply.set_web( VER_WEB );
-    reply.set_client_py( VER_CLIENT_PY );
-    std::cout << "Setting version info " << VER_MAJOR << "." << VER_MAPI_MAJOR << std::endl;
+    reply.set_release_year = DATAFED_RELEASE_YEAR;
+    reply.set_release_month = DATAFED_RELEASE_MONTH;
+    reply.set_release_day = DATAFED_RELEASE_DAY;
+    reply.set_release_hour = DATAFED_RELEASE_HOUR;
+    reply.set_release_minute = DATAFED_RELEASE_MINUTE;
+
+    reply.set_api_major = DATAFED_COMMON_PROTOCOL_API_MAJOR;
+    reply.set_api_minor = DATAFED_COMMON_PROTOCOL_API_MINOR;
+    reply.set_api_patch = DATAFED_COMMON_PROTOCOL_API_PATCH;
+    
+    reply.set_component_major = core::version::major;
+    reply.set_component_minor = core::version::minor;
+    reply.set_component_patch = core::version::patch;
+    //reply.set_major( VER_MAJOR );
+    //reply.set_mapi_major( VER_MAPI_MAJOR );
+    //reply.set_mapi_minor( VER_MAPI_MINOR );
+    //reply.set_core( VER_CORE );
+    //reply.set_repo( VER_REPO );
+    //reply.set_web( VER_WEB );
+    //reply.set_client_py( VER_CLIENT_PY );*/
+    std::cout << "Setting version info " << std::endl;
     PROC_MSG_END
 }
 

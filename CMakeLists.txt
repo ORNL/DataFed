@@ -1,10 +1,13 @@
 cmake_minimum_required (VERSION 3.17.0)
-project( DataFed CXX C )
 
-set(DataFed_MAJOR_VERSION 0)
-set(DataFed_MINOR_VERSION 2)
-set(DataFed_PATCH_VERSION 0)
-set(DataFed_VERSION ${DataFed_MAJOR_VERSION}.${DataFed_MINOR_VERSION}.${DataFed_PATCH_VERSION})
+include(./cmake/Version.cmake)
+
+project( DataFed CXX C VERSION "${DATAFED_RELEASE_YEAR}.${DATAFED_RELEASE_MONTH}.${DATAFED_RELEASE_DAY}.${DATAFED_RELEASE_HOUR}.${DATAFED_RELEASE_MINUTE}")
+
+#set(DataFed_MAJOR_VERSION 0)
+#set(DataFed_MINOR_VERSION 2)
+#set(DataFed_PATCH_VERSION 0)
+set(DataFed_VERSION "${DATAFED_RELEASE_YEAR}.${DATAFED_RELEASE_MONTH}.${DATAFED_RELEASE_DAY}.${DATAFED_RELEASE_HOUR}.${DATAFED_RELEASE_MINUTE}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -55,8 +58,18 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto"
+  @ONLY)
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/web/Version.js.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/web/Version.js"
+  @ONLY)
+
 # Create file glob here because need to be made visible here as well
-file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/*.proto" )
+file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON) 
 

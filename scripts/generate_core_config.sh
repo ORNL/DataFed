@@ -64,7 +64,8 @@ else
   local_DATAFED_GLOBUS_APP_SECRET=$(printenv DATAFED_GLOBUS_APP_SECRET)
 fi
 
-local_DATABASE_API_URL="http://127.0.0.1:8529/_db/sdms/api/"
+FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
+local_DATABASE_API_URL="http://127.0.0.1:8529/_db/sdms/api/${FOXX_MAJOR_API_VERSION}/"
 local_DATABASE_USER="root"
 
 if [ -z "${DATABASE_PASSWORD}" ]

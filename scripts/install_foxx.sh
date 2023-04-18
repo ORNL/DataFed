@@ -16,6 +16,7 @@ Help()
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-u, --database-user               Database user, needed to log into the database."
+  echo "-f, --foxx-api-major-version      The major version number to mount the foxx api under."
   echo "-p, --database-password           Database password, needed to log into the database."
   echo "                                  This is a REQUIRED parameters if it is not"
   echo "                                  provided via the command line it can also be set"
@@ -43,7 +44,9 @@ else
   local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
 fi
 
-VALID_ARGS=$(getopt -o hu:p --long 'help',database-user:,database-password: -- "$@")
+local_FOXX_MAJOR_API_VERSION="1"
+
+VALID_ARGS=$(getopt -o hu:p:f: --long 'help',database-user:,database-password:,foxx-api-major-version: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -63,6 +66,11 @@ while [ : ]; do
     -p | --database-password)
         echo "Processing 'Database password' option. Input argument is '$2'"
         local_DATABASE_PASSWORD=$2
+        shift 2
+        ;;
+    -f | --foxx-api-major-version)
+        echo "Processing 'Foxx major api version' option. Input argument is '$2'"
+        local_FOXX_MAJOR_API_VERSION=$2
         shift 2
         ;;
     -y | --zeromq-system-secret)
@@ -152,9 +160,9 @@ echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
   if [[ "$existing_services" =~ .*"DataFed".* ]]
   then
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
-    foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api ${PROJECT_ROOT}/core/database/api/
+    foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/api/
   else
-    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api ${PROJECT_ROOT}/core/database/api/
+    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/api/
   fi
 
   

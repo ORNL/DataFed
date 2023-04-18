@@ -1,0 +1,16 @@
+#ifndef REPO_VERSION_HPP
+#define REPO_VERSION_HPP
+#pragma once
+
+namespace SDMS {
+  namespace repository {
+    namespace version {
+      constexpr int MAJOR = @DATAFED_REPO_MAJOR@;
+      constexpr int MINOR = @DATAFED_REPO_MINOR@;
+      constexpr int PATCH = @DATAFED_REPO_PATCH@;
+    }
+  }
+}
+
+#endif // REPO_VERSION_HPP
+
