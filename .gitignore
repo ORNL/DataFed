@@ -4,4 +4,15 @@ config/datafed-authz.cfg
 config/datafed-core.cfg
 config/datafed-repo.cfg
 config/datafed-ws.cfg
+common/proto/common/Version.proto
+core/database/foxx/api/version_router.js
+core/database/foxx/manifest.json
+core/server/Version.hpp
+repository/gridftp/globus5/authz/source/Version.hpp
+repository/server/Version.hpp
+web/version.js
+scripts/globus/datafed-home-repo-form.json
+scripts/globus/datafed-home-repo.sh
+scripts/globus/mapping.json
+services/
 build
