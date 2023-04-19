@@ -4,12 +4,12 @@
 #include <boost/test/unit_test.hpp>
 
 // Local public includes
-#include "CredentialFactory.hpp"
-#include "ICredentials.hpp"
-#include "ProtocolTypes.hpp"
-#include "SocketFactory.hpp"
-#include "SocketOptions.hpp"
-#include "TraceException.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/ICredentials.hpp"
+#include "common/ProtocolTypes.hpp"
+#include "common/SocketFactory.hpp"
+#include "common/SocketOptions.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <iostream>

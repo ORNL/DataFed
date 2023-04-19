@@ -1,18 +1,22 @@
 #ifndef CORESERVER_HPP
 #define CORESERVER_HPP
+#pragma once
 
-#include <memory>
-#include <string>
+// Local private includes
+#include "AuthenticationManager.hpp"
+#include "Config.hpp"
+#include "ICoreServer.hpp"
+
+// Standard includes
 #include <map>
-#include <thread>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <thread>
 #include <condition_variable>
 #include <stdint.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include "Config.hpp"
-#include "AuthenticationManager.hpp"
-#include "ICoreServer.hpp"
 
 
 namespace SDMS {

@@ -1,4 +1,13 @@
-#include "Util.hpp"
+// Local public includes
+#include "common/SDMS.pb.h"
+#include "common/TraceException.hpp"
+#include "common/Util.hpp"
+
+// Third party includes
+#include <zmq.h>
+
+// Standard includes
+#include <array>
 #include <cstdio>
 #include <iostream>
 #include <iomanip>
@@ -6,10 +15,6 @@
 #include <set>
 #include <string>
 #include <string.h>
-#include <array>
-#include <zmq.h>
-#include "TraceException.hpp"
-#include "SDMS.pb.h"
 
 using namespace std;
 

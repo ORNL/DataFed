@@ -1,22 +1,22 @@
 
 // Local private includes
-#include "unistd.h"
-#include "DynaLog.hpp"
 #include "Config.hpp"
 #include "ITaskMgr.hpp"
 #include "TaskWorker.hpp"
 
 // Common public includes
-#include "CommunicatorFactory.hpp"
-#include "CredentialFactory.hpp"
-#include "ICommunicator.hpp"
-#include "IMessage.hpp"
-#include "MessageFactory.hpp"
-#include "SocketOptions.hpp"
+#include "common/CommunicatorFactory.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/DynaLog.hpp"
+#include "common/ICommunicator.hpp"
+#include "common/IMessage.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/SocketOptions.hpp"
 
 // Standard includes
 #include <memory>
 #include <sstream>
+#include "unistd.h"
 
 using namespace std;
 using namespace libjson;

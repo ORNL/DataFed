@@ -41,9 +41,9 @@ Description=DataFed Web Server
 PIDFile=/tmp/datafed-ws.pid
 Restart=always
 KillSignal=SIGQUIT
-WorkingDirectory=/opt/datafed/web
-Environment=NODE_PATH=/opt/datafed/web
-ExecStart=/opt/datafed/web/datafed-ws.js /opt/datafed/web/datafed-ws.cfg
+WorkingDirectory=${DATAFED_INSTALL_PATH}/web
+Environment=NODE_PATH=${DATAFED_INSTALL_PATH}/web
+ExecStart=${DATAFED_INSTALL_PATH}/web/datafed-ws.js ${DATAFED_INSTALL_PATH}/web/datafed-ws.cfg
 StandardOutput=append:${DATAFED_WS_LOG_FILE_PATH}
 StandardError=append:${DATAFED_WS_LOG_FILE_PATH}
 [Install]

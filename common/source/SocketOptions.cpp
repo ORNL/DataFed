@@ -1,7 +1,7 @@
 
 // Common public includes
-#include "SocketOptions.hpp"
-#include "TraceException.hpp"
+#include "common/SocketOptions.hpp"
+#include "common/TraceException.hpp"
 
 // Standard namespace
 #include <algorithm>

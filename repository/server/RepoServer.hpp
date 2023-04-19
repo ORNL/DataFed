@@ -1,18 +1,19 @@
 #ifndef REPOSERVER_HPP
 #define REPOSERVER_HPP
+#pragma once
 
-#include <string>
-#include <map>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <stdint.h>
-#include <unistd.h>
-
+// Local private includes
 #include "Config.hpp"
-//#include "MsgBuf.hpp"
-//#include "MsgComm.hpp"
 #include "RequestWorker.hpp"
+
+// Standard includes
+#include <condition_variable>
+#include <map>
+#include <mutex>
+#include <stdint.h>
+#include <string>
+#include <thread>
+#include <unistd.h>
 
 namespace SDMS {
 namespace Repo {

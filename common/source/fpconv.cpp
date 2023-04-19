@@ -1,8 +1,10 @@
+// Local public includes
+#include "common/fpconv.h"
+#include "common/powers.h"
+
+// Standard includes
 #include <stdbool.h>
 #include <string.h>
-
-#include "fpconv.h"
-#include "powers.h"
 
 #define fracmask  0x000FFFFFFFFFFFFFU
 #define expmask   0x7FF0000000000000U

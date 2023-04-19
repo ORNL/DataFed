@@ -3,10 +3,10 @@
 #pragma once
 
 // Local includes
-#include "IAuthenticationManager.hpp"
-#include "IMessage.hpp"
-#include "IOperator.hpp"
-#include "OperatorTypes.hpp"
+#include "common/IAuthenticationManager.hpp"
+#include "common/IMessage.hpp"
+#include "common/IOperator.hpp"
+#include "common/OperatorTypes.hpp"
 
 // Standard includes
 #include <any>

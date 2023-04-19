@@ -3,10 +3,10 @@
 #pragma once
 
 // Local public includes
-#include "ICommunicator.hpp"
-#include "IServer.hpp"
-#include "ISocket.hpp"
-#include "SocketOptions.hpp"
+#include "common/ICommunicator.hpp"
+#include "common/IServer.hpp"
+#include "common/ISocket.hpp"
+#include "common/SocketOptions.hpp"
 
 // Standard includes
 #include <chrono>

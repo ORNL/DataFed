@@ -3,9 +3,9 @@
 #include "servers/Proxy.hpp"
 
 // Local public includes
-#include "IServer.hpp"
-#include "SocketOptions.hpp"
-#include "TraceException.hpp"
+#include "common/IServer.hpp"
+#include "common/SocketOptions.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <memory>

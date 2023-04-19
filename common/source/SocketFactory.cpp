@@ -4,8 +4,8 @@
 #include "sockets/ZeroMQSocket.hpp"
 
 // Local public includes
-#include "SocketFactory.hpp"
-#include "TraceException.hpp"
+#include "common/SocketFactory.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <memory>

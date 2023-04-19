@@ -4,20 +4,22 @@
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
-// Local public includes
-#include "CommunicatorFactory.hpp"
-#include "CredentialFactory.hpp"
-#include "ICredentials.hpp"
-#include "IOperator.hpp"
-#include "MessageFactory.hpp"
-#include "OperatorFactory.hpp"
-#include "OperatorTypes.hpp"
+// Local private includes
 #include "servers/Proxy.hpp"
-#include "SocketOptions.hpp"
+
+// Local public includes
+#include "common/CommunicatorFactory.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/ICredentials.hpp"
+#include "common/IOperator.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/OperatorFactory.hpp"
+#include "common/OperatorTypes.hpp"
+#include "common/SocketOptions.hpp"
 
 // Proto file includes
-#include <SDMS_Anon.pb.h>
-#include <SDMS_Auth.pb.h>
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
 
 // Standard includes
 #include <memory>

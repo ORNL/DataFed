@@ -1,21 +1,20 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 #pragma once
-#include <string>
-#include <map>
-#include <mutex>
-#include <stdint.h>
-#include "SDMS.pb.h"
-//#include "MsgComm.hpp"
 
 // Core local private includes
 #include "AuthenticationManager.hpp"
 
 // DataFed Common public includes
-#include "ICredentials.hpp"
+#include "common/ICredentials.hpp"
+#include "common/SDMS.pb.h"
 
 // Standard includes
+#include <map>
 #include <memory>
+#include <mutex>
+#include <stdint.h>
+#include <string>
 
 namespace SDMS {
 namespace Core {

@@ -1,26 +1,29 @@
-#include <fstream>
-#include <time.h>
-#include "DynaLog.hpp"
+// Local private includes
 #include "RepoServer.hpp"
-#include "Util.hpp"
-
-#include "Version.pb.h"
-#include "SDMS.pb.h"
-#include "SDMS_Anon.pb.h"
-#include "SDMS_Auth.pb.h"
+#include "Version.hpp"
 
 // Common public includes
-#include "CommunicatorFactory.hpp"
-#include "CredentialFactory.hpp"
-#include "IServer.hpp"
-#include "KeyGenerator.hpp"
-#include "MessageFactory.hpp"
-#include "OperatorFactory.hpp"
-#include "ServerFactory.hpp"
-#include "TraceException.hpp"
+#include "common/CommunicatorFactory.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/DynaLog.hpp"
+#include "common/IServer.hpp"
+#include "common/KeyGenerator.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/OperatorFactory.hpp"
+#include "common/ServerFactory.hpp"
+#include "common/TraceException.hpp"
+#include "common/Util.hpp"
+
+// Proto includes
+#include "common/SDMS.pb.h"
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
+#include "common/Version.pb.h"
 
 // Standard includes
 #include <any>
+#include <fstream>
+#include <time.h>
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
 #define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
@@ -199,15 +202,36 @@ Server::checkServerVersion()
             {
                 EXCEPT_PARAM( 1, "Invalid response from core server: " << m_config.core_server );
             }
-            
-            if ( ver_reply->major() != VER_MAJOR || ver_reply->mapi_major() != VER_MAPI_MAJOR ||
-                VER_MAPI_MINOR > (int)ver_reply->mapi_minor() || ver_reply->mapi_minor() > VER_MAPI_MINOR + 9 )
-            {
-                EXCEPT_PARAM( 1, "Incompatible server version (" << ver_reply->major() << "." << ver_reply->mapi_major() << "." << ver_reply->mapi_minor() << ")" );
+           
+            if ( ver_reply->api_major() != SDMS::repository::version::MAJOR ) {
+              EXCEPT_PARAM( 1, "Incompatible messaging api detected major backwards breaking changes detected version (" << ver_reply->api_major() << "." << ver_reply->api_minor() << "." << ver_reply->api_patch() << ")" );
             }
-            else if ( ver_reply->repo() > VER_REPO )
-            {
-                DL_WARN( "A newer repository server version is available (" << ver_reply->major() << "." << ver_reply->mapi_major() << "." << ver_reply->mapi_minor() << ":" << ver_reply->repo() << ")" );
+            if ( ver_reply->api_minor() + 9 > SDMS::repository::version::MINOR) {
+              DL_WARN( "Significant changes in message api detected (" << ver_reply->api_major() << "." << ver_reply->api_minor() << "." << ver_reply->api_patch() << ")" );
+            }
+            bool new_release_available = false;
+            if ( ver_reply->release_year() > Version::DATAFED_RELEASE_YEAR) {
+              new_release_available = true;
+            } else if ( ver_reply->release_year() == Version::DATAFED_RELEASE_YEAR ) {
+              if( ver_reply->release_month() > Version::DATAFED_RELEASE_MONTH ) {
+                new_release_available = true;
+              } else if(ver_reply->release_month() == Version::DATAFED_RELEASE_MONTH ) {
+                if( ver_reply->release_day() > Version::DATAFED_RELEASE_DAY ) {
+                  new_release_available = true;
+                } else if(ver_reply->release_day() == Version::DATAFED_RELEASE_DAY ) {
+                  if( ver_reply->release_hour() > Version::DATAFED_RELEASE_HOUR ) {
+                    new_release_available = true;
+                  } else if(ver_reply->release_hour() == Version::DATAFED_RELEASE_HOUR ) {
+                    if( ver_reply->release_minute() > Version::DATAFED_RELEASE_MINUTE ) {
+                      new_release_available = true;
+                    }
+                  }
+                }
+              }
+            }
+
+            if(new_release_available) {
+              DL_INFO( "Newer releases for the repo server may be available." );
             }
 
             DL_INFO( "Core server connection OK." );

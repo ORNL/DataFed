@@ -1,27 +1,31 @@
 #ifndef COREWORKER_HPP
 #define COREWORKER_HPP
+#pragma once
 
-#include <string>
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <algorithm>
-#include <zmq.h>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json-schema.hpp>
-#include "Util.hpp"
-#include "DatabaseAPI.hpp"
+// Local private includes
 #include "ICoreServer.hpp"
+#include "DatabaseAPI.hpp"
 #include "GlobusAPI.hpp"
-#include <DynaLog.hpp>
 
 // DataFed Common public includes
-#include "IMessage.hpp"
-#include "IMessageMapper.hpp"
-#include "MessageFactory.hpp"
+#include "common/IMessage.hpp"
+#include "common/IMessageMapper.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/Util.hpp"
+#include "common/DynaLog.hpp"
+
+// Third party includes
+#include <nlohmann/json.hpp>
+#include <nlohmann/json-schema.hpp>
+#include <zmq.h>
 
 // Standard includes
+#include <algorithm>
 #include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace SDMS {
 namespace Core {

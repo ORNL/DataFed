@@ -6,11 +6,11 @@
 #include "../Buffer.hpp"
 
 // Local public includes
-#include "ICommunicator.hpp"
-#include "IMessage.hpp"
-#include "ISocket.hpp"
-#include "MessageFactory.hpp"
-#include "ProtoBufFactory.hpp"
+#include "common/ICommunicator.hpp"
+#include "common/IMessage.hpp"
+#include "common/ISocket.hpp"
+#include "common/MessageFactory.hpp"
+#include "../ProtoBufFactory.hpp"
 
 // Third party includes
 #include <zmq.hpp>

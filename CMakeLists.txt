@@ -1,10 +1,11 @@
 cmake_minimum_required (VERSION 3.17.0)
 project( DataFed CXX C )
+include(./cmake/Version.cmake)
 
-set(DataFed_MAJOR_VERSION 0)
-set(DataFed_MINOR_VERSION 2)
-set(DataFed_PATCH_VERSION 0)
-set(DataFed_VERSION ${DataFed_MAJOR_VERSION}.${DataFed_MINOR_VERSION}.${DataFed_PATCH_VERSION})
+#set(DataFed_MAJOR_VERSION 0)
+#set(DataFed_MINOR_VERSION 2)
+#set(DataFed_PATCH_VERSION 0)
+set(DataFed_VERSION "${DATAFED_RELEASE_YEAR}.${DATAFED_RELEASE_MONTH}.${DATAFED_RELEASE_DAY}.${DATAFED_RELEASE_HOUR}.${DATAFED_RELEASE_MINUTE}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -40,8 +41,33 @@ if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
     add_definitions( -Wall -Wextra )
 endif()
 
+
+# Set the path to the shell script
+set(DATAFED_SH_PATH ${PROJECT_SOURCE_DIR}/config/datafed.sh)
+
+if ( NOT EXISTS ${DATAFED_SH_PATH} )
+  message(FATAL_ERROR "No datafed.sh config file was found at ${DATAFED_SH_PATH}")
+endif()
+
+# Use execute_process to source the shell script and get the value
+execute_process(
+  COMMAND bash -c "source ${DATAFED_SH_PATH} && echo \$DATAFED_INSTALL_PATH"
+  OUTPUT_VARIABLE DATAFED_INSTALL_PATH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto"
+  @ONLY)
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js"
+  @ONLY)
+
 # Create file glob here because need to be made visible here as well
-file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/*.proto" )
+file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON) 
 
@@ -138,26 +164,26 @@ endif()
 
 if( INSTALL_REPO_SERVER )
   # Should only need to do this on the same machine that Globus is installed
-  install( TARGETS datafed-repo DESTINATION /opt/datafed/repo )
+  install( TARGETS datafed-repo DESTINATION ${DATAFED_INSTALL_PATH}/repo )
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_repo_service.sh )")
 endif()
 
 if( INSTALL_AUTHZ )
-  install( TARGETS datafed-authz DESTINATION /opt/datafed/authz )
+  install( TARGETS datafed-authz DESTINATION ${DATAFED_INSTALL_PATH}/authz )
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_authz.sh )")
 endif()
 
 if( INSTALL_CORE_SERVER )
-  install( TARGETS datafed-core DESTINATION /opt/datafed/core )
-  install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
+  install( TARGETS datafed-core DESTINATION ${DATAFED_INSTALL_PATH}/core )
+  install( FILES ${ProtoFiles} DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh )")
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_core_service.sh )")
 endif()
 
 if( INSTALL_WEB_SERVER )
-  install( FILES ${ProtoFiles} DESTINATION /opt/datafed/web )
-  install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION /opt/datafed/web )
-  install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION /opt/datafed/web )
+  install( FILES ${ProtoFiles} DESTINATION ${DATAFED_INSTALL_PATH}/web )
+  install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION ${DATAFED_INSTALL_PATH}/web )
+  install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_ws_service.sh )")
 endif()
 

@@ -118,10 +118,10 @@ echo "3HERE"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 server_address=tcp://${local_DATAFED_DOMAIN}:${local_DATAFED_SERVER_PORT}
-server_key=/opt/datafed/keys/datafed-core-key.pub
+server_key=${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub
 repo_id=repo/$DATAFED_REPO_ID_AND_DIR
-pub_key=/opt/datafed/keys/datafed-repo-key.pub
-priv_key=/opt/datafed/keys/datafed-repo-key.priv
+pub_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.pub
+priv_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.priv
 user=$local_DATAFED_AUTHZ_USER
 globus-collection-path=$local_GCS_COLLECTION_ROOT_PATH
 EOF

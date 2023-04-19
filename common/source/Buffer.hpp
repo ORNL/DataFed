@@ -3,7 +3,7 @@
 #pragma once
 
 // Local public includes
-#include "TraceException.hpp"
+#include "common/TraceException.hpp"
 
 // Third party includes
 #include <google/protobuf/message.h>

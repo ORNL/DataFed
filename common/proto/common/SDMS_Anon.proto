@@ -44,13 +44,26 @@ message VersionRequest
 // is possible.
 message VersionReply
 {
-    required uint32             major       = 1; // System MAJOR version, no backward compatibility
-    required uint32             mapi_major  = 2; // Message API MAJOR version, no backward compatibility
-    required uint32             mapi_minor  = 3; // Message API MINOR version, backward compatible
-    required uint32             core        = 4; // Core server MINOR version, information only
-    required uint32             web         = 5; // Web server MINOR version, info/notification purposes
-    required uint32             repo        = 6; // Repo server MINOR version, info/notification purposes
-    required uint32             client_py   = 7; // Python client/api MINOR version, info/notification purposes
+//    required uint32             major       = 1; // System MAJOR version, no backward compatibility
+//    required uint32             mapi_major  = 2; // Message API MAJOR version, no backward compatibility
+//    required uint32             mapi_minor  = 3; // Message API MINOR version, backward compatible
+//    required uint32             core        = 4; // Core server MINOR version, information only
+//    required uint32             web         = 5; // Web server MINOR version, info/notification purposes
+//    required uint32             repo        = 6; // Repo server MINOR version, info/notification purposes
+//    required uint32             client_py   = 7; // Python client/api MINOR version, info/notification purposes
+  optional uint32 release_year = 1;
+  optional uint32 release_month = 2;
+  optional uint32 release_day = 3;
+  optional uint32 release_hour = 4;
+  optional uint32 release_minute = 5;
+
+  optional uint32 api_major = 6;
+  optional uint32 api_minor = 7;
+  optional uint32 api_patch = 8;
+
+  optional uint32 component_major = 9;
+  optional uint32 component_minor = 10;
+  optional uint32 component_patch = 11;
 }
 
 // Request to get client authentication status

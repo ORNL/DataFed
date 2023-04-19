@@ -3,10 +3,12 @@
 #pragma once
 
 // Local public includes
-#include "ProtoBufMap.hpp"
-#include <SDMS_Anon.pb.h>
-#include <SDMS_Auth.pb.h>
-#include "TraceException.hpp"
+#include "common/ProtoBufMap.hpp"
+#include "common/TraceException.hpp"
+
+// Local protobuf includes
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
 
 // Standard includes
 #include <memory>

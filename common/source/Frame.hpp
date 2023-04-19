@@ -3,7 +3,7 @@
 #pragma once
 
 // Local public includes
-#include "IMessage.hpp"
+#include "common/IMessage.hpp"
 
 // Third party includes
 #include <zmq.hpp>

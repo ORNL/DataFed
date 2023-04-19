@@ -1,12 +1,20 @@
 #ifndef GLOBUSAPICLIENT_HPP
 #define GLOBUSAPICLIENT_HPP
+#pragma once
 
+// Local private includes
+#include "Config.hpp"
+
+// Local public includes
+#include "common/libjson.hpp"
+#include "common/SDMS.pb.h"
+
+// Third party includes
+#include <curl/curl.h>
+
+// Standard includes
 #include <string>
 #include <vector>
-#include <curl/curl.h>
-#include "libjson.hpp"
-#include "Config.hpp"
-#include "SDMS.pb.h"
 
 namespace SDMS {
 namespace Core {

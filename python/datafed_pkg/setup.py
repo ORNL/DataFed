@@ -7,13 +7,14 @@ this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README'), encoding='utf-8') as f:
     long_description = f.read()
 
+from datafed.VERSION import __version__
 # read the contents of VERSION file
-with open(path.join(this_directory, 'VERSION'), encoding='utf-8') as f:
-    version = f.read()
+#with open(path.join(this_directory, 'VERSION'), encoding='utf-8') as f:
+#    version = f.read()
 
 setuptools.setup(
     name="datafed",
-    version=version,
+    version=__version__,
     author="Dale Stansberry",
     author_email="stansberrydv@ornl.gov",
     description="DataFed CLI and API",

@@ -1,23 +1,24 @@
 // Local private includes
 #include "Config.h"
+#include "Version.hpp"
 
 // Common public includes
-#include "CommunicatorFactory.hpp"
-#include "CredentialFactory.hpp"
-#include "ICommunicator.hpp"
-#include "IMessage.hpp"
-#include "MessageFactory.hpp"
-#include "SocketOptions.hpp"
-#include "TraceException.hpp"
-#include "Util.hpp"
+#include "common/CommunicatorFactory.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/ICommunicator.hpp"
+#include "common/IMessage.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/SocketOptions.hpp"
+#include "common/TraceException.hpp"
+#include "common/Util.hpp"
 #define DEF_DYNALOG
-#include "DynaLog.hpp"
+#include "common/DynaLog.hpp"
 
 // Protobuf includes
-#include "SDMS.pb.h"
-#include "SDMS_Anon.pb.h"
-#include "SDMS_Auth.pb.h"
-#include "Version.pb.h"
+#include "common/SDMS.pb.h"
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
+#include "common/Version.pb.h"
 
 // Standard includes
 #include <string>
@@ -28,7 +29,7 @@
 using namespace std;
 using namespace SDMS::Anon;
 using namespace SDMS::Auth;
-
+//using namespace SDMS::authz::version;
 
 namespace SDMS {
 
@@ -268,10 +269,25 @@ extern "C"
     // The same
     const char * getVersion()
     {
-        static std::string ver_str = std::to_string(VER_MAJOR) + "." + std::to_string(VER_MAPI_MAJOR) + "." + std::to_string(VER_MAPI_MINOR) + ":" + std::to_string(VER_REPO);
+        static std::string ver_str = std::to_string(SDMS::authz::version::MAJOR) + "." + std::to_string(SDMS::authz::version::MINOR) + "." + std::to_string(SDMS::authz::version::PATCH);
 
         return ver_str.c_str();
     }
+
+    const char * getAPIVersion()
+    {
+        static std::string ver_str = std::to_string(DATAFED_COMMON_PROTOCOL_API_MAJOR) + "." + std::to_string(DATAFED_COMMON_PROTOCOL_API_MINOR) + "." + std::to_string(DATAFED_COMMON_PROTOCOL_API_PATCH);
+
+        return ver_str.c_str();
+    }
+
+    const char * getReleaseVersion()
+    {
+        static std::string ver_str = std::to_string(DATAFED_RELEASE_YEAR) + "." + std::to_string(DATAFED_RELEASE_MONTH) + "." + std::to_string(DATAFED_RELEASE_DAY) + "." + std::to_string(DATAFED_RELEASE_HOUR) + "." + std::to_string(DATAFED_RELEASE_MINUTE);
+
+        return ver_str.c_str();
+    }
+
 
     // The same
     int checkAuthorization( char * client_id, char * object, char * action, struct Config * config )

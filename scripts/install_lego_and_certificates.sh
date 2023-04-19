@@ -87,9 +87,9 @@ export GO111MODULE=on
 GOBIN=/usr/local/bin/ go install github.com/go-acme/lego/v4/cmd/lego@latest
 
 # Create the folder
-if [ ! -d "/opt/datafed/keys" ]
+if [ ! -d "${DATAFED_INSTALL_PATH}/keys" ]
 then
-	sudo mkdir -p /opt/datafed/keys
+	sudo mkdir -p "${DATAFED_INSTALL_PATH}/keys"
 fi
 
 # Check if the datafed-ws server is already running, will need to stop it if we want
@@ -107,13 +107,13 @@ datafed_ws_service=$(systemctl list-unit-files --type service | grep datafed-ws 
 # NOTE: Will only run if one of the necessary certificate files is missing
 cert_file="datafed-server-test.ornl.gov.crt"
 key_file="datafed-server-test.ornl.gov.key"
-if [ ! -f "/opt/datafed/keys/$cert_file" ] || [ ! -f "/opt/datafed/keys/$key_file" ]
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/$cert_file" ] || [ ! -f "${DATAFED_INSTALL_PATH}/keys/$key_file" ]
 then
-  sudo lego --accept-tos --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path /opt/datafed/keys/ --tls run 
-  mv /opt/datafed/keys/certificates/$cert_file /opt/datafed/keys/
-  mv /opt/datafed/keys/certificates/$key_file  /opt/datafed/keys/
-  rm -rf /opt/datafed/keys/certificates
-  rm -rf /opt/datafed/keys/accounts
+  sudo lego --accept-tos --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path "${DATAFED_INSTALL_PATH}/keys/" --tls run 
+  mv ${DATAFED_INSTALL_PATH}/keys/certificates/$cert_file ${DATAFED_INSTALL_PATH}/keys/
+  mv ${DATAFED_INSTALL_PATH}/keys/certificates/$key_file  ${DATAFED_INSTALL_PATH}/keys/
+  rm -rf ${DATAFED_INSTALL_PATH}/keys/certificates
+  rm -rf ${DATAFED_INSTALL_PATH}/keys/accounts
 else
   echo "Certificate files already exist - lego will not run."
   echo "Remove these files if you would like to generate new certs:"

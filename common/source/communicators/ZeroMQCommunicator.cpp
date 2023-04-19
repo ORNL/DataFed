@@ -1,16 +1,16 @@
 // Local private includes
 #include "ZeroMQCommunicator.hpp"
-#include "Frame.hpp"
-#include "ProtoBufFactory.hpp"
-#include "ProtoBufMap.hpp"
-#include "support/zeromq/Context.hpp"
-#include "support/zeromq/SocketTranslator.hpp"
+#include "../Frame.hpp"
+#include "../ProtoBufFactory.hpp"
+#include "../support/zeromq/Context.hpp"
+#include "../support/zeromq/SocketTranslator.hpp"
 
 // Local public includes
-#include "IMessage.hpp"
-#include "ISocket.hpp"
-#include "SocketFactory.hpp"
-#include "SocketOptions.hpp"
+#include "common/IMessage.hpp"
+#include "common/ISocket.hpp"
+#include "common/ProtoBufMap.hpp"
+#include "common/SocketFactory.hpp"
+#include "common/SocketOptions.hpp"
 
 // Third party includes
 #include <boost/range/adaptor/reversed.hpp>

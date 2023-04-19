@@ -1,13 +1,24 @@
+// Local private includes
+#include "RepoServer.hpp"
+// Repo server version
+#include "Version.hpp"
+
+// Local public includes
+#define DEF_DYNALOG
+#include "common/DynaLog.hpp"
+#include "common/TraceException.hpp"
+#include "common/Util.hpp"
+
+// Protocol includes 
+#include "common/Version.pb.h"
+
+// Third party includes
+#include <boost/program_options.hpp>
+
+// Standard includes
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
-#include <boost/program_options.hpp>
-#define DEF_DYNALOG
-#include "DynaLog.hpp"
-#include "TraceException.hpp"
-#include "Util.hpp"
-#include "RepoServer.hpp"
-#include "Version.pb.h"
 
 using namespace std;
 using namespace SDMS;
@@ -23,7 +34,7 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO( "DataFed repo server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_REPO );
+        DL_INFO("DataFed repo server starting, ver " << repository::version::MAJOR << "." << repository::version::MINOR << "." << repository::version::PATCH );
 
         Repo::Config &  config = Repo::Config::getInstance();
         string          cfg_file;
@@ -51,7 +62,7 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "help" ) )
             {
-                cout << "DataFed Repo Server, ver. " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_REPO << "\n";
+                cout << "DataFed Repo Server, ver. " << repository::version::MAJOR << "." << repository::version::MINOR << "." << repository::version::PATCH << "\n";
                 cout << "Usage: datafed-repo [options]\n";
                 cout << opts << endl;
                 return 0;
@@ -59,7 +70,9 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "version" ))
             {
-                cout << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_REPO << endl;
+                cout << "Release Version: " << DATAFED_RELEASE_YEAR << "." << DATAFED_RELEASE_MONTH << "." << DATAFED_RELEASE_DAY << "." << DATAFED_RELEASE_HOUR << "." << DATAFED_RELEASE_MINUTE << std::endl;
+                cout << "Messaging API: " << DATAFED_COMMON_PROTOCOL_API_MAJOR << "." << DATAFED_COMMON_PROTOCOL_API_MINOR << "." << DATAFED_COMMON_PROTOCOL_API_PATCH << endl;
+                cout << "Repo Server: " << repository::version::MAJOR << "." << repository::version::MINOR << "." << repository::version::PATCH << endl;
                 return 0;
             }
 

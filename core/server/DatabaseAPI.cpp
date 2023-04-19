@@ -1,15 +1,23 @@
-#include <cctype>
-#include <algorithm>
-#include <zmq.h>
-#include <unistd.h>
+
+// Local private includes
+#include "DatabaseAPI.hpp"
+
+// Local public includes
+#include "common/Util.hpp"
+#include "common/DynaLog.hpp"
+#include "common/TraceException.hpp"
+
+// Third party includes
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <google/protobuf/util/json_util.h>
-#include "Util.hpp"
-#include "DynaLog.hpp"
-#include "TraceException.hpp"
-#include "DatabaseAPI.hpp"
+#include <zmq.h>
+
+// Standard includes
+#include <algorithm>
+#include <cctype>
 #include <memory>
+#include <unistd.h>
 
 using namespace std;
 

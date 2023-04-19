@@ -1,3 +1,5 @@
+
+// Local private includes
 #include "Condition.hpp"
 
 // Standard includes

@@ -1,6 +1,8 @@
 #ifndef ICORESERVER_HPP
 #define ICORESERVER_HPP
+#pragma once
 
+// Standard includes
 #include <string>
 
 namespace SDMS {

@@ -8,7 +8,7 @@
 #include "PublicKeyTypes.hpp"
 
 // Common includes
-#include "IAuthenticationManager.hpp"
+#include "common/IAuthenticationManager.hpp"
 
 // Standard includes
 #include <memory>

@@ -1,6 +1,8 @@
 #ifndef ITASKWORKER_HPP
 #define ITASKWORKER_HPP
+#pragma once
 
+// Standard includes
 #include <condition_variable>
 #include <stdint.h>
 

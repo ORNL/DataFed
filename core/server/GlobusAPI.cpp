@@ -1,10 +1,15 @@
+// Local private includes
+#include "GlobusAPI.hpp"
+
+// Local public includes
+#include "common/Util.hpp"
+#include "common/TraceException.hpp"
+#include "common/DynaLog.hpp"
+
+// Standard includes
 #include <iostream>
 #include <time.h>
 #include <unistd.h>
-#include "GlobusAPI.hpp"
-#include "Util.hpp"
-#include "TraceException.hpp"
-#include "DynaLog.hpp"
 
 using namespace std;
 using namespace libjson;

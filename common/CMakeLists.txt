@@ -1,5 +1,13 @@
 cmake_minimum_required (VERSION 3.0.0)
 
+# The below command will by default generate the proto files in this folder
+# we want to place them in the binary folder in /proto/common
+add_subdirectory(proto/common)
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/common/Version.hpp.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/include/common/Version.hpp"
+  @ONLY)
 file( GLOB Sources "source/*.cpp" 
   "source/credentials/*cpp"
   "source/communicators/*.cpp"
@@ -8,14 +16,10 @@ file( GLOB Sources "source/*.cpp"
   "source/servers/*.cpp"
   "source/support/zeromq/*.cpp"
   "source/sockets/*.cpp")
-
-PROTOBUF_GENERATE_CPP( ProtoSourcesCpp ProtoHeadersCpp ${ProtoFiles} )
-
-add_library( common STATIC ${Sources} ${ProtoSourcesCpp} )
-set_target_properties(common PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_link_libraries( common -lprotobuf ) 
-include_directories(${CMAKE_BINARY_DIR}/common)
-target_include_directories( common INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include )
+add_library( common STATIC ${Sources})
+set_target_properties(common PROPERTIES POSITION_INDEPENDENT_CODE ON SOVERSION DATAFED_COMMON_LIB_MAJOR VERSION DATAFED_COMMON_LIB_MAJOR.DATAFED_COMMON_LIB_MINOR.DATAFED_COMMON_LIB_PATCH )
+target_link_libraries( common -lprotobuf datafed-protobuf) 
+target_include_directories( common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include )
 target_include_directories( common PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include )
 target_include_directories( common PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source )
 

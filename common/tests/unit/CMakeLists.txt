@@ -13,7 +13,7 @@ foreach(PROG
     test_SocketOptions
 )
 
-  include_directories(${CMAKE_SOURCE_DIR}/common/source)
+  include_directories(${PROJECT_SOURCE_DIR}/common/source)
   file(GLOB ${PROG}_SOURCES ${PROG}.cpp)
   add_executable(unit_${PROG} ${${PROG}_SOURCES})
   target_link_libraries(unit_${PROG} Boost::unit_test_framework common -lzmq -lprotobuf -lpthread)

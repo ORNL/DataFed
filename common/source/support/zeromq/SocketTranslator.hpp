@@ -3,7 +3,7 @@
 #pragma once
 
 // Local public includes
-#include "SocketOptions.hpp"
+#include "common/SocketOptions.hpp"
 
 // Third party includes
 #include <zmq.hpp>

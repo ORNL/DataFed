@@ -2,6 +2,11 @@ cmake_minimum_required (VERSION 3.0.0)
 
 file( GLOB Sources "*.cpp" )
 
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/Version.hpp.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Version.hpp"
+  @ONLY)
+
 add_executable( datafed-repo ${Sources} )
 add_dependencies( datafed-repo common )
 target_link_libraries( datafed-repo common -lprotobuf -lpthread -lzmq ${Boost_LIBRARIES} )

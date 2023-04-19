@@ -1,13 +1,23 @@
-#include <iostream>
-#include <fstream>
-#include <unistd.h>
-#include <boost/program_options.hpp>
-#include "DynaLog.hpp"
-#include "TraceException.hpp"
-#include "Util.hpp"
+// Local private includes
 #include "CoreServer.hpp"
+// Core server version
+#include "Version.hpp"
+
+// Local public includes
+#include "common/DynaLog.hpp"
+#include "common/TraceException.hpp"
+#include "common/Util.hpp"
+// messaging version
+#include "common/Version.pb.h"
+
+// Third party includes
+#include <boost/program_options.hpp>
+
+// Standard includes
+#include <fstream>
+#include <iostream>
+#include <unistd.h>
 #include "Config.hpp"
-#include "Version.pb.h"
 
 using namespace std;
 using namespace SDMS;
@@ -27,7 +37,8 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE );
+        DL_INFO("DataFed core server starting, ver " << core::version::MAJOR << "." << core::version::MINOR << "." << core::version::PATCH );
+        //DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE );
 
         Core::Config &  config = Core::Config::getInstance();
         string          cfg_file;
@@ -66,7 +77,8 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "help" ) )
             {
-                cout << "DataFed Core Server, ver. " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE << "\n";
+                //cout << "DataFed Core Server, ver. " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE << "\n";
+                cout << "DataFed Core Server, ver. " << core::version::MAJOR << "." << core::version::MINOR << "." << core::version::PATCH << "\n";
                 cout << "Usage: datafed-core [options]\n";
                 cout << opts << endl;
                 return 0;
@@ -74,7 +86,9 @@ int main( int a_argc, char ** a_argv )
 
             if ( opt_map.count( "version" ))
             {
-                cout << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE << endl;
+                cout << "Release Version: " << DATAFED_RELEASE_YEAR << "." << DATAFED_RELEASE_MONTH << "." << DATAFED_RELEASE_DAY << "." << DATAFED_RELEASE_HOUR << "." << DATAFED_RELEASE_MINUTE << std::endl;
+                cout << "Messaging API: " << DATAFED_COMMON_PROTOCOL_API_MAJOR << "." << DATAFED_COMMON_PROTOCOL_API_MINOR << "." << DATAFED_COMMON_PROTOCOL_API_PATCH << endl;
+                cout << "Core Server: " << core::version::MAJOR << "." << core::version::MINOR << "." << core::version::PATCH << endl;
                 return 0;
             }
 

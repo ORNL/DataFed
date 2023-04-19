@@ -3,7 +3,7 @@
 #include "credentials/ZeroMQSocketCredentials.hpp"
 
 // Local public includes
-#include "CredentialFactory.hpp"
+#include "common/CredentialFactory.hpp"
 
 // Standard includes
 #include <memory>

@@ -37,9 +37,9 @@ Description=DataFed Repo Server
 PIDFile=/tmp/datafed-repo.pid
 Restart=always
 KillSignal=SIGQUIT
-WorkingDirectory=/opt/datafed/repo
-ExecStart=/opt/datafed/repo/datafed-repo --cfg /opt/datafed/repo/datafed-repo.cfg
-User=cades
+WorkingDirectory=${DATAFED_INSTALL_PATH}/repo
+ExecStart=${DATAFED_INSTALL_PATH}/repo/datafed-repo --cfg ${DATAFED_INSTALL_PATH}/repo/datafed-repo.cfg tcp://${DATAFED_DOMAIN}:${DATAFED_SERVER_PORT}
+User=${DATAFED_GLOBUS_REPO_USER}
 StandardOutput=append:${DATAFED_REPO_LOG_FILE_PATH}
 StandardError=append:${DATAFED_REPO_LOG_FILE_PATH}
 [Install]

@@ -15,6 +15,7 @@ if ( process.argv.length != 3 ){
     throw "Invalid arguments, usage: datafed-ws config-file";
 }
 
+const web_version = require('./version.js');
 const express = require('express'); // For REST api
 var session = require('express-session');
 //var bodyParser = require('body-parser');
@@ -57,10 +58,18 @@ var g_host,
     //g_cookie_ui_opts = { httpOnly: true, maxAge: 604800000, secure: true, sameSite: "lax", path: "/ui" },
     g_ready_start = 4,
     g_version,
-    g_ver_major,
-    g_ver_mapi_major,
-    g_ver_mapi_minor,
-    g_ver_web,
+    g_ver_release_year,
+    g_ver_release_month,
+    g_ver_release_day,
+    g_ver_release_hour,
+    g_ver_release_minute,
+    g_ver_api_major,
+    g_ver_api_minor,
+    g_ver_api_patch,
+    //g_ver_major,
+    //g_ver_mapi_major,
+    //g_ver_mapi_minor,
+    //g_ver_web,
     g_tls;
 
 const nullfr = Buffer.from([]);
@@ -94,13 +103,35 @@ function startServer(){
         console.log(reply);
         if ( !reply ){
             console.log( "ERROR: No reply from core server" );
-        }else if ( reply.major != g_ver_major || reply.mapiMajor != g_ver_mapi_major ||
-                reply.mapi_minor < g_ver_mapi_minor || reply.mapi_minor > ( g_ver_mapi_minor + 9 )){
-            console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ")" );
+        }else if ( reply.api_major != g_ver_api_major || reply.api_minor < g_ver_api_minor || reply.api_minor > ( g_ver_api_minor + 9) ) {
+            console.log( "ERROR: Incompatible api version detected (" + reply.api_major + "." + reply.api_minor + "." + reply.api_patch + ")" );
+//        }else if ( reply.major != g_ver_major || reply.mapiMajor != g_ver_mapi_major ||
+ //               reply.mapi_minor < g_ver_mapi_minor || reply.mapi_minor > ( g_ver_mapi_minor + 9 )){
+ //           console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ")" );
         }else{
-            if ( reply.web > g_ver_web || reply.mapi_minor > g_ver_mapi_minor ){
-                console.log( "WARNING: A newer web server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.web + ")" );
+//            if ( reply.web > g_ver_web || reply.mapi_minor > g_ver_mapi_minor ){
+//                console.log( "WARNING: A newer web server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.web + ")" );
+ //           }
+          var warning_msg = "WARNING: A newer web server may be available the latest release version is: (" + reply.release_year + "." + reply.release_month + "." + reply.release_day + "." + reply.release_hour + "." + reply.release_minute
+          if( reply.release_year > g_ver_release_year ) {
+            console.log(warning_msg);
+          } else if( reply.release_year == g_ver_release_year ) {
+            if( reply.release_month > g_ver_release_month ) {
+              console.log(warning_msg);
+            } else if (reply.release_month == g_ver_release_month) {
+              if( reply.release_day > g_ver_release_day ) {
+                console.log(warning_msg);
+              } else if(reply.release_day == g_ver_release_day) {
+                if( reply.release_hour > g_ver_release_hour ) {
+                  console.log(warning_msg);
+                } else if(reply.release_hour == g_ver_release_hour) {
+                  if( reply.release_minute > g_ver_release_minute ) {
+                    console.log(warning_msg);
+                  }
+                }
+              }
             }
+          }
 
             g_oauth_credentials = {
                 clientId: g_client_id,
@@ -1766,12 +1797,18 @@ protobuf.load("Version.proto", function(err, root) {
     if ( !msg )
         throw "Missing Version enum in Version.Anon proto file";
 
-    g_ver_major = msg.values.VER_MAJOR;
-    g_ver_mapi_major = msg.values.VER_MAPI_MAJOR;
-    g_ver_mapi_minor = msg.values.VER_MAPI_MINOR;
-    g_ver_web = msg.values.VER_WEB;
+//    g_ver_major = msg.values.VER_MAJOR;
+//    g_ver_mapi_major = msg.values.VER_MAPI_MAJOR;
+//    g_ver_mapi_minor = msg.values.VER_MAPI_MINOR;
+//    g_ver_web = msg.values.VER_WEB;
 
-    g_version = g_ver_major + "." + g_ver_mapi_major + "." + g_ver_mapi_minor + ":" + g_ver_web;
+    g_ver_release_year = msg.values.DATAFED_RELEASE_YEAR
+    g_ver_release_month = msg.values.DATAFED_RELEASE_MONTH
+    g_ver_release_day = msg.values.DATAFED_RELEASE_DAY
+    g_ver_release_hour = msg.values.DATAFED_RELEASE_HOUR
+    g_ver_release_minute = msg.values.DATAFED_RELEASE_MINUTE
+
+    g_version = g_ver_release_year + "." + g_ver_release_month + "." + g_ver_release_day + "." + g_ver_release_hour + "." g_ver_release_minute;
 
     console.log('Running Version',g_version);
     if ( --g_ready_start == 0 )

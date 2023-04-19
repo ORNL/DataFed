@@ -6,9 +6,9 @@
 #include "../credentials/ZeroMQSocketCredentials.hpp"
 
 // Local public includes
-#include "ISocket.hpp"
-#include "ICredentials.hpp"
-#include "ProtocolTypes.hpp"
+#include "common/ISocket.hpp"
+#include "common/ICredentials.hpp"
+#include "common/ProtocolTypes.hpp"
 
 namespace SDMS {
 

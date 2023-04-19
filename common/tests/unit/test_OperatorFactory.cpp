@@ -4,12 +4,12 @@
 #include <boost/test/unit_test.hpp>
 
 // Local public includes
-#include "IAuthenticationManager.hpp"
-#include "IMessage.hpp"
-#include "IOperator.hpp"
-#include "MessageFactory.hpp"
-#include "OperatorFactory.hpp"
-#include "OperatorTypes.hpp"
+#include "common/IAuthenticationManager.hpp"
+#include "common/IMessage.hpp"
+#include "common/IOperator.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/OperatorFactory.hpp"
+#include "common/OperatorTypes.hpp"
 
 // Standard includes
 #include <iostream>

@@ -5,10 +5,10 @@
 #include "support/zeromq/SocketTranslator.hpp"
 
 // Local public includes
-#include "IMessage.hpp"
-#include "ISocket.hpp"
-#include "SocketFactory.hpp"
-#include "SocketOptions.hpp"
+#include "common/IMessage.hpp"
+#include "common/ISocket.hpp"
+#include "common/SocketFactory.hpp"
+#include "common/SocketOptions.hpp"
 
 // Third party includes
 #include <boost/range/adaptor/reversed.hpp>
