@@ -284,7 +284,7 @@ class API:
             repo_id = "repo/" + repo_id 
 
         msg = auth.RepoListAllocationsRequest()
-        msg.repo = repo_id 
+        msg.id = repo_id 
         return self._mapi.sendRecv( msg )
 
     def repoAllocationDelete(self, repo_id, subject): 
