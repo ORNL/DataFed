@@ -2,7 +2,7 @@
 #include "ZeroMQSocketCredentials.hpp"
 
 // Local public includes
-#include "TraceException.hpp"
+#include "common/TraceException.hpp"
 
 namespace SDMS {
 

@@ -5,11 +5,11 @@
 #include <boost/test/unit_test.hpp>
 
 // Local public includes
-#include "MessageFactory.hpp"
-#include "ProtoBufMap.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/ProtoBufMap.hpp"
 
 // Proto file includes
-#include <SDMS_Anon.pb.h>
+#include "common/SDMS_Anon.pb.h"
 
 using namespace SDMS;
 

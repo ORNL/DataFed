@@ -1,22 +1,29 @@
-#include <iostream>
-#include <atomic>
-#include <boost/filesystem.hpp>
-//#include <boost/tokenizer.hpp>
-#include <RequestWorker.hpp>
-#include <TraceException.hpp>
-#include <DynaLog.hpp>
-#include <Util.hpp>
-#include <Version.pb.h>
-#include <SDMS.pb.h>
-#include <SDMS_Anon.pb.h>
-#include <SDMS_Auth.pb.h>
+// Local private includes
+#include "RequestWorker.hpp"
+#include "Version.hpp"
 
 // Common public includes
-#include "CommunicatorFactory.hpp"
-#include "CredentialFactory.hpp"
-#include "ICommunicator.hpp"
-#include "ProtoBufMap.hpp"
-#include "SocketOptions.hpp"
+#include "common/CommunicatorFactory.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/DynaLog.hpp"
+#include "common/ICommunicator.hpp"
+#include "common/ProtoBufMap.hpp"
+#include "common/SocketOptions.hpp"
+#include "common/TraceException.hpp"
+#include "common/Util.hpp"
+
+// Proto includes
+#include "common/Version.pb.h"
+#include "common/SDMS.pb.h"
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
+
+// Third party includes
+#include <boost/filesystem.hpp>
+
+// Standard includes
+#include <atomic>
+#include <iostream>
 
 using namespace std;
 
@@ -337,13 +344,23 @@ RequestWorker::procVersionRequest(std::unique_ptr<IMessage> && msg_request){
 
     DL_DEBUG( "Version request" );
 
-    reply.set_major( VER_MAJOR );
-    reply.set_mapi_major( VER_MAPI_MAJOR );
-    reply.set_mapi_minor( VER_MAPI_MINOR );
-    reply.set_core( VER_CORE );
-    reply.set_repo( VER_REPO );
-    reply.set_web( VER_WEB );
-    reply.set_client_py( VER_CLIENT_PY );
+    reply.set_release_year( Version::DATAFED_RELEASE_YEAR );
+    reply.set_release_month( Version::DATAFED_RELEASE_MONTH );
+    reply.set_release_day( Version::DATAFED_RELEASE_DAY );
+    reply.set_release_hour( Version::DATAFED_RELEASE_HOUR );
+    reply.set_release_minute( Version::DATAFED_RELEASE_MINUTE );
+
+    reply.set_api_major( Version::DATAFED_COMMON_PROTOCOL_API_MAJOR );
+    reply.set_api_minor( Version::DATAFED_COMMON_PROTOCOL_API_MINOR );
+    reply.set_api_patch( Version::DATAFED_COMMON_PROTOCOL_API_PATCH );
+
+    reply.set_component_major( SDMS::repository::version::MAJOR );
+    reply.set_component_minor( SDMS::repository::version::MINOR );
+    reply.set_component_patch( SDMS::repository::version::PATCH );
+    //reply.set_core( VER_CORE );
+    //reply.set_repo( VER_REPO );
+    //reply.set_web( VER_WEB );
+    //reply.set_client_py( VER_CLIENT_PY );
 
     PROC_MSG_END
 }

@@ -3,8 +3,8 @@
 #pragma once
 
 // Local includes
-#include "ICredentials.hpp"
-#include "ProtocolTypes.hpp"
+#include "common/ICredentials.hpp"
+#include "common/ProtocolTypes.hpp"
 
 // Standard includes
 #include <optional>

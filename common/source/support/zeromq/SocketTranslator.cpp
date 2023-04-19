@@ -2,9 +2,9 @@
 #include "SocketTranslator.hpp"
 
 // Local public includes
-#include "ISocket.hpp"
-#include "SocketOptions.hpp"
-#include "TraceException.hpp"
+#include "common/ISocket.hpp"
+#include "common/SocketOptions.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <unordered_map>

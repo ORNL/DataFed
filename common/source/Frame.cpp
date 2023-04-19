@@ -2,9 +2,9 @@
 #include "Frame.hpp"
 
 // Local public includes
-#include "IMessage.hpp"
-#include "ProtoBufMap.hpp"
-#include "TraceException.hpp"
+#include "common/IMessage.hpp"
+#include "common/ProtoBufMap.hpp"
+#include "common/TraceException.hpp"
 
 // Third party includes
 #include <zmq.hpp>

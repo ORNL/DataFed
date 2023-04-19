@@ -4,7 +4,7 @@
 #include "operators/RouterBookKeepingOperator.hpp"
 
 // Local public includes
-#include "OperatorFactory.hpp"
+#include "common/OperatorFactory.hpp"
 
 // Standard includes
 #include <any>

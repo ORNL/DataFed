@@ -1,16 +1,16 @@
 // Local public common includes
-#include "CommunicatorFactory.hpp"
-#include "CredentialFactory.hpp"
-#include "ErrorCodes.hpp"
-#include "ICommunicator.hpp"
-#include "MessageFactory.hpp"
-#include "SocketOptions.hpp"
-#include "TraceException.hpp"
+#include "common/CommunicatorFactory.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/ErrorCodes.hpp"
+#include "common/ICommunicator.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/SocketOptions.hpp"
+#include "common/TraceException.hpp"
 
 // Proto file includes
-#include <SDMS.pb.h>
-#include <SDMS_Anon.pb.h>
-#include <SDMS_Auth.pb.h>
+#include "common/SDMS.pb.h"
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
 
 // Third party includes
 #include <boost/program_options.hpp>

@@ -7,7 +7,7 @@
 #include "PublicKeyTypes.hpp"
 
 // Local common includes
-#include "IAuthenticationManager.hpp"
+#include "common/IAuthenticationManager.hpp"
 
 // Standard includes
 #include <map>

@@ -4,15 +4,15 @@
 #include <boost/test/unit_test.hpp>
 
 // Local public includes
-#include "CommunicatorFactory.hpp"
-#include "CredentialFactory.hpp"
-#include "ICredentials.hpp"
-#include "MessageFactory.hpp"
-#include "ProtocolTypes.hpp"
+#include "common/CommunicatorFactory.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/ICredentials.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/ProtocolTypes.hpp"
 
 // Proto file includes
-#include <SDMS.pb.h>
-#include <SDMS_Anon.pb.h>
+#include "common/SDMS.pb.h"
+#include "common/SDMS_Anon.pb.h"
 
 // Standard includes
 #include <iostream>

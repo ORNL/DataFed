@@ -2,9 +2,9 @@
 #include "ProtoBufFactory.hpp"
 
 // Local public includes
-#include <SDMS_Anon.pb.h>
-#include <SDMS_Auth.pb.h>
-#include "TraceException.hpp"
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <memory>

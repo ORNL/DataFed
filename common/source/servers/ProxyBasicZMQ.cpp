@@ -1,14 +1,14 @@
 // Local private includes
 #include "ProxyBasicZMQ.hpp"
-#include "support/zeromq/Context.hpp"
-#include "support/zeromq/SocketTranslator.hpp"
+#include "../support/zeromq/Context.hpp"
+#include "../support/zeromq/SocketTranslator.hpp"
 
 // Local public includes
-#include "ICommunicator.hpp"
-#include "IServer.hpp"
-#include "SocketFactory.hpp"
-#include "SocketOptions.hpp"
-#include "TraceException.hpp"
+#include "common/ICommunicator.hpp"
+#include "common/IServer.hpp"
+#include "common/SocketFactory.hpp"
+#include "common/SocketOptions.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <chrono>

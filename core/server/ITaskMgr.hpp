@@ -1,9 +1,15 @@
 #ifndef ITASKMGR_HPP
 #define ITASKMGR_HPP
+#pragma once
 
-#include <string>
-#include "libjson.hpp"
+// Local private includes
 #include "ITaskWorker.hpp"
+
+// Local public includes
+#include "common/libjson.hpp"
+
+// Standard includes
+#include <string>
 
 namespace SDMS {
 namespace Core {

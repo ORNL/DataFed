@@ -1,8 +1,6 @@
 cmake_minimum_required (VERSION 3.17.0)
-
+project( DataFed CXX C )
 include(./cmake/Version.cmake)
-
-project( DataFed CXX C VERSION "${DATAFED_RELEASE_YEAR}.${DATAFED_RELEASE_MONTH}.${DATAFED_RELEASE_DAY}.${DATAFED_RELEASE_HOUR}.${DATAFED_RELEASE_MINUTE}")
 
 #set(DataFed_MAJOR_VERSION 0)
 #set(DataFed_MINOR_VERSION 2)
@@ -64,8 +62,8 @@ configure_file(
   @ONLY)
 
 configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/web/Version.js.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/web/Version.js"
+  "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js"
   @ONLY)
 
 # Create file glob here because need to be made visible here as well

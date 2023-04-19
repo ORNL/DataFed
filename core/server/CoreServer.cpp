@@ -7,13 +7,13 @@
 #include "PublicKeyTypes.hpp"
 
 // DataFed Common includes
-#include "DynaLog.hpp"
-#include "CredentialFactory.hpp"
-#include "IServer.hpp"
-#include "OperatorFactory.hpp"
-#include "ServerFactory.hpp"
-#include "SocketOptions.hpp"
-#include "Util.hpp"
+#include "common/DynaLog.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/IServer.hpp"
+#include "common/OperatorFactory.hpp"
+#include "common/ServerFactory.hpp"
+#include "common/SocketOptions.hpp"
+#include "common/Util.hpp"
 
 // Third party includes
 #include <curl/curl.h>

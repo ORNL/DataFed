@@ -147,9 +147,9 @@ def run():
         except _NoCommand as e:
             # Be nice and switch to interactive when no command given
             if _interactive and _first:
-                _print_msg( 1, "Welcome to DataFed CLI, version {}".format(__version__))))
-                _print_msg( 1, "               Release, version {}".format(release_version))))
-                _print_msg( 1, "                   API, version {}".format(api_version))))
+                _print_msg( 1, "Welcome to DataFed CLI, version {}".format(__version__))
+                _print_msg( 1, "               Release, version {}".format(release_version))
+                _print_msg( 1, "                   API, version {}".format(api_version))
                 _print_msg( 1, "Authenticated as " + _capi.getAuthUser() )
                 _print_msg( 1, "Use 'exit' command or Ctrl-C to exit shell." )
 

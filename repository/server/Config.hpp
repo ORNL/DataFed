@@ -1,14 +1,17 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
-
-#include <string>
-#include <map>
-#include <stdint.h>
-#include "SDMS.pb.h"
-//#include "MsgComm.hpp"
+#pragma once
 
 // Common public includes
-#include "ICredentials.hpp"
+#include "common/ICredentials.hpp"
+
+// Proto includes
+#include "common/SDMS.pb.h"
+
+// Standard includes
+#include <map>
+#include <stdint.h>
+#include <string>
 
 namespace SDMS {
 namespace Repo {

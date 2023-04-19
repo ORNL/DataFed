@@ -6,7 +6,9 @@
 
 // Local private includes
 #include "ProtoBufFactory.hpp"
-#include "ProtoBufMap.hpp"
+
+// Local public includes
+#include "common/ProtoBufMap.hpp"
 
 // Standard includes
 #include <iostream>

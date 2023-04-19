@@ -1,13 +1,19 @@
-#include <algorithm>
-#include <unistd.h>
-#include "TraceException.hpp"
-#include "DynaLog.hpp"
+
+// Local private includes
 #include "DatabaseAPI.hpp"
 #include "TaskMgr.hpp"
 #include "TaskWorker.hpp"
 #include "Config.hpp"
-#include "SDMS.pb.h"
-#include <libjson.hpp>
+
+// Local public includes
+#include "common/DynaLog.hpp"
+#include "common/libjson.hpp"
+#include "common/SDMS.pb.h"
+#include "common/TraceException.hpp"
+
+// Standard includes
+#include <algorithm>
+#include <unistd.h>
 
 using namespace std;
 

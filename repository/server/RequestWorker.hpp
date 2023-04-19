@@ -6,9 +6,9 @@
 #include "Config.hpp"
 
 // Common public includes
-#include "IMessage.hpp"
-#include "IMessageMapper.hpp"
-#include "MessageFactory.hpp"
+#include "common/IMessage.hpp"
+#include "common/IMessageMapper.hpp"
+#include "common/MessageFactory.hpp"
 
 // Standard includes
 #include <algorithm>

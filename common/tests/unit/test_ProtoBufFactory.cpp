@@ -6,11 +6,13 @@
 
 // Local private includes
 #include "ProtoBufFactory.hpp"
-#include "ProtoBufMap.hpp"
+
+// Local public includes
+#include "common/ProtoBufMap.hpp"
 
 // Proto file includes
-#include <SDMS_Anon.pb.h>
-#include <SDMS_Auth.pb.h>
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
 
 // Standard includes
 #include <iostream>

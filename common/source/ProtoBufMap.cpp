@@ -1,9 +1,9 @@
 
 // Local public includes
-#include "ProtoBufMap.hpp"
-#include "TraceException.hpp"
-#include <SDMS_Anon.pb.h>
-#include <SDMS_Auth.pb.h>
+#include "common/ProtoBufMap.hpp"
+#include "common/TraceException.hpp"
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
 
 // Third party includes
 #include <google/protobuf/message.h>

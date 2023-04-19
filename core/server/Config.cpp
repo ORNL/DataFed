@@ -1,11 +1,16 @@
 
 #define DEF_DYNALOG
-#include <vector>
-#include <memory>
-#include <mutex>
+// Local private includes
 #include "Config.hpp"
 #include "DatabaseAPI.hpp"
-#include "DynaLog.hpp"
+
+// Local public includes
+#include "common/DynaLog.hpp"
+
+// Standard includes
+#include <memory>
+#include <mutex>
+#include <vector>
 
 namespace SDMS {
   namespace Core {

@@ -1,16 +1,23 @@
-#include <iostream>
-#include <fstream>
-#include <unistd.h>
-#include <boost/program_options.hpp>
-#include "DynaLog.hpp"
-#include "TraceException.hpp"
-#include "Util.hpp"
+// Local private includes
 #include "CoreServer.hpp"
-#include "Config.hpp"
-// messaging version
-#include "Version.pb.h"
 // Core server version
 #include "Version.hpp"
+
+// Local public includes
+#include "common/DynaLog.hpp"
+#include "common/TraceException.hpp"
+#include "common/Util.hpp"
+// messaging version
+#include "common/Version.pb.h"
+
+// Third party includes
+#include <boost/program_options.hpp>
+
+// Standard includes
+#include <fstream>
+#include <iostream>
+#include <unistd.h>
+#include "Config.hpp"
 
 using namespace std;
 using namespace SDMS;
@@ -30,7 +37,7 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO("DataFed core server starting, ver " << core::version::MAJOR << "." << core::version::MINOR << "." << core::version::PATCH << endl;
+        DL_INFO("DataFed core server starting, ver " << core::version::MAJOR << "." << core::version::MINOR << "." << core::version::PATCH );
         //DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE );
 
         Core::Config &  config = Core::Config::getInstance();

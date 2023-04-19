@@ -8,11 +8,11 @@
 #include "Frame.hpp"
 
 // Local public includes
-#include "ProtoBufMap.hpp"
-#include "MessageFactory.hpp"
+#include "common/ProtoBufMap.hpp"
+#include "common/MessageFactory.hpp"
 
 // Proto file includes
-#include <SDMS_Anon.pb.h>
+#include "common/SDMS_Anon.pb.h"
 
 // Standard includes
 #include <iostream>

@@ -2,19 +2,20 @@
 #define TASKWORKER_HPP
 #pragma once
 
-#include <string>
-#include <thread>
+// Local private includes
 #include "DatabaseAPI.hpp"
 #include "GlobusAPI.hpp"
 #include "ITaskMgr.hpp"
 #include "ITaskWorker.hpp"
 
 // Common public includes
-#include "ICommunicator.hpp"
-#include "IMessage.hpp"
+#include "common/ICommunicator.hpp"
+#include "common/IMessage.hpp"
 
 // Standard includes
 #include <memory>
+#include <string>
+#include <thread>
 #include <unordered_map>
 
 namespace SDMS {

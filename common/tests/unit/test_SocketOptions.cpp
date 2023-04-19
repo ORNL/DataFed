@@ -5,7 +5,7 @@
 #include <boost/test/unit_test.hpp>
 
 // Local private includes
-#include "SocketOptions.hpp"
+#include "common/SocketOptions.hpp"
 
 // Standard includes
 #include <iostream>

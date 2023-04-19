@@ -1,14 +1,20 @@
 #ifndef DATABASEAPI_HPP
 #define DATABASEAPI_HPP
+#pragma once
 
+// Local public includes
+#include "common/libjson.hpp"
+#include "common/SDMS.pb.h"
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
+
+// Third party includes
+#include <curl/curl.h>
+
+// Standard includes
 #include <memory>
 #include <string>
 #include <vector>
-#include <curl/curl.h>
-#include "SDMS.pb.h"
-#include "SDMS_Anon.pb.h"
-#include "SDMS_Auth.pb.h"
-#include "libjson.hpp"
 
 namespace SDMS {
 namespace Core {

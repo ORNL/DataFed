@@ -3,8 +3,8 @@
 #pragma once
 
 // Local public includes
-#include "IMessage.hpp"
-#include "ProtoBufMap.hpp"
+#include "common/IMessage.hpp"
+#include "common/ProtoBufMap.hpp"
 
 // Third party includes
 #include <google/protobuf/message.h>

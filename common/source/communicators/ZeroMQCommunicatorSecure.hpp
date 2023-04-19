@@ -7,11 +7,11 @@
 #include "ZeroMQCommunicator.hpp"
 
 // Local public includes
-#include "ICommunicator.hpp"
-#include "ICredentials.hpp"
-#include "IMessage.hpp"
-#include "ISocket.hpp"
-#include "SocketOptions.hpp"
+#include "common/ICommunicator.hpp"
+#include "common/ICredentials.hpp"
+#include "common/IMessage.hpp"
+#include "common/ISocket.hpp"
+#include "common/SocketOptions.hpp"
 
 namespace SDMS {
 

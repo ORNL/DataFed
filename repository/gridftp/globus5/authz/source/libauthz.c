@@ -360,6 +360,8 @@ gsi_authz_init()
 {
     openlog( "gsi_authz", 0, LOG_AUTH );
     syslog( LOG_INFO, "DataFed Authz module started, version %s", getVersion() );
+    syslog( LOG_INFO, "                         API, version %s", getAPIVersion() );
+    syslog( LOG_INFO, "                     Release, version %s", getReleaseVersion() );
     memset( g_active_contexts, 0, sizeof( g_active_contexts ));
 
     // This line is different

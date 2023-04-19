@@ -5,7 +5,7 @@
 #include "sockets/ZeroMQSocket.hpp"
 
 // Local public includes
-#include "CommunicatorFactory.hpp"
+#include "common/CommunicatorFactory.hpp"
 
 // Standard includes
 #include <memory>

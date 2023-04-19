@@ -1,22 +1,29 @@
-#include <iostream>
-#include <atomic>
-#include <boost/tokenizer.hpp>
-#include <ClientWorker.hpp>
-#include <TraceException.hpp>
-#include <Util.hpp>
-#include <Version.pb.h>
-#include <SDMS.pb.h>
-#include <SDMS_Anon.pb.h>
-#include <SDMS_Auth.pb.h>
-#include "TaskMgr.hpp"
-#include "libjson.hpp"
+
 // Local DataFed includes
+#include "ClientWorker.hpp"
+#include "TaskMgr.hpp"
 #include "Version.hpp"
 
 // DataFed Common includes
-#include "CredentialFactory.hpp"
-#include "CommunicatorFactory.hpp"
-#include "ProtoBufMap.hpp"
+#include "common/CredentialFactory.hpp"
+#include "common/CommunicatorFactory.hpp"
+#include "common/libjson.hpp"
+#include "common/ProtoBufMap.hpp"
+#include "common/TraceException.hpp"
+#include "common/Util.hpp"
+
+// Proto files
+#include "common/Version.pb.h"
+#include "common/SDMS.pb.h"
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
+
+// Third party includes
+#include <boost/tokenizer.hpp>
+
+// Standard includes
+#include <atomic>
+#include <iostream>
 
 using namespace std;
 
@@ -627,19 +634,19 @@ ClientWorker::procVersionRequest( const std::string & a_uid, std::unique_ptr<IMe
     (void)a_uid;
     DL_INFO( "Ver request" );
 
-    reply.set_release_year = DATAFED_RELEASE_YEAR;
-    reply.set_release_month = DATAFED_RELEASE_MONTH;
-    reply.set_release_day = DATAFED_RELEASE_DAY;
-    reply.set_release_hour = DATAFED_RELEASE_HOUR;
-    reply.set_release_minute = DATAFED_RELEASE_MINUTE;
+    reply.set_release_year(DATAFED_RELEASE_YEAR);
+    reply.set_release_month(DATAFED_RELEASE_MONTH);
+    reply.set_release_day(DATAFED_RELEASE_DAY);
+    reply.set_release_hour(DATAFED_RELEASE_HOUR);
+    reply.set_release_minute(DATAFED_RELEASE_MINUTE);
 
-    reply.set_api_major = DATAFED_COMMON_PROTOCOL_API_MAJOR;
-    reply.set_api_minor = DATAFED_COMMON_PROTOCOL_API_MINOR;
-    reply.set_api_patch = DATAFED_COMMON_PROTOCOL_API_PATCH;
+    reply.set_api_major(DATAFED_COMMON_PROTOCOL_API_MAJOR);
+    reply.set_api_minor(DATAFED_COMMON_PROTOCOL_API_MINOR);
+    reply.set_api_patch(DATAFED_COMMON_PROTOCOL_API_PATCH);
     
-    reply.set_component_major = core::version::major;
-    reply.set_component_minor = core::version::minor;
-    reply.set_component_patch = core::version::patch;
+    reply.set_component_major(core::version::MAJOR);
+    reply.set_component_minor(core::version::MINOR);
+    reply.set_component_patch(core::version::PATCH);
     //reply.set_major( VER_MAJOR );
     //reply.set_mapi_major( VER_MAPI_MAJOR );
     //reply.set_mapi_minor( VER_MAPI_MINOR );

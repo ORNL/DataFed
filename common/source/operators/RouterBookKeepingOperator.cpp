@@ -3,7 +3,7 @@
 #include "RouterBookKeepingOperator.hpp"
 
 // Local public includes
-#include "TraceException.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <any>

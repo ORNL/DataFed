@@ -3,7 +3,7 @@
 #include "AuthenticationManager.hpp"
 
 // Common includes
-#include "TraceException.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <iostream>

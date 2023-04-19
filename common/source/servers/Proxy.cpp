@@ -1,13 +1,15 @@
 
-// Local includes
-#include "ICommunicator.hpp"
+// Local private includes
 #include "Proxy.hpp"
-#include "TraceException.hpp"
-#include "CommunicatorFactory.hpp"
+
+// Local public includes
+#include "common/ICommunicator.hpp"
+#include "common/TraceException.hpp"
+#include "common/CommunicatorFactory.hpp"
 
 // Proto file includes
-#include <SDMS_Anon.pb.h>
-#include <SDMS_Auth.pb.h>
+#include "common/SDMS_Anon.pb.h"
+#include "common/SDMS_Auth.pb.h"
 
 // Standard includes
 #include <exception>

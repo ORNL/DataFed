@@ -1,17 +1,24 @@
-#include <iostream>
-#include <fstream>
-#include <unistd.h>
-#include <boost/program_options.hpp>
-#define DEF_DYNALOG
-#include "DynaLog.hpp"
-#include "TraceException.hpp"
-#include "Util.hpp"
+// Local private includes
 #include "RepoServer.hpp"
-// messaging version
-#include "Version.pb.h"
 // Repo server version
 #include "Version.hpp"
 
+// Local public includes
+#define DEF_DYNALOG
+#include "common/DynaLog.hpp"
+#include "common/TraceException.hpp"
+#include "common/Util.hpp"
+
+// Protocol includes 
+#include "common/Version.pb.h"
+
+// Third party includes
+#include <boost/program_options.hpp>
+
+// Standard includes
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
 
 using namespace std;
 using namespace SDMS;
@@ -27,7 +34,7 @@ int main( int a_argc, char ** a_argv )
         DL_SET_CERR_ENABLED(true);
         DL_SET_SYSDL_ENABLED(false);
 
-        DL_INFO("DataFed repo server starting, ver " << repository::version::MAJOR << "." << repository::version::MINOR << "." << repository::version::PATCH << endl;
+        DL_INFO("DataFed repo server starting, ver " << repository::version::MAJOR << "." << repository::version::MINOR << "." << repository::version::PATCH );
 
         Repo::Config &  config = Repo::Config::getInstance();
         string          cfg_file;

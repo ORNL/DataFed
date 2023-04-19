@@ -4,8 +4,8 @@
 #include "../credentials/ZeroMQSocketCredentials.hpp"
 
 // Local public includes
-#include "ICredentials.hpp"
-#include "TraceException.hpp"
+#include "common/ICredentials.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <iostream>

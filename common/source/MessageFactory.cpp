@@ -3,9 +3,9 @@
 #include "messages/GoogleProtoMessage.hpp"
 
 // Local public includes
-#include "IMessage.hpp"
-#include "MessageFactory.hpp"
-#include "TraceException.hpp"
+#include "common/IMessage.hpp"
+#include "common/MessageFactory.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <memory>

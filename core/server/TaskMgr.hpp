@@ -1,21 +1,27 @@
 #ifndef TASKMGR_HPP
 #define TASKMGR_HPP
+#pragma once
 
-#include <chrono>
-#include <string>
-#include <vector>
-#include <list>
-#include <deque>
-#include <map>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <libjson.hpp>
+// Local private includes
 #include "ITaskMgr.hpp"
 #include "ITaskWorker.hpp"
 #include "Config.hpp"
-#include "SDMS_Auth.pb.h"
-#include "SDMS.pb.h"
+
+// Local public includes
+#include "common/libjson.hpp"
+#include "common/SDMS_Auth.pb.h"
+#include "common/SDMS.pb.h"
+
+// Standard includes
+#include <chrono>
+#include <condition_variable>
+#include <deque>
+#include <list>
+#include <map>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace SDMS {
 namespace Core {

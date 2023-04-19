@@ -1,7 +1,7 @@
 
 // Common public includes
-#include "KeyGenerator.hpp"
-#include "TraceException.hpp"
+#include "common/KeyGenerator.hpp"
+#include "common/TraceException.hpp"
 
 // Third party includes
 #include <zmq.hpp>
