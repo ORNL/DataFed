@@ -17,7 +17,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         path_of_file = os.path.abspath(__file__)
         current_folder = os.path.dirname(path_of_file)
         path_to_python_datafed_module = os.path.normpath(current_folder + os.sep + ".." + os.sep + ".." + os.sep + "python/datafed_pkg")
-        sys.path.append(path_to_python_datafed_module) 
+        sys.path.insert(0, path_to_python_datafed_module) 
         try:
             from datafed.CommandLib import API
         except ImportError:
@@ -195,6 +195,8 @@ if __name__ == '__main__':
     # Add them in the order they should be executed
     suite.addTest(TestDataFedPythonAPIRecordCRUD('test_record_create_delete'))
     runner = unittest.TextTestRunner()
-    runner.run(suite)
+    result = runner.run(suite)
+    # wasSuccessful() return True which is not 0
+    sys.exit(not result.wasSuccessful())
 
 

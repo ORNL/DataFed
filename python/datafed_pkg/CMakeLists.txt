@@ -3,11 +3,12 @@ cmake_minimum_required (VERSION 3.0.0)
 # Copy README file to python build dir
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/README ${CMAKE_CURRENT_BINARY_DIR} COPYONLY )
 
+# The files should exist in both the source and binary directories, they are needed in the 
+# source directory to run the tests and in the binary directory to install the package
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py.in"
   "${CMAKE_CURRENT_BINARY_DIR}/datafed/VERSION.py"
   @ONLY)
-
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py.in"
   "${CMAKE_CURRENT_BINARY_DIR}/datafed/API_VERSION.py"
@@ -15,6 +16,19 @@ configure_file(
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py.in"
   "${CMAKE_CURRENT_BINARY_DIR}/datafed/RELEASE_VERSION.py"
+  @ONLY)
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py"
+  @ONLY)
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py"
+  @ONLY)
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py"
   @ONLY)
 
 # Copy package files to build dir

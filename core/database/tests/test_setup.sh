@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
-# -u has been removed because we have no guarantees that the env variables are defined
+# -u has been removed because we are checking for possible non existent env variables
 set -f -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
+PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
 source ${PROJECT_ROOT}/config/datafed.sh
 
 Help()
@@ -141,7 +141,7 @@ fi
 ## Will create the zip file in the build directory to keep datafed source code clean
 #cd ../../build
 ## Zip up the api
-#zip datafed.zip ../core/database/api/* 
+#zip datafed.zip ../core/database/foxx/api/* 
 #
 ## Get the size of the file in bytes
 #bytes=$(wc -c < datafed.zip)
@@ -159,25 +159,15 @@ PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
 $NVM_DIR/nvm-exec npm install --global foxx-cli
 echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
 
-{ # try
-  # Check if database foxx services have already been installed
-  existing_services=$(foxx list -a -u $local_DATABASE_USER -p ${PATH_TO_PASSWD_FILE} --database $local_DATABASE_NAME)
+# Check if database foxx services have already been installed
+existing_services=$(foxx list -a -u $local_DATABASE_USER -p ${PATH_TO_PASSWD_FILE} --database $local_DATABASE_NAME)
+echo "existing services ${existing_services}"
 
-  FOUND_API=$(echo "$existing_services" | grep "/api/${local_FOXX_MAJOR_API_VERSION}")
-
-  if [ -z "${FOUND_API}" ]
-  then
-    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx/
-  else
-    echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
-    foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx/
-    echo "foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx"
-  fi
-
-  
-
-  rm ${PATH_TO_PASSWD_FILE}
-} || { # catch
-  rm ${PATH_TO_PASSWD_FILE}
-}
+if [[ "$existing_services" =~ .*"DataFed".* ]]
+then
+  echo "Running tests"
+else
+  echo "Foxx services have not been installed cannot run tests!"
+  exit 1
+fi
 

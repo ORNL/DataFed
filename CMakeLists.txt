@@ -33,16 +33,19 @@ set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
 set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
 
 # Off by default because running it on production would overwrite things on the database
-set(ENABLE_FOXX_TESTS FALSE)
+if( NOT DEFINED ENABLE_FOXX_TESTS )
+  set(ENABLE_FOXX_TESTS FALSE)
+endif()
 # To be safe this is by default turned off
-set(ENABLE_END_TO_END_TESTS FALSE)
+if( NOT DEFINED ENABLE_END_TO_END_TESTS )
+  set(ENABLE_END_TO_END_TESTS FALSE)
+endif()
 
 message( "Building for " ${CMAKE_BUILD_TYPE} )
 
 if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
     add_definitions( -Wall -Wextra )
 endif()
-
 
 # Set the path to the shell script
 set(DATAFED_SH_PATH ${PROJECT_SOURCE_DIR}/config/datafed.sh)

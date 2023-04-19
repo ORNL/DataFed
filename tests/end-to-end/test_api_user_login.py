@@ -10,7 +10,8 @@ class TestDataFedPythonAPILogin(unittest.TestCase):
         path_of_file = os.path.abspath(__file__)
         current_folder = os.path.dirname(path_of_file)
         path_to_python_datafed_module = os.path.normpath(current_folder + os.sep + ".." + os.sep + ".." + os.sep + "python/datafed_pkg")
-        sys.path.append(path_to_python_datafed_module) 
+        sys.path.insert(0, path_to_python_datafed_module) 
+        print(sys.path)
         try:
             from datafed.CommandLib import API
         except ImportError:
@@ -34,6 +35,10 @@ if __name__ == '__main__':
     # Add them in the order they should be executed
     suite.addTest(TestDataFedPythonAPILogin('test_login_with_password'))
     runner = unittest.TextTestRunner()
-    runner.run(suite)
+    result = runner.run(suite)
+    print("Result value")
+    print(result.wasSuccessful())
+    # wasSuccessful() return True which is not 0
+    sys.exit(not result.wasSuccessful())
 
 

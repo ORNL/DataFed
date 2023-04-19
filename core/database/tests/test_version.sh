@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
-# -u has been removed because we have no guarantees that the env variables are defined
+# -u has been removed because we are checking for possible non existent env variables
 set -f -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
+PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
 source ${PROJECT_ROOT}/config/datafed.sh
 
 Help()
@@ -115,21 +115,6 @@ then
   exit 1
 fi
 
-# We are now going to initialize the DataFed database in Arango, but only if sdms database does
-# not exist
-output=$(curl --dump - --user $local_DATABASE_USER:$local_DATABASE_PASSWORD http://localhost:8529/_api/database/user)
-
-if [[ "$output" =~ .*"sdms".* ]]; then
-	echo "SDMS already exists do nothing"
-else
-	echo "Creating SDMS"
-  arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute ${PROJECT_ROOT}/core/database/foxx/db_create.js
-  # Give time for the database to be created
-  sleep 2
-  arangosh --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
-  arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
-fi
-
 # There are apparently 3 different ways to deploy Foxx microservices,
 # Using curl with http requests
 # Using the Arango web ui 
@@ -151,33 +136,7 @@ NODE_VERSION="v14.21.3"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-nvm install $NODE_VERSION
 nvm use $NODE_VERSION
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
-# Install foxx service node module
-$NVM_DIR/nvm-exec npm install --global foxx-cli
-echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
-
-{ # try
-  # Check if database foxx services have already been installed
-  existing_services=$(foxx list -a -u $local_DATABASE_USER -p ${PATH_TO_PASSWD_FILE} --database $local_DATABASE_NAME)
-
-  FOUND_API=$(echo "$existing_services" | grep "/api/${local_FOXX_MAJOR_API_VERSION}")
-
-  if [ -z "${FOUND_API}" ]
-  then
-    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx/
-  else
-    echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
-    foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx/
-    echo "foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx"
-  fi
-
-  
-
-  rm ${PATH_TO_PASSWD_FILE}
-} || { # catch
-  rm ${PATH_TO_PASSWD_FILE}
-}
-
+foxx test -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION}

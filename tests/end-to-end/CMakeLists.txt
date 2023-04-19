@@ -1,0 +1,24 @@
+cmake_minimum_required (VERSION 3.7.0)
+# 3.7.0 requires to use test fixtures
+
+if( ENABLE_END_TO_END_TESTS )
+  add_test(NAME end_to_end_setup COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/setup.sh")
+  add_test(NAME end_to_end_user_login COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_user_login.py")
+  add_test(NAME end_to_end_context COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_context.py")
+  add_test(NAME end_to_end_endpoint COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_endpoint.py")
+  add_test(NAME end_to_end_repo COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_repo.py")
+  add_test(NAME end_to_end_alloc COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_alloc.py")
+  add_test(NAME end_to_end_collection COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_collection.py")
+
+  set_tests_properties(end_to_end_setup PROPERTIES FIXTURES_SETUP FIX_SETUP)
+  set_tests_properties(end_to_end_user_login PROPERTIES FIXTURES_REQUIRED FIX_SETUP)
+  set_tests_properties(end_to_end_user_login PROPERTIES FIXTURES_SETUP FIX_LOGIN)
+  set_tests_properties(end_to_end_context PROPERTIES FIXTURES_REQUIRED FIX_LOGIN)
+  set_tests_properties(end_to_end_endpoint PROPERTIES FIXTURES_REQUIRED FIX_LOGIN)
+  set_tests_properties(end_to_end_repo PROPERTIES FIXTURES_REQUIRED FIX_LOGIN)
+  set_tests_properties(end_to_end_repo PROPERTIES FIXTURES_SETUP FIX_REPO)
+  set_tests_properties(end_to_end_alloc PROPERTIES FIXTURES_REQUIRED FIX_REPO)
+  set_tests_properties(end_to_end_alloc PROPERTIES FIXTURES_SETUP FIX_ALLOC)
+  set_tests_properties(end_to_end_collection PROPERTIES FIXTURES_REQUIRED FIX_ALLOC)
+
+endif()
