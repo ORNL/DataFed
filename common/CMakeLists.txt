@@ -17,7 +17,7 @@ file( GLOB Sources "source/*.cpp"
   "source/support/zeromq/*.cpp"
   "source/sockets/*.cpp")
 add_library( common STATIC ${Sources})
-set_target_properties(common PROPERTIES POSITION_INDEPENDENT_CODE ON SOVERSION DATAFED_COMMON_LIB_MAJOR VERSION DATAFED_COMMON_LIB_MAJOR.DATAFED_COMMON_LIB_MINOR.DATAFED_COMMON_LIB_PATCH )
+set_target_properties(common PROPERTIES POSITION_INDEPENDENT_CODE ON SOVERSION ${DATAFED_COMMON_LIB_MAJOR} VERSION ${DATAFED_COMMON_LIB_MAJOR}.${DATAFED_COMMON_LIB_MINOR}.${DATAFED_COMMON_LIB_PATCH} )
 target_link_libraries( common -lprotobuf datafed-protobuf) 
 target_include_directories( common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include )
 target_include_directories( common PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include )
