@@ -45,5 +45,7 @@ then
   exit 0
 else
   echo "FAILED - the connection is unreadable, either it is encrypted when it should not be or there is an error."
+  echo "         it could be the case that the permissions have changed on tcpdump. See the README for settings"
+  echo "         that must be enabled to run it correctly."
   exit 1
 fi

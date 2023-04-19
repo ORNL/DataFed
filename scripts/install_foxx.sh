@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
-set -uf -o pipefail
+# -u has been removed because we have no guarantees that the env variables are defined
+set -f -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
@@ -44,7 +45,12 @@ else
   local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
 fi
 
-local_FOXX_MAJOR_API_VERSION="1"
+if [ -z "${FOXX_MAJOR_API_VERSION}" ]
+then
+  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
+else
+  local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
+fi
 
 VALID_ARGS=$(getopt -o hu:p:f: --long 'help',database-user:,database-password:,foxx-api-major-version: -- "$@")
 if [[ $? -ne 0 ]]; then
@@ -157,13 +163,15 @@ echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
   # Check if database foxx services have already been installed
   existing_services=$(foxx list -a -u $local_DATABASE_USER -p ${PATH_TO_PASSWD_FILE} --database $local_DATABASE_NAME)
 
-  if [[ "$existing_services" =~ .*"DataFed".* ]]
+  FOUND_API=$(echo "$existing_services" | grep "/api/${local_FOXX_MAJOR_API_VERSION}")
+
+  if [ -z "${FOUND_API}" ]
   then
+    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx/
+  else
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
     foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx/
     echo "foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx"
-  else
-    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx/
   fi
 
   

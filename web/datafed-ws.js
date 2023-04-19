@@ -1808,7 +1808,7 @@ protobuf.load("Version.proto", function(err, root) {
     g_ver_release_hour = msg.values.DATAFED_RELEASE_HOUR
     g_ver_release_minute = msg.values.DATAFED_RELEASE_MINUTE
 
-    g_version = g_ver_release_year + "." + g_ver_release_month + "." + g_ver_release_day + "." + g_ver_release_hour + "." g_ver_release_minute;
+    g_version = g_ver_release_year + "." + g_ver_release_month + "." + g_ver_release_day + "." + g_ver_release_hour + "." + g_ver_release_minute;
 
     console.log('Running Version',g_version);
     if ( --g_ready_start == 0 )
