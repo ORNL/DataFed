@@ -32,6 +32,8 @@ set(INSTALL_AUTHZ ${BUILD_AUTHZ})
 set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
 set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
 
+# Off by default because running it on production would overwrite things on the database
+set(ENABLE_FOXX_TESTS FALSE)
 # To be safe this is by default turned off
 set(ENABLE_END_TO_END_TESTS FALSE)
 

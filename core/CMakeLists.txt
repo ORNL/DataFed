@@ -7,5 +7,10 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/database/api/version_router.js"
   @ONLY)
 
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/database/manifest.json.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/database/manifest.json"
+  @ONLY)
+
 add_subdirectory (server)
 

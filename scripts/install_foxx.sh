@@ -160,9 +160,10 @@ echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
   if [[ "$existing_services" =~ .*"DataFed".* ]]
   then
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
-    foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/api/
+    foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx/
+    echo "foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx"
   else
-    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/api/
+    foxx install -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx/
   fi
 
   
