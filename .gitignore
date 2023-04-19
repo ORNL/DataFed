@@ -15,4 +15,11 @@ scripts/globus/datafed-home-repo-form.json
 scripts/globus/datafed-home-repo.sh
 scripts/globus/mapping.json
 services/
+web/SDMS.proto
+web/SDMS_Anon.proto
+web/SDMS_Auth.proto
+web/Version.proto
+web/datafed-core-key.pub
+web/node_modules/
+web/static/datafed-core-key.pub
 build
