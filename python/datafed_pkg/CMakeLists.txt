@@ -9,27 +9,27 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py.in"
   "${CMAKE_CURRENT_BINARY_DIR}/datafed/VERSION.py"
   @ONLY)
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/datafed/API_VERSION.py"
-  @ONLY)
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/datafed/RELEASE_VERSION.py"
-  @ONLY)
+#configure_file(
+#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py.in"
+#  "${CMAKE_CURRENT_BINARY_DIR}/datafed/API_VERSION.py"
+#  @ONLY)
+#configure_file(
+#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py.in"
+#  "${CMAKE_CURRENT_BINARY_DIR}/datafed/RELEASE_VERSION.py"
+#  @ONLY)
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py.in"
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py"
   @ONLY)
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py"
-  @ONLY)
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py"
-  @ONLY)
+#configure_file(
+#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py.in"
+#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py"
+#  @ONLY)
+#configure_file(
+#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py.in"
+#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py"
+#  @ONLY)
 
 # Copy package files to build dir
 file( GLOB PkgFiles ${CMAKE_CURRENT_SOURCE_DIR}/*.py )

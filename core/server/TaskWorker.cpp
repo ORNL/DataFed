@@ -461,15 +461,26 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
 
     std::string registered_repos = "";
 
-    auto repos = config.getRepos();
-    for ( auto & repo : repos ) {
-      registered_repos =  repo.second.id() + " ";
+    std::map<std::string,RepoData> repos;
+    if( config.repoCacheInvalid() ) {
+      // Task worker is not in charge of updating the cache that is handled by another thread so we will simply make a separate call
+      // and continue working
+      std::vector<RepoData> temp_repos;
+      m_db.repoList( temp_repos );
+
+      for ( RepoData & r : temp_repos ) {
+        repos[r.id()] = r;
+      }
+    } else { 
+      repos = config.getRepos();
     }
 
     if ( !repos.count(a_repo_id) ) {
-        EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id << " Registered repos are: " << registered_repos );
+      for ( auto & repo : repos ) {
+        registered_repos =  repo.second.id() + " ";
+      }
+      EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id << " Registered repos are: " << registered_repos );
     }
-
   // Need to be able to split repos into host and scheme and port
     std::cout << "ID is " << id() << std::endl;
       //const std::string client_id = "task_worker-" + id();

@@ -1,6 +1,6 @@
 {
   "name": "datafed-ws",
-  "version": "0.0.0",
+  "version": "@DATAFED_WEB_MAJOR@.@DATAFED_WEB_MINOR@.@DATAFED_WEB_PATCH@",
   "description": "DataFed web service",
   "main": "datafed-ws.js",
   "dependencies": {

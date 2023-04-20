@@ -24,8 +24,6 @@
 # level message-oriented programming interface of DataFed.
 #
 from . import VERSION
-from . import API_VERSION
-from . import RELEASE_VERSION
 
 name = "datafed"
 

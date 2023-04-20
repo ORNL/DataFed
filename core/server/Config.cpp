@@ -83,6 +83,12 @@ namespace SDMS {
       m_trigger_repo_refresh = true;
     }
 
+    bool Config::repoCacheInvalid() {
+      std::lock_guard<std::mutex> lock(m_repos_mtx);
+      return m_trigger_repo_refresh;
+    }
+
+
     std::map<std::string,RepoData> Config::getRepos() const {
       std::lock_guard<std::mutex> lock(m_repos_mtx);
       std::map<std::string,RepoData> repos = m_repos;

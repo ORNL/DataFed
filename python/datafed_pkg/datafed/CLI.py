@@ -42,11 +42,10 @@ from prompt_toolkit.formatted_text import to_formatted_text
 
 from . import SDMS_Auth_pb2 as auth
 from . import SDMS_pb2 as sdms
+from . import Version_pb2
 from . import CommandLib
 from . import Config
 from . import VERSION
-from . import API_VERSION
-from . import RELEASE_VERSION
 
 
 _OM_TEXT = 0
@@ -147,6 +146,14 @@ def run():
         except _NoCommand as e:
             # Be nice and switch to interactive when no command given
             if _interactive and _first:
+                api_version = f"{Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR}."
+                api_version += f"{Version_pb2.DATAFED_COMMON_PROTOCOL_API_MINOR}."
+                api_version += f"{Version_pb2.DATAFED_COMMON_PROTOCOL_API_PATCH}"
+                release_version = f"{Version_pb2.DATAFED_RELEASE_YEAR}."
+                release_version += f"{Version_pb2.DATAFED_RELEASE_MONTH}."
+                release_version += f"{Version_pb2.DATAFED_RELEASE_DAY}."
+                release_version += f"{Version_pb2.DATAFED_RELEASE_HOUR}."
+                release_version += f"{Version_pb2.DATAFED_RELEASE_MINUTE}"
                 _print_msg( 1, "Welcome to DataFed CLI, version {}".format(__version__))
                 _print_msg( 1, "               Release, version {}".format(release_version))
                 _print_msg( 1, "                   API, version {}".format(api_version))

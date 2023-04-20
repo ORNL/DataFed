@@ -135,12 +135,12 @@ then
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1681495540")
+HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl --fail-early -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1681495540")
+  response=$(curl --fail-early -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
@@ -160,12 +160,12 @@ then
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1681495540")
+HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl --fail-early -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1681495540")
+  response=$(curl --fail-early -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"

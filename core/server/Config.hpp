@@ -60,6 +60,7 @@ class Config
   public:
     void loadRepositoryConfig(AuthenticationManager & auth_manager);
     void triggerRepoCacheRefresh();
+    bool repoCacheInvalid();
 
     std::map<std::string,RepoData> getRepos() const;
 

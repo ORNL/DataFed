@@ -54,6 +54,9 @@ if ( NOT EXISTS ${DATAFED_SH_PATH} )
   message(FATAL_ERROR "No datafed.sh config file was found at ${DATAFED_SH_PATH}")
 endif()
 
+# Create file glob here because need to be made visible here as well
+file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
+
 # Use execute_process to source the shell script and get the value
 execute_process(
   COMMAND bash -c "source ${DATAFED_SH_PATH} && echo \$DATAFED_INSTALL_PATH"
@@ -66,13 +69,19 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto"
   @ONLY)
 
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js"
-  @ONLY)
+if( BUILD_WEB_SERVER )
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js"
+    @ONLY)
 
-# Create file glob here because need to be made visible here as well
-file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/web/package.json.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/web/package.json"
+    @ONLY)
+
+  file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
+endif()
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON) 
 
@@ -180,7 +189,6 @@ endif()
 
 if( INSTALL_CORE_SERVER )
   install( TARGETS datafed-core DESTINATION ${DATAFED_INSTALL_PATH}/core )
-  install( FILES ${ProtoFiles} DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh )")
   install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_core_service.sh )")
 endif()

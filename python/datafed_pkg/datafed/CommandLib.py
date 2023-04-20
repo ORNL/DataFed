@@ -21,8 +21,6 @@ from . import SDMS_pb2 as sdms
 from . import MessageLib
 from . import Config
 from . import VERSION
-from . import API_VERSION
-from . import RELEASE_VERSION
 
 
 class API:
