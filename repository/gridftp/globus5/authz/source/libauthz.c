@@ -624,8 +624,7 @@ gsi_authz_cancel()
 globus_result_t
 gsi_authz_identify( va_list ap )
 {
-    (void)ap;
-
+    //(void)ap;
     syslog( LOG_INFO, "gsi_authz_identify\n" );
     return 0;
 }

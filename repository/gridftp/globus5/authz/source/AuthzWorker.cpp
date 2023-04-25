@@ -21,15 +21,31 @@
 #include "common/Version.pb.h"
 
 // Standard includes
-#include <string>
-#include <fstream>
 #include <cstdlib>
+#include <fstream>
+#include <random>
+#include <string>
 #include <syslog.h>
 
 using namespace std;
 using namespace SDMS::Anon;
 using namespace SDMS::Auth;
 //using namespace SDMS::authz::version;
+
+namespace {
+  std::string randomAlphaNumericCode() {
+    std::string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    std::mt19937 generator(time(nullptr));
+    std::uniform_int_distribution<> distribution(0, chars.size() - 1);
+
+    int length = 6; // set the desired length of the random string
+    std::string random_string;
+    for (int i = 0; i < length; ++i) {
+      random_string += chars[distribution(generator)];
+    }
+    return random_string;
+  }
+}
 
 namespace SDMS {
 
@@ -140,8 +156,9 @@ public:
     CredentialFactory cred_factory;
     m_sec_ctx = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
-
-    std::string authz_thread_id = "authz_client_socket";
+    // Need to attach a random number to the authz_client_socket so that
+    // each authz client is distinct
+    std::string authz_thread_id = "authz_client_socket-" + randomAlphaNumericCode();
     auto client = [&](
         const std::string & socket_id,
         const std::string & address,
@@ -164,8 +181,8 @@ public:
 
       //auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
-      uint32_t timeout_on_receive = 20000;
-      long timeout_on_poll = 20000;
+      uint32_t timeout_on_receive = 10000;
+      long timeout_on_poll = 10000;
 
       CommunicatorFactory comm_factory;
       // When creating a communication channel with a server application we need

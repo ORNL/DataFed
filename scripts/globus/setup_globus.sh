@@ -58,7 +58,7 @@ then
 # Check if it already exists
   globus-connect-server storage-gateway create posix \
     "$GATEWAY_NAME" \
-    --domain ornl.gov --domain clients.auth.globus.org \
+    --domain ornl.gov --domain clients.auth.globus.org --domain gmail.com \
     --identity-mapping file:mapping.json
 
 else
@@ -69,7 +69,7 @@ else
 
   globus-connect-server storage-gateway update posix \
     "$uuid_of_storage_gateway" \
-    --domain ornl.gov --domain clients.auth.globus.org \
+    --domain ornl.gov --domain clients.auth.globus.org --domain gmail.com \
     --identity-mapping file:mapping.json
 
 fi

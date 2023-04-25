@@ -23,6 +23,7 @@
 // Standard includes
 #include <any>
 #include <fstream>
+#include <random>
 #include <time.h>
 
 #define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
@@ -34,6 +35,21 @@
 using namespace std;
 using namespace SDMS::Anon;
 using namespace SDMS::Auth;
+
+namespace {
+  std::string randomAlphaNumericCode() {
+    std::string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    std::mt19937 generator(time(nullptr));
+    std::uniform_int_distribution<> distribution(0, chars.size() - 1);
+
+    int length = 6; // set the desired length of the random string
+    std::string random_string;
+    for (int i = 0; i < length; ++i) {
+      random_string += chars[distribution(generator)];
+    }
+    return random_string;
+  }
+}
 
 namespace SDMS {
 namespace Repo {
@@ -131,7 +147,7 @@ Server::checkServerVersion()
     //sec_ctx.public_key = pub_key;
     //sec_ctx.private_key = priv_key;
 
-    std::string repo_thread_id = "repository_main_socket_client";
+    std::string repo_thread_id = "repo_main_socket_client-" + randomAlphaNumericCode();
     auto client = [&](
         const std::string & socket_id,
         const std::string & address,

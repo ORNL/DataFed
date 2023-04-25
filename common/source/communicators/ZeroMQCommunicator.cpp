@@ -11,6 +11,9 @@
 #include "common/ProtoBufMap.hpp"
 #include "common/SocketFactory.hpp"
 #include "common/SocketOptions.hpp"
+#ifdef DEF_DYNALOG
+#include "common/DynaLog.hpp"
+#endif
 
 // Third party includes
 #include <boost/range/adaptor/reversed.hpp>
@@ -870,6 +873,10 @@ namespace SDMS {
     //std::cout << id() << " polling " << address() << std::endl;
     Response response = m_poll(m_timeout_on_poll_milliseconds);
     if( response.error == false and response.time_out == false) {
+      std::cout << id() << " receiveRoute address: " << address() << std::endl;
+#ifdef DEF_DYNALOG
+      DL_INFO(id() << " receiveRoute address: " << address() );
+#endif
       response.message = m_msg_factory.create(message_type);
       //std::cout << id() << " receiveRoute address: " << address() << std::endl;
       receiveRoute(*response.message, m_zmq_socket, m_zmq_socket_type);
@@ -907,6 +914,10 @@ namespace SDMS {
   }
 
   void ZeroMQCommunicator::send(IMessage & message) {
+
+#ifdef DEF_DYNALOG
+          DL_INFO("sendRoute: " << id() << " attempting to send msg to identity: " << address() );
+#endif
     //std::cout << id() << " Sending route address: " << address() << std::endl;
     sendRoute(message, m_zmq_socket, m_zmq_socket_type);
     //std::cout << id() << " Sending Key address: " << address() << std::endl;
@@ -931,7 +942,10 @@ namespace SDMS {
     Response response = m_poll(m_timeout_on_receive_milliseconds);
     if( response.error == false and response.time_out == false) {
       response.message = m_msg_factory.create(message_type);
-      //std::cout << id() << " receiveRoute address: " << address() << std::endl;
+      std::cout << id() << " receiveRoute address: " << address() << std::endl;
+#ifdef DEF_DYNALOG
+      DL_INFO(id() << " receiveRoute address: " << address());
+#endif
       receiveRoute(*response.message, m_zmq_socket, m_zmq_socket_type);
       //std::cout << id() << " receiveKey address: " << address() << std::endl;
       receiveKey(*response.message, m_zmq_socket);
