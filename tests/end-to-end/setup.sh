@@ -121,7 +121,8 @@ ${PROJECT_ROOT}/scripts/install_foxx.sh
 
 IP=$(hostname -I | awk '{print $1}')
 echo "IP is $IP"
-
+echo "USER89 GLobud ID $DATAFED_USER89_GLOBUS_UUID"
+echo "Refresh is ${DATAFED_USER89_REFRESH_TOKEN}"
 # Chreate user datafed89 who is admin
 HTTP_CODE=$( curl -w "%{http_code}" -o /dev/null -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
 echo "HTTP_CODE: ${HTTP_CODE}"

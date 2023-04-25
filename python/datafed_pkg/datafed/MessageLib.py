@@ -70,7 +70,7 @@ class API:
         self._ctxt = 0
         self._auth = False
         self._nack_except = True
-        self._timeout = 30000
+        self._timeout = 50000
 
         if not server_host:
             raise Exception("Server host is not defined")

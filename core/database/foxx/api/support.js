@@ -650,13 +650,21 @@ module.exports = ( function() {
     };
 
     obj.hasAdminPermObject = function( a_client, a_object_id ) {
+        console.log("6a");
         if ( a_client.is_admin )
             return true;
 
-        var owner_id = obj.db.owner.firstExample({ _from: a_object_id })._to;
+        var first_owner = obj.db.owner.firstExample({ _from: a_object_id });
+        console.log("6b");
+        if ( first_owner !== null) {
+          var owner_id = first_owner._to; // obj.db.owner.firstExample({ _from: a_object_id })._to;
+        } else {
+          throw [obj.ERR_NOT_FOUND,"Data record for owner not found " + a_object_id + "." ];
+        }
         if ( owner_id == a_client._id )
             return true;
 
+        console.log("6c");
         if ( owner_id[0] == "p" ){
             // Object owned by a project
             if ( obj.db.admin.firstExample({ _from: owner_id, _to: a_client._id }))
@@ -666,6 +674,7 @@ module.exports = ( function() {
                 return true;
         }
 
+        console.log("6d");
         if ( a_object_id[0] == 'd' ){
             var data = obj.db._query("for i in d filter i._id == @id return i.creator",{id:a_object_id});
             if ( !data.hasNext() ){
@@ -1291,6 +1300,7 @@ module.exports = ( function() {
     };
 
     obj.hasPublicRead = function( a_id ) {
+        console.log("Has public read a_id is ", a_id );
         // Check for local topic on collections
         if ( a_id.startsWith("c/")){
             var col = obj.db.c.document( a_id );
@@ -1299,10 +1309,11 @@ module.exports = ( function() {
         }
 
         var i, children = [a_id], parents;
-
+      
         for(;;){
             // Find all parent collections owned by object owner
             parents = obj.db._query( "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic}", { children : children }).toArray();
+            console.log("children are ", children, " parents are, ", parents);
             if ( parents.length == 0 )
                 return false;
 

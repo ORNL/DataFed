@@ -30,12 +30,13 @@ namespace po = boost::program_options;
  */
 int main( int a_argc, char ** a_argv )
 {
+    std::cout << "Hello world!" << std::endl;
     try
     {
         DL_SET_ENABLED(true);
         DL_SET_LEVEL(DynaLog::DL_TRACE_LEV);
         DL_SET_CERR_ENABLED(true);
-        DL_SET_SYSDL_ENABLED(false);
+        DL_SET_SYSDL_ENABLED(true);
 
         DL_INFO("DataFed core server starting, ver " << core::version::MAJOR << "." << core::version::MINOR << "." << core::version::PATCH );
         //DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE );

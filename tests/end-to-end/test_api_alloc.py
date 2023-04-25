@@ -29,8 +29,9 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
         username = "datafed89"
         password = os.environ.get('DATAFED_USER89_PASSWORD')
 
-        self._df_api.loginByPassword(username, password)
-
+        result = self._df_api.loginByPassword(username, password)
+        print("Attempt to login result")
+        print(result)
         path_to_repo_form = os.environ.get('DATAFED_REPO_FORM_PATH')
         if path_to_repo_form is None:
             self.fail("DATAFED_REPO_FORM_PATH env variable is not defined")
@@ -66,6 +67,9 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
             count = count + 1
             if count > 3:
                 self.fail("Setup failed with repo create")
+
+        print("\nDoes repo exist!\n")
+        print(result)
 
 
     def test_repo_alloc_list_create_delete(self):
@@ -109,6 +113,14 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
             status = task_result[0].task[0].status 
             count = count + 1
 
+        result = self._df_api.repoListAllocations(repo_id)
+
+        print("Allocations")
+        print(result)
+        self.assertEqual( len(result[0].alloc), 1)
+
+
+
         self.assertEqual( status, 3)
 
         result = self._df_api.repoAllocationDelete(
@@ -139,9 +151,13 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
 
 
     def tearDown(self):
+
+        print("Running Tear Down")
         repo_id = self._repo_form["id"]
         if not repo_id.startswith("repo/"):
             repo_id = "repo/" + repo_id
+
+        print("Deleting Repo")
         result = self._df_api.repoDelete(repo_id)
         result = self._df_api.repoList(list_all = True)
         self.assertEqual( len(result[0].repo), 0)
