@@ -48,7 +48,7 @@ build-gcs-authz-base:
   script:
     - git clone -b v2.2.0 https://github.com/globusonline/globus-connect-server-deploy.git
     - cd ./globus-connect-server-deploy/docker
-    - apt-get -y install python3-pip
+    - sudo apt-get -y install python3-pip
     - python3 -m pip install shyaml
     - ./docker-build-gcs.sh ubuntu:focal
     - cd ../../
