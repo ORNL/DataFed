@@ -51,7 +51,9 @@ endif()
 set(DATAFED_SH_PATH ${PROJECT_SOURCE_DIR}/config/datafed.sh)
 
 if ( NOT EXISTS ${DATAFED_SH_PATH} )
-  message(FATAL_ERROR "No datafed.sh config file was found at ${DATAFED_SH_PATH}")
+  message(FATAL_ERROR "No datafed.sh config file was found at "
+    "${DATAFED_SH_PATH} make sure you first run "
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_datafed.sh")
 endif()
 
 # Create file glob here because need to be made visible here as well
