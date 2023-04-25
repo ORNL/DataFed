@@ -11,6 +11,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo ./scripts/install_core_dependencies.sh
+          ./scripts/generate_datafed.sh
       - name: Build
         run: |
           cmake -S. -B build -DCMAKE_BUILD_TYPE=Debug
