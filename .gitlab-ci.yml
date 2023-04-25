@@ -46,7 +46,7 @@ build-gcs-authz-base:
   tags:
     - datafed
   script:
-    - git clone https://github.com/globusonline/globus-connect-server-deploy.git
+    - git clone -b tags/v2.2.0 https://github.com/globusonline/globus-connect-server-deploy.git
     - cd ./globus-connect-server-deploy/docker
     - ./docker-build-gcs.sh ubuntu:focal
     - cd ../../
