@@ -32,7 +32,7 @@ namespace SDMS {
       copy.erase(0, inproc_prefix.length());
       m_scheme = URIScheme::INPROC;
     } else {
-      EXCEPT_PARAM(1, "Error unable to deconstruct address unrecognized scheme.");
+      EXCEPT_PARAM(1, "Error unable to deconstruct address unrecognized scheme: (" << address << ")" );
     }
 
     // Get the host

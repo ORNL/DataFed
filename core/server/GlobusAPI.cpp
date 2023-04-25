@@ -162,6 +162,11 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
     if ( a_body )
     {
         tmp = a_body->toString();
+        DL_INFO( "Sending string via CURL");
+        DL_INFO( tmp );
+        std::cout << "Sending string via CURL" << std::endl;
+        std::cout << "Token: " << a_token <<std::endl;
+        std::cout << tmp <<std::endl;
         curl_easy_setopt( a_curl, CURLOPT_POSTFIELDS, tmp.c_str() );
     }
     else

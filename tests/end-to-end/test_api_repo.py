@@ -27,7 +27,9 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
         username = "datafed89"
         password = os.environ.get('DATAFED_USER89_PASSWORD')
 
-        self._df_api.loginByPassword(username, password)
+        result = self._df_api.loginByPassword(username, password)
+        print("Attempt to login result")
+        print(result)
 
         path_to_repo_form = os.environ.get('DATAFED_REPO_FORM_PATH')
         if path_to_repo_form is None:

@@ -493,8 +493,11 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
       return str;
     }();
 
+    try {
   std::cout << "Client ID of task worker is: " << client_id << std::endl;
   auto client = [&](const std::string & repo_address,const std::string & repo_pub_key, const std::string & socket_id) {
+    
+
     AddressSplitter splitter(repo_address);
 
     /// Creating input parameters for constructing Communication Instance
@@ -543,6 +546,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
         timeout_on_poll);
 
   }(repos.at(a_repo_id).address(), repos.at(a_repo_id).pub_key(), client_id); // Pass the address into the lambda
+   
 
 
     std::cout << "Client " << client->id() << " sending msg" << std::endl; 
@@ -567,7 +571,14 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
       string  msg = nack->has_err_msg()?nack->err_msg():"Unknown service error";
       EXCEPT( code, msg );
     }
+
     return response;
+
+    } catch ( TraceException & e ) {
+
+        DL_ERROR( "Caught exception in repo communication logic: " << e.what() );
+        EXCEPT_PARAM(1, "Error detected in TaskWorker " << e.what());
+    }
 }
 
 }}

@@ -255,7 +255,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: [],
-                write: ["repo","admin"]
+                write: ["repo","admin","alloc"]
             },
             action: function() {
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
@@ -268,8 +268,9 @@ router.get('/delete', function (req, res) {
 
                 // Make sure there are no allocations present on repo
                 var alloc = g_db._query("for v in 1..1 inbound @repo alloc return {id:v._id}", { repo: req.queryParams.id } );
+                console.log(alloc);
                 if ( alloc.hasNext() )
-                    throw [g_lib.ERR_IN_USE,"Cannot delete repo with associated allocations."];
+                    throw [g_lib.ERR_IN_USE,"Cannot delete repo with associated allocations. Allocations still exist on the repository."];
                 graph.repo.remove( req.queryParams.id );
             }
         });
