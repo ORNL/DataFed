@@ -56,8 +56,6 @@ if ( NOT EXISTS ${DATAFED_SH_PATH} )
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_datafed.sh")
 endif()
 
-# Create file glob here because need to be made visible here as well
-file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
 
 # Use execute_process to source the shell script and get the value
 execute_process(
@@ -70,6 +68,9 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto.in"
   "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto"
   @ONLY)
+
+# Create file glob here because need to be made visible here as well
+file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
 
 if( BUILD_WEB_SERVER )
   configure_file(

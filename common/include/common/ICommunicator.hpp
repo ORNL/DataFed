@@ -19,6 +19,7 @@ namespace SDMS {
 
   class ICommunicator {
     public:
+ 
       struct Response {
         int events = 0;
         bool time_out = false;
