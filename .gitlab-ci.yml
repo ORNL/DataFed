@@ -9,6 +9,8 @@ before_script:
 
 build-foxx:
   stage: build
+  tags:
+    - ci-datafed-arango
   script:
     - apt-get install arangodb3 
     - arangod --version
