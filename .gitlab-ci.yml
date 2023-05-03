@@ -2,6 +2,7 @@ stages:
   - build-base
   - deploy-base
   - build
+  - test
   - deploy
 
 build-foxx:
@@ -15,7 +16,7 @@ build-foxx:
     - cmake -S. -B build -DENABLE_FOXX_TESTS=ON -DBUILD_CORE_SERVER=OFF -DBUILD_COMMON=OFF -DBUILD_WEB_SERVER=OFF -DBUILD_DOCS=OFF -DBUILD_PYTHON_CLIENT=OFF -DBUILD_TESTS=OFF -DINSTALL_FOXX=ON
     - cmake --build build
     - cmake --build build --target install
-
+    - cmake --build build --target test
       # NEed to apt install cmake after distro
       #
 
