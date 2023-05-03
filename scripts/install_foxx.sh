@@ -230,7 +230,7 @@ then
 else 
   # We are assuming that if the correct version of node is installed then the
   # correct version of npm is also installed
-  npm install --global foxx-cli
+  npm install foxx-cli
 fi
 
 echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
