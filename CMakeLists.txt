@@ -168,10 +168,9 @@ if( BUILD_CORE_SERVER )
   find_package(nlohmann_json CONFIG REQUIRED)
   find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
   find_package(OpenSSL REQUIRED)
-  add_subdirectory( core )
 endif()
 
-if( BUILD_FOXX )
+if( BUILD_FOXX OR BUILD_CORE_SERVER )
   add_subdirectory( core )
 endif()
 
