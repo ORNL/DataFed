@@ -11,6 +11,7 @@ build-foxx:
   script:
     - arangod --version
     - sudo systemctl status arangodb3
+    - ./scripts/generate_datafed.sh
     - cmake -S. -B build -DENABLE_FOXX_TESTS=ON -DBUILD_CORE_SERVER=OFF -DBUILD_COMMON=OFF -DBUILD_WEB_SERVER=OFF -DBUILD_DOCS=OFF -DBUILD_PYTHON_CLIENT=OFF -DBUILD_TESTS=OFF
     - cmake --build build
     - cmake --build build --target install
