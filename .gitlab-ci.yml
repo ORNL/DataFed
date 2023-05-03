@@ -10,11 +10,10 @@ build-foxx:
     - ci-datafed-arango
   script:
     - arangod --version
-    - sudo systemctl start arangodb3
     - sudo systemctl status arangodb3
     - cmake -S. -B build -DENABLE_FOXX_TESTS=ON -DBUILD_CORE_SERVER=OFF -DBUILD_COMMON=OFF -DBUILD_WEB_SERVER=OFF -DBUILD_DOCS=OFF -DBUILD_PYTHON_CLIENT=OFF -DBUILD_TESTS=OFF
     - cmake --build build
-    - sudo cmake --build build --target install
+    - cmake --build build --target install
 
       # NEed to apt install cmake after distro
       #
