@@ -12,6 +12,7 @@ configure_file(
 
 message("ENABLE FOX TEST ${ENABLE_FOXX_TESTS}")
 if( ENABLE_FOXX_TESTS )
+  message("Adding tests")
   add_test(NAME foxx_setup COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_setup.sh")
   add_test(NAME foxx_teardown COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_teardown.sh")
   add_test(NAME foxx_version COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_version.sh")

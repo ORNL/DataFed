@@ -29,6 +29,12 @@ set(INSTALL_AUTHZ ${BUILD_AUTHZ})
 set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
 set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
 
+if ( BUILD_TESTS ) 
+  include(CTest)
+  ENABLE_TESTING()
+  set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
+endif()
+
 # Off by default because running it on production would overwrite things on the database
 if( NOT DEFINED ENABLE_FOXX_TESTS )
 	if( NOT DEFINED ENV{ENABLE_FOXX_TESTS} )
@@ -105,11 +111,6 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
       program_options)
   endif()
 
-  if ( BUILD_TESTS ) 
-    include(CTest)
-    ENABLE_TESTING()
-    set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
-  endif()
   ## load in pkg-config support
   find_package(PkgConfig)
   ## use pkg-config to get hints for 0mq locations
