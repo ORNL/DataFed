@@ -233,6 +233,7 @@ else
   npm install foxx-cli
 fi
 
+echo "Path to PASSWRD file ${PATH_TO_PASSWD_FILE} passwd is $local_DATABASE_PASSWORD"
 echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
 
 { # try
