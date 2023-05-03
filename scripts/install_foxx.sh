@@ -138,14 +138,6 @@ fi
 # The web deployment requires manual interaction, and I could not figure out the 
 # syntax for the REST http endpoints with curl so we are going to try the node module
 
-## Will create the zip file in the build directory to keep datafed source code clean
-#cd ../../build
-## Zip up the api
-#zip datafed.zip ../core/database/api/* 
-#
-## Get the size of the file in bytes
-#bytes=$(wc -c < datafed.zip)
-
 NODE_VERSION="v14.21.3"
 
 export NVM_DIR="$HOME/.nvm"
