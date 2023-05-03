@@ -31,8 +31,16 @@ set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
 
 # Off by default because running it on production would overwrite things on the database
 if( NOT DEFINED ENABLE_FOXX_TESTS )
-  set(ENABLE_FOXX_TESTS FALSE)
+	if( NOT DEFINED ENV{ENABLE_FOXX_TESTS} )
+		set(ENABLE_FOXX_TESTS FALSE)
+	else()
+		set(ENABLE_FOXX_TESTS ENV{ENABLE_FOXX_TESTS})
+	endif()
+else()
+  # Avoid throwing warning by explicit set
+  set(ENABLE_FOXX_TESTS ${ENABLE_FOXX_TESTS})
 endif()
+
 # To be safe this is by default turned off
 if( NOT DEFINED ENABLE_END_TO_END_TESTS )
   set(ENABLE_END_TO_END_TESTS FALSE)

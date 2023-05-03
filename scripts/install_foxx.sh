@@ -138,6 +138,12 @@ fi
 # The web deployment requires manual interaction, and I could not figure out the 
 # syntax for the REST http endpoints with curl so we are going to try the node module
 
+# 1. Install nvm which will allow us to update node
+if [ ! -d "$HOME/.nvm" ]
+then
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+fi
+
 NODE_VERSION="v14.21.3"
 
 export NVM_DIR="$HOME/.nvm"

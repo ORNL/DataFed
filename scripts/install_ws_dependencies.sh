@@ -16,7 +16,10 @@ sudo apt-get install -y cmake curl python3 g++
 # but instead will install ourselves
 
 # 1. Install nvm which will allow us to update node
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+if [ ! -d "$HOME/.nvm" ]
+then
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+fi
 
 NODE_VERSION="v14.21.3"
 export NVM_DIR="$HOME/.nvm"
