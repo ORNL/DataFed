@@ -170,6 +170,10 @@ if( BUILD_CORE_SERVER )
   add_subdirectory( core )
 endif()
 
+if( BUILD_FOXX )
+  add_subdirectory( core )
+endif()
+
 if( BUILD_REPO_SERVER OR BUILD_AUTHZ)
   add_subdirectory( repository )
 endif()

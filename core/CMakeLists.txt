@@ -1,8 +1,11 @@
 cmake_minimum_required (VERSION 3.0.0)
 
-add_subdirectory (database)
+if( BUILD_FOXX )
+  add_subdirectory (database)
+endif()
 
-include_directories(${CMAKE_BINARY_DIR}/common/include)
-
-add_subdirectory (server)
+if( BUILD_CORE_SERVER ) 
+  include_directories(${CMAKE_BINARY_DIR}/common/include)
+  add_subdirectory (server)
+endif()
 
