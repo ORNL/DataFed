@@ -4,19 +4,23 @@ stages:
   - build
   - deploy
 
-before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-
 build-foxx:
   stage: build
   tags:
     - ci-datafed-arango
   script:
-    - apt-get install arangodb3 
     - arangod --version
-    - systemctl start arangodb3
-    - systemctl status arangodb3
+    - sudo systemctl start arangodb3
+    - sudo systemctl status arangodb3
+    - cmake -S. -B build -DENABLE_FOXX_TESTS=ON -DBUILD_CORE_SERVER=OFF -DBUILD_COMMON=OFF -DBUILD_WEB_SERVER=OFF -DBUILD_DOCS=OFF -DBUILD_PYTHON_CLIENT=OFF -DBUILD_TESTS=OFF
+    - cmake --build build
+    - sudo cmake --build build --target install
 
+      # NEed to apt install cmake after distro
+      #
+
+#before_script:
+#  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 # Building base containers the base containers should have all the required
 # dependencies it should not be necessary to build them every time
 #build-ws-base:

@@ -2,9 +2,6 @@ cmake_minimum_required (VERSION 3.17.0)
 project( DataFed CXX C )
 include(./cmake/Version.cmake)
 
-#set(DataFed_MAJOR_VERSION 0)
-#set(DataFed_MINOR_VERSION 2)
-#set(DataFed_PATCH_VERSION 0)
 set(DataFed_VERSION "${DATAFED_RELEASE_YEAR}.${DATAFED_RELEASE_MONTH}.${DATAFED_RELEASE_DAY}.${DATAFED_RELEASE_HOUR}.${DATAFED_RELEASE_MINUTE}")
 
 set(CMAKE_CXX_STANDARD 17)
