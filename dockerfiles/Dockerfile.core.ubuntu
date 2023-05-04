@@ -14,7 +14,7 @@ COPY ./config/datafed.sh ${BUILD_DIR}/config/
 COPY ./scripts/generate_core_config.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_core_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_core_service.sh ${BUILD_DIR}/scripts/
-COPY ./cmake ${BUILD_DIR}/
+COPY ./cmake ${BUILD_DIR}/cmake
 
 RUN ${BUILD_DIR}/scripts/generate_core_config.sh &&\
  ${BUILD_DIR}/scripts/generate_core_service.sh &&\
