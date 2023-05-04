@@ -87,7 +87,7 @@ These options can be used create the required services and configuration files. 
 of the configuration options:
 
 1. DATAFED_DEFAULT_LOG_PATH - Needed by core, repo, web services
-2. DATABASE_PASSWORD - Needed by core
+2. DATAFED_DATABASE_PASSWORD - Needed by core
 3. DATAFED_ZEROMQ_SESSION_SECRET - Needed by web server
 4. DATAFED_ZEROMQ_SYSTEM_SECRET - Needed by web server
 5. DATAFED_LEGO_EMAIL - Needed by web server

@@ -11,6 +11,14 @@ autoconf automake make git python3-pkg-resources python3-pip pkg-config \
 libglobus-common-dev
 sudo apt-get install -y libzmq3-dev 
 
+wget https://github.com/Kitware/CMake/releases/download/v3.17.5/cmake-3.17.5.tar.gz
+tar zxvf cmake-3.17.5.tar.gz
+cd cmake-3.17.5
+sudo ./bootstrap
+sudo make
+sudo make install
+cd ~
+
 python3 -m pip install --upgrade pip
 python3 -m pip install setuptools
 

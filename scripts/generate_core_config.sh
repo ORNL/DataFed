@@ -42,7 +42,7 @@ Help()
   echo "                                  This is a REQUIRED parameters if it is not"
   echo "                                  provided via the command line it can also be set"
   echo "                                  using the enviromental variable"
-  echo "                                  DATABASE_PASSWORD."
+  echo "                                  DATAFED_DATABASE_PASSWORD."
 }
 
 # Set defaults use environment variables by default
@@ -68,11 +68,11 @@ FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(
 local_DATABASE_API_URL="http://127.0.0.1:8529/_db/sdms/api/${FOXX_MAJOR_API_VERSION}/"
 local_DATABASE_USER="root"
 
-if [ -z "${DATABASE_PASSWORD}" ]
+if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
 then
-  local_DATABASE_PASSWORD=""
+  local_DATAFED_DATABASE_PASSWORD=""
 else
-  local_DATABASE_PASSWORD=$(printenv DATABASE_PASSWORD)
+  local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
 VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,api-url:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
@@ -124,7 +124,7 @@ while [ : ]; do
         ;;
     -p | --database-password)
         echo "Processing 'Database password' option. Input argument is '$2'"
-        local_DATABASE_PASSWORD=$2
+        local_DATAFED_DATABASE_PASSWORD=$2
         shift 2
         ;;
     --) shift; 
@@ -153,11 +153,11 @@ then
   ERROR_DETECTED=1
 fi
 
-if [ -z "$local_DATABASE_PASSWORD" ]
+if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]
 then
-  echo "Error DATABASE_PASSWORD is not defined, this is a required argument"
+  echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -p, --database-password"
-  echo "      or with the environment variable DATABASE_PASSWORD."
+  echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
   ERROR_DETECTED=1
 fi
 
@@ -180,7 +180,7 @@ db-url=$local_DATABASE_API_URL
 # User for ArangoDB
 db-user=$local_DATABASE_USER
 # Password to access the database
-db-pass=$local_DATABASE_PASSWORD
+db-pass=$local_DATAFED_DATABASE_PASSWORD
 # Below are the client ids and secrets which are obtained when you
 # register an application with Globus, these values should be consistent
 # with what is in the datafed-ws.cfg file

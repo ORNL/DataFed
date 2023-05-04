@@ -22,7 +22,7 @@ Help()
   echo "                                  This is a REQUIRED parameters if it is not"
   echo "                                  provided via the command line it can also be set"
   echo "                                  using the enviromental variable"
-  echo "                                  DATABASE_PASSWORD."
+  echo "                                  DATAFED_DATABASE_PASSWORD."
   echo "-y, --system-secret               ZeroMQ system secret"
   echo
   echo "NOTE: Do not run this script with sudo!"
@@ -31,11 +31,11 @@ Help()
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 
-if [ -z "${DATABASE_PASSWORD}" ]
+if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
 then
-  local_DATABASE_PASSWORD=""
+  local_DATAFED_DATABASE_PASSWORD=""
 else
-  local_DATABASE_PASSWORD=$(printenv DATABASE_PASSWORD)
+  local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
 if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]
@@ -71,7 +71,7 @@ while [ : ]; do
         ;;
     -p | --database-password)
         echo "Processing 'Database password' option. Input argument is '$2'"
-        local_DATABASE_PASSWORD=$2
+        local_DATAFED_DATABASE_PASSWORD=$2
         shift 2
         ;;
     -f | --foxx-api-major-version)
@@ -94,11 +94,11 @@ while [ : ]; do
 done
 
 ERROR_DETECTED=0
-if [ -z "$local_DATABASE_PASSWORD" ]
+if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]
 then
-  echo "Error DATABASE_PASSWORD is not defined, this is a required argument"
+  echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -p, --database-password"
-  echo "      or with the environment variable DATABASE_PASSWORD."
+  echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
   ERROR_DETECTED=1
 fi
 
@@ -117,17 +117,17 @@ fi
 
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(curl --dump - --user $local_DATABASE_USER:$local_DATABASE_PASSWORD http://localhost:8529/_api/database/user)
+output=$(curl --dump - --user $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://localhost:8529/_api/database/user)
 
 if [[ "$output" =~ .*"sdms".* ]]; then
 	echo "SDMS already exists do nothing"
 else
 	echo "Creating SDMS"
-  arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute ${PROJECT_ROOT}/core/database/foxx/db_create.js
+  arangosh  --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute ${PROJECT_ROOT}/core/database/foxx/db_create.js
   # Give time for the database to be created
   sleep 2
-  arangosh --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
-  arangosh  --server.password ${local_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
+  arangosh --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
+  arangosh  --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
 fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
@@ -157,7 +157,7 @@ nvm use $NODE_VERSION
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
 # Install foxx service node module
 $NVM_DIR/nvm-exec npm install --global foxx-cli
-echo "$local_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
+echo "$local_DATAFED_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
 
 # Check if database foxx services have already been installed
 existing_services=$(foxx list -a -u $local_DATABASE_USER -p ${PATH_TO_PASSWD_FILE} --database $local_DATABASE_NAME)

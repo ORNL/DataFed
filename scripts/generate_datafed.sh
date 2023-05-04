@@ -165,7 +165,7 @@ export DATAFED_GLOBUS_REPO_USER=""
 # ************************************************
 # Env Variables for Core Server
 # ************************************************
-export DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
+export DATAFED_DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
 # The user account the datafed core application will run under
 export DATAFED_CORE_USER=""
 # ************************************************
