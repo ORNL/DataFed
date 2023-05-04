@@ -15,6 +15,7 @@ COPY ./scripts/generate_ws_config.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_ws_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_lego_and_certificates.sh ${BUILD_DIR}/scripts/
+COPY ./cmake ${BUILD_DIR}/
 
 RUN ${BUILD_DIR}/scripts/generate_ws_config.sh &&\
  ${BUILD_DIR}/scripts/generate_ws_service.sh &&\
