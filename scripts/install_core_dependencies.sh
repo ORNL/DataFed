@@ -7,7 +7,7 @@ set -e
 sudo apt-get update
 sudo dpkg --configure -a
 sudo apt-get install -y libtool build-essential g++ gcc make libboost-all-dev \
-pkg-config autoconf automake unzip libcurl4-openssl-dev \
+pkg-config autoconf automake unzip libcurl4-openssl-dev wget \
 rapidjson-dev libkrb5-dev git python3-pkg-resources python3-pip libssl-dev
 sudo apt-get install -y libzmq3-dev 
 
