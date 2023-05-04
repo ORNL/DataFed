@@ -6,10 +6,20 @@ set -e
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo apt-get update
 sudo dpkg --configure -a
-sudo apt-get install -y libtool build-essential g++ gcc cmake libboost-all-dev \
-pkg-config autoconf automake make unzip libcurl4-openssl-dev \
+sudo apt-get install -y libtool build-essential g++ gcc make libboost-all-dev \
+pkg-config autoconf automake unzip libcurl4-openssl-dev \
 rapidjson-dev libkrb5-dev git python3-pkg-resources python3-pip libssl-dev
 sudo apt-get install -y libzmq3-dev 
+
+wget https://github.com/Kitware/CMake/releases/download/v3.17.5/cmake-3.17.5.tar.gz
+tar zxvf cmake-3.17.5.tar.gz
+cd cmake-3.17.5
+sudo ./bootstrap
+sudo make
+sudo make install
+cd ~
+
+# Install cmake 3.17
 
 python3 -m pip install --upgrade pip
 python3 -m pip install setuptools
