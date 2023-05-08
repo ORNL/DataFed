@@ -10,7 +10,7 @@ setup-vms:
   tags:
     - datafed-infrastructure 
   script:
-    - RV=$(./scripts/pipeline-setup.sh --compute-instance-id $OS_CI_DATAFED_ARANGO_ID)
+    - RV=$(./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_ARANGO_ID)
       #    - [ "$RV" == "0" ] && RV=$(./scripts/pipeline-setup.sh --compute-instance-id $OS_CI_DATAFED_CORE_ID)
 
 build-foxx:
