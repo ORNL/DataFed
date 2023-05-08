@@ -120,7 +120,7 @@ then
   exit 1
 fi
 
-data=$(curl --retry 5 -i -X POST \
+data=$(curl -s --retry 5 -i -X POST \
   -H "Content-Type: application/json" \
   -d "{
         \"auth\": {
@@ -160,7 +160,7 @@ subject_token=$(echo "$data" | grep "X-Subject-Token" | awk '{print $2}' )
 
 sanitize_subject_token=${subject_token:0:268}
 
-compute_instances=$(curl -v --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
+compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
 
 ################################################################################
 # Check 1 - Do VMs Exist
@@ -189,7 +189,7 @@ then
 
     #datafedci_repo_api_trigger_to_run_ci_pipeline
     # Here we need to make a request to the code.ornl.gov at datafedci
-    gitlab_response=$(curl --retry 5 --request POST \
+    gitlab_response=$(curl -s --retry 5 --request POST \
       --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
       --form ref="main" \
       "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
@@ -203,8 +203,7 @@ fi
 ################################################################################
 # This will need to be passed to the GitLab repo and set as an env variable instance
 
-INSTANCE_STATUS=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID | .status)
-')
+INSTANCE_STATUS=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .status ')
 
 INSTANCE_STATUS_SANITIZED=$(echo "$INSTANCE_STATUS" | sed 's/\"//g')
 
@@ -215,13 +214,13 @@ then
   VM_IS_ACTIVE=0
 fi
 
-if [ "$ALL_VMS_ARE_ACTIVE" -eq "0" ]
+if [ "$VM_IS_ACTIVE" -eq "0" ]
 then
   echo "VM: $COMPUTE_INSTANCE_ID is Unhealthy triggering pipeline."
 
   #datafedci_repo_api_trigger_to_run_ci_pipeline
   # Here we need to make a request to the code.ornl.gov at datafedci
-  gitlab_response=$(curl --retry 5 --request POST \
+  gitlab_response=$(curl -s --retry 5 --request POST \
     --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
     --form ref="main" \
     "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
