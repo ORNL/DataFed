@@ -193,7 +193,8 @@ then
       --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
       --form ref="main" \
       "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
-
+    echo "Gilab response"
+    echo "$gitlab_response"
     MAX_COUNT=40
     count=0
     while [ "$found_vm_id_in_list" == "0" ]
@@ -250,6 +251,9 @@ then
     --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
     --form ref="main" \
     "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
+
+    echo "Gilab response"
+    echo "$gitlab_response"
 
     MAX_COUNT=40
     count=0
