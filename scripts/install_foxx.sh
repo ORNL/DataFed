@@ -229,7 +229,7 @@ then
 else 
   # We are assuming that if the correct version of node is installed then the
   # correct version of npm is also installed
-  npm install foxx-cli
+  npm install foxx-cli --global
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
