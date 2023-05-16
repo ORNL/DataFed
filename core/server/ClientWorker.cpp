@@ -5,18 +5,18 @@
 #include "Version.hpp"
 
 // DataFed Common includes
-#include "common/CredentialFactory.hpp"
 #include "common/CommunicatorFactory.hpp"
-#include "common/libjson.hpp"
+#include "common/CredentialFactory.hpp"
 #include "common/ProtoBufMap.hpp"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
+#include "common/libjson.hpp"
 
 // Proto files
-#include "common/Version.pb.h"
 #include "common/SDMS.pb.h"
 #include "common/SDMS_Anon.pb.h"
 #include "common/SDMS_Auth.pb.h"
+#include "common/Version.pb.h"
 
 // Third party includes
 #include <boost/tokenizer.hpp>
@@ -34,209 +34,271 @@ using namespace SDMS::Auth;
 
 namespace Core {
 
-
-map<uint16_t,ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
+map<uint16_t, ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 
 // TODO - This should be defined in proto files
 #define NOTE_MASK_MD_ERR 0x2000
 
-ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid ) :
-    m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_worker_thread(0), m_run(true),
-    m_db_client( m_config.db_url , m_config.db_user, m_config.db_pass )
-{
-    // This should be hidden behind a factory or some other builder
-    m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
-    DL_DEBUG("Calling setupMsgHandlers");
-    setupMsgHandlers();
-    DL_DEBUG("Creating m_worker_thread");
-    m_worker_thread = new thread( &ClientWorker::workerThread, this );
+ClientWorker::ClientWorker(ICoreServer &a_core, size_t a_tid)
+    : m_config(Config::getInstance()),
+      m_core(a_core),
+      m_tid(a_tid),
+      m_worker_thread(0),
+      m_run(true),
+      m_db_client(m_config.db_url, m_config.db_user, m_config.db_pass) {
+  // This should be hidden behind a factory or some other builder
+  m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
+  DL_DEBUG("Calling setupMsgHandlers");
+  setupMsgHandlers();
+  DL_DEBUG("Creating m_worker_thread");
+  m_worker_thread = new thread(&ClientWorker::workerThread, this);
 }
 
-ClientWorker::~ClientWorker()
-{
-    stop();
-    wait();
+ClientWorker::~ClientWorker() {
+  stop();
+  wait();
 }
 
-void
-ClientWorker::stop()
-{
-    m_run = false;
+void ClientWorker::stop() { m_run = false; }
+
+void ClientWorker::wait() {
+  if (m_worker_thread) {
+    m_worker_thread->join();
+    delete m_worker_thread;
+    m_worker_thread = 0;
+  }
 }
 
-void
-ClientWorker::wait()
-{
-    if ( m_worker_thread )
-    {
-        m_worker_thread->join();
-        delete m_worker_thread;
-        m_worker_thread = 0;
-    }
-}
-
-#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[m_msg_mapper->getMessageType( proto_id, #msg )] = func
-#define SET_MSG_HANDLER_DB(proto_id,rq,rp,func) m_msg_handlers[m_msg_mapper->getMessageType( proto_id, #rq )] = &ClientWorker::dbPassThrough<rq,rp,&DatabaseAPI::func>
+#define SET_MSG_HANDLER(proto_id, msg, func) \
+  m_msg_handlers[m_msg_mapper->getMessageType(proto_id, #msg)] = func
+#define SET_MSG_HANDLER_DB(proto_id, rq, rp, func)              \
+  m_msg_handlers[m_msg_mapper->getMessageType(proto_id, #rq)] = \
+      &ClientWorker::dbPassThrough<rq, rp, &DatabaseAPI::func>
 
 /**
- * This method configures message handling by creating a map from message type to handler function.
- * There are currently two protocol levels: anonymous and authenticated. Each is supported by a
- * Google protobuf interface (in /common/proto). Most requests can be handled directly by the
- * DB (via DatabaseAPI class), but some require local processing. This method maps the two classes
- * of requests using the macros SET_MSG_HANDLER (for local) and SET_MSG_HANDLER_DB (for DB only).
+ * This method configures message handling by creating a map from message type
+ * to handler function. There are currently two protocol levels: anonymous and
+ * authenticated. Each is supported by a Google protobuf interface (in
+ * /common/proto). Most requests can be handled directly by the DB (via
+ * DatabaseAPI class), but some require local processing. This method maps the
+ * two classes of requests using the macros SET_MSG_HANDLER (for local) and
+ * SET_MSG_HANDLER_DB (for DB only).
  */
-void
-ClientWorker::setupMsgHandlers()
-{
-    static std::atomic_flag lock = ATOMIC_FLAG_INIT;
+void ClientWorker::setupMsgHandlers() {
+  static std::atomic_flag lock = ATOMIC_FLAG_INIT;
 
-    // Only perform the processing once as it affects global state in the messaging libraries
-    if ( lock.test_and_set() )
-        return;
+  // Only perform the processing once as it affects global state in the
+  // messaging libraries
+  if (lock.test_and_set()) return;
 
-    try
-    {
-        // Register and setup handlers for the Anonymous interface
+  try {
+    // Register and setup handlers for the Anonymous interface
 
-        uint8_t proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_ANONONYMOUS); //REG_PROTO( SDMS::Anon );
-        std::cout << "Setting up MSGHandler with proto_id " << proto_id << std::endl;
-        // Requests that require the server to take action
-        SET_MSG_HANDLER( proto_id, VersionRequest, &ClientWorker::procVersionRequest );
-        SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
-        SET_MSG_HANDLER( proto_id, AuthenticateByTokenRequest, &ClientWorker::procAuthenticateByTokenRequest );
-        SET_MSG_HANDLER( proto_id, GetAuthStatusRequest, &ClientWorker::procGetAuthStatusRequest );
+    uint8_t proto_id = m_msg_mapper->getProtocolID(
+        MessageProtocol::GOOGLE_ANONONYMOUS);  // REG_PROTO( SDMS::Anon );
+    std::cout << "Setting up MSGHandler with proto_id " << proto_id
+              << std::endl;
+    // Requests that require the server to take action
+    SET_MSG_HANDLER(proto_id, VersionRequest,
+                    &ClientWorker::procVersionRequest);
+    SET_MSG_HANDLER(proto_id, AuthenticateByPasswordRequest,
+                    &ClientWorker::procAuthenticateByPasswordRequest);
+    SET_MSG_HANDLER(proto_id, AuthenticateByTokenRequest,
+                    &ClientWorker::procAuthenticateByTokenRequest);
+    SET_MSG_HANDLER(proto_id, GetAuthStatusRequest,
+                    &ClientWorker::procGetAuthStatusRequest);
 
-        // Requests that can be handled by DB client directly
-        SET_MSG_HANDLER_DB( proto_id, DailyMessageRequest, DailyMessageReply, dailyMessage );
+    // Requests that can be handled by DB client directly
+    SET_MSG_HANDLER_DB(proto_id, DailyMessageRequest, DailyMessageReply,
+                       dailyMessage);
 
+    // Register and setup handlers for the Authenticated interface
+    proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_AUTHORIZED);
 
-        // Register and setup handlers for the Authenticated interface
-        proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_AUTHORIZED);
+    // Requests that require the server to take action
+    SET_MSG_HANDLER(proto_id, GenerateCredentialsRequest,
+                    &ClientWorker::procGenerateCredentialsRequest);
+    SET_MSG_HANDLER(proto_id, RevokeCredentialsRequest,
+                    &ClientWorker::procRevokeCredentialsRequest);
+    SET_MSG_HANDLER(proto_id, DataGetRequest,
+                    &ClientWorker::procDataGetRequest);
+    SET_MSG_HANDLER(proto_id, DataPutRequest,
+                    &ClientWorker::procDataPutRequest);
+    SET_MSG_HANDLER(proto_id, RecordCreateRequest,
+                    &ClientWorker::procRecordCreateRequest);
+    SET_MSG_HANDLER(proto_id, RecordUpdateRequest,
+                    &ClientWorker::procRecordUpdateRequest);
+    SET_MSG_HANDLER(proto_id, RecordUpdateBatchRequest,
+                    &ClientWorker::procRecordUpdateBatchRequest);
+    SET_MSG_HANDLER(proto_id, RecordDeleteRequest,
+                    &ClientWorker::procRecordDeleteRequest);
+    SET_MSG_HANDLER(proto_id, RecordAllocChangeRequest,
+                    &ClientWorker::procRecordAllocChangeRequest);
+    SET_MSG_HANDLER(proto_id, RecordOwnerChangeRequest,
+                    &ClientWorker::procRecordOwnerChangeRequest);
+    SET_MSG_HANDLER(proto_id, ProjectSearchRequest,
+                    &ClientWorker::procProjectSearchRequest);
+    SET_MSG_HANDLER(proto_id, CollDeleteRequest,
+                    &ClientWorker::procCollectionDeleteRequest);
+    SET_MSG_HANDLER(proto_id, ProjectDeleteRequest,
+                    &ClientWorker::procProjectDeleteRequest);
+    SET_MSG_HANDLER(proto_id, RepoAuthzRequest,
+                    &ClientWorker::procRepoAuthzRequest);
+    SET_MSG_HANDLER(proto_id, RepoAllocationCreateRequest,
+                    &ClientWorker::procRepoAllocationCreateRequest);
+    SET_MSG_HANDLER(proto_id, RepoAllocationDeleteRequest,
+                    &ClientWorker::procRepoAllocationDeleteRequest);
+    SET_MSG_HANDLER(proto_id, UserGetAccessTokenRequest,
+                    &ClientWorker::procUserGetAccessTokenRequest);
+    SET_MSG_HANDLER(proto_id, SchemaCreateRequest,
+                    &ClientWorker::procSchemaCreateRequest);
+    SET_MSG_HANDLER(proto_id, SchemaReviseRequest,
+                    &ClientWorker::procSchemaReviseRequest);
+    SET_MSG_HANDLER(proto_id, SchemaUpdateRequest,
+                    &ClientWorker::procSchemaUpdateRequest);
+    SET_MSG_HANDLER(proto_id, MetadataValidateRequest,
+                    &ClientWorker::procMetadataValidateRequest);
 
-        // Requests that require the server to take action
-        SET_MSG_HANDLER( proto_id, GenerateCredentialsRequest, &ClientWorker::procGenerateCredentialsRequest );
-        SET_MSG_HANDLER( proto_id, RevokeCredentialsRequest, &ClientWorker::procRevokeCredentialsRequest );
-        SET_MSG_HANDLER( proto_id, DataGetRequest, &ClientWorker::procDataGetRequest );
-        SET_MSG_HANDLER( proto_id, DataPutRequest, &ClientWorker::procDataPutRequest );
-        SET_MSG_HANDLER( proto_id, RecordCreateRequest, &ClientWorker::procRecordCreateRequest );
-        SET_MSG_HANDLER( proto_id, RecordUpdateRequest, &ClientWorker::procRecordUpdateRequest );
-        SET_MSG_HANDLER( proto_id, RecordUpdateBatchRequest, &ClientWorker::procRecordUpdateBatchRequest );
-        SET_MSG_HANDLER( proto_id, RecordDeleteRequest, &ClientWorker::procRecordDeleteRequest );
-        SET_MSG_HANDLER( proto_id, RecordAllocChangeRequest, &ClientWorker::procRecordAllocChangeRequest );
-        SET_MSG_HANDLER( proto_id, RecordOwnerChangeRequest, &ClientWorker::procRecordOwnerChangeRequest );
-        SET_MSG_HANDLER( proto_id, ProjectSearchRequest, &ClientWorker::procProjectSearchRequest );
-        SET_MSG_HANDLER( proto_id, CollDeleteRequest, &ClientWorker::procCollectionDeleteRequest );
-        SET_MSG_HANDLER( proto_id, ProjectDeleteRequest, &ClientWorker::procProjectDeleteRequest );
-        SET_MSG_HANDLER( proto_id, RepoAuthzRequest, &ClientWorker::procRepoAuthzRequest );
-        SET_MSG_HANDLER( proto_id, RepoAllocationCreateRequest, &ClientWorker::procRepoAllocationCreateRequest );
-        SET_MSG_HANDLER( proto_id, RepoAllocationDeleteRequest, &ClientWorker::procRepoAllocationDeleteRequest );
-        SET_MSG_HANDLER( proto_id, UserGetAccessTokenRequest, &ClientWorker::procUserGetAccessTokenRequest );
-        SET_MSG_HANDLER( proto_id, SchemaCreateRequest, &ClientWorker::procSchemaCreateRequest );
-        SET_MSG_HANDLER( proto_id, SchemaReviseRequest, &ClientWorker::procSchemaReviseRequest );
-        SET_MSG_HANDLER( proto_id, SchemaUpdateRequest, &ClientWorker::procSchemaUpdateRequest );
-        SET_MSG_HANDLER( proto_id, MetadataValidateRequest, &ClientWorker::procMetadataValidateRequest );
+    // Requires updating repo cache
+    SET_MSG_HANDLER(proto_id, RepoCreateRequest, &ClientWorker::procRepoCreate);
+    SET_MSG_HANDLER(proto_id, RepoUpdateRequest, &ClientWorker::procRepoUpdate);
+    SET_MSG_HANDLER(proto_id, RepoDeleteRequest, &ClientWorker::procRepoDelete);
 
-        // Requires updating repo cache
-        SET_MSG_HANDLER( proto_id, RepoCreateRequest, &ClientWorker::procRepoCreate);
-        SET_MSG_HANDLER( proto_id, RepoUpdateRequest, &ClientWorker::procRepoUpdate);
-        SET_MSG_HANDLER( proto_id, RepoDeleteRequest, &ClientWorker::procRepoDelete);
-
-        // Requests that can be handled by DB client directly
-        SET_MSG_HANDLER_DB( proto_id, CheckPermsRequest, CheckPermsReply, checkPerms );
-        SET_MSG_HANDLER_DB( proto_id, GetPermsRequest, GetPermsReply, getPerms );
-        SET_MSG_HANDLER_DB( proto_id, UserViewRequest, UserDataReply, userView );
-        SET_MSG_HANDLER_DB( proto_id, UserSetAccessTokenRequest, AckReply, userSetAccessToken );
-        SET_MSG_HANDLER_DB( proto_id, UserCreateRequest, UserDataReply, userCreate );
-        SET_MSG_HANDLER_DB( proto_id, UserUpdateRequest, UserDataReply, userUpdate );
-        SET_MSG_HANDLER_DB( proto_id, UserListAllRequest, UserDataReply, userListAll );
-        SET_MSG_HANDLER_DB( proto_id, UserListCollabRequest, UserDataReply, userListCollab );
-        SET_MSG_HANDLER_DB( proto_id, UserFindByUUIDsRequest, UserDataReply, userFindByUUIDs );
-        SET_MSG_HANDLER_DB( proto_id, UserFindByNameUIDRequest, UserDataReply, userFindByNameUID );
-        SET_MSG_HANDLER_DB( proto_id, UserGetRecentEPRequest, UserGetRecentEPReply, userGetRecentEP );
-        SET_MSG_HANDLER_DB( proto_id, UserSetRecentEPRequest, AckReply, userSetRecentEP );
-        SET_MSG_HANDLER_DB( proto_id, ProjectViewRequest, ProjectDataReply, projView );
-        SET_MSG_HANDLER_DB( proto_id, ProjectCreateRequest, ProjectDataReply, projCreate );
-        SET_MSG_HANDLER_DB( proto_id, ProjectUpdateRequest, ProjectDataReply, projUpdate );
-        SET_MSG_HANDLER_DB( proto_id, ProjectListRequest, ListingReply, projList );
-        SET_MSG_HANDLER_DB( proto_id, ProjectGetRoleRequest, ProjectGetRoleReply, projGetRole );
-        SET_MSG_HANDLER_DB( proto_id, RecordViewRequest, RecordDataReply, recordView );
-        SET_MSG_HANDLER_DB( proto_id, RecordCreateBatchRequest, RecordDataReply, recordCreateBatch );
-        SET_MSG_HANDLER_DB( proto_id, RecordExportRequest, RecordExportReply, recordExport );
-        SET_MSG_HANDLER_DB( proto_id, RecordLockRequest, ListingReply, recordLock );
-        SET_MSG_HANDLER_DB( proto_id, RecordListByAllocRequest, ListingReply, recordListByAlloc );
-        SET_MSG_HANDLER_DB( proto_id, RecordGetDependencyGraphRequest, ListingReply, recordGetDependencyGraph );
-        SET_MSG_HANDLER_DB( proto_id, SearchRequest, ListingReply, generalSearch );
-        SET_MSG_HANDLER_DB( proto_id, DataPathRequest, DataPathReply, dataPath );
-        SET_MSG_HANDLER_DB( proto_id, CollViewRequest, CollDataReply, collView );
-        SET_MSG_HANDLER_DB( proto_id, CollReadRequest, ListingReply, collRead );
-        SET_MSG_HANDLER_DB( proto_id, CollListPublishedRequest, ListingReply, collListPublished );
-        SET_MSG_HANDLER_DB( proto_id, CollCreateRequest, CollDataReply, collCreate );
-        SET_MSG_HANDLER_DB( proto_id, CollUpdateRequest, CollDataReply, collUpdate );
-        SET_MSG_HANDLER_DB( proto_id, CollWriteRequest, ListingReply, collWrite );
-        SET_MSG_HANDLER_DB( proto_id, CollMoveRequest, AckReply, collMove );
-        SET_MSG_HANDLER_DB( proto_id, CollGetParentsRequest, CollPathReply, collGetParents );
-        SET_MSG_HANDLER_DB( proto_id, CollGetOffsetRequest, CollGetOffsetReply, collGetOffset );
-        SET_MSG_HANDLER_DB( proto_id, QueryListRequest, ListingReply, queryList );
-        SET_MSG_HANDLER_DB( proto_id, QueryViewRequest, QueryDataReply, queryView );
-        SET_MSG_HANDLER_DB( proto_id, QueryExecRequest, ListingReply, queryExec );
-        SET_MSG_HANDLER_DB( proto_id, QueryCreateRequest, QueryDataReply, queryCreate );
-        SET_MSG_HANDLER_DB( proto_id, QueryUpdateRequest, QueryDataReply, queryUpdate );
-        SET_MSG_HANDLER_DB( proto_id, QueryDeleteRequest, AckReply, queryDelete );
-        SET_MSG_HANDLER_DB( proto_id, NoteViewRequest, NoteDataReply, noteView );
-        SET_MSG_HANDLER_DB( proto_id, NoteListBySubjectRequest, NoteDataReply, noteListBySubject );
-        SET_MSG_HANDLER_DB( proto_id, NoteCreateRequest, NoteDataReply, noteCreate );
-        SET_MSG_HANDLER_DB( proto_id, NoteUpdateRequest, NoteDataReply, noteUpdate );
-        SET_MSG_HANDLER_DB( proto_id, NoteCommentEditRequest, NoteDataReply, noteCommentEdit );
-        SET_MSG_HANDLER_DB( proto_id, TaskListRequest, TaskDataReply, taskList );
-        SET_MSG_HANDLER_DB( proto_id, TaskViewRequest, TaskDataReply, taskView );
-        SET_MSG_HANDLER_DB( proto_id, ACLViewRequest, ACLDataReply, aclView );
-        SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
-        SET_MSG_HANDLER_DB( proto_id, ACLSharedListRequest, ListingReply, aclSharedList );
-        SET_MSG_HANDLER_DB( proto_id, ACLSharedListItemsRequest, ListingReply, aclSharedListItems );
-        //SET_MSG_HANDLER_DB( proto_id, ACLBySubjectRequest, ListingReply, aclBySubject );
-        //SET_MSG_HANDLER_DB( proto_id, ACLListItemsBySubjectRequest, ListingReply, aclListItemsBySubject );
-        SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
-        SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
-        SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
-        SET_MSG_HANDLER_DB( proto_id, GroupListRequest, GroupDataReply, groupList );
-        SET_MSG_HANDLER_DB( proto_id, GroupViewRequest, GroupDataReply, groupView );
-        SET_MSG_HANDLER_DB( proto_id, RepoListRequest, RepoDataReply, repoList );
-        SET_MSG_HANDLER_DB( proto_id, RepoViewRequest, RepoDataReply, repoView );
-        //SET_MSG_HANDLER_DB( proto_id, RepoCreateRequest, RepoDataReply, repoCreate );
-        //SET_MSG_HANDLER_DB( proto_id, RepoUpdateRequest, RepoDataReply, repoUpdate );
-        //SET_MSG_HANDLER_DB( proto_id, RepoDeleteRequest, AckReply, repoDelete );
-        SET_MSG_HANDLER_DB( proto_id, RepoCalcSizeRequest, RepoCalcSizeReply, repoCalcSize );
-        SET_MSG_HANDLER_DB( proto_id, RepoListAllocationsRequest, RepoAllocationsReply, repoListAllocations );
-        SET_MSG_HANDLER_DB( proto_id, RepoListSubjectAllocationsRequest, RepoAllocationsReply, repoListSubjectAllocations );
-        SET_MSG_HANDLER_DB( proto_id, RepoListObjectAllocationsRequest, RepoAllocationsReply, repoListObjectAllocations );
-        SET_MSG_HANDLER_DB( proto_id, RepoViewAllocationRequest, RepoAllocationsReply, repoViewAllocation );
-        SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetRequest, AckReply, repoAllocationSet );
-        SET_MSG_HANDLER_DB( proto_id, RepoAllocationSetDefaultRequest, AckReply, repoAllocationSetDefault );
-        SET_MSG_HANDLER_DB( proto_id, RepoAllocationStatsRequest, RepoAllocationStatsReply, repoAllocationStats );
-        SET_MSG_HANDLER_DB( proto_id, SchemaSearchRequest, SchemaDataReply, schemaSearch );
-        SET_MSG_HANDLER_DB( proto_id, SchemaViewRequest, SchemaDataReply, schemaView );
-        SET_MSG_HANDLER_DB( proto_id, SchemaDeleteRequest, AckReply, schemaDelete );
-        SET_MSG_HANDLER_DB( proto_id, TagSearchRequest, TagDataReply, tagSearch );
-        SET_MSG_HANDLER_DB( proto_id, TagListByCountRequest, TagDataReply, tagListByCount );
-        SET_MSG_HANDLER_DB( proto_id, TopicListTopicsRequest, TopicDataReply, topicListTopics );
-        SET_MSG_HANDLER_DB( proto_id, TopicViewRequest, TopicDataReply, topicView );
-        SET_MSG_HANDLER_DB( proto_id, TopicSearchRequest, TopicDataReply, topicSearch );
-    }
-    catch( TraceException & e)
-    {
-        DL_ERROR( "ClientWorker::setupMsgHandlers, exception: " << e.toString() );
-        throw;
-    }
+    // Requests that can be handled by DB client directly
+    SET_MSG_HANDLER_DB(proto_id, CheckPermsRequest, CheckPermsReply,
+                       checkPerms);
+    SET_MSG_HANDLER_DB(proto_id, GetPermsRequest, GetPermsReply, getPerms);
+    SET_MSG_HANDLER_DB(proto_id, UserViewRequest, UserDataReply, userView);
+    SET_MSG_HANDLER_DB(proto_id, UserSetAccessTokenRequest, AckReply,
+                       userSetAccessToken);
+    SET_MSG_HANDLER_DB(proto_id, UserCreateRequest, UserDataReply, userCreate);
+    SET_MSG_HANDLER_DB(proto_id, UserUpdateRequest, UserDataReply, userUpdate);
+    SET_MSG_HANDLER_DB(proto_id, UserListAllRequest, UserDataReply,
+                       userListAll);
+    SET_MSG_HANDLER_DB(proto_id, UserListCollabRequest, UserDataReply,
+                       userListCollab);
+    SET_MSG_HANDLER_DB(proto_id, UserFindByUUIDsRequest, UserDataReply,
+                       userFindByUUIDs);
+    SET_MSG_HANDLER_DB(proto_id, UserFindByNameUIDRequest, UserDataReply,
+                       userFindByNameUID);
+    SET_MSG_HANDLER_DB(proto_id, UserGetRecentEPRequest, UserGetRecentEPReply,
+                       userGetRecentEP);
+    SET_MSG_HANDLER_DB(proto_id, UserSetRecentEPRequest, AckReply,
+                       userSetRecentEP);
+    SET_MSG_HANDLER_DB(proto_id, ProjectViewRequest, ProjectDataReply,
+                       projView);
+    SET_MSG_HANDLER_DB(proto_id, ProjectCreateRequest, ProjectDataReply,
+                       projCreate);
+    SET_MSG_HANDLER_DB(proto_id, ProjectUpdateRequest, ProjectDataReply,
+                       projUpdate);
+    SET_MSG_HANDLER_DB(proto_id, ProjectListRequest, ListingReply, projList);
+    SET_MSG_HANDLER_DB(proto_id, ProjectGetRoleRequest, ProjectGetRoleReply,
+                       projGetRole);
+    SET_MSG_HANDLER_DB(proto_id, RecordViewRequest, RecordDataReply,
+                       recordView);
+    SET_MSG_HANDLER_DB(proto_id, RecordCreateBatchRequest, RecordDataReply,
+                       recordCreateBatch);
+    SET_MSG_HANDLER_DB(proto_id, RecordExportRequest, RecordExportReply,
+                       recordExport);
+    SET_MSG_HANDLER_DB(proto_id, RecordLockRequest, ListingReply, recordLock);
+    SET_MSG_HANDLER_DB(proto_id, RecordListByAllocRequest, ListingReply,
+                       recordListByAlloc);
+    SET_MSG_HANDLER_DB(proto_id, RecordGetDependencyGraphRequest, ListingReply,
+                       recordGetDependencyGraph);
+    SET_MSG_HANDLER_DB(proto_id, SearchRequest, ListingReply, generalSearch);
+    SET_MSG_HANDLER_DB(proto_id, DataPathRequest, DataPathReply, dataPath);
+    SET_MSG_HANDLER_DB(proto_id, CollViewRequest, CollDataReply, collView);
+    SET_MSG_HANDLER_DB(proto_id, CollReadRequest, ListingReply, collRead);
+    SET_MSG_HANDLER_DB(proto_id, CollListPublishedRequest, ListingReply,
+                       collListPublished);
+    SET_MSG_HANDLER_DB(proto_id, CollCreateRequest, CollDataReply, collCreate);
+    SET_MSG_HANDLER_DB(proto_id, CollUpdateRequest, CollDataReply, collUpdate);
+    SET_MSG_HANDLER_DB(proto_id, CollWriteRequest, ListingReply, collWrite);
+    SET_MSG_HANDLER_DB(proto_id, CollMoveRequest, AckReply, collMove);
+    SET_MSG_HANDLER_DB(proto_id, CollGetParentsRequest, CollPathReply,
+                       collGetParents);
+    SET_MSG_HANDLER_DB(proto_id, CollGetOffsetRequest, CollGetOffsetReply,
+                       collGetOffset);
+    SET_MSG_HANDLER_DB(proto_id, QueryListRequest, ListingReply, queryList);
+    SET_MSG_HANDLER_DB(proto_id, QueryViewRequest, QueryDataReply, queryView);
+    SET_MSG_HANDLER_DB(proto_id, QueryExecRequest, ListingReply, queryExec);
+    SET_MSG_HANDLER_DB(proto_id, QueryCreateRequest, QueryDataReply,
+                       queryCreate);
+    SET_MSG_HANDLER_DB(proto_id, QueryUpdateRequest, QueryDataReply,
+                       queryUpdate);
+    SET_MSG_HANDLER_DB(proto_id, QueryDeleteRequest, AckReply, queryDelete);
+    SET_MSG_HANDLER_DB(proto_id, NoteViewRequest, NoteDataReply, noteView);
+    SET_MSG_HANDLER_DB(proto_id, NoteListBySubjectRequest, NoteDataReply,
+                       noteListBySubject);
+    SET_MSG_HANDLER_DB(proto_id, NoteCreateRequest, NoteDataReply, noteCreate);
+    SET_MSG_HANDLER_DB(proto_id, NoteUpdateRequest, NoteDataReply, noteUpdate);
+    SET_MSG_HANDLER_DB(proto_id, NoteCommentEditRequest, NoteDataReply,
+                       noteCommentEdit);
+    SET_MSG_HANDLER_DB(proto_id, TaskListRequest, TaskDataReply, taskList);
+    SET_MSG_HANDLER_DB(proto_id, TaskViewRequest, TaskDataReply, taskView);
+    SET_MSG_HANDLER_DB(proto_id, ACLViewRequest, ACLDataReply, aclView);
+    SET_MSG_HANDLER_DB(proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate);
+    SET_MSG_HANDLER_DB(proto_id, ACLSharedListRequest, ListingReply,
+                       aclSharedList);
+    SET_MSG_HANDLER_DB(proto_id, ACLSharedListItemsRequest, ListingReply,
+                       aclSharedListItems);
+    // SET_MSG_HANDLER_DB( proto_id, ACLBySubjectRequest, ListingReply,
+    // aclBySubject ); SET_MSG_HANDLER_DB( proto_id,
+    // ACLListItemsBySubjectRequest, ListingReply, aclListItemsBySubject );
+    SET_MSG_HANDLER_DB(proto_id, GroupCreateRequest, GroupDataReply,
+                       groupCreate);
+    SET_MSG_HANDLER_DB(proto_id, GroupUpdateRequest, GroupDataReply,
+                       groupUpdate);
+    SET_MSG_HANDLER_DB(proto_id, GroupDeleteRequest, AckReply, groupDelete);
+    SET_MSG_HANDLER_DB(proto_id, GroupListRequest, GroupDataReply, groupList);
+    SET_MSG_HANDLER_DB(proto_id, GroupViewRequest, GroupDataReply, groupView);
+    SET_MSG_HANDLER_DB(proto_id, RepoListRequest, RepoDataReply, repoList);
+    SET_MSG_HANDLER_DB(proto_id, RepoViewRequest, RepoDataReply, repoView);
+    // SET_MSG_HANDLER_DB( proto_id, RepoCreateRequest, RepoDataReply,
+    // repoCreate ); SET_MSG_HANDLER_DB( proto_id, RepoUpdateRequest,
+    // RepoDataReply, repoUpdate ); SET_MSG_HANDLER_DB( proto_id,
+    // RepoDeleteRequest, AckReply, repoDelete );
+    SET_MSG_HANDLER_DB(proto_id, RepoCalcSizeRequest, RepoCalcSizeReply,
+                       repoCalcSize);
+    SET_MSG_HANDLER_DB(proto_id, RepoListAllocationsRequest,
+                       RepoAllocationsReply, repoListAllocations);
+    SET_MSG_HANDLER_DB(proto_id, RepoListSubjectAllocationsRequest,
+                       RepoAllocationsReply, repoListSubjectAllocations);
+    SET_MSG_HANDLER_DB(proto_id, RepoListObjectAllocationsRequest,
+                       RepoAllocationsReply, repoListObjectAllocations);
+    SET_MSG_HANDLER_DB(proto_id, RepoViewAllocationRequest,
+                       RepoAllocationsReply, repoViewAllocation);
+    SET_MSG_HANDLER_DB(proto_id, RepoAllocationSetRequest, AckReply,
+                       repoAllocationSet);
+    SET_MSG_HANDLER_DB(proto_id, RepoAllocationSetDefaultRequest, AckReply,
+                       repoAllocationSetDefault);
+    SET_MSG_HANDLER_DB(proto_id, RepoAllocationStatsRequest,
+                       RepoAllocationStatsReply, repoAllocationStats);
+    SET_MSG_HANDLER_DB(proto_id, SchemaSearchRequest, SchemaDataReply,
+                       schemaSearch);
+    SET_MSG_HANDLER_DB(proto_id, SchemaViewRequest, SchemaDataReply,
+                       schemaView);
+    SET_MSG_HANDLER_DB(proto_id, SchemaDeleteRequest, AckReply, schemaDelete);
+    SET_MSG_HANDLER_DB(proto_id, TagSearchRequest, TagDataReply, tagSearch);
+    SET_MSG_HANDLER_DB(proto_id, TagListByCountRequest, TagDataReply,
+                       tagListByCount);
+    SET_MSG_HANDLER_DB(proto_id, TopicListTopicsRequest, TopicDataReply,
+                       topicListTopics);
+    SET_MSG_HANDLER_DB(proto_id, TopicViewRequest, TopicDataReply, topicView);
+    SET_MSG_HANDLER_DB(proto_id, TopicSearchRequest, TopicDataReply,
+                       topicSearch);
+  } catch (TraceException &e) {
+    DL_ERROR("ClientWorker::setupMsgHandlers, exception: " << e.toString());
+    throw;
+  }
 }
 
 /**
  * ClientWorker message handling thread.
  */
-void
-ClientWorker::workerThread()
-{
+void ClientWorker::workerThread() {
 
-  DL_DEBUG( "W" << m_tid << " thread started" );
+  DL_DEBUG("W" << m_tid << " thread started");
   CommunicatorFactory factory;
 
   const std::string client_id = "client_worker_" + std::to_string(m_tid);
@@ -244,12 +306,12 @@ ClientWorker::workerThread()
     /// Creating input parameters for constructing Communication Instance
     SocketOptions socket_options;
     socket_options.scheme = URIScheme::INPROC;
-    socket_options.class_type = SocketClassType::CLIENT; 
-    socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
+    socket_options.class_type = SocketClassType::CLIENT;
+    socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL;
     socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
     socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
     socket_options.connection_security = SocketConnectionSecurity::INSECURE;
-    socket_options.protocol_type = ProtocolType::ZQTP; 
+    socket_options.protocol_type = ProtocolType::ZQTP;
     socket_options.host = "workers";
     socket_options.local_id = client_id;
 
@@ -264,102 +326,100 @@ ClientWorker::workerThread()
     // When creating a communication channel with a server application we need
     // to locally have a client socket. So though we have specified a client
     // socket we will actually be communicating with the server.
-    return factory.create(
-        socket_options,
-        *credentials,
-        timeout_on_receive,
-        timeout_on_poll);
+    return factory.create(socket_options, *credentials, timeout_on_receive,
+                          timeout_on_poll);
   }();
 
-    ProtoBufMap proto_map;
-    uint16_t task_list_msg_type = proto_map.getMessageType( 2, "TaskListRequest");
+  ProtoBufMap proto_map;
+  uint16_t task_list_msg_type = proto_map.getMessageType(2, "TaskListRequest");
 
+  // int delay;
+  DL_DEBUG("W" << m_tid << " m_run " << m_run);
 
-    //int delay;
-    DL_DEBUG( "W" << m_tid << " m_run " << m_run);
+  while (m_run) {
+    try {
+      ICommunicator::Response response =
+          client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+      if (response.time_out == false and response.error == false) {
 
-    while ( m_run )
-    {
-        try
+        IMessage &message = *response.message;
+        uint16_t msg_type = std::get<uint16_t>(
+            message.get(constants::message::google::MSG_TYPE));
+        // msg_type = m_msg_buf.getMsgType();
+        DL_DEBUG("W" << m_tid
+                     << " received message: " << proto_map.toString(msg_type));
+
+        // DEBUG - Inject random delay in message processing
+        /*delay = (rand() % 2000)*1000;
+        if ( delay )
         {
-            ICommunicator::Response response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
-            if ( response.time_out == false and response.error == false) {
+            usleep( delay );
+        }*/
 
-                IMessage & message = *response.message;
-                uint16_t msg_type = std::get<uint16_t>(message.get(constants::message::google::MSG_TYPE));
-                //msg_type = m_msg_buf.getMsgType();
-                DL_DEBUG( "W" << m_tid << " received message: " << proto_map.toString(msg_type) );
+        const std::string uid =
+            std::get<std::string>(message.get(MessageAttribute::ID));
+        if (msg_type != task_list_msg_type) {
+          DL_DEBUG("W" << m_tid << " msg " << msg_type << " [" << uid << "]");
+        }
 
-                // DEBUG - Inject random delay in message processing
-                /*delay = (rand() % 2000)*1000;
-                if ( delay )
-                {
-                    usleep( delay );
-                }*/
+        if (uid.compare("anon") == 0 && msg_type > 0x1FF) {
+          DL_WARN("W" << m_tid
+                      << " unauthorized access attempt from anon user");
+          auto response_msg = m_msg_factory.createResponseEnvelope(message);
 
-                const std::string uid = std::get<std::string>(message.get(MessageAttribute::ID));
-                if ( msg_type != task_list_msg_type )
-                {
-                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< uid <<"]" );
-                }
-       
-                if(uid.compare("anon") == 0 && msg_type > 0x1FF ){
-                    DL_WARN( "W" << m_tid << " unauthorized access attempt from anon user" );
-                    auto response_msg = m_msg_factory.createResponseEnvelope(message);
+          // I know this is not great... allocating memory here slow
+          // This will need to be fixed
+          auto nack = std::make_unique<Anon::NackReply>();
+          nack->set_err_code(ID_AUTHN_REQUIRED);
+          nack->set_err_msg("Authentication required");
+          response_msg->setPayload(std::move(nack));
+          client->send(*response_msg);
+        } else {
+          DL_DEBUG("W" << m_tid << " getting handler from map: msg_type = "
+                       << proto_map.toString(msg_type));
+          if (m_msg_handlers.count(msg_type)) {
 
-                    // I know this is not great... allocating memory here slow 
-                    // This will need to be fixed
-                    auto nack = std::make_unique<Anon::NackReply>();
-                    nack->set_err_code( ID_AUTHN_REQUIRED );
-                    nack->set_err_msg( "Authentication required" );
-                    response_msg->setPayload(std::move(nack));
-                    client->send(*response_msg); 
-                } else {
-                    DL_DEBUG( "W"<<m_tid<<" getting handler from map: msg_type = "  << proto_map.toString(msg_type));
-                    if( m_msg_handlers.count( msg_type ) ) {
+            auto handler = m_msg_handlers.find(msg_type);
 
-                        auto handler = m_msg_handlers.find( msg_type );
+            DL_TRACE(
+                "W"
+                << m_tid
+                << " calling handler/attempting to call function of worker");
 
-                        DL_TRACE( "W"<< m_tid <<" calling handler/attempting to call function of worker" );
+            // Have to move the actual unique_ptr, change ownership not simply
+            // passing a reference
+            auto response_msg =
+                (this->*handler->second)(uid, std::move(response.message));
+            if (response_msg) {
+              // Gather msg metrics except on task lists (web clients poll)
+              if (msg_type != task_list_msg_type)
+                m_core.metricsUpdateMsgCount(uid, msg_type);
 
-                        // Have to move the actual unique_ptr, change ownership not simply passing a reference
-                        auto response_msg = (this->*handler->second)( uid, std::move(response.message) );
-                        if ( response_msg )
-                        {
-                            // Gather msg metrics except on task lists (web clients poll)
-                            if ( msg_type != task_list_msg_type )
-                                m_core.metricsUpdateMsgCount( uid, msg_type );
-
-                            DL_DEBUG( "W" << m_tid << " sending msg of type " << proto_map.toString(msg_type));
-                            // The freaking handlers touch everything.
-                            client->send(*response_msg );
-                            DL_DEBUG( "Message sent ");
-                            /*if ( msg_type != task_list_msg_type )
-                            {
-                                DL_DEBUG( "W"<<m_tid<<" reply sent." );
-                            }*/
-                        }
-                    } else {
-                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
-                    }
-                }
+              DL_DEBUG("W" << m_tid << " sending msg of type "
+                           << proto_map.toString(msg_type));
+              // The freaking handlers touch everything.
+              client->send(*response_msg);
+              DL_DEBUG("Message sent ");
+              /*if ( msg_type != task_list_msg_type )
+              {
+                  DL_DEBUG( "W"<<m_tid<<" reply sent." );
+              }*/
             }
+          } else {
+            DL_ERROR("W" << m_tid << " recvd unregistered msg: " << msg_type);
+          }
         }
-        catch( TraceException & e )
-        {
-            DL_ERROR( "W" << m_tid << " " << e.toString() );
-        }
-        catch( exception & e )
-        {
-            DL_ERROR( "W" << m_tid << " " << e.what() );
-        }
-        catch( ... )
-        {
-            DL_ERROR( "W" << m_tid << " unknown exception type" );
-        }
+      }
+    } catch (TraceException &e) {
+      DL_ERROR("W" << m_tid << " " << e.toString());
+    } catch (exception &e) {
+      DL_ERROR("W" << m_tid << " " << e.what());
+    } catch (...) {
+      DL_ERROR("W" << m_tid << " unknown exception type");
     }
+  }
 
-    DL_DEBUG( "W exiting loop" );
+  DL_DEBUG("W exiting loop");
 }
 ////////////////Start of old code
 //
@@ -369,7 +429,8 @@ ClientWorker::workerThread()
 //    uint16_t        msg_type;
 //    map<uint16_t,msg_fun_t>::iterator handler;
 //
-//    uint16_t task_list_msg_type = MsgBuf::findMessageType( 2, "TaskListRequest" );
+//    uint16_t task_list_msg_type = MsgBuf::findMessageType( 2,
+//    "TaskListRequest" );
 //
 //    Anon::NackReply nack;
 //    nack.set_err_code( ID_AUTHN_REQUIRED );
@@ -396,14 +457,16 @@ ClientWorker::workerThread()
 //
 //                if ( msg_type != task_list_msg_type )
 //                {
-//                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
+//                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<<
+//                    m_msg_buf.getUID() <<"]" );
 //                }
 //
-//                if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
+//                if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 &&
+//                msg_type > 0x1FF )
 //                {
-//                    DL_WARN( "W" << m_tid << " unauthorized access attempt from anon user" );
-//                    m_msg_buf.serialize( nack );
-//                    comm.send( m_msg_buf );
+//                    DL_WARN( "W" << m_tid << " unauthorized access attempt
+//                    from anon user" ); m_msg_buf.serialize( nack ); comm.send(
+//                    m_msg_buf );
 //                }
 //                else
 //                {
@@ -411,24 +474,28 @@ ClientWorker::workerThread()
 //                    handler = m_msg_handlers.find( msg_type );
 //                    if ( handler != m_msg_handlers.end() )
 //                    {
-//                        DL_TRACE( "W"<<m_tid<<" calling handler/attempting to call function of worker" );
+//                        DL_TRACE( "W"<<m_tid<<" calling handler/attempting to
+//                        call function of worker" );
 //
 //                        if ( (this->*handler->second)( m_msg_buf.getUID() ))
 //                        {
-//                            // Gather msg metrics except on task lists (web clients poll)
-//                            if ( msg_type != task_list_msg_type )
-//                                m_core.metricsUpdateMsgCount( m_msg_buf.getUID(), msg_type );
+//                            // Gather msg metrics except on task lists (web
+//                            clients poll) if ( msg_type != task_list_msg_type
+//                            )
+//                                m_core.metricsUpdateMsgCount(
+//                                m_msg_buf.getUID(), msg_type );
 //
-//                            DL_DEBUG( "W" << m_tid << " sending msg of type " << msg_type);
-//                            comm.send( m_msg_buf );
-//                            DL_DEBUG( "Message sent ");
+//                            DL_DEBUG( "W" << m_tid << " sending msg of type "
+//                            << msg_type); comm.send( m_msg_buf ); DL_DEBUG(
+//                            "Message sent ");
 //                            /*if ( msg_type != task_list_msg_type )
 //                            {
 //                                DL_DEBUG( "W"<<m_tid<<" reply sent." );
 //                            }*/
 //                        }
 //                    } else {
-//                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
+//                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: "
+//                        << msg_type );
 //                    }
 //                }
 //            }
@@ -452,78 +519,85 @@ ClientWorker::workerThread()
 
 // TODO The macros below should be replaced with templates
 
-/// This macro defines the begining of the common message handling code for all local handlers
-#define PROC_MSG_BEGIN( msgclass, replyclass ) \
-msgclass *request = 0; \
-bool send_reply = true; \
-::google::protobuf::Message *base_msg = std::get<google::protobuf::Message*>(msg_request->getPayload()); \
-if ( base_msg ) \
-{ \
-    request = dynamic_cast<msgclass*>( base_msg ); \
-    if ( request ) \
-    { \
-        DL_TRACE( "Rcvd [" << request->DebugString() << "]"); \
-        std::unique_ptr<google::protobuf::Message> reply_ptr = std::make_unique<replyclass>(); \
-        replyclass & reply = *(dynamic_cast<replyclass *>(reply_ptr.get())); \
-        try \
-        {
+/// This macro defines the begining of the common message handling code for all
+/// local handlers
+#define PROC_MSG_BEGIN(msgclass, replyclass)                              \
+  msgclass *request = 0;                                                  \
+  bool send_reply = true;                                                 \
+  ::google::protobuf::Message *base_msg =                                 \
+      std::get<google::protobuf::Message *>(msg_request->getPayload());   \
+  if (base_msg) {                                                         \
+    request = dynamic_cast<msgclass *>(base_msg);                         \
+    if (request) {                                                        \
+      DL_TRACE("Rcvd [" << request->DebugString() << "]");                \
+      std::unique_ptr<google::protobuf::Message> reply_ptr =              \
+          std::make_unique<replyclass>();                                 \
+      replyclass &reply = *(dynamic_cast<replyclass *>(reply_ptr.get())); \
+      try {
 
+/// This macro defines the end of the common message handling code for all local
+/// handlers
 
-/// This macro defines the end of the common message handling code for all local handlers
-
-#define PROC_MSG_END \
-            if ( send_reply ) { \
-                auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
-                msg_reply->setPayload(std::move(reply_ptr)); \
-                return msg_reply; \
-            } \
-        } catch( TraceException &e ) { \
-            DL_ERROR( "W"<<m_tid<<" " << e.toString() ); \
-            if ( send_reply ) { \
-                auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
-                auto nack = std::make_unique<NackReply>(); \
-                nack->set_err_code( (ErrorCode) e.getErrorCode() ); \
-                nack->set_err_msg( e.toString( true ) ); \
-                msg_reply->setPayload(std::move(nack)); \
-                return msg_reply; \
-            } \
-        } catch( exception &e ) { \
-            DL_ERROR( "W"<<m_tid<<" " << e.what() ); \
-            if ( send_reply ) { \
-                auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
-                auto nack = std::make_unique<NackReply>(); \
-                nack->set_err_code( ID_INTERNAL_ERROR ); \
-                nack->set_err_msg( e.what() ); \
-                msg_reply->setPayload(std::move(nack)); \
-                return msg_reply; \
-            } \
-        } catch(...) { \
-            DL_ERROR( "W"<<m_tid<<" unkown exception while processing message!" ); \
-            if ( send_reply ) { \
-                auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
-                auto nack = std::make_unique<NackReply>(); \
-                nack->set_err_code( ID_INTERNAL_ERROR ); \
-                nack->set_err_msg( "Unknown exception type" ); \
-                msg_reply->setPayload(std::move(nack)); \
-                return msg_reply; \
-            } \
-        } \
-        DL_TRACE( "Sent: " << reply.DebugString()); \
-    } else { \
-        DL_ERROR( "W"<<m_tid<<": dynamic cast of msg buffer failed!" );\
-    } \
-} else { \
-    DL_ERROR( "W"<<m_tid<<": message parse failed (malformed or unregistered msg type)." ); \
-    auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
-    auto nack = std::make_unique<NackReply>(); \
-    nack->set_err_code( ID_BAD_REQUEST ); \
-    nack->set_err_msg( "Message parse failed (malformed or unregistered msg type)" ); \
-    msg_reply->setPayload(std::move(nack)); \
-    return msg_reply; \
-} \
-return std::unique_ptr<IMessage>();
-
-
+#define PROC_MSG_END                                                         \
+  if (send_reply) {                                                          \
+    auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);     \
+    msg_reply->setPayload(std::move(reply_ptr));                             \
+    return msg_reply;                                                        \
+  }                                                                          \
+  }                                                                          \
+  catch (TraceException & e) {                                               \
+    DL_ERROR("W" << m_tid << " " << e.toString());                           \
+    if (send_reply) {                                                        \
+      auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);   \
+      auto nack = std::make_unique<NackReply>();                             \
+      nack->set_err_code((ErrorCode)e.getErrorCode());                       \
+      nack->set_err_msg(e.toString(true));                                   \
+      msg_reply->setPayload(std::move(nack));                                \
+      return msg_reply;                                                      \
+    }                                                                        \
+  }                                                                          \
+  catch (exception & e) {                                                    \
+    DL_ERROR("W" << m_tid << " " << e.what());                               \
+    if (send_reply) {                                                        \
+      auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);   \
+      auto nack = std::make_unique<NackReply>();                             \
+      nack->set_err_code(ID_INTERNAL_ERROR);                                 \
+      nack->set_err_msg(e.what());                                           \
+      msg_reply->setPayload(std::move(nack));                                \
+      return msg_reply;                                                      \
+    }                                                                        \
+  }                                                                          \
+  catch (...) {                                                              \
+    DL_ERROR("W" << m_tid << " unkown exception while processing message!"); \
+    if (send_reply) {                                                        \
+      auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);   \
+      auto nack = std::make_unique<NackReply>();                             \
+      nack->set_err_code(ID_INTERNAL_ERROR);                                 \
+      nack->set_err_msg("Unknown exception type");                           \
+      msg_reply->setPayload(std::move(nack));                                \
+      return msg_reply;                                                      \
+    }                                                                        \
+  }                                                                          \
+  DL_TRACE("Sent: " << reply.DebugString());                                 \
+  }                                                                          \
+  else {                                                                     \
+    DL_ERROR("W" << m_tid << ": dynamic cast of msg buffer failed!");        \
+  }                                                                          \
+  }                                                                          \
+  else {                                                                     \
+    DL_ERROR(                                                                \
+        "W"                                                                  \
+        << m_tid                                                             \
+        << ": message parse failed (malformed or unregistered msg type).");  \
+    auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);     \
+    auto nack = std::make_unique<NackReply>();                               \
+    nack->set_err_code(ID_BAD_REQUEST);                                      \
+    nack->set_err_msg(                                                       \
+        "Message parse failed (malformed or unregistered msg type)");        \
+    msg_reply->setPayload(std::move(nack));                                  \
+    return msg_reply;                                                        \
+  }                                                                          \
+  return std::unique_ptr<IMessage>();
 
 //#define PROC_MSG_END \
 //            if ( send_reply ) \
@@ -573,898 +647,822 @@ return std::unique_ptr<IMessage>();
 //return send_reply;
 //
 /// This method wraps all direct-to-DB message handler calls
-template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
-std::unique_ptr<IMessage>
-ClientWorker::dbPassThrough( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  )
-{
-    PROC_MSG_BEGIN( RQ, RP )
+template <typename RQ, typename RP, void (DatabaseAPI::*func)(const RQ &, RP &)>
+std::unique_ptr<IMessage> ClientWorker::dbPassThrough(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RQ, RP)
 
-    m_db_client.setClient( a_uid );
+  m_db_client.setClient(a_uid);
 
-    // Both request and reply here need to be Goolge protocol buffer classes
-    (m_db_client.*func)( *request, reply );
+  // Both request and reply here need to be Goolge protocol buffer classes
+  (m_db_client.*func)(*request, reply);
 
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procRepoCreate(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RepoCreateRequest, RepoDataReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procRepoCreate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RepoCreateRequest, RepoDataReply )
+  m_db_client.setClient(a_uid);
 
-    m_db_client.setClient( a_uid );
+  // Both request and reply here need to be Google protocol buffer classes
+  m_db_client.repoCreate(*request, reply);
 
-    // Both request and reply here need to be Google protocol buffer classes
-    m_db_client.repoCreate( *request, reply );
-
-    m_config.triggerRepoCacheRefresh();
-    PROC_MSG_END;
+  m_config.triggerRepoCacheRefresh();
+  PROC_MSG_END;
 }
 
-std::unique_ptr<IMessage>
-ClientWorker::procRepoUpdate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RepoUpdateRequest, RepoDataReply )
+std::unique_ptr<IMessage> ClientWorker::procRepoUpdate(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RepoUpdateRequest, RepoDataReply)
 
-    m_db_client.setClient( a_uid );
-    // Both request and reply here need to be Google protocol buffer classes
-    m_db_client.repoUpdate( *request, reply );
-    
-    m_config.triggerRepoCacheRefresh();
-    PROC_MSG_END
+  m_db_client.setClient(a_uid);
+  // Both request and reply here need to be Google protocol buffer classes
+  m_db_client.repoUpdate(*request, reply);
+
+  m_config.triggerRepoCacheRefresh();
+  PROC_MSG_END
 }
 
-std::unique_ptr<IMessage>
-ClientWorker::procRepoDelete( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RepoDeleteRequest, AckReply )
-    m_db_client.setClient( a_uid );
+std::unique_ptr<IMessage> ClientWorker::procRepoDelete(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RepoDeleteRequest, AckReply)
+  m_db_client.setClient(a_uid);
 
-    // Both request and reply here need to be Google protocol buffer classes
-    m_db_client.repoDelete( *request, reply );
-    m_config.triggerRepoCacheRefresh();
-    PROC_MSG_END
+  // Both request and reply here need to be Google protocol buffer classes
+  m_db_client.repoDelete(*request, reply);
+  m_config.triggerRepoCacheRefresh();
+  PROC_MSG_END
 }
 
-std::unique_ptr<IMessage>
-ClientWorker::procVersionRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( VersionRequest, VersionReply )
-    (void)a_uid;
-    DL_INFO( "Ver request" );
+std::unique_ptr<IMessage> ClientWorker::procVersionRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(VersionRequest, VersionReply)
+  (void)a_uid;
+  DL_INFO("Ver request");
 
-    reply.set_release_year(DATAFED_RELEASE_YEAR);
-    reply.set_release_month(DATAFED_RELEASE_MONTH);
-    reply.set_release_day(DATAFED_RELEASE_DAY);
-    reply.set_release_hour(DATAFED_RELEASE_HOUR);
-    reply.set_release_minute(DATAFED_RELEASE_MINUTE);
+  reply.set_release_year(DATAFED_RELEASE_YEAR);
+  reply.set_release_month(DATAFED_RELEASE_MONTH);
+  reply.set_release_day(DATAFED_RELEASE_DAY);
+  reply.set_release_hour(DATAFED_RELEASE_HOUR);
+  reply.set_release_minute(DATAFED_RELEASE_MINUTE);
 
-    reply.set_api_major(DATAFED_COMMON_PROTOCOL_API_MAJOR);
-    reply.set_api_minor(DATAFED_COMMON_PROTOCOL_API_MINOR);
-    reply.set_api_patch(DATAFED_COMMON_PROTOCOL_API_PATCH);
-    
-    reply.set_component_major(core::version::MAJOR);
-    reply.set_component_minor(core::version::MINOR);
-    reply.set_component_patch(core::version::PATCH);
-    //reply.set_major( VER_MAJOR );
-    //reply.set_mapi_major( VER_MAPI_MAJOR );
-    //reply.set_mapi_minor( VER_MAPI_MINOR );
-    //reply.set_core( VER_CORE );
-    //reply.set_repo( VER_REPO );
-    //reply.set_web( VER_WEB );
-    //reply.set_client_py( VER_CLIENT_PY );*/
-    std::cout << "Setting version info " << std::endl;
-    PROC_MSG_END
+  reply.set_api_major(DATAFED_COMMON_PROTOCOL_API_MAJOR);
+  reply.set_api_minor(DATAFED_COMMON_PROTOCOL_API_MINOR);
+  reply.set_api_patch(DATAFED_COMMON_PROTOCOL_API_PATCH);
+
+  reply.set_component_major(core::version::MAJOR);
+  reply.set_component_minor(core::version::MINOR);
+  reply.set_component_patch(core::version::PATCH);
+  // reply.set_major( VER_MAJOR );
+  // reply.set_mapi_major( VER_MAPI_MAJOR );
+  // reply.set_mapi_minor( VER_MAPI_MINOR );
+  // reply.set_core( VER_CORE );
+  // reply.set_repo( VER_REPO );
+  // reply.set_web( VER_WEB );
+  // reply.set_client_py( VER_CLIENT_PY );*/
+  std::cout << "Setting version info " << std::endl;
+  PROC_MSG_END
 }
 
-std::unique_ptr<IMessage>
-ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    (void)a_uid;
-    PROC_MSG_BEGIN( AuthenticateByPasswordRequest, AuthStatusReply )
+std::unique_ptr<IMessage> ClientWorker::procAuthenticateByPasswordRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  (void)a_uid;
+  PROC_MSG_BEGIN(AuthenticateByPasswordRequest, AuthStatusReply)
 
-    DL_INFO( "Starting manual password authentication for " << request->uid() );
+  DL_INFO("Starting manual password authentication for " << request->uid());
 
-    m_db_client.setClient( request->uid() );
-    m_db_client.clientAuthenticateByPassword( request->password(), reply );
+  m_db_client.setClient(request->uid());
+  m_db_client.clientAuthenticateByPassword(request->password(), reply);
 
-    DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
+  DL_INFO("Manual authentication SUCCESS for " << reply.uid());
 
-    m_core.authenticateClient( a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)), reply.uid() );
+  m_core.authenticateClient(
+      a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)),
+      reply.uid());
 
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
-std::unique_ptr<IMessage>
-ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    (void)a_uid;
-    PROC_MSG_BEGIN( AuthenticateByTokenRequest, AuthStatusReply )
+std::unique_ptr<IMessage> ClientWorker::procAuthenticateByTokenRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  (void)a_uid;
+  PROC_MSG_BEGIN(AuthenticateByTokenRequest, AuthStatusReply)
 
-    DL_INFO( "Starting manual token authentication" );
+  DL_INFO("Starting manual token authentication");
 
-    m_db_client.setClient( a_uid );
-    m_db_client.clientAuthenticateByToken( request->token(), reply );
+  m_db_client.setClient(a_uid);
+  m_db_client.clientAuthenticateByToken(request->token(), reply);
 
-    DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
+  DL_INFO("Manual authentication SUCCESS for " << reply.uid());
 
-    m_core.authenticateClient( a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)), reply.uid() );
+  m_core.authenticateClient(
+      a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)),
+      reply.uid());
 
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
-std::unique_ptr<IMessage>
-ClientWorker::procGetAuthStatusRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    (void)a_uid;
-    PROC_MSG_BEGIN( GetAuthStatusRequest, AuthStatusReply )
+std::unique_ptr<IMessage> ClientWorker::procGetAuthStatusRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  (void)a_uid;
+  PROC_MSG_BEGIN(GetAuthStatusRequest, AuthStatusReply)
 
-    if ( strncmp( a_uid.c_str(), "anon", 4 ) == 0 )
-    {
-        DL_INFO(a_uid << " not authorized");
-        reply.set_auth( false );
+  if (strncmp(a_uid.c_str(), "anon", 4) == 0) {
+    DL_INFO(a_uid << " not authorized");
+    reply.set_auth(false);
+  } else {
+    DL_INFO(a_uid << " authorized");
+    reply.set_auth(true);
+    reply.set_uid(a_uid);
+  }
+
+  PROC_MSG_END
+}
+
+std::unique_ptr<IMessage> ClientWorker::procGenerateCredentialsRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  (void)a_uid;
+  PROC_MSG_BEGIN(GenerateCredentialsRequest, GenerateCredentialsReply)
+
+  DL_INFO("Generating new credentials for " << a_uid);
+
+  m_db_client.setClient(a_uid);
+
+  string pub_key, priv_key;
+
+  if (!m_db_client.userGetKeys(pub_key, priv_key)) {
+    char public_key[41];
+    char secret_key[41];
+
+    if (zmq_curve_keypair(public_key, secret_key) != 0)
+      EXCEPT_PARAM(ID_SERVICE_ERROR,
+                   "Key generation failed: " << zmq_strerror(errno));
+
+    pub_key = public_key;
+    priv_key = secret_key;
+
+    m_db_client.userSetKeys(pub_key, priv_key);
+  }
+
+  reply.set_pub_key(pub_key);
+  reply.set_priv_key(priv_key);
+
+  if (request->has_domain() && request->has_uid()) {
+    m_db_client.clientLinkIdentity(request->domain() + "." +
+                                   to_string(request->uid()));
+  }
+
+  PROC_MSG_END
+}
+
+std::unique_ptr<IMessage> ClientWorker::procRevokeCredentialsRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  (void)a_uid;
+  PROC_MSG_BEGIN(RevokeCredentialsRequest, AckReply)
+
+  DL_INFO("Revoking credentials for " << a_uid);
+
+  m_db_client.setClient(a_uid);
+  m_db_client.userClearKeys();
+
+  PROC_MSG_END
+}
+
+std::unique_ptr<IMessage> ClientWorker::procDataGetRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(DataGetRequest, DataGetReply)
+
+  DL_INFO("CWORKER procDataGetRequest, uid: " << a_uid);
+
+  libjson::Value result;
+
+  m_db_client.setClient(a_uid);
+  m_db_client.taskInitDataGet(*request, reply, result);
+  handleTaskResponse(result);
+
+  PROC_MSG_END
+}
+
+std::unique_ptr<IMessage> ClientWorker::procDataPutRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(DataPutRequest, DataPutReply)
+
+  DL_INFO("CWORKER procDataPutRequest, uid: " << a_uid);
+
+  libjson::Value result;
+
+  m_db_client.setClient(a_uid);
+  m_db_client.taskInitDataPut(*request, reply, result);
+  handleTaskResponse(result);
+
+  PROC_MSG_END
+}
+
+void ClientWorker::schemaEnforceRequiredProperties(
+    const nlohmann::json &a_schema) {
+  // json_schema validator does not check for required fields in schema
+  // Must include properties and type: Object
+  if (!a_schema.is_object()) EXCEPT(1, "Schema must be a JSON object.");
+
+  nlohmann::json::const_iterator i = a_schema.find("properties");
+
+  if (i == a_schema.end())
+    EXCEPT(1, "Schema is missing required 'properties' field.");
+
+  if (!i.value().is_object())
+    EXCEPT(1, "Schema properties field must be a JSON object.");
+
+  i = a_schema.find("type");
+
+  if (i == a_schema.end())
+    EXCEPT(1, "Schema is missing required 'type' field.");
+
+  if (!i.value().is_string() || i.value().get<string>() != "object")
+    EXCEPT(1, "Schema type must be 'object'.");
+}
+
+std::unique_ptr<IMessage> ClientWorker::procSchemaCreateRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(SchemaCreateRequest, AckReply)
+
+  m_db_client.setClient(a_uid);
+
+  DL_INFO("Schema create");
+
+  try {
+    nlohmann::json schema = nlohmann::json::parse(request->def());
+
+    schemaEnforceRequiredProperties(schema);
+
+    nlohmann::json_schema::json_validator validator(bind(
+        &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2));
+
+    validator.set_root_schema(schema);
+
+    m_db_client.schemaCreate(*request);
+  } catch (exception &e) {
+    EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
+    DL_ERROR("Invalid metadata schema: " << e.what());
+  }
+
+  PROC_MSG_END
+}
+
+std::unique_ptr<IMessage> ClientWorker::procSchemaReviseRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(SchemaReviseRequest, AckReply)
+
+  m_db_client.setClient(a_uid);
+
+  DL_INFO("Schema revise");
+
+  if (request->has_def()) {
+    try {
+      nlohmann::json schema = nlohmann::json::parse(request->def());
+
+      schemaEnforceRequiredProperties(schema);
+
+      nlohmann::json_schema::json_validator validator(
+          bind(&ClientWorker::schemaLoader, this, placeholders::_1,
+               placeholders::_2));
+
+      validator.set_root_schema(schema);
+    } catch (exception &e) {
+      EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
+      DL_ERROR("Invalid metadata schema: " << e.what());
     }
-    else
-    {
-        DL_INFO(a_uid << " authorized");
-        reply.set_auth( true );
-        reply.set_uid( a_uid );
+  }
+
+  m_db_client.schemaRevise(*request);
+
+  PROC_MSG_END
+}
+
+std::unique_ptr<IMessage> ClientWorker::procSchemaUpdateRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(SchemaUpdateRequest, AckReply)
+
+  m_db_client.setClient(a_uid);
+
+  DL_INFO("Schema update");
+
+  if (request->has_def()) {
+    try {
+      nlohmann::json schema = nlohmann::json::parse(request->def());
+
+      schemaEnforceRequiredProperties(schema);
+
+      nlohmann::json_schema::json_validator validator(
+          bind(&ClientWorker::schemaLoader, this, placeholders::_1,
+               placeholders::_2));
+
+      validator.set_root_schema(schema);
+    } catch (exception &e) {
+      EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
+      DL_ERROR("Invalid metadata schema: " << e.what());
     }
+  }
 
-    PROC_MSG_END
+  m_db_client.schemaUpdate(*request);
+
+  PROC_MSG_END
 }
 
-std::unique_ptr<IMessage>
-ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    (void)a_uid;
-    PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
+std::unique_ptr<IMessage> ClientWorker::procMetadataValidateRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  DL_INFO("Meta validate");
 
-    DL_INFO( "Generating new credentials for " << a_uid );
+  PROC_MSG_BEGIN(MetadataValidateRequest, MetadataValidateReply)
 
-    m_db_client.setClient( a_uid );
+  m_db_client.setClient(a_uid);
 
-    string pub_key, priv_key;
+  nlohmann::json schema;
 
-    if ( !m_db_client.userGetKeys( pub_key, priv_key ))
-    {
-        char public_key[41];
-        char secret_key[41];
+  try {
+    libjson::Value sch;
+    DL_INFO("Schema " << request->sch_id());
 
-        if ( zmq_curve_keypair( public_key, secret_key ) != 0 )
-            EXCEPT_PARAM( ID_SERVICE_ERROR, "Key generation failed: " << zmq_strerror( errno ));
+    m_db_client.schemaView(request->sch_id(), sch);
 
-        pub_key = public_key;
-        priv_key = secret_key;
+    DL_INFO("Schema: "
+            << sch.asArray().begin()->asObject().getValue("def").toString());
 
-        m_db_client.userSetKeys( pub_key, priv_key );
-    }
+    schema = nlohmann::json::parse(
+        sch.asArray().begin()->asObject().getValue("def").toString());
+  } catch (TraceException &e) {
+    throw;
+  } catch (exception &e) {
+    EXCEPT_PARAM(1, "Schema parse error: " << e.what());
+  }
 
-    reply.set_pub_key( pub_key );
-    reply.set_priv_key( priv_key );
+  // DL_INFO( "Schema " << schema );
 
-    if ( request->has_domain() && request->has_uid() )
-    {
-        m_db_client.clientLinkIdentity( request->domain() + "." + to_string( request->uid() ));
-    }
+  nlohmann::json_schema::json_validator validator(bind(
+      &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2));
 
-    PROC_MSG_END
+  try {
+    // DL_INFO( "Setting root schema" );
+    validator.set_root_schema(schema);
+    // DL_INFO( "Validating" );
+
+    nlohmann::json md = nlohmann::json::parse(request->metadata());
+
+    m_validator_err.clear();
+    validator.validate(md, *this);
+  } catch (exception &e) {
+    m_validator_err = string("Invalid metadata schema: ") + e.what() + "\n";
+    DL_ERROR("Invalid metadata schema: " << e.what());
+  }
+
+  if (m_validator_err.size()) {
+    reply.set_errors(m_validator_err);
+  }
+
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procRecordCreateRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RecordCreateRequest, RecordDataReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    (void)a_uid;
-    PROC_MSG_BEGIN( RevokeCredentialsRequest, AckReply )
+  m_db_client.setClient(a_uid);
 
-    DL_INFO( "Revoking credentials for " << a_uid );
+  // Validate metdata if present
 
-    m_db_client.setClient( a_uid );
-    m_db_client.userClearKeys();
+  // libjson::Value result;
 
-    PROC_MSG_END
-}
+  DL_INFO("Creating record");
 
+  m_validator_err.clear();
 
-std::unique_ptr<IMessage>
-ClientWorker::procDataGetRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( DataGetRequest, DataGetReply )
+  if (request->has_sch_enforce() &&
+      !(request->has_metadata() && request->has_sch_id())) {
+    EXCEPT(1,
+           "Enforce schema option specified, but metadata and/or schema ID is "
+           "missing.");
+  }
 
-    DL_INFO( "CWORKER procDataGetRequest, uid: " << a_uid );
-
-    libjson::Value result;
-
-    m_db_client.setClient( a_uid );
-    m_db_client.taskInitDataGet( *request, reply, result );
-    handleTaskResponse( result );
-
-    PROC_MSG_END
-}
-
-
-std::unique_ptr<IMessage>
-ClientWorker::procDataPutRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( DataPutRequest, DataPutReply )
-
-    DL_INFO( "CWORKER procDataPutRequest, uid: " << a_uid );
-
-    libjson::Value result;
-
-    m_db_client.setClient( a_uid );
-    m_db_client.taskInitDataPut( *request, reply, result );
-    handleTaskResponse( result );
-
-    PROC_MSG_END
-}
-
-void
-ClientWorker::schemaEnforceRequiredProperties( const nlohmann::json & a_schema )
-{
-    // json_schema validator does not check for required fields in schema
-    // Must include properties and type: Object
-    if ( !a_schema.is_object() )
-        EXCEPT(1,"Schema must be a JSON object.");
-
-    nlohmann::json::const_iterator i = a_schema.find("properties");
-
-    if ( i == a_schema.end() )
-        EXCEPT(1,"Schema is missing required 'properties' field.");
-
-    if ( !i.value().is_object() )
-        EXCEPT(1,"Schema properties field must be a JSON object.");
-
-    i = a_schema.find("type");
-
-    if ( i == a_schema.end() )
-        EXCEPT(1,"Schema is missing required 'type' field.");
-
-    if ( !i.value().is_string() || i.value().get<string>() != "object" )
-        EXCEPT(1,"Schema type must be 'object'.");
-}
-
-std::unique_ptr<IMessage>
-ClientWorker::procSchemaCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( SchemaCreateRequest, AckReply )
-
-    m_db_client.setClient( a_uid );
-
-    DL_INFO( "Schema create" );
-
-    try
-    {
-        nlohmann::json schema = nlohmann::json::parse( request->def() );
-
-        schemaEnforceRequiredProperties( schema );
-
-        nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
-
-        validator.set_root_schema( schema );
-
-        m_db_client.schemaCreate( *request );
-    }
-    catch( exception & e )
-    {
-        EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
-        DL_ERROR( "Invalid metadata schema: " << e.what() );
-    }
-
-    PROC_MSG_END
-}
-
-
-std::unique_ptr<IMessage>
-ClientWorker::procSchemaReviseRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( SchemaReviseRequest, AckReply )
-
-    m_db_client.setClient( a_uid );
-
-    DL_INFO( "Schema revise" );
-
-    if ( request->has_def() )
-    {
-        try
-        {
-            nlohmann::json schema = nlohmann::json::parse( request->def() );
-
-            schemaEnforceRequiredProperties( schema );
-
-            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
-
-            validator.set_root_schema( schema );
-        }
-        catch( exception & e )
-        {
-            EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
-            DL_ERROR( "Invalid metadata schema: " << e.what() );
-        }
-    }
-
-    m_db_client.schemaRevise( *request );
-
-    PROC_MSG_END
-}
-
-std::unique_ptr<IMessage>
-ClientWorker::procSchemaUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( SchemaUpdateRequest, AckReply )
-
-    m_db_client.setClient( a_uid );
-
-    DL_INFO( "Schema update" );
-
-    if ( request->has_def() )
-    {
-        try
-        {
-            nlohmann::json schema = nlohmann::json::parse( request->def() );
-
-            schemaEnforceRequiredProperties( schema );
-
-            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
-
-            validator.set_root_schema( schema );
-        }
-        catch( exception & e )
-        {
-            EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
-            DL_ERROR( "Invalid metadata schema: " << e.what() );
-        }
-    }
-
-    m_db_client.schemaUpdate( *request );
-
-    PROC_MSG_END
-}
-
-std::unique_ptr<IMessage>
-ClientWorker::procMetadataValidateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    DL_INFO( "Meta validate" );
-
-    PROC_MSG_BEGIN( MetadataValidateRequest, MetadataValidateReply )
-
-    m_db_client.setClient( a_uid );
+  if (request->has_metadata() && request->has_sch_id()) {
+    // DL_INFO("Has metadata/schema");
+    // DL_INFO( "Must validate JSON, schema " << s->second.asString() );
 
     nlohmann::json schema;
 
-    try
-    {
-        libjson::Value sch;
-        DL_INFO( "Schema " << request->sch_id() );
+    try {
+      libjson::Value sch;
+      m_db_client.schemaView(request->sch_id(), sch);
+      schema = nlohmann::json::parse(
+          sch.asArray().begin()->asObject().getValue("def").toString());
 
-        m_db_client.schemaView( request->sch_id(), sch );
+      nlohmann::json_schema::json_validator validator(
+          bind(&ClientWorker::schemaLoader, this, placeholders::_1,
+               placeholders::_2));
 
-        DL_INFO( "Schema: " << sch.asArray().begin()->asObject().getValue("def").toString() );
+      try {
+        // DL_INFO( "Setting root schema" );
+        validator.set_root_schema(schema);
+        // DL_INFO( "Validating" );
 
-        schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
-    }
-    catch( TraceException & e )
-    {
-        throw;
-    }
-    catch( exception & e )
-    {
-        EXCEPT_PARAM(1,"Schema parse error: " << e.what() );
-    }
-
-    //DL_INFO( "Schema " << schema );
-
-    nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
-
-    try
-    {
-        //DL_INFO( "Setting root schema" );
-        validator.set_root_schema( schema );
-        //DL_INFO( "Validating" );
-
-        nlohmann::json md = nlohmann::json::parse( request->metadata() );
+        nlohmann::json md = nlohmann::json::parse(request->metadata());
 
         m_validator_err.clear();
-        validator.validate( md, *this );
-    }
-    catch( exception & e )
-    {
-        m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
-        DL_ERROR( "Invalid metadata schema: " << e.what() );
-    }
-
-
-    if ( m_validator_err.size() )
-    {
-        reply.set_errors( m_validator_err );
+        validator.validate(md, *this);
+      } catch (exception &e) {
+        m_validator_err = string("Invalid metadata schema: ") + e.what() + "\n";
+        DL_ERROR("Invalid metadata schema: " << e.what());
+      }
+    } catch (exception &e) {
+      m_validator_err = string("Metadata schema error: ") + e.what() + "\n";
+      DL_ERROR("Could not load metadata schema: " << e.what());
     }
 
-    PROC_MSG_END
+    if (request->has_sch_enforce() && m_validator_err.size()) {
+      EXCEPT(1, m_validator_err);
+    }
+  }
+
+  m_db_client.recordCreate(*request, reply);
+
+  if (m_validator_err.size()) {
+    DL_ERROR("Validation error - update record");
+
+    RecordData *data = reply.mutable_data(0);
+
+    m_db_client.recordUpdateSchemaError(data->id(), m_validator_err);
+    // TODO need a def for md_err mask
+    data->set_notes(data->notes() | NOTE_MASK_MD_ERR);
+    data->set_md_err_msg(m_validator_err);
+  }
+
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procRecordUpdateRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RecordUpdateRequest, RecordDataReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procRecordCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RecordCreateRequest, RecordDataReply )
+  m_db_client.setClient(a_uid);
 
-    m_db_client.setClient( a_uid );
+  // Validate metdata if present
 
-    // Validate metdata if present
+  libjson::Value result;
+  // nlohmann::json result;
 
-    //libjson::Value result;
+  DL_INFO("Updating record");
 
-    DL_INFO("Creating record");
+  m_validator_err.clear();
 
-    m_validator_err.clear();
+  if (request->has_metadata() ||
+      (request->has_sch_id() && request->sch_id().size()) ||
+      request->has_sch_enforce()) {
+    // DL_INFO("Has metadata/schema");
+    string metadata, cur_metadata, sch_id;
+    bool merge = true;
 
-    if ( request->has_sch_enforce() && !( request->has_metadata() && request->has_sch_id() ))
-    {
-        EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
+    if (request->has_mdset() && request->mdset()) merge = false;
+
+    if (!request->has_metadata() || merge || !request->has_sch_id()) {
+      // Request does not include metadata AND schema, or it's a merge, so must
+      // load the missing parts from DB before validation can be done.
+
+      RecordViewRequest view_request;
+      RecordDataReply view_reply;
+
+      view_request.set_id(request->id());
+
+      m_db_client.recordView(view_request, view_reply);
+
+      if (request->has_metadata() && merge) {
+        metadata = request->metadata();
+        cur_metadata = view_reply.data(0).metadata();
+      } else if (request->has_metadata()) {
+        metadata = request->metadata();
+      } else {
+        metadata = view_reply.data(0).metadata();
+      }
+
+      if (!request->has_sch_id())
+        sch_id = view_reply.data(0).sch_id();
+      else
+        sch_id = request->sch_id();
+    } else {
+      // metadata and schema ID are both in request AND it is not a merge
+      // operation
+      metadata = request->metadata();
+      sch_id = request->sch_id();
     }
 
-    if ( request->has_metadata() && request->has_sch_id() )
-    {
-        //DL_INFO("Has metadata/schema");
-        //DL_INFO( "Must validate JSON, schema " << s->second.asString() );
+    if (metadata.size() && sch_id.size()) {
+      DL_INFO("Must validate JSON, schema " << sch_id);
 
-        nlohmann::json schema;
+      libjson::Value sch;
+      m_db_client.schemaView(sch_id, sch);
 
-        try
-        {
-            libjson::Value sch;
-            m_db_client.schemaView( request->sch_id(), sch );
-            schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
+      DL_INFO("Schema record JSON:" << sch.toString());
+      // DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString()
+      // );
 
-            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+      nlohmann::json schema = nlohmann::json::parse(
+          sch.asArray().begin()->asObject().getValue("def").toString());
 
-            try
-            {
-                //DL_INFO( "Setting root schema" );
-                validator.set_root_schema( schema );
-                //DL_INFO( "Validating" );
+      DL_INFO("Schema nlohmann: " << schema);
 
-                nlohmann::json md = nlohmann::json::parse( request->metadata() );
+      nlohmann::json_schema::json_validator validator(
+          bind(&ClientWorker::schemaLoader, this, placeholders::_1,
+               placeholders::_2));
 
-                m_validator_err.clear();
-                validator.validate( md, *this );
-            }
-            catch( exception & e )
-            {
-                m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
-                DL_ERROR( "Invalid metadata schema: " << e.what() );
-            }
-        }
-        catch( exception & e )
-        {
-            m_validator_err = string( "Metadata schema error: ") + e.what() + "\n";
-            DL_ERROR( "Could not load metadata schema: " << e.what() );
+      try {
+        DL_INFO("Setting root schema");
+        validator.set_root_schema(schema);
+
+        // TODO This is a hacky way to convert between JSON implementations...
+        DL_INFO("Parse md");
+
+        nlohmann::json md = nlohmann::json::parse(metadata);
+
+        // Apply merge patch if needed
+        if (cur_metadata.size()) {
+          nlohmann::json cur_md = nlohmann::json::parse(cur_metadata);
+          cur_md.merge_patch(md);
+          md = cur_md;
         }
 
-        if ( request->has_sch_enforce() && m_validator_err.size() )
-        {
-            EXCEPT( 1, m_validator_err );
-        }
+        DL_INFO("Validating");
+
+        validator.validate(md, *this);
+      } catch (exception &e) {
+        m_validator_err = string("Invalid metadata schema: ") + e.what() + "\n";
+        DL_ERROR("Invalid metadata schema: " << e.what());
+      }
+
+      if (request->has_sch_enforce() && m_validator_err.size()) {
+        EXCEPT(1, m_validator_err);
+      }
+    } else if (request->has_sch_enforce()) {
+      EXCEPT(1,
+             "Enforce schema option specified, but metadata and/or schema ID "
+             "is missing.");
     }
+  }
 
-    m_db_client.recordCreate( *request, reply );
+  m_db_client.recordUpdate(*request, reply, result);
 
-    if ( m_validator_err.size() )
-    {
-        DL_ERROR( "Validation error - update record" );
+  if (m_validator_err.size()) {
+    DL_ERROR("Validation error - update record");
 
-        RecordData * data = reply.mutable_data(0);
+    m_db_client.recordUpdateSchemaError(request->id(), m_validator_err);
+    // Must find and update md_err flag in reply (always 1 data entry)
+    RecordData *data = reply.mutable_data(0);
+    data->set_notes(data->notes() | NOTE_MASK_MD_ERR);
+    data->set_md_err_msg(m_validator_err);
 
-        m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
+    for (int i = 0; i < reply.update_size(); i++) {
+      ListingData *data = reply.mutable_update(i);
+      if (data->id() == request->id()) {
         // TODO need a def for md_err mask
-        data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
-        data->set_md_err_msg( m_validator_err );
+        data->set_notes(data->notes() | NOTE_MASK_MD_ERR);
+        break;
+      }
     }
+  }
 
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procRecordUpdateBatchRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RecordUpdateBatchRequest, RecordDataReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procRecordUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RecordUpdateRequest, RecordDataReply )
+  m_db_client.setClient(a_uid);
 
-    m_db_client.setClient( a_uid );
+  libjson::Value result;
 
-    // Validate metdata if present
+  m_db_client.recordUpdateBatch(*request, reply, result);
 
-    libjson::Value result;
-    //nlohmann::json result;
+  handleTaskResponse(result);
 
-    DL_INFO("Updating record");
-
-    m_validator_err.clear();
-
-    if ( request->has_metadata() || ( request->has_sch_id() && request->sch_id().size() ) || request->has_sch_enforce() )
-    {
-        //DL_INFO("Has metadata/schema");
-        string metadata, cur_metadata, sch_id;
-        bool merge = true;
-
-        if ( request->has_mdset() && request->mdset() )
-            merge = false;
-
-        if ( !request->has_metadata() || merge || !request->has_sch_id() )
-        {
-            // Request does not include metadata AND schema, or it's a merge, so must load the missing parts
-            // from DB before validation can be done.
-
-            RecordViewRequest view_request;
-            RecordDataReply view_reply;
-
-            view_request.set_id( request->id() );
-
-            m_db_client.recordView( view_request, view_reply );
-
-            if ( request->has_metadata() && merge )
-            {
-                metadata = request->metadata();
-                cur_metadata = view_reply.data(0).metadata();
-            }
-            else if ( request->has_metadata() )
-            {
-                metadata = request->metadata();
-            }
-            else
-            {
-                metadata = view_reply.data(0).metadata();
-            }
-
-
-            if ( !request->has_sch_id() )
-                sch_id = view_reply.data(0).sch_id();
-            else
-                sch_id = request->sch_id();
-        }
-        else
-        {
-            // metadata and schema ID are both in request AND it is not a merge operation
-            metadata = request->metadata();
-            sch_id = request->sch_id();
-        }
-
-        if ( metadata.size() && sch_id.size() )
-        {
-            DL_INFO( "Must validate JSON, schema " << sch_id );
-
-            libjson::Value sch;
-            m_db_client.schemaView( sch_id, sch );
-
-            DL_INFO( "Schema record JSON:" << sch.toString() );
-            //DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
-
-            nlohmann::json schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
-
-            DL_INFO( "Schema nlohmann: " << schema );
-
-            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
-
-            try
-            {
-                DL_INFO( "Setting root schema" );
-                validator.set_root_schema( schema );
-
-                // TODO This is a hacky way to convert between JSON implementations...
-                DL_INFO( "Parse md" );
-
-                nlohmann::json md = nlohmann::json::parse( metadata );
-
-                // Apply merge patch if needed
-                if ( cur_metadata.size() )
-                {
-                    nlohmann::json cur_md = nlohmann::json::parse( cur_metadata );
-                    cur_md.merge_patch( md );
-                    md = cur_md;
-                }
-
-                DL_INFO( "Validating" );
-
-                validator.validate( md, *this );
-            }
-            catch( exception & e )
-            {
-                m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
-                DL_ERROR( "Invalid metadata schema: " << e.what() );
-            }
-
-            if ( request->has_sch_enforce() && m_validator_err.size() )
-            {
-                EXCEPT( 1, m_validator_err );
-            }
-        }
-        else if ( request->has_sch_enforce() )
-        {
-            EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
-        }
-    }
-
-    m_db_client.recordUpdate( *request, reply, result );
-
-    if ( m_validator_err.size() )
-    {
-        DL_ERROR( "Validation error - update record" );
-
-        m_db_client.recordUpdateSchemaError( request->id(), m_validator_err );
-        // Must find and update md_err flag in reply (always 1 data entry)
-        RecordData * data = reply.mutable_data(0);
-        data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
-        data->set_md_err_msg( m_validator_err );
-
-        for ( int i = 0; i < reply.update_size(); i++ )
-        {
-            ListingData * data = reply.mutable_update(i);
-            if ( data->id() == request->id() )
-            {
-                // TODO need a def for md_err mask
-                data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
-                break;
-            }
-        }
-    }
-
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procRecordDeleteRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RecordDeleteRequest, TaskDataReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procRecordUpdateBatchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RecordUpdateBatchRequest, RecordDataReply )
+  m_db_client.setClient(a_uid);
 
-    m_db_client.setClient( a_uid );
+  vector<string> ids;
 
-    libjson::Value result;
+  ids.reserve(request->id_size());
+  for (int i = 0; i < request->id_size(); i++) ids.push_back(request->id(i));
 
-    m_db_client.recordUpdateBatch( *request, reply, result );
+  recordCollectionDelete(ids, reply);
 
-    handleTaskResponse( result );
-
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procCollectionDeleteRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(CollDeleteRequest, TaskDataReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procRecordDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RecordDeleteRequest, TaskDataReply )
+  m_db_client.setClient(a_uid);
 
-    m_db_client.setClient( a_uid );
+  vector<string> ids;
 
-    vector<string> ids;
+  ids.reserve(request->id_size());
+  for (int i = 0; i < request->id_size(); i++) ids.push_back(request->id(i));
 
-    ids.reserve( request->id_size() );
-    for ( int i = 0; i < request->id_size(); i++ )
-        ids.push_back( request->id(i) );
+  recordCollectionDelete(ids, reply);
 
-    recordCollectionDelete( ids, reply );
-
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
+void ClientWorker::recordCollectionDelete(const std::vector<std::string> &a_ids,
+                                          TaskDataReply &a_reply) {
+  libjson::Value result;
 
-std::unique_ptr<IMessage>
-ClientWorker::procCollectionDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( CollDeleteRequest, TaskDataReply )
+  m_db_client.taskInitRecordCollectionDelete(a_ids, a_reply, result);
 
-    m_db_client.setClient( a_uid );
-
-    vector<string> ids;
-
-    ids.reserve( request->id_size() );
-    for ( int i = 0; i < request->id_size(); i++ )
-        ids.push_back( request->id(i) );
-
-    recordCollectionDelete( ids, reply );
-
-    PROC_MSG_END
+  handleTaskResponse(result);
 }
 
+std::unique_ptr<IMessage> ClientWorker::procRecordAllocChangeRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RecordAllocChangeRequest, RecordAllocChangeReply)
 
-void
-ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids, TaskDataReply & a_reply )
-{
-    libjson::Value result;
+  m_db_client.setClient(a_uid);
 
-    m_db_client.taskInitRecordCollectionDelete( a_ids, a_reply, result );
+  libjson::Value result;
 
-    handleTaskResponse( result );
+  m_db_client.taskInitRecordAllocChange(*request, reply, result);
+
+  handleTaskResponse(result);
+
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procRecordOwnerChangeRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RecordOwnerChangeRequest, RecordOwnerChangeReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procRecordAllocChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RecordAllocChangeRequest, RecordAllocChangeReply )
+  m_db_client.setClient(a_uid);
 
-    m_db_client.setClient( a_uid );
+  libjson::Value result;
 
-    libjson::Value result;
+  m_db_client.taskInitRecordOwnerChange(*request, reply, result);
 
-    m_db_client.taskInitRecordAllocChange( *request, reply, result );
+  handleTaskResponse(result);
 
-    handleTaskResponse( result );
-
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procProjectDeleteRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(ProjectDeleteRequest, TaskDataReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procRecordOwnerChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RecordOwnerChangeRequest, RecordOwnerChangeReply )
+  m_db_client.setClient(a_uid);
 
-    m_db_client.setClient( a_uid );
+  libjson::Value result;
 
-    libjson::Value result;
+  m_db_client.taskInitProjectDelete(*request, reply, result);
 
-    m_db_client.taskInitRecordOwnerChange( *request, reply, result );
+  handleTaskResponse(result);
 
-    handleTaskResponse( result );
-
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procRepoAllocationCreateRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RepoAllocationCreateRequest, TaskDataReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procProjectDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( ProjectDeleteRequest, TaskDataReply )
+  m_db_client.setClient(a_uid);
 
-    m_db_client.setClient( a_uid );
+  libjson::Value result;
 
-    libjson::Value result;
+  m_db_client.taskInitRepoAllocationCreate(*request, reply, result);
 
-    m_db_client.taskInitProjectDelete( *request, reply, result );
+  handleTaskResponse(result);
 
-    handleTaskResponse( result );
-
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
-std::unique_ptr<IMessage>
-ClientWorker::procRepoAllocationCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RepoAllocationCreateRequest, TaskDataReply )
+std::unique_ptr<IMessage> ClientWorker::procRepoAllocationDeleteRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(RepoAllocationDeleteRequest, TaskDataReply)
 
-    m_db_client.setClient( a_uid );
+  m_db_client.setClient(a_uid);
 
-    libjson::Value result;
+  libjson::Value result;
 
-    m_db_client.taskInitRepoAllocationCreate( *request, reply, result );
+  m_db_client.taskInitRepoAllocationDelete(*request, reply, result);
 
-    handleTaskResponse( result );
+  handleTaskResponse(result);
 
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
-std::unique_ptr<IMessage>
-ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( RepoAllocationDeleteRequest, TaskDataReply )
+std::unique_ptr<IMessage> ClientWorker::procProjectSearchRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  (void)a_uid;
 
-    m_db_client.setClient( a_uid );
+  PROC_MSG_BEGIN(ProjectSearchRequest, ProjectDataReply)
 
-    libjson::Value result;
+  EXCEPT(1, "Not implemented");
 
-    m_db_client.taskInitRepoAllocationDelete( *request, reply, result );
+  /*
+      m_db_client.setClient( a_uid );
+      DL_INFO("about to parse query[" << request->text_query() << "]" );
+      vector<string> scope;
+      for ( int i = 0; i < request->scope_size(); i++ )
+          scope.push_back( request->scope(i) );
+      string q = parseProjectQuery( request->text_query(), scope );
+      DL_INFO("parsed query[" << q << "]" );
+      m_db_client.projSearch( q, reply );
+  */
 
-    handleTaskResponse( result );
-
-    PROC_MSG_END
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procRepoAuthzRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  (void)a_uid;
+  PROC_MSG_BEGIN(RepoAuthzRequest, AckReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procProjectSearchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    (void) a_uid;
+  std::cout
+      << "\n****************************************************************"
+      << std::endl;
+  std::cout << "RepoAuthzRequest encountered\n" << std::endl;
+  DL_INFO(
+      "AUTHZ repo: "
+      << a_uid << ", usr: "
+      << request->client() /*<< ", repo: " << request->repo()*/ << ", file: "
+      << request->file() << ", act: " << request->action());
 
-    PROC_MSG_BEGIN( ProjectSearchRequest, ProjectDataReply )
+  // Because the Globus will send a comma separated list of all the ids we will
+  // separate them into individual ids and check if any of them have permission
 
-    EXCEPT( 1, "Not implemented" );
-
-/*
-    m_db_client.setClient( a_uid );
-    DL_INFO("about to parse query[" << request->text_query() << "]" );
-    vector<string> scope;
-    for ( int i = 0; i < request->scope_size(); i++ )
-        scope.push_back( request->scope(i) );
-    string q = parseProjectQuery( request->text_query(), scope );
-    DL_INFO("parsed query[" << q << "]" );
-    m_db_client.projSearch( q, reply );
-*/
-
-    PROC_MSG_END
+  //    std::vector<std::string> clients;
+  //    std::istringstream iss(request->client());
+  //    std::string client;
+  //    int uuid_char_len = 36;
+  //    while (std::getline(iss, client, ',')) {
+  //      if(client.length() != uuid_char_len ){
+  //        EXCEPT_PARAM( ID_SERVICE_ERROR, "REPO client id unsupported format:
+  //        " << request->client());
+  //      } else {
+  //        clients.push_back(element);
+  //      }
+  //    }
+  //
+  //    for( client : clients ) {
+  //      request->set_client(client);
+  m_db_client.setClient(request->client());
+  m_db_client.repoAuthz(*request, reply);
+  // Just send the first one
+  //      break;
+  //    }
+  PROC_MSG_END
 }
 
+std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request) {
+  PROC_MSG_BEGIN(UserGetAccessTokenRequest, UserAccessTokenReply)
 
-std::unique_ptr<IMessage>
-ClientWorker::procRepoAuthzRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    (void)a_uid;
-    PROC_MSG_BEGIN( RepoAuthzRequest, AckReply )
+  string acc_tok, ref_tok;
+  uint32_t expires_in;
 
-    std::cout << "\n****************************************************************" << std::endl;
-    std::cout << "RepoAuthzRequest encountered\n" << std::endl;
-    DL_INFO( "AUTHZ repo: " << a_uid << ", usr: " << request->client() /*<< ", repo: " << request->repo()*/ << ", file: " << request->file() << ", act: " << request->action() );
+  m_db_client.setClient(a_uid);
+  m_db_client.userGetAccessToken(acc_tok, ref_tok, expires_in);
 
-    // Because the Globus will send a comma separated list of all the ids we will separate them into individual ids and check if any of them have permission
-    
-//    std::vector<std::string> clients;
-//    std::istringstream iss(request->client());
-//    std::string client;
-//    int uuid_char_len = 36;
-//    while (std::getline(iss, client, ',')) {
-//      if(client.length() != uuid_char_len ){
-//        EXCEPT_PARAM( ID_SERVICE_ERROR, "REPO client id unsupported format: " << request->client());
-//      } else {
-//        clients.push_back(element);
-//      }
-//    }
-//
-//    for( client : clients ) {
-//      request->set_client(client);
-      m_db_client.setClient( request->client() );
-      m_db_client.repoAuthz( *request, reply );
-      // Just send the first one 
-//      break;
-//    }
-    PROC_MSG_END
+  if (expires_in < 300) {
+    DL_INFO("Refreshing access token for " << a_uid);
+
+    m_globus_api.refreshAccessToken(ref_tok, acc_tok, expires_in);
+    m_db_client.userSetAccessToken(acc_tok, expires_in, ref_tok);
+  }
+
+  reply.set_access(acc_tok);
+  reply.set_expires_in(expires_in);
+
+  PROC_MSG_END
 }
 
+void ClientWorker::handleTaskResponse(libjson::Value &a_result) {
+  libjson::Value::Object &obj = a_result.asObject();
 
-std::unique_ptr<IMessage>
-ClientWorker::procUserGetAccessTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
-{
-    PROC_MSG_BEGIN( UserGetAccessTokenRequest, UserAccessTokenReply )
+  if (obj.has("task")) {
+    libjson::Value::Object &task_obj = obj.asObject();
 
-    string acc_tok, ref_tok;
-    uint32_t expires_in;
-
-    m_db_client.setClient( a_uid );
-    m_db_client.userGetAccessToken( acc_tok, ref_tok, expires_in );
-
-    if ( expires_in < 300 )
-    {
-        DL_INFO( "Refreshing access token for " << a_uid );
-
-        m_globus_api.refreshAccessToken( ref_tok, acc_tok, expires_in );
-        m_db_client.userSetAccessToken( acc_tok, expires_in, ref_tok );
-
-    }
-
-    reply.set_access( acc_tok );
-    reply.set_expires_in( expires_in );
-
-    PROC_MSG_END
-}
-
-void
-ClientWorker::handleTaskResponse( libjson::Value & a_result )
-{
-    libjson::Value::Object & obj = a_result.asObject();
-
-    if ( obj.has( "task" ))
-    {
-        libjson::Value::Object & task_obj = obj.asObject();
-
-        if ( task_obj.getNumber( "status" ) != TS_BLOCKED )
-            TaskMgr::getInstance().newTask( task_obj.getString( "_id" ));
-    }
+    if (task_obj.getNumber("status") != TS_BLOCKED)
+      TaskMgr::getInstance().newTask(task_obj.getString("_id"));
+  }
 }
 
 /*
 string
-ClientWorker::parseProjectQuery( const string & a_text_query, const vector<string> & a_scope )
+ClientWorker::parseProjectQuery( const string & a_text_query, const
+vector<string> & a_scope )
 {
     string phrase = parseSearchTextPhrase( a_text_query );
 
@@ -1475,12 +1473,14 @@ ClientWorker::parseProjectQuery( const string & a_text_query, const vector<strin
 
     if ( a_scope.size() )
     {
-        result += string("for i in intersection((for i in projview search analyzer(") + phrase + ",'text_en') return i),(";
+        result += string("for i in intersection((for i in projview search
+analyzer(") + phrase + ",'text_en') return i),(";
 
         if ( a_scope.size() > 1 )
             result += "for i in union((";
 
-        for ( vector<string>::const_iterator c = a_scope.begin(); c != a_scope.end(); c++ )
+        for ( vector<string>::const_iterator c = a_scope.begin(); c !=
+a_scope.end(); c++ )
         {
             if ( c != a_scope.begin() )
                 result += "),(";
@@ -1488,7 +1488,9 @@ ClientWorker::parseProjectQuery( const string & a_text_query, const vector<strin
             // TODO Add support for organization, facility
             //if ( c->compare( 0, 2, "u/" ) == 0 )
             //{
-                result += string("for i in 1..1 inbound '") + ( c->compare( 0, 2, "u/" ) != 0 ? "u/" : "" ) + *c + "' owner, admin filter is_same_collection('p',i) return i";
+                result += string("for i in 1..1 inbound '") + ( c->compare( 0,
+2, "u/" ) != 0 ? "u/" : "" ) + *c + "' owner, admin filter
+is_same_collection('p',i) return i";
             //}
         }
 
@@ -1498,7 +1500,8 @@ ClientWorker::parseProjectQuery( const string & a_text_query, const vector<strin
         result += "))";
     }
     else
-        result += string("for i in projview search analyzer(") + phrase + ",'text_en')";
+        result += string("for i in projview search analyzer(") + phrase +
+",'text_en')";
 
     // TODO Add sort order
     result += " limit 100 return {id:i._id,title:i.title,owner:i.owner}";
@@ -1507,19 +1510,22 @@ ClientWorker::parseProjectQuery( const string & a_text_query, const vector<strin
 }
 */
 
-void
-ClientWorker::schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value )
-{
-    DL_INFO( "Load schema, scheme: " << a_uri.scheme() << ", path: " << a_uri.path() << ", auth: " << a_uri.authority() << ", id: " << a_uri.identifier() );
+void ClientWorker::schemaLoader(const nlohmann::json_uri &a_uri,
+                                nlohmann::json &a_value) {
+  DL_INFO("Load schema, scheme: "
+          << a_uri.scheme() << ", path: " << a_uri.path()
+          << ", auth: " << a_uri.authority() << ", id: " << a_uri.identifier());
 
-    libjson::Value sch;
-    std::string id = a_uri.path();
+  libjson::Value sch;
+  std::string id = a_uri.path();
 
-    id = id.substr( 1 ); // Skip leading "/"
-    m_db_client.schemaView( id, sch );
+  id = id.substr(1);  // Skip leading "/"
+  m_db_client.schemaView(id, sch);
 
-    a_value = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
-    DL_INFO( "Loaded schema: " << a_value );
+  a_value = nlohmann::json::parse(
+      sch.asArray().begin()->asObject().getValue("def").toString());
+  DL_INFO("Loaded schema: " << a_value);
 }
 
-}}
+}  // namespace Core
+}  // namespace SDMS

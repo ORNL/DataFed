@@ -13,12 +13,12 @@
 namespace SDMS {
 
 class CredentialFactory {
-  public:
-    std::unique_ptr<ICredentials> create(
-        const ProtocolType,
-        const std::unordered_map<CredentialType, std::string> & options) const;
+ public:
+  std::unique_ptr<ICredentials> create(
+      const ProtocolType,
+      const std::unordered_map<CredentialType, std::string>& options) const;
 };
 
-} // namespace SDMS
+}  // namespace SDMS
 
-#endif // CREDENTIAL_FACTORY_HPP
+#endif  // CREDENTIAL_FACTORY_HPP

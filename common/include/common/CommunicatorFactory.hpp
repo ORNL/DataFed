@@ -3,8 +3,8 @@
 #pragma once
 
 // Local includes
-#include "ICredentials.hpp"
 #include "ICommunicator.hpp"
+#include "ICredentials.hpp"
 #include "SocketOptions.hpp"
 
 // Standard includes
@@ -13,14 +13,13 @@
 namespace SDMS {
 
 class CommunicatorFactory {
-  public:
-    std::unique_ptr<ICommunicator> create(
-        const SocketOptions & socket_options,
-        const ICredentials & credentials,
-        uint32_t timeout_on_receive,
-        long timeout_on_poll) const;
+ public:
+  std::unique_ptr<ICommunicator> create(const SocketOptions& socket_options,
+                                        const ICredentials& credentials,
+                                        uint32_t timeout_on_receive,
+                                        long timeout_on_poll) const;
 };
 
-} // namespace SDMS
+}  // namespace SDMS
 
-#endif // COMMUNICATOR_FACTORY_HPP
+#endif  // COMMUNICATOR_FACTORY_HPP

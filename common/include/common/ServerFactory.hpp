@@ -12,44 +12,33 @@
 
 namespace SDMS {
 
-  class ICredentials;
-  class IOperator;
-  class IServer;
+class ICredentials;
+class IOperator;
+class IServer;
 
-  enum class SocketRole {
-    CLIENT,
-    SERVER,
-    MONITOR,
-    CONTROL
-  };
+enum class SocketRole { CLIENT, SERVER, MONITOR, CONTROL };
 
-  /**
-   * The custom proxy server is not required to use ZMQ, it can work with
-   * any hanldes hence there is no need to specify the PROTOCOL. The others
-   * use convenience objects provided by zmq and are thus technology specific.
-   **/
-  enum class ServerType {
-    PROXY_CUSTOM,
-    PROXY_BASIC_ZMQ,
-    ROUTER_ZMQ
-  };
+/**
+ * The custom proxy server is not required to use ZMQ, it can work with
+ * any hanldes hence there is no need to specify the PROTOCOL. The others
+ * use convenience objects provided by zmq and are thus technology specific.
+ **/
+enum class ServerType { PROXY_CUSTOM, PROXY_BASIC_ZMQ, ROUTER_ZMQ };
 
-  class ServerFactory {
-    public:
-      std::unique_ptr<IServer> create(
-          ServerType server_type,
-          const std::unordered_map<SocketRole, SocketOptions> & socket_options,
-          const std::unordered_map<SocketRole, ICredentials *> & socket_credentials
-          );
+class ServerFactory {
+ public:
+  std::unique_ptr<IServer> create(
+      ServerType server_type,
+      const std::unordered_map<SocketRole, SocketOptions> &socket_options,
+      const std::unordered_map<SocketRole, ICredentials *> &socket_credentials);
 
+  std::unique_ptr<IServer> create(
+      ServerType server_type,
+      const std::unordered_map<SocketRole, SocketOptions> &socket_options,
+      const std::unordered_map<SocketRole, ICredentials *> &socket_credentials,
+      std::vector<std::unique_ptr<IOperator>> incoming_operators);
+};
 
-      std::unique_ptr<IServer> create(
-          ServerType server_type,
-          const std::unordered_map<SocketRole, SocketOptions> & socket_options,
-          const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
-          std::vector<std::unique_ptr<IOperator>> incoming_operators);
-  };
+}  // namespace SDMS
 
-} // namespace SDMS
-
-#endif // SERVER_FACTORY_HPP
+#endif  // SERVER_FACTORY_HPP

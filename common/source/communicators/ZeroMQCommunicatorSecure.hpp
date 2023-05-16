@@ -15,19 +15,17 @@
 
 namespace SDMS {
 
-  class ZeroMQCommunicatorSecure : public ZeroMQCommunicator {
-    private:
-      void zmqCurveSetup(const ICredentials & credentials);
+class ZeroMQCommunicatorSecure : public ZeroMQCommunicator {
+ private:
+  void zmqCurveSetup(const ICredentials& credentials);
 
-    public:
-      ZeroMQCommunicatorSecure(
-          const SocketOptions & socket_options,
-          const ICredentials & credentials,
-          uint32_t timeout_on_receive_milliseconds,
-          long timeout_on_poll_milliseconds);
+ public:
+  ZeroMQCommunicatorSecure(const SocketOptions& socket_options,
+                           const ICredentials& credentials,
+                           uint32_t timeout_on_receive_milliseconds,
+                           long timeout_on_poll_milliseconds);
+};
 
-  };
+}  // namespace SDMS
 
-} // namespace SDMS
-
-#endif // ZEROMQ_COMMUNICATOR_SECURE_HPP
+#endif  // ZEROMQ_COMMUNICATOR_SECURE_HPP

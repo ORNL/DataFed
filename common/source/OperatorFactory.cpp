@@ -12,19 +12,21 @@
 
 namespace SDMS {
 
-std::unordered_map<OperatorType,OperatorFactory::OperatorCreateMethod>
+std::unordered_map<OperatorType, OperatorFactory::OperatorCreateMethod>
     OperatorFactory::m_create_methods;
 
-	OperatorFactory::OperatorFactory() {
-		registerOperator<AuthenticationOperator,OperatorType::Authenticator>();	
-		registerOperator<RouterBookKeepingOperator,OperatorType::RouterBookKeeping>();	
-	}
+OperatorFactory::OperatorFactory() {
+  registerOperator<AuthenticationOperator, OperatorType::Authenticator>();
+  registerOperator<RouterBookKeepingOperator,
+                   OperatorType::RouterBookKeeping>();
+}
 
-  std::unique_ptr<IOperator> OperatorFactory::create(const OperatorType type, std::any & options ) const {
-		if( m_create_methods.count(type) ){
-			return m_create_methods[type](options);
-		}
-    return std::unique_ptr<IOperator>();
+std::unique_ptr<IOperator> OperatorFactory::create(const OperatorType type,
+                                                   std::any& options) const {
+  if (m_create_methods.count(type)) {
+    return m_create_methods[type](options);
   }
+  return std::unique_ptr<IOperator>();
+}
 
-} // namespace SDMS
+}  // namespace SDMS

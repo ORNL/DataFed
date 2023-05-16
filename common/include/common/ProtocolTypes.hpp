@@ -6,9 +6,9 @@ namespace SDMS {
 
 enum class ProtocolType {
   HTTP,
-  ZQTP // ZeroMQ Transport Layer Protocol
+  ZQTP  // ZeroMQ Transport Layer Protocol
 };
 
-} // namespace SDMS
+}  // namespace SDMS
 
-#endif // PROTOCOL_TYPES_HPP
+#endif  // PROTOCOL_TYPES_HPP

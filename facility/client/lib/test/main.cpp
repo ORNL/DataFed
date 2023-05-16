@@ -3,62 +3,57 @@
 
 #include <time.h>
 
-#define timerDef() struct timespec _T0 = {0,0}, _T1 = {0,0}
-#define timerStart() clock_gettime(CLOCK_REALTIME,&_T0)
-#define timerStop() clock_gettime(CLOCK_REALTIME,&_T1)
-#define timerElapsed() ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec)/1.0e9))
+#define timerDef() struct timespec _T0 = {0, 0}, _T1 = {0, 0}
+#define timerStart() clock_gettime(CLOCK_REALTIME, &_T0)
+#define timerStop() clock_gettime(CLOCK_REALTIME, &_T1)
+#define timerElapsed() \
+  ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec) / 1.0e9))
 
-#include "TraceException.hpp"
 #include "Client.hpp"
+#include "TraceException.hpp"
 
 using namespace std;
 using namespace SDMS;
 using namespace SDMS::Facility;
 
+void doMsgTest(Client &client, int iter) {
+  timerDef();
 
-void doMsgTest( Client & client, int iter )
-{
-    timerDef();
+  cout << "msg marshalling test...";
 
-    cout << "msg marshalling test...";
+  timerStart();
 
-    timerStart();
+  client.test(iter);
 
-    client.test( iter );
+  timerStop();
 
-    timerStop();
-
-    cout << " time: " << timerElapsed() << " sec, iter/sec: " << iter/timerElapsed() << "\n";
+  cout << " time: " << timerElapsed()
+       << " sec, iter/sec: " << iter / timerElapsed() << "\n";
 }
 
+void perfTest(Client &client, int iter) {
+  timerDef();
+  spCollDataReply colls;
 
-void perfTest( Client & client, int iter )
-{
-    timerDef();
-    spCollDataReply colls;
+  cout << "perf test...";
 
-    cout << "perf test...";
+  timerStart();
 
-    timerStart();
+  for (int i = 0; i < iter; ++i) {
+    // users = client.userList();
+    colls = client.collList("d3s");
+  }
 
-    for ( int i = 0; i < iter; ++i )
-    {
-        //users = client.userList();
-        colls = client.collList( "d3s" );
-    }
-
-    timerStop();
-    cout << " time: " << timerElapsed() << " sec, ops/sec: " << iter/timerElapsed() << "\n";
+  timerStop();
+  cout << " time: " << timerElapsed()
+       << " sec, ops/sec: " << iter / timerElapsed() << "\n";
 }
 
+int main(int a_argc, char **a_argv) {
+  (void)a_argc;
+  (void)a_argv;
 
-int main( int a_argc, char ** a_argv )
-{
-    (void) a_argc;
-    (void) a_argv;
-
-    try
-    {
+  try {
 #if 0
         const char * host = "127.0.0.1";
         int port = 5800;
@@ -108,7 +103,7 @@ int main( int a_argc, char ** a_argv )
         }
 #endif
 
-        //timerDef();
+    // timerDef();
 #if 0
         cout << "Starting client (" << unit << ")" << endl;
 
@@ -126,138 +121,136 @@ int main( int a_argc, char ** a_argv )
         }
 #endif
 
-        //spUserDataReply users;
-        //spRecordDataReply records;
-        //spCollDataReply colls;
+    // spUserDataReply users;
+    // spRecordDataReply records;
+    // spCollDataReply colls;
 
+    // msgTest( client );
+    // pingTest( client, 1000 );
+    // perfTest( client );
 
-        //msgTest( client );
-        //pingTest( client, 1000 );
-        //perfTest( client );
+    /*
+            #if 1
+            spXfrDataReply xfrs = client.getData( "dat2",
+       "olcf#dtn_atlas/~/working/" ); #else string new_id; spXfrDataReply xfrs =
+       client.putData( "olcf#dtn_atlas/~/datafile", "Hello World", new_id, "Test
+       data", "dat2", "{\"x\":1}" ); cout << "Created data record " << new_id <<
+       "\n"; #endif
 
-/*
-        #if 1
-        spXfrDataReply xfrs = client.getData( "dat2", "olcf#dtn_atlas/~/working/" );
-        #else
-        string new_id;
-        spXfrDataReply xfrs = client.putData( "olcf#dtn_atlas/~/datafile", "Hello World", new_id, "Test data", "dat2", "{\"x\":1}" );
-        cout << "Created data record " << new_id << "\n";
-        #endif
-
-        if ( xfrs->xfr_size() == 1 )
-        {
-            const XfrData & xfr = xfrs->xfr(0);
-            cout << "xfr id     : " << xfr.id() << "\n";
-            cout << "xfr mode   : " << (int)xfr.mode() << "\n";
-            cout << "xfr status : " << (int)xfr.status() << "\n";
-            cout << "data id    : " << xfr.data_id() << "\n";
-            cout << "repo_path  : " << xfr.repo_path() << "\n";
-            cout << "loc_path  : " << xfr.local_path() << "\n";
-            cout << "globus id  : " << xfr.globus_id() << "\n";
-        }
-        else
-            cout << "Data xfr not started?\n";
-*/
-
-
-/*
-        XfrStatus xfr_stat = get_data->xfr_status();
-        if ( xfr_stat == XFR_ACTIVE )
-        {
-            cout << "Waiting for xfr\n";
-            while ( xfr_stat == XFR_ACTIVE )
+            if ( xfrs->xfr_size() == 1 )
             {
-                sleep( 5 );
-                xfr_stat = client.getXfrStatus( get_data->xfr_id() );
-                cout << "status: " << (int)xfr_stat << "\n";
+                const XfrData & xfr = xfrs->xfr(0);
+                cout << "xfr id     : " << xfr.id() << "\n";
+                cout << "xfr mode   : " << (int)xfr.mode() << "\n";
+                cout << "xfr status : " << (int)xfr.status() << "\n";
+                cout << "data id    : " << xfr.data_id() << "\n";
+                cout << "repo_path  : " << xfr.repo_path() << "\n";
+                cout << "loc_path  : " << xfr.local_path() << "\n";
+                cout << "globus id  : " << xfr.globus_id() << "\n";
             }
-        }
-*/
+            else
+                cout << "Data xfr not started?\n";
+    */
 
+    /*
+            XfrStatus xfr_stat = get_data->xfr_status();
+            if ( xfr_stat == XFR_ACTIVE )
+            {
+                cout << "Waiting for xfr\n";
+                while ( xfr_stat == XFR_ACTIVE )
+                {
+                    sleep( 5 );
+                    xfr_stat = client.getXfrStatus( get_data->xfr_id() );
+                    cout << "status: " << (int)xfr_stat << "\n";
+                }
+            }
+    */
 
-/*
-        records = client.recordView( "d3s:ddat1" );
-        if ( records->record_size() == 1 )
-        {
-            const RecordData & rec = records->record(0);
-            cout << "Record id: " << rec.id() << ", title: " << rec.title() << "\n";
-        }
-        else
-            cout << "Record not found\n";
-*/
+    /*
+            records = client.recordView( "d3s:ddat1" );
+            if ( records->record_size() == 1 )
+            {
+                const RecordData & rec = records->record(0);
+                cout << "Record id: " << rec.id() << ", title: " << rec.title()
+       << "\n";
+            }
+            else
+                cout << "Record not found\n";
+    */
 
-        //cout << "trans ID: " << client.getData( "d3s:ddat1", "/home/d3s/xxxx", CREATE_PATH | BACKUP ) << "\n";
+    // cout << "trans ID: " << client.getData( "d3s:ddat1", "/home/d3s/xxxx",
+    // CREATE_PATH | BACKUP ) << "\n";
 
+    /*
+            users = client.userView( "" );
+            if ( users->user_size() == 1 )
+            {
+                const UserData & user = users->user(0);
+                cout << "uid: " << user.uid() << ", name: " << user.name_first()
+       << " " << user.name_last() << "\n";
+            }
 
-/*
-        users = client.userView( "" );
-        if ( users->user_size() == 1 )
-        {
-            const UserData & user = users->user(0);
-            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
-        }
+            users = client.userView( "d3s" );
+            if ( users->user_size() == 1 )
+            {
+                const UserData & user = users->user(0);
+                cout << "uid: " << user.uid() << ", name: " << user.name_first()
+       << " " << user.name_last() << "\n";
+            }
+    */
 
-        users = client.userView( "d3s" );
-        if ( users->user_size() == 1 )
-        {
-            const UserData & user = users->user(0);
-            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
-        }
-*/
+    /*
+            users = client.userView( "d3s" );
+            if ( users->user_size() == 1 )
+            {
+                const UserData & user = users->user(0);
+                cout << "uid: " << user.uid() << ", name: " << user.name_first()
+       << " " << user.name_last() << "\n";
+            }
+    */
 
-/*
-        users = client.userView( "d3s" );
-        if ( users->user_size() == 1 )
-        {
-            const UserData & user = users->user(0);
-            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
-        }
-*/
+    /*
+            colls = client.collList( "" );
+            cout << "my collection count: " << colls->coll_size() << "\n";
+            for ( int i = 0; i < colls->coll_size(); ++i )
+            {
+                const CollData & coll = colls->coll(i);
+                cout << "id: " << coll.id() << ", title: " << coll.title() <<
+       "\n";
+            }
+    */
 
-/*
-        colls = client.collList( "" );
-        cout << "my collection count: " << colls->coll_size() << "\n";
-        for ( int i = 0; i < colls->coll_size(); ++i )
-        {
-            const CollData & coll = colls->coll(i);
-            cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
-        }
-*/
+    /*
+            colls = client.collList( "user1" );
+            cout << "user1 collection count: " << colls->coll_size() << "\n";
+            for ( int i = 0; i < colls->coll_size(); ++i )
+            {
+                const CollData & coll = colls->coll(i);
+                cout << "id: " << coll.id() << ", title: " << coll.title() <<
+       "\n";
+            }
+    */
 
-/*
-        colls = client.collList( "user1" );
-        cout << "user1 collection count: " << colls->coll_size() << "\n";
-        for ( int i = 0; i < colls->coll_size(); ++i )
-        {
-            const CollData & coll = colls->coll(i);
-            cout << "id: " << coll.id() << ", title: " << coll.title() << "\n";
-        }
-*/
+    /*
+            spUserDataReply users = client.userList();
 
-/*
-        spUserDataReply users = client.userList();
+            cout << "user count: " << users->user_size() << "\n";
+            for ( int i = 0; i < users->user_size(); ++i )
+            {
+                const UserData & user = users->user(i);
+                cout << "uid: " << user.uid() << ", name: " << user.name_first()
+       << " " << user.name_last() << "\n";
+            }
 
-        cout << "user count: " << users->user_size() << "\n";
-        for ( int i = 0; i < users->user_size(); ++i )
-        {
-            const UserData & user = users->user(i);
-            cout << "uid: " << user.uid() << ", name: " << user.name_first() << " " << user.name_last() << "\n";
-        }
+            users.reset();
+    */
+    // client.stop();
+    // sleep( 5 );
+  } catch (TraceException &e) {
+    cout << "Exception: " << e.toString() << "\n";
+  } catch (exception &e) {
+    cout << "Exception: " << e.what() << "\n";
+  }
 
-        users.reset();
-*/
-        //client.stop();
-        //sleep( 5 );
-    }
-    catch( TraceException &e )
-    {
-        cout << "Exception: " << e.toString() << "\n";
-    }
-    catch( exception &e )
-    {
-        cout << "Exception: " << e.what() << "\n";
-    }
-
-    return 0;
+  return 0;
 }
-

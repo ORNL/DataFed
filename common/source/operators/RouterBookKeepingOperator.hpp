@@ -19,26 +19,26 @@ class RouterBookKeepingOperator : public IOperator {
    * needed, to add the router identity in cases where the ROUTER dealer
    * combination is not being used
    **/
-  public:    
-    explicit RouterBookKeepingOperator(std::any options );
+ public:
+  explicit RouterBookKeepingOperator(std::any options);
 
-		static std::unique_ptr<IOperator> create(std::any options);
-  private:
+  static std::unique_ptr<IOperator> create(std::any options);
 
-    std::string m_client_socket_id;
+ private:
+  std::string m_client_socket_id;
 
-    virtual OperatorType type() const noexcept final { return OperatorType::RouterBookKeeping; }
-  
-    virtual void execute(IMessage & message) final;
-  
+  virtual OperatorType type() const noexcept final {
+    return OperatorType::RouterBookKeeping;
+  }
 
+  virtual void execute(IMessage& message) final;
 };
 
-inline std::unique_ptr<IOperator>
-RouterBookKeepingOperator::create(std::any options) {
+inline std::unique_ptr<IOperator> RouterBookKeepingOperator::create(
+    std::any options) {
   return std::make_unique<RouterBookKeepingOperator>(options);
 }
 
-} // namespace SDMS
+}  // namespace SDMS
 
-#endif // ROUTERBOOKKEEPING_OPERATOR_HPP
+#endif  // ROUTERBOOKKEEPING_OPERATOR_HPP

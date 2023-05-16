@@ -14,28 +14,30 @@ namespace SDMS {
 
 class ISocket {
 
-  public:
-    /*********************************************************
-     * Getters
-     *********************************************************/
-    virtual SocketClassType getSocketClassType() const noexcept = 0;
-    virtual SocketCommunicationType getSocketCommunicationType() const noexcept = 0;
-    virtual SocketDirectionalityType getSocketDirectionalityType() const noexcept = 0;
-    virtual SocketConnectionLife getSocketConnectionLife() const noexcept = 0;
+ public:
+  /*********************************************************
+   * Getters
+   *********************************************************/
+  virtual SocketClassType getSocketClassType() const noexcept = 0;
+  virtual SocketCommunicationType getSocketCommunicationType()
+      const noexcept = 0;
+  virtual SocketDirectionalityType getSocketDirectionalityType()
+      const noexcept = 0;
+  virtual SocketConnectionLife getSocketConnectionLife() const noexcept = 0;
 
-    virtual ProtocolType getProtocolType() const noexcept = 0;
-    virtual std::string getAddress() const noexcept = 0;
-    virtual std::string get(const CredentialType credential_type) const = 0;
+  virtual ProtocolType getProtocolType() const noexcept = 0;
+  virtual std::string getAddress() const noexcept = 0;
+  virtual std::string get(const CredentialType credential_type) const = 0;
 
-    virtual bool hasCredentials() const noexcept = 0;
-    /**
-     * Get an identifier to the local socket host/thread/process, requires
-     * users setting the local_id in the socket options otherwise a random
-     * identifier will be created.
-     **/
-    virtual std::string getID() const noexcept = 0;
+  virtual bool hasCredentials() const noexcept = 0;
+  /**
+   * Get an identifier to the local socket host/thread/process, requires
+   * users setting the local_id in the socket options otherwise a random
+   * identifier will be created.
+   **/
+  virtual std::string getID() const noexcept = 0;
 };
 
-} // SDMS
+}  // namespace SDMS
 
-#endif // ISOCKET_HPP
+#endif  // ISOCKET_HPP

@@ -15,15 +15,17 @@
 
 namespace SDMS {
 
-  class ProtoBufFactory {
-      ProtoBufMap m_proto_map;
-      ::google::protobuf::MessageFactory * m_factory;
-    public: 
-      ProtoBufFactory(); 
-      std::unique_ptr<::google::protobuf::Message> create(uint16_t desc_type);
-      std::unique_ptr<::google::protobuf::Message> create(const ::google::protobuf::Descriptor * msg_descriptor);
-  };
+class ProtoBufFactory {
+  ProtoBufMap m_proto_map;
+  ::google::protobuf::MessageFactory* m_factory;
 
-}
+ public:
+  ProtoBufFactory();
+  std::unique_ptr<::google::protobuf::Message> create(uint16_t desc_type);
+  std::unique_ptr<::google::protobuf::Message> create(
+      const ::google::protobuf::Descriptor* msg_descriptor);
+};
 
-#endif // PROTOBUFFACTORY_HPP
+}  // namespace SDMS
+
+#endif  // PROTOBUFFACTORY_HPP

@@ -7,14 +7,14 @@
 
 namespace SDMS {
 
-  class IMessage;
+class IMessage;
 
-  class IOperator {
-    public:
-      virtual OperatorType type() const noexcept = 0;
-      virtual void execute(IMessage & message) = 0;
-  };
+class IOperator {
+ public:
+  virtual OperatorType type() const noexcept = 0;
+  virtual void execute(IMessage& message) = 0;
+};
 
-} // SDMS
+}  // namespace SDMS
 
-#endif // IOPERATOR_HPP
+#endif  // IOPERATOR_HPP

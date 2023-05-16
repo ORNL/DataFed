@@ -3,9 +3,10 @@
 
 #include "Config.h"
 
-const char *    getVersion();
-const char *    getAPIVersion();
-const char *    getReleaseVersion();
-int             checkAuthorization( char * client_id, char * object, char * action, struct Config * config );
+const char* getVersion();
+const char* getAPIVersion();
+const char* getReleaseVersion();
+int checkAuthorization(char* client_id, char* object, char* action,
+                       struct Config* config);
 
 #endif

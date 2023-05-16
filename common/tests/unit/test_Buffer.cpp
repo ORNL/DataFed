@@ -18,7 +18,7 @@ using namespace SDMS;
 
 BOOST_AUTO_TEST_SUITE(BufferTest)
 
-BOOST_AUTO_TEST_CASE( testing_Buffer ) {
+BOOST_AUTO_TEST_CASE(testing_Buffer) {
 
   Buffer buffer;
 
@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE( testing_Buffer ) {
   BOOST_CHECK(buffer.toString().empty());
 }
 
-BOOST_AUTO_TEST_CASE( testing_Buffer_non_trivial ) {
+BOOST_AUTO_TEST_CASE(testing_Buffer_non_trivial) {
   const size_t array_size = 3;
   char array_chars[array_size] = {0};
 
@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE( testing_Buffer_non_trivial ) {
   BOOST_CHECK(buffer.capacity() == array_size);
   BOOST_CHECK(buffer.size() == 0);
 
-  copyToBuffer(buffer, array_chars, array_size); 
-  
+  copyToBuffer(buffer, array_chars, array_size);
+
   BOOST_CHECK(buffer.capacity() == array_size);
   BOOST_CHECK(buffer.size() == array_size);
 
@@ -56,12 +56,12 @@ BOOST_AUTO_TEST_CASE( testing_Buffer_non_trivial ) {
   char new_array_chars[array_size] = {0};
   copyFromBuffer(new_array_chars, buffer);
 
-  for( size_t i = 0; i<array_size; ++i) {
-    BOOST_CHECK( new_array_chars[i] == array_chars[i] );
+  for (size_t i = 0; i < array_size; ++i) {
+    BOOST_CHECK(new_array_chars[i] == array_chars[i]);
   }
 }
 
-BOOST_AUTO_TEST_CASE( testing_Buffer_non_trivial2 ) {
+BOOST_AUTO_TEST_CASE(testing_Buffer_non_trivial2) {
   const size_t array_size = 3;
   char array_chars[array_size] = {0};
 
@@ -72,8 +72,8 @@ BOOST_AUTO_TEST_CASE( testing_Buffer_non_trivial2 ) {
   Buffer buffer;
   buffer.reserve(array_size);
 
-  copyToBuffer(buffer, array_chars, array_size); 
-  
+  copyToBuffer(buffer, array_chars, array_size);
+
   BOOST_CHECK(buffer.capacity() == array_size);
   BOOST_CHECK(buffer.size() == array_size);
 
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE( testing_Buffer_non_trivial2 ) {
   BOOST_CHECK(buffer.size() == array_size);
 }
 
-BOOST_AUTO_TEST_CASE( testing_Buffer_googleprotobuf ) {
+BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf) {
 
   ProtoBufMap proto_map;
   ProtoBufFactory proto_factory;
@@ -109,32 +109,33 @@ BOOST_AUTO_TEST_CASE( testing_Buffer_googleprotobuf ) {
   const std::string password = "skeleton_key";
   auth_by_pass_req.set_uid(uid);
   auth_by_pass_req.set_password(password);
-  
-  BOOST_CHECK( auth_by_pass_req.uid().compare(uid) == 0 );
-  BOOST_CHECK( auth_by_pass_req.password().compare(password) == 0 );
- 
+
+  BOOST_CHECK(auth_by_pass_req.uid().compare(uid) == 0);
+  BOOST_CHECK(auth_by_pass_req.password().compare(password) == 0);
+
   Buffer buffer;
   std::cout << "Calling Copy to buffer" << std::endl;
   size_t size = auth_by_pass_req.ByteSizeLong();
   copyToBuffer(buffer, &auth_by_pass_req, size);
 
-  BOOST_CHECK( buffer.size() == buffer.capacity() );
-  BOOST_CHECK( buffer.size() == auth_by_pass_req.ByteSizeLong());
+  BOOST_CHECK(buffer.size() == buffer.capacity());
+  BOOST_CHECK(buffer.size() == auth_by_pass_req.ByteSizeLong());
 
   // Create a new message and copy the buffer into it
-  uint16_t msg_type = proto_map.getMessageType(auth_by_pass_req); 
-  std::unique_ptr<::google::protobuf::Message> new_msg = proto_factory.create(msg_type);
+  uint16_t msg_type = proto_map.getMessageType(auth_by_pass_req);
+  std::unique_ptr<::google::protobuf::Message> new_msg =
+      proto_factory.create(msg_type);
 
-  copyFromBuffer(new_msg.get(), buffer);  
+  copyFromBuffer(new_msg.get(), buffer);
 
-  auto new_auth_by_pass_req = dynamic_cast<SDMS::Anon::AuthenticateByPasswordRequest *>(new_msg.get());
+  auto new_auth_by_pass_req =
+      dynamic_cast<SDMS::Anon::AuthenticateByPasswordRequest *>(new_msg.get());
 
-  BOOST_CHECK( new_auth_by_pass_req->password().compare(password) == 0);
-  BOOST_CHECK( new_auth_by_pass_req->uid().compare(uid) == 0);
-
+  BOOST_CHECK(new_auth_by_pass_req->password().compare(password) == 0);
+  BOOST_CHECK(new_auth_by_pass_req->uid().compare(uid) == 0);
 }
 
-BOOST_AUTO_TEST_CASE( testing_Buffer_googleprotobuf_empty_payload ) {
+BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_empty_payload) {
 
   ProtoBufMap proto_map;
   ProtoBufFactory proto_factory;
@@ -146,18 +147,17 @@ BOOST_AUTO_TEST_CASE( testing_Buffer_googleprotobuf_empty_payload ) {
   size_t size = ack_reply.ByteSizeLong();
   copyToBuffer(buffer, &ack_reply, size);
 
-  BOOST_CHECK( buffer.size() == buffer.capacity() );
-  BOOST_CHECK( buffer.size() == ack_reply.ByteSizeLong());
+  BOOST_CHECK(buffer.size() == buffer.capacity());
+  BOOST_CHECK(buffer.size() == ack_reply.ByteSizeLong());
 
   // Create a new message and copy the buffer into it
-  uint16_t msg_type = proto_map.getMessageType(ack_reply); 
-  std::unique_ptr<::google::protobuf::Message> new_msg = proto_factory.create(msg_type);
+  uint16_t msg_type = proto_map.getMessageType(ack_reply);
+  std::unique_ptr<::google::protobuf::Message> new_msg =
+      proto_factory.create(msg_type);
 
-  copyFromBuffer(new_msg.get(), buffer);  
+  copyFromBuffer(new_msg.get(), buffer);
 
-  auto new_auth_by_pass_req = dynamic_cast<SDMS::Anon::AckReply *>(new_msg.get());
-
-
+  auto new_auth_by_pass_req =
+      dynamic_cast<SDMS::Anon::AckReply *>(new_msg.get());
 }
 BOOST_AUTO_TEST_SUITE_END()
-

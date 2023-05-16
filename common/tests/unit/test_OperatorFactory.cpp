@@ -19,56 +19,53 @@
 using namespace SDMS;
 
 class DummyAuthManager : public IAuthenticationManager {
-  private:
-    std::unordered_map<std::string, int> m_counters;
+ private:
+  std::unordered_map<std::string, int> m_counters;
 
-    /**
-     * Methods only available via the interface
-     **/
-    virtual void incrementKeyAccessCounter(const std::string & pub_key) final {
-      ++m_counters.at(pub_key); 
+  /**
+   * Methods only available via the interface
+   **/
+  virtual void incrementKeyAccessCounter(const std::string &pub_key) final {
+    ++m_counters.at(pub_key);
+  }
+
+  virtual bool hasKey(const std::string &pub_key) const {
+    return m_counters.count(pub_key);
+  }
+  // Just assume all keys map to the anon_uid
+  virtual std::string getUID(const std::string &) const {
+    return "authenticated_uid";
+  }
+
+  virtual void purge() final {
+    std::cout << "Purge not implemented" << std::endl;
+  }
+
+ public:
+  /**
+   * Method for adding known keys
+   **/
+  void addKey(const std::string pub_key) { m_counters[pub_key] = 0; }
+
+  int getAccessCount(const std::string &pub_key) {
+    if (m_counters.count(pub_key)) {
+      return m_counters.at(pub_key);
     }
-
-    virtual bool hasKey(const std::string & pub_key) const {
-      return m_counters.count(pub_key);
-    }
-    // Just assume all keys map to the anon_uid
-    virtual std::string getUID(const std::string &) const {
-      return "authenticated_uid";
-    }
-
-    virtual void purge() final {
-      std::cout << "Purge not implemented" << std::endl;
-    }
-
-
-
-  public:
-    /**
-     * Method for adding known keys
-     **/
-    void addKey(const std::string pub_key) {
-      m_counters[pub_key] = 0;
-    }
-
-    int getAccessCount(const std::string & pub_key) {
-      if( m_counters.count(pub_key) ) {
-        return m_counters.at(pub_key);
-      }
-      return 0;
-    }
+    return 0;
+  }
 };
 
 BOOST_AUTO_TEST_SUITE(OperatorFactoryTest)
 
-BOOST_AUTO_TEST_CASE( testing_OperatorFactoryAnon ) {
+BOOST_AUTO_TEST_CASE(testing_OperatorFactoryAnon) {
 
   OperatorFactory operator_factory;
   DummyAuthManager dummy_manager;
   // Pass in const DummyAuthManager * to std::any
   std::any argument = dynamic_cast<IAuthenticationManager *>(&dummy_manager);
 
-  auto auth_operator = operator_factory.create(OperatorType::Authenticator, argument);
+  auto auth_operator =
+      operator_factory.create(OperatorType::Authenticator, argument);
   BOOST_CHECK(auth_operator->type() == OperatorType::Authenticator);
 
   MessageFactory msg_factory;
@@ -80,24 +77,27 @@ BOOST_AUTO_TEST_CASE( testing_OperatorFactoryAnon ) {
   //
   // After running execute the UID will be "anon_bad_key"
   auth_operator->execute(*msg);
-  BOOST_CHECK(std::get<std::string>(msg->get(MessageAttribute::ID)).compare("anon") == 0 );
+  BOOST_CHECK(
+      std::get<std::string>(msg->get(MessageAttribute::ID)).compare("anon") ==
+      0);
 
   // Should not have been incremented because it is an unknown anonymous user
   // key
   BOOST_CHECK(dummy_manager.getAccessCount("bad_key") == 0);
 }
 
-BOOST_AUTO_TEST_CASE( testing_OperatorFactoryKnown ) {
+BOOST_AUTO_TEST_CASE(testing_OperatorFactoryKnown) {
 
   OperatorFactory oper_factory;
   DummyAuthManager dummy_manager;
-  
+
   // Add a known key
   dummy_manager.addKey("skeleton_key");
   // Pass in const DummyAuthManager * to std::any
   std::any argument = dynamic_cast<IAuthenticationManager *>(&dummy_manager);
 
-  auto auth_operator = oper_factory.create(OperatorType::Authenticator, argument);
+  auto auth_operator =
+      oper_factory.create(OperatorType::Authenticator, argument);
   BOOST_CHECK(auth_operator->type() == OperatorType::Authenticator);
 
   MessageFactory msg_factory;
@@ -110,20 +110,23 @@ BOOST_AUTO_TEST_CASE( testing_OperatorFactoryKnown ) {
   //
   // After running execute the UID will be "anon_George"
   auth_operator->execute(*msg);
-  BOOST_CHECK(std::get<std::string>(msg->get(MessageAttribute::ID)).compare("authenticated_uid") == 0 );
+  BOOST_CHECK(std::get<std::string>(msg->get(MessageAttribute::ID))
+                  .compare("authenticated_uid") == 0);
 
   // Should be incremented because user key was known
   BOOST_CHECK(dummy_manager.getAccessCount("skeleton_key") == 1);
 }
 
-BOOST_AUTO_TEST_CASE( testing_RouterBookKeepingOperator ) {
+BOOST_AUTO_TEST_CASE(testing_RouterBookKeepingOperator) {
 
   OperatorFactory oper_factory;
 
   std::string client_id = "my_nice_proxy_id";
   std::any obfuscated_id = client_id;
-  auto router_book_keeping_operator = oper_factory.create(OperatorType::RouterBookKeeping, obfuscated_id);
-  BOOST_CHECK(router_book_keeping_operator->type() == OperatorType::RouterBookKeeping);
+  auto router_book_keeping_operator =
+      oper_factory.create(OperatorType::RouterBookKeeping, obfuscated_id);
+  BOOST_CHECK(router_book_keeping_operator->type() ==
+              OperatorType::RouterBookKeeping);
 
   MessageFactory msg_factory;
   auto msg = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
@@ -136,4 +139,3 @@ BOOST_AUTO_TEST_CASE( testing_RouterBookKeepingOperator ) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

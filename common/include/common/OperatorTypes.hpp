@@ -7,11 +7,8 @@
 
 namespace SDMS {
 
-enum class OperatorType {
-  Authenticator,
-  RouterBookKeeping
-};
+enum class OperatorType { Authenticator, RouterBookKeeping };
 
 }
 
-#endif // OPERATOR_TYPES_HPP
+#endif  // OPERATOR_TYPES_HPP
