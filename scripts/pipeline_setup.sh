@@ -194,8 +194,34 @@ then
       --form ref="main" \
       "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
 
-    exit 1
+    MAX_COUNT=40
+    count=0
+    while [ "$found_vm_id_in_list" == "0" ]
+    do
+      echo "$count Waiting for pipeline to start VM ..."
+      sleep 30s
+      # Run while loop and sleep until VM shows up or timeout is hit
+      compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
+      CI_DATAFED_VMS=$(echo "$compute_instances" | jq '.servers[].id')
+      CI_DATAFED_VMS_SANITIZED=($(echo "$CI_DATAFED_VMS" | sed 's/\"//g'))
+      found_vm_id_in_list="0"
+      for ID in "${CI_DATAFED_VMS_SANITIZED[@]}"
+      do
+        if [ "$ID" == "$COMPUTE_INSTANCE_ID" ]
+        then
+          echo "Found: $COMPUTE_INSTANCE_ID"
+          found_vm_id_in_list="1"
+          break
+        fi
+      done
+      count=$(($count + 1))
 
+      if [ "$count" == "$MAX_COUNT" ]
+      then
+        echo "Exceeded time limit!"
+        exit 1
+      fi
+    done
 fi
 
 ################################################################################
@@ -225,7 +251,33 @@ then
     --form ref="main" \
     "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
 
-  exit 1
+    MAX_COUNT=40
+    count=0
+    while [ "$VM_IS_ACTIVE" -eq "0" ]
+    do
+
+      echo "$count Waiting for pipeline to start VM ..."
+      sleep 30s
+      compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
+      INSTANCE_STATUS=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .status ')
+
+      INSTANCE_STATUS_SANITIZED=$(echo "$INSTANCE_STATUS" | sed 's/\"//g')
+
+      # If the status is not ACTIVE trigger the GitLab pipeline
+      VM_IS_ACTIVE=1
+      if [[ "$INSTANCE_STATUS_SANITIZED" != "ACTIVE" ]]
+      then
+        VM_IS_ACTIVE=0
+      fi
+      count=$(($count + 1))
+
+      if [ "$count" == "$MAX_COUNT" ]
+      then
+        echo "Exceeded time limit!"
+        exit 1
+      fi
+    done
+
 else
   echo "VM: $COMPUTE_INSTANCE_ID is Healthy."
   exit 0
