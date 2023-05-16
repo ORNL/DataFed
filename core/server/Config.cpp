@@ -30,8 +30,11 @@ namespace SDMS {
       DatabaseAPI  db_client( db_url, db_user, db_pass );
 
       std::vector<RepoData> temp_repos;
-
+    
+      // list the repos and place them in the vector
       db_client.repoList( temp_repos );
+      // Get the full view of the repos that were listed
+      db_client.repoView( temp_repos );
 
       // Find which repos are temp_repos that are no longer in m_repos
 
@@ -67,7 +70,8 @@ namespace SDMS {
 
           // Cache repo data for data handling
           m_repos_mtx.lock();
-          //std::cout << r.id() << std::endl;
+          std::cout << "Storing repo " << std::endl;
+          std::cout << "id: " << r.id() << " address is " << r.address() << std::endl;
           m_repos[r.id()] = r;
           m_trigger_repo_refresh = false;
           m_repos_mtx.unlock();

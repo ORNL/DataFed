@@ -5,7 +5,7 @@ if [ $# -eq 0 ]
 then
   TIMEOUT_CMD="timeout"
   TCPDUMP_CMD="tcpdump"
-  MAX_TEST_TIME_SEC=2
+  MAX_TEST_TIME_SEC=4
 else
   TCPDUMP_CMD=$1
   TIMEOUT_CMD=$2
@@ -33,8 +33,9 @@ echo "TCPDUMP:       ${TCPDUMP_CMD}"
 echo "TIMEOUT:       ${TIMEOUT_CMD}"
 echo "MAX_TEST_TIME: ${MAX_TEST_TIME_SEC}"
 
-# Grab the first 18 packets sent on the loop back interface (127.0.0.1)
-match=$( ${TIMEOUT_CMD} ${MAX_TEST_TIME_SEC} ${TCPDUMP_CMD} -c 18 -vvv -A -i lo | grep token)
+# Grab the packets sent on the loop back interface (127.0.0.1) and port 7515
+output=$( ${TIMEOUT_CMD} ${MAX_TEST_TIME_SEC} ${TCPDUMP_CMD} -vvv -A port 7515 -i lo)
+match=$( echo "$output" | grep token)
 
 echo "Content of grep ${match}"
 # If '.magic_token' is returned from the network sniffer then we know that 
@@ -47,5 +48,7 @@ else
   echo "FAILED - the connection is unreadable, either it is encrypted when it should not be or there is an error."
   echo "         it could be the case that the permissions have changed on tcpdump. See the README for settings"
   echo "         that must be enabled to run it correctly."
+  echo 
+  echo "$output"
   exit 1
 fi

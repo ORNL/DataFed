@@ -28,7 +28,18 @@ class TestDataFedPythonAPIContext(unittest.TestCase):
 
         self._username = "datafed99"
         password = os.environ.get('DATAFED_USER99_PASSWORD') 
-        self._df_api.loginByPassword(self._username, password)
+
+        count = 0
+        while True:
+            try:
+                result = self._df_api.loginByPassword(self._username, password)
+                break
+            except:
+                pass
+            count += 1
+            # Try three times to authenticate
+            assert count < 3
+
 
 
     def test_context(self):

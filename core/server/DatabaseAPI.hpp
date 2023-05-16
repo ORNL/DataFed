@@ -131,6 +131,7 @@ public:
 
     void repoList( std::vector<RepoData> & a_repos );
     void repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply );
+    void repoView( std::vector<RepoData> & a_repos );
     void repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply );
     void repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply );
     void repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDataReply  & a_reply );

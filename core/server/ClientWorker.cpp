@@ -1397,9 +1397,27 @@ ClientWorker::procRepoAuthzRequest( const std::string & a_uid, std::unique_ptr<I
     std::cout << "RepoAuthzRequest encountered\n" << std::endl;
     DL_INFO( "AUTHZ repo: " << a_uid << ", usr: " << request->client() /*<< ", repo: " << request->repo()*/ << ", file: " << request->file() << ", act: " << request->action() );
 
-    m_db_client.setClient( request->client() );
-    m_db_client.repoAuthz( *request, reply );
-
+    // Because the Globus will send a comma separated list of all the ids we will separate them into individual ids and check if any of them have permission
+    
+//    std::vector<std::string> clients;
+//    std::istringstream iss(request->client());
+//    std::string client;
+//    int uuid_char_len = 36;
+//    while (std::getline(iss, client, ',')) {
+//      if(client.length() != uuid_char_len ){
+//        EXCEPT_PARAM( ID_SERVICE_ERROR, "REPO client id unsupported format: " << request->client());
+//      } else {
+//        clients.push_back(element);
+//      }
+//    }
+//
+//    for( client : clients ) {
+//      request->set_client(client);
+      m_db_client.setClient( request->client() );
+      m_db_client.repoAuthz( *request, reply );
+      // Just send the first one 
+//      break;
+//    }
     PROC_MSG_END
 }
 

@@ -33,8 +33,8 @@ echo "TCPDUMP:       ${TCPDUMP_CMD}"
 echo "TIMEOUT:       ${TIMEOUT_CMD}"
 echo "MAX_TEST_TIME: ${MAX_TEST_TIME_SEC}"
 
-# Grab the first 18 packets sent on the loop back interface (127.0.0.1)
-match=$( ${TIMEOUT_CMD} ${MAX_TEST_TIME_SEC} ${TCPDUMP_CMD} -c 18 -vvv -A -i lo | grep token)
+# Grab the first 30 packets sent on the loop back interface (127.0.0.1) and port 7515
+match=$( ${TIMEOUT_CMD} ${MAX_TEST_TIME_SEC} ${TCPDUMP_CMD} -vvv -A port 7515 -i lo | grep token)
 
 echo "Content of grep ${match}"
 # If '.magic_token' is returned from the network sniffer then we know that 
