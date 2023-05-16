@@ -3,7 +3,7 @@ import * as util from "./util.js";
 import * as dialogs from "./dialogs.js";
 import * as dlgRepoEdit from "./dlg_repo_edit.js";
 
-export function show(){
+export function show() {
     var content =
         "<div class='col-flex' style='height:100%'>\
             <div style='flex:none;padding:.5rem 0 0 0'>Repositories:</div>\
@@ -18,24 +18,24 @@ export function show(){
         </div>";
 
     var frame = $(document.createElement('div'));
-    frame.html( content );
+    frame.html(content);
     var tree;
 
-    function addRepo(){
+    function addRepo() {
         console.log("Add repo");
-        dlgRepoEdit.show( null, function(){
+        dlgRepoEdit.show(null, function() {
             util.setStatusText("Repo created");
             refreshRepoList();
         });
     }
 
-    function remRepo(){
+    function remRepo() {
         console.log("Remove repo");
         var node = tree.getActiveNode();
-        if ( node ){
-            dialogs.dlgConfirmChoice("Confirm Delete","Delete repo "+node.key.substr(5)+"? All associated data and allocations must be purged before repo can be deleted.",["Cancel","Delete"],function(choice){
-                if ( choice == 1 ){
-                    api.repoDelete( node.key );
+        if (node) {
+            dialogs.dlgConfirmChoice("Confirm Delete", "Delete repo " + node.key.substr(5) + "? All associated data and allocations must be purged before repo can be deleted.", ["Cancel", "Delete"], function(choice) {
+                if (choice == 1) {
+                    api.repoDelete(node.key);
                     util.setStatusText("Repo deleted");
                     refreshRepoList();
                 }
@@ -43,38 +43,44 @@ export function show(){
         }
     }
 
-    function editRepo(){
+    function editRepo() {
         console.log("Edit repo");
         var node = tree.getActiveNode();
-        if ( node ){
-            dlgRepoEdit.show( node.key, function(){
+        if (node) {
+            dlgRepoEdit.show(node.key, function() {
                 util.setStatusText("Repo updated");
                 refreshRepoList();
             });
         }
     }
 
-    function refreshRepoList(){
-        api.repoList(false,true,function( ok, data){
-            if ( !ok ){
-                dialogs.dlgAlert("Repo List Error",data);
+    function refreshRepoList() {
+        api.repoList(false, true, function(ok, data) {
+            if (!ok) {
+                dialogs.dlgAlert("Repo List Error", data);
                 return;
             }
 
             //console.log( "repo list:", ok, data );
             var src = [];
             var repo;
-            for ( var i in data ){
+            for (var i in data) {
                 repo = data[i];
-                src.push({title: repo.id + " (" + repo.domain + ")",folder:true,lazy:true,icon:false,key:repo.id });
+                src.push({
+                    title: repo.id + " (" + repo.domain + ")",
+                    folder: true,
+                    lazy: true,
+                    icon: false,
+                    key: repo.id
+                });
             }
             tree.reload(src);
         });
     }
 
-    $("#dlg_add_repo",frame).click( addRepo );
-    $("#dlg_edit_repo",frame).click( editRepo );
-    $("#dlg_rem_repo",frame).click( remRepo );
+    $("#dlg_add_repo", frame).click(addRepo);
+    $("#dlg_edit_repo", frame).click(editRepo);
+    $("#dlg_rem_repo", frame).click(remRepo);
 
     var options = {
         title: "Manage Data Repositories",
@@ -89,22 +95,28 @@ export function show(){
                 $(this).dialog('close');
             }
         }],
-        open: function(event,ui){
-            api.repoList(false,true,function( ok, data){
-                if ( !ok ){
-                    dialogs.dlgAlert("Repo List Error",data);
+        open: function(event, ui) {
+            api.repoList(false, true, function(ok, data) {
+                if (!ok) {
+                    dialogs.dlgAlert("Repo List Error", data);
                     return;
                 }
 
-                console.log( "repo list:", ok, data );
+                console.log("repo list:", ok, data);
                 var src = [];
                 var repo;
-                for ( var i in data ){
+                for (var i in data) {
                     repo = data[i];
-                    src.push({title: repo.id + " (" + repo.domain + ")",folder:true,lazy:true,icon:false,key:repo.id });
+                    src.push({
+                        title: repo.id + " (" + repo.domain + ")",
+                        folder: true,
+                        lazy: true,
+                        icon: false,
+                        key: repo.id
+                    });
                 }
 
-                $("#dlg_repo_tree",frame).fancytree({
+                $("#dlg_repo_tree", frame).fancytree({
                     extensions: ["themeroller"],
                     themeroller: {
                         activeClass: "my-fancytree-active",
@@ -112,20 +124,32 @@ export function show(){
                     },
                     source: src,
                     selectMode: 1,
-                    lazyLoad: function( event, data ) {
-                        data.result = { url: api.repoView_url( data.node.key ), cache: false };
+                    lazyLoad: function(event, data) {
+                        data.result = {
+                            url: api.repoView_url(data.node.key),
+                            cache: false
+                        };
                     },
-                    postProcess: function( event, data ) {
-                        if ( data.node.lazy && data.response.length ){
-                            console.log("resp:",data.response);
+                    postProcess: function(event, data) {
+                        if (data.node.lazy && data.response.length) {
+                            console.log("resp:", data.response);
                             data.result = [];
                             var repo = data.response[0];
-                            if ( repo.title )
-                                data.result.push( { title:"title: "+util.escapeHTML(repo.title),icon:false } );
-                            if ( repo.desc )
-                                data.result.push( { title:"desc: "+util.escapeHTML(repo.desc),icon:false } );
-                            if ( repo.capacity )
-                                data.result.push( { title:"capacity: "+util.sizeToString(repo.capacity),icon:false } );
+                            if (repo.title)
+                                data.result.push({
+                                    title: "title: " + util.escapeHTML(repo.title),
+                                    icon: false
+                                });
+                            if (repo.desc)
+                                data.result.push({
+                                    title: "desc: " + util.escapeHTML(repo.desc),
+                                    icon: false
+                                });
+                            if (repo.capacity)
+                                data.result.push({
+                                    title: "capacity: " + util.sizeToString(repo.capacity),
+                                    icon: false
+                                });
                             //var adm;
                             //for ( var i in data.response.admin ) {
                             //    adm = data.response.admin[i];
@@ -133,26 +157,25 @@ export function show(){
                             // }
                         }
                     },
-                    activate: function( ev, data ) {
-                        if ( data.node.key.startsWith("repo/")){
-                            $("#dlg_edit_repo",frame).button("enable" );
-                            $("#dlg_rem_repo",frame).button("enable" );
-                        }else{
-                            $("#dlg_edit_repo",frame).button("disable");
-                            $("#dlg_rem_repo",frame).button("disable");
+                    activate: function(ev, data) {
+                        if (data.node.key.startsWith("repo/")) {
+                            $("#dlg_edit_repo", frame).button("enable");
+                            $("#dlg_rem_repo", frame).button("enable");
+                        } else {
+                            $("#dlg_edit_repo", frame).button("disable");
+                            $("#dlg_rem_repo", frame).button("disable");
                         }
                     }
                 });
 
-                tree = $.ui.fancytree.getTree($("#dlg_repo_tree",frame));
+                tree = $.ui.fancytree.getTree($("#dlg_repo_tree", frame));
             });
         },
-        close: function( ev, ui ) {
+        close: function(ev, ui) {
             $(this).dialog("destroy").remove();
         }
     };
 
-    frame.dialog( options );
-    $(".btn",frame).button();
+    frame.dialog(options);
+    $(".btn", frame).button();
 }
-
