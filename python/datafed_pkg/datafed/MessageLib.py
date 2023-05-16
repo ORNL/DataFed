@@ -18,6 +18,7 @@ from . import SDMS_Anon_pb2 as anon
 from . import SDMS_Auth_pb2 as auth
 from . import Connection
 
+
 ##
 # @class API
 # @brief Provides a low-level messaging interface to the DataFed core server.
@@ -31,7 +32,6 @@ from . import Connection
 # and both synchronous ans asynchronous message send/recv methods.
 #
 class API:
-
     ##
     # @brief MessageLib.API class initialization method.
     # @param server_host The DataFed core server hostname or IP address.
@@ -52,20 +52,21 @@ class API:
     # be used to assess status. Also checks client and server protocol
     # versions for compatibility.
     #
-    def __init__( self,
-        server_host = None,
-        server_port = None,
-        server_pub_key_file = None,
-        server_pub_key = None,
-        client_pub_key_file = None,
-        client_pub_key = None,
-        client_priv_key_file = None,
-        client_priv_key = None,
-        client_token = None,
-        manual_auth = None,
-        **kwargs
-        ):
-        #print("MessageLib Init")
+    def __init__(
+        self,
+        server_host=None,
+        server_port=None,
+        server_pub_key_file=None,
+        server_pub_key=None,
+        client_pub_key_file=None,
+        client_pub_key=None,
+        client_priv_key_file=None,
+        client_priv_key=None,
+        client_token=None,
+        manual_auth=None,
+        **kwargs,
+    ):
+        # print("MessageLib Init")
 
         self._ctxt = 0
         self._auth = False
@@ -97,11 +98,13 @@ class API:
         # Use or load server public key
         if server_pub_key_file != None:
             try:
-                keyf = open( server_pub_key_file, "r" )
+                keyf = open(server_pub_key_file, "r")
                 _server_pub_key = keyf.read()
                 keyf.close()
             except:
-                raise Exception( "Could not open server public key file: " + server_pub_key_file )
+                raise Exception(
+                    "Could not open server public key file: " + server_pub_key_file
+                )
         else:
             _server_pub_key = server_pub_key
 
@@ -109,21 +112,30 @@ class API:
         self._keys_loaded = False
         self._keys_valid = False
 
-        if manual_auth or client_token or not ( client_pub_key_file or client_pub_key or client_priv_key_file or client_priv_key ):
-            pub,priv = zmq.curve_keypair()
+        if (
+            manual_auth
+            or client_token
+            or not (
+                client_pub_key_file
+                or client_pub_key
+                or client_priv_key_file
+                or client_priv_key
+            )
+        ):
+            pub, priv = zmq.curve_keypair()
             _client_pub_key = pub.decode("utf-8")
             _client_priv_key = priv.decode("utf-8")
         else:
             try:
                 if client_pub_key_file:
-                    keyf = open(client_pub_key_file, "r" )
+                    keyf = open(client_pub_key_file, "r")
                     _client_pub_key = keyf.read()
                     keyf.close()
                 else:
                     _client_pub_key = client_pub_key
 
                 if client_priv_key_file:
-                    keyf = open(client_priv_key_file, "r" )
+                    keyf = open(client_priv_key_file, "r")
                     _client_priv_key = keyf.read()
                     keyf.close()
                 else:
@@ -131,14 +143,14 @@ class API:
 
                 # Check for obviously bad keys
                 if len(_client_pub_key) != 40 or len(_client_priv_key) != 40:
-                    pub,priv = zmq.curve_keypair()
+                    pub, priv = zmq.curve_keypair()
                     _client_pub_key = pub.decode("utf-8")
                     _client_priv_key = priv.decode("utf-8")
                 else:
                     self._keys_valid = True
                 self._keys_loaded = True
             except:
-                pub,priv = zmq.curve_keypair()
+                pub, priv = zmq.curve_keypair()
                 _client_pub_key = pub.decode("utf-8")
                 _client_priv_key = priv.decode("utf-8")
 
@@ -148,36 +160,41 @@ class API:
         if not _client_priv_key:
             raise Exception("Client private key is not defined")
 
-        self._conn = Connection.Connection( server_host, server_port, _server_pub_key, _client_pub_key, _client_priv_key )
+        self._conn = Connection.Connection(
+            server_host, server_port, _server_pub_key, _client_pub_key, _client_priv_key
+        )
 
         self._conn.registerProtocol(anon)
         self._conn.registerProtocol(auth)
 
         # Check for compatible protocol versions
-        reply, mt = self.sendRecv(anon.VersionRequest(), 10000 )
+        reply, mt = self.sendRecv(anon.VersionRequest(), 10000)
         if reply == None:
-            raise Exception( "Timeout waiting for server connection." )
+            raise Exception("Timeout waiting for server connection.")
 
         if reply.api_major != Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR:
-            raise Exception( "Incompatible server api detected {}.{}.{}".format(reply.api_major,reply.api_minor,reply.api_patch))
+            raise Exception(
+                "Incompatible server api detected {}.{}.{}".format(
+                    reply.api_major, reply.api_minor, reply.api_patch
+                )
+            )
 
-        #if reply.major != Version_pb2.VER_MAJOR or reply.mapi_major != Version_pb2.VER_MAPI_MAJOR or \
+        # if reply.major != Version_pb2.VER_MAJOR or reply.mapi_major != Version_pb2.VER_MAPI_MAJOR or \
         #    reply.mapi_minor < Version_pb2.VER_MAPI_MINOR or reply.mapi_minor > ( Version_pb2.VER_MAPI_MINOR + 9 ):
         #    raise Exception( "Incompatible server version {}.{}.{}.{}.{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client_py))
 
-        #if reply.client_py > Version_pb2.VER_CLIENT_PY:
+        # if reply.client_py > Version_pb2.VER_CLIENT_PY:
         #    self.new_client_avail = "{}.{}.{}:{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client_py)
-        #else:
+        # else:
         #    self.new_client_avail = False
 
         if client_token:
-            self.manualAuthByToken( client_token )
+            self.manualAuthByToken(client_token)
         else:
             # Check if server authenticated based on keys
-            reply, mt = self.sendRecv( anon.GetAuthStatusRequest(), 10000 )
+            reply, mt = self.sendRecv(anon.GetAuthStatusRequest(), 10000)
             self._auth = reply.auth
             self._uid = reply.uid
-
 
     ## @brief Determines if client security keys were loaded.
     #
@@ -186,7 +203,6 @@ class API:
     #
     def keysLoaded(self):
         return self._keys_loaded
-
 
     ## @brief Determines if loaded client security keys had a valid format.
     #
@@ -199,7 +215,6 @@ class API:
     def keysValid(self):
         return self._keys_valid
 
-
     ## @brief Gets the client authentication status and user ID.
     #
     # @return A tuple of (bool,string) - The bool is True if client
@@ -210,19 +225,18 @@ class API:
     def getAuthStatus(self):
         return self._auth, self._uid
 
-
     ## @brief Perform manual client authentication with DataFed user ID and password.
     #
     # @param uid Client's DataFed user ID.
     # @param password Client's DataFed password.
     # @exception Exception: On communication timeout or authentication failure.
     #
-    def manualAuthByPassword( self, uid, password ):
+    def manualAuthByPassword(self, uid, password):
         msg = anon.AuthenticateByPasswordRequest()
         msg.uid = uid
         print(f"manual Auth By Password uid is {uid}")
         msg.password = password
-        a, b = self.sendRecv( msg )
+        a, b = self.sendRecv(msg)
         print("sendRecv result for pass word!")
         print(a)
         print(b)
@@ -231,7 +245,7 @@ class API:
         self._conn.reset()
 
         # Test auth status
-        reply, mt = self.sendRecv( anon.GetAuthStatusRequest())
+        reply, mt = self.sendRecv(anon.GetAuthStatusRequest())
         if not reply.auth:
             raise Exception(f"Password authentication failed.")
 
@@ -239,16 +253,16 @@ class API:
         print(f"reply uid is setting to mapi._uid: {reply.uid}")
         self._uid = reply.uid
 
-    def manualAuthByToken( self, token ):
+    def manualAuthByToken(self, token):
         msg = anon.AuthenticateByTokenRequest()
         msg.token = token
-        self.sendRecv( msg )
+        self.sendRecv(msg)
 
         # Reset connection so server can re-authenticate
         self._conn.reset()
 
         # Test auth status
-        reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )
+        reply, mt = self.sendRecv(anon.GetAuthStatusRequest())
 
         if not reply.auth:
             raise Exception("Token authentication failed")
@@ -256,7 +270,7 @@ class API:
         self._auth = True
         self._uid = reply.uid
 
-    def logout( self ):
+    def logout(self):
         self._conn.reset()
         self._auth = False
         self._uid = None
@@ -266,9 +280,8 @@ class API:
     # @return True if Nack exceptions are enabled; False otherwise.
     # @retval bool
     #
-    def getNackExceptionEnabled( self ):
+    def getNackExceptionEnabled(self):
         return self._nack_except
-
 
     ## @brief Set NackReply exception enable state.
     #
@@ -279,24 +292,23 @@ class API:
     #
     # @param enabled: Sets exceptions to enabled (True) or disabled (False)
     #
-    def setNackExceptionEnabled( self, enabled ):
+    def setNackExceptionEnabled(self, enabled):
         if enabled:
             self._nack_except = True
         else:
             self._nack_except = False
 
-
-    def setDefaultTimeout( self, timeout ):
+    def setDefaultTimeout(self, timeout):
         self._timeout = timeout
 
-    def getDefaultTimeout( self ):
+    def getDefaultTimeout(self):
         return self._timeout
 
-    def getDailyMessage( self ):
+    def getDailyMessage(self):
         # Get daily message, if set
-        reply, mt = self.sendRecv( anon.DailyMessageRequest(), 10000 )
+        reply, mt = self.sendRecv(anon.DailyMessageRequest(), 10000)
         if reply == None:
-            raise Exception( "Timeout waiting for server connection." )
+            raise Exception("Timeout waiting for server connection.")
 
         return reply.message
 
@@ -311,18 +323,19 @@ class API:
     # @retval (obj,str)
     # @exception Exception: On message context mismatch (out of sync)
     #
-    def sendRecv( self, msg, timeout = None, nack_except = None ):
-        self.send( msg )
-        _timeout = (timeout if timeout != None else self._timeout)
-        reply, mt, ctxt = self.recv( _timeout, nack_except )
+    def sendRecv(self, msg, timeout=None, nack_except=None):
+        self.send(msg)
+        _timeout = timeout if timeout != None else self._timeout
+        reply, mt, ctxt = self.recv(_timeout, nack_except)
         if reply == None:
             print("Timeout!")
             raise Exception("Timeout!!!!!!!!!")
             return None, None
         if ctxt != self._ctxt:
-            raise Exception("Mismatched reply. Expected {} got {}".format( self._ctxt, ctxt ))
+            raise Exception(
+                "Mismatched reply. Expected {} got {}".format(self._ctxt, ctxt)
+            )
         return reply, mt
-
 
     ## @brief Asynchronously send a protobuf message to DataFed server.
     #
@@ -331,11 +344,10 @@ class API:
     #    value (match to context in subsequent reply).
     # @retval int
     #
-    def send( self, msg ):
+    def send(self, msg):
         self._ctxt += 1
-        self._conn.send( msg, self._ctxt )
+        self._conn.send(msg, self._ctxt)
         return self._ctxt
-
 
     ## @brief Receive a protobuf message (reply) from DataFed server.
     #
@@ -349,19 +361,19 @@ class API:
     #   (None,None,None).
     # @retval (obj,str,int)
     #
-    def recv( self, timeout = None, nack_except = None ):
-        _timeout = (timeout if timeout != None else self._timeout)
+    def recv(self, timeout=None, nack_except=None):
+        _timeout = timeout if timeout != None else self._timeout
 
-        reply, msg_type, ctxt = self._conn.recv( _timeout )
+        reply, msg_type, ctxt = self._conn.recv(_timeout)
         if reply == None:
             return None, None, None
 
-        _nack_except = (nack_except if nack_except != None else self._nack_except)
+        _nack_except = nack_except if nack_except != None else self._nack_except
 
         if msg_type == "NackReply" and _nack_except:
             if reply.err_msg:
                 raise Exception(reply.err_msg)
             else:
-                raise Exception("Server error {}".format( reply.err_code ))
+                raise Exception("Server error {}".format(reply.err_code))
 
         return reply, msg_type, ctxt

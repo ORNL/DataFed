@@ -1,7 +1,7 @@
 ##
 # @package datafed.Config
 # Provides client configuration utility
-# 
+#
 # The DataFed Config module contains a single API class that provides
 # a client application-level configuration abstraction. This class is
 # optional, but very useful for gathering and presenting all of the
@@ -17,30 +17,115 @@
 import os
 import configparser
 
-_OPT_INT     = 0x01
-_OPT_BOOL    = 0x02
-_OPT_PATH    = 0x04
-_OPT_NO_ENV  = 0x08
-_OPT_NO_CF   = 0x10
-_OPT_NO_CL   = 0x20
-_OPT_HIDE    = 0x40
-_OPT_EAGER   = 0x80
+_OPT_INT = 0x01
+_OPT_BOOL = 0x02
+_OPT_PATH = 0x04
+_OPT_NO_ENV = 0x08
+_OPT_NO_CF = 0x10
+_OPT_NO_CL = 0x20
+_OPT_HIDE = 0x40
+_OPT_EAGER = 0x80
 
 _opt_info = {
     # key, cf-cat, cf-name, env-name, flags, opt-names, description
-    "server_cfg_dir": ["server","config_dir","DATAFED_SERVER_CFG_DIR",_OPT_PATH,["--server-cfg-dir"],"Server configuration directory"],
-    "server_cfg_file":["server","config_file","DATAFED_SERVER_CFG_FILE",_OPT_PATH|_OPT_NO_CF,["--server-cfg-file"],"Server configuration file"],
-    "server_pub_key_file":["server","public_key_file","DATAFED_SERVER_PUB_KEY_FILE",_OPT_PATH,["--server-pub-key-file"],"Server public key file"],
-    "server_host":["server","host","DATAFED_SERVER_HOST",0,["--server-host","-H"],"Sever host name or IP address"],
-    "server_port":["server","port","DATAFED_SERVER_PORT",_OPT_INT,["--server-port","-P"],"Server port number"],
-    "client_cfg_dir":["client","config_dir","DATAFED_CLIENT_CFG_DIR",_OPT_PATH,["--client-cfg-dir"],"Client configuration directory"],
-    "client_cfg_file":["client","config_file","DATAFED_CLIENT_CFG_FILE",_OPT_PATH|_OPT_NO_CF,["--client-cfg-file"],"Client configuration file"],
-    "client_pub_key_file":["client","public_key_file","DATAFED_CLIENT_PUB_KEY_FILE",_OPT_PATH,["--client-pub-key-file"],"Client public key file"],
-    "client_priv_key_file":["client","private_key_file","DATAFED_CLIENT_PRIV_KEY_FILE",_OPT_PATH,["--client-priv-key-file"],"Client private key file"],
-    "client_token":["client","token","DATAFED_CLIENT_TOKEN",_OPT_HIDE,["--client-token"],"Client access token"],
-    "default_ep":["general","default_endpoint","DATAFED_DEFAULT_ENDPOINT",0,["--default-ep","-e"],"Default Globus endpoint"],
-    "verbosity":["general","verbosity","DATAFED_DEFAULT_VERBOSITY",_OPT_INT,["--verbosity","-v"],"Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only."],
+    "server_cfg_dir": [
+        "server",
+        "config_dir",
+        "DATAFED_SERVER_CFG_DIR",
+        _OPT_PATH,
+        ["--server-cfg-dir"],
+        "Server configuration directory",
+    ],
+    "server_cfg_file": [
+        "server",
+        "config_file",
+        "DATAFED_SERVER_CFG_FILE",
+        _OPT_PATH | _OPT_NO_CF,
+        ["--server-cfg-file"],
+        "Server configuration file",
+    ],
+    "server_pub_key_file": [
+        "server",
+        "public_key_file",
+        "DATAFED_SERVER_PUB_KEY_FILE",
+        _OPT_PATH,
+        ["--server-pub-key-file"],
+        "Server public key file",
+    ],
+    "server_host": [
+        "server",
+        "host",
+        "DATAFED_SERVER_HOST",
+        0,
+        ["--server-host", "-H"],
+        "Sever host name or IP address",
+    ],
+    "server_port": [
+        "server",
+        "port",
+        "DATAFED_SERVER_PORT",
+        _OPT_INT,
+        ["--server-port", "-P"],
+        "Server port number",
+    ],
+    "client_cfg_dir": [
+        "client",
+        "config_dir",
+        "DATAFED_CLIENT_CFG_DIR",
+        _OPT_PATH,
+        ["--client-cfg-dir"],
+        "Client configuration directory",
+    ],
+    "client_cfg_file": [
+        "client",
+        "config_file",
+        "DATAFED_CLIENT_CFG_FILE",
+        _OPT_PATH | _OPT_NO_CF,
+        ["--client-cfg-file"],
+        "Client configuration file",
+    ],
+    "client_pub_key_file": [
+        "client",
+        "public_key_file",
+        "DATAFED_CLIENT_PUB_KEY_FILE",
+        _OPT_PATH,
+        ["--client-pub-key-file"],
+        "Client public key file",
+    ],
+    "client_priv_key_file": [
+        "client",
+        "private_key_file",
+        "DATAFED_CLIENT_PRIV_KEY_FILE",
+        _OPT_PATH,
+        ["--client-priv-key-file"],
+        "Client private key file",
+    ],
+    "client_token": [
+        "client",
+        "token",
+        "DATAFED_CLIENT_TOKEN",
+        _OPT_HIDE,
+        ["--client-token"],
+        "Client access token",
+    ],
+    "default_ep": [
+        "general",
+        "default_endpoint",
+        "DATAFED_DEFAULT_ENDPOINT",
+        0,
+        ["--default-ep", "-e"],
+        "Default Globus endpoint",
+    ],
+    "verbosity": [
+        "general",
+        "verbosity",
+        "DATAFED_DEFAULT_VERBOSITY",
+        _OPT_INT,
+        ["--verbosity", "-v"],
+        "Verbosity level (0=quiet,1=normal,2=verbose) for text-format output only.",
+    ],
 }
+
 
 ##
 # @class API
@@ -51,8 +136,8 @@ _opt_info = {
 # set from environment variables, server and client configuration
 # files - or overloaded via CLI options. The available settings are
 # listed below, including the key, config file section and name,
-# environment variable name, CLI option names, and help text. 
-# 
+# environment variable name, CLI option names, and help text.
+#
 # Available Settings:
 #
 # key                   | type | cf. sec | cf. name        | env. var. name              | long opt.             | short opt.
@@ -79,7 +164,6 @@ _opt_info = {
 # 5. set by environment variable
 #
 class API:
-
     ##
     # @brief Class initialization method.
     #
@@ -91,14 +175,14 @@ class API:
     #    by this parameter take priority over other setting sources.
     # @exception Exception: if opts parameter is not a dictionary.
     #
-    def __init__( self, opts = {} ):
-        #print("Config Init")
+    def __init__(self, opts={}):
+        # print("Config Init")
 
-        self._processOptions( opts )
+        self._processOptions(opts)
 
-    def _processOptions( self, opts ):
-        if not isinstance( opts, dict ):
-            raise Exception( "Config API options parameter must be a dictionary." )
+    def _processOptions(self, opts):
+        if not isinstance(opts, dict):
+            raise Exception("Config API options parameter must be a dictionary.")
 
         # Setting priorities:
         # 1. Direct setting (passed in opts, or CLI option)
@@ -113,7 +197,7 @@ class API:
             if v != None:
                 self._opts[k] = {"val": v, "pri": 1}
 
-        #print( "cfg self opts:", self._opts )
+        # print( "cfg self opts:", self._opts )
 
         cfg_file = None
 
@@ -124,20 +208,22 @@ class API:
 
         if "server_cfg_file" in self._opts:
             cfg_file = self._opts["server_cfg_file"]["val"]
-        elif 'server_cfg_dir' in self._opts:
-            tmp = os.path.expanduser( os.path.join( self._opts['server_cfg_dir']["val"], "datafed-server.ini" ))
-            if os.path.exists( tmp ):
+        elif "server_cfg_dir" in self._opts:
+            tmp = os.path.expanduser(
+                os.path.join(self._opts["server_cfg_dir"]["val"], "datafed-server.ini")
+            )
+            if os.path.exists(tmp):
                 cfg_file = tmp
-                self._opts["server_cfg_file"] = {"val": cfg_file, "pri": 5 }
+                self._opts["server_cfg_file"] = {"val": cfg_file, "pri": 5}
 
         if not cfg_file:
             tmp = os.path.expanduser("~/.datafed/datafed-server.ini")
-            if os.path.exists( tmp ):
+            if os.path.exists(tmp):
                 cfg_file = tmp
-                self._opts["server_cfg_file"] = {"val": cfg_file, "pri": 5 }
+                self._opts["server_cfg_file"] = {"val": cfg_file, "pri": 5}
 
         if cfg_file:
-            self._loadConfigFile( cfg_file, 3 )
+            self._loadConfigFile(cfg_file, 3)
 
         # Load client config file, if specified/available
 
@@ -146,84 +232,106 @@ class API:
         loaded = False
 
         if "client_cfg_file" in self._opts:
-            #print("first: client_cfg_file in opts")
+            # print("first: client_cfg_file in opts")
             cfg_file = self._opts["client_cfg_file"]["val"]
-            if os.path.exists( cfg_file ):
-                #print("client_cfg_file found")
-                self._loadConfigFile( cfg_file, 2 )
+            if os.path.exists(cfg_file):
+                # print("client_cfg_file found")
+                self._loadConfigFile(cfg_file, 2)
                 loaded = True
 
-        if not 'client_cfg_dir' in self._opts:
+        if not "client_cfg_dir" in self._opts:
             cfg_dir = os.path.expanduser("~/.datafed")
-            if not os.path.exists( cfg_dir ):
+            if not os.path.exists(cfg_dir):
                 try:
-                    os.mkdir( cfg_dir )
+                    os.mkdir(cfg_dir)
                 except:
                     return
-            self._opts["client_cfg_dir"] = {"val": cfg_dir, "pri": 5 }
+            self._opts["client_cfg_dir"] = {"val": cfg_dir, "pri": 5}
 
         if not loaded:
-            cfg_file = os.path.expanduser( os.path.join( self._opts['client_cfg_dir']["val"], "datafed-client.ini" ))
-            self._opts["client_cfg_file"] = {"val": cfg_file, "pri": 5 }
-            if os.path.exists( cfg_file ):
-                #print("loading cfg file after expanding cfg file path")
-                self._loadConfigFile( cfg_file, 2 )
+            cfg_file = os.path.expanduser(
+                os.path.join(self._opts["client_cfg_dir"]["val"], "datafed-client.ini")
+            )
+            self._opts["client_cfg_file"] = {"val": cfg_file, "pri": 5}
+            if os.path.exists(cfg_file):
+                # print("loading cfg file after expanding cfg file path")
+                self._loadConfigFile(cfg_file, 2)
                 loaded = True
 
-
-    def _loadEnvironVars( self ):
+    def _loadEnvironVars(self):
         # Check each defined option for a set and non-empty environment variable
         # Priority is next to lowest (4)
         # Values are automatically converted to expected type
         # Options with _OPT_NO_ENV are ignored
         for k, v in _opt_info.items():
-            if (not k in self._opts) and ((v[3] & _OPT_NO_ENV) == 0) and (v[2] in os.environ) and os.environ[v[2]]:
+            if (
+                (not k in self._opts)
+                and ((v[3] & _OPT_NO_ENV) == 0)
+                and (v[2] in os.environ)
+                and os.environ[v[2]]
+            ):
                 tmp = os.environ[v[2]]
                 if v[3] & _OPT_INT:
                     try:
                         tmp = int(tmp)
                     except:
-                        raise Exception( "Invalid value specified for {} ({}) from ENV {}".format(k,tmp,v[2]) )
+                        raise Exception(
+                            "Invalid value specified for {} ({}) from ENV {}".format(
+                                k, tmp, v[2]
+                            )
+                        )
                 elif v[3] & _OPT_BOOL:
                     tmp = tmp.lower()
-                    if tmp in ("true","yes","1"):
+                    if tmp in ("true", "yes", "1"):
                         tmp = True
-                    elif tmp in ("false","no","0"):
+                    elif tmp in ("false", "no", "0"):
                         tmp = False
                     else:
-                        raise Exception("Invalid value for {} ({}) from ENV {}".format(k,tmp,v[2]))
+                        raise Exception(
+                            "Invalid value for {} ({}) from ENV {}".format(k, tmp, v[2])
+                        )
                 elif v[3] & _OPT_PATH:
                     tmp = os.path.expanduser(tmp)
 
                 self._opts[k] = {"val": tmp, "pri": 4}
 
-    def _loadConfigFile( self, cfg_file, priority ):
+    def _loadConfigFile(self, cfg_file, priority):
         # Read config file and check each defined option for a contained value using section and name
         # Priority is set by parameter (3 or 4)
         # Values are automatically converted to expected type
         # Options with _OPT_NO_CF are ignored
         try:
-            with open( cfg_file, 'r') as f:
+            with open(cfg_file, "r") as f:
                 config = configparser.ConfigParser()
                 config.read_file(f)
 
                 for k, v in _opt_info.items():
-                    if ((not k in self._opts) or self._opts[k]["pri"] >= priority) and (v[3] & _OPT_NO_CF) == 0:
-                        if config.has_option(v[0],v[1]):
-                            tmp = config.get(v[0],v[1])
+                    if ((not k in self._opts) or self._opts[k]["pri"] >= priority) and (
+                        v[3] & _OPT_NO_CF
+                    ) == 0:
+                        if config.has_option(v[0], v[1]):
+                            tmp = config.get(v[0], v[1])
                             if v[3] & _OPT_INT:
                                 try:
                                     tmp = int(tmp)
                                 except:
-                                    raise Exception( "Invalid value specified for {} ({}) in {}".format(k,tmp,cfg_file) )
+                                    raise Exception(
+                                        "Invalid value specified for {} ({}) in {}".format(
+                                            k, tmp, cfg_file
+                                        )
+                                    )
                             elif v[3] & _OPT_BOOL:
                                 tmp = tmp.lower()
-                                if tmp in ("true","yes","1"):
+                                if tmp in ("true", "yes", "1"):
                                     tmp = True
-                                elif tmp in ("false","no","0"):
+                                elif tmp in ("false", "no", "0"):
                                     tmp = False
                                 else:
-                                    raise Exception("Invalid value for {} ({}) in {}".format(k,tmp,cfg_file))
+                                    raise Exception(
+                                        "Invalid value for {} ({}) in {}".format(
+                                            k, tmp, cfg_file
+                                        )
+                                    )
                             elif v[3] & _OPT_PATH:
                                 tmp = os.path.expanduser(tmp)
 
@@ -241,15 +349,15 @@ class API:
         for k, v in self._opts.items():
             p = v["pri"]
             if p == 5:
-                print("  {} = \"{}\" (assumed)".format(k,v["val"]))
+                print('  {} = "{}" (assumed)'.format(k, v["val"]))
             elif p == 4:
-                print("  {} = \"{}\" from {}".format(k,v["val"],_opt_info[k][2]))
+                print('  {} = "{}" from {}'.format(k, v["val"], _opt_info[k][2]))
             elif p == 3:
-                print("  {} = \"{}\" from server config file".format(k,v["val"]))
+                print('  {} = "{}" from server config file'.format(k, v["val"]))
             elif p == 2:
-                print("  {} = \"{}\" from client config file".format(k,v["val"]))
+                print('  {} = "{}" from client config file'.format(k, v["val"]))
             elif p == 1:
-                print("  {} = \"{}\" from CLI option".format(k,v["val"]))
+                print('  {} = "{}" from CLI option'.format(k, v["val"]))
 
     ##
     # @brief Get dictionary of all set configuration options.
@@ -271,9 +379,9 @@ class API:
     # @retval varies
     # @exception Exception: If unknown key is provided.
     #
-    def get( self, key ):
+    def get(self, key):
         if not key in _opt_info:
-            raise Exception("Undefined configuration key: " + key )
+            raise Exception("Undefined configuration key: " + key)
 
         if key in self._opts:
             return self._opts[key]["val"]
@@ -288,18 +396,18 @@ class API:
     # @param save If True, save new value to client configuration file.
     # @exception Exception: If unknown key is provided.
     #
-    def set( self, key, value, save = False ):
+    def set(self, key, value, save=False):
         if not key in _opt_info:
-            raise Exception("Undefined configuration key:",key)
+            raise Exception("Undefined configuration key:", key)
 
         if key in self._opts:
             self._opts[key]["val"] = value
         else:
-            self._opts[key] = { "val" : value, "pri" : 0 }
+            self._opts[key] = {"val": value, "pri": 0}
 
         if save:
             self.save()
-            #with open( self._opts["client_cfg_file"]["val"], 'r+') as f:
+            # with open( self._opts["client_cfg_file"]["val"], 'r+') as f:
             #    config = configparser.ConfigParser()
             #    config.read_file( f )
             #    opt = _opt_info[key]
@@ -310,16 +418,15 @@ class API:
             #    f.truncate()
             #    config.write( f )
 
-    def save( self ):
+    def save(self):
         if "client_cfg_file" in self._opts:
             config = configparser.ConfigParser()
             for key, val in self._opts.items():
                 if key in _opt_info:
                     opt = _opt_info[key]
-                    if not config.has_section( opt[0] ):
-                        config.add_section( opt[0] )
-                    config.set( opt[0], opt[1], str(val["val"]) )
-            with open( self._opts["client_cfg_file"]["val"], 'w') as f:
+                    if not config.has_section(opt[0]):
+                        config.add_section(opt[0])
+                    config.set(opt[0], opt[1], str(val["val"]))
+            with open(self._opts["client_cfg_file"]["val"], "w") as f:
                 f.truncate()
-                config.write( f )
-
+                config.write(f)

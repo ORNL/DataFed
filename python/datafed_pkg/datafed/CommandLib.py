@@ -64,14 +64,16 @@ class API:
 
     _max_md_size = 102400
     _max_payload_size = 1048576
-    _endpoint_legacy = re.compile(r'[\w\-]+#[\w\-]+')
-    _endpoint_uuid = re.compile( r'[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}', re.I )
+    _endpoint_legacy = re.compile(r"[\w\-]+#[\w\-]+")
+    _endpoint_uuid = re.compile(
+        r"[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}", re.I
+    )
 
-    def __init__( self, opts = {} ):
-        #print("CommandLib Init")
+    def __init__(self, opts={}):
+        # print("CommandLib Init")
 
-        if not isinstance( opts, dict ):
-            raise Exception( "CommandLib API options parameter must be a dictionary." )
+        if not isinstance(opts, dict):
+            raise Exception("CommandLib API options parameter must be a dictionary.")
 
         self._uid = None
         print(f"cur_sel set to None")
@@ -79,11 +81,11 @@ class API:
         self._cur_ep = None
         self._cur_alias_prefix = ""
 
-        self.cfg = Config.API( opts )
+        self.cfg = Config.API(opts)
         _opts = self._setSaneDefaultOptions()
 
-        self._mapi = MessageLib.API( **_opts )
-        self._mapi.setNackExceptionEnabled( True )
+        self._mapi = MessageLib.API(**_opts)
+        self._mapi.setNackExceptionEnabled(True)
         auth, uid = self._mapi.getAuthStatus()
 
         if auth:
@@ -91,13 +93,13 @@ class API:
             self._cur_sel = uid
             print(f"cur_sel set to {self._cur_sel}")
 
-        self._cur_ep = self.cfg.get( "default_ep" )
+        self._cur_ep = self.cfg.get("default_ep")
 
     # =========================================================================
     # -------------------------------------------------- Authentication Methods
     # =========================================================================
 
-    def getAuthUser( self ):
+    def getAuthUser(self):
         """
         Get current authenticated user, if any.
 
@@ -111,7 +113,7 @@ class API:
         """
         return self._uid
 
-    def logout( self ):
+    def logout(self):
         """
         Logout current client, if any.
 
@@ -127,7 +129,7 @@ class API:
             self._uid = None
             self._cur_sel = None
 
-    def loginByPassword( self, uid, password ):
+    def loginByPassword(self, uid, password):
         """
         Manually authenticate client by user id and password
 
@@ -151,13 +153,13 @@ class API:
         """
         self.logout()
 
-        self._mapi.manualAuthByPassword( uid, password )
+        self._mapi.manualAuthByPassword(uid, password)
 
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
         print(f"cur_sel set to self._mapi._uid {self._cur_sel}")
 
-    def generateCredentials( self ):
+    def generateCredentials(self):
         """
         Generate/download local user credentials
 
@@ -176,13 +178,26 @@ class API:
         """
         msg = auth.GenerateCredentialsRequest()
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
     # =========================================================================
     # ------------------------------------------------------------ Repo Methods
     # =========================================================================
 
-    def repoCreate( self, repo_id, title=None, desc=None, domain=None, capacity=None, pub_key=None, address=None, endpoint=None, path=None, exp_path=None, admins=[] ):
+    def repoCreate(
+        self,
+        repo_id,
+        title=None,
+        desc=None,
+        domain=None,
+        capacity=None,
+        pub_key=None,
+        address=None,
+        endpoint=None,
+        path=None,
+        exp_path=None,
+        admins=[],
+    ):
         """
         Create a repository
 
@@ -220,7 +235,7 @@ class API:
         Exception : On communication or server error
         """
         msg = auth.RepoCreateRequest()
-        msg.id = repo_id 
+        msg.id = repo_id
         msg.title = title
         msg.desc = desc
         msg.domain = domain
@@ -230,14 +245,14 @@ class API:
         msg.pub_key = pub_key
         msg.path = path
         msg.capacity = capacity
-        
-        if isinstance( admins, list ):
+
+        if isinstance(admins, list):
             for admin in admins:
-                msg.admin.append( admin)
+                msg.admin.append(admin)
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def repoList( self, list_all : bool = False ):
+    def repoList(self, list_all: bool = False):
         """
         List all repositories
 
@@ -245,9 +260,9 @@ class API:
         """
         msg = auth.RepoListRequest()
         msg.all = list_all
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def repoDelete( self, repo_id ):
+    def repoDelete(self, repo_id):
         """
         Delete a repository
 
@@ -266,41 +281,40 @@ class API:
         """
         msg = auth.RepoDeleteRequest()
         msg.id = repo_id
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
     def repoAllocationCreate(self, repo_id, subject, data_limit, rec_limit):
-
         if not repo_id.startswith("repo/"):
-            repo_id = "repo/" + repo_id 
+            repo_id = "repo/" + repo_id
 
         msg = auth.RepoAllocationCreateRequest()
-        msg.repo = repo_id 
+        msg.repo = repo_id
         msg.subject = subject
         msg.data_limit = data_limit
         msg.rec_limit = rec_limit
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
     def repoListAllocations(self, repo_id):
         if not repo_id.startswith("repo/"):
-            repo_id = "repo/" + repo_id 
+            repo_id = "repo/" + repo_id
 
         msg = auth.RepoListAllocationsRequest()
-        msg.id = repo_id 
-        return self._mapi.sendRecv( msg )
+        msg.id = repo_id
+        return self._mapi.sendRecv(msg)
 
-    def repoAllocationDelete(self, repo_id, subject): 
+    def repoAllocationDelete(self, repo_id, subject):
         if not repo_id.startswith("repo/"):
-            repo_id = "repo/" + repo_id 
+            repo_id = "repo/" + repo_id
         msg = auth.RepoAllocationDeleteRequest()
         msg.repo = repo_id
         msg.subject = subject
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
     # =========================================================================
     # ------------------------------------------------------------ Data Methods
     # =========================================================================
 
-    def dataView( self, data_id, details = False, context = None ):
+    def dataView(self, data_id, details=False, context=None):
         """
         View a data record
 
@@ -326,14 +340,29 @@ class API:
         Exception : On communication or server error
         """
         msg = auth.RecordViewRequest()
-        msg.id = self._resolve_id( data_id, context )
+        msg.id = self._resolve_id(data_id, context)
         msg.details = details
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def dataCreate( self, title, alias = None, description = None, tags = None, extension = None,
-        metadata = None, metadata_file = None, schema = None, schema_enforce = None,
-        parent_id = "root", deps = None, repo_id = None, raw_data_file = None, external = None, context = None ):
+    def dataCreate(
+        self,
+        title,
+        alias=None,
+        description=None,
+        tags=None,
+        extension=None,
+        metadata=None,
+        metadata_file=None,
+        schema=None,
+        schema_enforce=None,
+        parent_id="root",
+        deps=None,
+        repo_id=None,
+        raw_data_file=None,
+        external=None,
+        context=None,
+    ):
         """
         Create a new data record
 
@@ -395,17 +424,19 @@ class API:
         """
 
         if repo_id and external:
-            raise Exception( "Cannot specify repository for external (unmanaged) data." )
+            raise Exception("Cannot specify repository for external (unmanaged) data.")
 
         if raw_data_file and not external:
-            raise Exception( "Cannot specify raw_data_file for managed data (must upload after record creation)." )
+            raise Exception(
+                "Cannot specify raw_data_file for managed data (must upload after record creation)."
+            )
 
         if metadata and metadata_file:
-            raise Exception( "Cannot specify both metadata and metadata-file options." )
+            raise Exception("Cannot specify both metadata and metadata-file options.")
 
         msg = auth.RecordCreateRequest()
         msg.title = title
-        msg.parent_id = self._resolve_id( parent_id, context )
+        msg.parent_id = self._resolve_id(parent_id, context)
 
         if alias:
             msg.alias = alias
@@ -414,7 +445,7 @@ class API:
             msg.desc = description
 
         if tags:
-            msg.tags.extend( tags )
+            msg.tags.extend(tags)
 
         if repo_id:
             msg.repo_id = repo_id
@@ -431,11 +462,13 @@ class API:
 
         if metadata_file:
             try:
-                f = open( metadata_file, "r" )
+                f = open(metadata_file, "r")
                 metadata = f.read()
                 f.close()
             except:
-                raise Exception("Could not open metadata file: {}".format( metadata_file ))
+                raise Exception(
+                    "Could not open metadata file: {}".format(metadata_file)
+                )
 
         if metadata:
             msg.metadata = metadata
@@ -455,13 +488,28 @@ class API:
                     dp.type = 1
                 elif d[0] == "ver":
                     dp.type = 2
-                dp.id = self._resolve_id( d[1], context )
+                dp.id = self._resolve_id(d[1], context)
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def dataUpdate( self, data_id, title = None, alias = None, description = None, tags = None,
-        extension = None, metadata = None, metadata_file = None, metadata_set = False,
-        schema = None, schema_enforce = None, deps_add = None, deps_rem = None, raw_data_file = None, context = None ):
+    def dataUpdate(
+        self,
+        data_id,
+        title=None,
+        alias=None,
+        description=None,
+        tags=None,
+        extension=None,
+        metadata=None,
+        metadata_file=None,
+        metadata_set=False,
+        schema=None,
+        schema_enforce=None,
+        deps_add=None,
+        deps_rem=None,
+        raw_data_file=None,
+        context=None,
+    ):
         """
         Update an existing data record
 
@@ -527,10 +575,10 @@ class API:
         """
 
         if metadata and metadata_file:
-            raise Exception( "Cannot specify both metadata and metadata-file options." )
+            raise Exception("Cannot specify both metadata and metadata-file options.")
 
         msg = auth.RecordUpdateRequest()
-        msg.id = self._resolve_id( data_id, context )
+        msg.id = self._resolve_id(data_id, context)
 
         if title is not None:
             msg.title = title
@@ -545,7 +593,7 @@ class API:
             if not tags:
                 msg.tags_clear = True
             else:
-                msg.tags.extend( tags )
+                msg.tags.extend(tags)
 
         if extension is not None:
             if extension:
@@ -559,11 +607,13 @@ class API:
 
         if metadata_file:
             try:
-                f = open( metadata_file, "r" )
+                f = open(metadata_file, "r")
                 metadata = f.read()
                 f.close()
             except:
-                raise Exception("Could not open metadata file: {}".format( metadata_file ))
+                raise Exception(
+                    "Could not open metadata file: {}".format(metadata_file)
+                )
 
         if metadata is not None:
             msg.metadata = metadata
@@ -586,7 +636,7 @@ class API:
                     dep.type = 1
                 elif d[0] == "ver":
                     dep.type = 2
-                dep.id = self._resolve_id( d[1], context )
+                dep.id = self._resolve_id(d[1], context)
 
         if deps_rem:
             for d in deps_rem:
@@ -597,11 +647,11 @@ class API:
                     dep.type = 1
                 elif d[0] == "ver":
                     dep.type = 2
-                dep.id = self._resolve_id( d[1], context )
+                dep.id = self._resolve_id(d[1], context)
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def dataDelete( self, data_id, context = None ):
+    def dataDelete(self, data_id, context=None):
         """
         Deletes onr or more data records and associated raw data.
 
@@ -623,17 +673,24 @@ class API:
         """
         msg = auth.RecordDeleteRequest()
 
-        if isinstance( data_id, list ):
+        if isinstance(data_id, list):
             for i in data_id:
-                msg.id.append( self._resolve_id( i, context ))
+                msg.id.append(self._resolve_id(i, context))
         else:
-            msg.id.append( self._resolve_id( data_id, context ))
+            msg.id.append(self._resolve_id(data_id, context))
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def dataGet( self, item_id, path, encrypt = sdms.ENCRYPT_AVAIL,
-                 orig_fname = False, wait = False, timeout_sec = 0,
-                 context = None ):
+    def dataGet(
+        self,
+        item_id,
+        path,
+        encrypt=sdms.ENCRYPT_AVAIL,
+        orig_fname=False,
+        wait=False,
+        timeout_sec=0,
+        context=None,
+    ):
         """
         Get (download) raw data for one or more data records and/or collections
 
@@ -688,9 +745,9 @@ class API:
             item_id = [item_id]
 
         for ids in item_id:
-            msg.id.append( self._resolve_id( ids, context ))
+            msg.id.append(self._resolve_id(ids, context))
 
-        reply = self._mapi.sendRecv( msg )
+        reply = self._mapi.sendRecv(msg)
 
         # May initiate multiple transfers - one per repo with multiple records per transfer
         # Downloads may be Globus OR HTTP, but not both
@@ -704,11 +761,11 @@ class API:
             # Globus transfers
             msg = auth.DataGetRequest()
             msg.id.extend(glob_ids)
-            msg.path = self._resolvePathForGlobus( path, False )
+            msg.path = self._resolvePathForGlobus(path, False)
             msg.encrypt = encrypt
             msg.orig_fname = orig_fname
 
-            reply = self._mapi.sendRecv( msg )
+            reply = self._mapi.sendRecv(msg)
 
             if reply[0].task and wait:
                 msg2 = auth.TaskViewRequest()
@@ -719,7 +776,7 @@ class API:
                     time.sleep(4)
                     elapsed = elapsed + 4
 
-                    reply2 = self._mapi.sendRecv( msg2, nack_except = False )
+                    reply2 = self._mapi.sendRecv(msg2, nack_except=False)
 
                     # timeout
                     if reply2[0] == None:
@@ -742,9 +799,16 @@ class API:
             # Will land here if tried to get a collection with no records
             raise Exception("Specified record(s) contain no raw data.")
 
-    def dataPut( self, data_id, path, encrypt = sdms.ENCRYPT_AVAIL,
-                 wait = False, timeout_sec = 0, extension = None,
-                 context = None ):
+    def dataPut(
+        self,
+        data_id,
+        path,
+        encrypt=sdms.ENCRYPT_AVAIL,
+        wait=False,
+        timeout_sec=0,
+        extension=None,
+        context=None,
+    ):
         """
         Put (upload) raw data for a data record
 
@@ -784,15 +848,15 @@ class API:
         Exception : On invalid options or communication / server error.
         """
         msg = auth.DataPutRequest()
-        msg.id = self._resolve_id( data_id, context )
-        msg.path = self._resolvePathForGlobus( path, False )
+        msg.id = self._resolve_id(data_id, context)
+        msg.path = self._resolvePathForGlobus(path, False)
         msg.encrypt = encrypt
         if extension:
             msg.ext = extension
 
-        reply = self._mapi.sendRecv( msg )
+        reply = self._mapi.sendRecv(msg)
 
-        if ( reply[0].HasField( "task" ) == True ) and wait:
+        if (reply[0].HasField("task") == True) and wait:
             msg2 = auth.TaskViewRequest()
             msg2.task_id = reply[0].task.id
             elapsed = 0
@@ -801,13 +865,13 @@ class API:
                 time.sleep(4)
                 elapsed = elapsed + 4
 
-                reply2 = self._mapi.sendRecv( msg2, nack_except = False )
+                reply2 = self._mapi.sendRecv(msg2, nack_except=False)
 
                 # Not sure if this can happen:
                 if reply2[1] == "NackReply":
                     break
 
-                #reply = reply2
+                # reply = reply2
 
                 if reply2[0].task[0].status > 2:
                     break
@@ -819,7 +883,7 @@ class API:
 
         return reply
 
-    def dataBatchCreate( self, file, coll_id = None, context = None ):
+    def dataBatchCreate(self, file, coll_id=None, context=None):
         """
         Batch create data records
 
@@ -855,31 +919,35 @@ class API:
             fp = pathlib.Path(f)
 
             if not fp.is_file():
-                raise Exception( "File not found: " + f )
+                raise Exception("File not found: " + f)
 
             tot_size += fp.stat().st_size
             if tot_size > API._max_payload_size:
-                raise Exception( "Total batch create size exceeds limit ({})".format( API._max_payload_size ))
+                raise Exception(
+                    "Total batch create size exceeds limit ({})".format(
+                        API._max_payload_size
+                    )
+                )
 
-            with fp.open('r+') as f:
+            with fp.open("r+") as f:
                 records = jsonlib.load(f)
 
                 if not isinstance(records, list):
                     records = [records]
 
                 if coll_id:
-                    coll = self._resolve_id( coll_id, context )
+                    coll = self._resolve_id(coll_id, context)
                     for item in records:
                         item["parent"] = coll
 
-                payload.extend( records )
+                payload.extend(records)
 
         msg = auth.RecordCreateBatchRequest()
-        msg.records = jsonlib.dumps( payload )
+        msg.records = jsonlib.dumps(payload)
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def dataBatchUpdate( self, file ):
+    def dataBatchUpdate(self, file):
         """
         Batch update data records
 
@@ -910,30 +978,34 @@ class API:
             fp = pathlib.Path(f)
 
             if not fp.is_file():
-                raise Exception( "File not found: " + f )
+                raise Exception("File not found: " + f)
 
             tot_size += fp.stat().st_size
             if tot_size > API._max_payload_size:
-                raise Exception( "Total batch update size exceeds limit ({})".format( API._max_payload_size ))
+                raise Exception(
+                    "Total batch update size exceeds limit ({})".format(
+                        API._max_payload_size
+                    )
+                )
 
-            with fp.open('r+') as f:
+            with fp.open("r+") as f:
                 records = jsonlib.load(f)
 
-                if not isinstance( records, list ):
-                    payload.append( records )
+                if not isinstance(records, list):
+                    payload.append(records)
                 else:
-                    payload.extend( records )
+                    payload.extend(records)
 
         msg = auth.RecordUpdateBatchRequest()
-        msg.records = jsonlib.dumps( payload )
+        msg.records = jsonlib.dumps(payload)
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
     # =========================================================================
     # ------------------------------------------------------ Collection Methods
     # =========================================================================
 
-    def collectionView( self, coll_id, context = None ):
+    def collectionView(self, coll_id, context=None):
         """
         View collection information
 
@@ -956,14 +1028,21 @@ class API:
         Exception : On invalid options or communication / server error.
         """
         msg = auth.CollViewRequest()
-        msg.id = self._resolve_id( coll_id, context )
-        #msg.id = self._resolve_coll_id( coll_id, context )
+        msg.id = self._resolve_id(coll_id, context)
+        # msg.id = self._resolve_coll_id( coll_id, context )
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def collectionCreate( self, title, alias = None, description = None,
-                          tags = None, topic = None, parent_id = "root",
-                          context = None ):
+    def collectionCreate(
+        self,
+        title,
+        alias=None,
+        description=None,
+        tags=None,
+        topic=None,
+        parent_id="root",
+        context=None,
+    ):
         """
         Create a new collection
 
@@ -1012,19 +1091,26 @@ class API:
             msg.desc = description
 
         if tags:
-            msg.tags.extend( tags )
+            msg.tags.extend(tags)
 
         if topic:
             msg.topic = topic
 
         if parent_id:
-            msg.parent_id = self._resolve_id( parent_id, context )
+            msg.parent_id = self._resolve_id(parent_id, context)
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def collectionUpdate( self, coll_id, title = None, alias = None,
-                          description = None, tags = None, topic = None,
-                          context = None ):
+    def collectionUpdate(
+        self,
+        coll_id,
+        title=None,
+        alias=None,
+        description=None,
+        tags=None,
+        topic=None,
+        context=None,
+    ):
         """
         Update an existing collection with title, alias, and description.
 
@@ -1062,7 +1148,7 @@ class API:
         Exception : On communication or server error
         """
         msg = auth.CollUpdateRequest()
-        msg.id = self._resolve_id( coll_id, context )
+        msg.id = self._resolve_id(coll_id, context)
 
         if title is not None:
             msg.title = title
@@ -1077,14 +1163,14 @@ class API:
             if not tags:
                 msg.tags_clear = True
             else:
-                msg.tags.extend( tags )
+                msg.tags.extend(tags)
 
         if topic is not None:
             msg.topic = topic
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def collectionDelete( self, coll_id, context = None ):
+    def collectionDelete(self, coll_id, context=None):
         """
         Delete one or more existing collections
 
@@ -1111,16 +1197,15 @@ class API:
         """
         msg = auth.CollDeleteRequest()
 
-        if isinstance( coll_id, list ):
+        if isinstance(coll_id, list):
             for i in coll_id:
-                msg.id.append( self._resolve_id( i, context ))
+                msg.id.append(self._resolve_id(i, context))
         else:
-            msg.id.append( self._resolve_id( coll_id, context ))
+            msg.id.append(self._resolve_id(coll_id, context))
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def collectionItemsList( self, coll_id, offset = 0, count = 20,
-                             context = None ):
+    def collectionItemsList(self, coll_id, offset=0, count=20, context=None):
         """
         List items in collection
 
@@ -1150,12 +1235,11 @@ class API:
         msg = auth.CollReadRequest()
         msg.count = count
         msg.offset = offset
-        msg.id = self._resolve_id( coll_id, context )
+        msg.id = self._resolve_id(coll_id, context)
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def collectionItemsUpdate( self, coll_id, add_ids = None, rem_ids = None,
-                               context = None ):
+    def collectionItemsUpdate(self, coll_id, add_ids=None, rem_ids=None, context=None):
         """
         Update (add/remove) items linked to a specified collection
 
@@ -1191,23 +1275,23 @@ class API:
         Exception : On invalid options
         """
         msg = auth.CollWriteRequest()
-        msg.id = self._resolve_id( coll_id, context )
+        msg.id = self._resolve_id(coll_id, context)
 
-        if isinstance( add_ids, list ):
+        if isinstance(add_ids, list):
             for i in add_ids:
-                msg.add.append( self._resolve_id( i, context ))
-        elif isinstance( add_ids, str ):
-            msg.add.append( self._resolve_id( add_ids, context ))
+                msg.add.append(self._resolve_id(i, context))
+        elif isinstance(add_ids, str):
+            msg.add.append(self._resolve_id(add_ids, context))
 
-        if isinstance( rem_ids, list ):
+        if isinstance(rem_ids, list):
             for i in rem_ids:
-                msg.rem.append( self._resolve_id( i, context ))
-        elif isinstance( rem_ids, str ):
-            msg.rem.append( self._resolve_id( rem_ids, context ))
+                msg.rem.append(self._resolve_id(i, context))
+        elif isinstance(rem_ids, str):
+            msg.rem.append(self._resolve_id(rem_ids, context))
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def collectionGetParents( self, coll_id, inclusive = False, context = None ):
+    def collectionGetParents(self, coll_id, inclusive=False, context=None):
         """
         Get parents of specified collection up to the root collection
 
@@ -1232,16 +1316,16 @@ class API:
         Exception : On invalid options
         """
         msg = auth.CollGetParentsRequest()
-        msg.id = self._resolve_id( coll_id, context )
+        msg.id = self._resolve_id(coll_id, context)
         msg.inclusive = inclusive
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
     # =========================================================================
     # ----------------------------------------------------------- Query Methods
     # =========================================================================
 
-    def queryList( self, offset = 0, count = 20 ):
+    def queryList(self, offset=0, count=20):
         """
         List saved queries
 
@@ -1266,9 +1350,9 @@ class API:
         msg.offset = offset
         msg.count = count
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def queryView( self, query_id ):
+    def queryView(self, query_id):
         """
         View a saved query
 
@@ -1288,12 +1372,28 @@ class API:
         msg = auth.QueryViewRequest()
         msg.id = query_id
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def queryCreate( self, title, coll_mode = None, coll = None, id = None, text = None,
-        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
-        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None ):
-
+    def queryCreate(
+        self,
+        title,
+        coll_mode=None,
+        coll=None,
+        id=None,
+        text=None,
+        tags=None,
+        schema=None,
+        meta=None,
+        meta_err=None,
+        owner=None,
+        creator=None,
+        time_from=None,
+        time_to=None,
+        public=None,
+        category=None,
+        sort=None,
+        sort_rev=None,
+    ):
         """
         Create a new saved query
 
@@ -1323,15 +1423,49 @@ class API:
         msg = auth.QueryCreateRequest()
         msg.title = title
 
-        self._buildSearchRequest( msg.query, coll_mode, coll, id, text, tags, schema, meta,
-            meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev )
+        self._buildSearchRequest(
+            msg.query,
+            coll_mode,
+            coll,
+            id,
+            text,
+            tags,
+            schema,
+            meta,
+            meta_err,
+            owner,
+            creator,
+            time_from,
+            time_to,
+            public,
+            category,
+            sort,
+            sort_rev,
+        )
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-
-    def queryUpdate( self, query_id, title = None, coll_mode = None, coll = None, id = None, text = None,
-        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
-        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None ):
+    def queryUpdate(
+        self,
+        query_id,
+        title=None,
+        coll_mode=None,
+        coll=None,
+        id=None,
+        text=None,
+        tags=None,
+        schema=None,
+        meta=None,
+        meta_err=None,
+        owner=None,
+        creator=None,
+        time_from=None,
+        time_to=None,
+        public=None,
+        category=None,
+        sort=None,
+        sort_rev=None,
+    ):
         """
         Update an existing saved query
 
@@ -1357,13 +1491,29 @@ class API:
         if title != None:
             msg.title = title
 
-        self._buildSearchRequest( msg.query, coll_mode, coll, id, text, tags, schema, meta,
-            meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev )
+        self._buildSearchRequest(
+            msg.query,
+            coll_mode,
+            coll,
+            id,
+            text,
+            tags,
+            schema,
+            meta,
+            meta_err,
+            owner,
+            creator,
+            time_from,
+            time_to,
+            public,
+            category,
+            sort,
+            sort_rev,
+        )
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-
-    def queryDelete( self, query_id ):
+    def queryDelete(self, query_id):
         """
         Delete a saved query.
 
@@ -1381,12 +1531,11 @@ class API:
         Exception : On communication or server error
         """
         msg = auth.QueryDeleteRequest()
-        msg.id.append( query_id )
+        msg.id.append(query_id)
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-
-    def queryExec( self, query_id, offset = 0, count = 20 ):
+    def queryExec(self, query_id, offset=0, count=20):
         """
         Execute a stored query and return matches.
 
@@ -1414,13 +1563,29 @@ class API:
         msg.offset = offset
         msg.count = count
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-
-    def queryDirect( self, coll_mode = None, coll = None, id = None, text = None,
-        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
-        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None,
-        offset = 0, count = 20 ):
+    def queryDirect(
+        self,
+        coll_mode=None,
+        coll=None,
+        id=None,
+        text=None,
+        tags=None,
+        schema=None,
+        meta=None,
+        meta_err=None,
+        owner=None,
+        creator=None,
+        time_from=None,
+        time_to=None,
+        public=None,
+        category=None,
+        sort=None,
+        sort_rev=None,
+        offset=0,
+        count=20,
+    ):
         """
         Directly run a manually entered query and return matches
 
@@ -1447,30 +1612,67 @@ class API:
         """
         msg = auth.SearchRequest()
 
-        self._buildSearchRequest( msg, coll_mode, coll, id, text, tags, schema, meta,
-            meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev, offset, count )
+        self._buildSearchRequest(
+            msg,
+            coll_mode,
+            coll,
+            id,
+            text,
+            tags,
+            schema,
+            meta,
+            meta_err,
+            owner,
+            creator,
+            time_from,
+            time_to,
+            public,
+            category,
+            sort,
+            sort_rev,
+            offset,
+            count,
+        )
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-
-    def _buildSearchRequest( self, msg, coll_mode = None, coll = None, id = None, text = None,
-        tags = None, schema = None, meta = None, meta_err = None, owner = None, creator = None,
-        time_from = None, time_to = None, public = None, category = None, sort = None, sort_rev = None,
-        offset = 0, count = 20 ):
-
-        if coll_mode and (schema != None or meta != None or meta_err == True ):
-            raise Exception("Cannot specify metadata terms when searching for collection.")
+    def _buildSearchRequest(
+        self,
+        msg,
+        coll_mode=None,
+        coll=None,
+        id=None,
+        text=None,
+        tags=None,
+        schema=None,
+        meta=None,
+        meta_err=None,
+        owner=None,
+        creator=None,
+        time_from=None,
+        time_to=None,
+        public=None,
+        category=None,
+        sort=None,
+        sort_rev=None,
+        offset=0,
+        count=20,
+    ):
+        if coll_mode and (schema != None or meta != None or meta_err == True):
+            raise Exception(
+                "Cannot specify metadata terms when searching for collection."
+            )
 
         if coll_mode:
             msg.mode = 1
         else:
             msg.mode = 0
 
-        #if category != None and not public:
+        # if category != None and not public:
         #    raise Exception("Category search option is only available for public searches.")
 
         if coll != None:
-            msg.coll.extend( coll )
+            msg.coll.extend(coll)
 
         if sort != None:
             if sort == "id":
@@ -1490,7 +1692,9 @@ class API:
 
         if sort_rev == True:
             if msg.sort == 5:
-                raise Exception("Reverse sort option not available for text-relevance sorting.")
+                raise Exception(
+                    "Reverse sort option not available for text-relevance sorting."
+                )
 
             msg.sort_rev = True
 
@@ -1501,7 +1705,7 @@ class API:
             msg.text = text
 
         if tags != None:
-            msg.tags.extend( tags )
+            msg.tags.extend(tags)
 
         if owner != None:
             msg.owner = owner
@@ -1519,14 +1723,14 @@ class API:
             msg.meta_err = True
 
         if time_from != None:
-            ts = self.strToTimestamp( time_from )
+            ts = self.strToTimestamp(time_from)
             if ts == None:
                 raise Exception("Invalid time format for 'from' option.")
 
-            setattr( msg, "from", ts )
+            setattr(msg, "from", ts)
 
         if time_to != None:
-            ts = self.strToTimestamp( time_to )
+            ts = self.strToTimestamp(time_to)
             if ts == None:
                 raise Exception("Invalid time format for 'from' option.")
             msg.to = ts
@@ -1535,7 +1739,7 @@ class API:
             msg.published = True
 
         if category != None:
-            msg.cat_tags.extend( category.split( "." ))
+            msg.cat_tags.extend(category.split("."))
 
         if offset != None:
             msg.offset = offset
@@ -1547,7 +1751,7 @@ class API:
     # ------------------------------------------------------------ User Methods
     # =========================================================================
 
-    def userListCollaborators( self, offset = 0, count = 20 ):
+    def userListCollaborators(self, offset=0, count=20):
         """
         List collaborators. Collaborators are defined as users that have projects
         in common with the current user, or that have data-sharing relationships
@@ -1573,9 +1777,9 @@ class API:
         msg.offset = offset
         msg.count = count
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def userListAll( self, offset = 0, count = 20 ):
+    def userListAll(self, offset=0, count=20):
         """
         List all users
 
@@ -1599,9 +1803,9 @@ class API:
         msg.offset = offset
         msg.count = count
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def userView( self, uid ):
+    def userView(self, uid):
         """
         View user information
 
@@ -1622,15 +1826,13 @@ class API:
         msg = auth.UserViewRequest()
         msg.uid = uid
 
-        return self._mapi.sendRecv( msg )
-
+        return self._mapi.sendRecv(msg)
 
     # =========================================================================
     # --------------------------------------------------------- Project Methods
     # =========================================================================
 
-    def projectList( self, owned = True, admin = True, member = True,
-                     offset = 0, count = 20 ):
+    def projectList(self, owned=True, admin=True, member=True, offset=0, count=20):
         """
         List projects associated with current user
 
@@ -1670,9 +1872,9 @@ class API:
         msg.offset = offset
         msg.count = count
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def projectView( self, project_id ):
+    def projectView(self, project_id):
         """
         View project information (title, description, owner, etc.)
 
@@ -1693,9 +1895,9 @@ class API:
         msg = auth.ProjectViewRequest()
         msg.id = project_id
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def projectGetRole( self, project_id ):
+    def projectGetRole(self, project_id):
         """
         Get the role that this user plays in a given project
 
@@ -1716,7 +1918,7 @@ class API:
         msg = auth.ProjectGetRoleRequest()
         msg.id = project_id
 
-        reply = self._mapi.sendRecv( msg )
+        reply = self._mapi.sendRecv(msg)
 
         return reply[0].role
 
@@ -1724,8 +1926,7 @@ class API:
     # ----------------------------------------------------- Shared Data Methods
     # =========================================================================
 
-    def sharedList( self, inc_users = None, inc_projects = None,
-                          subject = None ):
+    def sharedList(self, inc_users=None, inc_projects=None, subject=None):
         """
         List users and/or that have shared data with client/subject.
 
@@ -1758,7 +1959,7 @@ class API:
         if subject != None:
             msg.subject = subject.lower()
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
     '''
     def sharedUsersList( self ):
@@ -1800,8 +2001,7 @@ class API:
         return self._mapi.sendRecv( msg )
     '''
 
-    def sharedListItems( self, owner_id, context = None,
-                         offset = None, count = None ):
+    def sharedListItems(self, owner_id, context=None, offset=None, count=None):
         """
         List shared data records and collections by user/project ID
 
@@ -1833,15 +2033,15 @@ class API:
         if context != None:
             msg.subject = context.lower()
 
-        return self._mapi.sendRecv( msg )
-
+        return self._mapi.sendRecv(msg)
 
     # =========================================================================
     # --------------------------------------------------- Data Transfer Methods
     # =========================================================================
 
-    def taskList( self, time_from = None, time_to = None, since = None,
-                  status = None, offset = 0, count = 20 ):
+    def taskList(
+        self, time_from=None, time_to=None, since=None, status=None, offset=0, count=20
+    ):
         """
         List recent Globus data transfer tasks
 
@@ -1881,14 +2081,14 @@ class API:
         msg = auth.TaskListRequest()
 
         if time_from != None:
-            ts = self.strToTimestamp( time_from )
+            ts = self.strToTimestamp(time_from)
             if ts == None:
                 raise Exception("Invalid time format for 'from' option.")
 
-            setattr( msg, "from", ts )
+            setattr(msg, "from", ts)
 
         if time_to != None:
-            ts = self.strToTimestamp( time_to )
+            ts = self.strToTimestamp(time_to)
             if ts == None:
                 raise Exception("Invalid time format for 'time_to' option.")
 
@@ -1899,22 +2099,22 @@ class API:
                 suf = since[-1]
                 mod = 1
 
-                if suf == 'h':
+                if suf == "h":
                     val = int(since[:-1])
                     mod = 3600
-                elif suf == 'd':
+                elif suf == "d":
                     val = int(since[:-1])
-                    mod = 24*3600
-                elif suf == 'w':
+                    mod = 24 * 3600
+                elif suf == "w":
                     val = int(since[:-1])
-                    mod = 7*24*3600
+                    mod = 7 * 24 * 3600
                 else:
                     val = int(since)
 
                 if val == None:
                     raise Exception("Invalid value for 'since'")
 
-                msg.since = val*mod
+                msg.since = val * mod
             except:
                 raise Exception("Invalid value for 'since'")
 
@@ -1927,18 +2127,18 @@ class API:
                 else:
                     # raise TypeError('status should be a list of str or int')
                     stat = str(s)
-                if stat in ["0","1","2","3","4"]:
-                    msg.status.append( int( stat ))
+                if stat in ["0", "1", "2", "3", "4"]:
+                    msg.status.append(int(stat))
                 elif stat == "queued":
-                    msg.status.append( 0 )
+                    msg.status.append(0)
                 elif stat == "ready":
-                    msg.status.append( 1 )
+                    msg.status.append(1)
                 elif stat == "running":
-                    msg.status.append( 2 )
+                    msg.status.append(2)
                 elif stat == "succeeded":
-                    msg.status.append( 3 )
+                    msg.status.append(3)
                 elif stat == "failed":
-                    msg.status.append( 4 )
+                    msg.status.append(4)
 
         if offset != None:
             try:
@@ -1962,9 +2162,9 @@ class API:
             else:
                 raise Exception("Invalid count value.")
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def taskView( self, task_id = None ):
+    def taskView(self, task_id=None):
         """
         View information regarding a (Globus data transfer) task
 
@@ -1991,13 +2191,13 @@ class API:
             msg = auth.TaskViewRequest()
             msg.task_id = task_id
 
-            reply = self._mapi.sendRecv( msg )
+            reply = self._mapi.sendRecv(msg)
         else:
             msg = auth.TaskListRequest()
             msg.offset = 0
             msg.count = 1
 
-            reply = self._mapi.sendRecv( msg )
+            reply = self._mapi.sendRecv(msg)
 
         return reply
 
@@ -2005,7 +2205,7 @@ class API:
     # -------------------------------------------------------- Endpoint Methods
     # =========================================================================
 
-    def endpointListRecent( self ):
+    def endpointListRecent(self):
         """
         List recently used Globus endpoints
 
@@ -2020,9 +2220,9 @@ class API:
         """
         msg = auth.UserGetRecentEPRequest()
 
-        return self._mapi.sendRecv( msg )
+        return self._mapi.sendRecv(msg)
 
-    def endpointDefaultGet( self ):
+    def endpointDefaultGet(self):
         """
         Get configured default endpoint
 
@@ -2031,9 +2231,9 @@ class API:
         str
             default endpoint string, or None if not configured
         """
-        return self.cfg.get( "default_ep" )
+        return self.cfg.get("default_ep")
 
-    def endpointDefaultSet( self, endpoint ):
+    def endpointDefaultSet(self, endpoint):
         """
         Set the default Globus endpoint (used to set initial current endpoint)
 
@@ -2043,11 +2243,11 @@ class API:
             New default endpoint
         """
         # TODO validate ep is UUID or legacy (not an ID)
-        self.cfg.set( "default_ep", endpoint, True )
+        self.cfg.set("default_ep", endpoint, True)
         if not self._cur_ep:
             self._cur_ep = endpoint
 
-    def endpointGet( self ):
+    def endpointGet(self):
         """
         Get current Globus endpoint
 
@@ -2059,7 +2259,7 @@ class API:
         # TODO: Consider making self._cur_ep more private via self.__cur_ep
         return self._cur_ep
 
-    def endpointSet( self, endpoint ):
+    def endpointSet(self, endpoint):
         """
         Set current Globus endpoint (added to partial get/put paths)
 
@@ -2071,12 +2271,11 @@ class API:
         # TODO validate ep is UUID or legacy (not an ID)
         self._cur_ep = endpoint
 
-
     # =========================================================================
     # --------------------------------------------------- Miscellaneous Methods
     # =========================================================================
 
-    def setupCredentials( self ):
+    def setupCredentials(self):
         """
         Setup local credentials
 
@@ -2099,27 +2298,29 @@ class API:
         priv_file = self.cfg.get("client_priv_key_file")
 
         if cfg_dir == None and (pub_file == None or priv_file == None):
-            raise Exception("Client configuration directory and/or client key files not configured")
+            raise Exception(
+                "Client configuration directory and/or client key files not configured"
+            )
 
         msg = auth.GenerateCredentialsRequest()
 
-        reply = self._mapi.sendRecv( msg )
+        reply = self._mapi.sendRecv(msg)
 
         if pub_file == None:
             pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
 
-        keyf = open( pub_file, "w" )
-        keyf.write( reply[0].pub_key )
+        keyf = open(pub_file, "w")
+        keyf.write(reply[0].pub_key)
         keyf.close()
 
         if priv_file == None:
             priv_file = os.path.join(cfg_dir, "datafed-user-key.priv")
 
-        keyf = open( priv_file, "w" )
-        keyf.write( reply[0].priv_key )
+        keyf = open(priv_file, "w")
+        keyf.write(reply[0].priv_key)
         keyf.close()
 
-    def setContext( self, item_id = None ):
+    def setContext(self, item_id=None):
         """
         Set current context which is used to resolve relative aliases
 
@@ -2153,24 +2354,28 @@ class API:
             else:
                 if id2[0:2] != "u/":
                     if id2.find("/") > 0 or id2.find(":") > 0:
-                        raise Exception("setContext invalid ID, '" + id2 + "'. Must be a user or a project ID")
+                        raise Exception(
+                            "setContext invalid ID, '"
+                            + id2
+                            + "'. Must be a user or a project ID"
+                        )
                     id2 = "u/" + id2
 
                 msg = auth.UserViewRequest()
                 msg.uid = id2
 
             # Don't need reply - just using to throw an except if id/uid is invalid
-            self._mapi.sendRecv( msg )
+            self._mapi.sendRecv(msg)
             self._cur_sel = id2
 
             if id2[0] == "u":
-                #self._cur_coll = "c/u_" + self._cur_sel[2:] + "_root"
+                # self._cur_coll = "c/u_" + self._cur_sel[2:] + "_root"
                 self._cur_alias_prefix = "u:" + self._cur_sel[2:] + ":"
             else:
-                #self._cur_coll = "c/p_" + self._cur_sel[2:] + "_root"
+                # self._cur_coll = "c/p_" + self._cur_sel[2:] + "_root"
                 self._cur_alias_prefix = "p:" + self._cur_sel[2:] + ":"
 
-    def getContext( self ):
+    def getContext(self):
         """
         Gets the current context which is used to resolve relative aliases
 
@@ -2181,7 +2386,7 @@ class API:
         """
         return self._cur_sel
 
-    def timestampToStr( self, ts ):
+    def timestampToStr(self, ts):
         """
         Convert timestamp into standard string format
 
@@ -2195,9 +2400,9 @@ class API:
         str
             A string representation of the timestamp in local time
         """
-        return time.strftime("%m/%d/%Y,%H:%M", time.localtime( ts ))
+        return time.strftime("%m/%d/%Y,%H:%M", time.localtime(ts))
 
-    def strToTimestamp( self, time_str ):
+    def strToTimestamp(self, time_str):
         """
         Convert a date/time string into the integer value of the
         represented timestamp (in local time)
@@ -2213,28 +2418,32 @@ class API:
             The integer timestamp representation of the time string
         """
         try:
-            return int( time_str )
+            return int(time_str)
         except:
             pass
 
         try:
-            return int( datetime.datetime.strptime( time_str, "%m/%d/%Y" ).timestamp())
+            return int(datetime.datetime.strptime(time_str, "%m/%d/%Y").timestamp())
         except:
             pass
 
         try:
-            return int( datetime.datetime.strptime( time_str, "%m/%d/%Y,%H:%M" ).timestamp())
+            return int(
+                datetime.datetime.strptime(time_str, "%m/%d/%Y,%H:%M").timestamp()
+            )
         except:
             pass
 
         try:
-            return int( datetime.datetime.strptime( time_str, "%m/%d/%Y,%H:%M:%S" ).timestamp())
+            return int(
+                datetime.datetime.strptime(time_str, "%m/%d/%Y,%H:%M:%S").timestamp()
+            )
         except:
             pass
 
         return None
 
-    def sizeToStr( self, size, precision = 1 ):
+    def sizeToStr(self, size, precision=1):
         """
         Convert integer size of data sizes to human readable size string with
         metric units
@@ -2251,7 +2460,7 @@ class API:
         str
             The size as a string with byte units
         """
-        #if not isinstance(size, int):
+        # if not isinstance(size, int):
         #    raise TypeError('size must be a integer')
         if size == 0:
             return "0"
@@ -2270,13 +2479,13 @@ class API:
             denom = 1099511627776
             unit = "TB"
 
-        return "{:.{}f} {}".format( size/denom, precision, unit )
+        return "{:.{}f} {}".format(size / denom, precision, unit)
 
     # =========================================================================
     # --------------------------------------------------------- Private Methods
     # =========================================================================
 
-    def _uniquifyFilename( self, path ):
+    def _uniquifyFilename(self, path):
         """
         Ensures that the provided file name is unique by generating a new
         unique file name if the specified file name already exists.
@@ -2293,29 +2502,31 @@ class API:
         """
         filepath = pathlib.Path(path)
         while filepath.exists():
-            stem = filepath.stem #string
-            suffixes = filepath.suffixes #list
-            stem_parts = stem.split("__", 1) #list
+            stem = filepath.stem  # string
+            suffixes = filepath.suffixes  # list
+            stem_parts = stem.split("__", 1)  # list
 
-            if stem_parts[-1].isdigit(): #nth copy
+            if stem_parts[-1].isdigit():  # nth copy
                 index_value = int(stem_parts[-1])
                 index_value += 1
                 stem_parts[-1] = str(index_value)
                 new_stem = "__".join(stem_parts)
                 new_name = [new_stem]
-                for suffix in suffixes: new_name.append(suffix)
+                for suffix in suffixes:
+                    new_name.append(suffix)
                 new_name = "".join(new_name)
                 filepath = filepath.with_name(new_name)
-            else: #first copy
+            else:  # first copy
                 new_stem = stem + "__1"
                 new_name = [new_stem]
-                for suffix in suffixes: new_name.append(suffix)
+                for suffix in suffixes:
+                    new_name.append(suffix)
                 new_name = "".join(new_name)
                 filepath = filepath.with_name(new_name)
 
         return str(filepath)
 
-    def _resolvePathForHTTP( self, path ):
+    def _resolvePathForHTTP(self, path):
         """
         Resolve relative local path
 
@@ -2331,7 +2542,7 @@ class API:
         """
         if path[0] == "~":
             res = pathlib.Path(path).expanduser().resolve()
-        elif path[0] == "." or path[0] != '/':
+        elif path[0] == "." or path[0] != "/":
             res = pathlib.Path.cwd() / path
             res = res.resolve()
         else:
@@ -2339,7 +2550,7 @@ class API:
 
         return str(res)
 
-    def _resolvePathForGlobus( self, path, must_exist ):
+    def _resolvePathForGlobus(self, path, must_exist):
         """
         Resolve relative paths and prefix with current endpoint if needed
 
@@ -2356,7 +2567,7 @@ class API:
             Path with globus endpoint UUID or alias prefixed.
         """
         # Check if this is a full Globus path with either a UUID or legacy endpoint prefix
-        if re.match( API._endpoint_legacy, path ) or re.match( API._endpoint_uuid, path ):
+        if re.match(API._endpoint_legacy, path) or re.match(API._endpoint_uuid, path):
             return path
 
         # Does not have an endpoint prefix, might be a full or relative path
@@ -2365,8 +2576,10 @@ class API:
             raise Exception("No endpoint set.")
 
         if path[0] == "~":
-            _path = pathlib.Path( path ).expanduser()
-        elif path[0] == "." or path[0] != "/": # Relative path: ./something ../something or something
+            _path = pathlib.Path(path).expanduser()
+        elif (
+            path[0] == "." or path[0] != "/"
+        ):  # Relative path: ./something ../something or something
             _path = pathlib.Path.cwd() / path
         else:
             _path = pathlib.Path(path)
@@ -2392,9 +2605,9 @@ class API:
                 idx = 0
                 for p in _path.parts:
                     if idx <= rel:
-                        basep = basep.joinpath( p )
+                        basep = basep.joinpath(p)
                     else:
-                        endp = endp.joinpath( p )
+                        endp = endp.joinpath(p)
                     idx = idx + 1
 
                 _path = basep.resolve().joinpath(endp)
@@ -2404,22 +2617,22 @@ class API:
             # TODO The follow windows-specific code needs to be tested on windows...
             if isinstance(winp, pathlib.PureWindowsPath):
                 if winp.drive:
-                    drive_name = winp.drive.replace(':', '')
+                    drive_name = winp.drive.replace(":", "")
                     parts = winp.parts[1:]
-                    winp = pathlib.PurePosixPath('/' + drive_name)
+                    winp = pathlib.PurePosixPath("/" + drive_name)
                     for item in parts:
                         winp = winp / str(item)  # adds each part
                     _path = str(winp)
                 elif not winp.drive:
                     _path = winp.as_posix()
-                    if _path[0] != '/':
+                    if _path[0] != "/":
                         _path = "/" + _path
             else:
                 _path = str(_path)
 
         return self._cur_ep + _path
 
-    def _resolve_id( self, item_id, context = None ):
+    def _resolve_id(self, item_id, context=None):
         """
         Resolve ID by prefixing relative aliases with current or specifies
         context
@@ -2436,7 +2649,7 @@ class API:
         str
             resolved ID
         """
-        if ( len( item_id ) > 2 and item_id[1] == "/" ) or ( item_id.find(":") > 0 ):
+        if (len(item_id) > 2 and item_id[1] == "/") or (item_id.find(":") > 0):
             return item_id
 
         if context:
@@ -2449,7 +2662,7 @@ class API:
         else:
             return self._cur_alias_prefix + item_id
 
-    def _setSaneDefaultOptions( self ):
+    def _setSaneDefaultOptions(self):
         """
         Set any missing config options to sane defaults
 
@@ -2464,12 +2677,12 @@ class API:
         save = False
 
         if not "server_host" in opts:
-            self.cfg.set( "server_host", "datafed.ornl.gov" )
+            self.cfg.set("server_host", "datafed.ornl.gov")
             opts["server_host"] = "datafed.ornl.gov"
             save = True
 
         if not "server_port" in opts:
-            self.cfg.set( "server_port", 7512 )
+            self.cfg.set("server_port", 7512)
             opts["server_port"] = 7512
             save = True
 
@@ -2477,39 +2690,51 @@ class API:
             serv_key_file = None
 
             if "server_cfg_dir" in opts:
-                serv_key_file = os.path.expanduser( os.path.join( opts['server_cfg_dir'], "datafed-core-key.pub" ))
-                self.cfg.set( "server_pub_key_file", serv_key_file )
+                serv_key_file = os.path.expanduser(
+                    os.path.join(opts["server_cfg_dir"], "datafed-core-key.pub")
+                )
+                self.cfg.set("server_pub_key_file", serv_key_file)
                 opts["server_pub_key_file"] = serv_key_file
 
-            if not serv_key_file or not os.path.exists( serv_key_file ):
+            if not serv_key_file or not os.path.exists(serv_key_file):
                 serv_key_file = None
                 if "client_cfg_dir" in opts:
-                    serv_key_file = os.path.expanduser( os.path.join( opts['client_cfg_dir'], "datafed-core-key.pub" ))
-                    self.cfg.set( "server_pub_key_file", serv_key_file )
+                    serv_key_file = os.path.expanduser(
+                        os.path.join(opts["client_cfg_dir"], "datafed-core-key.pub")
+                    )
+                    self.cfg.set("server_pub_key_file", serv_key_file)
                     opts["server_pub_key_file"] = serv_key_file
                     save = True
 
                 if not serv_key_file:
-                    raise Exception("Could not find location of server public key file.")
+                    raise Exception(
+                        "Could not find location of server public key file."
+                    )
 
                 if not os.path.exists(serv_key_file):
                     # Make default server pub key file
-                    url = "https://"+opts["server_host"]+"/datafed-core-key.pub"
-                    wget.download( url, out=serv_key_file )
+                    url = "https://" + opts["server_host"] + "/datafed-core-key.pub"
+                    wget.download(url, out=serv_key_file)
 
         if not "client_pub_key_file" in opts or not "client_priv_key_file" in opts:
             if not "client_cfg_dir" in opts:
-                raise Exception("Client key file(s) or client configuration directory not specified or invalid.")
+                raise Exception(
+                    "Client key file(s) or client configuration directory not specified or invalid."
+                )
 
             if not "client_pub_key_file" in opts:
-                key_file = os.path.expanduser( os.path.join( opts['client_cfg_dir'], "datafed-user-key.pub" ))
-                self.cfg.set( "client_pub_key_file", key_file )
+                key_file = os.path.expanduser(
+                    os.path.join(opts["client_cfg_dir"], "datafed-user-key.pub")
+                )
+                self.cfg.set("client_pub_key_file", key_file)
                 opts["client_pub_key_file"] = key_file
                 save = True
 
             if not "client_priv_key_file" in opts:
-                key_file = os.path.expanduser( os.path.join( opts['client_cfg_dir'], "datafed-user-key.priv" ))
-                self.cfg.set( "client_priv_key_file", key_file )
+                key_file = os.path.expanduser(
+                    os.path.join(opts["client_cfg_dir"], "datafed-user-key.priv")
+                )
+                self.cfg.set("client_priv_key_file", key_file)
                 opts["client_priv_key_file"] = key_file
                 save = True
 
@@ -2517,4 +2742,3 @@ class API:
             self.cfg.save()
 
         return opts
-

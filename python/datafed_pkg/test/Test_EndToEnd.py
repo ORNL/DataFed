@@ -2,8 +2,6 @@
 # TODO: Change all commands to fit new CLI
 
 
-
-
 """*** SUMMARY
 This script is used to test basic functionality of DataFed.
 *** EXTENDED SUMMARY
@@ -86,7 +84,7 @@ import datafed
 import datafed.CommandLib as cmd
 import datafed.Config
 
-warnings.simplefilter("always") #warnings will be raised every time a
+warnings.simplefilter("always")  # warnings will be raised every time a
 # non-compliant data record detail is generated
 
 
@@ -103,8 +101,14 @@ def escape(string):
         will print as being one backslash, as needed by the shell syntax.
 
     """
-    escaped_string = string.replace("\\", '\\\\').replace('"', '\\"').replace(
-        '`', '\\`').replace('$', '\\$').replace("'", "\\'").replace("!", "\\!")
+    escaped_string = (
+        string.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("`", "\\`")
+        .replace("$", "\\$")
+        .replace("'", "\\'")
+        .replace("!", "\\!")
+    )
     return str(escaped_string)
 
 
@@ -121,12 +125,17 @@ def unescape_for_JSON(string):
         backslashes.
 
     """
-    unescaped_string = string.replace("\\'", "'") .replace('\\!', '!')
+    unescaped_string = string.replace("\\'", "'").replace("\\!", "!")
     return str(unescaped_string)
 
 
-def string_generator(min_char=1, max_char=501, special_characters=True, \
-        shift_to_lowercase=True, making_topic=False):
+def string_generator(
+    min_char=1,
+    max_char=501,
+    special_characters=True,
+    shift_to_lowercase=True,
+    making_topic=False,
+):
     """Creates a random string of random length (from within a specified
     range) out of random characters (from a specified selection).
 
@@ -152,25 +161,28 @@ def string_generator(min_char=1, max_char=501, special_characters=True, \
     """
     all_char = string.ascii_letters + string.digits + string.punctuation
     all_char = all_char.replace('"', "")
-    #For full text details -- title and desc
+    # For full text details -- title and desc
     spec_char = string.ascii_letters + string.digits + "_" + "-" + "."
-    #Restricted selection matching SDMS requirements for alias and keywords
+    # Restricted selection matching SDMS requirements for alias and keywords
     topic_char = string.ascii_letters + string.digits + "_" + "-"
-    #Use of periods is restricted, as this is the delimitor for (sub)topics
+    # Use of periods is restricted, as this is the delimitor for (sub)topics
 
     if special_characters:
         if making_topic:
-            randostring = ''.join(r.choice(topic_char) for i in range(
-                r.randint(min_char, max_char)))
+            randostring = "".join(
+                r.choice(topic_char) for i in range(r.randint(min_char, max_char))
+            )
 
         else:
-            randostring = ''.join(r.choice(spec_char) for i in range(
-                r.randint(min_char, max_char)))
+            randostring = "".join(
+                r.choice(spec_char) for i in range(r.randint(min_char, max_char))
+            )
         pass
 
     else:
-        randostring = ''.join(r.choice(all_char) for i in range(r.randint(
-            min_char, max_char)))
+        randostring = "".join(
+            r.choice(all_char) for i in range(r.randint(min_char, max_char))
+        )
         pass
 
     if shift_to_lowercase:
@@ -179,15 +191,15 @@ def string_generator(min_char=1, max_char=501, special_characters=True, \
         pass
 
     if randostring[0] == "-":
-        randostring = randostring.replace("-", "_", 1) #If detail begins
-        #with a hyphen, the shell will interpret it as a switch
+        randostring = randostring.replace("-", "_", 1)  # If detail begins
+        # with a hyphen, the shell will interpret it as a switch
     else:
         pass
 
     return str(randostring)
 
 
-def make_alias(fits_requirements = True):
+def make_alias(fits_requirements=True):
     """Generates a random string for use as a record alias in the SDMS.
 
     SDMS requires that (optional) aliases are unique, and contain a maximum
@@ -218,14 +230,14 @@ def make_alias(fits_requirements = True):
         alias = r.choice(non_compliant_functions)
         if alias is too_long_alias:
             warnings.warn("SDMSError: Alias contains too many characters.")
-        else: #forbidden_char
+        else:  # forbidden_char
             warnings.warn("SDMSError: Alias contains forbidden characters.")
         pass
 
     return alias
 
 
-def make_title(fits_requirements = True):
+def make_title(fits_requirements=True):
     """Generates a random string for use as a record title in the SDMS.
 
     SDMS requires that all records have a title, which may be a maximum of
@@ -254,14 +266,14 @@ def make_title(fits_requirements = True):
         title = r.choice(non_compliant_functions)
         if title is empty_title:
             warnings.warn("SDMSError: Title is empty.")
-        else: #too_long_title
+        else:  # too_long_title
             warnings.warn("SDMSError: Title contains too many characters.")
         pass
 
     return title
 
 
-def make_desc(fits_requirements = True):
+def make_desc(fits_requirements=True):
     """Generates a random string for use as a record description in the SDMS.
 
     SDMS requires that (optional) descriptions have a maximum of 500
@@ -289,6 +301,7 @@ def make_desc(fits_requirements = True):
 
     return desc
 
+
 ################################ DATA RECORDS ################################
 
 
@@ -299,8 +312,25 @@ class DataRecord(object):
     allows for ease of comparison between the SDMS output and test details.
 
     """
-    def __init__(self, data_id, alias, title, desc, topic, keywords, owner,
-    locked, size, repo, uploaded, created, updated, meta, deps):
+
+    def __init__(
+        self,
+        data_id,
+        alias,
+        title,
+        desc,
+        topic,
+        keywords,
+        owner,
+        locked,
+        size,
+        repo,
+        uploaded,
+        created,
+        updated,
+        meta,
+        deps,
+    ):
         """Initializing the DataRecord object.
 
         Args:
@@ -341,7 +371,7 @@ class DataRecord(object):
                 and 1 indicating the parent. Each dependency is a dict
                 of strings all stored within a list.
 
-    """
+        """
         self.data_id = data_id
         self.alias = alias
         self.title = title
@@ -359,7 +389,7 @@ class DataRecord(object):
         self.deps = deps
 
     # TODO: Fix all f-strings
-    '''
+    """
     def __str__(self):
         return f'id: {self.data_id}, alias: {self.alias}, title: {self.title},\
             desc: {self.desc}, topic: {self.topic}, keywords: {self.keywords},\
@@ -373,23 +403,29 @@ class DataRecord(object):
             {self.keywords!r}, {self.owner!r}, {self.locked!r}, {self.size!r},\
             {self.repo!r}, {self.uploaded!r}, {self.created!r}, \
             {self.updated!r}, {self.meta!r}, {self.deps!r})')
-    '''
+    """
+
     @classmethod
-    def make_topic(cls, fits_requirements = True, quantity = 4,):
+    def make_topic(
+        cls,
+        fits_requirements=True,
+        quantity=4,
+    ):
         topic_as_list = []
         if fits_requirements:
             for x in range(r.randint(1, int(quantity))):
                 topic_as_list.append(string_generator(1, 5, True, True, True))
-            topic = ".".join(topic_as_list) #joins words with '.' as delimitor
+            topic = ".".join(topic_as_list)  # joins words with '.' as delimitor
 
         else:
+
             def too_long_topic(num):
                 warnings.warn("SDMSError: Topic word has too many characters")
                 num -= 1
                 topic_as_list = []
                 topic_as_list.append(string_generator(26, 30, True, True, True))
-                for x in range(r.randint(1, int(num))):topic_as_list.append(
-                    string_generator(4, 9, True, True, True))
+                for x in range(r.randint(1, int(num))):
+                    topic_as_list.append(string_generator(4, 9, True, True, True))
                 topic = ".".join(topic_as_list)
                 return topic
 
@@ -398,8 +434,8 @@ class DataRecord(object):
                 topic_as_list = []
                 num -= 1
                 topic_as_list.append(string_generator(4, 9, False, True, True))
-                for x in range(r.randint(1, int(num))):topic_as_list.append(
-                    string_generator(4, 9, True, True, True))
+                for x in range(r.randint(1, int(num))):
+                    topic_as_list.append(string_generator(4, 9, True, True, True))
                 topic = ".".join(topic_as_list)
                 return topic
 
@@ -408,22 +444,50 @@ class DataRecord(object):
 
         return topic
 
-# gotta generate the DataRecord object, and then make a method to
-#  change how it is formatted.
+    # gotta generate the DataRecord object, and then make a method to
+    #  change how it is formatted.
 
     @classmethod
-    def generate(cls, fits_requirements = True):
-
+    def generate(cls, fits_requirements=True):
         if fits_requirements:
-            dr = DataRecord("d/data_id", make_alias(True), make_title(True), make_desc(True), DataRecord.make_topic(True),"Keywords","u/breetju","Locked","5665","repo/test","Uploaded"                ,"Created","Updated","{\n    \"whatever\": \"x = 579975\",\n \
-                \"blue\": \"is a colour\"\n}", "[]")
+            dr = DataRecord(
+                "d/data_id",
+                make_alias(True),
+                make_title(True),
+                make_desc(True),
+                DataRecord.make_topic(True),
+                "Keywords",
+                "u/breetju",
+                "Locked",
+                "5665",
+                "repo/test",
+                "Uploaded",
+                "Created",
+                "Updated",
+                '{\n    "whatever": "x = 579975",\n \
+                "blue": "is a colour"\n}',
+                "[]",
+            )
 
         else:
-            dr = DataRecord("d/data_id", make_alias(True), make_title(True),
-                make_desc(True), DataRecord.make_topic(True),"Keywords",
-                "u/breetju","Locked","5665","repo/test","Uploaded","Created",
-                "Updated","{\n    \"whatever\": \"x = 579975\",\n    \"blue\":is a colour\"\n}", "[]")
-            if r.choice([0,1]) == 0:
+            dr = DataRecord(
+                "d/data_id",
+                make_alias(True),
+                make_title(True),
+                make_desc(True),
+                DataRecord.make_topic(True),
+                "Keywords",
+                "u/breetju",
+                "Locked",
+                "5665",
+                "repo/test",
+                "Uploaded",
+                "Created",
+                "Updated",
+                '{\n    "whatever": "x = 579975",\n    "blue":is a colour"\n}',
+                "[]",
+            )
+            if r.choice([0, 1]) == 0:
                 dr.alias = make_alias(False)
             else:
                 dr.title = make_title(False)
@@ -431,41 +495,76 @@ class DataRecord(object):
         return dr
 
     def as_text_input(self):
-        text = './scripts/datafed data create "{}" -a "{}" -d "{}" -kw "{}"'.format(escape(self.title), escape(self.alias), escape(self.desc), escape(self.keywords))
+        text = './scripts/datafed data create "{}" -a "{}" -d "{}" -kw "{}"'.format(
+            escape(self.title),
+            escape(self.alias),
+            escape(self.desc),
+            escape(self.keywords),
+        )
 
         return text
 
-
     def as_py_input(self):
-        command = 'data create "{}" -a "{}" -d "{}" -kw "{}"'.format(self.title, self.alias, self.desc, self.keywords) # TODO: add keywords and topic
+        command = 'data create "{}" -a "{}" -d "{}" -kw "{}"'.format(
+            self.title, self.alias, self.desc, self.keywords
+        )  # TODO: add keywords and topic
         return command
 
-    def type_change(self, form='as_dict'):  #### fix this to use magic method __str__
+    def type_change(self, form="as_dict"):  #### fix this to use magic method __str__
         dr_as_list = []
-        if form == 'as_str':
-            details = [self.data_id, self.alias, self.title, self.desc, \
-                self.topic, self.keywords, self.owner, self.locked, self.size,\
-                self.repo, self.uploaded, self.created, self.updated, \
-                self.meta, self.deps]
+        if form == "as_str":
+            details = [
+                self.data_id,
+                self.alias,
+                self.title,
+                self.desc,
+                self.topic,
+                self.keywords,
+                self.owner,
+                self.locked,
+                self.size,
+                self.repo,
+                self.uploaded,
+                self.created,
+                self.updated,
+                self.meta,
+                self.deps,
+            ]
             for attribute in details:
-                    dr_as_list.append('"' + attribute + '"')
-                    dr_as_str = " ".join(dr_as_list)  #string suitable for CLI Input, Ouput is separated by commas
+                dr_as_list.append('"' + attribute + '"')
+                dr_as_str = " ".join(
+                    dr_as_list
+                )  # string suitable for CLI Input, Ouput is separated by commas
 
             return dr_as_str
 
-        elif form == 'as_list': #list of strings
-            dr_as_list = [self.data_id, self.alias, self.title, self.desc,\
-                self.topic, self.keywords, self.owner, self.locked, self.size,\
-                self.repo, self.uploaded, self.created, self.updated, \
-                self.meta, self.deps]
+        elif form == "as_list":  # list of strings
+            dr_as_list = [
+                self.data_id,
+                self.alias,
+                self.title,
+                self.desc,
+                self.topic,
+                self.keywords,
+                self.owner,
+                self.locked,
+                self.size,
+                self.repo,
+                self.uploaded,
+                self.created,
+                self.updated,
+                self.meta,
+                self.deps,
+            ]
 
             return dr_as_list
 
-        else: #Dictionary that can be serialized into JSON to match with CLI output
+        else:  # Dictionary that can be serialized into JSON to match with CLI output
             return vars(self)
 
+
 ################################ COLLECTIONS ################################
-'''
+"""
 class Collection(object):
 
     def __init__(self, coll_id, alias, title, desc):
@@ -511,13 +610,13 @@ class Collection(object):
 
 
 ################################ PROJECTS ################################
-'''
-'''
+"""
+"""
 There is no current CLI functionality in terms of projects, other than
 viewing, and perhaps creating records within project allocations.
 this may change, or may not. Saved queries can be listed and executed.
-'''
-'''
+"""
+"""
 class project(object):
 
     def __init__(self, details):
@@ -563,7 +662,7 @@ class query(object):
     def type_change(self, form='as_dict'):
 
 ################################ ACCESS CONTROL GROUPS #########################
-'''
+"""
 
 ################################ DEPENDENCIES ? ################################
 
@@ -574,25 +673,28 @@ import os
 import json
 
 
-testdata = '/data/unittesting/testfiles/SampleData.txt'
+testdata = "/data/unittesting/testfiles/SampleData.txt"
 
 # TODO: Test the create and delete functions before continuing with testing any other functionality
 ##Creating a text file of input strings, each on a new line
 ##LATER  Need something recursive? -- that uses the lines of generated by bugaboo
-#each action is a unit test -- generate record object, append dc command to list (necessary?),
+# each action is a unit test -- generate record object, append dc command to list (necessary?),
 #       send command to shell, (update by putting in data? save timestamp?) dv in json, compare with dr dict object,
 #       then delete record.
 
-#Setting up a class for testing Data Records
+# Setting up a class for testing Data Records
 
 test_commands = {
-    'text_create' : './scripts/datafed data create "{}" -a "{}" -d "{}" -kw "{}"'
+    "text_create": './scripts/datafed data create "{}" -a "{}" -d "{}" -kw "{}"'
 }
+
 
 def delete_testing_files():
     os.remove("~/jbreet/DataFed/python/datafed_pkg/test/datarecordsinput.txt")
     os.remove("~/jbreet/DataFed/python/datafed_pkg/test/outputfile.txt")
-'''
+
+
+"""
 
 
 class TestDataBasicReturn(ut.TestCase):
@@ -652,10 +754,11 @@ class TestDataBasicText(ut.TestCase):
                     record failed")
             except AssertionError:
                 print("Manual delete required")
-'''
+"""
+
 
 class TestDataRecords_Text(ut.TestCase):
-    '''
+    """
     def setUp(self): #happens before EVERY method in testcase
         self.drcorr0 = DataRecord.generate(True)
         self.drcorr1 = DataRecord.generate(True)
@@ -673,11 +776,10 @@ class TestDataRecords_Text(ut.TestCase):
                 os.remove(item)
             else:
                 pass
-    '''
-
+    """
 
     ############################# NEED SETUP
-    '''
+    """
     def test_dr_create_JSON(self): #Take randostring, put into commands, pass to sdms, and write output to file
         with open('drinput.txt', 'a+') as ipfile:
             ipfile.write(self.drcorr0.as_input_str()) #writes a stringified copy of the DataRecord object as dictionary
@@ -695,21 +797,28 @@ class TestDataRecords_Text(ut.TestCase):
         with self.subTest("Confirming desc"):
             self.assertEqual(unescape_for_JSON(op["data"][0]["desc"])),
                 self.drcorr0.desc, msg="Returned desc does not match")
-    '''
+    """
+
     def test_dr_create_incorrect(self):
         drerr = DataRecord.generate(fits_requirements=False)
         drerrinput = drerr.as_text_input()
-        with open('datarecordsinput.txt', 'w+') as ipfile:
+        with open("datarecordsinput.txt", "w+") as ipfile:
             ipfile.write(drerrinput)
-        with open("outputfile.txt", 'w+') as opfile:
-            subprocess.run(drerrinput,stdout=opfile,stderr=subprocess.STDOUT,shell=True)
-        with open('outputfile.txt', 'r') as opfile:
+        with open("outputfile.txt", "w+") as opfile:
+            subprocess.run(
+                drerrinput, stdout=opfile, stderr=subprocess.STDOUT, shell=True
+            )
+        with open("outputfile.txt", "r") as opfile:
             outs = opfile.read()
             print(outs)
-        self.assertIs("ID:" not in outs, True, msg="Data-create of \
-            incorrect data record unexpected pass. Manual delete required")
+        self.assertIs(
+            "ID:" not in outs,
+            True,
+            msg="Data-create of \
+            incorrect data record unexpected pass. Manual delete required",
+        )
 
-    '''
+    """
     def test_dr_create_incorrect_json(self):
         drerr = DataRecord.generate(False)
         drerrinput = drerr.as_input_str()
@@ -722,8 +831,10 @@ class TestDataRecords_Text(ut.TestCase):
             op = json.load(jsonopfile)
         self.assertEqual(op["status"], "ERROR", msg="Data-create of \
             incorrect data record unexpected pass")
-    '''
-'''
+    """
+
+
+"""
     def test_dr_update(self):
         new_title = "New Title"
         with open("jsonoutput.json", 'w+') as jsonopfile:
@@ -731,8 +842,8 @@ class TestDataRecords_Text(ut.TestCase):
         with open("jsonoutput.json", 'r') as jsonopfile:
             op = json.load(jsonopfile)
         self.assertEqual(op["data"][0]["title"], new_title, msg="Update of Data Record title unsuccessful")
-'''
-'''
+"""
+"""
     def test_dr_put(self):
         with open("jsonoutput.json", 'w+') as jsonopfile:
             subprocess.run(f'./scripts/datafed put "{self.drcorr1.alias}" "{testdata}"\
@@ -1005,9 +1116,9 @@ class TestDataRecords_Text(ut.TestCase):
             msg="Clear dependencies failed")
         subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
         subprocess.run(f'./scripts/datafed data-delete {drcorr3.alias}', shell=True)
-'''
+"""
 
-'''
+"""
 class TestCollections(ut.TestCase):
 
     def setUp(self):
@@ -1147,9 +1258,9 @@ class TestCollections(ut.TestCase):
             
             
             
-'''
+"""
 
 ##########################
-if __name__ == '__main__':
+if __name__ == "__main__":
     ut.main()
     delete_testing_files()
