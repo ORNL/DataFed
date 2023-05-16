@@ -217,7 +217,7 @@ then
     echo "id is $pipeline_id"
 
     gitlab_response_status=$(curl -s --retry 5 --request GET \
-      --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
+      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
       --form ref="main" \
       "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
     echo "Gitlab reponse status"
@@ -286,7 +286,7 @@ then
     echo "id is $pipeline_id"
 
     gitlab_response_status=$(curl -s --retry 5 --request GET \
-      --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
+      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
       --form ref="main" \
       "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
     echo "Gitlab reponse status"
