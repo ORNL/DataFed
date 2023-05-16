@@ -31,7 +31,17 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
 
         self._username = "datafed89"
         password = os.environ.get('DATAFED_USER89_PASSWORD') 
-        self._df_api.loginByPassword(self._username, password)
+
+        count = 0
+        while True:
+            try:
+                result = self._df_api.loginByPassword(self._username, password)
+                break
+            except:
+                pass
+            count += 1
+            # Try three times to authenticate
+            assert count < 3
 
         path_to_repo_form = os.environ.get('DATAFED_REPO_FORM_PATH')
         if path_to_repo_form is None:
@@ -45,6 +55,7 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             self._repo_form = json.load(json_file)
 
         # Create the repositories
+        print("Creating repo")
         result = self._df_api.repoCreate(
                 repo_id = self._repo_form["id"],
                 title = self._repo_form["title"],

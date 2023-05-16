@@ -83,32 +83,35 @@ router.get('/gridftp', function (req, res) {
             console.log("11");
       console.log("data_id is, ", data_id);
         var loc = g_db.loc.firstExample({_from: data_id});
-      console.log("Loc is:")
-      console.log(loc)
-        if ( !loc )
+        console.log("Loc is:")
+        console.log(loc)
+        if ( !loc ) {
             console.log("Permission denied data is not managed by DataFed. This can happen if you try to do a transfer directly from Globus.")
             throw g_lib.ERR_PERM_DENIED;
-
-            console.log("12");
+        }
+        console.log("12");
         var alloc = g_db.alloc.firstExample({ _from: loc.uid, _to: loc._to });
         console.log("path:", path, " alloc path:", alloc.path + data_key, " loc: ", loc );
-        if ( !alloc )
+        if ( !alloc ) {
             throw g_lib.ERR_PERM_DENIED;
+        }
 
-            console.log("13");
+        console.log("13");
         if ( alloc.path + data_key != path ){
             // This may be due to an alloc/owner change
             // Allow IF new path matches
             console.log("authz loc info:", loc );
 
-            if ( !loc.new_repo )
+            if ( !loc.new_repo ) {
                 throw g_lib.ERR_PERM_DENIED;
+            }
 
             alloc = g_db.alloc.firstExample({ _from: loc.new_owner?loc.new_owner:loc.uid, _to: loc.new_repo });
 
 
-            if ( !alloc || ( alloc.path + data_key != path ))
+            if ( !alloc || ( alloc.path + data_key != path )) {
                 throw g_lib.ERR_PERM_DENIED;
+            }
         }
 
     } catch( e ) {

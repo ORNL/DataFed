@@ -222,15 +222,18 @@ class API:
         msg.uid = uid
         print(f"manual Auth By Password uid is {uid}")
         msg.password = password
-        self.sendRecv( msg )
+        a, b = self.sendRecv( msg )
+        print("sendRecv result for pass word!")
+        print(a)
+        print(b)
 
         # Reset connection so server can re-authenticate
         self._conn.reset()
 
         # Test auth status
-        reply, mt = self.sendRecv( anon.GetAuthStatusRequest() )
+        reply, mt = self.sendRecv( anon.GetAuthStatusRequest())
         if not reply.auth:
-            raise Exception("Password authentication failed")
+            raise Exception(f"Password authentication failed.")
 
         self._auth = True
         print(f"reply uid is setting to mapi._uid: {reply.uid}")
@@ -313,6 +316,8 @@ class API:
         _timeout = (timeout if timeout != None else self._timeout)
         reply, mt, ctxt = self.recv( _timeout, nack_except )
         if reply == None:
+            print("Timeout!")
+            raise Exception("Timeout!!!!!!!!!")
             return None, None
         if ctxt != self._ctxt:
             raise Exception("Mismatched reply. Expected {} got {}".format( self._ctxt, ctxt ))

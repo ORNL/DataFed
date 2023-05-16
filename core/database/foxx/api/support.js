@@ -350,6 +350,26 @@ module.exports = ( function() {
             return false;
     };
 
+    // Quick check to see if a comma separated list of UUIDs has been provided
+    // Must contain at least one comma
+    obj.isUUIDList = function( a_client_ids ) {
+        if ( a_client_ids.indexOf(',') > -1) {
+            var potential_uuids = a_client_ids.split(',')
+            for (var index in potential_uuids) {
+              console.log("Potential uuid " + potential_uuids[index] );
+              if ( ! obj.isUUID(potential_uuids[index]) ) {
+                console.log("False");
+                return false;
+              }
+            }
+            console.log("True");
+            return true;
+        } else {
+            console.log("Does not contain ,");
+            return false;
+        }
+    };
+
     // Verify a_is is a valid UUID AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA (full check)
     obj.isValidUUID = function( a_id ) {
         if ( a_id.length == 36 ){
@@ -404,6 +424,63 @@ module.exports = ( function() {
         return false;
     };
 
+
+    obj.resolveUUIDsToID = function( uuid_list ) {
+        // This function will take a comma separated list of uuids as a string separate them and then either resolve them to a single uuid or
+        // throw an error
+        var potential_uuids = uuid_list.split(',')
+        var uuids = [];
+        for ( var i in potential_uuids ) {
+            uuids.push( "uuid/" + potential_uuids[i] );
+        }
+        console.log("uuids");
+        console.log(uuids);
+        var result = obj.db._query( "for i in ident filter i._to in @ids return distinct document(i._from)", { ids: uuids }).toArray();
+
+        if ( result.length != 1 ) {
+            throw [obj.ERR_NOT_FOUND,"No user matching Globus IDs found"];
+        }
+
+        var first_uuid = result[0]._id
+        // Next we need to make sure the provided ids are all the same if there is more than one
+        for( var i=1; i < result.length; i++) {
+          if( first_uuid != result[i]._id ) {
+            throw [obj.ERR_INVALID_PARAM, "uuid_list does not resolve to a single user, unable to unambiguously resolve user, it is possible that you have multiple accounts when you should have only a single one problematic ids are: " + first_uuid + " and " + array[i]];
+          }
+        }
+        return first_uuid;
+    }
+
+    obj.resolveUUIDsToID_noexcept = function( uuid_list ) {
+        // This function will take a comma separated list of uuids as a string separate them and then either resolve them to a single uuid or
+        // throw an error
+        var potential_uuids = uuid_list.split(',')
+        var uuids = [];
+        for ( var i in potential_uuids ) {
+            uuids.push( "uuid/" + potential_uuids[i] );
+        }
+        console.log("uuids");
+        console.log(uuids);
+        var result = obj.db._query( "for i in ident filter i._to in @ids return distinct document(i._from)", { ids: uuids }).toArray();
+        console.log("result is ");
+        console.log(result);
+        if ( result.length != 1 ) {
+            throw [obj.ERR_NOT_FOUND,"No user matching Globus IDs found"];
+        }
+
+        var first_uuid = result[0]._id
+        console.log("first_uuid is");
+        console.log(first_uuid);
+        // Next we need to make sure the provided ids are all the same if there is more than one
+        for( var i=1; i < result.length; i++) {
+          console.log("resolveUUID comparint " + first_uuid + " with " + result[i] );
+          if( first_uuid != result[i]._id ) {
+            return;
+          }
+        }
+        return first_uuid;
+    }
+
     obj.getUserFromClientID = function( a_client_id ) {
         // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
         // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
@@ -421,6 +498,20 @@ module.exports = ( function() {
         } else if ( obj.isUUID( a_client_id  )) {
             // UUID
             params = { 'id': 'uuid/' + a_client_id };
+        } else if ( obj.isUUIDList( a_client_id )) {
+            console.log("is UUIDList");
+            // Check to make sure the UUIDs provided are all associated with the same DataFed account, if they are we can unambiguously
+            // determine the UUID, if they are not, then we will throw an error for now, 
+            var unambiguous_id = obj.resolveUUIDsToID(a_client_id);
+            console.log("unambiguoud id " + unambiguous_id);
+            if( ! unambiguous_id ) {
+              console.log("Undefined");
+              return;
+            }
+            //params = { 'id': unambiguous_id };
+            return obj.db._document({ _id: unambiguous_id });
+
+
         } else {
             if ( !obj.db.u.exists( "u/" + a_client_id ))
                 throw [ obj.ERR_INVALID_PARAM, "No such user 'u/" + a_client_id + "'" ];
@@ -443,17 +534,34 @@ module.exports = ( function() {
 
         var params;
 
+        console.log("getUserFromClientID_noexcept");
         if ( a_client_id.startsWith("u/")){
+            console.log("Starts with u/");
             if ( !obj.db.u.exists( a_client_id ))
                 return;
 
             return obj.db._document({ _id: a_client_id });
         } else if ( obj.isDomainAccount( a_client_id )) {
             // Account
+            console.log("isDomainAccount");
             params = { 'id': 'accn/' + a_client_id };
         } else if ( obj.isUUID( a_client_id  )) {
             // UUID
+            console.log("isUUID");
             params = { 'id': 'uuid/' + a_client_id };
+        } else if ( obj.isUUIDList( a_client_id )) {
+            console.log("is UUIDList");
+            // Check to make sure the UUIDs provided are all associated with the same DataFed account, if they are we can unambiguously
+            // determine the UUID, if they are not, then we will throw an error for now, 
+            var unambiguous_id = obj.resolveUUIDsToID_noexcept(a_client_id);
+            console.log("unambiguoud id " + unambiguous_id);
+            if( ! unambiguous_id ) {
+              console.log("Undefined");
+              return;
+            }
+            //params = { 'id': unambiguous_id };
+            return obj.db._document({ _id: unambiguous_id });
+
         } else {
             if ( !obj.db.u.exists( "u/" + a_client_id ))
                 return;

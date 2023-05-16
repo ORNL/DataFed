@@ -124,6 +124,8 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
         {
             try
             {
+                std::cout << "res_json is " << std::endl;
+                std::cout << res_json << std::endl;
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )
@@ -2193,6 +2195,7 @@ DatabaseAPI::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataRe
 {
     Value result;
 
+    std::cout << "Calling repoList" << std::endl;
     vector<pair<string,string>> params;
     if ( a_request.has_all() )
         params.push_back({"all", a_request.all()?"true":"false"});
@@ -2213,6 +2216,21 @@ DatabaseAPI::repoList( std::vector<RepoData> & a_repos )
     dbGet( "repo/list", {{"all","true"},{"details","true"}}, result );
 
     setRepoData( 0, a_repos, result );
+}
+
+  void
+DatabaseAPI::repoView( std::vector<RepoData> & a_repos )
+{
+    const std::vector<RepoData> copy = a_repos;
+    a_repos.clear();
+    for( const RepoData & r : copy ) { 
+      Value result;
+
+      dbGet( "repo/view", {{"id",r.id()}}, result );
+
+      setRepoData( 0, a_repos, result);
+
+    }
 }
 
 void
@@ -2354,6 +2372,7 @@ void
 DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> & a_repos, const libjson::Value & a_result )
 {
 
+    std::cout << "Calling setRepoData" << std::endl;
     Value::ArrayConstIter    k;
 
     TRANSLATE_BEGIN()
@@ -2380,6 +2399,7 @@ DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> &
         }
 
         if ( obj.has( "address" )) {
+            std::cout << "Setting address for repo " << obj.getString("id") << " address is " << obj.asString() << std::endl;
             a_repos.back().set_address( obj.asString() );
         }
 

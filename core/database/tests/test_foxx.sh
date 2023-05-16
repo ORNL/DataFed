@@ -11,9 +11,9 @@ source ${PROJECT_ROOT}/config/datafed.sh
 
 Help()
 {
-  echo "$(basename $0) Will set up a configuration file for the core server"
+  echo "$(basename $0) Will run a Foxx unit test"
   echo
-  echo "Syntax: $(basename $0) [-h|u|p|y]"
+  echo "Syntax: $(basename $0) [-h|u|p|t]"
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-u, --database-user               Database user, needed to log into the database."
@@ -23,7 +23,8 @@ Help()
   echo "                                  provided via the command line it can also be set"
   echo "                                  using the enviromental variable"
   echo "                                  DATAFED_DATABASE_PASSWORD."
-  echo "-y, --system-secret               ZeroMQ system secret"
+  echo "-t, --test                        The name of the test to run. If nothing is specified"
+  echo "                                  will run all the tests."
   echo
   echo "NOTE: Do not run this script with sudo!"
 }
@@ -38,13 +39,6 @@ else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]
-then
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-else
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
-fi
-
 if [ -z "${FOXX_MAJOR_API_VERSION}" ]
 then
   local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
@@ -52,13 +46,14 @@ else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
 
-VALID_ARGS=$(getopt -o hu:p:f: --long 'help',database-user:,database-password:,foxx-api-major-version: -- "$@")
+TEST_TO_RUN="all"
+
+VALID_ARGS=$(getopt -o hu:p:f:t: --long 'help',database-user:,database-password:,foxx-api-major-version:,test: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
-  echo "$1"
   case "$1" in
     -h | --help)
         Help
@@ -79,9 +74,9 @@ while [ : ]; do
         local_FOXX_MAJOR_API_VERSION=$2
         shift 2
         ;;
-    -y | --zeromq-system-secret)
-        echo "Processing 'DataFed ZeroMQ system secret' option. Input argument is '$2'"
-        local_DATAFED_ZEROMQ_SYSTEM_SECRET=$2
+    -t | --test)
+        echo "Processing 'test' option. Input argument is '$2'"
+        TEST_TO_RUN=$2
         shift 2
         ;;
     --) shift; 
@@ -99,14 +94,6 @@ then
   echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -p, --database-password"
   echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
-  ERROR_DETECTED=1
-fi
-
-if [ -z "$local_DATAFED_ZEROMQ_SYSTEM_SECRET" ]
-then
-  echo "Error DATAFED_ZEROMQ_SYSTEM_SECRET is not defined, this is a required argument"
-  echo "      This variable can be set using the command line option -y, --zeromq-session-secret"
-  echo "      or with the environment variable DATAFED_ZEROMQ_SYSTEM_SECRET."
   ERROR_DETECTED=1
 fi
 
@@ -139,4 +126,9 @@ export NVM_DIR="$HOME/.nvm"
 nvm use $NODE_VERSION
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
-foxx test -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION}
+if [ "$TEST_TO_RUN" == "all" ]
+then
+  foxx test -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} --reporter spec
+else
+  foxx test -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} "$TEST_TO_RUN" --reporter spec
+fi

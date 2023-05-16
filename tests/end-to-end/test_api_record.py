@@ -32,7 +32,18 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
 
         self._username = "datafed89"
         password = os.environ.get('DATAFED_USER89_PASSWORD') 
-        result = self._df_api.loginByPassword(self._username, password)
+
+        count = 0
+        while True:
+            try:
+                result = self._df_api.loginByPassword(self._username, password)
+                break
+            except:
+                pass
+            count += 1
+            # Try three times to authenticate
+            assert count < 3
+
         print("\nAttempt to login result\n")
         print(result)
         path_to_repo_form = os.environ.get('DATAFED_REPO_FORM_PATH')
@@ -145,49 +156,67 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         status = task_result[0].task[0].status 
         count = 0
         while status < 3:
-            if count > 2:
+            if count > 10:
                 break
             time.sleep(1)
             task_result = self._df_api.taskView(task_id)
             status = task_result[0].task[0].status 
             count = count + 1
-        if status < 3:
-            data_put_esnet_pass = True
+        
+        #if status < 3:
+        #    data_put_esnet_pass = True
 
+        assert status == 3 
+        print(task_result)
+        print(f"Status is {status}") 
+
+        task_result = self._df_api.dataDelete(data_id)
+
+        status = task_result[0].task[0].status 
+        count = 0
+        while status < 3:
+            if count > 10:
+                break
+            time.sleep(1)
+            task_result = self._df_api.taskView(task_id)
+            status = task_result[0].task[0].status 
+            count = count + 1
+ 
+        assert status == 3 
         #if not data_put_esnet_pass:
             # Try data from a different location
 
-#    def tearDown(self):
-#        result = self._df_api.repoAllocationDelete(
-#                repo_id=self._repo_id,
-#                subject="datafed89")
-#
-#        task_id = result[0].task[0].id
-#
-#        # Check the status of the task
-#        task_result = self._df_api.taskView(task_id)
-#
-#        # If status is less than 3 it is in the works
-#        status = task_result[0].task[0].status 
-#        count = 0
-#        while status < 3:
-#            if count > 2:
-#                print(task_result)
-#                self.fail("Something went wrong task was unable to complete, attempt to delete an allocation after 3 seconds failed, make sure all services are running.")
-#                break
-#            time.sleep(1)
-#            task_result = self._df_api.taskView(task_id)
-#            status = task_result[0].task[0].status 
-#            count = count + 1
-#
-#        print("Delete Allocations")
-#        print(result)
-#
-#        repo_id = self._repo_form["id"]
-#        if not repo_id.startswith("repo/"):
-#            repo_id = "repo/" + repo_id
-#        result = self._df_api.repoDelete(repo_id)
-#        result = self._df_api.repoList(list_all = True)
+    def tearDown(self):
+        result = self._df_api.repoAllocationDelete(
+                repo_id=self._repo_id,
+                subject="datafed89")
+
+        task_id = result[0].task[0].id
+
+        # Check the status of the task
+        task_result = self._df_api.taskView(task_id)
+
+        # If status is less than 3 it is in the works
+        status = task_result[0].task[0].status 
+        count = 0
+        while status < 3:
+            if count > 2:
+                print(task_result)
+                self.fail("Something went wrong task was unable to complete, attempt to delete an allocation after 3 seconds failed, make sure all services are running.")
+                break
+            time.sleep(1)
+            task_result = self._df_api.taskView(task_id)
+            status = task_result[0].task[0].status 
+            count = count + 1
+
+        print("Delete Allocations")
+        print(result)
+
+        repo_id = self._repo_form["id"]
+        if not repo_id.startswith("repo/"):
+            repo_id = "repo/" + repo_id
+        result = self._df_api.repoDelete(repo_id)
+        result = self._df_api.repoList(list_all = True)
 
 
 

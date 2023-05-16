@@ -534,17 +534,19 @@ Server::repoCacheThread()
 
     while ( 1 )
     {
-        try
-        {
+      try {
+        try {
+          DL_DEBUG( "Checking if Repo Cache needs Updating" );
+          m_config.loadRepositoryConfig(m_auth_manager);
 
-            DL_DEBUG( "Checking if Repo Cache needs Updating" );
-            m_config.loadRepositoryConfig(m_auth_manager);
-
-        } catch( ... ) {
-            DL_ERROR( "Repo Cache Updating... unknown exception" );
+        } catch(const std::exception & e ) {
+          DL_ERROR( "Repo Cache Updating... " << e.what() );
         }
+      } catch (...) {
+        DL_ERROR( "Repo Cache Updating... unknown exception" );
+      }
 
-        this_thread::sleep_for( repo_cache_poll );
+      this_thread::sleep_for( repo_cache_poll );
     }
     DL_ERROR( "DB maintenance thread exiting" );
 

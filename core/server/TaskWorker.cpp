@@ -463,16 +463,21 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
 
     std::map<std::string,RepoData> repos;
     if( config.repoCacheInvalid() ) {
+      std::cout << "RepoCacheInvalid!!!!!" << std::endl;
       // Task worker is not in charge of updating the cache that is handled by another thread so we will simply make a separate call
       // and continue working
       std::vector<RepoData> temp_repos;
       m_db.repoList( temp_repos );
+      m_db.repoView( temp_repos );
 
       for ( RepoData & r : temp_repos ) {
         repos[r.id()] = r;
+        std::cout << "Repo id is " << r.id() << " repo address is " << r.address() << std::endl;
       }
     } else { 
+      std::cout << "Getting repos from config!!!!" << std::endl;
       repos = config.getRepos();
+
     }
 
     if ( !repos.count(a_repo_id) ) {
@@ -482,7 +487,7 @@ TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> &&
       EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id << " Registered repos are: " << registered_repos );
     }
   // Need to be able to split repos into host and scheme and port
-    std::cout << "ID is " << id() << std::endl;
+    std::cout << "ID is " << id() << " repo id is " << a_repo_id << " repo address is " << repos.at(a_repo_id).address() << std::endl;
       //const std::string client_id = "task_worker-" + id();
     const std::string client_id = [&]() {
       std::stringstream ss;

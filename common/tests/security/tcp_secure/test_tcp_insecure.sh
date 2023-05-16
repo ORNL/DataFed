@@ -33,8 +33,8 @@ echo "TCPDUMP:       ${TCPDUMP_CMD}"
 echo "TIMEOUT:       ${TIMEOUT_CMD}"
 echo "MAX_TEST_TIME: ${MAX_TEST_TIME_SEC}"
 
-# Grab the first 18 packets sent on the loop back interface (127.0.0.1)
-output=$( ${TIMEOUT_CMD} ${MAX_TEST_TIME_SEC} ${TCPDUMP_CMD} -c 24 -vvv -A -i lo)
+# Grab the packets sent on the loop back interface (127.0.0.1) and port 7515
+output=$( ${TIMEOUT_CMD} ${MAX_TEST_TIME_SEC} ${TCPDUMP_CMD} -vvv -A port 7515 -i lo)
 match=$( echo "$output" | grep token)
 
 echo "Content of grep ${match}"
