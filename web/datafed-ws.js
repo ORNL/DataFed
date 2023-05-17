@@ -32,6 +32,7 @@ const app = express();
 var ECT = require('ect'); // for html templates
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
 const ClientOAuth2 = require('client-oauth2');
+const { v4: uuidv4 } = require('uuid');
 
 const MAX_CTX = 50;
 
@@ -1676,6 +1677,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(uuidv4() ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
@@ -1687,6 +1689,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(uuidv4() ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(client ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE );
@@ -1740,6 +1743,7 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(uuidv4() ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
@@ -1754,6 +1758,7 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
+            g_core_sock.send(uuidv4() ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame,zmq.ZMQ_SNDMORE);
@@ -1851,7 +1856,7 @@ process.on('unhandledRejection', (reason, p) => {
 
 // This is the reply part 
 // on - method is a way of subscribing to events
-g_core_sock.on('message', function( delim, header, route_count, delim2, key, id, frame, msg_buf ) {
+g_core_sock.on('message', function( delim, header, route_count, delim2, correlation_id, key, id, frame, msg_buf ) {
     //console.log( "got msg", delim, frame, msg_buf );
     //console.log( "frame", frame.toString('hex') );
     /*var mlen =*/ 
@@ -1882,27 +1887,27 @@ g_core_sock.on('message', function( delim, header, route_count, delim2, key, id,
                 //console.log("Decoding message, ", mtype);
                 msg = msg_class.decode( msg_buf );
                 if ( !msg ) {
-                    console.log( "ERROR: msg decode failed: no reason" );
+                    console.log( "ERROR: msg decode failed: no reason, correlation_id: ", correlation_id );
                 }
             } catch ( err ) {
-                console.log( "ERROR: msg decode failed:", err );
+                console.log( "ERROR: msg decode failed:", err, " correlation_id: ", correlation_id );
             }
         } else {
             msg = msg_class;
         }
     } else {
-        console.log( "ERROR: unknown msg type:", mtype );
+        console.log( "ERROR: unknown msg type:", mtype, " correlation_id: ", correlation_id );
     }
 
     var f = g_ctx[ctx];
     if ( f ) {
         g_ctx[ctx] = null;
-        console.log("freed ctx",ctx,"for msg",msg_class.name);
+        console.log("freed ctx",ctx,"for msg",msg_class.name, " correlation_id: ", correlation_id);
         g_ctx_next = ctx;
         f( msg );
     } else {
         g_ctx[ctx] = null;
-        console.log( "ERROR: no callback found for ctxt", ctx," - msg type:", mtype, ", name:", msg_class.name );
+        console.log( "ERROR: no callback found for ctxt", ctx," - msg type:", mtype, ", name:", msg_class.name, " correlation_id: ", correlation_id );
     }
 });
 

@@ -18,6 +18,7 @@ struct Config
     char    server_key[MAX_KEY_LEN];
     char    user[MAX_ID_LEN];
     char    test_path[MAX_PATH_LEN];
+    char    log_path[MAX_PATH_LEN];
     char    globus_collection_path[MAX_PATH_LEN];
     size_t  timeout;
 };

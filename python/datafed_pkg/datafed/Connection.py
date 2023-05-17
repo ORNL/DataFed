@@ -21,6 +21,7 @@ import struct
 import time
 import inspect
 import sys
+import uuid
 
 ##
 # @class Connection
@@ -168,6 +169,7 @@ class Connection:
             null_packet = self._socket.recv(0)
             print(f"Received null_packte: {null_packet}")
     
+            correlation_id = self._socket.recv_string(0)
             key = self._socket.recv_string(0)
             print(f"Received key: {key}")
             client = self._socket.recv_string(0)
@@ -225,6 +227,7 @@ class Connection:
         self._socket.send(struct.pack("!i",route_count), zmq.SNDMORE)
         print("Send b''")
         self._socket.send( b'', zmq.SNDMORE )
+        self._socket.send_string( str(uuid.uuid4()), zmq.SNDMORE )
         print("Send public key as string")
         self._socket.send_string( self._pub_key, zmq.SNDMORE )
         print("send 'no-user' as string")

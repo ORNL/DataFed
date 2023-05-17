@@ -3,7 +3,7 @@ foreach(PROG
     test_Buffer
     test_CommunicatorFactory
     test_Frame
-    test_Log
+    test_DynaLog
     test_MessageFactory
     test_OperatorFactory
     test_ProtoBufFactory

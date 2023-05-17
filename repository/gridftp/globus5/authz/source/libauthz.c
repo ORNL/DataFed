@@ -294,6 +294,8 @@ loadConfig()
                 err = setConfigVal( "server_address", g_config.server_addr, val, MAX_ADDR_LEN );
             else if ( strcmp( buf, "user" ) == 0 )
                 err = setConfigVal( "user", g_config.user, val, MAX_ID_LEN );
+            else if ( strcmp( buf, "log_path" ) == 0 )
+                err = setConfigVal( "log_path", g_config.log_path, val, MAX_PATH_LEN );
             else if ( strcmp( buf, "test_path" ) == 0 )
                 err = setConfigVal( "test_path", g_config.test_path, val, MAX_PATH_LEN );
             else if ( strcmp( buf, "globus-collection-path" ) == 0 )

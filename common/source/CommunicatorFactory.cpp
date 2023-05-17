@@ -25,14 +25,16 @@ namespace SDMS {
               socket_options,
               credentials,
               timeout_on_receive,
-              timeout_on_poll));
+              timeout_on_poll,
+              m_log_line));
       } else {
         std::cout << __FILE__ << ":" << __LINE__ << " SECURE CONSTRUCTOR " << std::endl;
         return std::unique_ptr<ICommunicator>(new ZeroMQCommunicatorSecure(
               socket_options,
               credentials,
               timeout_on_receive,
-              timeout_on_poll));
+              timeout_on_poll,
+              m_log_line));
       }
     }
     return std::unique_ptr<ICommunicator>();

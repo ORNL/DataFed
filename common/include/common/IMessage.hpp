@@ -31,7 +31,8 @@ namespace SDMS {
   enum class MessageAttribute {
     ID,
     KEY,
-    STATE
+    STATE,
+    CORRELATION_ID
   };
 
   inline const std::string toString(const MessageAttribute attribute) {
@@ -84,8 +85,12 @@ namespace SDMS {
       /**
        * Getters
        **/
+
+      /**
+       * The correlation ID is assigned to a message when it is created and is extremely important for
+       * tracing a message in the logs.
+       **/
       virtual std::variant<std::string, MessageState> get(MessageAttribute) const = 0;
-      //virtual MessageDirection get(MessageAttribute) const = 0;
       virtual const std::list<std::string> & getRoutes() const = 0;
       virtual std::list<std::string> & getRoutes() = 0;
       virtual MessageType type() const noexcept = 0; 

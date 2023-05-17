@@ -6,6 +6,7 @@
 #include "../Buffer.hpp"
 
 // Local public includes
+#include "common/DynaLog.hpp"
 #include "common/ICommunicator.hpp"
 #include "common/IMessage.hpp"
 #include "common/ISocket.hpp"
@@ -38,16 +39,18 @@ namespace SDMS {
 
       void zmqCurveSetup(const ICredentials & credentials);
 
+      LogLineContent m_log_line;
     public:
 
       /** To be used by children*/
-      ZeroMQCommunicator() {};
+      ZeroMQCommunicator();
 
       ZeroMQCommunicator(
           const SocketOptions & socket_options,
           const ICredentials & credentials,
           uint32_t timeout_on_receive_milliseconds,
-          long timeout_on_poll_milliseconds);
+          long timeout_on_poll_milliseconds,
+          const LogLineContent & log_context);
 
       virtual ~ZeroMQCommunicator();
       /**

@@ -1,94 +1,90 @@
-#ifndef DYNADL_HPP
-#define DYNADL_HPP
+#ifndef DYNA_LOG_HPP
+#define DYNA_LOG_HPP
 #pragma once
 
-#ifdef USE_DYNALOG
-
-// Trace lines are disabled by default to avoid overhead, define DL_IMPL_TRACE to enable
-//#define DL_IMPL_TRACE
-
-#include <ctime>
-#include <iomanip>
-#include <iostream>
-#include <fstream>
+// Third party includes
 #include <syslog.h>
-#include <sstream>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
-namespace DynaLog
-{
+// Standard includes
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
 
-enum Level
-{
-    DL_EMERG_LEV = LOG_EMERG,
-    DL_ERROR_LEV = LOG_ERR,
-    DL_WARN_LEV  = LOG_WARNING,
-    DL_INFO_LEV  = LOG_INFO,
-    DL_DEBUG_LEV = LOG_DEBUG,
-    DL_TRACE_LEV = LOG_DEBUG + 1 // syslog doesn't support trace-level
-};
+// Have to use macros for the line and func macros to work
+#define DL_LOG(level, content) \
+  ::SDMS::global_logger.log(level, content, __FILE__,  __func__, __LINE__ );
+#define DL_LOG_CRITICAL(content) \
+  ::SDMS::global_logger.critical(content, __FILE__, __func__, __LINE__ );
+#define DL_LOG_ERROR(content) \
+  ::SDMS::global_logger.error(content, __FILE__, __func__, __LINE__);
+#define DL_LOG_WARNING(content) \
+  ::SDMS::global_logger.warning(content, __FILE__, __func__, __LINE__ );
+#define DL_LOG_INFO(content) \
+  ::SDMS::global_logger.info(content, __FILE__, __func__, __LINE__);
+#define DL_LOG_DEBUG(content) \
+  ::SDMS::global_logger.debug(content, __FILE__, __func__, __LINE__);
+#define DL_LOG_TRACE(content) \
+  ::SDMS::global_logger.trace(content, __FILE__, __func__, __LINE__ );
 
-#ifdef DEF_DYNALOG
 
-bool                        g_enabled = true;
-int                         g_level = DL_INFO_LEV;
-bool                        g_use_cerr = true;
-bool                        g_use_syslog = false;
-std::stringstream           g_stream_buf;
+namespace SDMS {
 
-#else
+  enum class LogLevel {
+    CRITICAL,
+    ERROR,
+    WARNING,
+    INFO,
+    DEBUG,
+    TRACE
+  };
 
-extern bool                 g_enabled;
-extern int                  g_level;
-extern bool                 g_use_cerr;
-extern bool                 g_use_syslog;
-extern std::stringstream    g_stream_buf;
+  std::string toString(const LogLevel level);
+  int toSysLog(const LogLevel level);
 
-#endif
+  class LogLineContent {
+    public:
+      std::string message = "";
+      std::string thread_name = "";
+      std::string correlation_id = "";
+      int thread_id = 0;
 
-#define OUTPUT(lev,x) \
-    { \
-      std::time_t g_time = std::time(nullptr); \
-      std::tm local_time = *std::localtime(&g_time); \
-      if ( DynaLog::g_use_cerr ) { std::cerr << std::put_time(&local_time, "%d-%m-%y %H-%M-%S ") << __FILE__ << ":" << __LINE__ << " " << x << std::endl; } \
-      if ( DynaLog::g_use_syslog ) { \
-          DynaLog::g_stream_buf << __FILE__ << ":" << __LINE__ << " " <<  x << std::endl; \
-          syslog(lev,"%s",DynaLog::g_stream_buf.str().c_str()); \
-          DynaLog::g_stream_buf.str(""); } \
-    }
+  };
+  std::ostream & operator << (std::ostream &out, const LogLineContent &params);
 
-#define OUTPUT_TRACE(x) \
-    if ( DynaLog::g_use_cerr ) { std::cerr << x << std::endl; }
+  class Logger {
+    private:
+      // Parameters
+      std::vector<std::reference_wrapper<std::ostream>> m_streams;
+      LogLevel m_log_level = LogLevel::INFO;
+      bool m_output_to_syslog = false;
+      std::stringstream m_buffer;
+      mutable std::vector<std::unique_ptr<std::mutex>> m_mutexes;
 
-#define DL_SET_ENABLED(x) { DynaLog::g_enabled = x; }
-#define DL_SET_LEVEL(x) { DynaLog::g_level = x; }
-#define DL_SET_CERR_ENABLED(x) { DynaLog::g_use_cerr = x; }
-#define DL_SET_SYSDL_ENABLED(x) { DynaLog::g_use_syslog = x; }
+      // Internal Methods
+      void output(const LogLevel, const LogLineContent & log_params, std::string, std::string, int);
+    public:
+      // Methods
+      void setLevel(LogLevel) noexcept;
+      void addStream(std::ostream & stream);
 
-#define DL_EMERG(x) if( DynaLog::g_enabled ) { OUTPUT(DynaLog::DL_EMERG_LEV,x) }
-#define DL_ERROR(x) if( DynaLog::g_enabled && DynaLog::g_level >= DynaLog::DL_ERROR_LEV ) { OUTPUT(DynaLog::DL_ERROR_LEV,x) }
-#define DL_WARN(x) if( DynaLog::g_enabled && DynaLog::g_level >= DynaLog::DL_WARN_LEV ) { OUTPUT(DynaLog::DL_WARN_LEV,x) }
-#define DL_INFO(x) if( DynaLog::g_enabled && DynaLog::g_level >= DynaLog::DL_INFO_LEV ) { OUTPUT(DynaLog::DL_INFO_LEV,x) }
-#define DL_DEBUG(x) if( DynaLog::g_enabled && DynaLog::g_level >= DynaLog::DL_DEBUG_LEV ) { OUTPUT(DynaLog::DL_DEBUG_LEV,x) }
-#ifdef DL_IMPL_TRACE
-#define DL_TRACE(x) if( DynaLog::g_enabled && DynaLog::g_level >= DynaLog::DL_TRACE_LEV ) { OUTPUT_TRACE(x) }
-#else
-#define DL_TRACE(x)
-#endif
+      void log(const LogLevel, const LogLineContent &, std::string file_name, std::string func_name, int);
+      void critical(const LogLineContent &, std::string file_name, std::string func_name, int);
+      void error(const LogLineContent &, std::string file_name, std::string func_name, int);
+      void warning(const LogLineContent &, std::string file_name, std::string func_name, int);
+      void info(const LogLineContent &, std::string file_name, std::string func_name, int);
+      void debug(const LogLineContent &, std::string file_name, std::string func_name, int);
+      void trace(const LogLineContent &, std::string file_name, std::string func_name, int);
+  };
 
-} // DynaLog namespace
+  // Thread safe global logger
+  extern Logger global_logger;
 
-#else // Use_DYNALOG
+  std::ostream & operator << (std::ostream &out, const LogLineContent &params); 
 
-#define DL_SET_ENABLED(x)
-#define DL_SET_LEVEL(x)
-#define DL_SET_CERR_ENABLED(x)
-#define DL_SET_SYSDL_ENABLED(x)
-#define DL_EMERG(x)
-#define DL_ERROR(x)
-#define DL_WARN(x)
-#define DL_INFO(x)
-#define DL_DEBUG(x)
-#define DL_TRACE(x)
+} // namespace SDMS 
 
-#endif // USE_DYNALOG
-#endif // DYNADL_HPP
+#endif // DYNA_LOG_HPP

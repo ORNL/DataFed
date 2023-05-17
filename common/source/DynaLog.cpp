@@ -1,6 +1,6 @@
 
 // Local public includes
-#include "common/Log.hpp"
+#include "common/DynaLog.hpp"
 
 // Standard includes
 #include <optional>

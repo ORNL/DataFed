@@ -3,6 +3,7 @@
 #pragma once
 
 // Local includes
+#include "DynaLog.hpp"
 #include "ICredentials.hpp"
 #include "ICommunicator.hpp"
 #include "SocketOptions.hpp"
@@ -13,7 +14,11 @@
 namespace SDMS {
 
 class CommunicatorFactory {
+  private:
+    LogLineContent m_log_line;
   public:
+    CommunicatorFactory(LogLineContent log_line) : m_log_line(log_line) {};
+
     std::unique_ptr<ICommunicator> create(
         const SocketOptions & socket_options,
         const ICredentials & credentials,

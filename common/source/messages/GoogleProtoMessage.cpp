@@ -6,6 +6,11 @@
 // Local public includes
 #include "common/TraceException.hpp"
 
+// Third party includes
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 // Standard includes
 #include <memory>
 #include <string>
@@ -21,6 +26,10 @@ namespace SDMS {
     m_dyn_attributes[constants::message::google::MSG_ID] = (uint8_t)0;
     m_dyn_attributes[constants::message::google::MSG_TYPE] = (uint16_t) 0;
     m_dyn_attributes[constants::message::google::CONTEXT] = (uint16_t)0;
+
+    boost::uuids::random_generator generator;
+    boost::uuids::uuid uuid = generator();
+    m_attributes[MessageAttribute::CORRELATION_ID] = boost::uuids::to_string(uuid);
   }
 
   bool GoogleProtoMessage::exists(MessageAttribute attribute_type) const {
@@ -46,7 +55,6 @@ namespace SDMS {
       m_dyn_attributes[constants::message::google::MSG_TYPE] = frame.getMsgType();
       // Do not overload the context because this is not associated with the message payload but with 
       // the response
-      //m_dyn_attributes[constants::message::google::CONTEXT] = frame.context;
       m_payload = std::move(std::get<std::unique_ptr<::google::protobuf::Message>>(payload));
     } else {
       EXCEPT(1, "Attempt to add unsupported payload to GoogleProtoMessage.");
@@ -58,6 +66,8 @@ namespace SDMS {
       m_attributes[MessageAttribute::ID] = attribute;
     } else if (attribute_type == MessageAttribute::KEY ) {
       m_attributes[MessageAttribute::KEY] = attribute;
+    } else if (attribute_type == MessageAttribute::CORRELATION_ID ) {
+      m_attributes[MessageAttribute::CORRELATION_ID] = attribute;
     } else {
       EXCEPT(1, "Attempt to add unsupported attribute to GoogleProtoMessage.");
     }

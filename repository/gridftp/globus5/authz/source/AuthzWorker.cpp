@@ -5,13 +5,13 @@
 // Common public includes
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
+#include "common/DynaLog.hpp"
 #include "common/ICommunicator.hpp"
 #include "common/IMessage.hpp"
 #include "common/MessageFactory.hpp"
 #include "common/SocketOptions.hpp"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
-#define DEF_DYNALOG
 #include "common/DynaLog.hpp"
 
 // Protobuf includes
@@ -55,8 +55,11 @@ public:
         m_config( a_config ),
         m_globus_collection_path_len(strlen(a_config->globus_collection_path)),
         m_test_path_len( strlen( a_config->test_path )) {
-        //REG_PROTO( SDMS::Anon );
-        //REG_PROTO( SDMS::Auth );
+
+        m_log_line.message = "";
+        m_log_line.thread_name = "AuthzWorker"; 
+        m_log_line.thread_id = 0;
+        m_log_line.correlation_id = "";
     }
 
     ~AuthzWorker()
@@ -67,16 +70,18 @@ public:
 
     int checkAuth( char * client_id, char * path, char * action )
     {
-        DL_DEBUG("Checking auth for " << client_id << " in " << path );
+        m_log_line.message = "Checking auth for client: " + client_id;
+        DL_LOG_DEBUG(m_log_line);
 
-				DL_INFO("provided path is: " << path << " expected globus root POSIX path is: " << m_config->globus_collection_path );
         if ( m_test_path_len > 0 && strncmp( path, m_config->test_path, m_test_path_len ) == 0 ) {
-            DL_INFO("Allowing request within TEST PATH");
+            m_log_line.message = "Allowing request within TEST PATH: " + m_config->test_path + " actual path " + path;
+            DL_LOG_INFO(m_log_line);
             return 0;
         }
 
         if( m_globus_collection_path_len == 0 ) {
-            DL_INFO("AuthWorker.cpp globus-collection-path is not defined, must be defined.");
+            m_log_line.message = "AuthWorker.cpp globus-collection-path is not defined, must be defined.";
+            DL_LOG_ERROR(m_log_line);
             EXCEPT(1,"Globus collection path is not defined");
         }
 
@@ -91,7 +96,8 @@ public:
         //std::string local_globus_path_root = "ftp://";
         std::string local_path = path;
         if( local_path.substr(0,scheme.length()).compare(scheme) != 0 ) {
-            DL_INFO("AuthWorker.cpp provided path is not prefixed by expected ftp:// prefix.");
+            m_log_line.message = "Provided path is not properly formatted, should be prefixed with ftp:// but is: " + path;
+            DL_LOG_ERROR(m_log_line);
             EXCEPT(1,"Format error detected in path");
         }
 
@@ -112,9 +118,8 @@ public:
 				}
 
 				if(count != 3 ) {
-            DL_INFO("AuthWorker.cpp provided path is not prefixed by expected ftp://hostname/ prefix.");
-						DL_INFO("Local path is " << local_path );
-            DL_INFO("count is " << count);
+            m_log_line.message = "Provided path is not properly formatted, should be prefixed with ftp://hostname but is: " + path;
+            DL_LOG_ERROR(m_log_line);
             EXCEPT(1,"Format error detected in path");
 				}
 
@@ -125,15 +130,17 @@ public:
 				//std::string repo_id = m_config->repo_id;
         std::string local_globus_path_root = std::string(m_config->globus_collection_path); // + repo_id.substr(repo_prefix.length()-1);
         if(local_globus_path_root.length() > local_path.length() ) {
-            DL_INFO("AuthWorker.cpp provided path is not prefixed by globus_root_collection_path.");
-            DL_INFO("Provided path is: " << local_path << " root of globus collection is " << local_globus_path_root);
+            m_log_line.message = "Provided path is not properly formatted, should be prefixed with globus_root_collection_path: "
+            m_log_line.message += local_globus_path_root + " but is: " + path;
+            DL_LOG_ERROR(m_log_line);
             EXCEPT(1,"Path to data item is not within the collection");
         } 
 
         auto prefix = local_path.substr(0, local_globus_path_root.length());
         if( prefix.compare(local_globus_path_root) != 0 ) {
-            DL_INFO("AuthWorker.cpp provided path is not prefixed by globus_root_collection_path.");
-            DL_INFO("Provided path is: " << local_path << " root of globus collection is " << local_globus_path_root);
+            m_log_line.message = "Provided path is not properly formatted, should be prefixed with globus_root_collection_path: "
+            m_log_line.message += local_globus_path_root + " but is: " + path;
+            DL_LOG_ERROR(m_log_line);
             EXCEPT(1,"Path to data item is not within the collection");
         }
 
@@ -165,6 +172,8 @@ public:
         ICredentials & credentials
         ) {
       /// Creating input parameters for constructing Communication Instance
+      m_log_line.message = "Creating client with adress to server: " + address;
+      DL_LOG_INFO(m_log_line);
       AddressSplitter splitter(address);
       SocketOptions socket_options;
       socket_options.scheme = splitter.scheme();
@@ -195,22 +204,7 @@ public:
           timeout_on_poll);
   }(authz_thread_id, m_config->server_addr, *m_sec_ctx);
 
-
-
-
-
-//        Auth::RepoAuthzRequest  auth_req;
-//        MsgBuf::Message *       reply;
- //       MsgBuf::Frame           frame;
-
-//        MsgComm authzcomm(m_config->server_addr, MsgComm::DEALER, false, &sec_ctx );
-
         auto auth_req = std::make_unique<Auth::RepoAuthzRequest>();//  auth_req;
-       	string val1 = string("m_repo_id is ") + m_config->repo_id;	
-	      string val2 = string("path is") + sanitized_path;
-        DL_INFO(val1);
-        DL_INFO(val2);
- 
 
         auth_req->set_repo(m_config->repo_id);
         auth_req->set_client(client_id);
@@ -222,7 +216,6 @@ public:
         message->set(MessageAttribute::KEY, cred_options[CredentialType::PUBLIC_KEY]);
         message->setPayload(std::move(auth_req));
 
-        DL_INFO("SendingRepoAuthzRequest");
         client->send(*message);
         DL_INFO("PUB KEY:  " << cred_options[CredentialType::PUBLIC_KEY]);
         DL_INFO("PRIV KEY: " << cred_options[CredentialType::PRIVATE_KEY]);
@@ -276,6 +269,7 @@ private:
     struct Config *     m_config;
     size_t              m_test_path_len;
     size_t              m_globus_collection_path_len;
+    LogLineContent      m_log_line;
 };
 
 } // End namespace SDMS

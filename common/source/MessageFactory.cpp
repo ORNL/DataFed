@@ -27,6 +27,7 @@ namespace SDMS {
         auto new_msg = std::unique_ptr<IMessage>( new GoogleProtoMessage() ) ;
         new_msg->setRoutes(msg.getRoutes());
         new_msg->set(MessageAttribute::STATE, MessageState::RESPONSE);
+        new_msg->set(MessageAttribute::CORRELATION_ID, std::get<std::string>(msg.get(MessageAttribute::CORRELATION_ID)));
         // The context is needed so when the response is sent the client knows what request it is associated with it
         uint16_t context = 0;
         try {
