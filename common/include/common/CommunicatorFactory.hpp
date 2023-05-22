@@ -15,9 +15,9 @@ namespace SDMS {
 
 class CommunicatorFactory {
   private:
-    LogLineContent m_log_line;
+    LogContext m_log_context;
   public:
-    CommunicatorFactory(LogLineContent log_line) : m_log_line(log_line) {};
+    CommunicatorFactory(LogContext log_context) : m_log_context(log_context) {};
 
     std::unique_ptr<ICommunicator> create(
         const SocketOptions & socket_options,

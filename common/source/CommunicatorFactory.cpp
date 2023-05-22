@@ -20,21 +20,19 @@ namespace SDMS {
 
     if(socket_options.protocol_type == ProtocolType::ZQTP ) {
       if(socket_options.connection_security == SocketConnectionSecurity::INSECURE){
-        std::cout << __FILE__ << ":" << __LINE__ << " INSECURE CONSTRUCTOR " << std::endl;
         return std::unique_ptr<ICommunicator>(new ZeroMQCommunicator(
               socket_options,
               credentials,
               timeout_on_receive,
               timeout_on_poll,
-              m_log_line));
+              m_log_context));
       } else {
-        std::cout << __FILE__ << ":" << __LINE__ << " SECURE CONSTRUCTOR " << std::endl;
         return std::unique_ptr<ICommunicator>(new ZeroMQCommunicatorSecure(
               socket_options,
               credentials,
               timeout_on_receive,
               timeout_on_poll,
-              m_log_line));
+              m_log_context));
       }
     }
     return std::unique_ptr<ICommunicator>();

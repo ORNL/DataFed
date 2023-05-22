@@ -28,18 +28,21 @@ class Proxy : public IServer {
     std::unordered_map<SocketRole, std::unique_ptr<ICommunicator>> m_communicators;
     bool m_run_infinite_loop = true;
     std::chrono::duration<double> m_run_duration;
-
+    int m_thead_count = 0;
+    LogContext m_log_context;
     std::unordered_map<SocketRole, std::string> m_addresses;
   public:
     /// Convenience constructor
     Proxy(
       const std::unordered_map<SocketRole, SocketOptions> & socket_options,
-      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials);
+      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
+      LogContext log_context);
 
     Proxy(
       const std::unordered_map<SocketRole, SocketOptions> & socket_options,
       const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
-      std::vector<std::unique_ptr<IOperator>> incoming_operators);
+      std::vector<std::unique_ptr<IOperator>> incoming_operators,
+      LogContext log_context);
 
     virtual ServerType type() const noexcept final { return ServerType::PROXY_CUSTOM; }
     /**

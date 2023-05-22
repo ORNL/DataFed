@@ -36,15 +36,11 @@ namespace SDMS {
        **/
       virtual Response poll(const MessageType) = 0;
 
-      //virtual void send(IMessage & message) = 0;
-
       /**
        * This is technical debt in the future get rid of MsgBuf and replace with
        * IMessage
        **/
       virtual void send(IMessage & message) = 0;
-
-      //virtual std::unique_ptr<IMessage> receive(const MessageType type) = 0;
 
       /* Ideally in the future get rid of MsgBuf and replace with IMessage
        **/

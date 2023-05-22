@@ -106,7 +106,7 @@ namespace SDMS {
           // 0 - number of routes
           // null
           // Frame - function will not read
-    void receiveRoute(IMessage & msg, void * incoming_zmq_socket, const int zmq_socket_type) {
+    void receiveRoute(IMessage & msg, void * incoming_zmq_socket) {
       // If the first frame is not empty assume it is a route that was provided by the internals of zmq
       std::string previous_route = "";
       std::string received_part = "";
@@ -118,24 +118,19 @@ namespace SDMS {
           EXCEPT( 1, "receiveRoute zmq_msg_recv (route) failed." );
         }
         size_t len = zmq_msg_size( &zmq_msg );
-        std::cout << "Initial message part size " << len << std::endl;
         if(len) {
           if ( len > 255 ) {
             EXCEPT( 1, "Message route segment exceeds max allowed length." );
           }
-          zmq_provided_route_detected = true;
           received_part = std::string((char*) zmq_msg_data(&zmq_msg), zmq_msg_size(&zmq_msg));
           if(received_part.compare("BEGIN_DATAFED") == 0 ) {
-            std::cout << "BEGIN_DATAFED" << std::endl;
             zmq_msg_close( &zmq_msg );
             break;
           } else {
             previous_route = received_part;
-            std::cout << received_part << std::endl;
             msg.addRoute(received_part);
           }
         } else {
-          std::cout << "null" << std::endl;
         }
         zmq_msg_close( &zmq_msg );
       }
@@ -217,8 +212,6 @@ namespace SDMS {
           zmq_msg_t zmq_msg;
           zmq_msg_init_size( &zmq_msg, route.size() );
 
-          std::cout << route << std::endl;
-          std::cout << "sendRoute: attempting to send msg to identity: " << route << " string size is " << route.size() << std::endl;
           memcpy( zmq_msg_data( &zmq_msg ), route.data(), route.size() );
           int number_of_bytes = 0;
           if (( number_of_bytes = zmq_msg_send( &zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE )) < 0 ) {
@@ -372,7 +365,6 @@ namespace SDMS {
 
           ProtoBufMap proto_map;
           if( proto_map.exists(msg_type) ) {
-            std::cout << "poll received message of type: " << proto_map.toString(msg_type) << std::endl;
             std::unique_ptr<proto::Message> payload = factory.create( msg_type );
             msg.setPayload(std::move(payload));
           } else {
@@ -596,11 +588,11 @@ namespace SDMS {
       const ICredentials & credentials,
       uint32_t timeout_on_receive_milliseconds,
       long timeout_on_poll_milliseconds,
-      const LogLineContent & log_context) :
+      const LogContext & log_context) :
         m_timeout_on_receive_milliseconds(timeout_on_receive_milliseconds),
         m_timeout_on_poll_milliseconds(timeout_on_poll_milliseconds) {
 
-    m_log_line = log_context;
+    m_log_context = log_context;
     auto socket_factory = SocketFactory();
     m_socket = socket_factory.create(socket_options, credentials);
     m_zmq_ctx = getContext();
@@ -630,10 +622,9 @@ namespace SDMS {
 
     if( id.size() > constants::communicator::MAX_COMMUNICATOR_IDENTITY_SIZE ){
       std::string error_msg = "ZeroMQ exceeds max number of characters allowed, allowed: ";
-      error_msg += constants::communicator::MAX_COMMUNICATOR_IDENTITY_SIZE;
-      error_msg += " number provided " + id.size() + " identity: " + id;
-      m_log_line.message = error_msg;
-      DL_LOG_ERROR(m_log_line);
+      error_msg += std::to_string(constants::communicator::MAX_COMMUNICATOR_IDENTITY_SIZE);
+      error_msg += " number provided " + std::to_string(id.size()) + " identity: " + id;
+      DL_ERROR(m_log_context, error_msg);
       EXCEPT_PARAM( 1, error_msg);
     }
 
@@ -642,27 +633,28 @@ namespace SDMS {
     if( m_socket->getSocketConnectionLife() == SocketConnectionLife::PERSISTENT ){
       bool failure = zmq_bind( m_zmq_socket, m_socket->getAddress().c_str()) != 0;
       if ( failure ) {
-        m_log_line.message = "ZeroMQ bind to address '" + m_socket->getAddress();
-        m_log_line.message += "' failed. Be aware if using TCP, you must pick a ";
-        m_log_line.message += "recognized name for the domain... i.e. '127.0.0.1'.";
-        m_log_line.message += "ZMQ error msg: " << zmq_strerror(zmq_errno());
-        DL_LOG_ERROR(m_log_line);
-        EXCEPT_PARAM( 1, m_log_line.message);
+        std::string err_message = "ZeroMQ bind to address '" + m_socket->getAddress();
+        err_message += "' failed. Be aware if using TCP, you must pick a ";
+        err_message += "recognized name for the domain... i.e. '127.0.0.1'.";
+        err_message += "ZMQ error msg: ";
+        err_message += zmq_strerror(zmq_errno());
+        DL_ERROR(m_log_context, err_message);
+        EXCEPT_PARAM( 1, err_message);
       }
     } else {
       bool failure = zmq_connect( m_zmq_socket, m_socket->getAddress().c_str()) != 0;
       if ( failure ) {
-        m_log_line.message = "ZeroMQ unable to connect to address '" + m_socket->getAddress() + "' failed. ZMQ error message: " + zmq_strerror(zmq_errno());
-        DL_LOG_ERROR(m_log_line);
-        EXCEPT_PARAM( 1, m_log_line.message);
+        std::string err_message = "ZeroMQ unable to connect to address '" + m_socket->getAddress() + "' failed. ZMQ error message: " + zmq_strerror(zmq_errno());
+        DL_ERROR(m_log_context, err_message);
+        EXCEPT_PARAM( 1, err_message);
       }
     }
     if ( m_zmq_socket_type == ZMQ_SUB ){
       bool failure = zmq_setsockopt( m_zmq_socket, ZMQ_SUBSCRIBE, "", 0) != 0;
       if ( failure ) {
-        m_log_line.message = "ZeroMQ unable to connect to address '" + m_socket->getAddress() + "' failed.";
-        DL_LOG_ERROR(m_log_line);
-        EXCEPT_PARAM( 1, m_log_line.message );
+        std::string err_message = "ZeroMQ unable to connect to address '" + m_socket->getAddress() + "' failed.";
+        DL_ERROR(m_log_context, err_message);
+        EXCEPT_PARAM( 1, err_message );
       }
     }
   }
@@ -670,17 +662,18 @@ namespace SDMS {
   ZeroMQCommunicator::~ZeroMQCommunicator() {
     int rc = zmq_close(m_zmq_socket);
     if( rc ) {
-      m_log_line.message = "Problem closing socket on Communicator destruct. Socket address: ";
-      m_log_line.message += m_socket->getAddress().c_str();
-      DL_LOG_WARNING(m_log_line);
+      std::string err_message = "Problem closing socket on Communicator destruct. Socket address: ";
+      err_message += m_socket->getAddress().c_str();
+      DL_WARNING(m_log_context, err_message);
     }
   }
 
   ICommunicator::Response ZeroMQCommunicator::poll(const MessageType message_type) {
     Response response = m_poll(m_timeout_on_poll_milliseconds);
+    LogContext log_context = m_log_context;
     if( response.error == false and response.time_out == false) {
       response.message = m_msg_factory.create(message_type);
-      receiveRoute(*response.message, m_zmq_socket, m_zmq_socket_type);
+      receiveRoute(*response.message, m_zmq_socket);
       receiveCorrelationID(*response.message, m_zmq_socket);
       receiveKey(*response.message, m_zmq_socket);
       receiveID(*response.message, m_zmq_socket);
@@ -695,22 +688,22 @@ namespace SDMS {
       uint16_t msg_type = std::get<uint16_t>(response.message->get(constants::message::google::MSG_TYPE));
       ProtoBufMap proto_map;
     
-      m_log_line.correlation_id = std::get<std::string>(response.message->get(MessageAttribute::CORRELATION_ID));
-      m_log_line.message = "Received message on communicator id: " + id();
-      m_log_line.message += ", msg type: " + proto_map.toString(msg_type);
-      m_log_line.message += ", receiving from address: " + address();
-      DL_LOG_DEBUG(m_log_line); 
+      log_context.correlation_id = std::get<std::string>(response.message->get(MessageAttribute::CORRELATION_ID));
+      std::string err_message = "Received message on communicator id: " + id();
+      err_message += ", msg type: " + proto_map.toString(msg_type);
+      err_message += ", receiving from address: " + address();
+      DL_DEBUG(log_context, err_message); 
     } else {
       if( response.error ) {
-        m_log_line.message = "Error encountered for communicator id: " + id();
-        m_log_line.message += ", error is: " response.error_msg;
-        m_log_line.message += ", receiving from address: " + address();
-        DL_LOG_ERROR(m_log_line);
+        std::string err_message = "Error encountered for communicator id: " + id();
+        err_message += ", error is: " + response.error_msg;
+        err_message += ", receiving from address: " + address();
+        DL_ERROR(log_context, err_message);
       } else if (response.time_out){
-        m_log_line.message = "Timeout encountered for communicator id: " + id();
-        m_log_line.message += ", timeout occurred after: " + m_timeout_on_poll_millisecond;
-        m_log_line.message += ", receiving from address: " + address();
-        DL_LOG_INFO(m_log_line);
+        std::string err_message = "Timeout encountered for communicator id: " + id();
+        err_message += ", timeout occurred after: " + m_timeout_on_poll_milliseconds;
+        err_message += ", receiving from address: " + address();
+        DL_TRACE(log_context, err_message);
       }
     }
 
@@ -722,10 +715,11 @@ namespace SDMS {
 
     uint16_t msg_type = std::get<uint16_t>(message.get(constants::message::google::MSG_TYPE));
     ProtoBufMap proto_map;
-    m_log_line.correlation_id = std::get<std::string>(message.get(MessageAttribute::CORRELATION_ID));
-    m_log_line.message = "Sending message on communicator id: " + id();
-    m_log_line.message += ", to address: " + address() + ", msg type: " + proto_map.toString(msg_type);
-    DL_LOG_DEBUG(m_log_line); 
+    LogContext log_context = m_log_context;
+    log_context.correlation_id = std::get<std::string>(message.get(MessageAttribute::CORRELATION_ID));
+    std::string err_message = "Sending message on communicator id: " + id();
+    err_message += ", to address: " + address() + ", msg type: " + proto_map.toString(msg_type);
+    DL_DEBUG(log_context, err_message); 
     sendRoute(message, m_zmq_socket, m_zmq_socket_type);
     sendCorrelationID(message, m_zmq_socket);
     sendKey(message, m_zmq_socket);
@@ -737,9 +731,10 @@ namespace SDMS {
   ICommunicator::Response ZeroMQCommunicator::receive(const MessageType message_type) {
 
     Response response = m_poll(m_timeout_on_receive_milliseconds);
+    LogContext log_context = m_log_context;
     if( response.error == false and response.time_out == false) {
       response.message = m_msg_factory.create(message_type);
-      receiveRoute(*response.message, m_zmq_socket, m_zmq_socket_type);
+      receiveRoute(*response.message, m_zmq_socket);
       receiveCorrelationID(*response.message, m_zmq_socket);
       receiveKey(*response.message, m_zmq_socket);
       receiveID(*response.message, m_zmq_socket);
@@ -752,22 +747,22 @@ namespace SDMS {
 
       uint16_t msg_type = std::get<uint16_t>(response.message->get(constants::message::google::MSG_TYPE));
       ProtoBufMap proto_map;
-      m_log_line.correlation_id = std::get<std::string>(response.message->get(MessageAttribute::CORRELATION_ID));
-      m_log_line.message = "Received message on communicator id: " + id();
-      m_log_line.message += ", msg type: " + proto_map.toString(msg_type);
-      m_log_line.message += ", receiving from address: " + address();
-      DL_LOG_DEBUG(m_log_line); 
+      log_context.correlation_id = std::get<std::string>(response.message->get(MessageAttribute::CORRELATION_ID));
+      std::string log_message = "Received message on communicator id: " + id();
+      log_message += ", msg type: " + proto_map.toString(msg_type);
+      log_message += ", receiving from address: " + address();
+      DL_DEBUG(log_context, log_message); 
     } else {
       if( response.error ) {
-        m_log_line.message = "Error encountered for communicator id: " + id();
-        m_log_line.message += ", error is: " response.error_msg;
-        m_log_line.message += ", receiving from address: " + address();
-        DL_LOG_ERROR(m_log_line);
+        std::string err_message = "Error encountered for communicator id: " + id();
+        err_message += ", error is: " + response.error_msg;
+        err_message += ", receiving from address: " + address();
+        DL_ERROR(log_context, err_message);
       } else if (response.time_out){
-        m_log_line.message = "Timeout encountered for communicator id: " + id();
-        m_log_line.message += ", timeout occurred after: " + m_timeout_on_poll_millisecond;
-        m_log_line.message += ", receiving from address: " + address();
-        DL_LOG_INFO(m_log_line);
+        std::string err_message = "Timeout encountered for communicator id: " + id();
+        err_message += ", timeout occurred after: " + m_timeout_on_poll_milliseconds;
+        err_message += ", receiving from address: " + address();
+        DL_TRACE(log_context, err_message);
       }
     }
     return response;

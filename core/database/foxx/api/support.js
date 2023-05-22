@@ -362,10 +362,10 @@ module.exports = ( function() {
                 return false;
               }
             }
-            console.log("True");
+            console.log("Is a UUID list.");
             return true;
         } else {
-            console.log("Does not contain ,");
+            console.log("Does not contain ',' is Not a UUID List.");
             return false;
         }
     };
@@ -486,7 +486,7 @@ module.exports = ( function() {
         // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
 
         var params;
-
+        console.log("getUserFromClient id: ", a_client_id);
         if ( a_client_id.startsWith("u/")){
             if ( !obj.db.u.exists( a_client_id ))
                 throw [ obj.ERR_INVALID_PARAM, "No such user '" + a_client_id + "'" ];

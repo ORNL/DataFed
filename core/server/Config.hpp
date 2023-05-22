@@ -6,6 +6,7 @@
 #include "AuthenticationManager.hpp"
 
 // DataFed Common public includes
+#include "common/DynaLog.hpp"
 #include "common/ICredentials.hpp"
 #include "common/SDMS.pb.h"
 
@@ -58,7 +59,7 @@ class Config
     mutable std::mutex m_repos_mtx;
 
   public:
-    void loadRepositoryConfig(AuthenticationManager & auth_manager);
+    void loadRepositoryConfig(AuthenticationManager & auth_manager, LogContext log_context);
     void triggerRepoCacheRefresh();
     bool repoCacheInvalid();
 

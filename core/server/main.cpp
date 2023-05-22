@@ -30,16 +30,17 @@ namespace po = boost::program_options;
  */
 int main( int a_argc, char ** a_argv )
 {
-    std::cout << "Hello world!" << std::endl;
+    global_logger.setSysLog(false);
+    global_logger.addStream(std::cerr);
+    global_logger.setLevel(LogLevel::DEBUG);
+    LogContext log_context;
+    log_context.thread_name = "core_server";
+    log_context.thread_id = 0;
+
     try
     {
-        DL_SET_ENABLED(true);
-        DL_SET_LEVEL(DynaLog::DL_TRACE_LEV);
-        DL_SET_CERR_ENABLED(true);
-        DL_SET_SYSDL_ENABLED(true);
 
-        DL_INFO("DataFed core server starting, ver " << core::version::MAJOR << "." << core::version::MINOR << "." << core::version::PATCH );
-        //DL_INFO( "DataFed core server starting, ver " << VER_MAJOR << "." << VER_MAPI_MAJOR << "." << VER_MAPI_MINOR << ":" << VER_CORE );
+        DL_INFO(log_context, "DataFed core server starting, ver " << core::version::MAJOR << "." << core::version::MINOR << "." << core::version::PATCH );
 
         Core::Config &  config = Core::Config::getInstance();
         string          cfg_file;
@@ -133,26 +134,23 @@ int main( int a_argc, char ** a_argv )
         }
         catch( po::unknown_option & e )
         {
-            DL_ERROR( "Options error: " << e.what() );
+            DL_ERROR(log_context, "Options error: " << e.what());
             return 1;
         }
 
         // Create and run CoreServer instance. Configuration is held in Config singleton
 
-        DL_INFO( "Init Core Server" );
-        Core::Server server;
-        DL_INFO( "Run Core Server" );
+        Core::Server server(log_context);
         server.run();
 
-        DL_INFO( "DataFed core server exiting" );
     }
     catch( TraceException &e )
     {
-        DL_ERROR( "Exception: " << e.toString() );
+        DL_ERROR(log_context, "Exception: " << e.toString());
     }
     catch( exception &e )
     {
-        DL_ERROR( "Exception: " << e.what() );
+        DL_ERROR(log_context, "Exception: " << e.what());
     }
 
     return 0;

@@ -30,26 +30,28 @@ class TaskMgr : public ITaskMgr
 {
 public:
     static TaskMgr & getInstance();
+    static TaskMgr & getInstance(LogContext log_context, int thread_id);
 
     // Public interface used by CoreWorkers
-    void    newTask( const std::string & a_task_id );
-    void    cancelTask( const std::string & a_task_id );
-
+    void    newTask( const std::string & a_task_id, LogContext log_context );
+    void    cancelTask( const std::string & a_task_id, LogContext log_context );
 private:
     TaskMgr();
+    TaskMgr(LogContext log_context);
     ~TaskMgr();
 
+    void    initialize(LogContext log_context);
     // ITaskMgr methods used by TaskWorkers
     Task *      getNextTask( ITaskWorker * a_worker );
-    bool        retryTask( Task * a_task );
-    void        newTasks( const libjson::Value & a_tasks );
+    bool        retryTask( Task * a_task, LogContext log_context );
+    void        newTasks( const libjson::Value & a_tasks, LogContext log_context );
 
     // Private methods
-    void        maintenanceThread();
-    void        addNewTaskAndScheduleWorker( const std::string & a_task_id );
-    void        retryTaskAndScheduleWorker( Task * a_task );
+    void        maintenanceThread(LogContext, int);
+    void        addNewTaskAndScheduleWorker( const std::string & a_task_id, LogContext log_context );
+    void        retryTaskAndScheduleWorker( Task * a_task, LogContext log_context );
     void        wakeNextWorker();
-    void        purgeTaskHistory() const;
+    void        purgeTaskHistory(LogContext log_context) const;
 
     Config &                            m_config;
     std::deque<Task*>                   m_tasks_ready;
@@ -60,6 +62,8 @@ private:
     std::thread *                       m_maint_thread;
     std::mutex                          m_maint_mutex;
     std::condition_variable             m_maint_cvar;
+    LogContext                          m_log_context;
+    int m_thread_count =0;
 };
 
 }}

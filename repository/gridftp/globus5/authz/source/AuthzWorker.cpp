@@ -51,15 +51,13 @@ namespace SDMS {
 
 class AuthzWorker {
 public:
-    AuthzWorker( struct Config * a_config ) :
+    AuthzWorker( struct Config * a_config, LogContext log_context ) :
         m_config( a_config ),
-        m_globus_collection_path_len(strlen(a_config->globus_collection_path)),
         m_test_path_len( strlen( a_config->test_path )) {
 
-        m_log_line.message = "";
-        m_log_line.thread_name = "AuthzWorker"; 
-        m_log_line.thread_id = 0;
-        m_log_line.correlation_id = "";
+        m_log_context = log_context;
+        m_log_context.thread_name += "authz_worker";
+        m_log_context.thread_id = 0;
     }
 
     ~AuthzWorker()
@@ -70,19 +68,11 @@ public:
 
     int checkAuth( char * client_id, char * path, char * action )
     {
-        m_log_line.message = "Checking auth for client: " + client_id;
-        DL_LOG_DEBUG(m_log_line);
+        DL_DEBUG(m_log_context, "Checking auth for client: " << client_id);
 
         if ( m_test_path_len > 0 && strncmp( path, m_config->test_path, m_test_path_len ) == 0 ) {
-            m_log_line.message = "Allowing request within TEST PATH: " + m_config->test_path + " actual path " + path;
-            DL_LOG_INFO(m_log_line);
+            DL_INFO(m_log_context,"Allowing request within TEST PATH: " << m_config->test_path << " actual path: " << path);
             return 0;
-        }
-
-        if( m_globus_collection_path_len == 0 ) {
-            m_log_line.message = "AuthWorker.cpp globus-collection-path is not defined, must be defined.";
-            DL_LOG_ERROR(m_log_line);
-            EXCEPT(1,"Globus collection path is not defined");
         }
 
         // This should point to the root of the globus collection on the POSIX system
@@ -96,8 +86,7 @@ public:
         //std::string local_globus_path_root = "ftp://";
         std::string local_path = path;
         if( local_path.substr(0,scheme.length()).compare(scheme) != 0 ) {
-            m_log_line.message = "Provided path is not properly formatted, should be prefixed with ftp:// but is: " + path;
-            DL_LOG_ERROR(m_log_line);
+            DL_ERROR(m_log_context,"Provided path is not properly formatted, should be prefixed with ftp:// but is: " << path);
             EXCEPT(1,"Format error detected in path");
         }
 
@@ -118,42 +107,31 @@ public:
 				}
 
 				if(count != 3 ) {
-            m_log_line.message = "Provided path is not properly formatted, should be prefixed with ftp://hostname but is: " + path;
-            DL_LOG_ERROR(m_log_line);
+            DL_ERROR(m_log_context,"Provided path is not properly formatted, should be prefixed with ftp://hostname but is: " << path);
             EXCEPT(1,"Format error detected in path");
 				}
 
 				// extract the substring after the third occurrence of the character
 				local_path = local_path.substr(index);
 
-				//std::string repo_prefix = "repo/";
-				//std::string repo_id = m_config->repo_id;
         std::string local_globus_path_root = std::string(m_config->globus_collection_path); // + repo_id.substr(repo_prefix.length()-1);
-        if(local_globus_path_root.length() > local_path.length() ) {
-            m_log_line.message = "Provided path is not properly formatted, should be prefixed with globus_root_collection_path: "
-            m_log_line.message += local_globus_path_root + " but is: " + path;
-            DL_LOG_ERROR(m_log_line);
+        if(local_globus_path_root.length() > local_path.length() ) {;
+            std::string err_message = "Provided path is not properly formatted, should be prefixed with globus_root_collection_path: ";
+            err_message += local_globus_path_root + " but is: " + path;
+            DL_ERROR(m_log_context, err_message);
             EXCEPT(1,"Path to data item is not within the collection");
         } 
 
         auto prefix = local_path.substr(0, local_globus_path_root.length());
         if( prefix.compare(local_globus_path_root) != 0 ) {
-            m_log_line.message = "Provided path is not properly formatted, should be prefixed with globus_root_collection_path: "
-            m_log_line.message += local_globus_path_root + " but is: " + path;
-            DL_LOG_ERROR(m_log_line);
+            std::string err_message = "Provided path is not properly formatted, should be prefixed with globus_root_collection_path: ";
+            err_message += local_globus_path_root + " but is: " + path;
+            DL_ERROR(m_log_context, err_message);
             EXCEPT(1,"Path to data item is not within the collection");
         }
 
         auto sanitized_path = local_path.substr(prefix.length());
-        int result = 1;
         
-
-        //MsgComm::SecurityContext sec_ctx;
-        //sec_ctx.is_server = false;
-        //sec_ctx.public_key = m_config->pub_key;
-        //sec_ctx.private_key = m_config->priv_key;
-        //sec_ctx.server_key = m_config->server_key;
-
     std::unique_ptr<SDMS::ICredentials>   m_sec_ctx;
 
     std::unordered_map<CredentialType, std::string> cred_options;
@@ -172,8 +150,7 @@ public:
         ICredentials & credentials
         ) {
       /// Creating input parameters for constructing Communication Instance
-      m_log_line.message = "Creating client with adress to server: " + address;
-      DL_LOG_INFO(m_log_line);
+      DL_INFO(m_log_context, "Creating client with adress to server: " << address);
       AddressSplitter splitter(address);
       SocketOptions socket_options;
       socket_options.scheme = splitter.scheme();
@@ -188,12 +165,10 @@ public:
       //socket_options.port = 1341;
       socket_options.local_id = socket_id;
 
-      //auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-
       uint32_t timeout_on_receive = 10000;
       long timeout_on_poll = 10000;
 
-      CommunicatorFactory comm_factory;
+      CommunicatorFactory comm_factory(m_log_context);
       // When creating a communication channel with a server application we need
       // to locally have a client socket. So though we have specified a client
       // socket we will actually be communicating with the server.
@@ -217,59 +192,36 @@ public:
         message->setPayload(std::move(auth_req));
 
         client->send(*message);
-        DL_INFO("PUB KEY:  " << cred_options[CredentialType::PUBLIC_KEY]);
-        DL_INFO("PRIV KEY: " << cred_options[CredentialType::PRIVATE_KEY]);
-        DL_INFO("SERV KEY: " << cred_options[CredentialType::SERVER_KEY]);
-        DL_INFO("Sending request to core service at address." << client->address());
+        LogContext log_context = m_log_context;
+        log_context.correlation_id = std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID)); 
+        DL_INFO(log_context, "PUB KEY:  " << cred_options[CredentialType::PUBLIC_KEY]);
+        DL_INFO(log_context, "PRIV KEY: " << cred_options[CredentialType::PRIVATE_KEY]);
+        DL_INFO(log_context, "SERV KEY: " << cred_options[CredentialType::SERVER_KEY]);
+        DL_INFO(log_context, "Sending request to core service at address." << client->address());
 
         auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+        log_context.correlation_id = std::get<std::string>(response.message->get(MessageAttribute::CORRELATION_ID));
         if( response.time_out ) {
-            DL_INFO("AuthWorker.cpp Core service did not respond within timeout.");
+            DL_WARNING(log_context, "AuthWorker.cpp Core service did not respond within timeout.");
             EXCEPT(1,"Core service did not respond");
         } else if( response.error ) {
-            DL_INFO("AuthWorker.cpp there was an error when communicating with the core service.");
+            DL_ERROR(log_context, "AuthWorker.cpp there was an error when communicating with the core service: " << response.error_msg);
         } else {
             auto payload = std::get<google::protobuf::Message*>(response.message->getPayload());
             Anon::NackReply * nack = dynamic_cast<Anon::NackReply*>( payload );
             if ( !nack ){
                 return 0;
             }else{
-                DL_DEBUG("Got NACK reply");
+                DL_DEBUG(log_context, "Received NACK reply");
             }
         }
         return 1;
-
-
-        //authzcomm.send(auth_req);
-
-/*        if ( !authzcomm.recv( reply, frame, m_config->timeout ))
-        {
-            EXCEPT(1,"Core service did no respond");
-        }
-        else
-        {
-            DL_DEBUG( "Got response, msg type: " << frame.getMsgType() );
-
-            Anon::NackReply * nack = dynamic_cast<Anon::NackReply*>( reply );
-            if ( !nack )
-            {
-                result = 0;
-            }
-            else
-            {
-                DL_DEBUG("Got NACK reply");
-            }
-
-            delete reply;
-        }*/
-        //return result;
     }
 
 private:
     struct Config *     m_config;
     size_t              m_test_path_len;
-    size_t              m_globus_collection_path_len;
-    LogLineContent      m_log_line;
+    LogContext      m_log_context;
 };
 
 } // End namespace SDMS
@@ -303,26 +255,28 @@ extern "C"
     // The same
     int checkAuthorization( char * client_id, char * object, char * action, struct Config * config )
     {
-        DL_SET_LEVEL( DynaLog::DL_INFO_LEV );
-        DL_SET_CERR_ENABLED(false);
-        DL_SET_SYSDL_ENABLED(true);
+        SDMS::global_logger.setSysLog(true);
+        SDMS::global_logger.addStream(std::cerr);
 
-        DL_DEBUG( "AuthzWorker checkAuthorization " << client_id << ", " << object << ", " << action );
+        SDMS::LogContext log_context;
+        log_context.thread_name = "authz_check";
+        log_context.thread_id = 0;
+        DL_DEBUG(log_context, "AuthzWorker checkAuthorization " << client_id << ", " << object << ", " << action );
 
         int result = -1;
 
         try
         {
-            SDMS::AuthzWorker worker( config );
+            SDMS::AuthzWorker worker( config, log_context );
             result = worker.checkAuth( client_id, object, action );
         }
         catch( TraceException &e )
         {
-            DL_ERROR( "AuthzWorker exception: " << e.toString() );
+            DL_ERROR(log_context, "AuthzWorker exception: " << e.toString() );
         }
         catch( exception &e )
         {
-            DL_ERROR( "AuthzWorker exception: " << e.what() );
+            DL_ERROR(log_context, "AuthzWorker exception: " << e.what() );
         }
 
         return result;

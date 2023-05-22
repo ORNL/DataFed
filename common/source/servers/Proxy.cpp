@@ -22,17 +22,21 @@ namespace SDMS {
 
   Proxy::Proxy(
       const std::unordered_map<SocketRole, SocketOptions> & socket_options,
-      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials) :
+      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
+      LogContext log_context) :
     Proxy(
         socket_options,
         socket_credentials,
-        std::vector<std::unique_ptr<IOperator>>()) {};
+        std::vector<std::unique_ptr<IOperator>>(),
+        log_context) {};
 
   Proxy::Proxy(
       const std::unordered_map<SocketRole, SocketOptions> & socket_options,
       const std::unordered_map<SocketRole, ICredentials*> & socket_credentials,
-      std::vector<std::unique_ptr<IOperator>> incoming_operators) :
-    m_incoming_operators(std::move(incoming_operators)) {
+      std::vector<std::unique_ptr<IOperator>> incoming_operators,
+      LogContext log_context) :
+    m_incoming_operators(std::move(incoming_operators)),
+    m_log_context(log_context) {
 
       if( socket_options.count(SocketRole::CLIENT) == 0 ) {
         EXCEPT(1, "Proxy must have socket options for Client"); 
@@ -54,16 +58,14 @@ namespace SDMS {
         }
       }
 
-      CommunicatorFactory communication_factory;
+      CommunicatorFactory communication_factory(m_log_context);
 
-      //std::cout << "Creating proxy CLIENT" << std::endl;
       m_communicators[SocketRole::CLIENT] = communication_factory.create(
           socket_options.at(SocketRole::CLIENT),
           *socket_credentials.at(SocketRole::CLIENT),
           m_timeout_on_receive_milliseconds,
           m_timeout_on_poll_milliseconds);
       
-      //std::cout << "Creating proxy SERVER" << std::endl;
       m_communicators[SocketRole::SERVER] = communication_factory.create(
           socket_options.at(SocketRole::SERVER),
           *socket_credentials.at(SocketRole::SERVER),
@@ -94,38 +96,25 @@ namespace SDMS {
         // 
         //                                              <- POLL_IN
         // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock - Inter App
-        //std::cout << m_communicators[SocketRole::CLIENT]->id() << " poll" << std::endl;
         auto resp_from_client_socket = m_communicators[SocketRole::CLIENT]->poll(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
         if(resp_from_client_socket.error){
-          std::cout << m_communicators[SocketRole::CLIENT]->id() << " error detected: " << resp_from_client_socket.error_msg << std::endl;
+          DL_ERROR(m_log_context, m_communicators[SocketRole::CLIENT]->id() << " error detected: " << resp_from_client_socket.error_msg);
         }
-        //std::cout << "Done proxy polling for messages from server" << std::endl;
         
-        if( count > 100 ) {
-          std::cout << "Proxy running..." << std::endl;
-          std::cout << "Client id is: " << m_communicators[SocketRole::CLIENT]->id() << " Client address is: " << m_communicators[SocketRole::CLIENT]->address() << std::endl;
-          std::cout << "Server id is: " << m_communicators[SocketRole::SERVER]->id() << " Client address is: " << m_communicators[SocketRole::SERVER]->address() << std::endl;
-          count = 0;
-        }
         // Coming from the server socket that is local so communication flow is
         // coming from a public client thread/process
         // 
         //                              POLL_IN  -> 
         // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock - Inter App
-        //std::cout << "Proxy polling for messages from  client" << std::endl;
-        //std::cout << m_communicators[SocketRole::SERVER]->id() << " poll" << std::endl;
         auto resp_from_server_socket = m_communicators[SocketRole::SERVER]->poll(MessageType::GOOGLE_PROTOCOL_BUFFER);
         if(resp_from_server_socket.error){
-          std::cout << m_communicators[SocketRole::SERVER]->id() << " error detected: " << resp_from_server_socket.error_msg << std::endl;
+          DL_ERROR(m_log_context, m_communicators[SocketRole::SERVER]->id() << " error detected: " << resp_from_server_socket.error_msg);
         }
-        //std::cout << "Done proxy polling for messages from  client" << std::endl;
 
         // Essentially just route with out doing anything if flow is towards the
         // public
         if(resp_from_client_socket.error == false and resp_from_client_socket.time_out == false ){
-          //std::cout << "Proxy sending messages via proxy from server to client" << std::endl;
-          std::cout << m_communicators[SocketRole::SERVER]->id() << " send" << std::endl;
           m_communicators[SocketRole::SERVER]->send(*resp_from_client_socket.message);
         }
 
@@ -137,31 +126,22 @@ namespace SDMS {
         //                 | Operate on -> Pass to internal Server
         //                 |            |
         // ... - Serv Sock - Proxy ------ Client Sock - Serv Sock - Inter App
-        //std::cout << "Proxy size of incoming operators: " << m_incoming_operators.size() << std::endl;
         if(resp_from_server_socket.error == false and resp_from_server_socket.time_out == false) {
           for( auto & in_operator : m_incoming_operators ) {
-            //std::cout << "Proxy operating on messages from client" << std::endl;
-            std::cout << m_communicators[SocketRole::SERVER]->id() << " running operators" << std::endl;
             in_operator->execute(*resp_from_server_socket.message);
           }
-
-          //std::cout << "Proxy sending messages via proxy from client to server" << std::endl;
-//          std::cout << "Frame size is " << resp_from_server_socket.message->get("frame_size") << std::endl;
- //         std::cout << "Frame proto_id is " << resp_from_server_socket.message->get("proto_id") << std::endl;
-  //        std::cout << "Frame msg_id is " << resp_from_server_socket.message->get("msg_id") << std::endl;
-          std::cout << m_communicators[SocketRole::CLIENT]->id() << " send" << std::endl;
           m_communicators[SocketRole::CLIENT]->send(*resp_from_server_socket.message);
         }
 
       } catch( TraceException & e ) {
-        std::cerr << "Proxy::run - " << e.toString() << "\n";
+        DL_ERROR(m_log_context, "Proxy::run - " << e.toString() );
       } catch( exception & e ) {
-        std::cerr << "Proxy::run - " << e.what() << "\n";
+        DL_ERROR(m_log_context, "Proxy::run - " << e.what() );
       } catch( ... ) {
-        std::cerr << "Proxy::run - unknown exception" << "\n";
+        DL_ERROR(m_log_context, "Proxy::run - unknown exception" );
       }
     } // while( m_run_infinite ...etc)
-    std::cout << "Proxy is gracefully exiting after timeout." << std::endl;
+    DL_INFO(m_log_context, "Proxy is gracefully exiting after specified timeout.");
   } // run()
 
 } // namespace SDMS

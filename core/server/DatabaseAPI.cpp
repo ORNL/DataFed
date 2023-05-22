@@ -28,7 +28,7 @@ using namespace SDMS::Auth;
 using namespace libjson;
 
 #define TRANSLATE_BEGIN() try{
-#define TRANSLATE_END( json ) }catch( TraceException &e ){ DL_ERROR( "INVALID JSON FROM DB: " << json.toString() ); EXCEPT_CONTEXT( e, "Invalid response from DB" ); throw; }
+#define TRANSLATE_END( json, log_context ) }catch( TraceException &e ){ DL_ERROR(log_context, "INVALID JSON FROM DB: " << json.toString() ); EXCEPT_CONTEXT( e, "Invalid response from DB" ); throw; }
 
 DatabaseAPI::DatabaseAPI( const std::string & a_db_url, const std::string & a_db_user, const std::string & a_db_pass ) :
     m_client(0), m_db_url(a_db_url)
@@ -70,7 +70,7 @@ DatabaseAPI::setClient( const std::string & a_client )
 }
 
 long
-DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, libjson::Value & a_result, bool a_log )
+DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &a_params, libjson::Value & a_result, LogContext log_context, bool a_log )
 {
     (void)a_log;
 
@@ -102,12 +102,7 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
         curl_free( esc_txt );
     }
 
-    /*if ( a_log )
-    {
-        DL_DEBUG( "get url: " << url );
-    }*/
-
-    DL_DEBUG( "get url: " << url );
+    DL_DEBUG(log_context, "get url: " << url );
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
@@ -124,13 +119,11 @@ DatabaseAPI::dbGet( const char * a_url_path, const vector<pair<string,string>> &
         {
             try
             {
-                std::cout << "res_json is " << std::endl;
-                std::cout << res_json << std::endl;
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )
             {
-                DL_DEBUG( "PARSE [" << res_json << "]" );
+                DL_DEBUG(log_context, "PARSE [" << res_json << "]" );
                 EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.toString() );
             }
         }
@@ -189,8 +182,6 @@ DatabaseAPI::dbGetRaw( const char * a_url_path, const vector<pair<string,string>
         curl_free( esc_txt );
     }
 
-    //DL_TRACE( "get raw url: " << url );
-
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &a_result );
     curl_easy_setopt( m_curl, CURLOPT_ERRORBUFFER, error );
@@ -207,9 +198,8 @@ DatabaseAPI::dbGetRaw( const char * a_url_path, const vector<pair<string,string>
 }
 
 long
-DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, Value & a_result )
+DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> &a_params, const string * a_body, Value & a_result, LogContext log_context )
 {
-    //DL_DEBUG( "dbPost " << a_url_path << " [" << (a_body?*a_body:"") << "]" );
     static const char * empty_body = "";
 
     a_result.clear();
@@ -240,7 +230,6 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         curl_free( esc_txt );
     }
 
-    //DL_TRACE( "post url: " << url );
 
     curl_easy_setopt( m_curl, CURLOPT_URL, url.c_str() );
     curl_easy_setopt( m_curl, CURLOPT_WRITEDATA, &res_json );
@@ -261,12 +250,11 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         {
             try
             {
-                //DL_DEBUG( "PARSE [" << res_json << "]" );
                 a_result.fromString( res_json );
             }
             catch( libjson::ParseError & e )
             {
-                DL_DEBUG( "PARSE [" << res_json << "]" );
+                DL_DEBUG(log_context, "PARSE [" << res_json << "]" );
                 EXCEPT_PARAM( ID_SERVICE_ERROR, "Invalid JSON returned from DB: " << e.toString() );
             }
         }
@@ -279,7 +267,7 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
         {
             if ( res_json.size() && a_result.asObject().has( "errorMessage" ))
             {
-                DL_DEBUG( "dbPost FAILED " << url << " [" << (a_body?*a_body:"") << "]" );
+                DL_DEBUG(log_context, "dbPost FAILED " << url << " [" << (a_body?*a_body:"") << "]" );
 
                 EXCEPT_PARAM( ID_BAD_REQUEST, a_result.asObject().asString());
             }
@@ -297,28 +285,28 @@ DatabaseAPI::dbPost( const char * a_url_path, const vector<pair<string,string>> 
 
 
 void
-DatabaseAPI::serverPing()
+DatabaseAPI::serverPing(LogContext log_context)
 {
     Value result;
 
-    dbGet( "admin/ping", {}, result );
+    dbGet( "admin/ping", {}, result, log_context );
 }
 
 void
-DatabaseAPI::clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply )
+DatabaseAPI::clientAuthenticateByPassword( const std::string & a_password, Anon::AuthStatusReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "usr/authn/password", {{"pw",a_password}}, result );
-    setAuthStatus( a_reply, result );
+    dbGet( "usr/authn/password", {{"pw",a_password}}, result, log_context );
+    setAuthStatus( a_reply, result);
 }
 
 void
-DatabaseAPI::clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply )
+DatabaseAPI::clientAuthenticateByToken( const std::string & a_token, Anon::AuthStatusReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "usr/authn/token", {{"token",a_token}}, result );
+    dbGet( "usr/authn/token", {{"token",a_token}}, result, log_context );
     setAuthStatus( a_reply, result );
 }
 
@@ -331,11 +319,11 @@ DatabaseAPI::setAuthStatus( Anon::AuthStatusReply & a_reply, const Value & a_res
 }
 
 void
-DatabaseAPI::clientLinkIdentity( const std::string & a_identity )
+DatabaseAPI::clientLinkIdentity( const std::string & a_identity, LogContext log_context )
 {
     Value result;
 
-    dbGet( "usr/ident/add", {{"ident",a_identity}}, result );
+    dbGet( "usr/ident/add", {{"ident",a_identity}}, result, log_context );
 }
 
 bool
@@ -346,11 +334,11 @@ DatabaseAPI::uidByPubKey( const std::string & a_pub_key, std::string & a_uid )
 }
 
 bool
-DatabaseAPI::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
+DatabaseAPI::userGetKeys( std::string & a_pub_key, std::string & a_priv_key, LogContext log_context )
 {
     Value result;
 
-    dbGet( "usr/keys/get", {}, result );
+    dbGet( "usr/keys/get", {}, result, log_context );
 
     const Value::Object & obj = result.asArray()[0].asObject();
 
@@ -368,27 +356,27 @@ DatabaseAPI::userGetKeys( std::string & a_pub_key, std::string & a_priv_key )
 }
 
 void
-DatabaseAPI::userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key )
+DatabaseAPI::userSetKeys( const std::string & a_pub_key, const std::string & a_priv_key, LogContext log_context )
 {
     Value result;
 
-    dbGet( "usr/keys/set", {{"pub_key",a_pub_key},{"priv_key",a_priv_key}}, result );
+    dbGet( "usr/keys/set", {{"pub_key",a_pub_key},{"priv_key",a_priv_key}}, result, log_context );
 }
 
 void
-DatabaseAPI::userClearKeys()
+DatabaseAPI::userClearKeys(LogContext log_context)
 {
     Value result;
 
-    dbGet( "usr/keys/clear", {}, result );
+    dbGet( "usr/keys/clear", {}, result, log_context );
 }
 
 
 void
-DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expires_in )
+DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_tok, uint32_t & a_expires_in, LogContext log_context )
 {
     Value result;
-    dbGet( "usr/token/get", {}, result );
+    dbGet( "usr/token/get", {}, result, log_context );
 
     TRANSLATE_BEGIN()
 
@@ -398,30 +386,30 @@ DatabaseAPI::userGetAccessToken( std::string & a_acc_tok, std::string & a_ref_to
     a_ref_tok = obj.getString( "refresh" );
     a_expires_in = (uint32_t) obj.getNumber( "expires_in" );
 
-    TRANSLATE_END( result )
+    TRANSLATE_END( result, log_context )
 }
 
 
 void
-DatabaseAPI::userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok )
+DatabaseAPI::userSetAccessToken( const std::string & a_acc_tok, uint32_t a_expires_in, const std::string & a_ref_tok, LogContext log_context )
 {
-    //DL_DEBUG("userSetAccessToken: " << a_acc_tok  << " : " << a_ref_tok << " : " << a_expires_in );
     string result;
     dbGetRaw( "usr/token/set", {{"access",a_acc_tok},{"refresh",a_ref_tok},{"expires_in",to_string(a_expires_in)}}, result );
+    DL_TRACE(log_context, "token expires in: " << to_string(a_expires_in) );
 }
 
 void
-DatabaseAPI::userSetAccessToken( const Auth::UserSetAccessTokenRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::userSetAccessToken( const Auth::UserSetAccessTokenRequest & a_request, Anon::AckReply & a_reply, LogContext log_context)
 {
     (void)a_reply;
-    userSetAccessToken( a_request.access(), a_request.expires_in(), a_request.refresh() );
+    userSetAccessToken( a_request.access(), a_request.expires_in(), a_request.refresh(), log_context );
 }
 
 void
-DatabaseAPI::getExpiringAccessTokens( uint32_t a_expires_in, vector<UserTokenInfo> & a_expiring_tokens )
+DatabaseAPI::getExpiringAccessTokens( uint32_t a_expires_in, vector<UserTokenInfo> & a_expiring_tokens, LogContext log_context )
 {
     Value result;
-    dbGet( "usr/token/get/expiring", {{"expires_in",to_string(a_expires_in)}}, result );
+    dbGet( "usr/token/get/expiring", {{"expires_in",to_string(a_expires_in)}}, result, log_context );
 
     UserTokenInfo info;
     a_expiring_tokens.clear();
@@ -444,7 +432,7 @@ DatabaseAPI::getExpiringAccessTokens( uint32_t a_expires_in, vector<UserTokenInf
         a_expiring_tokens.push_back( info );
     }
 
-    TRANSLATE_END( result )
+    TRANSLATE_END( result, log_context )
 }
 
 void
@@ -455,9 +443,9 @@ DatabaseAPI::purgeTransferRecords( size_t age )
 }
 
 void
-DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply )
+DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDataReply & a_reply, LogContext log_context)
 {
-    DL_INFO( "DataFed user create - uid: " << a_request.uid() << ", name: " << a_request.name() );
+    DL_DEBUG(log_context, "DataFed user create - uid: " << a_request.uid() << ", name: " << a_request.name() );
 
     vector<pair<string,string>> params;
     params.push_back({"secret",a_request.secret()});
@@ -483,20 +471,20 @@ DatabaseAPI::userCreate( const Auth::UserCreateRequest & a_request, Auth::UserDa
     // Catch and log any trace exception
     try
     {
-        dbGet( "usr/create", params, result );
+        dbGet( "usr/create", params, result, log_context );
     }
     catch( TraceException & e )
     {
-        DL_ERROR( e.toString() );
+        DL_ERROR(log_context, e.toString() );
         throw;
     }
 
-    setUserData( a_reply, result );
+    setUserData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply )
+DatabaseAPI::userView( const Auth::UserViewRequest & a_request, Auth::UserDataReply & a_reply, LogContext log_context)
 {
     vector<pair<string,string>> params;
     params.push_back({"subject",a_request.uid()});
@@ -504,14 +492,14 @@ DatabaseAPI::userView( const Auth::UserViewRequest & a_request, Auth::UserDataRe
         params.push_back({"details","true"});
 
     Value result;
-    dbGet( "usr/view", params, result );
+    dbGet( "usr/view", params, result, log_context );
 
-    setUserData( a_reply, result );
+    setUserData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, Auth::UserDataReply & a_reply )
+DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, Auth::UserDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
@@ -524,14 +512,14 @@ DatabaseAPI::userUpdate( const UserUpdateRequest & a_request, Auth::UserDataRepl
     if ( a_request.has_options() )
         params.push_back({"options",a_request.options()});
 
-    dbGet( "usr/update", params, result );
+    dbGet( "usr/update", params, result, log_context );
 
-    setUserData( a_reply, result );
+    setUserData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::userListAll( const UserListAllRequest & a_request, Auth::UserDataReply & a_reply )
+DatabaseAPI::userListAll( const UserListAllRequest & a_request, Auth::UserDataReply & a_reply, LogContext log_context)
 {
     vector<pair<string,string>> params;
     if ( a_request.has_offset() && a_request.has_count() )
@@ -541,13 +529,13 @@ DatabaseAPI::userListAll( const UserListAllRequest & a_request, Auth::UserDataRe
     }
 
     Value result;
-    dbGet( "usr/list/all", params, result );
+    dbGet( "usr/list/all", params, result, log_context );
 
-    setUserData( a_reply, result );
+    setUserData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, Auth::UserDataReply & a_reply )
+DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, Auth::UserDataReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -556,13 +544,13 @@ DatabaseAPI::userListCollab( const UserListCollabRequest & a_request, Auth::User
         params.push_back({"offset",to_string(a_request.offset())});
         params.push_back({"count",to_string(a_request.count())});
     }
-    dbGet( "usr/list/collab", params, result );
+    dbGet( "usr/list/collab", params, result, log_context );
 
-    setUserData( a_reply, result );
+    setUserData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply )
+DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Auth::UserDataReply & a_reply, LogContext log_context)
 {
     string uuids = "[";
 
@@ -576,13 +564,13 @@ DatabaseAPI::userFindByUUIDs( const Auth::UserFindByUUIDsRequest & a_request, Au
     uuids += "]";
 
     Value result;
-    dbGet( "usr/find/by_uuids", {{"uuids",uuids}}, result );
+    dbGet( "usr/find/by_uuids", {{"uuids",uuids}}, result, log_context );
 
-    setUserData( a_reply, result );
+    setUserData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Auth::UserDataReply & a_reply )
+DatabaseAPI::userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request, Auth::UserDataReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -593,18 +581,18 @@ DatabaseAPI::userFindByNameUID( const Auth::UserFindByNameUIDRequest & a_request
         params.push_back({"count",to_string(a_request.count())});
     }
 
-    dbGet( "usr/find/by_name_uid", params, result );
+    dbGet( "usr/find/by_name_uid", params, result, log_context );
 
-    setUserData( a_reply, result );
+    setUserData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply )
+DatabaseAPI::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Auth::UserGetRecentEPReply & a_reply, LogContext log_context)
 {
     (void)a_request;
     Value result;
 
-    dbGet( "usr/ep/get", {}, result );
+    dbGet( "usr/ep/get", {}, result, log_context );
 
     TRANSLATE_BEGIN()
 
@@ -615,11 +603,11 @@ DatabaseAPI::userGetRecentEP( const Auth::UserGetRecentEPRequest & a_request, Au
         a_reply.add_ep( i->asString() );
     }
 
-    TRANSLATE_END( result )
+    TRANSLATE_END( result, log_context )
 }
 
 void
-DatabaseAPI::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, Anon::AckReply & a_reply, LogContext log_context)
 {
     (void) a_reply;
     Value result;
@@ -633,11 +621,11 @@ DatabaseAPI::userSetRecentEP( const Auth::UserSetRecentEPRequest & a_request, An
     }
     eps += "]";
 
-    dbGet( "usr/ep/set", {{"eps",eps}}, result );
+    dbGet( "usr/ep/set", {{"eps",eps}}, result, log_context );
 }
 
 void
-DatabaseAPI::setUserData( Auth::UserDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setUserData( Auth::UserDataReply & a_reply, const Value & a_result, LogContext log_context )
 {
     UserData*               user;
     Value::ArrayConstIter   k;
@@ -690,16 +678,16 @@ DatabaseAPI::setUserData( Auth::UserDataReply & a_reply, const Value & a_result 
                 const Value::Array & arr2 = obj.asArray();
 
                 for ( k = arr2.begin(); k != arr2.end(); k++ )
-                    setAllocData( user->add_alloc(), k->asObject() );
+                    setAllocData( user->add_alloc(), k->asObject(), log_context );
             }
         }
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context )
 }
 
 void
-DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply )
+DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::ProjectDataReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -736,13 +724,13 @@ DatabaseAPI::projCreate( const Auth::ProjectCreateRequest & a_request, Auth::Pro
         params.push_back({"members", members });
     }
 
-    dbGet( "prj/create", params, result );
+    dbGet( "prj/create", params, result, log_context );
 
-    setProjectData( a_reply, result );
+    setProjectData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply )
+DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::ProjectDataReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -781,22 +769,22 @@ DatabaseAPI::projUpdate( const Auth::ProjectUpdateRequest & a_request, Auth::Pro
         params.push_back({ "members", members });
     }
 
-    dbGet( "prj/update", params, result );
+    dbGet( "prj/update", params, result, log_context );
 
-    setProjectData( a_reply, result );
+    setProjectData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply )
+DatabaseAPI::projView( const Auth::ProjectViewRequest & a_request, Auth::ProjectDataReply & a_reply, LogContext log_context)
 {
     Value result;
-    dbGet( "prj/view", {{"id",a_request.id()}}, result );
+    dbGet( "prj/view", {{"id",a_request.id()}}, result, log_context );
 
-    setProjectData( a_reply, result );
+    setProjectData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -817,13 +805,13 @@ DatabaseAPI::projList( const Auth::ProjectListRequest & a_request, Auth::Listing
     if ( a_request.has_count())
         params.push_back({"count",to_string(a_request.count())});
 
-    dbGet( "prj/list", params, result );
+    dbGet( "prj/list", params, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::projGetRole( const Auth::ProjectGetRoleRequest & a_request, Auth::ProjectGetRoleReply & a_reply )
+DatabaseAPI::projGetRole( const Auth::ProjectGetRoleRequest & a_request, Auth::ProjectGetRoleReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -831,25 +819,25 @@ DatabaseAPI::projGetRole( const Auth::ProjectGetRoleRequest & a_request, Auth::P
     if ( a_request.has_subject() )
         params.push_back({"subject",a_request.subject()});
 
-    dbGet( "prj/get_role", params, result );
+    dbGet( "prj/get_role", params, result, log_context );
 
     const Value::Object & obj = result.asObject();
     a_reply.set_role((ProjectRole)(unsigned short) obj.getNumber( "role" ));
 }
 
 void
-DatabaseAPI::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply )
+DatabaseAPI::projSearch( const std::string & a_query, Auth::ProjectDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "prj/search", {{"query",a_query}}, result );
+    dbGet( "prj/search", {{"query",a_query}}, result, log_context );
 
-    setProjectData( a_reply, result );
+    setProjectData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::setProjectData( Auth::ProjectDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setProjectData( Auth::ProjectDataReply & a_reply, const Value & a_result, LogContext log_context )
 {
     ProjectData*            proj;
     Value::ArrayConstIter   k;
@@ -899,16 +887,16 @@ DatabaseAPI::setProjectData( Auth::ProjectDataReply & a_reply, const Value & a_r
             const Value::Array & arr2 = obj.asArray();
 
             for ( k = arr2.begin(); k != arr2.end(); k++ )
-                setAllocData( proj->add_alloc(), k->asObject() );
+                setAllocData( proj->add_alloc(), k->asObject(), log_context );
         }
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context )
 }
 
 
 void
-DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -919,24 +907,24 @@ DatabaseAPI::recordListByAlloc( const Auth::RecordListByAllocRequest & a_request
     if ( a_request.has_count() )
         params.push_back({"count",to_string(a_request.count())});
 
-    dbGet( "/dat/list/by_alloc", params, result );
+    dbGet( "/dat/list/by_alloc", params, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply )
+DatabaseAPI::recordView( const Auth::RecordViewRequest & a_request, Auth::RecordDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "dat/view", {{"id",a_request.id()}}, result );
+    dbGet( "dat/view", {{"id",a_request.id()}}, result, log_context );
 
-    setRecordData( a_reply, result );
+    setRecordData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply )
+DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::RecordDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
@@ -1003,25 +991,25 @@ DatabaseAPI::recordCreate( const Auth::RecordCreateRequest & a_request, Auth::Re
     }
     body += "}";
 
-    DL_INFO("dat create: " << body );
+    DL_DEBUG(log_context, "dat create: " << body );
 
-    dbPost( "dat/create", {}, &body, result );
+    dbPost( "dat/create", {}, &body, result, log_context );
 
-    setRecordData( a_reply, result );
+    setRecordData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply )
+DatabaseAPI::recordCreateBatch( const Auth::RecordCreateBatchRequest & a_request, Auth::RecordDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbPost( "dat/create/batch", {}, &a_request.records(), result );
+    dbPost( "dat/create/batch", {}, &a_request.records(), result, log_context );
 
-    setRecordData( a_reply, result );
+    setRecordData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
+DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result, LogContext log_context )
 {
     string body = "{\"id\":\"" + a_request.id() + "\"";
     if ( a_request.has_title() )
@@ -1058,16 +1046,12 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::Re
     }
     if ( a_request.has_sch_id() )
         body += string(",\"sch_id\":\"") + a_request.sch_id() + "\"";
-    //if ( a_request.has_size() )
-    //    body += ",\"size\":" + to_string(a_request.size());
     if ( a_request.has_source() )
         body += ",\"source\":\"" + a_request.source() + "\"";
     if ( a_request.has_ext() )
         body += ",\"ext\":\"" + a_request.ext() + "\"";
     if ( a_request.has_ext_auto() )
         body += string(",\"ext_auto\":") + (a_request.ext_auto()?"true":"false");
-    //if ( a_request.has_dt() )
-    //    body += ",\"dt\":" + to_string(a_request.dt());
 
     if ( a_request.dep_add_size() )
     {
@@ -1091,26 +1075,25 @@ DatabaseAPI::recordUpdate( const Auth::RecordUpdateRequest & a_request, Auth::Re
 
     body += "}";
 
-    //DL_INFO("update body[" << body << "]");
 
-    dbPost( "dat/update", {}, &body, result );
+    dbPost( "dat/update", {}, &body, result, log_context );
 
-    setRecordData( a_reply, result );
+    setRecordData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result )
+DatabaseAPI::recordUpdateBatch( const Auth::RecordUpdateBatchRequest & a_request, Auth::RecordDataReply & a_reply, libjson::Value & result, LogContext log_context )
 {
     // "records" field is a JSON document - send directly to DB
-    dbPost( "dat/update/batch", {}, &a_request.records(), result );
+    dbPost( "dat/update/batch", {}, &a_request.records(), result, log_context );
 
-    setRecordData( a_reply, result );
+    setRecordData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::recordUpdateSize( const Auth::RepoDataSizeReply & a_size_rep )
+DatabaseAPI::recordUpdateSize( const Auth::RepoDataSizeReply & a_size_rep, LogContext log_context )
 {
     libjson::Value result;
 
@@ -1125,19 +1108,19 @@ DatabaseAPI::recordUpdateSize( const Auth::RepoDataSizeReply & a_size_rep )
 
     body += "]}";
 
-    dbPost( "dat/update/size", {}, &body, result );
+    dbPost( "dat/update/size", {}, &body, result, log_context );
 }
 
 void
-DatabaseAPI::recordUpdateSchemaError( const std::string & a_rec_id, const std::string & a_err_msg )
+DatabaseAPI::recordUpdateSchemaError( const std::string & a_rec_id, const std::string & a_err_msg, LogContext log_context )
 {
     libjson::Value result;
 
-    dbPost( "dat/update/md_err_msg", {{"id", a_rec_id }}, &a_err_msg, result );
+    dbPost( "dat/update/md_err_msg", {{"id", a_rec_id }}, &a_err_msg, result, log_context );
 }
 
 void
-DatabaseAPI::recordExport( const Auth::RecordExportRequest & a_request, Auth::RecordExportReply & a_reply )
+DatabaseAPI::recordExport( const Auth::RecordExportRequest & a_request, Auth::RecordExportReply & a_reply, LogContext log_context)
 {
     Value result;
 
@@ -1152,7 +1135,7 @@ DatabaseAPI::recordExport( const Auth::RecordExportRequest & a_request, Auth::Re
 
     body += "]}";
 
-    dbPost( "dat/export", {}, &body, result );
+    dbPost( "dat/export", {}, &body, result, log_context );
 
     TRANSLATE_BEGIN()
 
@@ -1161,11 +1144,11 @@ DatabaseAPI::recordExport( const Auth::RecordExportRequest & a_request, Auth::Re
     for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
         a_reply.add_record( i->asString() );
 
-    TRANSLATE_END( result )
+    TRANSLATE_END( result, log_context )
 }
 
 void
-DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     string ids;
@@ -1185,25 +1168,25 @@ DatabaseAPI::recordLock( const Auth::RecordLockRequest & a_request, Auth::Listin
     else
         ids = "[]";
 
-    dbGet( "dat/lock", {{"ids",ids},{"lock",a_request.lock()?"true":"false"}}, result );
+    dbGet( "dat/lock", {{"ids",ids},{"lock",a_request.lock()?"true":"false"}}, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::recordGetDependencyGraph( const Auth::RecordGetDependencyGraphRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "dat/dep/graph/get", {{"id",a_request.id()}}, result );
+    dbGet( "dat/dep/graph/get", {{"id",a_request.id()}}, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::setRecordData( Auth::RecordDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setRecordData( Auth::RecordDataReply & a_reply, const Value & a_result, LogContext log_context )
 {
     RecordData *        rec;
     DependencyData *    deps;
@@ -1319,19 +1302,19 @@ DatabaseAPI::setRecordData( Auth::RecordDataReply & a_reply, const Value & a_res
         const Value::Array & arr = res_obj.asArray();
 
         for ( i = arr.begin(); i != arr.end(); i++ )
-            setListingData( a_reply.add_update(), i->asObject() );
+            setListingData( a_reply.add_update(), i->asObject(), log_context );
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context )
 }
 
 
 void
-DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply )
+DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "dat/path", {{"id",a_request.id()},{"domain",a_request.domain()}}, result );
+    dbGet( "dat/path", {{"id",a_request.id()},{"domain",a_request.domain()}}, result, log_context );
 
     const Value::Object & obj = result.asObject();
 
@@ -1350,28 +1333,28 @@ DatabaseAPI::dataPath( const Auth::DataPathRequest & a_request, Auth::DataPathRe
  * "collview" Arango search views for execution of the query.
  */
 void
-DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::generalSearch( const Auth::SearchRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     string qry_begin, qry_end, qry_filter, params;
 
-    uint32_t cnt = parseSearchRequest( a_request, qry_begin, qry_end, qry_filter, params );
+    uint32_t cnt = parseSearchRequest( a_request, qry_begin, qry_end, qry_filter, params, log_context );
 
     string body = "{\"mode\":"+to_string(a_request.mode()) + ",\"published\":"+ ((a_request.has_published() && a_request.published())?"true":"false") +
         ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
         "\",\"params\":{"+params+"},\"limit\":"+ to_string(cnt)+"}";
 
-    DL_DEBUG("Query: [" << body << "]");
+    DL_DEBUG(log_context, "Query: [" << body << "]");
 
-    dbPost( "qry/exec/direct", {}, &body, result );
+    dbPost( "qry/exec/direct", {}, &body, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 
 
 void
-DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1383,13 +1366,13 @@ DatabaseAPI::collListPublished( const Auth::CollListPublishedRequest & a_request
     if ( a_request.has_count() )
         params.push_back({"count",to_string(a_request.count())});
 
-    dbGet( "col/published/list", params, result );
+    dbGet( "col/published/list", params, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply )
+DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDataReply & a_reply, LogContext log_context)
 {
     Value result;
     string body = "{\"title\":\"" + escapeJSON( a_request.title() ) + "\"";
@@ -1420,13 +1403,13 @@ DatabaseAPI::collCreate( const Auth::CollCreateRequest & a_request, Auth::CollDa
 
     body += "}";
 
-    dbPost( "col/create", {}, &body, result );
+    dbPost( "col/create", {}, &body, result, log_context );
 
-    setCollData( a_reply, result );
+    setCollData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply )
+DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDataReply & a_reply, LogContext log_context)
 {
     Value result;
     string body = "{\"id\":\"" + a_request.id() + "\"";
@@ -1461,24 +1444,24 @@ DatabaseAPI::collUpdate( const Auth::CollUpdateRequest & a_request, Auth::CollDa
 
     body += "}";
 
-    dbPost( "col/update", {}, &body, result );
+    dbPost( "col/update", {}, &body, result, log_context );
 
-    setCollData( a_reply, result );
+    setCollData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply )
+DatabaseAPI::collView( const Auth::CollViewRequest & a_request, Auth::CollDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "col/view", {{"id",a_request.id()}}, result );
+    dbGet( "col/view", {{"id",a_request.id()}}, result, log_context );
 
-    setCollData( a_reply, result );
+    setCollData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::collRead( const Auth::CollReadRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1488,13 +1471,13 @@ DatabaseAPI::collRead( const Auth::CollReadRequest & a_request, Auth::ListingRep
     if ( a_request.has_count() )
         params.push_back({"count",to_string(a_request.count())});
 
-    dbGet( "col/read", params, result );
+    dbGet( "col/read", params, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     string add_list, rem_list;
     vector<pair<string,string>> params;
@@ -1531,13 +1514,13 @@ DatabaseAPI::collWrite( const Auth::CollWriteRequest & a_request, Auth::ListingR
 
     Value result;
 
-    dbGet( "col/write", params, result );
+    dbGet( "col/write", params, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply & a_reply, LogContext log_context)
 {
     (void) a_reply;
 
@@ -1556,11 +1539,11 @@ DatabaseAPI::collMove( const Auth::CollMoveRequest & a_request, Anon::AckReply &
     items += "]";
 
     Value result;
-    dbGet( "col/move", {{"source",a_request.src_id()},{"dest",a_request.dst_id()},{"items",items}}, result );
+    dbGet( "col/move", {{"source",a_request.src_id()},{"dest",a_request.dst_id()},{"items",items}}, result, log_context );
 }
 
 void
-DatabaseAPI::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply )
+DatabaseAPI::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth::CollPathReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1568,18 +1551,18 @@ DatabaseAPI::collGetParents( const Auth::CollGetParentsRequest & a_request, Auth
     if ( a_request.has_inclusive() )
         params.push_back({"inclusive",a_request.inclusive()?"true":"false"});
 
-    dbGet( "col/get_parents", params, result );
+    dbGet( "col/get_parents", params, result, log_context );
 
-    setCollPathData( a_reply, result );
+    setCollPathData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply )
+DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::CollGetOffsetReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "col/get_offset", {{"id",a_request.id()},{"item",a_request.item()},{"page_sz",to_string(a_request.page_sz())}}, result );
+    dbGet( "col/get_offset", {{"id",a_request.id()},{"item",a_request.item()},{"page_sz",to_string(a_request.page_sz())}}, result, log_context );
 
     a_reply.set_id( a_request.id() );
     a_reply.set_item( a_request.item() );
@@ -1588,7 +1571,7 @@ DatabaseAPI::collGetOffset( const Auth::CollGetOffsetRequest & a_request, Auth::
 
 
 void
-DatabaseAPI::setCollData( Auth::CollDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setCollData( Auth::CollDataReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     CollData* coll;
     Value::ObjectConstIter j;
@@ -1654,14 +1637,14 @@ DatabaseAPI::setCollData( Auth::CollDataReply & a_reply, const libjson::Value & 
         const Value::Array & arr = res_obj.asArray();
 
         for ( i = arr.begin(); i != arr.end(); i++ )
-            setListingData( a_reply.add_update(), i->asObject() );
+            setListingData( a_reply.add_update(), i->asObject(), log_context );
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context )
 }
 
 void
-DatabaseAPI::setCollPathData( CollPathReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setCollPathData( CollPathReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     PathData *          path;
     ListingData *       item;
@@ -1694,11 +1677,11 @@ DatabaseAPI::setCollPathData( CollPathReply & a_reply, const libjson::Value & a_
         }
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context )
 }
 
 void
-DatabaseAPI::setListingDataReply( Auth::ListingReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setListingDataReply( Auth::ListingReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     Value::ObjectConstIter   j;
 
@@ -1720,21 +1703,25 @@ DatabaseAPI::setListingDataReply( Auth::ListingReply & a_reply, const libjson::V
         }
         else
         {
-            setListingData( a_reply.add_item(), obj );
+            setListingData( a_reply.add_item(), obj, log_context );
         }
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context )
 }
 
 void
-DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
+DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj, LogContext log_context )
 {
-    if ( a_obj.has( "id" ))
+    if ( a_obj.has( "id" )) {
+        DL_TRACE(log_context, a_obj.asString() );
         a_item->set_id( a_obj.asString() );
-    else if ( a_obj.has( "_id" ))
+    } else if ( a_obj.has( "_id" )) {
         a_item->set_id( a_obj.asString() );
+        DL_TRACE(log_context, a_obj.asString() );
+    }
 
+    DL_TRACE(log_context, a_obj.getString("title") );
     a_item->set_title( a_obj.getString( "title" ));
 
     if ( a_obj.has( "alias" ) && !a_obj.value().isNull( ))
@@ -1793,7 +1780,7 @@ DatabaseAPI::setListingData( ListingData * a_item, const Value::Object & a_obj )
 }
 
 void
-DatabaseAPI::queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::queryList( const Auth::QueryListRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1802,20 +1789,20 @@ DatabaseAPI::queryList( const Auth::QueryListRequest & a_request, Auth::ListingR
     if ( a_request.has_count() )
         params.push_back({"count",to_string(a_request.count())});
 
-    dbGet( "qry/list", params, result );
+    dbGet( "qry/list", params, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply )
+DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::QueryDataReply & a_reply, LogContext log_context)
 {
     Value result;
     //vector<pair<string,string>> params;
 
     string qry_begin, qry_end, qry_filter, params;
 
-    uint32_t cnt = parseSearchRequest( a_request.query(), qry_begin, qry_end, qry_filter, params );
+    uint32_t cnt = parseSearchRequest( a_request.query(), qry_begin, qry_end, qry_filter, params, log_context );
 
     google::protobuf::util::JsonPrintOptions options;
     string query_json;
@@ -1829,7 +1816,6 @@ DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::Quer
         EXCEPT(1,"Invalid search request");
     }
 
-    //DL_INFO("Orig search msg:" << query_json );
 
     string body = string("{") +
         "\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end + "\",\"qry_filter\":\"" + qry_filter +
@@ -1837,15 +1823,14 @@ DatabaseAPI::queryCreate( const Auth::QueryCreateRequest & a_request, Auth::Quer
         ",\"title\":\"" + escapeJSON( a_request.title() ) + "\"" +
         ",\"query\":" + query_json + "}";
 
-    //DL_INFO("body:["<<body<<"]");
 
-    dbPost( "qry/create", {}, &body, result );
+    dbPost( "qry/create", {}, &body, result, log_context );
 
-    setQueryData( a_reply, result );
+    setQueryData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply )
+DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::QueryDataReply & a_reply, LogContext log_context)
 {
     Value result;
     string body = "{\"id\":\"" + a_request.id() + "\"";
@@ -1859,7 +1844,7 @@ DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::Quer
     {
         string qry_begin, qry_end, qry_filter, params;
 
-        uint32_t cnt = parseSearchRequest( a_request.query(), qry_begin, qry_end, qry_filter, params );
+        uint32_t cnt = parseSearchRequest( a_request.query(), qry_begin, qry_end, qry_filter, params, log_context );
 
         google::protobuf::util::JsonPrintOptions options;
         string query_json;
@@ -1879,14 +1864,14 @@ DatabaseAPI::queryUpdate( const Auth::QueryUpdateRequest & a_request, Auth::Quer
 
     body += "}";
 
-    dbPost( "qry/update", {}, &body, result );
+    dbPost( "qry/update", {}, &body, result, log_context );
 
-    setQueryData( a_reply, result );
+    setQueryData( a_reply, result, log_context );
 }
 
 //DatabaseAPI::queryDelete( const std::string & a_id )
 void
-DatabaseAPI::queryDelete( const Auth::QueryDeleteRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::queryDelete( const Auth::QueryDeleteRequest & a_request, Anon::AckReply & a_reply, LogContext log_context)
 {
     (void)a_reply;
     Value result;
@@ -1901,21 +1886,21 @@ DatabaseAPI::queryDelete( const Auth::QueryDeleteRequest & a_request, Anon::AckR
     }
     ids += "]";
 
-    dbGet( "qry/delete", {{"ids",ids}}, result );
+    dbGet( "qry/delete", {{"ids",ids}}, result, log_context );
 }
 
 void
-DatabaseAPI::queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply )
+DatabaseAPI::queryView( const Auth::QueryViewRequest & a_request, Auth::QueryDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "qry/view", {{"id",a_request.id()}}, result );
+    dbGet( "qry/view", {{"id",a_request.id()}}, result, log_context );
 
-    setQueryData( a_reply, result );
+    setQueryData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply )
+DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1926,13 +1911,13 @@ DatabaseAPI::queryExec( const Auth::QueryExecRequest & a_request, Auth::ListingR
     if ( a_request.has_count() )
         params.push_back({"count",to_string(a_request.count())});
 
-    dbGet( "/qry/exec", params, result );
+    dbGet( "/qry/exec", params, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::setQueryData( QueryDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setQueryData( QueryDataReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     TRANSLATE_BEGIN()
 
@@ -1950,23 +1935,23 @@ DatabaseAPI::setQueryData( QueryDataReply & a_reply, const libjson::Value & a_re
         EXCEPT(1,"Query data reply parse error!");
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 
 void
-DatabaseAPI::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply )
+DatabaseAPI::aclView( const Auth::ACLViewRequest & a_request, Auth::ACLDataReply & a_reply, LogContext log_context)
 {
     libjson::Value result;
 
-    dbGet( "acl/view", {{"id",a_request.id()}}, result );
+    dbGet( "acl/view", {{"id",a_request.id()}}, result, log_context );
 
-    setACLData( a_reply, result );
+    setACLData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataReply & a_reply )
+DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1974,13 +1959,13 @@ DatabaseAPI::aclUpdate( const Auth::ACLUpdateRequest & a_request, Auth::ACLDataR
     if ( a_request.has_rules() )
         params.push_back({"rules",a_request.rules()});
 
-    dbGet( "acl/update", params, result );
+    dbGet( "acl/update", params, result, log_context );
 
-    setACLData( a_reply, result );
+    setACLData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::aclSharedList( const Auth::ACLSharedListRequest & a_request,  Auth::ListingReply & a_reply )
+DatabaseAPI::aclSharedList( const Auth::ACLSharedListRequest & a_request,  Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -1990,26 +1975,26 @@ DatabaseAPI::aclSharedList( const Auth::ACLSharedListRequest & a_request,  Auth:
     if ( a_request.has_inc_projects() )
         params.push_back({"inc_projects",a_request.inc_projects()?"true":"false"});
 
-    dbGet( "acl/shared/list", params, result );
+    dbGet( "acl/shared/list", params, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::aclSharedListItems( const Auth::ACLSharedListItemsRequest & a_request,  Auth::ListingReply & a_reply )
+DatabaseAPI::aclSharedListItems( const Auth::ACLSharedListItemsRequest & a_request,  Auth::ListingReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
 
     params.push_back({"owner",a_request.owner()});
 
-    dbGet( "acl/shared/list/items", params, result );
+    dbGet( "acl/shared/list/items", params, result, log_context );
 
-    setListingDataReply( a_reply, result );
+    setListingDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::setACLData( ACLDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setACLData( ACLDataReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     ACLRule *           rule;
 
@@ -2031,12 +2016,12 @@ DatabaseAPI::setACLData( ACLDataReply & a_reply, const libjson::Value & a_result
             rule->set_inhgrant( obj.asNumber() );
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 
 void
-DatabaseAPI::groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply )
+DatabaseAPI::groupCreate( const Auth::GroupCreateRequest & a_request, Auth::GroupDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
@@ -2061,13 +2046,13 @@ DatabaseAPI::groupCreate( const Auth::GroupCreateRequest & a_request, Auth::Grou
         params.push_back({"members",  members });
     }
 
-    dbGet( "grp/create", params, result );
+    dbGet( "grp/create", params, result, log_context );
 
-    setGroupData( a_reply, result );
+    setGroupData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply )
+DatabaseAPI::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::GroupDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
@@ -2104,13 +2089,13 @@ DatabaseAPI::groupUpdate( const Auth::GroupUpdateRequest & a_request, Auth::Grou
         params.push_back({"rem",  members });
     }
 
-    dbGet( "grp/update", params, result );
+    dbGet( "grp/update", params, result, log_context );
 
-    setGroupData( a_reply, result );
+    setGroupData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckReply & a_reply, LogContext log_context)
 {
     (void) a_reply;
     Value result;
@@ -2120,11 +2105,11 @@ DatabaseAPI::groupDelete( const Auth::GroupDeleteRequest & a_request, Anon::AckR
     if ( a_request.uid().compare( m_client_uid ) != 0 )
         params.push_back({"proj", a_request.uid()});
 
-    dbGet( "grp/delete", params, result );
+    dbGet( "grp/delete", params, result, log_context );
 }
 
 void
-DatabaseAPI::groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply )
+DatabaseAPI::groupList( const Auth::GroupListRequest & a_request, Auth::GroupDataReply & a_reply, LogContext log_context)
 {
     (void) a_request;
 
@@ -2133,13 +2118,13 @@ DatabaseAPI::groupList( const Auth::GroupListRequest & a_request, Auth::GroupDat
     if ( a_request.uid().compare( m_client_uid ) != 0 )
         params.push_back({"proj", a_request.uid()});
 
-    dbGet( "grp/list", params, result );
+    dbGet( "grp/list", params, result, log_context );
 
-    setGroupData( a_reply, result );
+    setGroupData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply )
+DatabaseAPI::groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDataReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2147,13 +2132,13 @@ DatabaseAPI::groupView( const Auth::GroupViewRequest & a_request, Auth::GroupDat
     if ( a_request.uid().compare( m_client_uid ) != 0 )
         params.push_back({"proj", a_request.uid()});
 
-    dbGet( "grp/view", params, result );
+    dbGet( "grp/view", params, result, log_context );
 
-    setGroupData( a_reply, result );
+    setGroupData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::setGroupData( GroupDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setGroupData( GroupDataReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     GroupData *             group;
     Value::ArrayConstIter   j;
@@ -2187,65 +2172,65 @@ DatabaseAPI::setGroupData( GroupDataReply & a_reply, const libjson::Value & a_re
         }
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 void
-DatabaseAPI::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply )
+DatabaseAPI::repoList( const Auth::RepoListRequest & a_request, Auth::RepoDataReply  & a_reply, LogContext log_context)
 {
     Value result;
 
-    std::cout << "Calling repoList" << std::endl;
+    DL_DEBUG(log_context, "Calling repoList.");
     vector<pair<string,string>> params;
     if ( a_request.has_all() )
         params.push_back({"all", a_request.all()?"true":"false"});
     if ( a_request.has_details() )
         params.push_back({"details", a_request.details()?"true":"false"});
 
-    dbGet( "repo/list", params, result );
+    dbGet( "repo/list", params, result, log_context );
     
     std::vector<RepoData> temp;
-    setRepoData( &a_reply, temp, result );
+    setRepoData( &a_reply, temp, result, log_context );
 }
 
 void
-DatabaseAPI::repoList( std::vector<RepoData> & a_repos )
+DatabaseAPI::repoList( std::vector<RepoData> & a_repos, LogContext log_context )
 {
     Value result;
 
-    dbGet( "repo/list", {{"all","true"},{"details","true"}}, result );
+    dbGet( "repo/list", {{"all","true"},{"details","true"}}, result, log_context );
 
-    setRepoData( 0, a_repos, result );
+    setRepoData( 0, a_repos, result, log_context );
 }
 
   void
-DatabaseAPI::repoView( std::vector<RepoData> & a_repos )
+DatabaseAPI::repoView( std::vector<RepoData> & a_repos, LogContext log_context )
 {
     const std::vector<RepoData> copy = a_repos;
     a_repos.clear();
     for( const RepoData & r : copy ) { 
       Value result;
 
-      dbGet( "repo/view", {{"id",r.id()}}, result );
+      dbGet( "repo/view", {{"id",r.id()}}, result, log_context );
 
-      setRepoData( 0, a_repos, result);
+      setRepoData( 0, a_repos, result, log_context);
 
     }
 }
 
 void
-DatabaseAPI::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply )
+DatabaseAPI::repoView( const Auth::RepoViewRequest & a_request, Auth::RepoDataReply  & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "repo/view", {{"id",a_request.id()}}, result );
+    dbGet( "repo/view", {{"id",a_request.id()}}, result, log_context );
 
     std::vector<RepoData> temp;
-    setRepoData( &a_reply, temp, result );
+    setRepoData( &a_reply, temp, result, log_context );
 }
 
 void
-DatabaseAPI::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply )
+DatabaseAPI::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDataReply  & a_reply, LogContext log_context)
 {
     Value result;
 
@@ -2277,14 +2262,14 @@ DatabaseAPI::repoCreate( const Auth::RepoCreateRequest & a_request, Auth::RepoDa
     }
     body += "}";
 
-    dbPost( "repo/create", {}, &body, result );
+    dbPost( "repo/create", {}, &body, result, log_context );
 
     std::vector<RepoData> temp;
-    setRepoData( &a_reply, temp, result );
+    setRepoData( &a_reply, temp, result, log_context );
 }
 
 void
-DatabaseAPI::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDataReply  & a_reply )
+DatabaseAPI::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDataReply  & a_reply, LogContext log_context)
 {
     Value result;
 
@@ -2321,23 +2306,23 @@ DatabaseAPI::repoUpdate( const Auth::RepoUpdateRequest & a_request, Auth::RepoDa
     }
     body += "}";
 
-    dbPost( "repo/update", {}, &body, result );
+    dbPost( "repo/update", {}, &body, result, log_context );
 
     std::vector<RepoData> temp;
-    setRepoData( &a_reply, temp, result );
+    setRepoData( &a_reply, temp, result, log_context );
 }
 
 void
-DatabaseAPI::repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::repoDelete( const Auth::RepoDeleteRequest & a_request, Anon::AckReply  & a_reply, LogContext log_context)
 {
     (void) a_reply;
     Value result;
 
-    dbGet( "repo/delete", {{"id",a_request.id()}}, result );
+    dbGet( "repo/delete", {{"id",a_request.id()}}, result, log_context );
 }
 
 void
-DatabaseAPI::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::RepoCalcSizeReply  & a_reply )
+DatabaseAPI::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::RepoCalcSizeReply  & a_reply, LogContext log_context)
 {
     Value result;
 
@@ -2353,7 +2338,7 @@ DatabaseAPI::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::Re
         items += "]";
     }
 
-    dbGet( "repo/calc_size", {{"recurse",a_request.recurse()?"true":"false"},{"items",items}}, result );
+    dbGet( "repo/calc_size", {{"recurse",a_request.recurse()?"true":"false"},{"items",items}}, result, log_context );
 
     TRANSLATE_BEGIN()
 
@@ -2361,18 +2346,18 @@ DatabaseAPI::repoCalcSize( const Auth::RepoCalcSizeRequest & a_request, Auth::Re
 
     for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        setAllocStatsData( *a_reply.add_stats(), i->asObject() );
+        setAllocStatsData( *a_reply.add_stats(), i->asObject(), log_context );
     }
 
-    TRANSLATE_END( result )
+    TRANSLATE_END( result, log_context )
 }
 
 
 void
-DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> & a_repos, const libjson::Value & a_result )
+DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> & a_repos, const libjson::Value & a_result, LogContext log_context )
 {
 
-    std::cout << "Calling setRepoData" << std::endl;
+    DL_DEBUG(log_context, "Calling setRepoData." );
     Value::ArrayConstIter    k;
 
     TRANSLATE_BEGIN()
@@ -2399,7 +2384,6 @@ DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> &
         }
 
         if ( obj.has( "address" )) {
-            std::cout << "Setting address for repo " << obj.getString("id") << " address is " << obj.asString() << std::endl;
             a_repos.back().set_address( obj.asString() );
         }
 
@@ -2434,28 +2418,28 @@ DatabaseAPI::setRepoData( Auth::RepoDataReply * a_reply, std::vector<RepoData> &
         }
 
 
-         if ( a_reply ) {
+         if ( a_reply) {
               RepoData * repo = a_reply->add_repo();
               *repo = (a_repos.back());
          }
 
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 void
-DatabaseAPI::repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+DatabaseAPI::repoListAllocations( const Auth::RepoListAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "repo/alloc/list/by_repo", {{"repo",a_request.id()}}, result );
+    dbGet( "repo/alloc/list/by_repo", {{"repo",a_request.id()}}, result, log_context );
 
-    setAllocData( a_reply, result );
+    setAllocData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::repoListSubjectAllocations( const Auth::RepoListSubjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+DatabaseAPI::repoListSubjectAllocations( const Auth::RepoListSubjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2466,24 +2450,24 @@ DatabaseAPI::repoListSubjectAllocations( const Auth::RepoListSubjectAllocationsR
     if ( a_request.has_stats() )
         params.push_back({"stats",a_request.stats()?"true":"false"});
 
-    dbGet( "repo/alloc/list/by_owner", params, result );
+    dbGet( "repo/alloc/list/by_owner", params, result, log_context );
 
-    setAllocData( a_reply, result );
+    setAllocData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::repoListObjectAllocations( const Auth::RepoListObjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply )
+DatabaseAPI::repoListObjectAllocations( const Auth::RepoListObjectAllocationsRequest & a_request, Auth::RepoAllocationsReply  & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "repo/alloc/list/by_object", {{"object",a_request.id()}}, result );
+    dbGet( "repo/alloc/list/by_object", {{"object",a_request.id()}}, result, log_context );
 
-    setAllocData( a_reply, result );
+    setAllocData( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     TRANSLATE_BEGIN()
 
@@ -2491,15 +2475,15 @@ DatabaseAPI::setAllocData( Auth::RepoAllocationsReply & a_reply, const libjson::
 
     for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        setAllocData( a_reply.add_alloc(), i->asObject() );
+        setAllocData( a_reply.add_alloc(), i->asObject(), log_context );
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 
 void
-DatabaseAPI::setAllocData( AllocData * a_alloc, const libjson::Value::Object & a_obj )
+DatabaseAPI::setAllocData( AllocData * a_alloc, const libjson::Value::Object & a_obj, LogContext log_context )
 {
     a_alloc->set_repo( a_obj.getString( "repo" ));
     a_alloc->set_data_limit( a_obj.getNumber( "data_limit" ));
@@ -2515,11 +2499,11 @@ DatabaseAPI::setAllocData( AllocData * a_alloc, const libjson::Value::Object & a
         a_alloc->set_id( a_obj.asString() );
 
     if ( a_obj.has( "stats" ))
-        setAllocStatsData( *a_alloc->mutable_stats( ), a_obj );
+        setAllocStatsData( *a_alloc->mutable_stats( ), a_obj, log_context );
 }
 
 void
-DatabaseAPI::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply )
+DatabaseAPI::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_request, Auth::RepoAllocationsReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2527,13 +2511,13 @@ DatabaseAPI::repoViewAllocation( const Auth::RepoViewAllocationRequest & a_reque
     if ( a_request.has_subject() )
         params.push_back({"subject",a_request.subject()});
 
-    dbGet( "repo/alloc/view", params, result );
+    dbGet( "repo/alloc/view", params, result, log_context );
 
-    setAllocData( a_reply, result );
+    setAllocData( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply )
+DatabaseAPI::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_request, Auth::RepoAllocationStatsReply  & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2541,19 +2525,20 @@ DatabaseAPI::repoAllocationStats( const Auth::RepoAllocationStatsRequest & a_req
     if ( a_request.has_subject() )
         params.push_back({"subject",a_request.subject()});
 
-    dbGet( "repo/alloc/stats", params, result );
+    dbGet( "repo/alloc/stats", params, result, log_context );
 
     TRANSLATE_BEGIN()
 
-    setAllocStatsData( *a_reply.mutable_alloc(), result.asObject() );
+    setAllocStatsData( *a_reply.mutable_alloc(), result.asObject(), log_context );
 
-    TRANSLATE_END( result )
+    TRANSLATE_END( result, log_context )
 }
 
 
 void
-DatabaseAPI::setAllocStatsData( AllocStatsData & a_stats, const libjson::Value::Object & a_obj )
+DatabaseAPI::setAllocStatsData( AllocStatsData & a_stats, const libjson::Value::Object & a_obj, LogContext log_context )
 {
+    DL_TRACE(log_context, a_obj.getString( "repo" ) << " " << a_obj.getNumber( "rec_count" ) << a_obj.getNumber( "file_count" ) << a_obj.getNumber( "data_size" ));
     a_stats.set_repo( a_obj.getString( "repo" ));
     a_stats.set_rec_count( a_obj.getNumber( "rec_count" ));
     a_stats.set_file_count( a_obj.getNumber( "file_count" ));
@@ -2569,16 +2554,16 @@ DatabaseAPI::setAllocStatsData( AllocStatsData & a_stats, const libjson::Value::
 }
 
 void
-DatabaseAPI::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::repoAllocationSet( const Auth::RepoAllocationSetRequest & a_request, Anon::AckReply  & a_reply, LogContext log_context)
 {
     (void)a_reply;
     Value result;
 
-    dbGet( "repo/alloc/set", {{"repo",a_request.repo()},{"subject",a_request.subject()},{"data_limit",to_string(a_request.data_limit())},{"rec_limit",to_string(a_request.rec_limit())}}, result );
+    dbGet( "repo/alloc/set", {{"repo",a_request.repo()},{"subject",a_request.subject()},{"data_limit",to_string(a_request.data_limit())},{"rec_limit",to_string(a_request.rec_limit())}}, result, log_context );
 }
 
 void
-DatabaseAPI::repoAllocationSetDefault( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::repoAllocationSetDefault( const Auth::RepoAllocationSetDefaultRequest & a_request, Anon::AckReply  & a_reply, LogContext log_context)
 {
     (void)a_reply;
 
@@ -2589,25 +2574,25 @@ DatabaseAPI::repoAllocationSetDefault( const Auth::RepoAllocationSetDefaultReque
     if ( a_request.has_subject() )
         params.push_back({"subject",a_request.subject()});
 
-    dbGet( "repo/alloc/set/default", params, result );
+    dbGet( "repo/alloc/set/default", params, result, log_context );
 }
 
 void
-DatabaseAPI::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply )
+DatabaseAPI::checkPerms( const CheckPermsRequest & a_request, CheckPermsReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "authz/perm/check", {{ "id", a_request.id()},{ "perms", to_string( a_request.perms()) }}, result );
+    dbGet( "authz/perm/check", {{ "id", a_request.id()},{ "perms", to_string( a_request.perms()) }}, result, log_context );
 
     TRANSLATE_BEGIN()
 
     a_reply.set_granted( result.asObject().getBool( "granted" ));
 
-    TRANSLATE_END( result )
+    TRANSLATE_END( result, log_context )
 }
 
 void
-DatabaseAPI::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_reply )
+DatabaseAPI::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2615,26 +2600,26 @@ DatabaseAPI::getPerms( const GetPermsRequest & a_request, GetPermsReply & a_repl
     if ( a_request.has_perms() )
         params.push_back({ "perms", to_string( a_request.perms()) });
 
-    dbGet( "authz/perm/get", params, result );
+    dbGet( "authz/perm/get", params, result, log_context );
 
     TRANSLATE_BEGIN()
 
     a_reply.set_granted( result.asObject().getNumber( "granted" ));
 
-    TRANSLATE_END( result )
+    TRANSLATE_END( result, log_context )
 }
 
 void
-DatabaseAPI::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply )
+DatabaseAPI::repoAuthz( const Auth::RepoAuthzRequest & a_request, Anon::AckReply  & a_reply, LogContext log_context)
 {
     (void)a_reply;
     Value result;
 
-    dbGet( "authz/gridftp", {{"repo",a_request.repo()},{"file",a_request.file()},{"act",a_request.action()}}, result );
+    dbGet( "authz/gridftp", {{"repo",a_request.repo()},{"file",a_request.file()},{"act",a_request.action()}}, result, log_context );
 }
 
 void
-DatabaseAPI::topicListTopics( const Auth::TopicListTopicsRequest & a_request, Auth::TopicDataReply  & a_reply )
+DatabaseAPI::topicListTopics( const Auth::TopicListTopicsRequest & a_request, Auth::TopicDataReply  & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2646,35 +2631,34 @@ DatabaseAPI::topicListTopics( const Auth::TopicListTopicsRequest & a_request, Au
         params.push_back({ "count", to_string( a_request.count() )});
     }
 
-    dbGet( "topic/list/topics", params, result );
+    dbGet( "topic/list/topics", params, result, log_context );
 
-    setTopicDataReply( a_reply, result );
-    //setListingDataReply( a_reply, result );
+    setTopicDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::topicView( const Auth::TopicViewRequest  & a_request, Auth::TopicDataReply & a_reply )
+DatabaseAPI::topicView( const Auth::TopicViewRequest  & a_request, Auth::TopicDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "topic/view", {{"id",a_request.id()}}, result );
+    dbGet( "topic/view", {{"id",a_request.id()}}, result, log_context );
 
-    setTopicDataReply( a_reply, result );
+    setTopicDataReply( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::topicSearch( const Auth::TopicSearchRequest & a_request, Auth::TopicDataReply & a_reply )
+DatabaseAPI::topicSearch( const Auth::TopicSearchRequest & a_request, Auth::TopicDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "topic/search", {{"phrase",a_request.phrase()}}, result );
+    dbGet( "topic/search", {{"phrase",a_request.phrase()}}, result, log_context );
 
-    setTopicDataReply( a_reply, result );
+    setTopicDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::setTopicDataReply( Auth::TopicDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setTopicDataReply( Auth::TopicDataReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     TRANSLATE_BEGIN()
 
@@ -2725,13 +2709,13 @@ DatabaseAPI::setTopicDataReply( Auth::TopicDataReply & a_reply, const libjson::V
         }
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 void
-DatabaseAPI::noteCreate( const NoteCreateRequest & a_request, Auth::NoteDataReply & a_reply )
+DatabaseAPI::noteCreate( const NoteCreateRequest & a_request, Auth::NoteDataReply & a_reply, LogContext log_context)
 {
-    DL_INFO("NoteCreate");
+    DL_DEBUG(log_context, "NoteCreate");
 
     Value result;
     vector<pair<string,string>> params;
@@ -2741,15 +2725,15 @@ DatabaseAPI::noteCreate( const NoteCreateRequest & a_request, Auth::NoteDataRepl
     params.push_back({ "comment", a_request.comment() });
     params.push_back({ "activate", a_request.activate()?"true":"false" });
 
-    dbPost( "note/create", params, 0, result );
+    dbPost( "note/create", params, 0, result, log_context );
 
-    setNoteDataReply( a_reply, result );
+    setNoteDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::noteUpdate( const NoteUpdateRequest & a_request, Auth::NoteDataReply & a_reply )
+DatabaseAPI::noteUpdate( const NoteUpdateRequest & a_request, Auth::NoteDataReply & a_reply, LogContext log_context)
 {
-    DL_INFO("NoteUpdate");
+    DL_DEBUG(log_context, "NoteUpdate");
 
     Value result;
     vector<pair<string,string>> params;
@@ -2762,13 +2746,13 @@ DatabaseAPI::noteUpdate( const NoteUpdateRequest & a_request, Auth::NoteDataRepl
     if ( a_request.has_new_title() )
         params.push_back({ "new_title", a_request.new_title() });
 
-    dbPost( "note/update", params, 0, result );
+    dbPost( "note/update", params, 0, result, log_context );
 
-    setNoteDataReply( a_reply, result );
+    setNoteDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::noteCommentEdit( const Auth::NoteCommentEditRequest & a_request, Auth::NoteDataReply & a_reply )
+DatabaseAPI::noteCommentEdit( const Auth::NoteCommentEditRequest & a_request, Auth::NoteDataReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2776,41 +2760,41 @@ DatabaseAPI::noteCommentEdit( const Auth::NoteCommentEditRequest & a_request, Au
     params.push_back({ "comment", a_request.comment() });
     params.push_back({ "comment_idx", to_string( a_request.comment_idx() )});
 
-    dbPost( "note/comment/edit", params, 0, result );
+    dbPost( "note/comment/edit", params, 0, result, log_context );
 
-    setNoteDataReply( a_reply, result );
+    setNoteDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::noteView( const Auth::NoteViewRequest & a_request, Auth::NoteDataReply & a_reply )
+DatabaseAPI::noteView( const Auth::NoteViewRequest & a_request, Auth::NoteDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "note/view", {{"id",a_request.id()}}, result );
+    dbGet( "note/view", {{"id",a_request.id()}}, result, log_context );
 
-    setNoteDataReply( a_reply, result );
+    setNoteDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::noteListBySubject( const Auth::NoteListBySubjectRequest & a_request, Auth::NoteDataReply & a_reply )
+DatabaseAPI::noteListBySubject( const Auth::NoteListBySubjectRequest & a_request, Auth::NoteDataReply & a_reply, LogContext log_context)
 {
     Value result;
 
-    dbGet( "note/list/by_subject", {{"subject",a_request.subject()}}, result );
+    dbGet( "note/list/by_subject", {{"subject",a_request.subject()}}, result, log_context );
 
-    setNoteDataReply( a_reply, result );
+    setNoteDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::notePurge( uint32_t a_age_sec )
+DatabaseAPI::notePurge( uint32_t a_age_sec, LogContext log_context )
 {
     Value result;
 
-    dbGet( "note/purge", {{"age_sec",to_string( a_age_sec )}}, result );
+    dbGet( "note/purge", {{"age_sec",to_string( a_age_sec )}}, result, log_context );
 }
 
 void
-DatabaseAPI::setNoteDataReply( Auth::NoteDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setNoteDataReply( Auth::NoteDataReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     Value::ArrayConstIter    i;
 
@@ -2823,7 +2807,7 @@ DatabaseAPI::setNoteDataReply( Auth::NoteDataReply & a_reply, const libjson::Val
         const Value::Array & arr = res_obj.asArray();
 
         for ( i = arr.begin(); i != arr.end(); i++ )
-            setNoteData( a_reply.add_note(), i->asObject() );
+            setNoteData( a_reply.add_note(), i->asObject(), log_context );
     }
 
     if ( res_obj.has( "updates" ))
@@ -2831,15 +2815,16 @@ DatabaseAPI::setNoteDataReply( Auth::NoteDataReply & a_reply, const libjson::Val
         const Value::Array & arr = res_obj.asArray();
 
         for ( i = arr.begin(); i != arr.end(); i++ )
-            setListingData( a_reply.add_update(), i->asObject() );
+            setListingData( a_reply.add_update(), i->asObject(), log_context );
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 void
-DatabaseAPI::setNoteData( NoteData * a_note, const libjson::Value::Object & a_obj )
+DatabaseAPI::setNoteData( NoteData * a_note, const libjson::Value::Object & a_obj, LogContext log_context )
 {
+    DL_TRACE(log_context, a_obj.getString( "_id" ));
     a_note->set_id( a_obj.getString( "_id" ));
     a_note->set_type((NoteType) a_obj.getNumber( "type" ));
     a_note->set_state((NoteState) a_obj.getNumber( "state" ));
@@ -2879,7 +2864,7 @@ DatabaseAPI::setNoteData( NoteData * a_note, const libjson::Value::Object & a_ob
 
 
 void
-DatabaseAPI::tagSearch( const Auth::TagSearchRequest & a_request, Auth::TagDataReply & a_reply )
+DatabaseAPI::tagSearch( const Auth::TagSearchRequest & a_request, Auth::TagDataReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2892,14 +2877,14 @@ DatabaseAPI::tagSearch( const Auth::TagSearchRequest & a_request, Auth::TagDataR
         params.push_back({ "count", to_string( a_request.count() )});
     }
 
-    dbPost( "tag/search", params, 0, result );
+    dbPost( "tag/search", params, 0, result, log_context );
 
-    setTagDataReply( a_reply, result );
+    setTagDataReply( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::tagListByCount( const Auth::TagListByCountRequest & a_request, Auth::TagDataReply & a_reply )
+DatabaseAPI::tagListByCount( const Auth::TagListByCountRequest & a_request, Auth::TagDataReply & a_reply, LogContext log_context)
 {
     Value result;
     vector<pair<string,string>> params;
@@ -2910,13 +2895,13 @@ DatabaseAPI::tagListByCount( const Auth::TagListByCountRequest & a_request, Auth
         params.push_back({ "count", to_string( a_request.count() )});
     }
 
-    dbPost( "tag/list/by_count", params, 0, result );
+    dbPost( "tag/list/by_count", params, 0, result, log_context );
 
-    setTagDataReply( a_reply, result );
+    setTagDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::setTagDataReply( Auth::TagDataReply & a_reply, const Value & a_result )
+DatabaseAPI::setTagDataReply( Auth::TagDataReply & a_reply, const Value & a_result, LogContext log_context )
 {
     Value::ObjectConstIter   j;
 
@@ -2938,24 +2923,25 @@ DatabaseAPI::setTagDataReply( Auth::TagDataReply & a_reply, const Value & a_resu
         }
         else
         {
-            setTagData( a_reply.add_tag(), obj );
+            setTagData( a_reply.add_tag(), obj, log_context );
         }
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 
 void
-DatabaseAPI::setTagData( TagData * a_tag, const libjson::Value::Object & a_obj )
+DatabaseAPI::setTagData( TagData * a_tag, const libjson::Value::Object & a_obj, LogContext log_context )
 {
+    DL_TRACE(log_context, "name: " << a_obj.getString("name"));
     a_tag->set_name( a_obj.getString( "name" ));
     a_tag->set_count( a_obj.getNumber( "count" ));
 }
 
 
 void
-DatabaseAPI::schemaSearch( const Auth::SchemaSearchRequest & a_request, Auth::SchemaDataReply & a_reply )
+DatabaseAPI::schemaSearch( const Auth::SchemaSearchRequest & a_request, Auth::SchemaDataReply & a_reply, LogContext log_context)
 {
     libjson::Value result;
     vector<pair<string,string>> params;
@@ -2975,13 +2961,13 @@ DatabaseAPI::schemaSearch( const Auth::SchemaSearchRequest & a_request, Auth::Sc
     if ( a_request.has_count( ))
         params.push_back({ "count", to_string( a_request.count() )});
 
-    dbGet( "schema/search", params, result );
-    setSchemaDataReply( a_reply, result );
+    dbGet( "schema/search", params, result, log_context );
+    setSchemaDataReply( a_reply, result, log_context );
 }
 
 
 void
-DatabaseAPI::schemaView( const Auth::SchemaViewRequest & a_request, Auth::SchemaDataReply & a_reply )
+DatabaseAPI::schemaView( const Auth::SchemaViewRequest & a_request, Auth::SchemaDataReply & a_reply, LogContext log_context)
 {
     libjson::Value result;
     vector<pair<string,string>> params;
@@ -2990,12 +2976,12 @@ DatabaseAPI::schemaView( const Auth::SchemaViewRequest & a_request, Auth::Schema
     if ( a_request.has_resolve() && a_request.resolve() )
         params.push_back({ "resolve", "true" });
 
-    dbGet( "schema/view", params, result );
-    setSchemaDataReply( a_reply, result );
+    dbGet( "schema/view", params, result, log_context );
+    setSchemaDataReply( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::schemaCreate( const Auth::SchemaCreateRequest & a_request )
+DatabaseAPI::schemaCreate( const Auth::SchemaCreateRequest & a_request, LogContext log_context )
 {
     libjson::Value result;
     string body = "{\"id\":\"";
@@ -3010,11 +2996,11 @@ DatabaseAPI::schemaCreate( const Auth::SchemaCreateRequest & a_request )
     body.append( a_request.def() );
     body.append( "}" );
 
-    dbPost( "schema/create", {}, &body, result );
+    dbPost( "schema/create", {}, &body, result, log_context );
 }
 
 void
-DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request )
+DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request, LogContext log_context )
 {
     libjson::Value result;
     string body = "{";
@@ -3055,12 +3041,12 @@ DatabaseAPI::schemaRevise( const Auth::SchemaReviseRequest & a_request )
 
     body.append("}");
 
-    dbPost( "schema/revise", {{ "id", a_request.id() }}, &body, result );
+    dbPost( "schema/revise", {{ "id", a_request.id() }}, &body, result, log_context );
 }
 
 
 void
-DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request )
+DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request, LogContext log_context )
 {
     libjson::Value result;
     string body = "{";
@@ -3114,22 +3100,20 @@ DatabaseAPI::schemaUpdate( const Auth::SchemaUpdateRequest & a_request )
 
     body.append("}");
 
-    //DL_INFO("sch upd " << body );
-
-    dbPost( "schema/update", {{"id",a_request.id()}}, &body, result );
+    dbPost( "schema/update", {{"id",a_request.id()}}, &body, result, log_context );
 }
 
 void
-DatabaseAPI::schemaDelete( const Auth::SchemaDeleteRequest & a_request, Anon::AckReply & a_reply )
+DatabaseAPI::schemaDelete( const Auth::SchemaDeleteRequest & a_request, Anon::AckReply & a_reply, LogContext log_context)
 {
     (void) a_reply;
     libjson::Value result;
 
-    dbPost( "schema/delete", {{"id",a_request.id()}}, 0, result );
+    dbPost( "schema/delete", {{"id",a_request.id()}}, 0, result, log_context );
 }
 
 void
-DatabaseAPI::setSchemaDataReply( Auth::SchemaDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setSchemaDataReply( Auth::SchemaDataReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     Value::ObjectConstIter   j;
 
@@ -3155,7 +3139,7 @@ DatabaseAPI::setSchemaDataReply( Auth::SchemaDataReply & a_reply, const libjson:
         }
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 
@@ -3223,18 +3207,18 @@ DatabaseAPI::setSchemaData( SchemaData * a_schema, const libjson::Value::Object 
 
 
 void
-DatabaseAPI::schemaView( const std::string & a_id, libjson::Value & a_result )
+DatabaseAPI::schemaView( const std::string & a_id, libjson::Value & a_result, LogContext log_context )
 {
-    dbGet( "schema/view", {{ "id", a_id }}, a_result );
+    dbGet( "schema/view", {{ "id", a_id }}, a_result, log_context );
 }
 
 void
-DatabaseAPI::dailyMessage( const Anon::DailyMessageRequest & a_request, Anon::DailyMessageReply & a_reply )
+DatabaseAPI::dailyMessage( const Anon::DailyMessageRequest & a_request, Anon::DailyMessageReply & a_reply, LogContext log_context)
 {
     (void) a_request; // Not used
     libjson::Value result;
 
-    dbGet( "config/msg/daily", {}, result );
+    dbGet( "config/msg/daily", {}, result, log_context );
 
     TRANSLATE_BEGIN()
 
@@ -3243,46 +3227,44 @@ DatabaseAPI::dailyMessage( const Anon::DailyMessageRequest & a_request, Anon::Da
     if ( obj.has( "msg" ) && !obj.value().isNull( ))
         a_reply.set_message( obj.asString() );
 
-    TRANSLATE_END( result )
+    TRANSLATE_END( result, log_context )
 }
 
 void
-DatabaseAPI::taskLoadReady( libjson::Value & a_result )
+DatabaseAPI::taskLoadReady( libjson::Value & a_result, LogContext log_context )
 {
-    dbGet( "task/reload", {}, a_result );
+    dbGet( "task/reload", {}, a_result, log_context );
 }
 
 
 void
-DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step, std::string * a_err_msg )
+DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, LogContext log_context, int * a_step, std::string * a_err_msg )
 {
     vector<pair<string,string>> params;
     params.push_back({"task_id",a_task_id});
-    std::cout << "Calling taskRun from DatabaseAPI task id: " << a_task_id;
+    DL_DEBUG(log_context, "Calling taskRun from DatabaseAPI task id: " << a_task_id);
     if ( a_err_msg ) {
         params.push_back({ "err_msg", *a_err_msg });
-        std::cout <<  " err_msg is: " << a_err_msg;
+        DL_DEBUG(log_context, "Err_msg is: " << a_err_msg);
     } else if ( a_step ) {
         params.push_back({ "step", to_string( *a_step )});
-        std::cout << " step is " << *a_step;
     }
-    std::cout  << std::endl;
-    dbGet( "task/run", params, a_task_reply );
+    dbGet( "task/run", params, a_task_reply, log_context );
 }
 
 
 void
-DatabaseAPI::taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply )
+DatabaseAPI::taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply, LogContext log_context )
 {
     libjson::Value doc = a_msg;
     string body = doc.toString();
 
-    dbPost( "task/abort", {{"task_id",a_task_id}}, &body, a_task_reply );
+    dbPost( "task/abort", {{"task_id",a_task_id}}, &body, a_task_reply, log_context );
 }
 
 
 void
-DatabaseAPI::taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetReply & a_reply, libjson::Value & a_result, LogContext log_context )
 {
     string body = "{\"id\":[";
 
@@ -3309,13 +3291,13 @@ DatabaseAPI::taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::Data
 
     body += "}";
 
-    dbPost( "dat/get", {}, &body, a_result );
+    dbPost( "dat/get", {}, &body, a_result, log_context );
 
-    setDataGetReply( a_reply, a_result );
+    setDataGetReply( a_reply, a_result, log_context );
 }
 
 void
-DatabaseAPI::setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     Value::ObjectIter   t;
 
@@ -3330,7 +3312,7 @@ DatabaseAPI::setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value
         const Value::Array & arr = obj.asArray();
 
         for ( j = arr.begin(); j != arr.end(); j++ )
-            setListingData( a_reply.add_item(), j->asObject() );
+            setListingData( a_reply.add_item(), j->asObject(), log_context );
     }
 
     if ( obj.has( "ext_data" ) && obj.value().size() )
@@ -3338,17 +3320,17 @@ DatabaseAPI::setDataGetReply( Auth::DataGetReply & a_reply, const libjson::Value
         const Value::Array & arr = obj.asArray();
 
         for ( j = arr.begin(); j != arr.end(); j++ )
-            setListingData( a_reply.add_item(), j->asObject() );
+            setListingData( a_reply.add_item(), j->asObject(), log_context );
     }
 
     if ( obj.has( "task" ))
-        setTaskData( a_reply.mutable_task(), obj.value() );
+        setTaskData( a_reply.mutable_task(), obj.value(), log_context );
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 void
-DatabaseAPI::taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataPutReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataPutReply & a_reply, libjson::Value & a_result, LogContext log_context )
 {
     string body = "{\"id\":[\"" + a_request.id() + "\"]";
 
@@ -3366,13 +3348,13 @@ DatabaseAPI::taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::Data
 
     body += "}";
 
-    dbPost( "dat/put", {}, &body, a_result );
+    dbPost( "dat/put", {}, &body, a_result, log_context );
 
-    setDataPutReply( a_reply, a_result );
+    setDataPutReply( a_reply, a_result, log_context );
 }
 
 void
-DatabaseAPI::setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     Value::ObjectIter   t;
 
@@ -3402,13 +3384,13 @@ DatabaseAPI::setDataPutReply( Auth::DataPutReply & a_reply, const libjson::Value
         item->set_source( rec.asString() );
 
     if ( obj.has( "task" ))
-        setTaskData( a_reply.mutable_task(), obj.value() );
+        setTaskData( a_reply.mutable_task(), obj.value(), log_context );
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 void
-DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_ids, TaskDataReply & a_reply, libjson::Value & a_result, LogContext log_context )
 {
     string body = "{\"ids\":[";
 
@@ -3421,14 +3403,14 @@ DatabaseAPI::taskInitRecordCollectionDelete( const std::vector<std::string> & a_
     }
     body += "]}";
 
-    dbPost( "dat/delete", {}, &body, a_result );
+    dbPost( "dat/delete", {}, &body, a_result, log_context );
 
-    setTaskDataReply( a_reply, a_result );
+    setTaskDataReply( a_reply, a_result, log_context );
 }
 
 
 void
-DatabaseAPI::taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a_request, Auth::RecordAllocChangeReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a_request, Auth::RecordAllocChangeReply & a_reply, libjson::Value & a_result, LogContext log_context )
 {
     string body = "{\"ids\":[";
 
@@ -3446,7 +3428,7 @@ DatabaseAPI::taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a
         body += string(",\"check\":\"") + (a_request.check()?"true":"false") + "\"";
     body += "}";
 
-    dbPost( "dat/alloc_chg", {}, &body, a_result );
+    dbPost( "dat/alloc_chg", {}, &body, a_result, log_context );
 
     TRANSLATE_BEGIN()
 
@@ -3461,14 +3443,14 @@ DatabaseAPI::taskInitRecordAllocChange( const Auth::RecordAllocChangeRequest & a
     a_reply.set_rec_count( obj.getNumber( "rec_count" ));
 
     if ( obj.has( "task" ))
-        setTaskData( a_reply.mutable_task(), obj.value() );
+        setTaskData( a_reply.mutable_task(), obj.value(), log_context );
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 
 void
-DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a_request, Auth::RecordOwnerChangeReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a_request, Auth::RecordOwnerChangeReply & a_reply, libjson::Value & a_result, LogContext log_context )
 {
     string body = "{\"ids\":[";
 
@@ -3488,7 +3470,7 @@ DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a
         body += string(",\"check\":\"") + (a_request.check()?"true":"false") + "\"";
     body += "}";
 
-    dbPost( "dat/owner_chg", {}, &body, a_result );
+    dbPost( "dat/owner_chg", {}, &body, a_result, log_context );
 
     TRANSLATE_BEGIN()
 
@@ -3502,19 +3484,20 @@ DatabaseAPI::taskInitRecordOwnerChange( const Auth::RecordOwnerChangeRequest & a
     {
         const Value::Array & arr = obj.asArray();
 
-        for ( Value::ArrayConstIter a = arr.begin(); a != arr.end(); a++ )
-            setAllocData( a_reply.add_alloc(), a->asObject() );
+        for ( Value::ArrayConstIter a = arr.begin(); a != arr.end(); a++ ) {
+            setAllocData( a_reply.add_alloc(), a->asObject(), log_context );
+        }
     }
 
     if ( obj.has( "task" ))
-        setTaskData( a_reply.mutable_task(), obj.value() );
+        setTaskData( a_reply.mutable_task(), obj.value(), log_context );
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 
 void
-DatabaseAPI::taskInitProjectDelete( const Auth::ProjectDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitProjectDelete( const Auth::ProjectDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result, LogContext log_context )
 {
     string body = "{\"ids\":[";
 
@@ -3527,33 +3510,33 @@ DatabaseAPI::taskInitProjectDelete( const Auth::ProjectDeleteRequest & a_request
     }
     body += "]}";
 
-    dbPost( "prj/delete", {}, &body, a_result );
+    dbPost( "prj/delete", {}, &body, a_result, log_context );
 
-    setTaskDataReply( a_reply, a_result );
+    setTaskDataReply( a_reply, a_result, log_context );
 }
 
 
 void
-DatabaseAPI::taskInitRepoAllocationCreate( const Auth::RepoAllocationCreateRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitRepoAllocationCreate( const Auth::RepoAllocationCreateRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result, LogContext log_context )
 {
     dbGet( "repo/alloc/create", {{"subject",a_request.subject()},{"repo",a_request.repo()},
-        {"data_limit",to_string(a_request.data_limit())},{"rec_limit",to_string(a_request.rec_limit())}}, a_result );
+        {"data_limit",to_string(a_request.data_limit())},{"rec_limit",to_string(a_request.rec_limit())}}, a_result, log_context );
 
-    setTaskDataReply( a_reply, a_result );
+    setTaskDataReply( a_reply, a_result, log_context );
 }
 
 
 void
-DatabaseAPI::taskInitRepoAllocationDelete( const Auth::RepoAllocationDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result )
+DatabaseAPI::taskInitRepoAllocationDelete( const Auth::RepoAllocationDeleteRequest & a_request, Auth::TaskDataReply & a_reply, libjson::Value & a_result, LogContext log_context )
 {
-    dbGet( "repo/alloc/delete", {{"subject",a_request.subject()},{"repo",a_request.repo()}}, a_result );
+    dbGet( "repo/alloc/delete", {{"subject",a_request.subject()},{"repo",a_request.repo()}}, a_result, log_context );
 
-    setTaskDataReply( a_reply, a_result );
+    setTaskDataReply( a_reply, a_result, log_context );
 }
 
 
 void
-DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json )
+DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json, LogContext log_context )
 {
     const Value::Object & obj = a_task_json.asObject();
     const Value::Object & state = obj.getObject( "state" );
@@ -3573,6 +3556,7 @@ DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json 
     switch ( type )
     {
         case TT_DATA_GET:
+            DL_TRACE(log_context, "TT_DATA_GET");
             if ( state.has("glob_data"))
             {
                 const Value::Array & arr = state.asArray();
@@ -3594,6 +3578,7 @@ DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json 
             a_task->set_dest( state.getString( "path" ));
             break;
         case TT_DATA_PUT:
+            DL_TRACE(log_context, "TT_DATA_PUT");
             a_task->set_source( state.getString( "path" ));
             if ( state.has("glob_data"))
             {
@@ -3602,6 +3587,7 @@ DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json 
             }
             break;
         case TT_REC_CHG_ALLOC:
+            DL_TRACE(log_context, "TT_REC_CHG_ALLOC");
             if ( state.has("xfr"))
             {
                 const Value::Array & arr = state.asArray();
@@ -3633,6 +3619,7 @@ DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json 
             a_task->set_dest( state.getString( "dst_repo_id" ));
             break;
         case TT_REC_CHG_OWNER:
+            DL_TRACE(log_context, "TT_REC_CHG_OWNER");
             if ( state.has("glob_data"))
             {
                 const Value::Array & arr = state.asArray();
@@ -3658,16 +3645,16 @@ DatabaseAPI::setTaskData( TaskData * a_task, const libjson::Value & a_task_json 
  * input - this is to.
  */
 void
-DatabaseAPI::setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     TRANSLATE_BEGIN()
 
     const Value::Object & obj = a_result.asObject();
 
     if ( obj.has( "task" ))
-        setTaskData( a_reply.add_task(), obj.value() );
+        setTaskData( a_reply.add_task(), obj.value(), log_context );
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 
@@ -3680,29 +3667,29 @@ DatabaseAPI::setTaskDataReply( Auth::TaskDataReply & a_reply, const libjson::Val
  * JSON contains an array of task objects containing task fields.
  */
 void
-DatabaseAPI::setTaskDataReplyArray( Auth::TaskDataReply & a_reply, const libjson::Value & a_result )
+DatabaseAPI::setTaskDataReplyArray( Auth::TaskDataReply & a_reply, const libjson::Value & a_result, LogContext log_context )
 {
     TRANSLATE_BEGIN()
 
     const Value::Array & arr = a_result.asArray();
     for ( Value::ArrayConstIter i = arr.begin(); i != arr.end(); i++ )
     {
-        setTaskData( a_reply.add_task(), *i );
+        setTaskData( a_reply.add_task(), *i, log_context );
     }
 
-    TRANSLATE_END( a_result )
+    TRANSLATE_END( a_result, log_context)
 }
 
 
 void
-DatabaseAPI::taskStart( const std::string & a_task_id, libjson::Value & a_result )
+DatabaseAPI::taskStart( const std::string & a_task_id, libjson::Value & a_result, LogContext log_context )
 {
-    dbGet( "task/start", {{"task_id",a_task_id}}, a_result );
+    dbGet( "task/start", {{"task_id",a_task_id}}, a_result, log_context );
 }
 
 
 void
-DatabaseAPI::taskUpdate( const std::string & a_id, TaskStatus * a_status, const std::string * a_message, double * a_progress, libjson::Value * a_state )
+DatabaseAPI::taskUpdate( const std::string & a_id, LogContext log_context, TaskStatus * a_status, const std::string * a_message, double * a_progress, libjson::Value * a_state )
 {
     if ( !a_status && !a_progress && !a_state )
         return;
@@ -3738,12 +3725,12 @@ DatabaseAPI::taskUpdate( const std::string & a_id, TaskStatus * a_status, const 
     body += "}";
 
     Value result;
-    dbPost( "task/update", {{"task_id",a_id}}, &body, result );
+    dbPost( "task/update", {{"task_id",a_id}}, &body, result, log_context );
 }
 
 
 void
-DatabaseAPI::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result )
+DatabaseAPI::taskFinalize( const std::string & a_task_id, bool a_succeeded, const std::string & a_msg, libjson::Value & a_result, LogContext log_context )
 {
     vector<pair<string,string>> params;
     params.push_back({ "task_id", a_task_id });
@@ -3751,12 +3738,12 @@ DatabaseAPI::taskFinalize( const std::string & a_task_id, bool a_succeeded, cons
     if ( a_msg.size( ))
         params.push_back({ "message", a_msg });
 
-    dbPost( "task/finalize", params, 0, a_result );
+    dbPost( "task/finalize", params, 0, a_result, log_context );
 }
 
 
 void
-DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataReply & a_reply )
+DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataReply & a_reply, LogContext log_context)
 {
     vector<pair<string,string>> params;
 
@@ -3785,31 +3772,31 @@ DatabaseAPI::taskList( const Auth::TaskListRequest & a_request, Auth::TaskDataRe
 
     libjson::Value result;
 
-    dbGet( "task/list", params, result, false );
+    dbGet( "task/list", params, result, log_context, false );
 
-    setTaskDataReplyArray( a_reply, result );
+    setTaskDataReplyArray( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::taskView( const Auth::TaskViewRequest & a_request, Auth::TaskDataReply & a_reply )
+DatabaseAPI::taskView( const Auth::TaskViewRequest & a_request, Auth::TaskDataReply & a_reply, LogContext log_context)
 {
     libjson::Value result;
 
-    dbGet( "task/view", {{"task_id",a_request.task_id()}}, result );
+    dbGet( "task/view", {{"task_id",a_request.task_id()}}, result, log_context );
 
-    setTaskDataReplyArray( a_reply, result );
+    setTaskDataReplyArray( a_reply, result, log_context );
 }
 
 void
-DatabaseAPI::taskPurge( uint32_t a_age_sec )
+DatabaseAPI::taskPurge( uint32_t a_age_sec, LogContext log_context )
 {
     libjson::Value result;
 
-    dbGet( "task/purge", {{"age_sec",to_string( a_age_sec )}}, result );
+    dbGet( "task/purge", {{"age_sec",to_string( a_age_sec )}}, result, log_context );
 }
 
 void
-DatabaseAPI::metricsUpdateMsgCounts( uint32_t a_timestamp, uint32_t a_total, const std::map<std::string,std::map<uint16_t,uint32_t>> & a_metrics )
+DatabaseAPI::metricsUpdateMsgCounts( uint32_t a_timestamp, uint32_t a_total, const std::map<std::string,std::map<uint16_t,uint32_t>> & a_metrics, LogContext log_context )
 {
     map<string,std::map<uint16_t,uint32_t>>::const_iterator u;
     map<uint16_t,uint32_t>::const_iterator m;
@@ -3845,21 +3832,19 @@ DatabaseAPI::metricsUpdateMsgCounts( uint32_t a_timestamp, uint32_t a_total, con
 
     libjson::Value result;
 
-    //DL_DEBUG( "sending to db. body: " << body );
-
-    dbPost( "metrics/msg_count/update", {}, &body, result );
+    dbPost( "metrics/msg_count/update", {}, &body, result, log_context );
 }
 
 void
-DatabaseAPI::metricsPurge( uint32_t a_timestamp )
+DatabaseAPI::metricsPurge( uint32_t a_timestamp, LogContext log_context )
 {
     libjson::Value result;
 
-    dbPost( "metrics/purge", {{ "timestamp", to_string(a_timestamp) }}, 0, result );
+    dbPost( "metrics/purge", {{ "timestamp", to_string(a_timestamp) }}, 0, result, log_context );
 }
 
 uint32_t
-DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_qry_begin, std::string & a_qry_end, std::string & a_qry_filter, std::string & a_params )
+DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::string & a_qry_begin, std::string & a_qry_end, std::string & a_qry_filter, std::string & a_params, LogContext log_context )
 {
     string view = (a_request.mode()==SM_DATA?"dataview":"collview");
 
@@ -3950,7 +3935,7 @@ DatabaseAPI::parseSearchRequest( const Auth::SearchRequest & a_request, std::str
 
         if ( a_request.has_meta() )
         {
-            a_qry_filter = parseSearchMetadata( a_request.meta() );
+            a_qry_filter = parseSearchMetadata( a_request.meta(), log_context );
         }
     }
 
@@ -4262,7 +4247,7 @@ DatabaseAPI::parseSearchTerms( const std::string & a_key, const std::vector<std:
 }
 
 std::string
-DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string & a_iter )
+DatabaseAPI::parseSearchMetadata( const std::string & a_query, LogContext log_context, const std::string & a_iter )
 {
     // Process single and double quotes (treat everything inside as part of string, until a non-escaped matching quote is found)
     // Identify supported functions as "xxx("  (allow spaces between function name and parenthesis)
@@ -4309,8 +4294,6 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
     bool val_token, last_char = false;
     int back_cnt = 0; // Counts contiguous backslashes inside quoted strings
 
-    //DL_DEBUG( "parseMeta " << a_query );
-
     for ( string::const_iterator c = a_query.begin(); c != a_query.end(); c++ )
     {
         next_nws = 0;
@@ -4323,7 +4306,7 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
             }
         }
 
-        DL_DEBUG( "c[" << *c << "]" );
+        DL_DEBUG(log_context, "c[" << *c << "]" );
 
         switch( state )
         {
@@ -4346,7 +4329,6 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                 // If this is NOT an escaped quote, go back to default state
                 if ( *c == '\'' && ( back_cnt % 2 == 0 ))
                 {
-                    //DL_DEBUG( "single q end" );
                     state = PS_DEFAULT;
                 }
                 else
@@ -4367,7 +4349,6 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                 // If this is NOT an escaped quote, go back to default state
                 if ( *c == '\"' && ( back_cnt % 2 == 0 ))
                 {
-                    //DL_DEBUG( "dbl q end" );
                     state = PS_DEFAULT;
                 }
                 else
@@ -4383,7 +4364,6 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                 state = PS_SINGLE_QUOTE;
                 back_cnt = 0;
 
-                //DL_DEBUG( "single q start" );
                 break; // Avoid token processing
             }
             else if ( *c == '\"' ) // Start of double-quoted string
@@ -4391,12 +4371,10 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                 state = PS_DOUBLE_QUOTE;
                 back_cnt = 0;
 
-                //DL_DEBUG( "dbl q start" );
                 break; // Avoid token processing
             }
             else if ( *c == '/' && (*(c+1) == '/' || *(c+1) == '*')) // Start of comment /* or //
             {
-                //DL_DEBUG( "comment found" );
                 EXCEPT(1,"In-line metadata expression comments are not permitted." );
             }
             else if ( defchar.find( *c ) != defchar.end() ) // Check for other allowed characters
@@ -4424,7 +4402,6 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
 
             if ( !val_token || last_char )
             {
-                //cout << "tok start: " << v.start << ", len: " << v.len << "\n";
                 if ( !val_token )
                 {
                     tmp = a_query.substr( v.start, v.len );
@@ -4440,7 +4417,6 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
                     tmp = a_query.substr( v.start, v.len + 1 );
                     state = PS_STOP;
                 }
-                //DL_DEBUG( "token[" << tmp << "]" );
 
                 // Determine if identifier needs to be prefixed with iterator by testing against allowed identifiers
                 if ( tmp == "desc" )
@@ -4513,14 +4489,12 @@ DatabaseAPI::parseSearchMetadata( const std::string & a_query, const std::string
         }
     }
 
-    //DL_DEBUG( "done, state: " << (int)state );
 
     if ( state == PS_SINGLE_QUOTE || state == PS_DOUBLE_QUOTE )
     {
         EXCEPT(1,"Mismatched quotation marks in query" );
     }
-
-    //cout << "[" << a_query << "]=>[" << result << "]\n";
+    DL_TRACE(log_context, result);
     return result;
 }
 

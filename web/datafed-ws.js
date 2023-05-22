@@ -55,8 +55,6 @@ var g_host,
     g_ctx_next = 0,
     g_client_id,
     g_client_secret,
-    //g_cookie_opts = { httpOnly: true, maxAge: 604800000, secure: true, sameSite: "lax" },
-    //g_cookie_ui_opts = { httpOnly: true, maxAge: 604800000, secure: true, sameSite: "lax", path: "/ui" },
     g_ready_start = 4,
     g_version,
     g_ver_release_year,
@@ -67,10 +65,6 @@ var g_host,
     g_ver_api_major,
     g_ver_api_minor,
     g_ver_api_patch,
-    //g_ver_major,
-    //g_ver_mapi_major,
-    //g_ver_mapi_minor,
-    //g_ver_web,
     g_tls;
 
 const nullfr = Buffer.from([]);
@@ -78,56 +72,113 @@ const nullfr = Buffer.from([]);
 g_ctx.fill(null);
 
 
-function startServer(){
-    console.log( "  Host:", g_host );
-    console.log( "  Port:", g_port );
-    console.log( "  TLS:", g_tls?"Yes":"No" );
-    if ( g_tls ){
-        console.log( "  Server key file:", g_server_key_file );
-        console.log( "  Server cert file:", g_server_cert_file );
-        console.log( "  Server chain file:", g_server_chain_file );
-    }
-    console.log( "  External URL:", g_extern_url );
-    //console.log( "  System secret:", g_system_secret );
-    //console.log( "  session secret:", g_session_secret );
-    console.log( "  Core server addr:", g_core_serv_addr );
-    //console.log( "  Client ID:", g_client_id );
-    //console.log( "  Client Secret:", g_client_secret );
-    console.log( "  Test mode:", g_test );
+const LogLevel = {
+  TRACE: 0,
+  DEBUG: 1,
+  INFO: 2,
+  WARNING: 3,
+  ERROR: 4,
+  CRITICAL: 5 
+};
 
-    console.log( "Connecting to Core" );
-    console.log(g_core_serv_addr);
+class Logger {
+  constructor(level) {
+    this._level = level 
+  }
+
+  log(message_type, function_name, line_number, message, correlation_id) {
+    const now = new Date();
+    const isoDateTime = now.toISOString();
+    var log_line = `${isoDateTime} datafed-ws ${message_type} datafed-ws.js:${function_name}:${line_number} \{ \"thread_id\": 0, \"message\": \"${message}\" `;
+    if( correlation_id !== "") {
+      log_line += `, \"correlation_id\": \"${correlation_id}\"`;
+    }
+    log_line += ` \}`;
+    console.log(log_line);
+  }
+
+  critical(function_name, line_number, message, correlation_id = "") {
+    if( this._level >= LogLevel.CRITICAL ) {
+      this.log("CRIT", function_name, line_number, message, correlation_id); 
+    }
+  }
+  error(function_name, line_number, message, correlation_id = "") {
+    if( this._level >= LogLevel.ERROR ) {
+      this.log("ERROR", function_name, line_number, message, correlation_id); 
+    }
+  }
+  warning(function_name, line_number, message, correlation_id = "") {
+    if( this._level >= LogLevel.WARNING ) {
+      this.log("WARNING", function_name, line_number, message, correlation_id); 
+    }
+  }
+  info(function_name, line_number, message, correlation_id = "") {
+    if( this._level >= LogLevel.INFO ) {
+      this.log("INFO", function_name, line_number, message, correlation_id); 
+    }
+  }
+  debug(function_name, line_number, message, correlation_id = "") {
+    if( this._level >= LogLevel.DEBUG ) {
+      this.log("DEBUG", function_name, line_number, message, correlation_id); 
+    }
+  }
+  trace(function_name, line_number, message, correlation_id = "") {
+    if( this._level >= LogLevel.TRACE ) {
+      this.log("TRACE", function_name, line_number, message, correlation_id);
+    }
+  }
+}
+
+const logger = new Logger(LogLevel.INFO);
+
+function getCurrentLineNumber() {
+    const stackTrace = new Error().stack;
+    const lineMatches = stackTrace.match(/:\d+:\d+/g);
+
+    if (lineMatches && lineMatches.length > 1) {
+          const lineNumber = lineMatches[1].substring(1);
+          return parseInt(lineNumber, 10);
+        }
+
+    return undefined; // Line number could not be determined
+}
+
+function startServer(){
+    logger.info(startServer.name, getCurrentLineNumber(), `Host: ${g_host}`);
+    logger.info(startServer.name, getCurrentLineNumber(), `Port: ${g_port}`);
+    const message = "TLS:" + g_tls?"Yes":"No";
+    logger.info(startServer.name, getCurrentLineNumber(), message);
+    if ( g_tls ){
+        logger.debug(startServer.name, getCurrentLineNumber(), `Server key file: ${g_server_key_file}`);
+        logger.debug(startServer.name, getCurrentLineNumber(), `Server cert file: ${g_server_cert_file}`);
+        logger.debug(startServer.name, getCurrentLineNumber(), `Server chain file: ${g_server_chain_file}`);
+    }
+    logger.info(startServer.name, getCurrentLineNumber(), `External URL: ${g_extern_url}`);
+    logger.info(startServer.name, getCurrentLineNumber(), `Core server addr: ${g_core_serv_addr}`);
+    logger.info(startServer.name, getCurrentLineNumber(), `Test mode: ${g_test}`);
+
     g_core_sock.connect( g_core_serv_addr );
-    console.log("VersionRequest");
     sendMessageDirect( "VersionRequest", "", {}, function( reply ) {
-        console.log("Reply is");
-        console.log(reply);
         if ( !reply ){
-            console.log( "ERROR: No reply from core server" );
+            logger.error(startServer.name, getCurrentLineNumber(), "ERROR: No reply from core server" );
         }else if ( reply.api_major != g_ver_api_major || reply.api_minor < g_ver_api_minor || reply.api_minor > ( g_ver_api_minor + 9) ) {
-            console.log( "ERROR: Incompatible api version detected (" + reply.api_major + "." + reply.api_minor + "." + reply.api_patch + ")" );
-//        }else if ( reply.major != g_ver_major || reply.mapiMajor != g_ver_mapi_major ||
- //               reply.mapi_minor < g_ver_mapi_minor || reply.mapi_minor > ( g_ver_mapi_minor + 9 )){
- //           console.log( "ERROR: Incompatible server version (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ")" );
+            logger.error(startServer.name, getCurrentLineNumber(), "ERROR: Incompatible api version detected (" + reply.api_major + "." + reply.api_minor + "." + reply.api_patch + ")" );
         }else{
-//            if ( reply.web > g_ver_web || reply.mapi_minor > g_ver_mapi_minor ){
-//                console.log( "WARNING: A newer web server version is available (" + reply.major + "." + reply.mapiMajor + "." + reply.mapiMinor + ":" + reply.web + ")" );
- //           }
           var warning_msg = "WARNING: A newer web server may be available the latest release version is: (" + reply.release_year + "." + reply.release_month + "." + reply.release_day + "." + reply.release_hour + "." + reply.release_minute
           if( reply.release_year > g_ver_release_year ) {
-            console.log(warning_msg);
+            logger.warning(startServer.name, getCurrentLineNumber(),warning_msg);
           } else if( reply.release_year == g_ver_release_year ) {
             if( reply.release_month > g_ver_release_month ) {
-              console.log(warning_msg);
+              logger.warning(startServer.name, getCurrentLineNumber(),warning_msg);
             } else if (reply.release_month == g_ver_release_month) {
               if( reply.release_day > g_ver_release_day ) {
-                console.log(warning_msg);
+                logger.warning(startServer.name, getCurrentLineNumber(),warning_msg);
               } else if(reply.release_day == g_ver_release_day) {
                 if( reply.release_hour > g_ver_release_hour ) {
-                  console.log(warning_msg);
+                  logger.warning(startServer.name, getCurrentLineNumber(),warning_msg);
                 } else if(reply.release_hour == g_ver_release_hour) {
                   if( reply.release_minute > g_ver_release_minute ) {
-                    console.log(warning_msg);
+                    logger.warning(startServer.name, getCurrentLineNumber(),warning_msg);
                   }
                 }
               }
@@ -153,7 +204,6 @@ function startServer(){
                 if ( g_server_chain_file ){
                     chain = fs.readFileSync( g_server_chain_file, 'utf8');
                 }
-                console.log( "Starting https server" );
                 server = https.createServer({
                     key: privateKey,
                     cert: certificate,
@@ -161,7 +211,6 @@ function startServer(){
                     secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3
                 }, app );
             }else{
-                console.log( "Starting http server" );
                 server = http.createServer({}, app);
             }
 
@@ -238,22 +287,20 @@ app.get('/ui/welcome', (a_req, a_resp) => {
     if ( a_req.session.uid && a_req.session.reg )
         a_resp.redirect( '/ui/main' );
     else{
-        console.log("Access welcome from", a_req.connection.remoteAddress );
+        logger.debug('/ui/welcome', getCurrentLineNumber(), "Access welcome from: " + a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme']|| "light";
-        console.log("Theme:",theme);
         a_resp.render('index',{theme:theme,version:g_version,test_mode:g_test});
     }
 });
 
 app.get('/ui/main', (a_req, a_resp) => {
     if ( a_req.session.uid && a_req.session.reg ){
-        console.log( "Access main (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
+        logger.info('/ui/main', getCurrentLineNumber(), "Access main (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
         a_resp.render( 'main',{user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test});
     }else{
-        console.log("no session",a_req.session);
         // datafed-user cookie not set, so clear datafed-id before redirect
         //a_resp.clearCookie( 'datafed-id' );
         a_resp.redirect( '/' );
@@ -263,16 +310,16 @@ app.get('/ui/main', (a_req, a_resp) => {
 /* This is the post-Globus registration page where user may enter a password before continuing to main
 */
 app.get('/ui/register', (a_req, a_resp) => {
-    console.log("/ui/register");
+    logger.debug('/ui/register', getCurrentLineNumber(), "Begin registering.");
 
     if ( !a_req.session.uid ){
-        console.log(" - no uid, go to /");
+        logger.info('/ui/register', getCurrentLineNumber(), " - no uid, go to /");
         a_resp.redirect( '/' );
     } else if ( a_req.session.reg ){
-        console.log(" - already registered, go to /ui/main");
+        logger.info('/ui/register', getCurrentLineNumber(), " - already registered, go to /ui/main");
         a_resp.redirect( '/ui/main' );
     } else {
-        console.log( " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
+        logger.info('/ui/register', getCurrentLineNumber(), " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
         a_resp.render('register', { uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
@@ -287,7 +334,7 @@ app.get('/ui/login', (a_req, a_resp) => {
     if ( a_req.session.uid && a_req.session.reg ){
         a_resp.redirect( '/ui/main' );
     } else {
-        console.log( "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "log-in" );
+        logger.info('/ui/login', getCurrentLineNumber(), "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "log-in" );
 
         var uri = g_globus_auth.code.getUri();
         a_resp.redirect(uri);
@@ -296,7 +343,7 @@ app.get('/ui/login', (a_req, a_resp) => {
 
 
 app.get('/ui/logout', (a_req, a_resp) => {
-    console.log( "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "logout" );
+    logger.info('/ui/logout', getCurrentLineNumber(), "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "logout" );
 
     //a_resp.clearCookie( 'datafed-id' );
     //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
@@ -313,7 +360,7 @@ app.get('/ui/error', (a_req, a_resp) => {
 /* This is the OAuth redirect URL after a user authenticates with Globus
 */
 app.get('/ui/authn', ( a_req, a_resp ) => {
-    console.log( "Globus authenticated - log in to DataFed" );
+    logger.info('/ui/authn', getCurrentLineNumber(), "Globus authenticated - log in to DataFed" );
 
     /* This after Globus authentication. Loads Globus tokens and identity information.
     The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
@@ -345,21 +392,20 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
             });
 
             res.on('end', () => {
-                //console.log('tok introspect done, data:', data );
 
                 if ( res.statusCode >= 200 && res.statusCode < 300 ){
                     var userinfo = JSON.parse( data ),
                         uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
-                    console.log( 'User', uid, 'authenticated, verifying DataFed account' );
+                    logger.info('/ui/authn', getCurrentLineNumber(), 'User', uid, 'authenticated, verifying DataFed account' );
 
                     sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
                         if ( !reply  ) {
-                            console.log( "Error - Find user call failed." );
+                            logger.error('/ui/authn', getCurrentLineNumber(),  "Error - Find user call failed." );
                             a_resp.redirect( "/ui/error" );
                         } else if ( !reply.user || !reply.user.length ) {
                             // Not registered
-                            console.log( "User", uid, "not registered" );
+                            logger.info('/ui/authn', getCurrentLineNumber(),  "User: " + uid + "not registered" );
 
                             // Store all data need for registration in session (temporarily)
                             a_req.session.uid = uid;
@@ -372,7 +418,7 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
 
                             a_resp.redirect( "/ui/register" );
                         } else {
-                            console.log( 'User', uid, 'verified, acc:', xfr_token.access_token, ", ref:", xfr_token.refresh_token, ", exp:", xfr_token.expires_in );
+                            logger.info('/ui/authn', getCurrentLineNumber(),  'User: ' + uid + ' verified, acc:' + xfr_token.access_token + ", ref: " + xfr_token.refresh_token + ", exp:" + xfr_token.expires_in );
 
                             // Store only data needed for active session
                             a_req.session.uid = uid;
@@ -387,87 +433,36 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
                     });
                 }else{
                     // TODO - Not sure this is required - req.on('error'...) should catch this?
-                    console.log("Error: Globus introspection failed. User token:", xfr_token );
+                    logger.error('ui/authn', getCurrentLineNumber(), "Error: Globus introspection failed. User token:", xfr_token );
                     a_resp.redirect( "/ui/error" );
                 }
             });
         });
 
         req.on('error', (e) => {
-            console.log("Error: Globus introspection failed. User token:", xfr_token );
+            logger.error('ui/authn', getCurrentLineNumber(),"Error: Globus introspection failed. User token:", xfr_token );
             a_resp.redirect( "/ui/error" );
         });
 
         req.write( 'token=' + client_token.accessToken + '&include=identities_set' );
         req.end();
     }, function( reason ){
-        console.log("Error: Globus get token failed. Reason:", reason );
+        logger.error('ui/authn', getCurrentLineNumber(),"Error: Globus get token failed. Reason:", reason );
         a_resp.redirect( "/ui/error" );
     });
 });
 
-/*
-app.get('/ui/do_register', ( a_req, a_resp ) => {
-    if ( a_req.session.uid && a_req.session.reg ){
-        a_resp.redirect( '/ui/main' );
-    } else if ( !a_req.session.uid ){
-        a_resp.redirect( '/ui/welcome' );
-    } else {
-        console.log( 'Registering user', a_req.session.uid );
-
-        sendMessageDirect( "UserCreateRequest", "", {
-                uid: a_req.session.uid,
-                password: a_req.query.pw,
-                name: a_req.session.name,
-                email: a_req.session.email,
-                uuid: a_req.session.uuids,
-                secret: g_system_secret
-            }, function( reply ) {
-            if ( !reply ) {
-                console.log( "Error - User create failed: empty reply" );
-                a_resp.status(500).send( "Error - User create failed (server did not respond)" );
-            } else if ( reply.errCode ) {
-                if ( reply.errMsg ) {
-                    console.log( "Error - User create failed:", reply.errMsg );
-                    a_resp.status(500).send( "Error - User create failed: " + reply.errMsg );
-                } else {
-                    a_resp.status(500).send( "Error - User create failed: " + reply.errCode );
-                    console.log("Error - User create failed: ", reply.errCode);
-                }
-            } else {
-                // Save access token
-                setAccessToken( a_req.session.uid, a_req.session.acc_tok, a_req.session.ref_tok, a_req.session.acc_tok_ttl );
-
-                // Set session as registered user
-                a_req.session.reg = true;
-
-                // Remove data not needed for active session
-                delete a_req.session.name;
-                delete a_req.session.email;
-                delete a_req.session.uuids;
-                delete a_req.session.acc_tok;
-                delete a_req.session.acc_tok_ttl;
-                delete a_req.session.ref_tok;
-                delete a_req.session.uuids;
-
-                a_resp.redirect( "/ui/main" );
-            }
-        });
-    }
-});
-*/
-
 app.get('/api/usr/register', ( a_req, a_resp ) => {
-    console.log( '/api/usr/register' );
+    logger.debug('/api/usr/register', getCurrentLineNumber(), "Starting register." );
 
     if ( !a_req.session.uid ){
-        console.log( 'Not logged in' );
+        logger.error('/api/usr/register', getCurrentLineNumber(), 'Error: not authenticated.' );
         throw "Error: not authenticated.";
     } else if ( a_req.session.reg ){
-        console.log( 'Already registered' );
+        logger.error('/api/usr/register', getCurrentLineNumber(), 'Already registered' );
         throw "Error: already registered.";
     } else {
-        console.log( 'Registering user', a_req.session.uid );
+        logger.info('/api/usr/register', getCurrentLineNumber(), 'Registering user' + a_req.session.uid );
 
         sendMessageDirect( "UserCreateRequest", "", {
             uid: a_req.session.uid,
@@ -478,14 +473,14 @@ app.get('/api/usr/register', ( a_req, a_resp ) => {
             secret: g_system_secret
         }, function( reply ) {
             if ( !reply ) {
-                console.log("Error: user registration failed - empty reply from server");
+                logger.error('/api/usr/register', getCurrentLineNumber(),"Error: user registration failed - empty reply from server");
                 a_resp.status(500).send( "Empty reply from server" );
             } else if ( reply.errCode ) {
                 if ( reply.errMsg ) {
-                    console.log("Error: user registration failed - ", reply.errMsg);
+                    logger.error('/api/usr/register', getCurrentLineNumber(),"Error: user registration failed - ", reply.errMsg);
                     a_resp.status(500).send( reply.errMsg );
                 } else {
-                    console.log("Error: user registration failed - code:", reply.errCode);
+                    logger.error('/api/usr/register', getCurrentLineNumber(),"Error: user registration failed - code:", reply.errCode);
                     a_resp.status(500).send( "Error code: " + reply.errCode );
                 }
             } else {
@@ -535,7 +530,6 @@ app.get('/api/usr/find/by_name_uid', ( a_req, a_resp ) => {
 });
 
 app.get('/api/usr/view', ( a_req, a_resp ) => {
-    //console.log("/usr/view:",a_req.query.id);
     sendMessage( "UserViewRequest", { uid: a_req.query.id, details:(a_req.query.details=="true"?true:false)}, a_req, a_resp, function( reply ) {
         a_resp.json( reply.user[0] );
     });
@@ -557,7 +551,6 @@ app.get('/api/usr/update', ( a_req, a_resp ) => {
 });
 
 app.get('/api/usr/revoke_cred', ( a_req, a_resp ) => {
-    //console.log("/api/usr/revoke_cred");
     sendMessage( "RevokeCredentialsRequest", {}, a_req, a_resp, function( reply ) {
         a_resp.json({});
     });
@@ -635,14 +628,12 @@ app.get('/api/prj/list', ( a_req, a_resp ) => {
         params.count = a_req.query.count;
     }
 
-    //console.log("proj list:",params);
     sendMessage( "ProjectListRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.post('/api/prj/search', ( a_req, a_resp ) => {
-    //console.log("search:",a_req.body);
     sendMessage( "ProjectSearchRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply.item?reply.item:[]);
     });
@@ -706,14 +697,6 @@ app.get('/api/grp/delete', ( a_req, a_resp ) => {
     });
 });
 
-/*
-app.get('/api/dat/search', ( a_req, a_resp ) => {
-    sendMessage( "RecordSearchRequest", { query: a_req.query.query, scope: a_req.query.scope }, a_req, a_resp, function( reply ) {
-        a_resp.send(reply.item?reply.item:[]);
-    });
-});
-*/
-
 app.get('/api/query/list', ( a_req, a_resp ) => {
     var par = {};
     if ( a_req.query.offset != undefined && a_req.query.count != undefined ){
@@ -728,7 +711,6 @@ app.get('/api/query/list', ( a_req, a_resp ) => {
 
 
 app.post('/api/query/create', ( a_req, a_resp ) => {
-    console.log("save:",a_req.body);
     sendMessage( "QueryCreateRequest", {title: a_req.query.title, query: a_req.body }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -740,8 +722,6 @@ app.post('/api/query/update', ( a_req, a_resp ) => {
         params.title = a_req.query.title;
     if ( a_req.body )
         params.query = a_req.body;
-
-    //console.log("'/api/query/update, params=[",params,"]");
 
     sendMessage( "QueryUpdateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -777,12 +757,6 @@ app.get('/api/query/exec', ( a_req, a_resp ) => {
 
 
 app.post('/api/dat/search', ( a_req, a_resp ) => {
-    console.log("search:",a_req.body);
-    //var msg = g_msg_by_name["SearchRequest"];
-    //var msg_buf = msg.encode(JSON.stringify( a_req.body )).finish();
-    //var msg2 = msg.decode( msg_buf );
-    //console.log("msg2",msg2);
-
     sendMessage( "SearchRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -795,31 +769,27 @@ app.post('/api/dat/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/dat/create/batch', ( a_req, a_resp ) => {
-    //console.log( "dat create batch", a_req.headers['content-type'], typeof a_req.body );
     sendMessage( "RecordCreateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.post('/api/dat/update', ( a_req, a_resp ) => {
-    //console.log( "dat update", a_req.body );
     sendMessage( "RecordUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         if ( reply.data && reply.data.length ){
-            console.log( "User", a_req.session.uid, "- data update, id:", reply.data[0].id );
+            logger.debug('/api/dat/update', getCurrentLineNumber(), "User: " + a_req.session.uid + " - data update, id: " + reply.data[0].id );
         }
         a_resp.send(reply);
     });
 });
 
 app.post('/api/dat/update/batch', ( a_req, a_resp ) => {
-    //console.log( "dat update batch", a_req.headers['content-type'], typeof a_req.body );
     sendMessage( "RecordUpdateBatchRequest", {records:a_req.body}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
 });
 
 app.get('/api/dat/lock', ( a_req, a_resp ) => {
-    //console.log("/dat/lock, lock:",a_req.query.lock);
     sendMessage( "RecordLockRequest", { id: JSON.parse(a_req.query.ids), lock: a_req.query.lock=="true"?true:false}, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -843,7 +813,6 @@ app.get('/api/dat/copy', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/delete', ( a_req, a_resp ) => {
-    //console.log("/dat/delete",a_req.query.ids);
     sendMessage( "RecordDeleteRequest", { id: JSON.parse(a_req.query.ids) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -880,7 +849,6 @@ app.get('/api/dat/list/by_alloc', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/get', ( a_req, a_resp ) => {
-    //console.log("data get",a_req.query);
 
     var par = { id: JSON.parse( a_req.query.id )};
 
@@ -934,7 +902,6 @@ app.get('/api/dat/dep/graph/get', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/alloc_chg', ( a_req, a_resp ) => {
-    //console.log('/api/dat/alloc_chg');
 
     var params = { id: JSON.parse(a_req.query.id) };
     if ( a_req.query.repo_id )
@@ -950,7 +917,6 @@ app.get('/api/dat/alloc_chg', ( a_req, a_resp ) => {
 });
 
 app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
-    //console.log('/api/dat/owner_chg',a_req.query);
     var params = { id: JSON.parse(a_req.query.id), collId: a_req.query.coll_id };
     if ( a_req.query.repo_id )
         params.repoId = a_req.query.repo_id;
@@ -959,7 +925,6 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
     if ( a_req.query.check )
         params.check = true;
 
-    //console.log('/api/dat/owner_chg params:',params);
 
     sendMessage( "RecordOwnerChangeRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
@@ -967,9 +932,7 @@ app.get('/api/dat/owner_chg', ( a_req, a_resp ) => {
 });
 
 app.post('/api/metadata/validate', ( a_req, a_resp ) => {
-    //console.log( "md val", a_req.body );
     sendMessage( "MetadataValidateRequest", a_req.body, a_req, a_resp, function( reply ) {
-        //console.log("rec update:",reply);
         a_resp.send(reply);
     });
 });
@@ -1003,7 +966,7 @@ app.get('/api/acl/view', ( a_req, a_resp ) => {
 app.get('/api/acl/update', ( a_req, a_resp ) => {
     sendMessage( "ACLUpdateRequest", { id: a_req.query.id, rules: a_req.query.rules }, a_req, a_resp, function( reply ) {
         if ( reply.rule && reply.rule.length ){
-            console.log( "User", a_req.session.uid, "- ACL update, id:", a_req.query.id, a_req.query.rules );
+            logger.debug('/api/acl/update', getCurrentLineNumber(), "User: " + a_req.session.uid + " - ACL update, id: " + a_req.query.id + " " + a_req.query.rules );
         }
         a_resp.send(reply);
     });
@@ -1021,37 +984,6 @@ app.get('/api/acl/shared/list/items', ( a_req, a_resp ) => {
     });
 });
 
-/*
-app.get('/api/acl/by_user', ( a_req, a_resp ) => {
-    sendMessage( "ACLByUserRequest", {}, a_req, a_resp, function( reply ) {
-        if ( reply.user )
-            a_resp.send(reply.user);
-        else
-            a_resp.send([]);
-    });
-});
-
-app.get('/api/acl/by_user/list', ( a_req, a_resp ) => {
-    sendMessage( "ACLByUserListRequest", {owner:a_req.query.owner}, a_req, a_resp, function( reply ) {
-        a_resp.send(reply);
-    });
-});
-
-app.get('/api/acl/by_proj', ( a_req, a_resp ) => {
-    sendMessage( "ACLByProjRequest", {}, a_req, a_resp, function( reply ) {
-        if ( reply.proj )
-            a_resp.send(reply.proj);
-        else
-            a_resp.send([]);
-    });
-});
-
-app.get('/api/acl/by_proj/list', ( a_req, a_resp ) => {
-    sendMessage( "ACLByProjListRequest", {owner:a_req.query.owner}, a_req, a_resp, function( reply ) {
-        a_resp.send(reply);
-    });
-});
-*/
 
 app.get('/api/note/create', ( a_req, a_resp ) => {
     var params  = {
@@ -1062,7 +994,6 @@ app.get('/api/note/create', ( a_req, a_resp ) => {
         activate: a_req.query.activate
     };
 
-    //console.log("note create",params)
     sendMessage( "NoteCreateRequest", params, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1163,7 +1094,6 @@ app.get('/api/task/list', ( a_req, a_resp ) => {
 });
 
 app.get('/api/task/view', ( a_req, a_resp ) => {
-    //console.log("task/view", a_req.query.id );
     sendMessage( "TaskViewRequest", {"taskId":a_req.query.id}, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
@@ -1176,7 +1106,6 @@ app.post('/api/col/create', ( a_req, a_resp ) => {
 });
 
 app.post('/api/col/update', ( a_req, a_resp ) => {
-    //console.log("col update:",a_req.body);
     sendMessage( "CollUpdateRequest", a_req.body, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1204,7 +1133,6 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
         par.offset = a_req.query.offset;
         par.count = a_req.query.count;
     }
-    //console.log("Coll Read",a_req.query.id);
     sendMessage( "CollReadRequest", par, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1212,20 +1140,17 @@ app.get('/api/col/read', ( a_req, a_resp ) => {
 
 app.get('/api/col/get_parents', ( a_req, a_resp ) => {
     sendMessage( "CollGetParentsRequest", { id: a_req.query.id }, a_req, a_resp, function( reply ) {
-        //console.log("get_parents",reply);
         a_resp.send(reply);
     });
 });
 
 app.get('/api/col/get_offset', ( a_req, a_resp ) => {
     sendMessage( "CollGetOffsetRequest", { id: a_req.query.id, item: a_req.query.item_id, pageSz: a_req.query.page_sz}, a_req, a_resp, function( reply ) {
-        //console.log("get_offset - cb",a_req.query.id, a_req.query.item_id, a_req.query.page_sz);
         a_resp.send(reply);
     });
 });
 
 app.get('/api/col/move', ( a_req, a_resp ) => {
-    //console.log("move items:",a_req.query.items,"src:",a_req.query.src_id,"dst:",a_req.query.dst_id);
     sendMessage( "CollMoveRequest", { srcId: a_req.query.src_id, dstId: a_req.query.dst_id, item: JSON.parse(a_req.query.items) }, a_req, a_resp, function( reply ) {
         a_resp.send(reply);
     });
@@ -1578,10 +1503,9 @@ app.get('/ui/theme/save', ( a_req, a_resp ) => {
 
 
 function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
-    console.log( "setAccessToken",a_uid, a_acc_tok, a_ref_tok, a_expires_sec);
+    logger.info(setAccessToken.name, getCurrentLineNumber(), "setAccessToken uid: " + a_uid + " expires in: " + a_expires_sec);
     sendMessageDirect( "UserSetAccessTokenRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec }, function( reply ){
         // Should be an AckReply
-        //console.log("setAccessToken reply:", reply );
     });
 }
 
@@ -1593,9 +1517,9 @@ function allocRequestContext( a_resp, a_callback ) {
     if ( ctx == MAX_CTX ) {
         ctx = g_ctx.indexOf( null );
         if ( ctx == -1 ) {
-            console.log("ERROR: out of msg contexts!!!");
+            logger.critical(allocRequestContext.name, getCurrentLineNumber(), "ERROR: out of msg contexts!!!");
             if ( a_resp ) {
-                console.log("SEND FAIL");
+                logger.error(allocRequestContext.name, getCurrentLineNumber(), "SEND FAIL");
                 a_resp.status( 503 );
                 a_resp.send( "DataFed server busy." );
             }
@@ -1607,7 +1531,6 @@ function allocRequestContext( a_resp, a_callback ) {
         if ( g_ctx[g_ctx_next] )
             g_ctx_next = MAX_CTX;
     }
-    console.log("Context is now: ", g_ctx_next);
     a_callback( ctx );
 }
 
@@ -1615,86 +1538,67 @@ function allocRequestContext( a_resp, a_callback ) {
 function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
     var client = a_req.session.uid;
     if ( !client ){
-        console.log("NO AUTH :", a_msg_name, ":", a_req.connection.remoteAddress );
+        logger.info(sendMessage.name, getCurrentLineNumber(), "NO AUTH :" + a_msg_name + ":" + a_req.connection.remoteAddress );
         throw "Not Authenticated";
     }
 
     a_resp.setHeader('Content-Type', 'application/json');
 
     allocRequestContext( a_resp, function( ctx ){
-        //console.log("sendMsg msg_name ctx and data address ", a_msg_name, ctx, a_msg_data, g_core_serv_addr);
 
         var msg = g_msg_by_name[a_msg_name];
         if ( !msg )
             throw "Invalid message type: " + a_msg_name;
 
         var msg_buf = msg.encode(a_msg_data).finish();
-        //console.log( "snd msg, type:", msg._msg_type, ", len:", msg_buf.length );
 
-        /* Frame contents (C++)
-        uint32_t    size;       // Size of buffer
-        uint8_t     proto_id;
-        uint8_t     msg_id;
-        uint16_t    isContext
-        */
         var frame = Buffer.alloc(8);
         frame.writeUInt32BE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
         frame.writeUInt8( msg._mid, 5 );
-        //console.log("Writing ctx to frame, ", ctx);
         frame.writeUInt16BE( ctx, 6 );
-        console.log("MsgType is: ", msg._msg_type ," Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
 
-        //console.log("Creating callback for ctx: ", ctx);
         g_ctx[ctx] = function( a_reply ) {
             if ( !a_reply ) {
-                console.log("Error - reply handler: empty reply");
+                logger.error(sendMessage.name, getCurrentLineNumber(), "Error - reply handler: empty reply");
                 a_resp.status(500).send( "Empty reply" );
             } else if ( a_reply.errCode ) {
                 if ( a_reply.errMsg ) {
-                    console.log("Error - reply handler:", a_reply.errMsg);
+                    logger.error(sendMessage.name, getCurrentLineNumber(), "Error - reply handler: " + a_reply.errMsg);
                     a_resp.status(500).send( a_reply.errMsg );
                 } else {
+                    logger.error(sendMessage.name, getCurrentLineNumber(), "Error - reply handler: " + a_reply.errCode);
                     a_resp.status(500).send( "error code: " + a_reply.errCode );
-                    console.log("Error - reply handler:", a_reply.errCode);
                 }
             } else {
-                console.log("Sending a_reply as callback");
-                //console.log(a_reply);
                 a_cb( a_reply );
             }
         };
 
-        //console.log("frame buffer", frame.toString('hex'));
-        //console.log("msg buffer", msg_buf.toString('hex'));
-        //console.log("Sending to ", g_core_serv_addr);
-        //console.log( "sendMsg:", a_msg_name );
         var route_count = Buffer.alloc(4);
         route_count.writeUInt32BE( 0, 0 );
         if ( msg_buf.length ) {
-            console.log("sending multipart message bam");
-            //g_core_sock.send([ nullfr, nullfr, frame, msg_buf, nullfr, client ]);
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send(uuidv4() ,zmq.ZMQ_SNDMORE);
+            const corr_id = uuidv4();
+            g_core_sock.send(corr_id ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(msg_buf);
-            console.log("1 MsgType is: ", msg._msg_type ," Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
+            logger.debug(sendMessage.name, getCurrentLineNumber(), "MsgType is: " + msg._msg_type + " Writing ctx to frame, " + ctx + " buffer size " + msg_buf.length, corr_id);
         } else {
-            console.log("sending multipart message boom");
-            //g_core_sock.send([ nullfr, nullfr, frame, nullfr, nullfr, client ]);
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send(uuidv4() ,zmq.ZMQ_SNDMORE);
+            const corr_id = uuidv4();
+            g_core_sock.send(corr_id ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(client ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE );
             g_core_sock.send(nullfr);
-            console.log("2 MsgType is: ", msg._msg_type ," Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
+            logger.debug(sendMessage.name, getCurrentLineNumber(), "MsgType is: " + msg._msg_type + " Writing ctx to frame, " + ctx + " buffer size " + msg_buf.length, corr_id);
 
         }
 
@@ -1703,9 +1607,7 @@ function sendMessage( a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon ) {
 
 
 function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
-    //console.log("Sending MessageDirect");
     var msg = g_msg_by_name[a_msg_name];
-    //console.log(msg);
     if ( !msg )
         throw "Invalid message type: " + a_msg_name;
 
@@ -1718,54 +1620,37 @@ function sendMessageDirect( a_msg_name, a_client, a_msg_data, a_cb ) {
         frame.writeUInt32BE( msg_buf.length, 0 );
         frame.writeUInt8( msg._pid, 4 );
         frame.writeUInt8( msg._mid, 5 );
-        //console.log("MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", 5, " buffer size ", msg_buf.length);
         frame.writeUInt16BE( ctx, 6 );
-        console.log("0 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
 
-        //console.log("Registering ctx with value ", ctx);
         g_ctx[ctx] = a_cb;
-
-        //console.log("a_client is");
-        //console.log(a_client);
-        //console.log("Buffer length");
-        //console.log(msg_buf.length);
 
         var route_count = Buffer.alloc(4);
         route_count.writeUInt32BE( 0, 0 );
 
         if ( msg_buf.length ) {
             // ZeroMQ socket g_core_sock - not Dale's code it is a library
-            //g_core_sock.send([ nullfr, nullfr, frame, msg_buf, nullfr, a_client ]);
-            //console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, 'no_id', 'no_key', frame, msg_buf, '', a_client ]");
-
-
-            //g_core_sock.send(0 ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send(uuidv4() ,zmq.ZMQ_SNDMORE);
+            const corr_id = uuidv4();
+            g_core_sock.send(corr_id ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(msg_buf);
-            console.log("3 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
+            logger.debug(sendMessageDirect.name, getCurrentLineNumber(), "MsgType is: " + msg._msg_type + " Direct Writing ctx to frame, " + ctx + " buffer size " + msg_buf.length, corr_id);
         } else {
-            //console.log("sending multipart message with msg_buf [ 'BEGIN_DATAFED', route_count, nullfr, frame, nullfr, '', a_client ]");
-            //g_core_sock.send([ nullfr, "" ,nullfr, frame, nullfr, nullfr, a_client ]);
-            //g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
-            //g_core_sock.send(0 ,zmq.ZMQ_SNDMORE);
-            //g_core_sock.send("dummy_route" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("BEGIN_DATAFED", zmq.ZMQ_SNDMORE);
             g_core_sock.send(route_count ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr ,zmq.ZMQ_SNDMORE);
-            g_core_sock.send(uuidv4() ,zmq.ZMQ_SNDMORE);
+            const corr_id = uuidv4();
+            g_core_sock.send(corr_id ,zmq.ZMQ_SNDMORE);
             g_core_sock.send("no_key" ,zmq.ZMQ_SNDMORE);
             g_core_sock.send(a_client,zmq.ZMQ_SNDMORE);
             g_core_sock.send(frame,zmq.ZMQ_SNDMORE);
             g_core_sock.send(nullfr);
-            console.log("4 MsgType is: ", msg._msg_type ,"Direct Writing ctx to frame, ", ctx, " buffer size ", msg_buf.length);
+            logger.debug(sendMessageDirect.name, getCurrentLineNumber(),"MsgType is: " + msg._msg_type + " Direct Writing ctx to frame, " + ctx + " buffer size " + msg_buf.length, corr_id);
         }
-        //console.log("Message was sent");
     });
 }
 
@@ -1785,8 +1670,6 @@ function processProtoFile( msg ){
         msg._mid = i-1;
         msg._msg_type = (pid << 8) | (i-1);
 
-        //console.log(msg.name,msg._msg_type);
-
         g_msg_by_id[ msg._msg_type ] = msg;
         g_msg_by_name[ msg.name ] = msg;
     }
@@ -1796,16 +1679,9 @@ protobuf.load("Version.proto", function(err, root) {
     if ( err )
         throw err;
 
-    console.log('Version.proto loaded');
-
     var msg = root.lookupEnum( "Version" );
     if ( !msg )
         throw "Missing Version enum in Version.Anon proto file";
-
-//    g_ver_major = msg.values.VER_MAJOR;
-//    g_ver_mapi_major = msg.values.VER_MAPI_MAJOR;
-//    g_ver_mapi_minor = msg.values.VER_MAPI_MINOR;
-//    g_ver_web = msg.values.VER_WEB;
 
     g_ver_release_year = msg.values.DATAFED_RELEASE_YEAR
     g_ver_release_month = msg.values.DATAFED_RELEASE_MONTH
@@ -1815,7 +1691,7 @@ protobuf.load("Version.proto", function(err, root) {
 
     g_version = g_ver_release_year + "." + g_ver_release_month + "." + g_ver_release_day + "." + g_ver_release_hour + "." + g_ver_release_minute;
 
-    console.log('Running Version',g_version);
+    logger.info("protobuf.load", getCurrentLineNumber(),'Running Version: ' + g_version);
     if ( --g_ready_start == 0 )
         startServer();
 });
@@ -1823,8 +1699,6 @@ protobuf.load("Version.proto", function(err, root) {
 protobuf.load("SDMS_Anon.proto", function(err, root) {
     if ( err )
         throw err;
-
-    console.log('SDMS_Anon.proto loaded');
 
     var msg = root.lookupEnum( "SDMS.Anon.Protocol" );
     if ( !msg )
@@ -1839,8 +1713,6 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
     if ( err )
         throw err;
 
-    console.log('SDMS_Auth.proto loaded');
-
     var msg = root.lookupEnum( "SDMS.Auth.Protocol" );
     if ( !msg )
         throw "Missing Protocol enum in SDMS.Auth proto file";
@@ -1851,63 +1723,47 @@ protobuf.load("SDMS_Auth.proto", function(err, root) {
 });
 
 process.on('unhandledRejection', (reason, p) => {
-    console.log( 'Error - unhandled rejection at: Promise', p, 'reason:', reason );
+    logger.error("process.on", getCurrentLineNumber(), 'Error - unhandled rejection at: Promise: ' + p + ' reason: ' + reason );
 });
 
 // This is the reply part 
 // on - method is a way of subscribing to events
 g_core_sock.on('message', function( delim, header, route_count, delim2, correlation_id, key, id, frame, msg_buf ) {
-    //console.log( "got msg", delim, frame, msg_buf );
-    //console.log( "frame", frame.toString('hex') );
-    /*var mlen =*/ 
-    //console.log("Receiving messages");
-    //console.log(delim); 
-    //console.log("header");
-    //console.log(header.toString());
-    //console.log(key.toString());
-    //console.log(id.toString());
     frame.readUInt32BE( 0 );
     var mtype = (frame.readUInt8( 4 ) << 8 ) | frame.readUInt8( 5 );
     var ctx = frame.readUInt16BE( 6 );
-
-    //console.log( "got msg type:", mtype );
-    //console.log( "client len:", client?client.length:0 );
-    //console.log( "msg_buf len:", msg_buf?msg_buf.length:0 );
-    //console.log( "len", mlen, "mtype", mtype, "ctx", ctx );
 
     var msg_class = g_msg_by_id[mtype];
     var msg;
 
     if ( msg_class ) {
         // Only try to decode if there is a payload
-        //console.log("len ", msg_buf.length);
         if ( msg_buf && msg_buf.length ) {
             try {
                 // This is unserializing the protocol message
-                //console.log("Decoding message, ", mtype);
                 msg = msg_class.decode( msg_buf );
                 if ( !msg ) {
-                    console.log( "ERROR: msg decode failed: no reason, correlation_id: ", correlation_id );
+                    logger.error("g_core_sock.on", getCurrentLineNumber(), "ERROR: msg decode failed: no reason, correlation_id: " + correlation_id );
                 }
             } catch ( err ) {
-                console.log( "ERROR: msg decode failed:", err, " correlation_id: ", correlation_id );
+                logger.error("g_core_sock.on", getCurrentLineNumber(), "ERROR: msg decode failed: " + err + " correlation_id: " + correlation_id );
             }
         } else {
             msg = msg_class;
         }
     } else {
-        console.log( "ERROR: unknown msg type:", mtype, " correlation_id: ", correlation_id );
+        logger.error("g_core_sock.on", getCurrentLineNumber(), "ERROR: unknown msg type: " + mtype + " correlation_id: " + correlation_id );
     }
 
     var f = g_ctx[ctx];
     if ( f ) {
         g_ctx[ctx] = null;
-        console.log("freed ctx",ctx,"for msg",msg_class.name, " correlation_id: ", correlation_id);
+        logger.info("g_core_sock.on", getCurrentLineNumber(),"freed ctx: " + ctx + " for msg: " + msg_class.name + " correlation_id: " + correlation_id);
         g_ctx_next = ctx;
         f( msg );
     } else {
         g_ctx[ctx] = null;
-        console.log( "ERROR: no callback found for ctxt", ctx," - msg type:", mtype, ", name:", msg_class.name, " correlation_id: ", correlation_id );
+        logger.error("g_core_sock.on", getCurrentLineNumber(), "ERROR: no callback found for ctxt: " + ctx + " - msg type: " + mtype + ", name: " + msg_class.name + " correlation_id: " + correlation_id );
     }
 });
 
@@ -1920,7 +1776,7 @@ function loadSettings(){
     g_core_serv_addr = 'tcp://datafed.ornl.gov:7513';
     g_test = false;
 
-    console.log( "Reading configuration from file", process.argv[2] );
+    logger.info(loadSettings.name, getCurrentLineNumber(), "Reading configuration from file: " + process.argv[2] );
 
     try{
         var config = ini.parse(fs.readFileSync(process.argv[2],'utf-8'));
@@ -1954,8 +1810,8 @@ function loadSettings(){
             g_extern_url = "http"+(g_tls?'s':'')+"://" + g_host + ":" + g_port;
         }
     }catch( e ){
-        console.log( "Could not open/parse configuration file", process.argv[2] );
-        console.log( e.message );
+        logger.error(loadSettings.name, getCurrentLineNumber(), "Could not open/parse configuration file: " + process.argv[2] );
+        logger.error(loadSettings.name, getCurrentLineNumber(),  e.message );
         throw e;
     }
 

@@ -39,18 +39,18 @@ namespace SDMS {
 
       void zmqCurveSetup(const ICredentials & credentials);
 
-      LogLineContent m_log_line;
+      LogContext m_log_context;
     public:
 
       /** To be used by children*/
-      ZeroMQCommunicator();
+      ZeroMQCommunicator(const LogContext & log_context) : m_log_context(log_context) {};
 
       ZeroMQCommunicator(
           const SocketOptions & socket_options,
           const ICredentials & credentials,
           uint32_t timeout_on_receive_milliseconds,
           long timeout_on_poll_milliseconds,
-          const LogLineContent & log_context);
+          const LogContext & log_context);
 
       virtual ~ZeroMQCommunicator();
       /**

@@ -27,14 +27,17 @@ namespace po = boost::program_options;
 
 int main( int a_argc, char ** a_argv )
 {
+
+    global_logger.setSysLog(true);
+    global_logger.addStream(std::cerr);
+
+    LogContext log_context;
+    log_context.thread_name = "repo_server";
+    log_context.thread_id = 0;
+
     try
     {
-        DL_SET_ENABLED(true);
-        DL_SET_LEVEL(DynaLog::DL_TRACE_LEV);
-        DL_SET_CERR_ENABLED(true);
-        DL_SET_SYSDL_ENABLED(false);
-
-        DL_INFO("DataFed repo server starting, ver " << repository::version::MAJOR << "." << repository::version::MINOR << "." << repository::version::PATCH );
+        DL_INFO(log_context, "DataFed repo server starting, ver " << repository::version::MAJOR << "." << repository::version::MINOR << "." << repository::version::PATCH );
 
         Repo::Config &  config = Repo::Config::getInstance();
         string          cfg_file;
@@ -131,27 +134,27 @@ int main( int a_argc, char ** a_argv )
         }
         catch( po::unknown_option & e )
         {
-            DL_ERROR( "Options error: " << e.what() );
+            DL_ERROR(log_context, "Options error: " << e.what() );
             return 1;
         }
 
-        Repo::Server server;
+        Repo::Server server(log_context);
 
         server.run();
 
-        DL_INFO( "DataFed repo server exiting" );
+        DL_INFO(log_context, "DataFed repo server exiting" );
     }
     catch( TraceException &e )
     {
-        DL_ERROR( "Exception: " << e.toString() );
+        DL_ERROR(log_context, "Exception: " << e.toString() );
     }
     catch( exception &e )
     {
-        DL_ERROR( "Exception: " << e.what() );
+        DL_ERROR(log_context, "Exception: " << e.what() );
     }
     catch( ... )
     {
-        DL_ERROR( "Unexpected/unknown exception" );
+        DL_ERROR(log_context, "Unexpected/unknown exception" );
     }
 
     return 0;

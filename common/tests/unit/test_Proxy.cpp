@@ -10,6 +10,7 @@
 // Local public includes
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
+#include "common/DynaLog.hpp"
 #include "common/ICredentials.hpp"
 #include "common/IOperator.hpp"
 #include "common/MessageFactory.hpp"
@@ -61,7 +62,10 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
 
   const std::string channel_between_proxy_and_backend = "channeltobackend";
   const std::string channel_between_proxy_and_frontend = "channeltofrontend";
-  CommunicatorFactory factory;
+
+  LogContext log_context;
+  log_context.thread_name = "test_proxy_thread";
+  CommunicatorFactory factory(log_context);
 
   const std::string server_id = "overlord";
   auto server = [&]() {
@@ -200,7 +204,10 @@ BOOST_AUTO_TEST_CASE( testing_Proxy ) {
         std::vector<std::unique_ptr<IOperator>> incoming_operators;
         incoming_operators.push_back( oper_factory.create(OperatorType::RouterBookKeeping, router_id_to_add) );
 
-        Proxy proxy(socket_options, socket_credentials, std::move(incoming_operators));
+        LogContext log_context_proxy;
+        log_context_proxy.thread_name = "proxy_thread";
+        log_context_proxy.thread_id = 1;
+        Proxy proxy(socket_options, socket_credentials, std::move(incoming_operators), log_context_proxy);
 
         std::chrono::duration<double> duration = std::chrono::milliseconds(100);
         proxy.setRunDuration(duration);
@@ -272,7 +279,10 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
    **/
   const std::string channel_between_proxy_and_backend = "channeltobackend2";
   const std::string channel_between_proxy_and_frontend = "channeltofrontend2";
-  CommunicatorFactory factory;
+
+  LogContext log_context;
+  log_context.thread_name = "test_proxy2_thread";
+  CommunicatorFactory factory(log_context);
 
   const std::string server_id = "overlord";
   auto server = [&]() {
@@ -396,7 +406,10 @@ BOOST_AUTO_TEST_CASE( testing_Proxy2 ) {
 
         }
 
-        Proxy proxy(socket_options, socket_credentials);
+        LogContext log_context_proxy_middle;
+        log_context_proxy_middle.thread_name = "middleman";
+        log_context_proxy_middle.thread_id = 1;
+        Proxy proxy(socket_options, socket_credentials, log_context_proxy_middle);
 
         std::chrono::duration<double> duration = std::chrono::milliseconds(30);
         proxy.setRunDuration(duration);
@@ -467,7 +480,10 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
   std::chrono::duration<double> test_duration = std::chrono::milliseconds(1000);
   const std::string channel_between_proxy_and_backend = "channeltobackend_chain";
   const std::string channel_between_proxy_and_frontend = "channeltofrontend_chain";
-  CommunicatorFactory factory;
+
+  LogContext log_context_proxy;
+  log_context_proxy.thread_name = "test_proxy_chain_thread";
+  CommunicatorFactory factory(log_context_proxy);
 
   const std::string server_id = "overlord";
   auto server = [&]() {
@@ -594,7 +610,10 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
 
         }
 
-        Proxy proxy(socket_options, socket_credentials);
+        LogContext log_context_proxy1;
+        log_context_proxy1.thread_name = "test_proxy1_chain_thread";
+        log_context_proxy1.thread_id = 1;
+        Proxy proxy(socket_options, socket_credentials, log_context_proxy1);
 
         proxy.setRunDuration(test_duration);
         proxy.run();
@@ -666,7 +685,10 @@ BOOST_AUTO_TEST_CASE( testing_ProxyChain ) {
 
         }
 
-        Proxy proxy(socket_options, socket_credentials);
+        LogContext log_context_proxy2;
+        log_context_proxy2.thread_name = "test_proxy2_chain_thread";
+        log_context_proxy2.thread_id = 2;
+        Proxy proxy(socket_options, socket_credentials, log_context_proxy2);
 
         proxy.setRunDuration(test_duration);
         proxy.run();
@@ -766,7 +788,10 @@ BOOST_AUTO_TEST_CASE( testing_Proxy_with_PERSISTENT_proxy_client ) {
    **/
   const std::string channel_between_proxy_and_backend = "channeltobackend3";
   const std::string channel_between_proxy_and_frontend = "channeltofrontend3";
-  CommunicatorFactory factory;
+
+  LogContext log_context;
+  log_context.thread_name = "test_persistent_proxy";
+  CommunicatorFactory factory(log_context);
 
   const std::string server_id = "overlord";
   auto server = [&]() {
@@ -892,7 +917,10 @@ BOOST_AUTO_TEST_CASE( testing_Proxy_with_PERSISTENT_proxy_client ) {
 
         }
 
-        Proxy proxy(socket_options, socket_credentials);
+        LogContext log_context;
+        log_context.thread_name = "test_persistent_proxy1";
+        log_context.thread_id = 1;
+        Proxy proxy(socket_options, socket_credentials, log_context);
 
         std::chrono::duration<double> duration = std::chrono::milliseconds(30);
         proxy.setRunDuration(duration);

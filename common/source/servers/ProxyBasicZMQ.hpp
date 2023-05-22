@@ -29,14 +29,17 @@ class ProxyBasicZMQ : public IServer {
     int m_client_zmq_type;
     int m_server_zmq_type;
 
+    int m_thread_count = 0;
     std::unordered_map<SocketRole, std::string> m_addresses;
     std::string m_client_host = "";
     std::string m_server_host = "";
+    LogContext m_log_context;
   public:
     /// Convenience constructor
     ProxyBasicZMQ(
       const std::unordered_map<SocketRole, SocketOptions> & socket_options,
-      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials);
+      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
+      LogContext log_context);
 
     virtual ServerType type() const noexcept final { return ServerType::PROXY_BASIC_ZMQ; }
     /**

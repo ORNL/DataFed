@@ -33,7 +33,8 @@ namespace SDMS {
     /// Convenience constructor
     ProxyBasicZMQ::ProxyBasicZMQ(
       const std::unordered_map<SocketRole, SocketOptions> & socket_options,
-      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials) {
+      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
+      LogContext log_context) : m_log_context(log_context) {
 
       if( socket_options.count(SocketRole::CLIENT) == 0 ) {
         EXCEPT(1, "ProxyBasicZMQ must have socket options for Client"); 
@@ -164,13 +165,16 @@ namespace SDMS {
        * Lambda is only needed if the proxy is not being run for an infinite
        * loop.
        **/
-			auto terminate_call = [](std::chrono::duration<double> duration, const std::string address){
+			auto terminate_call = [](std::chrono::duration<double> duration, const std::string address, int thread_id, LogContext log_context){
+        log_context.thread_name += "-terminate_after_timeout";
+        log_context.thread_id = thread_id;
+        DL_INFO(log_context, "Launching control thread for duration: " << duration.count() );
       	void * context = getContext();
 				auto control_local = zmq_socket(context, ZMQ_PUB);
-        std::cout << "CONTROL: Sleeping" << std::endl;
+        DL_INFO(log_context, "CONTROL: Sleeping");
         std::this_thread::sleep_for (duration);
 				zmq_bind( control_local, address.c_str());
-        std::cout << "CONTROL: TERMINATE" << std::endl;
+        DL_INFO(log_context, "CONTROL: TERMINATE");
 				std::string command = "TERMINATE";
 				zmq_send(control_local, command.c_str(), command.size(), 0);
         int rc_local = zmq_close (control_local);
@@ -183,7 +187,9 @@ namespace SDMS {
        * Thread is for debugging purposes mostly, for logging the messages
        * that are sent through the steerable proxy.
        **/
-			auto proxy_log_call = [](const std::string address){
+			auto proxy_log_call = [](const std::string address, int thread_id, LogContext log_context){
+        log_context.thread_name += "-capture_thread";
+        log_context.thread_id = thread_id;
       	void * context = getContext();
 				auto capture_local = zmq_socket(context, ZMQ_SUB);
 				zmq_bind( capture_local, address.c_str());
@@ -192,11 +198,10 @@ namespace SDMS {
         const int num_items_in_array = 1;
         int events_detected = 0;
         uint32_t timeout_milliseconds = 50;
-
+        DL_INFO(log_context, "CAPTURE: Starting thread");
         bool terminate = false;
         while( true ) {
           events_detected = zmq_poll( items, num_items_in_array, timeout_milliseconds );
-          std::cout << "CAPTURE: events " << events_detected << std::endl;
           if ( events_detected > 0) {
             
             zmq_msg_t zmq_msg;
@@ -212,8 +217,9 @@ namespace SDMS {
 
               // Stop when delimiter is read
               std::string new_msg((char*) zmq_msg_data(&zmq_msg), zmq_msg_size(&zmq_msg));
-              std::cout << "CAPTURE: msg is = " << new_msg << std::endl;
+              DL_TRACE(log_context, "CAPTURE: msg is = " << new_msg);
               if( new_msg.compare("TERMINATE") == 0){
+                DL_INFO(log_context, "CAPTURE: received TERMINATE message.");
                 terminate = true;
               }
             }
@@ -230,18 +236,16 @@ namespace SDMS {
 
       std::thread control_thread;
       if( m_run_infinite_loop == false) {
-        std::cout << "**************************************" << std::endl;
-        std::cout << "Launching control thread for duration " << m_run_duration.count() << std::endl;
-        control_thread = std::thread(terminate_call, m_run_duration, m_addresses[SocketRole::CONTROL]);
+        control_thread = std::thread(terminate_call, m_run_duration, m_addresses[SocketRole::CONTROL], m_thread_count, m_log_context);
+        ++m_thread_count;
       }
 
       std::thread capture_thread;
       if( m_debug_output ) {
-        std::cout << "Running CAPTURE Thread" << std::endl;
-			  capture_thread = std::thread(proxy_log_call, m_addresses[SocketRole::MONITOR]);
+			  capture_thread = std::thread(proxy_log_call, m_addresses[SocketRole::MONITOR], m_thread_count, m_log_context);
+        ++m_thread_count;
       }
 
-      std::cout << "Creating ROUTER socket" << std::endl;
 			void *router_frontend_socket = zmq_socket (ctx, ZMQ_ROUTER);
 			if( not router_frontend_socket) {
         EXCEPT(1, "Problem creating frontend ROUTER socket");
@@ -254,14 +258,13 @@ namespace SDMS {
        * The socket on the proxy that will connect with the frontend is a
        * server socket. The proxy serves the frontend.
        **/
-      std::cout << "Binding ROUTER to address: " << m_server_socket->getAddress() << std::endl;
+      DL_DEBUG(m_log_context, "Binding ROUTER to address: " << m_server_socket->getAddress() );
 			int rc = zmq_bind (router_frontend_socket, m_server_socket->getAddress().c_str());
 			if( rc ) {
         EXCEPT_PARAM(1, "Problem binding frontend ROUTER socket, address: " << m_server_socket->getAddress() << " zmq_error: " << zmq_strerror(zmq_errno()));
       }
 
 			// Backend socket talks to workers over inproc
-      std::cout << "Creating DEALER socket" << std::endl;
 			void *dealer_backend_socket = zmq_socket (ctx, ZMQ_DEALER);
       if( not router_frontend_socket) {
         EXCEPT(1, "Problem creating backend DEALER socket");
@@ -274,7 +277,7 @@ namespace SDMS {
        * The socket on the proxy that will connect with the backend is a
        * client socket. The proxy acts like a client to the backend.
        **/
-      std::cout << "Binding DEALER socket to address: " << m_client_socket->getAddress() << std::endl;
+      DL_DEBUG(m_log_context, "Binding DEALER socket to address: " << m_client_socket->getAddress() );
 			rc = zmq_bind (dealer_backend_socket, m_client_socket->getAddress().c_str());
 			if( rc ) {
         EXCEPT_PARAM(1, "Problem binding backend DEALER socket, address: " << m_client_socket->getAddress());

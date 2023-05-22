@@ -7,6 +7,7 @@
 // DataFed Common includes
 #include "common/CredentialFactory.hpp"
 #include "common/CommunicatorFactory.hpp"
+#include "common/DynaLog.hpp"
 #include "common/libjson.hpp"
 #include "common/ProtoBufMap.hpp"
 #include "common/TraceException.hpp"
@@ -40,16 +41,19 @@ map<uint16_t,ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 // TODO - This should be defined in proto files
 #define NOTE_MASK_MD_ERR 0x2000
 
-ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid ) :
+ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid, LogContext log_context_in ) :
     m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_worker_thread(0), m_run(true),
-    m_db_client( m_config.db_url , m_config.db_user, m_config.db_pass )
+    m_db_client( m_config.db_url , m_config.db_user, m_config.db_pass ),
+    m_log_context(log_context_in)
 {
     // This should be hidden behind a factory or some other builder
     m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
-    DL_DEBUG("Calling setupMsgHandlers");
     setupMsgHandlers();
-    DL_DEBUG("Creating m_worker_thread");
-    m_worker_thread = new thread( &ClientWorker::workerThread, this );
+    
+    LogContext log_context = m_log_context;
+    log_context.thread_name += std::to_string(log_context.thread_id) + "-WorkerThread";
+    log_context.thread_id = 0; 
+    m_worker_thread = new thread( &ClientWorker::workerThread, this, log_context );
 }
 
 ClientWorker::~ClientWorker()
@@ -99,7 +103,6 @@ ClientWorker::setupMsgHandlers()
         // Register and setup handlers for the Anonymous interface
 
         uint8_t proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_ANONONYMOUS); //REG_PROTO( SDMS::Anon );
-        std::cout << "Setting up MSGHandler with proto_id " << proto_id << std::endl;
         // Requests that require the server to take action
         SET_MSG_HANDLER( proto_id, VersionRequest, &ClientWorker::procVersionRequest );
         SET_MSG_HANDLER( proto_id, AuthenticateByPasswordRequest, &ClientWorker::procAuthenticateByPasswordRequest );
@@ -193,8 +196,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate );
         SET_MSG_HANDLER_DB( proto_id, ACLSharedListRequest, ListingReply, aclSharedList );
         SET_MSG_HANDLER_DB( proto_id, ACLSharedListItemsRequest, ListingReply, aclSharedListItems );
-        //SET_MSG_HANDLER_DB( proto_id, ACLBySubjectRequest, ListingReply, aclBySubject );
-        //SET_MSG_HANDLER_DB( proto_id, ACLListItemsBySubjectRequest, ListingReply, aclListItemsBySubject );
         SET_MSG_HANDLER_DB( proto_id, GroupCreateRequest, GroupDataReply, groupCreate );
         SET_MSG_HANDLER_DB( proto_id, GroupUpdateRequest, GroupDataReply, groupUpdate );
         SET_MSG_HANDLER_DB( proto_id, GroupDeleteRequest, AckReply, groupDelete );
@@ -202,9 +203,6 @@ ClientWorker::setupMsgHandlers()
         SET_MSG_HANDLER_DB( proto_id, GroupViewRequest, GroupDataReply, groupView );
         SET_MSG_HANDLER_DB( proto_id, RepoListRequest, RepoDataReply, repoList );
         SET_MSG_HANDLER_DB( proto_id, RepoViewRequest, RepoDataReply, repoView );
-        //SET_MSG_HANDLER_DB( proto_id, RepoCreateRequest, RepoDataReply, repoCreate );
-        //SET_MSG_HANDLER_DB( proto_id, RepoUpdateRequest, RepoDataReply, repoUpdate );
-        //SET_MSG_HANDLER_DB( proto_id, RepoDeleteRequest, AckReply, repoDelete );
         SET_MSG_HANDLER_DB( proto_id, RepoCalcSizeRequest, RepoCalcSizeReply, repoCalcSize );
         SET_MSG_HANDLER_DB( proto_id, RepoListAllocationsRequest, RepoAllocationsReply, repoListAllocations );
         SET_MSG_HANDLER_DB( proto_id, RepoListSubjectAllocationsRequest, RepoAllocationsReply, repoListSubjectAllocations );
@@ -224,7 +222,7 @@ ClientWorker::setupMsgHandlers()
     }
     catch( TraceException & e)
     {
-        DL_ERROR( "ClientWorker::setupMsgHandlers, exception: " << e.toString() );
+        DL_ERROR(m_log_context, "exception: " << e.toString() );
         throw;
     }
 }
@@ -233,11 +231,11 @@ ClientWorker::setupMsgHandlers()
  * ClientWorker message handling thread.
  */
 void
-ClientWorker::workerThread()
+ClientWorker::workerThread(LogContext log_context)
 {
 
-  DL_DEBUG( "W" << m_tid << " thread started" );
-  CommunicatorFactory factory;
+  DL_DEBUG(log_context, "W" << m_tid << " thread started" );
+  CommunicatorFactory factory(log_context);
 
   const std::string client_id = "client_worker_" + std::to_string(m_tid);
   auto client = [&]() {
@@ -274,9 +272,7 @@ ClientWorker::workerThread()
     ProtoBufMap proto_map;
     uint16_t task_list_msg_type = proto_map.getMessageType( 2, "TaskListRequest");
 
-
-    //int delay;
-    DL_DEBUG( "W" << m_tid << " m_run " << m_run);
+    DL_DEBUG(log_context, "W" << m_tid << " m_run " << m_run);
 
     while ( m_run )
     {
@@ -288,23 +284,16 @@ ClientWorker::workerThread()
                 IMessage & message = *response.message;
                 uint16_t msg_type = std::get<uint16_t>(message.get(constants::message::google::MSG_TYPE));
                 //msg_type = m_msg_buf.getMsgType();
-                DL_DEBUG( "W" << m_tid << " received message: " << proto_map.toString(msg_type) );
-
-                // DEBUG - Inject random delay in message processing
-                /*delay = (rand() % 2000)*1000;
-                if ( delay )
-                {
-                    usleep( delay );
-                }*/
+                DL_DEBUG(log_context, "W" << m_tid << " received message: " << proto_map.toString(msg_type) );
 
                 const std::string uid = std::get<std::string>(message.get(MessageAttribute::ID));
                 if ( msg_type != task_list_msg_type )
                 {
-                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< uid <<"]" );
+                    DL_DEBUG(log_context, "W" << m_tid << " msg " << msg_type << " ["<< uid <<"]" );
                 }
        
                 if(uid.compare("anon") == 0 && msg_type > 0x1FF ){
-                    DL_WARN( "W" << m_tid << " unauthorized access attempt from anon user" );
+                    DL_WARNING(log_context, "W" << m_tid << " unauthorized access attempt from anon user" );
                     auto response_msg = m_msg_factory.createResponseEnvelope(message);
 
                     // I know this is not great... allocating memory here slow 
@@ -315,145 +304,52 @@ ClientWorker::workerThread()
                     response_msg->setPayload(std::move(nack));
                     client->send(*response_msg); 
                 } else {
-                    DL_DEBUG( "W"<<m_tid<<" getting handler from map: msg_type = "  << proto_map.toString(msg_type));
+                    DL_DEBUG(log_context, "W"<<m_tid<<" getting handler from map: msg_type = "  << proto_map.toString(msg_type));
                     if( m_msg_handlers.count( msg_type ) ) {
 
                         auto handler = m_msg_handlers.find( msg_type );
 
-                        DL_TRACE( "W"<< m_tid <<" calling handler/attempting to call function of worker" );
+                        DL_TRACE(log_context, "W"<< m_tid <<" calling handler/attempting to call function of worker" );
 
                         // Have to move the actual unique_ptr, change ownership not simply passing a reference
-                        auto response_msg = (this->*handler->second)( uid, std::move(response.message) );
+                        auto response_msg = (this->*handler->second)( uid, std::move(response.message), log_context );
                         if ( response_msg )
                         {
                             // Gather msg metrics except on task lists (web clients poll)
                             if ( msg_type != task_list_msg_type )
                                 m_core.metricsUpdateMsgCount( uid, msg_type );
 
-                            DL_DEBUG( "W" << m_tid << " sending msg of type " << proto_map.toString(msg_type));
-                            // The freaking handlers touch everything.
+                            DL_DEBUG(log_context, "W" << m_tid << " sending msg of type " << proto_map.toString(msg_type));
                             client->send(*response_msg );
-                            DL_DEBUG( "Message sent ");
-                            /*if ( msg_type != task_list_msg_type )
-                            {
-                                DL_DEBUG( "W"<<m_tid<<" reply sent." );
-                            }*/
+                            DL_TRACE(log_context, "Message sent ");
                         }
                     } else {
-                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
+                        DL_ERROR(log_context, "W" << m_tid << " recvd unregistered msg: " << msg_type );
                     }
                 }
             }
         }
         catch( TraceException & e )
         {
-            DL_ERROR( "W" << m_tid << " " << e.toString() );
+            DL_ERROR(log_context, "W" << m_tid << " " << e.toString() );
         }
         catch( exception & e )
         {
-            DL_ERROR( "W" << m_tid << " " << e.what() );
+            DL_ERROR(log_context, "W" << m_tid << " " << e.what() );
         }
         catch( ... )
         {
-            DL_ERROR( "W" << m_tid << " unknown exception type" );
+            DL_ERROR(log_context, "W" << m_tid << " unknown exception type" );
         }
     }
 
-    DL_DEBUG( "W exiting loop" );
+    DL_DEBUG(log_context, "W exiting loop" );
 }
-////////////////Start of old code
-//
-//    DL_DEBUG( "W" << m_tid << " thread started" );
-//
-//    //MsgComm         comm( "inproc://workers", MsgComm::DEALER, false );
-//    uint16_t        msg_type;
-//    map<uint16_t,msg_fun_t>::iterator handler;
-//
-//    uint16_t task_list_msg_type = MsgBuf::findMessageType( 2, "TaskListRequest" );
-//
-//    Anon::NackReply nack;
-//    nack.set_err_code( ID_AUTHN_REQUIRED );
-//    nack.set_err_msg( "Authentication required" );
-//
-//    //int delay;
-//    DL_DEBUG( "W" << m_tid << " m_run " << m_run);
-//
-//    while ( m_run )
-//    {
-//        try
-//        {
-//            if ( comm.recv( m_msg_buf, true, 1000 ))
-//            {
-//                msg_type = m_msg_buf.getMsgType();
-//                DL_DEBUG( "W" << m_tid << " received message" );
-//
-//                // DEBUG - Inject random delay in message processing
-//                /*delay = (rand() % 2000)*1000;
-//                if ( delay )
-//                {
-//                    usleep( delay );
-//                }*/
-//
-//                if ( msg_type != task_list_msg_type )
-//                {
-//                    DL_DEBUG( "W" << m_tid << " msg " << msg_type << " ["<< m_msg_buf.getUID() <<"]" );
-//                }
-//
-//                if ( strncmp( m_msg_buf.getUID().c_str(), "anon_", 5 ) == 0 && msg_type > 0x1FF )
-//                {
-//                    DL_WARN( "W" << m_tid << " unauthorized access attempt from anon user" );
-//                    m_msg_buf.serialize( nack );
-//                    comm.send( m_msg_buf );
-//                }
-//                else
-//                {
-//                    DL_DEBUG( "W"<<m_tid<<" getting handler from map" );
-//                    handler = m_msg_handlers.find( msg_type );
-//                    if ( handler != m_msg_handlers.end() )
-//                    {
-//                        DL_TRACE( "W"<<m_tid<<" calling handler/attempting to call function of worker" );
-//
-//                        if ( (this->*handler->second)( m_msg_buf.getUID() ))
-//                        {
-//                            // Gather msg metrics except on task lists (web clients poll)
-//                            if ( msg_type != task_list_msg_type )
-//                                m_core.metricsUpdateMsgCount( m_msg_buf.getUID(), msg_type );
-//
-//                            DL_DEBUG( "W" << m_tid << " sending msg of type " << msg_type);
-//                            comm.send( m_msg_buf );
-//                            DL_DEBUG( "Message sent ");
-//                            /*if ( msg_type != task_list_msg_type )
-//                            {
-//                                DL_DEBUG( "W"<<m_tid<<" reply sent." );
-//                            }*/
-//                        }
-//                    } else {
-//                        DL_ERROR( "W" << m_tid << " recvd unregistered msg: " << msg_type );
-//                    }
-//                }
-//            }
-//        }
-//        catch( TraceException & e )
-//        {
-//            DL_ERROR( "W" << m_tid << " " << e.toString() );
-//        }
-//        catch( exception & e )
-//        {
-//            DL_ERROR( "W" << m_tid << " " << e.what() );
-//        }
-//        catch( ... )
-//        {
-//            DL_ERROR( "W" << m_tid << " unknown exception type" );
-//        }
-//    }
-//
-//    DL_DEBUG( "W exiting loop" );
-//}
 
 // TODO The macros below should be replaced with templates
 
 /// This macro defines the begining of the common message handling code for all local handlers
-#define PROC_MSG_BEGIN( msgclass, replyclass ) \
+#define PROC_MSG_BEGIN( msgclass, replyclass, log_context ) \
 msgclass *request = 0; \
 bool send_reply = true; \
 ::google::protobuf::Message *base_msg = std::get<google::protobuf::Message*>(msg_request->getPayload()); \
@@ -462,7 +358,7 @@ if ( base_msg ) \
     request = dynamic_cast<msgclass*>( base_msg ); \
     if ( request ) \
     { \
-        DL_TRACE( "Rcvd [" << request->DebugString() << "]"); \
+        DL_TRACE(log_context, "Rcvd [" << request->DebugString() << "]"); \
         std::unique_ptr<google::protobuf::Message> reply_ptr = std::make_unique<replyclass>(); \
         replyclass & reply = *(dynamic_cast<replyclass *>(reply_ptr.get())); \
         try \
@@ -471,14 +367,14 @@ if ( base_msg ) \
 
 /// This macro defines the end of the common message handling code for all local handlers
 
-#define PROC_MSG_END \
+#define PROC_MSG_END(log_context) \
             if ( send_reply ) { \
                 auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
                 msg_reply->setPayload(std::move(reply_ptr)); \
                 return msg_reply; \
             } \
         } catch( TraceException &e ) { \
-            DL_ERROR( "W"<<m_tid<<" " << e.toString() ); \
+            DL_ERROR(log_context, "W"<<m_tid<<" " << e.toString() ); \
             if ( send_reply ) { \
                 auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
                 auto nack = std::make_unique<NackReply>(); \
@@ -488,7 +384,7 @@ if ( base_msg ) \
                 return msg_reply; \
             } \
         } catch( exception &e ) { \
-            DL_ERROR( "W"<<m_tid<<" " << e.what() ); \
+            DL_ERROR(log_context, "W"<<m_tid<<" " << e.what() ); \
             if ( send_reply ) { \
                 auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
                 auto nack = std::make_unique<NackReply>(); \
@@ -498,7 +394,7 @@ if ( base_msg ) \
                 return msg_reply; \
             } \
         } catch(...) { \
-            DL_ERROR( "W"<<m_tid<<" unkown exception while processing message!" ); \
+            DL_ERROR(log_context, "W"<<m_tid<<" unkown exception while processing message!" ); \
             if ( send_reply ) { \
                 auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
                 auto nack = std::make_unique<NackReply>(); \
@@ -508,12 +404,12 @@ if ( base_msg ) \
                 return msg_reply; \
             } \
         } \
-        DL_TRACE( "Sent: " << reply.DebugString()); \
+        DL_TRACE(log_context, "Sent: " << reply.DebugString()); \
     } else { \
-        DL_ERROR( "W"<<m_tid<<": dynamic cast of msg buffer failed!" );\
+        DL_ERROR(log_context, "W"<<m_tid<<": dynamic cast of msg buffer failed!" );\
     } \
 } else { \
-    DL_ERROR( "W"<<m_tid<<": message parse failed (malformed or unregistered msg type)." ); \
+    DL_ERROR(log_context, "W"<<m_tid<<": message parse failed (malformed or unregistered msg type)." ); \
     auto msg_reply = m_msg_factory.createResponseEnvelope( *msg_request ); \
     auto nack = std::make_unique<NackReply>(); \
     nack->set_err_code( ID_BAD_REQUEST ); \
@@ -523,116 +419,72 @@ if ( base_msg ) \
 } \
 return std::unique_ptr<IMessage>();
 
-
-
-//#define PROC_MSG_END \
-//            if ( send_reply ) \
-//                m_msg_buf.serialize( reply ); \
-//        } \
-//        catch( TraceException &e ) \
-//        { \
-//            DL_ERROR( "W"<<m_tid<<" " << e.toString() ); \
-//            if ( send_reply ) { \
-//                NackReply nack; \
-//                nack.set_err_code( (ErrorCode) e.getErrorCode() ); \
-//                nack.set_err_msg( e.toString( true ) ); \
-//                m_msg_buf.serialize( nack ); }\
-//        } \
-//        catch( exception &e ) \
-//        { \
-//            DL_ERROR( "W"<<m_tid<<" " << e.what() ); \
-//            if ( send_reply ) { \
-//                NackReply nack; \
-//                nack.set_err_code( ID_INTERNAL_ERROR ); \
-//                nack.set_err_msg( e.what() ); \
-//                m_msg_buf.serialize( nack ); } \
-//        } \
-//        catch(...) \
-//        { \
-//            DL_ERROR( "W"<<m_tid<<" unkown exception while processing message!" ); \
-//            if ( send_reply ) { \
-//                NackReply nack; \
-//                nack.set_err_code( ID_INTERNAL_ERROR ); \
-//                nack.set_err_msg( "Unknown exception type" ); \
-//                m_msg_buf.serialize( nack ); } \
-//        } \
-//        DL_TRACE( "Sent: " << reply.DebugString()); \
-//    } \
-//    else { \
-//        DL_ERROR( "W"<<m_tid<<": dynamic cast of msg buffer failed!" );\
-//    } \
-//    delete base_msg; \
-//} \
-//else { \
-//    DL_ERROR( "W"<<m_tid<<": message parse failed (malformed or unregistered msg type)." ); \
-//    NackReply nack; \
-//    nack.set_err_code( ID_BAD_REQUEST ); \
-//    nack.set_err_msg( "Message parse failed (malformed or unregistered msg type)" ); \
-//    m_msg_buf.serialize( nack ); \
-//} \
-//return send_reply;
-//
 /// This method wraps all direct-to-DB message handler calls
-template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &)>
+template<typename RQ, typename RP, void (DatabaseAPI::*func)( const RQ &, RP &, LogContext log_context)>
 std::unique_ptr<IMessage>
-ClientWorker::dbPassThrough( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request  )
+ClientWorker::dbPassThrough( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context  )
 {
-    PROC_MSG_BEGIN( RQ, RP )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RQ, RP, log_context )
 
     m_db_client.setClient( a_uid );
 
     // Both request and reply here need to be Goolge protocol buffer classes
-    (m_db_client.*func)( *request, reply );
+    (m_db_client.*func)( *request, reply, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procRepoCreate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRepoCreate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RepoCreateRequest, RepoDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RepoCreateRequest, RepoDataReply, log_context )
 
     m_db_client.setClient( a_uid );
 
     // Both request and reply here need to be Google protocol buffer classes
-    m_db_client.repoCreate( *request, reply );
+    m_db_client.repoCreate( *request, reply, log_context );
 
     m_config.triggerRepoCacheRefresh();
-    PROC_MSG_END;
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procRepoUpdate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRepoUpdate( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RepoUpdateRequest, RepoDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RepoUpdateRequest, RepoDataReply, log_context )
 
     m_db_client.setClient( a_uid );
     // Both request and reply here need to be Google protocol buffer classes
-    m_db_client.repoUpdate( *request, reply );
+    m_db_client.repoUpdate( *request, reply, log_context );
     
     m_config.triggerRepoCacheRefresh();
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procRepoDelete( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRepoDelete( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RepoDeleteRequest, AckReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RepoDeleteRequest, AckReply, log_context )
     m_db_client.setClient( a_uid );
 
     // Both request and reply here need to be Google protocol buffer classes
-    m_db_client.repoDelete( *request, reply );
+    m_db_client.repoDelete( *request, reply, log_context );
     m_config.triggerRepoCacheRefresh();
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procVersionRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procVersionRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( VersionRequest, VersionReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( VersionRequest, VersionReply, log_context )
     (void)a_uid;
-    DL_INFO( "Ver request" );
+    DL_TRACE(log_context, "Version request" );
 
     reply.set_release_year(DATAFED_RELEASE_YEAR);
     reply.set_release_month(DATAFED_RELEASE_MONTH);
@@ -647,87 +499,83 @@ ClientWorker::procVersionRequest( const std::string & a_uid, std::unique_ptr<IMe
     reply.set_component_major(core::version::MAJOR);
     reply.set_component_minor(core::version::MINOR);
     reply.set_component_patch(core::version::PATCH);
-    //reply.set_major( VER_MAJOR );
-    //reply.set_mapi_major( VER_MAPI_MAJOR );
-    //reply.set_mapi_minor( VER_MAPI_MINOR );
-    //reply.set_core( VER_CORE );
-    //reply.set_repo( VER_REPO );
-    //reply.set_web( VER_WEB );
-    //reply.set_client_py( VER_CLIENT_PY );*/
-    std::cout << "Setting version info " << std::endl;
-    PROC_MSG_END
+
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procAuthenticateByPasswordRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
     (void)a_uid;
-    PROC_MSG_BEGIN( AuthenticateByPasswordRequest, AuthStatusReply )
-
-    DL_INFO( "Starting manual password authentication for " << request->uid() );
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( AuthenticateByPasswordRequest, AuthStatusReply, log_context )
+    DL_INFO(log_context, "Starting manual password authentication for " << request->uid() );
 
     m_db_client.setClient( request->uid() );
-    m_db_client.clientAuthenticateByPassword( request->password(), reply );
+    m_db_client.clientAuthenticateByPassword( request->password(), reply, log_context );
 
-    DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
+    DL_INFO(log_context, "Manual password authentication SUCCESS for " << reply.uid() );
 
-    m_core.authenticateClient( a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)), reply.uid() );
+    m_core.authenticateClient( a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)), reply.uid(), log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procAuthenticateByTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
     (void)a_uid;
-    PROC_MSG_BEGIN( AuthenticateByTokenRequest, AuthStatusReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( AuthenticateByTokenRequest, AuthStatusReply, log_context )
 
-    DL_INFO( "Starting manual token authentication" );
+    DL_INFO(log_context, "Starting manual token authentication" );
 
     m_db_client.setClient( a_uid );
-    m_db_client.clientAuthenticateByToken( request->token(), reply );
+    m_db_client.clientAuthenticateByToken( request->token(), reply, log_context );
 
-    DL_INFO( "Manual authentication SUCCESS for " << reply.uid() );
+    DL_INFO(log_context, "Manual token authentication SUCCESS for " << reply.uid() );
 
-    m_core.authenticateClient( a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)), reply.uid() );
+    m_core.authenticateClient( a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)), reply.uid(), log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procGetAuthStatusRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procGetAuthStatusRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
     (void)a_uid;
-    PROC_MSG_BEGIN( GetAuthStatusRequest, AuthStatusReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( GetAuthStatusRequest, AuthStatusReply, log_context )
 
     if ( strncmp( a_uid.c_str(), "anon", 4 ) == 0 )
     {
-        DL_INFO(a_uid << " not authorized");
+        DL_WARNING(log_context, a_uid << std::string(" not authorized") );
         reply.set_auth( false );
     }
     else
     {
-        DL_INFO(a_uid << " authorized");
+        DL_INFO(log_context, a_uid << " authorized");
         reply.set_auth( true );
         reply.set_uid( a_uid );
     }
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
     (void)a_uid;
-    PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( GenerateCredentialsRequest, GenerateCredentialsReply, log_context )
 
-    DL_INFO( "Generating new credentials for " << a_uid );
+    DL_INFO(log_context, "Generating new credentials for " << a_uid );
 
     m_db_client.setClient( a_uid );
 
     string pub_key, priv_key;
 
-    if ( !m_db_client.userGetKeys( pub_key, priv_key ))
+    if ( !m_db_client.userGetKeys( pub_key, priv_key, log_context ))
     {
         char public_key[41];
         char secret_key[41];
@@ -738,7 +586,7 @@ ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid, std::un
         pub_key = public_key;
         priv_key = secret_key;
 
-        m_db_client.userSetKeys( pub_key, priv_key );
+        m_db_client.userSetKeys( pub_key, priv_key, log_context );
     }
 
     reply.set_pub_key( pub_key );
@@ -746,59 +594,62 @@ ClientWorker::procGenerateCredentialsRequest( const std::string & a_uid, std::un
 
     if ( request->has_domain() && request->has_uid() )
     {
-        m_db_client.clientLinkIdentity( request->domain() + "." + to_string( request->uid() ));
+        m_db_client.clientLinkIdentity( request->domain() + "." + to_string( request->uid() ), log_context);
     }
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRevokeCredentialsRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
     (void)a_uid;
-    PROC_MSG_BEGIN( RevokeCredentialsRequest, AckReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RevokeCredentialsRequest, AckReply, log_context )
 
-    DL_INFO( "Revoking credentials for " << a_uid );
+    DL_INFO(log_context, "Revoking credentials for " << a_uid );
 
     m_db_client.setClient( a_uid );
-    m_db_client.userClearKeys();
+    m_db_client.userClearKeys(log_context);
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procDataGetRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procDataGetRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( DataGetRequest, DataGetReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( DataGetRequest, DataGetReply, log_context )
 
-    DL_INFO( "CWORKER procDataGetRequest, uid: " << a_uid );
+    DL_DEBUG(log_context, "procDataGetRequest, uid: " << a_uid );
 
     libjson::Value result;
 
     m_db_client.setClient( a_uid );
-    m_db_client.taskInitDataGet( *request, reply, result );
-    handleTaskResponse( result );
+    m_db_client.taskInitDataGet( *request, reply, result, log_context );
+    handleTaskResponse( result, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procDataPutRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procDataPutRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( DataPutRequest, DataPutReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( DataPutRequest, DataPutReply, log_context )
 
-    DL_INFO( "CWORKER procDataPutRequest, uid: " << a_uid );
+    DL_DEBUG(log_context, "procDataPutRequest, uid: " << a_uid );
 
     libjson::Value result;
 
     m_db_client.setClient( a_uid );
-    m_db_client.taskInitDataPut( *request, reply, result );
-    handleTaskResponse( result );
+    m_db_client.taskInitDataPut( *request, reply, result, log_context );
+    handleTaskResponse( result, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 void
@@ -827,13 +678,14 @@ ClientWorker::schemaEnforceRequiredProperties( const nlohmann::json & a_schema )
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procSchemaCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procSchemaCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( SchemaCreateRequest, AckReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( SchemaCreateRequest, AckReply, log_context )
 
     m_db_client.setClient( a_uid );
 
-    DL_INFO( "Schema create" );
+    DL_DEBUG(log_context, "Schema create" );
 
     try
     {
@@ -841,30 +693,31 @@ ClientWorker::procSchemaCreateRequest( const std::string & a_uid, std::unique_pt
 
         schemaEnforceRequiredProperties( schema );
 
-        nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+        nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2, log_context ));
 
         validator.set_root_schema( schema );
 
-        m_db_client.schemaCreate( *request );
+        m_db_client.schemaCreate( *request, log_context );
     }
     catch( exception & e )
     {
+        DL_ERROR(log_context, "Invalid metadata schema: " << e.what() );
         EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
-        DL_ERROR( "Invalid metadata schema: " << e.what() );
     }
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procSchemaReviseRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procSchemaReviseRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( SchemaReviseRequest, AckReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( SchemaReviseRequest, AckReply, log_context )
 
     m_db_client.setClient( a_uid );
 
-    DL_INFO( "Schema revise" );
+    DL_DEBUG(log_context, "Schema revise" );
 
     if ( request->has_def() )
     {
@@ -874,30 +727,31 @@ ClientWorker::procSchemaReviseRequest( const std::string & a_uid, std::unique_pt
 
             schemaEnforceRequiredProperties( schema );
 
-            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2, log_context ));
 
             validator.set_root_schema( schema );
         }
         catch( exception & e )
         {
+            DL_ERROR( log_context, "Invalid metadata schema: " << e.what() );
             EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
-            DL_ERROR( "Invalid metadata schema: " << e.what() );
         }
     }
 
-    m_db_client.schemaRevise( *request );
+    m_db_client.schemaRevise( *request, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procSchemaUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procSchemaUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( SchemaUpdateRequest, AckReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( SchemaUpdateRequest, AckReply, log_context )
 
     m_db_client.setClient( a_uid );
 
-    DL_INFO( "Schema update" );
+    DL_DEBUG(log_context, "Schema update" );
 
     if ( request->has_def() )
     {
@@ -907,28 +761,30 @@ ClientWorker::procSchemaUpdateRequest( const std::string & a_uid, std::unique_pt
 
             schemaEnforceRequiredProperties( schema );
 
-            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2, log_context ));
 
             validator.set_root_schema( schema );
         }
         catch( exception & e )
         {
+            DL_ERROR(log_context, "Invalid metadata schema: " << e.what() );
             EXCEPT_PARAM( 1, "Invalid metadata schema: " << e.what() );
-            DL_ERROR( "Invalid metadata schema: " << e.what() );
         }
     }
 
-    m_db_client.schemaUpdate( *request );
+    m_db_client.schemaUpdate( *request, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procMetadataValidateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procMetadataValidateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    DL_INFO( "Meta validate" );
 
-    PROC_MSG_BEGIN( MetadataValidateRequest, MetadataValidateReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( MetadataValidateRequest, MetadataValidateReply, log_context )
+
+    DL_DEBUG(log_context, "Metadata validate" );
 
     m_db_client.setClient( a_uid );
 
@@ -937,16 +793,17 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid, std::uniqu
     try
     {
         libjson::Value sch;
-        DL_INFO( "Schema " << request->sch_id() );
+        DL_TRACE(log_context, "Schema " << request->sch_id() );
 
-        m_db_client.schemaView( request->sch_id(), sch );
+        m_db_client.schemaView( request->sch_id(), sch, log_context );
 
-        DL_INFO( "Schema: " << sch.asArray().begin()->asObject().getValue("def").toString() );
+        DL_TRACE(log_context, "Schema: " << sch.asArray().begin()->asObject().getValue("def").toString() );
 
         schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
     }
     catch( TraceException & e )
     {
+        DL_ERROR(log_context, "Schema validate failure: " << e.what() );
         throw;
     }
     catch( exception & e )
@@ -954,15 +811,11 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid, std::uniqu
         EXCEPT_PARAM(1,"Schema parse error: " << e.what() );
     }
 
-    //DL_INFO( "Schema " << schema );
 
-    nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
-
+    nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2, log_context ));
     try
     {
-        //DL_INFO( "Setting root schema" );
         validator.set_root_schema( schema );
-        //DL_INFO( "Validating" );
 
         nlohmann::json md = nlohmann::json::parse( request->metadata() );
 
@@ -972,7 +825,7 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid, std::uniqu
     catch( exception & e )
     {
         m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
-        DL_ERROR( "Invalid metadata schema: " << e.what() );
+        DL_ERROR(log_context, "Invalid metadata schema: " << e.what() );
     }
 
 
@@ -981,22 +834,21 @@ ClientWorker::procMetadataValidateRequest( const std::string & a_uid, std::uniqu
         reply.set_errors( m_validator_err );
     }
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procRecordCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRecordCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RecordCreateRequest, RecordDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RecordCreateRequest, RecordDataReply, log_context )
 
     m_db_client.setClient( a_uid );
 
     // Validate metdata if present
 
-    //libjson::Value result;
-
-    DL_INFO("Creating record");
+    DL_DEBUG(log_context, "Creating record");
 
     m_validator_err.clear();
 
@@ -1007,24 +859,20 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid, std::unique_pt
 
     if ( request->has_metadata() && request->has_sch_id() )
     {
-        //DL_INFO("Has metadata/schema");
-        //DL_INFO( "Must validate JSON, schema " << s->second.asString() );
 
         nlohmann::json schema;
 
         try
         {
             libjson::Value sch;
-            m_db_client.schemaView( request->sch_id(), sch );
+            m_db_client.schemaView( request->sch_id(), sch, log_context );
             schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
 
-            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2, log_context ));
 
             try
             {
-                //DL_INFO( "Setting root schema" );
                 validator.set_root_schema( schema );
-                //DL_INFO( "Validating" );
 
                 nlohmann::json md = nlohmann::json::parse( request->metadata() );
 
@@ -1034,13 +882,13 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid, std::unique_pt
             catch( exception & e )
             {
                 m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
-                DL_ERROR( "Invalid metadata schema: " << e.what() );
+                DL_ERROR(log_context, "Invalid metadata schema: " << e.what() );
             }
         }
         catch( exception & e )
         {
             m_validator_err = string( "Metadata schema error: ") + e.what() + "\n";
-            DL_ERROR( "Could not load metadata schema: " << e.what() );
+            DL_ERROR(log_context, "Could not load metadata schema: " << e.what() );
         }
 
         if ( request->has_sch_enforce() && m_validator_err.size() )
@@ -1049,43 +897,42 @@ ClientWorker::procRecordCreateRequest( const std::string & a_uid, std::unique_pt
         }
     }
 
-    m_db_client.recordCreate( *request, reply );
+    m_db_client.recordCreate( *request, reply, log_context );
 
     if ( m_validator_err.size() )
     {
-        DL_ERROR( "Validation error - update record" );
+        DL_ERROR(log_context, "Validation error - update record" );
 
         RecordData * data = reply.mutable_data(0);
 
-        m_db_client.recordUpdateSchemaError( data->id(), m_validator_err );
+        m_db_client.recordUpdateSchemaError( data->id(), m_validator_err, log_context );
         // TODO need a def for md_err mask
         data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
         data->set_md_err_msg( m_validator_err );
     }
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procRecordUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRecordUpdateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RecordUpdateRequest, RecordDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RecordUpdateRequest, RecordDataReply, log_context )
 
     m_db_client.setClient( a_uid );
 
     // Validate metdata if present
 
     libjson::Value result;
-    //nlohmann::json result;
 
-    DL_INFO("Updating record");
+    DL_DEBUG(log_context, "Updating record");
 
     m_validator_err.clear();
 
     if ( request->has_metadata() || ( request->has_sch_id() && request->sch_id().size() ) || request->has_sch_enforce() )
     {
-        //DL_INFO("Has metadata/schema");
         string metadata, cur_metadata, sch_id;
         bool merge = true;
 
@@ -1102,7 +949,7 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid, std::unique_pt
 
             view_request.set_id( request->id() );
 
-            m_db_client.recordView( view_request, view_reply );
+            m_db_client.recordView( view_request, view_reply, log_context );
 
             if ( request->has_metadata() && merge )
             {
@@ -1133,27 +980,24 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid, std::unique_pt
 
         if ( metadata.size() && sch_id.size() )
         {
-            DL_INFO( "Must validate JSON, schema " << sch_id );
+            DL_TRACE(log_context, "Must validate JSON, schema " << sch_id );
 
             libjson::Value sch;
-            m_db_client.schemaView( sch_id, sch );
+            m_db_client.schemaView( sch_id, sch, log_context );
 
-            DL_INFO( "Schema record JSON:" << sch.toString() );
-            //DL_INFO( "Schema def STR:" << sch.asObject().getValue("def").toString() );
+            DL_TRACE(log_context, "Schema record JSON:" << sch.toString() );
 
             nlohmann::json schema = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
 
-            DL_INFO( "Schema nlohmann: " << schema );
+            DL_TRACE(log_context, "Schema nlohmann: " << schema );
 
-            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2 ));
+            nlohmann::json_schema::json_validator validator( bind( &ClientWorker::schemaLoader, this, placeholders::_1, placeholders::_2, log_context ));
 
             try
             {
-                DL_INFO( "Setting root schema" );
                 validator.set_root_schema( schema );
 
                 // TODO This is a hacky way to convert between JSON implementations...
-                DL_INFO( "Parse md" );
 
                 nlohmann::json md = nlohmann::json::parse( metadata );
 
@@ -1165,34 +1009,32 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid, std::unique_pt
                     md = cur_md;
                 }
 
-                DL_INFO( "Validating" );
-
                 validator.validate( md, *this );
             }
             catch( exception & e )
             {
                 m_validator_err = string( "Invalid metadata schema: ") + e.what() + "\n";
-                DL_ERROR( "Invalid metadata schema: " << e.what() );
+                DL_WARNING(log_context, "Invalid metadata schema: " << e.what() );
             }
 
             if ( request->has_sch_enforce() && m_validator_err.size() )
             {
-                EXCEPT( 1, m_validator_err );
+                EXCEPT(1, m_validator_err );
             }
         }
         else if ( request->has_sch_enforce() )
         {
-            EXCEPT( 1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
+            EXCEPT(1, "Enforce schema option specified, but metadata and/or schema ID is missing." );
         }
     }
 
-    m_db_client.recordUpdate( *request, reply, result );
+    m_db_client.recordUpdate( *request, reply, result, log_context );
 
     if ( m_validator_err.size() )
     {
-        DL_ERROR( "Validation error - update record" );
+        DL_WARNING(log_context, "Validation error - while attempting to update record" );
 
-        m_db_client.recordUpdateSchemaError( request->id(), m_validator_err );
+        m_db_client.recordUpdateSchemaError( request->id(), m_validator_err, log_context );
         // Must find and update md_err flag in reply (always 1 data entry)
         RecordData * data = reply.mutable_data(0);
         data->set_notes( data->notes() | NOTE_MASK_MD_ERR );
@@ -1210,31 +1052,33 @@ ClientWorker::procRecordUpdateRequest( const std::string & a_uid, std::unique_pt
         }
     }
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procRecordUpdateBatchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRecordUpdateBatchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RecordUpdateBatchRequest, RecordDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RecordUpdateBatchRequest, RecordDataReply, log_context )
 
     m_db_client.setClient( a_uid );
 
     libjson::Value result;
 
-    m_db_client.recordUpdateBatch( *request, reply, result );
+    m_db_client.recordUpdateBatch( *request, reply, result, log_context );
 
-    handleTaskResponse( result );
+    handleTaskResponse( result, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procRecordDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRecordDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RecordDeleteRequest, TaskDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RecordDeleteRequest, TaskDataReply, log_context )
 
     m_db_client.setClient( a_uid );
 
@@ -1244,16 +1088,17 @@ ClientWorker::procRecordDeleteRequest( const std::string & a_uid, std::unique_pt
     for ( int i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    recordCollectionDelete( ids, reply );
+    recordCollectionDelete( ids, reply, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procCollectionDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procCollectionDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( CollDeleteRequest, TaskDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( CollDeleteRequest, TaskDataReply, log_context )
 
     m_db_client.setClient( a_uid );
 
@@ -1263,193 +1108,169 @@ ClientWorker::procCollectionDeleteRequest( const std::string & a_uid, std::uniqu
     for ( int i = 0; i < request->id_size(); i++ )
         ids.push_back( request->id(i) );
 
-    recordCollectionDelete( ids, reply );
+    recordCollectionDelete( ids, reply, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 void
-ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids, TaskDataReply & a_reply )
+ClientWorker::recordCollectionDelete( const std::vector<std::string> & a_ids, TaskDataReply & a_reply, LogContext log_context )
 {
     libjson::Value result;
 
-    m_db_client.taskInitRecordCollectionDelete( a_ids, a_reply, result );
+    m_db_client.taskInitRecordCollectionDelete( a_ids, a_reply, result, log_context );
 
-    handleTaskResponse( result );
+    handleTaskResponse( result, log_context );
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procRecordAllocChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRecordAllocChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RecordAllocChangeRequest, RecordAllocChangeReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RecordAllocChangeRequest, RecordAllocChangeReply, log_context )
 
     m_db_client.setClient( a_uid );
 
     libjson::Value result;
 
-    m_db_client.taskInitRecordAllocChange( *request, reply, result );
+    m_db_client.taskInitRecordAllocChange( *request, reply, result, log_context );
 
-    handleTaskResponse( result );
+    handleTaskResponse( result, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procRecordOwnerChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRecordOwnerChangeRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RecordOwnerChangeRequest, RecordOwnerChangeReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RecordOwnerChangeRequest, RecordOwnerChangeReply, log_context )
 
     m_db_client.setClient( a_uid );
 
     libjson::Value result;
 
-    m_db_client.taskInitRecordOwnerChange( *request, reply, result );
+    m_db_client.taskInitRecordOwnerChange( *request, reply, result, log_context );
 
-    handleTaskResponse( result );
+    handleTaskResponse( result, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procProjectDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procProjectDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( ProjectDeleteRequest, TaskDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( ProjectDeleteRequest, TaskDataReply, log_context )
 
     m_db_client.setClient( a_uid );
 
     libjson::Value result;
 
-    m_db_client.taskInitProjectDelete( *request, reply, result );
+    m_db_client.taskInitProjectDelete( *request, reply, result, log_context );
 
-    handleTaskResponse( result );
+    handleTaskResponse( result, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procRepoAllocationCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRepoAllocationCreateRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RepoAllocationCreateRequest, TaskDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RepoAllocationCreateRequest, TaskDataReply, log_context )
 
     m_db_client.setClient( a_uid );
 
     libjson::Value result;
 
-    m_db_client.taskInitRepoAllocationCreate( *request, reply, result );
+    m_db_client.taskInitRepoAllocationCreate( *request, reply, result, log_context );
 
-    handleTaskResponse( result );
+    handleTaskResponse( result, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 std::unique_ptr<IMessage>
-ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRepoAllocationDeleteRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( RepoAllocationDeleteRequest, TaskDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RepoAllocationDeleteRequest, TaskDataReply, log_context )
 
     m_db_client.setClient( a_uid );
 
     libjson::Value result;
 
-    m_db_client.taskInitRepoAllocationDelete( *request, reply, result );
+    m_db_client.taskInitRepoAllocationDelete( *request, reply, result, log_context );
 
-    handleTaskResponse( result );
+    handleTaskResponse( result, log_context );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procProjectSearchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procProjectSearchRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
     (void) a_uid;
 
-    PROC_MSG_BEGIN( ProjectSearchRequest, ProjectDataReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( ProjectSearchRequest, ProjectDataReply, log_context )
 
     EXCEPT( 1, "Not implemented" );
 
-/*
-    m_db_client.setClient( a_uid );
-    DL_INFO("about to parse query[" << request->text_query() << "]" );
-    vector<string> scope;
-    for ( int i = 0; i < request->scope_size(); i++ )
-        scope.push_back( request->scope(i) );
-    string q = parseProjectQuery( request->text_query(), scope );
-    DL_INFO("parsed query[" << q << "]" );
-    m_db_client.projSearch( q, reply );
-*/
-
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procRepoAuthzRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procRepoAuthzRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
     (void)a_uid;
-    PROC_MSG_BEGIN( RepoAuthzRequest, AckReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( RepoAuthzRequest, AckReply, log_context )
 
-    std::cout << "\n****************************************************************" << std::endl;
-    std::cout << "RepoAuthzRequest encountered\n" << std::endl;
-    DL_INFO( "AUTHZ repo: " << a_uid << ", usr: " << request->client() /*<< ", repo: " << request->repo()*/ << ", file: " << request->file() << ", act: " << request->action() );
+    DL_DEBUG(log_context, "AUTHZ repo: " << a_uid << ", usr: " << request->client() << ", file: " << request->file() << ", act: " << request->action() );
 
-    // Because the Globus will send a comma separated list of all the ids we will separate them into individual ids and check if any of them have permission
-    
-//    std::vector<std::string> clients;
-//    std::istringstream iss(request->client());
-//    std::string client;
-//    int uuid_char_len = 36;
-//    while (std::getline(iss, client, ',')) {
-//      if(client.length() != uuid_char_len ){
-//        EXCEPT_PARAM( ID_SERVICE_ERROR, "REPO client id unsupported format: " << request->client());
-//      } else {
-//        clients.push_back(element);
-//      }
-//    }
-//
-//    for( client : clients ) {
-//      request->set_client(client);
-      m_db_client.setClient( request->client() );
-      m_db_client.repoAuthz( *request, reply );
-      // Just send the first one 
-//      break;
-//    }
-    PROC_MSG_END
+    m_db_client.setClient( request->client() );
+    m_db_client.repoAuthz( *request, reply, log_context );
+    PROC_MSG_END(log_context);
 }
 
 
 std::unique_ptr<IMessage>
-ClientWorker::procUserGetAccessTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request )
+ClientWorker::procUserGetAccessTokenRequest( const std::string & a_uid, std::unique_ptr<IMessage> && msg_request, LogContext log_context )
 {
-    PROC_MSG_BEGIN( UserGetAccessTokenRequest, UserAccessTokenReply )
+    log_context.correlation_id = std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+    PROC_MSG_BEGIN( UserGetAccessTokenRequest, UserAccessTokenReply, log_context )
 
     string acc_tok, ref_tok;
     uint32_t expires_in;
 
     m_db_client.setClient( a_uid );
-    m_db_client.userGetAccessToken( acc_tok, ref_tok, expires_in );
+    m_db_client.userGetAccessToken( acc_tok, ref_tok, expires_in, log_context );
 
     if ( expires_in < 300 )
     {
-        DL_INFO( "Refreshing access token for " << a_uid );
+        DL_INFO(log_context, "Refreshing access token for " << a_uid );
 
-        m_globus_api.refreshAccessToken( ref_tok, acc_tok, expires_in );
-        m_db_client.userSetAccessToken( acc_tok, expires_in, ref_tok );
+        m_globus_api.refreshAccessToken( ref_tok, acc_tok, expires_in, log_context );
+        m_db_client.userSetAccessToken( acc_tok, expires_in, ref_tok, log_context );
 
     }
 
     reply.set_access( acc_tok );
     reply.set_expires_in( expires_in );
 
-    PROC_MSG_END
+    PROC_MSG_END(log_context);
 }
 
 void
-ClientWorker::handleTaskResponse( libjson::Value & a_result )
+ClientWorker::handleTaskResponse( libjson::Value & a_result, LogContext log_context )
 {
     libjson::Value::Object & obj = a_result.asObject();
 
@@ -1457,69 +1278,26 @@ ClientWorker::handleTaskResponse( libjson::Value & a_result )
     {
         libjson::Value::Object & task_obj = obj.asObject();
 
-        if ( task_obj.getNumber( "status" ) != TS_BLOCKED )
-            TaskMgr::getInstance().newTask( task_obj.getString( "_id" ));
-    }
-}
-
-/*
-string
-ClientWorker::parseProjectQuery( const string & a_text_query, const vector<string> & a_scope )
-{
-    string phrase = parseSearchTextPhrase( a_text_query );
-
-    if ( phrase.size() == 0 )
-        EXCEPT(1,"Empty query string");
-
-    string result;
-
-    if ( a_scope.size() )
-    {
-        result += string("for i in intersection((for i in projview search analyzer(") + phrase + ",'text_en') return i),(";
-
-        if ( a_scope.size() > 1 )
-            result += "for i in union((";
-
-        for ( vector<string>::const_iterator c = a_scope.begin(); c != a_scope.end(); c++ )
-        {
-            if ( c != a_scope.begin() )
-                result += "),(";
-
-            // TODO Add support for organization, facility
-            //if ( c->compare( 0, 2, "u/" ) == 0 )
-            //{
-                result += string("for i in 1..1 inbound '") + ( c->compare( 0, 2, "u/" ) != 0 ? "u/" : "" ) + *c + "' owner, admin filter is_same_collection('p',i) return i";
-            //}
+        if ( task_obj.getNumber( "status" ) != TS_BLOCKED ) {
+            TaskMgr::getInstance().newTask( task_obj.getString( "_id" ), log_context);
         }
-
-        if ( a_scope.size() > 1 )
-            result += ")) return i";
-
-        result += "))";
     }
-    else
-        result += string("for i in projview search analyzer(") + phrase + ",'text_en')";
-
-    // TODO Add sort order
-    result += " limit 100 return {id:i._id,title:i.title,owner:i.owner}";
-
-    return result;
 }
-*/
+
 
 void
-ClientWorker::schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value )
+ClientWorker::schemaLoader( const nlohmann::json_uri & a_uri, nlohmann::json & a_value, LogContext log_context )
 {
-    DL_INFO( "Load schema, scheme: " << a_uri.scheme() << ", path: " << a_uri.path() << ", auth: " << a_uri.authority() << ", id: " << a_uri.identifier() );
+    DL_DEBUG(log_context, "Load schema, scheme: " << a_uri.scheme() << ", path: " << a_uri.path() << ", auth: " << a_uri.authority() << ", id: " << a_uri.identifier() );
 
     libjson::Value sch;
     std::string id = a_uri.path();
 
     id = id.substr( 1 ); // Skip leading "/"
-    m_db_client.schemaView( id, sch );
+    m_db_client.schemaView( id, sch, log_context );
 
     a_value = nlohmann::json::parse( sch.asArray().begin()->asObject().getValue("def").toString() );
-    DL_INFO( "Loaded schema: " << a_value );
+    DL_TRACE(log_context, "Loaded schema: " << a_value );
 }
 
 }}

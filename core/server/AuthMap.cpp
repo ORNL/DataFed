@@ -78,11 +78,9 @@ namespace Core {
     };
 
     if ( PublicKeyType::TRANSIENT == pub_key_type) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
       lock_guard<mutex> lock( m_trans_clients_mtx );
       return expiredKeys(m_trans_auth_clients, threshold);
     } else if( PublicKeyType::SESSION == pub_key_type) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
       lock_guard<mutex> lock( m_session_clients_mtx );
       return expiredKeys(m_session_auth_clients, threshold);
     }
@@ -92,13 +90,11 @@ namespace Core {
   void AuthMap::removeKey(const PublicKeyType pub_key_type, const std::string & pub_key) {
 
     if ( PublicKeyType::TRANSIENT == pub_key_type) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
       lock_guard<mutex> lock( m_trans_clients_mtx );
       if( m_trans_auth_clients.count(pub_key) ) {
         m_trans_auth_clients.erase(pub_key);
       }
     } else if( PublicKeyType::SESSION == pub_key_type) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
       lock_guard<mutex> lock( m_session_clients_mtx );
       if( m_session_auth_clients.count(pub_key) ) {
         m_session_auth_clients.erase(pub_key);
@@ -110,7 +106,6 @@ namespace Core {
 
   void AuthMap::resetKey(const PublicKeyType pub_key_type, const std::string & public_key) {
     if( pub_key_type == PublicKeyType::TRANSIENT) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
         lock_guard<mutex> lock( m_trans_clients_mtx );
         if ( m_trans_auth_clients.count(public_key) ) {
           m_trans_auth_clients[public_key].expiration_time = time(0) + m_trans_active_increment;
@@ -119,7 +114,6 @@ namespace Core {
           EXCEPT( 1, "Missing public key cannot reset transient expiration." );
         }
     } else if( pub_key_type == PublicKeyType::SESSION) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
         lock_guard<mutex> lock( m_session_clients_mtx );
         if ( m_session_auth_clients.count(public_key) ) {
           m_session_auth_clients[public_key].expiration_time = time(0) + m_session_active_increment;
@@ -135,17 +129,14 @@ namespace Core {
 
   void AuthMap::addKey(const PublicKeyType pub_key_type, const std::string & public_key, const std::string & id) {
     if( pub_key_type == PublicKeyType::TRANSIENT) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
         lock_guard<mutex> lock( m_trans_clients_mtx );
         AuthElement element = { id, time(0) + m_trans_active_increment, 0 };
         m_trans_auth_clients[public_key] = element;
     } else if( pub_key_type == PublicKeyType::SESSION) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
         lock_guard<mutex> lock( m_session_clients_mtx );
         AuthElement element = { id, time(0) + m_session_active_increment, 0 };
         m_session_auth_clients[public_key] = element;
     } else if( pub_key_type == PublicKeyType::PERSISTENT) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
         lock_guard<mutex> lock( m_persistent_clients_mtx );
         m_persistent_auth_clients[public_key] = id;
     } else {
@@ -155,11 +146,9 @@ namespace Core {
 
   size_t AuthMap::size(const PublicKeyType pub_key_type) const {
     if(pub_key_type == PublicKeyType::TRANSIENT ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
       lock_guard<mutex> lock( m_trans_clients_mtx );
       return m_trans_auth_clients.size();
     } else if (pub_key_type == PublicKeyType::SESSION ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
       lock_guard<mutex> lock( m_session_clients_mtx );
       return m_session_auth_clients.size();
     } else {
@@ -170,13 +159,11 @@ namespace Core {
 
   void AuthMap::incrementKeyAccessCounter(const PublicKeyType pub_key_type, const std::string & public_key) {
     if( pub_key_type == PublicKeyType::TRANSIENT ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
       lock_guard<mutex> lock( m_trans_clients_mtx );
       if ( m_trans_auth_clients.count(public_key) ) {
         m_trans_auth_clients.at(public_key).access_count++;
       }
     } else if (pub_key_type == PublicKeyType::SESSION ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
       lock_guard<mutex> lock( m_session_clients_mtx );
       if ( m_session_auth_clients.count(public_key) ) {
         m_session_auth_clients.at(public_key).access_count++;
@@ -188,13 +175,11 @@ bool
 AuthMap::hasKey(const PublicKeyType pub_key_type, const std::string & public_key ) const {
 
   if ( pub_key_type == PublicKeyType::TRANSIENT ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
     lock_guard<mutex> lock( m_trans_clients_mtx );
     if ( m_trans_auth_clients.count(public_key) ) {
       return true; 
     }
   } else if ( pub_key_type == PublicKeyType::SESSION ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
     lock_guard<mutex> lock( m_session_clients_mtx );
     if ( m_session_auth_clients.count(public_key) ) return true; 
   } else if ( pub_key_type == PublicKeyType::PERSISTENT ) {
@@ -216,7 +201,6 @@ AuthMap::hasKey(const PublicKeyType pub_key_type, const std::string & public_key
 std::string
 AuthMap::getUID(const PublicKeyType pub_key_type, const std::string & public_key ) const {
   if ( pub_key_type == PublicKeyType::TRANSIENT ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
     lock_guard<mutex> lock( m_trans_clients_mtx );
     if ( m_trans_auth_clients.count(public_key) ) {
       return m_trans_auth_clients.at(public_key).uid;
@@ -225,7 +209,6 @@ AuthMap::getUID(const PublicKeyType pub_key_type, const std::string & public_key
     }
 
   } else if ( pub_key_type == PublicKeyType::SESSION ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
     lock_guard<mutex> lock( m_session_clients_mtx );
     if ( m_session_auth_clients.count(public_key) ) {
       return m_session_auth_clients.at(public_key).uid;
@@ -255,11 +238,9 @@ AuthMap::getUID(const PublicKeyType pub_key_type, const std::string & public_key
 
 bool AuthMap::hasKeyType(const PublicKeyType pub_key_type, const std::string & public_key) const {
   if ( pub_key_type == PublicKeyType::TRANSIENT ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
     lock_guard<mutex> lock( m_trans_clients_mtx );
     return m_trans_auth_clients.count(public_key);
   } else if ( pub_key_type == PublicKeyType::SESSION ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
     lock_guard<mutex> lock( m_session_clients_mtx );
     return m_session_auth_clients.count(public_key);
   } else  {
@@ -271,13 +252,11 @@ bool AuthMap::hasKeyType(const PublicKeyType pub_key_type, const std::string & p
 
 size_t AuthMap::getAccessCount(const PublicKeyType pub_key_type, const std::string & public_key ) const {
   if ( pub_key_type == PublicKeyType::TRANSIENT ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
     lock_guard<mutex> lock( m_trans_clients_mtx );
     if( m_trans_auth_clients.count(public_key) ) {
       return m_trans_auth_clients.at(public_key).access_count;
     }
   } else if ( pub_key_type == PublicKeyType::SESSION ) {
-      std::cout << __FILE__ << ":" << __LINE__ << " LOCKED" << std::endl;
     lock_guard<mutex> lock( m_session_clients_mtx );
     if( m_session_auth_clients.count(public_key) ) {
       return m_session_auth_clients.at(public_key).access_count;

@@ -6,6 +6,7 @@
 #include "Config.hpp"
 
 // Common public includes
+#include "common/DynaLog.hpp"
 #include "common/IMessage.hpp"
 #include "common/IMessageMapper.hpp"
 #include "common/MessageFactory.hpp"
@@ -24,7 +25,7 @@ namespace Repo {
 class RequestWorker
 {
 public:
-    RequestWorker( size_t a_tid );
+    RequestWorker( size_t a_tid, LogContext log_context );
     ~RequestWorker();
 
     void stop();
@@ -32,7 +33,7 @@ public:
 
 private:
     void        setupMsgHandlers();
-    void        workerThread();
+    void        workerThread(LogContext log_context);
 
     std::unique_ptr<IMessage>    procVersionRequest    (std::unique_ptr<IMessage> && );
     std::unique_ptr<IMessage>    procDataDeleteRequest (std::unique_ptr<IMessage> && );
@@ -46,14 +47,13 @@ private:
     std::thread *       m_worker_thread;
     bool                m_run;
 
-    //MsgBuf              m_msg_buf;
 
     typedef std::unique_ptr<IMessage> (RequestWorker::*msg_fun_t)(std::unique_ptr<IMessage> && request );
-    //typedef void (RequestWorker::*msg_fun_t)();
     static std::map<uint16_t,msg_fun_t> m_msg_handlers;
 
     std::unique_ptr<IMessageMapper> m_msg_mapper;
     MessageFactory m_msg_factory;
+    LogContext m_log_context;
 };
 
 }}

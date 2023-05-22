@@ -6,6 +6,7 @@
 #include "Config.hpp"
 
 // Local public includes
+#include "common/DynaLog.hpp"
 #include "common/libjson.hpp"
 #include "common/SDMS.pb.h"
 
@@ -53,16 +54,16 @@ public:
     GlobusAPI();
     ~GlobusAPI();
 
-    std::string transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, bool a_encrypt, const std::string & a_acc_token );
-    bool        checkTransferStatus( const std::string & a_task_id, const std::string & a_acc_tok, XfrStatus & a_status, std::string & a_err_msg );
-    void        cancelTask( const std::string & a_task_id, const std::string & a_acc_tok );
-    void        getEndpointInfo( const std::string & a_ep_id, const std::string & a_acc_token, EndpointInfo & a_ep_info );
-    void        refreshAccessToken( const std::string & a_ref_tok, std::string & a_new_acc_tok, uint32_t & a_expires_in );
+    std::string transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, bool a_encrypt, const std::string & a_acc_token, LogContext log_context );
+    bool        checkTransferStatus( const std::string & a_task_id, const std::string & a_acc_tok, XfrStatus & a_status, std::string & a_err_msg, LogContext log_context );
+    void        cancelTask( const std::string & a_task_id, const std::string & a_acc_tok, LogContext log_context );
+    void        getEndpointInfo( const std::string & a_ep_id, const std::string & a_acc_token, EndpointInfo & a_ep_info, LogContext log_context );
+    void        refreshAccessToken( const std::string & a_ref_tok, std::string & a_new_acc_tok, uint32_t & a_expires_in, LogContext log_context );
 
 private:
-    long        get( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, std::string & a_result );
-    long        post( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, std::string & a_result );
-    std::string getSubmissionID( const std::string & a_acc_token );
+    long        get( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, std::string & a_result, LogContext log_context );
+    long        post( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, std::string & a_result, LogContext log_context );
+    std::string getSubmissionID( const std::string & a_acc_token, LogContext log_context );
     bool        eventsHaveErrors( const std::vector<std::string> & a_events, XfrStatus & status, std::string & a_err_msg );
     void        checkResponsCode( long a_code, libjson::Value::Object & a_body ) const;
 

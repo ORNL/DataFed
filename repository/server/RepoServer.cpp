@@ -54,23 +54,14 @@ namespace {
 namespace SDMS {
 namespace Repo {
 
-//#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[m_msg_mapper->getMessageType( proto_id, #msg )] = func
-//#define SET_MSG_HANDLER(proto_id,msg,func)  m_msg_handlers[MsgBuf::findMessageType( proto_id, #msg )] = func
-
-
-Server::Server() :
-    m_config(Config::getInstance())
+Server::Server(LogContext log_context) :
+    m_config(Config::getInstance()),
+    m_log_context(log_context)
 {
-    // Register use of anon MAPI (for version check)
-    //REG_PROTO( SDMS::Anon );
-    //uint8_t proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_ANONONYMOUS);
-
     // Load keys from credential directory
     loadKeys();
 
     // Setup ZMQ security context
-    //m_config.sec_ctx.is_server = false;
-
     std::unordered_map<CredentialType, std::string> keys;
     keys[CredentialType::PUBLIC_KEY] = m_pub_key;
     keys[CredentialType::PRIVATE_KEY] = m_priv_key;
@@ -78,9 +69,6 @@ Server::Server() :
 
     CredentialFactory cred_factory;
     m_config.sec_ctx = cred_factory.create(ProtocolType::ZQTP, keys);
-    //m_config.sec_ctx.public_key = m_pub_key;
-    //m_config.sec_ctx.private_key = m_priv_key;
-    //m_config.sec_ctx.server_key = m_core_key;
 }
 
 
@@ -93,20 +81,18 @@ Server::run()
 {
     checkServerVersion();
 
-    DL_INFO( "Public/private MAPI starting on port " << m_config.port )
+    DL_INFO(m_log_context, "Public/private MAPI starting on port " << m_config.port )
 
     // Create worker threads
     for ( uint16_t t = 0; t < m_config.num_req_worker_threads; ++t ) {
-        std::cout << "Creating worker " << t << " out of " << m_config.num_req_worker_threads << std::endl;
-        m_req_workers.push_back( new RequestWorker( t+1 ));
+        DL_INFO(m_log_context, "Creating worker " << t+1 << " out of " << m_config.num_req_worker_threads);
+        m_req_workers.push_back( new RequestWorker( t+1, m_log_context ));
     }
 
-    std::cout << __LINE__ << std::endl;
     // Create secure interface and run message pump
     // NOTE: Normally ioSecure will not return
     ioSecure();
 
-    std::cout << __LINE__ << std::endl;
     // Clean-up workers
     vector<RequestWorker*>::iterator iwrk;
 
@@ -121,31 +107,16 @@ Server::run()
 void
 Server::checkServerVersion()
 {
-    DL_INFO( "Checking core server connection and version" );
+    DL_INFO(m_log_context, "Checking core server connection and version" );
 
     auto msg = std::make_unique<VersionRequest>();//      msg;
-    //MsgBuf::Message *   reply;
-    //MsgComm::SecurityContext sec_ctx;
-
     // Generate random security keys for anon version request to core server
-
-    //char pub_key[41];
-    //char priv_key[41];
-
-    //sec_ctx.is_server = false;
-    //sec_ctx.server_key = m_core_key;
-
-    // This is leaking implementation details ... 
-    //if ( zmq_curve_keypair( pub_key, priv_key ) != 0 )
-    //    EXCEPT_PARAM( 1, "Temp security key generation failed: " << zmq_strerror( errno ));
     KeyGenerator generator;
     auto local_keys = generator.generate(ProtocolType::ZQTP, KeyType::PUBLIC_PRIVATE);
     local_keys[CredentialType::SERVER_KEY] = m_core_key; 
 
     CredentialFactory cred_factory;
     auto local_sec_ctx = cred_factory.create(ProtocolType::ZQTP, local_keys);
-    //sec_ctx.public_key = pub_key;
-    //sec_ctx.private_key = priv_key;
 
     std::string repo_thread_id = "repo_main_socket_client-" + randomAlphaNumericCode();
     auto client = [&](
@@ -173,7 +144,7 @@ Server::checkServerVersion()
       uint32_t timeout_on_receive = 20000;
       long timeout_on_poll = 20000;
 
-      CommunicatorFactory factory;
+      CommunicatorFactory factory(m_log_context);
       // When creating a communication channel with a server application we need
       // to locally have a client socket. So though we have specified a client
       // socket we will actually be communicating with the server.
@@ -188,30 +159,20 @@ Server::checkServerVersion()
 
     for( int i = 0; i < 10; i++ )
     {
-        //MsgComm comm( m_config.core_server, MsgComm::DEALER, false, &sec_ctx );
-
         auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
-        //MsgBuf send_request;
         message->setPayload(std::move(msg));
         message->set(MessageAttribute::KEY, local_sec_ctx->get(CredentialType::PUBLIC_KEY));
-        //send_request.serialize(msg);
-        //send_request.setUID(pub_key);
 
-        //MsgBuf buffer;
-
-        //comm.send( msg );
+        LogContext msg_log_context = m_log_context;
+        msg_log_context.correlation_id = std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
         client->send(*message);
-        //comm.send( send_request, true );
         
         auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+        msg_log_context.correlation_id = std::get<std::string>(response.message->get(MessageAttribute::CORRELATION_ID));
 
-        //if ( !comm.recv( buffer, false, 20000 ))
-        //{
         if( response.time_out ) {
-            DL_ERROR( "Timeout waiting for response from core server: " << m_config.core_server );
-            cerr.flush();
+            DL_ERROR(msg_log_context, "Timeout waiting for response from core server: " << m_config.core_server );
         } else {
-            //reply = buffer.unserialize();
             auto payload = std::get<google::protobuf::Message*>(response.message->getPayload()); 
             VersionReply * ver_reply = dynamic_cast<VersionReply*>( payload );
             if ( ver_reply == 0 )
@@ -223,7 +184,7 @@ Server::checkServerVersion()
               EXCEPT_PARAM( 1, "Incompatible messaging api detected major backwards breaking changes detected version (" << ver_reply->api_major() << "." << ver_reply->api_minor() << "." << ver_reply->api_patch() << ")" );
             }
             if ( ver_reply->api_minor() + 9 > SDMS::repository::version::MINOR) {
-              DL_WARN( "Significant changes in message api detected (" << ver_reply->api_major() << "." << ver_reply->api_minor() << "." << ver_reply->api_patch() << ")" );
+              DL_WARNING(msg_log_context, "Significant changes in message api detected (" << ver_reply->api_major() << "." << ver_reply->api_minor() << "." << ver_reply->api_patch() << ")" );
             }
             bool new_release_available = false;
             if ( ver_reply->release_year() > Version::DATAFED_RELEASE_YEAR) {
@@ -247,14 +208,13 @@ Server::checkServerVersion()
             }
 
             if(new_release_available) {
-              DL_INFO( "Newer releases for the repo server may be available." );
+              DL_INFO(msg_log_context, "Newer releases for the repo server may be available." );
             }
 
-            DL_INFO( "Core server connection OK." );
+            DL_INFO(msg_log_context, "Core server connection OK." );
             return;
         }
     }
-
     EXCEPT_PARAM( 1, "Could not connect with core server: " << m_config.core_server );
 }
 
@@ -289,11 +249,9 @@ Server::loadKeys()
 void
 Server::ioSecure()
 {
-    std::cout << __LINE__ << std::endl;
     try
     {
 
-    std::cout << __LINE__ << std::endl;
         std::unordered_map<SocketRole, SocketOptions> socket_options;
         std::unordered_map<SocketRole, ICredentials *> socket_credentials;
 
@@ -325,7 +283,6 @@ Server::ioSecure()
         socket_credentials[SocketRole::CLIENT] = client_credentials.get();
         }
 
-    std::cout << __LINE__ << std::endl;
         // Credentials are allocated on the heap, to ensure they last until the end of
         // the test they must be defined outside of the scope block below
         std::unique_ptr<ICredentials> server_credentials;
@@ -352,7 +309,6 @@ Server::ioSecure()
           cred_options[CredentialType::PRIVATE_KEY] = m_config.sec_ctx->get(CredentialType::PRIVATE_KEY);
           cred_options[CredentialType::SERVER_KEY] = m_config.sec_ctx->get(CredentialType::SERVER_KEY);
 
-          std::cout << "PRIVATE KEY for repo secure connection to core server " << cred_options[CredentialType::PRIVATE_KEY] << std::endl;
           server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
           socket_credentials[SocketRole::SERVER] = server_credentials.get();
 
@@ -368,40 +324,20 @@ Server::ioSecure()
         // backend server, I think this is only necessary because we have
         // specifiedt that the Server is connecting Synchronously with the proxy
 
-
-        //OperatorFactory oper_factory;
-        //std::any router_id_to_add = proxy_client_id;
-
-        //OperatorFactory oper_factory;
-        //std::any router_id_to_add = client_id;
-        //std::vector<std::unique_ptr<IOperator>> incoming_operators;
-        //incoming_operators.push_back( oper_factory.create(OperatorType::RouterBookKeeping, router_id_to_add) );
-    std::cout << __LINE__ << std::endl;
-        ServerFactory server_factory;
+        ServerFactory server_factory(m_log_context);
         auto proxy = server_factory.create(ServerType::PROXY_CUSTOM ,socket_options, socket_credentials);
-        //auto proxy = server_factory.create(ServerType::PROXY_CUSTOM ,socket_options, socket_credentials, std::move(incoming_operators));
-    std::cout << __LINE__ << " Created proxy target addresses are:" << std::endl;
 
+        std::stringstream addresses;
         for( auto & addr : proxy->getAddresses() ) {
-          std::cout << addr.second << std::endl;
+          addresses << addr.second << ", ";
         }
+        DL_INFO(m_log_context, "Created proxy, target addresses are: " << addresses.str());
 
-        //std::chrono::duration<double> duration = std::chrono::milliseconds(30);
-        //proxy.setRunDuration(duration);
-    std::cout << __LINE__ << " running secure proxy..." << std::endl;
         proxy->run();
-
-    std::cout << __LINE__ << std::endl;
-
-        
-        //MsgComm frontend( "tcp://*:" + to_string(m_config.port), MsgComm::ROUTER, true, &m_config.sec_ctx );
-        //MsgComm backend( "inproc://workers", MsgComm::DEALER, true );
-
-        //frontend.proxy( backend );
     }
     catch( exception & e)
     {
-        DL_ERROR( "Exception in secure interface: " << e.what() )
+        DL_ERROR(m_log_context, "Exception in secure interface: " << e.what() )
     }
 }
 

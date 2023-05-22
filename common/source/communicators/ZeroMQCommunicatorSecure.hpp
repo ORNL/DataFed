@@ -19,7 +19,7 @@ namespace SDMS {
   class ZeroMQCommunicatorSecure : public ZeroMQCommunicator {
     private:
       void zmqCurveSetup(const ICredentials & credentials);
-      LogLineContent m_log_line;
+      LogContext m_log_context;
 
     public:
       ZeroMQCommunicatorSecure(
@@ -27,7 +27,7 @@ namespace SDMS {
           const ICredentials & credentials,
           uint32_t timeout_on_receive_milliseconds,
           long timeout_on_poll_milliseconds,
-          LogLineContent log_line);
+          LogContext log_context);
 
   };
 

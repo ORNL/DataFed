@@ -40,28 +40,28 @@ namespace SDMS {
     return LOG_EMERG;
   }
 
-  std::ostream & operator << (std::ostream &out, const LogLineContent &log_line) {
+  std::ostream & operator << (std::ostream &out, const LogLine &log_line) {
     out << "{ ";
       bool insert_comma = false;
-    if( not log_line.thread_name.empty() ) {
+    if( not log_line.context.thread_name.empty() ) {
       out << "\"thread_name\": ";
-      out << "\"" << log_line.thread_name << "\"";
+      out << "\"" << log_line.context.thread_name << "\"";
       insert_comma = true;
     }
-    if( log_line.thread_id ) {
+    if( log_line.context.thread_id ) {
       if( insert_comma ) {
         out << ", ";
       }
       out << "\"thread_id\": ";
-      out << "\"" << log_line.thread_id << "\"";
+      out << "\"" << log_line.context.thread_id << "\"";
       insert_comma = true;
     }
-    if( not log_line.correlation_id.empty() ) {
+    if( not log_line.context.correlation_id.empty() ) {
       if( insert_comma ) {
         out << ", ";
       }
       out << "\"correlation_id\": ";
-      out << "\"" << log_line.correlation_id << "\"";
+      out << "\"" << log_line.context.correlation_id << "\"";
       insert_comma = true;
     }
     if( not log_line.message.empty() ) {
@@ -75,7 +75,7 @@ namespace SDMS {
     return out;
   }
 
-  void Logger::output(const LogLevel level, const LogLineContent & log_line, std::string file, std::string func, int line_num) {
+  void Logger::output(const LogLevel level, std::string file, std::string func, int line_num, const LogContext & context, const std::string & message) {
 
       size_t index = 0;
       for( auto & output_stream : m_streams ) {
@@ -85,16 +85,19 @@ namespace SDMS {
         output_stream.get() << boost::posix_time::to_iso_extended_string(time) << "Z ";
         output_stream.get() << toString(level) << " ";
         output_stream.get() << file << ":" << func << ":" << line_num << " ";
+        LogLine log_line(context, message);
         output_stream.get() << log_line; 
         output_stream.get() << std::endl;
       }
 
       if ( m_output_to_syslog ) {
-          m_buffer << file << ":" << func << ":" << line_num << " ";
-          m_buffer << log_line;
-          m_buffer << std::endl;
-          syslog(toSysLog(level),"%s",m_buffer.str().c_str());
-          m_buffer.str("");
+          std::stringstream buffer; \
+          buffer << message; \
+          buffer << file << ":" << func << ":" << line_num << " ";
+          LogLine log_line(context, message);
+          buffer << log_line;
+          buffer << std::endl;
+          syslog(toSysLog(level),"%s",buffer.str().c_str());
       } 
   }
 
@@ -107,71 +110,52 @@ namespace SDMS {
     m_mutexes.emplace_back(std::make_unique<std::mutex>());
   }
 
-  void Logger::trace(const LogLineContent & content, std::string file, std::string func, int line_num) { 
+  void Logger::trace(std::string file, std::string func, int line_num, const LogContext & context, const std::string & message) { 
     if( m_log_level >= LogLevel::TRACE ) {
-      output(LogLevel::TRACE, content, file, func, line_num);    
+      output(LogLevel::TRACE, file, func, line_num, context, message);    
     }
   }
-  void Logger::debug(const LogLineContent & content, std::string file, std::string func, int line_num) { 
+  void Logger::debug(std::string file, std::string func, int line_num, const LogContext & context, const std::string & message) { 
     if( m_log_level >= LogLevel::DEBUG ) {
-      output(LogLevel::DEBUG, content, file, func, line_num);    
+      output(LogLevel::DEBUG, file, func, line_num, context, message);    
     }
   }
-  void Logger::info(const LogLineContent & content, std::string file, std::string func, int line_num) { 
+  void Logger::info(std::string file, std::string func, int line_num, const LogContext & context, const std::string & message) { 
     if( m_log_level >= LogLevel::INFO ) {
-      output(LogLevel::INFO, content, file, func, line_num);    
+      output(LogLevel::INFO, file, func, line_num, context, message);    
     }
   }
-  void Logger::warning(const LogLineContent & content, std::string file, std::string func, int line_num) { 
+  void Logger::warning(std::string file, std::string func, int line_num, const LogContext & context, const std::string & message) { 
     if( m_log_level >= LogLevel::WARNING ) {
-      output(LogLevel::WARNING, content, file, func, line_num);    
+      output(LogLevel::WARNING, file, func, line_num, context, message);    
     }
   }
-  void Logger::error(const LogLineContent & content, std::string file, std::string func, int line_num) { 
+  void Logger::error(std::string file, std::string func, int line_num, const LogContext & context, const std::string & message) { 
     if( m_log_level >= LogLevel::ERROR ) {
-      output(LogLevel::ERROR, content, file, func, line_num);    
+      output(LogLevel::ERROR, file, func, line_num, context, message);    
     }
   }
-  void Logger::critical(const LogLineContent & content, std::string file, std::string func, int line_num) { 
+  void Logger::critical(std::string file, std::string func, int line_num, const LogContext & context, const std::string & message) { 
     if( m_log_level >= LogLevel::CRITICAL ) {
-      output(LogLevel::CRITICAL, content, file, func, line_num);    
+      output(LogLevel::CRITICAL, file, func, line_num, context, message);    
     }
   }
 
-  void Logger::log(LogLevel level, const LogLineContent & content, std::string file, std::string func, int line_num) {
+  void Logger::log(LogLevel level, std::string file, std::string func, int line_num, const LogContext & context, const std::string & message) {
     if( level == LogLevel::TRACE ) {
-      trace(content, file, func, line_num);
+      trace(file, func, line_num, context, message);
     } else if( level == LogLevel::DEBUG ) {
-      debug(content, file, func, line_num);
+      debug(file, func, line_num, context, message);
     } else if( level == LogLevel::INFO ) {
-      info(content, file, func, line_num);
+      info(file, func, line_num, context, message);
     } else if( level == LogLevel::WARNING ) {
-      warning(content, file, func, line_num);
+      warning(file, func, line_num, context, message);
     } else if( level == LogLevel::ERROR ) {
-      error(content, file, func, line_num);
+      error(file, func, line_num, context, message);
     } else if( level == LogLevel::CRITICAL ) {
-      critical(content, file, func, line_num);
+      critical(file, func, line_num, context, message);
     }
   }
-/*  constexpr void output(const char * level, const LogLineContent & log_line) {
-      if ( global_log_settings.output_to_cerr ) {
-        boost::posix_time::ptime time = boost::posix_time::microsec_clock::universal_time();
-        std::cerr << boost::posix_time::to_iso_extended_string(t) << "Z\n";
-        std::cerr << std::put_time(&local_time, "%d-%m-%y %H-%M-%S ");
-        std::cerr << level << " ";
-        std::cerr << __FILE__ << ":" << __LINE__ << " ";
-        std::cerr << log_line; 
-        std::cerr << std::endl;
-      }
-
-      if ( global_log_settings.output_to_syslog ) {
-          global_log_buffer.buffer << __FILE__ << ":" << __LINE__ << " ";
-          global_log_buffer.buffer << log_line;
-          global_log_buffer.buffer << std::endl;
-          syslog(toSysLog(level),"%s",global_log_buffer.buffer.str().c_str());
-          global_log_buffer.buffer.str("");
-      } 
-  }*/
 
 } // namespace SDMS 
 

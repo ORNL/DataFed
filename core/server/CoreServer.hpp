@@ -7,6 +7,9 @@
 #include "Config.hpp"
 #include "ICoreServer.hpp"
 
+// Public common includes
+#include "common/DynaLog.hpp"
+
 // Standard includes
 #include <map>
 #include <memory>
@@ -50,7 +53,7 @@ class Server : public ICoreServer
 {
 public:
     /// CoreServer constructor (uses Config singleton)
-    Server();
+    Server(LogContext);
 
     /// CoreServer destructor
     virtual ~Server();
@@ -75,25 +78,24 @@ private:
      * This method is called after a public key has been authenticated, the key is then made
      * an authorized transient key.
      **/
-    void authenticateClient( const std::string & a_cert_uid, const std::string & a_key, const std::string & a_uid );
+    void authenticateClient( const std::string & a_cert_uid, const std::string & a_key, const std::string & a_uid, LogContext log_context );
     void metricsUpdateMsgCount( const std::string & a_uid, uint16_t a_msg_type );
-    bool isClientAuthenticated( const std::string & a_client_key, std::string & a_uid );
+    //bool isClientAuthenticated( const std::string & a_client_key, std::string & a_uid );
     void loadKeys( const std::string & a_cred_dir );
     void loadRepositoryConfig();
-    void msgRouter();
-    void ioSecure();
-    void ioInsecure();
-    //void zapHandler();
-    void dbMaintenance();
-    void metricsThread();
-    void repoCacheThread();
+    void msgRouter(LogContext log_context, int thread_count);
+    void ioSecure(LogContext log_context, int thread_count);
+    void ioInsecure(LogContext log_context, int thread_count);
+    void dbMaintenance(LogContext log_context, int thread_count);
+    void metricsThread(LogContext log_context, int thread_count);
+    void repoCacheThread(LogContext log_context, int thread_count);
+    int getNewThreadId();
 
     Config &                        m_config;               ///< Ref to configuration singleton
     std::thread                    m_io_secure_thread;     ///< Secure I/O thread handle
     std::thread                    m_io_insecure_thread;   ///< Insecure I/O thread handle
     std::string                     m_pub_key;              ///< Public key for secure interface
     std::string                     m_priv_key;             ///< Private key for secure interface
-    //std::thread                   m_zap_thread;           ///< ZeroMQ client authentication (ZAP) thread
     std::thread                    m_msg_router_thread;    ///< Main message router thread handle
     std::vector<std::shared_ptr<ClientWorker>>      m_workers;              ///< List of ClientWorker instances
     std::thread                   m_db_maint_thread;      ///< DB maintenance thread handle
@@ -101,6 +103,10 @@ private:
     std::thread                   m_repo_cache_thread;  ///< Thread for updating the repo cache
     std::map<std::string,MsgMetrics_t> m_msg_metrics;       ///< Map of UID to message request metrics
     std::mutex                      m_msg_metrics_mutex;    ///< Mutex for metrics updates
+    LogContext                m_log_context;
+    std::mutex                      m_thread_count_mutex;    ///< Mutex for metrics updates
+    int m_thread_count = 0; // Keep track of the number of threads created
+    int m_main_thread_id = 0;
 };
 
 

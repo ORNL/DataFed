@@ -6,6 +6,7 @@
 #include "ITaskWorker.hpp"
 
 // Local public includes
+#include "common/DynaLog.hpp"
 #include "common/libjson.hpp"
 
 // Standard includes
@@ -45,8 +46,8 @@ public:
     };
 
     virtual Task *      getNextTask( ITaskWorker * a_worker ) = 0;
-    virtual bool        retryTask( Task * a_task ) = 0;
-    virtual void        newTasks( const libjson::Value & a_tasks ) = 0;
+    virtual bool        retryTask( Task * a_task, LogContext log_context ) = 0;
+    virtual void        newTasks( const libjson::Value & a_tasks, LogContext log_context ) = 0;
 };
 
 }}

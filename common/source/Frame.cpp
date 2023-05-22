@@ -35,24 +35,16 @@ namespace SDMS {
       *((uint32_t*) msg_frame_allocation) = htonl( frame.size );
       *(msg_frame_allocation+4) = frame.proto_id;
       *(msg_frame_allocation+5) = frame.msg_id;
-      //std::cout << "FrameConverter::copy " << __LINE__ << " Copy from frame context is " << frame.context << " frame size " << frame.size << std::endl;
       *((uint16_t*)(msg_frame_allocation+6)) = htons( frame.context );
     } else { // TO_FRAME
-      //std::cout << "FrameConverter::size " << __LINE__ << " sizeof(Frame) " << sizeof(Frame) << std::endl;
       if ( zmq_msg_size( &zmq_msg ) != sizeof( Frame )) {
         EXCEPT_PARAM( 1, "Unable to copy zmq_msg to Frame sizes are inconsistent Frame: " << sizeof( Frame ) << " zmq_msg " << zmq_msg_size( &zmq_msg ) );
       }
-      //std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       unsigned char * msg_frame_allocation = (unsigned char *)zmq_msg_data( &zmq_msg );
-      //std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       frame.size = ntohl( *((uint32_t*) msg_frame_allocation) );
-      //std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       frame.proto_id = *(msg_frame_allocation+4);
-      //std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       frame.msg_id = *(msg_frame_allocation+5);
-      //std::cout << "FrameConverter::copy " << __LINE__ << std::endl;
       frame.context = ntohs( *((uint16_t*)(msg_frame_allocation+6)));
-      //std::cout << "FrameConverter::copy " << __LINE__ << " Copy to frame context is " << frame.context << " frame size " << frame.size << std::endl;
     }
   }
 
@@ -61,15 +53,10 @@ namespace SDMS {
       IMessage & msg,
       const Frame & frame) {
     if( direction == CopyDirection::FROM_FRAME ) {
-//      std::cout << "FrameConverter::copy - " << __LINE__ << std::endl;
       msg.set(g_constants::FRAME_SIZE, frame.size);
- //     std::cout << "FrameConverter::copy - " << __LINE__ << std::endl;
       msg.set(g_constants::PROTO_ID, frame.proto_id);
-  //    std::cout << "FrameConverter::copy - " << __LINE__ << std::endl;
       msg.set(g_constants::MSG_ID, frame.msg_id);
-   //   std::cout << "FrameConverter::copy - " << __LINE__ << std::endl;
       msg.set(g_constants::MSG_TYPE, frame.getMsgType());
-      //std::cout << "FrameConverter::copy - " << __LINE__ << " Copy from frame context is " << frame.context << " frame size " << frame.size << std::endl;
       msg.set(g_constants::CONTEXT, frame.context);
     } else {
       EXCEPT(1, "Unsupported copy direction for FrameConverter working on IMessage instance");

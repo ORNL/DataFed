@@ -81,7 +81,6 @@ namespace SDMS {
 
       uint8_t server_key[32];
       if ( !zmq_z85_decode( server_key, local_serv_key.c_str() )) {
-        std::cout << "Local server public key " << local_serv_key << std::endl;
         EXCEPT_PARAM( 1, "Decode server public key failed when constructing ZeroMQ Client. ZMQ msg: " << zmq_strerror(zmq_errno()) );
       }
 
@@ -109,12 +108,12 @@ namespace SDMS {
       const SocketOptions & socket_options,
       const ICredentials & credentials,
       uint32_t timeout_on_receive_milliseconds,
-      long timeout_on_poll_milliseconds) : ZeroMQCommunicator() {
+      long timeout_on_poll_milliseconds,
+      LogContext log_context) : ZeroMQCommunicator(log_context) {
 
     if(not zmq_has("curve") ){
       EXCEPT(1, "ZeroMQ was not built with curve support cannot create secure connections.");
     }
-      
     m_timeout_on_receive_milliseconds = timeout_on_receive_milliseconds;
     m_timeout_on_poll_milliseconds = timeout_on_poll_milliseconds;
 

@@ -3,6 +3,7 @@
 #pragma once
 
 // Local public includes
+#include "DynaLog.hpp"
 #include "SocketOptions.hpp"
 
 // Standard includes
@@ -35,7 +36,10 @@ namespace SDMS {
   };
 
   class ServerFactory {
+      LogContext m_log_context;
     public:
+      ServerFactory(LogContext log_context) : m_log_context(log_context) {};
+
       std::unique_ptr<IServer> create(
           ServerType server_type,
           const std::unordered_map<SocketRole, SocketOptions> & socket_options,
@@ -47,7 +51,8 @@ namespace SDMS {
           ServerType server_type,
           const std::unordered_map<SocketRole, SocketOptions> & socket_options,
           const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
-          std::vector<std::unique_ptr<IOperator>> incoming_operators);
+          std::vector<std::unique_ptr<IOperator>> incoming_operators
+          );
   };
 
 } // namespace SDMS

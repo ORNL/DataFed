@@ -1,6 +1,7 @@
 // Local public common includes
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
+#include "common/DynaLog.hpp"
 #include "common/ErrorCodes.hpp"
 #include "common/ICommunicator.hpp"
 #include "common/MessageFactory.hpp"
@@ -52,7 +53,10 @@ int main(int a_argc, char ** a_argv ) {
   }
 
 
-  CommunicatorFactory comm_factory;
+  LogContext log_context;
+  log_context.thread_name = "tcp_secure_server";
+  log_context.thread_id = 0;
+  CommunicatorFactory comm_factory(log_context);
 
   // Server properties
   const std::string server_id = "overlord";

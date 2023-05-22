@@ -50,7 +50,10 @@ int main(int a_argc, char ** a_argv ) {
     secure_connection = false;
   }
 
-  CommunicatorFactory comm_factory;
+  LogContext log_context;
+  log_context.thread_name = "tcp_secure_client";
+  log_context.thread_id = 0;
+  CommunicatorFactory comm_factory(log_context);
 
   // Client properties
   const std::string client_id = "minion";

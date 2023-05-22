@@ -20,11 +20,11 @@ namespace Core {
 class ITaskWorker
 {
 public:
-    ITaskWorker( uint32_t a_id ) :
+    ITaskWorker( uint32_t a_id, LogContext log_context ) :
         m_id( a_id ),
         m_run( false ),
-        m_next( 0 )
-        //m_prev( 0 ),
+        m_next( 0 ),
+        m_log_context(log_context)
     {
     }
 
@@ -39,6 +39,7 @@ private:
     uint32_t                    m_id;
     bool                        m_run;
     ITaskWorker *               m_next;
+    LogContext m_log_context;
     //ITaskWorker *               m_prev;
     std::condition_variable     m_cvar;
 

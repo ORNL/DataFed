@@ -4,7 +4,7 @@
 #include <boost/test/unit_test.hpp>
 
 // Local public includes
-#include "common/Log.hpp"
+#include "common/DynaLog.hpp"
 
 // Standard includes
 #include <iostream>
@@ -20,11 +20,10 @@ BOOST_AUTO_TEST_CASE( testing_LogOutput ) {
 
   std::string file_name ="./log_output_test1.txt";
   global_logger.setLevel(SDMS::LogLevel::TRACE);
-  LogLineContent log_line;
-  log_line.message = "This is a test message";
-  log_line.thread_name = "test_thread"; 
-  log_line.thread_id = 1;
-  log_line.correlation_id = "XXXXYYYY-XXXX-YYYY-XXXX-YYYYXXXXYYYY";
+  LogContext log_context;
+  log_context.thread_name = "test_thread"; 
+  log_context.thread_id = 1;
+  log_context.correlation_id = "XXXXYYYY-XXXX-YYYY-XXXX-YYYYXXXXYYYY";
 
   // Remove file if it exists
   bool file_removed = true;
@@ -44,12 +43,13 @@ BOOST_AUTO_TEST_CASE( testing_LogOutput ) {
   //global_log_settings.output_stream.rdbuf(file.rdbuf());
   global_logger.addStream(file);
   // Writing to file
-  DL_LOG_CRITICAL(log_line);
-  DL_LOG_ERROR(log_line);
-  DL_LOG_WARNING(log_line);
-  DL_LOG_INFO(log_line);
-  DL_LOG_DEBUG(log_line);
-  DL_LOG_TRACE(log_line);
+  std::string message = "This is a test message";
+  DL_CRITICAL(log_context, message);
+  DL_ERROR(log_context, message);
+  DL_WARNING(log_context, message);
+  DL_INFO(log_context, message);
+  DL_DEBUG(log_context, message);
+  DL_TRACE(log_context, message);
   
   file.close();
 

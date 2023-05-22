@@ -39,8 +39,9 @@ namespace SDMS {
 
 namespace Core {
 
-Server::Server() :
-    m_config(Config::getInstance())
+Server::Server(LogContext log_context) :
+    m_config(Config::getInstance()),
+    m_log_context(log_context)
 {
     // One-time global libcurl init
     curl_global_init( CURL_GLOBAL_DEFAULT );
@@ -82,7 +83,7 @@ Server::Server() :
     purge_conditions[PublicKeyType::SESSION].emplace_back(std::make_unique<Reset>(accesses_to_reset, key_type_to_apply_reset));
 
     // Load repository config from DB
-    m_config.loadRepositoryConfig(m_auth_manager);
+    m_config.loadRepositoryConfig(m_auth_manager, log_context);
 
     // Must occur after loading config settings
     m_auth_manager = std::move(AuthenticationManager(purge_intervals,
@@ -95,16 +96,16 @@ Server::Server() :
     //m_zap_thread = thread( &Server::zapHandler, this );
 
     // Start DB maintenance thread
-    m_db_maint_thread = thread( &Server::dbMaintenance, this );
+    m_db_maint_thread = thread( &Server::dbMaintenance, this, m_log_context, getNewThreadId());
 
     // Start DB maintenance thread
-    m_repo_cache_thread = thread( &Server::repoCacheThread, this );
+    m_repo_cache_thread = thread( &Server::repoCacheThread, this, m_log_context, getNewThreadId());
 
     // Start DB maintenance thread
-    m_metrics_thread = thread( &Server::metricsThread, this );
+    m_metrics_thread = thread( &Server::metricsThread, this, m_log_context, getNewThreadId());
 
     // Create task mgr (starts it's own threads)
-    TaskMgr::getInstance();
+    TaskMgr::getInstance(m_log_context, getNewThreadId());
 
 }
 
@@ -142,20 +143,20 @@ Server::loadKeys( const std::string & a_cred_dir )
 void
 Server::waitForDB()
 {
-    DL_INFO("Waiting for DB...");
+    DL_INFO(m_log_context, "Waiting for DB...");
 
     for ( int i = 0; i < 10; i++ )
     {
         try
         {
             DatabaseAPI  db_client( m_config.db_url, m_config.db_user, m_config.db_pass );
-            db_client.serverPing();
-            DL_INFO("DB Ping Success");
+            db_client.serverPing(m_log_context);
+            DL_INFO(m_log_context, "DB Ping Success");
             return;
         }
         catch(...)
         {
-            DL_INFO("DB connection error");
+            DL_INFO(m_log_context, "DB connection error");
         }
         sleep( 5 );
     }
@@ -174,19 +175,21 @@ Server::waitForDB()
 void
 Server::run()
 {
-    DL_INFO( "Public/private MAPI starting on ports " << m_config.port << "/" << ( m_config.port + 1))
+    DL_INFO(m_log_context, "Public/private MAPI starting on ports " << m_config.port << "/" << ( m_config.port + 1))
 
-    m_msg_router_thread = thread( &Server::msgRouter, this );
-    m_io_secure_thread = thread( &Server::ioSecure, this );
-    ioInsecure();
+    m_msg_router_thread = thread( &Server::msgRouter, this, m_log_context, getNewThreadId() );
+    m_io_secure_thread = thread( &Server::ioSecure, this, m_log_context, getNewThreadId());
+    ioInsecure(m_log_context, m_main_thread_id);
 
     m_msg_router_thread.join();
 }
 
 
   void
-Server::msgRouter()
+Server::msgRouter(LogContext log_context, int thread_count)
 {
+  log_context.thread_name = "msgRounter";
+  log_context.thread_id = thread_count;
   std::unordered_map<SocketRole, SocketOptions> socket_options;
   std::unordered_map<SocketRole, ICredentials *> socket_credentials;
 
@@ -246,7 +249,7 @@ Server::msgRouter()
 
   }
 
-  ServerFactory server_factory;
+  ServerFactory server_factory(log_context);
   auto proxy = server_factory.create(
       ServerType::PROXY_BASIC_ZMQ,
       socket_options,
@@ -255,8 +258,11 @@ Server::msgRouter()
   //ProxyBasicZMQ proxy(socket_options, socket_credentials);
 
   // Ceate worker threads
-  for ( uint16_t t = 0; t < m_config.num_client_worker_threads; ++t )
-      m_workers.emplace_back( new ClientWorker(*this, t+1) );
+  for ( uint16_t t = 0; t < m_config.num_client_worker_threads; ++t ) {
+      LogContext log_context_client = log_context;
+      log_context_client.thread_id = getNewThreadId();
+      m_workers.emplace_back( new ClientWorker(*this, t+1, log_context_client) );
+  }
 
   proxy->run();
 
@@ -268,47 +274,18 @@ Server::msgRouter()
 
 }
 
-/*void
-Server::msgRouter()
-{
-    void * ctx = MsgComm::getContext();
-
-    void *frontend = zmq_socket( ctx, ZMQ_ROUTER );
-    int linger = 100;
-    zmq_setsockopt( frontend, ZMQ_LINGER, &linger, sizeof( int ));
-    zmq_bind( frontend, "inproc://msg_proc" );
-
-    void *backend = zmq_socket( ctx, ZMQ_DEALER );
-    zmq_setsockopt( backend, ZMQ_LINGER, &linger, sizeof( int ));
-
-    zmq_bind( backend, "inproc://workers" );
-
-    void *control = zmq_socket( ctx, ZMQ_SUB );
-    zmq_setsockopt( control, ZMQ_LINGER, &linger, sizeof( int ));
-    zmq_connect( control, "inproc://control" );
-    zmq_setsockopt( control, ZMQ_SUBSCRIBE, "", 0 );
-
-    // Ceate worker threads
-    for ( uint16_t t = 0; t < m_config.num_client_worker_threads; ++t )
-        m_workers.emplace_back( new ClientWorker(*this, t+1) );
-
-    // Connect backend to frontend via a proxy
-    zmq_proxy_steerable( frontend, backend, 0, control );
-
-    zmq_close( backend );
-    zmq_close( control );
-
-    // Clean-up workers
-    vector<std::shared_ptr<ClientWorker>>::iterator iwrk;
-
-    for ( iwrk = m_workers.begin(); iwrk != m_workers.end(); ++iwrk )
-        (*iwrk)->stop();
-
-}*/
+int Server::getNewThreadId() {
+    lock_guard<mutex> lock( m_thread_count_mutex );
+    ++m_thread_count;
+    return m_thread_count;
+}
 
 void
-Server::ioSecure()
+Server::ioSecure(LogContext log_context, int thread_count)
 {
+
+    log_context.thread_name = "ioSecure";
+    log_context.thread_id = thread_count;
     try
     {
 
@@ -384,7 +361,7 @@ Server::ioSecure()
           operator_factory.create(OperatorType::Authenticator, argument)
         );
 
-        ServerFactory server_factory;
+        ServerFactory server_factory(log_context);
         auto proxy = server_factory.create(
             ServerType::PROXY_CUSTOM,
             socket_options,
@@ -393,21 +370,19 @@ Server::ioSecure()
 
         proxy->run();
 
-
-/*
-
-        // Must use custom proxy to inject ZAP User-Id into message frame
-        frontend.proxy( backend, m_auth_manager );*/
     }
     catch( exception & e)
     {
-        DL_ERROR( "Exception in secure interface: " << e.what() )
+        DL_ERROR(log_context, "Exception in secure interface: " << e.what() )
     }
 }
 
 void
-Server::ioInsecure()
+Server::ioInsecure(LogContext log_context, int thread_count)
 {
+    log_context.thread_name += "-ioInsecure";
+    log_context.thread_id = thread_count;
+
     try
     {
 
@@ -430,15 +405,11 @@ Server::ioInsecure()
     client_socket_options.connection_security = SocketConnectionSecurity::INSECURE;
     client_socket_options.protocol_type = ProtocolType::ZQTP; 
     client_socket_options.host = "msg_proc";
-    //        client_socket_options.port = 1341;
     client_socket_options.local_id = "internal_facing_insecure_proxy_client";
     socket_options[SocketRole::CLIENT] = client_socket_options;
 
     CredentialFactory cred_factory;
     std::unordered_map<CredentialType, std::string> cred_options;
-    //cred_options[CredentialType::PUBLIC_KEY] = "";
-    //cred_options[CredentialType::PRIVATE_KEY] = "";
-    //cred_options[CredentialType::SERVER_KEY] = "";
 
     client_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
     socket_credentials[SocketRole::CLIENT] = client_credentials.get();
@@ -467,16 +438,13 @@ Server::ioInsecure()
     CredentialFactory cred_factory;
 
     std::unordered_map<CredentialType, std::string> cred_options;
-    //cred_options[CredentialType::PUBLIC_KEY] = "";
-    //cred_options[CredentialType::PRIVATE_KEY] = "";
-    //cred_options[CredentialType::SERVER_KEY] = "";
 
     server_credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
     socket_credentials[SocketRole::SERVER] = server_credentials.get();
 
   }
 
-  ServerFactory server_factory;
+  ServerFactory server_factory(log_context);
   auto proxy = server_factory.create(
       ServerType::PROXY_BASIC_ZMQ,
       socket_options,
@@ -484,20 +452,18 @@ Server::ioInsecure()
 
   proxy->run();
 
-//        MsgComm frontend( "tcp://*:" + to_string(m_config.port + 1), MsgComm::ROUTER, true );
- /*       MsgComm backend( "inproc://msg_proc", MsgComm::DEALER, false );
-
-        zmq_proxy( frontend.getSocket(), backend.getSocket(), 0 );*/
     }
     catch( exception & e)
     {
-        DL_ERROR( "Exception in insecure interface: " << e.what() )
+        DL_ERROR(log_context, "Exception in insecure interface: " << e.what() )
     }
 }
 
 void
-Server::dbMaintenance()
+Server::dbMaintenance(LogContext log_context, int thread_count)
 {
+    log_context.thread_name = "dbMaintenance";
+    log_context.thread_id = thread_count;
     chrono::system_clock::duration  purge_per = chrono::seconds( m_config.note_purge_period );
     DatabaseAPI                     db( m_config.db_url, m_config.db_user, m_config.db_pass );
 
@@ -505,56 +471,60 @@ Server::dbMaintenance()
     {
         try
         {
-            DL_DEBUG( "DB Maint: Purging closed annotations" );
-            db.notePurge( m_config.note_purge_age );
+            DL_DEBUG(log_context, "DB Maint: Purging closed annotations" );
+            db.notePurge( m_config.note_purge_age, log_context );
         }
         catch( TraceException & e )
         {
-            DL_ERROR( "DB Maint:" << e.toString() );
+            DL_ERROR(log_context, "DB Maint:" << e.toString() );
         }
         catch( exception & e )
         {
-            DL_ERROR( "DB Maint:" << e.what() );
+            DL_ERROR(log_context, "DB Maint:" << e.what() );
         }
         catch( ... )
         {
-            DL_ERROR( "DB Maint: Unknown exception" );
+            DL_ERROR(log_context, "DB Maint: Unknown exception" );
         }
 
         this_thread::sleep_for( purge_per );
     }
-    DL_ERROR( "DB maintenance thread exiting" );
+    DL_ERROR(log_context, "DB maintenance thread exiting" );
 }
 
 void
-Server::repoCacheThread()
+Server::repoCacheThread(LogContext log_context, int thread_count)
 {
     // Check to see if repo cache needs to be updated every 60 seconds
+    log_context.thread_name = "repoCacheThread";
+    log_context.thread_id = thread_count;
     chrono::system_clock::duration  repo_cache_poll = chrono::seconds( 60 );
 
     while ( 1 )
     {
       try {
         try {
-          DL_DEBUG( "Checking if Repo Cache needs Updating" );
-          m_config.loadRepositoryConfig(m_auth_manager);
+          DL_DEBUG(log_context, "Checking if Repo Cache needs Updating" );
+          m_config.loadRepositoryConfig(m_auth_manager, log_context);
 
         } catch(const std::exception & e ) {
-          DL_ERROR( "Repo Cache Updating... " << e.what() );
+          DL_ERROR(log_context, "Repo Cache Updating... " << e.what() );
         }
       } catch (...) {
-        DL_ERROR( "Repo Cache Updating... unknown exception" );
+        DL_ERROR(log_context, "Repo Cache Updating... unknown exception" );
       }
 
       this_thread::sleep_for( repo_cache_poll );
     }
-    DL_ERROR( "DB maintenance thread exiting" );
+    DL_ERROR(log_context, "DB maintenance thread exiting" );
 
 }
 
 void
-Server::metricsThread()
+Server::metricsThread(LogContext log_context, int thread_count)
 {
+    log_context.thread_name = "metricsThread";
+    log_context.thread_id = thread_count;
     chrono::system_clock::duration metrics_per = chrono::seconds( m_config.metrics_period );
     DatabaseAPI db( m_config.db_url, m_config.db_user, m_config.db_pass );
     map<string,MsgMetrics_t>::iterator u;
@@ -566,14 +536,12 @@ Server::metricsThread()
 
     pc = purge_count;
 
-    DL_DEBUG( "metrics: " << m_config.metrics_purge_period << ", " << m_config.metrics_period << ", " << purge_count );
+    DL_DEBUG(log_context, "metrics: " << m_config.metrics_purge_period << ", " << m_config.metrics_period << ", " << purge_count );
 
     while ( 1 )
     {
         try
         {
-            //DL_DEBUG( "metrics: updating" );
-
             // Lock mutex, swap metrics to local store, release lock
             {
                 lock_guard<mutex> lock( m_msg_metrics_mutex );
@@ -594,150 +562,41 @@ Server::metricsThread()
                 u->second[0] = subtot; // Store total in 0 (0 is never a valid message type)
                 total += subtot; // Unlikely to overflow (i.e. > 13.3 million msg/sec )
             }
-            //DL_DEBUG( "metrics: send to db" );
 
-            db.metricsUpdateMsgCounts( timestamp, total, metrics );
+            db.metricsUpdateMsgCounts( timestamp, total, metrics, log_context );
             metrics.clear();
 
             if ( --pc == 0 )
             {
-                DL_DEBUG( "metrics: purging" );
-                db.metricsPurge( timestamp - m_config.metrics_purge_age );
+                DL_DEBUG(log_context, "metrics: purging" );
+                db.metricsPurge( timestamp - m_config.metrics_purge_age, log_context );
                 pc = purge_count;
             }
         }
         catch( TraceException & e )
         {
-            DL_ERROR( "Metrics thread:" << e.toString() );
+            DL_ERROR(log_context, "Metrics thread:" << e.toString() );
         }
         catch( exception & e )
         {
-            DL_ERROR( "Metrics thread:" << e.what() );
+            DL_ERROR(log_context, "Metrics thread:" << e.what() );
         }
         catch( ... )
         {
-            DL_ERROR( "Metrics thread: Unknown exception" );
+            DL_ERROR(log_context, "Metrics thread: Unknown exception" );
         }
 
         this_thread::sleep_for( metrics_per );
     }
-    DL_ERROR( "Metrics thread exiting" );
+    DL_ERROR(log_context, "Metrics thread exiting" );
 }
-
-// This does nothing for us
-/*
-void
-Server::zapHandler()
-{
-    DL_INFO( "ZAP handler thread starting" );
-
-    try
-    {
-        //void *      ctx = MsgComm::getContext();
-        void *      ctx = getContext();
-        void *      socket = zmq_socket( ctx, ZMQ_REP );
-        int         rc;
-        char        version[100];
-        char        request_id[100];
-        char        domain[100];
-        char        address[100];
-        char        identity_property[100];
-        char        mechanism[100];
-        char        client_key[100];
-        zmq_pollitem_t                  poll_items[] = { socket, 0, ZMQ_POLLIN, 0 };
-
-        if (( rc = zmq_bind( socket, "inproc://zeromq.zap.01" )) == -1 )
-            EXCEPT( 1, "Bind on ZAP failed." );
-
-        while ( 1 )
-        {
-            try
-            {
-                if (( rc = zmq_poll( poll_items, 1, 10000 )) == -1 )
-                    EXCEPT( 1, "Poll on ZAP socket failed." );
-
-                m_auth_manager.purge(PublicKeyType::TRANSIENT);
-                m_auth_manager.purge(PublicKeyType::SESSION);
-
-                if ( !(poll_items[0].revents & ZMQ_POLLIN ))
-                    continue;
-
-                if (( rc = zmq_recv( socket, version, 100, 0 )) == -1 )
-                    EXCEPT( 1, "Rcv version failed." );
-                version[rc] = 0;
-                if (( rc = zmq_recv( socket, request_id, 100, 0 )) == -1 )
-                    EXCEPT( 1, "Rcv request_id failed." );
-                request_id[rc] = 0;
-                if (( rc = zmq_recv( socket, domain, 100, 0 )) == -1 )
-                    EXCEPT( 1, "Rcv domain failed." );
-                domain[rc] = 0;
-                if (( rc = zmq_recv( socket, address, 100, 0 )) == -1 )
-                    EXCEPT( 1, "Rcv address failed." );
-                address[rc] = 0;
-                if (( rc = zmq_recv( socket, identity_property, 100, 0 )) == -1 )
-                    EXCEPT( 1, "Rcv identity_property failed." );
-                identity_property[rc] = 0;
-                if (( rc = zmq_recv( socket, mechanism, 100, 0 )) == -1 )
-                    EXCEPT( 1, "Rcv mechanism failed." );
-                mechanism[rc] = 0;
-                if (( rc = zmq_recv( socket, client_key, 100, 0 )) == -1 )
-                    EXCEPT( 1, "Rcv client_key failed." );
-                client_key[rc] = 0;
-
-                if ( rc != 32 )
-                    EXCEPT( 1, "Invalid client_key length." );
-
-                char client_key_text[41];
-                if ( !zmq_z85_encode( client_key_text, (uint8_t*)client_key, 32 ))
-                    EXCEPT( 1, "Encode of client_key failed." );
-
-                zmq_send( socket, "1.0", 3, ZMQ_SNDMORE );
-                zmq_send( socket, request_id, strlen(request_id), ZMQ_SNDMORE );
-								// A value of 200 means accept a value of 400 means deny
-                zmq_send( socket, "200", 3, ZMQ_SNDMORE );
-                zmq_send( socket, "", 0, ZMQ_SNDMORE );
-                zmq_send( socket, client_key_text, strlen(client_key_text), ZMQ_SNDMORE );
-                zmq_send( socket, "", 0, 0 );
-
-            }
-            catch( TraceException & e )
-            {
-                DL_ERROR( "ZAP handler:" << e.toString() );
-            }
-            catch( exception & e )
-            {
-                DL_ERROR( "ZAP handler:" << e.what() );
-            }
-            catch( ... )
-            {
-                DL_ERROR( "ZAP handler: Unknown exception" );
-            }
-        }
-
-        zmq_close( socket );
-    }
-    catch( TraceException & e )
-    {
-        DL_ERROR( "ZAP handler:" << e.toString() );
-    }
-    catch( exception & e )
-    {
-        DL_ERROR( "ZAP handler:" << e.what() );
-    }
-    catch( ... )
-    {
-        DL_ERROR( "ZAP handler: unknown exception type" );
-    }
-    DL_INFO( "ZAP handler thread exiting" );
-}*/ 
-
 
 // Triggered by client worker
   void
-Server::authenticateClient( const std::string & a_cert_uid, const std::string & a_key, const std::string & a_uid )
+Server::authenticateClient( const std::string & a_cert_uid, const std::string & a_key, const std::string & a_uid, LogContext log_context )
 {
 
-    DL_INFO("authenticateClient a_cert_uid is " << a_cert_uid << " a_uid is " << a_uid );
+    DL_INFO(log_context, "authenticateClient a_cert_uid is " << a_cert_uid << " a_uid is " << a_uid );
     if ( a_cert_uid.compare("anon") == 0 )
     {
         m_auth_manager.addKey( PublicKeyType::TRANSIENT, a_key, a_uid);
@@ -749,19 +608,13 @@ Server::metricsUpdateMsgCount( const std::string & a_uid, uint16_t a_msg_type )
 {
     lock_guard<mutex> lock( m_msg_metrics_mutex );
     map<string,MsgMetrics_t>::iterator u = m_msg_metrics.find( a_uid );
-    if ( u == m_msg_metrics.end() )
-    {
+    if ( u == m_msg_metrics.end() ) {
         m_msg_metrics[a_uid][a_msg_type] = 1;
-    }
-    else
-    {
+    } else {
         MsgMetrics_t::iterator m = u->second.find( a_msg_type );
-        if ( m == u->second.end() )
-        {
+        if ( m == u->second.end() ) {
             u->second[a_msg_type] = 1;
-        }
-        else
-        {
+        } else {
             m->second++;
         }
     }

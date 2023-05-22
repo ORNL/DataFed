@@ -51,7 +51,7 @@ GlobusAPI::~GlobusAPI()
 }
 
 long
-GlobusAPI::get( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const vector<pair<string,string>> &a_params, string & a_result )
+GlobusAPI::get( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const vector<pair<string,string>> &a_params, string & a_result, LogContext log_context )
 {
     string  url;
     char    error[CURL_ERROR_SIZE];
@@ -109,7 +109,7 @@ GlobusAPI::get( CURL * a_curl, const std::string & a_base_url, const std::string
 
     if ( res != CURLE_OK )
     {
-        DL_ERROR( "GlobusAPI::get - CURL error [" << error << "], " << curl_easy_strerror( res ));
+        DL_ERROR(log_context, "CURL error [" << error << "], " << curl_easy_strerror( res ));
         EXCEPT_PARAM( 1, "Globus API call failed." );
     }
 
@@ -117,7 +117,7 @@ GlobusAPI::get( CURL * a_curl, const std::string & a_base_url, const std::string
 }
 
 long
-GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, string & a_result )
+GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::string & a_url_path, const std::string & a_token, const std::vector<std::pair<std::string,std::string>> & a_params, const libjson::Value * a_body, string & a_result, LogContext log_context )
 {
 
     string  url;
@@ -162,11 +162,6 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
     if ( a_body )
     {
         tmp = a_body->toString();
-        DL_INFO( "Sending string via CURL");
-        DL_INFO( tmp );
-        std::cout << "Sending string via CURL" << std::endl;
-        std::cout << "Token: " << a_token <<std::endl;
-        std::cout << tmp <<std::endl;
         curl_easy_setopt( a_curl, CURLOPT_POSTFIELDS, tmp.c_str() );
     }
     else
@@ -207,7 +202,7 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
 
     if ( res != CURLE_OK )
     {
-        DL_ERROR( "GlobusAPI::post - CURL error [" << error << "], " << curl_easy_strerror( res ));
+        DL_ERROR(log_context, "CURL error [" << error << "], " << curl_easy_strerror( res ));
         EXCEPT_PARAM( 1, "Globus API call failed." );
     }
 
@@ -217,11 +212,11 @@ GlobusAPI::post( CURL * a_curl, const std::string & a_base_url, const std::strin
 
 
 std::string
-GlobusAPI::getSubmissionID( const std::string & a_acc_token )
+GlobusAPI::getSubmissionID( const std::string & a_acc_token, LogContext log_context )
 {
 
     string raw_result;
-    long code = get( m_curl_xfr, m_config.glob_xfr_url + "submission_id", "", a_acc_token, {}, raw_result );
+    long code = get( m_curl_xfr, m_config.glob_xfr_url + "submission_id", "", a_acc_token, {}, raw_result, log_context );
 
     try
     {
@@ -240,30 +235,28 @@ GlobusAPI::getSubmissionID( const std::string & a_acc_token )
     }
     catch( libjson::ParseError & e )
     {
-        DL_DEBUG("PARSE FAILED!");
-        DL_DEBUG( raw_result );
+        DL_DEBUG(log_context, "PARSE FAILED! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus submission API call returned invalid JSON." );
     }
     catch( TraceException & e )
     {
-        DL_DEBUG( raw_result );
+        DL_DEBUG(log_context, raw_result );
         e.addContext( "Globus submission API call failed." );
         throw;
     }
     catch( ... )
     {
-        DL_DEBUG("UNEXPECTED/MISSING JSON!");
-        DL_DEBUG( raw_result );
+        DL_DEBUG(log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus submission API call returned unexpected content" );
     }
 }
 
 
 string
-GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, bool a_encrypt, const std::string & a_acc_token )
+GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep, const std::vector<std::pair<std::string,std::string>> & a_files, bool a_encrypt, const std::string & a_acc_token, LogContext log_context )
 {
 
-    string sub_id = getSubmissionID( a_acc_token );
+    string sub_id = getSubmissionID( a_acc_token, log_context );
 
 
     Value body;
@@ -294,7 +287,7 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
     }
 
     string raw_result;
-    long code = post( m_curl_xfr, m_config.glob_xfr_url + "transfer", "", a_acc_token, {}, &body, raw_result );
+    long code = post( m_curl_xfr, m_config.glob_xfr_url + "transfer", "", a_acc_token, {}, &body, raw_result, log_context );
 
     try
     {
@@ -322,37 +315,33 @@ GlobusAPI::transfer( const std::string & a_src_ep, const std::string & a_dst_ep,
     }
     catch( libjson::ParseError & e )
     {
-        DL_DEBUG("PARSE FAILED!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "PARSE FAILED! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus transfer API call returned invalid JSON." );
     }
     catch( TraceException & e )
     {
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, raw_result );
         e.addContext( "Globus transfer API call failed." );
         throw;
     }
     catch( ... )
     {
-        DL_DEBUG("UNEXPECTED EXCEPTION");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "UNEXPECTED EXCEPTION " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus transfer API call returned unexpected content" );
     }
 }
 
 
 bool
-GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string & a_acc_tok, XfrStatus & a_status, std::string & a_err_msg ){
+GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string & a_acc_tok, XfrStatus & a_status, std::string & a_err_msg, LogContext log_context ){
 
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! checkTransferStatus " << std::endl;
     a_status = XS_INIT;
     a_err_msg.clear();
     string raw_result;
 
     // First check task global status for "SUCEEDED", "FAILED", "INACTIVE"
 
-    std::cout << "Checking globus status of task_id " << a_task_id << std::endl;
-    long code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id /*+ "?fields=status,nice_status"*/, a_acc_tok, {}, raw_result );
+    long code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id /*+ "?fields=status,nice_status"*/, a_acc_tok, {}, raw_result, log_context );
 
     try
     {
@@ -369,13 +358,12 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
         
         if ( status == "ACTIVE") {
 
-            std::cout << "task id " << a_task_id << " status is ACTIVE" << std::endl;
             double faults = resp_obj.getNumber("faults");
             if(faults > 0.0) {
 
-              std::cout << "faults encountered for task: " << a_task_id << " faults " << faults <<  std::endl;
+              DL_WARNING(log_context, "faults encountered for task: " << a_task_id << " faults " << faults);
               string raw_result2;
-              get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id  + "/event_list", a_acc_tok, {}, raw_result2 );
+              get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id  + "/event_list", a_acc_tok, {}, raw_result2, log_context );
               Value result2;
               result2.fromString( raw_result2 );
               Value::Object & resp_obj2 = result2.asObject();
@@ -384,17 +372,14 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
 
               Value::Object & event = data_arr.front().asObject();
               if( event.getBool("is_error")){
-                std::cout << "Error encountered for task: " << a_task_id << std::endl;
-                DL_DEBUG("\nError encountered is_error True printing error message");
-                DL_DEBUG(event.getString("details"));
-                DL_DEBUG("\n");
+                DL_ERROR(log_context, "Error encountered is_error True printing error message: " << event.getString("details"));
               }
 
              
               const double task_attempts = 2.0;
               if (resp_obj2.getNumber("total") > task_attempts) {
                 a_err_msg = resp_obj.getString("nice_status");
-                DL_DEBUG("Aborting task exceeded acceptable transfer attempts");
+                DL_DEBUG(log_context, "Aborting task exceeded acceptable transfer attempts");
                 a_status = XS_FAILED;
                 return true;
               }
@@ -415,27 +400,25 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
     }
     catch( libjson::ParseError & e )
     {
-        DL_DEBUG("PARSE FAILED!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "PARSE FAILED! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus task view API call returned invalid JSON." );
     }
     catch( TraceException & e )
     {
-        DL_DEBUG( raw_result );
+        DL_ERROR( log_context, raw_result );
         e.addContext( "Globus task view API call failed." );
         throw;
     }
     catch( ... )
     {
-        DL_DEBUG("UNEXPECTED/MISSING JSON!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus task view API call returned unexpected content" );
     }
 
     // If task status is "ACTIVE", also check event list for transient errors that should map to fatal errors
 
     raw_result.clear();
-    code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id + "/event_list", a_acc_tok, {}, raw_result );
+    code = get( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id + "/event_list", a_acc_tok, {}, raw_result, log_context );
 
     try
     {
@@ -478,31 +461,29 @@ GlobusAPI::checkTransferStatus( const std::string & a_task_id, const std::string
     }
     catch( libjson::ParseError & e )
     {
-        DL_DEBUG("PARSE FAILED!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "PARSE FAILED! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus task event list API call returned invalid JSON." );
     }
     catch( TraceException & e )
     {
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, raw_result );
         e.addContext( "Globus task event list API call failed." );
         throw;
     }
     catch( ... )
     {
-        DL_DEBUG("UNEXPECTED/MISSING JSON!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus task event list API call returned unexpected content" );
     }
 }
 
 void
-GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_tok )
+GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_tok, LogContext log_context )
 {
 
     string raw_result;
 
-    long code = post( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id + "/cancel", a_acc_tok, {}, 0, raw_result );
+    long code = post( m_curl_xfr, m_config.glob_xfr_url + "task/", a_task_id + "/cancel", a_acc_tok, {}, 0, raw_result, log_context );
 
     try
     {
@@ -524,20 +505,18 @@ GlobusAPI::cancelTask( const std::string & a_task_id, const std::string & a_acc_
     }
     catch( libjson::ParseError & e )
     {
-        DL_DEBUG("PARSE FAILED!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "PARSE FAILED! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus cancel task API call returned invalid JSON." );
     }
     catch( TraceException & e )
     {
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, raw_result );
         e.addContext( "Globus cancel task API call failed." );
         throw;
     }
     catch( ... )
     {
-        DL_DEBUG("UNEXPECTED/MISSING JSON!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus cancel task API call returned unexpected content" );
     }
 }
@@ -587,11 +566,11 @@ GlobusAPI::eventsHaveErrors( const vector<string> & a_events, XfrStatus & a_stat
 
 
 void
-GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_acc_token, EndpointInfo & a_ep_info )
+GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_acc_token, EndpointInfo & a_ep_info, LogContext log_context )
 {
 
     string raw_result;
-    long code = get( m_curl_xfr, m_config.glob_xfr_url + "endpoint/", a_ep_id, a_acc_token, {}, raw_result );
+    long code = get( m_curl_xfr, m_config.glob_xfr_url + "endpoint/", a_ep_id, a_acc_token, {}, raw_result, log_context );
 
     try
     {
@@ -643,33 +622,29 @@ GlobusAPI::getEndpointInfo( const std::string & a_ep_id, const std::string & a_a
     }
     catch( libjson::ParseError & e )
     {
-        DL_DEBUG("PARSE FAILED!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "PARSE FAILED! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus endpoint API call returned invalid JSON." );
     }
     catch( TraceException & e )
     {
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, raw_result );
         e.addContext( "Globus endpoint API call failed." );
         throw;
     }
     catch( exception & e )
     {
-        DL_DEBUG("UNEXPECTED/MISSING JSON!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus endpoint API call returned unexpected content" );
     }
 }
 
 
 void
-GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_new_acc_tok, uint32_t & a_expires_in )
+GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_new_acc_tok, uint32_t & a_expires_in, LogContext log_context )
 {
-    DL_DEBUG( "GlobusAPI::refreshAccessToken" );
-
 
     string raw_result;
-    long code = post( m_curl_auth, m_config.glob_oauth_url + "token", "", "", {{"refresh_token",a_ref_tok},{"grant_type","refresh_token"}}, 0, raw_result );
+    long code = post( m_curl_auth, m_config.glob_oauth_url + "token", "", "", {{"refresh_token",a_ref_tok},{"grant_type","refresh_token"}}, 0, raw_result, log_context );
 
 
     if ( !raw_result.size() )
@@ -687,27 +662,23 @@ GlobusAPI::refreshAccessToken( const std::string & a_ref_tok, std::string & a_ne
 
         checkResponsCode( code, resp_obj );
 
-        std::string output = "scope of token is: " + resp_obj.getString("scope");
-        DL_DEBUG(output);
         a_new_acc_tok = resp_obj.getString( "access_token" );
         a_expires_in = (uint32_t)resp_obj.getNumber( "expires_in" );
     }
     catch( libjson::ParseError & e )
     {
-        DL_DEBUG("PARSE FAILED!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "PARSE FAILED! Globus token API call returned invalid JSON");
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus token API call returned invalid JSON." );
     }
     catch( TraceException & e )
     {
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, raw_result );
         e.addContext( "Globus token API call failed." );
         throw;
     }
     catch( exception & e )
     {
-        DL_DEBUG("UNEXPECTED/MISSING JSON!");
-        DL_DEBUG( raw_result );
+        DL_ERROR(log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
         EXCEPT_PARAM( ID_SERVICE_ERROR, "Globus token API call returned unexpected content" );
     }
 }

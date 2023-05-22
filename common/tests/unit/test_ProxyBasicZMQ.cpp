@@ -11,6 +11,7 @@
 // Local public includes
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
+#include "common/DynaLog.hpp"
 #include "common/ICredentials.hpp"
 #include "common/IOperator.hpp"
 #include "common/MessageFactory.hpp"
@@ -68,7 +69,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ ) {
 
   const std::string frontend_channel = "proxy_frontend";
   const std::string backend_channel = "proxy_backend";
-  CommunicatorFactory factory;
+  LogContext log_context;
+  log_context.thread_name = "test_proxy_basic_thread";
+  CommunicatorFactory factory(log_context);
 
   const std::string server_id = "overlord";
   auto server = [&](const std::string backend_channel) {
@@ -193,7 +196,10 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ ) {
 
         }
 
-        ProxyBasicZMQ proxy(socket_options, socket_credentials);
+        LogContext log_context1;
+        log_context1.thread_name = "test_proxy_basic_middleman_thread";
+        log_context1.thread_id = 1;
+        ProxyBasicZMQ proxy(socket_options, socket_credentials, log_context1);
 
         std::chrono::duration<double> duration = std::chrono::milliseconds(400);
         proxy.setRunDuration(duration);
@@ -270,7 +276,10 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
   std::cout << "********************************\n" << std::endl;
   const std::string frontend_channel = "proxy_frontend_2";
   const std::string backend_channel = "proxy_backend_2";
-  CommunicatorFactory factory;
+
+  LogContext log_context;
+  log_context.thread_name = "test_proxy_basic_reply_thread";
+  CommunicatorFactory factory(log_context);
 
   std::cout << __FILE__ << ":" << __LINE__ <<std::endl;
   const std::string server_id = "overlord";
@@ -400,7 +409,10 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_Reply ) {
 
         }
 
-        ProxyBasicZMQ proxy(socket_options, socket_credentials);
+        LogContext log_context1;
+        log_context1.thread_name = "test_proxy_basic_middleman_thread";
+        log_context1.thread_id = 1;
+        ProxyBasicZMQ proxy(socket_options, socket_credentials, log_context1);
 
         std::chrono::duration<double> duration = std::chrono::milliseconds(1000);
         proxy.setRunDuration(duration);
@@ -507,7 +519,9 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_TCPServer_Reply ) {
   std::cout << "\nBasic ZMQ Proxy Reply Test with TCP Server" << std::endl;
   std::cout << "*********************************************\n" << std::endl;
   const std::string backend_channel = "proxy_backend_3";
-  CommunicatorFactory factory;
+  LogContext log_context;
+  log_context.thread_name = "test_proxy_basic_tcp_reply_thread";
+  CommunicatorFactory factory(log_context);
 
   std::cout << __FILE__ << ":" << __LINE__ <<std::endl;
   const std::string server_id = "overlord";
@@ -641,7 +655,10 @@ BOOST_AUTO_TEST_CASE( testing_ProxyBasicZMQ_TCPServer_Reply ) {
 
         }
 
-        ProxyBasicZMQ proxy(socket_options, socket_credentials);
+        LogContext log_context1;
+        log_context1.thread_name = "test_proxy_basic_middleman_thread";
+        log_context1.thread_id = 1;
+        ProxyBasicZMQ proxy(socket_options, socket_credentials, log_context1);
 
         // The proxy run duration should be less than the duration that we wait to finish the test
         proxy.setRunDuration(proxy_run_duration);

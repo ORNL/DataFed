@@ -6,6 +6,9 @@
 #include "Config.hpp"
 #include "RequestWorker.hpp"
 
+// Local public includes
+#include "common/DynaLog.hpp"
+
 // Standard includes
 #include <condition_variable>
 #include <map>
@@ -29,7 +32,7 @@ namespace Repo {
 class Server
 {
 public:
-    Server();
+    Server(LogContext log_context);
     virtual ~Server();
 
     Server& operator=( const Server & ) = delete;
@@ -47,6 +50,7 @@ private:
     std::string                     m_priv_key;
     std::string                     m_core_key;
     std::vector<RequestWorker*>     m_req_workers;
+    LogContext m_log_context;
 };
 
 

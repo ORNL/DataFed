@@ -4,6 +4,7 @@
 #include <boost/test/unit_test.hpp>
 
 // Local public includes
+#include "common/DynaLog.hpp"
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
 #include "common/ICredentials.hpp"
@@ -45,7 +46,9 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactory ) {
   std::cout << "\n*****************************" << std::endl;
   std::cout << "Starting insecure test" << std::endl;
 
-  CommunicatorFactory factory;
+  LogContext log_context;
+  log_context.thread_name = "test_communicator_factory";
+  CommunicatorFactory factory(log_context);
   // Create the client communicator
   const std::string server_id = "overlord";
   auto server = [&]() {
@@ -162,7 +165,9 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactorySecure ) {
   std::cout << "\n*****************************" << std::endl;
   std::cout << "Starting Secure test" << std::endl;
 
-  CommunicatorFactory factory;
+  LogContext log_context;
+  log_context.thread_name = "test_communicator_factory_secure";
+  CommunicatorFactory factory(log_context);
   // Create the client communicator
   const std::string server_id = "overlord";
   auto server = [&]() {
@@ -306,15 +311,16 @@ BOOST_AUTO_TEST_CASE( testing_CommunicatorFactorySecure ) {
     BOOST_CHECK( routes.front().compare(client_id) == 0);
 
     auto google_msg_ptr = std::get<::google::protobuf::Message *>(response.message->getPayload());
-    auto payload = dynamic_cast<Anon::AckReply *>(google_msg_ptr);
+    dynamic_cast<Anon::AckReply *>(google_msg_ptr);
     
   }
 }
 
 BOOST_AUTO_TEST_CASE( testing_CommunicatorFactoryReply ) {
 
-
-  CommunicatorFactory factory;
+  LogContext log_context;
+  log_context.thread_name = "test_communicator_factory_with_reply";
+  CommunicatorFactory factory(log_context);
   // Create the client communicator
   const std::string server_id = "overlord";
   auto server = [&]() {
