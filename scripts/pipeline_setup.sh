@@ -8,7 +8,7 @@ Help()
   echo " triger a GitLab pipeline to create the VM. It requires that you "
   echo "provide the Open Stack VM ID"
   echo
-  echo "Syntax: $(basename $0) [-h|i|s|c|g]"
+  echo "Syntax: $(basename $0) [-h|i|s|c|g|a]"
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-i, --app-credential-id           The application credentials id for"
@@ -21,8 +21,10 @@ Help()
   echo "                                  can be used."
   echo "-c, --compute-instance-id         The id of the instance we are trying"
   echo "                                  to check."
-  echo "-g, --gitlab-token                The GitLab token for restarting the CI"
+  echo "-g, --gitlab-trigger-token        The GitLab token for restarting the CI"
   echo "                                  pipeline to generate the VMs."
+  echo "-a, --gitlab-api-token            The GitLab API token for checking the"
+  echo "                                  status of a pipeline."
 }
 
 OS_APP_ID=$(printenv OS_APP_ID || true)
@@ -46,17 +48,22 @@ fi
 GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN=$(printenv GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN || true)
 if [ -z "$GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" ]
 then
-  # This is the port that is open and listening on"
-  # the core server."
   local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN=""
 else
   local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN="$GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN"
 fi
 
+GITLAB_DATAFEDCI_REPO_API_TOKEN=$(printenv GITLAB_DATAFEDCI_REPO_API_TOKEN || true)
+if [ -z "$GITLAB_DATAFEDCI_REPO_API_TOKEN" ]
+then
+  local_GITLAB_DATAFEDCI_REPO_API_TOKEN=""
+else
+  local_GITLAB_DATAFEDCI_REPO_API_TOKEN="$GITLAB_DATAFEDCI_REPO_API_TOKEN"
+fi
 
 COMPUTE_INSTANCE_ID=""
 
-VALID_ARGS=$(getopt -o hi:s:c: --long 'help',app-credential-id:,app-credential-secret:,compute-instance-id: -- "$@")
+VALID_ARGS=$(getopt -o hi:s:c:g:a: --long 'help',app-credential-id:,app-credential-secret:,compute-instance-id:,gitlab-trigger-token:,gitlab-api-token: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -79,8 +86,12 @@ while [ : ]; do
         COMPUTE_INSTANCE_ID=$2
         shift 2
         ;;
-    -g | --gitlab-token)
+    -g | --gitlab-trigger-token)
         local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN=$2
+        shift 2
+        ;;
+    -a | --gitlab-api-token)
+        local_GITLAB_DATAFEDCI_REPO_API_TOKEN=$2
         shift 2
         ;;
     --) shift; 
@@ -117,6 +128,13 @@ if [ -z "$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" ]
 then
   echo "The GitLab token for triggering the CI pipeline has not been defined it"
   echo "is a required parameter."
+  exit 1
+fi
+
+if [ -z "$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" ]
+then
+  echo "The GitLab token for accessing the API of the datafedci repo."
+  echo "It is a required parameter."
   exit 1
 fi
 
@@ -199,7 +217,7 @@ then
     echo "id is $pipeline_id"
 
     gitlab_response_status=$(curl -s --retry 5 --request GET \
-      --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
+      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
       --form ref="main" \
       "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
     echo "Gitlab reponse status"
@@ -268,7 +286,7 @@ then
     echo "id is $pipeline_id"
 
     gitlab_response_status=$(curl -s --retry 5 --request GET \
-      --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
+      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
       --form ref="main" \
       "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
     echo "Gitlab reponse status"
