@@ -133,7 +133,7 @@ fi
 
 if [ -z "$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" ]
 then
-  echo "The GitLab token for accessing the API of the datafedci repo."
+  echo "The GitLab token for accessing the API of the datafedci repo is missing."
   echo "It is a required parameter."
   exit 1
 fi

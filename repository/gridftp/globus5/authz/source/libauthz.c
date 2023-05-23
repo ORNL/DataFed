@@ -139,14 +139,9 @@ bool clearContext(globus_gsi_authz_handle_t a_handle) {
   return true;
 }
 
-/**
- * EVERY THING ABOVE IS UNCHANGED
- **/
-
 // IMPORTANT: The DATAFED_AUTHZ_CFG_FILE env variable must be set in the gridFTP
 // service script (usually /etc/init.d/globus-gridftp-server). This variable
 // points to the configuration file used for DataFed comm settings
-
 static struct Config g_config;
 
 bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
@@ -330,14 +325,14 @@ globus_result_t gsi_authz_init() {
 
 // The same
 globus_result_t gsi_authz_destroy() {
-  syslog(LOG_INFO, "gsi_authz_destroy");
+  syslog(LOG_DEBUG, "gsi_authz_destroy");
 
   return 0;
 }
 
 // The same
 globus_result_t gsi_authz_handle_init(va_list ap) {
-  syslog(LOG_INFO, "gsi_authz_handle_init");
+  syslog(LOG_DEBUG, "gsi_authz_handle_init");
 
   globus_result_t result = GLOBUS_FAILURE;
   globus_gsi_authz_handle_t *handle = va_arg(ap, globus_gsi_authz_handle_t *);
@@ -345,12 +340,9 @@ globus_result_t gsi_authz_handle_init(va_list ap) {
   gss_ctx_id_t context = va_arg(ap, gss_ctx_id_t);
   globus_gsi_authz_cb_t callback = va_arg(ap, globus_gsi_authz_cb_t);
   void *callback_arg = va_arg(ap, void *);
-  // void *                      authz_system_state  = va_arg( ap, void * );
 
   // Unused arguments
   (void)service_name;
-
-  // syslog( LOG_ERR, "handle %p", *handle );
 
   if (findContext(*handle) == 0) {
     if (setContext(*handle, context) == false)
@@ -360,9 +352,6 @@ globus_result_t gsi_authz_handle_init(va_list ap) {
   } else {
     syslog(LOG_ERR, "gsi_authz_handle_init context handle already initialized");
   }
-
-  // syslog( LOG_ERR, "gsi_authz_handle_init, handle: %p, serv: %s, cb: %p",
-  // *handle, service_name, callback );
 
   callback(callback_arg, callback_arg, result);
 
@@ -484,24 +473,17 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
               else
                 client_id = strdup((char *)cn + 4);
 
-              char *callout_username;
-              callout_username = getenv("GLOBUS_GRIDFTP_MAPPED_USERNAME");
+              char * callout_ids = getenv("GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS");
 
-              char *callout_username_id;
-              callout_username_id = getenv("GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID");
-
-              if (callout_username_id != NULL) {
-                syslog(LOG_INFO,
-                       "libauthz.c GLOBUS_GRIDFTP_MAPPED_USERNAME: %s\n",
-                       callout_username);
-                syslog(LOG_INFO,
-                       "libauthz.c GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
-                       callout_username_id);
-                client_id = strdup(callout_username_id);
-                syslog(LOG_INFO, "libauthz.c client_id: %s\n", client_id);
+              if (callout_ids != NULL) {
+                syslog(LOG_DEBUG,
+                       "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
+                       callout_ids);
+                client_id = strdup(callout_ids);
+                syslog(LOG_INFO, "libauthz.c client_id(s): %s\n", client_id);
               } else {
                 syslog(LOG_ERR,
-                       "libauthz.c GLOBUS_GRIDFTP_MAPPED_USERNAME not set.\n");
+                       "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS.\n");
               }
             }
 
@@ -556,19 +538,18 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
 
 // The same
 globus_result_t gsi_authz_cancel() {
-  syslog(LOG_INFO, "gsi_authz_cancel\n");
+  syslog(LOG_DEBUG, "gsi_authz_cancel\n");
   return 0;
 }
 
 // The same
 globus_result_t gsi_authz_identify(va_list ap) {
-  //(void)ap;
-  syslog(LOG_INFO, "gsi_authz_identify\n");
+  syslog(LOG_DEBUG, "gsi_authz_identify\n");
   return 0;
 }
 
 globus_result_t gsi_map_user(va_list Ap) {
-  syslog(LOG_INFO, "gsi_map_user");
+  syslog(LOG_DEBUG, "gsi_map_user");
 
   char *service = NULL;
   char *desired_identity = NULL;
@@ -586,32 +567,6 @@ globus_result_t gsi_map_user(va_list Ap) {
   (void)desired_identity;
   (void)service;
 
-#if 0
-    OM_uint32 min_stat;
-    gss_name_t client = GSS_C_NO_NAME;
-    gss_name_t target = GSS_C_NO_NAME;
-    OM_uint32 maj_stat = gss_inquire_context( &min_stat, context, &client, &target, 0, 0, 0, 0, 0 );
-    if ( maj_stat == GSS_S_COMPLETE )
-    {
-        gss_buffer_desc  client_buf = GSS_C_EMPTY_BUFFER;
-        gss_OID client_type;
-
-        maj_stat = gss_display_name( &min_stat, client, &client_buf, &client_type );
-        if ( maj_stat == GSS_S_COMPLETE )
-        {
-            gss_buffer_desc target_buf = GSS_C_EMPTY_BUFFER;
-            gss_OID target_type;
-
-            maj_stat = gss_display_name( &min_stat, target, &target_buf, &target_type );
-            if ( maj_stat == GSS_S_COMPLETE )
-            {
-                syslog( LOG_INFO, "client: %s", (char*)client_buf.value );
-            }
-        }
-    }
-
-    syslog( LOG_INFO, "gsi_map_user request service(%s), user (%s)", service, desired_identity );
-#endif
   memset(identity_buffer, 0, buffer_length);
   strcat(identity_buffer, g_config.user);
   buffer_length = strlen(g_config.user);

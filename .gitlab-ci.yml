@@ -27,8 +27,6 @@ build-foxx:
     - cmake --build build
     - cmake --build build --target install
     - cmake --build build --target test
-      # NEed to apt install cmake after distro
-      #
 
 #before_script:
 #  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY

@@ -55,7 +55,7 @@ public:
       : m_config(a_config), m_test_path_len(strlen(a_config->test_path)) {
 
     m_log_context = log_context;
-    m_log_context.thread_name += "authz_worker";
+    m_log_context.thread_name += "-authz_worker";
     m_log_context.thread_id = 0;
   }
 
@@ -186,7 +186,7 @@ public:
                                  timeout_on_receive, timeout_on_poll);
     }(authz_thread_id, m_config->server_addr, *m_sec_ctx);
 
-    auto auth_req = std::make_unique<Auth::RepoAuthzRequest>(); //  auth_req;
+    auto auth_req = std::make_unique<Auth::RepoAuthzRequest>();
 
     auth_req->set_repo(m_config->repo_id);
     auth_req->set_client(client_id);
@@ -203,13 +203,13 @@ public:
     LogContext log_context = m_log_context;
     log_context.correlation_id =
         std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
-    DL_INFO(log_context,
+    DL_DEBUG(log_context,
             "PUB KEY:  " << cred_options[CredentialType::PUBLIC_KEY]);
-    DL_INFO(log_context,
+    DL_DEBUG(log_context,
             "PRIV KEY: " << cred_options[CredentialType::PRIVATE_KEY]);
-    DL_INFO(log_context,
+    DL_DEBUG(log_context,
             "SERV KEY: " << cred_options[CredentialType::SERVER_KEY]);
-    DL_INFO(log_context,
+    DL_DEBUG(log_context,
             "Sending request to core service at address." << client->address());
 
     auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
