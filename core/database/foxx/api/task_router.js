@@ -14,8 +14,10 @@ module.exports = router;
 
 router.get('/view', function (req, res) {
     try{
-        if ( !g_db._exists( req.queryParams.task_id ))
+        if ( !g_db._exists( req.queryParams.task_id )) {
+            // WARNING - do not change this error message it is acted on by the task worker
             throw [g_lib.ERR_INVALID_PARAM,"Task " + req.queryParams.task_id + " does not exist."];
+        }
 
         var task = g_db.task.document( req.queryParams.task_id );
         var blocks = g_db.block.byExample({_from:req.queryParams.task_id});

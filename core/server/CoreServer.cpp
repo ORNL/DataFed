@@ -50,15 +50,11 @@ Server::Server(LogContext log_context) :
     loadKeys( m_config.cred_dir );
 
     // Configure ZMQ security context
-    //m_config.sec_ctx.is_server = true;
     CredentialFactory cred_factory;
     std::unordered_map<CredentialType, std::string> params;
     params[CredentialType::PUBLIC_KEY] = m_pub_key;
     params[CredentialType::PRIVATE_KEY] = m_priv_key;
-    //params[CredentialType::SERVER_KEY] = std::string("");
     m_config.sec_ctx = cred_factory.create(ProtocolType::ZQTP, params);
-    //m_config.sec_ctx.public_key = m_pub_key;
-    //m_config.sec_ctx.private_key = m_priv_key;
 
     // Wait for DB connection
     waitForDB();
@@ -188,7 +184,7 @@ Server::run()
   void
 Server::msgRouter(LogContext log_context, int thread_count)
 {
-  log_context.thread_name = "msgRounter";
+  log_context.thread_name += "-msgRouter";
   log_context.thread_id = thread_count;
   std::unordered_map<SocketRole, SocketOptions> socket_options;
   std::unordered_map<SocketRole, ICredentials *> socket_credentials;
@@ -209,7 +205,6 @@ Server::msgRouter(LogContext log_context, int thread_count)
     client_socket_options.connection_security = SocketConnectionSecurity::INSECURE;
     client_socket_options.protocol_type = ProtocolType::ZQTP; 
     client_socket_options.host = "workers";
-    //        client_socket_options.port = 1341;
     client_socket_options.local_id = "core_message_routing_client";
     socket_options[SocketRole::CLIENT] = client_socket_options;
 
@@ -236,7 +231,6 @@ Server::msgRouter(LogContext log_context, int thread_count)
     server_socket_options.connection_security = SocketConnectionSecurity::INSECURE;
     server_socket_options.protocol_type = ProtocolType::ZQTP; 
     server_socket_options.host = "msg_proc";
-    //server_socket_options.port = 1341;
     server_socket_options.local_id = "core_message_routing_server";
     socket_options[SocketRole::SERVER] = server_socket_options;
 
@@ -254,8 +248,6 @@ Server::msgRouter(LogContext log_context, int thread_count)
       ServerType::PROXY_BASIC_ZMQ,
       socket_options,
       socket_credentials);
-
-  //ProxyBasicZMQ proxy(socket_options, socket_credentials);
 
   // Ceate worker threads
   for ( uint16_t t = 0; t < m_config.num_client_worker_threads; ++t ) {
@@ -284,7 +276,7 @@ void
 Server::ioSecure(LogContext log_context, int thread_count)
 {
 
-    log_context.thread_name = "ioSecure";
+    log_context.thread_name += "-ioSecure";
     log_context.thread_id = thread_count;
     try
     {
@@ -462,7 +454,7 @@ Server::ioInsecure(LogContext log_context, int thread_count)
 void
 Server::dbMaintenance(LogContext log_context, int thread_count)
 {
-    log_context.thread_name = "dbMaintenance";
+    log_context.thread_name += "-dbMaintenance";
     log_context.thread_id = thread_count;
     chrono::system_clock::duration  purge_per = chrono::seconds( m_config.note_purge_period );
     DatabaseAPI                     db( m_config.db_url, m_config.db_user, m_config.db_pass );
@@ -496,7 +488,7 @@ void
 Server::repoCacheThread(LogContext log_context, int thread_count)
 {
     // Check to see if repo cache needs to be updated every 60 seconds
-    log_context.thread_name = "repoCacheThread";
+    log_context.thread_name += "-repoCacheThread";
     log_context.thread_id = thread_count;
     chrono::system_clock::duration  repo_cache_poll = chrono::seconds( 60 );
 
@@ -523,7 +515,7 @@ Server::repoCacheThread(LogContext log_context, int thread_count)
 void
 Server::metricsThread(LogContext log_context, int thread_count)
 {
-    log_context.thread_name = "metricsThread";
+    log_context.thread_name += "-metricsThread";
     log_context.thread_id = thread_count;
     chrono::system_clock::duration metrics_per = chrono::seconds( m_config.metrics_period );
     DatabaseAPI db( m_config.db_url, m_config.db_user, m_config.db_pass );

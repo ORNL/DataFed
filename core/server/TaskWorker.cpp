@@ -30,13 +30,12 @@ namespace Core {
 TaskWorker::TaskWorker( ITaskMgr & a_mgr, uint32_t a_worker_id, LogContext log_context ) :
     ITaskWorker( a_worker_id, log_context ),
     m_mgr( a_mgr ),
-    m_thread( 0 ),
     m_db( Config::getInstance().db_url , Config::getInstance().db_user, Config::getInstance().db_pass )
 {
 
     log_context.thread_name += "-TaskWorker";
     log_context.thread_id = a_worker_id;
-    m_thread = new thread( &TaskWorker::workerThread, this, log_context );
+    m_thread = std::make_unique<std::thread>( &TaskWorker::workerThread, this, log_context );
 
     m_execute[TC_RAW_DATA_TRANSFER] = &cmdRawDataTransfer;
     m_execute[TC_RAW_DATA_DELETE] = &cmdRawDataDelete;
@@ -47,6 +46,10 @@ TaskWorker::TaskWorker( ITaskMgr & a_mgr, uint32_t a_worker_id, LogContext log_c
 
 TaskWorker::~TaskWorker()
 {
+  m_running = false;
+  if( m_thread.get() != nullptr ) {
+    m_thread->join();
+  }
 }
 
 /**
@@ -67,9 +70,9 @@ TaskWorker::workerThread(LogContext log_context)
     int                step;
     bool               first;
 
-    while( 1 )
+    while( m_running )
     {
-        m_task = m_mgr.getNextTask( this );
+      std::unique_ptr<ITaskMgr::Task> m_task = m_mgr.getNextTask( this );
 
         err_msg.clear();
         first = true;
@@ -84,12 +87,9 @@ TaskWorker::workerThread(LogContext log_context)
                 }
                 else
                 {
-                    DL_TRACE(log_context, "Calling task run, step: " << step );
-
                     m_db.taskRun( m_task->task_id, task_cmd, log_context, err_msg.size()?0:&step, err_msg.size()?&err_msg:0 );
                 }
 
-                //DL_DEBUG( "task reply: " << task_cmd.toString() );
 
                 const Value::Object & obj = task_cmd.asObject();
 
@@ -99,10 +99,10 @@ TaskWorker::workerThread(LogContext log_context)
 
                 if ( obj.has( "step" )) {
                     step = obj.asNumber();
-                } else if ( cmd != TC_STOP )
+                } else if ( cmd != TC_STOP ) {
                     EXCEPT(1,"Reply missing step value" );
+                }
 
-                //bool retry = false;
                 ICommunicator::Response response;
                 if(m_execute.count(cmd)) {
                   DL_DEBUG(log_context, "TASK_ID: " << m_task->task_id << ", Step: " << step );
@@ -117,7 +117,7 @@ TaskWorker::workerThread(LogContext log_context)
 
                 if ( response.error or response.time_out )
                 {
-                    if ( m_mgr.retryTask( m_task, log_context ))
+                    if ( m_mgr.retryTask( std::move(m_task), log_context ))
                     {
                         err_msg = "Maximum task retry period exceeded.";
                         // We give up, exit inner while loop and delete task
@@ -134,7 +134,11 @@ TaskWorker::workerThread(LogContext log_context)
             catch( TraceException & e )
             {
                 err_msg = e.toString();
-                DL_ERROR(log_context, "Task worker " << id() << " exception: " << err_msg );
+                DL_ERROR(log_context, "Task worker " << id() << " exception: " << err_msg << " task_id is " << m_task->task_id );
+                if( err_msg.find("Task " + m_task->task_id + " does not exist") != std::string::npos) {
+                  DL_ERROR(log_context, "Task is not found in the database something strange is going on, move to the next task");
+                  break;
+                }
             }
             catch( exception & e )
             {
@@ -143,14 +147,12 @@ TaskWorker::workerThread(LogContext log_context)
             }
 
             task_cmd.clear();
-        } // End of inner while loop
 
-        // Free task only if set
-        if ( m_task )
-        {
-            delete m_task;
-            m_task = 0;
-        }
+            if( not m_running ) {
+              DL_DEBUG(log_context, "Graceful termination of TASK_ID: " << m_task->task_id);
+              break;
+            }
+        } // End of inner while loop
 
     } // End of outer while loop
 }
@@ -182,7 +184,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params, Log
     {
         DL_DEBUG(log_context, "Refreshing access token for " << uid << " (expires in " << expires_in << ")" );
 
-        me.m_glob.refreshAccessToken( ref_tok, acc_tok, expires_in, log_context );
+        me.m_glob.refreshAccessToken( ref_tok, acc_tok, expires_in);
         me.m_db.setClient( uid );
         me.m_db.userSetAccessToken( acc_tok, expires_in, ref_tok, log_context );
     }
@@ -192,7 +194,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params, Log
         const string & ep = (type == TT_DATA_GET)?dst_ep:src_ep;
 
         // Check destination endpoint
-        me.m_glob.getEndpointInfo( ep, acc_tok, ep_info, log_context );
+        me.m_glob.getEndpointInfo( ep, acc_tok, ep_info);
         if ( !ep_info.activated )
             EXCEPT_PARAM( 1, "Globus endpoint " << ep << " requires activation." );
 
@@ -206,7 +208,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params, Log
         {
             GlobusAPI::EndpointInfo     ep_info2;
 
-            me.m_glob.getEndpointInfo( src_ep, acc_tok, ep_info2, log_context );
+            me.m_glob.getEndpointInfo( src_ep, acc_tok, ep_info2);
             if ( !ep_info.activated ) {
               DL_ERROR(log_context, "Globus endpoint " << ep << " requires activation.");
               EXCEPT_PARAM( 1, "Globus endpoint " << ep << " requires activation." );
@@ -230,7 +232,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params, Log
     if ( files_v.size() )
     {
         DL_TRACE(log_context, "Begin transfer of " << files_v.size() << " files" );
-        string glob_task_id = me.m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok, log_context );
+        string glob_task_id = me.m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok);
         // Monitor Globus transfer
 
         GlobusAPI::XfrStatus    xfr_status;
@@ -240,10 +242,10 @@ TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params, Log
         {
             sleep( 5 );
        
-            if ( me.m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg, log_context )){
+            if ( me.m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg)){
                 // Transfer task needs to be cancelled
                 DL_DEBUG(log_context, "Cancelling task: " << glob_task_id);
-                me.m_glob.cancelTask( glob_task_id, acc_tok, log_context );
+                me.m_glob.cancelTask( glob_task_id, acc_tok);
             }
         } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
 

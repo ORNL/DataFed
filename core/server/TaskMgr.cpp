@@ -131,7 +131,7 @@ TaskMgr::maintenanceThread(LogContext log_context, int thread_id)
     timepoint_t                             now = chrono::system_clock::now();
     timepoint_t                             purge_next = now + purge_per;
     timepoint_t                             timeout;
-    multimap<timepoint_t,Task*>::iterator   t;
+    multimap<timepoint_t,std::unique_ptr<Task>>::iterator   t;
     unique_lock<mutex>                      sched_lock( m_worker_mutex, defer_lock );
     unique_lock<mutex>                      maint_lock( m_maint_mutex );
 
@@ -194,7 +194,7 @@ TaskMgr::maintenanceThread(LogContext log_context, int thread_id)
             {
                 DL_INFO(log_context, "MAINT: rescheduling failed task " << t->second->task_id );
 
-                retryTaskAndScheduleWorker( t->second, log_context );
+                retryTaskAndScheduleWorker( std::move(t->second), log_context );
                 t = m_tasks_retry.erase( t );
             }
             else
@@ -294,7 +294,7 @@ TaskMgr::addNewTaskAndScheduleWorker( const std::string & a_task_id, LogContext 
     // TODO Add logic to limit max number of ready tasks in memory
 
     DL_DEBUG(log_context, "Adding task " << a_task_id );
-    m_tasks_ready.push_back( new Task( a_task_id ));
+    m_tasks_ready.push_back(std::make_unique<Task>( a_task_id ));
 
     if ( m_worker_next )
     {
@@ -306,9 +306,9 @@ TaskMgr::addNewTaskAndScheduleWorker( const std::string & a_task_id, LogContext 
 }
 
 void
-TaskMgr::retryTaskAndScheduleWorker( Task * a_task, LogContext log_context )
+TaskMgr::retryTaskAndScheduleWorker( std::unique_ptr<Task> a_task, LogContext log_context )
 {
-    m_tasks_ready.push_back( a_task );
+    m_tasks_ready.push_back( std::move(a_task) );
 
     if ( m_worker_next )
     {
@@ -368,10 +368,9 @@ TaskMgr::cancelTask( const std::string & a_task_id, LogContext log_context )
  * is available, it is returned directly; otherwise the worker is
  * descheduled until one becomes available.
  */
-TaskMgr::Task *
+std::unique_ptr<TaskMgr::Task>
 TaskMgr::getNextTask( ITaskWorker * a_worker )
 {
-    Task * task = 0;
 
     unique_lock<mutex> lock( m_worker_mutex );
 
@@ -388,7 +387,7 @@ TaskMgr::getNextTask( ITaskWorker * a_worker )
     }
 
     // Pop next task from ready queue and place in running map
-    task = m_tasks_ready.front();
+    auto task = std::move(m_tasks_ready.front());
     m_tasks_ready.pop_front();
 
     return task;
@@ -404,7 +403,7 @@ TaskMgr::getNextTask( ITaskWorker * a_worker )
  * Called by task workers on transient failures.
  */
 bool
-TaskMgr::retryTask( Task * a_task, LogContext log_context )
+TaskMgr::retryTask( std::unique_ptr<Task> a_task, LogContext log_context )
 {
     DL_DEBUG(log_context, "Retry task " << a_task->task_id );
 
@@ -423,7 +422,7 @@ TaskMgr::retryTask( Task * a_task, LogContext log_context )
 
         lock_guard<mutex> lock( m_maint_mutex );
 
-        m_tasks_retry.insert( make_pair( a_task->retry_time, a_task ));
+        m_tasks_retry.insert( make_pair( a_task->retry_time, std::move(a_task) ));
         m_maint_cvar.notify_one();
     }
     else if ( now < a_task->retry_fail_time )
@@ -439,7 +438,7 @@ TaskMgr::retryTask( Task * a_task, LogContext log_context )
 
         lock_guard<mutex> lock(m_maint_mutex);
 
-        m_tasks_retry.insert( make_pair( a_task->retry_time, a_task ));
+        m_tasks_retry.insert( make_pair( a_task->retry_time, std::move(a_task) ));
         m_maint_cvar.notify_one();
     }
     else

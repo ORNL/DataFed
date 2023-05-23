@@ -161,6 +161,17 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
 
 
     def tearDown(self):
+        # Check all tasks 
+        result = self._df_api.taskList(status="queued")
+        print("Queued tasks")
+        print(result)
+        result = self._df_api.taskList(status="ready")
+        print("Ready tasks")
+        print(result)
+        result = self._df_api.taskList(status="running")
+        print("Running tasks")
+        print(result)
+
 
         print("Running Tear Down")
         repo_id = self._repo_form["id"]

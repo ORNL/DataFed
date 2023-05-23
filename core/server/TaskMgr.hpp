@@ -42,20 +42,20 @@ private:
 
     void    initialize(LogContext log_context);
     // ITaskMgr methods used by TaskWorkers
-    Task *      getNextTask( ITaskWorker * a_worker );
-    bool        retryTask( Task * a_task, LogContext log_context );
+    std::unique_ptr<Task>      getNextTask( ITaskWorker * a_worker );
+    bool        retryTask( std::unique_ptr<Task> a_task, LogContext log_context );
     void        newTasks( const libjson::Value & a_tasks, LogContext log_context );
 
     // Private methods
     void        maintenanceThread(LogContext, int);
     void        addNewTaskAndScheduleWorker( const std::string & a_task_id, LogContext log_context );
-    void        retryTaskAndScheduleWorker( Task * a_task, LogContext log_context );
+    void        retryTaskAndScheduleWorker( std::unique_ptr<Task> a_task, LogContext log_context );
     void        wakeNextWorker();
     void        purgeTaskHistory(LogContext log_context) const;
 
     Config &                            m_config;
-    std::deque<Task*>                   m_tasks_ready;
-    std::multimap<timepoint_t,Task*>    m_tasks_retry;
+    std::deque<std::unique_ptr<Task>>                   m_tasks_ready;
+    std::multimap<timepoint_t,std::unique_ptr<Task>>    m_tasks_retry;
     std::mutex                          m_worker_mutex;
     std::vector<ITaskWorker*>           m_workers;
     ITaskWorker *                       m_worker_next;

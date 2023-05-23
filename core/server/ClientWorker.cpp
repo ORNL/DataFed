@@ -42,18 +42,18 @@ map<uint16_t,ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 #define NOTE_MASK_MD_ERR 0x2000
 
 ClientWorker::ClientWorker( ICoreServer & a_core, size_t a_tid, LogContext log_context_in ) :
-    m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_worker_thread(0), m_run(true),
+    m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid), m_run(true),
     m_db_client( m_config.db_url , m_config.db_user, m_config.db_pass ),
     m_log_context(log_context_in)
 {
     // This should be hidden behind a factory or some other builder
     m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
     setupMsgHandlers();
-    
     LogContext log_context = m_log_context;
     log_context.thread_name += std::to_string(log_context.thread_id) + "-WorkerThread";
     log_context.thread_id = 0; 
-    m_worker_thread = new thread( &ClientWorker::workerThread, this, log_context );
+    m_globus_api = std::move(GlobusAPI(log_context));
+    m_worker_thread = std::make_unique<std::thread>( &ClientWorker::workerThread, this, log_context );
 }
 
 ClientWorker::~ClientWorker()
@@ -62,9 +62,15 @@ ClientWorker::~ClientWorker()
     wait();
 }
 
+bool ClientWorker::isRunning() const {
+  std::lock_guard<mutex> lock( m_run_mutex );
+  return m_run;
+}
+
 void
 ClientWorker::stop()
 {
+    std::lock_guard<mutex> lock( m_run_mutex );
     m_run = false;
 }
 
@@ -74,7 +80,7 @@ ClientWorker::wait()
     if ( m_worker_thread )
     {
         m_worker_thread->join();
-        delete m_worker_thread;
+        //delete m_worker_thread;
         m_worker_thread = 0;
     }
 }
@@ -274,7 +280,7 @@ ClientWorker::workerThread(LogContext log_context)
 
     DL_DEBUG(log_context, "W" << m_tid << " m_run " << m_run);
 
-    while ( m_run )
+    while ( isRunning() )
     {
         try
         {
@@ -1258,7 +1264,7 @@ ClientWorker::procUserGetAccessTokenRequest( const std::string & a_uid, std::uni
     {
         DL_INFO(log_context, "Refreshing access token for " << a_uid );
 
-        m_globus_api.refreshAccessToken( ref_tok, acc_tok, expires_in, log_context );
+        m_globus_api.refreshAccessToken( ref_tok, acc_tok, expires_in);
         m_db_client.userSetAccessToken( acc_tok, expires_in, ref_tok, log_context );
 
     }

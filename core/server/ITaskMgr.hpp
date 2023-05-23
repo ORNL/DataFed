@@ -10,6 +10,7 @@
 #include "common/libjson.hpp"
 
 // Standard includes
+#include <memory>
 #include <string>
 
 namespace SDMS {
@@ -45,8 +46,8 @@ public:
         timepoint_t         retry_fail_time;
     };
 
-    virtual Task *      getNextTask( ITaskWorker * a_worker ) = 0;
-    virtual bool        retryTask( Task * a_task, LogContext log_context ) = 0;
+    virtual std::unique_ptr<Task>      getNextTask( ITaskWorker * a_worker ) = 0;
+    virtual bool        retryTask( std::unique_ptr<Task> a_task, LogContext log_context ) = 0;
     virtual void        newTasks( const libjson::Value & a_tasks, LogContext log_context ) = 0;
 };
 

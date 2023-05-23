@@ -13,6 +13,7 @@
 #include "common/IMessage.hpp"
 
 // Standard includes
+#include <atomic>
 #include <memory>
 #include <string>
 #include <thread>
@@ -50,10 +51,11 @@ private:
     ICommunicator::Response repoSendRecv( const std::string & a_repo_id, std::unique_ptr<IMessage> && a_msg, LogContext log_context );
 
     ITaskMgr &                  m_mgr;
-    std::thread *               m_thread;
+    std::unique_ptr<std::thread>  m_thread;
     ITaskMgr::Task *            m_task;
     DatabaseAPI                 m_db;
     GlobusAPI                   m_glob;
+    std::atomic<bool> m_running = true;
 };
 
 }}

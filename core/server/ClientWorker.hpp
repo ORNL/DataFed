@@ -115,10 +115,13 @@ private:
         m_validator_err += "At " + (path.size()?path:"top-level") + ": " + a_err_msg + "\n";
     }
 
+    bool isRunning() const;
+
     Config &            m_config;           ///< Ref to configuration singleton
     ICoreServer &       m_core;             ///< Ref to parent CoreServer interface
     size_t              m_tid;              ///< Thread ID
-    std::thread *       m_worker_thread;    ///< Local thread handle
+    std::unique_ptr<std::thread>   m_worker_thread;    ///< Local thread handle
+    mutable std::mutex          m_run_mutex;
     bool                m_run;              ///< Thread run flag
     DatabaseAPI         m_db_client;        ///< Local DB client instance
     GlobusAPI           m_globus_api;       ///< Local GlobusAPI instance
