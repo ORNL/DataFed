@@ -1,10 +1,10 @@
 'use strict';
 
-const   createRouter = require('@arangodb/foxx/router');
-const   router = createRouter();
-const   joi = require('joi');
-const   g_db = require('@arangodb').db;
-const   g_lib = require('./support');
+const createRouter = require('@arangodb/foxx/router');
+const router = createRouter();
+const joi = require('joi');
+const g_db = require('@arangodb').db;
+const g_lib = require('./support');
 
 module.exports = router;
 
@@ -12,24 +12,24 @@ module.exports = router;
 //==================== ACL API FUNCTIONS
 
 
-router.get('/version', function (req, res) {
-    try {
-        res.send({
-          "release_year": @DATAFED_RELEASE_YEAR@,
-          "release_month": @DATAFED_RELEASE_MONTH@,
-          "release_day": @DATAFED_RELEASE_DAY@,
-          "release_hour": @DATAFED_RELEASE_HOUR@,
-          "release_minute": @DATAFED_RELEASE_MINUTE@,
-          "api_major": @DATAFED_FOXX_API_MAJOR@,
-          "api_minor": @DATAFED_FOXX_API_MINOR@,
-          "api_patch": @DATAFED_FOXX_API_PATCH@,
-          "component_major": @DATAFED_FOXX_MAJOR@,
-          "component_minor": @DATAFED_FOXX_MINOR@,
-          "component_patch": @DATAFED_FOXX_PATCH@
-        });
-    } catch( e ) {
-        g_lib.handleException( e, res );
-    }
-})
-.summary('Get version numbers')
-.description('Get version number of Foxx service, of foxx API and of release');
+router.get('/version', function(req, res) {
+        try {
+            res.send({
+                "release_year": @DATAFED_RELEASE_YEAR @,
+                "release_month": @DATAFED_RELEASE_MONTH @,
+                "release_day": @DATAFED_RELEASE_DAY @,
+                "release_hour": @DATAFED_RELEASE_HOUR @,
+                "release_minute": @DATAFED_RELEASE_MINUTE @,
+                "api_major": @DATAFED_FOXX_API_MAJOR @,
+                "api_minor": @DATAFED_FOXX_API_MINOR @,
+                "api_patch": @DATAFED_FOXX_API_PATCH @,
+                "component_major": @DATAFED_FOXX_MAJOR @,
+                "component_minor": @DATAFED_FOXX_MINOR @,
+                "component_patch": @DATAFED_FOXX_PATCH @
+            });
+        } catch (e) {
+            g_lib.handleException(e, res);
+        }
+    })
+    .summary('Get version numbers')
+    .description('Get version number of Foxx service, of foxx API and of release');
