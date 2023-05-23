@@ -53,9 +53,10 @@ class Connection:
         server_pub_key,
         client_pub_key,
         client_priv_key,
-        zmq_ctxt = None ):
+        zmq_ctxt=None,
+    ):
 
-        #print("Connection Init")
+        # print("Connection Init")
         # Unfortunately we cannot get the public key out once we put it in zmq
         self._pub_key = client_pub_key
 
@@ -63,7 +64,7 @@ class Connection:
         self._msg_desc_by_name = {}
         self._msg_type_by_desc = {}
 
-        self._address = 'tcp://{0}:{1}'.format( server_host, server_port )
+        self._address = "tcp://{0}:{1}".format(server_host, server_port)
         print(f"Address is {self._address}")
         # init zeromq
         if zmq_ctxt:
@@ -72,41 +73,41 @@ class Connection:
         else:
             self._zmq_ctxt = zmq.Context()
             self._zmq_ctxt_owner = True
-            self._zmq_ctxt.setsockopt( zmq.RECONNECT_IVL, 2000 )
+            self._zmq_ctxt.setsockopt(zmq.RECONNECT_IVL, 2000)
 
-        self._socket = self._zmq_ctxt.socket( zmq.DEALER )
-        self._socket.setsockopt( zmq.TCP_KEEPALIVE, 1 )
-        self._socket.setsockopt( zmq.TCP_KEEPALIVE_CNT, 20 )
-        self._socket.setsockopt( zmq.TCP_KEEPALIVE_IDLE, 540 )
-        self._socket.setsockopt( zmq.TCP_KEEPALIVE_INTVL, 5 )
+        self._socket = self._zmq_ctxt.socket(zmq.DEALER)
+        self._socket.setsockopt(zmq.TCP_KEEPALIVE, 1)
+        self._socket.setsockopt(zmq.TCP_KEEPALIVE_CNT, 20)
+        self._socket.setsockopt(zmq.TCP_KEEPALIVE_IDLE, 540)
+        self._socket.setsockopt(zmq.TCP_KEEPALIVE_INTVL, 5)
 
         if sys.version_info.major == 3:
             try:
-                self._socket.setsockopt_string( zmq.CURVE_SECRETKEY, client_priv_key )
+                self._socket.setsockopt_string(zmq.CURVE_SECRETKEY, client_priv_key)
             except:
                 raise Exception("Invalid client private key")
             try:
-                self._socket.setsockopt_string( zmq.CURVE_PUBLICKEY, client_pub_key )
+                self._socket.setsockopt_string(zmq.CURVE_PUBLICKEY, client_pub_key)
             except:
                 raise Exception("Invalid client public key")
             try:
-                self._socket.setsockopt_string( zmq.CURVE_SERVERKEY, server_pub_key )
+                self._socket.setsockopt_string(zmq.CURVE_SERVERKEY, server_pub_key)
             except:
-                raise Exception("Invalid server public key: " + server_pub_key )
+                raise Exception("Invalid server public key: " + server_pub_key)
         else:
             self._socket.curve_secretkey = client_priv_key
             self._socket.curve_publickey = client_pub_key
             self._socket.curve_serverkey = server_pub_key
 
         # TODO need a timeout
-        self._socket.connect( self._address )
+        self._socket.connect(self._address)
         self._socket.setsockopt(zmq.LINGER, 100)
 
     def __del__(self):
         # Clean-up zeromq resources on delete
-        if '_socket' in dir(self):
+        if "_socket" in dir(self):
             self._socket.close()
-        if '_zmq_ctxt' in dir(self) and self._zmq_ctxt_owner:
+        if "_zmq_ctxt" in dir(self) and self._zmq_ctxt_owner:
             self._zmq_ctxt.destroy()
 
     ##
@@ -118,17 +119,17 @@ class Connection:
     #
     # @param msg_module - Protobuf module (imported *_pb2 module)
     #
-    def registerProtocol( self, msg_module ):
+    def registerProtocol(self, msg_module):
         # Message descriptors are stored by name created by protobuf compiler
         # A custom post-proc tool generates and appends _msg_name_to_type with defined DataFed-sepcific numer message types
 
-        for name,desc in sorted(msg_module.DESCRIPTOR.message_types_by_name.items()):
+        for name, desc in sorted(msg_module.DESCRIPTOR.message_types_by_name.items()):
             msg_t = msg_module._msg_name_to_type[name]
             self._msg_desc_by_type[msg_t] = desc
             self._msg_desc_by_name[desc.name] = desc
             self._msg_type_by_desc[desc] = msg_t
 
-            #print( msg_t, " = ", name )
+            # print( msg_t, " = ", name )
 
     ##
     # @brief Receive a message
@@ -144,16 +145,16 @@ class Connection:
     # @retval (object,str,int) or (None,None,None) on timeout
     # @exception Exception: if unregistered message type is received.
     #
-    def recv( self, a_timeout=1000 ):
+    def recv(self, a_timeout=1000):
         # Wait for data to arrive
         print("calling poll")
-        ready = self._socket.poll( a_timeout )
+        ready = self._socket.poll(a_timeout)
         if ready > 0:
             # receive null frame
             print("recv initial string")
-            nf = self._socket.recv_string( 0 )
+            nf = self._socket.recv_string(0)
 
-            header = "" 
+            header = ""
             while header != "BEGIN_DATAFED":
                 header = self._socket.recv_string(0)
                 print(f"Received header: {header}")
@@ -168,7 +169,7 @@ class Connection:
 
             null_packet = self._socket.recv(0)
             print(f"Received null_packet: {null_packet}")
-    
+
             correlation_id = self._socket.recv_string(0)
             print(f"Received correlation_id: {correlation_id}")
             key = self._socket.recv_string(0)
@@ -177,26 +178,28 @@ class Connection:
             print(f"Received : {client}")
 
             # receive custom frame header and unpack
-            frame_data = self._socket.recv( 0 )
-            frame_values = struct.unpack( '>LBBH', frame_data )
+            frame_data = self._socket.recv(0)
+            frame_values = struct.unpack(">LBBH", frame_data)
             msg_type = (frame_values[1] << 8) | frame_values[2]
 
             # find message descriptor based on type (descriptor index)
 
             if not (msg_type in self._msg_desc_by_type):
-                raise Exception( "received unregistered message type: {}".format( msg_type ))
+                raise Exception(
+                    "received unregistered message type: {}".format(msg_type)
+                )
 
             desc = self._msg_desc_by_type[msg_type]
 
             if frame_values[0] > 0:
                 # Create message by parsing content
-                data = self._socket.recv( 0 )
-                reply = google.protobuf.reflection.ParseMessage( desc, data )
+                data = self._socket.recv(0)
+                reply = google.protobuf.reflection.ParseMessage(desc, data)
             else:
                 # No content, just create message instance
                 print(f"received no content frame was less than 0")
-                data = self._socket.recv( 0 )
-                reply = google.protobuf.reflection.MakeClass( desc )()
+                data = self._socket.recv(0)
+                reply = google.protobuf.reflection.MakeClass(desc)()
 
             print("Reply is")
             print(reply)
@@ -213,48 +216,48 @@ class Connection:
     # @param ctxt - Reply re-association value (int)
     # @exception Exception: if unregistered message type is sent.
     #
-    def send( self, message, ctxt ):
+    def send(self, message, ctxt):
         # Find msg type by descriptor look-up
         if not (message.DESCRIPTOR in self._msg_type_by_desc):
-            raise Exception( "Attempt to send unregistered message type.")
+            raise Exception("Attempt to send unregistered message type.")
         msg_type = self._msg_type_by_desc[message.DESCRIPTOR]
 
         # Initial Null frame
         print("Send BEGIN_DATAFED string")
         self._socket.send_string("BEGIN_DATAFED", zmq.SNDMORE)
-        route_count = 0;
+        route_count = 0
         # !i - The ! - is for network byte order, the 'i' is for an integer
         print("Send route_count")
-        self._socket.send(struct.pack("!i",route_count), zmq.SNDMORE)
+        self._socket.send(struct.pack("!i", route_count), zmq.SNDMORE)
         print("Send b''")
-        self._socket.send( b'', zmq.SNDMORE )
-        self._socket.send_string( str(uuid.uuid4()), zmq.SNDMORE )
+        self._socket.send(b"", zmq.SNDMORE)
+        self._socket.send_string(str(uuid.uuid4()), zmq.SNDMORE)
         print("Send public key as string")
-        self._socket.send_string( self._pub_key, zmq.SNDMORE )
+        self._socket.send_string(self._pub_key, zmq.SNDMORE)
         print("send 'no-user' as string")
-        self._socket.send_string( 'no_user', zmq.SNDMORE )
+        self._socket.send_string("no_user", zmq.SNDMORE)
 
         # Serialize
         print("Send data")
         data = message.SerializeToString()
-        data_sz = len( data )
+        data_sz = len(data)
 
         # Build the message frame, to match C-struct MessageFrame
-        frame = struct.pack( '>LBBH', data_sz, msg_type >> 8, msg_type & 0xFF, ctxt )
+        frame = struct.pack(">LBBH", data_sz, msg_type >> 8, msg_type & 0xFF, ctxt)
 
         if data_sz > 0:
             # Send frame and payload
             print("Send frame")
-            self._socket.send( frame, zmq.SNDMORE )
+            self._socket.send(frame, zmq.SNDMORE)
             print("Send body")
             print(message)
-            self._socket.send( data, 0 )
+            self._socket.send(data, 0)
         else:
             # Send frame (no payload)
             print("Send frame")
-            self._socket.send( frame, zmq.SNDMORE )
+            self._socket.send(frame, zmq.SNDMORE)
             print("Send empty body")
-            self._socket.send( b'', 0)
+            self._socket.send(b"", 0)
 
         print("Done")
 
@@ -265,9 +268,9 @@ class Connection:
     # This is useful for clearing error conditions or re-establishing a
     # connection after security handshake.
     #
-    def reset( self ):
-        self._socket.disconnect( self._address )
-        self._socket.connect( self._address )
+    def reset(self):
+        self._socket.disconnect(self._address)
+        self._socket.connect(self._address)
         self._socket.setsockopt(zmq.LINGER, 100)
 
     ##
@@ -276,10 +279,11 @@ class Connection:
     # @param msg_name (str) - Name of message class to instantiate
     # @return New protobuf message instance, or None if not registered
     #
-    def makeMessage( self, msg_name ):
+    def makeMessage(self, msg_name):
         # find message descriptor based on type (descriptor index)
         if msg_name in self._msg_desc_by_name:
-            return google.protobuf.reflection.MakeClass( self._msg_desc_by_name[msg_name] )()
+            return google.protobuf.reflection.MakeClass(
+                self._msg_desc_by_name[msg_name]
+            )()
         else:
             return None
-

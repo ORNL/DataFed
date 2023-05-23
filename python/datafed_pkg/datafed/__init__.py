@@ -28,4 +28,4 @@ from . import VERSION
 name = "datafed"
 
 version = VERSION.__version__
-#version = "{}.{}.{}:{}".format(Version_pb2.VER_MAJOR,Version_pb2.VER_MAPI_MAJOR,Version_pb2.VER_MAPI_MINOR,Version_pb2.VER_CLIENT_PY)
+# version = "{}.{}.{}:{}".format(Version_pb2.VER_MAJOR,Version_pb2.VER_MAPI_MAJOR,Version_pb2.VER_MAPI_MINOR,Version_pb2.VER_CLIENT_PY)
