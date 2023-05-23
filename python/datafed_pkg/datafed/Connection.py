@@ -167,9 +167,10 @@ class Connection:
                 print(f"Received route: {route}")
 
             null_packet = self._socket.recv(0)
-            print(f"Received null_packte: {null_packet}")
+            print(f"Received null_packet: {null_packet}")
     
             correlation_id = self._socket.recv_string(0)
+            print(f"Received correlation_id: {correlation_id}")
             key = self._socket.recv_string(0)
             print(f"Received key: {key}")
             client = self._socket.recv_string(0)

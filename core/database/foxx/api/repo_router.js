@@ -254,10 +254,23 @@ router.get('/delete', function (req, res) {
     try {
         g_db._executeTransaction({
             collections: {
-                read: [],
+                read: ["lock"],
                 write: ["repo","admin","alloc"]
             },
             action: function() {
+
+                // Begin by checking that there are no relationships to repo object, because
+                // if they exist and we remove the repo record we break things
+                const aqlQuery = `
+                  FOR edge IN lock
+                    FILTER edge._to == @repoVertex 
+                    RETURN edge._from
+                `
+                var items_connected_to_repo = g_db._query(aqlQuery, {repoVertex: req.queryParams.id }).toArray();
+                if( items_connected_to_repo.length > 0 ) {
+                    throw [g_lib.ERR_IN_USE,"Cannot delete repo. The repository is in use: " + items_connected_to_repo.join(", ")];
+                }
+
                 var client = g_lib.getUserFromClientID( req.queryParams.client );
 
                 if ( !g_db._exists( req.queryParams.id ))
@@ -271,6 +284,8 @@ router.get('/delete', function (req, res) {
                 console.log(alloc);
                 if ( alloc.hasNext() )
                     throw [g_lib.ERR_IN_USE,"Cannot delete repo with associated allocations. Allocations still exist on the repository."];
+                // Remove the repo vertex from the graph and all edges, this includes all
+                // edges - such as the lock collection
                 graph.repo.remove( req.queryParams.id );
             }
         });
