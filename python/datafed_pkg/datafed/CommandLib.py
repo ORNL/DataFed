@@ -70,13 +70,11 @@ class API:
     )
 
     def __init__(self, opts={}):
-        # print("CommandLib Init")
 
         if not isinstance(opts, dict):
             raise Exception("CommandLib API options parameter must be a dictionary.")
 
         self._uid = None
-        print(f"cur_sel set to None")
         self._cur_sel = None
         self._cur_ep = None
         self._cur_alias_prefix = ""
@@ -91,7 +89,6 @@ class API:
         if auth:
             self._uid = uid
             self._cur_sel = uid
-            print(f"cur_sel set to {self._cur_sel}")
 
         self._cur_ep = self.cfg.get("default_ep")
 
@@ -157,7 +154,6 @@ class API:
 
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
-        print(f"cur_sel set to self._mapi._uid {self._cur_sel}")
 
     def generateCredentials(self):
         """

@@ -66,7 +66,6 @@ class API:
         manual_auth=None,
         **kwargs,
     ):
-        # print("MessageLib Init")
 
         self._ctxt = 0
         self._auth = False
@@ -234,12 +233,8 @@ class API:
     def manualAuthByPassword(self, uid, password):
         msg = anon.AuthenticateByPasswordRequest()
         msg.uid = uid
-        print(f"manual Auth By Password uid is {uid}")
         msg.password = password
         a, b = self.sendRecv(msg)
-        print("sendRecv result for pass word!")
-        print(a)
-        print(b)
 
         # Reset connection so server can re-authenticate
         self._conn.reset()
@@ -250,7 +245,6 @@ class API:
             raise Exception(f"Password authentication failed.")
 
         self._auth = True
-        print(f"reply uid is setting to mapi._uid: {reply.uid}")
         self._uid = reply.uid
 
     def manualAuthByToken(self, token):
@@ -328,7 +322,6 @@ class API:
         _timeout = timeout if timeout != None else self._timeout
         reply, mt, ctxt = self.recv(_timeout, nack_except)
         if reply == None:
-            print("Timeout!")
             raise Exception("Timeout!!!!!!!!!")
             return None, None
         if ctxt != self._ctxt:
