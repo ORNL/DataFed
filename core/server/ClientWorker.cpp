@@ -339,7 +339,9 @@ void ClientWorker::workerThread(LogContext log_context) {
 
   DL_DEBUG(log_context, "W" << m_tid << " m_run " << m_run);
 
+  LogContext message_log_context = log_context;
   while (isRunning()) {
+    message_log_context.correlation_id = "";
     try {
       ICommunicator::Response response =
           client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
@@ -348,19 +350,19 @@ void ClientWorker::workerThread(LogContext log_context) {
         IMessage &message = *response.message;
         uint16_t msg_type = std::get<uint16_t>(
             message.get(constants::message::google::MSG_TYPE));
-        // msg_type = m_msg_buf.getMsgType();
-        DL_DEBUG(log_context, "W" << m_tid << " received message: "
+        message_log_context.correlation_id = std::get<std::string>(message.get(MessageAttribute::CORRELATION_ID));
+        DL_DEBUG(message_log_context, "W" << m_tid << " received message: "
                                   << proto_map.toString(msg_type));
 
         const std::string uid =
             std::get<std::string>(message.get(MessageAttribute::ID));
         if (msg_type != task_list_msg_type) {
-          DL_DEBUG(log_context,
+          DL_DEBUG(message_log_context,
                    "W" << m_tid << " msg " << msg_type << " [" << uid << "]");
         }
 
         if (uid.compare("anon") == 0 && msg_type > 0x1FF) {
-          DL_WARNING(log_context,
+          DL_WARNING(message_log_context,
                      "W" << m_tid
                          << " unauthorized access attempt from anon user");
           auto response_msg = m_msg_factory.createResponseEnvelope(message);
@@ -373,43 +375,43 @@ void ClientWorker::workerThread(LogContext log_context) {
           response_msg->setPayload(std::move(nack));
           client->send(*response_msg);
         } else {
-          DL_DEBUG(log_context, "W" << m_tid
+          DL_DEBUG(message_log_context, "W" << m_tid
                                     << " getting handler from map: msg_type = "
                                     << proto_map.toString(msg_type));
           if (m_msg_handlers.count(msg_type)) {
 
             auto handler = m_msg_handlers.find(msg_type);
 
-            DL_TRACE(log_context, "W" << m_tid
+            DL_TRACE(message_log_context, "W" << m_tid
                                       << " calling handler/attempting to call "
                                          "function of worker");
 
             // Have to move the actual unique_ptr, change ownership not simply
             // passing a reference
             auto response_msg = (this->*handler->second)(
-                uid, std::move(response.message), log_context);
+                uid, std::move(response.message), message_log_context);
             if (response_msg) {
               // Gather msg metrics except on task lists (web clients poll)
               if (msg_type != task_list_msg_type)
                 m_core.metricsUpdateMsgCount(uid, msg_type);
 
-              DL_DEBUG(log_context, "W" << m_tid << " sending msg of type "
+              DL_DEBUG(message_log_context, "W" << m_tid << " sending msg of type "
                                         << proto_map.toString(msg_type));
               client->send(*response_msg);
-              DL_TRACE(log_context, "Message sent ");
+              DL_TRACE(message_log_context, "Message sent ");
             }
           } else {
-            DL_ERROR(log_context,
+            DL_ERROR(message_log_context,
                      "W" << m_tid << " recvd unregistered msg: " << msg_type);
           }
         }
       }
     } catch (TraceException &e) {
-      DL_ERROR(log_context, "W" << m_tid << " " << e.toString());
+      DL_ERROR(message_log_context, "W" << m_tid << " " << e.toString());
     } catch (exception &e) {
-      DL_ERROR(log_context, "W" << m_tid << " " << e.what());
+      DL_ERROR(message_log_context, "W" << m_tid << " " << e.what());
     } catch (...) {
-      DL_ERROR(log_context, "W" << m_tid << " unknown exception type");
+      DL_ERROR(message_log_context, "W" << m_tid << " unknown exception type");
     }
   }
 
