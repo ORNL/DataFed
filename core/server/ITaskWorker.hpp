@@ -9,43 +9,34 @@
 namespace SDMS {
 namespace Core {
 
-
 /**
  * @brief Provides control structure per worker needed by TaskMgr
- * 
+ *
  * Next/prev attrib are for worker pool linked list. 'run' flag tells mgr if
- * the worker is in the pool or not (run == true means not in pool, run == 
+ * the worker is in the pool or not (run == true means not in pool, run ==
  * false means a spurious wake).
  */
-class ITaskWorker
-{
+class ITaskWorker {
 public:
-    ITaskWorker( uint32_t a_id, LogContext log_context ) :
-        m_id( a_id ),
-        m_run( false ),
-        m_next( 0 ),
-        m_log_context(log_context)
-    {
-    }
+  ITaskWorker(uint32_t a_id, LogContext log_context)
+      : m_id(a_id), m_run(false), m_next(0), m_log_context(log_context) {}
 
-    virtual ~ITaskWorker()
-    {}
+  virtual ~ITaskWorker() {}
 
-    inline uint32_t id() const {
-        return m_id;
-    }
+  inline uint32_t id() const { return m_id; }
 
 private:
-    uint32_t                    m_id;
-    bool                        m_run;
-    ITaskWorker *               m_next;
-    LogContext m_log_context;
-    //ITaskWorker *               m_prev;
-    std::condition_variable     m_cvar;
+  uint32_t m_id;
+  bool m_run;
+  ITaskWorker *m_next;
+  LogContext m_log_context;
+  // ITaskWorker *               m_prev;
+  std::condition_variable m_cvar;
 
-    friend class TaskMgr;
+  friend class TaskMgr;
 };
 
-}}
+} // namespace Core
+} // namespace SDMS
 
 #endif

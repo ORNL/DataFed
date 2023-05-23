@@ -12,19 +12,19 @@
 
 namespace SDMS {
 
-  enum class KeyType {
-    PUBLIC_PRIVATE
-  };
-  
-  class KeyGenerator {
-    public:
-      std::unordered_map<CredentialType, std::string> generate(const ProtocolType, const KeyType);
-  };
+enum class KeyType { PUBLIC_PRIVATE };
 
-  class KeyPairValidator {
-    public:
-      bool validate( const std::string & public_key, const std::string & prviate_key) const;
-  };
+class KeyGenerator {
+public:
+  std::unordered_map<CredentialType, std::string> generate(const ProtocolType,
+                                                           const KeyType);
+};
+
+class KeyPairValidator {
+public:
+  bool validate(const std::string &public_key,
+                const std::string &prviate_key) const;
+};
 
 } // namespace SDMS
 

@@ -3,9 +3,9 @@
 #include "Proxy.hpp"
 
 // Local public includes
+#include "common/CommunicatorFactory.hpp"
 #include "common/ICommunicator.hpp"
 #include "common/TraceException.hpp"
-#include "common/CommunicatorFactory.hpp"
 
 // Proto file includes
 #include "common/SDMS_Anon.pb.h"
@@ -20,128 +20,140 @@ using namespace std;
 
 namespace SDMS {
 
-  Proxy::Proxy(
-      const std::unordered_map<SocketRole, SocketOptions> & socket_options,
-      const std::unordered_map<SocketRole, ICredentials *> & socket_credentials,
-      LogContext log_context) :
-    Proxy(
-        socket_options,
-        socket_credentials,
-        std::vector<std::unique_ptr<IOperator>>(),
-        log_context) {};
+Proxy::Proxy(
+    const std::unordered_map<SocketRole, SocketOptions> &socket_options,
+    const std::unordered_map<SocketRole, ICredentials *> &socket_credentials,
+    LogContext log_context)
+    : Proxy(socket_options, socket_credentials,
+            std::vector<std::unique_ptr<IOperator>>(), log_context){};
 
-  Proxy::Proxy(
-      const std::unordered_map<SocketRole, SocketOptions> & socket_options,
-      const std::unordered_map<SocketRole, ICredentials*> & socket_credentials,
-      std::vector<std::unique_ptr<IOperator>> incoming_operators,
-      LogContext log_context) :
-    m_incoming_operators(std::move(incoming_operators)),
-    m_log_context(log_context) {
+Proxy::Proxy(
+    const std::unordered_map<SocketRole, SocketOptions> &socket_options,
+    const std::unordered_map<SocketRole, ICredentials *> &socket_credentials,
+    std::vector<std::unique_ptr<IOperator>> incoming_operators,
+    LogContext log_context)
+    : m_incoming_operators(std::move(incoming_operators)),
+      m_log_context(log_context) {
 
-      if( socket_options.count(SocketRole::CLIENT) == 0 ) {
-        EXCEPT(1, "Proxy must have socket options for Client"); 
-      }
-      if ( socket_credentials.count(SocketRole::CLIENT) == 0 ) {
-        EXCEPT(1, "Proxy must have socket credentials for Client"); 
-      }
-
-      if( socket_options.count(SocketRole::SERVER) == 0 ) {
-        EXCEPT(1, "Proxy must have socket options for SERVER"); 
-      }
-      if ( socket_credentials.count(SocketRole::SERVER) == 0 ) {
-        EXCEPT(1, "Proxy must have socket credentials for SERVER"); 
-      }
-
-      if( socket_options.at(SocketRole::CLIENT).connection_life == SocketConnectionLife::INTERMITTENT ){
-        if( socket_options.at(SocketRole::CLIENT).class_type != SocketClassType::CLIENT ) {
-          EXCEPT_PARAM( 1, "Custom proxy does not yet support intermittent connections for any socket class but client." );
-        }
-      }
-
-      CommunicatorFactory communication_factory(m_log_context);
-
-      m_communicators[SocketRole::CLIENT] = communication_factory.create(
-          socket_options.at(SocketRole::CLIENT),
-          *socket_credentials.at(SocketRole::CLIENT),
-          m_timeout_on_receive_milliseconds,
-          m_timeout_on_poll_milliseconds);
-      
-      m_communicators[SocketRole::SERVER] = communication_factory.create(
-          socket_options.at(SocketRole::SERVER),
-          *socket_credentials.at(SocketRole::SERVER),
-          m_timeout_on_receive_milliseconds,
-          m_timeout_on_poll_milliseconds);
-
-      m_addresses[SocketRole::CLIENT] = m_communicators[SocketRole::CLIENT]->address();
-      m_addresses[SocketRole::SERVER] = m_communicators[SocketRole::SERVER]->address();
-    }
-
-
-  void Proxy::setRunDuration(std::chrono::duration<double> duration) {
-    m_run_infinite_loop = false;
-    m_run_duration = duration;
+  if (socket_options.count(SocketRole::CLIENT) == 0) {
+    EXCEPT(1, "Proxy must have socket options for Client");
+  }
+  if (socket_credentials.count(SocketRole::CLIENT) == 0) {
+    EXCEPT(1, "Proxy must have socket credentials for Client");
   }
 
-  void Proxy::run() {
+  if (socket_options.count(SocketRole::SERVER) == 0) {
+    EXCEPT(1, "Proxy must have socket options for SERVER");
+  }
+  if (socket_credentials.count(SocketRole::SERVER) == 0) {
+    EXCEPT(1, "Proxy must have socket credentials for SERVER");
+  }
 
-    auto end_time = std::chrono::steady_clock::now() + m_run_duration;
+  if (socket_options.at(SocketRole::CLIENT).connection_life ==
+      SocketConnectionLife::INTERMITTENT) {
+    if (socket_options.at(SocketRole::CLIENT).class_type !=
+        SocketClassType::CLIENT) {
+      EXCEPT_PARAM(1, "Custom proxy does not yet support intermittent "
+                      "connections for any socket class but client.");
+    }
+  }
 
-    int count = 0;
+  CommunicatorFactory communication_factory(m_log_context);
 
-    while ( m_run_infinite_loop or (end_time > std::chrono::steady_clock::now()) ) { 
-      try {
-        count++;
-        // Coming from the client socket that is local so communication flow is
-        // going from an internal thread/process
-        // 
-        //                                              <- POLL_IN
-        // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock - Inter App
-        auto resp_from_client_socket = m_communicators[SocketRole::CLIENT]->poll(MessageType::GOOGLE_PROTOCOL_BUFFER);
+  m_communicators[SocketRole::CLIENT] = communication_factory.create(
+      socket_options.at(SocketRole::CLIENT),
+      *socket_credentials.at(SocketRole::CLIENT),
+      m_timeout_on_receive_milliseconds, m_timeout_on_poll_milliseconds);
 
-        if(resp_from_client_socket.error){
-          DL_ERROR(m_log_context, m_communicators[SocketRole::CLIENT]->id() << " error detected: " << resp_from_client_socket.error_msg);
-        }
-        
-        // Coming from the server socket that is local so communication flow is
-        // coming from a public client thread/process
-        // 
-        //                              POLL_IN  -> 
-        // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock - Inter App
-        auto resp_from_server_socket = m_communicators[SocketRole::SERVER]->poll(MessageType::GOOGLE_PROTOCOL_BUFFER);
-        if(resp_from_server_socket.error){
-          DL_ERROR(m_log_context, m_communicators[SocketRole::SERVER]->id() << " error detected: " << resp_from_server_socket.error_msg);
-        }
+  m_communicators[SocketRole::SERVER] = communication_factory.create(
+      socket_options.at(SocketRole::SERVER),
+      *socket_credentials.at(SocketRole::SERVER),
+      m_timeout_on_receive_milliseconds, m_timeout_on_poll_milliseconds);
 
-        // Essentially just route with out doing anything if flow is towards the
-        // public
-        if(resp_from_client_socket.error == false and resp_from_client_socket.time_out == false ){
-          m_communicators[SocketRole::SERVER]->send(*resp_from_client_socket.message);
-        }
+  m_addresses[SocketRole::CLIENT] =
+      m_communicators[SocketRole::CLIENT]->address();
+  m_addresses[SocketRole::SERVER] =
+      m_communicators[SocketRole::SERVER]->address();
+}
 
-        // If there are operations that need to happen on incoming messages,
-        // messages headed to the internal server of which we are a client,
-        // they will now be executed.
-        //                 |            |
-        //         POLL_IN ->           |
-        //                 | Operate on -> Pass to internal Server
-        //                 |            |
-        // ... - Serv Sock - Proxy ------ Client Sock - Serv Sock - Inter App
-        if(resp_from_server_socket.error == false and resp_from_server_socket.time_out == false) {
-          for( auto & in_operator : m_incoming_operators ) {
-            in_operator->execute(*resp_from_server_socket.message);
-          }
-          m_communicators[SocketRole::CLIENT]->send(*resp_from_server_socket.message);
-        }
+void Proxy::setRunDuration(std::chrono::duration<double> duration) {
+  m_run_infinite_loop = false;
+  m_run_duration = duration;
+}
 
-      } catch( TraceException & e ) {
-        DL_ERROR(m_log_context, "Proxy::run - " << e.toString() );
-      } catch( exception & e ) {
-        DL_ERROR(m_log_context, "Proxy::run - " << e.what() );
-      } catch( ... ) {
-        DL_ERROR(m_log_context, "Proxy::run - unknown exception" );
+void Proxy::run() {
+
+  auto end_time = std::chrono::steady_clock::now() + m_run_duration;
+
+  int count = 0;
+
+  while (m_run_infinite_loop or (end_time > std::chrono::steady_clock::now())) {
+    try {
+      count++;
+      // Coming from the client socket that is local so communication flow is
+      // going from an internal thread/process
+      //
+      //                                              <- POLL_IN
+      // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock
+      // - Inter App
+      auto resp_from_client_socket = m_communicators[SocketRole::CLIENT]->poll(
+          MessageType::GOOGLE_PROTOCOL_BUFFER);
+
+      if (resp_from_client_socket.error) {
+        DL_ERROR(m_log_context, m_communicators[SocketRole::CLIENT]->id()
+                                    << " error detected: "
+                                    << resp_from_client_socket.error_msg);
       }
-    } // while( m_run_infinite ...etc)
-    DL_INFO(m_log_context, "Proxy is gracefully exiting after specified timeout.");
-  } // run()
+
+      // Coming from the server socket that is local so communication flow is
+      // coming from a public client thread/process
+      //
+      //                              POLL_IN  ->
+      // Pub Client - Client Sock - Serv Sock - Proxy - Client Sock - Serv Sock
+      // - Inter App
+      auto resp_from_server_socket = m_communicators[SocketRole::SERVER]->poll(
+          MessageType::GOOGLE_PROTOCOL_BUFFER);
+      if (resp_from_server_socket.error) {
+        DL_ERROR(m_log_context, m_communicators[SocketRole::SERVER]->id()
+                                    << " error detected: "
+                                    << resp_from_server_socket.error_msg);
+      }
+
+      // Essentially just route with out doing anything if flow is towards the
+      // public
+      if (resp_from_client_socket.error == false and
+          resp_from_client_socket.time_out == false) {
+        m_communicators[SocketRole::SERVER]->send(
+            *resp_from_client_socket.message);
+      }
+
+      // If there are operations that need to happen on incoming messages,
+      // messages headed to the internal server of which we are a client,
+      // they will now be executed.
+      //                 |            |
+      //         POLL_IN ->           |
+      //                 | Operate on -> Pass to internal Server
+      //                 |            |
+      // ... - Serv Sock - Proxy ------ Client Sock - Serv Sock - Inter App
+      if (resp_from_server_socket.error == false and
+          resp_from_server_socket.time_out == false) {
+        for (auto &in_operator : m_incoming_operators) {
+          in_operator->execute(*resp_from_server_socket.message);
+        }
+        m_communicators[SocketRole::CLIENT]->send(
+            *resp_from_server_socket.message);
+      }
+
+    } catch (TraceException &e) {
+      DL_ERROR(m_log_context, "Proxy::run - " << e.toString());
+    } catch (exception &e) {
+      DL_ERROR(m_log_context, "Proxy::run - " << e.what());
+    } catch (...) {
+      DL_ERROR(m_log_context, "Proxy::run - unknown exception");
+    }
+  } // while( m_run_infinite ...etc)
+  DL_INFO(m_log_context,
+          "Proxy is gracefully exiting after specified timeout.");
+} // run()
 
 } // namespace SDMS

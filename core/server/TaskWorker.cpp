@@ -1,8 +1,8 @@
 
 // Local private includes
+#include "TaskWorker.hpp"
 #include "Config.hpp"
 #include "ITaskMgr.hpp"
-#include "TaskWorker.hpp"
 
 // Common public includes
 #include "common/CommunicatorFactory.hpp"
@@ -14,9 +14,9 @@
 #include "common/SocketOptions.hpp"
 
 // Standard includes
+#include "unistd.h"
 #include <memory>
 #include <sstream>
-#include "unistd.h"
 
 using namespace std;
 using namespace libjson;
@@ -27,27 +27,27 @@ using namespace libjson;
 namespace SDMS {
 namespace Core {
 
-TaskWorker::TaskWorker( ITaskMgr & a_mgr, uint32_t a_worker_id, LogContext log_context ) :
-    ITaskWorker( a_worker_id, log_context ),
-    m_mgr( a_mgr ),
-    m_db( Config::getInstance().db_url , Config::getInstance().db_user, Config::getInstance().db_pass )
-{
+TaskWorker::TaskWorker(ITaskMgr &a_mgr, uint32_t a_worker_id,
+                       LogContext log_context)
+    : ITaskWorker(a_worker_id, log_context), m_mgr(a_mgr),
+      m_db(Config::getInstance().db_url, Config::getInstance().db_user,
+           Config::getInstance().db_pass) {
 
-    log_context.thread_name += "-TaskWorker";
-    log_context.thread_id = a_worker_id;
-    m_thread = std::make_unique<std::thread>( &TaskWorker::workerThread, this, log_context );
+  log_context.thread_name += "-TaskWorker";
+  log_context.thread_id = a_worker_id;
+  m_thread = std::make_unique<std::thread>(&TaskWorker::workerThread, this,
+                                           log_context);
 
-    m_execute[TC_RAW_DATA_TRANSFER] = &cmdRawDataTransfer;
-    m_execute[TC_RAW_DATA_DELETE] = &cmdRawDataDelete;
-    m_execute[TC_RAW_DATA_UPDATE_SIZE] = &cmdRawDataUpdateSize;
-    m_execute[TC_ALLOC_CREATE] = &cmdAllocCreate;
-    m_execute[TC_ALLOC_DELETE] = &cmdAllocDelete;
+  m_execute[TC_RAW_DATA_TRANSFER] = &cmdRawDataTransfer;
+  m_execute[TC_RAW_DATA_DELETE] = &cmdRawDataDelete;
+  m_execute[TC_RAW_DATA_UPDATE_SIZE] = &cmdRawDataUpdateSize;
+  m_execute[TC_ALLOC_CREATE] = &cmdAllocCreate;
+  m_execute[TC_ALLOC_DELETE] = &cmdAllocDelete;
 }
 
-TaskWorker::~TaskWorker()
-{
+TaskWorker::~TaskWorker() {
   m_running = false;
-  if( m_thread.get() != nullptr ) {
+  if (m_thread.get() != nullptr) {
     m_thread->join();
   }
 }
@@ -55,520 +55,542 @@ TaskWorker::~TaskWorker()
 /**
  * @brief Thread method for TaskWorker task processing.
  *
- * Basic loop of getting a task from TaskMgr, processing, then reporting back to TaskMgr.
- * All steps of a task are processed unless a non-permanent failure occurs. Task control
- * objects (Task*) are released by the TaskMgr when either retryTask or getNextTask are
- * called.
+ * Basic loop of getting a task from TaskMgr, processing, then reporting back to
+ * TaskMgr. All steps of a task are processed unless a non-permanent failure
+ * occurs. Task control objects (Task*) are released by the TaskMgr when either
+ * retryTask or getNextTask are called.
  */
-void
-TaskWorker::workerThread(LogContext log_context)
-{
-    string             err_msg;
-    Value              task_cmd;
-    Value::ObjectIter  iter;
-    uint32_t           cmd;
-    int                step;
-    bool               first;
+void TaskWorker::workerThread(LogContext log_context) {
+  string err_msg;
+  Value task_cmd;
+  Value::ObjectIter iter;
+  uint32_t cmd;
+  int step;
+  bool first;
 
-    while( m_running )
-    {
-      std::unique_ptr<ITaskMgr::Task> m_task = m_mgr.getNextTask( this );
+  while (m_running) {
+    std::unique_ptr<ITaskMgr::Task> m_task = m_mgr.getNextTask(this);
 
-        err_msg.clear();
-        first = true;
+    err_msg.clear();
+    first = true;
 
-        while ( true )
-        {
-            try
-            {
-                if ( first ){
-                    m_db.taskRun( m_task->task_id, task_cmd, log_context, 0 );
-                    first = false;
-                }
-                else
-                {
-                    m_db.taskRun( m_task->task_id, task_cmd, log_context, err_msg.size()?0:&step, err_msg.size()?&err_msg:0 );
-                }
+    while (true) {
+      try {
+        if (first) {
+          m_db.taskRun(m_task->task_id, task_cmd, log_context, 0);
+          first = false;
+        } else {
+          m_db.taskRun(m_task->task_id, task_cmd, log_context,
+                       err_msg.size() ? 0 : &step,
+                       err_msg.size() ? &err_msg : 0);
+        }
 
+        const Value::Object &obj = task_cmd.asObject();
 
-                const Value::Object & obj = task_cmd.asObject();
+        cmd = (uint32_t)obj.getNumber("cmd");
 
-                cmd = (uint32_t)obj.getNumber( "cmd" );
+        const Value &params = obj.getValue("params");
 
-                const Value & params = obj.getValue( "params" );
+        if (obj.has("step")) {
+          step = obj.asNumber();
+        } else if (cmd != TC_STOP) {
+          EXCEPT(1, "Reply missing step value");
+        }
 
-                if ( obj.has( "step" )) {
-                    step = obj.asNumber();
-                } else if ( cmd != TC_STOP ) {
-                    EXCEPT(1,"Reply missing step value" );
-                }
+        ICommunicator::Response response;
+        if (m_execute.count(cmd)) {
+          DL_DEBUG(log_context,
+                   "TASK_ID: " << m_task->task_id << ", Step: " << step);
+          response = m_execute[cmd](*this, params, log_context);
 
-                ICommunicator::Response response;
-                if(m_execute.count(cmd)) {
-                  DL_DEBUG(log_context, "TASK_ID: " << m_task->task_id << ", Step: " << step );
-                  response = m_execute[cmd](*this, params, log_context);
-                
-                } else if( cmd == TC_STOP) {
-                    m_mgr.newTasks( params, log_context );
-                    break;
-                } else {
-                  EXCEPT_PARAM(1,"Invalid task command: " << cmd );
-                }
+        } else if (cmd == TC_STOP) {
+          m_mgr.newTasks(params, log_context);
+          break;
+        } else {
+          EXCEPT_PARAM(1, "Invalid task command: " << cmd);
+        }
 
-                if ( response.error or response.time_out )
-                {
-                    if ( m_mgr.retryTask( std::move(m_task), log_context ))
-                    {
-                        err_msg = "Maximum task retry period exceeded.";
-                        // We give up, exit inner while loop and delete task
-                        break;
-                    }
-                    else
-                    {
-                        // Done for now - TaskMgr owns task, so clear ptr to prevent deletion, then exit inner while loop
-                        m_task = 0;
-                        break;
-                    }
-                }
-            }
-            catch( TraceException & e )
-            {
-                err_msg = e.toString();
-                DL_ERROR(log_context, "Task worker " << id() << " exception: " << err_msg << " task_id is " << m_task->task_id );
-                if( err_msg.find("Task " + m_task->task_id + " does not exist") != std::string::npos) {
-                  DL_ERROR(log_context, "Task is not found in the database something strange is going on, move to the next task");
-                  break;
-                }
-            }
-            catch( exception & e )
-            {
-                err_msg = e.what();
-                DL_ERROR(log_context, "Task worker " << id() << " exception: " << err_msg );
-            }
+        if (response.error or response.time_out) {
+          if (m_mgr.retryTask(std::move(m_task), log_context)) {
+            err_msg = "Maximum task retry period exceeded.";
+            // We give up, exit inner while loop and delete task
+            break;
+          } else {
+            // Done for now - TaskMgr owns task, so clear ptr to prevent
+            // deletion, then exit inner while loop
+            m_task = 0;
+            break;
+          }
+        }
+      } catch (TraceException &e) {
+        err_msg = e.toString();
+        DL_ERROR(log_context, "Task worker "
+                                  << id() << " exception: " << err_msg
+                                  << " task_id is " << m_task->task_id);
+        if (err_msg.find("Task " + m_task->task_id + " does not exist") !=
+            std::string::npos) {
+          DL_ERROR(log_context, "Task is not found in the database something "
+                                "strange is going on, move to the next task");
+          break;
+        }
+      } catch (exception &e) {
+        err_msg = e.what();
+        DL_ERROR(log_context,
+                 "Task worker " << id() << " exception: " << err_msg);
+      }
 
-            task_cmd.clear();
+      task_cmd.clear();
 
-            if( not m_running ) {
-              DL_DEBUG(log_context, "Graceful termination of TASK_ID: " << m_task->task_id);
-              break;
-            }
-        } // End of inner while loop
+      if (not m_running) {
+        DL_DEBUG(log_context,
+                 "Graceful termination of TASK_ID: " << m_task->task_id);
+        break;
+      }
+    } // End of inner while loop
 
-    } // End of outer while loop
+  } // End of outer while loop
 }
 
 ICommunicator::Response
-TaskWorker::cmdRawDataTransfer(TaskWorker & me, const Value & a_task_params, LogContext log_context )
-{
+TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
+                               LogContext log_context) {
 
-    const Value::Object & obj = a_task_params.asObject();
+  const Value::Object &obj = a_task_params.asObject();
 
-    const string &              uid = obj.getString( "uid" );
-    TaskType                    type = (TaskType)obj.getNumber( "type" );
-    Encryption                  encrypt = (Encryption)obj.getNumber( "encrypt" );
-    const string &              src_ep = obj.getString( "src_repo_ep" );
-    const string &              src_path = obj.getString( "src_repo_path" );
-    const string &              dst_ep = obj.getString( "dst_repo_ep" );
-    const string &              dst_path = obj.getString( "dst_repo_path" );
-    const Value::Array &        files = obj.getArray( "files" );
-    bool                        encrypted = true;
-    GlobusAPI::EndpointInfo     ep_info;
+  const string &uid = obj.getString("uid");
+  TaskType type = (TaskType)obj.getNumber("type");
+  Encryption encrypt = (Encryption)obj.getNumber("encrypt");
+  const string &src_ep = obj.getString("src_repo_ep");
+  const string &src_path = obj.getString("src_repo_path");
+  const string &dst_ep = obj.getString("dst_repo_ep");
+  const string &dst_path = obj.getString("dst_repo_path");
+  const Value::Array &files = obj.getArray("files");
+  bool encrypted = true;
+  GlobusAPI::EndpointInfo ep_info;
 
-    string acc_tok = obj.getString( "acc_tok" );
-    string ref_tok = obj.getString( "ref_tok" );
-    uint32_t expires_in = obj.getNumber( "acc_tok_exp_in" );
+  string acc_tok = obj.getString("acc_tok");
+  string ref_tok = obj.getString("ref_tok");
+  uint32_t expires_in = obj.getNumber("acc_tok_exp_in");
 
-    DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in );
+  DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in);
 
-    if ( expires_in < 3600 )
-    {
-        DL_DEBUG(log_context, "Refreshing access token for " << uid << " (expires in " << expires_in << ")" );
+  if (expires_in < 3600) {
+    DL_DEBUG(log_context, "Refreshing access token for "
+                              << uid << " (expires in " << expires_in << ")");
 
-        me.m_glob.refreshAccessToken( ref_tok, acc_tok, expires_in);
-        me.m_db.setClient( uid );
-        me.m_db.userSetAccessToken( acc_tok, expires_in, ref_tok, log_context );
+    me.m_glob.refreshAccessToken(ref_tok, acc_tok, expires_in);
+    me.m_db.setClient(uid);
+    me.m_db.userSetAccessToken(acc_tok, expires_in, ref_tok, log_context);
+  }
+
+  if (type == TT_DATA_GET || type == TT_DATA_PUT) {
+    const string &ep = (type == TT_DATA_GET) ? dst_ep : src_ep;
+
+    // Check destination endpoint
+    me.m_glob.getEndpointInfo(ep, acc_tok, ep_info);
+    if (!ep_info.activated)
+      EXCEPT_PARAM(1, "Globus endpoint " << ep << " requires activation.");
+
+    // TODO Notify if ep activation expiring soon
+
+    // Calculate encryption state based on non-datafed endpoint
+    encrypted = me.checkEncryption(ep_info, encrypt);
+
+    // If data is external, also check the other endpoint for encryption state
+    if (type == TT_DATA_GET && obj.getValue("src_repo_id").isNumber()) {
+      GlobusAPI::EndpointInfo ep_info2;
+
+      me.m_glob.getEndpointInfo(src_ep, acc_tok, ep_info2);
+      if (!ep_info.activated) {
+        DL_ERROR(log_context,
+                 "Globus endpoint " << ep << " requires activation.");
+        EXCEPT_PARAM(1, "Globus endpoint " << ep << " requires activation.");
+      }
+
+      encrypted = me.checkEncryption(ep_info, ep_info2, encrypt);
     }
+  }
 
-    if ( type == TT_DATA_GET || type == TT_DATA_PUT )
-    {
-        const string & ep = (type == TT_DATA_GET)?dst_ep:src_ep;
+  // Init Globus transfer
+  DL_TRACE(log_context, "Init globus transfer");
 
-        // Check destination endpoint
-        me.m_glob.getEndpointInfo( ep, acc_tok, ep_info);
-        if ( !ep_info.activated )
-            EXCEPT_PARAM( 1, "Globus endpoint " << ep << " requires activation." );
+  vector<pair<string, string>> files_v;
+  for (Value::ArrayConstIter f = files.begin(); f != files.end(); f++) {
+    const Value::Object &fobj = f->asObject();
+    if (type == TT_DATA_PUT || fobj.getNumber("size") > 0)
+      files_v.push_back(make_pair(src_path + fobj.getString("from"),
+                                  dst_path + fobj.getString("to")));
+  }
 
-        // TODO Notify if ep activation expiring soon
+  if (files_v.size()) {
+    DL_TRACE(log_context, "Begin transfer of " << files_v.size() << " files");
+    string glob_task_id =
+        me.m_glob.transfer(src_ep, dst_ep, files_v, encrypted, acc_tok);
+    // Monitor Globus transfer
 
-        // Calculate encryption state based on non-datafed endpoint
-        encrypted = me.checkEncryption( ep_info, encrypt );
+    GlobusAPI::XfrStatus xfr_status;
+    string err_msg;
 
-        // If data is external, also check the other endpoint for encryption state
-        if ( type == TT_DATA_GET && obj.getValue( "src_repo_id" ).isNumber() )
-        {
-            GlobusAPI::EndpointInfo     ep_info2;
+    do {
+      sleep(5);
 
-            me.m_glob.getEndpointInfo( src_ep, acc_tok, ep_info2);
-            if ( !ep_info.activated ) {
-              DL_ERROR(log_context, "Globus endpoint " << ep << " requires activation.");
-              EXCEPT_PARAM( 1, "Globus endpoint " << ep << " requires activation." );
-            }
+      if (me.m_glob.checkTransferStatus(glob_task_id, acc_tok, xfr_status,
+                                        err_msg)) {
+        // Transfer task needs to be cancelled
+        DL_DEBUG(log_context, "Cancelling task: " << glob_task_id);
+        me.m_glob.cancelTask(glob_task_id, acc_tok);
+      }
+    } while (xfr_status < GlobusAPI::XS_SUCCEEDED);
 
-            encrypted = me.checkEncryption( ep_info, ep_info2, encrypt );
-        }
+    if (xfr_status == GlobusAPI::XS_FAILED) {
+      EXCEPT(1, err_msg);
     }
+  } else {
+    DL_DEBUG(log_context, "No files to transfer");
+  }
 
-    // Init Globus transfer
-    DL_TRACE(log_context, "Init globus transfer" );
-
-    vector<pair<string,string>> files_v;
-    for ( Value::ArrayConstIter f = files.begin(); f != files.end(); f++ )
-    {
-        const Value::Object & fobj = f->asObject();
-        if ( type == TT_DATA_PUT || fobj.getNumber( "size" ) > 0 )
-            files_v.push_back(make_pair( src_path + fobj.getString( "from" ), dst_path + fobj.getString( "to" )));
-    }
-
-    if ( files_v.size() )
-    {
-        DL_TRACE(log_context, "Begin transfer of " << files_v.size() << " files" );
-        string glob_task_id = me.m_glob.transfer( src_ep, dst_ep, files_v, encrypted, acc_tok);
-        // Monitor Globus transfer
-
-        GlobusAPI::XfrStatus    xfr_status;
-        string                  err_msg;
-
-        do
-        {
-            sleep( 5 );
-       
-            if ( me.m_glob.checkTransferStatus( glob_task_id, acc_tok, xfr_status, err_msg)){
-                // Transfer task needs to be cancelled
-                DL_DEBUG(log_context, "Cancelling task: " << glob_task_id);
-                me.m_glob.cancelTask( glob_task_id, acc_tok);
-            }
-        } while( xfr_status < GlobusAPI::XS_SUCCEEDED );
-
-        if ( xfr_status == GlobusAPI::XS_FAILED ) {
-            EXCEPT( 1, err_msg );
-        }
-    }
-    else
-    {
-        DL_DEBUG(log_context, "No files to transfer" );
-    }
-
-    ICommunicator::Response response;
-    response.time_out = false;
-    return response;
+  ICommunicator::Response response;
+  response.time_out = false;
+  return response;
 }
 
+ICommunicator::Response TaskWorker::cmdRawDataDelete(TaskWorker &me,
+                                                     const Value &a_task_params,
+                                                     LogContext log_context) {
 
-ICommunicator::Response
-TaskWorker::cmdRawDataDelete(TaskWorker & me, const  Value & a_task_params, LogContext log_context )
-{
+  const Value::Object &obj = a_task_params.asObject();
 
-    const Value::Object & obj = a_task_params.asObject();
+  const string &repo_id = obj.getString("repo_id");
+  const string &path = obj.getString("repo_path");
+  const Value::Array &ids = obj.getArray("ids");
+  Value::ArrayConstIter id = ids.begin();
+  size_t i = 0, j, sz = ids.size();
+  size_t chunk = Config::getInstance().repo_chunk_size;
 
-    const string &                  repo_id = obj.getString( "repo_id" );
-    const string &                  path = obj.getString( "repo_path" );
-    const Value::Array &            ids = obj.getArray( "ids" );
-    Value::ArrayConstIter           id = ids.begin();
-    size_t                          i = 0, j, sz = ids.size();
-    size_t                          chunk = Config::getInstance().repo_chunk_size;
+  // Issue #603 - break large requests into chunks to reduce likelihood of
+  // timeouts
+  MessageFactory msg_factory;
+  ICommunicator::Response resp;
 
-    // Issue #603 - break large requests into chunks to reduce likelihood of timeouts
-    MessageFactory msg_factory;
-    ICommunicator::Response resp;
+  while (i < sz) {
+    j = min(i + chunk, sz);
 
-    while ( i < sz )
-    {
-        j = min( i + chunk, sz );
-
-        auto message_req = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
-      
-        auto del_req = std::make_unique<Auth::RepoDataDeleteRequest>();//     del_req;
-        for ( ; i < j; i++, id++ )
-        {
-            RecordDataLocation * loc = del_req->add_loc();
-            loc->set_id( id->asString() );
-            loc->set_path( path + id->asString().substr(2) );
-        }
-        message_req->setPayload(std::move(del_req));
-        log_context.correlation_id = std::get<std::string>(message_req->get(MessageAttribute::CORRELATION_ID));
-        DL_DEBUG(log_context, "Creating Repo Data Delete Request");
-        resp = me.repoSendRecv( repo_id, std::move(message_req), log_context);
-        if( resp.error or resp.time_out) {
-            return resp;
-        }
-    }
-    return resp;
-}
-
-
-ICommunicator::Response
-TaskWorker::cmdRawDataUpdateSize(TaskWorker & me, const  Value & a_task_params, LogContext log_context )
-{
-
-    const Value::Object & obj = a_task_params.asObject();
-
-    const string &                  repo_id = obj.getString( "repo_id" );
-    const string &                  path = obj.getString( "repo_path" );
-    const Value::Array &            ids = obj.getArray( "ids" );
-    auto size_req = std::make_unique<Auth::RepoDataGetSizeRequest>(); //   sz_req;
-    //RecordDataLocation *            loc;
-
-    MessageFactory msg_factory;
     auto message_req = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
-    for ( Value::ArrayConstIter id = ids.begin(); id != ids.end(); id++ ) {
-        RecordDataLocation * loc = size_req->add_loc();
-        loc->set_id( id->asString() );
-        loc->set_path( path + id->asString().substr(2) );
+    auto del_req =
+        std::make_unique<Auth::RepoDataDeleteRequest>(); //     del_req;
+    for (; i < j; i++, id++) {
+      RecordDataLocation *loc = del_req->add_loc();
+      loc->set_id(id->asString());
+      loc->set_path(path + id->asString().substr(2));
     }
-    
-    message_req->setPayload(std::move(size_req));
-    log_context.correlation_id = std::get<std::string>(message_req->get(MessageAttribute::CORRELATION_ID));
-    DL_DEBUG(log_context, "Sending message size request"); 
-    ICommunicator::Response response = me.repoSendRecv( repo_id, std::move(message_req), log_context );
-
-    if( response.time_out == false and response.error == false ) {
-      auto proto_msg = std::get<google::protobuf::Message*>(response.message->getPayload());
-      auto size_reply = dynamic_cast<Auth::RepoDataSizeReply*>(proto_msg);
-      if ( size_reply->size_size() != (int)ids.size() ) {
-            EXCEPT_PARAM( 1, "Mismatched result size with RepoDataSizeReply from repo: " << repo_id );
-      }
-
-      me.m_db.recordUpdateSize( *size_reply, log_context );
-    } else {
-      EXCEPT_PARAM( 1, "Unexpected reply to RepoDataSizeReply from repo: " << repo_id );
+    message_req->setPayload(std::move(del_req));
+    log_context.correlation_id = std::get<std::string>(
+        message_req->get(MessageAttribute::CORRELATION_ID));
+    DL_DEBUG(log_context, "Creating Repo Data Delete Request");
+    resp = me.repoSendRecv(repo_id, std::move(message_req), log_context);
+    if (resp.error or resp.time_out) {
+      return resp;
     }
-
-    return response;
+  }
+  return resp;
 }
-
 
 ICommunicator::Response
-TaskWorker::cmdAllocCreate(TaskWorker & me, const Value & a_task_params, LogContext log_context )
-{
-    const Value::Object & obj = a_task_params.asObject();
+TaskWorker::cmdRawDataUpdateSize(TaskWorker &me, const Value &a_task_params,
+                                 LogContext log_context) {
 
-    const string & repo_id = obj.getString( "repo_id" );
-    const string & path = obj.getString( "repo_path" );
+  const Value::Object &obj = a_task_params.asObject();
 
-    MessageFactory msg_factory;
-    auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+  const string &repo_id = obj.getString("repo_id");
+  const string &path = obj.getString("repo_path");
+  const Value::Array &ids = obj.getArray("ids");
+  auto size_req = std::make_unique<Auth::RepoDataGetSizeRequest>(); //   sz_req;
+  // RecordDataLocation *            loc;
 
-    auto req = std::make_unique<Auth::RepoPathCreateRequest>();
-    req->set_path( path );
-    message->setPayload(std::move(req));
+  MessageFactory msg_factory;
+  auto message_req = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
-    log_context.correlation_id = std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
-    DL_DEBUG(log_context, "Sending message allocation create request"); 
-    return me.repoSendRecv( repo_id, std::move(message), log_context );
-}
+  for (Value::ArrayConstIter id = ids.begin(); id != ids.end(); id++) {
+    RecordDataLocation *loc = size_req->add_loc();
+    loc->set_id(id->asString());
+    loc->set_path(path + id->asString().substr(2));
+  }
 
+  message_req->setPayload(std::move(size_req));
+  log_context.correlation_id =
+      std::get<std::string>(message_req->get(MessageAttribute::CORRELATION_ID));
+  DL_DEBUG(log_context, "Sending message size request");
+  ICommunicator::Response response =
+      me.repoSendRecv(repo_id, std::move(message_req), log_context);
 
-ICommunicator::Response
-TaskWorker::cmdAllocDelete(TaskWorker & me, const Value & a_task_params, LogContext log_context )
-{
-
-    const Value::Object & obj = a_task_params.asObject();
-
-    const string & repo_id = obj.getString( "repo_id" );
-    const string & path = obj.getString( "repo_path" );
-
-    MessageFactory msg_factory;
-    auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
-
-    auto req = std::make_unique<Auth::RepoPathDeleteRequest>();
-    req->set_path( path );
-    message->setPayload(std::move(req));
-    log_context.correlation_id = std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
-    DL_DEBUG(log_context, "Sending message repo path delete request"); 
-
-    return me.repoSendRecv( repo_id, std::move(message), log_context );
-}
-
-
-bool
-TaskWorker::checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info, Encryption a_encrypt )
-{
-    switch ( a_encrypt )
-    {
-        case ENCRYPT_NONE:
-            if ( a_ep_info.force_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info.id << " requires encryption.");
-            return false;
-        case ENCRYPT_AVAIL:
-            if ( a_ep_info.supports_encryption )
-                return true;
-            else
-                return false;
-        case ENCRYPT_FORCE:
-            if ( !a_ep_info.supports_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info.id << " does not support encryption.");
-            return true;
-        default:
-            EXCEPT_PARAM( 1, "Invalid transfer encryption value: " << a_encrypt );
+  if (response.time_out == false and response.error == false) {
+    auto proto_msg =
+        std::get<google::protobuf::Message *>(response.message->getPayload());
+    auto size_reply = dynamic_cast<Auth::RepoDataSizeReply *>(proto_msg);
+    if (size_reply->size_size() != (int)ids.size()) {
+      EXCEPT_PARAM(1,
+                   "Mismatched result size with RepoDataSizeReply from repo: "
+                       << repo_id);
     }
 
-    // compiler warns, but can't get here
+    me.m_db.recordUpdateSize(*size_reply, log_context);
+  } else {
+    EXCEPT_PARAM(
+        1, "Unexpected reply to RepoDataSizeReply from repo: " << repo_id);
+  }
+
+  return response;
+}
+
+ICommunicator::Response TaskWorker::cmdAllocCreate(TaskWorker &me,
+                                                   const Value &a_task_params,
+                                                   LogContext log_context) {
+  const Value::Object &obj = a_task_params.asObject();
+
+  const string &repo_id = obj.getString("repo_id");
+  const string &path = obj.getString("repo_path");
+
+  MessageFactory msg_factory;
+  auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+
+  auto req = std::make_unique<Auth::RepoPathCreateRequest>();
+  req->set_path(path);
+  message->setPayload(std::move(req));
+
+  log_context.correlation_id =
+      std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
+  DL_DEBUG(log_context, "Sending message allocation create request");
+  return me.repoSendRecv(repo_id, std::move(message), log_context);
+}
+
+ICommunicator::Response TaskWorker::cmdAllocDelete(TaskWorker &me,
+                                                   const Value &a_task_params,
+                                                   LogContext log_context) {
+
+  const Value::Object &obj = a_task_params.asObject();
+
+  const string &repo_id = obj.getString("repo_id");
+  const string &path = obj.getString("repo_path");
+
+  MessageFactory msg_factory;
+  auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+
+  auto req = std::make_unique<Auth::RepoPathDeleteRequest>();
+  req->set_path(path);
+  message->setPayload(std::move(req));
+  log_context.correlation_id =
+      std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
+  DL_DEBUG(log_context, "Sending message repo path delete request");
+
+  return me.repoSendRecv(repo_id, std::move(message), log_context);
+}
+
+bool TaskWorker::checkEncryption(const GlobusAPI::EndpointInfo &a_ep_info,
+                                 Encryption a_encrypt) {
+  switch (a_encrypt) {
+  case ENCRYPT_NONE:
+    if (a_ep_info.force_encryption)
+      EXCEPT_PARAM(1, "Endpoint " << a_ep_info.id << " requires encryption.");
     return false;
+  case ENCRYPT_AVAIL:
+    if (a_ep_info.supports_encryption)
+      return true;
+    else
+      return false;
+  case ENCRYPT_FORCE:
+    if (!a_ep_info.supports_encryption)
+      EXCEPT_PARAM(1, "Endpoint " << a_ep_info.id
+                                  << " does not support encryption.");
+    return true;
+  default:
+    EXCEPT_PARAM(1, "Invalid transfer encryption value: " << a_encrypt);
+  }
+
+  // compiler warns, but can't get here
+  return false;
 }
 
-bool
-TaskWorker::checkEncryption( const GlobusAPI::EndpointInfo & a_ep_info1, const GlobusAPI::EndpointInfo & a_ep_info2, Encryption a_encrypt )
-{
-    switch ( a_encrypt )
-    {
-        case ENCRYPT_NONE:
-            if ( a_ep_info1.force_encryption && a_ep_info1.force_encryption )
-                EXCEPT_PARAM( 1, "Endpoints " << a_ep_info1.id << " and " << a_ep_info2.id << " require encryption.");
-            else if ( a_ep_info1.force_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info1.id << " requires encryption.");
-            else if ( a_ep_info2.force_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info2.id << " requires encryption.");
-            return false;
-        case ENCRYPT_AVAIL:
-            if ( a_ep_info1.supports_encryption && a_ep_info2.supports_encryption )
-                return true;
-            else
-                return false;
-        case ENCRYPT_FORCE:
-            if ( !a_ep_info1.supports_encryption && !a_ep_info1.supports_encryption )
-                EXCEPT_PARAM( 1, "Endpoints " << a_ep_info1.id << " and " << a_ep_info1.id << " do not support encryption.");
-            else if ( !a_ep_info1.supports_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info1.id << " does not support encryption.");
-            else if ( !a_ep_info2.supports_encryption )
-                EXCEPT_PARAM( 1, "Endpoint " << a_ep_info2.id << " does not support encryption.");
-            return true;
-        default:
-            EXCEPT_PARAM( 1, "Invalid transfer encryption value: " << a_encrypt );
-    }
-
-    // compiler warns, but can't get here
+bool TaskWorker::checkEncryption(const GlobusAPI::EndpointInfo &a_ep_info1,
+                                 const GlobusAPI::EndpointInfo &a_ep_info2,
+                                 Encryption a_encrypt) {
+  switch (a_encrypt) {
+  case ENCRYPT_NONE:
+    if (a_ep_info1.force_encryption && a_ep_info1.force_encryption)
+      EXCEPT_PARAM(1, "Endpoints " << a_ep_info1.id << " and " << a_ep_info2.id
+                                   << " require encryption.");
+    else if (a_ep_info1.force_encryption)
+      EXCEPT_PARAM(1, "Endpoint " << a_ep_info1.id << " requires encryption.");
+    else if (a_ep_info2.force_encryption)
+      EXCEPT_PARAM(1, "Endpoint " << a_ep_info2.id << " requires encryption.");
     return false;
+  case ENCRYPT_AVAIL:
+    if (a_ep_info1.supports_encryption && a_ep_info2.supports_encryption)
+      return true;
+    else
+      return false;
+  case ENCRYPT_FORCE:
+    if (!a_ep_info1.supports_encryption && !a_ep_info1.supports_encryption)
+      EXCEPT_PARAM(1, "Endpoints " << a_ep_info1.id << " and " << a_ep_info1.id
+                                   << " do not support encryption.");
+    else if (!a_ep_info1.supports_encryption)
+      EXCEPT_PARAM(1, "Endpoint " << a_ep_info1.id
+                                  << " does not support encryption.");
+    else if (!a_ep_info2.supports_encryption)
+      EXCEPT_PARAM(1, "Endpoint " << a_ep_info2.id
+                                  << " does not support encryption.");
+    return true;
+  default:
+    EXCEPT_PARAM(1, "Invalid transfer encryption value: " << a_encrypt);
+  }
+
+  // compiler warns, but can't get here
+  return false;
 }
 
 ICommunicator::Response
-TaskWorker::repoSendRecv( const string & a_repo_id, std::unique_ptr<IMessage> && a_msg, LogContext log_context)
-{
+TaskWorker::repoSendRecv(const string &a_repo_id,
+                         std::unique_ptr<IMessage> &&a_msg,
+                         LogContext log_context) {
 
-    log_context.correlation_id = std::get<std::string>(a_msg->get(MessageAttribute::CORRELATION_ID));
-    Config & config = Config::getInstance();
+  log_context.correlation_id =
+      std::get<std::string>(a_msg->get(MessageAttribute::CORRELATION_ID));
+  Config &config = Config::getInstance();
 
-    std::string registered_repos = "";
+  std::string registered_repos = "";
 
-    std::map<std::string,RepoData> repos;
-    if( config.repoCacheInvalid() ) {
-      DL_TRACE(log_context, "config repo cache is detected to be invalid.");
-      // Task worker is not in charge of updating the cache that is handled by another thread so we will simply make a separate call
-      // and continue working
-      std::vector<RepoData> temp_repos;
-      m_db.repoList( temp_repos, log_context );
-      m_db.repoView( temp_repos, log_context );
+  std::map<std::string, RepoData> repos;
+  if (config.repoCacheInvalid()) {
+    DL_TRACE(log_context, "config repo cache is detected to be invalid.");
+    // Task worker is not in charge of updating the cache that is handled by
+    // another thread so we will simply make a separate call and continue
+    // working
+    std::vector<RepoData> temp_repos;
+    m_db.repoList(temp_repos, log_context);
+    m_db.repoView(temp_repos, log_context);
 
-      for ( RepoData & r : temp_repos ) {
-        repos[r.id()] = r;
-        DL_TRACE(log_context, "Refreshed cache with repos: " << r.id() << " " << r.address() );
-      }
-    } else { 
-      repos = config.getRepos();
+    for (RepoData &r : temp_repos) {
+      repos[r.id()] = r;
+      DL_TRACE(log_context,
+               "Refreshed cache with repos: " << r.id() << " " << r.address());
+    }
+  } else {
+    repos = config.getRepos();
+  }
+
+  if (!repos.count(a_repo_id)) {
+    for (auto &repo : repos) {
+      registered_repos = repo.second.id() + " ";
+    }
+    EXCEPT_PARAM(1, "Task refers to non-existent repo server: "
+                        << a_repo_id
+                        << " Registered repos are: " << registered_repos);
+  }
+  // Need to be able to split repos into host and scheme and port
+  const std::string client_id = [&]() {
+    std::stringstream ss;
+    ss << "task_worker-";
+    ss << id();
+    std::string str;
+    ss >> str;
+    return str;
+  }();
+
+  try {
+
+    auto client =
+        [&](const std::string &repo_address, const std::string &repo_pub_key,
+            const std::string &socket_id, LogContext log_context) {
+          AddressSplitter splitter(repo_address);
+
+          /// Creating input parameters for constructing Communication Instance
+          SocketOptions socket_options;
+          socket_options.scheme = splitter.scheme();
+          socket_options.scheme = URIScheme::TCP;
+          socket_options.class_type = SocketClassType::CLIENT;
+          socket_options.direction_type =
+              SocketDirectionalityType::BIDIRECTIONAL;
+          socket_options.communication_type =
+              SocketCommunicationType::ASYNCHRONOUS;
+          socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
+          socket_options.connection_security = SocketConnectionSecurity::SECURE;
+          socket_options.protocol_type = ProtocolType::ZQTP;
+          socket_options.host = splitter.host();
+          socket_options.port = splitter.port();
+          socket_options.local_id = socket_id;
+
+          CredentialFactory cred_factory;
+
+          std::unordered_map<CredentialType, std::string> cred_options;
+          cred_options[CredentialType::PUBLIC_KEY] =
+              config.sec_ctx->get(CredentialType::PUBLIC_KEY);
+          cred_options[CredentialType::PRIVATE_KEY] =
+              config.sec_ctx->get(CredentialType::PRIVATE_KEY);
+          // Cannot grab the public key from sec_ctx because we have several
+          // repos to pick from
+          // cred_options[CredentialType::SERVER_KEY] =
+          // config.sec_ctx->get(CredentialType::SERVER_KEY);
+          cred_options[CredentialType::SERVER_KEY] = repo_pub_key;
+
+          DL_TRACE(log_context,
+                   "Core server client to repo server public key "
+                       << cred_options[CredentialType::PUBLIC_KEY]);
+          DL_TRACE(log_context,
+                   "Core server client to repo server private key "
+                       << cred_options[CredentialType::PRIVATE_KEY]);
+          DL_TRACE(log_context,
+                   "Core server client to repo server Repo public key "
+                       << cred_options[CredentialType::SERVER_KEY]);
+          auto credentials =
+              cred_factory.create(ProtocolType::ZQTP, cred_options);
+
+          uint32_t timeout_on_receive = Config::getInstance().repo_timeout;
+          long timeout_on_poll = Config::getInstance().repo_timeout;
+
+          // When creating a communication channel with a server application we
+          // need to locally have a client socket. So though we have specified a
+          // client socket we will actually be communicating with the server.
+          CommunicatorFactory communicator_factory(log_context);
+          return communicator_factory.create(socket_options, *credentials,
+                                             timeout_on_receive,
+                                             timeout_on_poll);
+        }(repos.at(a_repo_id).address(), repos.at(a_repo_id).pub_key(),
+          client_id, log_context); // Pass the address into the lambda
+
+    client->send(*a_msg);
+
+    ICommunicator::Response response =
+        client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+    if (response.time_out) {
+      DL_ERROR(log_context, "Timeout waiting for response from "
+                                << a_repo_id << " address "
+                                << client->address());
+      return response;
+    } else if (response.error) {
+      DL_ERROR(log_context, "Error while waiting for response from "
+                                << a_repo_id << " " << response.error_msg);
+      return response;
     }
 
-    if ( !repos.count(a_repo_id) ) {
-      for ( auto & repo : repos ) {
-        registered_repos =  repo.second.id() + " ";
-      }
-      EXCEPT_PARAM( 1, "Task refers to non-existent repo server: " << a_repo_id << " Registered repos are: " << registered_repos );
-    }
-    // Need to be able to split repos into host and scheme and port
-    const std::string client_id = [&]() {
-      std::stringstream ss;
-      ss << "task_worker-";
-      ss << id();
-      std::string str;
-      ss >> str;
-      return str;
-    }();
-
-    try {
-
-  auto client = [&](const std::string & repo_address,const std::string & repo_pub_key, const std::string & socket_id, LogContext log_context) {
-    
-
-    AddressSplitter splitter(repo_address);
-
-    /// Creating input parameters for constructing Communication Instance
-    SocketOptions socket_options;
-    socket_options.scheme = splitter.scheme();
-    socket_options.scheme = URIScheme::TCP;
-    socket_options.class_type = SocketClassType::CLIENT; 
-    socket_options.direction_type = SocketDirectionalityType::BIDIRECTIONAL; 
-    socket_options.communication_type = SocketCommunicationType::ASYNCHRONOUS;
-    socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
-    socket_options.connection_security = SocketConnectionSecurity::SECURE;
-    socket_options.protocol_type = ProtocolType::ZQTP; 
-    socket_options.host = splitter.host();
-    socket_options.port = splitter.port();
-    socket_options.local_id = socket_id;
-
-    CredentialFactory cred_factory;
-   
-    std::unordered_map<CredentialType, std::string> cred_options;
-    cred_options[CredentialType::PUBLIC_KEY] = config.sec_ctx->get(CredentialType::PUBLIC_KEY);
-    cred_options[CredentialType::PRIVATE_KEY] = config.sec_ctx->get(CredentialType::PRIVATE_KEY);
-    // Cannot grab the public key from sec_ctx because we have several repos to pick from 
-    //cred_options[CredentialType::SERVER_KEY] = config.sec_ctx->get(CredentialType::SERVER_KEY);
-    cred_options[CredentialType::SERVER_KEY] = repo_pub_key;
-
-    DL_TRACE(log_context, "Core server client to repo server public key " << cred_options[CredentialType::PUBLIC_KEY]);
-    DL_TRACE(log_context, "Core server client to repo server private key " << cred_options[CredentialType::PRIVATE_KEY]);
-    DL_TRACE(log_context, "Core server client to repo server Repo public key " << cred_options[CredentialType::SERVER_KEY]);
-    auto credentials = cred_factory.create(ProtocolType::ZQTP, cred_options);
-    
-    uint32_t timeout_on_receive = Config::getInstance().repo_timeout;
-    long timeout_on_poll = Config::getInstance().repo_timeout;
-
-    // When creating a communication channel with a server application we need
-    // to locally have a client socket. So though we have specified a client
-    // socket we will actually be communicating with the server.
-    CommunicatorFactory communicator_factory(log_context);
-    return communicator_factory.create(
-        socket_options,
-        *credentials,
-        timeout_on_receive,
-        timeout_on_poll);
-
-  }(repos.at(a_repo_id).address(), repos.at(a_repo_id).pub_key(), client_id, log_context); // Pass the address into the lambda
-   
-    client->send( *a_msg );
-
-    ICommunicator::Response response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
-    if( response.time_out ) {
-        DL_ERROR(log_context, "Timeout waiting for response from " << a_repo_id << " address " << client->address() );
-        return response;
-    } else if(response.error) {
-        DL_ERROR(log_context, "Error while waiting for response from " << a_repo_id << " " << response.error_msg );
-        return response;
-    }
-
-    auto proto_msg = std::get<google::protobuf::Message*>( response.message->getPayload() ); 
+    auto proto_msg =
+        std::get<google::protobuf::Message *>(response.message->getPayload());
     auto nack = dynamic_cast<Anon::NackReply *>(proto_msg);
-    if( nack != 0) {
+    if (nack != 0) {
       ErrorCode code = nack->err_code();
-      string  msg = nack->has_err_msg()?nack->err_msg():"Unknown service error";
-      EXCEPT( code, msg );
+      string msg =
+          nack->has_err_msg() ? nack->err_msg() : "Unknown service error";
+      EXCEPT(code, msg);
     }
 
     return response;
 
-    } catch ( TraceException & e ) {
+  } catch (TraceException &e) {
 
-        DL_ERROR(log_context, "Caught exception in repo communication logic: " << e.what() );
-        EXCEPT_PARAM(1, "Error detected in TaskWorker " << e.what());
-    }
+    DL_ERROR(log_context,
+             "Caught exception in repo communication logic: " << e.what());
+    EXCEPT_PARAM(1, "Error detected in TaskWorker " << e.what());
+  }
 }
 
-}}
+} // namespace Core
+} // namespace SDMS

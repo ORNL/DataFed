@@ -7,15 +7,15 @@
 #include "common/ProtoBufMap.hpp"
 
 // Third party includes
-#include <google/protobuf/message.h>
 #include <google/protobuf/descriptor.h>
+#include <google/protobuf/message.h>
 
 // Standard includes
 #include <list>
 #include <memory>
 #include <string>
-#include <variant>
 #include <unordered_map>
+#include <variant>
 
 namespace SDMS {
 /**
@@ -27,7 +27,7 @@ namespace SDMS {
  * there is a MACRO used to registere Protobuf message types to ClientWorker
  * functions, this breaks encapsulation.
  *
- * Ideally, the IMessage abstraction would fully encapsulate all things 
+ * Ideally, the IMessage abstraction would fully encapsulate all things
  * google protobuf like and completely hide everything with a public facing
  * general interface. Ideally, you would also have abstraction classes for the
  * DataModel, that are independent of the underlying technology. This would
@@ -37,56 +37,63 @@ namespace SDMS {
  * design would enable this.
  **/
 class GoogleProtoMessage : public IMessage {
-  public:
-    GoogleProtoMessage();
+public:
+  GoogleProtoMessage();
 
+private:
+  MessageState m_state = MessageState::REQUEST;
 
-  private:
+  /// List instead of vector because need to add to front, routes are small
+  /// so vector cache optimization really wouldn't really make a difference
+  std::list<std::string> m_routes;
+  std::unordered_map<MessageAttribute, std::string> m_attributes;
 
-    MessageState m_state = MessageState::REQUEST;
+  std::unordered_map<std::string, std::variant<uint8_t, uint16_t, uint32_t>>
+      m_dyn_attributes;
 
-    /// List instead of vector because need to add to front, routes are small
-    /// so vector cache optimization really wouldn't really make a difference
-    std::list<std::string> m_routes;
-    std::unordered_map<MessageAttribute, std::string> m_attributes;
+  std::unique_ptr<::google::protobuf::Message> m_payload;
 
-    std::unordered_map<std::string, std::variant<uint8_t, uint16_t, uint32_t>> m_dyn_attributes;
+  ProtoBufMap m_proto_map;
+  /**
+   * State checkers
+   **/
+  virtual bool exists(MessageAttribute) const final;
+  virtual bool exists(const std::string &) const final;
 
-    std::unique_ptr<::google::protobuf::Message> m_payload;
+  /**
+   * Setters
+   **/
+  virtual void addRoute(const std::string &route) final {
+    m_routes.push_back(route);
+  }
 
-    ProtoBufMap m_proto_map;
-    /**
-     * State checkers
-     **/
-    virtual bool exists(MessageAttribute) const final;
-    virtual bool exists(const std::string & ) const final;
+  virtual void setRoutes(const std::list<std::string> &routes) final {
+    m_routes = routes;
+  }
 
-    /**
-     * Setters
-     **/
-    virtual void addRoute(const std::string & route) final {
-      m_routes.push_back(route);
-    }
-
-    virtual void setRoutes(const std::list<std::string> & routes) final {
-      m_routes = routes;
-    }
-
-    virtual void setPayload(std::variant<std::unique_ptr<::google::protobuf::Message>,std::string>) final;
-    virtual void set(MessageAttribute, const std::string &) final;
-    virtual void set(MessageAttribute, MessageState) final;
-    virtual void set(std::string attribute_name, std::variant<uint8_t, uint16_t, uint32_t> ) final; 
-    /**
-     * Getters
-     **/
-    virtual std::variant<std::string, MessageState> get(MessageAttribute) const final;
-    virtual std::variant<uint8_t, uint16_t, uint32_t> get(const std::string & attribute_name) const final; 
-    virtual const std::list<std::string> & getRoutes() const final { return m_routes; }
-    virtual std::list<std::string> & getRoutes() final { return m_routes; }
-    virtual MessageType type() const noexcept final { return MessageType::GOOGLE_PROTOCOL_BUFFER; }
-    virtual std::variant<
-      ::google::protobuf::Message*,
-      std::string> getPayload() final;
+  virtual void setPayload(
+      std::variant<std::unique_ptr<::google::protobuf::Message>, std::string>)
+      final;
+  virtual void set(MessageAttribute, const std::string &) final;
+  virtual void set(MessageAttribute, MessageState) final;
+  virtual void set(std::string attribute_name,
+                   std::variant<uint8_t, uint16_t, uint32_t>) final;
+  /**
+   * Getters
+   **/
+  virtual std::variant<std::string, MessageState>
+      get(MessageAttribute) const final;
+  virtual std::variant<uint8_t, uint16_t, uint32_t>
+  get(const std::string &attribute_name) const final;
+  virtual const std::list<std::string> &getRoutes() const final {
+    return m_routes;
+  }
+  virtual std::list<std::string> &getRoutes() final { return m_routes; }
+  virtual MessageType type() const noexcept final {
+    return MessageType::GOOGLE_PROTOCOL_BUFFER;
+  }
+  virtual std::variant<::google::protobuf::Message *, std::string>
+  getPayload() final;
 };
 
 } // namespace SDMS

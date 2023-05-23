@@ -30,23 +30,24 @@ class AuthenticationOperator : public IOperator {
    * then it is is prefixed with anon_ and elsewhere in the code an anonymous
    * authentication flow is run.
    *
-   * In addition to checking the public key and mapping it to a user id the 
+   * In addition to checking the public key and mapping it to a user id the
    * operator will count the number of times the key is accessed (If it is
    * known).
    **/
-  public:    
-    explicit AuthenticationOperator(std::any & options );
-    explicit AuthenticationOperator(IAuthenticationManager & auth_manager ) : m_authentication_manager(&auth_manager) {};
-		static std::unique_ptr<IOperator> create(std::any options);
+public:
+  explicit AuthenticationOperator(std::any &options);
+  explicit AuthenticationOperator(IAuthenticationManager &auth_manager)
+      : m_authentication_manager(&auth_manager){};
+  static std::unique_ptr<IOperator> create(std::any options);
 
-  private:
+private:
+  IAuthenticationManager *m_authentication_manager;
 
-    IAuthenticationManager * m_authentication_manager;
+  virtual OperatorType type() const noexcept final {
+    return OperatorType::Authenticator;
+  }
 
-    virtual OperatorType type() const noexcept final { return OperatorType::Authenticator; }
-  
-    virtual void execute(IMessage & message) final;
-
+  virtual void execute(IMessage &message) final;
 };
 
 inline std::unique_ptr<IOperator>

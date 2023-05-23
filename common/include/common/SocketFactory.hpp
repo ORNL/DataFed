@@ -13,10 +13,9 @@
 namespace SDMS {
 
 class SocketFactory {
-  public:
-    std::unique_ptr<ISocket> create(
-        const SocketOptions & socket_options,
-        const ICredentials & credentials) const;
+public:
+  std::unique_ptr<ISocket> create(const SocketOptions &socket_options,
+                                  const ICredentials &credentials) const;
 };
 
 } // namespace SDMS

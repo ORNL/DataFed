@@ -21,41 +21,40 @@
 namespace SDMS {
 namespace Repo {
 
-
-class RequestWorker
-{
+class RequestWorker {
 public:
-    RequestWorker( size_t a_tid, LogContext log_context );
-    ~RequestWorker();
+  RequestWorker(size_t a_tid, LogContext log_context);
+  ~RequestWorker();
 
-    void stop();
-    void wait();
+  void stop();
+  void wait();
 
 private:
-    void        setupMsgHandlers();
-    void        workerThread(LogContext log_context);
+  void setupMsgHandlers();
+  void workerThread(LogContext log_context);
 
-    std::unique_ptr<IMessage>    procVersionRequest    (std::unique_ptr<IMessage> && );
-    std::unique_ptr<IMessage>    procDataDeleteRequest (std::unique_ptr<IMessage> && );
-    std::unique_ptr<IMessage>    procDataGetSizeRequest(std::unique_ptr<IMessage> && );
-    std::unique_ptr<IMessage>    procPathCreateRequest (std::unique_ptr<IMessage> && );
-    std::unique_ptr<IMessage>    procPathDeleteRequest (std::unique_ptr<IMessage> && );
+  std::unique_ptr<IMessage> procVersionRequest(std::unique_ptr<IMessage> &&);
+  std::unique_ptr<IMessage> procDataDeleteRequest(std::unique_ptr<IMessage> &&);
+  std::unique_ptr<IMessage>
+  procDataGetSizeRequest(std::unique_ptr<IMessage> &&);
+  std::unique_ptr<IMessage> procPathCreateRequest(std::unique_ptr<IMessage> &&);
+  std::unique_ptr<IMessage> procPathDeleteRequest(std::unique_ptr<IMessage> &&);
 
+  Config &m_config;
+  size_t m_tid;
+  std::thread *m_worker_thread;
+  bool m_run;
 
-    Config &            m_config;
-    size_t              m_tid;
-    std::thread *       m_worker_thread;
-    bool                m_run;
+  typedef std::unique_ptr<IMessage> (RequestWorker::*msg_fun_t)(
+      std::unique_ptr<IMessage> &&request);
+  static std::map<uint16_t, msg_fun_t> m_msg_handlers;
 
-
-    typedef std::unique_ptr<IMessage> (RequestWorker::*msg_fun_t)(std::unique_ptr<IMessage> && request );
-    static std::map<uint16_t,msg_fun_t> m_msg_handlers;
-
-    std::unique_ptr<IMessageMapper> m_msg_mapper;
-    MessageFactory m_msg_factory;
-    LogContext m_log_context;
+  std::unique_ptr<IMessageMapper> m_msg_mapper;
+  MessageFactory m_msg_factory;
+  LogContext m_log_context;
 };
 
-}}
+} // namespace Repo
+} // namespace SDMS
 
 #endif

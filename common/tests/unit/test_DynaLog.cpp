@@ -7,21 +7,21 @@
 #include "common/DynaLog.hpp"
 
 // Standard includes
-#include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <regex>
 
 using namespace SDMS;
 
 BOOST_AUTO_TEST_SUITE(LogTest)
 
-BOOST_AUTO_TEST_CASE( testing_LogOutput ) {
+BOOST_AUTO_TEST_CASE(testing_LogOutput) {
 
-  std::string file_name ="./log_output_test1.txt";
+  std::string file_name = "./log_output_test1.txt";
   global_logger.setLevel(SDMS::LogLevel::TRACE);
   LogContext log_context;
-  log_context.thread_name = "test_thread"; 
+  log_context.thread_name = "test_thread";
   log_context.thread_id = 1;
   log_context.correlation_id = "XXXXYYYY-XXXX-YYYY-XXXX-YYYYXXXXYYYY";
 
@@ -31,16 +31,16 @@ BOOST_AUTO_TEST_CASE( testing_LogOutput ) {
   if (std::filesystem::exists(file_name)) {
     std::cout << "Yes" << std::endl;
     file_removed = false;
-    if(std::filesystem::remove(file_name)) {
+    if (std::filesystem::remove(file_name)) {
       std::cout << "Removing file" << std::endl;
-      file_removed = true; 
+      file_removed = true;
     }
   }
 
   BOOST_CHECK(file_removed);
 
   std::ofstream file(file_name);
-  //global_log_settings.output_stream.rdbuf(file.rdbuf());
+  // global_log_settings.output_stream.rdbuf(file.rdbuf());
   global_logger.addStream(file);
   // Writing to file
   std::string message = "This is a test message";
@@ -50,15 +50,16 @@ BOOST_AUTO_TEST_CASE( testing_LogOutput ) {
   DL_INFO(log_context, message);
   DL_DEBUG(log_context, message);
   DL_TRACE(log_context, message);
-  
+
   file.close();
 
   std::ifstream file2(file_name);
-  if( !file2.is_open()) {
+  if (!file2.is_open()) {
     // Unable to open file
     BOOST_CHECK(false);
-  } 
-  std::regex pattern("\"thread_id\": \"1\", \"correlation_id\": \"XXXXYYYY-XXXX-YYYY-XXXX-YYYYXXXXYYYY\"");
+  }
+  std::regex pattern("\"thread_id\": \"1\", \"correlation_id\": "
+                     "\"XXXXYYYY-XXXX-YYYY-XXXX-YYYYXXXXYYYY\"");
 
   std::regex pattern_info("INFO");
   std::regex pattern_debug("DEBUG");
@@ -72,17 +73,17 @@ BOOST_AUTO_TEST_CASE( testing_LogOutput ) {
 
   int count = 0;
   std::string line;
-  while(std::getline(file2, line)) {
-    if( std::regex_search(line, pattern) ) {
+  while (std::getline(file2, line)) {
+    if (std::regex_search(line, pattern)) {
       ++count;
     }
-    if( std::regex_search(line, pattern_info) ) {
+    if (std::regex_search(line, pattern_info)) {
       found_info = true;
-    } else if(std::regex_search(line, pattern_debug )) {
+    } else if (std::regex_search(line, pattern_debug)) {
       found_debug = true;
-    } else if(std::regex_search(line, pattern_trace )) {
+    } else if (std::regex_search(line, pattern_trace)) {
       found_trace = true;
-    } else if(std::regex_search(line, pattern_critical )) {
+    } else if (std::regex_search(line, pattern_critical)) {
       found_critical = true;
     }
   }
@@ -100,8 +101,7 @@ BOOST_AUTO_TEST_CASE( testing_LogOutput ) {
   // ERROR
   // CRITICAL
   std::cout << "Count is " << count << std::endl;
-  BOOST_CHECK(count==6);
+  BOOST_CHECK(count == 6);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

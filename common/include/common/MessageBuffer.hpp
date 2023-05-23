@@ -9,6 +9,6 @@ class MessageBuffer {
   virtual void unserialize() = 0;
 };
 
-}
+} // namespace SDMS
 
 #endif // MESSAGE_BUFFER_HPP

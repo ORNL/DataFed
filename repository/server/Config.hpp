@@ -16,28 +16,26 @@
 namespace SDMS {
 namespace Repo {
 
+struct Config {
+  static Config &getInstance() {
+    static Config inst;
+    return inst;
+  }
 
-struct Config
-{
-    static Config & getInstance()
-    {
-        static Config inst;
-        return inst;
-    }
+  Config() {}
 
-    Config() {}
+  std::string globus_collection_path;
+  std::string core_server = "tcp://datafed.ornl.gov:7512";
+  std::string cred_dir = "/opt/datafed/keys";
+  uint16_t port = 9000;
+  uint32_t timeout = 5;
+  uint32_t num_req_worker_threads = 4;
 
-    std::string     globus_collection_path;
-    std::string     core_server = "tcp://datafed.ornl.gov:7512";
-    std::string     cred_dir = "/opt/datafed/keys";
-    uint16_t        port = 9000;
-    uint32_t        timeout = 5;
-    uint32_t        num_req_worker_threads = 4;
-
-    std::unique_ptr<ICredentials> sec_ctx;
-    //MsgComm::SecurityContext            sec_ctx;
+  std::unique_ptr<ICredentials> sec_ctx;
+  // MsgComm::SecurityContext            sec_ctx;
 };
 
-}}
+} // namespace Repo
+} // namespace SDMS
 
 #endif

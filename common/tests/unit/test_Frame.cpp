@@ -8,8 +8,8 @@
 #include "Frame.hpp"
 
 // Local public includes
-#include "common/ProtoBufMap.hpp"
 #include "common/MessageFactory.hpp"
+#include "common/ProtoBufMap.hpp"
 
 // Proto file includes
 #include "common/SDMS_Anon.pb.h"
@@ -21,7 +21,7 @@ using namespace SDMS;
 
 BOOST_AUTO_TEST_SUITE(FrameTest)
 
-BOOST_AUTO_TEST_CASE( testing_Frame ) {
+BOOST_AUTO_TEST_CASE(testing_Frame) {
 
   Frame frame;
 
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE( testing_Frame ) {
   BOOST_CHECK(frame.context == 0);
 }
 
-BOOST_AUTO_TEST_CASE( testing_FrameConverter ) {
+BOOST_AUTO_TEST_CASE(testing_FrameConverter) {
 
   Frame frame;
   frame.size = 4;
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE( testing_FrameConverter ) {
   FrameConverter converter;
 
   zmq_msg_t zmq_msg;
-  zmq_msg_init_size( &zmq_msg, 8 );
+  zmq_msg_init_size(&zmq_msg, 8);
   converter.copy(FrameConverter::CopyDirection::FROM_FRAME, zmq_msg, frame);
 
   Frame frame_new;
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE( testing_FrameConverter ) {
   BOOST_CHECK(frame_new.context == 2);
 }
 
-BOOST_AUTO_TEST_CASE( testing_FrameFactory ) {
+BOOST_AUTO_TEST_CASE(testing_FrameFactory) {
 
   FrameFactory factory;
 
@@ -92,8 +92,7 @@ BOOST_AUTO_TEST_CASE( testing_FrameFactory ) {
   BOOST_CHECK(frame.getMsgType() == expected_msg_type);
 }
 
-BOOST_AUTO_TEST_CASE( testing_FrameFactory_EmptyPayload ) {
-
+BOOST_AUTO_TEST_CASE(testing_FrameFactory_EmptyPayload) {
 
   MessageFactory msg_factory;
   auto msg = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
@@ -109,7 +108,8 @@ BOOST_AUTO_TEST_CASE( testing_FrameFactory_EmptyPayload ) {
   auto msg_new = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
   FrameConverter converter;
   Frame frame_new;
-  converter.copy(FrameConverter::CopyDirection::FROM_FRAME, *msg_new, frame_new);
+  converter.copy(FrameConverter::CopyDirection::FROM_FRAME, *msg_new,
+                 frame_new);
 
   BOOST_CHECK(frame_new.size == 0);
   BOOST_CHECK(frame_new.proto_id == 0);
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE( testing_FrameFactory_EmptyPayload ) {
   BOOST_CHECK(frame_new.getMsgType() == 0);
 }
 
-BOOST_AUTO_TEST_CASE( testing_FrameFactory2 ) {
+BOOST_AUTO_TEST_CASE(testing_FrameFactory2) {
 
   FrameFactory frame_factory;
   MessageFactory msg_factory;
@@ -127,7 +127,8 @@ BOOST_AUTO_TEST_CASE( testing_FrameFactory2 ) {
   auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
   auth_by_token_req->set_token("magic_token");
 
-  Frame frame_from_protocol_msg = frame_factory.create(*auth_by_token_req, proto_map);
+  Frame frame_from_protocol_msg =
+      frame_factory.create(*auth_by_token_req, proto_map);
 
   msg->setPayload(std::move(auth_by_token_req));
 
@@ -144,13 +145,10 @@ BOOST_AUTO_TEST_CASE( testing_FrameFactory2 ) {
   std::cout << frame_from_protocol_msg.msg_id << std::endl;
   std::cout << frame_from_protocol_msg.context << std::endl;
 
-
   BOOST_CHECK(frame_IMessage.size == frame_from_protocol_msg.size);
   BOOST_CHECK(frame_IMessage.proto_id == frame_from_protocol_msg.proto_id);
   BOOST_CHECK(frame_IMessage.msg_id == frame_from_protocol_msg.msg_id);
   BOOST_CHECK(frame_IMessage.context == frame_from_protocol_msg.context);
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-
