@@ -26,7 +26,7 @@ namespace po = boost::program_options;
 
 int main(int a_argc, char **a_argv) {
 
-  global_logger.setLevel(LogLevel::TRACE);
+  global_logger.setLevel(LogLevel::INFO);
   global_logger.setSysLog(false);
   global_logger.addStream(std::cerr);
 
