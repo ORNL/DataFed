@@ -108,7 +108,7 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
           include_directories( $ENV{BOOST_INC} )
           link_directories( $ENV{BOOST_LIB} )
   else()
-    find_package(Boost REQUIRED COMPONENTS unit_test_framework system filesystem
+    find_package(Boost REQUIRED COMPONENTS date_time unit_test_framework system filesystem
       program_options)
   endif()
 

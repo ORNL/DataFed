@@ -255,9 +255,6 @@ void Server::ioSecure() {
     std::unordered_map<SocketRole, SocketOptions> socket_options;
     std::unordered_map<SocketRole, ICredentials *> socket_credentials;
 
-    // const std::string channel_between_proxy_and_backend = "channeltobackend";
-    // const std::string channel_between_proxy_and_frontend =
-    // "channeltofrontend";
     // Credentials are allocated on the heap, to ensure they last until the end
     // of the test they must be defined outside of the scope block below
     std::unique_ptr<ICredentials> client_credentials;

@@ -142,11 +142,15 @@ void RequestWorker::workerThread(LogContext log_context) {
       ICommunicator::Response response =
           client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
       LogContext message_log_context = log_context;
-      DL_TRACE(log_context, "Getting correlation_id.");
-      message_log_context.correlation_id = std::get<std::string>(
-          response.message->get(MessageAttribute::CORRELATION_ID));
 
-      DL_TRACE(log_context, "Checking timeouts: " << response.time_out);
+      // May not have a correlation id if the message timed out
+      DL_TRACE(log_context, "Getting correlation_id.");
+      if( response.message->exists(MessageAttribute::CORRELATION_ID) ) {
+        message_log_context.correlation_id = std::get<std::string>(
+            response.message->get(MessageAttribute::CORRELATION_ID));
+      }
+
+      DL_TRACE(message_log_context, "Checking timeouts: " << response.time_out);
       if (response.time_out == false and response.error == false) {
         IMessage &message = *response.message;
         uint16_t msg_type = std::get<uint16_t>(
