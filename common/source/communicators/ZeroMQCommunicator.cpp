@@ -106,7 +106,7 @@ void sendFinalDelimiter(void *outgoing_zmq_socket) {
 // 0 - number of routes
 // null
 // Frame - function will not read
-void receiveRoute(IMessage &msg, void *incoming_zmq_socket) {
+void receiveRoute(IMessage &msg, void *incoming_zmq_socket, LogContext log_context) {
   // If the first frame is not empty assume it is a route that was provided by
   // the internals of zmq
   std::string previous_route = "";
@@ -157,6 +157,7 @@ void receiveRoute(IMessage &msg, void *incoming_zmq_socket) {
     unsigned char *msg_router_count_allocation =
         (unsigned char *)zmq_msg_data(&zmq_msg);
     number_of_routes = ntohl(*((uint32_t *)msg_router_count_allocation));
+    DL_TRACE(log_context, "Number of Routes Detected: " << number_of_routes);
     zmq_msg_close(&zmq_msg);
   }
   // Start a while loop for the number of routes that have been indicated
@@ -290,7 +291,7 @@ void sendRoute(IMessage &msg, void *outgoing_zmq_socket,
 /**
  * Will load the frame of the message.
  **/
-void receiveFrame(IMessage &msg, void *incoming_zmq_socket) {
+void receiveFrame(IMessage &msg, void *incoming_zmq_socket, LogContext log_context) {
   int number_of_bytes = 0;
   while (number_of_bytes == 0) {
     zmq_msg_t zmq_msg;
@@ -305,6 +306,7 @@ void receiveFrame(IMessage &msg, void *incoming_zmq_socket) {
       FrameConverter converter;
       converter.copy(FrameConverter::CopyDirection::FROM_FRAME, msg, frame);
       zmq_msg_close(&zmq_msg);
+      DL_TRACE(log_context, "Received frame.");
       // Break out of loop after reading in frame
       break;
     } else if (zmq_msg_more(&zmq_msg) == 0) {
@@ -345,7 +347,7 @@ void sendFrame(IMessage &msg, void *outgoing_zmq_socket) {
  * nothing.
  **/
 void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
-                 void *incoming_zmq_socket) {
+                 void *incoming_zmq_socket, LogContext log_context) {
 
   if (msg.exists(FRAME_SIZE)) {
     uint32_t frame_size = std::get<uint32_t>(msg.get(FRAME_SIZE));
@@ -385,6 +387,7 @@ void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
       uint16_t msg_type = std::get<uint16_t>(msg.get(MSG_TYPE));
 
       ProtoBufMap proto_map;
+      DL_TRACE(log_context, "Receiving message body of type: " + proto_map.toString(msg_type));
       if (proto_map.exists(msg_type)) {
         std::unique_ptr<proto::Message> payload = factory.create(msg_type);
         msg.setPayload(std::move(payload));
@@ -447,7 +450,7 @@ void sendBody(IMessage &msg, Buffer &buffer, void *outgoing_zmq_socket) {
   }
 }
 
-void receiveCorrelationID(IMessage &msg, void *incoming_zmq_socket) {
+void receiveCorrelationID(IMessage &msg, void *incoming_zmq_socket, LogContext log_context) {
   // If the UID metadata is set, use is; otherwise get the UID from the message
   zmq_msg_t zmq_msg;
   zmq_msg_init(&zmq_msg);
@@ -461,6 +464,7 @@ void receiveCorrelationID(IMessage &msg, void *incoming_zmq_socket) {
     std::string correlation_id =
         std::string((char *)zmq_msg_data(&zmq_msg), zmq_msg_size(&zmq_msg));
     msg.set(MessageAttribute::CORRELATION_ID, correlation_id);
+    DL_TRACE(log_context, "Received correlation_id: " << correlation_id);
   }
 
   // Check to see if there are more parts if there are we are not currently set
@@ -472,7 +476,7 @@ void receiveCorrelationID(IMessage &msg, void *incoming_zmq_socket) {
   zmq_msg_close(&zmq_msg);
 }
 
-void receiveKey(IMessage &msg, void *incoming_zmq_socket) {
+void receiveKey(IMessage &msg, void *incoming_zmq_socket, LogContext log_context) {
   // If the UID metadata is set, use is; otherwise get the UID from the message
   zmq_msg_t zmq_msg;
   zmq_msg_init(&zmq_msg);
@@ -486,6 +490,7 @@ void receiveKey(IMessage &msg, void *incoming_zmq_socket) {
     std::string key =
         std::string((char *)zmq_msg_data(&zmq_msg), zmq_msg_size(&zmq_msg));
     msg.set(MessageAttribute::KEY, key);
+    DL_TRACE(log_context, "Received key: " << key);
   }
 
   // Check to see if there are more parts if there are we are not currently set
@@ -542,7 +547,7 @@ void sendKey(IMessage &msg, void *outgoing_zmq_socket) {
   zmq_msg_close(&zmq_msg);
 }
 
-void receiveID(IMessage &msg, void *incoming_zmq_socket) {
+void receiveID(IMessage &msg, void *incoming_zmq_socket, LogContext log_context) {
   // If the UID metadata is set, use is; otherwise get the UID from the message
   zmq_msg_t zmq_msg;
   zmq_msg_init(&zmq_msg);
@@ -555,6 +560,7 @@ void receiveID(IMessage &msg, void *incoming_zmq_socket) {
     std::string id =
         std::string((char *)zmq_msg_data(&zmq_msg), zmq_msg_size(&zmq_msg));
     msg.set(MessageAttribute::ID, id);
+    DL_TRACE(log_context, "Received id: " << id);
   }
 
   // Check to see if there are more parts if there are we are not currently set
@@ -727,13 +733,13 @@ ZeroMQCommunicator::poll(const MessageType message_type) {
   LogContext log_context = m_log_context;
   if (response.error == false and response.time_out == false) {
     response.message = m_msg_factory.create(message_type);
-    receiveRoute(*response.message, m_zmq_socket);
-    receiveCorrelationID(*response.message, m_zmq_socket);
-    receiveKey(*response.message, m_zmq_socket);
-    receiveID(*response.message, m_zmq_socket);
-    receiveFrame(*response.message, m_zmq_socket);
+    receiveRoute(*response.message, m_zmq_socket, log_context);
+    receiveCorrelationID(*response.message, m_zmq_socket, log_context);
+    receiveKey(*response.message, m_zmq_socket, log_context);
+    receiveID(*response.message, m_zmq_socket, log_context);
+    receiveFrame(*response.message, m_zmq_socket, log_context);
 
-    receiveBody(*response.message, m_buffer, m_protocol_factory, m_zmq_socket);
+    receiveBody(*response.message, m_buffer, m_protocol_factory, m_zmq_socket, log_context);
 
     uint16_t msg_type = std::get<uint16_t>(
         response.message->get(constants::message::google::MSG_TYPE));
@@ -792,12 +798,12 @@ ZeroMQCommunicator::receive(const MessageType message_type) {
   LogContext log_context = m_log_context;
   if (response.error == false and response.time_out == false) {
     response.message = m_msg_factory.create(message_type);
-    receiveRoute(*response.message, m_zmq_socket);
-    receiveCorrelationID(*response.message, m_zmq_socket);
-    receiveKey(*response.message, m_zmq_socket);
-    receiveID(*response.message, m_zmq_socket);
-    receiveFrame(*response.message, m_zmq_socket);
-    receiveBody(*response.message, m_buffer, m_protocol_factory, m_zmq_socket);
+    receiveRoute(*response.message, m_zmq_socket, log_context);
+    receiveCorrelationID(*response.message, m_zmq_socket, log_context);
+    receiveKey(*response.message, m_zmq_socket, log_context);
+    receiveID(*response.message, m_zmq_socket, log_context);
+    receiveFrame(*response.message, m_zmq_socket, log_context);
+    receiveBody(*response.message, m_buffer, m_protocol_factory, m_zmq_socket, log_context);
 
     uint16_t msg_type = std::get<uint16_t>(
         response.message->get(constants::message::google::MSG_TYPE));

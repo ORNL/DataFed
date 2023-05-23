@@ -37,11 +37,14 @@ namespace Repo {
 map<uint16_t, RequestWorker::msg_fun_t> RequestWorker::m_msg_handlers;
 
 RequestWorker::RequestWorker(size_t a_tid, LogContext log_context)
-    : m_config(Config::getInstance()), m_tid(a_tid), m_worker_thread(0),
+    : m_config(Config::getInstance()), m_tid(a_tid), 
       m_run(true), m_log_context(log_context) {
+
   m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
+  DL_DEBUG(m_log_context, "Setting up message handlers.");
   setupMsgHandlers();
-  m_worker_thread = new thread(&RequestWorker::workerThread, this, log_context);
+  DL_DEBUG(m_log_context, "Creating worker thread.");
+  m_worker_thread = std::make_unique<thread>(&RequestWorker::workerThread, this, log_context);
 }
 
 RequestWorker::~RequestWorker() {
@@ -54,8 +57,6 @@ void RequestWorker::stop() { m_run = false; }
 void RequestWorker::wait() {
   if (m_worker_thread) {
     m_worker_thread->join();
-    delete m_worker_thread;
-    m_worker_thread = 0;
   }
 }
 
@@ -134,13 +135,18 @@ void RequestWorker::workerThread(LogContext log_context) {
   DL_TRACE(log_context, "Listening on address " << client->address());
 
   while (m_run) {
+    DL_TRACE(log_context, "Listening on address " << client->address());
     try {
+      
+      DL_TRACE(log_context, "Getting response.");
       ICommunicator::Response response =
           client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
       LogContext message_log_context = log_context;
+      DL_TRACE(log_context, "Getting correlation_id.");
       message_log_context.correlation_id = std::get<std::string>(
           response.message->get(MessageAttribute::CORRELATION_ID));
 
+      DL_TRACE(log_context, "Checking timeouts: " << response.time_out);
       if (response.time_out == false and response.error == false) {
         IMessage &message = *response.message;
         uint16_t msg_type = std::get<uint16_t>(

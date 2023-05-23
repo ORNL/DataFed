@@ -13,6 +13,7 @@
 
 // Standard includes
 #include <algorithm>
+#include <atomic>
 #include <memory>
 #include <string>
 #include <thread>
@@ -41,9 +42,9 @@ private:
   std::unique_ptr<IMessage> procPathDeleteRequest(std::unique_ptr<IMessage> &&);
 
   Config &m_config;
-  size_t m_tid;
-  std::thread *m_worker_thread;
-  bool m_run;
+  std::atomic<size_t> m_tid;
+  std::unique_ptr<std::thread> m_worker_thread;
+  std::atomic<bool> m_run;
 
   typedef std::unique_ptr<IMessage> (RequestWorker::*msg_fun_t)(
       std::unique_ptr<IMessage> &&request);
