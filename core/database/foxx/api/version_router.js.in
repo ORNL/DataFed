@@ -15,17 +15,17 @@ module.exports = router;
 router.get('/version', function(req, res) {
         try {
             res.send({
-                "release_year": @DATAFED_RELEASE_YEAR @,
-                "release_month": @DATAFED_RELEASE_MONTH @,
-                "release_day": @DATAFED_RELEASE_DAY @,
-                "release_hour": @DATAFED_RELEASE_HOUR @,
-                "release_minute": @DATAFED_RELEASE_MINUTE @,
-                "api_major": @DATAFED_FOXX_API_MAJOR @,
-                "api_minor": @DATAFED_FOXX_API_MINOR @,
-                "api_patch": @DATAFED_FOXX_API_PATCH @,
-                "component_major": @DATAFED_FOXX_MAJOR @,
-                "component_minor": @DATAFED_FOXX_MINOR @,
-                "component_patch": @DATAFED_FOXX_PATCH @
+                "release_year": @DATAFED_RELEASE_YEAR@,
+                "release_month": @DATAFED_RELEASE_MONTH@,
+                "release_day": @DATAFED_RELEASE_DAY@,
+                "release_hour": @DATAFED_RELEASE_HOUR@,
+                "release_minute": @DATAFED_RELEASE_MINUTE@,
+                "api_major": @DATAFED_FOXX_API_MAJOR@,
+                "api_minor": @DATAFED_FOXX_API_MINOR@,
+                "api_patch": @DATAFED_FOXX_API_PATCH@,
+                "component_major": @DATAFED_FOXX_MAJOR@,
+                "component_minor": @DATAFED_FOXX_MINOR@,
+                "component_patch": @DATAFED_FOXX_PATCH@
             });
         } catch (e) {
             g_lib.handleException(e, res);
