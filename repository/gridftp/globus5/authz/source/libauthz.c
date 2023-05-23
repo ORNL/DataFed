@@ -543,7 +543,7 @@ globus_result_t gsi_authz_cancel() {
 }
 
 // The same
-globus_result_t gsi_authz_identify(va_list ap) {
+globus_result_t gsi_authz_identify() {
   syslog(LOG_DEBUG, "gsi_authz_identify\n");
   return 0;
 }
