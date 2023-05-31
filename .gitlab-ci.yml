@@ -77,24 +77,36 @@ build-repo-base:
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
 
-## This build runs two builds, one to build the gcs image provided by Globus
-## The second to build on top of the gcs image and add the authz dependencies
-#build-gcs-authz-base:
-#  variables:
-#    IMAGE_TAG: "dlsw/datafed/gcs-base"
-#    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
-#  stage: build-base
-#  tags:
-#    - datafed
-#  script:
-#    - git clone -b v2.2.0 https://github.com/globusonline/globus-connect-server-deploy.git
-#    - cd ./globus-connect-server-deploy/docker
-#    - sudo apt-get -y install python3-pip
-#    - python3 -m pip install shyaml
-#    - ./docker-build-gcs.sh ubuntu:focal
-#    - cd ../../
-#    - docker tag globus-connect-server54:latest $CI_REGISTRY/${IMAGE_TAG}
-#    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG2} .
+# This build runs two builds, one to build the gcs image provided by Globus
+# The second to build on top of the gcs image and add the authz dependencies
+build-gcs-authz-base:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/gcs-base"
+    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
+    IMAGE_TAG3: "dlsw/datafed/gcs-authz"
+  stage: build-base
+  tags:
+    - ci-datafed-globus
+    - docker
+  rules:
+    - changes:
+      - dockerfiles/Dockerfile.gcs-base.ubuntu
+      - dockerfiles/Dockerfile.gcs-authz-base.ubuntu
+      - scripts/install_gcs.sh
+      - scripts/install_authz_dependencies.sh
+      - scripts/generate_datafed.sh
+      - scripts/generate_authz_config.sh
+      - .gitlab-ci.yml
+      when: always
+    - when: manual
+  script:
+    - docker build -f dockerfiles/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker push $CI_REGISTRY/${IMAGE_TAG}
+    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
+    - docker push $CI_REGISTRY/${IMAGE_TAG2}
+    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
+    - docker push $CI_REGISTRY/${IMAGE_TAG3}
 
 
 ################################################################################
@@ -132,14 +144,14 @@ deploy-repo-base:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
 
-#deploy-gcs-authz-base:
-#  stage: deploy-base
-#  needs: ["build-gcs-authz-base"]
-#  tags:
-#    - datafed
-#  script:
-#    - docker push $CI_REGISTRY/dlsw/datafed/gcs-base
-#    - docker push $CI_REGISTRY/dlsw/datafed/gcs-authz-base
+deploy-gcs-authz-base:
+  stage: deploy-base
+  needs: ["build-gcs-authz-base"]
+  tags:
+    - datafed
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker push $CI_REGISTRY/dlsw/datafed/gcs-authz-base
 
 ################################################################################
 # STAGE: build 
