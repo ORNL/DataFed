@@ -66,10 +66,12 @@ build-repo-base:
   tags:
     - ci-datafed-repo
     - docker
-  only:
-    changes:
+  rules:
+    - changes:
       - dockerfiles/Dockerfile.repo-base.ubuntu
       - scripts/install_repo_dependencies.sh 
+      when: always
+    - when: manual
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
 
