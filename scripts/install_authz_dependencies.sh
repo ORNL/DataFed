@@ -8,7 +8,7 @@ sudo apt-get update
 sudo dpkg --configure -a
 sudo apt-get install -y libtool build-essential g++ gcc cmake libboost-all-dev \
 autoconf automake make git python3-pkg-resources python3-pip pkg-config \
-libglobus-common-dev wget
+libglobus-common-dev wget libssl-dev
 sudo apt-get install -y libzmq3-dev 
 
 wget https://github.com/Kitware/CMake/releases/download/v3.17.5/cmake-3.17.5.tar.gz

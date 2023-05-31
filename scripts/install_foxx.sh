@@ -225,11 +225,11 @@ then
   nvm use $NODE_VERSION
 
   # Install foxx service node module
-  $NVM_DIR/nvm-exec npm install --global foxx-cli
+  $NVM_DIR/nvm-exec npm install --global foxx-cli --prefix ~/
 else 
   # We are assuming that if the correct version of node is installed then the
   # correct version of npm is also installed
-  npm install --global foxx-cli
+  npm install --global foxx-cli --prefix ~/
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
