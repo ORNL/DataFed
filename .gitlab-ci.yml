@@ -59,7 +59,7 @@ build-repo-base:
     - ci-datafed-repo
     - docker
   script:
-    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
+    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
 
 ## This build runs two builds, one to build the gcs image provided by Globus
 ## The second to build on top of the gcs image and add the authz dependencies
@@ -96,8 +96,8 @@ deploy-core-base:
     - ci-datafed-core
     - docker
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker push $CI_REGISTRY/dlsw/datafed/core-base
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD code.ornl.gov:4567
+    - docker push code.ornl.gov:4567/dlsw/datafed/core-base
 
 deploy-repo-base:
   stage: deploy-base
@@ -106,7 +106,7 @@ deploy-repo-base:
     - ci-datafed-repo
     - docker
   script:
-    - docker push $CI_REGISTRY/dlsw/datafed/repo-base
+    - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
 
 #deploy-gcs-authz-base:
 #  stage: deploy-base
@@ -144,7 +144,7 @@ build-core:
     - env
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
-    - docker build -f dockerfiles/Dockerfile.core.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
+    - docker build -f dockerfiles/Dockerfile.core.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 #build-repo:
 #  variables:
