@@ -47,18 +47,20 @@ build-core-base:
   stage: build-base
   tags:
     - ci-datafed-core
+    - docker
   script:
     - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
 
-#build-repo-base:
-#  variables:
-#    IMAGE_TAG: "dlsw/datafed/repo-base"
-#  stage: build-base
-#  tags:
-#    - datafed
-#  script:
-#    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
-#
+build-repo-base:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/repo-base"
+  stage: build-base
+  tags:
+    - ci-datafed-repo
+    - docker
+  script:
+    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
+
 ## This build runs two builds, one to build the gcs image provided by Globus
 ## The second to build on top of the gcs image and add the authz dependencies
 #build-gcs-authz-base:
@@ -92,18 +94,20 @@ deploy-core-base:
   needs: ["build-core-base"]
   tags:
     - ci-datafed-core
+    - docker
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker push $CI_REGISTRY/dlsw/datafed/core-base
 
-#deploy-repo-base:
-#  stage: deploy-base
-#  needs: ["build-repo-base"]
-#  tags:
-#    - datafed
-#  script:
-#    - docker push $CI_REGISTRY/dlsw/datafed/repo-base
-#
+deploy-repo-base:
+  stage: deploy-base
+  needs: ["build-repo-base"]
+  tags:
+    - ci-datafed-repo
+    - docker
+  script:
+    - docker push $CI_REGISTRY/dlsw/datafed/repo-base
+
 #deploy-gcs-authz-base:
 #  stage: deploy-base
 #  needs: ["build-gcs-authz-base"]
@@ -133,6 +137,7 @@ build-core:
   stage: build
   tags:
     - ci-datafed-core
+    - docker
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
