@@ -5,6 +5,11 @@ stages:
   - build
   - deploy
 
+################################################################################
+# STAGE: setup
+################################################################################
+# Setup stage is designed to check that the infrastructure is up and running
+# before attempting to launch the CI pipelines
 setup-vms:
   stage: setup
   tags:
@@ -15,33 +20,28 @@ setup-vms:
     - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS1_ID
     - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS2_ID
 
-build-foxx:
-  stage: build
-  tags:
-    - ci-datafed-arango
-  script:
-    - arangod --version
-    - sudo systemctl status arangodb3
-    - ./scripts/generate_datafed.sh
-    - env
-    - cat ./config/datafed.sh
-    - cmake -S. -B build -DENABLE_FOXX_TESTS=ON -DBUILD_CORE_SERVER=OFF -DBUILD_COMMON=OFF -DBUILD_WEB_SERVER=OFF -DBUILD_DOCS=OFF -DBUILD_PYTHON_CLIENT=OFF -DBUILD_TESTS=ON -DINSTALL_FOXX=ON
-    - cmake --build build
-    - cmake --build build --target install
-    - cmake --build build --target test
-
-#before_script:
-#  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+################################################################################
+# STAGE: build-base
+################################################################################
 # Building base containers the base containers should have all the required
 # dependencies it should not be necessary to build them every time
-#build-ws-base:
-#  variables:
-#    IMAGE_TAG: "dlsw/datafed/ws-base"
-#  stage: build-base
-#  tags:
-#    - datafed
-#  script:
-#    - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
+build-ws-base:
+  stage: build-base
+  variables:
+    IMAGE_TAG: "dlsw/datafed/ws-base"
+  tags:
+    - ci-datafed-core
+    - docker
+  rules:
+    - changes:
+      - dockerfiles/Dockerfile.web-base.ubuntu
+      - scripts/install_ws_dependencies.sh 
+      - common/proto/*
+      - .gitlab-ci.yml
+      when: always
+    - when: manual
+  script:
+    - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
 
 build-core-base:
   stage: build-base
@@ -95,16 +95,17 @@ build-repo-base:
 #    - cd ../../
 #    - docker tag globus-connect-server54:latest $CI_REGISTRY/${IMAGE_TAG}
 #    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG2} .
-#
-## Deploying base containers
-#deploy-ws-base:
-#  stage: deploy-base
-#  needs: ["build-ws-base"]
-#  tags:
-#    - datafed
-#  script:
-#    - docker push $CI_REGISTRY/dlsw/datafed/ws-base
-#
+
+# Deploying base containers
+deploy-ws-base:
+  stage: deploy-base
+  needs: ["build-ws-base"]
+  tags:
+    - ci-datafed-core
+    - docker
+  script:
+    - docker push $CI_REGISTRY/dlsw/datafed/ws-base
+
 deploy-core-base:
   stage: deploy-base
   needs: ["build-core-base"]
@@ -132,21 +133,22 @@ deploy-repo-base:
 #  script:
 #    - docker push $CI_REGISTRY/dlsw/datafed/gcs-base
 #    - docker push $CI_REGISTRY/dlsw/datafed/gcs-authz-base
-#
-## Building containers for running services
-#build-ws:
-#  variables:
-#    IMAGE_TAG: "dlsw/datafed/ws-"
-#  stage: build
-#  tags:
-#    - datafed
-#  script:
-#    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-#    - echo "$BRANCH_LOWER"
-#    - ./scripts/generate_datafed.sh
-#    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-#
+
+# Building containers for running services
+build-ws:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/ws-"
+  stage: build
+  tags:
+    - ci-datafed-core
+    - docker
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+      #    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
+
 build-core:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-"
@@ -169,6 +171,23 @@ build-core:
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
     - docker build -f dockerfiles/Dockerfile.core.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
+
+
+build-foxx:
+  stage: build
+  tags:
+    - ci-datafed-arango
+  script:
+    - arangod --version
+    - sudo systemctl status arangodb3
+    - ./scripts/generate_datafed.sh
+    - env
+    - cat ./config/datafed.sh
+    - cmake -S. -B build -DENABLE_FOXX_TESTS=ON -DBUILD_CORE_SERVER=OFF -DBUILD_COMMON=OFF -DBUILD_WEB_SERVER=OFF -DBUILD_DOCS=OFF -DBUILD_PYTHON_CLIENT=OFF -DBUILD_TESTS=ON -DINSTALL_FOXX=ON
+    - cmake --build build
+    - cmake --build build --target install
+    - cmake --build build --target test
+
 
 #build-repo:
 #  variables:
