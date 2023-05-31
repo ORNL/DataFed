@@ -50,7 +50,16 @@ build-core-base:
   tags:
     - ci-datafed-core
     - docker
+  before_script:
+    - >
+      if docker inspect code.ornl.gov:4567/${IMAGE_TAG} $> /dev/null; then
+        export CONTAINER_EXISTS="true"
+      else
+        export CONTAINER_EXISTS="false"
+      fi
   rules:
+    - if: '$CONTAINER_EXISTS == "false"'
+      when: always
     - changes:
       - dockerfiles/Dockerfile.core-base.ubuntu
       - scripts/install_core_dependencies.sh 
@@ -152,6 +161,13 @@ build-core:
   tags:
     - ci-datafed-core
     - docker
+  rules:
+    - changes:
+      - dockerfiles/*
+      - scripts/*
+      - core/* 
+      when: always
+    - when: manual
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
