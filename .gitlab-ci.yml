@@ -40,7 +40,7 @@ build-foxx:
 #    - datafed
 #  script:
 #    - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
-#
+
 build-core-base:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-base"
