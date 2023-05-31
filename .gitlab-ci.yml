@@ -113,7 +113,6 @@ deploy-core-base:
     - ci-datafed-core
     - docker
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/core-base
 
 deploy-repo-base:
