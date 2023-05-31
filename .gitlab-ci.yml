@@ -12,6 +12,8 @@ setup-vms:
   script:
     - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_ARANGO_ID
     - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_CORE_ID
+    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS1_ID
+    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS2_ID
 
 build-foxx:
   stage: build
@@ -48,10 +50,12 @@ build-core-base:
   tags:
     - ci-datafed-core
     - docker
-  only:
-    changes:
+  rules:
+    - changes:
       - dockerfiles/Dockerfile.core-base.ubuntu
       - scripts/install_core_dependencies.sh 
+      when: always
+    - when: manual
   script:
     - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
 
@@ -62,6 +66,10 @@ build-repo-base:
   tags:
     - ci-datafed-repo
     - docker
+  only:
+    changes:
+      - dockerfiles/Dockerfile.repo-base.ubuntu
+      - scripts/install_repo_dependencies.sh 
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
 
