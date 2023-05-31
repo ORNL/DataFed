@@ -96,6 +96,11 @@ build-repo-base:
 #    - docker tag globus-connect-server54:latest $CI_REGISTRY/${IMAGE_TAG}
 #    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG2} .
 
+
+################################################################################
+# STAGE: deploy-base
+################################################################################
+
 # Deploying base containers
 deploy-ws-base:
   stage: deploy-base
@@ -133,6 +138,9 @@ deploy-repo-base:
 #    - docker push $CI_REGISTRY/dlsw/datafed/gcs-base
 #    - docker push $CI_REGISTRY/dlsw/datafed/gcs-authz-base
 
+################################################################################
+# STAGE: build 
+################################################################################
 # Building containers for running services
 build-ws:
   variables:
@@ -171,11 +179,18 @@ build-core:
     - cat ./config/datafed.sh
     - docker build -f dockerfiles/Dockerfile.core.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 
-
 build-foxx:
   stage: build
+  needs: ["setup-vms"]
   tags:
     - ci-datafed-arango
+  rules:
+    - changes:
+      - CMakeLists.txt
+      - scripts/*
+      - core/database/*
+      - .gitlab-ci.yml
+      when: always
   script:
     - arangod --version
     - sudo systemctl status arangodb3
