@@ -1,4 +1,5 @@
 FROM code.ornl.gov:4567/dlsw/datafed/gcs-base:latest as build
+#FROM ubuntu:focal as build
 
 ARG BUILD_DIR="/source"
 

@@ -48,6 +48,10 @@ build-core-base:
   tags:
     - ci-datafed-core
     - docker
+  only:
+    changes:
+      - dockerfiles/Dockerfile.core-base.ubuntu
+      - scripts/install_core_dependencies.sh 
   script:
     - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
 
