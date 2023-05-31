@@ -105,7 +105,7 @@ build-repo-base:
 #
 deploy-core-base:
   stage: deploy-base
-# needs: ["build-core-base"]
+  needs: ["build-core-base"]
   tags:
     - ci-datafed-core
     - docker
