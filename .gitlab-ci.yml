@@ -46,7 +46,7 @@ build-ws-base:
       when: always
     - when: manual
   script:
-    - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t $CI_REGISTRY/${IMAGE_TAG} .
+    - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
 
 build-core-base:
   stage: build-base
@@ -107,11 +107,11 @@ build-gcs-authz-base:
   script:
     - docker build -f dockerfiles/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push $CI_REGISTRY/${IMAGE_TAG}
+    - docker push code.ornl.gov:4567/${IMAGE_TAG}
     - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
-    - docker push $CI_REGISTRY/${IMAGE_TAG2}
+    - docker push code.ornl.gov:4567/${IMAGE_TAG2}
     - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
-    - docker push $CI_REGISTRY/${IMAGE_TAG3}
+    - docker push code.ornl.gov:4567/${IMAGE_TAG3}
 
 
 ################################################################################
@@ -127,7 +127,7 @@ deploy-ws-base:
     - docker
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push $CI_REGISTRY/dlsw/datafed/ws-base
+    - docker push code.ornl.gov:4567/dlsw/datafed/ws-base
 
 deploy-core-base:
   stage: deploy-base
@@ -156,7 +156,7 @@ deploy-gcs-authz-base:
     - datafed
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push $CI_REGISTRY/dlsw/datafed/gcs-authz-base
+    - docker push code.ornl.gov:4567/dlsw/datafed/gcs-authz-base
 
 ################################################################################
 # STAGE: build 
@@ -183,7 +183,8 @@ build-ws:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
-    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t "${CI_REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker build -f dockerfiles/Dockerfile.web.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 build-core:
   variables:
@@ -208,6 +209,7 @@ build-core:
     - env
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker build -f dockerfiles/Dockerfile.core.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 build-foxx:
@@ -255,6 +257,7 @@ build-repo:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker build -f dockerfiles/Dockerfile.repo.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 build-gcs-authz:
@@ -268,6 +271,7 @@ build-gcs-authz:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker build -f dockerfiles/Dockerfile.gcs-authz.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 
