@@ -13,7 +13,7 @@ Help()
 {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
-  echo "Syntax: $(basename $0) [-h|u|p|y]"
+  echo "Syntax: $(basename $0) [-h|u|f|p|y]"
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-u, --database-user               Database user, needed to log into the database."
@@ -120,7 +120,7 @@ else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
 
-VALID_ARGS=$(getopt -o hu:p:f: --long 'help',database-user:,database-password:,foxx-api-major-version: -- "$@")
+VALID_ARGS=$(getopt -o hu:p:f:y: --long 'help',database-user:,database-password:,foxx-api-major-version:,zeromq-system-secret: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
