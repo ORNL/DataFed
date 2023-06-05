@@ -55,24 +55,20 @@ if [[ $? -ne 0 ]]; then
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
-  echo "$1"
   case "$1" in
     -h | --help)
         Help
         exit 0
         ;;
     -u | --database-user)
-        echo "Processing 'Database user' option. Input argument is '$2'"
         local_DATABASE_USER=$2
         shift 2
         ;;
     -p | --database-password)
-        echo "Processing 'Database password' option. Input argument is '$2'"
         local_DATAFED_DATABASE_PASSWORD=$2
         shift 2
         ;;
     -o | --output-file)
-        echo "Processing 'DataFed Output File' option. Input argument is '$2'"
         local_DATAFED_OUTPUT_FILE=$2
         shift 2
         ;;
@@ -108,20 +104,21 @@ fi
 
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(curl --dump - --user $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://localhost:8529/_api/database/user)
-
-if [[ "$output" =~ .*"sdms".* ]]; then
-	echo "Verified SDMS exists."
-else
+output=$(curl -s --dump - --user $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://localhost:8529/_api/database/user)
+if [[ ! "$output" =~ .*"sdms".* ]]; then
   echo "Something is wrong, the sdms database is missing!"
   exit 1
 fi
 
-resp=$(curl -X POST --header 'accept: application/json' http://localhost:8529/_open/auth -d "{ \"username\": \"$user\", \"password\": $pass}") 
-tok=$(echo "$resp" | jq .jwt) 
-data=$(curl -X POST --header 'accept: application/json' -u $user:$pass http://localhost:8529/_db/sdms/_api/cursor -d "{ \"query\" : \"FOR user1 IN u RETURN user1.email\" }") 
+data=$(curl -s -X POST --header 'accept: application/json' -u $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://localhost:8529/_db/sdms/_api/cursor -d "{ \"query\" : \"FOR user1 IN u RETURN user1.email\" }") 
 emails=$(echo $data | jq .result) 
 emails_cleaned=$(echo $emails | sed 's/", "/ /g' | sed 's/\[ "//g'  | sed 's/" \]//g') 
+
+if [ -f "$local_DATAFED_OUTPUT_FILE" ]
+then
+  # Remove file if it exists
+  rm "$local_DATAFED_OUTPUT_FILE"
+fi
 
 for email in ${emails_cleaned} 
 do 
