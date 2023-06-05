@@ -108,6 +108,7 @@ fi
 
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
+output=$(curl --dump - --user $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://localhost:8529/_api/database/user)
 
 if [[ "$output" =~ .*"sdms".* ]]; then
 	echo "Verified SDMS exists."
