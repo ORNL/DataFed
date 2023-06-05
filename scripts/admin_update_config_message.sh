@@ -21,7 +21,6 @@ Help()
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-u, --database-user               Database user, needed to log into the database."
-  echo "-f, --foxx-api-major-version      The major version number to mount the foxx api under."
   echo "-p, --database-password           Database password, needed to log into the database."
   echo "                                  This is a REQUIRED parameters if it is not"
   echo "                                  provided via the command line it can also be set"
@@ -50,14 +49,7 @@ else
   local_DATAFED_MESSAGE_FILE=$(printenv DATAFED_MESSAGE_FILE)
 fi
 
-if [ -z "${FOXX_MAJOR_API_VERSION}" ]
-then
-  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
-else
-  local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
-fi
-
-VALID_ARGS=$(getopt -o hu:p:f:m: --long 'help',database-user:,database-password:,foxx-api-major-version:message-file -- "$@")
+VALID_ARGS=$(getopt -o hu:p:m: --long 'help',database-user:,database-password:,message-file: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -77,11 +69,6 @@ while [ : ]; do
     -p | --database-password)
         echo "Processing 'Database password' option. Input argument is '$2'"
         local_DATAFED_DATABASE_PASSWORD=$2
-        shift 2
-        ;;
-    -f | --foxx-api-major-version)
-        echo "Processing 'Foxx major api version' option. Input argument is '$2'"
-        local_FOXX_MAJOR_API_VERSION=$2
         shift 2
         ;;
     -m | --message-file)
