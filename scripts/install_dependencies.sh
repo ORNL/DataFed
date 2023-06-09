@@ -7,12 +7,15 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
+source "${PROJECT_ROOT}/dependency_install_functions.sh"
+
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo apt-get update
 sudo dpkg --configure -a
-sudo apt-get install -y libtool build-essential g++ gcc npm cmake libboost-all-dev pkg-config autoconf automake libtool curl make unzip libcurl4-openssl-dev libfuse-dev rapidjson-dev libglobus-common-dev libkrb5-dev
+sudo apt-get install -y libtool build-essential g++ gcc npm libboost-all-dev pkg-config autoconf automake libtool curl make unzip libcurl4-openssl-dev libfuse-dev rapidjson-dev libglobus-common-dev libkrb5-dev
 sudo apt-get install -y libzmq3-dev 
 
+install_cmake
 # The foxx services need node version 12 or greater so we aren't going to use the package manager
 # but instead will install ourselves
 
@@ -26,74 +29,19 @@ export NVM_DIR="$HOME/.nvm"
 nvm install $NODE_VERSION
 nvm use $NODE_VERSION
 
-if [ -d json ]
-then
-	rm -rf json
-fi
-
-cd ~
-git clone https://github.com/nlohmann/json.git
-cd json
-git checkout v3.10.2
-cmake -S . -B build
-cmake --build build -j 4
-sudo cmake --build build --target install
+install_nlohmann_json
 cd ~
 
-if [ -d json-schema-validator ]
-then
-	rm -rf json-schema-validator
-fi
-git clone https://github.com/pboettch/json-schema-validator
-cd json-schema-validator
-git checkout 2.1.0
-cmake -S . -B build
-cmake --build build -j 4
-sudo cmake --build build --target install
+install_json_schema_validator
 cd ~
 
-if [ -d protobuf ]
-then
-	# sudo required because of egg file
-	sudo rm -rf protobuf 
-fi
-git clone  https://github.com/google/protobuf.git
-cd protobuf
-git checkout v3.17.3
-git submodule update --init --recursive
-cmake -S cmake/ -B build -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-cmake --build build -j 4
-sudo cmake --build build --target install
-cd python
-python3 setup.py build
-python3 setup.py test
-sudo python3 setup.py install
+install_protobuf
 cd ~
 
-if [ -d libsodium ]
-then
-	rm -rf libsodium 
-fi
-git clone https://github.com/jedisct1/libsodium.git
-cd libsodium
-git checkout 1.0.18
-./autogen.sh
-./configure
-make check
-sudo make install
-sudo ldconfig
+install_libsodium
 cd ~
 
-if [ -d libzmq ]
-then
-	rm -rf libzmq 
-fi
-git clone https://github.com/zeromq/libzmq.git
-cd libzmq
-git checkout v4.3.4
-cmake -S. -B build
-cmake --build build -j 4
-sudo cmake --build build --target install
+install_libzmq
 cd ~
 
 npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web

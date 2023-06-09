@@ -3,6 +3,12 @@
 # Exit on error
 set -e
 
+SCRIPT=$(realpath "$0")
+SOURCE=$(dirname "$SCRIPT")
+PROJECT_ROOT=$(realpath ${SOURCE}/..)
+
+source "${PROJECT_ROOT}/dependency_install_functions.sh"
+
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo apt-get update
 sudo dpkg --configure -a
@@ -11,12 +17,7 @@ pkg-config autoconf automake unzip libcurl4-openssl-dev wget \
 rapidjson-dev libkrb5-dev git python3-pkg-resources python3-pip libssl-dev
 sudo apt-get install -y libzmq3-dev 
 
-wget https://github.com/Kitware/CMake/releases/download/v3.17.5/cmake-3.17.5.tar.gz
-tar zxvf cmake-3.17.5.tar.gz
-cd cmake-3.17.5
-sudo ./bootstrap
-sudo make
-sudo make install
+install_cmake
 cd ~
 
 # Install cmake 3.17
@@ -24,73 +25,18 @@ cd ~
 python3 -m pip install --upgrade pip
 python3 -m pip install setuptools
 
-if [ -d json ]
-then
-	rm -rf json
-fi
-
-cd ~
-git clone https://github.com/nlohmann/json.git
-cd json
-git checkout v3.10.2
-cmake -S . -B build
-cmake --build build -j 4
-sudo cmake --build build --target install
+install_nlohmann_json
 cd ~
 
-if [ -d json-schema-validator ]
-then
-	rm -rf json-schema-validator
-fi
-git clone https://github.com/pboettch/json-schema-validator
-cd json-schema-validator
-git checkout 2.1.0
-cmake -S . -B build
-cmake --build build -j 4
-sudo cmake --build build --target install
+install_json_schema_validator
 cd ~
 
-if [ -d protobuf ]
-then
-	# sudo required because of egg file
-	sudo rm -rf protobuf 
-fi
-git clone  https://github.com/google/protobuf.git
-cd protobuf
-git checkout v3.17.3
-git submodule update --init --recursive
-cmake -S cmake/ -B build -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-cmake --build build -j 4
-sudo cmake --build build --target install
-cd python
-python3 setup.py build
-python3 setup.py test
-sudo python3 setup.py install
+install_protobuf
 cd ~
 
-if [ -d libsodium ]
-then
-	rm -rf libsodium 
-fi
-git clone https://github.com/jedisct1/libsodium.git
-cd libsodium
-git checkout 1.0.18
-./autogen.sh
-./configure
-make check
-sudo make install
-sudo ldconfig
+install_libsodium
 cd ~
 
-if [ -d libzmq ]
-then
-	rm -rf libzmq 
-fi
-git clone https://github.com/zeromq/libzmq.git
-cd libzmq
-git checkout v4.3.4
-cmake -S. -B build
-cmake --build build -j 4
-sudo cmake --build build --target install
+install_libzmq
 cd ~
 
