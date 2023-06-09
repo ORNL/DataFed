@@ -2,7 +2,7 @@
 
 install_cmake() {
   local cmake_version="3.17.5"
-  curl -LO https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-Linux-x86_64.tar.gz
+  wget https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-Linux-x86_64.tar.gz
   tar -xzvf cmake-${cmake_version}-Linux-x86_64.tar.gz
   cp -r cmake-${cmake_version}-Linux-x86_64/bin /usr/local
   cp -r cmake-${cmake_version}-Linux-x86_64/share /usr/local

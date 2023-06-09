@@ -12,7 +12,10 @@ source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo apt-get update
 sudo dpkg --configure -a
-sudo apt-get install -y libtool build-essential g++ gcc npm libboost-all-dev pkg-config autoconf automake libtool curl make unzip libcurl4-openssl-dev libfuse-dev rapidjson-dev libglobus-common-dev libkrb5-dev
+sudo apt-get install -y libtool build-essential g++ gcc npm libboost-all-dev \
+pkg-config autoconf automake libtool wget curl make unzip libcurl4-openssl-dev \
+libfuse-dev rapidjson-dev libglobus-common-dev libkrb5-dev
+
 sudo apt-get install -y libzmq3-dev 
 
 install_cmake
