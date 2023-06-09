@@ -13,7 +13,7 @@ source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 sudo apt-get update
 sudo dpkg --configure -a
 
-sudo apt-get install -y curl python3 g++
+sudo apt-get install -y curl python3 g++ make
 
 install_cmake
 # The foxx services need node version 12 or greater so we aren't going to use the package manager
