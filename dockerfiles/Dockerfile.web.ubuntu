@@ -8,6 +8,7 @@ RUN mkdir -p ${BUILD_DIR}/common/proto
 WORKDIR ${BUILD_DIR}
 
 COPY ./web ${BUILD_DIR}/web
+COPY ./cmake/* ${BUILD_DIR}/cmake/
 COPY ./common/proto/* ${BUILD_DIR}/common/proto/
 COPY ./CMakeLists.txt ${BUILD_DIR}
 COPY ./config/datafed.sh ${BUILD_DIR}/config/
@@ -16,6 +17,11 @@ COPY ./scripts/generate_ws_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_lego_and_certificates.sh ${BUILD_DIR}/scripts/
 COPY ./cmake ${BUILD_DIR}/
+
+RUN ls ${BUILD_DIR}
+RUN ls ${BUILD_DIR}/common
+RUN ls ${BUILD_DIR}/common/proto
+RUN ls ${BUILD_DIR}/common/proto/common
 
 RUN ${BUILD_DIR}/scripts/generate_ws_config.sh &&\
  ${BUILD_DIR}/scripts/generate_ws_service.sh &&\

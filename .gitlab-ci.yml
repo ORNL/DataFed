@@ -166,7 +166,6 @@ build-ws:
   variables:
     IMAGE_TAG: "dlsw/datafed/ws-"
   stage: build
-  needs: ["deploy-ws-base"]
   tags:
     - ci-datafed-core
     - docker
@@ -193,7 +192,6 @@ build-core:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-"
   stage: build
-  needs: ["setup-vms"]
   tags:
     - ci-datafed-core
     - docker
@@ -243,7 +241,6 @@ build-repo:
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-"
   stage: build
-  needs: ["setup-vms"]
   tags:
     - ci-datafed-repo
     - docker
