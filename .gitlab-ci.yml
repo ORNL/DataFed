@@ -178,6 +178,9 @@ build-ws:
       - common/proto/* 
       - .gitlab-ci.yml
       when: always
+    - exists:
+      - deploy-ws-base
+      when: always
     - when: manual
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
