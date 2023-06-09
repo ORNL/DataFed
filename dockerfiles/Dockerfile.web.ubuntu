@@ -22,7 +22,7 @@ RUN ${BUILD_DIR}/scripts/generate_ws_config.sh &&\
  cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \
                     -DBUILD_CORE_SERVER=False -DBUILD_WEB_SERVER=True \
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
-                    -DBUILD_FOXX=False &&\
+                    -DBUILD_FOXX=False -DBUILD_COMMON=False &&\
  cmake --build build
 
 ENV NVM_INC=/root/.nvm/versions/node/v13.14.0/include/node
