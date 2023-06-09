@@ -166,7 +166,7 @@ build-ws:
   variables:
     IMAGE_TAG: "dlsw/datafed/ws-"
   stage: build
-  needs: ["setup-vms"]
+  needs: ["deploy-ws-base"]
   tags:
     - ci-datafed-core
     - docker
