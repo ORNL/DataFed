@@ -2,7 +2,7 @@ stages:
   - setup
   - build-base
   - deploy-base
-  - build
+  - build-unit-test
   - deploy
 
 ################################################################################
@@ -41,6 +41,7 @@ build-ws-base:
     - changes:
       - dockerfiles/Dockerfile.web-base.ubuntu
       - scripts/install_ws_dependencies.sh 
+      - scripts/dependency_install_functions.sh
       - common/proto/*
       - .gitlab-ci.yml
       when: always
@@ -59,6 +60,7 @@ build-core-base:
     - changes:
       - dockerfiles/Dockerfile.core-base.ubuntu
       - scripts/install_core_dependencies.sh 
+      - scripts/dependency_install_functions.sh
       - .gitlab-ci.yml
       when: always
     - when: manual
@@ -76,6 +78,7 @@ build-repo-base:
     - changes:
       - dockerfiles/Dockerfile.repo-base.ubuntu
       - scripts/install_repo_dependencies.sh 
+      - scripts/dependency_install_functions.sh
       - .gitlab-ci.yml
       when: always
     - when: manual
@@ -99,6 +102,7 @@ build-gcs-authz-base:
       - dockerfiles/Dockerfile.gcs-authz-base.ubuntu
       - scripts/install_gcs.sh
       - scripts/install_authz_dependencies.sh
+      - scripts/dependency_install_functions.sh
       - scripts/generate_datafed.sh
       - scripts/generate_authz_config.sh
       - .gitlab-ci.yml
@@ -166,7 +170,7 @@ deploy-gcs-authz-base:
 build-ws:
   variables:
     IMAGE_TAG: "dlsw/datafed/ws-"
-  stage: build
+  stage: build-unit-test
   tags:
     - ci-datafed-core
     - docker
@@ -192,7 +196,7 @@ build-ws:
 build-core:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-"
-  stage: build
+  stage: build-unit-test
   tags:
     - ci-datafed-core
     - docker
@@ -215,7 +219,7 @@ build-core:
     - docker build -f dockerfiles/Dockerfile.core.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 build-foxx:
-  stage: build
+  stage: build-unit-test
   needs: ["setup-vms"]
   tags:
     - ci-datafed-arango
@@ -241,7 +245,7 @@ build-foxx:
 build-repo:
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-"
-  stage: build
+  stage: build-unit-test
   tags:
     - ci-datafed-repo
     - docker
@@ -264,7 +268,7 @@ build-repo:
 build-gcs-authz:
   variables:
     IMAGE_TAG: "dlsw/datafed/gcs-authz-"
-  stage: build
+  stage: build-unit-test
   tags:
     - ci-datafed-globus
     - docker

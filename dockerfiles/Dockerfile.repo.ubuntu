@@ -10,6 +10,7 @@ WORKDIR ${BUILD_DIR}
 COPY ./common ${BUILD_DIR}/common
 COPY ./repository/CMakeLists.txt ${BUILD_DIR}/repository/CMakeLists.txt
 COPY ./CMakeLists.txt ${BUILD_DIR}
+COPY ./cmake/* ${BUILD_DIR}/cmake/
 COPY ./repository/server ${BUILD_DIR}/repository/server
 COPY ./config/datafed.sh ${BUILD_DIR}/config/
 COPY ./scripts/generate_repo_config.sh ${BUILD_DIR}/scripts/
