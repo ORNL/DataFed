@@ -7,11 +7,15 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
+source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
+
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo apt-get update
 sudo dpkg --configure -a
 
-sudo apt-get install -y cmake curl python3 g++
+sudo apt-get install -y curl python3 g++
+
+install_cmake
 # The foxx services need node version 12 or greater so we aren't going to use the package manager
 # but instead will install ourselves
 
