@@ -377,8 +377,8 @@ then
 			echo "Infrastructure pipeline has failed unable to execute CI."
 			exit 1
 		fi
-			
-		printf "$count Waiting for pipeline to complete ... "
+    			
+		printf "$count Waiting for pipeline to complete ... running"
 		sleep 30s
 	done
 		# Running
