@@ -8,7 +8,7 @@ Help()
   echo " triger a GitLab pipeline to create the VM. It requires that you "
   echo "provide the Open Stack VM ID"
   echo
-  echo "Syntax: $(basename $0) [-h|i|s|c|g|a]"
+  echo "Syntax: $(basename $0) [-h|i|s|c|g|a|n]"
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-i, --app-credential-id           The application credentials id for"
@@ -20,7 +20,9 @@ Help()
   echo "                                  env variable OS_APP_SECRET exists it"
   echo "                                  can be used."
   echo "-c, --compute-instance-id         The id of the instance we are trying"
-  echo "                                  to check."
+  echo "                                  to check id or name is required."
+  echo "-n, --compute-instance-name       The name of the instance we are trying"
+  echo "                                  to check id or name is required.."
   echo "-g, --gitlab-trigger-token        The GitLab token for restarting the CI"
   echo "                                  pipeline to generate the VMs."
   echo "-a, --gitlab-api-token            The GitLab API token for checking the"
@@ -62,8 +64,12 @@ else
 fi
 
 COMPUTE_INSTANCE_ID=""
+ID_PROVIDED="FALSE"
+COMPUTE_INSTANCE_NAME=""
+COMPUTE_NAME_PROVIDED="FALSE"
+COMPUTE_ID_PROVIDED="FALSE"
 
-VALID_ARGS=$(getopt -o hi:s:c:g:a: --long 'help',app-credential-id:,app-credential-secret:,compute-instance-id:,gitlab-trigger-token:,gitlab-api-token: -- "$@")
+VALID_ARGS=$(getopt -o hi:s:c:g:a:n: --long 'help',app-credential-id:,app-credential-secret:,compute-instance-id:,gitlab-trigger-token:,gitlab-api-token:,compute-instance-name: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -84,6 +90,12 @@ while [ : ]; do
         ;;
     -c | --compute-instance-id)
         COMPUTE_INSTANCE_ID=$2
+        COMPUTE_ID_PROVIDED="TRUE"
+        shift 2
+        ;;
+    -n | --compute-instance-name)
+        COMPUTE_INSTANCE_NAME=$2
+        COMPUTE_NAME_PROVIDED="TRUE"
         shift 2
         ;;
     -g | --gitlab-trigger-token)
@@ -117,10 +129,10 @@ then
   exit 1
 fi
 
-if [ -z "$COMPUTE_INSTANCE_ID" ]
+if [ -z "$COMPUTE_INSTANCE_ID" && -z "$COMPUTE_INSTANCE_NAME" ]
 then
-  echo "The open stack compute instance id has not been defined this is"
-  echo " a required parameter."
+  echo "The open stack compute instance id or name has not been defined, at "
+  echo "least one is required."
   exit 1
 fi
 
@@ -168,6 +180,42 @@ then
   exit 1
 fi
 
+
+find_orc_instance_by_id() {
+  local SANITIZED_TOKEN="$1"
+  local SANITIZED_URL="$2"
+  local COMPUTE_INSTANCE_ID="$3"
+  compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $SANITIZED_TOKEN" "$SANITIZED_URL/servers/detail" | jq)
+  local instance_id=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .id' | sed 's/\"//g')
+  local instance_name=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .name' | sed 's/\"//g')
+  if [ "$instance_id" == "$COMPUTE_INSTANCE_ID" ]
+  then
+    echo "Found: $COMPUTE_INSTANCE_ID"
+    found_vm_id="TRUE"
+    compute_id="$COMPUTE_INSTANCE_ID"
+    compute_name="$COMPUTE_INSTANCE_NAME"
+  fi
+}
+
+find_orc_instance_by_name() {
+  local SANITIZED_TOKEN="$1"
+  local SANITIZED_URL="$2"
+  local COMPUTE_INSTANCE_NAME="$3"
+  compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $SANITIZED_TOKEN" "$SANITIZED_URL/servers/detail" | jq)
+  instance_id=$(echo "$compute_instances" | jq  --arg COMPUTE_INSTANCE_NAME "$COMPUTE_INSTANCE_NAME"  '.servers[] | select (.name==$COMPUTE_INSTANCE_NAME) | .id ' | sed 's/\"//g')
+  instance_name=$(echo "$compute_instances" | jq  --arg COMPUTE_INSTANCE_NAME "$COMPUTE_INSTANCE_NAME"  '.servers[] | select (.name==$COMPUTE_INSTANCE_NAME)  | .name ' | sed 's/\"//g')
+  if [ -z "$instance_id" ]
+  then
+    echo "Missing: $COMPUTE_INSTANCE_NAME"
+    found_vm_id="FALSE"
+  else
+    echo "Found: $instance_id"
+    found_vm_id="TRUE"
+    compute_id="$instance_id"
+    compute_name="$instance_name"
+  fi
+}
+
 body=$(echo $data | sed 's/^.*{\"token/{\"token/' )
 
 compute_url=$(echo "$body" | jq '.token.catalog[] | select(.name=="nova") |.endpoints[] | select(.interface=="public") | .url ')
@@ -178,32 +226,51 @@ subject_token=$(echo "$data" | grep "X-Subject-Token" | awk '{print $2}' )
 
 sanitize_subject_token=${subject_token:0:268}
 
-compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
 
+#compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
+#echo "Compute instances are"
+#echo "$compute_instances"
+#echo "$compute_instances" | jq '.servers[]'
+#echo 
+#echo
+#echo "$compute_instances" | jq  --arg COMPUTE_INSTANCE_NAME "$COMPUTE_INSTANCE_NAME"  '.servers[] | select (.name==$COMPUTE_INSTANCE_NAME) | .id '
+#exit 1
 ################################################################################
 # Check 1 - Do VMs Exist
 ################################################################################
 
 # Make sure the instances exist if not we should run the pipeline
 
-CI_DATAFED_VMS=$(echo "$compute_instances" | jq '.servers[].id')
-
-CI_DATAFED_VMS_SANITIZED=($(echo "$CI_DATAFED_VMS" | sed 's/\"//g'))
-
-found_vm_id_in_list="0"
-for ID in "${CI_DATAFED_VMS_SANITIZED[@]}"
-do
-  if [ "$ID" == "$COMPUTE_INSTANCE_ID" ]
-  then
-    echo "Found: $COMPUTE_INSTANCE_ID"
-    found_vm_id_in_list="1"
-    break
-  fi
-done
-
-if [ "$found_vm_id_in_list" == "0" ]
+compute_id=""
+compute_name=""
+found_vm_id="FALSE"
+if [ "$COMPUTE_ID_PROVIDED" == "TRUE" ]
 then
-    echo "VM: $COMPUTE_INSTANCE_ID is Unhealthy, does not exist, triggering pipeline."
+  find_orc_instance_by_id "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_ID"
+fi
+if [ "$found_vm_id" == "FALSE" && "$COMPUTE_NAME_PROVIDED" ]
+then
+  find_orc_instance_by_name "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_NAME"
+fi
+
+#CI_DATAFED_VMS=$(echo "$compute_instances" | jq '.servers[].id')
+
+#CI_DATAFED_VMS_SANITIZED=($(echo "$CI_DATAFED_VMS" | sed 's/\"//g'))
+
+#found_vm_id_in_list="0"
+#for ID in "${CI_DATAFED_VMS_SANITIZED[@]}"
+#do
+#  if [ "$ID" == "$COMPUTE_INSTANCE_ID" ]
+#  then
+#    echo "Found: $COMPUTE_INSTANCE_ID"
+#    found_vm_id_in_list="1"
+#    break
+#  fi
+#done
+
+if [ "$found_vm_id" == "FALSE" ]
+then
+    echo "VM ID: $compute_id Name: $compute_name is Unhealthy, does not exist, triggering pipeline."
 
     #datafedci_repo_api_trigger_to_run_ci_pipeline
     # Here we need to make a request to the code.ornl.gov at datafedci
@@ -224,24 +291,38 @@ then
     echo "$gitlab_response_status"
     MAX_COUNT=40
     count=0
-    while [ "$found_vm_id_in_list" == "0" ]
+    while [ "$found_vm_id" == "FALSE" ]
     do
       echo "$count Waiting for pipeline to start VM ..."
       sleep 30s
       # Run while loop and sleep until VM shows up or timeout is hit
-      compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
-      CI_DATAFED_VMS=$(echo "$compute_instances" | jq '.servers[].id')
-      CI_DATAFED_VMS_SANITIZED=($(echo "$CI_DATAFED_VMS" | sed 's/\"//g'))
-      found_vm_id_in_list="0"
-      for ID in "${CI_DATAFED_VMS_SANITIZED[@]}"
-      do
-        if [ "$ID" == "$COMPUTE_INSTANCE_ID" ]
-        then
-          echo "Found: $COMPUTE_INSTANCE_ID"
-          found_vm_id_in_list="1"
-          break
-        fi
-      done
+#      compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
+#      CI_DATAFED_VMS=$(echo "$compute_instances" | jq '.servers[].id')
+#      CI_DATAFED_VMS_SANITIZED=($(echo "$CI_DATAFED_VMS" | sed 's/\"//g'))
+#      found_vm_id="FALSE"
+#      for ID in "${CI_DATAFED_VMS_SANITIZED[@]}"
+#      do
+#        if [ "$ID" == "$COMPUTE_INSTANCE_ID" ]
+#        then
+#          echo "Found: $COMPUTE_INSTANCE_ID"
+#          found_vm_id_in_list="1"
+#          break
+#        fi
+#      done
+#
+#
+      compute_id=""
+      compute_name=""
+      found_vm_id="FALSE"
+      if [ "$COMPUTE_ID_PROVIDED" == "TRUE" ]
+      then
+        find_orc_instance_by_id "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_ID"
+      fi
+      if [ "$found_vm_id" == "FALSE" && "$COMPUTE_NAME_PROVIDED" ]
+      then
+        find_orc_instance_by_name "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_NAME"
+      fi
+
       count=$(($count + 1))
 
       if [ "$count" == "$MAX_COUNT" ]
@@ -257,20 +338,20 @@ fi
 ################################################################################
 # This will need to be passed to the GitLab repo and set as an env variable instance
 
-INSTANCE_STATUS=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .status ')
+INSTANCE_STATUS=$(echo "$compute_instances" | jq --arg compute_id "$compute_id" '.servers[] | select(.id==$compute_id) | .status ')
 
 INSTANCE_STATUS_SANITIZED=$(echo "$INSTANCE_STATUS" | sed 's/\"//g')
 
 # If the status is not ACTIVE trigger the GitLab pipeline
-VM_IS_ACTIVE=1
+VM_IS_ACTIVE="TRUE"
 if [[ "$INSTANCE_STATUS_SANITIZED" != "ACTIVE" ]]
 then
-  VM_IS_ACTIVE=0
+  VM_IS_ACTIVE="FALSE"
 fi
 
-if [ "$VM_IS_ACTIVE" -eq "0" ]
+if [ "$VM_IS_ACTIVE" -eq "FALSE" ]
 then
-  echo "VM: $COMPUTE_INSTANCE_ID is Unhealthy triggering pipeline."
+  echo "VM ID: $compute_id Name: $compute_name is Unhealthy triggering pipeline."
 
   #datafedci_repo_api_trigger_to_run_ci_pipeline
   # Here we need to make a request to the code.ornl.gov at datafedci
@@ -295,21 +376,21 @@ then
 
     MAX_COUNT=40
     count=0
-    while [ "$VM_IS_ACTIVE" -eq "0" ]
+    while [ "$VM_IS_ACTIVE" -eq "FALSE" ]
     do
 
       echo "$count Waiting for pipeline to start VM ..."
       sleep 30s
       compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
-      INSTANCE_STATUS=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .status ')
+      INSTANCE_STATUS=$(echo "$compute_instances" | jq --arg compute_id "$compute_id" '.servers[] | select(.id==$compute_id) | .status ')
 
       INSTANCE_STATUS_SANITIZED=$(echo "$INSTANCE_STATUS" | sed 's/\"//g')
 
       # If the status is not ACTIVE trigger the GitLab pipeline
-      VM_IS_ACTIVE=1
+      VM_IS_ACTIVE="TRUE"
       if [[ "$INSTANCE_STATUS_SANITIZED" != "ACTIVE" ]]
       then
-        VM_IS_ACTIVE=0
+        VM_IS_ACTIVE="FALSE"
       fi
       count=$(($count + 1))
 
@@ -321,7 +402,7 @@ then
     done
 
 else
-  echo "VM: $COMPUTE_INSTANCE_ID is Healthy."
+  echo "VM ID: $compute_id Name: $compute_name is Healthy."
   exit 0
 fi
 
