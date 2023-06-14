@@ -190,10 +190,10 @@ find_orc_instance_by_id() {
   local instance_name=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .name' | sed 's/\"//g')
   if [ "$instance_id" == "$COMPUTE_INSTANCE_ID" ]
   then
-    echo "Found: $COMPUTE_INSTANCE_ID"
     found_vm_id="TRUE"
     compute_id="$COMPUTE_INSTANCE_ID"
     compute_name="$COMPUTE_INSTANCE_NAME"
+    echo "Found: $COMPUTE_INSTANCE_ID Name: $compute_name"
   fi
 }
 
@@ -209,10 +209,10 @@ find_orc_instance_by_name() {
     found_vm_id="FALSE"
     compute_name="$COMPUTE_INSTANCE_NAME"
   else
-    echo "Found: $instance_id"
-    found_vm_id="TRUE"
     compute_id="$instance_id"
     compute_name="$COMPUTE_INSTANCE_NAME"
+    echo "Found: $instance_id Name: $compute_name"
+    found_vm_id="TRUE"
   fi
 }
 
