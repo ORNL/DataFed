@@ -244,21 +244,7 @@ then
   find_orc_instance_by_name "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_NAME"
 fi
 
-#CI_DATAFED_VMS=$(echo "$compute_instances" | jq '.servers[].id')
-
-#CI_DATAFED_VMS_SANITIZED=($(echo "$CI_DATAFED_VMS" | sed 's/\"//g'))
-
-#found_vm_id_in_list="0"
-#for ID in "${CI_DATAFED_VMS_SANITIZED[@]}"
-#do
-#  if [ "$ID" == "$COMPUTE_INSTANCE_ID" ]
-#  then
-#    echo "Found: $COMPUTE_INSTANCE_ID"
-#    found_vm_id_in_list="1"
-#    break
-#  fi
-#done
-
+pipeline_id=""
 if [ "$found_vm_id" == "FALSE" ]
 then
     echo "VM ID: $compute_id Name: $compute_name is Unhealthy, does not exist, triggering pipeline."
@@ -269,39 +255,15 @@ then
       --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
       --form ref="main" \
       "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
-    echo "Gilab response"
-    echo "$gitlab_response"
     pipeline_id=$(echo "$gitlab_response" | jq '.id' )
-    echo "id is $pipeline_id"
-#
-#    gitlab_response_status=$(curl -s --retry 5 --request GET \
-#      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
-#      --form ref="main" \
-#      "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
-#    echo "Gitlab reponse status"
-#    echo "$gitlab_response_status"
+
     MAX_COUNT=40
     count=0
     while [ "$found_vm_id" == "FALSE" ]
     do
-      echo "$count Waiting for pipeline to start VM ..."
+      printf "$count Waiting for pipeline to start VM $compute_id..."
       sleep 30s
       # Run while loop and sleep until VM shows up or timeout is hit
-#      compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
-#      CI_DATAFED_VMS=$(echo "$compute_instances" | jq '.servers[].id')
-#      CI_DATAFED_VMS_SANITIZED=($(echo "$CI_DATAFED_VMS" | sed 's/\"//g'))
-#      found_vm_id="FALSE"
-#      for ID in "${CI_DATAFED_VMS_SANITIZED[@]}"
-#      do
-#        if [ "$ID" == "$COMPUTE_INSTANCE_ID" ]
-#        then
-#          echo "Found: $COMPUTE_INSTANCE_ID"
-#          found_vm_id_in_list="1"
-#          break
-#        fi
-#      done
-#
-#
       compute_id=""
       compute_name=""
       found_vm_id="FALSE"
@@ -340,7 +302,8 @@ then
   VM_IS_ACTIVE="FALSE"
 fi
 
-if [ "$VM_IS_ACTIVE" == "FALSE" ]
+# Only trigger the pipeline here if it was not triggered before
+if [[ "$VM_IS_ACTIVE" == "FALSE" && -z "$pipeline_id" ]]
 then
   echo "VM ID: $compute_id Name: $compute_name is unhealthy triggering pipeline."
 
@@ -352,30 +315,30 @@ then
     "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
 
     pipeline_id=$(echo "$gitlab_response" | jq '.id' )
-#
-#    gitlab_response_status=$(curl -s --retry 5 --request GET \
-#      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
-#      --form ref="main" \
-#      "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
-#    echo "GitLab reponse status: $gitlab_response_status"
+fi
 
+# If the pipeline is defined check the status of the VMs
+if [ ! -z "$pipeline_id" ]
+then
     MAX_COUNT=40
     count=0
     while [ "$VM_IS_ACTIVE" == "FALSE" ]
     do
 
-      echo "$count Waiting for pipeline to start VM ..."
+      printf "$count Waiting for pipeline to start VM ... "
       sleep 30s
       compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
       INSTANCE_STATUS=$(echo "$compute_instances" | jq --arg compute_id "$compute_id" '.servers[] | select(.id==$compute_id) | .status ')
-
       INSTANCE_STATUS_SANITIZED=$(echo "$INSTANCE_STATUS" | sed 's/\"//g')
 
       # If the status is not ACTIVE trigger the GitLab pipeline
       VM_IS_ACTIVE="TRUE"
       if [[ "$INSTANCE_STATUS_SANITIZED" != "ACTIVE" ]]
       then
+        echo "$compute_name is still down."
         VM_IS_ACTIVE="FALSE"
+      else
+        echo "$compute_name is up."
       fi
       count=$(($count + 1))
 
@@ -391,3 +354,32 @@ else
   exit 0
 fi
 
+# If the pipeline is defined check to see if the pipeline completed else wait
+# until it finished before proceeding
+if [ ! -z "$pipeline_id" ]
+then
+
+	KEEP_RUNNING="TRUE"	
+	while [ "$KEEP_RUNNING" == "TRUE" ]
+	do
+		pipeline_status=$(curl --header "PRIVATE-TOKEN: Nyn4KfTxFXkUrzNcGs-a" "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
+
+		if [ "$pipeline_status" == "failed" ]
+		then
+			echo "Infrastructure pipeline has failed unable to execute CI."
+			exit 1
+		elif [ "$pipeline_status" == "success" ]
+		then
+			echo "Infrastructure pipeline has passed."
+			exit 0
+		elif [ "$pipeline_status" == "canceled" ]
+		then
+			echo "Infrastructure pipeline has failed unable to execute CI."
+			exit 1
+		fi
+			
+		printf "$count Waiting for pipeline to complete ... "
+		sleep 30s
+	done
+		# Running
+fi
