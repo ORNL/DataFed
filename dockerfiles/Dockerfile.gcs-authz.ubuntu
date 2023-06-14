@@ -9,12 +9,11 @@ WORKDIR ${BUILD_DIR}
 COPY ./scripts/generate_authz_config.sh ${BUILD_DIR}/scripts/generate_authz_config.sh
 COPY ./config/datafed.sh ${BUILD_DIR}/config/
 COPY ./CMakeLists.txt ${BUILD_DIR}
-COPY ./cmake/* ${BUILD_DIR}/cmake
+COPY ./cmake ${BUILD_DIR}/cmake
 COPY ./repository/CMakeLists.txt ${BUILD_DIR}/repository/CMakeLists.txt
 COPY ./repository/gridftp/CMakeLists.txt ${BUILD_DIR}/repository/gridftp/CMakeLists.txt
 COPY ./repository/gridftp/globus5 ${BUILD_DIR}/repository/gridftp/globus5
 COPY ./common ${BUILD_DIR}/common
-COPY ./cmake ${BUILD_DIR}/
 
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&\
  cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=True \
