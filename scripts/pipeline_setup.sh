@@ -226,15 +226,6 @@ subject_token=$(echo "$data" | grep "X-Subject-Token" | awk '{print $2}' )
 
 sanitize_subject_token=${subject_token:0:268}
 
-
-#compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
-#echo "Compute instances are"
-#echo "$compute_instances"
-#echo "$compute_instances" | jq '.servers[]'
-#echo 
-#echo
-#echo "$compute_instances" | jq  --arg COMPUTE_INSTANCE_NAME "$COMPUTE_INSTANCE_NAME"  '.servers[] | select (.name==$COMPUTE_INSTANCE_NAME) | .id '
-#exit 1
 ################################################################################
 # Check 1 - Do VMs Exist
 ################################################################################
