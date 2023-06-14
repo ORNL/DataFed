@@ -129,7 +129,7 @@ then
   exit 1
 fi
 
-if [ -z "$COMPUTE_INSTANCE_ID" && -z "$COMPUTE_INSTANCE_NAME" ]
+if [[ -z "$COMPUTE_INSTANCE_ID" && -z "$COMPUTE_INSTANCE_NAME" ]]
 then
   echo "The open stack compute instance id or name has not been defined, at "
   echo "least one is required."
@@ -203,16 +203,16 @@ find_orc_instance_by_name() {
   local COMPUTE_INSTANCE_NAME="$3"
   compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $SANITIZED_TOKEN" "$SANITIZED_URL/servers/detail" | jq)
   instance_id=$(echo "$compute_instances" | jq  --arg COMPUTE_INSTANCE_NAME "$COMPUTE_INSTANCE_NAME"  '.servers[] | select (.name==$COMPUTE_INSTANCE_NAME) | .id ' | sed 's/\"//g')
-  instance_name=$(echo "$compute_instances" | jq  --arg COMPUTE_INSTANCE_NAME "$COMPUTE_INSTANCE_NAME"  '.servers[] | select (.name==$COMPUTE_INSTANCE_NAME)  | .name ' | sed 's/\"//g')
   if [ -z "$instance_id" ]
   then
     echo "Missing: $COMPUTE_INSTANCE_NAME"
     found_vm_id="FALSE"
+    compute_name="$COMPUTE_INSTANCE_NAME"
   else
     echo "Found: $instance_id"
     found_vm_id="TRUE"
     compute_id="$instance_id"
-    compute_name="$instance_name"
+    compute_name="$COMPUTE_INSTANCE_NAME"
   fi
 }
 
@@ -248,7 +248,7 @@ if [ "$COMPUTE_ID_PROVIDED" == "TRUE" ]
 then
   find_orc_instance_by_id "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_ID"
 fi
-if [ "$found_vm_id" == "FALSE" && "$COMPUTE_NAME_PROVIDED" ]
+if [[ "$found_vm_id" == "FALSE" && "$COMPUTE_NAME_PROVIDED" ]]
 then
   find_orc_instance_by_name "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_NAME"
 fi
@@ -318,7 +318,7 @@ then
       then
         find_orc_instance_by_id "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_ID"
       fi
-      if [ "$found_vm_id" == "FALSE" && -z "$COMPUTE_NAME_PROVIDED" ]
+      if [[ "$found_vm_id" == "FALSE" && -z "$COMPUTE_NAME_PROVIDED" ]]
       then
         find_orc_instance_by_name "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_NAME"
       fi
