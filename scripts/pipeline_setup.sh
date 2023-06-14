@@ -364,24 +364,23 @@ then
 	do
 		pipeline_status=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
 
+		printf "$count Waiting for pipeline: ${pipeline_id} to complete ... "
 		if [ "$pipeline_status" == "failed" ]
 		then
-			echo "Infrastructure pipeline has failed unable to execute CI."
+			echo "Infrastructure pipeline has failed unable to execute CI. STATUS: $pipeline_status"
 			exit 1
 		elif [ "$pipeline_status" == "success" ]
 		then
-			echo "Infrastructure pipeline has passed."
+			echo "Infrastructure pipeline has passed. STATUS: $pipeline_status"
 			exit 0
 		elif [ "$pipeline_status" == "canceled" ]
 		then
-			echo "Infrastructure pipeline has failed unable to execute CI."
+			echo "Infrastructure pipeline has failed unable to execute CI. STATUS: $pipeline_status"
 			exit 1
     else
-      echo "running"
+      echo "STATUS: $pipeline_status"
 		fi
     			
-		printf "$count Waiting for pipeline: ${pipeline_id} to complete ... "
 		sleep 30s
 	done
-		# Running
 fi
