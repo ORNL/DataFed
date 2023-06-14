@@ -187,8 +187,6 @@ find_orc_instance_by_id() {
   local COMPUTE_INSTANCE_ID="$3"
   compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $SANITIZED_TOKEN" "$SANITIZED_URL/servers/detail" | jq)
   local instance_id=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .id' | sed 's/\"//g')
-  echo "Find by id"
-  echo "$compute_instances"
   local instance_name=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .name' | sed 's/\"//g')
   if [ "$instance_id" == "$COMPUTE_INSTANCE_ID" ]
   then
@@ -204,8 +202,6 @@ find_orc_instance_by_name() {
   local SANITIZED_URL="$2"
   local COMPUTE_INSTANCE_NAME="$3"
   compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $SANITIZED_TOKEN" "$SANITIZED_URL/servers/detail" | jq)
-  echo "Find by name"
-  echo "$compute_instances"
   instance_id=$(echo "$compute_instances" | jq  --arg COMPUTE_INSTANCE_NAME "$COMPUTE_INSTANCE_NAME"  '.servers[] | select (.name==$COMPUTE_INSTANCE_NAME) | .id ' | sed 's/\"//g')
   if [ -z "$instance_id" ]
   then
