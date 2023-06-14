@@ -13,10 +13,14 @@ setup-vms:
   tags:
     - datafed-infrastructure 
   script:
-    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_ARANGO_ID
-    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_CORE_ID
-    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS1_ID
-    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS2_ID
+    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-arango" 
+    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-core"
+    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus1"
+    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
+#    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_ARANGO_ID
+#    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_CORE_ID
+#    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS1_ID
+#    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS2_ID
 
 ################################################################################
 # STAGE: build-deploy-base
@@ -36,14 +40,14 @@ build-ws-base:
   tags:
     - ci-datafed-core
     - docker
-  rules:
-    - changes:
-      - dockerfiles/Dockerfile.web-base.ubuntu
-      - scripts/install_ws_dependencies.sh 
-      - scripts/dependency_install_functions.sh
-      - common/proto/*
-      - .gitlab-ci.yml
-      when: always
+#  rules:
+#    - changes:
+#      - dockerfiles/Dockerfile.web-base.ubuntu
+#      - scripts/install_ws_dependencies.sh 
+#      - scripts/dependency_install_functions.sh
+#      - common/proto/*
+#      - .gitlab-ci.yml
+#      when: always
   script:
     - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
@@ -57,13 +61,13 @@ build-core-base:
   tags:
     - ci-datafed-core
     - docker
-  rules:
-    - changes:
-      - dockerfiles/Dockerfile.core-base.ubuntu
-      - scripts/install_core_dependencies.sh 
-      - scripts/dependency_install_functions.sh
-      - .gitlab-ci.yml
-      when: always
+#  rules:
+#    - changes:
+#      - dockerfiles/Dockerfile.core-base.ubuntu
+#      - scripts/install_core_dependencies.sh 
+#      - scripts/dependency_install_functions.sh
+#      - .gitlab-ci.yml
+#      when: always
   script:
     - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
@@ -77,13 +81,13 @@ build-repo-base:
   tags:
     - ci-datafed-repo
     - docker
-  rules:
-    - changes:
-      - dockerfiles/Dockerfile.repo-base.ubuntu
-      - scripts/install_repo_dependencies.sh 
-      - scripts/dependency_install_functions.sh
-      - .gitlab-ci.yml
-      when: always
+#  rules:
+#    - changes:
+#      - dockerfiles/Dockerfile.repo-base.ubuntu
+#      - scripts/install_repo_dependencies.sh 
+#      - scripts/dependency_install_functions.sh
+#      - .gitlab-ci.yml
+#      when: always
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
@@ -101,17 +105,17 @@ build-gcs-authz-base:
   tags:
     - ci-datafed-globus
     - docker
-  rules:
-    - changes:
-      - dockerfiles/Dockerfile.gcs-base.ubuntu
-      - dockerfiles/Dockerfile.gcs-authz-base.ubuntu
-      - scripts/install_gcs.sh
-      - scripts/install_authz_dependencies.sh
-      - scripts/dependency_install_functions.sh
-      - scripts/generate_datafed.sh
-      - scripts/generate_authz_config.sh
-      - .gitlab-ci.yml
-      when: always
+#  rules:
+#    - changes:
+#      - dockerfiles/Dockerfile.gcs-base.ubuntu
+#      - dockerfiles/Dockerfile.gcs-authz-base.ubuntu
+#      - scripts/install_gcs.sh
+#      - scripts/install_authz_dependencies.sh
+#      - scripts/dependency_install_functions.sh
+#      - scripts/generate_datafed.sh
+#      - scripts/generate_authz_config.sh
+#      - .gitlab-ci.yml
+#      when: always
   script:
     - docker build -f dockerfiles/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
