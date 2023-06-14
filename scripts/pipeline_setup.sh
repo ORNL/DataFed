@@ -318,7 +318,7 @@ then
       then
         find_orc_instance_by_id "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_ID"
       fi
-      if [ "$found_vm_id" == "FALSE" && "$COMPUTE_NAME_PROVIDED" ]
+      if [ "$found_vm_id" == "FALSE" && -z "$COMPUTE_NAME_PROVIDED" ]
       then
         find_orc_instance_by_name "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_NAME"
       fi
@@ -351,7 +351,7 @@ fi
 
 if [ "$VM_IS_ACTIVE" -eq "FALSE" ]
 then
-  echo "VM ID: $compute_id Name: $compute_name is Unhealthy triggering pipeline."
+  echo "VM ID: $compute_id Name: $compute_name is unhealthy triggering pipeline."
 
   #datafedci_repo_api_trigger_to_run_ci_pipeline
   # Here we need to make a request to the code.ornl.gov at datafedci
@@ -360,19 +360,13 @@ then
     --form ref="main" \
     "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
 
-    echo "Gilab response"
-    echo "$gitlab_response"
-
     pipeline_id=$(echo "$gitlab_response" | jq '.id' )
-    echo "id is $pipeline_id"
 
     gitlab_response_status=$(curl -s --retry 5 --request GET \
       --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
       --form ref="main" \
       "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
-    echo "Gitlab reponse status"
-    echo "$gitlab_response_status"
- 
+    echo "GitLab reponse status: $gitlab_response_status"
 
     MAX_COUNT=40
     count=0
