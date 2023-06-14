@@ -362,7 +362,7 @@ then
 	KEEP_RUNNING="TRUE"	
 	while [ "$KEEP_RUNNING" == "TRUE" ]
 	do
-		pipeline_status=$(curl --header "PRIVATE-TOKEN: Nyn4KfTxFXkUrzNcGs-a" "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
+		pipeline_status=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
 
 		if [ "$pipeline_status" == "failed" ]
 		then
