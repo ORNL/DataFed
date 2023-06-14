@@ -273,13 +273,13 @@ then
     echo "$gitlab_response"
     pipeline_id=$(echo "$gitlab_response" | jq '.id' )
     echo "id is $pipeline_id"
-
-    gitlab_response_status=$(curl -s --retry 5 --request GET \
-      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
-      --form ref="main" \
-      "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
-    echo "Gitlab reponse status"
-    echo "$gitlab_response_status"
+#
+#    gitlab_response_status=$(curl -s --retry 5 --request GET \
+#      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
+#      --form ref="main" \
+#      "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
+#    echo "Gitlab reponse status"
+#    echo "$gitlab_response_status"
     MAX_COUNT=40
     count=0
     while [ "$found_vm_id" == "FALSE" ]
@@ -352,12 +352,12 @@ then
     "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
 
     pipeline_id=$(echo "$gitlab_response" | jq '.id' )
-
-    gitlab_response_status=$(curl -s --retry 5 --request GET \
-      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
-      --form ref="main" \
-      "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
-    echo "GitLab reponse status: $gitlab_response_status"
+#
+#    gitlab_response_status=$(curl -s --retry 5 --request GET \
+#      --form token="$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" \
+#      --form ref="main" \
+#      "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id")
+#    echo "GitLab reponse status: $gitlab_response_status"
 
     MAX_COUNT=40
     count=0
