@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -u
+set -eu
 
 Help()
 {
@@ -365,7 +365,7 @@ then
 
     MAX_COUNT=40
     count=0
-    while [ "$VM_IS_ACTIVE" -eq "FALSE" ]
+    while [ "$VM_IS_ACTIVE" == "FALSE" ]
     do
 
       echo "$count Waiting for pipeline to start VM ..."
