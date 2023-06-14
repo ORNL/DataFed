@@ -44,7 +44,6 @@ build-ws-base:
       - common/proto/*
       - .gitlab-ci.yml
       when: always
-      #    - when: manual
   script:
     - docker build -f dockerfiles/Dockerfile.web-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
@@ -65,7 +64,6 @@ build-core-base:
       - scripts/dependency_install_functions.sh
       - .gitlab-ci.yml
       when: always
-      #    - when: manual
   script:
     - docker build -f dockerfiles/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
@@ -86,7 +84,6 @@ build-repo-base:
       - scripts/dependency_install_functions.sh
       - .gitlab-ci.yml
       when: always
-      #    - when: manual
   script:
     - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
@@ -115,7 +112,6 @@ build-gcs-authz-base:
       - scripts/generate_authz_config.sh
       - .gitlab-ci.yml
       when: always
-      #    - when: manual
   script:
     - docker build -f dockerfiles/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
@@ -149,7 +145,6 @@ build-ws:
     - exists:
       - deploy-ws-base
       when: always
-      #    - when: manual
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
@@ -174,7 +169,6 @@ build-core:
       - core/* 
       - .gitlab-ci.yml
       when: always
-      #    - when: manual
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
@@ -227,7 +221,6 @@ build-repo:
       - repository/*
       - .gitlab-ci.yml
       when: always
-      #    - when: manual
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
