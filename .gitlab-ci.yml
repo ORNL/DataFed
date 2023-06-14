@@ -17,10 +17,6 @@ setup-vms:
     - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-core"
     - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus1"
     - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
-#    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_ARANGO_ID
-#    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_CORE_ID
-#    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS1_ID
-#    - ./scripts/pipeline_setup.sh --compute-instance-id $OS_CI_DATAFED_GLOBUS2_ID
 
 ################################################################################
 # STAGE: build-deploy-base
