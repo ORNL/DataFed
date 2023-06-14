@@ -8,15 +8,14 @@ RUN mkdir -p ${BUILD_DIR}/common/proto
 WORKDIR ${BUILD_DIR}
 
 COPY ./web ${BUILD_DIR}/web
-COPY ./cmake/* ${BUILD_DIR}/cmake/
-COPY ./common/proto/* ${BUILD_DIR}/common/proto/
+COPY ./cmake ${BUILD_DIR}/cmake
+COPY ./common/proto ${BUILD_DIR}/common/proto
 COPY ./CMakeLists.txt ${BUILD_DIR}
 COPY ./config/datafed.sh ${BUILD_DIR}/config/
 COPY ./scripts/generate_ws_config.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_ws_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_lego_and_certificates.sh ${BUILD_DIR}/scripts/
-COPY ./cmake ${BUILD_DIR}/
 
 RUN ls ${BUILD_DIR}
 RUN ls ${BUILD_DIR}/common
@@ -36,4 +35,7 @@ ENV NVM_DIR=/root/.nvm
 ENV PATH=/root/.nvm/versions/node/v13.14.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV NVM_BIN=/root/.nvm/versions/node/v13.14.0/bin
 
+# Note that building the web server this way assumes that a temporary core key 
+# has been passed in, this will need to be overwritten when the web server
+# is run.
 RUN cmake --build build --target install
