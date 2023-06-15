@@ -364,18 +364,18 @@ then
 	do
 		pipeline_status=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
 
-		printf "$count Waiting for pipeline: ${pipeline_id} to complete ... "
+		printf "$count Waiting for triggered pipeline: ${pipeline_id} to complete ... "
 		if [ "$pipeline_status" == "failed" ]
 		then
-			echo "Infrastructure pipeline has failed unable to execute CI. STATUS: $pipeline_status"
+			echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
 			exit 1
 		elif [ "$pipeline_status" == "success" ]
 		then
-			echo "Infrastructure pipeline has passed. STATUS: $pipeline_status"
+			echo "Infrastructure triggered pipeline has passed. STATUS: $pipeline_status"
 			exit 0
 		elif [ "$pipeline_status" == "canceled" ]
 		then
-			echo "Infrastructure pipeline has failed unable to execute CI. STATUS: $pipeline_status"
+			echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
 			exit 1
     else
       echo "STATUS: $pipeline_status"
@@ -384,3 +384,14 @@ then
 		sleep 30s
 	done
 fi
+
+# We should not attempt to execute further if any pipelines are running
+all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines?status=running" | jq '.[]')
+
+while [ ! -z "$all_other_pipelines" ] 
+do
+  echo "Other running pipelines detected... waiting for them to complete."
+  echo "$all_other_pipelines" | jq '.id'
+  sleep 30s
+  all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines?status=running" | jq '.[]')
+done
