@@ -180,6 +180,25 @@ then
   exit 1
 fi
 
+wait_for_running_infrastructure_pipelines_to_finish() {
+  local GITLAB_REPO_API_TOKEN="$1"
+  local all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${GITLAB_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines?status=running" | jq '.[]')
+  if [ -z "$all_other_pipelines" ]
+  then
+    echo "No other running infrastructure provisioning pipelines detected!"
+    exit 0
+  fi
+
+  local count=0
+  while [ ! -z "$all_other_pipelines" ] 
+  do
+    echo "$count Other running infrastructure provisioning pipelines detected... waiting for them to complete."
+    echo "$all_other_pipelines" | jq '.id'
+    sleep 30s
+    count=$(($count + 1))
+    all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${GITLAB_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines?status=running" | jq '.[]')
+  done
+}
 
 find_orc_instance_by_id() {
   local SANITIZED_TOKEN="$1"
@@ -226,10 +245,15 @@ subject_token=$(echo "$data" | grep "X-Subject-Token" | awk '{print $2}' )
 
 sanitize_subject_token=${subject_token:0:268}
 
-################################################################################
-# Check 1 - Do VMs Exist
-################################################################################
 
+################################################################################
+# Check 1 - Are there running pipelines
+################################################################################
+wait_for_running_infrastructure_pipelines_to_finish "${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}"
+
+################################################################################
+# Check 2 - Do VMs Exist
+################################################################################
 # Make sure the instances exist if not we should run the pipeline
 
 compute_id=""
@@ -287,7 +311,7 @@ then
 fi
 
 ################################################################################
-# Check 2 - Is the VM running
+# Check 3 - Is the VM running
 ################################################################################
 # This will need to be passed to the GitLab repo and set as an env variable instance
 
@@ -354,6 +378,9 @@ else
   exit 0
 fi
 
+################################################################################
+# Check 4 - Wait for the triggered pipeline to finish
+################################################################################
 # If the pipeline is defined check to see if the pipeline completed else wait
 # until it finished before proceeding
 if [ ! -z "$pipeline_id" ]
@@ -388,20 +415,8 @@ then
 	done
 fi
 
-# We should not attempt to execute further if any pipelines are running
-all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines?status=running" | jq '.[]')
-if [ -z "$all_other_pipelines" ]
-then
-  echo "No other running infrastructure provisioning pipelines detected!"
-  exit 0
-fi
+################################################################################
+# Check 5 - If there are any other running pipelines wait for them to complete
+################################################################################
+wait_for_running_infrastructure_pipelines_to_finish "${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}"
 
-count=0
-while [ ! -z "$all_other_pipelines" ] 
-do
-  echo "$count Other running infrastructure provisioning pipelines detected... waiting for them to complete."
-  echo "$all_other_pipelines" | jq '.id'
-  sleep 30s
-  count=$(($count + 1))
-  all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines?status=running" | jq '.[]')
-done
