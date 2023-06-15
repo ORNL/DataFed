@@ -359,6 +359,7 @@ fi
 if [ ! -z "$pipeline_id" ]
 then
 
+  count=0
 	KEEP_RUNNING="TRUE"	
 	while [ "$KEEP_RUNNING" == "TRUE" ]
 	do
@@ -382,6 +383,8 @@ then
 		fi
     			
 		sleep 30s
+
+    count=$(($count + 1))
 	done
 fi
 
@@ -393,10 +396,12 @@ then
   exit 0
 fi
 
+count=0
 while [ ! -z "$all_other_pipelines" ] 
 do
-  echo "Other running infrastructure provisioning pipelines detected... waiting for them to complete."
+  echo "$count Other running infrastructure provisioning pipelines detected... waiting for them to complete."
   echo "$all_other_pipelines" | jq '.id'
   sleep 30s
+  count=$(($count + 1))
   all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines?status=running" | jq '.[]')
 done
