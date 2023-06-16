@@ -186,7 +186,6 @@ wait_for_running_infrastructure_pipelines_to_finish() {
   if [ -z "$all_other_pipelines" ]
   then
     echo "No other running infrastructure provisioning pipelines detected!"
-    exit 0
   fi
 
   local count=0
@@ -419,4 +418,4 @@ fi
 # Check 5 - If there are any other running pipelines wait for them to complete
 ################################################################################
 wait_for_running_infrastructure_pipelines_to_finish "${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}"
-
+exit 0
