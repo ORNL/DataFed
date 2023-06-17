@@ -10,14 +10,16 @@ COPY ./common ${BUILD_DIR}/common
 COPY ./core/server ${BUILD_DIR}/core/server
 COPY ./core/CMakeLists.txt ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt ${BUILD_DIR}
-COPY ./config/datafed.sh ${BUILD_DIR}/config/
+COPY ./core/docker/entrypoint.sh ${BUILD_DIR}/scripts/
+#COPY ./config/datafed.sh ${BUILD_DIR}/config/
+COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_core_config.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_core_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_core_service.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/run_core_service.sh ${BUILD_DIR}/scripts/
 COPY ./cmake ${BUILD_DIR}/cmake
 
-RUN ${BUILD_DIR}/scripts/generate_core_config.sh &&\
- ${BUILD_DIR}/scripts/generate_core_service.sh &&\
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
  cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \
                     -DBUILD_CORE_SERVER=True -DBUILD_WEB_SERVER=False \
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
@@ -32,4 +34,5 @@ EXPOSE 7513
 # ArangoDB port
 EXPOSE 8529
 
-CMD ["bash","-c","$(cat datafed-core.service | grep ExecStart | cut -d '=' -f2)"]
+#CMD ["bash","-c","$(cat datafed-core.service | grep ExecStart | cut -d '=' -f2)"]
+ENTRYPOINT ["${BUILD_DIR}/scripts/entrypoint.sh"]

@@ -202,8 +202,9 @@ endif()
 
 if( INSTALL_CORE_SERVER )
   install( TARGETS datafed-core DESTINATION ${DATAFED_INSTALL_PATH}/core )
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh )")
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_core_service.sh )")
+  # The below steps should exist outside of the build steps
+  #install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh )")
+  #  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_core_service.sh )")
 endif()
 
 if( INSTALL_WEB_SERVER )
@@ -211,7 +212,8 @@ if( INSTALL_WEB_SERVER )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( FILES ${PROJECT_SOURCE_DIR}/web/version.js DESTINATION ${DATAFED_INSTALL_PATH}/web )
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_ws_service.sh )")
+  #Installing services should be a separate step outside of the build
+  #install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_ws_service.sh )")
 endif()
 
 if( INSTALL_FOXX ) 

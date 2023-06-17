@@ -11,10 +11,13 @@ COPY ./web ${BUILD_DIR}/web
 COPY ./cmake ${BUILD_DIR}/cmake
 COPY ./common/proto ${BUILD_DIR}/common/proto
 COPY ./CMakeLists.txt ${BUILD_DIR}
-COPY ./config/datafed.sh ${BUILD_DIR}/config/
+COPY ./web/docker/entrypoint.sh ${BUILD_DIR}/scripts/
+#COPY ./config/datafed.sh ${BUILD_DIR}/config/
+COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_ws_config.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_ws_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws_service.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/run_ws_service.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_lego_and_certificates.sh ${BUILD_DIR}/scripts/
 
 RUN ls ${BUILD_DIR}
@@ -22,8 +25,7 @@ RUN ls ${BUILD_DIR}/common
 RUN ls ${BUILD_DIR}/common/proto
 RUN ls ${BUILD_DIR}/common/proto/common
 
-RUN ${BUILD_DIR}/scripts/generate_ws_config.sh &&\
- ${BUILD_DIR}/scripts/generate_ws_service.sh &&\
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
  cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \
                     -DBUILD_CORE_SERVER=False -DBUILD_WEB_SERVER=True \
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
@@ -39,3 +41,5 @@ ENV NVM_BIN=/root/.nvm/versions/node/v13.14.0/bin
 # has been passed in, this will need to be overwritten when the web server
 # is run.
 RUN cmake --build build --target install
+
+ENTRYPOINT ["${BUILD_DIR}/scripts/entrypoint.sh"] 
