@@ -168,14 +168,14 @@ build-foxx:
     - env
     - cat ./config/datafed.sh
     - >
-			cmake -S. -B build \
- 			-DENABLE_FOXX_TESTS=ON \
-      -DBUILD_CORE_SERVER=OFF \
-      -DBUILD_COMMON=OFF \
-      -DBUILD_WEB_SERVER=OFF \
-      -DBUILD_DOCS=OFF \
-      -DBUILD_PYTHON_CLIENT=OFF \
-      -DBUILD_TESTS=ON \
+			cmake -S. -B build
+ 			-DENABLE_FOXX_TESTS=ON
+      -DBUILD_CORE_SERVER=OFF
+      -DBUILD_COMMON=OFF
+      -DBUILD_WEB_SERVER=OFF
+      -DBUILD_DOCS=OFF
+      -DBUILD_PYTHON_CLIENT=OFF
+      -DBUILD_TESTS=ON
       -DINSTALL_FOXX=ON
     - cmake --build build
     - cmake --build build --target install
@@ -242,12 +242,12 @@ end-to-end-ws:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker run -f web/docker/Dockerfile.web.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 		- >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="$DATAFED_GLOBUS_APP_SECRET" \
-      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID" \
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET" \
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET" \
-      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN" \
-      -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH" \
-      -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH" \
-      -v "$HOST_LOG_FILE_PATH":/var/log/datafed/datafed-ws.log \
+      docker run -e DATAFED_GLOBUS_APP_SECRET="$DATAFED_GLOBUS_APP_SECRET"
+      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
+      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
+      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
+      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
+      -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH"
+      -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
+      -v "$HOST_LOG_FILE_PATH":/var/log/datafed/datafed-ws.log
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
