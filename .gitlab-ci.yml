@@ -224,6 +224,18 @@ build-gcs-authz:
 ################################################################################
 # STAGE: Integration
 ################################################################################
+
+end-to-end-ws:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/ws-"
+    GIT_STRATEGY: clone
+  stage: end-to-end
+  tags:
+    - ci-datafed-core
+    - docker
+  script:
+    - echo "Testing"
+
 #end-to-end-ws:
 #  variables:
 #    IMAGE_TAG: "dlsw/datafed/ws-"
