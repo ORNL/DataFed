@@ -1,16 +1,16 @@
----
-- stages:
-    - setup
-    - build-deploy-base
-    - build-unit-test-deploy
-    - end-to-end-test
+
+stages:
+  - setup
+  - build-deploy-base
+  - build-unit-test-deploy
+  - end-to-end-test
 
 ################################################################################
 # STAGE: setup
 ################################################################################
 # Setup stage is designed to check that the infrastructure is up and running
 # before attempting to launch the CI pipelines
-- setup-vms:
+setup-vms:
   stage: setup
   tags:
     - datafed-infrastructure
@@ -30,7 +30,7 @@
 #
 # NOTE GitLab is set to remove images after a month, so they will be forced to
 # rebuild at least once a month.
-- build-ws-base:
+build-ws-base:
   stage: build-deploy-base
   variables:
     IMAGE_TAG: "dlsw/datafed/ws-base"
@@ -43,7 +43,7 @@
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/ws-base
 
-- build-core-base:
+build-core-base:
   stage: build-deploy-base
   variables:
     IMAGE_TAG: "dlsw/datafed/core-base"
@@ -56,7 +56,7 @@
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/core-base
 
-- build-repo-base:
+build-repo-base:
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-base"
     GIT_STRATEGY: clone
@@ -71,7 +71,7 @@
 
 # This build runs two builds, one to build the gcs image provided by Globus
 # The second to build on top of the gcs image and add the authz dependencies
-- build-gcs-authz-base:
+build-gcs-authz-base:
   variables:
     IMAGE_TAG: "dlsw/datafed/gcs-base"
     IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
@@ -94,7 +94,7 @@
 # STAGE: build
 ################################################################################
 # Building containers for running services
-- build-ws:
+build-ws:
   variables:
     IMAGE_TAG: "dlsw/datafed/ws-"
     GIT_STRATEGY: clone
@@ -121,7 +121,7 @@
     - docker build -f web/docker/Dockerfile.web.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
-- build-core:
+build-core:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-"
     GIT_STRATEGY: clone
@@ -147,7 +147,7 @@
     - docker build -f core/docker/Dockerfile.core.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
-- build-foxx:
+build-foxx:
   variables:
     GIT_STRATEGY: clone
   stage: build-unit-test-deploy
@@ -181,7 +181,7 @@
     - cmake --build build --target install
     - cmake --build build --target test
 
-- build-repo:
+build-repo:
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-"
     GIT_STRATEGY: clone
@@ -205,7 +205,7 @@
     - docker build -f dockerfiles/Dockerfile.repo.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
-- build-gcs-authz:
+build-gcs-authz:
   variables:
     IMAGE_TAG: "dlsw/datafed/gcs-authz-"
     GIT_STRATEGY: clone
