@@ -224,17 +224,17 @@ build-gcs-authz:
 ################################################################################
 # STAGE: Integration
 ################################################################################
-end-to-end-ws:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/ws-"
-    GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-ws.log"
-  stage: end-to-end
-  tags:
-    - ci-datafed-core
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+#end-to-end-ws:
+#  variables:
+#    IMAGE_TAG: "dlsw/datafed/ws-"
+#    GIT_STRATEGY: clone
+#    HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-ws.log"
+#  stage: end-to-end
+#  tags:
+#    - ci-datafed-core
+#    - docker
+#  script:
+#    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
 #    - echo "$BRANCH_LOWER"
 #    - ./scripts/generate_datafed.sh
 #    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
