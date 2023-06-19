@@ -134,6 +134,15 @@ else
   local_DATAFED_WEB_KEY_PATH=$(printenv DATAFED_WEB_KEY_PATH)
 fi
 
+if [ ! -d "$PATH_TO_CONFIG_DIR" ]
+then
+  mkdir -p "$PATH_TO_CONFIG_DIR"
+fi
+
+if [ ! -f  "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}" ]
+then
+  touch "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
+fi
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 # This is the master DataFed configuration file

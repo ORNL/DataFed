@@ -43,10 +43,6 @@ then
     fi
   fi
   nvm use $NODE_VERSION
-else
-  # This should have been installed as part of the dependencies
-  echo "ERROR Unable to locate npm."
-  exit 1
 fi
 npm --allow-root --unsafe-perm --prefix ${DATAFED_INSTALL_PATH}/web install 
 # Install javascript web server repo and core server were 
