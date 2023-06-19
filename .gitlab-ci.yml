@@ -43,53 +43,53 @@ build-ws-base:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/ws-base
 
-#build-core-base:
-#  stage: build-deploy-base
-#  variables:
-#    IMAGE_TAG: "dlsw/datafed/core-base"
-#    GIT_STRATEGY: clone
-#  tags:
-#    - ci-datafed-core
-#    - docker
-#  script:
-#    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-#    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-#    - docker push code.ornl.gov:4567/dlsw/datafed/core-base
-#
-#build-repo-base:
-#  variables:
-#    IMAGE_TAG: "dlsw/datafed/repo-base"
-#    GIT_STRATEGY: clone
-#  stage: build-deploy-base
-#  tags:
-#    - ci-datafed-repo
-#    - docker
-#  script:
-#    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-#    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-#    - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
-#
-## This build runs two builds, one to build the gcs image provided by Globus
-## The second to build on top of the gcs image and add the authz dependencies
-#build-gcs-authz-base:
-#  variables:
-#    IMAGE_TAG: "dlsw/datafed/gcs-base"
-#    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
-#    IMAGE_TAG3: "dlsw/datafed/gcs-authz"
-#    GIT_STRATEGY: clone
-#  stage: build-deploy-base
-#  tags:
-#    - ci-datafed-globus
-#    - docker
-#  script:
-#    - docker build -f dockerfiles/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-#    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-#    - docker push code.ornl.gov:4567/${IMAGE_TAG}
-#    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
-#    - docker push code.ornl.gov:4567/${IMAGE_TAG2}
-#    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
-#    - docker push code.ornl.gov:4567/${IMAGE_TAG3}
-#
+build-core-base:
+  stage: build-deploy-base
+  variables:
+    IMAGE_TAG: "dlsw/datafed/core-base"
+    GIT_STRATEGY: clone
+  tags:
+    - ci-datafed-core
+    - docker
+  script:
+    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker push code.ornl.gov:4567/dlsw/datafed/core-base
+
+build-repo-base:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/repo-base"
+    GIT_STRATEGY: clone
+  stage: build-deploy-base
+  tags:
+    - ci-datafed-repo
+    - docker
+  script:
+    - docker build -f dockerfiles/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
+
+# This build runs two builds, one to build the gcs image provided by Globus
+# The second to build on top of the gcs image and add the authz dependencies
+build-gcs-authz-base:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/gcs-base"
+    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
+    IMAGE_TAG3: "dlsw/datafed/gcs-authz"
+    GIT_STRATEGY: clone
+  stage: build-deploy-base
+  tags:
+    - ci-datafed-globus
+    - docker
+  script:
+    - docker build -f dockerfiles/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker push code.ornl.gov:4567/${IMAGE_TAG}
+    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
+    - docker push code.ornl.gov:4567/${IMAGE_TAG2}
+    - docker build -f dockerfiles/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
+    - docker push code.ornl.gov:4567/${IMAGE_TAG3}
+
 #################################################################################
 ## STAGE: build
 #################################################################################
