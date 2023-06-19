@@ -168,8 +168,8 @@ build-foxx:
     - env
     - cat ./config/datafed.sh
     - >
-			cmake -S. -B build
- 			-DENABLE_FOXX_TESTS=ON
+      cmake -S. -B build
+      -DENABLE_FOXX_TESTS=ON
       -DBUILD_CORE_SERVER=OFF
       -DBUILD_COMMON=OFF
       -DBUILD_WEB_SERVER=OFF
@@ -251,3 +251,4 @@ end-to-end-ws:
       -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
       -v "$HOST_LOG_FILE_PATH":/var/log/datafed/datafed-ws.log
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
+
