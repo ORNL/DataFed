@@ -34,4 +34,4 @@ EXPOSE 7513
 EXPOSE 8529
 
 #CMD ["bash","-c","$(cat datafed-core.service | grep ExecStart | cut -d '=' -f2)"]
-ENTRYPOINT ["${BUILD_DIR}/core/docker/entrypoint.sh"]
+#ENTRYPOINT ["${BUILD_DIR}/core/docker/entrypoint.sh"]

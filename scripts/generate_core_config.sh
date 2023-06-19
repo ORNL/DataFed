@@ -14,7 +14,7 @@ Help()
 {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
-  echo "Syntax: $(basename $0) [-h|t|c|f]"
+  echo "Syntax: $(basename $0) [-h|t|c|f|s|i|a|u|p]"
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-t, --threads-task                The number of threads available to the datafed    "
@@ -35,8 +35,9 @@ Help()
   echo "                                  as a command line argument it can be set as an "
   echo "                                  environment variable called"
   echo "                                  DATAFED_GLOBUS_APP_ID"
-  echo "-a, --api-url                     Database api url, the REST api of the database "
-  echo "                                  that DataFed interacts with."
+  echo "-a, --database-ip-address-port    Database IP address and port, where the REST api of the database "
+  echo "                                  that DataFed interacts with can be accessed."
+  echo "                                  i.e. http://192.168.92.1:4520."
   echo "-u, --database-user               Database user, needed to log into the database."
   echo "-p, --database-password           Database password, needed to log into the database."
   echo "                                  This is a REQUIRED parameters if it is not"
@@ -46,9 +47,15 @@ Help()
 }
 
 # Set defaults use environment variables by default
-local_DATAFED_CRED_DIR="/opt/datafed/keys/"
 local_DATAFED_CORE_CLIENT_THREADS=2
 local_DATAFED_CORE_TASK_THREADS=2
+
+if [ -z "${DATAFED_CRED_DIR}" ]
+then
+  local_DATAFED_CRED_DIR="/opt/datafed/keys/"
+else
+  local_DATAFED_CRED_DIR=$(printenv DATAFED_CRED_DIR)
+fi
 
 if [ -z "${DATAFED_GLOBUS_APP_ID}" ]
 then
@@ -64,9 +71,13 @@ else
   local_DATAFED_GLOBUS_APP_SECRET=$(printenv DATAFED_GLOBUS_APP_SECRET)
 fi
 
-FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
-local_DATABASE_API_URL="http://127.0.0.1:8529/_db/sdms/api/${FOXX_MAJOR_API_VERSION}/"
 local_DATABASE_USER="root"
+if [ -z "" ]
+then
+  local_DATAFED_DATABASE_IP_ADDRESS_PORT="http://127.0.0.1:8529"
+else
+  local_DATAFED_DATABASE_IP_ADDRESS_PORT=$(printenv DATAFED_DATABASE_IP_ADDRESS_PORT)
+fi
 
 if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
 then
@@ -75,7 +86,7 @@ else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,api-url:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
+VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,database-ip-address:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -102,11 +113,6 @@ while [ : ]; do
         local_DATAFED_CORE_CLIENT_THREADS=$2
         shift 2
         ;;
-    -a | --api-url)
-        echo "Processing 'Database api url' option. Input argument is '$2'"
-        local_DATABASE_API_URL=$2
-        shift 2
-        ;;
     -s | --globus-secret)
         echo "Processing 'DataFed Globus App secret' option. Input argument is '$2'"
         local_DATAFED_GLOBUS_APP_SECRET=$2
@@ -125,6 +131,11 @@ while [ : ]; do
     -p | --database-password)
         echo "Processing 'Database password' option. Input argument is '$2'"
         local_DATAFED_DATABASE_PASSWORD=$2
+        shift 2
+        ;;
+      -a | --database-ip-address)
+        echo "Processing 'Database IP address' option. Input argument is '$2'"
+        local_DATAFED_DATABASE_IP_ADDRESS_PORT=$2
         shift 2
         ;;
     --) shift; 
@@ -161,10 +172,21 @@ then
   ERROR_DETECTED=1
 fi
 
+if [ -z "$local_DATAFED_DATABASE_IP_ADDRESS_PORT" ]
+then
+  echo "Error DATAFED_DATABASE_IP_ADDRESS_PORT is not defined, this is a required argument"
+  echo "      This variable can be set using the command line option -a, --database-ip-address-port"
+  echo "      or with the environment variable DATAFED_DATABASE_IP_ADDRESS_PORT. A default variable"
+  echo "      should have been defined as http://127.0.0.1:8529 so you are likely overwriting the default."
+fi
+
 if [ "$ERROR_DETECTED" == "1" ]
 then
   exit 1
 fi
+
+FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
+local_DATABASE_API_URL="${local_DATAFED_DATABASE_IP_ADDRESS_PORT}/_db/sdms/api/${FOXX_MAJOR_API_VERSION}/"
 
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 

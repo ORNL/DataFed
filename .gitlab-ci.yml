@@ -239,12 +239,37 @@ end-to-end-ws:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker run -f web/docker/Dockerfile.web.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
     - >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="$DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
+      docker run -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
+      -e DATAFED_GLOBUS_APP_ID="$GLOBUS_DATAFED_APP_ID"
+      -e DATAFED_ZEROMQ_SESSION_SECRET="$DATAFED_ZEROMQ_SESSION_SECRET"
+      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$DATAFED_ZEROMQ_SYSTEM_SECRET"
+      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
+      -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH"
+      -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
+      -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
+      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
+
+
+end-to-end-ws:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/core-"
+    GIT_STRATEGY: clone
+    HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-core.log"
+  stage: end-to-end-test
+  tags:
+    - ci-datafed-core
+    - docker
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - >
+      docker run -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
+      -e DATAFED_GLOBUS_APP_ID="$GLOBUS_DATAFED_APP_ID"
+      -e DATAFED_ZEROMQ_SESSION_SECRET="$DATAFED_ZEROMQ_SESSION_SECRET"
+      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$DATAFED_ZEROMQ_SYSTEM_SECRET"
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
       -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH"
       -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
