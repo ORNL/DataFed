@@ -229,7 +229,7 @@ end-to-end-ws:
   variables:
     IMAGE_TAG: "dlsw/datafed/ws-"
     GIT_STRATEGY: clone
-  stage: end-to-end
+  stage: end-to-end-test
   tags:
     - ci-datafed-core
     - docker
