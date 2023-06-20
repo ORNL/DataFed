@@ -3,7 +3,9 @@ stages:
   - setup
   - build-deploy-base
   - build-unit-test-deploy
+  - end-to-end-setup
   - end-to-end-test
+  - end-to-end-teardown
 
 ################################################################################
 # STAGE: setup
@@ -230,7 +232,7 @@ end-to-end-ws:
     IMAGE_TAG: "dlsw/datafed/ws-"
     GIT_STRATEGY: clone
     HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-ws.log"
-  stage: end-to-end-test
+  stage: end-to-end-setup
   tags:
     - ci-datafed-core
     - docker
@@ -257,7 +259,7 @@ end-to-end-ws:
     IMAGE_TAG: "dlsw/datafed/core-"
     GIT_STRATEGY: clone
     HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-core.log"
-  stage: end-to-end-test
+  stage: end-to-end-setup
   tags:
     - ci-datafed-core
     - docker
@@ -285,7 +287,7 @@ end-to-end-repo:
     IMAGE_TAG: "dlsw/datafed/repo-"
     GIT_STRATEGY: clone
     HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-repo.log"
-  stage: end-to-end-test
+  stage: end-to-end-setup
   tags:
     - ci-datafed-globus
     - docker
@@ -309,7 +311,7 @@ end-to-end-gcs-authz:
   variables:
     IMAGE_TAG: "dlsw/datafed/gcs-authz-"
     GIT_STRATEGY: clone
-  stage: end-to-end-test
+  stage: end-to-end-setup
   tags:
     - ci-datafed-globus
     - docker
