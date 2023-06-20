@@ -54,7 +54,7 @@ else
   local_DATAFED_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
 fi
 
-local_DATAFED_CRED_DIR="/opt/datafed/keys/"
+local_DATAFED_CRED_DIR="${DATAFED_INSTALL_PATH}/keys/"
 local_DATAFED_REPO_EGRESS_PORT="9000"
 local_DATAFED_REPO_THREADS=2
 

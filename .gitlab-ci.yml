@@ -248,6 +248,7 @@ end-to-end-ws:
       -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH"
       -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
       -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
+      -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 
@@ -266,12 +267,64 @@ end-to-end-ws:
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$GLOBUS_DATAFED_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$DATAFED_ZEROMQ_SYSTEM_SECRET"
+      docker run -e DATAFED_GLOBUS_APP_SECRET="DATAFED_GLOBUS_APP_SECRET"
+      -e DATAFED_GLOBUS_APP_ID="$DATAFED_GLOBUS_APP_ID"
+      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
+      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
       -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH"
       -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
       -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
-      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
+      -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
+      -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
+      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+
+
+end-to-end-repo:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/repo-"
+    GIT_STRATEGY: clone
+    HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-repo.log"
+  stage: end-to-end-test
+  tags:
+    - ci-datafed-globus
+    - docker
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - >
+      docker run -e DATAFED_GLOBUS_APP_SECRET="DATAFED_GLOBUS_APP_SECRET"
+      -e DATAFED_GLOBUS_APP_ID="$DATAFED_GLOBUS_APP_ID"
+      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
+      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
+      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
+      -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
+      -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
+      -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
+      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+
+end-to-end-gcs-authz:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/gcs-authz-"
+    GIT_STRATEGY: clone
+  stage: end-to-end-test
+  tags:
+    - ci-datafed-globus
+    - docker
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - >
+      docker run -e DATAFED_GLOBUS_APP_SECRET="DATAFED_GLOBUS_APP_SECRET"
+      -e DATAFED_GLOBUS_APP_ID="$DATAFED_GLOBUS_APP_ID"
+      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
+      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
+      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
+      -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
+      -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
+      -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
+      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 

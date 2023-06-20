@@ -35,10 +35,8 @@ Help()
 }
 
 # Set defaults use environment variables by default
-
-
-local_DATAFED_WEB_CERT_PATH="/opt/datafed/keys/datafed-server-test.ornl.gov.crt"
-local_DATAFED_WEB_KEY_PATH="/opt/datafed/keys/datafed-server-test.ornl.gov.key"
+local_DATAFED_WEB_CERT_PATH="${DATAFED_INSTALL_PATH}/keys/datafed-server-test.ornl.gov.crt"
+local_DATAFED_WEB_KEY_PATH="${DATAFED_INSTALL_PATH}/keys/datafed-server-test.ornl.gov.key"
 
 local_DATAFED_HTTPS_SERVER_PORT="443"
 

@@ -52,7 +52,7 @@ local_DATAFED_CORE_TASK_THREADS=2
 
 if [ -z "${DATAFED_CRED_DIR}" ]
 then
-  local_DATAFED_CRED_DIR="/opt/datafed/keys/"
+  local_DATAFED_CRED_DIR="${DATAFED_INSTALL_PATH}/keys/"
 else
   local_DATAFED_CRED_DIR=$(printenv DATAFED_CRED_DIR)
 fi

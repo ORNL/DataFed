@@ -1,9 +1,26 @@
 FROM code.ornl.gov:4567/dlsw/datafed/ws-base:latest as build
 
-ARG BUILD_DIR="/source"
+ARG DATAFED_DIR="/datafed"
+ARG BUILD_DIR="/datafed/source"
+ARG DATAFED_INSTALL_PATH="/datafed/install"
+
+# The above should alos be available at runtime
+ENV DATAFED_DIR="$DATAFED_DIR"
+ENV BUILD_DIR="$BUILD_DIR"
+ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${BUILD_DIR}/common/proto
+RUN mkdir -p ${DATAFED_INSTALL_PATH}
+
+# For communicating with public
+EXPOSE 8080
+# For listening to core server
+EXPOSE 7513
+
+# Create datafed user, prefer more secure login options than password
+# Recommended to mount ssh public key on run
+RUN adduser --disabled-password --gecos "" datafed
 
 WORKDIR ${BUILD_DIR}
 
@@ -13,16 +30,14 @@ COPY ./common/proto ${BUILD_DIR}/common/proto
 COPY ./CMakeLists.txt ${BUILD_DIR}
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_ws_config.sh ${BUILD_DIR}/scripts/
-COPY ./scripts/generate_ws_service.sh ${BUILD_DIR}/scripts/
-COPY ./scripts/install_ws_service.sh ${BUILD_DIR}/scripts/
-COPY ./scripts/run_ws_service.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_ws.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_lego_and_certificates.sh ${BUILD_DIR}/scripts/
 COPY ./web/docker/entrypoint.sh ${BUILD_DIR}/web/docker/
 
-RUN ls ${BUILD_DIR}
-RUN ls ${BUILD_DIR}/common
-RUN ls ${BUILD_DIR}/common/proto
-RUN ls ${BUILD_DIR}/common/proto/common
+# All files should be owned by the datafed user
+RUN chown -R datafed:datafed ${DATAFED_DIR}
+
+USER datafed
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
  cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \

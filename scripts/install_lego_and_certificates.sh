@@ -99,7 +99,7 @@ datafed_ws_service=$(systemctl list-unit-files --type service | grep datafed-ws 
 
 # This should create a folder in ~/.lego/certificates, that contains the
 # certificate files you need, we are going to copy them over to the
-# /opt/datafed/keys folder
+# ${DATAFED_INSTALL_PATH}/keys folder (Defalut: /opt/datafed/keys)
 #
 # NOTE: To run lego you will need to make sure that nothing else is using port 443
 # it will be unable to run if the datafed webserver is also running.

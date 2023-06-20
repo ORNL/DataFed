@@ -9,6 +9,7 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 CONFIG_FILE_NAME="datafed.sh"
 PATH_TO_CONFIG_DIR=$(realpath "$PROJECT_ROOT/config")
 
+# This is a build config variable
 local_DATAFED_INSTALL_PATH=""
 if [ -z "${DATAFED_INSTALL_PATH}" ]
 then
