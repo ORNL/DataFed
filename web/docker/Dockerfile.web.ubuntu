@@ -45,10 +45,10 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
                     -DBUILD_FOXX=False -DBUILD_COMMON=False &&\
  cmake --build build
 
-ENV NVM_INC=/root/.nvm/versions/node/v13.14.0/include/node
-ENV NVM_DIR=/root/.nvm
-ENV PATH=/root/.nvm/versions/node/v13.14.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV NVM_BIN=/root/.nvm/versions/node/v13.14.0/bin
+ENV NVM_DIR="$DATAFED_DIR/.nvm"
+ENV NVM_INC=$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node
+ENV PATH=$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV NVM_BIN=$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin
 
 # Note that building the web server this way assumes that a temporary core key 
 # has been passed in, this will need to be overwritten when the web server

@@ -57,14 +57,15 @@ install_cmake
 # but instead will install ourselves
 
 # 1. Install nvm which will allow us to update node
+export NVM_DIR="$local_NODE_INSTALL/.nvm"
 if [ ! -d "$local_NODE_INSTALL/.nvm" ]
 then
+  mkdir -p "$NVM_DIR"
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 fi
 
 NODE_VERSION="v14.21.3"
-export NVM_DIR="$local_NODE_INSTALL/.nvm"
-[ -s "$local_NODE_INSTALL/nvm.sh" ] && . "$local_NODE_INSTALL/nvm.sh" # This loads nvm
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
 nvm install $NODE_VERSION
 nvm use $NODE_VERSION
