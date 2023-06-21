@@ -47,4 +47,6 @@ RUN ${BUILD_DIR}/scripts/generate_repo_config.sh &&\
  cmake --build build
 RUN cmake --build build --target install
 
-CMD ["bash","-c","$(cat datafed-repo.service | grep ExecStart | cut -d '=' -f2)"]
+ENTRYPOINT ["/datafed/source/repository/docker/entrypoint.sh"]
+
+CMD ["/datafed/install/repo/datafed-repo","--cfg","/datafed/install/repo/datafed-repo.cfg"]

@@ -9,3 +9,5 @@ PROJECT_ROOT=$(realpath ${SOURCE}/../..)
 ${PROJECT_ROOT}/scripts/generate_datafed.sh
 ${PROJECT_ROOT}/scripts/generate_ws_config.sh
 ${PROJECT_ROOT}/scripts/install_ws.sh
+
+exec "$@"

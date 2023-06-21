@@ -17,12 +17,21 @@ cp "$PROJECT_ROOT/web/package.json" ${DATAFED_INSTALL_PATH}/web/
 
 export npm_config_cache=${DATAFED_INSTALL_PATH}/web
 # Check if npm exists
-npm_path=$(which npm)
+{
+  npm_path=$(which npm)
+} || {
+  echo "npm_path not found."
+}
 if [ -z "$npm_path" ]
 then
 
   NODE_VERSION="v14.21.3"
-  nvm_path=$(which nvm)
+  {
+    nvm_path=$(which nvm)
+  } || {
+    echo "nvm_path not found."
+  }
+
   if [ -z "$nvm_path" ]
   then
     # Check for nvm in default location when installed with web dependencies
@@ -34,7 +43,11 @@ then
     else
       export NVM_DIR="$HOME/.nvm"
       [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-      nvm_path=$(which nvm)
+      {
+        nvm_path=$(which nvm)
+      } || {
+        echo "nvm_path not found after sourcing."
+      }
       if [ -z "$nvm_path" ]
       then
         echo "ERROR Unable to locate npm or nvm."
@@ -44,7 +57,12 @@ then
   fi
   nvm use $NODE_VERSION
 fi
-npm --allow-root --unsafe-perm --prefix ${DATAFED_INSTALL_PATH}/web install 
+{
+  npm --allow-root --unsafe-perm --prefix ${DATAFED_INSTALL_PATH}/web install 
+} || {
+  echo "ERROR npm command failed!"
+  exit 1
+}
 # Install javascript web server repo and core server were 
 # already installed by CMake
 cp "$PROJECT_ROOT/web/datafed-ws.js" ${DATAFED_INSTALL_PATH}/web
