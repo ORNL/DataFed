@@ -12,6 +12,7 @@
     "helmet": "^4.6.0",
     "ini": "^2.0.0",
     "protobufjs": "^6.11.2",
+    "uuid": "^9.0.0",
     "zeromq": "^5.2.0"
   },
   "scripts": {
