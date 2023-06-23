@@ -7,6 +7,9 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source ${PROJECT_ROOT}/config/datafed.sh
 
+# Versions
+NODE_VERSION="v14.21.3"
+
 # Make sure paths exist
 mkdir -p ${DATAFED_INSTALL_PATH}/web
 mkdir -p ${DATAFED_INSTALL_PATH}/keys
@@ -25,35 +28,40 @@ export npm_config_cache=${DATAFED_INSTALL_PATH}/web
 if [ -z "$npm_path" ]
 then
 
-  NODE_VERSION="v14.21.3"
   {
-    nvm_path=$(which nvm)
+    # Will return a result if nvm can be found and returns nothing otherwise
+    # which does not work with nvm
+    nvm_command_exists=$(command -v nvm)
   } || {
-    echo "nvm_path not found."
+    echo "nvm_command_exists not found."
   }
 
   if [ -z "$nvm_path" ]
   then
     # Check for nvm in default location when installed with web dependencies
     # script
-    if [ ! -d "$HOME/.nvm" ]
+    if [ -d "$NVM_DIR" ]
     then
-      echo "ERROR Unable to locate npm or nvm."
-      exit 1
-    else
+      [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+    elif [ -d "$HOME/.nvm" ]
+    then
       export NVM_DIR="$HOME/.nvm"
       [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
       {
-        nvm_path=$(which nvm)
+    	nvm_command_exists=$(command -v nvm)
       } || {
-        echo "nvm_path not found after sourcing."
+        echo "nvm_command_exists not found after sourcing."
       }
       if [ -z "$nvm_path" ]
       then
         echo "ERROR Unable to locate npm or nvm."
         exit 1
       fi
+    else
+      echo "ERROR Unable to locate npm or nvm."
+      exit 1
     fi
+
   fi
   nvm use $NODE_VERSION
 fi

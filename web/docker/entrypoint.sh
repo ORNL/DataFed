@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NVM_DIR must be defined
+
 set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")

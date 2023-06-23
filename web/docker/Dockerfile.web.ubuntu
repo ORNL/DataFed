@@ -13,8 +13,11 @@ RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${BUILD_DIR}/common/proto
 RUN mkdir -p ${DATAFED_INSTALL_PATH}
 
+# vim and nc are for debugging
+RUN apt-get install vim netcat -y
+
 # For communicating with public
-EXPOSE 8080
+EXPOSE 443
 # For listening to core server
 EXPOSE 7513
 
@@ -25,6 +28,7 @@ RUN adduser --disabled-password --gecos "" datafed
 WORKDIR ${BUILD_DIR}
 
 COPY ./web ${BUILD_DIR}/web
+COPY ./web/package.json ${BUILD_DIR}/web/package.json
 COPY ./cmake ${BUILD_DIR}/cmake
 COPY ./common/proto ${BUILD_DIR}/common/proto
 COPY ./CMakeLists.txt ${BUILD_DIR}
@@ -36,6 +40,7 @@ COPY ./web/docker/entrypoint.sh ${BUILD_DIR}/web/docker/
 # All files should be owned by the datafed user
 RUN chown -R datafed:datafed ${DATAFED_DIR}
 
+# Build as if a non root user
 USER datafed
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
@@ -55,6 +60,8 @@ ENV NVM_BIN=$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin
 # is run.
 RUN cmake --build build --target install
 
-# datafed-ws.js is missing from the install folder, also node is inaccessible because it is installed as root
-ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh"]
-CMD ["/datafed/install/web/datafed-ws.js","/datafed/install/web/datafed-ws.cfg"]
+USER datafed
+WORKDIR ${DATAFED_INSTALL_PATH}/web
+
+#ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh"]
+#CMD ["/datafed/install/web/datafed-ws.js","/datafed/install/web/datafed-ws.cfg"]
