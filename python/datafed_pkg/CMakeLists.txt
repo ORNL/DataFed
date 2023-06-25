@@ -9,27 +9,11 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py.in"
   "${CMAKE_CURRENT_BINARY_DIR}/datafed/VERSION.py"
   @ONLY)
-#configure_file(
-#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py.in"
-#  "${CMAKE_CURRENT_BINARY_DIR}/datafed/API_VERSION.py"
-#  @ONLY)
-#configure_file(
-#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py.in"
-#  "${CMAKE_CURRENT_BINARY_DIR}/datafed/RELEASE_VERSION.py"
-#  @ONLY)
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py.in"
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py"
   @ONLY)
-#configure_file(
-#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py.in"
-#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/API_VERSION.py"
-#  @ONLY)
-#configure_file(
-#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py.in"
-#  "${CMAKE_CURRENT_SOURCE_DIR}/datafed/RELEASE_VERSION.py"
-#  @ONLY)
 
 # Copy package files to build dir
 file( GLOB PkgFiles ${CMAKE_CURRENT_SOURCE_DIR}/*.py )
@@ -48,11 +32,5 @@ endforeach()
 
 add_subdirectory( datafed )
 
-#add_custom_target( pydatafed_ver )
-#add_dependencies( pydatafed_ver pydatafed_src )
-
-#add_custom_command( TARGET pydatafed_ver POST_BUILD
-#    COMMAND python3 make_ver.py )
-
 add_custom_target( pydatafed )
-add_dependencies( pydatafed pydatafed_src) # pydatafed_ver )
+add_dependencies( pydatafed pydatafed_src) )
