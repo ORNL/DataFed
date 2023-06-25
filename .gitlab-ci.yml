@@ -257,7 +257,7 @@ end-to-end-ws-setup:
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
 
 
-end-to-end-ws-setup:
+end-to-end-core-setup:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-"
     GIT_STRATEGY: clone
@@ -272,13 +272,15 @@ end-to-end-ws-setup:
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$DATAFED_GLOBUS_APP_ID"
+      docker run -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
+      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
       -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH"
       -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
+      -p 443:443
+      -p 7513:7513
       -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
       -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
@@ -300,8 +302,8 @@ end-to-end-repo-setup:
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$DATAFED_GLOBUS_APP_ID"
+      docker run -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
+      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
@@ -324,8 +326,8 @@ end-to-end-gcs-authz-setup:
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$DATAFED_GLOBUS_APP_ID"
+      docker run -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
+      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
