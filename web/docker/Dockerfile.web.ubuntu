@@ -28,7 +28,6 @@ RUN adduser --disabled-password --gecos "" datafed
 WORKDIR ${BUILD_DIR}
 
 COPY ./web ${BUILD_DIR}/web
-COPY ./web/package.json ${BUILD_DIR}/web/package.json
 COPY ./cmake ${BUILD_DIR}/cmake
 COPY ./common/proto ${BUILD_DIR}/common/proto
 COPY ./CMakeLists.txt ${BUILD_DIR}

@@ -72,7 +72,7 @@ else
 fi
 
 local_DATABASE_USER="root"
-if [ -z "" ]
+if [ -z "${DATAFED_DATABASE_IP_ADDRESS_PORT}" ]
 then
   local_DATAFED_DATABASE_IP_ADDRESS_PORT="http://127.0.0.1:8529"
 else
