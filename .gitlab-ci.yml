@@ -346,9 +346,9 @@ end-to-end-arango-setup:
     - ci-datafed-arango
   script:
     - arangod --version
+    - status=$(systemctl is-active arangodb3)
     - >
-      status=$(systemctl is-active arangodb3)
-      if [ "$status" = "active" ]
+      if [ "${status}" = "active" ]
       then
         echo "ArangoDB is Running"
       else
