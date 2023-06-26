@@ -30,6 +30,7 @@ COPY ./common ${BUILD_DIR}/common
 COPY ./core/server ${BUILD_DIR}/core/server
 COPY ./core/CMakeLists.txt ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt ${BUILD_DIR}
+COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_core_config.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_core.sh ${BUILD_DIR}/scripts/

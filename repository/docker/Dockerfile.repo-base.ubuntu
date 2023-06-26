@@ -7,6 +7,7 @@ RUN mkdir -p ${BUILD_DIR}/repository/server
 
 WORKDIR ${BUILD_DIR}
 
+COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_repo_dependencies.sh ${BUILD_DIR}/scripts/
 

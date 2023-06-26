@@ -31,6 +31,7 @@ COPY ./web ${BUILD_DIR}/web
 COPY ./cmake ${BUILD_DIR}/cmake
 COPY ./common/proto ${BUILD_DIR}/common/proto
 COPY ./CMakeLists.txt ${BUILD_DIR}
+COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_ws_config.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws.sh ${BUILD_DIR}/scripts/

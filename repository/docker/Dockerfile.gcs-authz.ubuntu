@@ -6,6 +6,7 @@ RUN mkdir -p ${BUILD_DIR}
 
 WORKDIR ${BUILD_DIR}
 
+COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_authz_config.sh ${BUILD_DIR}/scripts/generate_authz_config.sh
 COPY ./config/datafed.sh ${BUILD_DIR}/config/
 COPY ./CMakeLists.txt ${BUILD_DIR}

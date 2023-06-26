@@ -29,6 +29,8 @@ COPY ./repository/CMakeLists.txt ${BUILD_DIR}/repository/CMakeLists.txt
 COPY ./CMakeLists.txt ${BUILD_DIR}
 COPY ./cmake/* ${BUILD_DIR}/cmake/
 COPY ./repository/server ${BUILD_DIR}/repository/server
+COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_repo_config.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_repo.sh ${BUILD_DIR}/scripts/

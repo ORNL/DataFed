@@ -9,6 +9,7 @@ RUN mkdir -p ${BUILD_DIR}/common/proto
 WORKDIR ${BUILD_DIR}
 
 COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
 
 # Docker dependency
