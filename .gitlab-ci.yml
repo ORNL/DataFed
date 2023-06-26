@@ -254,7 +254,7 @@ end-to-end-ws-setup:
       -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
       -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
       -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
-      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
+      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 
 end-to-end-core-setup:
@@ -277,6 +277,7 @@ end-to-end-core-setup:
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
+      -e DATAFED_DATABASE_PASSWORD="$CI_DATAFED_DATABASE_PASSWORD"
       -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH"
       -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
       -p 443:443
@@ -346,7 +347,7 @@ end-to-end-arango-setup:
     - arangod --version
     - >
       status=$(systemctl is-active arangodb3)
-      if[ "$status" = "active" ]; then
+      if [ "$status" = "active" ]; then
         echo "ArangoDB is Running"
       else
         echo "Something is wrong Arangodb should be running at this stage"
