@@ -33,4 +33,4 @@ endforeach()
 add_subdirectory( datafed )
 
 add_custom_target( pydatafed )
-add_dependencies( pydatafed pydatafed_src) )
+add_dependencies( pydatafed pydatafed_src)
