@@ -348,7 +348,8 @@ end-to-end-arango-setup:
     - arangod --version
     - >
       status=$(systemctl is-active arangodb3)
-      if [ "$status" = "active" ]; then
+      if [ "$status" = "active" ]
+      then
         echo "ArangoDB is Running"
       else
         echo "Something is wrong Arangodb should be running at this stage"
