@@ -33,7 +33,7 @@ COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_repo_config.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_repo.sh ${BUILD_DIR}/scripts/
 COPY ./cmake ${BUILD_DIR}/
-COPY ./repository/docker/entrypoint.sh ${BUILD_DIR}/repository/docker/
+COPY ./repository/docker/entrypoint-repo.sh ${BUILD_DIR}/repository/docker/
 
 # All files should be owned by the datafed user
 RUN chown -R datafed:datafed ${DATAFED_DIR}
@@ -46,6 +46,6 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
  cmake --build build
 RUN cmake --build build --target install
 
-ENTRYPOINT ["/datafed/source/repository/docker/entrypoint.sh"]
+ENTRYPOINT ["/datafed/source/repository/docker/entrypoint-repo.sh"]
 
 CMD ["/datafed/install/repo/datafed-repo","--cfg","/datafed/install/repo/datafed-repo.cfg"]
