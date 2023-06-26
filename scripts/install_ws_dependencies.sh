@@ -7,6 +7,8 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
+source "${SOURCE}/dependency_versions.sh"
+
 Help()
 {
   echo "$(basename $0) install web dependencies."
@@ -64,10 +66,9 @@ then
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 fi
 
-NODE_VERSION="v14.21.3"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-nvm install $NODE_VERSION
-nvm use $NODE_VERSION
+nvm install $DATAFED_NODE_VERSION
+nvm use $DATAFED_NODE_VERSION
 
 npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web

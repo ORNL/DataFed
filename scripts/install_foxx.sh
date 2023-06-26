@@ -8,6 +8,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source ${PROJECT_ROOT}/config/datafed.sh
+source ${SOURCE}/dependency_versions.sh
 
 Help()
 {
@@ -205,9 +206,8 @@ fi
 #
 # The web deployment requires manual interaction, and I could not figure out the 
 # syntax for the REST http endpoints with curl so we are going to try the node module
-NODE_VERSION="v14.21.3"
 actual_version=$(node --version)
-semantic_version_compatible $actual_version $NODE_VERSION 
+semantic_version_compatible $actual_version $DATAFED_NODE_VERSION 
 compatible=$?
 
 if [ "$compatible" -eq "0" ]
@@ -221,8 +221,8 @@ then
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-  nvm install $NODE_VERSION
-  nvm use $NODE_VERSION
+  nvm install $DATAFED_NODE_VERSION
+  nvm use $DATAFED_NODE_VERSION
 
   # Install foxx service node module
   $NVM_DIR/nvm-exec npm install --global foxx-cli --prefix ~/

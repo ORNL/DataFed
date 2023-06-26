@@ -8,6 +8,7 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
+source "${SOURCE}/dependency_versions.sh"
 
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo apt-get update
@@ -25,12 +26,11 @@ install_cmake
 # 1. Install nvm which will allow us to update node
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 
-NODE_VERSION="v14.21.3"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-nvm install $NODE_VERSION
-nvm use $NODE_VERSION
+nvm install $DATAFED_NODE_VERSION
+nvm use $DATAFED_NODE_VERSION
 
 install_nlohmann_json
 cd ~

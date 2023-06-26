@@ -6,9 +6,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source ${PROJECT_ROOT}/config/datafed.sh
-
-# Versions
-NODE_VERSION="v14.21.3"
+source ${SOURCE}/dependency_versions.sh
 
 # Make sure paths exist
 mkdir -p ${DATAFED_INSTALL_PATH}/web
@@ -63,7 +61,7 @@ then
     fi
 
   fi
-  nvm use $NODE_VERSION
+  nvm use $DATAFED_NODE_VERSION
 fi
 {
   npm --allow-root --unsafe-perm --prefix ${DATAFED_INSTALL_PATH}/web install 
