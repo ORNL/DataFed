@@ -10,7 +10,7 @@ ENV DATAFED_DIR="$DATAFED_DIR"
 ENV BUILD_DIR="$BUILD_DIR"
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 
-RUN mkdir -p ${BUILD_DIR}
+RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${BUILD_DIR}/common/proto
 RUN mkdir -p ${DATAFED_INSTALL_PATH}
 
@@ -64,5 +64,5 @@ RUN cmake --build build --target install
 USER datafed
 WORKDIR ${DATAFED_INSTALL_PATH}/web
 
-#ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh"]
-#CMD ["/datafed/install/web/datafed-ws.js","/datafed/install/web/datafed-ws.cfg"]
+ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh"]
+CMD ["/datafed/install/web/datafed-ws.js","/datafed/install/web/datafed-ws.cfg"]

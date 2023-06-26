@@ -28,6 +28,12 @@ Help()
   echo "                                  as a command line argument it can be set as an "
   echo "                                  environment variable called"
   echo "                                  DATAFED_GLOBUS_APP_ID"
+  echo "-c, --core-address-port           The web server needs to know where to find the core"
+  echo "                                  server. Valid entries include:"
+  echo "                                  localhost:7513"
+  echo "                                  127.0.0.1:7513"
+  echo "                                  datafed.ornl.gov:7513"
+  echo "                                  The default is to use the domain name and port 7513."
   echo "-z, --zeromq-session-secret       ZeroMQ session secret"
   echo "-y, --zeromq-system-secret        ZeroMQ system secret"
   echo "-w, --web-cert-path               Path to web server certificate file."
@@ -84,7 +90,15 @@ else
   local_DATAFED_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
 fi
 
-VALID_ARGS=$(getopt -o hs:i:z:y:w:k: --long 'help',globus-secret:,globus-id:,zeromq-session-secret:,zeromq-system-secret:,web-cert-path:,web-key-path -- "$@")
+if [ -z "${DATAFED_CORE_ADDRESS_PORT_INTERNAL}" ]
+then
+  local_DATAFED_CORE_ADDRESS_PORT_INTERNAL="${local_DATAFED_SERVER_DOMAIN_NAME}:7513"
+else
+  local_DATAFED_CORE_ADDRESS_PORT_INTERNAL=$(printenv DATAFED_CORE_ADDRESS_PORT_INTERNAL)
+fi
+
+
+VALID_ARGS=$(getopt -o hs:i:z:y:w:k:c: --long 'help',globus-secret:,globus-id:,zeromq-session-secret:,zeromq-system-secret:,web-cert-path:,web-key-path:,core-address-port: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -124,6 +138,11 @@ while [ : ]; do
     -k | --web-key-path)
         echo "Processing 'DataFed web key path' option. Input argument is '$2'"
         local_DATAFED_WEB_KEY_PATH=$2
+        shift 2
+        ;;
+    -c | --core-address-port)
+        echo "Processing 'DataFed internal core address and port' option. Input argument is '$2'"
+        local_DATAFED_CORE_ADDRESS_PORT_INTERNAL=$2
         shift 2
         ;;
     --) shift; 
@@ -206,8 +225,8 @@ client_secret=${local_DATAFED_GLOBUS_APP_SECRET}
 
 [core]
 # This is the address to talk with the core server which is listening on 
-# port 7513
-server_address=tcp://localhost:7513
+# port 7513, assuming internal network.
+server_address=tcp://${local_DATAFED_CORE_ADDRESS_PORT_INTERNAL}
 EOF
 
 echo

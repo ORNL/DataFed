@@ -32,7 +32,7 @@ KeyGenerator::generate(const ProtocolType protocol_type,
 }
 
 bool KeyPairValidator::validate(const std::string &public_key,
-                                const std::string &prviate_key) const {
+                                const std::string &private_key) const {
   /*zmq::context_t context(5);
   zmq::socket_t socket(context, zmq::socket_type::pair);
   socket.setsockopt(ZMQ_CURVE_SERVER, 1);

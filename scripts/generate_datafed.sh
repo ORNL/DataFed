@@ -135,6 +135,13 @@ else
   local_DATAFED_WEB_KEY_PATH=$(printenv DATAFED_WEB_KEY_PATH)
 fi
 
+if [ -z "${DATAFED_CORE_ADDRESS_PORT_INTERNAL}" ]
+then
+  local_DATAFED_CORE_ADDRESS_PORT_INTERNAL="${local_DATAFED_DOMAIN}:7513"
+else
+  local_DATAFED_CORE_ADDRESS_PORT_INTERNAL=$(printenv DATAFED_CORE_ADDRESS_PORT_INTERNAL)
+fi
+
 if [ ! -d "$PATH_TO_CONFIG_DIR" ]
 then
   mkdir -p "$PATH_TO_CONFIG_DIR"
@@ -197,6 +204,8 @@ export DATAFED_WEB_KEY_PATH="$local_DATAFED_WEB_KEY_PATH"
 export DATAFED_WEB_CERT_PATH="$local_DATAFED_WEB_CERT_PATH"
 # The user account the datafed web application will run under
 export DATAFED_WEB_USER=""
+# How the web server communicates with the core server, assumes an internal network
+export DATAFED_CORE_ADDRESS_PORT_INTERNAL="$local_DATAFED_CORE_ADDRESS_PORT_INTERNAL"
 # ************************************************
 # Env Variables for Globus Connect Server
 # ************************************************

@@ -234,7 +234,8 @@ end-to-end-ws-setup:
   variables:
     IMAGE_TAG: "dlsw/datafed/ws-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-ws.log"
+    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
   stage: end-to-end-setup
   tags:
     - ci-datafed-core
@@ -242,18 +243,27 @@ end-to-end-ws-setup:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
+    - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chmod 777 "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - CERT_FILE_NAME=$(basename "${CI_DATAFED_WEB_CERT_PATH}")
+    - KEY_FILE_NAME=$(basename "${CI_DATAFED_WEB_KEY_PATH}")
     - >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
+      docker run -d
+      -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$GLOBUS_DATAFED_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$DATAFED_ZEROMQ_SYSTEM_SECRET"
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH"
-      -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
-      -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
-      -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
+      -e DATAFED_WEB_CERT_PATH="${CI_DATAFED_WEB_CERT_PATH}"
+      -e DATAFED_WEB_KEY_PATH="${CI_DATAFED_WEB_KEY_PATH}"
+      -e DATAFED_DEFAULT_LOG_PATH="$CONTAINER_LOG_FILE_PATH"
+      -p 443:443
+      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
+      -v "${CI_DATAFED_CORE_PUB_KEY}:/source/install/keys/datafed-core-key.pub"
+      -v "${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}"
+      -v "${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}"
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 
@@ -272,7 +282,8 @@ end-to-end-core-setup:
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
+      docker run
+      -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
