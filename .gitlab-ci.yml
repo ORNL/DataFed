@@ -271,7 +271,8 @@ end-to-end-core-setup:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-core.log"
+    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
   stage: end-to-end-setup
   tags:
     - ci-datafed-core
@@ -282,7 +283,7 @@ end-to-end-core-setup:
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - >
-      docker run
+      docker run -d
       -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
@@ -290,11 +291,10 @@ end-to-end-core-setup:
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
       -e DATAFED_DATABASE_PASSWORD="$CI_DATAFED_DATABASE_PASSWORD"
       -e DATAFED_DATABASE_IP_ADDRESS_PORT="$CI_DATAFED_DATABASE_IP_ADDRESS_PORT"
-      -e DATAFED_WEB_CERT_PATH="$CI_DATAFED_WEB_CERT_PATH"
-      -e DATAFED_WEB_KEY_PATH="$CI_DATAFED_WEB_KEY_PATH"
-      -p 443:443
+      -e DATAFED_DEFAULT_LOG_PATH="$CONTAINER_LOG_FILE_PATH" \
       -p 7513:7513
-      -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
+      -p 7512:7512
+      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
       -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
