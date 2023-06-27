@@ -292,8 +292,8 @@ end-to-end-core-setup:
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
       -e DATAFED_DATABASE_PASSWORD="$CI_DATAFED_DATABASE_PASSWORD"
       -e DATAFED_DATABASE_IP_ADDRESS_PORT="$CI_DATAFED_DATABASE_IP_ADDRESS_PORT"
-      -e DATAFED_DEFAULT_LOG_PATH="$CONTAINER_LOG_FILE_PATH" \
-      --network host \
+      -e DATAFED_DEFAULT_LOG_PATH="$CONTAINER_LOG_FILE_PATH"
+      --network host
       -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
       -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
