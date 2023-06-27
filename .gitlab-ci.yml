@@ -266,7 +266,8 @@ end-to-end-ws-setup:
       -v "${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}"
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
-
+# Note here we use network=host to run the docker container this is
+# because we do not need it to communicate with an external port 
 end-to-end-core-setup:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-"
@@ -292,8 +293,7 @@ end-to-end-core-setup:
       -e DATAFED_DATABASE_PASSWORD="$CI_DATAFED_DATABASE_PASSWORD"
       -e DATAFED_DATABASE_IP_ADDRESS_PORT="$CI_DATAFED_DATABASE_IP_ADDRESS_PORT"
       -e DATAFED_DEFAULT_LOG_PATH="$CONTAINER_LOG_FILE_PATH" \
-      -p 7513:7513
-      -p 7512:7512
+      --network=host \
       -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
       -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
