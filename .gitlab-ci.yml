@@ -249,8 +249,10 @@ end-to-end-ws-setup:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - CERT_FILE_NAME=$(basename "${CI_DATAFED_WEB_CERT_PATH}")
     - KEY_FILE_NAME=$(basename "${CI_DATAFED_WEB_KEY_PATH}")
+    - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
     - >
       docker run -d
+      --name "${IMAGE_TAG}${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
       -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$GLOBUS_DATAFED_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$DATAFED_ZEROMQ_SESSION_SECRET"
@@ -265,6 +267,7 @@ end-to-end-ws-setup:
       -v "${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}"
       -v "${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}"
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
+    - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 # Note here we use network=host to run the docker container this is
 # because we do not need it to communicate with an external port 
@@ -283,8 +286,10 @@ end-to-end-core-setup:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
     - >
       docker run -d
+      --name "${IMAGE_TAG}${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
       -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
@@ -298,6 +303,7 @@ end-to-end-core-setup:
       -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 
 end-to-end-repo-setup:
@@ -314,8 +320,11 @@ end-to-end-repo-setup:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
     - >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
+      docker run -d
+      --name "${IMAGE_TAG}${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
@@ -324,6 +333,7 @@ end-to-end-repo-setup:
       -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 end-to-end-gcs-authz-setup:
   variables:
@@ -338,8 +348,11 @@ end-to-end-gcs-authz-setup:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
     - >
-      docker run -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
+      docker run -d
+      --name "${IMAGE_TAG}${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
@@ -348,6 +361,7 @@ end-to-end-gcs-authz-setup:
       -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 end-to-end-arango-setup:
   variables:
