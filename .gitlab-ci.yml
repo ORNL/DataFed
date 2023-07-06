@@ -252,7 +252,7 @@ end-to-end-ws-setup:
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
     - >
       docker run -d
-      --name "${IMAGE_TAG}${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      --name "ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
       -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$GLOBUS_DATAFED_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$DATAFED_ZEROMQ_SESSION_SECRET"
@@ -289,7 +289,7 @@ end-to-end-core-setup:
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
     - >
       docker run -d
-      --name "${IMAGE_TAG}${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      --name "core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
       -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
@@ -323,7 +323,7 @@ end-to-end-repo-setup:
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
     - >
       docker run -d
-      --name "${IMAGE_TAG}${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      --name "repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
       -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
@@ -351,7 +351,7 @@ end-to-end-gcs-authz-setup:
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
     - >
       docker run -d
-      --name "${IMAGE_TAG}${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      --name "gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
       -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
