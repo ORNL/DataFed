@@ -1,7 +1,8 @@
 FROM code.ornl.gov:4567/dlsw/datafed/gcs-base:latest as build
 #FROM ubuntu:focal as build
 
-ARG BUILD_DIR="/source"
+ARG DATAFED_DIR="/datafed"
+ARG BUILD_DIR="/datafed/source"
 
 RUN mkdir -p ${BUILD_DIR}
 

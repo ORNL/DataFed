@@ -7,7 +7,7 @@ ARG DATAFED_INSTALL_PATH="/datafed/install"
 # The above should also be available at runtime
 ENV DATAFED_DIR="$DATAFED_DIR"
 ENV BUILD_DIR="$BUILD_DIR"
-ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH/core"
 
 RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${DATAFED_INSTALL_PATH}
@@ -49,6 +49,8 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
                     -DBUILD_FOXX=False &&\
  cmake --build build -j 8
 RUN cmake --build build --target install
+
+WORKDIR ${DATAFED_INSTALL_PATHl}/core
 
 ENTRYPOINT ["/datafed/source/core/docker/entrypoint.sh"]
 

@@ -4,14 +4,14 @@ ARG DATAFED_DIR="/datafed"
 ARG BUILD_DIR="/datafed/source"
 ARG DATAFED_INSTALL_PATH="/datafed/install"
 
-# The above should alos be available at runtime
+# The above should also be available at runtime
 ENV DATAFED_DIR="$DATAFED_DIR"
 ENV BUILD_DIR="$BUILD_DIR"
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 
 RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${BUILD_DIR}/common/proto
-RUN mkdir -p ${DATAFED_INSTALL_PATH}
+RUN mkdir -p ${DATAFED_INSTALL_PATH}/web
 
 # vim and nc are for debugging
 RUN apt-get install vim netcat -y
@@ -60,7 +60,6 @@ ENV NVM_BIN=$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin
 # is run.
 RUN cmake --build build --target install
 
-USER datafed
 WORKDIR ${DATAFED_INSTALL_PATH}/web
 
 ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh"]
