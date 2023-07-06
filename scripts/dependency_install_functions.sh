@@ -1,7 +1,7 @@
 #!/bin/bash
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-source "${SOURCE}/dependency_version.sh"
+source "${SOURCE}/dependency_versions.sh"
 
 install_cmake() {
   wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
