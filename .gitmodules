@@ -1,0 +1,3 @@
+[submodule "external/globus-connect-server-deploy"]
+	path = external/globus-connect-server-deploy
+	url = https://github.com/globus/globus-connect-server-deploy.git
