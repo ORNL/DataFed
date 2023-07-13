@@ -230,7 +230,7 @@ export DATAFED_GCS_ROOT_NAME="$local_DATAFED_GCS_ROOT_NAME"
 #
 # The path will be created if it does not exist
 # 
-# \$GCS_COLLECTION_ROOT_PATH/\$DATAFED_ROOT_NAME"
+# \$GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR"
 #
 # So if these variables are defined as:
 # DATAFED_GCS_ROOT_NAME="datafed-home"

@@ -1,7 +1,7 @@
 FROM code.ornl.gov:4567/dlsw/datafed/gcs-authz-base:latest as build
 
 ARG DATAFED_DIR="/datafed"
-ARG BUILD_DIR="datafed/source"
+ARG BUILD_DIR="/datafed/source"
 ARG DATAFED_INSTALL_PATH="/datafed/install"
 
 # The above should also be available at runtime
@@ -32,7 +32,7 @@ WORKDIR ${BUILD_DIR}
 
 COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_authz_config.sh ${BUILD_DIR}/scripts/generate_authz_config.sh
-COPY ./config/datafed.sh ${BUILD_DIR}/config/
+COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/generate_datafed.sh
 COPY ./CMakeLists.txt ${BUILD_DIR}
 COPY ./cmake ${BUILD_DIR}/cmake
 COPY ./repository/CMakeLists.txt ${BUILD_DIR}/repository/CMakeLists.txt
@@ -46,13 +46,21 @@ RUN chown -R datafed:datafed ${DATAFED_DIR}
 # Build as if a non root user
 USER datafed
 
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh
+
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&\
  cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=True \
                     -DBUILD_CORE_SERVER=False -DBUILD_WEB_SERVER=False \
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
-                    -DBUILD_FOXX=False &&\
+                    -DBUILD_FOXX=False && \
  cmake --build build
 RUN cmake --build build --target install
+
+COPY ./scripts/globus/setup_globus.sh ${BUILD_DIR}/scripts/globus/setup_globus.sh
+COPY ./scripts/globus/generate_repo_form.sh ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
+COPY ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
+
+USER root
 
 WORKDIR ${DATAFED_INSTALL_PATH}/authz
 # Rerunning the GCS entrypoint

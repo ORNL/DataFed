@@ -53,17 +53,13 @@ else
   local_GCS_COLLECTION_ROOT_PATH=$(printenv GCS_COLLECTION_ROOT_PATH)
 fi
 
-echo "HERE"
 if [ -z $DATAFED_AUTHZ_USER ]
 then
-  echo "HERE DATAFED_AUTHZ_USER is not defined"
   local_DATAFED_AUTHZ_USER="$USER"
 else
-  echo "HERE3 DATAFED_AUTHZ_USER is defined"
   local_DATAFED_AUTHZ_USER=$(printenv DATAFED_AUTHZ_USER)
 fi
 
-echo "1HERE"
 
 VALID_ARGS=$(getopt -o hr:d:g: --long 'help',repo-id:,user:,domain:,globus-collection-path -- "$@")
 if [[ $? -ne 0 ]]; then
@@ -110,11 +106,8 @@ while [ : ]; do
   esac
 done
 
-echo "2HERE"
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
-
 CONFIG_FILE_NAME="datafed-authz.cfg"
-echo "3HERE"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 server_address=tcp://${local_DATAFED_DOMAIN}:${local_DATAFED_SERVER_PORT}

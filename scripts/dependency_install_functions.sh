@@ -90,3 +90,14 @@ install_json_schema_validator() {
   sudo cmake --build build --target install
   cd ../
 }
+
+install_gcs() {
+  sudo apt update
+  sudo apt install -y curl git gnupg
+  curl -LOs https://downloads.globus.org/globus-connect-server/stable/installers/repo/deb/globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb
+  sudo dpkg -i globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb
+  sudo apt-key add /usr/share/globus-repo/RPM-GPG-KEY-Globus
+  # Need a second update command after adding the globus GPG key
+  sudo apt update
+  sudo apt-get install globus-connect-server54 -y
+}

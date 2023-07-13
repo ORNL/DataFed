@@ -72,26 +72,49 @@ build-repo-base:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
 
-# This build runs two builds, one to build the gcs image provided by Globus
-# The second to build on top of the gcs image and add the authz dependencies
-build-gcs-authz-base:
+
+build-gcs-base:
   variables:
-    IMAGE_TAG: "dlsw/datafed/gcs-base"
+    GIT_SUBMODULE_STRATEGY: recursive
+    DISTRO: "ubuntu:focal"
+    GCS_TAG: "code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
     IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
     IMAGE_TAG3: "dlsw/datafed/gcs-authz"
-    GIT_STRATEGY: clone
   stage: build-deploy-base
   tags:
     - ci-datafed-globus
     - docker
   script:
-    - docker build -f repository/docker/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
+    - cd external/globus-connect-server-deploy/deploy
+    - ./docker-build-gcs.sh "${DISTRO}"
+    - LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
+    - docker tag "$LATEST_IMAGE" "$GCS_TAG" 
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push code.ornl.gov:4567/${IMAGE_TAG}
+    - docker push "$GCS_TAG"
     - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
     - docker push code.ornl.gov:4567/${IMAGE_TAG2}
     - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
     - docker push code.ornl.gov:4567/${IMAGE_TAG3}
+# This build runs two builds, one to build the gcs image provided by Globus
+# The second to build on top of the gcs image and add the authz dependencies
+#build-gcs-authz-base:
+#  variables:
+#    IMAGE_TAG: "dlsw/datafed/gcs-base"
+#    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
+#    IMAGE_TAG3: "dlsw/datafed/gcs-authz"
+#    GIT_STRATEGY: clone
+#  stage: build-deploy-base
+#  tags:
+#    - ci-datafed-globus
+#    - docker
+#  script:
+#    - docker build -f repository/docker/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
+#    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+#    - docker push code.ornl.gov:4567/${IMAGE_TAG}
+#    - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
+#    - docker push code.ornl.gov:4567/${IMAGE_TAG2}
+#    - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
+#    - docker push code.ornl.gov:4567/${IMAGE_TAG3}
 
 ################################################################################
 # STAGE: build
