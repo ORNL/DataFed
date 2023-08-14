@@ -85,7 +85,7 @@ build-gcs-base:
     - ci-datafed-globus
     - docker
   script:
-    - cd external/globus-connect-server-deploy/deploy
+    - cd external/globus-connect-server-deploy/docker
     - ./docker-build-gcs.sh "${DISTRO}"
     - LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
     - docker tag "$LATEST_IMAGE" "$GCS_TAG" 
