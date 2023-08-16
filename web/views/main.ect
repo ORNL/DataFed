@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8;script-src 'nonce-<%= @nonce %> 'self'">
         <% include 'head.ect' %>
         <script type="application/json" id="template_data">
         {
@@ -12,48 +11,48 @@
         }
         </script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.37.0/skin-themeroller/ui.fancytree.min.css" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.37.0/jquery.fancytree-all.min.js"></script>
-        <script src="/jquery/jquery.ui-contextmenu.min.js"></script>
-        <script src="/ace/ace.js" type="text/javascript" charset="utf-8"></script>
-        <script src="/ace/theme-light.js" type="text/javascript" charset="utf-8"></script>
-        <script src="/ace/theme-dark.js" type="text/javascript" charset="utf-8"></script>
-        <script src="/ace/mode-json.js" type="text/javascript" charset="utf-8"></script>
-        <script src="/tag/tag-it.js" type="text/javascript" charset="utf-8"></script>
+        <script nonce="<%= @nonce %>" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fancytree/2.37.0/jquery.fancytree-all.min.js"></script>
+        <script nonce="<%= @nonce %>" src="/jquery/jquery.ui-contextmenu.min.js"></script>
+        <script nonce="<%= @nonce %>" src="/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+        <script nonce="<%= @nonce %>" src="/ace/theme-light.js" type="text/javascript" charset="utf-8"></script>
+        <script nonce="<%= @nonce %>" src="/ace/theme-dark.js" type="text/javascript" charset="utf-8"></script>
+        <script nonce="<%= @nonce %>" src="/ace/mode-json.js" type="text/javascript" charset="utf-8"></script>
+        <script nonce="<%= @nonce %>" src="/tag/tag-it.js" type="text/javascript" charset="utf-8"></script>
         <link href="/tag/tag-it.css" rel="stylesheet" type="text/css">
-        <script src="https://d3js.org/d3.v5.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
+        <script nonce="<%= @nonce %>" src="https://d3js.org/d3.v5.min.js"></script>
+        <script nonce="<%= @nonce %>" src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
         <link href="/query_builder.css" rel="stylesheet" type="text/css">
-        <script type="module" charset="utf-8" src="/model.js"></script>
-        <script type="module" charset="utf-8" src="/util.js"></script>
-        <script type="module" charset="utf-8" src="/settings.js"></script>
-        <script type="module" charset="utf-8" src="/api.js"></script>
-        <script type="module" charset="utf-8" src="/query_builder.js"></script>
-        <script type="module" charset="utf-8" src="/dialogs.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_annotation.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_pick_user.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_pick_proj.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_set_acls.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_data_new_edit.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_coll_new_edit.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_query_save.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_groups.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_group_edit.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_proj_new_edit.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_alloc_new_edit.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_start_xfer.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_ep_browse.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_settings.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_repo_edit.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_repo_manage.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_owner_chg_confirm.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_schema.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_schema_list.js"></script>
-        <script type="module" charset="utf-8" src="/dlg_query_builder.js"></script>
-        <script type="module" charset="utf-8" src="/panel_catalog.js"></script>
-        <script type="module" charset="utf-8" src="/panel_graph.js"></script>
-        <script type="module" charset="utf-8" src="/panel_item_info.js"></script>
-        <script type="module" charset="utf-8" src="/main_browse_tab.js"></script>
-        <script type="module" charset="utf-8" src="/main.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/model.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/util.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/settings.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/api.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/query_builder.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dialogs.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_annotation.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_pick_user.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_pick_proj.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_set_acls.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_data_new_edit.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_coll_new_edit.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_query_save.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_groups.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_group_edit.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_proj_new_edit.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_alloc_new_edit.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_start_xfer.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_ep_browse.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_settings.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_repo_edit.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_repo_manage.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_owner_chg_confirm.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_schema.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_schema_list.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/dlg_query_builder.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/panel_catalog.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/panel_graph.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/panel_item_info.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/main_browse_tab.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/main.js"></script>
         <title>DataFed Main</title>
     </head>
     <body>

@@ -22,7 +22,7 @@ var session = require('express-session');
 var cookieParser = require('cookie-parser'); // cookies for user state
 var http = require('http');
 var https = require('https');
-const constants = require('crypto');
+const crypto = require('crypto');
 const helmet = require('helmet');
 const fs = require('fs');
 const ini = require('ini');
@@ -208,7 +208,7 @@ function startServer(){
                     key: privateKey,
                     cert: certificate,
                     ca: chain,
-                    secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3
+                    secureOptions: crypto.SSL_OP_NO_SSLv2 | crypto.SSL_OP_NO_SSLv3
                 }, app );
             }else{
                 server = http.createServer({}, app);
@@ -271,6 +271,14 @@ app.use( function( req, res, next ){
     res.setHeader('Content-Language','en-US');
     next();
 });
+
+app.use((req, res, next) => {
+  const nonce = crypto.randomBytes(16).toString('base64');
+  res.locals.nonce = nonce;
+  res.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
+  next();
+});
+
 app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
 
@@ -290,7 +298,7 @@ app.get('/ui/welcome', (a_req, a_resp) => {
         logger.debug('/ui/welcome', getCurrentLineNumber(), "Access welcome from: " + a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme']|| "light";
-        a_resp.render('index',{theme:theme,version:g_version,test_mode:g_test});
+        a_resp.render('index',{nonce:a_resp.locals.nonce, theme:theme,version:g_version,test_mode:g_test});
     }
 });
 
@@ -299,7 +307,7 @@ app.get('/ui/main', (a_req, a_resp) => {
         logger.info('/ui/main', getCurrentLineNumber(), "Access main (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
-        a_resp.render( 'main',{user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test});
+        a_resp.render('main',{nonce:a_resp.locals.nonce,user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test});
     }else{
         // datafed-user cookie not set, so clear datafed-id before redirect
         //a_resp.clearCookie( 'datafed-id' );
@@ -322,7 +330,7 @@ app.get('/ui/register', (a_req, a_resp) => {
         logger.info('/ui/register', getCurrentLineNumber(), " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
-        a_resp.render('register', { uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
+        a_resp.render('register', {nonce:a_resp.locals.nonce, uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
     }
 });
 
@@ -354,7 +362,7 @@ app.get('/ui/logout', (a_req, a_resp) => {
 });
 
 app.get('/ui/error', (a_req, a_resp) => {
-    a_resp.render('error',{theme:"light",version:g_version,test_mode:g_test});
+    a_resp.render('error',{nonce:a_resp.locals.nonce,theme:"light",version:g_version,test_mode:g_test});
 });
 
 /* This is the OAuth redirect URL after a user authenticates with Globus
