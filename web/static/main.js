@@ -49,7 +49,7 @@ $(document).ready(function(){
 
             api.epRecentLoad();
 
-            $( "#uname" ).text( DOMPurify.sanitize(settings.user.nameFirst) + " " + DOMPurify.sanitize(settings.user.nameLast) );
+            $( "#uname" ).text( util.escapeHTML(settings.user.nameFirst) + " " + util.escapeHTML(settings.user.nameLast) );
 
             if ( settings.user.isAdmin ){
                 $("#is_admin").show();

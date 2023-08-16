@@ -571,7 +571,7 @@ function showSelectedItemForm( item ){
     switch ( t ){
         case 'd': type = "Data Record"; icon = ""; title = item.title; cls = item.doi?".sidp":".sid"; break;
         case 'c': type = "Collection"; title = item.title; cls = ".sic"; break;
-        case 'u': type = "User"; title = DOMPurify.sanitize(item.nameFirst) + " " + DOMPurify.sanitize(item.nameLast); cls = ".siu"; break;
+        case 'u': type = "User"; title = util.escapeHTML(item.nameFirst) + " " + util.escapeHTML(item.nameLast); cls = ".siu"; break;
         case 'p': type = "Project"; title = item.title; cls = ".sip"; break;
         case 'r': type = "Allocation"; title = "Allocation for " + (item.user.startsWith("u/")?" user ":" project ") + item.user; cls = ".sia"; break;
         case 'q': type = "Saved Query"; title = item.title; cls = ".siq"; break;
