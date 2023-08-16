@@ -148,7 +148,7 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
                 for ( i in a_data.response.user ) {
                     user = a_data.response.user[i];
                     unsel = (a_excl.indexOf( user.uid ) != -1);
-                    a_data.result.push({ title: (unsel?"<span style='color:#808080'>":"") + user.nameLast + ", " + user.nameFirst + " ("+user.uid.substr(2) +")" + (unsel?"</span>":""),icon:"ui-icon ui-icon-person",key: user.uid,unselectable:unsel, selected: user.uid in sel_users });
+                    a_data.result.push({ title: (unsel?"<span style='color:#808080'>":"") + DOMPurify.sanitize(user.nameLast) + ", " + DOMPurify.sanitize(user.nameFirst) + " ("+user.uid.substr(2) +")" + (unsel?"</span>":""),icon:"ui-icon ui-icon-person",key: user.uid,unselectable:unsel, selected: user.uid in sel_users });
                 }
 
             } else if ( a_data.node.key == "groups" ){
