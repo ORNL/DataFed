@@ -116,7 +116,7 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
             } else if ( data.node.key == "all" ) {
                 data.result = { url: api.userListAll_url( data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key == "search" ) {
-                var srch_val = search_input.val().trim();
+                var srch_val = search_input.val().trim().toLowerCase();
                 if ( srch_val.length > 1 ){
                     data.result = { url: api.userFindByName_url( srch_val, data.node.data.offset, settings.opts.page_sz ), cache: false };
                 }else{
