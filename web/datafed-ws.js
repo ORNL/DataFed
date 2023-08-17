@@ -18,6 +18,7 @@ if ( process.argv.length != 3 ){
 const express = require('express'); // For REST api
 var session = require('express-session');
 //var bodyParser = require('body-parser');
+const sanitizeHtml = require('sanitize-html');
 var cookieParser = require('cookie-parser'); // cookies for user state
 var http = require('http');
 var https = require('https');
@@ -241,8 +242,8 @@ app.get('/ui/register', (a_req, a_resp) => {
         console.log( " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
-
-        a_resp.render('register', { uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
+        const clean = sanitizeHtml( a_req.session.name );
+        a_resp.render('register', { uid: a_req.session.uid, uname: clean, theme: theme, version: g_version, test_mode: g_test });
     }
 });
 
