@@ -272,16 +272,8 @@ app.use( function( req, res, next ){
     next();
 });
 
-app.use((req, res, next) => {
-  const nonce = crypto.randomBytes(16).toString('base64');
-  res.locals.nonce = nonce;
-  res.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
-  next();
-});
-
 app.set( 'view engine', 'ect' );
 app.engine( 'ect', ectRenderer.render );
-
 
 app.get('/', (a_req, a_resp) => {
     if ( a_req.session.uid && a_req.session.reg )
@@ -298,6 +290,9 @@ app.get('/ui/welcome', (a_req, a_resp) => {
         logger.debug('/ui/welcome', getCurrentLineNumber(), "Access welcome from: " + a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme']|| "light";
+        const nonce = crypto.randomBytes(16).toString('base64');
+        a_resp.locals.nonce = nonce;
+        a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
         a_resp.render('index',{nonce:a_resp.locals.nonce, theme:theme,version:g_version,test_mode:g_test});
     }
 });
@@ -307,6 +302,9 @@ app.get('/ui/main', (a_req, a_resp) => {
         logger.info('/ui/main', getCurrentLineNumber(), "Access main (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
+        const nonce = crypto.randomBytes(16).toString('base64');
+        a_resp.locals.nonce = nonce;
+        a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
         a_resp.render('main',{nonce:a_resp.locals.nonce,user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test});
     }else{
         // datafed-user cookie not set, so clear datafed-id before redirect
@@ -330,6 +328,9 @@ app.get('/ui/register', (a_req, a_resp) => {
         logger.info('/ui/register', getCurrentLineNumber(), " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
+        const nonce = crypto.randomBytes(16).toString('base64');
+        a_resp.locals.nonce = nonce;
+        a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
         a_resp.render('register', {nonce:a_resp.locals.nonce, uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
     }
 });
@@ -362,6 +363,9 @@ app.get('/ui/logout', (a_req, a_resp) => {
 });
 
 app.get('/ui/error', (a_req, a_resp) => {
+    const nonce = crypto.randomBytes(16).toString('base64');
+    a_resp.locals.nonce = nonce;
+    a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
     a_resp.render('error',{nonce:a_resp.locals.nonce,theme:"light",version:g_version,test_mode:g_test});
 });
 
