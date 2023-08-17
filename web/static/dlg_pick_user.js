@@ -65,8 +65,8 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
     var search_input = $("#search_input",frame);
 
     var src = [
-        {title:"Collaborators",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"collab"},
-        {title:"By Groups",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"groups"},
+        {title:"Collaborators",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"collab",offset:0},
+        {title:"By Groups",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"groups",offset:0},
         {title:"All",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"all",offset:0},
         {title:"Search Results",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"search",offset:0}
     ];
@@ -130,11 +130,12 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
         },
         postProcess: function( ev, a_data ) {
             var i;
-
+            
             if ( a_data.node.key == "collab" || a_data.node.key == "all" || a_data.node.key == "search" ){
                 a_data.result = [];
                 if ( a_data.response.offset > 0 || a_data.response.total > (a_data.response.offset + a_data.response.count )){
-                    var pages = Math.ceil(a_data.response.total/settings.opts.page_sz), page = 1+a_data.response.offset/settings.opts.page_sz;
+                    var pages = Math.ceil(a_data.response.total/settings.opts.page_sz);
+                    var page = 1+a_data.response.offset/settings.opts.page_sz;
                     a_data.result.push({title:
                         "<button id='first_page' class='btn btn-icon-tiny' "+(page==1?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> " +
                         "<button id='back_page' class='btn btn-icon-tiny' "+(page==1?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-w'></span></button> " +
@@ -146,24 +147,9 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
                       unselectable:true,
                       hasBtn:true });
 
-              
-                  $(document).ready(function() {
-                    $('#first_page').click(function() {
-                      userPageLoad(a_data.node.key,0);
-                    });
-                    $('#back_page').click(function() {
-                      userPageLoad(a_data.node.key, (page-2)*settings.opts.page_sz);
-                    });
-                    $('#forward_page').click(function() {
-                      userPageLoad(a_data.node.key, page*settings.opts.page_sz);
-                    });
-                    $('#last_page').click(function() {
-                      userPageLoad(a_data.node.key, (pages-1)*settings.opts.page_sz);
-                    });
-                  });
+                  a_data.node.page = page;
+                  a_data.node.pages = pages;
                 }
-
-                console.log(a_data.result);
                 var user,unsel;
                 for ( i in a_data.response.user ) {
                     user = a_data.response.user[i];
@@ -197,6 +183,18 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
         renderNode: function(ev,data){
             if ( data.node.data.hasBtn ){
                 $(".btn",data.node.li).button();
+                $('#first_page', data.node.span).click(function() {
+                  userPageLoad(data.node.parent.key,0);
+                });
+                $('#back_page', data.node.span).click(function() {
+                  userPageLoad(data.node.parent.key, (data.node.parent.page-2)*settings.opts.page_sz);
+                });
+                $('#forward_page', data.node.span).click(function() {
+                  userPageLoad(data.node.parent.key, data.node.parent.page*settings.opts.page_sz);
+                });
+                $('#last_page', data.node.span).click(function() {
+                  userPageLoad(data.node.parent.key, (data.node.parent.pages-1)*settings.opts.page_sz);
+                });
             }
         },
     });

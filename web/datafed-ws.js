@@ -574,6 +574,7 @@ app.get('/api/usr/list/all', ( a_req, a_resp ) => {
     sendMessage( "UserListAllRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
+
 });
 
 app.get('/api/usr/list/collab', ( a_req, a_resp ) => {
@@ -586,6 +587,7 @@ app.get('/api/usr/list/collab', ( a_req, a_resp ) => {
     sendMessage( "UserListCollabRequest", par, a_req, a_resp, function( reply ) {
         a_resp.json(reply);
     });
+
 });
 
 app.post('/api/prj/create', ( a_req, a_resp ) => {

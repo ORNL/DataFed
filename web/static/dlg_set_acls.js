@@ -383,7 +383,7 @@ export function show( item ){
                             group = groups.find( function(elem){ return elem.gid == gid; } );
                             if ( group ){
                                 node.resetLazy();
-                                node.setTitle( utils.escapeHTML( group.title ) + " (" + gid + ")");
+                                node.setTitle( util.escapeHTML( group.title ) + " (" + gid + ")");
                             }else{
                                 new_rules.splice(i,1);
                                 node.remove();
