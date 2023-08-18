@@ -65,8 +65,8 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
     var search_input = $("#search_input",frame);
 
     var src = [
-        {title:"Collaborators",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"collab"},
-        {title:"By Groups",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"groups"},
+        {title:"Collaborators",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"collab",offset:0},
+        {title:"By Groups",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"groups",offset:0},
         {title:"All",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"all",offset:0},
         {title:"Search Results",icon:"ui-icon ui-icon-folder",folder:true,lazy:true,unselectable:true,key:"search",offset:0}
     ];
@@ -116,7 +116,7 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
             } else if ( data.node.key == "all" ) {
                 data.result = { url: api.userListAll_url( data.node.data.offset, settings.opts.page_sz ), cache: false };
             } else if ( data.node.key == "search" ) {
-                var srch_val = search_input.val().trim();
+                var srch_val = search_input.val().trim().toLowerCase();
                 if ( srch_val.length > 1 ){
                     data.result = { url: api.userFindByName_url( srch_val, data.node.data.offset, settings.opts.page_sz ), cache: false };
                 }else{
@@ -130,20 +130,26 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
         },
         postProcess: function( ev, a_data ) {
             var i;
-
+            
             if ( a_data.node.key == "collab" || a_data.node.key == "all" || a_data.node.key == "search" ){
                 a_data.result = [];
                 if ( a_data.response.offset > 0 || a_data.response.total > (a_data.response.offset + a_data.response.count )){
-                    var pages = Math.ceil(a_data.response.total/settings.opts.page_sz), page = 1+a_data.response.offset/settings.opts.page_sz;
-                    a_data.result.push({title:"<button class='btn btn-icon-tiny''"+(page==1?" disabled":"")+" onclick='userPageLoad(\"" +
-                        a_data.node.key+"\",0)'><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> <button class='btn btn-icon-tiny'"+(page==1?" disabled":"") +
-                        " onclick='userPageLoad(\""+a_data.node.key+"\","+(page-2)*settings.opts.page_sz+")'><span class='ui-icon ui-icon-triangle-1-w'></span></button> Page " +
-                        page + " of " + pages + " <button class='btn btn-icon-tiny'"+(page==pages?" disabled":"")+" onclick='userPageLoad(\"" +
-                        a_data.node.key+"\","+page*settings.opts.page_sz+")'><span class='ui-icon ui-icon-triangle-1-e'></span></button> <button class='btn btn-icon-tiny'" + 
-                        (page==pages?" disabled":"")+" onclick='userPageLoad(\""+a_data.node.key+"\","+(pages-1)*settings.opts.page_sz +
-                        ")'><span class='ui-icon ui-icon-triangle-1-e-stop'></span></button>", folder:false, icon:false, unselectable:true, hasBtn:true });
-                }
+                    var pages = Math.ceil(a_data.response.total/settings.opts.page_sz);
+                    var page = 1+a_data.response.offset/settings.opts.page_sz;
+                    a_data.result.push({title:
+                        "<button id='first_page' class='btn btn-icon-tiny' "+(page==1?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-w-stop'></span></button> " +
+                        "<button id='back_page' class='btn btn-icon-tiny' "+(page==1?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-w'></span></button> " +
+                        "Page " + page + " of " + pages + " " + 
+                        "<button id='forward_page' class='btn btn-icon-tiny' "+(page==pages?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-e'></span></button> " +
+                        "<button id='last_page' class='btn btn-icon-tiny' "+(page==pages?" disabled":"")+"><span class='ui-icon ui-icon-triangle-1-e-stop'></span></button>",
+                      folder:false,
+                      icon:false,
+                      unselectable:true,
+                      hasBtn:true });
 
+                  a_data.node.page = page;
+                  a_data.node.pages = pages;
+                }
                 var user,unsel;
                 for ( i in a_data.response.user ) {
                     user = a_data.response.user[i];
@@ -177,6 +183,18 @@ export function show(  a_uid, a_excl, a_single_sel, cb ){
         renderNode: function(ev,data){
             if ( data.node.data.hasBtn ){
                 $(".btn",data.node.li).button();
+                $('#first_page', data.node.span).click(function() {
+                  userPageLoad(data.node.parent.key,0);
+                });
+                $('#back_page', data.node.span).click(function() {
+                  userPageLoad(data.node.parent.key, (data.node.parent.page-2)*settings.opts.page_sz);
+                });
+                $('#forward_page', data.node.span).click(function() {
+                  userPageLoad(data.node.parent.key, data.node.parent.page*settings.opts.page_sz);
+                });
+                $('#last_page', data.node.span).click(function() {
+                  userPageLoad(data.node.parent.key, (data.node.parent.pages-1)*settings.opts.page_sz);
+                });
             }
         },
     });

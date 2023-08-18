@@ -328,7 +328,7 @@ router.get('/find/by_name_uid', function(req, res) {
                 cnt = req.queryParams.count ? req.queryParams.count : 20;
 
             var result = g_db._query("for u in userview search analyzer(u.name in tokens(@name,'user_name'), 'user_name')" +
-                " let s = BM25(u) filter s > 2 sort s desc limit @off,@cnt return {uid:u._id,name_last:u.name_last,name_first:u.name_first}", {
+                " let s = BM25(u) filter s > 0 sort s desc limit @off,@cnt return {uid:u._id,name_last:u.name_last,name_first:u.name_first}", {
                     name: name,
                     off: off,
                     cnt: cnt

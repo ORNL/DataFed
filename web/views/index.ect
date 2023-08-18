@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta http-equiv="Content-Type" content="script-src 'nonce-<%= @nonce %> 'self'">
         <% include 'head.ect' %>
-        <script type="module" charset="utf-8" src="/index.js"></script>
+        <script nonce="<%= @nonce %>" type="module" charset="utf-8" src="/index.js"></script>
         <title>DataFed Login</title>
         <script type="application/json" id="template_data">
         {
