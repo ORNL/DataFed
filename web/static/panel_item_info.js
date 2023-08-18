@@ -571,7 +571,7 @@ function showSelectedItemForm( item ){
     switch ( t ){
         case 'd': type = "Data Record"; icon = ""; title = item.title; cls = item.doi?".sidp":".sid"; break;
         case 'c': type = "Collection"; title = item.title; cls = ".sic"; break;
-        case 'u': type = "User"; title = item.nameFirst + " " + item.nameLast; cls = ".siu"; break;
+        case 'u': type = "User"; title = util.escapeHTML(item.nameFirst) + " " + util.escapeHTML(item.nameLast); cls = ".siu"; break;
         case 'p': type = "Project"; title = item.title; cls = ".sip"; break;
         case 'r': type = "Allocation"; title = "Allocation for " + (item.user.startsWith("u/")?" user ":" project ") + item.user; cls = ".sia"; break;
         case 'q': type = "Saved Query"; title = item.title; cls = ".siq"; break;
@@ -590,8 +590,6 @@ function showSelectedItemForm( item ){
 
     title_div.text( title );
 
-    //$("#sel_info_desc",form).text( item.desc );
-
     $(".sel-info-table td:nth-child(2)",form).not(".ignore").html("<span style='color:#808080'>(none)</span>");
 
     $("#sel_info_type",form).text( type );
@@ -600,15 +598,6 @@ function showSelectedItemForm( item ){
         $("#sel_info_id",form).text( item.title );
     else
         $("#sel_info_id",form).text( item.id );
-
-
-    //if ( item.title )
-        //$("#sel_info_title",form).text( item.title );
-
-    //if ( item.nameLast )
-    //    info += "<b>" + item.nameFirst + " " + item.nameLast + "</b><br><br>";
-
-        //$("#sel_info_name",form).text( item.nameFirst + " " + item.nameLast );
 
     if ( item.alias && cls != ".sidp" )
         $("#sel_info_alias",form).text( item.alias );

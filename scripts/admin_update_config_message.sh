@@ -110,7 +110,7 @@ then
   fi
 
 else
-  local_DATAFED_MESSAGE=$(cat "$local_DATAFED_DEFAULT_MESSAGE_FILE")
+  local_DATAFED_MESSAGE=$(cat "$local_DATAFED_MESSAGE_FILE")
 fi
 
 if [ "$ERROR_DETECTED" == "1" ]

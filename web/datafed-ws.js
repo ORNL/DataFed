@@ -19,6 +19,7 @@ const web_version = require('./version.js');
 const express = require('express'); // For REST api
 var session = require('express-session');
 //var bodyParser = require('body-parser');
+const sanitizeHtml = require('sanitize-html');
 var cookieParser = require('cookie-parser'); // cookies for user state
 var http = require('http');
 var https = require('https');
@@ -328,10 +329,11 @@ app.get('/ui/register', (a_req, a_resp) => {
         logger.info('/ui/register', getCurrentLineNumber(), " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
+        const clean = sanitizeHtml( a_req.session.name );
         const nonce = crypto.randomBytes(16).toString('base64');
         a_resp.locals.nonce = nonce;
         a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
-        a_resp.render('register', {nonce:a_resp.locals.nonce, uid: a_req.session.uid, uname: a_req.session.name, theme: theme, version: g_version, test_mode: g_test });
+        a_resp.render('register', {nonce:a_resp.locals.nonce, uid: a_req.session.uid, uname: clean, theme: theme, version: g_version, test_mode: g_test });
     }
 });
 
@@ -410,7 +412,6 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
                         uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
                     logger.info('/ui/authn', getCurrentLineNumber(), 'User', uid, 'authenticated, verifying DataFed account' );
-
                     sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
                         if ( !reply  ) {
                             logger.error('/ui/authn', getCurrentLineNumber(),  "Error - Find user call failed." );
