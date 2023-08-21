@@ -474,16 +474,12 @@ module.exports = (function() {
         if (a_client_ids.indexOf(',') > -1) {
             var potential_uuids = a_client_ids.split(',')
             for (var index in potential_uuids) {
-                console.log("Potential uuid " + potential_uuids[index]);
                 if (!obj.isUUID(potential_uuids[index])) {
-                    console.log("False");
                     return false;
                 }
             }
-            console.log("Is a UUID list.");
             return true;
         } else {
-            console.log("Does not contain ',' is Not a UUID List.");
             return false;
         }
     };
@@ -551,8 +547,6 @@ module.exports = (function() {
         for (var i in potential_uuids) {
             uuids.push("uuid/" + potential_uuids[i]);
         }
-        console.log("uuids");
-        console.log(uuids);
         var result = obj.db._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
             ids: uuids
         }).toArray();
@@ -579,23 +573,17 @@ module.exports = (function() {
         for (var i in potential_uuids) {
             uuids.push("uuid/" + potential_uuids[i]);
         }
-        console.log("uuids");
-        console.log(uuids);
         var result = obj.db._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
             ids: uuids
         }).toArray();
-        console.log("result is ");
-        console.log(result);
         if (result.length != 1) {
             throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
         }
 
         var first_uuid = result[0]._id
-        console.log("first_uuid is");
-        console.log(first_uuid);
         // Next we need to make sure the provided ids are all the same if there is more than one
         for (var i = 1; i < result.length; i++) {
-            console.log("resolveUUID comparint " + first_uuid + " with " + result[i]);
+            console.log("resolveUUID comparing " + first_uuid + " with " + result[i]);
             if (first_uuid != result[i]._id) {
                 return;
             }
@@ -609,9 +597,11 @@ module.exports = (function() {
 
         var params;
         console.log("getUserFromClient id: ", a_client_id);
+
         if (a_client_id.startsWith("u/")) {
-            if (!obj.db.u.exists(a_client_id))
+            if (!obj.db.u.exists(a_client_id)) {
                 throw [obj.ERR_INVALID_PARAM, "No such user '" + a_client_id + "'"];
+	    }
 
             return obj.db._document({
                 _id: a_client_id
@@ -627,11 +617,9 @@ module.exports = (function() {
                 'id': 'uuid/' + a_client_id
             };
         } else if (obj.isUUIDList(a_client_id)) {
-            console.log("is UUIDList");
             // Check to make sure the UUIDs provided are all associated with the same DataFed account, if they are we can unambiguously
             // determine the UUID, if they are not, then we will throw an error for now, 
             var unambiguous_id = obj.resolveUUIDsToID(a_client_id);
-            console.log("unambiguoud id " + unambiguous_id);
             if (!unambiguous_id) {
                 console.log("Undefined");
                 return;
@@ -643,8 +631,9 @@ module.exports = (function() {
 
 
         } else {
-            if (!obj.db.u.exists("u/" + a_client_id))
+            if (!obj.db.u.exists("u/" + a_client_id)) {
                 throw [obj.ERR_INVALID_PARAM, "No such user 'u/" + a_client_id + "'"];
+            }
             return obj.db._document({
                 _id: "u/" + a_client_id
             });
@@ -668,9 +657,7 @@ module.exports = (function() {
 
         var params;
 
-        console.log("getUserFromClientID_noexcept");
         if (a_client_id.startsWith("u/")) {
-            console.log("Starts with u/");
             if (!obj.db.u.exists(a_client_id))
                 return;
 
@@ -679,22 +666,18 @@ module.exports = (function() {
             });
         } else if (obj.isDomainAccount(a_client_id)) {
             // Account
-            console.log("isDomainAccount");
             params = {
                 'id': 'accn/' + a_client_id
             };
         } else if (obj.isUUID(a_client_id)) {
             // UUID
-            console.log("isUUID");
             params = {
                 'id': 'uuid/' + a_client_id
             };
         } else if (obj.isUUIDList(a_client_id)) {
-            console.log("is UUIDList");
             // Check to make sure the UUIDs provided are all associated with the same DataFed account, if they are we can unambiguously
             // determine the UUID, if they are not, then we will throw an error for now, 
             var unambiguous_id = obj.resolveUUIDsToID_noexcept(a_client_id);
-            console.log("unambiguoud id " + unambiguous_id);
             if (!unambiguous_id) {
                 console.log("Undefined");
                 return;
@@ -944,14 +927,12 @@ module.exports = (function() {
     };
 
     obj.hasAdminPermObject = function(a_client, a_object_id) {
-        console.log("6a");
         if (a_client.is_admin)
             return true;
 
         var first_owner = obj.db.owner.firstExample({
             _from: a_object_id
         });
-        console.log("6b");
         if (first_owner !== null) {
             var owner_id = first_owner._to; // obj.db.owner.firstExample({ _from: a_object_id })._to;
         } else {
@@ -960,7 +941,6 @@ module.exports = (function() {
         if (owner_id == a_client._id)
             return true;
 
-        console.log("6c");
         if (owner_id[0] == "p") {
             // Object owned by a project
             if (obj.db.admin.firstExample({
@@ -976,7 +956,6 @@ module.exports = (function() {
                 return true;
         }
 
-        console.log("6d");
         if (a_object_id[0] == 'd') {
             var data = obj.db._query("for i in d filter i._id == @id return i.creator", {
                 id: a_object_id
@@ -1310,7 +1289,6 @@ module.exports = (function() {
     collections are not changed by this function.
     */
     obj.catalogUpdateColl = function(a_coll, a_ctx, a_visited = {}) {
-        console.log("catalogUpdateColl", a_coll._id, a_ctx);
         var ctx;
 
         if (a_ctx) {
