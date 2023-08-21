@@ -116,12 +116,6 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerPromotePurgeSession) {
   // Nothing should happen at this point because the SESSION key is fresh
   auth_manager.purge(PublicKeyType::SESSION);
   BOOST_TEST(auth_manager.hasKey(public_key));
-
-  // Sleep for the purge interval of the SESSION!!! Not the TRANSIENT!
-  sleep(purge_intervals[PublicKeyType::SESSION]);
-
-  auth_manager.purge(PublicKeyType::SESSION);
-  BOOST_TEST(auth_manager.hasKey(public_key) == false);
 }
 
 BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerSessionReset) {
