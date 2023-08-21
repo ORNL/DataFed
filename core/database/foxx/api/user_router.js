@@ -14,12 +14,13 @@ module.exports = router;
 //==================== USER API FUNCTIONS
 
 router.get('/authn/password', function(req, res) {
+	console.log("Running /authn/password");
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
-
             const is_verified = auth.verify(client.password, req.queryParams.pw);
-            if (is_verified === false)
+            if (is_verified === false) {
                 throw g_lib.ERR_AUTHN_FAILED;
+	    }
 
             //if ( client.password != req.queryParams.pw )
             //    throw g_lib.ERR_AUTHN_FAILED;
