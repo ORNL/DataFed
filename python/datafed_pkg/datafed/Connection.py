@@ -172,7 +172,8 @@ class Connection:
             self._socket.recv(0)
 
             # correlation_id
-            self._socket.recv_string(0)
+            correlation_id = self._socket.recv_string(0)
+            self._logger.debug(f"Receiving message with correlation id is {correlation_id}")
             # key
             self._socket.recv_string(0)
             # client
@@ -227,6 +228,7 @@ class Connection:
         self._socket.send(struct.pack("!i", route_count), zmq.SNDMORE)
         self._socket.send(b"", zmq.SNDMORE)
         correlation_id = str(uuid.uuid4())
+        self._logger.debug(f"Creating message with correlation id is {correlation_id}")
         self._socket.send_string(correlation_id, zmq.SNDMORE)
         self._socket.send_string(self._pub_key, zmq.SNDMORE)
         self._socket.send_string("no_user", zmq.SNDMORE)
