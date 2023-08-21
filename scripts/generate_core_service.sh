@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/bin/bash
 
 # Not do not include "-u" in set option, we will be checking for unbound variables
 # if that option is set then this script will throw an error when there is none

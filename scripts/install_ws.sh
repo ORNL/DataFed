@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euf -o pipefail
+set -uf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
@@ -8,6 +8,10 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source ${PROJECT_ROOT}/config/datafed.sh
 source ${SOURCE}/dependency_versions.sh
 
+#NVM_DIR=/home/cades/.nvm
+#[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+export NVM_DIR="/home/cades/.nvm"
+source ${NVM_DIR}/nvm.sh
 # Make sure paths exist
 mkdir -p ${DATAFED_INSTALL_PATH}/web
 mkdir -p ${DATAFED_INSTALL_PATH}/keys
@@ -16,6 +20,7 @@ mkdir -p ${DATAFED_DEFAULT_LOG_PATH}
 # Install web node modules
 cp "$PROJECT_ROOT/web/package.json" ${DATAFED_INSTALL_PATH}/web/
 
+nvm use $DATAFED_NODE_VERSION
 export npm_config_cache=${DATAFED_INSTALL_PATH}/web
 # Check if npm exists
 {
@@ -69,6 +74,7 @@ fi
   echo "ERROR npm command failed!"
   exit 1
 }
+
 # Install javascript web server repo and core server were 
 # already installed by CMake
 cp "$PROJECT_ROOT/web/datafed-ws.js" ${DATAFED_INSTALL_PATH}/web
