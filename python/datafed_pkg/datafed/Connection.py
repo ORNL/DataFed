@@ -73,7 +73,6 @@ class Connection:
         self._msg_type_by_desc = {}
 
         self._address = "tcp://{0}:{1}".format(server_host, server_port)
-        self._logger.debug(f"Address is {self._address}")
         # init zeromq
         if zmq_ctxt:
             self._zmq_ctxt = zmq_ctxt
@@ -161,25 +160,23 @@ class Connection:
             header = ""
             while header != "BEGIN_DATAFED":
                 header = self._socket.recv_string(0)
-                self._logger.debug(f"Received header: {header}")
 
             msg = self._socket.recv(0)
             route_count = struct.unpack("!i", msg)[0]
-            self._logger.debug(f"Received route count {route_count}")
 
             for i in range(0, route_count):
-                route = self._socket.recv(0)
-                self._logger.debug(f"Received route: {route}")
+                # route
+                self._socket.recv(0)
 
-            null_packet = self._socket.recv(0)
-            self._logger.debug(f"Received null_packet: {null_packet}")
+            # null_packet
+            self._socket.recv(0)
 
-            correlation_id = self._socket.recv_string(0)
-            self._logger.debug(f"Received correlation_id: {correlation_id}")
-            key = self._socket.recv_string(0)
-            self._logger.debug(f"Received key: {key}")
-            client = self._socket.recv_string(0)
-            self._logger.debug(f"Received : {client}")
+            # correlation_id
+            self._socket.recv_string(0)
+            # key
+            self._socket.recv_string(0)
+            # client
+            self._socket.recv_string(0)
 
             # receive custom frame header and unpack
             frame_data = self._socket.recv(0)
@@ -201,7 +198,6 @@ class Connection:
                 reply = google.protobuf.reflection.ParseMessage(desc, data)
             else:
                 # No content, just create message instance
-                self._logger.debug(f"received no content frame was less than 0")
                 data = self._socket.recv(0)
                 reply = google.protobuf.reflection.MakeClass(desc)()
 
@@ -225,20 +221,14 @@ class Connection:
         msg_type = self._msg_type_by_desc[message.DESCRIPTOR]
 
         # Initial Null frame
-        self._logger.debug("Send BEGIN_DATAFED string")
         self._socket.send_string("BEGIN_DATAFED", zmq.SNDMORE)
         route_count = 0
         # !i - The ! - is for network byte order, the 'i' is for an integer
-        self._logger.debug("Send route_count: {route_count}")
         self._socket.send(struct.pack("!i", route_count), zmq.SNDMORE)
-        self._logger.debug("Send b''")
         self._socket.send(b"", zmq.SNDMORE)
         correlation_id = str(uuid.uuid4())
-        self._logger.debug("Send correlation_id: {correlation_id}")
         self._socket.send_string(correlation_id, zmq.SNDMORE)
-        self._logger.debug("Send public key as string {self._pub_key}")
         self._socket.send_string(self._pub_key, zmq.SNDMORE)
-        self._logger.debug("send user: 'no-user'")
         self._socket.send_string("no_user", zmq.SNDMORE)
 
         # Serialize
@@ -250,15 +240,11 @@ class Connection:
 
         if data_sz > 0:
             # Send frame and payload
-            self._logger.debug("Send frame.")
             self._socket.send(frame, zmq.SNDMORE)
-            self._logger.debug("Send body.")
             self._socket.send(data, 0)
         else:
             # Send frame (no payload)
-            self._logger.debug("Send frame.")
             self._socket.send(frame, zmq.SNDMORE)
-            self._logger.debug("Send empty body.")
             self._socket.send(b"", 0)
 
     ##
