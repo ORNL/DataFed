@@ -16,8 +16,8 @@ from datafed.VERSION import __version__
 setuptools.setup(
     name="datafed",
     version=__version__,
-    author="Dale Stansberry",
-    author_email="stansberrydv@ornl.gov",
+    author="Dale Stansberry, Joshua Brown",
+    author_email="stansberrydv@ornl.gov, brownjs@ornl.gov",
     description="DataFed CLI and API",
     long_description=long_description,
     long_description_content_type="text/markdown",
