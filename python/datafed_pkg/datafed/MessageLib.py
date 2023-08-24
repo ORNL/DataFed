@@ -12,11 +12,28 @@
 
 
 import os
+import xmlrpc.client
 import zmq
 from . import Version_pb2
 from . import SDMS_Anon_pb2 as anon
 from . import SDMS_Auth_pb2 as auth
 from . import Connection
+from . import VERSION
+
+
+# Check with pypi if a newer release is available
+def get_latest_version(package_name):
+    try:
+        client = xmlrpc.client.ServerProxy('https://pypi.org/pypi')
+        releases = client.package_releases(package_name)
+        
+        if not releases:
+            return None
+        
+        return releases[0]
+    except Exception as e:
+        print(f"Unable to connect to pypi: {e}")
+        return None
 
 ##
 # @class API
@@ -168,7 +185,7 @@ class API:
 
         # Check for compatible protocol versions
         reply, mt = self.sendRecv(anon.VersionRequest(), 10000)
-        if reply == None:
+        if reply is None:
             raise Exception("Timeout waiting for server connection.")
 
         if reply.api_major != Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR:
@@ -178,14 +195,32 @@ class API:
                 )
             )
 
-        # if reply.major != Version_pb2.VER_MAJOR or reply.mapi_major != Version_pb2.VER_MAPI_MAJOR or \
-        #    reply.mapi_minor < Version_pb2.VER_MAPI_MINOR or reply.mapi_minor > ( Version_pb2.VER_MAPI_MINOR + 9 ):
-        #    raise Exception( "Incompatible server version {}.{}.{}.{}.{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client_py))
-
-        # if reply.client_py > Version_pb2.VER_CLIENT_PY:
-        #    self.new_client_avail = "{}.{}.{}:{}".format(reply.major,reply.mapi_major,reply.mapi_minor,reply.client_py)
-        # else:
-        #    self.new_client_avail = False
+        # Make a request to pypi
+        package_name = 'datafed'  # Replace with the package name you want to check
+        latest_version_on_pypi = get_latest_version(package_name)
+        
+        if latest_version_on_pypi:
+            pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split('.')
+            major, minor, patch = VERSION.__version__.split('.')
+            if pypi_major != major:
+                print("A new major release of the datafed python client is "
+                      "available it is recommended that you update the datafed"
+                      " python client.")
+                print(f"The current version is: {VERSION.__version__}")
+                print(f" The latest version is: {latest_version_on_pypi}")
+            elif pypi_minor > minor:
+                print("A new minor release of the datafed python client is "
+                      "available.")
+                print(f"The current version is: {VERSION.__version__}")
+                print(f" The latest version is: {latest_version_on_pypi}")
+            elif pypi_patch > patch:
+                print("A new patch release of the datafed python client is "
+                      "available.")
+                print(f"The current version is: {VERSION.__version__}")
+                print(f" The latest version is: {latest_version_on_pypi}")
+            self.new_client_avail = latest_version_on_pypi
+        else:
+            self.new_client_avail = False
 
         if client_token:
             self.manualAuthByToken(client_token)
