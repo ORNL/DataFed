@@ -9,10 +9,6 @@ with open(path.join(this_directory, "README"), encoding="utf-8") as f:
 
 from datafed.VERSION import __version__
 
-# read the contents of VERSION file
-# with open(path.join(this_directory, 'VERSION'), encoding='utf-8') as f:
-#    version = f.read()
-
 setuptools.setup(
     name="datafed",
     version=__version__,
