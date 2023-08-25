@@ -30,7 +30,14 @@ COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 
 gateway_line=$( globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" )
-
+#    {
+#      "source": "{id}",
+#      "match": "${DATAFED_GLOBUS_APP_ID}@clients.auth.globus.org",
+#      "output": "${DATAFED_GLOBUS_REPO_USER}",
+#      "ignore_case": false,
+#      "literal": true
+#    }
+echo "$DATAFED_GLOBUS_REPO_USER"
 cat << EOF > mapping.json 
 {
   "DATA_TYPE": "expression_identity_mapping#1.0.0",
@@ -41,24 +48,20 @@ cat << EOF > mapping.json
       "output": "${DATAFED_GLOBUS_REPO_USER}",
       "ignore_case": false,
       "literal": false
-    },
-    {
-      "source": "{id}",
-      "match": "${DATAFED_GLOBUS_APP_ID}@clients.auth.globus.org",
-      "output": "${DATAFED_GLOBUS_REPO_USER}",
-      "ignore_case": false,
-      "literal": true
     }
   ]
 }
 EOF
+
+#DOMAINS="--domain ornl.gov --domain clients.auth.globus.org --domain gmail.com"
+DOMAINS="--domain ornl.gov"
 
 if [ -z "$gateway_line" ]
 then
 # Check if it already exists
   globus-connect-server storage-gateway create posix \
     "$GATEWAY_NAME" \
-    --domain ornl.gov --domain clients.auth.globus.org --domain gmail.com \
+    ${DOMAINS}  \
     --identity-mapping file:mapping.json
 
 else
@@ -69,7 +72,7 @@ else
 
   globus-connect-server storage-gateway update posix \
     "$uuid_of_storage_gateway" \
-    --domain ornl.gov --domain clients.auth.globus.org --domain gmail.com \
+    ${DOMAINS} \
     --identity-mapping file:mapping.json
 
 fi
@@ -77,8 +80,8 @@ fi
 PATH_TO_GUEST_ROOT="${GCS_COLLECTION_ROOT_PATH}"
 
 # Create project/ and /user folders
-mkdir -p "${PATH_TO_GUEST_ROOT}/${DATAFED_REPO_ID_AND_DIR}/user"
-mkdir -p "${PATH_TO_GUEST_ROOT}/${DATAFED_REPO_ID_AND_DIR}/project"
+#mkdir -p "${PATH_TO_GUEST_ROOT}/${DATAFED_REPO_ID_AND_DIR}/user"
+#mkdir -p "${PATH_TO_GUEST_ROOT}/${DATAFED_REPO_ID_AND_DIR}/project"
 
 collection_line=$( globus-connect-server collection list | grep "$COLLECTION_NAME" )
 
@@ -95,6 +98,7 @@ then
     "$COLLECTION_NAME" \
     --allow-guest-collections \
     --enable-anonymous-writes \
+    --default-directory "${GCS_COLLECTION_ROOT_PATH}" \
     --disable-https
 else
 
@@ -104,6 +108,7 @@ else
     "$uuid_of_collection" \
     --allow-guest-collections \
     --enable-anonymous-writes \
+    --default-directory "${GCS_COLLECTION_ROOT_PATH}" \
     --disable-https
 
 fi
