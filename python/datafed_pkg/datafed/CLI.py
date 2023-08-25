@@ -177,7 +177,7 @@ def run():
                 release_version += f"{Version_pb2.DATAFED_RELEASE_DAY}."
                 release_version += f"{Version_pb2.DATAFED_RELEASE_HOUR}."
                 release_version += f"{Version_pb2.DATAFED_RELEASE_MINUTE}"
-                _print_msg(1, "Welcome to DataFed CLI, version {}".format(__version__))
+                _print_msg(1, f"Welcome to DataFed CLI, version {VERSION.__version__}")
                 _print_msg(
                     1, "               Release, version {}".format(release_version)
                 )
@@ -2201,12 +2201,11 @@ def _help_cli(ctx, command):
     """
 
     if not command:
-        click.echo("DataFed _cli, version {}\n".format(version))
+        click.echo("DataFed _cli, version {}\n".format(VERSION.__version__))
         click.echo(ctx.parent.get_help())
     else:
         first = True
         for c in command:
-            # print( c )
             if first:
                 first = False
                 subcmd = _cli.get_command(_cli, c)
@@ -3038,7 +3037,7 @@ def _initialize(opts):
     # print("_initialize, opts:", opts )
 
     if "version" in opts and opts["version"]:
-        click.echo(version)
+        click.echo(VERSION.__version__)
         _interactive = False
         raise SystemExit()
 
