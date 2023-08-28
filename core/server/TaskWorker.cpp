@@ -324,7 +324,9 @@ TaskWorker::cmdRawDataUpdateSize(TaskWorker &me, const Value &a_task_params,
   ICommunicator::Response response =
       me.repoSendRecv(repo_id, std::move(message_req), log_context);
 
-  if (response.time_out == false and response.error == false) {
+  if (response.time_out == true) {
+    return response;
+  } else if (response.error == false) {
     auto proto_msg =
         std::get<google::protobuf::Message *>(response.message->getPayload());
     auto size_reply = dynamic_cast<Auth::RepoDataSizeReply *>(proto_msg);
