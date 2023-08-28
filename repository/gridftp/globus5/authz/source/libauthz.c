@@ -392,6 +392,11 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
   void *callback_arg = va_arg(ap, void *);
   // void *                      authz_system_state  = va_arg(ap, void *);
 
+  char * callout_ids1 = getenv("GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS");
+
+  syslog(LOG_DEBUG,
+    "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
+    callout_ids1);
   if (strcmp(action, "lookup") == 0 || strcmp(action, "chdir") == 0) {
     result = GLOBUS_SUCCESS;
     callback(callback_arg, handle, result);

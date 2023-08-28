@@ -25,7 +25,7 @@ install_protobuf() {
   git checkout v${DATAFED_PROTOBUF_VERSION}
   git submodule update --init --recursive
   cmake -S cmake/ -B build -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-  cmake --build build -j 4
+  cmake --build build -j 8
   sudo cmake --build build --target install
   cd python
   python3 setup.py build
@@ -58,8 +58,8 @@ install_libzmq() {
   git clone https://github.com/zeromq/libzmq.git
   cd libzmq
   git checkout v${DATAFED_LIBZMQ_VERSION}
-  cmake -S. -B build
-  cmake --build build -j 4
+  cmake -S. -B build -DBUILD_STATIC=ON -DBUILD_SHARED=ON
+  cmake --build build -j 8
   sudo cmake --build build --target install
 }
 
@@ -72,7 +72,7 @@ install_nlohmann_json() {
   cd json
   git checkout v${DATAFED_NLOHMANN_JSON_VERSION}
   cmake -S . -B build
-  cmake --build build -j 4
+  cmake --build build -j 8
   sudo cmake --build build --target install
   cd ../
 }
@@ -86,7 +86,7 @@ install_json_schema_validator() {
   cd json-schema-validator
   git checkout ${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}
   cmake -S . -B build
-  cmake --build build -j 4
+  cmake --build build -j 8
   sudo cmake --build build --target install
   cd ../
 }

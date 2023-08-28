@@ -17,7 +17,7 @@ foreach(PROG
   include_directories(${PROJECT_SOURCE_DIR}/common/source)
   file(GLOB ${PROG}_SOURCES ${PROG}.cpp)
   add_executable(unit_${PROG} ${${PROG}_SOURCES})
-  target_link_libraries(unit_${PROG} Boost::unit_test_framework Boost::date_time common -lzmq -lprotobuf -lpthread)
+  target_link_libraries(unit_${PROG} ${Boost_LIBRARIES} common PkgConfig::PkgConfig_ZMQ ${Protobuf_LIBRARIES} Threads::Threads)
   target_compile_definitions(unit_${PROG} PRIVATE BOOST_TEST_DYN_LINK)
   add_test(unit_${PROG} unit_${PROG})
    

@@ -1,11 +1,11 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/common/source)
 add_executable(test_tcp_secure_client test_tcp_secure_client.cpp)
-target_link_libraries(test_tcp_secure_client ${Boost_LIBRARIES} common -lzmq -lprotobuf -lpthread)
+target_link_libraries(test_tcp_secure_client ${Boost_LIBRARIES} common PkgConfig::PkgConfig_ZMQ ${Protobuf_LIBRARIES} Threads::Threads)
 target_compile_definitions(test_tcp_secure_client PRIVATE BOOST_TEST_DYN_LINK)
 
 add_executable(test_tcp_secure_server test_tcp_secure_server.cpp)
-target_link_libraries(test_tcp_secure_server ${Boost_LIBRARIES} common -lzmq -lprotobuf -lpthread)
+target_link_libraries(test_tcp_secure_server ${Boost_LIBRARIES} common PkgConfig::PkgConfig_ZMQ ${Protobuf_LIBRARIES} Threads::Threads)
 target_compile_definitions(test_tcp_secure_server PRIVATE BOOST_TEST_DYN_LINK)
 
 find_program(TCPDUMP_CMD NAMES tcpdump)
