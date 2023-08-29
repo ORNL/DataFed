@@ -1154,6 +1154,7 @@ std::unique_ptr<IMessage> ClientWorker::procRecordUpdateBatchRequest(
 
   m_db_client.recordUpdateBatch(*request, reply, result, log_context);
 
+  DL_DEBUG(log_context, "procRecordUpdateBatchRequest, uid: " << a_uid);
   handleTaskResponse(result, log_context);
 
   PROC_MSG_END(log_context);
@@ -1208,6 +1209,7 @@ void ClientWorker::recordCollectionDelete(const std::vector<std::string> &a_ids,
   m_db_client.taskInitRecordCollectionDelete(a_ids, a_reply, result,
                                              log_context);
 
+  DL_DEBUG(log_context, "recordCollectionDelete ");
   handleTaskResponse(result, log_context);
 }
 
@@ -1224,6 +1226,7 @@ std::unique_ptr<IMessage> ClientWorker::procRecordAllocChangeRequest(
 
   m_db_client.taskInitRecordAllocChange(*request, reply, result, log_context);
 
+  DL_DEBUG(log_context, "procRecordAllocChangeRequest ");
   handleTaskResponse(result, log_context);
 
   PROC_MSG_END(log_context);
@@ -1242,6 +1245,7 @@ std::unique_ptr<IMessage> ClientWorker::procRecordOwnerChangeRequest(
 
   m_db_client.taskInitRecordOwnerChange(*request, reply, result, log_context);
 
+  DL_DEBUG(log_context, "procOwnerChangeRequest ");
   handleTaskResponse(result, log_context);
 
   PROC_MSG_END(log_context);
@@ -1261,6 +1265,7 @@ ClientWorker::procProjectDeleteRequest(const std::string &a_uid,
 
   m_db_client.taskInitProjectDelete(*request, reply, result, log_context);
 
+  DL_DEBUG(log_context, "procProjectDeleteRequest ");
   handleTaskResponse(result, log_context);
 
   PROC_MSG_END(log_context);
@@ -1280,6 +1285,7 @@ std::unique_ptr<IMessage> ClientWorker::procRepoAllocationCreateRequest(
   m_db_client.taskInitRepoAllocationCreate(*request, reply, result,
                                            log_context);
 
+  DL_DEBUG(log_context, "procRepoAllocationCreateRequest ");
   handleTaskResponse(result, log_context);
 
   PROC_MSG_END(log_context);
@@ -1299,6 +1305,7 @@ std::unique_ptr<IMessage> ClientWorker::procRepoAllocationDeleteRequest(
   m_db_client.taskInitRepoAllocationDelete(*request, reply, result,
                                            log_context);
 
+  DL_DEBUG(log_context, "procRepoAllocationDeleteRequest ");
   handleTaskResponse(result, log_context);
 
   PROC_MSG_END(log_context);
@@ -1372,6 +1379,7 @@ void ClientWorker::handleTaskResponse(libjson::Value &a_result,
     libjson::Value::Object &task_obj = obj.asObject();
 
     if (task_obj.getNumber("status") != TS_BLOCKED) {
+      DL_DEBUG(log_context, "handleTaskResponse status is: " << task_obj.getNumber("status"));
       TaskMgr::getInstance().newTask(task_obj.getString("_id"), log_context);
     }
   }

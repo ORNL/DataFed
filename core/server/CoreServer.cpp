@@ -476,22 +476,18 @@ void Server::repoCacheThread(LogContext log_context, int thread_count) {
   // Check to see if repo cache needs to be updated every 60 seconds
   log_context.thread_name += "-repoCacheThread";
   log_context.thread_id = thread_count;
-  chrono::system_clock::duration repo_cache_poll = chrono::seconds(60);
+  std::chrono::seconds repo_cache_poll(60);
 
   while (1) {
     try {
-      try {
-        DL_DEBUG(log_context, "Checking if Repo Cache needs Updating");
-        m_config.loadRepositoryConfig(m_auth_manager, log_context);
-
-      } catch (const std::exception &e) {
-        DL_ERROR(log_context, "Repo Cache Updating... " << e.what());
-      }
+      DL_DEBUG(log_context, "Checking if Repo Cache needs Updating, then sleeping for " << std::to_string(repo_cache_poll.count()) << " seconds.");
+      m_config.loadRepositoryConfig(m_auth_manager, log_context);
+    } catch (const std::exception &e) {
+      DL_ERROR(log_context, "Repo Cache Updating... " << e.what());
     } catch (...) {
       DL_ERROR(log_context, "Repo Cache Updating... unknown exception");
     }
-
-    this_thread::sleep_for(repo_cache_poll);
+    std::this_thread::sleep_for(repo_cache_poll);
   }
   DL_ERROR(log_context, "DB maintenance thread exiting");
 }

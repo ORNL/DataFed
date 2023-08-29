@@ -1394,14 +1394,14 @@ var tasks_func = function() {
     };
 
     obj.taskComplete = function(a_task_id, a_success, a_msg) {
-        //console.log("taskComplete 1");
+        console.log("taskComplete 1");
         var ready_tasks = [],
             dep, dep_blocks, blocks = g_db.block.byExample({
                 _to: a_task_id
             });
         var time = Math.floor(Date.now() / 1000);
 
-        //console.log("taskComplete 2");
+        console.log("taskComplete 2");
 
         while (blocks.hasNext()) {
             dep = blocks.next()._from;
@@ -1422,7 +1422,7 @@ var tasks_func = function() {
                 });
             }
         }
-        //console.log("taskComplete 3");
+        console.log("taskComplete 3");
 
         var doc;
         if (a_success) {
@@ -1439,14 +1439,14 @@ var tasks_func = function() {
 
         doc.ut = time;
 
-        //console.log("taskComplete 4", doc );
+        console.log("taskComplete 4", doc );
         g_db.block.removeByExample({
             _to: a_task_id
         });
         g_db.lock.removeByExample({
             _from: a_task_id
         });
-        //console.log("taskComplete 5");
+        console.log("taskComplete 5");
         var delay = 1;
         for (;;) {
             try {
@@ -1467,7 +1467,7 @@ var tasks_func = function() {
                 }
             }
         }
-        //console.log("taskComplete 6");
+        console.log("taskComplete 6");
 
         return ready_tasks;
     };

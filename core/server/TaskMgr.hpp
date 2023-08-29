@@ -66,6 +66,10 @@ private:
   std::condition_variable m_maint_cvar;
   LogContext m_log_context;
   int m_thread_count = 0;
+
+  static TaskMgr * global_task_mgr;
+  static std::mutex singleton_instance_mutex;
+
 };
 
 } // namespace Core

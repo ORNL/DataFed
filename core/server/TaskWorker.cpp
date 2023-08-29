@@ -69,6 +69,7 @@ void TaskWorker::workerThread(LogContext log_context) {
   bool first;
 
   while (m_running) {
+    DL_DEBUG(log_context,"Grabbing next task");
     std::unique_ptr<ITaskMgr::Task> m_task = m_mgr.getNextTask(this);
 
     err_msg.clear();
@@ -104,18 +105,26 @@ void TaskWorker::workerThread(LogContext log_context) {
           response = m_execute[cmd](*this, params, log_context);
 
         } else if (cmd == TC_STOP) {
+          DL_DEBUG(log_context,
+                   "TASK_ID: " << m_task->task_id << ", STOP at step: " << step);
           m_mgr.newTasks(params, log_context);
           break;
         } else {
+          DL_ERROR(log_context, "Invalid task command: " << cmd);
           EXCEPT_PARAM(1, "Invalid task command: " << cmd);
         }
 
         if (response.error or response.time_out) {
+	  err_msg = response.error_msg;
+          DL_DEBUG(log_context, "error dectected: " << response.error << " time_out detected: " << response.time_out << " cmd: " << cmd);
+          DL_DEBUG(log_context, "err_msg: " << err_msg );
           if (m_mgr.retryTask(std::move(m_task), log_context)) {
+            DL_DEBUG(log_context, "retry period exceeded");
             err_msg = "Maximum task retry period exceeded.";
             // We give up, exit inner while loop and delete task
             break;
           } else {
+            DL_DEBUG(log_context, "Done with retries");
             // Done for now - TaskMgr owns task, so clear ptr to prevent
             // deletion, then exit inner while loop
             m_task = 0;
@@ -126,7 +135,8 @@ void TaskWorker::workerThread(LogContext log_context) {
         err_msg = e.toString();
         DL_ERROR(log_context, "Task worker "
                                   << id() << " exception: " << err_msg
-                                  << " task_id is " << m_task->task_id);
+                                  << " task_id is " << m_task->task_id
+				  << " cmd is " << cmd);
         if (err_msg.find("Task " + m_task->task_id + " does not exist") !=
             std::string::npos) {
           DL_ERROR(log_context, "Task is not found in the database something "
@@ -330,16 +340,21 @@ TaskWorker::cmdRawDataUpdateSize(TaskWorker &me, const Value &a_task_params,
     auto proto_msg =
         std::get<google::protobuf::Message *>(response.message->getPayload());
     auto size_reply = dynamic_cast<Auth::RepoDataSizeReply *>(proto_msg);
-    if (size_reply->size_size() != (int)ids.size()) {
-      EXCEPT_PARAM(1,
-                   "Mismatched result size with RepoDataSizeReply from repo: "
-                       << repo_id);
-    }
+    if (size_reply != 0 ) {
+      if (size_reply->size_size() != (int)ids.size()) {
+        DL_ERROR(log_context, "Mismatched result size with RepoDataSizeReply from repo: "
+             << repo_id);
+        EXCEPT_PARAM(1,
+         "Mismatched result size with RepoDataSizeReply from repo: "
+             << repo_id);
+      }
 
-    me.m_db.recordUpdateSize(*size_reply, log_context);
-  } else {
-    EXCEPT_PARAM(
+      me.m_db.recordUpdateSize(*size_reply, log_context);
+    } else {
+      DL_ERROR(log_context, "Unexpected reply to RepoDataSizeReply from repo: " << repo_id);
+      EXCEPT_PARAM(
         1, "Unexpected reply to RepoDataSizeReply from repo: " << repo_id);
+    }
   }
 
   return response;

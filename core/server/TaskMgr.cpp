@@ -20,6 +20,9 @@ using namespace std;
 namespace SDMS {
 namespace Core {
 
+TaskMgr * TaskMgr::global_task_mgr;
+std::mutex TaskMgr::singleton_instance_mutex;
+
 void TaskMgr::initialize(LogContext log_context) {
   m_log_context = log_context;
 
@@ -97,17 +100,24 @@ TaskMgr::TaskMgr()
 TaskMgr::~TaskMgr() {}
 
 TaskMgr &TaskMgr::getInstance() {
-  static TaskMgr *mgr = new TaskMgr();
+  if( global_task_mgr == nullptr ) {
+    EXCEPT(1, "Something is really wrong, the getInstance() should only be called after the getInstance(log_context, thread_id) command has been called");
+  }
 
-  return *mgr;
+  return *global_task_mgr;
 }
 
 TaskMgr &TaskMgr::getInstance(LogContext log_context, int thread_id) {
-  log_context.thread_name += "-TaskMgr";
-  log_context.thread_id = thread_id;
-  static TaskMgr *mgr = new TaskMgr(log_context);
+  if( global_task_mgr == nullptr ) {
+     std::lock_guard<std::mutex> lock(singleton_instance_mutex);
+     if(global_task_mgr == nullptr ) {
+       log_context.thread_name += "-TaskMgr";
+       log_context.thread_id = thread_id;
+       global_task_mgr = new TaskMgr(log_context);
+     }
+  }
 
-  return *mgr;
+  return *global_task_mgr;
 }
 /**
  * @brief Task background maintenance thread
@@ -288,6 +298,7 @@ void TaskMgr::addNewTaskAndScheduleWorker(const std::string &a_task_id,
 
 void TaskMgr::retryTaskAndScheduleWorker(std::unique_ptr<Task> a_task,
                                          LogContext log_context) {
+  DL_DEBUG(log_context, "Retrying task " << a_task->task_id);
   m_tasks_ready.push_back(std::move(a_task));
 
   if (m_worker_next) {
@@ -350,6 +361,7 @@ void TaskMgr::cancelTask(const std::string &a_task_id, LogContext log_context) {
 std::unique_ptr<TaskMgr::Task> TaskMgr::getNextTask(ITaskWorker *a_worker) {
 
   unique_lock<mutex> lock(m_worker_mutex);
+  LogContext log_context;
 
   if (m_tasks_ready.empty()) {
     // No work right now, put worker at front of ready worker queue
@@ -363,8 +375,10 @@ std::unique_ptr<TaskMgr::Task> TaskMgr::getNextTask(ITaskWorker *a_worker) {
   }
 
   // Pop next task from ready queue and place in running map
+  DL_DEBUG(log_context, "There are " << m_tasks_ready.size() << " grabbing one.");
   auto task = std::move(m_tasks_ready.front());
   m_tasks_ready.pop_front();
+  DL_DEBUG(log_context, "Now there are " << m_tasks_ready.size() << " left.");
 
   return task;
 }
