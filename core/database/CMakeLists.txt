@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.7.0)
+cmake_minimum_required (VERSION 3.17.0)
 # 3.7.0 requires to use test fixtures
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/foxx/api/version_router.js.in"

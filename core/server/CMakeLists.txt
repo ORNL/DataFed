@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0.0)
+cmake_minimum_required (VERSION 3.17.0)
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/Version.hpp.in"

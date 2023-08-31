@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0.0)
+cmake_minimum_required (VERSION 3.17.0)
 
 # Copy py source to build package source dir
 file( GLOB SrcFiles ${CMAKE_CURRENT_SOURCE_DIR}/*.py )

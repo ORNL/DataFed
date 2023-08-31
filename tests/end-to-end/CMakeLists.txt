@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.7.0)
+cmake_minimum_required (VERSION 3.17.0)
 # 3.7.0 requires to use test fixtures
 
 if( ENABLE_END_TO_END_TESTS )

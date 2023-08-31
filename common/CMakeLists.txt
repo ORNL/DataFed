@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0.0)
+cmake_minimum_required (VERSION 3.17.0)
 
 # The below command will by default generate the proto files in this folder
 # we want to place them in the binary folder in /proto/common
