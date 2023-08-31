@@ -24,7 +24,7 @@ install_protobuf() {
   cd protobuf
   git checkout v${DATAFED_PROTOBUF_VERSION}
   git submodule update --init --recursive
-  cmake -S cmake/ -B build -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+  cmake -S cmake/ -B build -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=ON
   cmake --build build -j 8
   sudo cmake --build build --target install
   cd python
