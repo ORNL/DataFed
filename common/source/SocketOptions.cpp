@@ -54,8 +54,12 @@ AddressSplitter::AddressSplitter(const std::string &address) {
     // Add 1 so as to ignore the ':' when copying the port number
     if (pos_colon + 1 < copy.size()) {
       port = copy.substr(pos_colon + 1);
-    } // Else no port was provided
-
+    } else {// Else no port was provided
+      // This is an error we will throw we should not provide : at the end of
+      // an address without specifying a port number
+      EXCEPT_PARAM(1, "Error unable to deconstruct port, it does not appear to "
+                    "be provided in the address even though ':' has been specified after the host. (" << address << ") ");
+    }
     std::string host;
     if (pos_colon > 0) {
       m_host = copy.substr(0, pos_colon);
