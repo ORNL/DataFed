@@ -293,7 +293,7 @@ app.get('/ui/welcome', (a_req, a_resp) => {
         var theme = a_req.cookies['datafed-theme']|| "light";
         const nonce = crypto.randomBytes(16).toString('base64');
         a_resp.locals.nonce = nonce;
-        a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
+        a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'  auth.globus.org`);
         a_resp.render('index',{nonce:a_resp.locals.nonce, theme:theme,version:g_version,test_mode:g_test});
     }
 });
@@ -332,7 +332,7 @@ app.get('/ui/register', (a_req, a_resp) => {
         const clean = sanitizeHtml( a_req.session.name );
         const nonce = crypto.randomBytes(16).toString('base64');
         a_resp.locals.nonce = nonce;
-        a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
+        a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}' auth.globus.org`);
         a_resp.render('register', {nonce:a_resp.locals.nonce, uid: a_req.session.uid, uname: clean, theme: theme, version: g_version, test_mode: g_test });
     }
 });
