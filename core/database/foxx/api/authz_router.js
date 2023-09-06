@@ -101,6 +101,12 @@ router.get('/gridftp', function(req, res) {
                 throw g_lib.ERR_PERM_DENIED;
             }
 
+            // If path is missing the starting "/" add it back in
+            if (!path.startsWith("/") && alloc.path.startsWith("/") ) {
+               path = "/" + path;
+            }
+
+            console.log("path:", path, " alloc path:", alloc.path + data_key, " loc: ", loc);
             console.log("13");
             if (alloc.path + data_key != path) {
                 // This may be due to an alloc/owner change
