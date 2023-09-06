@@ -547,6 +547,8 @@ module.exports = (function() {
         for (var i in potential_uuids) {
             uuids.push("uuid/" + potential_uuids[i]);
         }
+	console.log("resolveUUIDsToID");
+	console.log("uuids: ", uuids);
         var result = obj.db._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
             ids: uuids
         }).toArray();
@@ -573,6 +575,8 @@ module.exports = (function() {
         for (var i in potential_uuids) {
             uuids.push("uuid/" + potential_uuids[i]);
         }
+	console.log("resolveUUIDsToID_noexcept");
+	console.log("uuids: ", uuids);
         var result = obj.db._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
             ids: uuids
         }).toArray();
@@ -708,12 +712,17 @@ module.exports = (function() {
     };
 
     obj.findUserFromUUIDs = function(a_uuids) {
+	console.log("findUserFromUUIDs");
+	console.log("a_uuids: ", a_uuids);
         var result = obj.db._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
             ids: a_uuids
         }).toArray();
 
-        if (result.length != 1)
+        if (result.length == 0) {
             throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
+	} else if (result.length > 1) {
+            throw [obj.ERR_NOT_FOUND, "Multiple DataFed accounts associated with the provided Globus identities" + result.toString() ];
+	}
 
         return result[0];
     };
