@@ -107,11 +107,11 @@ export function show( a_excl, a_single_sel, cb ){
                     var pages = Math.ceil(data.response.total/settings.opts.page_sz);
                     var page = 1+data.response.offset/settings.opts.page_sz;
                     data.result.push({title:
-                      "<button id='first_page_proj' class='btn small''"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\",0)'>First</button> " +
-                      "<button id='back_page_proj' class='btn small'"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+ "\","+(page-2)*settings.opts.page_sz+")'>Prev</button> " +
+                      "<button id='first_page_proj' class='btn small'"+(page==1?" disabled":"")+" >First</button> " +
+                      "<button id='back_page_proj' class='btn small'"+(page==1?" disabled":"")+" >Prev</button> " +
                       "Page " + page + " of " + pages +
-                      " <button id='forware_page_proj' class='btn small'"+ (page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\","+page*settings.opts.page_sz+")'>Next</button> " +
-                      "<button id='last_page_proj' class='btn small'"+(page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+ "\","+(pages-1)*settings.opts.page_sz+")'>Last</button>",
+                      " <button id='forward_page_proj' class='btn small'"+ (page==pages?" disabled":"")+" >Next</button> " +
+                      "<button id='last_page_proj' class='btn small'"+(page==pages?" disabled":"")+" >Last</button>",
                       folder:false,
                       icon:false,
                       checkbox:false,
