@@ -104,19 +104,39 @@ export function show( a_excl, a_single_sel, cb ){
                 }
 
                 if ( data.response.offset > 0 || data.response.total > (data.response.offset + data.response.count) ){
-                    var pages = Math.ceil(data.response.total/settings.opts.page_sz), page = 1+data.response.offset/settings.opts.page_sz;
-                    data.result.push({title:"<button class='btn small''"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+
-                    "\",0)'>First</button> <button class='btn small'"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+
-                    "\","+(page-2)*settings.opts.page_sz+")'>Prev</button> Page " + page + " of " + pages + " <button class='btn small'"+
-                    (page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\","+page*settings.opts.page_sz+
-                    ")'>Next</button> <button class='btn small'"+(page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+
-                    "\","+(pages-1)*settings.opts.page_sz+")'>Last</button>",folder:false,icon:false,checkbox:false,hasBtn:true});
+                    var pages = Math.ceil(data.response.total/settings.opts.page_sz);
+                    var page = 1+data.response.offset/settings.opts.page_sz;
+                    data.result.push({title:
+                      "<button id='first_page_proj' class='btn small''"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\",0)'>First</button> " +
+                      "<button id='back_page_proj' class='btn small'"+(page==1?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+ "\","+(page-2)*settings.opts.page_sz+")'>Prev</button> " +
+                      "Page " + page + " of " + pages +
+                      " <button id='forware_page_proj' class='btn small'"+ (page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+"\","+page*settings.opts.page_sz+")'>Next</button> " +
+                      "<button id='last_page_proj' class='btn small'"+(page==pages?" disabled":"")+" onclick='projPageLoad(\""+data.node.key+ "\","+(pages-1)*settings.opts.page_sz+")'>Last</button>",
+                      folder:false,
+                      icon:false,
+                      checkbox:false,
+                      hasBtn:true});
+
+                    data.node.page = page;
+                    data.node.pages = pages;
                 }
             }
         },
         renderNode: function(ev,data){
             if ( data.node.data.hasBtn ){
                 $(".btn",data.node.li).button();
+                $('#first_page_proj', data.node.span).click(function() {
+                  projPageLoad(data.node.parent.key,0);
+                });
+                $('#back_page_proj', data.node.span).click(function() {
+                  projPageLoad(data.node.parent.key, (data.node.parent.page-2)*settings.opts.page_sz);
+                });
+                $('#forward_page_proj', data.node.span).click(function() {
+                  projPageLoad(data.node.parent.key, data.node.parent.page*settings.opts.page_sz);
+                });
+                $('#last_page_proj', data.node.span).click(function() {
+                  projPageLoad(data.node.parent.key, (data.node.parent.pages-1)*settings.opts.page_sz);
+                });
             }
         },
     });
