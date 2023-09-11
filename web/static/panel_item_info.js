@@ -599,6 +599,7 @@ function showSelectedItemForm( item ){
     else
         $("#sel_info_id",form).text( item.id );
 
+
     if ( item.alias && cls != ".sidp" )
         $("#sel_info_alias",form).text( item.alias );
 
