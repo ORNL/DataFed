@@ -21,7 +21,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     setup_requires=["setuptools"],
     install_requires=[
-        "protobuf>=3",
+        "protobuf>=3, <=3.20",
         "pyzmq>=16",
         "wget>=3",
         "click>=7",
