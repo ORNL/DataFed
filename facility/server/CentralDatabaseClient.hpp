@@ -27,8 +27,8 @@ public:
   std::string getDataStorageLocation(const std::string &a_data_id);
 
   // void checkPerms( const Auth::CheckPermsRequest & a_request,
-  // Auth::CheckPermsReply & a_reply ); uint16_t checkPerms( const string & a_id,
-  // uint16_t a_perms );
+  // Auth::CheckPermsReply & a_reply ); uint16_t checkPerms( const string &
+  // a_id, uint16_t a_perms );
   void userView(const Auth::UserViewRequest &a_request,
                 Auth::UserDataReply &a_reply);
   void userUpdate(const Auth::UserUpdateRequest &a_request,

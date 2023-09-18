@@ -350,9 +350,10 @@ void ClientWorker::workerThread(LogContext log_context) {
         IMessage &message = *response.message;
         uint16_t msg_type = std::get<uint16_t>(
             message.get(constants::message::google::MSG_TYPE));
-        message_log_context.correlation_id = std::get<std::string>(message.get(MessageAttribute::CORRELATION_ID));
+        message_log_context.correlation_id = std::get<std::string>(
+            message.get(MessageAttribute::CORRELATION_ID));
         DL_DEBUG(message_log_context, "W" << m_tid << " received message: "
-                                  << proto_map.toString(msg_type));
+                                          << proto_map.toString(msg_type));
 
         const std::string uid =
             std::get<std::string>(message.get(MessageAttribute::ID));
@@ -375,16 +376,17 @@ void ClientWorker::workerThread(LogContext log_context) {
           response_msg->setPayload(std::move(nack));
           client->send(*response_msg);
         } else {
-          DL_DEBUG(message_log_context, "W" << m_tid
-                                    << " getting handler from map: msg_type = "
-                                    << proto_map.toString(msg_type));
+          DL_DEBUG(message_log_context,
+                   "W" << m_tid << " getting handler from map: msg_type = "
+                       << proto_map.toString(msg_type));
           if (m_msg_handlers.count(msg_type)) {
 
             auto handler = m_msg_handlers.find(msg_type);
 
-            DL_TRACE(message_log_context, "W" << m_tid
-                                      << " calling handler/attempting to call "
-                                         "function of worker");
+            DL_TRACE(message_log_context,
+                     "W" << m_tid
+                         << " calling handler/attempting to call "
+                            "function of worker");
 
             // Have to move the actual unique_ptr, change ownership not simply
             // passing a reference
@@ -395,8 +397,9 @@ void ClientWorker::workerThread(LogContext log_context) {
               if (msg_type != task_list_msg_type)
                 m_core.metricsUpdateMsgCount(uid, msg_type);
 
-              DL_DEBUG(message_log_context, "W" << m_tid << " sending msg of type "
-                                        << proto_map.toString(msg_type));
+              DL_DEBUG(message_log_context,
+                       "W" << m_tid << " sending msg of type "
+                           << proto_map.toString(msg_type));
               client->send(*response_msg);
               DL_TRACE(message_log_context, "Message sent ");
             }
@@ -1379,7 +1382,8 @@ void ClientWorker::handleTaskResponse(libjson::Value &a_result,
     libjson::Value::Object &task_obj = obj.asObject();
 
     if (task_obj.getNumber("status") != TS_BLOCKED) {
-      DL_DEBUG(log_context, "handleTaskResponse status is: " << task_obj.getNumber("status"));
+      DL_DEBUG(log_context, "handleTaskResponse status is: "
+                                << task_obj.getNumber("status"));
       TaskMgr::getInstance().newTask(task_obj.getString("_id"), log_context);
     }
   }

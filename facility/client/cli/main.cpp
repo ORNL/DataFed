@@ -1791,21 +1791,21 @@ int main(int a_argc, char **a_argv) {
   addCommand("", "exit", "Exit interactive shell", "", exit_shell);
 
   // addCommand( "a", "acl", "Manage ACLs for data or collections",  "acl
-  // [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get ACLs
-  // for record or collection <id> (as ID or alias)", acl ); addCommand( "g",
-  // "group", "Group management (for ACLs)", "group <cmd> [id [args]]\n\nGroup
-  // commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete", group );
-  // addCommand( "", "cp", "Copy data into a collection","cp <data_id>
+  // [get|set] <id> [[uid|gid|def] [grant|deny [inh]] value] ]\n\nSet or get
+  // ACLs for record or collection <id> (as ID or alias)", acl ); addCommand(
+  // "g", "group", "Group management (for ACLs)", "group <cmd> [id
+  // [args]]\n\nGroup commands: (l)ist, (v)iew, (c)reate, (u)pdate, (d)elete",
+  // group ); addCommand( "", "cp", "Copy data into a collection","cp <data_id>
   // [<coll_id>]>\n\n\"Copies\" a data record into either the specified
   // collection, or the current collection if <coll_id> is not provided. The
-  // command does not create an actual copy of the data, rather it creates a link
-  // to the data in the specified collection. Use the \"dup\" command to create a
-  // new data record from an existing record.", cp ); addCommand( "", "mv", "Move
-  // data/collection into a collection","mv <id> [<coll_id>]>\n\n\"Moves\" a data
-  // record or a collection into either the specified collection, or the current
-  // collection if <coll_id> is not provided. The command creates a new link to
-  // the data/collection in the specified collection, and unlinks it from the.",
-  // mv );
+  // command does not create an actual copy of the data, rather it creates a
+  // link to the data in the specified collection. Use the \"dup\" command to
+  // create a new data record from an existing record.", cp ); addCommand( "",
+  // "mv", "Move data/collection into a collection","mv <id>
+  // [<coll_id>]>\n\n\"Moves\" a data record or a collection into either the
+  // specified collection, or the current collection if <coll_id> is not
+  // provided. The command creates a new link to the data/collection in the
+  // specified collection, and unlinks it from the.", mv );
 
   buildCmdMap();
 
@@ -1887,11 +1887,11 @@ int main(int a_argc, char **a_argv) {
       "csv", po::bool_switch(&g_out_csv),
       "Output in CSV format (default is TEXT)")
       //("name,n",po::value<string>( &g_name ),"Specify user name for update
-      //command")
+      // command")
       //("email,e",po::value<string>( &g_email ),"Specify user email for update
-      //command")
+      // command")
       //("globus_id,g",po::value<string>( &g_globus_id ),"Specify user globus_id
-      //for update command")
+      // for update command")
       ("verbose,v", po::bool_switch(&g_details),
        "Show extra details for supported commands")(
           "since", po::value<uint32_t>(&g_since),

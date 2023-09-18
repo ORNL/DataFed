@@ -371,7 +371,7 @@ class DataRecord(object):
                 and 1 indicating the parent. Each dependency is a dict
                 of strings all stored within a list.
 
-    """
+        """
         self.data_id = data_id
         self.alias = alias
         self.title = title

@@ -24,16 +24,17 @@ from . import VERSION
 # Check with pypi if a newer release is available
 def get_latest_version(package_name):
     try:
-        client = xmlrpc.client.ServerProxy('https://pypi.org/pypi')
+        client = xmlrpc.client.ServerProxy("https://pypi.org/pypi")
         releases = client.package_releases(package_name)
-        
+
         if not releases:
             return None
-        
+
         return releases[0]
     except Exception as e:
         print(f"Unable to connect to pypi: {e}")
         return None
+
 
 ##
 # @class API
@@ -185,12 +186,12 @@ class API:
         self._conn.registerProtocol(auth)
 
         # Make a request to pypi
-        package_name = 'datafed'  # Replace with the package name you want to check
+        package_name = "datafed"  # Replace with the package name you want to check
         latest_version_on_pypi = get_latest_version(package_name)
-        
+
         if latest_version_on_pypi:
-            pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split('.')
-            major, minor, patch = VERSION.__version__.split('.')
+            pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split(".")
+            major, minor, patch = VERSION.__version__.split(".")
 
             if pypi_major != major or pypi_minor > minor or pypi_patch > patch:
                 self.new_client_avail = latest_version_on_pypi
@@ -202,21 +203,25 @@ class API:
         # Check for compatible protocol versions
         reply, mt = self.sendRecv(anon.VersionRequest(), 10000)
         if reply is None:
-            raise Exception("Timeout waiting for server connection. Make sure"
-                    "the right ports are open.")
+            raise Exception(
+                "Timeout waiting for server connection. Make sure"
+                "the right ports are open."
+            )
 
         if reply.api_major != Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR:
-            error_msg = ("Incompatible server api detected {}.{}.{} consider "
-                        "upgrading the datafed python client.".format(
-                        reply.api_major, reply.api_minor, reply.api_patch
-                        ))
-            if self.new_client_avail:
-                error_msg +=("\nConsider upgrading the datafed python client as"
-                    f" a new version is available {latest_version_on_pypi} that"
-                     " should be compatible with the API.")
-            raise Exception(
-                
+            error_msg = (
+                "Incompatible server api detected {}.{}.{} consider "
+                "upgrading the datafed python client.".format(
+                    reply.api_major, reply.api_minor, reply.api_patch
+                )
             )
+            if self.new_client_avail:
+                error_msg += (
+                    "\nConsider upgrading the datafed python client as"
+                    f" a new version is available {latest_version_on_pypi} that"
+                    " should be compatible with the API."
+                )
+            raise Exception()
 
         if client_token:
             self.manualAuthByToken(client_token)

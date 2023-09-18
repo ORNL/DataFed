@@ -18,12 +18,12 @@ import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
-project = 'DataFed'
-copyright = '2020, Oak Ridge National Laboratories'
-author = 'Dale Stansberry'
+project = "DataFed"
+copyright = "2020, Oak Ridge National Laboratories"
+author = "Dale Stansberry"
 
 # The full version, including alpha/beta/rc tags
-release = '1.4'
+release = "1.4"
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,11 +32,11 @@ release = '1.4'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 
-#extensions = ['sphinx.ext.autodoc','autoapi.extension']
-extensions = ['autoapi.extension','sphinx.ext.autosectionlabel']
+# extensions = ['sphinx.ext.autodoc','autoapi.extension']
+extensions = ["autoapi.extension", "sphinx.ext.autosectionlabel"]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -49,27 +49,24 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 html_show_sourcelink = False
 
-  
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 html_permalinks = False
-html_css_files = [
-    'css/custom.css'
-]
+html_css_files = ["css/custom.css"]
 
-source_suffix = ['.rst']
+source_suffix = [".rst"]
 
-master_doc = 'index'
+master_doc = "index"
 
-highlight_language = 'none'
+highlight_language = "none"
 
-autoapi_type = 'python'
-autoapi_dirs = ['../../python/datafed_pkg/datafed']
-#autoapi_generate_api_docs = False
+autoapi_type = "python"
+autoapi_dirs = ["../../python/datafed_pkg/datafed"]
+# autoapi_generate_api_docs = False
 autoapi_add_toctree_entry = True
-
