@@ -37,7 +37,6 @@ jobs:
           python-version: 3.9
       - name: generate config file
         run: |
-          sudo ./scripts/install_core_dependencies.sh
           ./scripts/generate_datafed.sh
       - name: Install documentation build dependencies
         run: |
