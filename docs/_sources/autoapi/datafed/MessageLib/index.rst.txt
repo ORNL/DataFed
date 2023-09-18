@@ -1,0 +1,76 @@
+:py:mod:`datafed.MessageLib`
+============================
+
+.. py:module:: datafed.MessageLib
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   datafed.MessageLib.API
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   datafed.MessageLib.get_latest_version
+
+
+
+.. py:function:: get_latest_version(package_name)
+
+
+.. py:class:: API(server_host=None, server_port=None, server_pub_key_file=None, server_pub_key=None, client_pub_key_file=None, client_pub_key=None, client_priv_key_file=None, client_priv_key=None, client_token=None, manual_auth=None, **kwargs)
+
+
+   .. py:method:: keysLoaded()
+
+
+   .. py:method:: keysValid()
+
+
+   .. py:method:: getAuthStatus()
+
+
+   .. py:method:: manualAuthByPassword(uid, password)
+
+
+   .. py:method:: manualAuthByToken(token)
+
+
+   .. py:method:: logout()
+
+
+   .. py:method:: getNackExceptionEnabled()
+
+
+   .. py:method:: setNackExceptionEnabled(enabled)
+
+
+   .. py:method:: setDefaultTimeout(timeout)
+
+
+   .. py:method:: getDefaultTimeout()
+
+
+   .. py:method:: getDailyMessage()
+
+
+   .. py:method:: sendRecv(msg, timeout=None, nack_except=None)
+
+
+   .. py:method:: send(msg)
+
+
+   .. py:method:: recv(timeout=None, nack_except=None)
+
+
+

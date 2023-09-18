@@ -1,0 +1,1259 @@
+:py:mod:`datafed.SDMS_Auth_pb2`
+===============================
+
+.. py:module:: datafed.SDMS_Auth_pb2
+
+.. autoapi-nested-parse::
+
+   Generated protocol buffer code.
+
+
+
+Module Contents
+---------------
+
+.. py:data:: _sym_db
+
+   
+
+.. py:data:: DESCRIPTOR
+
+   
+
+.. py:data:: _PROTOCOL
+
+   
+
+.. py:data:: Protocol
+
+   
+
+.. py:data:: ID
+   :value: 2
+
+   
+
+.. py:data:: _GENERATECREDENTIALSREQUEST
+
+   
+
+.. py:data:: _REVOKECREDENTIALSREQUEST
+
+   
+
+.. py:data:: _GENERATECREDENTIALSREPLY
+
+   
+
+.. py:data:: _CHECKPERMSREQUEST
+
+   
+
+.. py:data:: _CHECKPERMSREPLY
+
+   
+
+.. py:data:: _GETPERMSREQUEST
+
+   
+
+.. py:data:: _GETPERMSREPLY
+
+   
+
+.. py:data:: _USERVIEWREQUEST
+
+   
+
+.. py:data:: _USERDATAREPLY
+
+   
+
+.. py:data:: _USERSETACCESSTOKENREQUEST
+
+   
+
+.. py:data:: _USERGETACCESSTOKENREQUEST
+
+   
+
+.. py:data:: _USERACCESSTOKENREPLY
+
+   
+
+.. py:data:: _USERCREATEREQUEST
+
+   
+
+.. py:data:: _USERFINDBYUUIDSREQUEST
+
+   
+
+.. py:data:: _USERFINDBYNAMEUIDREQUEST
+
+   
+
+.. py:data:: _USERUPDATEREQUEST
+
+   
+
+.. py:data:: _USERLISTALLREQUEST
+
+   
+
+.. py:data:: _USERLISTCOLLABREQUEST
+
+   
+
+.. py:data:: _USERGETRECENTEPREQUEST
+
+   
+
+.. py:data:: _USERGETRECENTEPREPLY
+
+   
+
+.. py:data:: _USERSETRECENTEPREQUEST
+
+   
+
+.. py:data:: _LISTINGREPLY
+
+   
+
+.. py:data:: _RECORDLISTBYALLOCREQUEST
+
+   
+
+.. py:data:: _RECORDVIEWREQUEST
+
+   
+
+.. py:data:: _RECORDDATAREPLY
+
+   
+
+.. py:data:: _RECORDCREATEREQUEST
+
+   
+
+.. py:data:: _RECORDCREATEBATCHREQUEST
+
+   
+
+.. py:data:: _RECORDUPDATEREQUEST
+
+   
+
+.. py:data:: _RECORDUPDATEBATCHREQUEST
+
+   
+
+.. py:data:: _RECORDEXPORTREQUEST
+
+   
+
+.. py:data:: _RECORDEXPORTREPLY
+
+   
+
+.. py:data:: _RECORDLOCKREQUEST
+
+   
+
+.. py:data:: _RECORDDELETEREQUEST
+
+   
+
+.. py:data:: _RECORDGETDEPENDENCYGRAPHREQUEST
+
+   
+
+.. py:data:: _RECORDALLOCCHANGEREQUEST
+
+   
+
+.. py:data:: _RECORDALLOCCHANGEREPLY
+
+   
+
+.. py:data:: _RECORDOWNERCHANGEREQUEST
+
+   
+
+.. py:data:: _RECORDOWNERCHANGEREPLY
+
+   
+
+.. py:data:: _DATAGETREQUEST
+
+   
+
+.. py:data:: _DATAPUTREQUEST
+
+   
+
+.. py:data:: _DATAGETREPLY
+
+   
+
+.. py:data:: _DATAPUTREPLY
+
+   
+
+.. py:data:: _DATADELETEREQUEST
+
+   
+
+.. py:data:: _DATAPATHREQUEST
+
+   
+
+.. py:data:: _DATAPATHREPLY
+
+   
+
+.. py:data:: _SEARCHREQUEST
+
+   
+
+.. py:data:: _COLLVIEWREQUEST
+
+   
+
+.. py:data:: _COLLDATAREPLY
+
+   
+
+.. py:data:: _COLLREADREQUEST
+
+   
+
+.. py:data:: _COLLCREATEREQUEST
+
+   
+
+.. py:data:: _COLLUPDATEREQUEST
+
+   
+
+.. py:data:: _COLLDELETEREQUEST
+
+   
+
+.. py:data:: _COLLWRITEREQUEST
+
+   
+
+.. py:data:: _COLLMOVEREQUEST
+
+   
+
+.. py:data:: _COLLGETPARENTSREQUEST
+
+   
+
+.. py:data:: _COLLPATHREPLY
+
+   
+
+.. py:data:: _COLLGETOFFSETREQUEST
+
+   
+
+.. py:data:: _COLLGETOFFSETREPLY
+
+   
+
+.. py:data:: _COLLLISTPUBLISHEDREQUEST
+
+   
+
+.. py:data:: _GROUPCREATEREQUEST
+
+   
+
+.. py:data:: _GROUPUPDATEREQUEST
+
+   
+
+.. py:data:: _GROUPDATAREPLY
+
+   
+
+.. py:data:: _GROUPDELETEREQUEST
+
+   
+
+.. py:data:: _GROUPLISTREQUEST
+
+   
+
+.. py:data:: _GROUPVIEWREQUEST
+
+   
+
+.. py:data:: _ACLVIEWREQUEST
+
+   
+
+.. py:data:: _ACLUPDATEREQUEST
+
+   
+
+.. py:data:: _ACLSHAREDLISTREQUEST
+
+   
+
+.. py:data:: _ACLSHAREDLISTITEMSREQUEST
+
+   
+
+.. py:data:: _ACLDATAREPLY
+
+   
+
+.. py:data:: _PROJECTVIEWREQUEST
+
+   
+
+.. py:data:: _PROJECTDATAREPLY
+
+   
+
+.. py:data:: _PROJECTCREATEREQUEST
+
+   
+
+.. py:data:: _PROJECTUPDATEREQUEST
+
+   
+
+.. py:data:: _PROJECTDELETEREQUEST
+
+   
+
+.. py:data:: _PROJECTLISTREQUEST
+
+   
+
+.. py:data:: _PROJECTSEARCHREQUEST
+
+   
+
+.. py:data:: _PROJECTGETROLEREQUEST
+
+   
+
+.. py:data:: _PROJECTGETROLEREPLY
+
+   
+
+.. py:data:: _REPODATADELETEREQUEST
+
+   
+
+.. py:data:: _REPODATAGETSIZEREQUEST
+
+   
+
+.. py:data:: _REPODATASIZEREPLY
+
+   
+
+.. py:data:: _REPOPATHCREATEREQUEST
+
+   
+
+.. py:data:: _REPOPATHDELETEREQUEST
+
+   
+
+.. py:data:: _REPOLISTREQUEST
+
+   
+
+.. py:data:: _REPOVIEWREQUEST
+
+   
+
+.. py:data:: _REPOCREATEREQUEST
+
+   
+
+.. py:data:: _REPOUPDATEREQUEST
+
+   
+
+.. py:data:: _REPODELETEREQUEST
+
+   
+
+.. py:data:: _REPODATAREPLY
+
+   
+
+.. py:data:: _REPOCALCSIZEREQUEST
+
+   
+
+.. py:data:: _REPOCALCSIZEREPLY
+
+   
+
+.. py:data:: _REPOLISTALLOCATIONSREQUEST
+
+   
+
+.. py:data:: _REPOLISTSUBJECTALLOCATIONSREQUEST
+
+   
+
+.. py:data:: _REPOLISTOBJECTALLOCATIONSREQUEST
+
+   
+
+.. py:data:: _REPOVIEWALLOCATIONREQUEST
+
+   
+
+.. py:data:: _REPOALLOCATIONSREPLY
+
+   
+
+.. py:data:: _REPOALLOCATIONSTATSREQUEST
+
+   
+
+.. py:data:: _REPOALLOCATIONSTATSREPLY
+
+   
+
+.. py:data:: _REPOALLOCATIONCREATEREQUEST
+
+   
+
+.. py:data:: _REPOALLOCATIONSETREQUEST
+
+   
+
+.. py:data:: _REPOALLOCATIONSETDEFAULTREQUEST
+
+   
+
+.. py:data:: _REPOALLOCATIONDELETEREQUEST
+
+   
+
+.. py:data:: _REPOAUTHZREQUEST
+
+   
+
+.. py:data:: _QUERYCREATEREQUEST
+
+   
+
+.. py:data:: _QUERYUPDATEREQUEST
+
+   
+
+.. py:data:: _QUERYDELETEREQUEST
+
+   
+
+.. py:data:: _QUERYLISTREQUEST
+
+   
+
+.. py:data:: _QUERYVIEWREQUEST
+
+   
+
+.. py:data:: _QUERYEXECREQUEST
+
+   
+
+.. py:data:: _QUERYDATAREPLY
+
+   
+
+.. py:data:: _NOTELISTBYSUBJECTREQUEST
+
+   
+
+.. py:data:: _NOTEVIEWREQUEST
+
+   
+
+.. py:data:: _NOTECREATEREQUEST
+
+   
+
+.. py:data:: _NOTEUPDATEREQUEST
+
+   
+
+.. py:data:: _NOTECOMMENTEDITREQUEST
+
+   
+
+.. py:data:: _NOTEDATAREPLY
+
+   
+
+.. py:data:: _TASKVIEWREQUEST
+
+   
+
+.. py:data:: _TASKLISTREQUEST
+
+   
+
+.. py:data:: _TASKDATAREPLY
+
+   
+
+.. py:data:: _TAGSEARCHREQUEST
+
+   
+
+.. py:data:: _TAGLISTBYCOUNTREQUEST
+
+   
+
+.. py:data:: _TAGDATAREPLY
+
+   
+
+.. py:data:: _METADATAVALIDATEREQUEST
+
+   
+
+.. py:data:: _METADATAVALIDATEREPLY
+
+   
+
+.. py:data:: _SCHEMAVIEWREQUEST
+
+   
+
+.. py:data:: _SCHEMASEARCHREQUEST
+
+   
+
+.. py:data:: _SCHEMADATAREPLY
+
+   
+
+.. py:data:: _SCHEMACREATEREQUEST
+
+   
+
+.. py:data:: _SCHEMAUPDATEREQUEST
+
+   
+
+.. py:data:: _SCHEMAREVISEREQUEST
+
+   
+
+.. py:data:: _SCHEMADELETEREQUEST
+
+   
+
+.. py:data:: _TOPICLISTTOPICSREQUEST
+
+   
+
+.. py:data:: _TOPICVIEWREQUEST
+
+   
+
+.. py:data:: _TOPICSEARCHREQUEST
+
+   
+
+.. py:data:: _TOPICDATAREPLY
+
+   
+
+.. py:data:: GenerateCredentialsRequest
+
+   
+
+.. py:data:: RevokeCredentialsRequest
+
+   
+
+.. py:data:: GenerateCredentialsReply
+
+   
+
+.. py:data:: CheckPermsRequest
+
+   
+
+.. py:data:: CheckPermsReply
+
+   
+
+.. py:data:: GetPermsRequest
+
+   
+
+.. py:data:: GetPermsReply
+
+   
+
+.. py:data:: UserViewRequest
+
+   
+
+.. py:data:: UserDataReply
+
+   
+
+.. py:data:: UserSetAccessTokenRequest
+
+   
+
+.. py:data:: UserGetAccessTokenRequest
+
+   
+
+.. py:data:: UserAccessTokenReply
+
+   
+
+.. py:data:: UserCreateRequest
+
+   
+
+.. py:data:: UserFindByUUIDsRequest
+
+   
+
+.. py:data:: UserFindByNameUIDRequest
+
+   
+
+.. py:data:: UserUpdateRequest
+
+   
+
+.. py:data:: UserListAllRequest
+
+   
+
+.. py:data:: UserListCollabRequest
+
+   
+
+.. py:data:: UserGetRecentEPRequest
+
+   
+
+.. py:data:: UserGetRecentEPReply
+
+   
+
+.. py:data:: UserSetRecentEPRequest
+
+   
+
+.. py:data:: ListingReply
+
+   
+
+.. py:data:: RecordListByAllocRequest
+
+   
+
+.. py:data:: RecordViewRequest
+
+   
+
+.. py:data:: RecordDataReply
+
+   
+
+.. py:data:: RecordCreateRequest
+
+   
+
+.. py:data:: RecordCreateBatchRequest
+
+   
+
+.. py:data:: RecordUpdateRequest
+
+   
+
+.. py:data:: RecordUpdateBatchRequest
+
+   
+
+.. py:data:: RecordExportRequest
+
+   
+
+.. py:data:: RecordExportReply
+
+   
+
+.. py:data:: RecordLockRequest
+
+   
+
+.. py:data:: RecordDeleteRequest
+
+   
+
+.. py:data:: RecordGetDependencyGraphRequest
+
+   
+
+.. py:data:: RecordAllocChangeRequest
+
+   
+
+.. py:data:: RecordAllocChangeReply
+
+   
+
+.. py:data:: RecordOwnerChangeRequest
+
+   
+
+.. py:data:: RecordOwnerChangeReply
+
+   
+
+.. py:data:: DataGetRequest
+
+   
+
+.. py:data:: DataPutRequest
+
+   
+
+.. py:data:: DataGetReply
+
+   
+
+.. py:data:: DataPutReply
+
+   
+
+.. py:data:: DataDeleteRequest
+
+   
+
+.. py:data:: DataPathRequest
+
+   
+
+.. py:data:: DataPathReply
+
+   
+
+.. py:data:: SearchRequest
+
+   
+
+.. py:data:: CollViewRequest
+
+   
+
+.. py:data:: CollDataReply
+
+   
+
+.. py:data:: CollReadRequest
+
+   
+
+.. py:data:: CollCreateRequest
+
+   
+
+.. py:data:: CollUpdateRequest
+
+   
+
+.. py:data:: CollDeleteRequest
+
+   
+
+.. py:data:: CollWriteRequest
+
+   
+
+.. py:data:: CollMoveRequest
+
+   
+
+.. py:data:: CollGetParentsRequest
+
+   
+
+.. py:data:: CollPathReply
+
+   
+
+.. py:data:: CollGetOffsetRequest
+
+   
+
+.. py:data:: CollGetOffsetReply
+
+   
+
+.. py:data:: CollListPublishedRequest
+
+   
+
+.. py:data:: GroupCreateRequest
+
+   
+
+.. py:data:: GroupUpdateRequest
+
+   
+
+.. py:data:: GroupDataReply
+
+   
+
+.. py:data:: GroupDeleteRequest
+
+   
+
+.. py:data:: GroupListRequest
+
+   
+
+.. py:data:: GroupViewRequest
+
+   
+
+.. py:data:: ACLViewRequest
+
+   
+
+.. py:data:: ACLUpdateRequest
+
+   
+
+.. py:data:: ACLSharedListRequest
+
+   
+
+.. py:data:: ACLSharedListItemsRequest
+
+   
+
+.. py:data:: ACLDataReply
+
+   
+
+.. py:data:: ProjectViewRequest
+
+   
+
+.. py:data:: ProjectDataReply
+
+   
+
+.. py:data:: ProjectCreateRequest
+
+   
+
+.. py:data:: ProjectUpdateRequest
+
+   
+
+.. py:data:: ProjectDeleteRequest
+
+   
+
+.. py:data:: ProjectListRequest
+
+   
+
+.. py:data:: ProjectSearchRequest
+
+   
+
+.. py:data:: ProjectGetRoleRequest
+
+   
+
+.. py:data:: ProjectGetRoleReply
+
+   
+
+.. py:data:: RepoDataDeleteRequest
+
+   
+
+.. py:data:: RepoDataGetSizeRequest
+
+   
+
+.. py:data:: RepoDataSizeReply
+
+   
+
+.. py:data:: RepoPathCreateRequest
+
+   
+
+.. py:data:: RepoPathDeleteRequest
+
+   
+
+.. py:data:: RepoListRequest
+
+   
+
+.. py:data:: RepoViewRequest
+
+   
+
+.. py:data:: RepoCreateRequest
+
+   
+
+.. py:data:: RepoUpdateRequest
+
+   
+
+.. py:data:: RepoDeleteRequest
+
+   
+
+.. py:data:: RepoDataReply
+
+   
+
+.. py:data:: RepoCalcSizeRequest
+
+   
+
+.. py:data:: RepoCalcSizeReply
+
+   
+
+.. py:data:: RepoListAllocationsRequest
+
+   
+
+.. py:data:: RepoListSubjectAllocationsRequest
+
+   
+
+.. py:data:: RepoListObjectAllocationsRequest
+
+   
+
+.. py:data:: RepoViewAllocationRequest
+
+   
+
+.. py:data:: RepoAllocationsReply
+
+   
+
+.. py:data:: RepoAllocationStatsRequest
+
+   
+
+.. py:data:: RepoAllocationStatsReply
+
+   
+
+.. py:data:: RepoAllocationCreateRequest
+
+   
+
+.. py:data:: RepoAllocationSetRequest
+
+   
+
+.. py:data:: RepoAllocationSetDefaultRequest
+
+   
+
+.. py:data:: RepoAllocationDeleteRequest
+
+   
+
+.. py:data:: RepoAuthzRequest
+
+   
+
+.. py:data:: QueryCreateRequest
+
+   
+
+.. py:data:: QueryUpdateRequest
+
+   
+
+.. py:data:: QueryDeleteRequest
+
+   
+
+.. py:data:: QueryListRequest
+
+   
+
+.. py:data:: QueryViewRequest
+
+   
+
+.. py:data:: QueryExecRequest
+
+   
+
+.. py:data:: QueryDataReply
+
+   
+
+.. py:data:: NoteListBySubjectRequest
+
+   
+
+.. py:data:: NoteViewRequest
+
+   
+
+.. py:data:: NoteCreateRequest
+
+   
+
+.. py:data:: NoteUpdateRequest
+
+   
+
+.. py:data:: NoteCommentEditRequest
+
+   
+
+.. py:data:: NoteDataReply
+
+   
+
+.. py:data:: TaskViewRequest
+
+   
+
+.. py:data:: TaskListRequest
+
+   
+
+.. py:data:: TaskDataReply
+
+   
+
+.. py:data:: TagSearchRequest
+
+   
+
+.. py:data:: TagListByCountRequest
+
+   
+
+.. py:data:: TagDataReply
+
+   
+
+.. py:data:: MetadataValidateRequest
+
+   
+
+.. py:data:: MetadataValidateReply
+
+   
+
+.. py:data:: SchemaViewRequest
+
+   
+
+.. py:data:: SchemaSearchRequest
+
+   
+
+.. py:data:: SchemaDataReply
+
+   
+
+.. py:data:: SchemaCreateRequest
+
+   
+
+.. py:data:: SchemaUpdateRequest
+
+   
+
+.. py:data:: SchemaReviseRequest
+
+   
+
+.. py:data:: SchemaDeleteRequest
+
+   
+
+.. py:data:: TopicListTopicsRequest
+
+   
+
+.. py:data:: TopicViewRequest
+
+   
+
+.. py:data:: TopicSearchRequest
+
+   
+
+.. py:data:: TopicDataReply
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+

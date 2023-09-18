@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introduction &mdash; DataFed 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=c9ed3d4e"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="System Overview" href="overview.html" />
+    <link rel="prev" title="DataFed - A Scientific Data Federation" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> DataFed
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">About DataFed</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scientific-data-management">Scientific Data Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-lifecycle">Data Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-datafed">Why DataFed?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/web/portal.html">Web Portal Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cli/reference.html">Command Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin/general.html">Administration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/release.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DataFed</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Introduction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="introduction">
+<h1>Introduction</h1>
+<p>DataFed is a <em>federated</em> and <em>scalable</em> scientific data management and collaboration system that
+addresses the critical need for holistic and FAIR-principled “big data” handling within, and across,
+scientific domains and facilities with the goal of enhancing the <em>productivity</em> and <em>reproducibility</em>
+of data-oriented scientific research. DataFed supports the early lifecycle stages of “working”
+scientific data and serves as a tool to ease the burden associated with capturing, organizing, and
+sharing potentially large volumes of heterogeneous scientific data. DataFed provides an environment
+in which scientific data can be precisely controlled and refined in preparation for eventual data
+publishing.</p>
+<p>DataFed is an open source project hosted on GitHub at <a class="reference external" href="https://github.com/ORNL/DataFed">https://github.com/ORNL/DataFed</a>. DataFed is
+under active development at Oak Ridge National Laboratory (ORNL) within the Oak Ridge Leadership
+Computing Facility (OLCF) and is currently deployed in an alpha-release state for early access users.</p>
+<section id="background">
+<h2>Background</h2>
+<p>The primary goal of DataFed is to improve scientific data quality by enabling
+precise early-lifecycle control over data artifacts, with the ability to uniformly share and access data
+across geographically distributed facilities. DataFed can be thought of as a “tier 2+” distributed data storage system - meaning it is intended
+for creating and working with data that is of medium- to long-term significance to the owner and/or
+collaborators. Unlike a tier 1 storage system (i.e. a local file system), DataFed compromises raw data
+access performance in favor of FAIR data principles.</p>
+<p>While DataFed shares many features with tier 3
+storage systems (i.e. data archival systems), DataFed allows data and metadata to be modified after it
+is ingested and specifically includes features for disseminating subsequent changes to downstream
+data consumers via automatic provenance-based alerts as well as opt-in data subscriptions. DataFed
+also provides powerful and easy to use collaboration features to encourage “in-band” data-related
+communication instead of ad hoc and error-prone methods, such as email.</p>
+<p>DataFed utilizes <a class="reference external" href="https://www.globus.org">Globus</a> for efficient and secure data transfers, as well as
+for user authentication. Globus can be thought of as a “data network” where data transfers take place
+between Globus “endpoints” - which are Globus services that enable access to underlying file systems
+hosted by member organizations. DataFed adds a data management layer on top of Globus that permits data
+to be located and accessed without needing to know where the data is physically stored within the Globus
+network. Because DataFed relies heavily on Globus, it is recommended that DataFed users familiarize
+themselves with <a class="reference external" href="https://www.globus.org/what-we-do">how Globus works</a>.</p>
+</section>
+<section id="scientific-data-management">
+<h2>Scientific Data Management</h2>
+<p>Traditional scientific data management systems (SDMS) are restricted to individual organizations or a small number of
+organizations connected via a “virtual organization” (VO) configuration. These systems typically support
+domain-specific and predetermined data workflows that cannot be readily applied to other domains or applications.
+On the other hand, data cataloging systems are typically single-site and provide access to static datasets. Also catalogs
+usually only support HTTP data transfers, thus limiting the size of datasets that can be served. Neither
+SDMSs nor cataloging systems can easily scale-out to accommodate large numbers of users across multiple organizations.</p>
+<p>DataFed provides a combination of the features and benefits of both SDMSs and data cataloging services while
+also supporting big data. For example, DataFed provides storage and access to structured and unstructured
+heterogeneous raw data with access controls, metadata and provenance capture, and metadata indexing and search;
+however, DataFed diverges significantly from these systems in a number of ways to better serve the needs of
+open and collaborative scientific research.</p>
+<p>Briefly, DataFed provides the following unique blend of capabilities and benefits:</p>
+<ul class="simple">
+<li><p>Presents a uniform and concise logical view of widely distributed data.</p></li>
+<li><p>Supports both general- and domain-specific use cases.</p></li>
+<li><p>Manages “living data” throughout critical pre-publication data lifecycle stages.</p></li>
+<li><p>Encourages FAIR-principled data practices via user- and community-defined schemas.</p></li>
+<li><p>Enhances data awareness with automatic notification of “data events”.</p></li>
+<li><p>Scales out and up to enable efficient big data research across organizations/facilities.</p></li>
+<li><p>Provides high-quality data management foundation for use by other applications and services.</p></li>
+</ul>
+</section>
+<section id="data-lifecycle">
+<h2>Data Lifecycle</h2>
+<p>DataFed is an enabling technology for the early lifecycle stages of scientific data - from data ingest
+to pre-publication. The figure below illustrates how DataFed supports the lifecycle stages:</p>
+<img alt="../_images/data_lifecycle.png" src="../_images/data_lifecycle.png" />
+<p>DataFed provides interfaces that can be used to capture metadata, provenance, and raw data from the creation
+stage; whereas during analysis, new records may be created and linked to input records or dedicated context
+records. Pre-publication is supported by providing powerful data organization
+and data handling capabilities to help ensure that the right data is being published and that it contains
+proper metadata and provenance information. Note that data publishing systems may have additional metadata
+requirements that are not available from the data records themselves (i.e. contract numbers, sponsoring
+organizations, etc.)</p>
+</section>
+<section id="why-datafed">
+<h2>Why DataFed?</h2>
+<p>DataFed directly benefits both individual researchers and teams of geographically dispersed collaborators
+who need to capture, manage, share, and access scientific data from within, or across, any of the experimental,
+observational, compute, or analytics resources within the Department of Energy’s national laboratory network.</p>
+<p><strong>Domain Agnosticism</strong></p>
+<p>DataFed is <strong>general purpose</strong>. DataFed is domain- and methodology-neutral in that it does not require
+users to utilize pre-defined data formats or processes - yet, despite this, DataFed provides powerful
+domain-specific metadata indexing and query capabilities augmented by user/community defined schemas.</p>
+<p><strong>Working Data Support</strong></p>
+<p>DataFed supports the <strong>pre-publication data lifecycle</strong> which is both critical and complex in
+collaborative scientific research - yet is under served by existing data management systems.</p>
+<p><strong>Scalability</strong></p>
+<p>DataFed is <strong>Scalable</strong>. Datafed was designed to easily scale-out across multiple/many organizations
+and facilities by relying on federated identity technology and a common access control mechanism;
+however, individual organizations are still able to manage their own data storage resources and policies.
+In contrast, most existing SDMS products either cannot span organizations at all, or rely on virtual
+organization (VO) technologies that are highly labor-intensive to scale beyond a few organizations.</p>
+<p><strong>Big Data Support</strong></p>
+<p>DataFed <strong>understands big data</strong>. DataFed was design from the start to support “big data” and
+the often complex environments in which such data is created and processed. Many existing SDMS products
+rely on tightly-coupled file systems or HTTP/S for moving data; however, DataFed utilizes Globus (GridFTP)
+for data transfer between facilities because it is the defacto standard for high performance movement
+of very large data sets (Petabyte scale) between government-funded user facilities (DoE), research
+universities, and commercial cloud computing services.</p>
+<p><strong>Foundation for Data Applications</strong></p>
+<p>DataFed focuses on providing high quality, uniform, and easy-to-use data management services
+and does not overreach by bundling complementary features such as instrument control, workflow
+processing, or data analytics that are better served by dedicated application-specific tools. However,
+DataFed does provide application programming interfaces (APIs) to allow other services or applications
+to be utilize DataFed’s data management capabilities.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="DataFed - A Scientific Data Federation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="overview.html" class="btn btn-neutral float-right" title="System Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Oak Ridge National Laboratories.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

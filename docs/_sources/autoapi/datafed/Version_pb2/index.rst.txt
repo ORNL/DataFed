@@ -1,0 +1,70 @@
+:py:mod:`datafed.Version_pb2`
+=============================
+
+.. py:module:: datafed.Version_pb2
+
+.. autoapi-nested-parse::
+
+   Generated protocol buffer code.
+
+
+
+Module Contents
+---------------
+
+.. py:data:: _sym_db
+
+   
+
+.. py:data:: DESCRIPTOR
+
+   
+
+.. py:data:: _VERSION
+
+   
+
+.. py:data:: Version
+
+   
+
+.. py:data:: DATAFED_RELEASE_YEAR
+   :value: 2023
+
+   
+
+.. py:data:: DATAFED_RELEASE_MONTH
+   :value: 8
+
+   
+
+.. py:data:: DATAFED_RELEASE_DAY
+   :value: 21
+
+   
+
+.. py:data:: DATAFED_RELEASE_HOUR
+   :value: 10
+
+   
+
+.. py:data:: DATAFED_RELEASE_MINUTE
+   :value: 40
+
+   
+
+.. py:data:: DATAFED_COMMON_PROTOCOL_API_MAJOR
+   :value: 0
+
+   
+
+.. py:data:: DATAFED_COMMON_PROTOCOL_API_MINOR
+   :value: 0
+
+   
+
+.. py:data:: DATAFED_COMMON_PROTOCOL_API_PATCH
+   :value: 0
+
+   
+

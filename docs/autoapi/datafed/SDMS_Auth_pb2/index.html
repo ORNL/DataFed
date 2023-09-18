@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>datafed.SDMS_Auth_pb2 &mdash; DataFed 1.4 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=c9ed3d4e"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="datafed.SDMS_pb2" href="../SDMS_pb2/index.html" />
+    <link rel="prev" title="datafed.SDMS_Anon_pb2" href="../SDMS_Anon_pb2/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> DataFed
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/web/portal.html">Web Portal Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/reference.html">Command Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../CLI/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CLI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../CommandLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Config/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Connection/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Connection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../MessageLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.MessageLib</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_Anon_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Anon_pb2</span></code></a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Auth_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../VERSION/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.VERSION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Version_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Version_pb2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin/general.html">Administration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/release.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">DataFed</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">API Reference</a> &raquo;</li>
+          <li><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a> &raquo;</li>
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Auth_pb2</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-datafed.SDMS_Auth_pb2">
+<span id="datafed-sdms-auth-pb2"></span><h1><a class="reference internal" href="#module-datafed.SDMS_Auth_pb2" title="datafed.SDMS_Auth_pb2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Auth_pb2</span></code></a></h1>
+<p>Generated protocol buffer code.</p>
+<section id="module-contents">
+<h2>Module Contents</h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._sym_db">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_sym_db</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.DESCRIPTOR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">DESCRIPTOR</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROTOCOL">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROTOCOL</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.Protocol">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">Protocol</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ID">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GENERATECREDENTIALSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GENERATECREDENTIALSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REVOKECREDENTIALSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REVOKECREDENTIALSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GENERATECREDENTIALSREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GENERATECREDENTIALSREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._CHECKPERMSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_CHECKPERMSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._CHECKPERMSREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_CHECKPERMSREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GETPERMSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GETPERMSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GETPERMSREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GETPERMSREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERSETACCESSTOKENREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERSETACCESSTOKENREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERGETACCESSTOKENREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERGETACCESSTOKENREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERACCESSTOKENREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERACCESSTOKENREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERCREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERCREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERFINDBYUUIDSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERFINDBYUUIDSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERFINDBYNAMEUIDREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERFINDBYNAMEUIDREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERLISTALLREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERLISTALLREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERLISTCOLLABREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERLISTCOLLABREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERGETRECENTEPREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERGETRECENTEPREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERGETRECENTEPREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERGETRECENTEPREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._USERSETRECENTEPREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERSETRECENTEPREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._LISTINGREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_LISTINGREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDLISTBYALLOCREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDLISTBYALLOCREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDCREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDCREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDCREATEBATCHREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDCREATEBATCHREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDUPDATEBATCHREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDUPDATEBATCHREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDEXPORTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDEXPORTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDEXPORTREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDEXPORTREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDLOCKREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDLOCKREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDDELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDDELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDGETDEPENDENCYGRAPHREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDGETDEPENDENCYGRAPHREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDALLOCCHANGEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDALLOCCHANGEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDALLOCCHANGEREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDALLOCCHANGEREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDOWNERCHANGEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDOWNERCHANGEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._RECORDOWNERCHANGEREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDOWNERCHANGEREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._DATAGETREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_DATAGETREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._DATAPUTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_DATAPUTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._DATAGETREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_DATAGETREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._DATAPUTREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_DATAPUTREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._DATADELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_DATADELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._DATAPATHREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_DATAPATHREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._DATAPATHREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_DATAPATHREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._SEARCHREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_SEARCHREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLREADREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLREADREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLCREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLCREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLDELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLDELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLWRITEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLWRITEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLMOVEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLMOVEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLGETPARENTSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLGETPARENTSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLPATHREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLPATHREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLGETOFFSETREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLGETOFFSETREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLGETOFFSETREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLGETOFFSETREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._COLLLISTPUBLISHEDREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLLISTPUBLISHEDREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GROUPCREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GROUPCREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GROUPUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GROUPUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GROUPDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GROUPDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GROUPDELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GROUPDELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GROUPLISTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GROUPLISTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._GROUPVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_GROUPVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._ACLVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_ACLVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._ACLUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_ACLUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._ACLSHAREDLISTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_ACLSHAREDLISTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._ACLSHAREDLISTITEMSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_ACLSHAREDLISTITEMSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._ACLDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_ACLDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROJECTVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROJECTDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROJECTCREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTCREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROJECTUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROJECTDELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTDELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROJECTLISTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTLISTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROJECTSEARCHREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTSEARCHREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROJECTGETROLEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTGETROLEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._PROJECTGETROLEREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTGETROLEREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPODATADELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPODATADELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPODATAGETSIZEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPODATAGETSIZEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPODATASIZEREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPODATASIZEREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOPATHCREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOPATHCREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOPATHDELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOPATHDELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOLISTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOLISTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOCREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOCREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPODELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPODELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPODATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPODATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOCALCSIZEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOCALCSIZEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOCALCSIZEREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOCALCSIZEREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOLISTALLOCATIONSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOLISTALLOCATIONSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOLISTSUBJECTALLOCATIONSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOLISTSUBJECTALLOCATIONSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOLISTOBJECTALLOCATIONSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOLISTOBJECTALLOCATIONSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOVIEWALLOCATIONREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOVIEWALLOCATIONREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOALLOCATIONSREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSTATSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOALLOCATIONSTATSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSTATSREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOALLOCATIONSTATSREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOALLOCATIONCREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOALLOCATIONCREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSETREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOALLOCATIONSETREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOALLOCATIONSETDEFAULTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOALLOCATIONSETDEFAULTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOALLOCATIONDELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOALLOCATIONDELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._REPOAUTHZREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPOAUTHZREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._QUERYCREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_QUERYCREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._QUERYUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_QUERYUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._QUERYDELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_QUERYDELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._QUERYLISTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_QUERYLISTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._QUERYVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_QUERYVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._QUERYEXECREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_QUERYEXECREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._QUERYDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_QUERYDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._NOTELISTBYSUBJECTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTELISTBYSUBJECTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._NOTEVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTEVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._NOTECREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTECREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._NOTEUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTEUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._NOTECOMMENTEDITREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTECOMMENTEDITREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._NOTEDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTEDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TASKVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TASKVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TASKLISTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TASKLISTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TASKDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TASKDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TAGSEARCHREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TAGSEARCHREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TAGLISTBYCOUNTREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TAGLISTBYCOUNTREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TAGDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TAGDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._METADATAVALIDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_METADATAVALIDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._METADATAVALIDATEREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_METADATAVALIDATEREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._SCHEMAVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_SCHEMAVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._SCHEMASEARCHREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_SCHEMASEARCHREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._SCHEMADATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_SCHEMADATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._SCHEMACREATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_SCHEMACREATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._SCHEMAUPDATEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_SCHEMAUPDATEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._SCHEMAREVISEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_SCHEMAREVISEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._SCHEMADELETEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_SCHEMADELETEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TOPICLISTTOPICSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TOPICLISTTOPICSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TOPICVIEWREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TOPICVIEWREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TOPICSEARCHREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TOPICSEARCHREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._TOPICDATAREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_TOPICDATAREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GenerateCredentialsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GenerateCredentialsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RevokeCredentialsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RevokeCredentialsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GenerateCredentialsReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GenerateCredentialsReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CheckPermsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CheckPermsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CheckPermsReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CheckPermsReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GetPermsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GetPermsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GetPermsReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GetPermsReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserSetAccessTokenRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserSetAccessTokenRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserGetAccessTokenRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserGetAccessTokenRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserAccessTokenReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserAccessTokenReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserFindByUUIDsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserFindByUUIDsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserFindByNameUIDRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserFindByNameUIDRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserListAllRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserListAllRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserListCollabRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserListCollabRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserGetRecentEPRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserGetRecentEPRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserGetRecentEPReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserGetRecentEPReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.UserSetRecentEPRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">UserSetRecentEPRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ListingReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ListingReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordListByAllocRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordListByAllocRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordCreateBatchRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordCreateBatchRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordUpdateBatchRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordUpdateBatchRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordExportRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordExportRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordExportReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordExportReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordLockRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordLockRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordGetDependencyGraphRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordGetDependencyGraphRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordAllocChangeRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordAllocChangeRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordAllocChangeReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordAllocChangeReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordOwnerChangeRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordOwnerChangeRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RecordOwnerChangeReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordOwnerChangeReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.DataGetRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">DataGetRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.DataPutRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">DataPutRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.DataGetReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">DataGetReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.DataPutReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">DataPutReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.DataDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">DataDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.DataPathRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">DataPathRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.DataPathReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">DataPathReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.SearchRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">SearchRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollReadRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollReadRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollWriteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollWriteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollMoveRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollMoveRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollGetParentsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollGetParentsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollPathReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollPathReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollGetOffsetRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollGetOffsetRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollGetOffsetReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollGetOffsetReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.CollListPublishedRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">CollListPublishedRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GroupCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GroupCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GroupUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GroupUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GroupDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GroupDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GroupDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GroupDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GroupListRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GroupListRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.GroupViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">GroupViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ACLViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ACLViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ACLUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ACLUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ACLSharedListRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ACLSharedListRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ACLSharedListItemsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ACLSharedListItemsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ACLDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ACLDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ProjectViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ProjectDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ProjectCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ProjectUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ProjectDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ProjectListRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectListRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ProjectSearchRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectSearchRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ProjectGetRoleRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectGetRoleRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.ProjectGetRoleReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectGetRoleReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoDataDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoDataDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoDataGetSizeRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoDataGetSizeRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoDataSizeReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoDataSizeReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoPathCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoPathCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoPathDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoPathDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoListRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoListRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoCalcSizeRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoCalcSizeRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoCalcSizeReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoCalcSizeReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoListAllocationsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoListAllocationsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoListSubjectAllocationsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoListSubjectAllocationsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoListObjectAllocationsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoListObjectAllocationsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoViewAllocationRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoViewAllocationRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoAllocationsReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoAllocationsReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoAllocationStatsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoAllocationStatsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoAllocationStatsReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoAllocationStatsReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoAllocationCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoAllocationCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoAllocationSetRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoAllocationSetRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoAllocationSetDefaultRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoAllocationSetDefaultRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoAllocationDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoAllocationDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.RepoAuthzRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoAuthzRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.QueryCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">QueryCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.QueryUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">QueryUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.QueryDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">QueryDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.QueryListRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">QueryListRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.QueryViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">QueryViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.QueryExecRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">QueryExecRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.QueryDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">QueryDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.NoteListBySubjectRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteListBySubjectRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.NoteViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.NoteCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.NoteUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.NoteCommentEditRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteCommentEditRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.NoteDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TaskViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TaskViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TaskListRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TaskListRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TaskDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TaskDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TagSearchRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TagSearchRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TagListByCountRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TagListByCountRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TagDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TagDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.MetadataValidateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">MetadataValidateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.MetadataValidateReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">MetadataValidateReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.SchemaViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">SchemaViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.SchemaSearchRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">SchemaSearchRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.SchemaDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">SchemaDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.SchemaCreateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">SchemaCreateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.SchemaUpdateRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">SchemaUpdateRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.SchemaReviseRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">SchemaReviseRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.SchemaDeleteRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">SchemaDeleteRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TopicListTopicsRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TopicListTopicsRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TopicViewRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TopicViewRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TopicSearchRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TopicSearchRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2.TopicDataReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">TopicDataReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._msg_name_to_type">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Auth_pb2._msg_type_to_name">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id16">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id17">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id18">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id19">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id20">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id21">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id22">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id23">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id24">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id25">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id26">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id27">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id28">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id29">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id30">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id31">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Auth_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../SDMS_Anon_pb2/index.html" class="btn btn-neutral float-left" title="datafed.SDMS_Anon_pb2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../SDMS_pb2/index.html" class="btn btn-neutral float-right" title="datafed.SDMS_pb2" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Oak Ridge National Laboratories.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
