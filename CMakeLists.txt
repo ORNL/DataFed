@@ -119,6 +119,20 @@ if( BUILD_WEB_SERVER )
   file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
 endif()
 
+if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT) 
+  if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})
+          message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )
+          message( "PBUF_LIB_DIR:" $ENV{PBUF_LIB_DIR} )
+          include_directories( $ENV{PBUF_INC_DIR} )
+          link_directories( $ENV{PBUF_LIB_DIR} )
+    set( Protobuf_LIBRARY $ENV{PBUF_LIB_DIR} )
+  endif()
+
+  find_package(Protobuf REQUIRED VERSION "${PROTOBUF_VERSION}" )
+  message("Protobuf library ${Protobuf_LIBRARIES}")
+  set( PROTOBUF_IMPORT_DIRS ${PROTOBUF_INCLUDE_DIRS})
+endif() 
+
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON) 
 
   include_directories( "/usr/include/globus" )
@@ -161,18 +175,6 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
   #include_directories( ${ZeroMQ_INCLUDE_DIR} )
   #link_directories( ${PC_ZeroMQ_LIBRARY_DIRS} )
 
-  if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})
-          message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )
-          message( "PBUF_LIB_DIR:" $ENV{PBUF_LIB_DIR} )
-          include_directories( $ENV{PBUF_INC_DIR} )
-          link_directories( $ENV{PBUF_LIB_DIR} )
-    set( Protobuf_LIBRARY $ENV{PBUF_LIB_DIR} )
-  endif()
-
-
-  find_package(Protobuf REQUIRED VERSION "${PROTOBUF_VERSION}" )
-  message("Protobuf library ${Protobuf_LIBRARIES}")
-  set( PROTOBUF_IMPORT_DIRS ${PROTOBUF_INCLUDE_DIRS})
   #message( TRACE "PROTOBUF_IMPORT_DIRS:" ${PROTOBUF_IMPORT_DIRS} )
 
   if(NOT CMAKE_BUILD_TYPE)
