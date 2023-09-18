@@ -17,5 +17,7 @@ sudo apt-get install -y
 install_cmake
 cd ~
 
+install_protobuf
+cd ~
 python3 -m pip install --upgrade pip
 python3 -m pip install setuptools sphinx sphinx-rtd-theme sphinx-autoapi
