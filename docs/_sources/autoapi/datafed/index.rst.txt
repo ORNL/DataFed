@@ -1,0 +1,36 @@
+:py:mod:`datafed`
+=================
+
+.. py:module:: datafed
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   CLI/index.rst
+   CommandLib/index.rst
+   Config/index.rst
+   Connection/index.rst
+   MessageLib/index.rst
+   SDMS_Anon_pb2/index.rst
+   SDMS_Auth_pb2/index.rst
+   SDMS_pb2/index.rst
+   VERSION/index.rst
+   Version_pb2/index.rst
+
+
+Package Contents
+----------------
+
+.. py:data:: name
+   :value: 'datafed'
+
+   
+
+.. py:data:: version
+
+   
+

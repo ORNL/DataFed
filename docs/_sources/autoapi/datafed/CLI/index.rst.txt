@@ -1,0 +1,831 @@
+:py:mod:`datafed.CLI`
+=====================
+
+.. py:module:: datafed.CLI
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   datafed.CLI._AliasedGroup
+   datafed.CLI._AliasedGroupRoot
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   datafed.CLI.run
+   datafed.CLI.init
+   datafed.CLI.loginByPassword
+   datafed.CLI.loginByToken
+   datafed.CLI.command
+   datafed.CLI._set_script_cb
+   datafed.CLI._set_verbosity_cb
+   datafed.CLI._global_context_options
+   datafed.CLI._global_output_options
+   datafed.CLI._cli
+   datafed.CLI._genDoc
+   datafed.CLI._genDocHeader
+   datafed.CLI._genDocCmd
+   datafed.CLI._wc
+   datafed.CLI._wp
+   datafed.CLI._data
+   datafed.CLI._dataView
+   datafed.CLI._dataCreate
+   datafed.CLI._dataUpdate
+   datafed.CLI._dataDelete
+   datafed.CLI._dataGet
+   datafed.CLI._dataPut
+   datafed.CLI._batch
+   datafed.CLI._data_batch_create
+   datafed.CLI._data_batch_update
+   datafed.CLI._list
+   datafed.CLI._coll
+   datafed.CLI._collView
+   datafed.CLI._collCreate
+   datafed.CLI._collUpdate
+   datafed.CLI._collDelete
+   datafed.CLI._collItemsAdd
+   datafed.CLI._coll_rem
+   datafed.CLI._query
+   datafed.CLI._queryList
+   datafed.CLI._queryView
+   datafed.CLI._queryCreate
+   datafed.CLI._queryUpdate
+   datafed.CLI._queryDelete
+   datafed.CLI._queryExec
+   datafed.CLI._queryRun
+   datafed.CLI._user
+   datafed.CLI._userListCollab
+   datafed.CLI._userListAll
+   datafed.CLI._userView
+   datafed.CLI._userWho
+   datafed.CLI._project
+   datafed.CLI._projectList
+   datafed.CLI._projectView
+   datafed.CLI._shares
+   datafed.CLI._task
+   datafed.CLI._taskList
+   datafed.CLI._taskView
+   datafed.CLI._ep
+   datafed.CLI._epGet
+   datafed.CLI._epSet
+   datafed.CLI._epList
+   datafed.CLI._epDefault
+   datafed.CLI._epDefaultGet
+   datafed.CLI._epDefaultSet
+   datafed.CLI._setup
+   datafed.CLI._verbositySet
+   datafed.CLI._help_cli
+   datafed.CLI._exit_cli
+   datafed.CLI._print_msg
+   datafed.CLI._print_ack_reply
+   datafed.CLI._print_listing
+   datafed.CLI._print_user_listing
+   datafed.CLI._print_proj_listing
+   datafed.CLI._print_endpoints
+   datafed.CLI._print_data
+   datafed.CLI._print_batch
+   datafed.CLI._print_coll
+   datafed.CLI._print_deps
+   datafed.CLI._print_task_listing
+   datafed.CLI._print_task
+   datafed.CLI._print_task_array
+   datafed.CLI._print_user
+   datafed.CLI._print_proj
+   datafed.CLI._print_path
+   datafed.CLI._print_query
+   datafed.CLI._wrap_text
+   datafed.CLI._resolve_id
+   datafed.CLI._resolve_coll_id
+   datafed.CLI._generic_reply_handler
+   datafed.CLI._setWorkingCollectionTitle
+   datafed.CLI._arrayToCSV
+   datafed.CLI._arrayToDotted
+   datafed.CLI._printJSON
+   datafed.CLI._printJSON_List
+   datafed.CLI._bar_adaptive_human_readable
+   datafed.CLI._initialize
+   datafed.CLI._addConfigOptions
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   datafed.CLI._OM_TEXT
+   datafed.CLI._OM_JSON
+   datafed.CLI._OM_RETN
+   datafed.CLI._STAT_OK
+   datafed.CLI._STAT_ERROR
+   datafed.CLI._capi
+   datafed.CLI._return_val
+   datafed.CLI._uid
+   datafed.CLI._cur_ctx
+   datafed.CLI._cur_coll
+   datafed.CLI._cur_coll_prefix
+   datafed.CLI._cur_coll_title
+   datafed.CLI._cur_alias_prefix
+   datafed.CLI._prev_coll
+   datafed.CLI._prev_ctx
+   datafed.CLI._list_items
+   datafed.CLI._interactive
+   datafed.CLI._verbosity_sticky
+   datafed.CLI._verbosity
+   datafed.CLI._output_mode_sticky
+   datafed.CLI._output_mode
+   datafed.CLI._ctxt_settings
+   datafed.CLI._task_statuses
+   datafed.CLI._task_types
+   datafed.CLI._initialized
+   datafed.CLI._devnull
+   datafed.CLI._hdr_lev_char
+   datafed.CLI.__global_context_options
+   datafed.CLI.__global_output_options
+
+
+.. py:data:: _OM_TEXT
+   :value: 0
+
+   
+
+.. py:data:: _OM_JSON
+   :value: 1
+
+   
+
+.. py:data:: _OM_RETN
+   :value: 2
+
+   
+
+.. py:data:: _STAT_OK
+   :value: 0
+
+   
+
+.. py:data:: _STAT_ERROR
+   :value: 1
+
+   
+
+.. py:data:: _capi
+
+   
+
+.. py:data:: _return_val
+
+   
+
+.. py:data:: _uid
+
+   
+
+.. py:data:: _cur_ctx
+
+   
+
+.. py:data:: _cur_coll
+
+   
+
+.. py:data:: _cur_coll_prefix
+   :value: 'root'
+
+   
+
+.. py:data:: _cur_coll_title
+
+   
+
+.. py:data:: _cur_alias_prefix
+   :value: ''
+
+   
+
+.. py:data:: _prev_coll
+   :value: 'root'
+
+   
+
+.. py:data:: _prev_ctx
+
+   
+
+.. py:data:: _list_items
+   :value: []
+
+   
+
+.. py:data:: _interactive
+   :value: True
+
+   
+
+.. py:data:: _verbosity_sticky
+   :value: 1
+
+   
+
+.. py:data:: _verbosity
+   :value: 1
+
+   
+
+.. py:data:: _output_mode_sticky
+
+   
+
+.. py:data:: _output_mode
+
+   
+
+.. py:data:: _ctxt_settings
+
+   
+
+.. py:data:: _task_statuses
+
+   
+
+.. py:data:: _task_types
+
+   
+
+.. py:data:: _initialized
+   :value: False
+
+   
+
+.. py:data:: _devnull
+
+   
+
+.. py:data:: _hdr_lev_char
+   :value: ['-', '-', '^', ',']
+
+   
+
+.. py:function:: run()
+
+
+.. py:function:: init(opts={})
+
+
+.. py:function:: loginByPassword(uid, password)
+
+
+.. py:function:: loginByToken(token)
+
+
+.. py:function:: command(command)
+
+
+.. py:class:: _AliasedGroup(name: Optional[str] = None, commands: Optional[Union[Dict[str, Command], Sequence[Command]]] = None, **attrs: Any)
+
+
+   Bases: :py:obj:`click.Group`
+
+   A group allows a command to have subcommands attached. This is
+   the most common way to implement nesting in Click.
+
+   :param name: The name of the group command.
+   :param commands: A dict mapping names to :class:`Command` objects.
+       Can also be a list of :class:`Command`, which will use
+       :attr:`Command.name` to create the dict.
+   :param attrs: Other command arguments described in
+       :class:`MultiCommand`, :class:`Command`, and
+       :class:`BaseCommand`.
+
+   .. versionchanged:: 8.0
+       The ``commmands`` argument can be a list of command objects.
+
+   .. py:method:: get_command(ctx, cmd_name)
+
+      Given a context and a command name, this returns a
+      :class:`Command` object if it exists or returns `None`.
+
+
+   .. py:method:: resolve_command(ctx, args)
+
+
+
+.. py:class:: _AliasedGroupRoot(name: Optional[str] = None, commands: Optional[Union[Dict[str, Command], Sequence[Command]]] = None, **attrs: Any)
+
+
+   Bases: :py:obj:`_AliasedGroup`
+
+   A group allows a command to have subcommands attached. This is
+   the most common way to implement nesting in Click.
+
+   :param name: The name of the group command.
+   :param commands: A dict mapping names to :class:`Command` objects.
+       Can also be a list of :class:`Command`, which will use
+       :attr:`Command.name` to create the dict.
+   :param attrs: Other command arguments described in
+       :class:`MultiCommand`, :class:`Command`, and
+       :class:`BaseCommand`.
+
+   .. versionchanged:: 8.0
+       The ``commmands`` argument can be a list of command objects.
+
+   .. py:method:: get_command(ctx, cmd_name)
+
+      Given a context and a command name, this returns a
+      :class:`Command` object if it exists or returns `None`.
+
+
+
+.. py:exception:: _NoCommand(*args, **kwargs)
+
+
+   Bases: :py:obj:`Exception`
+
+   Common base class for all non-exit exceptions.
+
+
+.. py:function:: _set_script_cb(ctx, param, value)
+
+
+.. py:function:: _set_verbosity_cb(ctx, param, value)
+
+
+.. py:data:: __global_context_options
+
+   
+
+.. py:function:: _global_context_options(func)
+
+
+.. py:data:: __global_output_options
+
+   
+
+.. py:function:: _global_output_options(func)
+
+
+.. py:function:: _cli(ctx, *args, **kwargs)
+
+   'datafed' is the command-line interface (CLI) for the DataFed federated data management
+   service and may be used to access many of the features available via the DataFed web
+   portal. This CLI may be used interactively (human-friendly output) or for scripting (JSON
+   output) by specifying the -s option.
+
+   When the datafed CLI is run without any command arguments, a interactive shell session is
+   started. While in the shell, commands should be entered without specifying the 'datafed'
+   prefix.
+
+
+.. py:function:: _genDoc(ctx)
+
+
+.. py:function:: _genDocHeader(cmd, level)
+
+
+.. py:function:: _genDocCmd(cmd, ctx, level, parname=None, recurse=True)
+
+
+.. py:function:: _wc(coll_id)
+
+   Set/print current working collection or path. 'ID' can be a collection ID, alias, user
+   or project ID, listing index, previous collection ('-'), or path ('..','/','~'). 'cd' is
+   an alias for the 'wc' command.
+
+   The 'wc' command can be used to switch to a different user or project context by either
+   specifying a user/project ID/alias as the argument, or by specifying a collection ID/alias
+   that is owned by another user or project. In either case, if permission is granted, the CLI
+   context will be changed to the associated user/project and all subsequent commands will act
+   within that context. To return to the authenticated users context, use the 'wc ~' command.
+   The '~' path indicates the authenticated user's root collection; whereas the '/' path is the
+   root colelction of the current context.
+
+
+.. py:function:: _wp()
+
+   Get current working path. Displays the full path of the current working
+   collection starting from the root collection of the associated user or
+   project.
+
+
+.. py:function:: _data()
+
+
+.. py:function:: _dataView(data_id, context)
+
+   View data record information. Displays record title, description, tags,
+   and other informational and administrative fields. ID may be a data record
+   identifier, alias, or index value from a listing. By default, description
+   text is truncated and metadata is not shown unless the verbosity is as
+   level 2.
+
+
+.. py:function:: _dataCreate(title, alias, description, tags, raw_data_file, extension, external, metadata, metadata_file, schema, schema_enforce, parent, repository, deps, context)
+
+   Create a new data record. The data record 'title' is required, but all
+   other attributes are optional. On success, the ID of the created data
+   record is returned. Note that if a parent collection is specified, and
+   that collection belongs to a project or other collaborator, the creating
+   user must have permission to write to that collection. The raw-data-file
+   option is only supported in interactive mode and is provided as a
+   convenience to avoid a separate dataPut() call.
+
+
+.. py:function:: _dataUpdate(data_id, title, alias, description, tags, raw_data_file, extension, metadata, metadata_file, metadata_set, schema, schema_enforce, deps_add, deps_rem, context)
+
+   Update an existing data record. The data record ID is required and can be
+   an ID, alias, or listing index; all other record attributes are optional.
+   The raw-data-file option is only supported in interactive mode and is
+   provided as a convenience to avoid a separate dataPut() call.
+
+
+.. py:function:: _dataDelete(data_id, force, context)
+
+   Delete one or more existing data records. Multiple ID arguments can be
+   provided and may data record IDs, aliases, or index values from a listing.
+   By default, a confirmation prompt is used, but this can be bypassed with
+   the '--force' option.
+
+
+.. py:function:: _dataGet(df_id, path, wait, encrypt, orig_fname, context)
+
+   Get (download) raw data of data records and/or collections. Multiple ID
+   arguments can be specified and may be data record and/or collection IDs,
+   aliases, or index values from s listing. The PATH argument is the
+   destination for the download and can be either a full Globus path (with
+   endpoint), or a local file system path (absolute or relative).
+
+   If no endpoint is specified in the PATH argument, the current endpoint will
+   be used. If the destination PATH doesn't exist, it will be created
+   given sufficient filesystem permissions. Note that the path does not have to
+   be local to where the CLI is running - data can be transferred to/from remote
+   systems; however, full Globus paths must used in this case.
+
+
+.. py:function:: _dataPut(data_id, path, wait, extension, encrypt, context)
+
+   Put (upload) raw data located at PATH to DataFed record ID.  The ID
+   argument may be data record ID, alias, or index value from a listing.
+   The PATH argument specifies the source file for the upload and can be
+   either a full Globus path (with endpoint), or a local file system path
+   (absolute or relative). If no endpoint is specified in the PATH
+   argument, the current endpoint will be used.
+
+
+.. py:function:: _batch()
+
+
+.. py:function:: _data_batch_create(collection, file, context)
+
+   Batch create data records from JSON file(s). Multiple FILE arguments may be
+   specified and are absolute or relative paths to JSON inputs file on a local
+   filesystem. JSON input files may contain individual JSON objects, or arrays
+   of JSON objects. Each JSON object represents a new data record and the JSON
+   must comply with the DataFed record input schema (see online documentation).
+
+
+.. py:function:: _data_batch_update(file)
+
+   Batch update data records from JSON file(s). Multiple FILE arguments may be
+   specified and are absolute or relative paths to JSON inputs file on a local
+   filesystem. JSON input files may contain individual JSON objects, or arrays
+   of JSON objects. Each JSON object represents a new data record and the JSON
+   must comply with the DataFed record input schema (see online documentation).
+
+
+.. py:function:: _list(ctx, item_id, offset, count, context)
+
+   List contents of a collection, or shared items. ID may be a collection ID
+   or alias, a path ('..','/','~'), a user or project ID, an index value from a
+   listing, or omitted for the current working collection. If the ID is a
+   user or project, the ls command will list shared items associated with the
+   given user or project.
+
+   Note: the '/' path lists the root collection of the current context (user or
+   project); whereas the '~' path always lists the root collection of the
+   authenticated user, regardless of context.
+
+
+.. py:function:: _coll()
+
+
+.. py:function:: _collView(coll_id, context)
+
+   View collection information. Displays collection title, description, and
+   other administrative fields. ID may be a collection identifier, alias, or
+   index value from a listing. Use 'coll list' command to see items contained
+   in a collection.
+
+
+.. py:function:: _collCreate(title, alias, description, tags, topic, parent, context)
+
+   Create a new collection. The collection 'title' is required, but all
+   other attributes are optional. On success, the ID of the created
+   collection is returned. Note that if a parent collection is specified, and
+   that collection belongs to a project or other collaborator, the creating
+   user must have permission to write to that collection.
+
+
+.. py:function:: _collUpdate(coll_id, title, alias, description, tags, topic, context)
+
+   Update an existing collection. The collection ID is required and can be
+   an ID, alias, or listing index; all other collection attributes are
+   optional.
+
+
+.. py:function:: _collDelete(coll_id, force, context)
+
+   Delete one or more existing collections. Multiple ID arguments can be
+   provided and may be collection IDs, aliases, or index values from a
+   listing. By default, a confirmation prompt is used, but this can be
+   bypassed with the '--force' option.
+
+   When a collection is deleted, all contained collections are also deleted;
+   however, contained data records are only deleted if they are not linked to
+   another collection not involved in the deletion.
+
+
+.. py:function:: _collItemsAdd(coll_id, item_id, context)
+
+   Add data records and/or collections to a collection. COLL_ID is the
+   destination collection and ITEM_IDs specify one or more data records and/or
+   collections to add to the destination collection. COLL_ID and ITEM_IDs may
+   be IDs, aliases, or index values from a listing. COLL_ID may also be a
+   relative collection path ('.', '..', or '/').
+
+
+.. py:function:: _coll_rem(coll_id, item_id, context)
+
+   Remove data records and/or collections from a collection. COLL_ID is the
+   containing collection and ITEM_IDs specify one or more data records and/or
+   collections to remove from the containing collection. COLL_ID and ITEM_IDs
+   may be IDs, aliases, or index values from a listing. COLL_ID may also be a
+   relative collection path ('.', '..', or '/').
+
+
+.. py:function:: _query(*args, **kwargs)
+
+
+.. py:function:: _queryList(offset, count)
+
+   List saved queries.
+
+
+.. py:function:: _queryView(qry_id)
+
+   View a saved query by ID.
+
+
+.. py:function:: _queryCreate(title, coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev)
+
+   Create a saved query.
+
+
+.. py:function:: _queryUpdate(qry_id, title, coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev)
+
+   Update a saved query. The title and search terms of a query may be updated;
+   however, search scope cannot currently be changed. To remove a term,
+   specify an empty string ("") for the associated option.
+
+
+.. py:function:: _queryDelete(qry_id)
+
+   Delete a saved query by ID.
+
+
+.. py:function:: _queryExec(qry_id, offset, count)
+
+   Execute a saved query by ID.
+
+
+.. py:function:: _queryRun(coll_mode, coll, id, text, tag, schema, meta, meta_err, owner, creator, time_from, time_to, public, category, sort, sort_rev, offset, count)
+
+   Run a direct query on data or collections. The default scope is the current
+   authenticated user. If collections are specified, they must be in the same
+   overall search scope. At least one search term must be specified.
+
+   The sort option 'text' is a text-matching relevance ranking and only works
+   if a text term is specified in the query. The --sort-rev option does
+   not work with text relevance matching. The sort options 'ct' and 'ut'
+   are creation and update times, respectively.
+
+
+.. py:function:: _user()
+
+
+.. py:function:: _userListCollab(offset, count)
+
+   List all users that are collaborators. Collaborators are defined as users
+   that have projects in common with the current user, or that have data-
+   sharing relationships with the current user.
+
+
+.. py:function:: _userListAll(offset, count)
+
+   List all users.
+
+
+.. py:function:: _userView(uid)
+
+   View user information.
+
+
+.. py:function:: _userWho()
+
+   Show current authenticated user ID.
+
+
+.. py:function:: _project()
+
+
+.. py:function:: _projectList(owned, admin, member, offset, count)
+
+   List projects associated with current user. List projects that are owned or managed by the
+   current user, as well as projects were the current user is a member.
+
+
+.. py:function:: _projectView(proj_id)
+
+   View project information. Current user must have a role (owner, manager, or
+   member) within the project specified by the ID argument.
+
+
+.. py:function:: _shares(users, projects)
+
+   List users and/or projects sharing data with current user.
+
+
+.. py:function:: _task()
+
+
+.. py:function:: _taskList(time_from, to, since, status, offset, count)
+
+   List recent tasks. If no time or status filter options are
+   provided, all tasks initiated by the current user are listed,
+   most recent first. Note that the DataFed server periodically purges
+   tasks history such that only up to 30 days of history are retained.
+
+
+.. py:function:: _taskView(task_id)
+
+   Show task information. Use the ID argument to view a specific task
+   record, or omit to view the latest task initiated by the current user.
+
+
+.. py:function:: _ep()
+
+
+.. py:function:: _epGet()
+
+   Get Globus endpoint for the current session. At the start of a session, the
+   current endpoint will be set to the default endpoint, if configured.
+
+
+.. py:function:: _epSet(endpoint)
+
+   Set endpoint for the current session. If no endpoint is given, the
+   default endpoint will be set as the current endpoint, if configured.
+
+
+.. py:function:: _epList()
+
+   List recently used endpoints.
+
+
+.. py:function:: _epDefault()
+
+
+.. py:function:: _epDefaultGet()
+
+   Show the default Globus endpoint.
+
+
+.. py:function:: _epDefaultSet(current, endpoint)
+
+   Set the default Globus endpoint. The default endpoint will be set from the
+   'endpoint' argument, or if the '--current' options is specified, from the
+   currently active endpoint.
+
+
+.. py:function:: _setup(ctx)
+
+   Setup local credentials. This command installs DataFed credentials for the
+   current user in the configured client configuration directory. Subsequent
+   use of the DataFed CLI will read these credentials instead of requiring
+   manual authentication.
+
+
+.. py:function:: _verbositySet(level)
+
+   Set/display verbosity level. The verbosity level argument can be 0
+   (lowest), 1 (normal), or 2 (highest). If the the level is omitted, the
+   current verbosity level is returned.
+
+
+.. py:function:: _help_cli(ctx, command)
+
+   Show DataFed CLI help. Include a command name as the argument to see
+   command-specific help.
+
+
+.. py:function:: _exit_cli()
+
+   Exit an interactive session. Ctrl-C may also be used to exit the shell.
+
+
+.. py:function:: _print_msg(level, message, err=False)
+
+
+.. py:function:: _print_ack_reply(reply=None)
+
+
+.. py:function:: _print_listing(message)
+
+
+.. py:function:: _print_user_listing(message)
+
+
+.. py:function:: _print_proj_listing(message)
+
+
+.. py:function:: _print_endpoints(message)
+
+
+.. py:function:: _print_data(message)
+
+
+.. py:function:: _print_batch(message)
+
+
+.. py:function:: _print_coll(message)
+
+
+.. py:function:: _print_deps(dr)
+
+
+.. py:function:: _print_task_listing(message)
+
+
+.. py:function:: _print_task(message)
+
+
+.. py:function:: _print_task_array(message)
+
+
+.. py:function:: _print_user(message)
+
+
+.. py:function:: _print_proj(message)
+
+
+.. py:function:: _print_path(message)
+
+
+.. py:function:: _print_query(message)
+
+
+.. py:function:: _wrap_text(text, prefix, indent, compact=False)
+
+
+.. py:function:: _resolve_id(df_id)
+
+
+.. py:function:: _resolve_coll_id(coll_id, context=None)
+
+
+.. py:function:: _generic_reply_handler(reply, printFunc)
+
+
+.. py:function:: _setWorkingCollectionTitle()
+
+
+.. py:function:: _arrayToCSV(items, skip)
+
+
+.. py:function:: _arrayToDotted(items, skip=0)
+
+
+.. py:function:: _printJSON(json, cur_indent, indent)
+
+
+.. py:function:: _printJSON_List(json, cur_indent, indent)
+
+
+.. py:function:: _bar_adaptive_human_readable(current, total, width=80)
+
+
+.. py:function:: _initialize(opts)
+
+
+.. py:function:: _addConfigOptions()
+
+

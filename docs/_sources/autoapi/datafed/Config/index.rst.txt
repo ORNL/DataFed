@@ -1,0 +1,107 @@
+:py:mod:`datafed.Config`
+========================
+
+.. py:module:: datafed.Config
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   datafed.Config.API
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   datafed.Config._OPT_INT
+   datafed.Config._OPT_BOOL
+   datafed.Config._OPT_PATH
+   datafed.Config._OPT_NO_ENV
+   datafed.Config._OPT_NO_CF
+   datafed.Config._OPT_NO_CL
+   datafed.Config._OPT_HIDE
+   datafed.Config._OPT_EAGER
+   datafed.Config._opt_info
+
+
+.. py:data:: _OPT_INT
+   :value: 1
+
+   
+
+.. py:data:: _OPT_BOOL
+   :value: 2
+
+   
+
+.. py:data:: _OPT_PATH
+   :value: 4
+
+   
+
+.. py:data:: _OPT_NO_ENV
+   :value: 8
+
+   
+
+.. py:data:: _OPT_NO_CF
+   :value: 16
+
+   
+
+.. py:data:: _OPT_NO_CL
+   :value: 32
+
+   
+
+.. py:data:: _OPT_HIDE
+   :value: 64
+
+   
+
+.. py:data:: _OPT_EAGER
+   :value: 128
+
+   
+
+.. py:data:: _opt_info
+
+   
+
+.. py:class:: API(opts={})
+
+
+   .. py:method:: _processOptions(opts)
+
+
+   .. py:method:: _loadEnvironVars()
+
+
+   .. py:method:: _loadConfigFile(cfg_file, priority)
+
+
+   .. py:method:: printSettingInfo()
+
+
+   .. py:method:: getOpts()
+
+
+   .. py:method:: get(key)
+
+
+   .. py:method:: set(key, value, save=False)
+
+
+   .. py:method:: save()
+
+
+

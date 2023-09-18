@@ -1,0 +1,251 @@
+:py:mod:`datafed.SDMS_Anon_pb2`
+===============================
+
+.. py:module:: datafed.SDMS_Anon_pb2
+
+.. autoapi-nested-parse::
+
+   Generated protocol buffer code.
+
+
+
+Module Contents
+---------------
+
+.. py:data:: _sym_db
+
+   
+
+.. py:data:: DESCRIPTOR
+
+   
+
+.. py:data:: _PROTOCOL
+
+   
+
+.. py:data:: Protocol
+
+   
+
+.. py:data:: ID
+   :value: 1
+
+   
+
+.. py:data:: _ACKREPLY
+
+   
+
+.. py:data:: _NACKREPLY
+
+   
+
+.. py:data:: _VERSIONREQUEST
+
+   
+
+.. py:data:: _VERSIONREPLY
+
+   
+
+.. py:data:: _GETAUTHSTATUSREQUEST
+
+   
+
+.. py:data:: _AUTHENTICATEBYPASSWORDREQUEST
+
+   
+
+.. py:data:: _AUTHENTICATEBYTOKENREQUEST
+
+   
+
+.. py:data:: _AUTHSTATUSREPLY
+
+   
+
+.. py:data:: _DAILYMESSAGEREQUEST
+
+   
+
+.. py:data:: _DAILYMESSAGEREPLY
+
+   
+
+.. py:data:: AckReply
+
+   
+
+.. py:data:: NackReply
+
+   
+
+.. py:data:: VersionRequest
+
+   
+
+.. py:data:: VersionReply
+
+   
+
+.. py:data:: GetAuthStatusRequest
+
+   
+
+.. py:data:: AuthenticateByPasswordRequest
+
+   
+
+.. py:data:: AuthenticateByTokenRequest
+
+   
+
+.. py:data:: AuthStatusReply
+
+   
+
+.. py:data:: DailyMessageRequest
+
+   
+
+.. py:data:: DailyMessageReply
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+
+.. py:data:: _msg_name_to_type
+
+   
+
+.. py:data:: _msg_type_to_name
+
+   
+

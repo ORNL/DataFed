@@ -1,0 +1,607 @@
+:py:mod:`datafed.SDMS_pb2`
+==========================
+
+.. py:module:: datafed.SDMS_pb2
+
+.. autoapi-nested-parse::
+
+   Generated protocol buffer code.
+
+
+
+Module Contents
+---------------
+
+.. py:data:: _sym_db
+
+   
+
+.. py:data:: DESCRIPTOR
+
+   
+
+.. py:data:: _ERRORCODE
+
+   
+
+.. py:data:: ErrorCode
+
+   
+
+.. py:data:: _SERVICESTATUS
+
+   
+
+.. py:data:: ServiceStatus
+
+   
+
+.. py:data:: _SEARCHMODE
+
+   
+
+.. py:data:: SearchMode
+
+   
+
+.. py:data:: _DEPENDENCYTYPE
+
+   
+
+.. py:data:: DependencyType
+
+   
+
+.. py:data:: _DEPENDENCYDIR
+
+   
+
+.. py:data:: DependencyDir
+
+   
+
+.. py:data:: _SORTOPTION
+
+   
+
+.. py:data:: SortOption
+
+   
+
+.. py:data:: _PROJECTROLE
+
+   
+
+.. py:data:: ProjectRole
+
+   
+
+.. py:data:: _NOTETYPE
+
+   
+
+.. py:data:: NoteType
+
+   
+
+.. py:data:: _NOTESTATE
+
+   
+
+.. py:data:: NoteState
+
+   
+
+.. py:data:: _TASKTYPE
+
+   
+
+.. py:data:: TaskType
+
+   
+
+.. py:data:: _TASKSTATUS
+
+   
+
+.. py:data:: TaskStatus
+
+   
+
+.. py:data:: _TASKCOMMAND
+
+   
+
+.. py:data:: TaskCommand
+
+   
+
+.. py:data:: _ENCRYPTION
+
+   
+
+.. py:data:: Encryption
+
+   
+
+.. py:data:: ID_BAD_REQUEST
+   :value: 1
+
+   
+
+.. py:data:: ID_INTERNAL_ERROR
+   :value: 2
+
+   
+
+.. py:data:: ID_CLIENT_ERROR
+   :value: 3
+
+   
+
+.. py:data:: ID_SERVICE_ERROR
+   :value: 4
+
+   
+
+.. py:data:: ID_AUTHN_REQUIRED
+   :value: 5
+
+   
+
+.. py:data:: ID_AUTHN_ERROR
+   :value: 6
+
+   
+
+.. py:data:: ID_DEST_PATH_ERROR
+   :value: 7
+
+   
+
+.. py:data:: ID_DEST_FILE_ERROR
+   :value: 8
+
+   
+
+.. py:data:: SS_NORMAL
+   :value: 0
+
+   
+
+.. py:data:: SS_DEGRADED
+   :value: 1
+
+   
+
+.. py:data:: SS_FAILED
+   :value: 2
+
+   
+
+.. py:data:: SS_OFFLINE
+   :value: 3
+
+   
+
+.. py:data:: SM_DATA
+   :value: 0
+
+   
+
+.. py:data:: SM_COLLECTION
+   :value: 1
+
+   
+
+.. py:data:: DEP_IS_DERIVED_FROM
+   :value: 0
+
+   
+
+.. py:data:: DEP_IS_COMPONENT_OF
+   :value: 1
+
+   
+
+.. py:data:: DEP_IS_NEW_VERSION_OF
+   :value: 2
+
+   
+
+.. py:data:: DEP_TYPE_COUNT
+   :value: 3
+
+   
+
+.. py:data:: DEP_IN
+   :value: 0
+
+   
+
+.. py:data:: DEP_OUT
+   :value: 1
+
+   
+
+.. py:data:: SORT_ID
+   :value: 0
+
+   
+
+.. py:data:: SORT_TITLE
+   :value: 1
+
+   
+
+.. py:data:: SORT_OWNER
+   :value: 2
+
+   
+
+.. py:data:: SORT_TIME_CREATE
+   :value: 3
+
+   
+
+.. py:data:: SORT_TIME_UPDATE
+   :value: 4
+
+   
+
+.. py:data:: SORT_RELEVANCE
+   :value: 5
+
+   
+
+.. py:data:: PROJ_NO_ROLE
+   :value: 0
+
+   
+
+.. py:data:: PROJ_MEMBER
+   :value: 1
+
+   
+
+.. py:data:: PROJ_MANAGER
+   :value: 2
+
+   
+
+.. py:data:: PROJ_ADMIN
+   :value: 3
+
+   
+
+.. py:data:: NOTE_QUESTION
+   :value: 0
+
+   
+
+.. py:data:: NOTE_INFO
+   :value: 1
+
+   
+
+.. py:data:: NOTE_WARN
+   :value: 2
+
+   
+
+.. py:data:: NOTE_ERROR
+   :value: 3
+
+   
+
+.. py:data:: NOTE_CLOSED
+   :value: 0
+
+   
+
+.. py:data:: NOTE_OPEN
+   :value: 1
+
+   
+
+.. py:data:: NOTE_ACTIVE
+   :value: 2
+
+   
+
+.. py:data:: TT_DATA_GET
+   :value: 0
+
+   
+
+.. py:data:: TT_DATA_PUT
+   :value: 1
+
+   
+
+.. py:data:: TT_DATA_DEL
+   :value: 2
+
+   
+
+.. py:data:: TT_REC_CHG_ALLOC
+   :value: 3
+
+   
+
+.. py:data:: TT_REC_CHG_OWNER
+   :value: 4
+
+   
+
+.. py:data:: TT_REC_DEL
+   :value: 5
+
+   
+
+.. py:data:: TT_ALLOC_CREATE
+   :value: 6
+
+   
+
+.. py:data:: TT_ALLOC_DEL
+   :value: 7
+
+   
+
+.. py:data:: TT_USER_DEL
+   :value: 8
+
+   
+
+.. py:data:: TT_PROJ_DEL
+   :value: 9
+
+   
+
+.. py:data:: TS_BLOCKED
+   :value: 0
+
+   
+
+.. py:data:: TS_READY
+   :value: 1
+
+   
+
+.. py:data:: TS_RUNNING
+   :value: 2
+
+   
+
+.. py:data:: TS_SUCCEEDED
+   :value: 3
+
+   
+
+.. py:data:: TS_FAILED
+   :value: 4
+
+   
+
+.. py:data:: TC_STOP
+   :value: 0
+
+   
+
+.. py:data:: TC_RAW_DATA_TRANSFER
+   :value: 1
+
+   
+
+.. py:data:: TC_RAW_DATA_DELETE
+   :value: 2
+
+   
+
+.. py:data:: TC_RAW_DATA_UPDATE_SIZE
+   :value: 3
+
+   
+
+.. py:data:: TC_ALLOC_CREATE
+   :value: 4
+
+   
+
+.. py:data:: TC_ALLOC_DELETE
+   :value: 5
+
+   
+
+.. py:data:: ENCRYPT_NONE
+   :value: 0
+
+   
+
+.. py:data:: ENCRYPT_AVAIL
+   :value: 1
+
+   
+
+.. py:data:: ENCRYPT_FORCE
+   :value: 2
+
+   
+
+.. py:data:: _ALLOCSTATSDATA
+
+   
+
+.. py:data:: _ALLOCDATA
+
+   
+
+.. py:data:: _DEPENDENCYDATA
+
+   
+
+.. py:data:: _DEPENDENCYSPECDATA
+
+   
+
+.. py:data:: _USERDATA
+
+   
+
+.. py:data:: _PROJECTDATA
+
+   
+
+.. py:data:: _LISTINGDATA
+
+   
+
+.. py:data:: _TAGDATA
+
+   
+
+.. py:data:: _PATHDATA
+
+   
+
+.. py:data:: _RECORDDATA
+
+   
+
+.. py:data:: _RECORDDATALOCATION
+
+   
+
+.. py:data:: _REPORECORDDATALOCATIONS
+
+   
+
+.. py:data:: _RECORDDATASIZE
+
+   
+
+.. py:data:: _COLLDATA
+
+   
+
+.. py:data:: _GROUPDATA
+
+   
+
+.. py:data:: _ACLRULE
+
+   
+
+.. py:data:: _TOPICDATA
+
+   
+
+.. py:data:: _REPODATA
+
+   
+
+.. py:data:: _NOTECOMMENT
+
+   
+
+.. py:data:: _NOTEDATA
+
+   
+
+.. py:data:: _TASKDATA
+
+   
+
+.. py:data:: _SCHEMADATA
+
+   
+
+.. py:data:: AllocStatsData
+
+   
+
+.. py:data:: AllocData
+
+   
+
+.. py:data:: DependencyData
+
+   
+
+.. py:data:: DependencySpecData
+
+   
+
+.. py:data:: UserData
+
+   
+
+.. py:data:: ProjectData
+
+   
+
+.. py:data:: ListingData
+
+   
+
+.. py:data:: TagData
+
+   
+
+.. py:data:: PathData
+
+   
+
+.. py:data:: RecordData
+
+   
+
+.. py:data:: RecordDataLocation
+
+   
+
+.. py:data:: RepoRecordDataLocations
+
+   
+
+.. py:data:: RecordDataSize
+
+   
+
+.. py:data:: CollData
+
+   
+
+.. py:data:: GroupData
+
+   
+
+.. py:data:: ACLRule
+
+   
+
+.. py:data:: TopicData
+
+   
+
+.. py:data:: RepoData
+
+   
+
+.. py:data:: NoteComment
+
+   
+
+.. py:data:: NoteData
+
+   
+
+.. py:data:: TaskData
+
+   
+
+.. py:data:: SchemaData
+
+   
+
