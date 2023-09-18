@@ -1,0 +1,41 @@
+:py:mod:`datafed.Connection`
+============================
+
+.. py:module:: datafed.Connection
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   datafed.Connection.Connection
+
+
+
+
+.. py:class:: Connection(server_host, server_port, server_pub_key, client_pub_key, client_priv_key, zmq_ctxt=None, log_level=logging.INFO)
+
+
+   .. py:method:: __del__()
+
+
+   .. py:method:: registerProtocol(msg_module)
+
+
+   .. py:method:: recv(a_timeout=1000)
+
+
+   .. py:method:: send(message, ctxt)
+
+
+   .. py:method:: reset()
+
+
+   .. py:method:: makeMessage(msg_name)
+
+
+

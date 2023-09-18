@@ -1,0 +1,14 @@
+:py:mod:`datafed.VERSION`
+=========================
+
+.. py:module:: datafed.VERSION
+
+
+Module Contents
+---------------
+
+.. py:data:: __version__
+   :value: '2.0.3'
+
+   
+

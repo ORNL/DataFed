@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>datafed.SDMS_Anon_pb2 &mdash; DataFed 1.4 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=c9ed3d4e"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="datafed.SDMS_Auth_pb2" href="../SDMS_Auth_pb2/index.html" />
+    <link rel="prev" title="datafed.MessageLib" href="../MessageLib/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> DataFed
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/web/portal.html">Web Portal Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/reference.html">Command Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../CLI/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CLI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../CommandLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Config/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Connection/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Connection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../MessageLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.MessageLib</span></code></a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Anon_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_Auth_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Auth_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../VERSION/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.VERSION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Version_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Version_pb2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin/general.html">Administration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/release.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">DataFed</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">API Reference</a> &raquo;</li>
+          <li><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a> &raquo;</li>
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Anon_pb2</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-datafed.SDMS_Anon_pb2">
+<span id="datafed-sdms-anon-pb2"></span><h1><a class="reference internal" href="#module-datafed.SDMS_Anon_pb2" title="datafed.SDMS_Anon_pb2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Anon_pb2</span></code></a></h1>
+<p>Generated protocol buffer code.</p>
+<section id="module-contents">
+<h2>Module Contents</h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._sym_db">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_sym_db</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.DESCRIPTOR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">DESCRIPTOR</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._PROTOCOL">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROTOCOL</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.Protocol">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">Protocol</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.ID">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">ID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._ACKREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_ACKREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._NACKREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_NACKREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._VERSIONREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_VERSIONREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._VERSIONREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_VERSIONREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._GETAUTHSTATUSREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_GETAUTHSTATUSREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._AUTHENTICATEBYPASSWORDREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_AUTHENTICATEBYPASSWORDREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._AUTHENTICATEBYTOKENREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_AUTHENTICATEBYTOKENREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._AUTHSTATUSREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_AUTHSTATUSREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._DAILYMESSAGEREQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_DAILYMESSAGEREQUEST</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._DAILYMESSAGEREPLY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_DAILYMESSAGEREPLY</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.AckReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">AckReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.NackReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">NackReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.VersionRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">VersionRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.VersionReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">VersionReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.GetAuthStatusRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">GetAuthStatusRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.AuthenticateByPasswordRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">AuthenticateByPasswordRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.AuthenticateByTokenRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">AuthenticateByTokenRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.AuthStatusReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">AuthStatusReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.DailyMessageRequest">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">DailyMessageRequest</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2.DailyMessageReply">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">DailyMessageReply</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._msg_name_to_type">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_Anon_pb2._msg_type_to_name">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id16">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id17">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id18">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id19">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id20">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id21">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id22">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id23">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id24">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id25">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id26">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id27">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id28">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id29">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id30">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_name_to_type</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="id31">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_Anon_pb2.</span></span><span class="sig-name descname"><span class="pre">_msg_type_to_name</span></span></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../MessageLib/index.html" class="btn btn-neutral float-left" title="datafed.MessageLib" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../SDMS_Auth_pb2/index.html" class="btn btn-neutral float-right" title="datafed.SDMS_Auth_pb2" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Oak Ridge National Laboratories.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

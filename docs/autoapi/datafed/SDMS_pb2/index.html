@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>datafed.SDMS_pb2 &mdash; DataFed 1.4 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=c9ed3d4e"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="datafed.VERSION" href="../VERSION/index.html" />
+    <link rel="prev" title="datafed.SDMS_Auth_pb2" href="../SDMS_Auth_pb2/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> DataFed
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">About DataFed</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/papers.html">Papers and Presentations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../system/getting_started.html">Getting Started</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Web Portal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/web/portal.html">Web Portal Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Client Package</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/client/install.html">Installation and Configuration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/cli/reference.html">Command Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python Interface</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/high_level_guide.html">Guide to High Level Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user/python/notebooks.html">Jupyter Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../CLI/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CLI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../CommandLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.CommandLib</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Config/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Connection/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Connection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../MessageLib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.MessageLib</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_Anon_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Anon_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../SDMS_Auth_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_Auth_pb2</span></code></a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_pb2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../VERSION/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.VERSION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Version_pb2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.Version_pb2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Administration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin/general.html">Administration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/project.html">Project Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/design.html">Architecture &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/release.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev/roadmap.html">Feature Road Map</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">DataFed</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">API Reference</a> &raquo;</li>
+          <li><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed</span></code></a> &raquo;</li>
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_pb2</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-datafed.SDMS_pb2">
+<span id="datafed-sdms-pb2"></span><h1><a class="reference internal" href="#module-datafed.SDMS_pb2" title="datafed.SDMS_pb2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">datafed.SDMS_pb2</span></code></a></h1>
+<p>Generated protocol buffer code.</p>
+<section id="module-contents">
+<h2>Module Contents</h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._sym_db">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_sym_db</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DESCRIPTOR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DESCRIPTOR</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._ERRORCODE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_ERRORCODE</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ErrorCode">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ErrorCode</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._SERVICESTATUS">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_SERVICESTATUS</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ServiceStatus">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ServiceStatus</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._SEARCHMODE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_SEARCHMODE</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SearchMode">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SearchMode</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._DEPENDENCYTYPE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_DEPENDENCYTYPE</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DependencyType">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DependencyType</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._DEPENDENCYDIR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_DEPENDENCYDIR</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DependencyDir">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DependencyDir</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._SORTOPTION">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_SORTOPTION</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SortOption">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SortOption</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._PROJECTROLE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTROLE</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ProjectRole">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectRole</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._NOTETYPE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTETYPE</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NoteType">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteType</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._NOTESTATE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTESTATE</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NoteState">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteState</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._TASKTYPE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_TASKTYPE</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TaskType">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TaskType</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._TASKSTATUS">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_TASKSTATUS</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TaskStatus">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TaskStatus</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._TASKCOMMAND">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_TASKCOMMAND</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TaskCommand">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TaskCommand</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._ENCRYPTION">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_ENCRYPTION</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.Encryption">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">Encryption</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ID_BAD_REQUEST">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ID_BAD_REQUEST</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ID_INTERNAL_ERROR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ID_INTERNAL_ERROR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ID_CLIENT_ERROR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ID_CLIENT_ERROR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ID_SERVICE_ERROR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ID_SERVICE_ERROR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ID_AUTHN_REQUIRED">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ID_AUTHN_REQUIRED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ID_AUTHN_ERROR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ID_AUTHN_ERROR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ID_DEST_PATH_ERROR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ID_DEST_PATH_ERROR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ID_DEST_FILE_ERROR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ID_DEST_FILE_ERROR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SS_NORMAL">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SS_NORMAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SS_DEGRADED">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SS_DEGRADED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SS_FAILED">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SS_FAILED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SS_OFFLINE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SS_OFFLINE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SM_DATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SM_DATA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SM_COLLECTION">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SM_COLLECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DEP_IS_DERIVED_FROM">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DEP_IS_DERIVED_FROM</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DEP_IS_COMPONENT_OF">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DEP_IS_COMPONENT_OF</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DEP_IS_NEW_VERSION_OF">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DEP_IS_NEW_VERSION_OF</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DEP_TYPE_COUNT">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DEP_TYPE_COUNT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DEP_IN">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DEP_IN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DEP_OUT">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DEP_OUT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SORT_ID">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SORT_ID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SORT_TITLE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SORT_TITLE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SORT_OWNER">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SORT_OWNER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SORT_TIME_CREATE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SORT_TIME_CREATE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SORT_TIME_UPDATE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SORT_TIME_UPDATE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SORT_RELEVANCE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SORT_RELEVANCE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.PROJ_NO_ROLE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">PROJ_NO_ROLE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.PROJ_MEMBER">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">PROJ_MEMBER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.PROJ_MANAGER">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">PROJ_MANAGER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.PROJ_ADMIN">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">PROJ_ADMIN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NOTE_QUESTION">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NOTE_QUESTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NOTE_INFO">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NOTE_INFO</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NOTE_WARN">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NOTE_WARN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NOTE_ERROR">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NOTE_ERROR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NOTE_CLOSED">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NOTE_CLOSED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NOTE_OPEN">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NOTE_OPEN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NOTE_ACTIVE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NOTE_ACTIVE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_DATA_GET">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_DATA_GET</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_DATA_PUT">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_DATA_PUT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_DATA_DEL">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_DATA_DEL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_REC_CHG_ALLOC">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_REC_CHG_ALLOC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_REC_CHG_OWNER">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_REC_CHG_OWNER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_REC_DEL">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_REC_DEL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_ALLOC_CREATE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_ALLOC_CREATE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_ALLOC_DEL">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_ALLOC_DEL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_USER_DEL">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_USER_DEL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TT_PROJ_DEL">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TT_PROJ_DEL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">9</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TS_BLOCKED">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TS_BLOCKED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TS_READY">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TS_READY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TS_RUNNING">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TS_RUNNING</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TS_SUCCEEDED">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TS_SUCCEEDED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TS_FAILED">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TS_FAILED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TC_STOP">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TC_STOP</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TC_RAW_DATA_TRANSFER">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TC_RAW_DATA_TRANSFER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TC_RAW_DATA_DELETE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TC_RAW_DATA_DELETE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TC_RAW_DATA_UPDATE_SIZE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TC_RAW_DATA_UPDATE_SIZE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TC_ALLOC_CREATE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TC_ALLOC_CREATE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TC_ALLOC_DELETE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TC_ALLOC_DELETE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ENCRYPT_NONE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ENCRYPT_NONE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ENCRYPT_AVAIL">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ENCRYPT_AVAIL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ENCRYPT_FORCE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ENCRYPT_FORCE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._ALLOCSTATSDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_ALLOCSTATSDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._ALLOCDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_ALLOCDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._DEPENDENCYDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_DEPENDENCYDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._DEPENDENCYSPECDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_DEPENDENCYSPECDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._USERDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_USERDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._PROJECTDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_PROJECTDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._LISTINGDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_LISTINGDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._TAGDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_TAGDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._PATHDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_PATHDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._RECORDDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._RECORDDATALOCATION">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDDATALOCATION</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._REPORECORDDATALOCATIONS">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPORECORDDATALOCATIONS</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._RECORDDATASIZE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_RECORDDATASIZE</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._COLLDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_COLLDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._GROUPDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_GROUPDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._ACLRULE">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_ACLRULE</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._TOPICDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_TOPICDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._REPODATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_REPODATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._NOTECOMMENT">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTECOMMENT</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._NOTEDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_NOTEDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._TASKDATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_TASKDATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2._SCHEMADATA">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">_SCHEMADATA</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.AllocStatsData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">AllocStatsData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.AllocData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">AllocData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DependencyData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DependencyData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.DependencySpecData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">DependencySpecData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.UserData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">UserData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ProjectData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ProjectData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ListingData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ListingData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TagData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TagData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.PathData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">PathData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.RecordData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.RecordDataLocation">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordDataLocation</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.RepoRecordDataLocations">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoRecordDataLocations</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.RecordDataSize">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">RecordDataSize</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.CollData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">CollData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.GroupData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">GroupData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.ACLRule">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">ACLRule</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TopicData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TopicData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.RepoData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">RepoData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NoteComment">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteComment</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.NoteData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">NoteData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.TaskData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">TaskData</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="datafed.SDMS_pb2.SchemaData">
+<span class="sig-prename descclassname"><span class="pre">datafed.SDMS_pb2.</span></span><span class="sig-name descname"><span class="pre">SchemaData</span></span></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../SDMS_Auth_pb2/index.html" class="btn btn-neutral float-left" title="datafed.SDMS_Auth_pb2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../VERSION/index.html" class="btn btn-neutral float-right" title="datafed.VERSION" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Oak Ridge National Laboratories.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
