@@ -43,7 +43,7 @@ jobs:
           sudo ./scripts/install_docs_dependencies.sh
       - name: Build documentation
         run: | 
-          cmake -S. -B build -DBUILD_AUTHZ=OFF -DBUILD_CORE_SERVER=OFF -DBUILD_COMMON=OFF -DBUILD_DOCS=ON -DBUILD_FOXX=OFF -DBUILD_REPO_SERVER=OFF -DBUILD_PYTHON_CLIENT=OFF -DBUILD_TESTS=OFF -DBUILD_WEB_SERVER=OFF -DENABLE_UNIT_TESTS=OFF
+          cmake -S. -B build -DBUILD_AUTHZ=OFF -DBUILD_CORE_SERVER=OFF -DBUILD_COMMON=OFF -DBUILD_DOCS=ON -DBUILD_FOXX=OFF -DBUILD_REPO_SERVER=OFF -DBUILD_PYTHON_CLIENT=ON -DBUILD_TESTS=OFF -DBUILD_WEB_SERVER=OFF -DENABLE_UNIT_TESTS=OFF
       - name: Build cmake doc target
         run: |
           cmake --build build --target docs

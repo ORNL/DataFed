@@ -217,6 +217,9 @@ if( BUILD_PYTHON_CLIENT )
 endif()
 
 if( BUILD_DOCS )
+  if(NOT BUILD_PYTHON_CLIENT)
+    message(FATAL_ERROR "Python client must also be build to create documentation for API.")
+  endif()
   # make target = docs
   add_subdirectory( doc_source EXCLUDE_FROM_ALL )
 endif()
