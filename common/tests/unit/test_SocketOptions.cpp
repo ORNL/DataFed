@@ -6,6 +6,7 @@
 
 // Local private includes
 #include "common/SocketOptions.hpp"
+#include "common/TraceException.hpp"
 
 // Standard includes
 #include <iostream>
@@ -35,15 +36,7 @@ BOOST_AUTO_TEST_CASE(testing_AddressSplitterINPROC) {
 BOOST_AUTO_TEST_CASE(testing_AddressSplitterNoPort) {
 
   // Still contains ':'
-  AddressSplitter splitter("inproc://www.datafed.com:");
-
-  BOOST_CHECK(splitter.host().compare("www.datafed.com") == 0);
-  BOOST_CHECK(splitter.scheme() == URIScheme::INPROC);
-
-  if (auto port = splitter.port(); port) {
-    // Should not execute because port should not be defined
-    BOOST_CHECK(false);
-  }
+  BOOST_CHECK_THROW(AddressSplitter splitter("inproc://www.datafed.com:"), TraceException);
 }
 
 BOOST_AUTO_TEST_CASE(testing_AddressSplitterNoPort2) {
