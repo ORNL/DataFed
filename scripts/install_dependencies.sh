@@ -56,3 +56,5 @@ sudo apt-get install apt-transport-https
 sudo apt-get update
 sudo apt-get install arangodb3
 
+python3 -m pip install --upgrade pip
+python3 -m pip install setuptools sphinx sphinx-rtd-theme sphinx-autoapi
