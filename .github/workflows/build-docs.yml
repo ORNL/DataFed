@@ -35,9 +35,13 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
+      - name: generate config file
+        run: |
+          sudo ./scripts/install_core_dependencies.sh
+          ./scripts/generate_datafed.sh
       - name: Install documentation build dependencies
         run: |
-          python3 -m pip install setuptools sphinx sphinx-rtd-theme sphinx-autoapi
+          sudo ./scripts/install_docs_dependencies.sh
       - name: Build documentation
         run: | 
           cmake -S. -B build -DBUILD_AUTHZ=OFF -DBUILD_CORE_SERVER=OFF -DBUILD_COMMON=OFF -DBUILD_DOCS=ON -DBUILD_FOXX=OFF -DBUILD_REPO_SERVER=OFF -DBUILD_PYTHON_CLIENT=OFF -DBUILD_TESTS=OFF -DBUILD_WEB_SERVER=OFF -DENABLE_UNIT_TESTS=OFF
