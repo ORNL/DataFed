@@ -173,7 +173,9 @@ class Connection:
 
             # correlation_id
             correlation_id = self._socket.recv_string(0)
-            self._logger.debug(f"Receiving message with correlation id is {correlation_id}")
+            self._logger.debug(
+                f"Receiving message with correlation id is {correlation_id}"
+            )
             # key
             self._socket.recv_string(0)
             # client

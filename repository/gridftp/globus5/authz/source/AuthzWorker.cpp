@@ -174,10 +174,15 @@ public:
       socket_options.host = splitter.host();
       socket_options.port = splitter.port();
 
-      if ( socket_options.port.has_value() ) {
-        if( socket_options.port.value() != 7512 ) {
+      if (socket_options.port.has_value()) {
+        if (socket_options.port.value() != 7512) {
           DL_WARNING(m_log_context,
-              "Port number is defined for: " << address << " however, it is a non standard port, the standard port for connecting to the core server is port number 7512, whereas here you are using port: " << socket_options.port.value());
+                     "Port number is defined for: "
+                         << address
+                         << " however, it is a non standard port, the standard "
+                            "port for connecting to the core server is port "
+                            "number 7512, whereas here you are using port: "
+                         << socket_options.port.value());
         }
       }
       // socket_options.port = 1341;
@@ -212,29 +217,33 @@ public:
     log_context.correlation_id =
         std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
     DL_DEBUG(log_context,
-            "PUB KEY:  " << cred_options[CredentialType::PUBLIC_KEY]);
+             "PUB KEY:  " << cred_options[CredentialType::PUBLIC_KEY]);
     DL_DEBUG(log_context,
-            "PRIV KEY: " << cred_options[CredentialType::PRIVATE_KEY]);
+             "PRIV KEY: " << cred_options[CredentialType::PRIVATE_KEY]);
     DL_DEBUG(log_context,
-            "SERV KEY: " << cred_options[CredentialType::SERVER_KEY]);
-    DL_DEBUG(log_context,
-            "Sending request to core service at address." << client->address());
+             "SERV KEY: " << cred_options[CredentialType::SERVER_KEY]);
+    DL_DEBUG(log_context, "Sending request to core service at address."
+                              << client->address());
 
     auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
     log_context.correlation_id = std::get<std::string>(
         response.message->get(MessageAttribute::CORRELATION_ID));
     if (response.time_out) {
-      std::string error_msg = "AuthWorker.cpp Core service did not respond within timeout.";
+      std::string error_msg =
+          "AuthWorker.cpp Core service did not respond within timeout.";
 
       AddressSplitter splitter(client->address());
 
-      if( splitter.port().value() != 7512 ) {
+      if (splitter.port().value() != 7512) {
 
-       error_msg += "Port number is defined for: " + client->address() + " however, it is a non standard port, the standard port for connecting to the core server is port number 7512, whereas here you are using port: " + std::to_string( splitter.port().value());
+        error_msg += "Port number is defined for: " + client->address() +
+                     " however, it is a non standard port, the standard port "
+                     "for connecting to the core server is port number 7512, "
+                     "whereas here you are using port: " +
+                     std::to_string(splitter.port().value());
       }
 
-      DL_WARNING(log_context,
-                 error_msg);
+      DL_WARNING(log_context, error_msg);
       EXCEPT(1, "Core service did not respond");
     } else if (response.error) {
       DL_ERROR(log_context, "AuthWorker.cpp there was an error when "

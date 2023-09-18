@@ -480,7 +480,9 @@ void Server::repoCacheThread(LogContext log_context, int thread_count) {
 
   while (1) {
     try {
-      DL_DEBUG(log_context, "Checking if Repo Cache needs Updating, then sleeping for " << std::to_string(repo_cache_poll.count()) << " seconds.");
+      DL_DEBUG(log_context,
+               "Checking if Repo Cache needs Updating, then sleeping for "
+                   << std::to_string(repo_cache_poll.count()) << " seconds.");
       m_config.loadRepositoryConfig(m_auth_manager, log_context);
     } catch (const std::exception &e) {
       DL_ERROR(log_context, "Repo Cache Updating... " << e.what());
