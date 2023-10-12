@@ -76,7 +76,7 @@ echo "DataFed - backup completed"
 sendmail "$DATAFED_ADMIN_EMAIL" << EOF
 To: $DATAFED_ADMIN_EMAIL
 From: $DATAFED_SYSTEM_EMAIL
-Subject: DataFed Databas Backup Notification
+Subject: DataFed Database Backup Notification
 
 DataFed has been backed up. A new backup exists at ${DATAFED_DATABASE_BACKUP_PATH}/backups.
 EOF
