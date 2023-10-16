@@ -65,7 +65,7 @@ while len(result[0].repo) == 0:
     result = _df_api.repoList(list_all=True)
     count = count + 1
     if count > 3:
-        fail("Setup failed with repo create")
+        raise Exception("Setup failed with repo create")
 
 
 repo_id = _repo_form["id"]
@@ -88,7 +88,7 @@ count = 0
 while status < 3:
     if count > 2:
         print(task_result)
-        fail(
+        raise Exception(
             "Something went wrong task was unable to complete, attempt to create an allocation after 3 seconds failed, make sure all services are running."
         )
         break
