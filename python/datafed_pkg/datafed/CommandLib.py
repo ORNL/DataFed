@@ -66,12 +66,12 @@ class API:
     _max_payload_size = 1048576
     _endpoint_legacy = re.compile(r"[\w\-]+#[\w\-]+")
     _endpoint_uuid = re.compile(
-        r"[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}", re.I)
+        r"[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}", re.I
+    )
 
     def __init__(self, opts={}):
         if not isinstance(opts, dict):
-            raise Exception(
-                "CommandLib API options parameter must be a dictionary.")
+            raise Exception("CommandLib API options parameter must be a dictionary.")
 
         self._uid = None
         self._cur_sel = None
@@ -419,8 +419,7 @@ class API:
         """
 
         if repo_id and external:
-            raise Exception(
-                "Cannot specify repository for external (unmanaged) data.")
+            raise Exception("Cannot specify repository for external (unmanaged) data.")
 
         if raw_data_file and not external:
             raise Exception(
@@ -428,8 +427,7 @@ class API:
             )
 
         if metadata and metadata_file:
-            raise Exception(
-                "Cannot specify both metadata and metadata-file options.")
+            raise Exception("Cannot specify both metadata and metadata-file options.")
 
         msg = auth.RecordCreateRequest()
         msg.title = title
@@ -572,8 +570,7 @@ class API:
         """
 
         if metadata and metadata_file:
-            raise Exception(
-                "Cannot specify both metadata and metadata-file options.")
+            raise Exception("Cannot specify both metadata and metadata-file options.")
 
         msg = auth.RecordUpdateRequest()
         msg.id = self._resolve_id(data_id, context)
@@ -1237,12 +1234,7 @@ class API:
 
         return self._mapi.sendRecv(msg)
 
-    def collectionItemsUpdate(
-            self,
-            coll_id,
-            add_ids=None,
-            rem_ids=None,
-            context=None):
+    def collectionItemsUpdate(self, coll_id, add_ids=None, rem_ids=None, context=None):
         """
         Update (add/remove) items linked to a specified collection
 
@@ -1835,13 +1827,7 @@ class API:
     # --------------------------------------------------------- Project Methods
     # =========================================================================
 
-    def projectList(
-            self,
-            owned=True,
-            admin=True,
-            member=True,
-            offset=0,
-            count=20):
+    def projectList(self, owned=True, admin=True, member=True, offset=0, count=20):
         """
         List projects associated with current user
 
@@ -2049,13 +2035,8 @@ class API:
     # =========================================================================
 
     def taskList(
-            self,
-            time_from=None,
-            time_to=None,
-            since=None,
-            status=None,
-            offset=0,
-            count=20):
+        self, time_from=None, time_to=None, since=None, status=None, offset=0, count=20
+    ):
         """
         List recent Globus data transfer tasks
 
@@ -2089,8 +2070,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        if since is not None and (
-                time_from is not None or time_to is not None):
+        if since is not None and (time_from is not None or time_to is not None):
             raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
         msg = auth.TaskListRequest()
@@ -2439,26 +2419,21 @@ class API:
             pass
 
         try:
-            return int(
-                datetime.datetime.strptime(
-                    time_str,
-                    "%m/%d/%Y").timestamp())
+            return int(datetime.datetime.strptime(time_str, "%m/%d/%Y").timestamp())
         except BaseException:
             pass
 
         try:
             return int(
-                datetime.datetime.strptime(
-                    time_str,
-                    "%m/%d/%Y,%H:%M").timestamp())
+                datetime.datetime.strptime(time_str, "%m/%d/%Y,%H:%M").timestamp()
+            )
         except BaseException:
             pass
 
         try:
             return int(
-                datetime.datetime.strptime(
-                    time_str,
-                    "%m/%d/%Y,%H:%M:%S").timestamp())
+                datetime.datetime.strptime(time_str, "%m/%d/%Y,%H:%M:%S").timestamp()
+            )
         except BaseException:
             pass
 
@@ -2589,11 +2564,7 @@ class API:
         """
         # Check if this is a full Globus path with either a UUID or legacy
         # endpoint prefix
-        if re.match(
-                API._endpoint_legacy,
-                path) or re.match(
-                API._endpoint_uuid,
-                path):
+        if re.match(API._endpoint_legacy, path) or re.match(API._endpoint_uuid, path):
             return path
 
         # Does not have an endpoint prefix, might be a full or relative path
@@ -2718,16 +2689,18 @@ class API:
             serv_key_file = None
 
             if "server_cfg_dir" in opts:
-                serv_key_file = os.path.expanduser(os.path.join(
-                    opts["server_cfg_dir"], "datafed-core-key.pub"))
+                serv_key_file = os.path.expanduser(
+                    os.path.join(opts["server_cfg_dir"], "datafed-core-key.pub")
+                )
                 self.cfg.set("server_pub_key_file", serv_key_file)
                 opts["server_pub_key_file"] = serv_key_file
 
             if not serv_key_file or not os.path.exists(serv_key_file):
                 serv_key_file = None
                 if "client_cfg_dir" in opts:
-                    serv_key_file = os.path.expanduser(os.path.join(
-                        opts["client_cfg_dir"], "datafed-core-key.pub"))
+                    serv_key_file = os.path.expanduser(
+                        os.path.join(opts["client_cfg_dir"], "datafed-core-key.pub")
+                    )
                     self.cfg.set("server_pub_key_file", serv_key_file)
                     opts["server_pub_key_file"] = serv_key_file
                     save = True
@@ -2739,8 +2712,7 @@ class API:
 
                 if not os.path.exists(serv_key_file):
                     # Make default server pub key file
-                    url = "https://" + \
-                        opts["server_host"] + "/datafed-core-key.pub"
+                    url = "https://" + opts["server_host"] + "/datafed-core-key.pub"
                     wget.download(url, out=serv_key_file)
 
         if "client_pub_key_file" not in opts or "client_priv_key_file" not in opts:
@@ -2751,18 +2723,16 @@ class API:
 
             if "client_pub_key_file" not in opts:
                 key_file = os.path.expanduser(
-                    os.path.join(
-                        opts["client_cfg_dir"],
-                        "datafed-user-key.pub"))
+                    os.path.join(opts["client_cfg_dir"], "datafed-user-key.pub")
+                )
                 self.cfg.set("client_pub_key_file", key_file)
                 opts["client_pub_key_file"] = key_file
                 save = True
 
             if "client_priv_key_file" not in opts:
                 key_file = os.path.expanduser(
-                    os.path.join(
-                        opts["client_cfg_dir"],
-                        "datafed-user-key.priv"))
+                    os.path.join(opts["client_cfg_dir"], "datafed-user-key.priv")
+                )
                 self.cfg.set("client_priv_key_file", key_file)
                 opts["client_priv_key_file"] = key_file
                 save = True

@@ -182,8 +182,7 @@ class API:
 
     def _processOptions(self, opts):
         if not isinstance(opts, dict):
-            raise Exception(
-                "Config API options parameter must be a dictionary.")
+            raise Exception("Config API options parameter must be a dictionary.")
 
         # Setting priorities:
         # 1. Direct setting (passed in opts, or CLI option)
@@ -211,9 +210,8 @@ class API:
             cfg_file = self._opts["server_cfg_file"]["val"]
         elif "server_cfg_dir" in self._opts:
             tmp = os.path.expanduser(
-                os.path.join(
-                    self._opts["server_cfg_dir"]["val"],
-                    "datafed-server.ini"))
+                os.path.join(self._opts["server_cfg_dir"]["val"], "datafed-server.ini")
+            )
             if os.path.exists(tmp):
                 cfg_file = tmp
                 self._opts["server_cfg_file"] = {"val": cfg_file, "pri": 5}
@@ -252,9 +250,8 @@ class API:
 
         if not loaded:
             cfg_file = os.path.expanduser(
-                os.path.join(
-                    self._opts["client_cfg_dir"]["val"],
-                    "datafed-client.ini"))
+                os.path.join(self._opts["client_cfg_dir"]["val"], "datafed-client.ini")
+            )
             self._opts["client_cfg_file"] = {"val": cfg_file, "pri": 5}
             if os.path.exists(cfg_file):
                 # print("loading cfg file after expanding cfg file path")
@@ -280,7 +277,9 @@ class API:
                     except BaseException:
                         raise Exception(
                             "Invalid value specified for {} ({}) from ENV {}".format(
-                                k, tmp, v[2]))
+                                k, tmp, v[2]
+                            )
+                        )
                 elif v[3] & _OPT_BOOL:
                     tmp = tmp.lower()
                     if tmp in ("true", "yes", "1"):
@@ -289,8 +288,8 @@ class API:
                         tmp = False
                     else:
                         raise Exception(
-                            "Invalid value for {} ({}) from ENV {}".format(
-                                k, tmp, v[2]))
+                            "Invalid value for {} ({}) from ENV {}".format(k, tmp, v[2])
+                        )
                 elif v[3] & _OPT_PATH:
                     tmp = os.path.expanduser(tmp)
 
@@ -308,7 +307,8 @@ class API:
 
                 for k, v in _opt_info.items():
                     if ((k not in self._opts) or self._opts[k]["pri"] >= priority) and (
-                            v[3] & _OPT_NO_CF) == 0:
+                        v[3] & _OPT_NO_CF
+                    ) == 0:
                         if config.has_option(v[0], v[1]):
                             tmp = config.get(v[0], v[1])
                             if v[3] & _OPT_INT:
@@ -317,7 +317,9 @@ class API:
                                 except BaseException:
                                     raise Exception(
                                         "Invalid value specified for {} ({}) in {}".format(
-                                            k, tmp, cfg_file))
+                                            k, tmp, cfg_file
+                                        )
+                                    )
                             elif v[3] & _OPT_BOOL:
                                 tmp = tmp.lower()
                                 if tmp in ("true", "yes", "1"):
@@ -327,15 +329,15 @@ class API:
                                 else:
                                     raise Exception(
                                         "Invalid value for {} ({}) in {}".format(
-                                            k, tmp, cfg_file))
+                                            k, tmp, cfg_file
+                                        )
+                                    )
                             elif v[3] & _OPT_PATH:
                                 tmp = os.path.expanduser(tmp)
 
                             self._opts[k] = {"val": tmp, "pri": priority}
         except IOError:
-            raise Exception(
-                "Error reading from server config file: " +
-                cfg_file)
+            raise Exception("Error reading from server config file: " + cfg_file)
 
     ##
     # @brief Print details of current settings
@@ -349,17 +351,11 @@ class API:
             if p == 5:
                 print('  {} = "{}" (assumed)'.format(k, v["val"]))
             elif p == 4:
-                print(
-                    '  {} = "{}" from {}'.format(
-                        k, v["val"], _opt_info[k][2]))
+                print('  {} = "{}" from {}'.format(k, v["val"], _opt_info[k][2]))
             elif p == 3:
-                print(
-                    '  {} = "{}" from server config file'.format(
-                        k, v["val"]))
+                print('  {} = "{}" from server config file'.format(k, v["val"]))
             elif p == 2:
-                print(
-                    '  {} = "{}" from client config file'.format(
-                        k, v["val"]))
+                print('  {} = "{}" from client config file'.format(k, v["val"]))
             elif p == 1:
                 print('  {} = "{}" from CLI option'.format(k, v["val"]))
 

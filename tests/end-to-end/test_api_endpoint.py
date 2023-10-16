@@ -68,8 +68,7 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     # Add them in the order they should be executed
-    suite.addTest(TestDataFedPythonAPIEndpoint(
-        "test_endpoint_set_and_default"))
+    suite.addTest(TestDataFedPythonAPIEndpoint("test_endpoint_set_and_default"))
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     # wasSuccessful() return True which is not 0

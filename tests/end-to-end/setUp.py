@@ -10,13 +10,8 @@ import unittest
 path_of_file = os.path.abspath(__file__)
 current_folder = os.path.dirname(path_of_file)
 path_to_python_datafed_module = os.path.normpath(
-    current_folder +
-    os.sep +
-    ".." +
-    os.sep +
-    ".." +
-    os.sep +
-    "python/datafed_pkg")
+    current_folder + os.sep + ".." + os.sep + ".." + os.sep + "python/datafed_pkg"
+)
 sys.path.append(path_to_python_datafed_module)
 try:
     from datafed.CommandLib import API
