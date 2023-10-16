@@ -24,6 +24,7 @@ import inspect
 import sys
 import uuid
 
+
 ##
 # @class Connection
 # @brief Provides low-level message-oriented communication
@@ -57,7 +58,6 @@ class Connection:
         zmq_ctxt=None,
         log_level=logging.INFO,
     ):
-
         self._log_level = log_level
         self._format = "%(asctime)s datafed-cli %(levelname)s %(message)"
         logging.Formatter(self._format)

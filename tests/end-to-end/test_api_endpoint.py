@@ -52,7 +52,6 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
             assert count < 3
 
     def test_endpoint_set_and_default(self):
-
         endpoint = os.environ.get("DATAFED_USER89_GLOBUS_UUID")
         if endpoint is None:
             self.fail(

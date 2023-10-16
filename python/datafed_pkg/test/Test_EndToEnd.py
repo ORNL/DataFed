@@ -445,7 +445,6 @@ class DataRecord(object):
 
     @classmethod
     def generate(cls, fits_requirements=True):
-
         if fits_requirements:
             dr = DataRecord(
                 "d/data_id",
