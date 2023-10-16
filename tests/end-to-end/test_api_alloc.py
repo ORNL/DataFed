@@ -45,7 +45,7 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
             try:
                 result = self._df_api.loginByPassword(username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate
@@ -109,8 +109,10 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
         # Will return a task
         print("Calling repoAllocationCreate")
         result = self._df_api.repoAllocationCreate(
-            repo_id=repo_id, subject="datafed89", data_limit=1000000000, rec_limit=100
-        )
+            repo_id=repo_id,
+            subject="datafed89",
+            data_limit=1000000000,
+            rec_limit=100)
 
         task_id = result[0].task[0].id
 
@@ -142,7 +144,8 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
 
         self.assertEqual(status, 3)
 
-        result = self._df_api.repoAllocationDelete(repo_id=repo_id, subject="datafed89")
+        result = self._df_api.repoAllocationDelete(
+            repo_id=repo_id, subject="datafed89")
 
         task_id = result[0].task[0].id
 
@@ -194,7 +197,8 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     # Add them in the order they should be executed
-    suite.addTest(TestDataFedPythonAPIRepoAlloc("test_repo_alloc_list_create_delete"))
+    suite.addTest(TestDataFedPythonAPIRepoAlloc(
+        "test_repo_alloc_list_create_delete"))
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     # wasSuccessful() return True which is not 0

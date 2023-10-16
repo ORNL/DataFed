@@ -50,7 +50,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             try:
                 result = self._df_api.loginByPassword(self._username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate

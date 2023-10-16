@@ -44,7 +44,7 @@ class TestDataFedPythonAPILogin(unittest.TestCase):
             try:
                 df_api.loginByPassword(username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate

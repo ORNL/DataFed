@@ -49,7 +49,7 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             try:
                 result = self._df_api.loginByPassword(self._username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate
@@ -157,7 +157,9 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
         col_response = self._df_api.collectionView(alias)
 
         self.assertEqual(col_response[0].coll[0].owner, f"u/{self._username}")
-        self.assertEqual(col_response[0].coll[0].creator, f"u/{self._username}")
+        self.assertEqual(
+            col_response[0].coll[0].creator,
+            f"u/{self._username}")
         self.assertEqual(col_response[0].coll[0].title, title)
         self.assertEqual(col_response[0].coll[0].alias, alias)
         self.assertEqual(col_response[0].coll[0].id, col_id)
@@ -166,7 +168,9 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
         col_response = self._df_api.collectionView(col_result[0].coll[0].id)
 
         self.assertEqual(col_response[0].coll[0].owner, f"u/{self._username}")
-        self.assertEqual(col_response[0].coll[0].creator, f"u/{self._username}")
+        self.assertEqual(
+            col_response[0].coll[0].creator,
+            f"u/{self._username}")
         self.assertEqual(col_response[0].coll[0].title, title)
         self.assertEqual(col_response[0].coll[0].alias, alias)
         self.assertEqual(col_response[0].coll[0].id, col_id)
@@ -174,7 +178,9 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
         new_title = "Material(s)"
         col_response = self._df_api.collectionUpdate(col_id, title=new_title)
         self.assertEqual(col_response[0].coll[0].owner, f"u/{self._username}")
-        self.assertEqual(col_response[0].coll[0].creator, f"u/{self._username}")
+        self.assertEqual(
+            col_response[0].coll[0].creator,
+            f"u/{self._username}")
         self.assertEqual(col_response[0].coll[0].title, new_title)
         self.assertEqual(col_response[0].coll[0].alias, alias)
         self.assertEqual(col_response[0].coll[0].id, col_id)
@@ -245,7 +251,8 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     # Add them in the order they should be executed
-    suite.addTest(TestDataFedPythonAPICollectionCRUD("test_collection_create_delete"))
+    suite.addTest(TestDataFedPythonAPICollectionCRUD(
+        "test_collection_create_delete"))
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     # wasSuccessful() return True which is not 0
