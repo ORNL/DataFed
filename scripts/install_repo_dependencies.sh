@@ -20,13 +20,13 @@ sudo apt-get install -y libzmq3-dev  python3-pip
 python3 -m pip install --upgrade pip
 python3 -m pip install setuptools
 
-#install_cmake
-#cd ~
-#
-#install_protobuf
-#cd ~
-#
-#install_libsodium
+install_cmake
+cd ~
+
+install_protobuf
+cd ~
+
+install_libsodium
 cd ~
 
 install_libzmq
