@@ -5,9 +5,13 @@
 set -ef -o pipefail
 
 SCRIPT=$(realpath "$0")
+FILE_NAME="$(basename ${SCRIPT})"
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
+
+VERSION="1.0.0"
+echo "$FILE_NAME $VERSION"
 
 ERROR_DETECTED=0
 # The admin should who should be receiving emails about the backups
