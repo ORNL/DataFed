@@ -1,4 +1,4 @@
-## @package datafed.Connection
+# @package datafed.Connection
 # Low-level message-oriented communications module
 #
 # The DataFed Connection class enables sending and receiving Google protobuf
@@ -90,16 +90,19 @@ class Connection:
 
         if sys.version_info.major == 3:
             try:
-                self._socket.setsockopt_string(zmq.CURVE_SECRETKEY, client_priv_key)
-            except:
+                self._socket.setsockopt_string(
+                    zmq.CURVE_SECRETKEY, client_priv_key)
+            except BaseException:
                 raise Exception("Invalid client private key")
             try:
-                self._socket.setsockopt_string(zmq.CURVE_PUBLICKEY, client_pub_key)
-            except:
+                self._socket.setsockopt_string(
+                    zmq.CURVE_PUBLICKEY, client_pub_key)
+            except BaseException:
                 raise Exception("Invalid client public key")
             try:
-                self._socket.setsockopt_string(zmq.CURVE_SERVERKEY, server_pub_key)
-            except:
+                self._socket.setsockopt_string(
+                    zmq.CURVE_SERVERKEY, server_pub_key)
+            except BaseException:
                 raise Exception("Invalid server public key: " + server_pub_key)
         else:
             self._socket.curve_secretkey = client_priv_key
@@ -128,9 +131,11 @@ class Connection:
     #
     def registerProtocol(self, msg_module):
         # Message descriptors are stored by name created by protobuf compiler
-        # A custom post-proc tool generates and appends _msg_name_to_type with defined DataFed-sepcific numer message types
+        # A custom post-proc tool generates and appends _msg_name_to_type with
+        # defined DataFed-sepcific numer message types
 
-        for name, desc in sorted(msg_module.DESCRIPTOR.message_types_by_name.items()):
+        for name, desc in sorted(
+                msg_module.DESCRIPTOR.message_types_by_name.items()):
             msg_t = msg_module._msg_name_to_type[name]
             self._msg_desc_by_type[msg_t] = desc
             self._msg_desc_by_name[desc.name] = desc
@@ -230,7 +235,8 @@ class Connection:
         self._socket.send(struct.pack("!i", route_count), zmq.SNDMORE)
         self._socket.send(b"", zmq.SNDMORE)
         correlation_id = str(uuid.uuid4())
-        self._logger.debug(f"Creating message with correlation id is {correlation_id}")
+        self._logger.debug(
+            f"Creating message with correlation id is {correlation_id}")
         self._socket.send_string(correlation_id, zmq.SNDMORE)
         self._socket.send_string(self._pub_key, zmq.SNDMORE)
         self._socket.send_string("no_user", zmq.SNDMORE)
@@ -240,7 +246,12 @@ class Connection:
         data_sz = len(data)
 
         # Build the message frame, to match C-struct MessageFrame
-        frame = struct.pack(">LBBH", data_sz, msg_type >> 8, msg_type & 0xFF, ctxt)
+        frame = struct.pack(
+            ">LBBH",
+            data_sz,
+            msg_type >> 8,
+            msg_type & 0xFF,
+            ctxt)
 
         if data_sz > 0:
             # Send frame and payload

@@ -1,4 +1,4 @@
-## @namespace datafed.CLI
+# @namespace datafed.CLI
 # @brief Provides a high-level client interface to the DataFed server
 #
 # The DataFed CLI module provides a high-level, text-based client
@@ -75,7 +75,12 @@ _ctxt_settings = dict(
     ignore_unknown_options=True,
     allow_extra_args=True,
 )
-_task_statuses = {0: "Queued", 1: "Ready", 2: "Running", 3: "Succeeded", 4: "Failed"}
+_task_statuses = {
+    0: "Queued",
+    1: "Ready",
+    2: "Running",
+    3: "Succeeded",
+    4: "Failed"}
 _task_types = {
     0: "Data Get",
     1: "Data Put",
@@ -127,20 +132,21 @@ def run():
         try:
             if _first:
                 _cli(standalone_mode=False)
-                # Will get here if a command was specified on command-line, assume user wants non-REPL
+                # Will get here if a command was specified on command-line,
+                # assume user wants non-REPL
                 _interactive = False
             else:
-                if session == None:
-                    session = PromptSession(
-                        history=FileHistory(os.path.expanduser("~/.datafed-hist"))
-                    )
+                if session is None:
+                    session = PromptSession(history=FileHistory(
+                        os.path.expanduser("~/.datafed-hist")))
                 if _cur_ctx != _uid:
                     prefix = "\n(" + _cur_ctx + ") " + _cur_coll_prefix + ">"
                 else:
                     prefix = "\n" + _cur_coll_prefix + ">"
                 _args = shlex.split(
-                    session.prompt(prefix, auto_suggest=AutoSuggestFromHistory())
-                )
+                    session.prompt(
+                        prefix,
+                        auto_suggest=AutoSuggestFromHistory()))
                 _cli(prog_name="datafed", args=_args, standalone_mode=False)
 
         except click.ClickException as e:
@@ -156,7 +162,8 @@ def run():
                 _interactive = False
 
         except SystemExit as e:
-            # For subsequent interactive commands, hide top-level (start-up) options
+            # For subsequent interactive commands, hide top-level (start-up)
+            # options
             if _first and _interactive and _initialized:
                 for i in _cli.params:
                     i.hidden = True
@@ -177,11 +184,12 @@ def run():
                 release_version += f"{Version_pb2.DATAFED_RELEASE_DAY}."
                 release_version += f"{Version_pb2.DATAFED_RELEASE_HOUR}."
                 release_version += f"{Version_pb2.DATAFED_RELEASE_MINUTE}"
-                _print_msg(1, f"Welcome to DataFed CLI, version {VERSION.__version__}")
                 _print_msg(
-                    1, "               Release, version {}".format(release_version)
-                )
-                _print_msg(1, "                   API, version {}".format(api_version))
+                    1, f"Welcome to DataFed CLI, version {VERSION.__version__}")
+                _print_msg(
+                    1, "               Release, version {}".format(release_version))
+                _print_msg(
+                    1, "                   API, version {}".format(api_version))
                 _print_msg(1, "Authenticated as " + _capi.getAuthUser())
                 _print_msg(1, "Use 'exit' command or Ctrl-C to exit shell.")
 
@@ -193,13 +201,15 @@ def run():
                     _print_msg(2, "\nSettings:")
                     _capi.cfg.printSettingInfo()
             elif not _interactive:
-                click.echo('{{"msg_type":"ClientError","message":"{}"}}'.format(e))
+                click.echo(
+                    '{{"msg_type":"ClientError","message":"{}"}}'.format(e))
 
         except Exception as e:
             if _output_mode == _OM_TEXT:
                 click.echo(e)
             elif _output_mode == _OM_JSON:
-                click.echo('{{"msg_type":"ClientError","message":"{}"}}'.format(e))
+                click.echo(
+                    '{{"msg_type":"ClientError","message":"{}"}}'.format(e))
             if _first:
                 _interactive = False
 
@@ -354,7 +364,8 @@ class _AliasedGroup(click.Group):
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
             return rv
-        matches = [x for x in self.list_commands(ctx) if x.startswith(cmd_name)]
+        matches = [x for x in self.list_commands(
+            ctx) if x.startswith(cmd_name)]
 
         if not matches:
             # Cmd was not found - might be an invalid option
@@ -418,8 +429,7 @@ __global_context_options = [
         required=False,
         type=str,
         help="User or project ID for command alias context. See 'alias' command help for more information.",
-    )
-]
+    )]
 
 
 # Decorator to add context option to click commands
@@ -456,10 +466,11 @@ def _global_output_options(func):
 # =============================================================================
 
 
-@click.group(
-    cls=_AliasedGroupRoot, invoke_without_command=True, context_settings=_ctxt_settings
-)
-@click.option("-m", "--manual-auth", is_flag=True, help="Force manual authentication")
+@click.group(cls=_AliasedGroupRoot,
+             invoke_without_command=True,
+             context_settings=_ctxt_settings)
+@click.option("-m", "--manual-auth", is_flag=True,
+              help="Force manual authentication")
 @click.option(
     "-s",
     "--script",
@@ -488,7 +499,7 @@ def _cli(ctx, *args, **kwargs):
         ctx.invoke(_genDoc)
         raise SystemExit()
 
-    if _capi == None:
+    if _capi is None:
         _initialize(ctx.params)
 
     if ctx.invoked_subcommand is None:
@@ -508,11 +519,12 @@ def _genDoc(ctx):
     for c in _cli.list_commands(ctx):
         subcmd = _cli.get_command(_cli, c)
         if not subcmd.hidden:
-            body = body + _genDocCmd(
-                subcmd,
-                click.Context(subcmd, info_name=subcmd.name, parent=ctx.parent),
-                0,
-            )
+            body = body + _genDocCmd(subcmd,
+                                     click.Context(subcmd,
+                                                   info_name=subcmd.name,
+                                                   parent=ctx.parent),
+                                     0,
+                                     )
 
     print(body)
 
@@ -529,7 +541,7 @@ def _genDocHeader(cmd, level):
 
 
 def _genDocCmd(cmd, ctx, level, parname=None, recurse=True):
-    if cmd == None:
+    if cmd is None:
         cname = "Datafed"
         cmd = _cli
     elif parname:
@@ -584,12 +596,13 @@ def _genDocCmd(cmd, ctx, level, parname=None, recurse=True):
             for c in cmd.list_commands(ctx):
                 subcmd = cmd.get_command(cmd, c)
                 if not subcmd.hidden:
-                    doc = doc + _genDocCmd(
-                        subcmd,
-                        click.Context(subcmd, info_name=subcmd.name, parent=ctx),
-                        level + 1,
-                        cname,
-                    )
+                    doc = doc + _genDocCmd(subcmd,
+                                           click.Context(subcmd,
+                                                         info_name=subcmd.name,
+                                                         parent=ctx),
+                                           level + 1,
+                                           cname,
+                                           )
     else:
         doc += "\n"
 
@@ -621,8 +634,8 @@ def _wc(coll_id):
     global _cur_coll_title
     global _cur_coll_prefix
 
-    if coll_id == None:
-        if _cur_coll_title == None:
+    if coll_id is None:
+        if _cur_coll_title is None:
             _setWorkingCollectionTitle()
 
         if _output_mode == _OM_TEXT:
@@ -751,10 +764,10 @@ def _dataView(data_id, context):
 @_data.command(name="create")
 @click.argument("title", required=True)
 @click.option("-a", "--alias", type=str, required=False, help="Record alias.")
-@click.option("-d", "--description", type=str, required=False, help="Description text.")
-@click.option(
-    "-T", "--tags", type=str, required=False, help="Tags (comma separated list)."
-)
+@click.option("-d", "--description", type=str,
+              required=False, help="Description text.")
+@click.option("-T", "--tags", type=str, required=False,
+              help="Tags (comma separated list).")
 @click.option(
     "-r",
     "--raw-data-file",
@@ -790,9 +803,8 @@ def _dataView(data_id, context):
     required=False,
     help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.",
 )
-@click.option(
-    "-s", "--schema", type=str, required=False, help="Set metadata schema id:version"
-)
+@click.option("-s", "--schema", type=str, required=False,
+              help="Set metadata schema id:version")
 @click.option(
     "-e",
     "--schema-enforce",
@@ -859,7 +871,8 @@ def _dataCreate(
         raise Exception("Cannot specify a repository for external raw data.")
 
     if metadata and metadata_file:
-        raise Exception("Cannot specify both --metadata and --metadata-file options.")
+        raise Exception(
+            "Cannot specify both --metadata and --metadata-file options.")
 
     if tags:
         tags = tags.split(",")
@@ -898,10 +911,10 @@ def _dataCreate(
 @click.argument("data_id", metavar="ID", required=True)
 @click.option("-t", "--title", type=str, required=False, help="Title")
 @click.option("-a", "--alias", type=str, required=False, help="Alias")
-@click.option("-d", "--description", type=str, required=False, help="Description text")
-@click.option(
-    "-T", "--tags", type=str, required=False, help="Tags (comma separated list)"
-)
+@click.option("-d", "--description", type=str,
+              required=False, help="Description text")
+@click.option("-T", "--tags", type=str, required=False,
+              help="Tags (comma separated list)")
 @click.option(
     "-r",
     "--raw-data-file",
@@ -916,9 +929,8 @@ def _dataCreate(
     required=False,
     help="Override extension for raw data file (default = auto detect).",
 )
-@click.option(
-    "-m", "--metadata", type=str, required=False, help="Inline metadata in JSON format."
-)
+@click.option("-m", "--metadata", type=str, required=False,
+              help="Inline metadata in JSON format.")
 @click.option(
     "-f",
     "--metadata-file",
@@ -933,9 +945,8 @@ def _dataCreate(
     required=False,
     help="Set (replace) existing metadata with provided instead of merging.",
 )
-@click.option(
-    "-s", "--schema", type=str, required=False, help="Set metadata schema id:version"
-)
+@click.option("-s", "--schema", type=str, required=False,
+              help="Set metadata schema id:version")
 @click.option(
     "-e",
     "--schema-enforce",
@@ -995,7 +1006,8 @@ def _dataUpdate(
         external = False
 
     if metadata and metadata_file:
-        raise Exception("Cannot specify both --metadata and --metadata-file options.")
+        raise Exception(
+            "Cannot specify both --metadata and --metadata-file options.")
 
     if tags:
         tags = tags.split(",")
@@ -1026,9 +1038,8 @@ def _dataUpdate(
 
 
 @_data.command(name="delete")
-@click.option(
-    "-f", "--force", is_flag=True, help="Delete record(s) without confirmation."
-)
+@click.option("-f", "--force", is_flag=True,
+              help="Delete record(s) without confirmation.")
 @click.argument("data_id", metavar="ID", nargs=-1)
 @_global_context_options
 def _dataDelete(data_id, force, context):
@@ -1045,7 +1056,8 @@ def _dataDelete(data_id, force, context):
 
     if not force:
         if not _interactive:
-            raise Exception("Cannot confirm deletion while running non-interactively.")
+            raise Exception(
+                "Cannot confirm deletion while running non-interactively.")
 
         if not click.confirm("Confirm delete record(s)?"):
             return
@@ -1057,9 +1069,8 @@ def _dataDelete(data_id, force, context):
 @_data.command(name="get")
 @click.argument("df_id", required=True, metavar="ID", nargs=-1)
 @click.argument("path", required=True, metavar="PATH", nargs=1)
-@click.option(
-    "-w", "--wait", is_flag=True, help="Block until Globus transfer is complete."
-)
+@click.option("-w", "--wait", is_flag=True,
+              help="Block until Globus transfer is complete.")
 @click.option(
     "-e",
     "--encrypt",
@@ -1067,9 +1078,8 @@ def _dataDelete(data_id, force, context):
     default="1",
     help="Encryption mode: 0 = none, 1 = if available (default), 2 = force.",
 )
-@click.option(
-    "-o", "--orig_fname", is_flag=True, help="Download to original filename(s)."
-)
+@click.option("-o", "--orig_fname", is_flag=True,
+              help="Download to original filename(s).")
 @_global_context_options
 def _dataGet(df_id, path, wait, encrypt, orig_fname, context):
     """
@@ -1231,7 +1241,7 @@ def _list(ctx, item_id, offset, count, context):
 
     global _cur_coll
 
-    if item_id == None:
+    if item_id is None:
         _id = _cur_coll
     else:
         _id = _resolve_coll_id(item_id)
@@ -1250,7 +1260,8 @@ def _list(ctx, item_id, offset, count, context):
             if _output_mode == _OM_TEXT:
                 click.echo("Listing project root:")
     elif _id[:2] == "u/":
-        reply = _capi.sharedListItems(_id, offset=offset, count=count, context=context)
+        reply = _capi.sharedListItems(
+            _id, offset=offset, count=count, context=context)
         if _output_mode == _OM_TEXT:
             click.echo("Listing user shares:")
     else:
@@ -1283,7 +1294,11 @@ def _collView(coll_id, context):
     in a collection.
     """
 
-    reply = _capi.collectionView(_resolve_coll_id(coll_id, context), context=context)
+    reply = _capi.collectionView(
+        _resolve_coll_id(
+            coll_id,
+            context),
+        context=context)
     _generic_reply_handler(reply, _print_coll)
 
 
@@ -1297,10 +1312,10 @@ def _collView(coll_id, context):
     required=False,
     help="Parent collection ID/alias (default is current working collection)",
 )
-@click.option("-d", "--description", type=str, required=False, help="Description text")
-@click.option(
-    "-T", "--tags", type=str, required=False, help="Tags (comma separated list)."
-)
+@click.option("-d", "--description", type=str,
+              required=False, help="Description text")
+@click.option("-T", "--tags", type=str, required=False,
+              help="Tags (comma separated list).")
 @click.option(
     "--topic",
     type=str,
@@ -1342,10 +1357,10 @@ def _collCreate(title, alias, description, tags, topic, parent, context):
 @click.argument("coll_id", metavar="ID")
 @click.option("-t", "--title", type=str, required=False, help="Title")
 @click.option("-a", "--alias", type=str, required=False, help="Alias")
-@click.option("-d", "--description", type=str, required=False, help="Description text")
-@click.option(
-    "-T", "--tags", type=str, required=False, help="Tags (comma separated list)."
-)
+@click.option("-d", "--description", type=str,
+              required=False, help="Description text")
+@click.option("-T", "--tags", type=str, required=False,
+              help="Tags (comma separated list).")
 @click.option(
     "--topic",
     type=str,
@@ -1377,7 +1392,8 @@ def _collUpdate(coll_id, title, alias, description, tags, topic, context):
 
 
 @_coll.command(name="delete")
-@click.option("-f", "--force", is_flag=True, help="Delete without confirmation.")
+@click.option("-f", "--force", is_flag=True,
+              help="Delete without confirmation.")
 @click.argument("coll_id", metavar="ID", nargs=-1)
 @_global_context_options
 def _collDelete(coll_id, force, context):
@@ -1398,7 +1414,8 @@ def _collDelete(coll_id, force, context):
 
     if not force:
         if not _interactive:
-            raise Exception("Cannot confirm deletion while running non-interactively.")
+            raise Exception(
+                "Cannot confirm deletion while running non-interactively.")
 
         click.echo(
             "Warning: this will delete all data records and collections contained in the specified collection(s)."
@@ -1428,8 +1445,11 @@ def _collItemsAdd(coll_id, item_id, context):
         resolved_ids.append(_resolve_id(i))
 
     reply = _capi.collectionItemsUpdate(
-        _resolve_coll_id(coll_id, context), add_ids=resolved_ids, context=context
-    )
+        _resolve_coll_id(
+            coll_id,
+            context),
+        add_ids=resolved_ids,
+        context=context)
     _generic_reply_handler(reply, _print_ack_reply)
 
 
@@ -1451,8 +1471,11 @@ def _coll_rem(coll_id, item_id, context):
         resolved_ids.append(_resolve_id(i))
 
     reply = _capi.collectionItemsUpdate(
-        _resolve_coll_id(coll_id, context), rem_ids=resolved_ids, context=context
-    )
+        _resolve_coll_id(
+            coll_id,
+            context),
+        rem_ids=resolved_ids,
+        context=context)
     _generic_reply_handler(reply, _print_ack_reply)
 
 
@@ -1491,9 +1514,8 @@ def _queryView(qry_id):
 
 @_query.command(name="create")
 @click.argument("title", metavar="TITLE")
-@click.option(
-    "-C", "--coll-mode", is_flag=True, help="Search for collections intead of data"
-)
+@click.option("-C", "--coll-mode", is_flag=True,
+              help="Search for collections intead of data")
 @click.option(
     "-c",
     "--coll",
@@ -1503,26 +1525,27 @@ def _queryView(qry_id):
 )
 @click.option("--id", type=str, help="ID/alias expression")
 @click.option("--text", type=str, help="Text expression")
-@click.option("-t", "--tag", type=str, multiple=True, help="Tag (multiple allowed)")
+@click.option("-t", "--tag", type=str, multiple=True,
+              help="Tag (multiple allowed)")
 @click.option("--schema", type=str, help="Metadata schema ID")
 @click.option("--meta", type=str, help="Metadata expression")
-@click.option("--meta-err", is_flag=True, help="Metadata has validation errors")
-@click.option("--owner", type=str, help="Owning user ID (only for public queries)")
+@click.option("--meta-err", is_flag=True,
+              help="Metadata has validation errors")
+@click.option("--owner", type=str,
+              help="Owning user ID (only for public queries)")
 @click.option("--creator", type=str, help="Creating user ID")
-@click.option(
-    "--from", "time_from", help="Find from specified date/time (M/D/YYYY[,HH:MM])"
-)
+@click.option("--from", "time_from",
+              help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option(
     "--to", "time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])"
 )
-@click.option(
-    "-p", "--public", is_flag=True, help="Search public data/collections in catalog"
-)
+@click.option("-p", "--public", is_flag=True,
+              help="Search public data/collections in catalog")
 @click.option("--category", type=str, help="Category (public searches only)")
-@click.option("--sort", type=str, help="Sort option (id,title,owner,text,ct,ut)")
-@click.option(
-    "--sort-rev", is_flag=True, help="Sort in reverse order (not available for text)"
-)
+@click.option("--sort", type=str,
+              help="Sort option (id,title,owner,text,ct,ut)")
+@click.option("--sort-rev", is_flag=True,
+              help="Sort in reverse order (not available for text)")
 def _queryCreate(
     title,
     coll_mode,
@@ -1571,9 +1594,8 @@ def _queryCreate(
 
 @_query.command(name="update")
 @click.option("--title", help="New query title")
-@click.option(
-    "-C", "--coll-mode", is_flag=True, help="Search for collections intead of data"
-)
+@click.option("-C", "--coll-mode", is_flag=True,
+              help="Search for collections intead of data")
 @click.option(
     "-c",
     "--coll",
@@ -1583,26 +1605,27 @@ def _queryCreate(
 )
 @click.option("--id", type=str, help="ID/alias expression")
 @click.option("--text", type=str, help="Text expression")
-@click.option("-t", "--tag", type=str, multiple=True, help="Tag (multiple allowed)")
+@click.option("-t", "--tag", type=str, multiple=True,
+              help="Tag (multiple allowed)")
 @click.option("--schema", type=str, help="Metadata schema ID")
 @click.option("--meta", type=str, help="Metadata expression")
-@click.option("--meta-err", is_flag=True, help="Metadata has validation errors")
-@click.option("--owner", type=str, help="Owning user ID (only for public queries)")
+@click.option("--meta-err", is_flag=True,
+              help="Metadata has validation errors")
+@click.option("--owner", type=str,
+              help="Owning user ID (only for public queries)")
 @click.option("--creator", type=str, help="Creating user ID")
-@click.option(
-    "--from", "time_from", help="Find from specified date/time (M/D/YYYY[,HH:MM])"
-)
+@click.option("--from", "time_from",
+              help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option(
     "--to", "time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])"
 )
-@click.option(
-    "-p", "--public", is_flag=True, help="Search public data/collections in catalog"
-)
+@click.option("-p", "--public", is_flag=True,
+              help="Search public data/collections in catalog")
 @click.option("--category", type=str, help="Category (public searches only)")
-@click.option("--sort", type=str, help="Sort option (id,title,owner,text,ct,ut)")
-@click.option(
-    "--sort-rev", is_flag=True, help="Sort in reverse order (not available for text)"
-)
+@click.option("--sort", type=str,
+              help="Sort option (id,title,owner,text,ct,ut)")
+@click.option("--sort-rev", is_flag=True,
+              help="Sort in reverse order (not available for text)")
 @click.argument("qry_id", metavar="ID")
 def _queryUpdate(
     qry_id,
@@ -1678,9 +1701,8 @@ def _queryExec(qry_id, offset, count):
 
 
 @_query.command(name="run")
-@click.option(
-    "-C", "--coll-mode", is_flag=True, help="Search for collections intead of data"
-)
+@click.option("-C", "--coll-mode", is_flag=True,
+              help="Search for collections intead of data")
 @click.option(
     "-c",
     "--coll",
@@ -1690,28 +1712,30 @@ def _queryExec(qry_id, offset, count):
 )
 @click.option("--id", type=str, help="ID/alias expression")
 @click.option("--text", type=str, help="Text expression")
-@click.option("-t", "--tag", type=str, multiple=True, help="Tag (multiple allowed)")
+@click.option("-t", "--tag", type=str, multiple=True,
+              help="Tag (multiple allowed)")
 @click.option("--schema", type=str, help="Metadata schema ID")
 @click.option("--meta", type=str, help="Metadata expression")
-@click.option("--meta-err", is_flag=True, help="Metadata has validation errors")
-@click.option("--owner", type=str, help="Owning user ID (only for public queries)")
+@click.option("--meta-err", is_flag=True,
+              help="Metadata has validation errors")
+@click.option("--owner", type=str,
+              help="Owning user ID (only for public queries)")
 @click.option("--creator", type=str, help="Creating user ID")
-@click.option(
-    "--from", "time_from", help="Find from specified date/time (M/D/YYYY[,HH:MM])"
-)
+@click.option("--from", "time_from",
+              help="Find from specified date/time (M/D/YYYY[,HH:MM])")
 @click.option(
     "--to", "time_to", help="Find up to specified date/time (M/D/YYYY[,HH:MM])"
 )
-@click.option(
-    "-p", "--public", is_flag=True, help="Search public data/collections in catalog"
-)
+@click.option("-p", "--public", is_flag=True,
+              help="Search public data/collections in catalog")
 @click.option("--category", type=str, help="Category (public searches only)")
-@click.option("--sort", type=str, help="Sort option (id,title,owner,text,ct,ut)")
-@click.option(
-    "--sort-rev", is_flag=True, help="Sort in reverse order (not available for text)"
-)
+@click.option("--sort", type=str,
+              help="Sort option (id,title,owner,text,ct,ut)")
+@click.option("--sort-rev", is_flag=True,
+              help="Sort in reverse order (not available for text)")
 @click.option("--offset", default=0, help="Start result list at offset")
-@click.option("--count", default=20, help="Limit to count results (default = 20)")
+@click.option("--count", default=20,
+              help="Limit to count results (default = 20)")
 def _queryRun(
     coll_mode,
     coll,
@@ -1843,8 +1867,10 @@ def _project():
 
 @_project.command(name="list")
 @click.option("-o", "--owned", is_flag=True, help="Include owned projects")
-@click.option("-a", "--admin", is_flag=True, help="Include administered projects")
-@click.option("-m", "--member", is_flag=True, help="Include membership projects")
+@click.option("-a", "--admin", is_flag=True,
+              help="Include administered projects")
+@click.option("-m", "--member", is_flag=True,
+              help="Include membership projects")
 @click.option("-O", "--offset", default=0, help="Start list at offset")
 @click.option("-C", "--count", default=20, help="Limit list to count results")
 def _projectList(owned, admin, member, offset, count):
@@ -1909,24 +1935,29 @@ def _task():
 
 
 @_task.command(name="list")
-@click.option(
-    "-s",
-    "--since",
-    help="List from specified time (seconds default, suffix h = hours, d = days, w = weeks)",
-)
-@click.option(
-    "-f", "--from", "time_from", help="List from specified date/time (M/D/YYYY[,HH:MM])"
-)
-@click.option("-t", "--to", help="List up to specified date/time (M/D/YYYY[,HH:MM])")
-@click.option(
-    "-S",
-    "--status",
-    type=click.Choice(
-        ["0", "1", "2", "3", "4", "queued", "ready", "running", "succeeded", "failed"]
-    ),
-    multiple=True,
-    help="List tasks matching specified status",
-)
+@click.option("-s",
+              "--since",
+              help="List from specified time (seconds default, suffix h = hours, d = days, w = weeks)",
+              )
+@click.option("-f", "--from", "time_from",
+              help="List from specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("-t", "--to",
+              help="List up to specified date/time (M/D/YYYY[,HH:MM])")
+@click.option("-S",
+              "--status",
+              type=click.Choice(["0",
+                                 "1",
+                                 "2",
+                                 "3",
+                                 "4",
+                                 "queued",
+                                 "ready",
+                                 "running",
+                                 "succeeded",
+                                 "failed"]),
+              multiple=True,
+              help="List tasks matching specified status",
+              )
 @click.option("-O", "--offset", default=0, help="Start list at offset")
 @click.option("-C", "--count", default=20, help="Limit list to count results")
 def _taskList(time_from, to, since, status, offset, count):
@@ -1937,7 +1968,7 @@ def _taskList(time_from, to, since, status, offset, count):
     tasks history such that only up to 30 days of history are retained.
     """
 
-    if since != None and (time_from != None or to != None):
+    if since is not None and (time_from is not None or to is not None):
         raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
     reply = _capi.taskList(
@@ -2036,7 +2067,8 @@ def _epList():
     _generic_reply_handler(reply, _print_endpoints)
 
 
-@_ep.command(name="default", cls=_AliasedGroup, help="Default endpoint commands.")
+@_ep.command(name="default", cls=_AliasedGroup,
+             help="Default endpoint commands.")
 def _epDefault():
     pass
 
@@ -2062,9 +2094,8 @@ def _epDefaultGet():
 
 @_epDefault.command(name="set")
 @click.argument("endpoint", required=False)
-@click.option(
-    "-c", "--current", is_flag=True, help="Set default endpoint to current endpoint."
-)
+@click.option("-c", "--current", is_flag=True,
+              help="Set default endpoint to current endpoint.")
 def _epDefaultSet(current, endpoint):
     """
     Set the default Globus endpoint. The default endpoint will be set from the
@@ -2074,10 +2105,11 @@ def _epDefaultSet(current, endpoint):
 
     if current:
         if _output_mode_sticky != _OM_RETN and not _interactive:
-            raise Exception("--current option not supported in non-interactive mode.")
+            raise Exception(
+                "--current option not supported in non-interactive mode.")
 
         ep = _capi.endpointGet()
-        if ep == None:
+        if ep is None:
             raise Exception("No current endpoint set.")
 
         _capi.endpointDefaultSet(ep)
@@ -2115,21 +2147,21 @@ def _setup(ctx):
     pub_file = _capi.cfg.get("client_pub_key_file")
     priv_file = _capi.cfg.get("client_priv_key_file")
 
-    if cfg_dir == None and (pub_file == None or priv_file == None):
+    if cfg_dir is None and (pub_file is None or priv_file is None):
         raise Exception(
             "Client configuration directory and/or client key files not configured"
         )
 
     reply = _capi.generateCredentials()
 
-    if pub_file == None:
+    if pub_file is None:
         pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
 
     keyf = open(pub_file, "w")
     keyf.write(reply[0].pub_key)
     keyf.close()
 
-    if priv_file == None:
+    if priv_file is None:
         priv_file = os.path.join(cfg_dir, "datafed-user-key.priv")
 
     keyf = open(priv_file, "w")
@@ -2179,10 +2211,10 @@ def _verbositySet(level):
         raise Exception("Command not supported in non-interactive modes.")
 
     global _verbosity_sticky
-    if level != None:
+    if level is not None:
         try:
             v = int(level)
-        except:
+        except BaseException:
             raise Exception("Invalid verbosity value.")
 
         if v < 0 or v > 2:
@@ -2317,8 +2349,11 @@ def _print_listing(message):
         _list_items.append(i.id)
         if i.alias:
             click.echo(
-                "{:2}. {:12} ({:20} {}".format(df_idx, i.id, i.alias + ")", i.title)
-            )
+                "{:2}. {:12} ({:20} {}".format(
+                    df_idx,
+                    i.id,
+                    i.alias + ")",
+                    i.title))
         else:
             click.echo("{:2}. {:34} {}".format(df_idx, i.id, i.title))
         df_idx += 1
@@ -2335,8 +2370,11 @@ def _print_user_listing(message):
     for i in message.user:
         _list_items.append(i.uid)
         click.echo(
-            "{:2}. {:24} {}, {}".format(df_idx, i.uid, i.name_last, i.name_first)
-        )
+            "{:2}. {:24} {}, {}".format(
+                df_idx,
+                i.uid,
+                i.name_last,
+                i.name_first))
         df_idx += 1
 
 
@@ -2371,7 +2409,7 @@ def _print_endpoints(message):
 
         try:
             _list_items.index(path)
-        except:
+        except BaseException:
             _list_items.append(path)
             click.echo("{:2}. {}".format(df_idx, path))
             df_idx += 1
@@ -2380,7 +2418,10 @@ def _print_endpoints(message):
 def _print_data(message):
     for dr in message.data:
         click.echo("{:<15}{:<50}".format("ID: ", dr.id))
-        click.echo("{:<15}{:<50}".format("Alias: ", dr.alias if dr.alias else "(none)"))
+        click.echo(
+            "{:<15}{:<50}".format(
+                "Alias: ",
+                dr.alias if dr.alias else "(none)"))
         _wrap_text(dr.title, "Title:", 15)
         _wrap_text(_arrayToCSV(dr.tags, 0), "Tags:", 15)
 
@@ -2411,12 +2452,14 @@ def _print_data(message):
                 )
 
         click.echo(
-            "{:<15}{:<50}".format("Schema: ", dr.sch_id if dr.sch_id else "(none)")
-        )
+            "{:<15}{:<50}".format(
+                "Schema: ",
+                dr.sch_id if dr.sch_id else "(none)"))
         if dr.sch_id and dr.metadata:
             click.echo(
-                "{:<15}{:<50}".format("Meta Errors: ", "Yes" if dr.md_err_msg else "No")
-            )
+                "{:<15}{:<50}".format(
+                    "Meta Errors: ",
+                    "Yes" if dr.md_err_msg else "No"))
             if dr.md_err_msg and _verbosity == 2:
                 click.echo("")
                 _wrap_text(dr.md_err_msg, "", 2)
@@ -2458,8 +2501,11 @@ def _print_batch(message):
         for i in message.data:
             _list_items.append(i.id)
             click.echo(
-                "{:2}. {:12} ({:20} {}".format(df_idx, i.id, i.alias + ")", i.title)
-            )
+                "{:2}. {:12} ({:20} {}".format(
+                    df_idx,
+                    i.id,
+                    i.alias + ")",
+                    i.title))
             df_idx += 1
         click.echo("Processed {} records.".format(len(message.data)))
 
@@ -2468,8 +2514,9 @@ def _print_coll(message):
     for coll in message.coll:
         click.echo("{:<15}{:<50}".format("ID: ", coll.id))
         click.echo(
-            "{:<15}{:<50}".format("Alias: ", coll.alias if coll.alias else "(none)")
-        )
+            "{:<15}{:<50}".format(
+                "Alias: ",
+                coll.alias if coll.alias else "(none)"))
         _wrap_text(coll.title, "Title:", 15)
         _wrap_text(_arrayToCSV(coll.tags, 0), "Tags:", 15)
 
@@ -2486,13 +2533,17 @@ def _print_coll(message):
         )
 
         if len(coll.desc) > 200 and _verbosity < 2:
-            _wrap_text(coll.desc[:200] + "... [more]", "Description:", 15, True)
+            _wrap_text(coll.desc[:200] +
+                       "... [more]", "Description:", 15, True)
         else:
             _wrap_text(coll.desc, "Description:", 15)
 
 
 def _print_deps(dr):
-    types = {0: "is Derived from", 1: "is a Component of", 2: "is a New Version of"}
+    types = {
+        0: "is Derived from",
+        1: "is a Component of",
+        2: "is a New Version of"}
     for i in dr.deps:
         if (
             i.dir == 0
@@ -2556,10 +2607,15 @@ def _print_task(message):
             click.echo("{:<20} {:<50}".format("Message: ", message.task.msg))
 
         click.echo(
-            "{:<20} {:<50}".format("Started: ", _capi.timestampToStr(message.task.ct))
-            + "\n"
-            + "{:<20} {:<50}".format("Updated: ", _capi.timestampToStr(message.task.ut))
-        )
+            "{:<20} {:<50}".format(
+                "Started: ",
+                _capi.timestampToStr(
+                    message.task.ct)) +
+            "\n" +
+            "{:<20} {:<50}".format(
+                "Updated: ",
+                _capi.timestampToStr(
+                    message.task.ut)))
 
 
 def _print_task_array(message):
@@ -2613,17 +2669,15 @@ def _print_proj(message):
 
         # w,h = shutil.get_terminal_size((80, 20))
 
-        click.echo(
-            "{:<14} {:<50}".format("ID: ", proj.id)
-            + "\n"
-            + "{:<14} {:<50}".format("Title: ", proj.title)
-            + "\n"
-            + "{:<14} {:<50}".format("Owner: ", proj.owner[2:])
-            + "\n"
-            + "{:<14} {:<50}".format("Created: ", _capi.timestampToStr(proj.ct))
-            + "\n"
-            + "{:<14} {:<50}".format("Updated: ", _capi.timestampToStr(proj.ut))
-        )
+        click.echo("{:<14} {:<50}".format("ID: ", proj.id) +
+                   "\n" +
+                   "{:<14} {:<50}".format("Title: ", proj.title) +
+                   "\n" +
+                   "{:<14} {:<50}".format("Owner: ", proj.owner[2:]) +
+                   "\n" +
+                   "{:<14} {:<50}".format("Created: ", _capi.timestampToStr(proj.ct)) +
+                   "\n" +
+                   "{:<14} {:<50}".format("Updated: ", _capi.timestampToStr(proj.ut)))
 
         if _verbosity == 2:
             if len(proj.admin):
@@ -2641,7 +2695,7 @@ def _print_proj(message):
             if len(proj.alloc) > 0:
                 first = True
                 for alloc in proj.alloc:
-                    if first == True:
+                    if first:
                         first = False
                         click.echo(
                             "{:<14} {}, {} total, {} used".format(
@@ -2664,7 +2718,8 @@ def _print_proj(message):
                 click.echo("{:<14} (none)".format("Allocations:"))
 
         if len(proj.desc) > 200 and _verbosity < 2:
-            _wrap_text(proj.desc[:200] + "... [more]", "Description:", 15, True)
+            _wrap_text(proj.desc[:200] +
+                       "... [more]", "Description:", 15, True)
         else:
             _wrap_text(proj.desc, "Description:", 15)
 
@@ -2680,9 +2735,13 @@ def _print_path(message):
                     click.echo('"{}" [{}]'.format(i.title, i.id))
             else:
                 if i.alias:
-                    click.echo('{:{}}"{}" ({})'.format(" ", ind, i.title, i.alias))
+                    click.echo(
+                        '{:{}}"{}" ({})'.format(
+                            " ", ind, i.title, i.alias))
                 else:
-                    click.echo('{:{}}"{}" [{}]'.format(" ", ind, i.title, i.id))
+                    click.echo(
+                        '{:{}}"{}" [{}]'.format(
+                            " ", ind, i.title, i.id))
             ind = ind + 3
 
 
@@ -2728,14 +2787,18 @@ def _print_query(message):
     if message.query.HasField("from"):
         click.echo(
             "  {:<18} {}".format(
-                "From Date: ", _capi.timestampToStr(getattr(message.query, "from"))
-            )
-        )
+                "From Date: ",
+                _capi.timestampToStr(
+                    getattr(
+                        message.query,
+                        "from"))))
 
     if message.query.HasField("to"):
         click.echo(
-            "  {:<18} {}".format("To Date: ", _capi.timestampToStr(message.query.to))
-        )
+            "  {:<18} {}".format(
+                "To Date: ",
+                _capi.timestampToStr(
+                    message.query.to)))
 
     if message.query.HasField("sch_id"):
         click.echo("  {:<18} {}".format("Schema: ", message.query.sch_id))
@@ -2751,8 +2814,10 @@ def _print_query(message):
 
     if len(message.query.cat_tags):
         click.echo(
-            "  {:<18} {}".format("Category: ", _arrayToDotted(message.query.cat_tags))
-        )
+            "  {:<18} {}".format(
+                "Category: ",
+                _arrayToDotted(
+                    message.query.cat_tags)))
 
 
 def _wrap_text(text, prefix, indent, compact=False):
@@ -2775,7 +2840,7 @@ def _wrap_text(text, prefix, indent, compact=False):
 
         for p in para:
             click.echo(wrapper.fill(p))
-            if first == True:
+            if first:
                 wrapper.initial_indent = " " * indent
                 first = False
 
@@ -2844,9 +2909,10 @@ def _generic_reply_handler(reply, printFunc):
     elif _output_mode == _OM_JSON:
         click.echo(
             '{{"msg_type":"{}","message":{}}}'.format(
-                reply[1], MessageToJson(reply[0], preserving_proto_field_name=True)
-            )
-        )
+                reply[1],
+                MessageToJson(
+                    reply[0],
+                    preserving_proto_field_name=True)))
     elif _output_mode == _OM_TEXT:
         printFunc(reply[0])
 
@@ -2897,18 +2963,18 @@ def _printJSON(json, cur_indent, indent):
     for k, v in json.items():
         print("" if last == 0 else ",\n", pref, end="", sep="")
         last = 1
-        if type(v) is dict:
+        if isinstance(v, dict):
             if v:
                 print(k, ": {")
                 _printJSON(v, cur_indent + indent, indent)
                 print("\n", pref, "}", sep="", end="")
             else:
                 print(k, ": {}", end="")
-        elif type(v) is list:
+        elif isinstance(v, list):
             # Test array for dict or list values
             cplx = False
             for a in v:
-                if type(a) is dict or type(a) is list:
+                if isinstance(a, dict) or isinstance(a, list):
                     cplx = True
                     break
             if cplx:
@@ -2917,7 +2983,7 @@ def _printJSON(json, cur_indent, indent):
                 print("\n", pref, "]", sep="", end="")
             else:
                 print(k, " : ", str(v), sep="", end="")
-        elif type(v) is str:
+        elif isinstance(v, str):
             print(k, ' : "', v, '"', sep="", end="")
         else:
             print(k, " : ", v, sep="", end="")
@@ -2927,7 +2993,7 @@ def _printJSON_List(json, cur_indent, indent):
     pref = " " * cur_indent
     last = 0
     for v in json:
-        if type(v) is dict:
+        if isinstance(v, dict):
             if v:
                 if last == 0:
                     print(pref, "{", sep="")
@@ -2951,11 +3017,11 @@ def _printJSON_List(json, cur_indent, indent):
             print(",\n" if last != 0 else "", pref, end="", sep="")
             last = 2
 
-            if type(v) is list:
+            if isinstance(v, list):
                 # Test array for dict or list values
                 cplx = False
                 for a in v:
-                    if type(a) is dict or type(a) is list:
+                    if isinstance(a, dict) or isinstance(a, list):
                         cplx = True
                         break
                 if cplx:
@@ -2964,7 +3030,7 @@ def _printJSON_List(json, cur_indent, indent):
                     print(pref, "]", sep="", end="")
                 else:
                     print(str(v), end="")
-            elif type(v) is str:
+            elif isinstance(v, str):
                 print('"', v, '"', end="", sep="")
             else:
                 print(v, end="")
@@ -3002,10 +3068,12 @@ def _bar_adaptive_human_readable(current, total, width=80):
     for field in selected:
         if field == "percent":
             # fixed size width for percentage
-            output += ("%s%%" % (100 * current // total)).rjust(min_width["percent"])
+            output += ("%s%%" % (100 * current // total)
+                       ).rjust(min_width["percent"])
         elif field == "bar":  # [. ]
             # bar takes its min width + all available space
-            output += wget.bar_thermometer(current, total, min_width["bar"] + avail)
+            output += wget.bar_thermometer(current,
+                                           total, min_width["bar"] + avail)
         elif field == "size":
             # size field has a constant width (min == max)
             output += (
@@ -3066,7 +3134,7 @@ def _initialize(opts):
                 )
             )
 
-        if man_auth or _capi.getAuthUser() == None:
+        if man_auth or _capi.getAuthUser() is None:
             if not man_auth:
                 if not _capi._mapi.keysLoaded():
                     if _output_mode == _OM_RETN:
@@ -3076,7 +3144,8 @@ def _initialize(opts):
                     _print_msg(1, "No local credentials loaded.")
                 elif not _capi._mapi.keysValid():
                     if _output_mode == _OM_RETN:
-                        raise Exception("Not authenticated: invalid local credentials.")
+                        raise Exception(
+                            "Not authenticated: invalid local credentials.")
                     _print_msg(1, "Invalid local credentials.", True)
 
                 _print_msg(0, "Manual authentication required.")
@@ -3101,7 +3170,7 @@ def _initialize(opts):
                 raise Exception("Too many failed log-in attempts.")
 
         tmp = _capi.cfg.get("verbosity")
-        if tmp != None:
+        if tmp is not None:
             _verbosity_sticky = tmp
             _verbosity = tmp
 
@@ -3125,12 +3194,24 @@ def _addConfigOptions():
                 hide = False
 
             if v[3] & Config._OPT_INT:
-                _cli.params.append(click.Option(v[4], type=int, help=v[5], hidden=hide))
+                _cli.params.append(
+                    click.Option(
+                        v[4],
+                        type=int,
+                        help=v[5],
+                        hidden=hide))
             elif v[3] & Config._OPT_BOOL:
                 _cli.params.append(
                     click.Option(
-                        v[4], is_flag=True, default=None, help=v[5], hidden=hide
-                    )
-                )
+                        v[4],
+                        is_flag=True,
+                        default=None,
+                        help=v[5],
+                        hidden=hide))
             else:
-                _cli.params.append(click.Option(v[4], type=str, help=v[5], hidden=hide))
+                _cli.params.append(
+                    click.Option(
+                        v[4],
+                        type=str,
+                        help=v[5],
+                        hidden=hide))

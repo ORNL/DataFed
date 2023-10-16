@@ -1,4 +1,4 @@
-## @package datafed.CommandLib
+# @package datafed.CommandLib
 # Provides a high-level client interface to the DataFed server
 #
 # The DataFed CommandLib module contains a single API class that provides
@@ -30,7 +30,7 @@ class API:
     The DataFed CommandLib.API class provides a high-level interface
     for sending requests to a DataFed server. Requests are sent via python
     class methods and replies are (currently) returned as Google Protobuf message objects.
-    These reply messages are defined in the \*.proto files included in the
+    These reply messages are defined in the \\*.proto files included in the
     DataFed client package. Basic functionality of th API class mirrors the
     capabilities exposed in the DataFed CLI.
 
@@ -66,12 +66,12 @@ class API:
     _max_payload_size = 1048576
     _endpoint_legacy = re.compile(r"[\w\-]+#[\w\-]+")
     _endpoint_uuid = re.compile(
-        r"[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}", re.I
-    )
+        r"[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}", re.I)
 
     def __init__(self, opts={}):
         if not isinstance(opts, dict):
-            raise Exception("CommandLib API options parameter must be a dictionary.")
+            raise Exception(
+                "CommandLib API options parameter must be a dictionary.")
 
         self._uid = None
         self._cur_sel = None
@@ -419,7 +419,8 @@ class API:
         """
 
         if repo_id and external:
-            raise Exception("Cannot specify repository for external (unmanaged) data.")
+            raise Exception(
+                "Cannot specify repository for external (unmanaged) data.")
 
         if raw_data_file and not external:
             raise Exception(
@@ -427,7 +428,8 @@ class API:
             )
 
         if metadata and metadata_file:
-            raise Exception("Cannot specify both metadata and metadata-file options.")
+            raise Exception(
+                "Cannot specify both metadata and metadata-file options.")
 
         msg = auth.RecordCreateRequest()
         msg.title = title
@@ -460,7 +462,7 @@ class API:
                 f = open(metadata_file, "r")
                 metadata = f.read()
                 f.close()
-            except:
+            except BaseException:
                 raise Exception(
                     "Could not open metadata file: {}".format(metadata_file)
                 )
@@ -570,7 +572,8 @@ class API:
         """
 
         if metadata and metadata_file:
-            raise Exception("Cannot specify both metadata and metadata-file options.")
+            raise Exception(
+                "Cannot specify both metadata and metadata-file options.")
 
         msg = auth.RecordUpdateRequest()
         msg.id = self._resolve_id(data_id, context)
@@ -605,7 +608,7 @@ class API:
                 f = open(metadata_file, "r")
                 metadata = f.read()
                 f.close()
-            except:
+            except BaseException:
                 raise Exception(
                     "Could not open metadata file: {}".format(metadata_file)
                 )
@@ -774,7 +777,7 @@ class API:
                     reply2 = self._mapi.sendRecv(msg2, nack_except=False)
 
                     # timeout
-                    if reply2[0] == None:
+                    if reply2[0] is None:
                         break
 
                     # Not sure if this can happen:
@@ -851,7 +854,7 @@ class API:
 
         reply = self._mapi.sendRecv(msg)
 
-        if (reply[0].HasField("task") == True) and wait:
+        if (reply[0].HasField("task")) and wait:
             msg2 = auth.TaskViewRequest()
             msg2.task_id = reply[0].task.id
             elapsed = 0
@@ -1234,7 +1237,12 @@ class API:
 
         return self._mapi.sendRecv(msg)
 
-    def collectionItemsUpdate(self, coll_id, add_ids=None, rem_ids=None, context=None):
+    def collectionItemsUpdate(
+            self,
+            coll_id,
+            add_ids=None,
+            rem_ids=None,
+            context=None):
         """
         Update (add/remove) items linked to a specified collection
 
@@ -1483,7 +1491,7 @@ class API:
         msg = auth.QueryUpdateRequest()
         msg.id = query_id
 
-        if title != None:
+        if title is not None:
             msg.title = title
 
         self._buildSearchRequest(
@@ -1653,7 +1661,7 @@ class API:
         offset=0,
         count=20,
     ):
-        if coll_mode and (schema != None or meta != None or meta_err == True):
+        if coll_mode and (schema is not None or meta is not None or meta_err):
             raise Exception(
                 "Cannot specify metadata terms when searching for collection."
             )
@@ -1666,10 +1674,10 @@ class API:
         # if category != None and not public:
         #    raise Exception("Category search option is only available for public searches.")
 
-        if coll != None:
+        if coll is not None:
             msg.coll.extend(coll)
 
-        if sort != None:
+        if sort is not None:
             if sort == "id":
                 msg.sort = 0
             elif sort == "title":
@@ -1685,7 +1693,7 @@ class API:
             else:
                 raise Exception("Invalid sort option.")
 
-        if sort_rev == True:
+        if sort_rev:
             if msg.sort == 5:
                 raise Exception(
                     "Reverse sort option not available for text-relevance sorting."
@@ -1693,53 +1701,53 @@ class API:
 
             msg.sort_rev = True
 
-        if id != None:
+        if id is not None:
             msg.id = id
 
-        if text != None:
+        if text is not None:
             msg.text = text
 
-        if tags != None:
+        if tags is not None:
             msg.tags.extend(tags)
 
-        if owner != None:
+        if owner is not None:
             msg.owner = owner
 
-        if creator != None:
+        if creator is not None:
             msg.creator = creator
 
-        if schema != None:
+        if schema is not None:
             msg.sch_id = schema
 
-        if meta != None:
+        if meta is not None:
             msg.meta = meta
 
-        if meta_err == True:
+        if meta_err:
             msg.meta_err = True
 
-        if time_from != None:
+        if time_from is not None:
             ts = self.strToTimestamp(time_from)
-            if ts == None:
+            if ts is None:
                 raise Exception("Invalid time format for 'from' option.")
 
             setattr(msg, "from", ts)
 
-        if time_to != None:
+        if time_to is not None:
             ts = self.strToTimestamp(time_to)
-            if ts == None:
+            if ts is None:
                 raise Exception("Invalid time format for 'from' option.")
             msg.to = ts
 
         if public:
             msg.published = True
 
-        if category != None:
+        if category is not None:
             msg.cat_tags.extend(category.split("."))
 
-        if offset != None:
+        if offset is not None:
             msg.offset = offset
 
-        if count != None:
+        if count is not None:
             msg.count = count
 
     # =========================================================================
@@ -1827,7 +1835,13 @@ class API:
     # --------------------------------------------------------- Project Methods
     # =========================================================================
 
-    def projectList(self, owned=True, admin=True, member=True, offset=0, count=20):
+    def projectList(
+            self,
+            owned=True,
+            admin=True,
+            member=True,
+            offset=0,
+            count=20):
         """
         List projects associated with current user
 
@@ -1945,13 +1959,13 @@ class API:
         """
         msg = auth.ACLSharedListRequest()
 
-        if inc_users != None:
+        if inc_users is not None:
             msg.inc_users = inc_users
 
-        if inc_projects != None:
+        if inc_projects is not None:
             msg.inc_projects = inc_projects
 
-        if subject != None:
+        if subject is not None:
             msg.subject = subject.lower()
 
         return self._mapi.sendRecv(msg)
@@ -2025,7 +2039,7 @@ class API:
 
         msg = auth.ACLSharedListItemsRequest()
         msg.owner = owner_id.lower()
-        if context != None:
+        if context is not None:
             msg.subject = context.lower()
 
         return self._mapi.sendRecv(msg)
@@ -2035,8 +2049,13 @@ class API:
     # =========================================================================
 
     def taskList(
-        self, time_from=None, time_to=None, since=None, status=None, offset=0, count=20
-    ):
+            self,
+            time_from=None,
+            time_to=None,
+            since=None,
+            status=None,
+            offset=0,
+            count=20):
         """
         List recent Globus data transfer tasks
 
@@ -2070,26 +2089,27 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        if since != None and (time_from != None or time_to != None):
+        if since is not None and (
+                time_from is not None or time_to is not None):
             raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
         msg = auth.TaskListRequest()
 
-        if time_from != None:
+        if time_from is not None:
             ts = self.strToTimestamp(time_from)
-            if ts == None:
+            if ts is None:
                 raise Exception("Invalid time format for 'from' option.")
 
             setattr(msg, "from", ts)
 
-        if time_to != None:
+        if time_to is not None:
             ts = self.strToTimestamp(time_to)
-            if ts == None:
+            if ts is None:
                 raise Exception("Invalid time format for 'time_to' option.")
 
             msg.to = ts
 
-        if since != None:
+        if since is not None:
             try:
                 suf = since[-1]
                 mod = 1
@@ -2106,14 +2126,14 @@ class API:
                 else:
                     val = int(since)
 
-                if val == None:
+                if val is None:
                     raise Exception("Invalid value for 'since'")
 
                 msg.since = val * mod
-            except:
+            except BaseException:
                 raise Exception("Invalid value for 'since'")
 
-        if status != None:
+        if status is not None:
             for s in status:
                 if isinstance(s, str):
                     stat = s.lower()
@@ -2135,10 +2155,10 @@ class API:
                 elif stat == "failed":
                     msg.status.append(4)
 
-        if offset != None:
+        if offset is not None:
             try:
                 tmp = int(offset)
-            except:
+            except BaseException:
                 raise Exception("Invalid offset value.")
 
             if offset >= 0:
@@ -2146,10 +2166,10 @@ class API:
             else:
                 raise Exception("Invalid offset value.")
 
-        if count != None:
+        if count is not None:
             try:
                 tmp = int(count)
-            except:
+            except BaseException:
                 raise Exception("Invalid count value.")
 
             if count > 0:
@@ -2292,7 +2312,7 @@ class API:
         pub_file = self.cfg.get("client_pub_key_file")
         priv_file = self.cfg.get("client_priv_key_file")
 
-        if cfg_dir == None and (pub_file == None or priv_file == None):
+        if cfg_dir is None and (pub_file is None or priv_file is None):
             raise Exception(
                 "Client configuration directory and/or client key files not configured"
             )
@@ -2301,14 +2321,14 @@ class API:
 
         reply = self._mapi.sendRecv(msg)
 
-        if pub_file == None:
+        if pub_file is None:
             pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
 
         keyf = open(pub_file, "w")
         keyf.write(reply[0].pub_key)
         keyf.close()
 
-        if priv_file == None:
+        if priv_file is None:
             priv_file = os.path.join(cfg_dir, "datafed-user-key.priv")
 
         keyf = open(priv_file, "w")
@@ -2334,7 +2354,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        if item_id == None:
+        if item_id is None:
             if self._cur_sel == self._uid:
                 return
 
@@ -2359,7 +2379,8 @@ class API:
                 msg = auth.UserViewRequest()
                 msg.uid = id2
 
-            # Don't need reply - just using to throw an except if id/uid is invalid
+            # Don't need reply - just using to throw an except if id/uid is
+            # invalid
             self._mapi.sendRecv(msg)
             self._cur_sel = id2
 
@@ -2414,26 +2435,31 @@ class API:
         """
         try:
             return int(time_str)
-        except:
-            pass
-
-        try:
-            return int(datetime.datetime.strptime(time_str, "%m/%d/%Y").timestamp())
-        except:
+        except BaseException:
             pass
 
         try:
             return int(
-                datetime.datetime.strptime(time_str, "%m/%d/%Y,%H:%M").timestamp()
-            )
-        except:
+                datetime.datetime.strptime(
+                    time_str,
+                    "%m/%d/%Y").timestamp())
+        except BaseException:
             pass
 
         try:
             return int(
-                datetime.datetime.strptime(time_str, "%m/%d/%Y,%H:%M:%S").timestamp()
-            )
-        except:
+                datetime.datetime.strptime(
+                    time_str,
+                    "%m/%d/%Y,%H:%M").timestamp())
+        except BaseException:
+            pass
+
+        try:
+            return int(
+                datetime.datetime.strptime(
+                    time_str,
+                    "%m/%d/%Y,%H:%M:%S").timestamp())
+        except BaseException:
             pass
 
         return None
@@ -2561,13 +2587,18 @@ class API:
         str
             Path with globus endpoint UUID or alias prefixed.
         """
-        # Check if this is a full Globus path with either a UUID or legacy endpoint prefix
-        if re.match(API._endpoint_legacy, path) or re.match(API._endpoint_uuid, path):
+        # Check if this is a full Globus path with either a UUID or legacy
+        # endpoint prefix
+        if re.match(
+                API._endpoint_legacy,
+                path) or re.match(
+                API._endpoint_uuid,
+                path):
             return path
 
         # Does not have an endpoint prefix, might be a full or relative path
 
-        if self._cur_ep == None:
+        if self._cur_ep is None:
             raise Exception("No endpoint set.")
 
         if path[0] == "~":
@@ -2594,7 +2625,7 @@ class API:
                     rel = idx
                 idx = idx + 1
 
-            if rel != None:
+            if rel is not None:
                 basep = pathlib.Path()
                 endp = pathlib.Path()
                 idx = 0
@@ -2609,7 +2640,8 @@ class API:
 
             winp = pathlib.PurePath(_path)
 
-            # TODO The follow windows-specific code needs to be tested on windows...
+            # TODO The follow windows-specific code needs to be tested on
+            # windows...
             if isinstance(winp, pathlib.PureWindowsPath):
                 if winp.drive:
                     drive_name = winp.drive.replace(":", "")
@@ -2668,35 +2700,34 @@ class API:
         """
         opts = self.cfg.getOpts()
 
-        # Examine initial configuration options and set & save defaults where needed
+        # Examine initial configuration options and set & save defaults where
+        # needed
         save = False
 
-        if not "server_host" in opts:
+        if "server_host" not in opts:
             self.cfg.set("server_host", "datafed.ornl.gov")
             opts["server_host"] = "datafed.ornl.gov"
             save = True
 
-        if not "server_port" in opts:
+        if "server_port" not in opts:
             self.cfg.set("server_port", 7512)
             opts["server_port"] = 7512
             save = True
 
-        if not "server_pub_key_file" in opts:
+        if "server_pub_key_file" not in opts:
             serv_key_file = None
 
             if "server_cfg_dir" in opts:
-                serv_key_file = os.path.expanduser(
-                    os.path.join(opts["server_cfg_dir"], "datafed-core-key.pub")
-                )
+                serv_key_file = os.path.expanduser(os.path.join(
+                    opts["server_cfg_dir"], "datafed-core-key.pub"))
                 self.cfg.set("server_pub_key_file", serv_key_file)
                 opts["server_pub_key_file"] = serv_key_file
 
             if not serv_key_file or not os.path.exists(serv_key_file):
                 serv_key_file = None
                 if "client_cfg_dir" in opts:
-                    serv_key_file = os.path.expanduser(
-                        os.path.join(opts["client_cfg_dir"], "datafed-core-key.pub")
-                    )
+                    serv_key_file = os.path.expanduser(os.path.join(
+                        opts["client_cfg_dir"], "datafed-core-key.pub"))
                     self.cfg.set("server_pub_key_file", serv_key_file)
                     opts["server_pub_key_file"] = serv_key_file
                     save = True
@@ -2708,27 +2739,30 @@ class API:
 
                 if not os.path.exists(serv_key_file):
                     # Make default server pub key file
-                    url = "https://" + opts["server_host"] + "/datafed-core-key.pub"
+                    url = "https://" + \
+                        opts["server_host"] + "/datafed-core-key.pub"
                     wget.download(url, out=serv_key_file)
 
-        if not "client_pub_key_file" in opts or not "client_priv_key_file" in opts:
-            if not "client_cfg_dir" in opts:
+        if "client_pub_key_file" not in opts or "client_priv_key_file" not in opts:
+            if "client_cfg_dir" not in opts:
                 raise Exception(
                     "Client key file(s) or client configuration directory not specified or invalid."
                 )
 
-            if not "client_pub_key_file" in opts:
+            if "client_pub_key_file" not in opts:
                 key_file = os.path.expanduser(
-                    os.path.join(opts["client_cfg_dir"], "datafed-user-key.pub")
-                )
+                    os.path.join(
+                        opts["client_cfg_dir"],
+                        "datafed-user-key.pub"))
                 self.cfg.set("client_pub_key_file", key_file)
                 opts["client_pub_key_file"] = key_file
                 save = True
 
-            if not "client_priv_key_file" in opts:
+            if "client_priv_key_file" not in opts:
                 key_file = os.path.expanduser(
-                    os.path.join(opts["client_cfg_dir"], "datafed-user-key.priv")
-                )
+                    os.path.join(
+                        opts["client_cfg_dir"],
+                        "datafed-user-key.priv"))
                 self.cfg.set("client_priv_key_file", key_file)
                 opts["client_priv_key_file"] = key_file
                 save = True

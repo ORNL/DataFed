@@ -1,4 +1,4 @@
-## @package datafed.MessageLib
+# @package datafed.MessageLib
 # Provides a low-level client interface to the DataFed server
 #
 # The DataFed MessageLib module contains a single API class that provides
@@ -91,35 +91,38 @@ class API:
         if not server_host:
             raise Exception("Server host is not defined")
 
-        if server_port == None:
+        if server_port is None:
             raise Exception("Server port is not defined")
 
         if not server_pub_key and not server_pub_key_file:
             raise Exception("Server public key or key file is not defined")
 
         if server_pub_key and server_pub_key_file:
-            raise Exception("Cannot specify both server public key and key file")
+            raise Exception(
+                "Cannot specify both server public key and key file")
 
         if client_pub_key and client_pub_key_file:
-            raise Exception("Cannot specify both client public key and key file")
+            raise Exception(
+                "Cannot specify both client public key and key file")
 
         if client_priv_key and client_priv_key_file:
-            raise Exception("Cannot specify both client private key and key file")
+            raise Exception(
+                "Cannot specify both client private key and key file")
 
         _server_pub_key = None
         _client_pub_key = None
         _client_priv_key = None
 
         # Use or load server public key
-        if server_pub_key_file != None:
+        if server_pub_key_file is not None:
             try:
                 keyf = open(server_pub_key_file, "r")
                 _server_pub_key = keyf.read()
                 keyf.close()
-            except:
+            except BaseException:
                 raise Exception(
-                    "Could not open server public key file: " + server_pub_key_file
-                )
+                    "Could not open server public key file: " +
+                    server_pub_key_file)
         else:
             _server_pub_key = server_pub_key
 
@@ -165,7 +168,7 @@ class API:
                     self._keys_valid = True
                 self._keys_loaded = True
                 print
-            except:
+            except BaseException:
                 pub, priv = zmq.curve_keypair()
                 _client_pub_key = pub.decode("utf-8")
                 _client_priv_key = priv.decode("utf-8")
@@ -177,8 +180,11 @@ class API:
             raise Exception("Client private key is not defined")
 
         self._conn = Connection.Connection(
-            server_host, server_port, _server_pub_key, _client_pub_key, _client_priv_key
-        )
+            server_host,
+            server_port,
+            _server_pub_key,
+            _client_pub_key,
+            _client_priv_key)
 
         self._conn.registerProtocol(anon)
         self._conn.registerProtocol(auth)
@@ -188,7 +194,8 @@ class API:
         latest_version_on_pypi = get_latest_version(package_name)
 
         if latest_version_on_pypi:
-            pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split(".")
+            pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split(
+                ".")
             major, minor, patch = VERSION.__version__.split(".")
 
             if pypi_major != major or pypi_minor > minor or pypi_patch > patch:
@@ -229,7 +236,7 @@ class API:
             self._auth = reply.auth
             self._uid = reply.uid
 
-    ## @brief Determines if client security keys were loaded.
+    # @brief Determines if client security keys were loaded.
     #
     # @return True if keys were loaded; false otherwise.
     # @retval bool
@@ -237,7 +244,7 @@ class API:
     def keysLoaded(self):
         return self._keys_loaded
 
-    ## @brief Determines if loaded client security keys had a valid format.
+    # @brief Determines if loaded client security keys had a valid format.
     #
     # Note that keys with valid format but invalid value will cause
     # a connection failure (exception or timeout).
@@ -248,7 +255,7 @@ class API:
     def keysValid(self):
         return self._keys_valid
 
-    ## @brief Gets the client authentication status and user ID.
+    # @brief Gets the client authentication status and user ID.
     #
     # @return A tuple of (bool,string) - The bool is True if client
     #    is authenticated; False otherwise. IF authenticated, the
@@ -258,7 +265,7 @@ class API:
     def getAuthStatus(self):
         return self._auth, self._uid
 
-    ## @brief Perform manual client authentication with DataFed user ID and password.
+    # @brief Perform manual client authentication with DataFed user ID and password.
     #
     # @param uid Client's DataFed user ID.
     # @param password Client's DataFed password.
@@ -303,7 +310,7 @@ class API:
         self._auth = False
         self._uid = None
 
-    ## @brief Get NackReply exception enable state.
+    # @brief Get NackReply exception enable state.
     #
     # @return True if Nack exceptions are enabled; False otherwise.
     # @retval bool
@@ -311,7 +318,7 @@ class API:
     def getNackExceptionEnabled(self):
         return self._nack_except
 
-    ## @brief Set NackReply exception enable state.
+    # @brief Set NackReply exception enable state.
     #
     # If NackReply exceptions are enabled, any NackReply received by
     # the recv() or SendRecv() methods will be raised as an exception
@@ -335,12 +342,12 @@ class API:
     def getDailyMessage(self):
         # Get daily message, if set
         reply, mt = self.sendRecv(anon.DailyMessageRequest(), 10000)
-        if reply == None:
+        if reply is None:
             raise Exception("Timeout waiting for server connection.")
 
         return reply.message
 
-    ## @brief Synchronously send a message then receive a reply to/from DataFed server.
+    # @brief Synchronously send a message then receive a reply to/from DataFed server.
     #
     # @param msg: Protobuf message to send to the server
     #   timeout: Timeout in milliseconds
@@ -353,9 +360,9 @@ class API:
     #
     def sendRecv(self, msg, timeout=None, nack_except=None):
         self.send(msg)
-        _timeout = timeout if timeout != None else self._timeout
+        _timeout = timeout if timeout is not None else self._timeout
         reply, mt, ctxt = self.recv(_timeout, nack_except)
-        if reply == None:
+        if reply is None:
             raise Exception("Timeout!!!!!!!!!")
             return None, None
         if ctxt != self._ctxt:
@@ -364,7 +371,7 @@ class API:
             )
         return reply, mt
 
-    ## @brief Asynchronously send a protobuf message to DataFed server.
+    # @brief Asynchronously send a protobuf message to DataFed server.
     #
     # @param msg: Protobuf message to send to the server
     # @return Auto-generated message re-association context int
@@ -376,7 +383,7 @@ class API:
         self._conn.send(msg, self._ctxt)
         return self._ctxt
 
-    ## @brief Receive a protobuf message (reply) from DataFed server.
+    # @brief Receive a protobuf message (reply) from DataFed server.
     #
     # @param timeout: Timeout in milliseconds (0 = don't wait, -1 =
     #   wait forever).
@@ -389,13 +396,13 @@ class API:
     # @retval (obj,str,int)
     #
     def recv(self, timeout=None, nack_except=None):
-        _timeout = timeout if timeout != None else self._timeout
+        _timeout = timeout if timeout is not None else self._timeout
 
         reply, msg_type, ctxt = self._conn.recv(_timeout)
-        if reply == None:
+        if reply is None:
             return None, None, None
 
-        _nack_except = nack_except if nack_except != None else self._nack_except
+        _nack_except = nack_except if nack_except is not None else self._nack_except
 
         if msg_type == "NackReply" and _nack_except:
             if reply.err_msg:
