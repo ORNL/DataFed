@@ -142,6 +142,13 @@ else
   local_DATAFED_CORE_ADDRESS_PORT_INTERNAL=$(printenv DATAFED_CORE_ADDRESS_PORT_INTERNAL)
 fi
 
+if [ -z "${DATAFED_GOOGLE_ANALYTICS_TAG}" ]
+then
+  local_DATAFED_GOOGLE_ANALYTICS_TAG=""
+else
+  local_DATAFED_GOOGLE_ANALYTICS_TAG=$(printenv DATAFED_GOOGLE_ANALYTICS_TAG)
+fi
+
 if [ ! -d "$PATH_TO_CONFIG_DIR" ]
 then
   mkdir -p "$PATH_TO_CONFIG_DIR"
@@ -206,6 +213,8 @@ export DATAFED_WEB_CERT_PATH="$local_DATAFED_WEB_CERT_PATH"
 export DATAFED_WEB_USER=""
 # How the web server communicates with the core server, assumes an internal network
 export DATAFED_CORE_ADDRESS_PORT_INTERNAL="$local_DATAFED_CORE_ADDRESS_PORT_INTERNAL"
+# The id for the associated Google Analytics tag, if left empty, Google Analytics will be disabled
+export DATAFED_GOOGLE_ANALYTICS_TAG="$local_DATAFED_GOOGLE_ANALYTICS_TAG"
 # ************************************************
 # Env Variables for Globus Connect Server
 # ************************************************

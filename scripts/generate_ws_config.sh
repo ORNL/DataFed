@@ -14,7 +14,7 @@ Help()
 {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
-  echo "Syntax: $(basename $0) [-h|s|i|z|y|w|k]"
+  echo "Syntax: $(basename $0) [-h|s|i|z|y|w|k|t]"
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-s, --globus-secret               Globus App secret used by DataFed to authenticate"
@@ -38,6 +38,7 @@ Help()
   echo "-y, --zeromq-system-secret        ZeroMQ system secret"
   echo "-w, --web-cert-path               Path to web server certificate file."
   echo "-k, --web-key-path                Path to web server key file."
+  echo "-t, --google-analytics-tag        The tag associated with a Google Analytics stream"
 }
 
 # Set defaults use environment variables by default
@@ -97,8 +98,15 @@ else
   local_DATAFED_CORE_ADDRESS_PORT_INTERNAL=$(printenv DATAFED_CORE_ADDRESS_PORT_INTERNAL)
 fi
 
+if [ -z "${DATAFED_GOOGLE_ANALYTICS_TAG}" ]
+then
+  local_DATAFED_GOOGLE_ANALYTICS_TAG=""
+else
+  local_DATAFED_GOOGLE_ANALYTICS_TAG=$(printenv DATAFED_GOOGLE_ANALYTICS_TAG)
+fi
 
-VALID_ARGS=$(getopt -o hs:i:z:y:w:k:c: --long 'help',globus-secret:,globus-id:,zeromq-session-secret:,zeromq-system-secret:,web-cert-path:,web-key-path:,core-address-port: -- "$@")
+
+VALID_ARGS=$(getopt -o hs:i:z:y:w:k:c:t: --long 'help',globus-secret:,globus-id:,zeromq-session-secret:,zeromq-system-secret:,web-cert-path:,web-key-path:,core-address-port:google-analytics-tag -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -143,6 +151,11 @@ while [ : ]; do
     -c | --core-address-port)
         echo "Processing 'DataFed internal core address and port' option. Input argument is '$2'"
         local_DATAFED_CORE_ADDRESS_PORT_INTERNAL=$2
+        shift 2
+        ;;
+    -t | --google-analytics-tag)
+        echo "Processing 'DataFed Google Analytics tag' option. Input argument is '$2'"
+        local_DATAFED_GOOGLE_ANALYTICS_TAG=$2
         shift 2
         ;;
     --) shift; 
@@ -227,6 +240,10 @@ client_secret=${local_DATAFED_GLOBUS_APP_SECRET}
 # This is the address to talk with the core server which is listening on 
 # port 7513, assuming internal network.
 server_address=tcp://${local_DATAFED_CORE_ADDRESS_PORT_INTERNAL}
+
+[operations]
+# This is the tag associated with a Google Analytics installation that metrics will be sent to.
+google_analytics_tag=${local_DATAFED_GOOGLE_ANALYTICS_TAG}
 EOF
 
 echo
