@@ -18,6 +18,8 @@ Refer to the "BUILD.md" file for instructions on how to configure and build Data
 
 # Installation Core Server and Web Server
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c297f7edc971409a9fce04bf815ee5db)](https://app.codacy.com/gh/ORNL/DataFed?utm_source=github.com&utm_medium=referral&utm_content=ORNL/DataFed&utm_campaign=Badge_Grade)
+
 Please see documentation at doc_source/source/admin/general.rst for installation instructions.
 
 # Versions
