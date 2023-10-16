@@ -51,9 +51,8 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--alloc",
-    metavar="NAME",
-    help="Destination allocation (without repo/ prefix)")
+    "--alloc", metavar="NAME", help="Destination allocation (without repo/ prefix)"
+)
 
 parser.add_argument(
     "--public",

@@ -98,16 +98,13 @@ class API:
             raise Exception("Server public key or key file is not defined")
 
         if server_pub_key and server_pub_key_file:
-            raise Exception(
-                "Cannot specify both server public key and key file")
+            raise Exception("Cannot specify both server public key and key file")
 
         if client_pub_key and client_pub_key_file:
-            raise Exception(
-                "Cannot specify both client public key and key file")
+            raise Exception("Cannot specify both client public key and key file")
 
         if client_priv_key and client_priv_key_file:
-            raise Exception(
-                "Cannot specify both client private key and key file")
+            raise Exception("Cannot specify both client private key and key file")
 
         _server_pub_key = None
         _client_pub_key = None
@@ -121,8 +118,8 @@ class API:
                 keyf.close()
             except BaseException:
                 raise Exception(
-                    "Could not open server public key file: " +
-                    server_pub_key_file)
+                    "Could not open server public key file: " + server_pub_key_file
+                )
         else:
             _server_pub_key = server_pub_key
 
@@ -180,11 +177,8 @@ class API:
             raise Exception("Client private key is not defined")
 
         self._conn = Connection.Connection(
-            server_host,
-            server_port,
-            _server_pub_key,
-            _client_pub_key,
-            _client_priv_key)
+            server_host, server_port, _server_pub_key, _client_pub_key, _client_priv_key
+        )
 
         self._conn.registerProtocol(anon)
         self._conn.registerProtocol(auth)
@@ -194,8 +188,7 @@ class API:
         latest_version_on_pypi = get_latest_version(package_name)
 
         if latest_version_on_pypi:
-            pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split(
-                ".")
+            pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split(".")
             major, minor, patch = VERSION.__version__.split(".")
 
             if pypi_major != major or pypi_minor > minor or pypi_patch > patch:

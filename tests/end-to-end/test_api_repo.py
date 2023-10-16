@@ -88,9 +88,7 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
         self.assertEqual(len(result[0].repo), 1)
 
         self.assertEqual(result[0].repo[0].pub_key, self._repo_form["pub_key"])
-        self.assertEqual(
-            result[0].repo[0].capacity,
-            self._repo_form["capacity"])
+        self.assertEqual(result[0].repo[0].capacity, self._repo_form["capacity"])
         self.assertEqual(result[0].repo[0].address, self._repo_form["address"])
 
         result = self._df_api.repoList(list_all=True)

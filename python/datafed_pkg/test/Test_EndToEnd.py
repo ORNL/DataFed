@@ -171,12 +171,14 @@ def string_generator(
 
     if special_characters:
         if making_topic:
-            randostring = "".join(r.choice(topic_char)
-                                  for i in range(r.randint(min_char, max_char)))
+            randostring = "".join(
+                r.choice(topic_char) for i in range(r.randint(min_char, max_char))
+            )
 
         else:
-            randostring = "".join(r.choice(spec_char)
-                                  for i in range(r.randint(min_char, max_char)))
+            randostring = "".join(
+                r.choice(spec_char) for i in range(r.randint(min_char, max_char))
+            )
         pass
 
     else:
@@ -420,13 +422,9 @@ class DataRecord(object):
                 warnings.warn("SDMSError: Topic word has too many characters")
                 num -= 1
                 topic_as_list = []
-                topic_as_list.append(
-                    string_generator(
-                        26, 30, True, True, True))
+                topic_as_list.append(string_generator(26, 30, True, True, True))
                 for x in range(r.randint(1, int(num))):
-                    topic_as_list.append(
-                        string_generator(
-                            4, 9, True, True, True))
+                    topic_as_list.append(string_generator(4, 9, True, True, True))
                 topic = ".".join(topic_as_list)
                 return topic
 
@@ -436,9 +434,7 @@ class DataRecord(object):
                 num -= 1
                 topic_as_list.append(string_generator(4, 9, False, True, True))
                 for x in range(r.randint(1, int(num))):
-                    topic_as_list.append(
-                        string_generator(
-                            4, 9, True, True, True))
+                    topic_as_list.append(string_generator(4, 9, True, True, True))
                 topic = ".".join(topic_as_list)
                 return topic
 
@@ -499,11 +495,11 @@ class DataRecord(object):
 
     def as_text_input(self):
         text = './scripts/datafed data create "{}" -a "{}" -d "{}" -kw "{}"'.format(
-            escape(
-                self.title), escape(
-                self.alias), escape(
-                self.desc), escape(
-                    self.keywords), )
+            escape(self.title),
+            escape(self.alias),
+            escape(self.desc),
+            escape(self.keywords),
+        )
 
         return text
 
