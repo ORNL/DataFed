@@ -1,8 +1,7 @@
+# Pre-Release
 
-
- 
 ## PATCH Bug fixes/Technical Debt/Documentation
-1. [] - Added github pr template
+1. [911] - Add GitHub template
 
 # v2023.8.21.10.40
 
