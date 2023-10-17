@@ -333,7 +333,7 @@ end-to-end-repo-setup:
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-repo.log"
+    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
   stage: end-to-end-setup
   tags:
     - ci-datafed-globus
@@ -361,6 +361,7 @@ end-to-end-repo-setup:
 end-to-end-gcs-authz-setup:
   variables:
     IMAGE_TAG: "dlsw/datafed/gcs-authz-"
+    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
     GIT_STRATEGY: clone
   stage: end-to-end-setup
   tags:
