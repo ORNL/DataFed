@@ -69,6 +69,7 @@ build-ws-base:
     - docker push code.ornl.gov:4567/dlsw/datafed/ws-base
 
 build-core-base:
+  needs: ["clear-core-cache"]
   stage: build-deploy-base
   variables:
     IMAGE_TAG: "dlsw/datafed/core-base"
@@ -83,6 +84,7 @@ build-core-base:
     - docker push code.ornl.gov:4567/dlsw/datafed/core-base
 
 build-repo-base:
+  needs: ["clear-repo-cache"]
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-base"
     GIT_STRATEGY: clone
@@ -98,6 +100,7 @@ build-repo-base:
 
 
 build-gcs-base:
+  needs: ["clear-repo-cache"]
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
