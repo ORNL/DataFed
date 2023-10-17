@@ -2905,7 +2905,7 @@ def _setWorkingCollectionTitle():
         _cur_coll_prefix = coll.alias
     else:
         _cur_coll_title = '"{}" [{}]'.format(coll.title, coll.id)
-        _cur_coll_prefix = coll.id
+        _cur_coll_prefix = coll.id  # noqa
 
 
 def _arrayToCSV(items, skip):

@@ -74,17 +74,16 @@ Creating data record objects, with the following attributes:
             return "dv \"%s\" -J" % (self.alias)
 
 """
-import subprocess
-import unittest as ut
+# import subprocess
+# import unittest as ut
 import os
-import unittest
 import random as r
 import string
-import json
+# import json
 import warnings
-import datafed
-import datafed.CommandLib as cmd
-import datafed.Config
+# import datafed
+# import datafed.CommandLib as cmd
+# import datafed.Config
 
 warnings.simplefilter("always")  # warnings will be raised every time a
 # non-compliant data record detail is generated
@@ -304,7 +303,7 @@ def make_desc(fits_requirements=True):
     return desc
 
 
-################################ DATA RECORDS ################################
+# ############################### DATA RECORDS ################################
 
 
 class DataRecord(object):
@@ -561,7 +560,7 @@ class DataRecord(object):
             return vars(self)
 
 
-################################ COLLECTIONS ################################
+# ############################### COLLECTIONS ################################
 
 # class Collection(object):
 #
@@ -607,7 +606,7 @@ class DataRecord(object):
 #
 
 
-################################ PROJECTS ################################
+# ############################### PROJECTS ################################
 """
 There is no current CLI functionality in terms of projects, other than
 viewing, and perhaps creating records within project allocations.
@@ -657,9 +656,9 @@ this may change, or may not. Saved queries can be listed and executed.
 #
 #     def type_change(self, form='as_dict'):
 
-################################ ACCESS CONTROL GROUPS #########################
+# ############################### ACCESS CONTROL GROUPS #########################
 
-################################ DEPENDENCIES ? ##########################
+# ############################### DEPENDENCIES ? ##########################
 
 
 testdata = "/data/unittesting/testfiles/SampleData.txt"
@@ -698,7 +697,8 @@ def delete_testing_files():
 #         msg =("Alias of intial data record create does not match."))
 #         try:
 #             del_reply = cmd.command('data delete {}'.format(create_reply[0].data[0].id))
-#             self.assertEqual(del_reply[1], 'AckReply', msg = "Delete of initial data record failed.")
+#             self.assertEqual(del_reply[1], 'AckReply', msg =("Delete "
+#             "of initial data record failed."))
 #         except AssertionError:
 #             print("Manual delete required")
 #

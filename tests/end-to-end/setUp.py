@@ -16,7 +16,8 @@ try:
     from datafed.CommandLib import API
 except ImportError:
     print(
-        "datafed was not found, make sure you are running script with PYTHONPATH set to the location of the package in the datafed repo"
+        "datafed was not found, make sure you are running script with "
+        "PYTHONPATH set to the location of the package in the datafed repo"
     )
     sys.exit(1)
 
@@ -31,11 +32,6 @@ password = os.environ.get("DATAFED_USER89_PASSWORD")
 _df_api.loginByPassword(username, password)
 
 path_to_repo_form = os.environ.get("DATAFED_REPO_FORM_PATH")
-# if path_to_repo_form is None:
-#    fail("DATAFED_REPO_FORM_PATH env variable is not defined")
-
-# if not path_to_repo_form.endswith(".json"):
-#    fail("repo create test requires that the repo form exist and be provided as a json file, the test uses the environment variable DATAFED_REPO_PATH to search for the repo form")
 
 _repo_form = {}
 with open(path_to_repo_form) as json_file:
@@ -88,7 +84,9 @@ while status < 3:
     if count > 2:
         print(task_result)
         raise Exception(
-            "Something went wrong task was unable to complete, attempt to create an allocation after 3 seconds failed, make sure all services are running."
+            "Something went wrong task was unable to complete, attempt to "
+            "create an allocation after 3 seconds failed, make sure all "
+            "services are running."
         )
     time.sleep(1)
     task_result = _df_api.taskView(task_id)

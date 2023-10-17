@@ -4,7 +4,7 @@ import datafed.Config
 
 
 def main():
-    config = datafed.Config.API()  # generate default configs
+    datafed.Config.API()  # generate default configs
     # Config module will try to find things and send to MessageLib init
     datafed.CommandLib.init()
     for i in range(10):
