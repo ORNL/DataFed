@@ -200,7 +200,7 @@ class API:
         Parameters
         ----------
         repo_id : str
-            The id of the data repository i.e. "datafed-home" internally this 
+            The id of the data repository i.e. "datafed-home" internally this
             will be represented as "repo/datafed-home"
         title : str
             A title describing the repository
@@ -213,18 +213,18 @@ class API:
         pub_key : str
             The public key of the repo so the core server and repository server can communicate
         address : str
-            The tcp address of the repository server, given the domain and the 
+            The tcp address of the repository server, given the domain and the
             port i.e. "tcp://my-repo-server.cu.edu:9000"
         endpoint : str
-            The globus UUID associated with the repository with the following 
+            The globus UUID associated with the repository with the following
             format "XXXXYYYYXXXX-XXXX-XXXX-XXXX-XXXXYYYY"
         path : str
-            The relative POSIX path as seen from the globus collection 
-            (endpoint) to the repositories folder which is controled by the 
-            datafed repo server. i.e. if I have a POSIX path 
-            /home/tony_stark/inventions/datafed-home and the endpoint path 
-            pointed to /home/tony_stark/inventions then the POSIX path could be 
-            set to /datafed-home, NOTE the last folder in the path must have 
+            The relative POSIX path as seen from the globus collection
+            (endpoint) to the repositories folder which is controled by the
+            datafed repo server. i.e. if I have a POSIX path
+            /home/tony_stark/inventions/datafed-home and the endpoint path
+            pointed to /home/tony_stark/inventions then the POSIX path could be
+            set to /datafed-home, NOTE the last folder in the path must have
             the same name as the repo_id.
         exp_path : str
         admins : list[str]

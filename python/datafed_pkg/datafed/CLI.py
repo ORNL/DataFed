@@ -412,8 +412,10 @@ __global_context_options = [
         "--context",
         required=False,
         type=str,
-        help=("User or project ID for command alias context. See 'alias' "
-              "command help for more information."),
+        help=(
+            "User or project ID for command alias context. See 'alias' "
+            "command help for more information."
+        ),
     )
 ]
 
@@ -465,9 +467,11 @@ def _global_output_options(func):
     is_flag=True,
     is_eager=True,
     callback=_set_script_cb,
-    help=("Start in non-interactive scripting mode. Output is in JSON, all"
-          "intermediate I/O is disabled, and certain client-side commands are"
-          "unavailable."),
+    help=(
+        "Start in non-interactive scripting mode. Output is in JSON, all"
+        "intermediate I/O is disabled, and certain client-side commands are"
+        "unavailable."
+    ),
 )
 @click.option("--version", is_flag=True, help="Print version number and exit.")
 @click.pass_context
@@ -572,8 +576,10 @@ def _genDocCmd(cmd, ctx, level, parname=None, recurse=True):
     doc += "\n"
 
     if is_group:
-        doc += ("Sub-Commands:\n\n================================="
-                "============================================\n")
+        doc += (
+            "Sub-Commands:\n\n================================="
+            "============================================\n"
+        )
         for c in cmd.list_commands(ctx):
             subcmd = cmd.get_command(cmd, c)
             if not subcmd.hidden:
@@ -762,8 +768,10 @@ def _dataView(data_id, context):
     "--raw-data-file",
     type=str,
     required=False,
-    help=("Globus path to raw data file (local or remote) to upload to new"
-          "record. Default endpoint is used if none provided."),
+    help=(
+        "Globus path to raw data file (local or remote) to upload to new"
+        "record. Default endpoint is used if none provided."
+    ),
 )
 @click.option(
     "-x",
@@ -784,16 +792,20 @@ def _dataView(data_id, context):
     "--metadata",
     type=str,
     required=False,
-    help=("Inline metadata in JSON format. JSON must define an object type."
-          " Cannot be specified with --metadata-file option."),
+    help=(
+        "Inline metadata in JSON format. JSON must define an object type."
+        " Cannot be specified with --metadata-file option."
+    ),
 )
 @click.option(
     "-f",
     "--metadata-file",
     type=str,
     required=False,
-    help=("Path to local metadata file containing JSON. JSON must define an "
-          "object type. Cannot be specified with --metadata option."),
+    help=(
+        "Path to local metadata file containing JSON. JSON must define an "
+        "object type. Cannot be specified with --metadata option."
+    ),
 )
 @click.option(
     "-s", "--schema", type=str, required=False, help="Set metadata schema id:version"
@@ -824,11 +836,13 @@ def _dataView(data_id, context):
     "--deps",
     multiple=True,
     type=click.Tuple([click.Choice(["der", "comp", "ver"]), str]),
-    help=("Dependencies (provenance). Use one '--deps' option per dependency "
-          "and specify with a string consisting of the type of relationship "
-          "('der', 'comp', 'ver') follwed by ID/alias of the referenced record."
-          " Relationship types are: 'der' for 'derived from', 'comp' for 'a "
-          "component of', and 'ver' for 'a new version of'."),
+    help=(
+        "Dependencies (provenance). Use one '--deps' option per dependency "
+        "and specify with a string consisting of the type of relationship "
+        "('der', 'comp', 'ver') follwed by ID/alias of the referenced record."
+        " Relationship types are: 'der' for 'derived from', 'comp' for 'a "
+        "component of', and 'ver' for 'a new version of'."
+    ),
 )
 @_global_context_options
 @_global_output_options
@@ -916,8 +930,10 @@ def _dataCreate(
     "--raw-data-file",
     type=str,
     required=False,
-    help=("Globus path to raw data file (local or remote) to upload with "
-          "record. Default endpoint used if none provided."),
+    help=(
+        "Globus path to raw data file (local or remote) to upload with "
+        "record. Default endpoint used if none provided."
+    ),
 )
 @click.option(
     "-x",
@@ -958,18 +974,22 @@ def _dataCreate(
     "--deps-add",
     multiple=True,
     type=click.Tuple([click.Choice(["der", "comp", "ver"]), str]),
-    help=("Specify dependencies to add by listing first the type of "
-          "relationship ('der', 'comp', or 'ver') follwed by ID/alias of the "
-          "target record. Can be specified multiple times."),
+    help=(
+        "Specify dependencies to add by listing first the type of "
+        "relationship ('der', 'comp', or 'ver') follwed by ID/alias of the "
+        "target record. Can be specified multiple times."
+    ),
 )
 @click.option(
     "-R",
     "--deps-rem",
     multiple=True,
     type=click.Tuple([click.Choice(["der", "comp", "ver"]), str]),
-    help=("Specify dependencies to remove by listing first the type of "
-          "relationship ('der', 'comp', or 'ver') followed by ID/alias "
-          "of the target record. Can be specified multiple times."),
+    help=(
+        "Specify dependencies to remove by listing first the type of "
+        "relationship ('der', 'comp', or 'ver') followed by ID/alias "
+        "of the target record. Can be specified multiple times."
+    ),
 )
 @_global_context_options
 @_global_output_options
