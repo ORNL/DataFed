@@ -75,6 +75,7 @@ build-repo-base:
 build-gcs-base:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
+    GIT_STRATEGY: clone
     DISTRO: "ubuntu:focal"
     GCS_TAG: "code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
     IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
