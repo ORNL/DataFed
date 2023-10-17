@@ -1,3 +1,5 @@
+1. [911] - Add GitHub template
+
 # v2023.8.21.10.40
 
 ## MAJOR Breaking changes
