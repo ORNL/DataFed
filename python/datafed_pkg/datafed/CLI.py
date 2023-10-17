@@ -149,14 +149,14 @@ def run():
             if _first:
                 _interactive = False
 
-        except SystemExit as e:
+        except SystemExit:
             # For subsequent interactive commands, hide top-level (start-up)
             # options
             if _first and _interactive and _initialized:
                 for i in _cli.params:
                     i.hidden = True
 
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             # Break out of main loop
             _interactive = False
             break
@@ -199,7 +199,7 @@ def run():
                 _interactive = False
 
         # If initialization failed or not in interactive mode, exit main loop
-        if not _initialized or _interactive == False:
+        if not _initialized or _interactive is False:
             break
 
         if _first:
@@ -324,7 +324,7 @@ def command(command):
     try:
         _args = shlex.split(command)
         _cli(prog_name="datafed", args=_args, standalone_mode=False)
-    except SystemExit as e:
+    except SystemExit:
         pass
     except click.ClickException as e:
         raise Exception(e.format_message())
@@ -412,7 +412,8 @@ __global_context_options = [
         "--context",
         required=False,
         type=str,
-        help="User or project ID for command alias context. See 'alias' command help for more information.",
+        help=("User or project ID for command alias context. See 'alias' "
+              "command help for more information."),
     )
 ]
 
@@ -433,9 +434,12 @@ __global_output_options = [
         expose_value=False,
         help="Verbosity level of output",
     ),
-    # click.option('-v', '--verbosity', required=False,type=click.Choice(['0', '1', '2']),callback=_set_verbosity_cb, help='Verbosity level of output'),
-    # click.option("-J", "--json", is_flag=True, help="Set _cli output format to JSON, when applicable."),
-    # click.option("-T", "--text", is_flag=True, help="Set _cli output format to human-friendly text.")
+    # click.option('-v', '--verbosity', required=False,type=click.Choice(['0', '1', '2']),
+    # callback=_set_verbosity_cb, help='Verbosity level of output'),
+    # click.option("-J", "--json", is_flag=True,
+    # help="Set _cli output format to JSON, when applicable."),
+    # click.option("-T", "--text", is_flag=True,
+    # help="Set _cli output format to human-friendly text.")
 ]
 
 
@@ -461,7 +465,9 @@ def _global_output_options(func):
     is_flag=True,
     is_eager=True,
     callback=_set_script_cb,
-    help="Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.",
+    help=("Start in non-interactive scripting mode. Output is in JSON, all"
+          "intermediate I/O is disabled, and certain client-side commands are"
+          "unavailable."),
 )
 @click.option("--version", is_flag=True, help="Print version number and exit.")
 @click.pass_context
@@ -566,7 +572,8 @@ def _genDocCmd(cmd, ctx, level, parname=None, recurse=True):
     doc += "\n"
 
     if is_group:
-        doc += "Sub-Commands:\n\n===============  ============================================================\n"
+        doc += ("Sub-Commands:\n\n================================="
+                "============================================\n")
         for c in cmd.list_commands(ctx):
             subcmd = cmd.get_command(cmd, c)
             if not subcmd.hidden:
@@ -755,7 +762,8 @@ def _dataView(data_id, context):
     "--raw-data-file",
     type=str,
     required=False,
-    help="Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.",
+    help=("Globus path to raw data file (local or remote) to upload to new"
+          "record. Default endpoint is used if none provided."),
 )
 @click.option(
     "-x",
@@ -776,14 +784,16 @@ def _dataView(data_id, context):
     "--metadata",
     type=str,
     required=False,
-    help="Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.",
+    help=("Inline metadata in JSON format. JSON must define an object type."
+          " Cannot be specified with --metadata-file option."),
 )
 @click.option(
     "-f",
     "--metadata-file",
     type=str,
     required=False,
-    help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.",
+    help=("Path to local metadata file containing JSON. JSON must define an "
+          "object type. Cannot be specified with --metadata option."),
 )
 @click.option(
     "-s", "--schema", type=str, required=False, help="Set metadata schema id:version"
@@ -814,7 +824,11 @@ def _dataView(data_id, context):
     "--deps",
     multiple=True,
     type=click.Tuple([click.Choice(["der", "comp", "ver"]), str]),
-    help="Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.",
+    help=("Dependencies (provenance). Use one '--deps' option per dependency "
+          "and specify with a string consisting of the type of relationship "
+          "('der', 'comp', 'ver') follwed by ID/alias of the referenced record."
+          " Relationship types are: 'der' for 'derived from', 'comp' for 'a "
+          "component of', and 'ver' for 'a new version of'."),
 )
 @_global_context_options
 @_global_output_options
@@ -902,7 +916,8 @@ def _dataCreate(
     "--raw-data-file",
     type=str,
     required=False,
-    help="Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.",
+    help=("Globus path to raw data file (local or remote) to upload with "
+          "record. Default endpoint used if none provided."),
 )
 @click.option(
     "-x",
@@ -943,14 +958,18 @@ def _dataCreate(
     "--deps-add",
     multiple=True,
     type=click.Tuple([click.Choice(["der", "comp", "ver"]), str]),
-    help="Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.",
+    help=("Specify dependencies to add by listing first the type of "
+          "relationship ('der', 'comp', or 'ver') follwed by ID/alias of the "
+          "target record. Can be specified multiple times."),
 )
 @click.option(
     "-R",
     "--deps-rem",
     multiple=True,
     type=click.Tuple([click.Choice(["der", "comp", "ver"]), str]),
-    help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.",
+    help=("Specify dependencies to remove by listing first the type of "
+          "relationship ('der', 'comp', or 'ver') followed by ID/alias "
+          "of the target record. Can be specified multiple times."),
 )
 @_global_context_options
 @_global_output_options
@@ -1396,7 +1415,8 @@ def _collDelete(coll_id, force, context):
             raise Exception("Cannot confirm deletion while running non-interactively.")
 
         click.echo(
-            "Warning: this will delete all data records and collections contained in the specified collection(s)."
+            "Warning: this will delete all data records and collections "
+            "contained in the specified collection(s)."
         )
         if not click.confirm("Continue?"):
             return
@@ -2136,7 +2156,9 @@ def _setup(ctx):
 
 
 """
-@_cli.command(name='output',help="Set output mode. If MODE argument is 'json' or 'text', the current mode will be set accordingly. If no argument is provided, the current output mode will be displayed.")
+@_cli.command(name='output',help=("Set output mode. If MODE argument is 'json' "
+"or 'text', the current mode will be set accordingly. If no argument is "
+"provided, the current output mode will be displayed."))
 @click.argument("mode",metavar='MODE',required=False)
 @click.pass_context
 def _outputModeSet( ctx, mode ):
@@ -2241,7 +2263,9 @@ def _exit_cli():
 
 
 """
-@_cli.command(name='more',help="List the next set of data replies from the DataFed server. Optional argument determines number of data replies received (else the previous count will be used)")
+@_cli.command(name='more',help=("List the next set of data replies from the "
+"DataFed server. Optional argument determines number of data replies received "
+"(else the previous count will be used)"))
 @click.argument("count",type=int,required=False)
 def _more(count):
     if not _interactive:
