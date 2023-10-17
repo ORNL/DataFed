@@ -43,7 +43,7 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(username, password)
+                self._df_api.loginByPassword(username, password)
                 break
             except BaseException:
                 pass

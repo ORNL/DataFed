@@ -163,7 +163,6 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
 
         put_task = self._df_api.dataPut(new_alias, esnet_uuid + "/1M.dat")
 
-        data_put_esnet_pass = False
         task_id = put_task[0].task.id
 
         task_result = self._df_api.taskView(task_id)

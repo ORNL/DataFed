@@ -2,7 +2,6 @@
 
 # api.dataPut(name,"esnet#cern-diskpt1/data1/1M.dat")
 
-import sys
 import argparse
 import random
 import datafed.CommandLib
@@ -305,8 +304,8 @@ for i in range(start, end + 1):
         if num_link > 0 and num_link < len(aliases) - 1:
             links = selectRand(0, num_link, len(aliases) - 1)
 
-            for l in links:
-                deps.append(["der", aliases[l]])
+            for link in links:
+                deps.append(["der", aliases[link]])
 
         # Create record
         if (
