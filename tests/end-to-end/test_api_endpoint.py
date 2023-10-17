@@ -25,7 +25,8 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
             from datafed.CommandLib import API
         except ImportError:
             print(
-                "datafed was not found, make sure you are running script with PYTHONPATH set to the location of the package in the datafed repo"
+                "datafed was not found, make sure you are running script with "
+                "PYTHONPATH set to the location of the package in the datafed repo"
             )
             sys.exit(1)
 
@@ -54,7 +55,13 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
         endpoint = os.environ.get("DATAFED_USER89_GLOBUS_UUID")
         if endpoint is None:
             self.fail(
-                "Cannot run end-to-end tests with Python CLI requires setting env variable DATAFED_REPO_ENDPOINT_UUID so that we know what to set the default endpoint to. This should be the same endpoint that the users have an allocation on... users datafed89 and datafed99"
+
+                "Cannot run end-to-end tests with Python CLI requires setting "
+                " env variable DATAFED_REPO_ENDPOINT_UUID so that we know what to"
+                " set the default endpoint to. This should be the same endpoint"
+                " that the users have an allocation on... users datafed89 and"
+                " datafed99"
+
             )
 
         if not self._df_api.endpointDefaultGet():

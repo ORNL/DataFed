@@ -140,21 +140,37 @@ _opt_info = {
 #
 # Available Settings:
 #
-# key                   | type | cf. sec | cf. name        | env. var. name              | long opt.             | short opt.
-# ----------------------|------|---------|-----------------|-----------------------------|-----------------------|------------
-# server_cfg_dir        | path | server  | config_dir      | DATAFED_SERVER_CFG_DIR      | --server-cfg-dir      |         |
-# server_cfg_file       | path |         |                 | DATAFED_SERVER_CFG_FILE     | --server-cfg-file     |         |
-# server_pub_key_file   | path | server  | public_key_file | DATAFED_SERVER_PUB_KEY_FILE | --server-pub-key-file |         |
-# server_host           | str  | server  | host            | DATAFED_SERVER_HOST         | --server-host         | -H      |
-# server_port           | int  | server  | port            | DATAFED_SERVER_PORT         | --server-port         | -P      |
-# client_cfg_dir        | path | client  | config_dir      | DATAFED_CLIENT_CFG_DIR      | --client-cfg-dir      |         |
-# client_cfg_file       | path | client  | config_file     | DATAFED_CLIENT_CFG_FILE     | --client-cfg-file     |         |
-# client_pub_key_file   | path | client  | public_key_file | DATAFED_CLIENT_PUB_KEY_FILE | --client-pub-key-file |         |
-# client_priv_key_file  | path | client  | private_key_file| DATAFED_CLIENT_PRIV_KEY_FILE| --client-priv-key-file|         |
-# default_ep            | str  | general | default_endpoint| DATAFED_DEFAULT_ENDPOINT    | --default-ep          | -e      |
-# verbosity             | int  | general | verbosity       | DATAFED_DEFAULT_VERBOSITY   | --verbosity           | -v      |
-# interactive           | bool | general | interactive     | DATAFED_DEFAULT_INTERACT    | --interact/--no-interact | -i/-n   |
+# key                   | type | cf. sec | cf. name        |
+# ----------------------|------|---------|-----------------|
+# server_cfg_dir        | path | server  | config_dir      |
+# server_cfg_file       | path |         |                 |
+# server_pub_key_file   | path | server  | public_key_file |
+# server_host           | str  | server  | host            |
+# server_port           | int  | server  | port            |
+# client_cfg_dir        | path | client  | config_dir      |
+# client_cfg_file       | path | client  | config_file     |
+# client_pub_key_file   | path | client  | public_key_file |
+# client_priv_key_file  | path | client  | private_key_file|
+# default_ep            | str  | general | default_endpoint|
+# verbosity             | int  | general | verbosity       |
+# interactive           | bool | general | interactive     |
 #
+# Continuation of table
+# key                   |
+# ----------------------|
+# server_cfg_dir        |
+# server_cfg_file       |
+# server_pub_key_file   |
+# server_host           |
+# server_port           |
+# client_cfg_dir        |
+# client_cfg_file       |
+# client_pub_key_file   |
+# client_priv_key_file  |
+# default_ep            |
+# verbosity             |
+# interactive           |
+# 
 # Configuration source priority:
 #
 # 1. set programatically
@@ -296,10 +312,10 @@ class API:
                 self._opts[k] = {"val": tmp, "pri": 4}
 
     def _loadConfigFile(self, cfg_file, priority):
-        # Read config file and check each defined option for a contained value using section and name
-        # Priority is set by parameter (3 or 4)
-        # Values are automatically converted to expected type
-        # Options with _OPT_NO_CF are ignored
+        # Read config file and check each defined option for a contained value
+        # using section and name Priority is set by parameter (3 or 4) Values
+        # are automatically converted to expected type Options with _OPT_NO_CF
+        # are ignored
         try:
             with open(cfg_file, "r") as f:
                 config = configparser.ConfigParser()

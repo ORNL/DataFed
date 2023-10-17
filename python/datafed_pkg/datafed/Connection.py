@@ -19,8 +19,6 @@ import logging
 import zmq
 import zmq.utils.z85
 import struct
-import time
-import inspect
 import sys
 import uuid
 
@@ -156,7 +154,7 @@ class Connection:
         ready = self._socket.poll(a_timeout)
         if ready > 0:
             # receive null frame
-            nf = self._socket.recv_string(0)
+            self._socket.recv_string(0)
 
             header = ""
             while header != "BEGIN_DATAFED":

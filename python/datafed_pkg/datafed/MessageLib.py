@@ -11,7 +11,6 @@
 # secure ZeroMQ link.
 
 
-import os
 import xmlrpc.client
 import zmq
 from . import Version_pb2
@@ -58,7 +57,8 @@ class API:
     # @param client_pub_key_file Client public key file (full path).
     # @param client_priv_key_file Client private key file (full path).
     # @param client_cfg_dir Client configuration directory.
-    # @param manual_auth Client intends to manually authenticate if True. Bypasses client key loading.
+    # @param manual_auth Client intends to manually authenticate if True.
+    #                    Bypasses client key loading.
     # @param kwargs Placeholder for any extra keyword arguments (ignored)
     # @exception Exception: On server key load error, timeout, or incompatible protocols.
     #
@@ -276,7 +276,7 @@ class API:
         # Test auth status
         reply, mt = self.sendRecv(anon.GetAuthStatusRequest())
         if not reply.auth:
-            raise Exception(f"Password authentication failed.")
+            raise Exception("Password authentication failed.")
 
         self._auth = True
         self._uid = reply.uid
