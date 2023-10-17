@@ -38,7 +38,7 @@ clear-core-cache:
 clear-repo-cache:
   stage: clear-docker-cache
   tags:
-    - ci_4
+    - ci_3
   script:
     - docker system prune -f
 
