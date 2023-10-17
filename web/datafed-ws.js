@@ -67,7 +67,7 @@ var g_host,
     g_ver_api_minor,
     g_ver_api_patch,
     g_tls,
-    g_ga;
+    g_google_analytics;
 
 const nullfr = Buffer.from([]);
 
@@ -295,7 +295,7 @@ app.get('/ui/welcome', (a_req, a_resp) => {
         const nonce = crypto.randomBytes(16).toString('base64');
         a_resp.locals.nonce = nonce;
         a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'  auth.globus.org`);
-        a_resp.render('index',{nonce:a_resp.locals.nonce, theme:theme,version:g_version,test_mode:g_test,...g_ga});
+        a_resp.render('index',{nonce:a_resp.locals.nonce, theme:theme,version:g_version,test_mode:g_test,...g_google_analytics});
     }
 });
 
@@ -307,7 +307,7 @@ app.get('/ui/main', (a_req, a_resp) => {
         const nonce = crypto.randomBytes(16).toString('base64');
         a_resp.locals.nonce = nonce;
         a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
-        a_resp.render('main',{nonce:a_resp.locals.nonce,user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test,...g_ga});
+        a_resp.render('main',{nonce:a_resp.locals.nonce,user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test,...g_google_analytics});
     }else{
         // datafed-user cookie not set, so clear datafed-id before redirect
         //a_resp.clearCookie( 'datafed-id' );
@@ -334,7 +334,7 @@ app.get('/ui/register', (a_req, a_resp) => {
         const nonce = crypto.randomBytes(16).toString('base64');
         a_resp.locals.nonce = nonce;
         a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}' auth.globus.org`);
-        a_resp.render('register', {nonce:a_resp.locals.nonce, uid: a_req.session.uid, uname: clean, theme: theme, version: g_version, test_mode: g_test, ...g_ga });
+        a_resp.render('register', {nonce:a_resp.locals.nonce, uid: a_req.session.uid, uname: clean, theme: theme, version: g_version, test_mode: g_test, ...g_google_analytics });
     }
 });
 
@@ -369,7 +369,7 @@ app.get('/ui/error', (a_req, a_resp) => {
     const nonce = crypto.randomBytes(16).toString('base64');
     a_resp.locals.nonce = nonce;
     a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
-    a_resp.render('error',{nonce:a_resp.locals.nonce,theme:"light",version:g_version,test_mode:g_test,...g_ga});
+    a_resp.render('error',{nonce:a_resp.locals.nonce,theme:"light",version:g_version,test_mode:g_test,...g_google_analytics});
 });
 
 /* This is the OAuth redirect URL after a user authenticates with Globus
@@ -1827,7 +1827,7 @@ function loadSettings(){
         }
 
         if ( config.operations ){
-          g_ga = { enableGoogleAnalytics: config.operations.google_analytics_tag !== '', googleAnalyticsTag: config.operations.google_analytics_tag };
+          g_google_analytics = { enableGoogleAnalytics: config.operations.google_analytics_tag !== '', googleAnalyticsTag: config.operations.google_analytics_tag };
         }
     }catch( e ){
         logger.error(loadSettings.name, getCurrentLineNumber(), "Could not open/parse configuration file: " + process.argv[2] );
