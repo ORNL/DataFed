@@ -170,7 +170,7 @@ _opt_info = {
 # default_ep            |
 # verbosity             |
 # interactive           |
-# 
+#
 # Configuration source priority:
 #
 # 1. set programatically
