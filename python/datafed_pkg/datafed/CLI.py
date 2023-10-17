@@ -822,7 +822,8 @@ def _dataView(data_id, context):
     "--parent",
     type=str,
     required=False,
-    help="Parent collection ID, alias, or listing index. Default is the current working collection.",
+    help=("Parent collection ID, alias, or listing index. Default is the "
+          "current working collection."),
 )
 @click.option(
     "-R",
@@ -2743,7 +2744,7 @@ def _print_query(message):
     )
 
     if len(message.query.coll):
-        tags = _arrayToCSV(message.query.coll, 2)
+        _arrayToCSV(message.query.coll, 2)
         _wrap_text(_arrayToCSV(message.query.coll, 0), "  Selection:", 21)
     else:
         click.echo("  {:<18} {}".format("Selection: ", "All Data"))
@@ -2755,7 +2756,7 @@ def _print_query(message):
         _wrap_text(message.query.text, "  Text:", 21)
 
     if len(message.query.tags):
-        tags = _arrayToCSV(message.query.tags, 2)
+        _arrayToCSV(message.query.tags, 2)
         _wrap_text(_arrayToCSV(message.query.tags, 0), "  Tags:", 21)
 
     if message.query.HasField("owner"):
@@ -3150,7 +3151,7 @@ def _initialize(opts):
         _cur_ctx = uid
         _cur_coll = "c/u_" + uid[2:] + "_root"
         _initialized = True
-    except Exception as e:
+    except Exception:
         _interactive = False
         raise
 

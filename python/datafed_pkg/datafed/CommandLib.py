@@ -8,19 +8,16 @@
 
 from __future__ import division, print_function, absolute_import
 import os
-import sys
 import datetime
 import re
 import json as jsonlib
 import time
 import pathlib
 import wget
-from . import SDMS_Anon_pb2 as anon
 from . import SDMS_Auth_pb2 as auth
 from . import SDMS_pb2 as sdms
 from . import MessageLib
 from . import Config
-from . import VERSION
 
 
 class API:
@@ -2147,7 +2144,7 @@ class API:
 
         if offset is not None:
             try:
-                tmp = int(offset)
+                int(offset)
             except BaseException:
                 raise Exception("Invalid offset value.")
 
@@ -2158,7 +2155,7 @@ class API:
 
         if count is not None:
             try:
-                tmp = int(count)
+                int(count)
             except BaseException:
                 raise Exception("Invalid count value.")
 
