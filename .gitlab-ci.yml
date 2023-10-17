@@ -248,7 +248,7 @@ end-to-end-ws-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
-      #    - chmod 777 "$HOST_LOG_FILE_PATH"
+    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - CERT_FILE_NAME=$(basename "${CI_DATAFED_WEB_CERT_PATH}")
@@ -287,6 +287,8 @@ end-to-end-core-setup:
     - docker
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
@@ -322,6 +324,8 @@ end-to-end-repo-setup:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
+    - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
@@ -351,6 +355,8 @@ end-to-end-gcs-authz-setup:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
+    - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
