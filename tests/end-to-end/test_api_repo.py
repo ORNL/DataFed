@@ -1,7 +1,6 @@
 #!/bin/python3
 import json
 import os
-import subprocess
 import sys
 import unittest
 

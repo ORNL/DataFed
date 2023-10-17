@@ -1,11 +1,10 @@
 #!/bin/python3
-from datafed import version as df_ver
+
 import json
 import os
-import subprocess
 import sys
 import time
-import unittest
+from datafed import version as df_ver
 
 path_of_file = os.path.abspath(__file__)
 current_folder = os.path.dirname(path_of_file)
@@ -91,7 +90,6 @@ while status < 3:
         raise Exception(
             "Something went wrong task was unable to complete, attempt to create an allocation after 3 seconds failed, make sure all services are running."
         )
-        break
     time.sleep(1)
     task_result = _df_api.taskView(task_id)
     status = task_result[0].task[0].status
