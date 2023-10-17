@@ -106,7 +106,7 @@ else
 fi
 
 
-VALID_ARGS=$(getopt -o hs:i:z:y:w:k:c:t: --long 'help',globus-secret:,globus-id:,zeromq-session-secret:,zeromq-system-secret:,web-cert-path:,web-key-path:,core-address-port:google-analytics-tag -- "$@")
+VALID_ARGS=$(getopt -o hs:i:z:y:w:k:c:t: --long 'help',globus-secret:,globus-id:,zeromq-session-secret:,zeromq-system-secret:,web-cert-path:,web-key-path:,core-address-port:,google-analytics-tag: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
