@@ -214,6 +214,8 @@ export DATAFED_WEB_USER=""
 # How the web server communicates with the core server, assumes an internal network
 export DATAFED_CORE_ADDRESS_PORT_INTERNAL="$local_DATAFED_CORE_ADDRESS_PORT_INTERNAL"
 # The id for the associated Google Analytics tag, if left empty, Google Analytics will be disabled
+# You can find your tag id by going to the stream details page and it is the field marked as "Measurement ID"
+# It will be in the form of "G-XXXXXXXXXX"
 export DATAFED_GOOGLE_ANALYTICS_TAG="$local_DATAFED_GOOGLE_ANALYTICS_TAG"
 # ************************************************
 # Env Variables for Globus Connect Server
