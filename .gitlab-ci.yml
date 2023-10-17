@@ -33,6 +33,7 @@ clear-core-cache:
   tags:
     - ci_1
   script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker system prune -f
 
 clear-repo-cache:
@@ -40,6 +41,7 @@ clear-repo-cache:
   tags:
     - ci_3
   script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker system prune -f
 
 ################################################################################
