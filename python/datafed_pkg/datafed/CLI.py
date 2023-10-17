@@ -822,8 +822,10 @@ def _dataView(data_id, context):
     "--parent",
     type=str,
     required=False,
-    help=("Parent collection ID, alias, or listing index. Default is the "
-          "current working collection."),
+    help=(
+        "Parent collection ID, alias, or listing index. Default is the "
+        "current working collection."
+    ),
 )
 @click.option(
     "-R",
