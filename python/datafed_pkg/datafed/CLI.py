@@ -23,25 +23,18 @@ import shlex
 import getpass
 import os
 import sys
-import datetime
 import textwrap
 import shutil
+import json as jsonlib
 import click
 import click.decorators
-import re
-import json as jsonlib
-import time
-import pathlib
 import wget
 from google.protobuf.json_format import MessageToJson
-from google.protobuf.json_format import MessageToDict
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-from prompt_toolkit.formatted_text import to_formatted_text
 
-from . import SDMS_Auth_pb2 as auth
-from . import SDMS_pb2 as sdms
+# from . import SDMS_Auth_pb2 as auth
 from . import Version_pb2
 from . import CommandLib
 from . import Config
