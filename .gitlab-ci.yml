@@ -18,10 +18,10 @@ setup-vms:
   tags:
     - datafed-infrastructure
   script:
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-arangodb"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-core"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-client"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-arangodb"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-core"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-client"
 
 
 ################################################################################
@@ -35,6 +35,7 @@ clear-core-cache:
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker system prune -f
+    - ./scripts/ci_purge_images.sh
 
 clear-repo-cache:
   stage: clear-docker-cache
@@ -43,6 +44,7 @@ clear-repo-cache:
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker system prune -f
+    - ./scripts/ci_purge_images.sh
 
 ################################################################################
 # STAGE: build-deploy-base
