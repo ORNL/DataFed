@@ -42,13 +42,6 @@ clear-repo-cache:
   script:
     - docker system prune -f
 
-clear-client-cache:
-  stage: clear-docker-cache
-  tags:
-    - ci_5
-  script:
-    - docker system prune -f
-
 ################################################################################
 # STAGE: build-deploy-base
 ################################################################################
