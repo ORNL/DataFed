@@ -1,6 +1,7 @@
 
 stages:
   - setup
+  - clear-docker-cache
   - build-deploy-base
   - build-unit-test-deploy
   - end-to-end-setup
@@ -21,6 +22,32 @@ setup-vms:
     - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-core"
     - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
     - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-client"
+
+
+################################################################################
+# STAGE: clear-docker-cache
+################################################################################
+# Used to clear out the cache on VMs where the images are being built
+clear-core-cache:
+  stage: clear-docker-cache
+  tags:
+    - ci_1
+  script:
+    - docker system prune -f
+
+clear-repo-cache:
+  stage: clear-docker-cache
+  tags:
+    - ci_4
+  script:
+    - docker system prune -f
+
+clear-client-cache:
+  stage: clear-docker-cache
+  tags:
+    - ci_5
+  script:
+    - docker system prune -f
 
 ################################################################################
 # STAGE: build-deploy-base
