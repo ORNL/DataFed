@@ -564,21 +564,21 @@ class DataRecord(object):
 ################################ COLLECTIONS ################################
 
 # class Collection(object):
-# 
+#
 #     def __init__(self, coll_id, alias, title, desc):
 #         self.coll_id = coll_id
 #         self.alias = alias
 #         self.title = title
 #         self.desc = desc
-# 
+#
 #     def __str__(self):
 #         return f'id: {self.coll_id}, alias: {self.alias}, \
 #             title: {self.title}, desc: {self.desc}'
-# 
+#
 #     def __repr__(self):
 #         return f'{self.__class__.__name__} : ({self.coll_id}, {self.alias}, \
 #             {self.title}, {self.desc})'
-# 
+#
 #     @classmethod
 #     def generate(cls, fits_requirements=True):
 #         if fits_requirements:
@@ -592,19 +592,19 @@ class DataRecord(object):
 #             coll.random_detail = random_detail(False)
 #             pass
 #         return coll
-# 
+#
 #     def as_input_str(self):  # TODO: Update command
 #         string = f'sdms cc -a "{escape(self.alias)}" -t "{escape(self.title)}"\
 #             -d "{escape(self.desc)}"'
 #         return string
-# 
+#
 #     def type_change(self, form='as_dict'):
 #         if form == "as_list":
 #             coll_as_list = [self.coll_id, self.alias, self.title, self.desc]
 #             return coll_as_list
 #         else:
 #             return vars(self)
-# 
+#
 
 
 ################################ PROJECTS ################################
@@ -614,47 +614,47 @@ viewing, and perhaps creating records within project allocations.
 this may change, or may not. Saved queries can be listed and executed.
 """
 # class project(object):
-# 
+#
 #     def __init__(self, details):
-# 
-# 
+#
+#
 #     def __str__(self):
-# 
-# 
+#
+#
 #     def __repr__(self):
-# 
-# 
+#
+#
 #     @classmethod
 #     def generate(cls, fits_requirements=True):
-# 
-# 
+#
+#
 #     def as_input_str(self):
-# 
-# 
+#
+#
 #     def type_change(self, form='as_dict'):
-# 
-# 
-# 
+#
+#
+#
 # ################################ QUERIES ################################
-# 
+#
 # class query(object):
-# 
+#
 #     def __init__(self, details):
-# 
-# 
+#
+#
 #     def __str__(self):
-# 
-# 
+#
+#
 #     def __repr__(self):
-# 
-# 
+#
+#
 #     @classmethod
 #     def generate(cls, fits_requirements=True):
-# 
-# 
+#
+#
 #     def as_input_str(self):
-# 
-# 
+#
+#
 #     def type_change(self, form='as_dict'):
 
 ################################ ACCESS CONTROL GROUPS #########################
@@ -684,10 +684,9 @@ def delete_testing_files():
     os.remove("~/jbreet/DataFed/python/datafed_pkg/test/outputfile.txt")
 
 
-
-# 
+#
 # class TestDataBasicReturn(ut.TestCase):
-# 
+#
 #     # TODO: using object return, generate, check, then delete data record
 #     def test_dr_create_and_delete(self):
 #         config = datafed.Config.API()
@@ -702,12 +701,12 @@ def delete_testing_files():
 #             self.assertEqual(del_reply[1], 'AckReply', msg = "Delete of initial data record failed.")
 #         except AssertionError:
 #             print("Manual delete required")
-# 
+#
 #     # TODO: same with collection
-# 
+#
 #     #if this fails, do not continue
 # class TestDataBasicText(ut.TestCase):
-# 
+#
 #     # TODO: using object return, generate, check, then delete data record
 #     def test_dr_create_and_delete(self):
 #         config = datafed.Config.API()
@@ -757,9 +756,9 @@ def delete_testing_files():
 #     # TEST WILL PASS? BUT NOT PASSING IS FINE EITHER WAY BECAUSE NOTHIN TO
 #     # DELETE I GUESS
 #          #Needs to be generated in setUp
-# 
-# 
-# 
+#
+#
+#
 #     def tearDown(self): #Happens after EVERY method in test method
 #         subprocess.run('./scripts/datafed data delete {}'.format(self.drcorr1.alias), shell=True)
 #         files = ["jsonoutput.json", "drinput.txt", "outputfile.txt"]
@@ -769,7 +768,7 @@ def delete_testing_files():
 #             else:
 #                 pass
 #     """
-# 
+#
 #     # NEED SETUP
 #     """
 #     def test_dr_create_JSON(self):
@@ -792,7 +791,7 @@ def delete_testing_files():
 #             self.assertEqual(unescape_for_JSON(op["data"][0]["desc"])),
 #                 self.drcorr0.desc, msg="Returned desc does not match")
 #     """
-# 
+#
 #     def test_dr_create_incorrect(self):
 #         drerr = DataRecord.generate(fits_requirements=False)
 #         drerrinput = drerr.as_text_input()
@@ -811,7 +810,7 @@ def delete_testing_files():
 #             msg="Data-create of \
 #             incorrect data record unexpected pass. Manual delete required",
 #         )
-# 
+#
 #     """
 #     def test_dr_create_incorrect_json(self):
 #         drerr = DataRecord.generate(False)
@@ -827,8 +826,8 @@ def delete_testing_files():
 #         self.assertEqual(op["status"], "ERROR", msg="Data-create of \
 #             incorrect data record unexpected pass")
 #     """
-# 
-# 
+#
+#
 # """
 #     def test_dr_update(self):
 #         new_title = "New Title"
@@ -850,9 +849,9 @@ def delete_testing_files():
 #             putop = json.load(jsonopfile)
 #         self.assertEqual(putop["status"], "SUCCEEDED",
 #             msg="Data-put transfer failed")
-#             # NB: Xfr will FAIL if Globus Connect is not running -- going 
+#             # NB: Xfr will FAIL if Globus Connect is not running -- going
 #             # to have to find a way to make this work????
-# 
+#
 #     def test_dr_view(self):
 #         with open("jsonoutput.json", 'w+') as jsonopfile:
 #             subprocess.run(f'./scripts/datafed dv "{self.drcorr1.alias}" -D -J',
@@ -862,13 +861,13 @@ def delete_testing_files():
 #         with self.subTest("Confirming desc"):
 #             self.assertEqual(unescape_for_JSON(str(op["data"][0]["desc"]),
 #                 self.drcorr1.desc, msg="Returned desc does not match")
-# 
+#
 # # ##############################
 # # NOT making dependencies tests their own
 # # sub/class because the setup should be the same.  Integrative may be better
 # # because if general DR unit tests fail, it won't be worth running the
 # # dependencies tests anyway.
-# 
+#
 #     def test_deps_add_0(self):
 #         drcorr2 = DataRecord.generate(True)
 #         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
@@ -911,7 +910,7 @@ def delete_testing_files():
 #                     0]["dir"])), 0, msg="Add dependency type 0 ERROR: \
 #                     dir according to relative does not match")
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
-# 
+#
 #     def test_deps_add_1(self):
 #         drcorr2 = DataRecord.generate(True)
 #         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
@@ -954,7 +953,7 @@ def delete_testing_files():
 #                     0]["dir"])), 0, msg="Add dependency type 1 ERROR: dir \
 #                     according to relative does not match")
 #             subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
-# 
+#
 #     def test_deps_add_2(self):
 #         drcorr2 = DataRecord.generate(True)
 #         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
@@ -997,7 +996,7 @@ def delete_testing_files():
 #                     0]["dir"])), 0, msg="Add dep type 2 ERROR: dir according \
 #                     to relative does not match")
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
-# 
+#
 #     def test_deps_remove(self):
 #         drcorr2 = DataRecord.generate(True)
 #         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
@@ -1012,7 +1011,7 @@ def delete_testing_files():
 #         self.assertEqual(deps["data"][0]["deps"][0], '[]',
 #             msg="Remove dependency type 0 failed")
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
-# 
+#
 #     def test_deps_replace_single(self):
 #         drcorr2 = DataRecord.generate(True)
 #         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
@@ -1040,7 +1039,7 @@ def delete_testing_files():
 #                 owner does not match")
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr3.alias}', shell=True)
-# 
+#
 #     def test_deps_replace_multi(self):
 #         drcorr2 = DataRecord.generate(True)
 #         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
@@ -1102,7 +1101,7 @@ def delete_testing_files():
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr4.alias}', shell=True)
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr5.alias}', shell=True)
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr6.alias}', shell=True)
-# 
+#
 #     def test_deps_clear(self): #multiple delete
 #         drcorr2 = DataRecord.generate(True)
 #         subprocess.run(f'{drcorr2.as_input_str()}', shell=True)
@@ -1120,15 +1119,15 @@ def delete_testing_files():
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr2.alias}', shell=True)
 #         subprocess.run(f'./scripts/datafed data-delete {drcorr3.alias}', shell=True)
 # """
-# 
+#
 # """
 # class TestCollections(ut.TestCase):
-# 
+#
 #     def setUp(self):
 #         self.collcorr0 = Collection.generate(True)
 #         self.collcorr1 = Collection.generate(True)
 #         subprocess.run(f'{self.collcorr1.as_input_str()}', shell=True)
-# 
+#
 #     def tearDown(self):
 #         subprocess.run(f'./scripts/datafed coll-delete {self.collcorr1.alias}', shell=True)
 #         files = ["colloutput.json", "collinput.txt", "outputfile.txt"]
@@ -1137,7 +1136,7 @@ def delete_testing_files():
 #                 os.remove(item)
 #             else:
 #                 pass
-# 
+#
 #     def test_coll_delete(self):
 #         with open("outputfile.txt", "w+") as opfile:
 #             subprocess.run(f'./scripts/datafed coll-delete {self.collcorr1.alias}',
@@ -1146,7 +1145,7 @@ def delete_testing_files():
 #             outs = opfile.read()
 #         self.assertEqual("SUCCESS" in outs, True, msg="Collection-delete \
 #             of single record failed")
-# 
+#
 #     def test_coll_create(self):
 #         with open("collinput.txt", "w+") as ipfile:
 #             ipfile.write(self.collcorr0.as_input_str())
@@ -1167,7 +1166,7 @@ def delete_testing_files():
 #                 self.collcorr0.desc, msg="Returned desc does not match")
 #         coll_id = op["coll"][0]["id"]
 #         return coll_id
-# 
+#
 #     def test_coll_create_incorrect(self):
 #         collerr = Collection.generate(False)
 #         with open("collinput.txt", "a+") as ipfile:
@@ -1180,7 +1179,7 @@ def delete_testing_files():
 #             op = json.load(jsonopfile)
 #         self.assertEqual(op["status"], "ERROR", msg="Collection-create of \
 #             incorrect Collection unexpected pass")
-# 
+#
 #     def test_coll_update(self):
 #         with open("colloutput.json", 'w+') as jsonopfile:
 #             subprocess.run(f'./scripts/datafed cu "{self.collcorr1.alias}" -t "New Title" \
@@ -1189,7 +1188,7 @@ def delete_testing_files():
 #             op = json.load(jsonopfile)
 #         self.assertEqual(unescape_for_JSON(str(op["coll"][0]["title"])),
 #             "New Title", msg="Returned title does not match")
-# 
+#
 #     def test_coll_view(self):
 #         with open("colloutput.json", 'w+') as jsonopfile:
 #             subprocess.run(f'./scripts/datafed cv {self.collcorr1.alias} -J',
@@ -1202,7 +1201,7 @@ def delete_testing_files():
 #         with self.subTest("Confirming desc"):
 #             self.assertEqual(unescape_for_JSON(str(op["coll"][0]["desc"])),
 #                 self.collcorr1.desc, msg="Returned desc does not match")
-# 
+#
 #     def test_coll_link(self):
 #         collcorr2 = Collection.generate(True)
 #         subprocess.run(f'{collcorr2.as_input_str()}', shell=True)
@@ -1216,7 +1215,7 @@ def delete_testing_files():
 #         self.assertEqual(unescape_for_JSON(str(op["item"][0]["alias"])),
 #             collcorr2.alias, msg="Returned alias of child \
 #             Collection does not match")
-# 
+#
 #     def test_coll_move(self):
 #         collcorr2 = Collection.generate(True)
 #         subprocess.run(f'{collcorr2.as_input_str()}', shell=True)
@@ -1244,7 +1243,7 @@ def delete_testing_files():
 #             self.assertEqual(unescape_for_JSON(str(op["item"][0]["alias"])),
 #                 collcorr2.alias, msg="Returned alias of child Collection \
 #                 in new parent during move command does not match")
-# 
+#
 #     def test_coll_unlink(self):
 #         collcorr2 = Collection.generate(True)
 #         subprocess.run(f'{collcorr2.as_input_str()}', shell=True)
@@ -1259,12 +1258,12 @@ def delete_testing_files():
 #             op = json.load(jsonopfile)
 #         self.assertEqual(unescape_for_JSON(str(op["item"][0])), '[]',
 #             msg="Unlink of child from parent Collection failed")
-# 
-# 
-# 
-# 
+#
+#
+#
+#
 # """
-# 
+#
 # ##########################
 # if __name__ == "__main__":
 #     ut.main()
