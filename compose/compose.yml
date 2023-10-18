@@ -1,0 +1,12 @@
+version: '3.9'
+
+
+services:
+  datafed-web:
+    image: datafed/web:latest
+
+  datafed-core:
+    image: datafed/core:latest
+
+  arango:
+
