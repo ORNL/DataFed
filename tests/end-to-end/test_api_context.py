@@ -5,6 +5,7 @@ import subprocess
 import sys
 import unittest
 
+
 # Depends on the provided tests first passing
 # user_login
 class TestDataFedPythonAPIContext(unittest.TestCase):
@@ -51,7 +52,6 @@ class TestDataFedPythonAPIContext(unittest.TestCase):
             assert count < 3
 
     def test_context(self):
-
         context = self._df_api.getContext()
         self.assertEqual(self._df_api.getContext(), f"u/{self._username}")
 

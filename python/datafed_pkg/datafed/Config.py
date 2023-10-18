@@ -126,6 +126,7 @@ _opt_info = {
     ],
 }
 
+
 ##
 # @class API
 # @brief A client configuration helper class.
@@ -163,7 +164,6 @@ _opt_info = {
 # 5. set by environment variable
 #
 class API:
-
     ##
     # @brief Class initialization method.
     #

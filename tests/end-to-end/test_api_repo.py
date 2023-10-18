@@ -5,6 +5,7 @@ import subprocess
 import sys
 import unittest
 
+
 # Should only run after api login password test has been run
 class TestDataFedPythonAPIRepo(unittest.TestCase):
     def setUp(self):
@@ -66,12 +67,10 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
             self._repo_form = json.load(json_file)
 
     def test_repo_list(self):
-
         result = self._df_api.repoList(list_all=True)
         self.assertEqual(len(result[0].repo), 0)
 
     def test_repo_create_delete(self):
-
         result = self._df_api.repoCreate(
             repo_id=self._repo_form["id"],
             title=self._repo_form["title"],

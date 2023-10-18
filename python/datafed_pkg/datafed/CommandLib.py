@@ -70,7 +70,6 @@ class API:
     )
 
     def __init__(self, opts={}):
-
         if not isinstance(opts, dict):
             raise Exception("CommandLib API options parameter must be a dictionary.")
 
@@ -280,7 +279,6 @@ class API:
         return self._mapi.sendRecv(msg)
 
     def repoAllocationCreate(self, repo_id, subject, data_limit, rec_limit):
-
         if not repo_id.startswith("repo/"):
             repo_id = "repo/" + repo_id
 
@@ -1391,7 +1389,6 @@ class API:
         sort=None,
         sort_rev=None,
     ):
-
         """
         Create a new saved query
 
@@ -1656,7 +1653,6 @@ class API:
         offset=0,
         count=20,
     ):
-
         if coll_mode and (schema != None or meta != None or meta_err == True):
             raise Exception(
                 "Cannot specify metadata terms when searching for collection."

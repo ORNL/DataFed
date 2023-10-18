@@ -96,7 +96,6 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
         print(result)
 
     def test_repo_alloc_list_create_delete(self):
-
         repo_id = self._repo_form["id"]
         if not repo_id.startswith("repo/"):
             repo_id = "repo/" + repo_id

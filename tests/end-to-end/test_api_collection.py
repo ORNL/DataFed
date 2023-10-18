@@ -126,7 +126,6 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             count = count + 1
 
     def test_collection_create_delete(self):
-
         # collectionItemsList in "root" of context
         list_response = self._df_api.collectionItemsList("root")
         self.assertEqual(list_response[0].total, 0)

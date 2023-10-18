@@ -346,6 +346,7 @@ def command(command):
 
 # @cond
 
+
 # Aliases click commands
 class _AliasedGroup(click.Group):
     # Allows command matching by unique suffix
@@ -441,6 +442,7 @@ __global_output_options = [
     # click.option("-J", "--json", is_flag=True, help="Set _cli output format to JSON, when applicable."),
     # click.option("-T", "--text", is_flag=True, help="Set _cli output format to human-friendly text.")
 ]
+
 
 # Decorator to add output options to click commands
 def _global_output_options(func):
@@ -2285,6 +2287,7 @@ _listing_requests = {
 # ------------------------------------------------------------- Print Functions
 # =============================================================================
 
+
 # Interactive and verbosity-aware print
 def _print_msg(level, message, err=False):
     global _verbosity
@@ -2997,7 +3000,6 @@ def _bar_adaptive_human_readable(current, total, width=80):
     # render
     output = ""
     for field in selected:
-
         if field == "percent":
             # fixed size width for percentage
             output += ("%s%%" % (100 * current // total)).rjust(min_width["percent"])

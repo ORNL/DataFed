@@ -49,7 +49,6 @@ def get_latest_version(package_name):
 # and both synchronous ans asynchronous message send/recv methods.
 #
 class API:
-
     ##
     # @brief MessageLib.API class initialization method.
     # @param server_host The DataFed core server hostname or IP address.
@@ -84,7 +83,6 @@ class API:
         manual_auth=None,
         **kwargs,
     ):
-
         self._ctxt = 0
         self._auth = False
         self._nack_except = True
