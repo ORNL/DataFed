@@ -1,3 +1,7 @@
+
+## MINOR Feature
+1. [912] - Adds initial compose file and docker files for python-client
+
 # v2023.8.21.10.40
 
 ## MAJOR Breaking changes
