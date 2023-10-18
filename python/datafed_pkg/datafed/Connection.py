@@ -1,4 +1,4 @@
-## @package datafed.Connection
+# @package datafed.Connection
 # Low-level message-oriented communications module
 #
 # The DataFed Connection class enables sending and receiving Google protobuf
@@ -19,8 +19,6 @@ import logging
 import zmq
 import zmq.utils.z85
 import struct
-import time
-import inspect
 import sys
 import uuid
 
@@ -91,15 +89,15 @@ class Connection:
         if sys.version_info.major == 3:
             try:
                 self._socket.setsockopt_string(zmq.CURVE_SECRETKEY, client_priv_key)
-            except:
+            except BaseException:
                 raise Exception("Invalid client private key")
             try:
                 self._socket.setsockopt_string(zmq.CURVE_PUBLICKEY, client_pub_key)
-            except:
+            except BaseException:
                 raise Exception("Invalid client public key")
             try:
                 self._socket.setsockopt_string(zmq.CURVE_SERVERKEY, server_pub_key)
-            except:
+            except BaseException:
                 raise Exception("Invalid server public key: " + server_pub_key)
         else:
             self._socket.curve_secretkey = client_priv_key
@@ -128,7 +126,8 @@ class Connection:
     #
     def registerProtocol(self, msg_module):
         # Message descriptors are stored by name created by protobuf compiler
-        # A custom post-proc tool generates and appends _msg_name_to_type with defined DataFed-sepcific numer message types
+        # A custom post-proc tool generates and appends _msg_name_to_type with
+        # defined DataFed-sepcific numer message types
 
         for name, desc in sorted(msg_module.DESCRIPTOR.message_types_by_name.items()):
             msg_t = msg_module._msg_name_to_type[name]
@@ -155,7 +154,7 @@ class Connection:
         ready = self._socket.poll(a_timeout)
         if ready > 0:
             # receive null frame
-            nf = self._socket.recv_string(0)
+            self._socket.recv_string(0)
 
             header = ""
             while header != "BEGIN_DATAFED":
