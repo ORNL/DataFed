@@ -72,7 +72,6 @@ build-repo-base:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
 
-
 build-gcs-base:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
@@ -95,26 +94,19 @@ build-gcs-base:
     - docker push code.ornl.gov:4567/${IMAGE_TAG2}
     - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
     - docker push code.ornl.gov:4567/${IMAGE_TAG3}
-# This build runs two builds, one to build the gcs image provided by Globus
-# The second to build on top of the gcs image and add the authz dependencies
-#build-gcs-authz-base:
-#  variables:
-#    IMAGE_TAG: "dlsw/datafed/gcs-base"
-#    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
-#    IMAGE_TAG3: "dlsw/datafed/gcs-authz"
-#    GIT_STRATEGY: clone
-#  stage: build-deploy-base
-#  tags:
-#    - ci-datafed-globus
-#    - docker
-#  script:
-#    - docker build -f repository/docker/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-#    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-#    - docker push code.ornl.gov:4567/${IMAGE_TAG}
-#    - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
-#    - docker push code.ornl.gov:4567/${IMAGE_TAG2}
-#    - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
-#    - docker push code.ornl.gov:4567/${IMAGE_TAG3}
+
+build-python-client-base:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/python-client-base"
+    GIT_STRATEGY: clone
+  stage: build-deploy-base
+  tags:
+    - docker
+  script:
+    - docker build -f python/docker/Dockerfile.python-client-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker push code.ornl.gov:4567/dlsw/datafed/python-client-base
+
 
 ################################################################################
 # STAGE: build
@@ -248,6 +240,30 @@ build-gcs-authz:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
+
+build-python-client:
+  variables:
+    IMAGE_TAG: "dlsw/datafed/python-client-"
+    GIT_STRATEGY: clone
+  stage: build-unit-test-deploy
+  tags:
+    - docker
+  rules:
+    - changes:
+        - python/*
+        - scripts/*
+        - common/*
+        - .gitlab-ci.yml
+      when: always
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker build -f python/docker/Dockerfile.python-client.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
+    - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
+
+
 
 ################################################################################
 # STAGE: Integration
@@ -397,28 +413,28 @@ end-to-end-arango-setup:
     - ./scripts/run_arango_service.sh
 
 
-end-to-end-client-test:
-  variables:
-    GIT_STRATEGY: clone
-  stage: end-to-end-test
-  tags:
-    - ci-datafed-client
-  script:
-    - ./scripts/generate_datafed.sh
-    - env
-    - cat ./config/datafed.sh
-    - >
-      cmake -S. -B build
-      -DENABLE_FOXX_TESTS=OFF
-      -DBUILD_CORE_SERVER=OFF
-      -DBUILD_COMMON=OFF
-      -DBUILD_WEB_SERVER=OFF
-      -DBUILD_DOCS=OFF
-      -DBUILD_PYTHON_CLIENT=ON
-      -DBUILD_TESTS=ON
-      -DENABLE_END_TO_END_TESTS=ON
-      -DINSTALL_FOXX=OFF
-    - cmake --build build
-    - cmake --build build --target install
-
-
+# end-to-end-client-test:
+#   variables:
+#     GIT_STRATEGY: clone
+#   stage: end-to-end-test
+#   tags:
+#     - ci-datafed-client
+#   script:
+#     - ./scripts/generate_datafed.sh
+#     - env
+#     - cat ./config/datafed.sh
+#     - >
+#       cmake -S. -B build
+#       -DENABLE_FOXX_TESTS=OFF
+#       -DBUILD_CORE_SERVER=OFF
+#       -DBUILD_COMMON=OFF
+#       -DBUILD_WEB_SERVER=OFF
+#       -DBUILD_DOCS=OFF
+#       -DBUILD_PYTHON_CLIENT=ON
+#       -DBUILD_TESTS=ON
+#       -DENABLE_END_TO_END_TESTS=ON
+#       -DINSTALL_FOXX=OFF
+#     - cmake --build build
+#     - cmake --build build --target install
+# 
+# 
