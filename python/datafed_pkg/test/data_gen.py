@@ -2,7 +2,6 @@
 
 # api.dataPut(name,"esnet#cern-diskpt1/data1/1M.dat")
 
-import sys
 import argparse
 import random
 import datafed.CommandLib
@@ -212,11 +211,11 @@ for i in range(start, end + 1):
 
     if do_del:
         if pub:
-            if api.collectionUpdate(alias, topic="", context=ctx)[0] == None:
+            if api.collectionUpdate(alias, topic="", context=ctx)[0] is None:
                 print("Timeout on collectionUpdate, coll {}".format(i))
                 exit()
 
-        if api.collectionDelete(alias, context=ctx)[0] == None:
+        if api.collectionDelete(alias, context=ctx)[0] is None:
             print("Timeout on collectionDelete, coll {}".format(i))
             exit()
 
@@ -248,7 +247,7 @@ for i in range(start, end + 1):
             tags=_tags,
             context=ctx,
         )[0]
-        == None
+        is None
     ):
         print("Timeout on collectionCreate, coll {}".format(i))
         exit()
@@ -305,8 +304,8 @@ for i in range(start, end + 1):
         if num_link > 0 and num_link < len(aliases) - 1:
             links = selectRand(0, num_link, len(aliases) - 1)
 
-            for l in links:
-                deps.append(["der", aliases[l]])
+            for link in links:
+                deps.append(["der", aliases[link]])
 
         # Create record
         if (
@@ -322,13 +321,13 @@ for i in range(start, end + 1):
                 repo_id=repo,
                 context=ctx,
             )[0]
-            == None
+            is None
         ):
             print("Timeout on dataCreate, coll {}, rec {}".format(i, j))
             exit()
 
         if up_file:
-            if api.dataPut(data_alias, up_file, context=ctx)[0] == None:
+            if api.dataPut(data_alias, up_file, context=ctx)[0] is None:
                 print("Timeout on dataPut, coll {}, rec {}".format(i, j))
                 exit()
 
@@ -336,7 +335,7 @@ for i in range(start, end + 1):
         sel = random.randint(0, len(topics) - 1)
         _topic = topics[sel]
 
-    if api.collectionUpdate(alias, topic=_topic, context=ctx)[0] == None:
+    if api.collectionUpdate(alias, topic=_topic, context=ctx)[0] is None:
         print("Timeout on collectionUpdate, coll {}".format(i))
         exit()
 

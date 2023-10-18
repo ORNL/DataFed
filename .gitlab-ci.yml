@@ -1,6 +1,7 @@
 
 stages:
   - setup
+  - clear-docker-cache
   - build-deploy-base
   - build-unit-test-deploy
   - end-to-end-setup
@@ -17,11 +18,33 @@ setup-vms:
   tags:
     - datafed-infrastructure
   script:
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-arangodb"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-core"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus1"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-client"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-arangodb"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-core"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-client"
+
+
+################################################################################
+# STAGE: clear-docker-cache
+################################################################################
+# Used to clear out the cache on VMs where the images are being built
+clear-core-cache:
+  stage: clear-docker-cache
+  tags:
+    - ci_1
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker system prune -f
+    - ./scripts/ci_purge_images.sh
+
+clear-repo-cache:
+  stage: clear-docker-cache
+  tags:
+    - ci_3
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker system prune -f
+    - ./scripts/ci_purge_images.sh
 
 ################################################################################
 # STAGE: build-deploy-base
@@ -42,11 +65,13 @@ build-ws-base:
     - ci-datafed-core
     - docker
   script:
+    - docker system prune -f
     - docker build -f web/docker/Dockerfile.web-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/ws-base
 
 build-core-base:
+  needs: ["clear-core-cache"]
   stage: build-deploy-base
   variables:
     IMAGE_TAG: "dlsw/datafed/core-base"
@@ -55,11 +80,13 @@ build-core-base:
     - ci-datafed-core
     - docker
   script:
+    - docker system prune -f
     - docker build -f core/docker/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/core-base
 
 build-repo-base:
+  needs: ["clear-repo-cache"]
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-base"
     GIT_STRATEGY: clone
@@ -68,13 +95,16 @@ build-repo-base:
     - ci-datafed-repo
     - docker
   script:
+    - docker system prune -f
     - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
 
 build-gcs-base:
+  needs: ["clear-repo-cache"]
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
+    GIT_STRATEGY: clone
     DISTRO: "ubuntu:focal"
     GCS_TAG: "code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
     IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
@@ -84,12 +114,14 @@ build-gcs-base:
     - ci-datafed-globus
     - docker
   script:
+    - docker system prune -f
     - cd external/globus-connect-server-deploy/docker
     - ./docker-build-gcs.sh "${DISTRO}"
     - LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
     - docker tag "$LATEST_IMAGE" "$GCS_TAG" 
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push "$GCS_TAG"
+    - cd ../../../ # back too root of project
     - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
     - docker push code.ornl.gov:4567/${IMAGE_TAG2}
     - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
@@ -283,7 +315,7 @@ end-to-end-ws-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
-    - chmod 777 "$HOST_LOG_FILE_PATH"
+    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - CERT_FILE_NAME=$(basename "${CI_DATAFED_WEB_CERT_PATH}")
@@ -322,6 +354,8 @@ end-to-end-core-setup:
     - docker
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
@@ -349,7 +383,7 @@ end-to-end-repo-setup:
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-repo.log"
+    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
   stage: end-to-end-setup
   tags:
     - ci-datafed-globus
@@ -357,6 +391,8 @@ end-to-end-repo-setup:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
+    - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
@@ -377,6 +413,7 @@ end-to-end-repo-setup:
 end-to-end-gcs-authz-setup:
   variables:
     IMAGE_TAG: "dlsw/datafed/gcs-authz-"
+    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
     GIT_STRATEGY: clone
   stage: end-to-end-setup
   tags:
@@ -385,6 +422,8 @@ end-to-end-gcs-authz-setup:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
+    - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
