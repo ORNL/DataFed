@@ -1,3 +1,6 @@
+## MINOR Feature
+1. [909] - Added Support for Google Analytics
+
 # v2023.8.21.10.40
 
 ## MAJOR Breaking changes
