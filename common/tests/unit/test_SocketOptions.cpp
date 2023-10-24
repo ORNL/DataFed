@@ -36,7 +36,8 @@ BOOST_AUTO_TEST_CASE(testing_AddressSplitterINPROC) {
 BOOST_AUTO_TEST_CASE(testing_AddressSplitterNoPort) {
 
   // Still contains ':'
-  BOOST_CHECK_THROW(AddressSplitter splitter("inproc://www.datafed.com:"), TraceException);
+  BOOST_CHECK_THROW(AddressSplitter splitter("inproc://www.datafed.com:"),
+                    TraceException);
 }
 
 BOOST_AUTO_TEST_CASE(testing_AddressSplitterNoPort2) {
