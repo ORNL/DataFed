@@ -18,7 +18,7 @@ rapidjson-dev libkrb5-dev git python3-pkg-resources python3-pip libssl-dev
 sudo apt-get install -y libzmq3-dev 
 
 cd ~
-#install_cmake
+install_cmake
 cd ~
 
 # Install cmake 3.17
