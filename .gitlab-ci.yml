@@ -14,14 +14,17 @@ stages:
 # before attempting to launch the CI pipelines
 setup-vms:
   stage: setup
-  tags:
-    - datafed-infrastructure
-  script:
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-arangodb"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-core"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus1"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-client"
+  trigger:
+    project: 8f4/datafedci
+    branch: main
+    strategy: depend
+#    - datafed-infrastructure
+#  script:
+#    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-arangodb"
+#    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-core"
+#    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus1"
+#    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
+#    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-client"
 
 ################################################################################
 # STAGE: build-deploy-base
