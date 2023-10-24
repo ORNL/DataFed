@@ -2,11 +2,16 @@
 
 ## MAJOR Breaking changes
 
+## PATCH Bug Fixes/Technical Debt/Documentation
+
+# v2023.10.23.15.50
+
 ## MINOR Feature
-1. [906] - Added backup and cert refresh scripts.
+1. [906] - Added backup and cert refresh scripts. 
 
 ## PATCH Bug Fixes/Technical Debt/Documentation
 1. [911] - Add GitHub template
+2. [913] - Fixed bug, when endpoint info returns an empty array check to seee if array is empty before accessing elements
 
 # v2023.8.21.10.40
 
