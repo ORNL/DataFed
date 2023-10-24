@@ -674,7 +674,7 @@ public:
   }
 
   Object &asObject() {
-    if (m_type != VT_OBJECT) { 
+    if (m_type != VT_OBJECT) {
       std::string error_msg = "Value is not an object, it is instead of type: ";
       error_msg += getTypeString();
       EXCEPT(1, error_msg);
