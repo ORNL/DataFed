@@ -11,7 +11,7 @@
 
 ## PATCH Bug Fixes/Technical Debt/Documentation
 1. [911] - Add GitHub template
-2. [] - Fixed bug, when endpoint info returns an empty array check to seee if array is empty before accessing elements
+2. [913] - Fixed bug, when endpoint info returns an empty array check to seee if array is empty before accessing elements
 
 # v2023.8.21.10.40
 
