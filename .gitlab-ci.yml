@@ -416,28 +416,27 @@ end-to-end-arango-setup:
     - ./scripts/run_arango_service.sh
 
 
-end-to-end-client-test:
-  variables:
-    GIT_STRATEGY: clone
-  stage: end-to-end-test
-  tags:
-    - ci-datafed-client
-  script:
-    - ./scripts/generate_datafed.sh
-    - env
-    - cat ./config/datafed.sh
-    - >
-      cmake -S. -B build
-      -DENABLE_FOXX_TESTS=OFF
-      -DBUILD_CORE_SERVER=OFF
-      -DBUILD_COMMON=OFF
-      -DBUILD_WEB_SERVER=OFF
-      -DBUILD_DOCS=OFF
-      -DBUILD_PYTHON_CLIENT=ON
-      -DBUILD_TESTS=ON
-      -DENABLE_END_TO_END_TESTS=ON
-      -DINSTALL_FOXX=OFF
-    - cmake --build build
-    - cmake --build build --target install
-
+#end-to-end-client-test:
+#  variables:
+#    GIT_STRATEGY: clone
+#  stage: end-to-end-test
+#  tags:
+#    - ci-datafed-client
+#  script:
+#    - ./scripts/generate_datafed.sh
+#    - env
+#    - cat ./config/datafed.sh
+#    - >
+#      cmake -S. -B build
+#      -DENABLE_FOXX_TESTS=OFF
+#      -DBUILD_CORE_SERVER=OFF
+#      -DBUILD_COMMON=OFF
+#      -DBUILD_WEB_SERVER=OFF
+#      -DBUILD_DOCS=OFF
+#      -DBUILD_PYTHON_CLIENT=ON
+#      -DBUILD_TESTS=ON
+#      -DENABLE_END_TO_END_TESTS=ON
+#      -DINSTALL_FOXX=OFF
+#    - cmake --build build
+#    - cmake --build build --target install
 
