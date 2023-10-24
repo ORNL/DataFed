@@ -4,6 +4,7 @@ foreach(PROG
     test_CommunicatorFactory
     test_Frame
     test_DynaLog
+    test_Value
     test_MessageFactory
     test_OperatorFactory
     test_ProtoBufFactory

@@ -542,62 +542,69 @@ void GlobusAPI::getEndpointInfo(const std::string &a_ep_id,
   long code = get(m_curl_xfr, m_config.glob_xfr_url + "endpoint/", a_ep_id,
                   a_acc_token, {}, raw_result);
 
+
+  Value result;
   try {
-    if (!raw_result.size())
-      EXCEPT_PARAM(ID_SERVICE_ERROR, "Empty response. Code: " << code);
+	  if (!raw_result.size())
+		  EXCEPT_PARAM(ID_SERVICE_ERROR, "Empty response. Code: " << code);
 
-    Value result;
 
-    result.fromString(raw_result);
+	  result.fromString(raw_result);
 
-    Value::Object &resp_obj = result.asObject();
+	  Value::Object &resp_obj = result.asObject();
 
-    checkResponsCode(code, resp_obj);
+	  checkResponsCode(code, resp_obj);
 
-    a_ep_info.id = a_ep_id;
-    a_ep_info.activated = resp_obj.getBool("activated");
+	  a_ep_info.id = a_ep_id;
+	  a_ep_info.activated = resp_obj.getBool("activated");
 
-    int64_t exp = resp_obj.getNumber("expires_in");
-    if (exp < 0) {
-      a_ep_info.activated = true;
-      a_ep_info.never_expires = true;
-      a_ep_info.expiration = 0;
-    } else {
-      a_ep_info.never_expires = false;
-      a_ep_info.expiration = time(0) + exp;
-    }
+	  int64_t exp = resp_obj.getNumber("expires_in");
+	  if (exp < 0) {
+		  a_ep_info.activated = true;
+		  a_ep_info.never_expires = true;
+		  a_ep_info.expiration = 0;
+	  } else {
+		  a_ep_info.never_expires = false;
+		  a_ep_info.expiration = time(0) + exp;
+	  }
 
-    a_ep_info.force_encryption = resp_obj.getBool("force_encryption");
-    if (a_ep_info.force_encryption)
-      a_ep_info.supports_encryption = true;
-    else {
-      a_ep_info.supports_encryption = false;
+	  a_ep_info.force_encryption = resp_obj.getBool("force_encryption");
+	  if (a_ep_info.force_encryption)
+		  a_ep_info.supports_encryption = true;
+	  else {
+		  a_ep_info.supports_encryption = false;
 
-      // Look at DATA[0].scheme to see if it's gsiftp
-      Value::Array &data = resp_obj.getArray("DATA");
-      Value::Object &server_obj = data[0].asObject();
+		  // Look at DATA[0].scheme to see if it's gsiftp
+		  Value::Array &data = resp_obj.getArray("DATA");
 
-      Value &scheme = server_obj.getValue("scheme");
+		  if( data.size() > 0 ) {
+			  Value::Object &server_obj = data[0].asObject();
 
-      if (scheme.isNull())
-        a_ep_info.supports_encryption = true;
-      else if (scheme.isString())
-        a_ep_info.supports_encryption =
-            (scheme.asString().compare("gsiftp") == 0);
-    }
+			  Value &scheme = server_obj.getValue("scheme");
+
+			  if (scheme.isNull())
+				  a_ep_info.supports_encryption = true;
+			  else if (scheme.isString())
+				  a_ep_info.supports_encryption =
+					  (scheme.asString().compare("gsiftp") == 0);
+		  }
+	  }
   } catch (libjson::ParseError &e) {
-    DL_ERROR(m_log_context, "PARSE FAILED! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
-                 "Globus endpoint API call returned invalid JSON.");
+	  DL_ERROR(m_log_context, "PARSE FAILED! " << raw_result);
+	  EXCEPT_PARAM(ID_SERVICE_ERROR,
+			  "Globus endpoint API call returned invalid JSON.");
   } catch (TraceException &e) {
-    DL_ERROR(m_log_context, raw_result);
-    e.addContext("Globus endpoint API call failed.");
-    throw;
+	  DL_ERROR(m_log_context, raw_result);
+	  DL_ERROR(m_log_context, "Result type: " << result.getTypeString());
+	  e.addContext("Globus endpoint API call failed.");
+	  throw;
   } catch (exception &e) {
-    DL_ERROR(m_log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
-                 "Globus endpoint API call returned unexpected content");
+	  DL_ERROR(m_log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
+	  EXCEPT_PARAM(ID_SERVICE_ERROR,
+			  "Globus endpoint API call returned unexpected content");
   }
+
+
 }
 
 void GlobusAPI::refreshAccessToken(const std::string &a_ref_tok,

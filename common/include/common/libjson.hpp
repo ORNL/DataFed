@@ -674,16 +674,20 @@ public:
   }
 
   Object &asObject() {
-    if (m_type != VT_OBJECT)
-      EXCEPT(1, "Value is not an object");
-
+    if (m_type != VT_OBJECT) { 
+      std::string error_msg = "Value is not an object, it is instead of type: ";
+      error_msg += getTypeString();
+      EXCEPT(1, error_msg);
+    }
     return *m_value.o;
   }
 
   const Object &asObject() const {
-    if (m_type != VT_OBJECT)
-      EXCEPT(1, "Value is not an object");
-
+    if (m_type != VT_OBJECT) {
+      std::string error_msg = "Value is not an object, it is instead of type: ";
+      error_msg += getTypeString();
+      EXCEPT(1, error_msg);
+    }
     return *m_value.o;
   }
 
@@ -698,15 +702,21 @@ public:
   }
 
   Array &asArray() {
-    if (m_type != VT_ARRAY)
-      EXCEPT(1, "Value is not an array");
+    if (m_type != VT_ARRAY) {
+      std::string error_msg = "Value is not an array, it is instead of type: ";
+      error_msg += getTypeString();
+      EXCEPT(1, error_msg);
+    }
 
     return *m_value.a;
   }
 
   const Array &asArray() const {
-    if (m_type != VT_ARRAY)
-      EXCEPT(1, "Value is not an array");
+    if (m_type != VT_ARRAY) {
+      std::string error_msg = "Value is not an array, it is instead of type: ";
+      error_msg += getTypeString();
+      EXCEPT(1, error_msg);
+    }
 
     return *m_value.a;
   }
