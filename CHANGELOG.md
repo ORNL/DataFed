@@ -1,3 +1,7 @@
+## PATCH Bug Fixes/
+1. [915] - Refactor CI to use pipelines Gitlab feature as opposed to custom
+   solution
+
 1. [911] - Add GitHub template
 
 # v2023.8.21.10.40
