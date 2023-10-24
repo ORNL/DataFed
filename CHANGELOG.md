@@ -1,5 +1,6 @@
 ## MINOR Feature
-1. [909] - Added Support for Google Analytics
+1. [911] - Add GitHub template
+2. [909] - Added Support for Google Analytics
 
 # v2023.8.21.10.40
 
