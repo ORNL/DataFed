@@ -1,9 +1,9 @@
 #!/bin/python3
-import json
+# import json
 import os
-import subprocess
 import sys
 import unittest
+
 
 # Depends on the provided tests first passing
 # user_login
@@ -25,7 +25,8 @@ class TestDataFedPythonAPIContext(unittest.TestCase):
             from datafed.CommandLib import API
         except ImportError:
             print(
-                "datafed was not found, make sure you are running script with PYTHONPATH set to the location of the package in the datafed repo"
+                "datafed was not found, make sure you are running script with "
+                "PYTHONPATH set to the location of the package in the datafed repo"
             )
             sys.exit(1)
 
@@ -42,17 +43,16 @@ class TestDataFedPythonAPIContext(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(self._username, password)
+                self._df_api.loginByPassword(self._username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate
             assert count < 3
 
     def test_context(self):
-
-        context = self._df_api.getContext()
+        self._df_api.getContext()
         self.assertEqual(self._df_api.getContext(), f"u/{self._username}")
 
 

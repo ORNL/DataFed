@@ -175,14 +175,19 @@ export DATAFED_GLOBUS_APP_SECRET="$local_DATAFED_GLOBUS_APP_SECRET"
 # ************************************************
 # i.e. 7512 - ZeroMQ port
 export DATAFED_SERVER_PORT="$local_DATAFED_SERVER_PORT"
+
 # ************************************************
 # Env Variables for Authz, Web, Repo Server
 # ************************************************
-# If not set will resolve to datafed.ornl.gov
-export DATAFED_DOMAIN="$local_DATAFED_DOMAIN"
 # DataFed Repository POSIX user account that DataFed users will be mapped too
 # from Globus, so the posix account all globus users will map too
 export DATAFED_GLOBUS_REPO_USER=""
+
+# ******************************************************************
+# Env Variables for Authz, Web, Repo Server & administrative scripts
+# ******************************************************************
+# If not set will resolve to datafed.ornl.gov
+export DATAFED_DOMAIN="$local_DATAFED_DOMAIN"
 
 # ************************************************
 # Env Variables for Core Server
@@ -190,6 +195,7 @@ export DATAFED_GLOBUS_REPO_USER=""
 export DATAFED_DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
 # The user account the datafed core application will run under
 export DATAFED_CORE_USER=""
+
 # ************************************************
 # Env Variables for Web Server
 # ************************************************
@@ -206,6 +212,18 @@ export DATAFED_WEB_CERT_PATH="$local_DATAFED_WEB_CERT_PATH"
 export DATAFED_WEB_USER=""
 # How the web server communicates with the core server, assumes an internal network
 export DATAFED_CORE_ADDRESS_PORT_INTERNAL="$local_DATAFED_CORE_ADDRESS_PORT_INTERNAL"
+
+# ****************************************************************************
+# Env Variables for DataFed Core server administrative and operational scripts 
+# ****************************************************************************
+# The admin should who should be receiving emails about the backups
+export DATAFED_ADMIN_EMAIL=""
+# DataFed system email is from the actual system not from a person, it is
+# used to fill in the from field when sending emails out to admins or users.
+export DATAFED_SYSTEM_EMAIL=""
+# Where the database backups will be placed.
+export DATAFED_DATABASE_BACKUP_PATH=""
+
 # ************************************************
 # Env Variables for Globus Connect Server
 # ************************************************
