@@ -285,9 +285,10 @@ end-to-end-ws-setup:
     - CERT_FILE_NAME=$(basename "${CI_DATAFED_WEB_CERT_PATH}")
     - KEY_FILE_NAME=$(basename "${CI_DATAFED_WEB_KEY_PATH}")
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
+    - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
       docker run -d
-      --name "ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      --name "ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
       -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$GLOBUS_DATAFED_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$DATAFED_ZEROMQ_SESSION_SECRET"
@@ -324,9 +325,10 @@ end-to-end-core-setup:
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
+    - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
       docker run -d
-      --name "core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      --name "core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
       -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
@@ -348,6 +350,7 @@ end-to-end-repo-setup:
     IMAGE_TAG: "dlsw/datafed/repo-"
     GIT_STRATEGY: clone
     HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
   stage: end-to-end-setup
   tags:
     - ci-datafed-globus
@@ -360,15 +363,16 @@ end-to-end-repo-setup:
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
+    - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
       docker run -d
-      --name "repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      --name "repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
       -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
+      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
       -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
@@ -378,6 +382,7 @@ end-to-end-gcs-authz-setup:
   variables:
     IMAGE_TAG: "dlsw/datafed/gcs-authz-"
     HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     GIT_STRATEGY: clone
   stage: end-to-end-setup
   tags:
@@ -391,15 +396,16 @@ end-to-end-gcs-authz-setup:
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
+    - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
       docker run -d
-      --name "gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
+      --name "gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
       -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
       -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
       -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
       -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
       -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
+      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
       -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
