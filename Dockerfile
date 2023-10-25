@@ -289,6 +289,7 @@ COPY --from=repo-build --chown=datafed:datafed /datafed/install/repo/datafed-rep
 
 FROM runtime AS ws
 
+ARG DATAFED_NODE_VERSION=""
 ARG DATAFED_DIR
 ARG DATAFED_INSTALL_PATH
 ARG BUILD_DIR
@@ -325,4 +326,12 @@ COPY --chown=datafed:datafed ./scripts/dependency_versions.sh /datafed/scripts/d
 COPY --chown=datafed:datafed ./scripts/generate_ws_config.sh /datafed/scripts/generate_ws_config.sh
 COPY --chown=datafed:datafed ./scripts/install_ws.sh /datafed/scripts/install_ws.sh
 COPY --chown=datafed:datafed ./cmake/Version.cmake /datafed/cmake/Version.cmake
+
+COPY --from=ws-build --chown=datafed:datafed /datafed/source/web/package.json /datafed/install/web/package.json
+RUN . /datafed/scripts/dependency_versions.sh && \
+		. /datafed/.nvm/nvm.sh && \
+		npm --allow-root --unsafe-perm --prefix /datafed/install/web install
+
 COPY --from=ws-build --chown=datafed:datafed /datafed/source/web /datafed/install/web
+
+WORKDIR /datafed/install/web
