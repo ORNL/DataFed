@@ -1,7 +1,9 @@
 # Pre-Release
 
+
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [911] - Add GitHub template
+2. [910] - Static code analysis and status checks fixed, improvements to CI
 
 # v2023.8.21.10.40
 
