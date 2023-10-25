@@ -4,7 +4,7 @@
 set -ef -o pipefail
 
 SCRIPT=$(realpath "$0")
-FILE_NAME="$(basename ${SCRIPT})"
+FILE_NAME=$(basename "${SCRIPT}")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
