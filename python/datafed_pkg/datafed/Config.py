@@ -126,6 +126,7 @@ _opt_info = {
     ],
 }
 
+
 ##
 # @class API
 # @brief A client configuration helper class.
@@ -139,20 +140,36 @@ _opt_info = {
 #
 # Available Settings:
 #
-# key                   | type | cf. sec | cf. name        | env. var. name              | long opt.             | short opt.
-# ----------------------|------|---------|-----------------|-----------------------------|-----------------------|------------
-# server_cfg_dir        | path | server  | config_dir      | DATAFED_SERVER_CFG_DIR      | --server-cfg-dir      |         |
-# server_cfg_file       | path |         |                 | DATAFED_SERVER_CFG_FILE     | --server-cfg-file     |         |
-# server_pub_key_file   | path | server  | public_key_file | DATAFED_SERVER_PUB_KEY_FILE | --server-pub-key-file |         |
-# server_host           | str  | server  | host            | DATAFED_SERVER_HOST         | --server-host         | -H      |
-# server_port           | int  | server  | port            | DATAFED_SERVER_PORT         | --server-port         | -P      |
-# client_cfg_dir        | path | client  | config_dir      | DATAFED_CLIENT_CFG_DIR      | --client-cfg-dir      |         |
-# client_cfg_file       | path | client  | config_file     | DATAFED_CLIENT_CFG_FILE     | --client-cfg-file     |         |
-# client_pub_key_file   | path | client  | public_key_file | DATAFED_CLIENT_PUB_KEY_FILE | --client-pub-key-file |         |
-# client_priv_key_file  | path | client  | private_key_file| DATAFED_CLIENT_PRIV_KEY_FILE| --client-priv-key-file|         |
-# default_ep            | str  | general | default_endpoint| DATAFED_DEFAULT_ENDPOINT    | --default-ep          | -e      |
-# verbosity             | int  | general | verbosity       | DATAFED_DEFAULT_VERBOSITY   | --verbosity           | -v      |
-# interactive           | bool | general | interactive     | DATAFED_DEFAULT_INTERACT    | --interact/--no-interact | -i/-n   |
+# key                   | type | cf. sec | cf. name        |
+# ----------------------|------|---------|-----------------|
+# server_cfg_dir        | path | server  | config_dir      |
+# server_cfg_file       | path |         |                 |
+# server_pub_key_file   | path | server  | public_key_file |
+# server_host           | str  | server  | host            |
+# server_port           | int  | server  | port            |
+# client_cfg_dir        | path | client  | config_dir      |
+# client_cfg_file       | path | client  | config_file     |
+# client_pub_key_file   | path | client  | public_key_file |
+# client_priv_key_file  | path | client  | private_key_file|
+# default_ep            | str  | general | default_endpoint|
+# verbosity             | int  | general | verbosity       |
+# interactive           | bool | general | interactive     |
+#
+# Continuation of table
+# key                   |
+# ----------------------|
+# server_cfg_dir        |
+# server_cfg_file       |
+# server_pub_key_file   |
+# server_host           |
+# server_port           |
+# client_cfg_dir        |
+# client_cfg_file       |
+# client_pub_key_file   |
+# client_priv_key_file  |
+# default_ep            |
+# verbosity             |
+# interactive           |
 #
 # Configuration source priority:
 #
@@ -163,7 +180,6 @@ _opt_info = {
 # 5. set by environment variable
 #
 class API:
-
     ##
     # @brief Class initialization method.
     #
@@ -194,7 +210,7 @@ class API:
         self._opts = {}
 
         for k, v in opts.items():
-            if v != None:
+            if v is not None:
                 self._opts[k] = {"val": v, "pri": 1}
 
         # print( "cfg self opts:", self._opts )
@@ -239,12 +255,12 @@ class API:
                 self._loadConfigFile(cfg_file, 2)
                 loaded = True
 
-        if not "client_cfg_dir" in self._opts:
+        if "client_cfg_dir" not in self._opts:
             cfg_dir = os.path.expanduser("~/.datafed")
             if not os.path.exists(cfg_dir):
                 try:
                     os.mkdir(cfg_dir)
-                except:
+                except BaseException:
                     return
             self._opts["client_cfg_dir"] = {"val": cfg_dir, "pri": 5}
 
@@ -265,7 +281,7 @@ class API:
         # Options with _OPT_NO_ENV are ignored
         for k, v in _opt_info.items():
             if (
-                (not k in self._opts)
+                (k not in self._opts)
                 and ((v[3] & _OPT_NO_ENV) == 0)
                 and (v[2] in os.environ)
                 and os.environ[v[2]]
@@ -274,7 +290,7 @@ class API:
                 if v[3] & _OPT_INT:
                     try:
                         tmp = int(tmp)
-                    except:
+                    except BaseException:
                         raise Exception(
                             "Invalid value specified for {} ({}) from ENV {}".format(
                                 k, tmp, v[2]
@@ -296,17 +312,17 @@ class API:
                 self._opts[k] = {"val": tmp, "pri": 4}
 
     def _loadConfigFile(self, cfg_file, priority):
-        # Read config file and check each defined option for a contained value using section and name
-        # Priority is set by parameter (3 or 4)
-        # Values are automatically converted to expected type
-        # Options with _OPT_NO_CF are ignored
+        # Read config file and check each defined option for a contained value
+        # using section and name Priority is set by parameter (3 or 4) Values
+        # are automatically converted to expected type Options with _OPT_NO_CF
+        # are ignored
         try:
             with open(cfg_file, "r") as f:
                 config = configparser.ConfigParser()
                 config.read_file(f)
 
                 for k, v in _opt_info.items():
-                    if ((not k in self._opts) or self._opts[k]["pri"] >= priority) and (
+                    if ((k not in self._opts) or self._opts[k]["pri"] >= priority) and (
                         v[3] & _OPT_NO_CF
                     ) == 0:
                         if config.has_option(v[0], v[1]):
@@ -314,7 +330,7 @@ class API:
                             if v[3] & _OPT_INT:
                                 try:
                                     tmp = int(tmp)
-                                except:
+                                except BaseException:
                                     raise Exception(
                                         "Invalid value specified for {} ({}) in {}".format(
                                             k, tmp, cfg_file
@@ -380,7 +396,7 @@ class API:
     # @exception Exception: If unknown key is provided.
     #
     def get(self, key):
-        if not key in _opt_info:
+        if key not in _opt_info:
             raise Exception("Undefined configuration key: " + key)
 
         if key in self._opts:
@@ -397,7 +413,7 @@ class API:
     # @exception Exception: If unknown key is provided.
     #
     def set(self, key, value, save=False):
-        if not key in _opt_info:
+        if key not in _opt_info:
             raise Exception("Undefined configuration key:", key)
 
         if key in self._opts:
