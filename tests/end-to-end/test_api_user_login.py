@@ -1,7 +1,6 @@
 #!/bin/python3
-import json
+# import json
 import os
-import subprocess
 import sys
 import unittest
 
@@ -25,7 +24,8 @@ class TestDataFedPythonAPILogin(unittest.TestCase):
             from datafed.CommandLib import API
         except ImportError:
             print(
-                "datafed was not found, make sure you are running script with PYTHONPATH set to the location of the package in the datafed repo"
+                "datafed was not found, make sure you are running script with "
+                "PYTHONPATH set to the location of the package in the datafed repo"
             )
             sys.exit(1)
 
@@ -44,7 +44,7 @@ class TestDataFedPythonAPILogin(unittest.TestCase):
             try:
                 df_api.loginByPassword(username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate
