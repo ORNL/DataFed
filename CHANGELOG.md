@@ -2,6 +2,9 @@
 
 ## MAJOR Breaking changes
 
+## MINOR Feature
+1. [909] - Added Support for Google Analytics
+
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [914] - Improve GitHub template
 2. [910] - Static code analysis and status checks fixed, improvements to CI
