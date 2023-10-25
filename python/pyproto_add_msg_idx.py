@@ -23,7 +23,7 @@ while True:
         # print( "ID:", parts[idx+1] )
         msg_type = int(parts[idx + 1]) << 8
         break
-    except:
+    except BaseException:
         pass
 
 # msg_type = 0
