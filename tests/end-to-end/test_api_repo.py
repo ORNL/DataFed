@@ -1,9 +1,9 @@
 #!/bin/python3
 import json
 import os
-import subprocess
 import sys
 import unittest
+
 
 # Should only run after api login password test has been run
 class TestDataFedPythonAPIRepo(unittest.TestCase):
@@ -24,7 +24,8 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
             from datafed.CommandLib import API
         except ImportError:
             print(
-                "datafed was not found, make sure you are running script with PYTHONPATH set to the location of the package in the datafed repo"
+                "datafed was not found, make sure you are running script with "
+                "PYTHONPATH set to the location of the package in the datafed repo"
             )
             sys.exit(1)
 
@@ -43,7 +44,7 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
             try:
                 result = self._df_api.loginByPassword(username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate
@@ -58,7 +59,9 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
 
         if not path_to_repo_form.endswith(".json"):
             self.fail(
-                "repo create test requires that the repo form exist and be provided as a json file, the test uses the environment variable DATAFED_REPO_PATH to search for the repo form"
+                "repo create test requires that the repo form exist and be "
+                "provided as a json file, the test uses the environment "
+                "variable DATAFED_REPO_PATH to search for the repo form"
             )
 
         self._repo_form = {}
@@ -66,12 +69,10 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
             self._repo_form = json.load(json_file)
 
     def test_repo_list(self):
-
         result = self._df_api.repoList(list_all=True)
         self.assertEqual(len(result[0].repo), 0)
 
     def test_repo_create_delete(self):
-
         result = self._df_api.repoCreate(
             repo_id=self._repo_form["id"],
             title=self._repo_form["title"],

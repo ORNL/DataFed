@@ -1,4 +1,9 @@
+# Pre-Release
+
+
+## PATCH Bug fixes/Technical Debt/Documentation
 1. [911] - Add GitHub template
+2. [910] - Static code analysis and status checks fixed, improvements to CI
 
 # v2023.8.21.10.40
 
@@ -15,7 +20,7 @@
 7. [879] - Added correlation ids to messages for tracking
 8. [879] - Split log output into server specific files.
 
-## PATCH Bug fixes/Technical Debt
+## PATCH Bug fixes/Technical Debt/Documentation
 1. [879] - Fixed thread safety of repo list calls in core server which where causing
 seg faults
 2. [879] - Added better error reporting when attempting to delete repo with running tasks.
