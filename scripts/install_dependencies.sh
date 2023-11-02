@@ -12,12 +12,16 @@ source "${SOURCE}/dependency_versions.sh"
 
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo apt-get update
+sudo apt-get install -y curl gnupg
+curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key
+sudo apt-key add - < Release.key
+echo 'deb https://download.arangodb.com/arangodb38/DEBIAN/ /' | sudo tee /etc/apt/sources.list.d/arangodb.list
+sudo apt-get update
 sudo dpkg --configure -a
 sudo apt-get install -y libtool build-essential g++ gcc npm libboost-all-dev \
-pkg-config autoconf automake libtool wget curl make unzip libcurl4-openssl-dev \
-libfuse-dev rapidjson-dev libglobus-common-dev libkrb5-dev python3-pip
-
-sudo apt-get install -y libzmq3-dev 
+pkg-config autoconf automake libtool wget make unzip libcurl4-openssl-dev \
+libfuse-dev rapidjson-dev libglobus-common-dev libkrb5-dev python3-pip \
+apt-transport-https arangodb3 libzmq3-dev git
 
 install_cmake
 # The foxx services need node version 12 or greater so we aren't going to use the package manager
@@ -51,10 +55,3 @@ install_libzmq
 cd ~
 
 npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web
-
-curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key
-sudo apt-key add - < Release.key
-echo 'deb https://download.arangodb.com/arangodb38/DEBIAN/ /' | sudo tee /etc/apt/sources.list.d/arangodb.list
-sudo apt-get install apt-transport-https
-sudo apt-get update
-sudo apt-get install arangodb3

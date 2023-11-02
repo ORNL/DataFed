@@ -27,9 +27,6 @@ RUN mkdir -p ${NVM_DIR}
 
 WORKDIR ${BUILD_DIR}
 
-RUN apt update
-RUN apt install -y cmake git
-
 # Copy install scripts
 COPY ./scripts/dependency_install_functions.sh	${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_versions.sh						${BUILD_DIR}/scripts/
