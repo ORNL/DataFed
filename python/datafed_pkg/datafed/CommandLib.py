@@ -692,6 +692,7 @@ class API:
         wait=False,
         timeout_sec=0,
         context=None,
+        retries=None
     ):
         """
         Get (download) raw data for one or more data records and/or collections
@@ -726,6 +727,10 @@ class API:
             By default, there is no timeout.
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
+        retries : int, Optional. Default = None
+            The acceptable number of faults to allow before cancelling a Globus
+            transfer, if none is specified will default to the Globus default
+            behavior.
 
         Returns
         -------
@@ -749,6 +754,9 @@ class API:
         for ids in item_id:
             msg.id.append(self._resolve_id(ids, context))
 
+        if retries:
+            msg.retries = retries
+
         reply = self._mapi.sendRecv(msg)
 
         # May initiate multiple transfers - one per repo with multiple records per transfer
@@ -766,6 +774,9 @@ class API:
             msg.path = self._resolvePathForGlobus(path, False)
             msg.encrypt = encrypt
             msg.orig_fname = orig_fname
+
+            if retries:
+                msg.retries = retries
 
             reply = self._mapi.sendRecv(msg)
 
@@ -810,6 +821,7 @@ class API:
         timeout_sec=0,
         extension=None,
         context=None,
+        retries=None
     ):
         """
         Put (upload) raw data for a data record
@@ -839,6 +851,10 @@ class API:
             By default, the extension is detected automatically.
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
+        retries : int, Optional. Default = None
+            The acceptable number of faults to allow before cancelling a Globus
+            transfer, if none is specified will default to the Globus default
+            behavior.
 
         Returns
         -------
@@ -855,6 +871,9 @@ class API:
         msg.encrypt = encrypt
         if extension:
             msg.ext = extension
+
+        if retries:
+            msg.retries = retries
 
         reply = self._mapi.sendRecv(msg)
 
