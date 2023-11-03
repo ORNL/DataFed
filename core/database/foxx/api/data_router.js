@@ -1379,16 +1379,21 @@ router.post('/get', function(req, res) {
                 action: function() {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id, res_ids = [];
+                    // The number is the max value for a unit32_t
+                    var retries = 4294967295; 
 
                     if (!req.body.check && !req.body.path)
                         throw [g_lib.ERR_INVALID_PARAM, "Must provide path parameter if not running check."];
+
+                    if (req.retries)
+                      retries = req.retries;
 
                     for (var i in req.body.id) {
                         id = g_lib.resolveDataCollID(req.body.id[i], client);
                         res_ids.push(id);
                     }
 
-                    var result = g_tasks.taskInitDataGet(client, req.body.path, req.body.encrypt, res_ids, req.body.orig_fname, req.body.check);
+                    var result = g_tasks.taskInitDataGet(client, req.body.path, req.body.encrypt, res_ids, req.body.orig_fname, req.body.check, retries);
 
                     if (!req.body.check)
                         g_lib.saveRecentGlobusPath(client, req.body.path, g_lib.TT_DATA_GET);
@@ -1407,6 +1412,7 @@ router.post('/get', function(req, res) {
         path: joi.string().optional(),
         encrypt: joi.number().optional(),
         orig_fname: joi.boolean().optional(),
+        retries: joi.number().optional(),
         check: joi.boolean().optional()
     }).required(), 'Parameters')
     .summary('Get (download) data to Globus destination path')
@@ -1425,6 +1431,12 @@ router.post('/put', function(req, res) {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var res_ids = [];
 
+                    // The number is the max value for a unit32_t
+                    var retries = 4294967295; 
+
+                    if (req.retries)
+                      retries = req.retries;
+
                     if (!req.body.check && !req.body.path)
                         throw [g_lib.ERR_INVALID_PARAM, "Must provide path parameter if not running check."];
 
@@ -1435,7 +1447,7 @@ router.post('/put', function(req, res) {
                         res_ids.push(g_lib.resolveDataID(req.body.id[i], client));
                     }
 
-                    var result = g_tasks.taskInitDataPut(client, req.body.path, req.body.encrypt, req.body.ext, res_ids, req.body.check);
+                    var result = g_tasks.taskInitDataPut(client, req.body.path, req.body.encrypt, req.body.ext, res_ids, req.body.check, retries);
 
                     if (!req.body.check)
                         g_lib.saveRecentGlobusPath(client, req.body.path, g_lib.TT_DATA_PUT);
@@ -1454,6 +1466,7 @@ router.post('/put', function(req, res) {
         path: joi.string().optional(),
         encrypt: joi.number().optional(),
         ext: joi.string().optional(),
+        retries: joi.number().optional(),
         check: joi.boolean().optional()
     }).required(), 'Parameters')
     .summary('Put (upload) raw data to record')

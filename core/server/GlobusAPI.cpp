@@ -320,7 +320,8 @@ string GlobusAPI::transfer(
 bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
                                     const std::string &a_acc_tok,
                                     XfrStatus &a_status,
-                                    std::string &a_err_msg) {
+                                    std::string &a_err_msg,
+                                    const uint32_t retries) {
 
   a_status = XS_INIT;
   a_err_msg.clear();
@@ -346,10 +347,14 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
     if (status == "ACTIVE") {
 
       double faults = resp_obj.getNumber("faults");
+
+      uint32_t faults_converted;
+      // Safely convert double to uint32_t
+
       if (faults > 0.0) {
 
         DL_WARNING(m_log_context, "faults encountered for task: "
-                                      << a_task_id << " faults " << faults);
+                                      << a_task_id << " faults " << faults << " allowed retries " << retries);
         string raw_result2;
         get(m_curl_xfr, m_config.glob_xfr_url + "task/",
             a_task_id + "/event_list", a_acc_tok, {}, raw_result2);

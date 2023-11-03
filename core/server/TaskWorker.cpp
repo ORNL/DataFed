@@ -172,6 +172,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   const string &uid = obj.getString("uid");
   TaskType type = (TaskType)obj.getNumber("type");
   Encryption encrypt = (Encryption)obj.getNumber("encrypt");
+  const uint32_t retries = (uint32_t)obj.getNumber("retries");
   const string &src_ep = obj.getString("src_repo_ep");
   const string &src_path = obj.getString("src_repo_path");
   const string &dst_ep = obj.getString("dst_repo_ep");
@@ -247,7 +248,8 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
       sleep(5);
 
       if (me.m_glob.checkTransferStatus(glob_task_id, acc_tok, xfr_status,
-                                        err_msg)) {
+                                        err_msg,
+                                        retries)) {
         // Transfer task needs to be cancelled
         DL_DEBUG(log_context, "Cancelling task: " << glob_task_id);
         me.m_glob.cancelTask(glob_task_id, acc_tok);
