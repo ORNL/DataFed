@@ -76,9 +76,9 @@ RUN adduser --disabled-password --gecos "" datafed
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 
-COPY ./scripts/dependency_versions.sh						${BUILD_DIR}/scripts/
-COPY ./scripts/dependency_install_functions.sh	${BUILD_DIR}/scripts/
-COPY ./scripts/install_authz_dependencies.sh		${BUILD_DIR}/scripts/
+COPY ./scripts/dependency_versions.sh          ${BUILD_DIR}/scripts/
+COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/install_authz_dependencies.sh   ${BUILD_DIR}/scripts/
 
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh
 
@@ -108,15 +108,15 @@ EXPOSE 7513
 # ArangoDB port
 EXPOSE 8529
 
-COPY ./core/CMakeLists.txt							${BUILD_DIR}/core/CMakeLists.txt
-COPY ./CMakeLists.txt										${BUILD_DIR}
-COPY ./scripts/dependency_versions.sh		${BUILD_DIR}/scripts/
-COPY ./scripts/generate_datafed.sh			${BUILD_DIR}/scripts/
-COPY ./scripts/generate_core_config.sh	${BUILD_DIR}/scripts/
-COPY ./scripts/install_core.sh					${BUILD_DIR}/scripts/
-COPY ./cmake														${BUILD_DIR}/cmake
-COPY ./core/docker/entrypoint.sh				${BUILD_DIR}/core/docker/
-COPY ./core/server											${BUILD_DIR}/core/server
+COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
+COPY ./CMakeLists.txt                  ${BUILD_DIR}
+COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_datafed.sh     ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_core_config.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/install_core.sh         ${BUILD_DIR}/scripts/
+COPY ./cmake                           ${BUILD_DIR}/cmake
+COPY ./core/docker/entrypoint.sh       ${BUILD_DIR}/core/docker/
+COPY ./core/server                     ${BUILD_DIR}/core/server
 
 # All files should be owned by the datafed user
 # RUN chown -R datafed:datafed ${DATAFED_DIR}
@@ -124,13 +124,13 @@ COPY ./core/server											${BUILD_DIR}/core/server
 # USER datafed
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-RUN cmake -S. -B build				\
-	-DBUILD_REPO_SERVER=False		\
-	-DBUILD_AUTHZ=False					\
-	-DBUILD_CORE_SERVER=True		\
-	-DBUILD_WEB_SERVER=False		\
-	-DBUILD_DOCS=False					\
-	-DBUILD_PYTHON_CLIENT=False \
+RUN cmake -S. -B build			\
+	-DBUILD_REPO_SERVER=False	\
+	-DBUILD_AUTHZ=False		\
+	-DBUILD_CORE_SERVER=True	\
+	-DBUILD_WEB_SERVER=False	\
+	-DBUILD_DOCS=False		\
+	-DBUILD_PYTHON_CLIENT=False	\
 	-DBUILD_FOXX=False
 RUN cmake --build build -j 8
 RUN cmake --build build --target install
@@ -147,25 +147,26 @@ EXPOSE 7512
 # and ingress?
 EXPOSE 9000
 
-COPY ./repository/CMakeLists.txt								${BUILD_DIR}/repository/CMakeLists.txt
-COPY ./CMakeLists.txt														${BUILD_DIR}
-COPY ./cmake/*																	${BUILD_DIR}/cmake/
-COPY ./scripts/dependency_versions.sh						${BUILD_DIR}/scripts/
-COPY ./scripts/dependency_install_functions.sh	${BUILD_DIR}/scripts/
-COPY ./scripts/generate_datafed.sh							${BUILD_DIR}/scripts/
-COPY ./scripts/generate_repo_config.sh					${BUILD_DIR}/scripts/
-COPY ./scripts/install_repo.sh									${BUILD_DIR}/scripts/
-COPY ./cmake																		${BUILD_DIR}/
-COPY ./repository/server												${BUILD_DIR}/repository/server
+COPY ./repository/CMakeLists.txt               ${BUILD_DIR}/repository/CMakeLists.txt
+COPY ./CMakeLists.txt                          ${BUILD_DIR}
+COPY ./scripts/dependency_versions.sh          ${BUILD_DIR}/scripts/
+COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_datafed.sh             ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_repo_config.sh         ${BUILD_DIR}/scripts/
+COPY ./scripts/install_repo.sh                 ${BUILD_DIR}/scripts/
+COPY ./cmake                                   ${BUILD_DIR}/
+COPY ./repository/server                       ${BUILD_DIR}/repository/server
+
+RUN apt update && apt install -y cmake
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-RUN cmake -S. -B build				\
-	-DBUILD_REPO_SERVER=True		\
-	-DBUILD_AUTHZ=False					\
-	-DBUILD_CORE_SERVER=False		\
-	-DBUILD_WEB_SERVER=False		\
-	-DBUILD_DOCS=False					\
-	-DBUILD_PYTHON_CLIENT=False \
+RUN cmake -S. -B build			\
+	-DBUILD_REPO_SERVER=True	\
+	-DBUILD_AUTHZ=False		\
+	-DBUILD_CORE_SERVER=False	\
+	-DBUILD_WEB_SERVER=False	\
+	-DBUILD_DOCS=False		\
+	-DBUILD_PYTHON_CLIENT=False	\
 	-DBUILD_FOXX=False
 RUN cmake --build build
 RUN cmake --build build --target install
@@ -184,31 +185,31 @@ EXPOSE 7513
 # For communication with the public
 EXPOSE 443
 
-COPY ./CMakeLists.txt									${BUILD_DIR}
+COPY ./CMakeLists.txt                 ${BUILD_DIR}
 COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
-COPY ./scripts/generate_datafed.sh		${BUILD_DIR}/scripts/
-COPY ./scripts/generate_ws_config.sh	${BUILD_DIR}/scripts/
-COPY ./scripts/install_ws.sh					${BUILD_DIR}/scripts/
-COPY ./cmake													${BUILD_DIR}/cmake
-COPY ./common/proto										${BUILD_DIR}/common/proto
-COPY ./web														${BUILD_DIR}/web
+COPY ./scripts/generate_datafed.sh    ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_ws_config.sh  ${BUILD_DIR}/scripts/
+COPY ./scripts/install_ws.sh          ${BUILD_DIR}/scripts/
+COPY ./cmake                          ${BUILD_DIR}/cmake
+COPY ./common/proto                   ${BUILD_DIR}/common/proto
+COPY ./web                            ${BUILD_DIR}/web
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-RUN cmake -S. -B build				\
-	-DBUILD_REPO_SERVER=False		\
-	-DBUILD_AUTHZ=False					\
-	-DBUILD_CORE_SERVER=False		\
-	-DBUILD_WEB_SERVER=True			\
-	-DBUILD_DOCS=False					\
-	-DBUILD_PYTHON_CLIENT=False \
-	-DBUILD_FOXX=False					\
+RUN cmake -S. -B build			\
+	-DBUILD_REPO_SERVER=False	\
+	-DBUILD_AUTHZ=False		\
+	-DBUILD_CORE_SERVER=False	\
+	-DBUILD_WEB_SERVER=True		\
+	-DBUILD_DOCS=False		\
+	-DBUILD_PYTHON_CLIENT=False	\
+	-DBUILD_FOXX=False		\
 	-DBUILD_COMMON=False
 RUN cmake --build build
 
 ENV NVM_DIR="$NVM_DIR"
 ENV NVM_INC="$NVM_INC"
 ENV NVM_BIN="$NVM_BIN"
-ENV	   PATH="$NVM_BIN:$PATH"
+ENV PATH="$NVM_BIN:$PATH"
 
 RUN cmake --build build --target install
 
@@ -253,13 +254,13 @@ RUN ln -s ${LIB_DIR}/libprotobuf.so.3.17.3.0 ${LIB_DIR}/libprotobuf.so
 
 # libzmq
 COPY --from=dependencies ${LIB_DIR}/libzmq.so.5.2.4 ${LIB_DIR}/libzmq.so.5.2.4
-RUN ln -s ${LIB_DIR}/libzmq.so.5.2.4	${LIB_DIR}/libzmq.so.5
-RUN ln -s ${LIB_DIR}/libzmq.so.5			${LIB_DIR}/libzmq.so
+RUN ln -s ${LIB_DIR}/libzmq.so.5.2.4 ${LIB_DIR}/libzmq.so.5
+RUN ln -s ${LIB_DIR}/libzmq.so.5     ${LIB_DIR}/libzmq.so
 
 # libsodium
 COPY --from=dependencies ${LIB_DIR}/libsodium.so.23.3.0 ${LIB_DIR}/libsodium.so.23.3.0
-RUN ln -s ${LIB_DIR}/libsodium.so.23.3.0	${LIB_DIR}/libsodium.so.23
-RUN ln -s ${LIB_DIR}/libsodium.so.23			${LIB_DIR}/libsodium.so
+RUN ln -s ${LIB_DIR}/libsodium.so.23.3.0 ${LIB_DIR}/libsodium.so.23
+RUN ln -s ${LIB_DIR}/libsodium.so.23     ${LIB_DIR}/libsodium.so
 
 # libboost-program-options
 COPY --from=dependencies /lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0 ${LIB_DIR}/libboost_program_options.so.1.71.0
@@ -269,12 +270,12 @@ RUN ldconfig
 
 USER datafed
 
-COPY --chown=datafed:datafed ./scripts/generate_datafed.sh			${DATAFED_DIR}/scripts/generate_datafed.sh
-COPY --chown=datafed:datafed ./scripts/generate_core_config.sh	${DATAFED_DIR}/scripts/generate_core_config.sh
-COPY --chown=datafed:datafed ./scripts/install_core.sh					${DATAFED_DIR}/scripts/install_core.sh
-COPY --chown=datafed:datafed ./cmake/Version.cmake							${DATAFED_DIR}/cmake/Version.cmake
-COPY --from=core-build --chown=datafed:datafed ${BUILD_DIR}/core/docker/entrypoint.sh			${BUILD_DIR}/core/entrypoint.sh
-COPY --from=core-build --chown=datafed:datafed ${DATAFED_INSTALL_PATH}/core/datafed-core	${DATAFED_INSTALL_PATH}/core/datafed-core
+COPY --chown=datafed:datafed ./scripts/generate_datafed.sh     ${DATAFED_DIR}/scripts/generate_datafed.sh
+COPY --chown=datafed:datafed ./scripts/generate_core_config.sh ${DATAFED_DIR}/scripts/generate_core_config.sh
+COPY --chown=datafed:datafed ./scripts/install_core.sh         ${DATAFED_DIR}/scripts/install_core.sh
+COPY --chown=datafed:datafed ./cmake/Version.cmake             ${DATAFED_DIR}/cmake/Version.cmake
+COPY --from=core-build --chown=datafed:datafed ${BUILD_DIR}/core/docker/entrypoint.sh    ${BUILD_DIR}/core/entrypoint.sh
+COPY --from=core-build --chown=datafed:datafed ${DATAFED_INSTALL_PATH}/core/datafed-core ${DATAFED_INSTALL_PATH}/core/datafed-core
 
 # ENTRYPOINT ["/app/entrypoint.sh"]
 # CMD ["/app/datafed-core","--cfg","/app/datafed-core.cfg"]
@@ -288,7 +289,7 @@ ARG LIB_DIR
 
 # The above should also be available at runtime
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
-ENV	         DATAFED_DIR="$DATAFED_DIR"
+ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 
 WORKDIR /datafed
@@ -300,13 +301,13 @@ RUN ln -s ${LIB_DIR}/libprotobuf.so.3.17.3.0 ${LIB_DIR}/libprotobuf.so
 
 # libzmq
 COPY --from=dependencies ${LIB_DIR}/libzmq.so.5.2.4 ${LIB_DIR}/libzmq.so.5.2.4
-RUN ln -s ${LIB_DIR}/libzmq.so.5.2.4	${LIB_DIR}/libzmq.so.5
-RUN ln -s ${LIB_DIR}/libzmq.so.5			${LIB_DIR}/libzmq.so
+RUN ln -s ${LIB_DIR}/libzmq.so.5.2.4 ${LIB_DIR}/libzmq.so.5
+RUN ln -s ${LIB_DIR}/libzmq.so.5     ${LIB_DIR}/libzmq.so
 
 # libsodium
 COPY --from=dependencies ${LIB_DIR}/libsodium.so.23.3.0 ${LIB_DIR}/libsodium.so.23.3.0
-RUN ln -s ${LIB_DIR}/libsodium.so.23.3.0	${LIB_DIR}/libsodium.so.23
-RUN ln -s ${LIB_DIR}/libsodium.so.23			${LIB_DIR}/libsodium.so
+RUN ln -s ${LIB_DIR}/libsodium.so.23.3.0 ${LIB_DIR}/libsodium.so.23
+RUN ln -s ${LIB_DIR}/libsodium.so.23     ${LIB_DIR}/libsodium.so
 
 # libboost-filesystem
 COPY --from=dependencies /lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0 ${LIB_DIR}/libboost_filesystem.so.1.71.0
@@ -321,10 +322,10 @@ RUN ldconfig
 USER datafed
 
 COPY --chown=datafed:datafed ./repository/docker/entrypoint_repo.sh ${BUILD_DIR}/repository/entrypoint.sh
-COPY --chown=datafed:datafed ./scripts/generate_datafed.sh					${DATAFED_DIR}/scripts/generate_datafed.sh
-COPY --chown=datafed:datafed ./scripts/generate_repo_config.sh			${DATAFED_DIR}/scripts/generate_repo_config.sh
-COPY --chown=datafed:datafed ./scripts/install_repo.sh							${DATAFED_DIR}/scripts/install_repo.sh
-COPY --chown=datafed:datafed ./cmake/Version.cmake									${DATAFED_DIR}/cmake/Version.cmake
+COPY --chown=datafed:datafed ./scripts/generate_datafed.sh          ${DATAFED_DIR}/scripts/generate_datafed.sh
+COPY --chown=datafed:datafed ./scripts/generate_repo_config.sh      ${DATAFED_DIR}/scripts/generate_repo_config.sh
+COPY --chown=datafed:datafed ./scripts/install_repo.sh              ${DATAFED_DIR}/scripts/install_repo.sh
+COPY --chown=datafed:datafed ./cmake/Version.cmake                  ${DATAFED_DIR}/cmake/Version.cmake
 COPY --from=repo-build --chown=datafed:datafed ${DATAFED_INSTALL_PATH}/repo/datafed-repo ${DATAFED_INSTALL_PATH}/repo/datafed-repo
 
 # ENTRYPOINT ["/app/entrypoint.sh"]
@@ -362,17 +363,17 @@ RUN ln -s "$NVM_DIR" /home/cades/.nvm
 
 USER datafed
 
-COPY --chown=datafed:datafed ./web/docker/entrypoint.sh				${BUILD_DIR}/web/entrypoint.sh
-COPY --chown=datafed:datafed ./scripts/generate_datafed.sh		${DATAFED_DIR}/scripts/generate_datafed.sh
+COPY --chown=datafed:datafed ./web/docker/entrypoint.sh       ${BUILD_DIR}/web/entrypoint.sh
+COPY --chown=datafed:datafed ./scripts/generate_datafed.sh    ${DATAFED_DIR}/scripts/generate_datafed.sh
 COPY --chown=datafed:datafed ./scripts/dependency_versions.sh ${DATAFED_DIR}/scripts/dependency_versions.sh
-COPY --chown=datafed:datafed ./scripts/generate_ws_config.sh	${DATAFED_DIR}/scripts/generate_ws_config.sh
-COPY --chown=datafed:datafed ./scripts/install_ws.sh					${DATAFED_DIR}/scripts/install_ws.sh
-COPY --chown=datafed:datafed ./cmake/Version.cmake						${DATAFED_DIR}/cmake/Version.cmake
+COPY --chown=datafed:datafed ./scripts/generate_ws_config.sh  ${DATAFED_DIR}/scripts/generate_ws_config.sh
+COPY --chown=datafed:datafed ./scripts/install_ws.sh          ${DATAFED_DIR}/scripts/install_ws.sh
+COPY --chown=datafed:datafed ./cmake/Version.cmake            ${DATAFED_DIR}/cmake/Version.cmake
 
 COPY --from=ws-build --chown=datafed:datafed ${BUILD_DIR}/web/package.json ${DATAFED_INSTALL_PATH}/web/package.json
-RUN . ${DATAFED_DIR}/scripts/dependency_versions.sh && \
-		. ${DATAFED_DIR}/.nvm/nvm.sh &&										 \
-		npm --allow-root --unsafe-perm --prefix ${DATAFED_INSTALL_PATH}/web install
+RUN . ${DATAFED_DIR}/scripts/dependency_versions.sh &&					\
+	. ${DATAFED_DIR}/.nvm/nvm.sh &&							\
+	npm --allow-root --unsafe-perm --prefix ${DATAFED_INSTALL_PATH}/web install
 
 COPY --from=ws-build --chown=datafed:datafed ${BUILD_DIR}/web ${DATAFED_INSTALL_PATH}/web
 
@@ -394,39 +395,39 @@ ENV                BUILD_DIR="$BUILD_DIR"
 # All files should be owned by the datafed user
 RUN chown -R datafed:datafed ${DATAFED_DIR}
 
-COPY --chown=datafed:datafed ./scripts/dependency_versions.sh					${BUILD_DIR}/scripts/
-COPY --chown=datafed:datafed ./scripts/generate_authz_config.sh				${BUILD_DIR}/scripts/generate_authz_config.sh
-COPY --chown=datafed:datafed ./scripts/generate_datafed.sh						${BUILD_DIR}/scripts/generate_datafed.sh
-COPY --chown=datafed:datafed ./CMakeLists.txt													${BUILD_DIR}
-COPY --chown=datafed:datafed ./cmake																	${BUILD_DIR}/cmake
-COPY --chown=datafed:datafed ./repository/CMakeLists.txt							${BUILD_DIR}/repository/CMakeLists.txt
-COPY --chown=datafed:datafed ./repository/gridftp/CMakeLists.txt			${BUILD_DIR}/repository/gridftp/CMakeLists.txt
-COPY --chown=datafed:datafed ./scripts/globus/setup_globus.sh					${BUILD_DIR}/scripts/globus/setup_globus.sh
-COPY --chown=datafed:datafed ./scripts/globus/generate_repo_form.sh		${BUILD_DIR}/scripts/globus/generate_repo_form.sh
-COPY --chown=datafed:datafed ./repository/docker/entrypoint_authz.sh	${BUILD_DIR}/repository/docker/entrypoint_authz.sh
-COPY --chown=datafed:datafed ./common																	${BUILD_DIR}/common
-COPY --chown=datafed:datafed ./repository/gridftp/globus5							${BUILD_DIR}/repository/gridftp/globus5
+COPY --chown=datafed:datafed ./scripts/dependency_versions.sh        ${BUILD_DIR}/scripts/
+COPY --chown=datafed:datafed ./scripts/generate_authz_config.sh      ${BUILD_DIR}/scripts/generate_authz_config.sh
+COPY --chown=datafed:datafed ./scripts/generate_datafed.sh           ${BUILD_DIR}/scripts/generate_datafed.sh
+COPY --chown=datafed:datafed ./CMakeLists.txt                        ${BUILD_DIR}
+COPY --chown=datafed:datafed ./cmake                                 ${BUILD_DIR}/cmake
+COPY --chown=datafed:datafed ./repository/CMakeLists.txt             ${BUILD_DIR}/repository/CMakeLists.txt
+COPY --chown=datafed:datafed ./repository/gridftp/CMakeLists.txt     ${BUILD_DIR}/repository/gridftp/CMakeLists.txt
+COPY --chown=datafed:datafed ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
+COPY --chown=datafed:datafed ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
+COPY --chown=datafed:datafed ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
+COPY --chown=datafed:datafed ./common                                ${BUILD_DIR}/common
+COPY --chown=datafed:datafed ./repository/gridftp/globus5            ${BUILD_DIR}/repository/gridftp/globus5
 
 # Build as if a non root user
 USER datafed
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
-RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
-	cmake -S. -B build																	\
-		-DBUILD_REPO_SERVER=False													\
-		-DBUILD_AUTHZ=True																\
-    -DBUILD_CORE_SERVER=False													\
-		-DBUILD_WEB_SERVER=False													\
-    -DBUILD_DOCS=False																\
-		-DBUILD_PYTHON_CLIENT=False												\
-    -DBUILD_FOXX=False
+RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
+	cmake -S. -B build				\
+		-DBUILD_REPO_SERVER=False		\
+		-DBUILD_AUTHZ=True			\
+		-DBUILD_CORE_SERVER=False		\
+		-DBUILD_WEB_SERVER=False		\
+		-DBUILD_DOCS=False			\
+		-DBUILD_PYTHON_CLIENT=False		\
+		-DBUILD_FOXX=False
 RUN cmake --build build
 RUN cmake --build build --target install
 
-COPY ./scripts/globus/setup_globus.sh					${BUILD_DIR}/scripts/globus/setup_globus.sh
-COPY ./scripts/globus/generate_repo_form.sh		${BUILD_DIR}/scripts/globus/generate_repo_form.sh
-COPY ./repository/docker/entrypoint_authz.sh	${BUILD_DIR}/repository/docker/entrypoint_authz.sh
+COPY ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
+COPY ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
+COPY ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
 
 USER root
 
