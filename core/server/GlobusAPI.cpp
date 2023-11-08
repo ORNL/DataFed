@@ -354,7 +354,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
 
       // Safely convert double to uint32_t, resp_obj returns a double the
       // converter makes sure that the double fits appropriately into a uint32_t
-      const uint32_t faults = std::any_cast<uint32_t>(double_to_uint32_converter.convert(resp_obj.getNumber("faults")));
+      const uint32_t faults = std::any_cast<uint32_t>(double_to_uint32_converter->convert(resp_obj.getNumber("faults")));
 
       if (faults > retries) {
 
