@@ -3,10 +3,13 @@
 
 // Local public includes
 #include "common/DynaLog.hpp"
+#include "common/ITypeConverter.hpp"
 #include "common/TraceException.hpp"
+#include "common/TypeConverterFactory.hpp"
 #include "common/Util.hpp"
 
 // Standard includes
+#include <any>
 #include <iostream>
 #include <time.h>
 #include <unistd.h>
@@ -327,6 +330,9 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
   a_err_msg.clear();
   string raw_result;
 
+  TypeConverterFactory factory;
+  auto double_to_uint32_converter = factory.create(CppType::cpp_double, CppType::cpp_uint32_t);
+
   // First check task global status for "SUCEEDED", "FAILED", "INACTIVE"
 
   long code = get(m_curl_xfr, m_config.glob_xfr_url + "task/",
@@ -346,12 +352,11 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
 
     if (status == "ACTIVE") {
 
-      double faults = resp_obj.getNumber("faults");
+      // Safely convert double to uint32_t, resp_obj returns a double the
+      // converter makes sure that the double fits appropriately into a uint32_t
+      const uint32_t faults = std::any_cast<uint32_t>(double_to_uint32_converter.convert(resp_obj.getNumber("faults")));
 
-      uint32_t faults_converted;
-      // Safely convert double to uint32_t
-
-      if (faults > 0.0) {
+      if (faults > retries) {
 
         DL_WARNING(m_log_context, "faults encountered for task: "
                                       << a_task_id << " faults " << faults << " allowed retries " << retries);

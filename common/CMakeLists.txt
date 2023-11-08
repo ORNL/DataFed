@@ -16,7 +16,8 @@ if( BUILD_COMMON )
     "source/operators/*.cpp"
     "source/servers/*.cpp"
     "source/support/zeromq/*.cpp"
-    "source/sockets/*.cpp")
+    "source/sockets/*.cpp"
+    "source/type_converters/*.cpp")
   add_library( common STATIC ${Sources})
   set_target_properties(common PROPERTIES POSITION_INDEPENDENT_CODE ON SOVERSION ${DATAFED_COMMON_LIB_MAJOR} VERSION ${DATAFED_COMMON_LIB_MAJOR}.${DATAFED_COMMON_LIB_MINOR}.${DATAFED_COMMON_LIB_PATCH} )
   target_link_libraries( common Boost::date_time ${Protobuf_LIBRARIES} datafed-protobuf) 
