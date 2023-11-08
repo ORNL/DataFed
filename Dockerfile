@@ -1,11 +1,11 @@
-ARG          DATAFED_DIR="/datafed"
-ARG DATAFED_INSTALL_PATH="$DATAFED_DIR/install"
-ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
-ARG            BUILD_DIR="$DATAFED_DIR/source"
-ARG              NVM_DIR="$DATAFED_DIR/.nvm"
-ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
-ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
-ARG              LIB_DIR="/usr/local/lib"
+ARG             DATAFED_DIR="/datafed"
+ARG    DATAFED_INSTALL_PATH="$DATAFED_DIR/install"
+ARG               GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
+ARG               BUILD_DIR="$DATAFED_DIR/source"
+ARG                 NVM_DIR="$DATAFED_DIR/.nvm"
+ARG                 NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
+ARG                 NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
+ARG                 LIB_DIR="/usr/local/lib"
 
 FROM ubuntu:focal AS base
 
@@ -16,13 +16,17 @@ ARG DATAFED_DIR
 ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
 ARG DEBIAN_FRONTEND=noninteractive
+ARG LIB_DIR
 
+ENV BUILD_DIR="${BUILD_DIR}"
 ENV DATAFED_DIR="${DATAFED_DIR}"
+ENV LIB_DIR="${LIB_DIR}"
 
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${BUILD_DIR}/repository/server
 RUN mkdir -p ${BUILD_DIR}/common/proto
+RUN mkdir -p /libraries
 RUN mkdir -p ${NVM_DIR}
 
 WORKDIR ${BUILD_DIR}
@@ -46,6 +50,13 @@ RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 # RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_gcs.sh
 # RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh
+
+COPY ./scripts/copy_dependency.sh ${BUILD_DIR}/scripts/
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf from
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq from
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium from
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options from
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_filesystem from
 
 # RUN cp -R $HOME/.nvm ${NVM_DIR}
 
@@ -123,15 +134,15 @@ COPY ./core/server                     ${BUILD_DIR}/core/server
 #
 # USER datafed
 
-RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-RUN cmake -S. -B build			\
-	-DBUILD_REPO_SERVER=False	\
-	-DBUILD_AUTHZ=False		\
-	-DBUILD_CORE_SERVER=True	\
-	-DBUILD_WEB_SERVER=False	\
-	-DBUILD_DOCS=False		\
-	-DBUILD_PYTHON_CLIENT=False	\
-	-DBUILD_FOXX=False
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
+	cmake -S. -B build						\
+		-DBUILD_REPO_SERVER=False		\
+		-DBUILD_AUTHZ=False					\
+		-DBUILD_CORE_SERVER=True		\
+		-DBUILD_WEB_SERVER=False		\
+		-DBUILD_DOCS=False					\
+		-DBUILD_PYTHON_CLIENT=False	\
+		-DBUILD_FOXX=False
 RUN cmake --build build -j 8
 RUN cmake --build build --target install
 
@@ -154,20 +165,18 @@ COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh             ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_repo_config.sh         ${BUILD_DIR}/scripts/
 COPY ./scripts/install_repo.sh                 ${BUILD_DIR}/scripts/
-COPY ./cmake                                   ${BUILD_DIR}/
+COPY ./cmake                                   ${BUILD_DIR}/cmake
 COPY ./repository/server                       ${BUILD_DIR}/repository/server
 
-RUN apt update && apt install -y cmake
-
-RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-RUN cmake -S. -B build			\
-	-DBUILD_REPO_SERVER=True	\
-	-DBUILD_AUTHZ=False		\
-	-DBUILD_CORE_SERVER=False	\
-	-DBUILD_WEB_SERVER=False	\
-	-DBUILD_DOCS=False		\
-	-DBUILD_PYTHON_CLIENT=False	\
-	-DBUILD_FOXX=False
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
+	cmake -S. -B build						\
+		-DBUILD_REPO_SERVER=True		\
+		-DBUILD_AUTHZ=False					\
+		-DBUILD_CORE_SERVER=False		\
+		-DBUILD_WEB_SERVER=False		\
+		-DBUILD_DOCS=False					\
+		-DBUILD_PYTHON_CLIENT=False	\
+		-DBUILD_FOXX=False
 RUN cmake --build build
 RUN cmake --build build --target install
 
@@ -194,16 +203,16 @@ COPY ./cmake                          ${BUILD_DIR}/cmake
 COPY ./common/proto                   ${BUILD_DIR}/common/proto
 COPY ./web                            ${BUILD_DIR}/web
 
-RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-RUN cmake -S. -B build			\
-	-DBUILD_REPO_SERVER=False	\
-	-DBUILD_AUTHZ=False		\
-	-DBUILD_CORE_SERVER=False	\
-	-DBUILD_WEB_SERVER=True		\
-	-DBUILD_DOCS=False		\
-	-DBUILD_PYTHON_CLIENT=False	\
-	-DBUILD_FOXX=False		\
-	-DBUILD_COMMON=False
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
+	cmake -S. -B build						\
+		-DBUILD_REPO_SERVER=False		\
+		-DBUILD_AUTHZ=False					\
+		-DBUILD_CORE_SERVER=False		\
+		-DBUILD_WEB_SERVER=True			\
+		-DBUILD_DOCS=False					\
+		-DBUILD_PYTHON_CLIENT=False	\
+		-DBUILD_FOXX=False					\
+		-DBUILD_COMMON=False
 RUN cmake --build build
 
 ENV NVM_DIR="$NVM_DIR"
@@ -223,6 +232,8 @@ ARG BUILD_DIR
 # Recommended to mount ssh public key on run
 RUN adduser --disabled-password --gecos "" datafed
 
+COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/
+COPY ./scripts/copy_dependency.sh      ${BUILD_DIR}/scripts/
 RUN mkdir -p ${DATAFED_DIR}
 RUN mkdir -p /opt/datafed
 RUN mkdir -p /var/log/datafed
@@ -246,25 +257,17 @@ ARG LIB_DIR
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
+ENV              LIB_DIR="$LIB_DIR"
 
 # copy necessary shared libraries
-# libprotobuf
-COPY --from=dependencies ${LIB_DIR}/libprotobuf.so.3.17.3.0 ${LIB_DIR}/libprotobuf.so.3.17.3.0
-RUN ln -s ${LIB_DIR}/libprotobuf.so.3.17.3.0 ${LIB_DIR}/libprotobuf.so
-
-# libzmq
-COPY --from=dependencies ${LIB_DIR}/libzmq.so.5.2.4 ${LIB_DIR}/libzmq.so.5.2.4
-RUN ln -s ${LIB_DIR}/libzmq.so.5.2.4 ${LIB_DIR}/libzmq.so.5
-RUN ln -s ${LIB_DIR}/libzmq.so.5     ${LIB_DIR}/libzmq.so
-
-# libsodium
-COPY --from=dependencies ${LIB_DIR}/libsodium.so.23.3.0 ${LIB_DIR}/libsodium.so.23.3.0
-RUN ln -s ${LIB_DIR}/libsodium.so.23.3.0 ${LIB_DIR}/libsodium.so.23
-RUN ln -s ${LIB_DIR}/libsodium.so.23     ${LIB_DIR}/libsodium.so
-
-# libboost-program-options
-COPY --from=dependencies /lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0 ${LIB_DIR}/libboost_program_options.so.1.71.0
-RUN ln -s ${LIB_DIR}/libboost_program_options.so.1.71.0 ${LIB_DIR}/libboost_program_options.so
+COPY --from=dependencies /libraries/libprotobuf.so           /libraries/libprotobuf.so
+COPY --from=dependencies /libraries/libzmq.so                /libraries/libzmq.so
+COPY --from=dependencies /libraries/libsodium.so             /libraries/libsodium.so
+COPY --from=dependencies /libraries/libboost_program_options.so /libraries/libboost_program_options.so
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
 
 RUN ldconfig
 
@@ -291,31 +294,21 @@ ARG LIB_DIR
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
+ENV              LIB_DIR="$LIB_DIR"
 
 WORKDIR /datafed
 
 # copy necessary shared libraries
-# libprotobuf
-COPY --from=dependencies ${LIB_DIR}/libprotobuf.so.3.17.3.0 ${LIB_DIR}/libprotobuf.so.3.17.3.0
-RUN ln -s ${LIB_DIR}/libprotobuf.so.3.17.3.0 ${LIB_DIR}/libprotobuf.so
-
-# libzmq
-COPY --from=dependencies ${LIB_DIR}/libzmq.so.5.2.4 ${LIB_DIR}/libzmq.so.5.2.4
-RUN ln -s ${LIB_DIR}/libzmq.so.5.2.4 ${LIB_DIR}/libzmq.so.5
-RUN ln -s ${LIB_DIR}/libzmq.so.5     ${LIB_DIR}/libzmq.so
-
-# libsodium
-COPY --from=dependencies ${LIB_DIR}/libsodium.so.23.3.0 ${LIB_DIR}/libsodium.so.23.3.0
-RUN ln -s ${LIB_DIR}/libsodium.so.23.3.0 ${LIB_DIR}/libsodium.so.23
-RUN ln -s ${LIB_DIR}/libsodium.so.23     ${LIB_DIR}/libsodium.so
-
-# libboost-filesystem
-COPY --from=dependencies /lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0 ${LIB_DIR}/libboost_filesystem.so.1.71.0
-RUN ln -s ${LIB_DIR}/libboost_filesystem.so.1.71.0 ${LIB_DIR}/libboost_filesystem.so
-
-# libboost-program-options
-COPY --from=dependencies /lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0 ${LIB_DIR}/libboost_program_options.so.1.71.0
-RUN ln -s ${LIB_DIR}/libboost_program_options.so.1.71.0 ${LIB_DIR}/libboost_program_options.so
+COPY --from=dependencies /libraries/libprotobuf.so           /libraries/libprotobuf.so
+COPY --from=dependencies /libraries/libzmq.so                /libraries/libzmq.so
+COPY --from=dependencies /libraries/libsodium.so             /libraries/libsodium.so
+COPY --from=dependencies /libraries/libboost_program_options.so /libraries/libboost_program_options.so
+COPY --from=dependencies /libraries/libboost_filesystem.so      /libraries/libboost_filesystem.so
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_filesystem to
 
 RUN ldconfig
 
