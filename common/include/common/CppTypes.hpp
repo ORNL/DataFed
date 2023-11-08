@@ -8,16 +8,15 @@
 
 namespace SDMS {
 
-
-enum class CppType { 
-cpp_double,
-cpp_string,
-cpp_uint32_t,
-cpp_uint64_t,
-cpp_char 
+enum class CppType {
+  cpp_double,
+  cpp_string,
+  cpp_uint32_t,
+  cpp_uint64_t,
+  cpp_char
 };
 extern std::unordered_map<CppType, std::string> cpp_enum_type_to_string;
 
-}
+} // namespace SDMS
 
 #endif // CPP_TYPES_HPP

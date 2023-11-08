@@ -59,10 +59,8 @@ public:
            const std::vector<std::pair<std::string, std::string>> &a_files,
            bool a_encrypt, const std::string &a_acc_token);
   bool checkTransferStatus(const std::string &a_task_id,
-                           const std::string &a_acc_tok,
-                           XfrStatus &a_status,
-                           std::string &a_err_msg,
-                           const uint32_t retries);
+                           const std::string &a_acc_tok, XfrStatus &a_status,
+                           std::string &a_err_msg, const uint32_t retries);
   void cancelTask(const std::string &a_task_id, const std::string &a_acc_tok);
   void getEndpointInfo(const std::string &a_ep_id,
                        const std::string &a_acc_token, EndpointInfo &a_ep_info);

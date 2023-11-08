@@ -15,19 +15,23 @@
 
 namespace SDMS {
 
-std::unordered_map<CppType, 
-  std::unordered_map<CppType, TypeConverterFactory::ConverterCreateMethod>>
+std::unordered_map<
+    CppType,
+    std::unordered_map<CppType, TypeConverterFactory::ConverterCreateMethod>>
     TypeConverterFactory::m_create_methods;
 
 TypeConverterFactory::TypeConverterFactory() {
-  registerTypeConverter<StringUint32T, CppType::cpp_string, CppType::cpp_uint32_t>();
-  registerTypeConverter<StringUint64T, CppType::cpp_string, CppType::cpp_uint64_t>();
-  registerTypeConverter<DoubleUint32T, CppType::cpp_double, CppType::cpp_uint32_t>();
+  registerTypeConverter<StringUint32T, CppType::cpp_string,
+                        CppType::cpp_uint32_t>();
+  registerTypeConverter<StringUint64T, CppType::cpp_string,
+                        CppType::cpp_uint64_t>();
+  registerTypeConverter<DoubleUint32T, CppType::cpp_double,
+                        CppType::cpp_uint32_t>();
 }
 
-std::unique_ptr<ITypeConverter> TypeConverterFactory::create(
-    const CppType from_type,
-    const CppType to_type) const {
+std::unique_ptr<ITypeConverter>
+TypeConverterFactory::create(const CppType from_type,
+                             const CppType to_type) const {
 
   if (m_create_methods.count(from_type)) {
     if (m_create_methods[from_type].count(to_type)) {
@@ -40,7 +44,7 @@ std::unique_ptr<ITypeConverter> TypeConverterFactory::create(
   error_msg += "\nFrom " + cpp_enum_type_to_string[from_type] + " -> To: ";
   error_msg += cpp_enum_type_to_string[to_type];
   EXCEPT(1, error_msg);
-  
+
   return std::unique_ptr<ITypeConverter>();
 }
 

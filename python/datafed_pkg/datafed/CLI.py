@@ -876,7 +876,7 @@ def _dataCreate(
     repository,
     deps,
     context,
-    retries
+    retries,
 ):
     """
     Create a new data record. The data record 'title' is required, but all
@@ -900,7 +900,7 @@ def _dataCreate(
         error_msg = "Invalid option, cannot specify retries if raw data file"
         error_msg += "has not been specified."
         raise Exception(error_msg)
-    
+
     if retries and external:
         error_msg = "Invalid option, cannot specify retries on external data."
         error_msg += " The data is not transferred when using an external repo."
@@ -932,16 +932,13 @@ def _dataCreate(
         repo_id=repository,
         raw_data_file=raw_data_file,
         external=external,
-        context=context
+        context=context,
     )
     _generic_reply_handler(reply, _print_data)
 
     if raw_data_file and not external:
         click.echo("")
-        reply = _capi.dataPut(
-                reply[0].data[0].id,
-                raw_data_file,
-                retries=retries)
+        reply = _capi.dataPut(reply[0].data[0].id, raw_data_file, retries=retries)
         _generic_reply_handler(reply, _print_task)
 
 
@@ -1048,7 +1045,7 @@ def _dataUpdate(
     deps_add,
     deps_rem,
     context,
-    retries
+    retries,
 ):
     """
     Update an existing data record. The data record ID is required and can be
@@ -1072,7 +1069,7 @@ def _dataUpdate(
         error_msg = "Invalid option, cannot specify retries if raw data file"
         error_msg += "has not been specified."
         raise Exception(error_msg)
-    
+
     if retries and external:
         error_msg = "Invalid option, cannot specify retries on external data."
         error_msg += " The data is not transferred when using an external repo."
@@ -1099,16 +1096,13 @@ def _dataUpdate(
         deps_add=deps_add,
         deps_rem=deps_rem,
         raw_data_file=raw_data_file if external else None,
-        context=context
+        context=context,
     )
     _generic_reply_handler(reply, _print_data)
 
     if raw_data_file and not external:
         click.echo("")
-        reply = _capi.dataPut(
-                reply[0].data[0].id,
-                raw_data_file,
-                retries=retries)
+        reply = _capi.dataPut(reply[0].data[0].id, raw_data_file, retries=retries)
         _generic_reply_handler(reply, _print_task)
 
 
@@ -1195,7 +1189,7 @@ def _dataGet(df_id, path, wait, encrypt, orig_fname, context, retries):
         orig_fname=orig_fname,
         wait=wait,
         context=context,
-        retries=retries
+        retries=retries,
     )
 
     if reply[1] == "DataGetReply":
@@ -1254,7 +1248,7 @@ def _dataPut(data_id, path, wait, extension, encrypt, context, retries):
         wait=wait,
         extension=extension,
         context=context,
-        retries=retries
+        retries=retries,
     )
 
     if reply[1] == "DataPutReply":

@@ -22,25 +22,24 @@ BOOST_AUTO_TEST_CASE(testing_double_to_uint32_t) {
   std::any output_any;
   { // Should pass
     double input = 0.0;
-    BOOST_CHECK_NO_THROW(output_any = converter->convert(input)); 
-    uint32_t output = std::any_cast<uint32_t>(output_any); 
+    BOOST_CHECK_NO_THROW(output_any = converter->convert(input));
+    uint32_t output = std::any_cast<uint32_t>(output_any);
     BOOST_CHECK(output == 0);
-  } 
+  }
   { // Should pass
     double input = 4294967295.0;
-    BOOST_CHECK_NO_THROW(output_any = converter->convert(input)); 
-    uint32_t output = std::any_cast<uint32_t>(output_any); 
+    BOOST_CHECK_NO_THROW(output_any = converter->convert(input));
+    uint32_t output = std::any_cast<uint32_t>(output_any);
     BOOST_CHECK(output == 4294967295);
   }
   { // Should throw
     double input = 4294967295.0 + 1;
-    BOOST_CHECK_THROW(converter->convert(input), TraceException); 
+    BOOST_CHECK_THROW(converter->convert(input), TraceException);
   }
   { // Should throw
     double input = -0.1;
-    BOOST_CHECK_THROW(converter->convert(input), TraceException); 
+    BOOST_CHECK_THROW(converter->convert(input), TraceException);
   }
 }
-
 
 BOOST_AUTO_TEST_SUITE_END()

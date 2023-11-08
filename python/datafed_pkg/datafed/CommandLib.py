@@ -692,7 +692,7 @@ class API:
         wait=False,
         timeout_sec=0,
         context=None,
-        retries=None
+        retries=None,
     ):
         """
         Get (download) raw data for one or more data records and/or collections
@@ -821,7 +821,7 @@ class API:
         timeout_sec=0,
         extension=None,
         context=None,
-        retries=None
+        retries=None,
     ):
         """
         Put (upload) raw data for a data record

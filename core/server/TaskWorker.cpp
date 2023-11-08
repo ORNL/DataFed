@@ -248,8 +248,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
       sleep(5);
 
       if (me.m_glob.checkTransferStatus(glob_task_id, acc_tok, xfr_status,
-                                        err_msg,
-                                        retries)) {
+                                        err_msg, retries)) {
         // Transfer task needs to be cancelled
         DL_DEBUG(log_context, "Cancelling task: " << glob_task_id);
         me.m_glob.cancelTask(glob_task_id, acc_tok);
