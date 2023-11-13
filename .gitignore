@@ -9,6 +9,9 @@ config/datafed-ws.cfg
 core/database/foxx/api/version_router.js
 core/database/foxx/manifest.json
 core/server/Version.hpp
+docs/.buildinfo
+docs/.doctrees/
+docs/.nojekyll
 python/datafed_pkg/datafed/VERSION.py
 repository/gridftp/globus5/authz/source/Version.hpp
 repository/server/Version.hpp
@@ -26,3 +29,5 @@ web/Version.proto
 web/datafed-core-key.pub
 web/node_modules/
 web/static/datafed-core-key.pub
+
+
