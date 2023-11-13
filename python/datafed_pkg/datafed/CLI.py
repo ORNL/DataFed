@@ -2140,6 +2140,22 @@ def _epDefaultSet(current, endpoint):
 
 
 @_cli.command(name="setup")
+@click.option("-r", "--reset-all", is_flag=True, help="Reset the configuration
+        file (WARNING this will remove the existing .ini file), redownload the
+        DataFed server public key and recreate the users pubic and private key
+        pair.")
+@click.option("-a", "--reset-all-credentials", is_flag=True, help="Recreate the
+        users pubic and private keys, and redownload and use the DataFed servers
+        public key.")
+@click.option("-u", "--reset-user-credentials", is_flag=True, help="Recreate the
+        users pubic and private keys only.")
+@click.option("-m", "--reset-server-credentials", is_flag=True, help="Redownload and use the DataFed servers
+        public key.")
+@click.option("-f", "--reset-config-file", is_flag=True, help="Reset the
+        configuration file with defaults.")
+@click.option("-s", "--show", is_flag=True, help="Show all configuration options.")
+@click.option("-c", "--show-config-file", is_flag=True, help="Show contents of
+        config file.")
 @click.pass_context
 def _setup(ctx):
     """
