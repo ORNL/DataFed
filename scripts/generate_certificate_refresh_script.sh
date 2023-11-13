@@ -9,7 +9,7 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 echo "$FILE_NAME $VERSION"
 
 ERROR_DETECTED=0
@@ -54,7 +54,7 @@ cat << OUTER_EOF > "$PROJECT_ROOT/scripts/admin_refresh_certs.sh"
 # and root root
 DOMAIN="${DATAFED_DOMAIN}"
 systemctl stop datafed-ws.service
-lego --email="${DATAFED_LEGO_EMAIL}" --domains="${DATAFED_DOMAIN}" --tls run
+lego --accept-tos --email="${DATAFED_LEGO_EMAIL}" --domains="${DATAFED_DOMAIN}" --tls run
 DIR_NAME=\$(date +%m-%Y)
 mkdir -p "\${DIR_NAME}"
 # Create a copy so we can always go back and check when the last time was
