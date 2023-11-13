@@ -2277,7 +2277,7 @@ class API:
     # --------------------------------------------------- Miscellaneous Methods
     # =========================================================================
 
-    def setupCredentials(self):
+    def setupCredentials(self, overwrite=True):
         """
         Setup local credentials
 
@@ -2295,6 +2295,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
+
         cfg_dir = self.cfg.get("client_cfg_dir")
         pub_file = self.cfg.get("client_pub_key_file")
         priv_file = self.cfg.get("client_priv_key_file")
@@ -2311,16 +2312,63 @@ class API:
         if pub_file is None:
             pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
 
-        keyf = open(pub_file, "w")
-        keyf.write(reply[0].pub_key)
-        keyf.close()
+        if not os.path.exists(pub_file) or overwrite:
+            keyf = open(pub_file, "w")
+            keyf.write(reply[0].pub_key)
+            keyf.close()
 
         if priv_file is None:
             priv_file = os.path.join(cfg_dir, "datafed-user-key.priv")
 
-        keyf = open(priv_file, "w")
-        keyf.write(reply[0].priv_key)
-        keyf.close()
+        if not os.path.exists(pub_file) or overwrite:
+            keyf = open(priv_file, "w")
+            keyf.write(reply[0].priv_key)
+            keyf.close()
+
+
+
+    def setupServerCredentials(self, overwrite=True):
+        """
+        Download server public key
+
+        If no server public key exists will download a new one. If one already
+        exists and is found will use it and not bother downloading a new one.
+        """
+        write = False
+        if overwrite:
+            write = True
+
+
+        serv_key_file = self.cfg.get("server_pub_key_file")
+        if serv_key_file is None:
+            raise Exception(
+                "Could not find location of server public key file. Please "
+                "check that your configuration settings are set correctly and "
+                "that a path is defined to 'server_pub_key_file'. NOTE the file"
+                " does not need to exist but a valid path needs to be defined."
+            )
+
+        host = self.cfg.get("server_host")
+        if host is None:
+            raise Exception(
+                "A DataFed host has not been defined, please make sure that"
+                " a 'server_host' has been defined and set in your "
+                "configuration file."
+            )
+
+        # The file does not exist
+        if not os.path.exists(serv_key_file):
+            write = True
+
+        if write:
+            url = "https://" + host + "/datafed-core-key.pub"
+            wget.download(url, out=serv_key_file)
+
+
+    def setupAllCredentials(self, overwrite=True):
+        self.setupServerCredentials(overwrite)
+        self.setupCredentials(overwrite)
+
 
     def setContext(self, item_id=None):
         """
@@ -2713,15 +2761,18 @@ class API:
                     opts["server_pub_key_file"] = serv_key_file
                     save = True
 
-                if not serv_key_file:
-                    raise Exception(
-                        "Could not find location of server public key file."
-                    )
-
-                if not os.path.exists(serv_key_file):
-                    # Make default server pub key file
-                    url = "https://" + opts["server_host"] + "/datafed-core-key.pub"
-                    wget.download(url, out=serv_key_file)
+                # Will not overwrite the server core public key if it already 
+                # exists
+                self.setupServerCredentials(overwrite=False)
+#                if not serv_key_file:
+#                    raise Exception(
+#                        "Could not find location of server public key file."
+#                    )
+#
+#                if not os.path.exists(serv_key_file):
+#                    # Make default server pub key file
+#                    url = "https://" + opts["server_host"] + "/datafed-core-key.pub"
+#                    wget.download(url, out=serv_key_file)
 
         if "client_pub_key_file" not in opts or "client_priv_key_file" not in opts:
             if "client_cfg_dir" not in opts:
