@@ -2,11 +2,15 @@
 
 ## MAJOR Breaking changes
 
+## MINOR Feature
+1. [909] - Added Support for Google Analytics
+
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [914] - Improve GitHub template
 2. [910] - Static code analysis and status checks fixed, improvements to CI
-1. [915] - Refactor CI to use pipelines Gitlab feature along with pipelines 
-           script
+3. [923] - Fixed missing flag in certificate refresh script
+4. [917] - Add additional files to .gitignore
+5. [915] - Refactor CI to use pipelines Gitlab feature along with pipelines 
 
 # v2023.10.23.15.50
 
