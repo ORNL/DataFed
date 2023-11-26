@@ -208,7 +208,6 @@ build-foxx:
     DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
     DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
   stage: build-unit-test-deploy
-  needs: ["setup-vms"]
   tags:
     - ci-datafed-arango
   rules:
