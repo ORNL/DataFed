@@ -67,6 +67,9 @@ class API:
     )
 
     def __init__(self, opts={}):
+        self._initialize(opts)
+
+    def _initialize(self, opts={}):
         if not isinstance(opts, dict):
             raise Exception("CommandLib API options parameter must be a dictionary.")
 
@@ -2305,9 +2308,7 @@ class API:
                 "Client configuration directory and/or client key files not configured"
             )
 
-        msg = auth.GenerateCredentialsRequest()
-
-        reply = self._mapi.sendRecv(msg)
+        reply = self.generateCredentials()
 
         if pub_file is None:
             pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
@@ -2325,8 +2326,6 @@ class API:
             keyf.write(reply[0].priv_key)
             keyf.close()
 
-
-
     def setupServerCredentials(self, overwrite=True):
         """
         Download server public key
@@ -2337,7 +2336,6 @@ class API:
         write = False
         if overwrite:
             write = True
-
 
         serv_key_file = self.cfg.get("server_pub_key_file")
         if serv_key_file is None:
@@ -2364,11 +2362,26 @@ class API:
             url = "https://" + host + "/datafed-core-key.pub"
             wget.download(url, out=serv_key_file)
 
-
     def setupAllCredentials(self, overwrite=True):
         self.setupServerCredentials(overwrite)
         self.setupCredentials(overwrite)
 
+    def setupClientConfigFile(self, opts={}, overwrite=True):
+        write = False
+        if overwrite:
+            write = True
+
+        cfg_file = self.cfg.get("client_cfg_file")
+        if cfg_file is None:
+            write = True
+        elif not os.path.exists(cfg_file):
+            write = True
+        else:
+            if overwrite:
+                os.remove(cfg_file)
+
+        if write:
+            self._initialize(opts)
 
     def setContext(self, item_id=None):
         """
@@ -2761,18 +2774,18 @@ class API:
                     opts["server_pub_key_file"] = serv_key_file
                     save = True
 
-                # Will not overwrite the server core public key if it already 
+                # Will not overwrite the server core public key if it already
                 # exists
                 self.setupServerCredentials(overwrite=False)
-#                if not serv_key_file:
-#                    raise Exception(
-#                        "Could not find location of server public key file."
-#                    )
-#
-#                if not os.path.exists(serv_key_file):
-#                    # Make default server pub key file
-#                    url = "https://" + opts["server_host"] + "/datafed-core-key.pub"
-#                    wget.download(url, out=serv_key_file)
+        #                if not serv_key_file:
+        #                    raise Exception(
+        #                        "Could not find location of server public key file."
+        #                    )
+        #
+        #                if not os.path.exists(serv_key_file):
+        #                    # Make default server pub key file
+        #                    url = "https://" + opts["server_host"] + "/datafed-core-key.pub"
+        #                    wget.download(url, out=serv_key_file)
 
         if "client_pub_key_file" not in opts or "client_priv_key_file" not in opts:
             if "client_cfg_dir" not in opts:

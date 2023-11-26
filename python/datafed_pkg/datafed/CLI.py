@@ -2140,24 +2140,56 @@ def _epDefaultSet(current, endpoint):
 
 
 @_cli.command(name="setup")
-@click.option("-r", "--reset-all", is_flag=True, help="Reset the configuration
-        file (WARNING this will remove the existing .ini file), redownload the
-        DataFed server public key and recreate the users pubic and private key
-        pair.")
-@click.option("-a", "--reset-all-credentials", is_flag=True, help="Recreate the
-        users pubic and private keys, and redownload and use the DataFed servers
-        public key.")
-@click.option("-u", "--reset-user-credentials", is_flag=True, help="Recreate the
-        users pubic and private keys only.")
-@click.option("-m", "--reset-server-credentials", is_flag=True, help="Redownload and use the DataFed servers
-        public key.")
-@click.option("-f", "--reset-config-file", is_flag=True, help="Reset the
-        configuration file with defaults.")
+@click.option(
+    "-r",
+    "--reset-all",
+    is_flag=True,
+    help="Reset the configuration"
+    " file (WARNING this will remove the existing .ini file), redownload "
+    "the DataFed server public key and recreate the users pubic and private"
+    "key pair.",
+)
+@click.option(
+    "-a",
+    "--reset-all-credentials",
+    is_flag=True,
+    help="Recreate the"
+    " users pubic and private keys, and redownload and use the DataFed "
+    "servers public key.",
+)
+@click.option(
+    "-u",
+    "--reset-user-credentials",
+    is_flag=True,
+    help="Recreate " "the users pubic and private keys only.",
+)
+@click.option(
+    "-m",
+    "--reset-server-credentials",
+    is_flag=True,
+    help=("Redownload and use the DataFed servers public key."),
+)
+@click.option(
+    "-f",
+    "--reset-config-file",
+    is_flag=True,
+    help="Reset the " "configuration file with defaults.",
+)
 @click.option("-s", "--show", is_flag=True, help="Show all configuration options.")
-@click.option("-c", "--show-config-file", is_flag=True, help="Show contents of
-        config file.")
+@click.option(
+    "-c", "--show-config-file", is_flag=True, help="Show contents of " "config file."
+)
 @click.pass_context
-def _setup(ctx):
+def _setup(
+    ctx,
+    reset_all,
+    reset_all_credentials,
+    reset_user_credentials,
+    reset_server_credentials,
+    reset_config_file,
+    show,
+    show_config_file,
+):
     """
     Setup local credentials. This command installs DataFed credentials for the
     current user in the configured client configuration directory. Subsequent
@@ -2165,30 +2197,27 @@ def _setup(ctx):
     manual authentication.
     """
 
-    cfg_dir = _capi.cfg.get("client_cfg_dir")
-    pub_file = _capi.cfg.get("client_pub_key_file")
-    priv_file = _capi.cfg.get("client_priv_key_file")
+    if cfg_dir is None:
+        raise Exception("Client configuration directory is not configured")
 
-    if cfg_dir is None and (pub_file is None or priv_file is None):
-        raise Exception(
-            "Client configuration directory and/or client key files not configured"
-        )
+    if reset_all:
+        reset_all_credentials = True
+        reset_user_credentials = True
+        reset_server_credentials = True
+        reset_config_file = True
+    elif reset_all_credentials:
+        reset_user_credentials = True
+        reset_server_credentials = True
 
-    reply = _capi.generateCredentials()
+    _capi.setupClientConfigFile(reset_config_file)
+    _capi.setupCredentials(reset_user_credentials)
+    _capi.setupServerCredentials(reset_server_credentials)
 
-    if pub_file is None:
-        pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
-
-    keyf = open(pub_file, "w")
-    keyf.write(reply[0].pub_key)
-    keyf.close()
-
-    if priv_file is None:
-        priv_file = os.path.join(cfg_dir, "datafed-user-key.priv")
-
-    keyf = open(priv_file, "w")
-    keyf.write(reply[0].priv_key)
-    keyf.close()
+    if show:
+        _capi.cfg.printSettingInfo()
+    elif show_config_file:
+        _capi.cfg.printSettingInfo(priority=2)
+        _capi.cfg.printSettingInfo(priority=3)
 
     if _output_mode_sticky != _OM_RETN:
         _print_ack_reply()
