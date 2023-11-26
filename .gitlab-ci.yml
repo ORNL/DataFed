@@ -1,6 +1,7 @@
 
 stages:
-  - setup
+  - ci-infrastructure-check
+  - build-infrastructure
   - clear-docker-cache
   - build-deploy-base
   - build-unit-test-deploy
@@ -9,16 +10,36 @@ stages:
   - end-to-end-teardown
 
 ################################################################################
-# STAGE: setup
+# STAGE: ci-infrastructure-check
 ################################################################################
-# Setup stage is designed to check that the infrastructure is up and running
-# before attempting to launch the CI pipelines
-setup-vms:
-  stage: setup
+# ci-infrastructure-check stage is designed to check that the infrastructure is
+# up and running before attempting to launch the CI pipelines
+
+check-ci-infrastructure:
+  stage: ci-infrastructure-check
+  tags:
+    - datafed-infrastructure
+  script:
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-arangodb"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-core"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
+    - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-client"
+  allow_failure: true
+  resource_group: infrastructure_build
+  only:
+    - merge_requests
+
+run-trigger-job:
+  stage: build-infrastructure
+  rules:
+    - when: on_failure
   trigger:
     project: 8f4/datafedci
     branch: main
     strategy: depend
+  resource_group: infrastructure_build
+  only:
+    - merge_requests
 
 ################################################################################
 # STAGE: clear-docker-cache
