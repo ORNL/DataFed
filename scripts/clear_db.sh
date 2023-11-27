@@ -22,8 +22,22 @@ else
   local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
 fi
 
+if [ -z "${DATAFED_DATABASE_HOST}" ]
+then
+  local_DATAFED_DATABASE_HOST="localhost"
+else
+  local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
+fi
+
+if [ -z "${DATAFED_DATABASE_PORT}" ]
+then
+  local_DATAFED_DATABASE_PORT="8529"
+else
+  local_DATAFED_DATABASE_PORT=$(printenv DATAFED_DATABASE_PORT)
+fi
+
 # Delete database and API from arangodb
 if command -v arangosh &> /dev/null
 then
-  arangosh  --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._dropDatabase("sdms");'
+  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}"  --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._dropDatabase("sdms");'
 fi
