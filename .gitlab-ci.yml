@@ -46,6 +46,8 @@ run-trigger-job:
 # as an anchor for setting up dependencies
 signal:
   stage: signal
+  tags:
+    - runner
   script:
     - echo "Starting Build"
 
