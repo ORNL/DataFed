@@ -345,6 +345,7 @@ end-to-end-ws-setup:
       -v "${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}"
       -v "${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}"
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
+       </dev/null &>/dev/null &
     - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 # Note here we use network=host to run the docker container this is
@@ -384,6 +385,7 @@ end-to-end-core-setup:
       -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+       </dev/null &>/dev/null &
     - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 
@@ -418,6 +420,7 @@ end-to-end-repo-setup:
       -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+       </dev/null &>/dev/null &
     - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 end-to-end-gcs-authz-setup:
@@ -451,6 +454,7 @@ end-to-end-gcs-authz-setup:
       -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+       </dev/null &>/dev/null &
     - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 end-to-end-arango-setup:
@@ -480,6 +484,7 @@ end-to-end-client-test:
     DATAFED_USER99_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER99_GLOBUS_REFRESH_TOKEN}"
     DATAFED_USER99_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER99_GLOBUS_ACCESS_TOKEN}"
     DATAFED_USER99_GLOBUS_UUID: "${CI_DATAFED_USER99_GLOBUS_UUID}"
+    DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
   stage: end-to-end-test
   tags:
     - ci-datafed-client
