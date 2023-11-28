@@ -40,7 +40,7 @@ fi
 if command -v arangosh &> /dev/null
 then
 	exists=$(arangosh --server.endpoint "http+tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}" \
-			 --server.usernam "$local_DATABASE_USER" \
+			 --server.username "$local_DATABASE_USER" \
 			 --server.password "$local_DATAFED_DATABASE_PASSWORD" \
 			 --javascript.execute "db._databases().includes('$local_DATABASE_NAME')")
 
