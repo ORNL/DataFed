@@ -39,5 +39,19 @@ fi
 # Delete database and API from arangodb
 if command -v arangosh &> /dev/null
 then
-  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}"  --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._dropDatabase("sdms");'
+	exists=$(arangosh --server.endpoint "http+tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}" \
+			 --server.usernam "$local_DATABASE_USER" \
+			 --server.password "$local_DATAFED_DATABASE_PASSWORD" \
+			 --javascript.execute "db._databases().includes('$local_DATABASE_NAME')")
+
+	if [ "$exists" = "true" ]; then
+	  arangosh  --server.endpoint
+    "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}" \
+      --server.password ${local_DATAFED_DATABASE_PASSWORD} \
+      --server.username ${local_DATABASE_USER} \
+      --javascript.execute-string "db._dropDatabase('$local_DATABASE_NAME');"
+	else
+	    echo "Database $local_DATABASE_NAME does not exist."
+	fi
+
 fi

@@ -104,11 +104,19 @@ fi
 
 
 # Detect whether arangodb is running locally
-ARANGODB_RUNNING=$(systemctl is-active --quiet arangodb3.service && echo "RUNNING")
-if [ "$ARANGODB_RUNNING" != "RUNNING" ]
+{
+	ARANGODB_RUNNING=$(systemctl is-active --quiet arangodb3.service && echo "RUNNING")
+} || {
+	echo "Arangodb service is not locally detected."
+}
+
+if [ "${DATAFED_DATABASE_HOST}" == "localhost" ] || [ "${DATAFED_DATABASE_HOST}" == "127.0.0.1" ]
 then
-  echo "REQUIRED the arangodb service has not been detected to be running by systemctl"
-  exit 1
+	if [ "$ARANGODB_RUNNING" != "RUNNING" ]
+	then
+	  echo "REQUIRED the arangodb service has not been detected to be running by systemctl"
+	  exit 1
+	fi
 fi
 
 # First step is to clear the database

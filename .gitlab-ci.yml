@@ -2,8 +2,10 @@
 stages:
   - ci-infrastructure-check
   - build-infrastructure
+  - signal
   - clear-docker-cache
   - build-deploy-base
+  - provision-client
   - build-unit-test-deploy
   - end-to-end-setup
   - end-to-end-test
@@ -26,8 +28,6 @@ check-ci-infrastructure:
     - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-client"
   allow_failure: true
   resource_group: infrastructure_build
-  #  only:
-  #  - merge_requests
 
 run-trigger-job:
   stage: build-infrastructure
@@ -38,8 +38,16 @@ run-trigger-job:
     branch: main
     strategy: depend
   resource_group: infrastructure_build
-  #only:
-  #  - merge_requests
+
+################################################################################
+# STAGE: signal
+################################################################################
+# Stage is used to separte the trigger job from the remaining jobs and to act
+# as an anchor for setting up dependencies
+signal:
+  stage: signal
+  script:
+    - echo "Starting Build"
 
 ################################################################################
 # STAGE: clear-docker-cache
@@ -47,6 +55,7 @@ run-trigger-job:
 # Used to clear out the cache on VMs where the images are being built
 clear-core-cache:
   stage: clear-docker-cache
+  needs: ["signal"]
   tags:
     - ci_1
   script:
@@ -56,6 +65,7 @@ clear-core-cache:
 
 clear-repo-cache:
   stage: clear-docker-cache
+  needs: ["signal"]
   tags:
     - ci_3
   script:
@@ -144,6 +154,20 @@ build-gcs-base:
     - docker push code.ornl.gov:4567/${IMAGE_TAG2}
     - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
     - docker push code.ornl.gov:4567/${IMAGE_TAG3}
+
+################################################################################
+# STAGE: provision client
+################################################################################
+provision-client:
+  needs: ["signal"]
+  variables:
+    IMAGE_TAG: "dlsw/datafed/repo-base"
+    GIT_STRATEGY: clone
+  stage: provision-client
+  tags:
+    - ci-datafed-client
+  script:
+    - ./scripts/install_client_dependencies.sh
 
 ################################################################################
 # STAGE: build
@@ -437,6 +461,9 @@ end-to-end-arango-setup:
     - arangod --version
     - ./scripts/run_arango_service.sh
 
+################################################################################
+# Actual Testing
+################################################################################
 end-to-end-client-test:
   variables:
     GIT_STRATEGY: clone
