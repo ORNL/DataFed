@@ -31,7 +31,13 @@ install_protobuf() {
   python3 setup.py build
   python3 setup.py test
   python3 setup.py install --user
-  cd ../../
+  cd ../
+  # Cleanup build file with root ownership
+  if [ -f build/install_manifest.txt ]
+  then
+    sudo rm build/install_manifest.txt
+  fi
+  cd ../
 }
 
 install_libsodium() {
