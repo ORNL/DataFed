@@ -49,6 +49,12 @@ signal:
     - runner
   script:
     - echo "Starting Build"
+  rules:
+    - exists:
+      - check-ci-infrastrucure
+    - exists:
+      - run-trigger-job
+    - when: on_success
 
 ################################################################################
 # STAGE: clear-docker-cache
