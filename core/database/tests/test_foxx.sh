@@ -136,7 +136,13 @@ FOXX_PREFIX=""
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
 if [ "$TEST_TO_RUN" == "all" ]
 then
-  ${FOXX_PREFIX}foxx test -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} --reporter spec
+  "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
+    -p "${PATH_TO_PASSWD_FILE}" \
+    --database "${local_DATABASE_NAME}" \
+    /api/${local_FOXX_MAJOR_API_VERSION} --reporter spec
 else
-  ${FOXX_PREFIX}foxx test -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} "$TEST_TO_RUN" --reporter spec
+  "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
+    -p "${PATH_TO_PASSWD_FILE}" \
+    --database "${local_DATABASE_NAME}" \
+    /api/${local_FOXX_MAJOR_API_VERSION} "$TEST_TO_RUN" --reporter spec
 fi
