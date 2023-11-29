@@ -26,7 +26,6 @@ check-ci-infrastructure:
     - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-core"
     - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
     - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-client"
-  allow_failure: true
   resource_group: infrastructure_build
 
 run-trigger-job:
