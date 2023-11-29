@@ -139,10 +139,10 @@ then
   "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "${local_DATABASE_NAME}" \
-    /api/${local_FOXX_MAJOR_API_VERSION} --reporter spec
+    "/api/${local_FOXX_MAJOR_API_VERSION}" --reporter spec
 else
   "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "${local_DATABASE_NAME}" \
-    /api/${local_FOXX_MAJOR_API_VERSION} "$TEST_TO_RUN" --reporter spec
+    "/api/${local_FOXX_MAJOR_API_VERSION}" "$TEST_TO_RUN" --reporter spec
 fi
