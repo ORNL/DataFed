@@ -11,8 +11,8 @@ set -f -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
-source ${PROJECT_ROOT}/config/datafed.sh
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
+source "${PROJECT_ROOT}/config/datafed.sh"
 
 Help()
 {
@@ -111,15 +111,17 @@ then
 fi
 
 # We are now going to make sure the database actually exists. 
-output=$(curl --dump - --user $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://localhost:8529/_api/database/user)
+output=$(curl --dump - \
+  --user "$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD" \
+  http://localhost:8529/_api/database/user)
 
 
 
 
-if [[ "$output" =~ .*"sdms".* ]]; then
+if [[ "$output" =~ .*"$local_DATABASE_NAME".* ]]; then
 	echo "Verified SDMS exists."
 else
-  echo "Something is wrong, the sdms database is missing!"
+  echo "Something is wrong, the $local_DATABASE_NAME database is missing!"
   exit 1
 fi
 
@@ -130,13 +132,14 @@ fi
 
 if [[ "$local_ENABLE_ADMIN_ACCOUNT" == "TRUE" ]]
 then
-  arangosh --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username
-  ${local_DATABASE_USER} --javascript.execute-string "db._useDatabase(\"sdms\");
-  db.u.update( $USER_KEY, {\"is_admin\": \"true\"});"
+  arangosh --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
+    --server.username "${local_DATABASE_USER}" \
+    --javascript.execute-string "db._useDatabase(\"$local_DATABASE_NAME\");  db.u.update( $USER_KEY, {\"is_admin\": \"true\"});"
 
 else
-  arangosh --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username
-  ${local_DATABASE_USER} --javascript.execute-string "db._useDatabase(\"sdms\");
+  arangosh --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
+    --server.username "${local_DATABASE_USER}" \
+    --javascript.execute-string "db._useDatabase(\"$local_DATABASE_NAME\");
   db.u.update( $USER_KEY, {\"is_admin\": \"false\"});"
 
 fi
