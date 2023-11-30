@@ -69,7 +69,7 @@ class API:
     def __init__(self, opts={}):
         self._initialize(opts)
 
-    def _initialize(self, opts={}):
+    def _initialize(self, opts=None):
         if not isinstance(opts, dict):
             raise Exception("CommandLib API options parameter must be a dictionary.")
 
@@ -2366,7 +2366,10 @@ class API:
         self.setupServerCredentials(overwrite)
         self.setupCredentials(overwrite)
 
-    def setupClientConfigFile(self, opts={}, overwrite=True):
+    def setupClientConfigFile(self, opts=None, overwrite=True):
+        if not isinstance(opts, dict):
+            raise Exception("CommandLib API options parameter must be a dictionary.")
+
         write = False
         if overwrite:
             write = True

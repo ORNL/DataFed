@@ -2197,6 +2197,7 @@ def _setup(
     manual authentication.
     """
 
+    cfg_dir = _capi.cfg.get("client_cfg_dir")
     if cfg_dir is None:
         raise Exception("Client configuration directory is not configured")
 
