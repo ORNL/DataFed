@@ -10,6 +10,7 @@
 2. [910] - Static code analysis and status checks fixed, improvements to CI
 3. [923] - Fixed missing flag in certificate refresh script
 4. [917] - Add additional files to .gitignore
+5. [915] - Refactor CI to use pipelines Gitlab feature along with pipelines 
 
 # v2023.10.23.15.50
 

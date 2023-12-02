@@ -1,20 +1,24 @@
 
 stages:
-  - setup
+  - ci-infrastructure-check
+  - build-infrastructure
+  - signal
   - clear-docker-cache
   - build-deploy-base
+  - provision-client
   - build-unit-test-deploy
   - end-to-end-setup
   - end-to-end-test
   - end-to-end-teardown
 
 ################################################################################
-# STAGE: setup
+# STAGE: ci-infrastructure-check
 ################################################################################
-# Setup stage is designed to check that the infrastructure is up and running
-# before attempting to launch the CI pipelines
-setup-vms:
-  stage: setup
+# ci-infrastructure-check stage is designed to check that the infrastructure is
+# up and running before attempting to launch the CI pipelines
+
+check-ci-infrastructure:
+  stage: ci-infrastructure-check
   tags:
     - datafed-infrastructure
   script:
@@ -22,7 +26,35 @@ setup-vms:
     - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-core"
     - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
     - ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-client"
+  resource_group: infrastructure_build
 
+run-trigger-job:
+  stage: build-infrastructure
+  rules:
+    - when: on_failure
+  trigger:
+    project: 8f4/datafedci
+    branch: main
+    strategy: depend
+  resource_group: infrastructure_build
+
+################################################################################
+# STAGE: signal
+################################################################################
+# Stage is used to separte the trigger job from the remaining jobs and to act
+# as an anchor for setting up dependencies
+signal:
+  stage: signal
+  tags:
+    - runner
+  script:
+    - echo "Starting Build"
+  rules:
+    - exists:
+      - check-ci-infrastrucure
+    - exists:
+      - run-trigger-job
+    - when: on_success
 
 ################################################################################
 # STAGE: clear-docker-cache
@@ -30,6 +62,7 @@ setup-vms:
 # Used to clear out the cache on VMs where the images are being built
 clear-core-cache:
   stage: clear-docker-cache
+  needs: ["signal"]
   tags:
     - ci_1
   script:
@@ -39,6 +72,7 @@ clear-core-cache:
 
 clear-repo-cache:
   stage: clear-docker-cache
+  needs: ["signal"]
   tags:
     - ci_3
   script:
@@ -129,6 +163,20 @@ build-gcs-base:
     - docker push code.ornl.gov:4567/${IMAGE_TAG3}
 
 ################################################################################
+# STAGE: provision client
+################################################################################
+provision-client:
+  needs: ["signal"]
+  variables:
+    IMAGE_TAG: "dlsw/datafed/repo-base"
+    GIT_STRATEGY: clone
+  stage: provision-client
+  tags:
+    - ci-datafed-client
+  script:
+    - ./scripts/install_client_dependencies.sh
+
+################################################################################
 # STAGE: build
 ################################################################################
 # Building containers for running services
@@ -191,7 +239,6 @@ build-foxx:
     DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
     DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
   stage: build-unit-test-deploy
-  needs: ["setup-vms"]
   tags:
     - ci-datafed-arango
   rules:
@@ -303,6 +350,7 @@ end-to-end-ws-setup:
       -v "${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}"
       -v "${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}"
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
+       </dev/null &>/dev/null &
     - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 # Note here we use network=host to run the docker container this is
@@ -342,6 +390,7 @@ end-to-end-core-setup:
       -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+       </dev/null &>/dev/null &
     - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 
@@ -376,6 +425,7 @@ end-to-end-repo-setup:
       -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+       </dev/null &>/dev/null &
     - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 end-to-end-gcs-authz-setup:
@@ -409,6 +459,7 @@ end-to-end-gcs-authz-setup:
       -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
+       </dev/null &>/dev/null &
     - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 end-to-end-arango-setup:
@@ -421,10 +472,24 @@ end-to-end-arango-setup:
     - arangod --version
     - ./scripts/run_arango_service.sh
 
-
+################################################################################
+# Actual Testing
+################################################################################
 #end-to-end-client-test:
 #  variables:
 #    GIT_STRATEGY: clone
+#    DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
+#    DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET}"
+#    DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
+#    DATAFED_USER89_PASSWORD: "${CI_DATAFED_USER89_PASSWORD}"
+#    DATAFED_USER89_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
+#    DATAFED_USER89_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER89_GLOBUS_ACCESS_TOKEN}"
+#    DATAFED_USER89_GLOBUS_UUID: "${CI_DATAFED_USER89_GLOBUS_UUID}"
+#    DATAFED_USER99_PASSWORD: "${CI_DATAFED_USER99_PASSWORD}"
+#    DATAFED_USER99_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER99_GLOBUS_REFRESH_TOKEN}"
+#    DATAFED_USER99_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER99_GLOBUS_ACCESS_TOKEN}"
+#    DATAFED_USER99_GLOBUS_UUID: "${CI_DATAFED_USER99_GLOBUS_UUID}"
+#    DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
 #  stage: end-to-end-test
 #  tags:
 #    - ci-datafed-client
@@ -444,5 +509,6 @@ end-to-end-arango-setup:
 #      -DENABLE_END_TO_END_TESTS=ON
 #      -DINSTALL_FOXX=OFF
 #    - cmake --build build
-#    - cmake --build build --target install
-
+#    - cmake --build build --target pydatafed
+#    - cmake --build build --target test
+#

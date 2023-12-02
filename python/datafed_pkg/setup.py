@@ -9,6 +9,9 @@ with open(path.join(this_directory, "README"), encoding="utf-8") as f:
     long_description = f.read()
 
 
+with open("requirements.txt", "r") as f:
+    install_requires = [line.strip() for line in f]
+
 setuptools.setup(
     name="datafed",
     version=__version__,
@@ -20,13 +23,7 @@ setuptools.setup(
     url="https://github.com/ORNL/DataFed",
     packages=setuptools.find_packages(),
     setup_requires=["setuptools"],
-    install_requires=[
-        "protobuf>=3, <=3.20",
-        "pyzmq>=16",
-        "wget>=3",
-        "click>=7",
-        "prompt_toolkit>=2",
-    ],
+    install_requires=install_requires,
     entry_points={"console_scripts": ["datafed = datafed.CLI:run"]},
     classifiers=[
         "Programming Language :: Python :: 3",
