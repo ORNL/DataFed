@@ -346,7 +346,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
     if (status == "ACTIVE") {
 
       double faults = resp_obj.getNumber("faults");
-      if (faults > 0.0) {
+      if (faults > 30.0) {
 
         DL_WARNING(m_log_context, "faults encountered for task: "
                                       << a_task_id << " faults " << faults);
