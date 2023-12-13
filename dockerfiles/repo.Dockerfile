@@ -82,5 +82,5 @@ COPY --chown=datafed:datafed ./scripts/install_repo.sh              ${DATAFED_DI
 COPY --chown=datafed:datafed ./cmake/Version.cmake                  ${DATAFED_DIR}/cmake/Version.cmake
 COPY --from=repo-build --chown=datafed:datafed ${DATAFED_INSTALL_PATH}/repo/datafed-repo ${DATAFED_INSTALL_PATH}/repo/datafed-repo
 
-# ENTRYPOINT ["/app/entrypoint.sh"]
-# CMD ["/app/datafed-core","--cfg","/app/datafed-core.cfg"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["/app/datafed-core","--cfg","/app/datafed-core.cfg"]

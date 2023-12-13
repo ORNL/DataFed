@@ -84,5 +84,5 @@ COPY --chown=datafed:datafed ./cmake/Version.cmake             ${DATAFED_DIR}/cm
 COPY --from=core-build --chown=datafed:datafed ${BUILD_DIR}/core/docker/entrypoint.sh    ${BUILD_DIR}/core/entrypoint.sh
 COPY --from=core-build --chown=datafed:datafed ${DATAFED_INSTALL_PATH}/core/datafed-core ${DATAFED_INSTALL_PATH}/core/datafed-core
 
-# ENTRYPOINT ["/app/entrypoint.sh"]
-# CMD ["/app/datafed-core","--cfg","/app/datafed-core.cfg"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["/app/datafed-core","--cfg","/app/datafed-core.cfg"]

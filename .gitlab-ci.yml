@@ -36,14 +36,30 @@ setup-vms:
 build-dependencies:
   stage: build-deploy-base
   variables:
-    CACHE_TAG: "dlws/datafed/datafed-cache"
+    IMAGE_TAG: "dlsw/datafed/dependencies"
+    CACHE_TAG: "dlsw/datafed/datafed-cache:dependencies"
     GIT_STRATEGY: clone
   tags:
     - ci-datafed-core
     - docker
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build --target dependencies --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} .
+    - docker buildx build -f dockerfiles/dependencies.Dockerfile --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} -t code.ornl.gov:4567/${IMAGE_TAG} .
+    - docker push code.ornl.gov:4567/${IMAGE_TAG}
+
+build-runtime:
+  stage: build-deploy-base
+  variables:
+    IMAGE_TAG: "dlsw/datafed/runtime"
+    CACHE_TAG: "dlsw/datafed/datafed-cache:runtime"
+    GIT_STRATEGY: clone
+  tags:
+    - ci-datafed-core
+    - docker
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker buildx build -f dockerfiles/runtime.Dockerfile --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} -t code.ornl.gov:4567/${IMAGE_TAG} .
+    - docker push code.ornl.gov:4567/${IMAGE_TAG}
 
 build-gcs-base:
   variables:
@@ -51,7 +67,7 @@ build-gcs-base:
     DISTRO: "ubuntu:focal"
     GCS_TAG: "code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
     IMAGE_TAG: "dlsw/datafed/gcs-authz"
-    CACHE_TAG: "dlws/datafed/datafed-cache"
+    CACHE_TAG: "dlsw/datafed/datafed-cache:gcs"
   stage: build-deploy-base
   tags:
     - ci-datafed-globus
@@ -63,8 +79,8 @@ build-gcs-base:
     - LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
     - docker tag "$LATEST_IMAGE" "$GCS_TAG" 
     - docker push "$GCS_TAG"
-    - docker build --target gcs-authz -t code.ornl.gov:4567/${IMAGE_TAG2} --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} --build-arg GCS_IMAGE=${GCS_TAG} .
-    - docker push code.ornl.gov:4567/${IMAGE_TAG}
+    # - docker buildx build -f gcs.Dockerfile -t code.ornl.gov:4567/${IMAGE_TAG} --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} --build-arg GCS_IMAGE=${GCS_TAG} .
+    # - docker push code.ornl.gov:4567/${IMAGE_TAG}
 # This build runs two builds, one to build the gcs image provided by Globus
 # The second to build on top of the gcs image and add the authz dependencies
 #build-gcs-authz-base:
@@ -93,7 +109,9 @@ build-gcs-base:
 build-ws:
   variables:
     IMAGE_TAG: "dlsw/datafed/ws-"
-    CACHE_TAG: "dlws/datafed/datafed-cache"
+    CACHE_TAG: "dlsw/datafed/datafed-cache:ws"
+    DEPENDENCIES: "code.ornl.gov:4567/dependencies"
+    RUNTIME: "code.ornl.gov:4567/runtime"
     GIT_STRATEGY: clone
   stage: build-unit-test-deploy
   tags:
@@ -119,13 +137,15 @@ build-ws:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build --target ws -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} .
+    - docker buildx build -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" -f dockerfiles/ws.Dockerfile --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} --build-arg DEPENDENCIES=${DEPENDENCIES} --build-arg RUNTIME=${RUNTIME} .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-core:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-"
-    CACHE_TAG: "dlws/datafed/datafed-cache"
+    CACHE_TAG: "dlsw/datafed/datafed-cache:core"
+    DEPENDENCIES: "code.ornl.gov:4567/dependencies"
+    RUNTIME: "code.ornl.gov:4567/runtime"
     GIT_STRATEGY: clone
   stage: build-unit-test-deploy
   tags:
@@ -151,7 +171,7 @@ build-core:
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build --target core -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} .
+    - docker buildx build -f dockerfiles/core.Dockerfile -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} --build-arg DEPENDENCIES=${DEPENDENCIES} --build-arg RUNTIME=${RUNTIME} .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-foxx:
@@ -193,7 +213,9 @@ build-foxx:
 build-repo:
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-"
-    CACHE_TAG: "dlws/datafed/datafed-cache"
+    CACHE_TAG: "dlsw/datafed/datafed-cache:repo"
+    DEPENDENCIES: "code.ornl.gov:4567/dependencies"
+    RUNTIME: "code.ornl.gov:4567/runtime"
     GIT_STRATEGY: clone
   stage: build-unit-test-deploy
   tags:
@@ -220,13 +242,13 @@ build-repo:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build --target repo -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} .
+    - docker buildx build -f dockerfiles/repo.Dockerfile -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} --build-arg DEPENDENCIES=${DEPENDENCIES} --build-arg RUNTIME=${RUNTIME} .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-gcs-authz:
   variables:
     IMAGE_TAG: "dlsw/datafed/gcs-authz-"
-    CACHE_TAG: "dlws/datafed/datafed-cache"
+    CACHE_TAG: "dlsw/datafed/datafed-cache:gcs"
     GCS_TAG: "code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
     GIT_STRATEGY: clone
   stage: build-unit-test-deploy
@@ -238,7 +260,7 @@ build-gcs-authz:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build --target gcs-authz -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --build-arg GCS_IMAGE=${GCS_TAG} --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} .
+    - docker buildx build -f dockerfiles/gcs.Dockerfile -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --build-arg GCS_IMAGE=${GCS_TAG} --cache-from ${CACHE_TAG} --cache-to ${CACHE_TAG} .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 ################################################################################
@@ -412,5 +434,3 @@ end-to-end-client-test:
       -DINSTALL_FOXX=OFF
     - cmake --build build
     - cmake --build build --target install
-
-
