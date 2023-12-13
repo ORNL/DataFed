@@ -59,18 +59,18 @@ ENV                BUILD_DIR="$BUILD_DIR"
 # All files should be owned by the datafed user
 RUN chown -R datafed:datafed ${DATAFED_DIR}
 
-COPY --chown=datafed:datafed ./scripts/dependency_versions.sh        ${BUILD_DIR}/scripts/
-COPY --chown=datafed:datafed ./scripts/generate_authz_config.sh      ${BUILD_DIR}/scripts/generate_authz_config.sh
-COPY --chown=datafed:datafed ./scripts/generate_datafed.sh           ${BUILD_DIR}/scripts/generate_datafed.sh
-COPY --chown=datafed:datafed ./CMakeLists.txt                        ${BUILD_DIR}
-COPY --chown=datafed:datafed ./cmake                                 ${BUILD_DIR}/cmake
-COPY --chown=datafed:datafed ./repository/CMakeLists.txt             ${BUILD_DIR}/repository/CMakeLists.txt
-COPY --chown=datafed:datafed ./repository/gridftp/CMakeLists.txt     ${BUILD_DIR}/repository/gridftp/CMakeLists.txt
-COPY --chown=datafed:datafed ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
-COPY --chown=datafed:datafed ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
-COPY --chown=datafed:datafed ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
-COPY --chown=datafed:datafed ./common                                ${BUILD_DIR}/common
-COPY --chown=datafed:datafed ./repository/gridftp/globus5            ${BUILD_DIR}/repository/gridftp/globus5
+COPY --chown=datafed:root ./scripts/dependency_versions.sh        ${BUILD_DIR}/scripts/
+COPY --chown=datafed:root ./scripts/generate_authz_config.sh      ${BUILD_DIR}/scripts/generate_authz_config.sh
+COPY --chown=datafed:root ./scripts/generate_datafed.sh           ${BUILD_DIR}/scripts/generate_datafed.sh
+COPY --chown=datafed:root ./CMakeLists.txt                        ${BUILD_DIR}
+COPY --chown=datafed:root ./cmake                                 ${BUILD_DIR}/cmake
+COPY --chown=datafed:root ./repository/CMakeLists.txt             ${BUILD_DIR}/repository/CMakeLists.txt
+COPY --chown=datafed:root ./repository/gridftp/CMakeLists.txt     ${BUILD_DIR}/repository/gridftp/CMakeLists.txt
+COPY --chown=datafed:root ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
+COPY --chown=datafed:root ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
+COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
+COPY --chown=datafed:root ./common                                ${BUILD_DIR}/common
+COPY --chown=datafed:root ./repository/gridftp/globus5            ${BUILD_DIR}/repository/gridftp/globus5
 
 # Build as if a non root user
 USER datafed

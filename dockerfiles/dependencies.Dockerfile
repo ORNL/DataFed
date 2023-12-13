@@ -1,11 +1,11 @@
-ARG             DATAFED_DIR="/datafed"
-ARG    DATAFED_INSTALL_PATH="$DATAFED_DIR/install"
-ARG               GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
-ARG               BUILD_DIR="$DATAFED_DIR/source"
-ARG                 NVM_DIR="$DATAFED_DIR/.nvm"
-ARG                 NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
-ARG                 NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
-ARG                 LIB_DIR="/usr/local/lib"
+ARG          DATAFED_DIR="/datafed"
+ARG DATAFED_INSTALL_PATH="$DATAFED_DIR/install"
+ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
+ARG            BUILD_DIR="$DATAFED_DIR/source"
+ARG              NVM_DIR="$DATAFED_DIR/.nvm"
+ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
+ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
+ARG              LIB_DIR="/usr/local/lib"
 
 FROM ubuntu:focal
 
@@ -32,21 +32,11 @@ WORKDIR ${BUILD_DIR}
 # Copy install scripts
 COPY ./scripts/dependency_install_functions.sh	${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_versions.sh						${BUILD_DIR}/scripts/
-# COPY ./scripts/install_core_dependencies.sh			${BUILD_DIR}/scripts/
-# COPY ./scripts/install_repo_dependencies.sh			${BUILD_DIR}/scripts/
-# COPY ./scripts/install_ws_dependencies.sh				${BUILD_DIR}/scripts/
-# COPY ./scripts/install_gcs.sh ${BUILD_DIR}/scripts/
-# COPY ./scripts/install_authz_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_dependencies.sh ${BUILD_DIR}/scripts/
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 
 # run build scripts
-# RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_core_dependencies.sh
-# RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_repo_dependencies.sh
-# RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_ws_dependencies.sh -n "${DATAFED_DIR}"
-# RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_gcs.sh
-# RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh
 
 COPY ./scripts/copy_dependency.sh ${BUILD_DIR}/scripts/

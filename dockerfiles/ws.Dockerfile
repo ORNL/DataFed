@@ -78,24 +78,24 @@ WORKDIR /datafed
 RUN mkdir -p /home/cades
 RUN chown -R datafed:datafed /home/cades
 
-COPY --from=ws-build --chown=datafed:datafed "$NVM_DIR" "$NVM_DIR" 
+COPY --from=ws-build --chown=datafed:root "$NVM_DIR" "$NVM_DIR" 
 RUN ln -s ${DATAFED_INSTALL_PATH}/web ${DATAFED_DIR}/web
 RUN ln -s "$NVM_DIR" /home/cades/.nvm
 
 USER datafed
 
-COPY --chown=datafed:datafed ./web/docker/entrypoint.sh       ${BUILD_DIR}/web/entrypoint.sh
-COPY --chown=datafed:datafed ./scripts/generate_datafed.sh    ${DATAFED_DIR}/scripts/generate_datafed.sh
-COPY --chown=datafed:datafed ./scripts/dependency_versions.sh ${DATAFED_DIR}/scripts/dependency_versions.sh
-COPY --chown=datafed:datafed ./scripts/generate_ws_config.sh  ${DATAFED_DIR}/scripts/generate_ws_config.sh
-COPY --chown=datafed:datafed ./scripts/install_ws.sh          ${DATAFED_DIR}/scripts/install_ws.sh
-COPY --chown=datafed:datafed ./cmake/Version.cmake            ${DATAFED_DIR}/cmake/Version.cmake
+COPY --chown=datafed:root ./web/docker/entrypoint.sh       ${BUILD_DIR}/web/entrypoint.sh
+COPY --chown=datafed:root ./scripts/generate_datafed.sh    ${DATAFED_DIR}/scripts/generate_datafed.sh
+COPY --chown=datafed:root ./scripts/dependency_versions.sh ${DATAFED_DIR}/scripts/dependency_versions.sh
+COPY --chown=datafed:root ./scripts/generate_ws_config.sh  ${DATAFED_DIR}/scripts/generate_ws_config.sh
+COPY --chown=datafed:root ./scripts/install_ws.sh          ${DATAFED_DIR}/scripts/install_ws.sh
+COPY --chown=datafed:root ./cmake/Version.cmake            ${DATAFED_DIR}/cmake/Version.cmake
 
-COPY --from=ws-build --chown=datafed:datafed ${BUILD_DIR}/web/package.json ${DATAFED_INSTALL_PATH}/web/package.json
+COPY --from=ws-build --chown=datafed:root ${BUILD_DIR}/web/package.json ${DATAFED_INSTALL_PATH}/web/package.json
 RUN . ${DATAFED_DIR}/scripts/dependency_versions.sh &&					\
 	. ${DATAFED_DIR}/.nvm/nvm.sh &&							\
 	npm --allow-root --unsafe-perm --prefix ${DATAFED_INSTALL_PATH}/web install
 
-COPY --from=ws-build --chown=datafed:datafed ${BUILD_DIR}/web ${DATAFED_INSTALL_PATH}/web
+COPY --from=ws-build --chown=datafed:root ${BUILD_DIR}/web ${DATAFED_INSTALL_PATH}/web
 
 WORKDIR ${DATAFED_INSTALL_PATH}/web
