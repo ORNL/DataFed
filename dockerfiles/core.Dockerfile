@@ -20,8 +20,6 @@ ARG DATAFED_INSTALL_PATH
 EXPOSE 7512
 # For listening to web server
 EXPOSE 7513
-# ArangoDB port
-EXPOSE 8529
 
 COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt                  ${BUILD_DIR}

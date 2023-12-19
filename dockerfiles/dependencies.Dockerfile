@@ -33,6 +33,10 @@ WORKDIR ${BUILD_DIR}
 COPY ./scripts/dependency_install_functions.sh	${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_versions.sh						${BUILD_DIR}/scripts/
 COPY ./scripts/install_dependencies.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/install_core_dependencies.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/install_repo_dependencies.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
+COPY ./scripts/install_authz_dependencies.sh ${BUILD_DIR}/scripts/
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 

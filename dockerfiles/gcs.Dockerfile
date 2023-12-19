@@ -10,7 +10,7 @@ ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
 ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG              LIB_DIR="/usr/local/lib"
 
-FROM ${GCS_IMAGE} AS gcs-base
+FROM ${GCS_IMAGE}
 
 ARG DATAFED_DIR
 ARG BUILD_DIR
@@ -42,8 +42,6 @@ COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_authz_dependencies.sh   ${BUILD_DIR}/scripts/
 
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh
-
-FROM gcs-base AS gcs-authz
 
 ARG rebuild=true
 ARG DATAFED_DIR
