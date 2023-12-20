@@ -24,7 +24,7 @@ sudo dpkg --configure -a
 
 sudo "$SOURCE/install_core_dependencies.sh" unify
 sudo "$SOURCE/install_repo_dependencies.sh" unify
-sudo "$SOURCE/install_ws_dependencies.sh" unify
+sudo "$SOURCE/install_ws_dependencies.sh" --unify
 sudo "$SOURCE/install_authz_dependencies.sh" unify
 
 all_packages=$(cat $apt_file_path)
@@ -33,7 +33,6 @@ deduplicated_packages_array=($(printf "%s\n" "${all_packages_array[@]}" | sort -
 
 all_externals=$(cat $ext_file_path)
 IFS=' ' read -r -a all_externals_array <<< "$all_externals"
-# deduplicated_externals_array=($(printf "%s\n" "${all_externals_array[@]}" | sort -u))
 
 sudo apt-get install -y "${deduplicated_packages_array[@]}"
 
