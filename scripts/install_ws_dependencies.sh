@@ -6,8 +6,13 @@ set -e
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
+apt_file_path="/tmp/apt_deps"
+ext_file_path="/tmp/ext_deps"
 
 source "${SOURCE}/dependency_versions.sh"
+
+packages=("curl" "python3" "g++" "make" "wget")
+externals=("cmake")
 
 Help()
 {
@@ -17,11 +22,13 @@ Help()
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-n, --node_install_dir            Install directory, defaults to $HOME"
+  echo "-u, --unify                       Unifies install scripts to be used in docker builds"
 }
 
 local_NODE_INSTALL="$HOME"
+local_UNIFY=false
 
-VALID_ARGS=$(getopt -o hn: --long 'help',node_install_dir: -- "$@")
+VALID_ARGS=$(getopt -o hnu: --long 'help',node_install_dir,unify: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -33,10 +40,14 @@ while [ : ]; do
         exit 0
         ;;
     -n | --node_install_dir)
-        echo "Processing 'node install dir' option. Input argument is '$2'"
+        # echo "Processing 'node install dir' option. Input argument is '$2'"
         local_NODE_INSTALL=$2
         shift 2
         ;;
+    -u | --unify)
+        echo -n "${packages[@]}" >> "$apt_file_path"
+        echo -n "${externals[@]}" >> "$ext_file_path"
+        local_UNIFY=true
     --) shift; 
         break 
         ;;
@@ -48,13 +59,16 @@ done
 
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-# This script will install all of the dependencies needed by DataFed 1.0
-sudo apt-get update
-sudo dpkg --configure -a
+if [ "$local_UNIFY" = false ]; then
+  sudo apt-get update
+  sudo dpkg --configure -a
+  sudo apt-get install -y "${packages[@]}"
 
-sudo apt-get install -y curl python3 g++ make wget
+  for "$ext" in "${externals[@]}"; do
+    install_dep_by_name "$ext"
+  done
+fi
 
-#install_cmake
 # The foxx services need node version 12 or greater so we aren't going to use the package manager
 # but instead will install ourselves
 

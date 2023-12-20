@@ -10,45 +10,50 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 source "${SOURCE}/dependency_versions.sh"
 
+apt_file_path="/tmp/apt_deps"
+ext_file_path="/tmp/ext_deps"
+touch "$apt_file_path"
+touch "$ext_file_path"
+
 sudo apt-get update
-sudo apt install -y wget
+sudo apt install -y wget git curl
+
 install_cmake
 # This script will install all of the dependencies needed by DataFed 1.0
 sudo dpkg --configure -a
-sudo apt-get install -y libtool build-essential g++ gcc npm libboost-all-dev \
-pkg-config autoconf automake libtool wget curl make unzip libcurl4-openssl-dev \
-libfuse-dev rapidjson-dev libglobus-common-dev libkrb5-dev python3-pip libzmq3-dev  git
+
+sudo "$SOURCE/install_core_dependencies.sh" unify
+sudo "$SOURCE/install_repo_dependencies.sh" unify
+sudo "$SOURCE/install_ws_dependencies.sh" unify
+sudo "$SOURCE/install_authz_dependencies.sh" unify
+
+all_packages=$(cat $apt_file_path)
+IFS=' ' read -r -a all_packages_array <<< "$all_packages"
+deduplicated_packages_array=($(printf "%s\n" "${all_packages_array[@]}" | sort -u))
+
+all_externals=$(cat $ext_file_path)
+IFS=' ' read -r -a all_externals_array <<< "$all_externals"
+# deduplicated_externals_array=($(printf "%s\n" "${all_externals_array[@]}" | sort -u))
+
+sudo apt-get install -y "${deduplicated_packages_array[@]}"
+
+echo "DEPENDENCIES (${deduplicated_externals_array[@]})"
+
+cd ~
+
+for ext in "${all_externals_array[@]}"; do
+  echo "===== INSTALLING $ext ======"
+  install_dep_by_name "$ext"
+done
+
+rm $apt_file_path
+rm $ext_file_path
+
 # The foxx services need node version 12 or greater so we aren't going to use the package manager
 # but instead will install ourselves
 
-# 1. Install nvm which will allow us to update node
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
-
-export NVM_DIR="$DATAFED_DIR/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-
-nvm install $DATAFED_NODE_VERSION
-nvm use $DATAFED_NODE_VERSION
-
 python3 -m pip install --upgrade pip
 python3 -m pip install setuptools sphinx sphinx-rtd-theme sphinx-autoapi
-
-install_nlohmann_json
-cd ~
-
-install_json_schema_validator
-cd ~
-
-install_protobuf
-cd ~
-
-install_libsodium
-cd ~
-
-install_libzmq
-cd ~
-
-npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web
 
 curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key
 sudo apt-key add - < Release.key
