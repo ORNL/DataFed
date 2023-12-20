@@ -1,5 +1,5 @@
 ARG          DATAFED_DIR="/datafed"
-ARG DATAFED_INSTALL_PATH="$DATAFED_DIR/install"
+ARG DATAFED_INSTALL_PATH="/opt/datafed"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
 ARG              NVM_DIR="$DATAFED_DIR/.nvm"
@@ -27,9 +27,9 @@ COPY ./scripts/copy_dependency.sh      ${BUILD_DIR}/scripts/
 RUN mkdir -p ${DATAFED_DIR}
 RUN mkdir -p /opt/datafed
 RUN mkdir -p /var/log/datafed
-RUN chown -R datafed:datafed /opt/datafed
-RUN chown -R datafed:datafed /var/log/datafed
-RUN chown -R datafed:datafed ${DATAFED_DIR}
+RUN chown -R datafed:root /opt/datafed
+RUN chown -R datafed:root /var/log/datafed
+RUN chown -R datafed:root ${DATAFED_DIR}
 WORKDIR ${DATAFED_DIR}
 
 RUN apt update

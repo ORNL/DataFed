@@ -1,4 +1,5 @@
 #!/bin/bash
+# This script is used to rename the dependency libraries that DataFed uses to make them easier to copy between containers by reading the dependency_versions.sh script and renaming them accordingly.
 # credit to chatgpt for this script
 
 source $BUILD_DIR/scripts/dependency_versions.sh

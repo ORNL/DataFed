@@ -2,7 +2,7 @@ ARG           BUILD_BASE="ubuntu:focal"
 ARG         DEPENDENCIES="dependencies"
 ARG              RUNTIME="runtime"
 ARG          DATAFED_DIR="/datafed"
-ARG DATAFED_INSTALL_PATH="$DATAFED_DIR/install"
+ARG DATAFED_INSTALL_PATH="/opt/datafed"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
 ARG              NVM_DIR="$DATAFED_DIR/.nvm"
@@ -82,5 +82,5 @@ COPY --chown=datafed:root ./cmake/Version.cmake             ${DATAFED_DIR}/cmake
 COPY --from=core-build --chown=datafed:root ${BUILD_DIR}/core/docker/entrypoint.sh    ${BUILD_DIR}/core/entrypoint.sh
 COPY --from=core-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/core/datafed-core ${DATAFED_INSTALL_PATH}/core/datafed-core
 
-ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["/app/datafed-core","--cfg","/app/datafed-core.cfg"]
+ENTRYPOINT ["${BUILD_DIR}/core/entrypoint.sh"]
+CMD ["${DATAFED_INSTALL_PATH}/core/datafed-core","--cfg","${DATAFED_INSTALL_PATH}/core/datafed-core.cfg"]

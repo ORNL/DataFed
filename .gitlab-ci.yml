@@ -1,4 +1,3 @@
-
 stages:
   - ci-infrastructure-check
   - build-infrastructure
@@ -90,77 +89,49 @@ clear-repo-cache:
 #
 # NOTE GitLab is set to remove images after a month, so they will be forced to
 # rebuild at least once a month.
-build-dependencies:
+build-ws-base:
   stage: build-deploy-base
   variables:
-    IMAGE_TAG: "dlsw/datafed/dependencies"
-    CACHE_TAG: "dlsw/datafed/cache:dependencies"
+    IMAGE_TAG: "dlsw/datafed/ws-base"
     GIT_STRATEGY: clone
   tags:
-    - ci-datafed
+    - ci-datafed-core
     - docker
   script:
-    - docker buildx build -f dockerfiles/dependencies.Dockerfile --cache-from $CACHE_TAG --cache-to $CACHE_TAG .
+    - docker system prune -f
+    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push code.ornl.gov:4567/$IMAGE_TAG
+    - docker push code.ornl.gov:4567/dlsw/datafed/ws-base
 
-build-runtime:
+build-core-base:
+  needs: ["clear-core-cache"]
   stage: build-deploy-base
   variables:
-    IMAGE_TAG: "dlsw/datafed/runtime"
-    CACHE_TAG: "dlsw/datafed/cache:runtime"
+    IMAGE_TAG: "dlsw/datafed/core-base"
     GIT_STRATEGY: clone
   tags:
-    - ci-datafed
+    - ci-datafed-core
     - docker
   script:
-    - docker buildx build -f dockerfiles/runtime.Dockerfile --cache-from $CACHE_TAG --cache-to $CACHE_TAG .
+    - docker system prune -f
+    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push code.ornl.gov:4567/$IMAGE_TAG
+    - docker push code.ornl.gov:4567/dlsw/datafed/core-base
 
-# build-ws-base:
-#   stage: build-deploy-base
-#   variables:
-#     IMAGE_TAG: "dlsw/datafed/ws-base"
-#     GIT_STRATEGY: clone
-#   tags:
-#     - ci-datafed-core
-#     - docker
-#   script:
-#     - docker system prune -f
-#     - docker build -f web/docker/Dockerfile.web-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-#     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-#     - docker push code.ornl.gov:4567/dlsw/datafed/ws-base
-#
-# build-core-base:
-#   needs: ["clear-core-cache"]
-#   stage: build-deploy-base
-#   variables:
-#     IMAGE_TAG: "dlsw/datafed/core-base"
-#     GIT_STRATEGY: clone
-#   tags:
-#     - ci-datafed-core
-#     - docker
-#   script:
-#     - docker system prune -f
-#     - docker build -f core/docker/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-#     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-#     - docker push code.ornl.gov:4567/dlsw/datafed/core-base
-#
-# build-repo-base:
-#   needs: ["clear-repo-cache"]
-#   variables:
-#     IMAGE_TAG: "dlsw/datafed/repo-base"
-#     GIT_STRATEGY: clone
-#   stage: build-deploy-base
-#   tags:
-#     - ci-datafed-repo
-#     - docker
-#   script:
-#     - docker system prune -f
-#     - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-#     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-#     - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
+build-repo-base:
+  needs: ["clear-repo-cache"]
+  variables:
+    IMAGE_TAG: "dlsw/datafed/repo-base"
+    GIT_STRATEGY: clone
+  stage: build-deploy-base
+  tags:
+    - ci-datafed-repo
+    - docker
+  script:
+    - docker system prune -f
+    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
+    - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
 
 
 build-gcs-base:
@@ -170,6 +141,8 @@ build-gcs-base:
     GIT_STRATEGY: clone
     DISTRO: "ubuntu:focal"
     GCS_TAG: "code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
+    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
+    IMAGE_TAG3: "dlsw/datafed/gcs-authz"
   stage: build-deploy-base
   tags:
     - ci-datafed-globus
@@ -182,6 +155,11 @@ build-gcs-base:
     - docker tag "$LATEST_IMAGE" "$GCS_TAG" 
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
     - docker push "$GCS_TAG"
+    - cd ../../../ # back too root of project
+    - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
+    - docker push code.ornl.gov:4567/${IMAGE_TAG2}
+    - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
+    - docker push code.ornl.gov:4567/${IMAGE_TAG3}
 
 ################################################################################
 # STAGE: provision client
@@ -204,9 +182,6 @@ provision-client:
 build-ws:
   variables:
     IMAGE_TAG: "dlsw/datafed/ws-"
-    CACHE_TAG: "dlsw/datafed/cache:ws"
-    DEPENDENCIES: "dlsw/datafed/dependencies"
-    RUNTIME: "dlsw/datafed/runtime"
     GIT_STRATEGY: clone
   stage: build-unit-test-deploy
   tags:
@@ -228,15 +203,12 @@ build-ws:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker buildx build -f dockerfiles/ws.Dockerfile -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --cache-from $CACHE_TAG --cache-to $CACHE_TAG --build-arg DEPENDENCIES=$DEPENDENCIES --build-arg RUNTIME=$RUNTIME .
+    - docker build -f web/docker/Dockerfile.web.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-core:
   variables:
     IMAGE_TAG: "dlsw/datafed/core-"
-    CACHE_TAG: "dlsw/datafed/cache:core"
-    DEPENDENCIES: "dlsw/datafed/dependencies"
-    RUNTIME: "dlsw/datafed/runtime"
     GIT_STRATEGY: clone
   stage: build-unit-test-deploy
   tags:
@@ -257,7 +229,7 @@ build-core:
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build -f dockerfiles/core.Dockerfile -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --cache-from $CACHE_TAG --cache-to $CACHE_TAG --build-arg DEPENDENCIES=$DEPENDENCIES --build-arg RUNTIME=$RUNTIME .
+    - docker build -f core/docker/Dockerfile.core.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-foxx:
@@ -298,9 +270,6 @@ build-foxx:
 build-repo:
   variables:
     IMAGE_TAG: "dlsw/datafed/repo-"
-    CACHE_TAG: "dlsw/datafed/cache:repo"
-    DEPENDENCIES: "dlsw/datafed/dependencies"
-    RUNTIME: "dlsw/datafed/runtime"
     GIT_STRATEGY: clone
   stage: build-unit-test-deploy
   tags:
@@ -319,14 +288,12 @@ build-repo:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build -f dockerfiles/repo.Dockerfile -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --cache-from $CACHE_TAG --cache-to $CACHE_TAG --build-arg DEPENDENCIES=$DEPENDENCIES --build-arg RUNTIME=$RUNTIME .
+    - docker build -f repository/docker/Dockerfile.repo.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-gcs-authz:
   variables:
     IMAGE_TAG: "dlsw/datafed/gcs-authz-"
-    CACHE_TAG: "dlsw/datafed/cache:gcs"
-    GCS_TAG: "code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
     GIT_STRATEGY: clone
   stage: build-unit-test-deploy
   tags:
@@ -337,7 +304,7 @@ build-gcs-authz:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build -f dockerfiles/gcs.Dockerfile -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" --cache-from $CACHE_TAG --cache-to $CACHE_TAG --build-arg GCS_IMAGE=$GCS_TAG .
+    - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
 
 ################################################################################
