@@ -55,7 +55,7 @@ ENV                BUILD_DIR="$BUILD_DIR"
 
 
 # All files should be owned by the datafed user
-RUN chown -R datafed:datafed ${DATAFED_DIR}
+RUN chown -R datafed:root ${DATAFED_DIR}
 
 COPY --chown=datafed:root ./scripts/dependency_versions.sh        ${BUILD_DIR}/scripts/
 COPY --chown=datafed:root ./scripts/generate_authz_config.sh      ${BUILD_DIR}/scripts/generate_authz_config.sh
@@ -87,9 +87,9 @@ RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
 RUN cmake --build build
 RUN cmake --build build --target install
 
-COPY ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
-COPY ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
-COPY ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
+COPY --chown=datafed:root ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
+COPY --chown=datafed:root ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
+COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
 
 USER root
 

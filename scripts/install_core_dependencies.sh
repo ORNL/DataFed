@@ -6,8 +6,6 @@ set -e
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
-apt_file_path="/tmp/apt_deps"
-ext_file_path="/tmp/ext_deps"
 
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 

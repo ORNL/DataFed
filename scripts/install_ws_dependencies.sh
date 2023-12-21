@@ -6,8 +6,6 @@ set -e
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
-apt_file_path="/tmp/apt_deps"
-ext_file_path="/tmp/ext_deps"
 
 source "${SOURCE}/dependency_versions.sh"
 
@@ -40,7 +38,6 @@ while [ : ]; do
         exit 0
         ;;
     -n | --node_install_dir)
-        # echo "Processing 'node install dir' option. Input argument is '$2'"
         local_NODE_INSTALL=$2
         shift 2
         ;;

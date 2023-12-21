@@ -31,11 +31,6 @@ COPY ./cmake                           ${BUILD_DIR}/cmake
 COPY ./core/docker/entrypoint.sh       ${BUILD_DIR}/core/docker/
 COPY ./core/server                     ${BUILD_DIR}/core/server
 
-# All files should be owned by the datafed user
-# RUN chown -R datafed:datafed ${DATAFED_DIR}
-#
-# USER datafed
-
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
 	cmake -S. -B build						\
 		-DBUILD_REPO_SERVER=False		\

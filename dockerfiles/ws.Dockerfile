@@ -73,14 +73,10 @@ ENV                 PATH="$NVM_BIN:$PATH"
 
 RUN apt install -y python3 make g++
 
-WORKDIR /datafed
-
-RUN mkdir -p /home/cades
-RUN chown -R datafed:datafed /home/cades
+WORKDIR ${DATAFED_DIR}
 
 COPY --from=ws-build --chown=datafed:root "$NVM_DIR" "$NVM_DIR" 
 RUN ln -s ${DATAFED_INSTALL_PATH}/web ${DATAFED_DIR}/web
-RUN ln -s "$NVM_DIR" /home/cades/.nvm
 
 USER datafed
 

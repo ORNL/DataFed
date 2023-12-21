@@ -3,8 +3,13 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 source "${SOURCE}/dependency_versions.sh"
 
+# these are the dependencies to be installed by apt
+apt_file_path="/tmp/apt_deps"
+# these are the dependencies to be installed and built via cmake
+ext_file_path="/tmp/ext_deps"
+
 install_cmake() {
-  if [ ! -e ".cmake_installed" ]; then
+  if [ ! -e ".cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
     tar -xzvf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
     cp -r cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin /usr/local
@@ -15,12 +20,12 @@ install_cmake() {
     rm -rf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
 
     # Mark cmake as installed
-    touch .cmake_installed
+    touch ".cmake_installed-${DATAFED_CMAKE_VERSION}"
   fi
 }
 
 install_protobuf() {
-  if [ ! -e ".protobuf_installed" ]; then
+  if [ ! -e ".protobuf_installed-${DATAFED_PROTOBUF_VERSION}" ]; then
     if [ -d protobuf ]
     then
       # sudo required because of egg file
@@ -40,12 +45,12 @@ install_protobuf() {
     cd ../../
 
     # Mark protobuf as installed
-    touch .protobuf_installed
+    touch ".protobuf_installed-${DATAFED_PROTOBUF_VERSION}"
   fi
 }
 
 install_libsodium() {
-  if [ ! -e ".libsodium_installed" ]; then
+  if [ ! -e ".libsodium_installed-${DATAFED_LIBSODIUM_VERSION}" ]; then
     if [ -d libsodium ]
     then
       rm -rf libsodium 
@@ -61,12 +66,12 @@ install_libsodium() {
     cd ../
     
     # Mark libsodium as installed
-    touch .libsodium_installed
+    touch ".libsodium_installed-${DATAFED_LIBSODIUM_VERSION}"
   fi
 }
 
 install_libzmq() {
-  if [ ! -e ".libzmq_installed" ]; then
+  if [ ! -e ".libzmq_installed-${DATAFED_LIBZMQ_VERSION}" ]; then
     if [ -d libzmq ]
     then
       rm -rf libzmq 
@@ -79,12 +84,12 @@ install_libzmq() {
     sudo cmake --build build --target install
     
     # Mark libzmq as installed
-    touch .libzmq_installed
+    touch ".libzmq_installed-${DATAFED_LIBZMQ_VERSION}"
   fi
 }
 
 install_nlohmann_json() {
-  if [ ! -e ".nlohmann_json_installed" ]; then
+  if [ ! -e ".nlohmann_json_installed-${DATAFED_NLOHMANN_JSON_VERSION}" ]; then
     if [ -d json ]
     then
       rm -rf json
@@ -99,12 +104,12 @@ install_nlohmann_json() {
     cd ../
     
     # Mark nlohmann_json as installed
-    touch .nlohmann_json_installed
+    touch ".nlohmann_json_installed-${DATAFED_NLOHMANN_JSON_VERSION}"
   fi
 }
 
 install_json_schema_validator() {
-  if [ ! -e ".json_schema_validator_installed" ]; then
+  if [ ! -e ".json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}" ]; then
     if [ -d json-schema-validator ]
     then
       rm -rf json-schema-validator
@@ -118,12 +123,12 @@ install_json_schema_validator() {
     cd ../
     
     # Mark json-schema-validator as installed
-    touch .json_schema_validator_installed
+    touch ".json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}"
   fi
 }
 
 install_gcs() {
-  if [ ! -e ".gcs_installed" ]; then
+  if [ ! -e ".gcs_installed-${DATAFED_GLOBUS_VERSION}" ]; then
     sudo apt update
     sudo apt install -y curl git gnupg
     curl -LOs https://downloads.globus.org/globus-connect-server/stable/installers/repo/deb/globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb
@@ -134,8 +139,17 @@ install_gcs() {
     sudo apt-get install globus-connect-server54 -y
     
     # Mark gcs as installed
-    touch .gcs_installed
+    touch ".gcs_installed-${DATAFED_GLOBUS_VERSION}"
   fi
+}
+
+install_arangodb() {
+  curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key
+  sudo apt-key add - < Release.key
+  echo 'deb https://download.arangodb.com/arangodb38/DEBIAN/ /' | sudo tee /etc/apt/sources.list.d/arangodb.list
+  sudo apt-get install apt-transport-https
+  sudo apt-get update
+  sudo apt-get install arangodb3
 }
 
 install_dep_by_name() {
