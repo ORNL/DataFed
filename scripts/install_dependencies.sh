@@ -22,7 +22,7 @@ sudo dpkg --configure -a
 
 sudo "$SOURCE/install_core_dependencies.sh" unify
 sudo "$SOURCE/install_repo_dependencies.sh" unify
-sudo "$SOURCE/install_ws_dependencies.sh" --unify
+sudo "$SOURCE/install_ws_dependencies.sh" unify
 sudo "$SOURCE/install_authz_dependencies.sh" unify
 
 all_packages=$(cat $apt_file_path)

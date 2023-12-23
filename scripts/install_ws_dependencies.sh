@@ -26,7 +26,7 @@ Help()
 local_NODE_INSTALL="$HOME"
 local_UNIFY=false
 
-VALID_ARGS=$(getopt -o hnu: --long 'help',node_install_dir,unify: -- "$@")
+VALID_ARGS=$(getopt -o hn: --long 'help',node_install_dir: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -41,10 +41,13 @@ while [ : ]; do
         local_NODE_INSTALL=$2
         shift 2
         ;;
-    -u | --unify)
-        echo -n "${packages[@]}" >> "$apt_file_path"
-        echo -n "${externals[@]}" >> "$ext_file_path"
+    unify)
+        # the space is necessary to not conflict with the other install scripts
+        echo -n "${packages[@]} " >> "$apt_file_path"
+        echo -n "${externals[@]} " >> "$ext_file_path"
         local_UNIFY=true
+        shift
+        ;;
     --) shift; 
         break 
         ;;
@@ -70,8 +73,12 @@ fi
 # but instead will install ourselves
 
 # 1. Install nvm which will allow us to update node
-export NVM_DIR="$local_NODE_INSTALL/.nvm"
-if [ ! -d "$local_NODE_INSTALL/.nvm" ]
+if [[ -z "$NVM_DIR" ]];
+then
+  export NVM_DIR="$local_NODE_INSTALL/.nvm"
+fi
+
+if [ ! -d "$NVM_DIR" ]
 then
   mkdir -p "$NVM_DIR"
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
