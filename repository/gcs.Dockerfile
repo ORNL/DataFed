@@ -70,9 +70,6 @@ COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/r
 COPY --chown=datafed:root ./common                                ${BUILD_DIR}/common
 COPY --chown=datafed:root ./repository/gridftp/globus5            ${BUILD_DIR}/repository/gridftp/globus5
 
-# Build as if a non root user
-USER datafed
-
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\

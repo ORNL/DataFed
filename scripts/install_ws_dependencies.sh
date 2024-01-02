@@ -8,6 +8,7 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
 source "${SOURCE}/dependency_versions.sh"
+source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("curl" "python3" "g++" "make" "wget")
 externals=("cmake")
@@ -57,14 +58,12 @@ while [ : ]; do
   esac
 done
 
-source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
-
-if [ "$local_UNIFY" = false ]; then
+if [[ $local_UNIFY = false ]]; then
   sudo apt-get update
   sudo dpkg --configure -a
   sudo apt-get install -y "${packages[@]}"
 
-  for "$ext" in "${externals[@]}"; do
+  for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
   done
 fi
@@ -80,6 +79,7 @@ fi
 
 if [ ! -d "$NVM_DIR" ]
 then
+  echo "==========INSTALLING NVM============"
   mkdir -p "$NVM_DIR"
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 fi

@@ -160,6 +160,9 @@ install_arangodb() {
 
 install_dep_by_name() {
   case "$1" in
+    "cmake")
+      install_cmake
+      ;;
     "protobuf")
       install_protobuf
       ;;

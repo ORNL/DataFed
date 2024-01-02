@@ -25,7 +25,6 @@ RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${BUILD_DIR}/repository/server
 RUN mkdir -p ${BUILD_DIR}/common/proto
 RUN mkdir -p /libraries
-RUN mkdir -p ${NVM_DIR}
 
 WORKDIR ${BUILD_DIR}
 
