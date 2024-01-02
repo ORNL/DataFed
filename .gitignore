@@ -37,3 +37,5 @@ web/Version.proto
 web/datafed-core-key.pub
 web/node_modules/
 web/static/datafed-core-key.pub
+*.swp
+*.swo
