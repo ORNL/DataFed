@@ -4,6 +4,7 @@
 
 ## MINOR Feature
 1. [909] - Added Support for Google Analytics
+2. [916] - Reworked Docker build process to be faster and produce simpler and smaller images
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [914] - Improve GitHub template
