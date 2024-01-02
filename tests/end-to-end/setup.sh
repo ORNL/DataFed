@@ -104,11 +104,19 @@ fi
 
 
 # Detect whether arangodb is running locally
-ARANGODB_RUNNING=$(systemctl is-active --quiet arangodb3.service && echo "RUNNING")
-if [ "$ARANGODB_RUNNING" != "RUNNING" ]
+{
+	ARANGODB_RUNNING=$(systemctl is-active --quiet arangodb3.service && echo "RUNNING")
+} || {
+	echo "Arangodb service is not locally detected."
+}
+
+if [ "${DATAFED_DATABASE_HOST}" == "localhost" ] || [ "${DATAFED_DATABASE_HOST}" == "127.0.0.1" ]
 then
-  echo "REQUIRED the arangodb service has not been detected to be running by systemctl"
-  exit 1
+	if [ "$ARANGODB_RUNNING" != "RUNNING" ]
+	then
+	  echo "REQUIRED the arangodb service has not been detected to be running by systemctl"
+	  exit 1
+	fi
 fi
 
 # First step is to clear the database
@@ -117,31 +125,38 @@ ${PROJECT_ROOT}/scripts/clear_db.sh
 # Second install foxx
 ${PROJECT_ROOT}/scripts/install_foxx.sh
 
+
+if [ -z "${DATAFED_DATABASE_HOST}" ]
+then
+  local_DATAFED_DATABASE_HOST=$(hostname -I | awk '{print $1}')
+else
+  local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
+fi
+
 #curl -X GET http://127.0.0.1:8529/_db/sdms/
 
-IP=$(hostname -I | awk '{print $1}')
-echo "IP is $IP"
+echo "IP is ${local_DATAFED_DATABASE_HOST}"
 echo "USER89 GLobud ID $DATAFED_USER89_GLOBUS_UUID"
 echo "Refresh is ${DATAFED_USER89_REFRESH_TOKEN}"
 # Chreate user datafed89 who is admin
-HTTP_CODE=$( curl -w "%{http_code}" -o /dev/null -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
+HTTP_CODE=$( curl -w "%{http_code}" -o /dev/null -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$( curl -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
+  response=$( curl -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl --fail-early -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+  response=$(curl --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
@@ -149,24 +164,24 @@ then
 fi
 
 # Create user datafed99 who is not admin
-HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
+HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl --fail-early -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
+  response=$(curl --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+HTTP_CODE=$(curl  -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl --fail-early -X GET "http://${IP}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+  response=$(curl --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
@@ -177,7 +192,7 @@ exit 0
 #source ${DATAFED_REPO_FORM_PATH}
 
 # Using the datafed89 client because it has admin rights to add the repo
-#curl -X POST --header 'accept: application/json' --data-binary @- --dump - "http://${IP}:8529/_db/sdms/api/repo/create?client=u%2Fdatafed89" <<\
+#curl -X POST --header 'accept: application/json' --data-binary @- --dump - "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/repo/create?client=u%2Fdatafed89" <<\
 #EOF
 #{
 #  "id" : "$DATAFED_REPO_ID",
@@ -196,7 +211,7 @@ exit 0
 #
 ## Using the datafed89 client because it has the repo rights to create an allocation
 ## Creating an allocation for datafed89
-#curl -X GET  "http://${IP}:8529/_db/sdms/api/repo/alloc/create?client=u%2Fdatafed89&subject=u%2Fdatafed89&repo=repo%2F${DATAFED_REPO_ID}&data_limit=1000000000&rec_limit=100" 
+#curl -X GET  "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/repo/alloc/create?client=u%2Fdatafed89&subject=u%2Fdatafed89&repo=repo%2F${DATAFED_REPO_ID}&data_limit=1000000000&rec_limit=100" 
 #
 ## Creating an allocation for datafed99
-#curl -X GET  "http://${IP}:8529/_db/sdms/api/repo/alloc/create?client=u%2Fdatafed89&subject=u%2Fdatafed99&repo=repo%2F${DATAFED_REPO_ID}&data_limit=1000000000&rec_limit=100" 
+#curl -X GET  "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/repo/alloc/create?client=u%2Fdatafed89&subject=u%2Fdatafed99&repo=repo%2F${DATAFED_REPO_ID}&data_limit=1000000000&rec_limit=100" 
