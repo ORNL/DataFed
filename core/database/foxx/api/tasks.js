@@ -230,7 +230,7 @@ var tasks_func = function() {
 
     // ----------------------- DATA GET ----------------------------
 
-    obj.taskInitDataGet = function(a_client, a_path, a_encrypt, a_res_ids, a_orig_fname, a_check) {
+    obj.taskInitDataGet = function(a_client, a_path, a_encrypt, a_res_ids, a_orig_fname, a_check, a_retries) {
         console.log("taskInitDataGet");
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_GET);
@@ -268,7 +268,8 @@ var tasks_func = function() {
                     encrypt: a_encrypt,
                     orig_fname: a_orig_fname,
                     glob_data: result.glob_data,
-                    ext_data: result.ext_data
+                    ext_data: result.ext_data,
+                    retries: a_retries
                 },
                 task = obj._createTask(a_client._id, g_lib.TT_DATA_GET, 2, state),
                 i, dep_ids = [];
@@ -329,11 +330,20 @@ var tasks_func = function() {
         if (a_task.step < a_task.steps - 1) {
             //console.log("taskRunDataGet - do xfr");
             // Transfer data step
+         
+            // This is only needed if it is an old task and a task entry does
+            // not exist in the database with he retries field
+            // the number is the max value for a unit32_t
+            var a_retries = 4294967295;
+            if (a_task.state.retries) {
+              a_retries = a_task.state.retries;
+            }
 
             var tokens = g_lib.getAccessToken(a_task.client);
             var params = {
                 uid: a_task.client,
                 type: a_task.type,
+                retries: a_retries,
                 encrypt: state.encrypt,
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,
@@ -362,7 +372,7 @@ var tasks_func = function() {
 
     // ----------------------- DATA PUT ----------------------------
 
-    obj.taskInitDataPut = function(a_client, a_path, a_encrypt, a_ext, a_res_ids, a_check) {
+    obj.taskInitDataPut = function(a_client, a_path, a_encrypt, a_ext, a_res_ids, a_check, a_retries) {
         console.log("taskInitDataPut");
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_PUT);
@@ -376,6 +386,7 @@ var tasks_func = function() {
                 path: a_path,
                 encrypt: a_encrypt,
                 ext: a_ext,
+                retries: a_retries,
                 glob_data: result.glob_data
             };
             var task = obj._createTask(a_client._id, g_lib.TT_DATA_PUT, 2, state);
@@ -433,11 +444,20 @@ var tasks_func = function() {
         if (a_task.step < a_task.steps - 2) {
             //console.log("taskRunDataPut - do xfr");
             // Transfer data step
+          
+            // This is only needed if it is an old task and a task entry does
+            // not exist in the database with he retries field
+            // the number is the max value for a unit32_t
+            var a_retries = 4294967295;
+            if (a_task.state.retries) {
+              a_retries = a_task.state.retries;
+            }
 
             var tokens = g_lib.getAccessToken(a_task.client);
             params = {
                 uid: a_task.client,
                 type: a_task.type,
+                retries: a_retries,
                 encrypt: state.encrypt,
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,

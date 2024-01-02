@@ -847,6 +847,17 @@ def _dataView(data_id, context):
         "component of', and 'ver' for 'a new version of'."
     ),
 )
+@click.option(
+    "-q",
+    "--retries",
+    type=int,
+    required=False,
+    help=(
+        "Number of retries allowed before failing when uploading a raw data "
+        "file using Globus. If none is specified will resort to the default "
+        "Globus behavior."
+    ),
+)
 @_global_context_options
 @_global_output_options
 def _dataCreate(
@@ -865,6 +876,7 @@ def _dataCreate(
     repository,
     deps,
     context,
+    retries,
 ):
     """
     Create a new data record. The data record 'title' is required, but all
@@ -883,6 +895,16 @@ def _dataCreate(
 
     if repository and external:
         raise Exception("Cannot specify a repository for external raw data.")
+
+    if retries and not raw_data_file:
+        error_msg = "Invalid option, cannot specify retries if raw data file"
+        error_msg += "has not been specified."
+        raise Exception(error_msg)
+
+    if retries and external:
+        error_msg = "Invalid option, cannot specify retries on external data."
+        error_msg += " The data is not transferred when using an external repo."
+        raise Exception(error_msg)
 
     if metadata and metadata_file:
         raise Exception("Cannot specify both --metadata and --metadata-file options.")
@@ -916,7 +938,7 @@ def _dataCreate(
 
     if raw_data_file and not external:
         click.echo("")
-        reply = _capi.dataPut(reply[0].data[0].id, raw_data_file)
+        reply = _capi.dataPut(reply[0].data[0].id, raw_data_file, retries=retries)
         _generic_reply_handler(reply, _print_task)
 
 
@@ -994,6 +1016,17 @@ def _dataCreate(
         "of the target record. Can be specified multiple times."
     ),
 )
+@click.option(
+    "-q",
+    "--retries",
+    type=int,
+    required=False,
+    help=(
+        "Number of retries allowed before failing when uploading a raw data "
+        "file using Globus. If none is specified will resort to the default "
+        "Globus behavior."
+    ),
+)
 @_global_context_options
 @_global_output_options
 def _dataUpdate(
@@ -1012,6 +1045,7 @@ def _dataUpdate(
     deps_add,
     deps_rem,
     context,
+    retries,
 ):
     """
     Update an existing data record. The data record ID is required and can be
@@ -1030,6 +1064,16 @@ def _dataUpdate(
             )
     else:
         external = False
+
+    if retries and not raw_data_file:
+        error_msg = "Invalid option, cannot specify retries if raw data file"
+        error_msg += "has not been specified."
+        raise Exception(error_msg)
+
+    if retries and external:
+        error_msg = "Invalid option, cannot specify retries on external data."
+        error_msg += " The data is not transferred when using an external repo."
+        raise Exception(error_msg)
 
     if metadata and metadata_file:
         raise Exception("Cannot specify both --metadata and --metadata-file options.")
@@ -1058,7 +1102,7 @@ def _dataUpdate(
 
     if raw_data_file and not external:
         click.echo("")
-        reply = _capi.dataPut(reply[0].data[0].id, raw_data_file)
+        reply = _capi.dataPut(reply[0].data[0].id, raw_data_file, retries=retries)
         _generic_reply_handler(reply, _print_task)
 
 
@@ -1107,8 +1151,19 @@ def _dataDelete(data_id, force, context):
 @click.option(
     "-o", "--orig_fname", is_flag=True, help="Download to original filename(s)."
 )
+@click.option(
+    "-q",
+    "--retries",
+    type=int,
+    required=False,
+    help=(
+        "Number of retries allowed before failing when downloading a raw data "
+        "file using Globus. If none is specified will resort to the default "
+        "Globus behavior."
+    ),
+)
 @_global_context_options
-def _dataGet(df_id, path, wait, encrypt, orig_fname, context):
+def _dataGet(df_id, path, wait, encrypt, orig_fname, context, retries):
     """
     Get (download) raw data of data records and/or collections. Multiple ID
     arguments can be specified and may be data record and/or collection IDs,
@@ -1134,6 +1189,7 @@ def _dataGet(df_id, path, wait, encrypt, orig_fname, context):
         orig_fname=orig_fname,
         wait=wait,
         context=context,
+        retries=retries,
     )
 
     if reply[1] == "DataGetReply":
@@ -1163,8 +1219,19 @@ def _dataGet(df_id, path, wait, encrypt, orig_fname, context):
     default="1",
     help="Encryption mode: 0 = none, 1 = if available (default), 2 = force.",
 )
+@click.option(
+    "-q",
+    "--retries",
+    type=int,
+    required=False,
+    help=(
+        "Number of retries allowed before failing when uploading a raw data "
+        "file using Globus. If none is specified will resort to the default "
+        "Globus behavior."
+    ),
+)
 @_global_context_options
-def _dataPut(data_id, path, wait, extension, encrypt, context):
+def _dataPut(data_id, path, wait, extension, encrypt, context, retries):
     """
     Put (upload) raw data located at PATH to DataFed record ID.  The ID
     argument may be data record ID, alias, or index value from a listing.
@@ -1181,6 +1248,7 @@ def _dataPut(data_id, path, wait, extension, encrypt, context):
         wait=wait,
         extension=extension,
         context=context,
+        retries=retries,
     )
 
     if reply[1] == "DataPutReply":

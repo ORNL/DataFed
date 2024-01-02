@@ -426,6 +426,7 @@ message DataGetRequest
     optional Encryption         encrypt     = 3; // Optional encryption mode (none, if available, required)
     optional bool               orig_fname  = 4; // Optional flag to download to original filenames
     optional bool               check       = 5; // Optional flag to perform initial validation only if true
+    optional uint32             retries     = 6; // Optional number of transfer retries to attempt
 }
 
 // Request to upload raw data to a data records. Auth user must have WRITE_DATA
@@ -439,6 +440,7 @@ message DataPutRequest
     optional Encryption         encrypt     = 3; // Optional encryption mode (none, if available, required)
     optional string             ext         = 4; // Optional extension override
     optional bool               check       = 5; // Optional flag to perform initial validation only if true
+    optional uint32             retries     = 6; // Optional number of transfer retries to attempt
 }
 
 // Reply containing data download information, including associated background task.

@@ -3136,6 +3136,9 @@ void DatabaseAPI::taskInitDataGet(const Auth::DataGetRequest &a_request,
   if (a_request.has_orig_fname() && a_request.orig_fname())
     body += ",\"orig_fname\":true";
 
+  if (a_request.has_retries())
+    body += ",\"retries\":\"" + to_string(a_request.retries()) + "\"";
+
   if (a_request.has_check() && a_request.check())
     body += ",\"check\":true";
 
@@ -3191,6 +3194,9 @@ void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
 
   if (a_request.has_ext())
     body += ",\"ext\":\"" + a_request.ext() + "\"";
+
+  if (a_request.has_retries())
+    body += ",\"retries\":\"" + to_string(a_request.retries()) + "\"";
 
   if (a_request.has_check() && a_request.check())
     body += ",\"check\":true";

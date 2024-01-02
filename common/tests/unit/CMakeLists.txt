@@ -13,6 +13,7 @@ foreach(PROG
     test_ProxyBasicZMQ
     test_SocketFactory
     test_SocketOptions
+    test_TypeConverter
 )
 
   include_directories(${PROJECT_SOURCE_DIR}/common/source)
