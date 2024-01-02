@@ -75,7 +75,11 @@ COPY --from=dependencies /usr/local/include/sodium /usr/local/include/sodium
 COPY --from=dependencies /usr/local/include/sodium.h /usr/local/include/sodium.h
 COPY --from=dependencies /usr/local/include/zmq.h /usr/local/include/zmq.h
 COPY --from=dependencies /usr/local/include/zmq_utils.h /usr/local/include/zmq_utils.h
+COPY --from=dependencies /usr/local/lib/pkgconfig/libzmq.pc /usr/local/lib/pkgconfig/libzmq.pc
+RUN rm /usr/include/zmq*
+RUN rm /usr/lib/x86_64-linux-gnu/*zmq*
 COPY --from=dependencies /usr/local/lib/cmake /usr/local/lib/cmake
+
 COPY --from=dependencies /libraries/libprotobuf.so           /libraries/libprotobuf.so
 COPY --from=dependencies /libraries/libzmq.so                /libraries/libzmq.so
 COPY --from=dependencies /libraries/libsodium.so             /libraries/libsodium.so
