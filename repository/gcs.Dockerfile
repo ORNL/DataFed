@@ -24,9 +24,6 @@ RUN mkdir -p ${BUILD_DIR}/common/proto
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/authz
 RUN mkdir -p ${DATAFED_DIR}/collections/mapped
 
-# RUN apt update
-# RUN apt install -y vim netcat wget make
-
 # For communicating with public
 EXPOSE 443
 
@@ -73,6 +70,12 @@ COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/r
 COPY --chown=datafed:root ./common                                ${BUILD_DIR}/common
 COPY --chown=datafed:root ./repository/gridftp/globus5            ${BUILD_DIR}/repository/gridftp/globus5
 
+COPY --from=dependencies /usr/local/include/google /usr/local/include/google
+COPY --from=dependencies /usr/local/include/sodium /usr/local/include/sodium
+COPY --from=dependencies /usr/local/include/sodium.h /usr/local/include/sodium.h
+COPY --from=dependencies /usr/local/include/zmq.h /usr/local/include/zmq.h
+COPY --from=dependencies /usr/local/include/zmq_utils.h /usr/local/include/zmq_utils.h
+COPY --from=dependencies /usr/local/lib/cmake /usr/local/lib/cmake
 COPY --from=dependencies /libraries/libprotobuf.so           /libraries/libprotobuf.so
 COPY --from=dependencies /libraries/libzmq.so                /libraries/libzmq.so
 COPY --from=dependencies /libraries/libsodium.so             /libraries/libsodium.so
