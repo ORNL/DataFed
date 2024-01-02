@@ -10,6 +10,8 @@ ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
 ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG              LIB_DIR="/usr/local/lib"
 
+FROM ${DEPENDENCIES} AS dependencies
+
 FROM ${GCS_IMAGE}
 
 ARG DATAFED_DIR
@@ -22,8 +24,8 @@ RUN mkdir -p ${BUILD_DIR}/common/proto
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/authz
 RUN mkdir -p ${DATAFED_DIR}/collections/mapped
 
-RUN apt update
-RUN apt install -y vim netcat
+# RUN apt update
+# RUN apt install -y vim netcat wget make
 
 # For communicating with public
 EXPOSE 443
@@ -40,8 +42,9 @@ RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 COPY ./scripts/dependency_versions.sh          ${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_authz_dependencies.sh   ${BUILD_DIR}/scripts/
+COPY ./scripts/copy_dependency.sh   ${BUILD_DIR}/scripts/
 
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh unify
 
 ARG rebuild=true
 ARG DATAFED_DIR
@@ -69,6 +72,13 @@ COPY --chown=datafed:root ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/s
 COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
 COPY --chown=datafed:root ./common                                ${BUILD_DIR}/common
 COPY --chown=datafed:root ./repository/gridftp/globus5            ${BUILD_DIR}/repository/gridftp/globus5
+
+COPY --from=dependencies /libraries/libprotobuf.so           /libraries/libprotobuf.so
+COPY --from=dependencies /libraries/libzmq.so                /libraries/libzmq.so
+COPY --from=dependencies /libraries/libsodium.so             /libraries/libsodium.so
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 

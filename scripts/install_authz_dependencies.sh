@@ -33,14 +33,17 @@ if [ $# -eq 1 ]; then
   esac
 fi
 
+sudo apt-get update
+sudo dpkg --configure -a
+sudo apt-get install -y "${packages[@]}"
+
+cd ~
+install_cmake
+
+python3 -m pip install --upgrade pip
+python3 -m pip install setuptools
+
 if [[ $local_UNIFY = false ]]; then
-  sudo apt-get update
-  sudo dpkg --configure -a
-  sudo apt-get install -y "${packages[@]}"
-
-  python3 -m pip install --upgrade pip
-  python3 -m pip install setuptools
-
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
   done
