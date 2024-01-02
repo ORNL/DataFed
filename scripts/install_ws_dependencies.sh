@@ -42,7 +42,7 @@ while [ : ]; do
         shift 2
         ;;
     unify)
-        # the space is necessary to not conflict with the other install scripts
+        # The extra space is necessary to not conflict with the other install scripts
         echo -n "${packages[@]} " >> "$apt_file_path"
         echo -n "${externals[@]} " >> "$ext_file_path"
         local_UNIFY=true

@@ -20,6 +20,7 @@ if [ $# -eq 1 ]; then
       ;;
     unify)
       # If 'unify' is provided, print the packages
+      # The extra space is necessary to not conflict with the other install scripts
       echo -n "${packages[@]} " >> "$apt_file_path"
       echo -n "${externals[@]} " >> "$ext_file_path"
       ;;
