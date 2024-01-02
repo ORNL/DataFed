@@ -4,6 +4,7 @@
 
 ## MINOR Feature
 1. [909] - Added Support for Google Analytics
+2. [918] - Add admin script for making a user an admin
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [914] - Improve GitHub template
