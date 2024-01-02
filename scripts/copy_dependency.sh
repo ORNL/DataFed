@@ -2,7 +2,7 @@
 # This script is used to rename the dependency libraries that DataFed uses to make them easier to copy between containers by reading the dependency_versions.sh script and renaming them accordingly.
 # credit to chatgpt for this script
 
-source $BUILD_DIR/scripts/dependency_versions.sh
+source "$BUILD_DIR/scripts/dependency_versions.sh"
 
 # Define the list of supported libraries and their environment variable names
 supported_libraries=("protobuf" "libsodium" "libzmq" "boost_program_options" "boost_filesystem")
