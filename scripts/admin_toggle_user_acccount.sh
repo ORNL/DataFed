@@ -13,12 +13,13 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
+SCRIPT_NAME=$(basename $0)
 
 Help()
 {
-  echo "$(basename $0) will make the specified DataFed user a DataFed admin when enable-admin-account flag is used."
+  echo "${SCRIPT_NAME} will make the specified DataFed user a DataFed admin when enable-admin-account flag is used."
   echo
-  echo "Syntax: $(basename $0) [-h|u|p|d|e]"
+  echo "Syntax: ${SCRIPT_NAME} [-h|u|p|d|e]"
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-u, --database-user               Database user, needed to log into the database."
@@ -126,7 +127,6 @@ else
 fi
 
 # Start by checking if the user exists, cannot run if the user does not exist.
-#db._query("FOR user in u FILTER user._id == 'u/gilligan' RETURN user._key");
 # Grab the key 
 # USER_KEY - need to grab this from the database
 
