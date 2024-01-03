@@ -44,6 +44,7 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_depen
 
 COPY ./scripts/copy_dependency.sh ${BUILD_DIR}/scripts/
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf from
+RUN ${BUILD_DIR}/scripts/copy_dependency.sh protoc from
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq from
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium from
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options from
