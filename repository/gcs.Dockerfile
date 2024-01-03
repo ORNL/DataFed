@@ -10,8 +10,8 @@ ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
 ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG              LIB_DIR="/usr/local/lib"
 
-FROM ${DEPENDENCIES} AS dependencies
-
+#FROM ${DEPENDENCIES} AS dependencies
+FROM dependencies
 FROM ${GCS_IMAGE}
 
 ARG DATAFED_DIR
@@ -78,35 +78,40 @@ COPY --from=dependencies /usr/local/include/sodium.h /usr/local/include/sodium.h
 COPY --from=dependencies /usr/local/include/zmq.h /usr/local/include/zmq.h
 COPY --from=dependencies /usr/local/include/zmq_utils.h /usr/local/include/zmq_utils.h
 COPY --from=dependencies /usr/local/lib/pkgconfig/libzmq.pc /usr/local/lib/pkgconfig/libzmq.pc
+COPY --from=dependencies /usr/local/bin /usr/local/bin
 RUN rm /usr/include/zmq*
 RUN rm /usr/lib/x86_64-linux-gnu/*zmq*
 COPY --from=dependencies /usr/local/lib/cmake /usr/local/lib/cmake
+COPY --from=dependencies /usr/include/zmq.hpp /usr/include/zmq.hpp
 
 COPY --from=dependencies /libraries/libprotobuf.so           /libraries/libprotobuf.so
 COPY --from=dependencies /libraries/libzmq.so                /libraries/libzmq.so
 COPY --from=dependencies /libraries/libsodium.so             /libraries/libsodium.so
+COPY --from=dependencies /usr/local/lib/libprotoc.so             /usr/local/lib/libprotoc.so
+COPY --from=dependencies /usr/local/lib/libprotoc.so.3.17.3.0             /usr/local/lib/libprotoc.so.3.17.3.0
+
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
-RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
-	cmake -S. -B build				\
-		-DBUILD_REPO_SERVER=False		\
-		-DBUILD_AUTHZ=True			\
-		-DBUILD_CORE_SERVER=False		\
-		-DBUILD_WEB_SERVER=False		\
-		-DBUILD_DOCS=False			\
-		-DBUILD_PYTHON_CLIENT=False		\
-		-DBUILD_FOXX=False && \
-	cmake --build build
-RUN cmake --build build --target install
-
-COPY --chown=datafed:root ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
-COPY --chown=datafed:root ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
-COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
-
-USER root
-
-WORKDIR ${DATAFED_INSTALL_PATH}/authz
+#RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
+#	cmake -S. -B build				\
+#		-DBUILD_REPO_SERVER=False		\
+#		-DBUILD_AUTHZ=True			\
+#		-DBUILD_CORE_SERVER=False		\
+#		-DBUILD_WEB_SERVER=False		\
+#		-DBUILD_DOCS=False			\
+#		-DBUILD_PYTHON_CLIENT=False		\
+#		-DBUILD_FOXX=False && \
+#	cmake --build build
+#RUN cmake --build build --target install
+#
+#COPY --chown=datafed:root ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
+#COPY --chown=datafed:root ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
+#COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
+#
+#USER root
+#
+#WORKDIR ${DATAFED_INSTALL_PATH}/authz
