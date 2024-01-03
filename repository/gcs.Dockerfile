@@ -47,11 +47,13 @@ ARG rebuild=true
 ARG DATAFED_DIR
 ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
+ARG LIB_DIR
 
 ENV GCS_COLLECTION_ROOT_PATH="$DATAFED_DIR/collections/mapped"
 ENV     DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV	             DATAFED_DIR="$DATAFED_DIR"
 ENV                BUILD_DIR="$BUILD_DIR"
+ENV                  LIB_DIR="$LIB_DIR"
 
 
 # All files should be owned by the datafed user
@@ -97,8 +99,8 @@ RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
 		-DBUILD_WEB_SERVER=False		\
 		-DBUILD_DOCS=False			\
 		-DBUILD_PYTHON_CLIENT=False		\
-		-DBUILD_FOXX=False
-RUN cmake --build build
+		-DBUILD_FOXX=False && \
+	cmake --build build
 RUN cmake --build build --target install
 
 COPY --chown=datafed:root ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
