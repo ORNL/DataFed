@@ -68,14 +68,17 @@ RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
 
 RUN ldconfig
 
+RUN mkdir /opt/config
+RUN chown datafed:root /opt/config
+
 USER datafed
 
-COPY --chown=datafed:root ./scripts/generate_datafed.sh     ${DATAFED_DIR}/scripts/generate_datafed.sh
-COPY --chown=datafed:root ./scripts/generate_core_config.sh ${DATAFED_DIR}/scripts/generate_core_config.sh
-COPY --chown=datafed:root ./scripts/install_core.sh         ${DATAFED_DIR}/scripts/install_core.sh
-COPY --chown=datafed:root ./cmake/Version.cmake             ${DATAFED_DIR}/cmake/Version.cmake
-COPY --from=core-build --chown=datafed:root ${BUILD_DIR}/core/docker/entrypoint.sh    ${BUILD_DIR}/core/entrypoint.sh
+COPY --chown=datafed:root ./scripts/generate_datafed.sh     /opt/scripts/generate_datafed.sh
+COPY --chown=datafed:root ./scripts/generate_core_config.sh /opt/scripts/generate_core_config.sh
+COPY --chown=datafed:root ./scripts/install_core.sh         /opt/scripts/install_core.sh
+COPY --chown=datafed:root ./cmake/Version.cmake             /opt/cmake/Version.cmake
+COPY --from=core-build --chown=datafed:root ${BUILD_DIR}/core/docker/entrypoint.sh    ${DATAFED_INSTALL_PATH}/core/entrypoint.sh
 COPY --from=core-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/core/datafed-core ${DATAFED_INSTALL_PATH}/core/datafed-core
 
-ENTRYPOINT ["${BUILD_DIR}/core/entrypoint.sh"]
-CMD ["${DATAFED_INSTALL_PATH}/core/datafed-core","--cfg","${DATAFED_INSTALL_PATH}/core/datafed-core.cfg"]
+# ENTRYPOINT ["$DATAFED_INSTALL_PATH/core/entrypoint.sh"]
+# CMD ["$DATAFED_INSTALL_PATH/core/datafed-core","--cfg","$DATAFED_INSTALL_PATH/core/datafed-core.cfg"]

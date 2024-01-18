@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  web:
+    image: datafed-ws
+    depends_on:
+      - arangodb
+    ports:
+      - '80:80'
+      - '443:443'
+    env_file: .env
+
+  core:
+    image: datafed-core
+    depends_on:
+      - arangodb
+    network_mode: host
+    env_file: .env
+    # volumes:
+
+  arangodb:
+    image: arangodb
