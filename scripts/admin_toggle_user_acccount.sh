@@ -13,7 +13,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
-SCRIPT_NAME=$(basename $0)
+SCRIPT_NAME=$(basename "$0")
 
 Help()
 {
