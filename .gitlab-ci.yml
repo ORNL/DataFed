@@ -1,4 +1,3 @@
-
 stages:
   - ci-infrastructure-check
   - build-infrastructure
