@@ -51,10 +51,10 @@ ARG BUILD_DIR
 ARG LIB_DIR
 
 # The above should also be available at runtime
-ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
-ENV          DATAFED_DIR="$DATAFED_DIR"
-ENV            BUILD_DIR="$BUILD_DIR"
-ENV              LIB_DIR="$LIB_DIR"
+ENV DATAFED_INSTALL_PATH=$DATAFED_INSTALL_PATH
+ENV          DATAFED_DIR=$DATAFED_DIR
+ENV            BUILD_DIR=$BUILD_DIR
+ENV              LIB_DIR=$LIB_DIR
 
 # copy necessary shared libraries
 COPY --from=core-build /libraries/libprotobuf.so           /libraries/libprotobuf.so
@@ -80,5 +80,4 @@ COPY --chown=datafed:root ./cmake/Version.cmake             /opt/cmake/Version.c
 COPY --from=core-build --chown=datafed:root ${BUILD_DIR}/core/docker/entrypoint.sh    ${DATAFED_INSTALL_PATH}/core/entrypoint.sh
 COPY --from=core-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/core/datafed-core ${DATAFED_INSTALL_PATH}/core/datafed-core
 
-# ENTRYPOINT ["$DATAFED_INSTALL_PATH/core/entrypoint.sh"]
-# CMD ["$DATAFED_INSTALL_PATH/core/datafed-core","--cfg","$DATAFED_INSTALL_PATH/core/datafed-core.cfg"]
+ENTRYPOINT ["/bin/bash", "-c", "$DATAFED_INSTALL_PATH/core/entrypoint.sh $DATAFED_INSTALL_PATH/core/datafed-core --cfg $DATAFED_INSTALL_PATH/core/datafed-core.cfg"]

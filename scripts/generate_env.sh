@@ -13,6 +13,6 @@ if [ ! -f "$PROJECT_ROOT/config/datafed.sh" ]; then
 fi
 
 # Process the input script and extract export statements
-grep '^export ' "$PROJECT_ROOT/config/datafed.sh" | sed 's/^export //' > "$PROJECT_ROOT/.env"
+grep '^export ' "$PROJECT_ROOT/config/datafed.sh" | sed 's/^export \(.*\)="\(.*\)"/\1=\2/' > "$PROJECT_ROOT/.env"
 
 echo "Conversion complete. Output saved to '$PROJECT_ROOT/.env'."
