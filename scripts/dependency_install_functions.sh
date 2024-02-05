@@ -2,6 +2,7 @@
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 source "${SOURCE}/dependency_versions.sh"
+PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
 # these are the dependencies to be installed by apt
 apt_file_path="/tmp/apt_deps"
@@ -25,17 +26,20 @@ install_cmake() {
 }
 
 install_protobuf() {
+  local original_dir=$(pwd)
+  cd "${PROJECT_ROOT}"
+  echo "PROJECT_ROOT $PROJECT_ROOT"
   if [ ! -e ".protobuf_installed-${DATAFED_PROTOBUF_VERSION}" ]; then
-    if [ -d protobuf ]
+    if [ -d "${PROJECT_ROOT}/external/protobuf" ]
     then
       # sudo required because of egg file
-      sudo rm -rf protobuf 
+      sudo rm -rf "${PROJECT_ROOT}/external/protobuf"
     fi
-    git clone  https://github.com/google/protobuf.git
-    cd protobuf
-    git checkout v${DATAFED_PROTOBUF_VERSION}
+    git submodule update --init "${PROJECT_ROOT}/external/protobuf"
+    cd "${PROJECT_ROOT}/external/protobuf"
+    git checkout "v${DATAFED_PROTOBUF_VERSION}"
     git submodule update --init --recursive
-    cmake -S cmake/ -B build -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=ON
+    cmake -S . -B build -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=ON 
     cmake --build build -j 8
     sudo cmake --build build --target install
     cd python
@@ -48,11 +52,12 @@ install_protobuf() {
     then
       sudo rm build/install_manifest.txt
     fi
-    cd ../
+    cd "${PROJECT_ROOT}"
 
     # Mark protobuf as installed
     touch ".protobuf_installed-${DATAFED_PROTOBUF_VERSION}"
   fi
+  cd "$original_dir"
 }
 
 install_libsodium() {

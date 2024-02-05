@@ -39,14 +39,25 @@ fi
 # Delete database and API from arangodb
 if command -v arangosh &> /dev/null
 then
-	exists=$(arangosh --server.endpoint "http+tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}" \
-			 --server.username "$local_DATABASE_USER" \
+	output=$(arangosh --server.endpoint "http+tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}" \
+			 --server.username "$local_DATABASE_USER"  \
 			 --server.password "$local_DATAFED_DATABASE_PASSWORD" \
-			 --javascript.execute "db._databases().includes('$local_DATABASE_NAME')")
+       --javascript.execute-string "console.log(db._databases().includes('$local_DATABASE_NAME'))" \
+       --log.use-json-format true
+     )
 
+  if [[ "$output" =~ "ERROR" ]]; then
+    echo "An error was detected."
+    echo "$output"
+    exit 1
+  fi
+
+  exists=$(echo "$output" | jq -r '.message')
+
+  echo "Does it exist $exists"
 	if [ "$exists" = "true" ]; then
-	  arangosh  --server.endpoint
-    "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}" \
+    echo "Clearing database"
+	  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}" \
       --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
       --server.username "${local_DATABASE_USER}" \
       --javascript.execute-string "db._dropDatabase('$local_DATABASE_NAME');"

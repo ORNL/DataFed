@@ -30,6 +30,10 @@ set(INSTALL_AUTHZ ${BUILD_AUTHZ})
 set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
 set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
 
+# Needed by protobuf to correctly link library
+set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--copy-dt-needed-entries")
+set(CMAKE_MODULE_LINKER_FLAGS "-Wl,--copy-dt-needed-entries")
+
 function(get_version_from_script INPUT_STRING PATTERN_TO_MATCH OUTPUT_VERSION)
     string(REGEX MATCH "${PATTERN_TO_MATCH}=(.*)" MATCHED_PART "${INPUT_STRING}")
     if(MATCHED_PART)
@@ -42,7 +46,8 @@ endfunction()
 
 file(READ "${PROJECT_SOURCE_DIR}/scripts/dependency_versions.sh" DEPENDENCY_VERSIONS)
 
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_PROTOBUF_VERSION" PROTOBUF_VERSION)
+get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_DYNAMIC_LIBRARY_PROTOBUF_VERSION" PROTOBUF_LIBRARY_VERSION)
+get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_PROTOBUF_VERSION" PROTOBUF_COMPILER_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_NLOHMANN_JSON_VERSION" NLOHMANN_JSON_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBZMQ_VERSION" LIBZMQ_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBSODIUM_VERSION" LIBSODIUM_VERSION)
@@ -128,8 +133,52 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BU
     set( Protobuf_LIBRARY $ENV{PBUF_LIB_DIR} )
   endif()
 
-  find_package(Protobuf REQUIRED VERSION "${PROTOBUF_VERSION}" )
-  message("Protobuf library ${Protobuf_LIBRARIES}")
+  #INCLUDE(FindProtobuf)
+  find_package(Protobuf CONFIG REQUIRED ${PROTOBUF_LIBRARY_VERSION} PATHS ~/nfs/DataFed/install/lib/cmake )
+  #find_package(absl REQUIRED)
+  # This is necessary because they decided to increment the protoc tool starting
+  # with the minor version number but kept the library incrementing with a major
+  # version cmake fails with using find_package with a REQUIRED statement
+  # because looks at both of these numbers which are different so here
+  # we compare the version of protoc differently from the library
+  if(NOT ${Protobuf_VERSION} STREQUAL ${PROTOBUF_LIBRARY_VERSION} )
+    message(FATAL_ERROR "Versions of proto library (${Protobuf_VERSION}) and the required version (${PROTOBUF_LIBRARY_VERSION}) do not match.")
+  endif()
+  message("main cmake Protobuf_LIBRARIES: ${Protobuf_LIBRARIES}")
+  message("main cmake Protobuf_INCLUDE_DIRS: ${Protobuf_INCLUDE_DIRS}")
+  message("main cmake PROTOBUF_INCLUDE_DIRS: ${PROTOBUF_INCLUDE_DIRS}")
+  message("main cmake PROTOBUF_LIBRARIES: ${PROTOBUF_LIBRARIES}")
+
+  include_directories(${PROTOBUF_INCLUDE_DIRS})
+  #find_package(Protobuf PATHS ~/nfs/DataFed/install/lib/cmake )
+  message("Protoc executable ${Protobuf_PROTOC_EXECUTABLE}") 
+  get_target_property(PROTOC_PATH protobuf::protoc IMPORTED_LOCATION_NOCONFIG)
+  message("Protoc executable ${PROTOC_PATH}") 
+  execute_process(
+    COMMAND ${PROTOC_PATH} --version
+    OUTPUT_VARIABLE PROTOBUF_COMPILER_VERSION_OUTPUT
+    ERROR_VARIABLE PROTOBUF_VERSION_ERROR
+    RESULT_VARIABLE PROTOBUF_VERSION_RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_STRIP_TRAILING_WHITESPACE
+  )
+
+  # Remove library name from output
+  # Regular expression to match the first word
+  set(regex "^[^ ]+ ")
+
+  # Remove the first word using string(REGEX REPLACE ...)
+  string(REGEX REPLACE "${regex}" "" PROTOBUF_COMPILER_VERSION_ACTUAL "${PROTOBUF_COMPILER_VERSION_OUTPUT}")
+
+  if(NOT ${PROTOBUF_COMPILER_VERSION_ACTUAL} STREQUAL ${PROTOBUF_COMPILER_VERSION} )
+    message(FATAL_ERROR "Versions of protoc compiler (${PROTOBUF_COMPILER_VERSION_ACTUAL}) and the required version (${PROTOBUF_COMPILER_VERSION}) do not match.")
+  endif()
+
+  find_package(PkgConfig)
+  #pkg_check_modules(protobuf REQUIRED IMPORTED_TARGET protobuf=${PROTOBUF_LIBRARY_VERSION})
+  # REQUIRED VERSION "${PROTOBUF_VERSION}"
+  #message("Protobuf library ${Protobuf_LIBRARIES}")
+
   set( PROTOBUF_IMPORT_DIRS ${PROTOBUF_INCLUDE_DIRS})
 endif() 
 
@@ -271,7 +320,8 @@ if (PKG_CONFIG_FOUND)
 endif()
 message("")
 message("Tested Dependency Versions")
-message("             protobuf Version: ${PROTOBUF_VERSION}")
+message("             protobuf Version: ${PROTOBUF_LIBRARY_VERSION}")
+message("               protoc Version: ${PROTOBUF_COMPILER_VERSION}")
 message("         nlohman json Version: ${NLOHMANN_JSON_VERSION}")
 message("               libzmq Version: ${LIBZMQ_VERSION}")
 message("            libsodium Version: ${LIBSODIUM_VERSION}")
@@ -282,6 +332,7 @@ message("                boost Version: ${LOCAL_BOOST_VERSION}")
 message("")
 message("Found Dependency Versions")
 message("             protobuf Version: ${Protobuf_VERSION}")
+message("               protoc Version: ${PROTOBUF_COMPILER_VERSION_ACTUAL}")
 message("         nlohman json Version: ${nlohmann_json_VERSION}")
 message("               libzmq Version: ${PkgConfig_ZMQ_VERSION}")
 message("            libsodium Version: ${sodium_PKG_VERSION}")

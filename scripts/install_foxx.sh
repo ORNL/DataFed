@@ -202,11 +202,27 @@ then
   exit 1
 fi
 
+basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
+url="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
+code=$(curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
+
+if [[ "$code" != "200" ]]; then
+  echo "Error detected in attempting to connect to database at $url"
+  echo "HTTP code is: $code"
+  exit 1
+fi
+
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(curl --dump - \
-  --user "$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
-  "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user")
+output=$(curl -s -o /dev/null -i --dump - --user "$basic_auth" "$url")
+
+echo "Output: $output"
+
+if [[ "$output" == "" ]]; then
+  echo "curl command failed $url exiting"
+  exit 1
+fi
+
 
 if [[ "$output" =~ .*"sdms".* ]]; then
 	echo "SDMS already exists do nothing"

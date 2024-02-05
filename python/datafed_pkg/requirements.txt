@@ -1,4 +1,4 @@
-protobuf>=3,<=3.20
+protobuf
 pyzmq>=16
 wget>=3
 click>=7
