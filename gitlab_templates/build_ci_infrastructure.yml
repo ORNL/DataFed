@@ -1,7 +1,7 @@
 build-infrastructure-job:
   stage: build-infrastructure
   trigger:
-    project: dlsw/datafed/datafedci
+    project: dlsw/datafed/ci
     branch: main
     strategy: depend
   resource_group: infrastructure_build
