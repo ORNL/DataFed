@@ -7,6 +7,4 @@ skip-build-infrastructure:
     - datafed-infrastructure
   script:
     - echo "Infrastructure is already running!"
-  resource_group: infrastructure_build
-
 
