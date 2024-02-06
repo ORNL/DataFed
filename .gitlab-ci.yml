@@ -5,7 +5,7 @@ stages:
   - clear-docker-cache
   - build-deploy-base
   - provision-client
-  - build-unit-test-deploy
+  - build-unit-main
   - end-to-end-setup
   - end-to-end-test
   - end-to-end-teardown
@@ -144,7 +144,6 @@ build-core-base:
     - docker system prune -f
     - docker build -f core/docker/Dockerfile.core-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN REGISTRY
     - docker push "${REGISTRY}/${IMAGE_TAG}"
 
 build-repo-base:
@@ -214,7 +213,8 @@ build-ws:
   variables:
     IMAGE_TAG: "datafed/ws-"
     GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
+  needs: ["build-ws-base"]
+  stage: build-unit-main
   tags:
     - ci-datafed-core
     - docker
@@ -242,7 +242,8 @@ build-core:
   variables:
     IMAGE_TAG: "datafed/core-"
     GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
+  needs: ["build-core-base"]
+  stage: build-unit-main
   tags:
     - ci-datafed-core
     - docker
@@ -270,7 +271,7 @@ build-foxx:
     GIT_STRATEGY: clone
     DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
     DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
-  stage: build-unit-test-deploy
+  stage: build-unit-main
   tags:
     - ci-datafed-arango
   rules:
@@ -304,7 +305,7 @@ build-repo:
   variables:
     IMAGE_TAG: "datafed/repo-"
     GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
+  stage: build-unit-main
   tags:
     - ci-datafed-repo
     - docker
@@ -328,7 +329,7 @@ build-gcs-authz:
   variables:
     IMAGE_TAG: "datafed/gcs-authz-"
     GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
+  stage: build-unit-main
   tags:
     - ci-datafed-globus
     - docker
