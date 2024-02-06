@@ -56,7 +56,7 @@ run-trigger-job:
   trigger:
     include:
       - artifact: ci_infrastructure.yml
-        job: infrastructure-job
+        job: check-ci-infrastructure
     strategy: depend
   resource_group: infrastructure_build
 
