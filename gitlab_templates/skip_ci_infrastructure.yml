@@ -1,5 +1,8 @@
+stages:
+  - skip-infrastructure-build
+
 skip-build-infrastructure:
-  stage: build-infrastructure
+  stage: skip-infrastructure-build
   script:
     - echo "Infrastructure is already running!"
   resource_group: infrastructure_build

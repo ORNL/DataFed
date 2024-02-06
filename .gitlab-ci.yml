@@ -1,7 +1,6 @@
 stages:
   - ci-infrastructure-check
-  - pre-build-infrastructure
-  - build-infrastructure
+  - trigger-infrastructure
   - signal
   - clear-docker-cache
   - build-deploy-base
@@ -52,7 +51,7 @@ check-ci-infrastructure:
       - ci_infrastructure.yml 
 
 run-trigger-job:
-  stage: pre-build-infrastructure
+  stage: trigger-infrastructure
   trigger:
     include:
       - artifact: ci_infrastructure.yml
