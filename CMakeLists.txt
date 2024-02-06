@@ -133,9 +133,7 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BU
     set( Protobuf_LIBRARY $ENV{PBUF_LIB_DIR} )
   endif()
 
-  #INCLUDE(FindProtobuf)
   find_package(Protobuf CONFIG REQUIRED ${PROTOBUF_LIBRARY_VERSION} PATHS ~/nfs/DataFed/install/lib/cmake )
-  #find_package(absl REQUIRED)
   # This is necessary because they decided to increment the protoc tool starting
   # with the minor version number but kept the library incrementing with a major
   # version cmake fails with using find_package with a REQUIRED statement
