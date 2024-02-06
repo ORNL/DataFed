@@ -5,10 +5,10 @@ set -eu
 Help()
 {
   echo "$(basename $0) Will determine if a Open Stack VM exists if not it will"
-  echo " triger a GitLab pipeline to create the VM. It requires that you "
+  echo " will exit with an error code. It requires that you "
   echo "provide the Open Stack VM ID"
   echo
-  echo "Syntax: $(basename $0) [-h|i|s|c|g|a|n]"
+  echo "Syntax: $(basename $0) [-h|i|s|c|a|n]"
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-i, --app-credential-id           The application credentials id for"
@@ -23,11 +23,11 @@ Help()
   echo "                                  to check id or name is required."
   echo "-n, --compute-instance-name       The name of the instance we are trying"
   echo "                                  to check id or name is required.."
-  echo "-g, --gitlab-trigger-token        The GitLab token for restarting the CI"
-  echo "                                  pipeline to generate the VMs."
   echo "-a, --gitlab-api-token            The GitLab API token for checking the"
   echo "                                  status of a pipeline."
 }
+
+GITLAB_PROJECT_ID="10830"
 
 OS_APP_ID=$(printenv OS_APP_ID || true)
 if [ -z "$OS_APP_ID" ]
@@ -47,14 +47,6 @@ else
   local_OS_APP_SECRET="$OS_APP_SECRET"
 fi
 
-GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN=$(printenv GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN || true)
-if [ -z "$GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" ]
-then
-  local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN=""
-else
-  local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN="$GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN"
-fi
-
 GITLAB_DATAFEDCI_REPO_API_TOKEN=$(printenv GITLAB_DATAFEDCI_REPO_API_TOKEN || true)
 if [ -z "$GITLAB_DATAFEDCI_REPO_API_TOKEN" ]
 then
@@ -69,7 +61,7 @@ COMPUTE_INSTANCE_NAME=""
 COMPUTE_NAME_PROVIDED="FALSE"
 COMPUTE_ID_PROVIDED="FALSE"
 
-VALID_ARGS=$(getopt -o hi:s:c:g:a:n: --long 'help',app-credential-id:,app-credential-secret:,compute-instance-id:,gitlab-trigger-token:,gitlab-api-token:,compute-instance-name: -- "$@")
+VALID_ARGS=$(getopt -o hi:s:c:a:n: --long 'help',app-credential-id:,app-credential-secret:,compute-instance-id:,gitlab-api-token:,compute-instance-name: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -96,10 +88,6 @@ while [ : ]; do
     -n | --compute-instance-name)
         COMPUTE_INSTANCE_NAME=$2
         COMPUTE_NAME_PROVIDED="TRUE"
-        shift 2
-        ;;
-    -g | --gitlab-trigger-token)
-        local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN=$2
         shift 2
         ;;
     -a | --gitlab-api-token)
@@ -136,16 +124,9 @@ then
   exit 1
 fi
 
-if [ -z "$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" ]
-then
-  echo "The GitLab token for triggering the CI pipeline has not been defined it"
-  echo "is a required parameter."
-  exit 1
-fi
-
 if [ -z "$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" ]
 then
-  echo "The GitLab token for accessing the API of the datafedci repo is missing."
+  echo "The GitLab token for accessing the API of the DataFed ci repo is missing."
   echo "It is a required parameter."
   exit 1
 fi
@@ -173,7 +154,7 @@ then
 fi
 
 # Make sure jq is installed
-jq_path=$(which jq)
+jq_path=$(which jq || true)
 if [ -z "$jq_path" ]
 then
   echo "jq command not found exiting!"
@@ -182,23 +163,27 @@ fi
 
 wait_for_running_infrastructure_pipelines_to_finish() {
   local GITLAB_REPO_API_TOKEN="$1"
-  local all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${GITLAB_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines?status=running" | jq '.[]')
+  local all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${GITLAB_REPO_API_TOKEN}"  "https://code.ornl.gov/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines?status=running" | jq '.[]')
   if [ -z "$all_other_pipelines" ]
   then
     echo "No other running infrastructure provisioning pipelines detected!"
   fi
-
+ 
   local count=0
   while [ ! -z "$all_other_pipelines" ] 
   do
-    echo "$count Other running infrastructure provisioning pipelines detected... waiting for them to complete."
+    echo "Attempt $count, Other running infrastructure provisioning pipelines detected... waiting for them to complete."
+    echo
+    echo "Running Pipelines Are:"
     echo "$all_other_pipelines" | jq '.id'
     sleep 30s
     count=$(($count + 1))
-    all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${GITLAB_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines?status=running" | jq '.[]')
+    all_other_pipelines=$(curl -s --header "PRIVATE-TOKEN: ${GITLAB_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines?status=running" | jq '.[]')
   done
 }
 
+# Will search the open research cloud for instance that is running with the
+# provided identity
 find_orc_instance_by_id() {
   local SANITIZED_TOKEN="$1"
   local SANITIZED_URL="$2"
@@ -238,7 +223,6 @@ body=$(echo $data | sed 's/^.*{\"token/{\"token/' )
 
 compute_url=$(echo "$body" | jq '.token.catalog[] | select(.name=="nova") |.endpoints[] | select(.interface=="public") | .url ')
 sanitize_compute_url=$(echo $compute_url | sed 's/\"//g')
-
 header=$(echo "$data" | sed 's/{\"token.*//')
 subject_token=$(echo "$data" | grep "X-Subject-Token" | awk '{print $2}' )
 
@@ -271,42 +255,7 @@ pipeline_id=""
 if [ "$found_vm_id" == "FALSE" ]
 then
     echo "VM ID: $compute_id Name: $compute_name is Unhealthy, does not exist, triggering pipeline."
-
-    #datafedci_repo_api_trigger_to_run_ci_pipeline
-    # Here we need to make a request to the code.ornl.gov at datafedci
-    gitlab_response=$(curl -s --retry 5 --request POST \
-      --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
-      --form ref="main" \
-      "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
-    pipeline_id=$(echo "$gitlab_response" | jq '.id' )
-
-    MAX_COUNT=40
-    count=0
-    while [ "$found_vm_id" == "FALSE" ]
-    do
-      printf "$count Waiting for pipeline to start VM $compute_id..."
-      sleep 30s
-      # Run while loop and sleep until VM shows up or timeout is hit
-      compute_id=""
-      compute_name=""
-      found_vm_id="FALSE"
-      if [ "$COMPUTE_ID_PROVIDED" == "TRUE" ]
-      then
-        find_orc_instance_by_id "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_ID"
-      fi
-      if [[ "$found_vm_id" == "FALSE" && "$COMPUTE_NAME_PROVIDED" == "TRUE" ]]
-      then
-        find_orc_instance_by_name "$sanitize_subject_token" "$sanitize_compute_url" "$COMPUTE_INSTANCE_NAME"
-      fi
-
-      count=$(($count + 1))
-
-      if [ "$count" == "$MAX_COUNT" ]
-      then
-        echo "Exceeded time limit!"
-        exit 1
-      fi
-    done
+    exit 1
 fi
 
 ################################################################################
@@ -329,15 +278,7 @@ fi
 if [[ "$VM_IS_ACTIVE" == "FALSE" && -z "$pipeline_id" ]]
 then
   echo "VM ID: $compute_id Name: $compute_name is unhealthy triggering pipeline."
-
-  #datafedci_repo_api_trigger_to_run_ci_pipeline
-  # Here we need to make a request to the code.ornl.gov at datafedci
-  gitlab_response=$(curl -s --retry 5 --request POST \
-    --form token="$local_GITLAB_DATAFEDCI_REPO_TRIGGER_TOKEN" \
-    --form ref="main" \
-    "https://code.ornl.gov/api/v4/projects/10830/trigger/pipeline")
-
-    pipeline_id=$(echo "$gitlab_response" | jq '.id' )
+  exit 1
 fi
 
 # If the pipeline is defined check the status of the VMs
@@ -348,7 +289,7 @@ then
     while [ "$VM_IS_ACTIVE" == "FALSE" ]
     do
 
-      printf "$count Waiting for pipeline to start VM ... "
+      printf "Attempt $count, Waiting for pipeline to start VM ... "
       sleep 30s
       compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $sanitize_subject_token" "$sanitize_compute_url/servers/detail" | jq)
       INSTANCE_STATUS=$(echo "$compute_instances" | jq --arg compute_id "$compute_id" '.servers[] | select(.id==$compute_id) | .status ')
@@ -389,9 +330,9 @@ then
 	KEEP_RUNNING="TRUE"	
 	while [ "$KEEP_RUNNING" == "TRUE" ]
 	do
-		pipeline_status=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/10830/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
+		pipeline_status=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
 
-		printf "$count Waiting for triggered infrastructure provisioning pipeline: ${pipeline_id} to complete ... "
+		printf "Attempt $count, Waiting for triggered infrastructure provisioning pipeline: ${pipeline_id} to complete ... "
 		if [ "$pipeline_status" == "failed" ]
 		then
 			echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"

@@ -346,7 +346,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
     if (status == "ACTIVE") {
 
       double faults = resp_obj.getNumber("faults");
-      if (faults > 0.0) {
+      if (faults > 30.0) {
 
         DL_WARNING(m_log_context, "faults encountered for task: "
                                       << a_task_id << " faults " << faults);
@@ -542,11 +542,10 @@ void GlobusAPI::getEndpointInfo(const std::string &a_ep_id,
   long code = get(m_curl_xfr, m_config.glob_xfr_url + "endpoint/", a_ep_id,
                   a_acc_token, {}, raw_result);
 
+  Value result;
   try {
     if (!raw_result.size())
       EXCEPT_PARAM(ID_SERVICE_ERROR, "Empty response. Code: " << code);
-
-    Value result;
 
     result.fromString(raw_result);
 
@@ -575,15 +574,18 @@ void GlobusAPI::getEndpointInfo(const std::string &a_ep_id,
 
       // Look at DATA[0].scheme to see if it's gsiftp
       Value::Array &data = resp_obj.getArray("DATA");
-      Value::Object &server_obj = data[0].asObject();
 
-      Value &scheme = server_obj.getValue("scheme");
+      if (data.size() > 0) {
+        Value::Object &server_obj = data[0].asObject();
 
-      if (scheme.isNull())
-        a_ep_info.supports_encryption = true;
-      else if (scheme.isString())
-        a_ep_info.supports_encryption =
-            (scheme.asString().compare("gsiftp") == 0);
+        Value &scheme = server_obj.getValue("scheme");
+
+        if (scheme.isNull())
+          a_ep_info.supports_encryption = true;
+        else if (scheme.isString())
+          a_ep_info.supports_encryption =
+              (scheme.asString().compare("gsiftp") == 0);
+      }
     }
   } catch (libjson::ParseError &e) {
     DL_ERROR(m_log_context, "PARSE FAILED! " << raw_result);
@@ -591,6 +593,7 @@ void GlobusAPI::getEndpointInfo(const std::string &a_ep_id,
                  "Globus endpoint API call returned invalid JSON.");
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, raw_result);
+    DL_ERROR(m_log_context, "Result type: " << result.getTypeString());
     e.addContext("Globus endpoint API call failed.");
     throw;
   } catch (exception &e) {

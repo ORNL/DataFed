@@ -9,35 +9,38 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-# This script will install all of the dependencies needed by DataFed 1.0
-sudo apt-get update
-sudo dpkg --configure -a
-sudo apt-get install -y libtool build-essential g++ gcc make libboost-all-dev \
-pkg-config autoconf automake unzip libcurl4-openssl-dev wget \
-rapidjson-dev libkrb5-dev git python3-pkg-resources python3-pip libssl-dev
-sudo apt-get install -y libzmq3-dev 
+packages=("libtool" "build-essential" "g++" "gcc" "make" "libboost-all-dev" "pkg-config" "autoconf" "automake" "unzip" "libcurl4-openssl-dev" "wget" "rapidjson-dev" "libkrb5-dev" "git" "python3-pkg-resources" "python3-pip" "libssl-dev" "libzmq3-dev")
+externals=("cmake" "nlohmann_json" "json_schema_validator" "protobuf" "libsodium" "libzmq")
 
-cd ~
-install_cmake
-cd ~
+local_UNIFY=false
 
-# Install cmake 3.17
+if [ $# -eq 1 ]; then
+  case "$1" in
+    -h|--help)
+      # If -h or --help is provided, print help
+      echo "Usage: $0 [-h|--help] [unify]"
+      ;;
+    unify)
+      # If 'unify' is provided, print the packages
+      # The extra space is necessary to not conflict with the other install scripts
+      echo -n "${packages[@]} " >> "$apt_file_path"
+      echo -n "${externals[@]} " >> "$ext_file_path"
+      local_UNIFY=true
+      ;;
+    *)
+      echo "Invalid Argument"
+      ;;
+  esac
+fi
 
-python3 -m pip install --upgrade pip
-python3 -m pip install setuptools
+if [[ $local_UNIFY = false ]]; then
+  sudo apt-get update
+  sudo dpkg --configure -a
+  sudo apt-get install -y "${packages[@]}"
+  python3 -m pip install --upgrade pip
+  python3 -m pip install setuptools
 
-install_nlohmann_json
-cd ~
-
-install_json_schema_validator
-cd ~
-
-install_protobuf
-cd ~
-
-install_libsodium
-cd ~
-
-install_libzmq
-cd ~
-
+  for ext in "${externals[@]}"; do
+    install_dep_by_name "$ext"
+  done
+fi

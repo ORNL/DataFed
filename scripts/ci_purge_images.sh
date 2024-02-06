@@ -6,7 +6,7 @@
 # the oldest one
 
 # Max allowed size of all images in GB
-THRESHOLD_IN_GB="5"
+THRESHOLD_IN_GB="15"
 
 get_size_of_all_images_in_GB() {
 	declare -g total_image_size_number="0"

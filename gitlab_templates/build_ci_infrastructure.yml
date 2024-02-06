@@ -1,0 +1,12 @@
+stages:
+  - build-infrastructure
+
+build-infrastructure-job:
+  stage: build-infrastructure
+  trigger:
+    project: dlsw/datafed/ci
+    branch: main
+    strategy: depend
+  resource_group: infrastructure_build
+
+

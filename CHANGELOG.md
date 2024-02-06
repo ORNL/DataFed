@@ -1,10 +1,30 @@
-# Pre-Release
+# Pre-release
+
+## MAJOR Breaking changes
+
+## MINOR Feature
+1. [909] - Added Support for Google Analytics
+2. [916] - Reworked Docker build process to be faster and produce simpler and smaller images
 
 ## MINOR Feature
 1. [912] - Adds initial compose file and docker files for python-client
 
 ## PATCH Bug fixes/Technical Debt/Documentation
+1. [914] - Improve GitHub template
+2. [910] - Static code analysis and status checks fixed, improvements to CI
+3. [923] - Fixed missing flag in certificate refresh script
+4. [917] - Add additional files to .gitignore
+5. [915] - Refactor CI to use pipelines Gitlab feature along with pipelines 
+6. [927] - Add vim swp files to .gitignore
+
+# v2023.10.23.15.50
+
+## MINOR Feature
+1. [906] - Added backup and cert refresh scripts. 
+
+## PATCH Bug Fixes/Technical Debt/Documentation
 1. [911] - Add GitHub template
+2. [913] - Fixed bug, when endpoint info returns an empty array check to seee if array is empty before accessing elements
 
 # v2023.8.21.10.40
 
@@ -21,7 +41,7 @@
 7. [879] - Added correlation ids to messages for tracking
 8. [879] - Split log output into server specific files.
 
-## PATCH Bug fixes/Technical Debt/Documentation
+## PATCH Bug Fixes/Technical Debt/Documentation
 1. [879] - Fixed thread safety of repo list calls in core server which where causing
 seg faults
 2. [879] - Added better error reporting when attempting to delete repo with running tasks.
