@@ -18,6 +18,15 @@ else
   local_DATAFED_INSTALL_PATH=$(printenv DATAFED_INSTALL_PATH)
 fi
 
+# This is a build config variable
+local_DATAFED_DEPENDENCIES_INSTALL_PATH=""
+if [ -z "${DATAFED_INSTALL_PATH}" ]
+then
+  local_DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
+else
+  local_DATAFED_DEPENDENCIES_INSTALL_PATH=$(printenv DATAFED_DEPENDENCIES_INSTALL_PATH)
+fi
+
 local_DATAFED_DEFAULT_LOG_PATH=""
 if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
 then
@@ -171,6 +180,10 @@ export DATAFED_DEFAULT_LOG_PATH="$local_DATAFED_DEFAULT_LOG_PATH"
 # by default it will install to:
 # /opt/datafed
 export DATAFED_INSTALL_PATH="$local_DATAFED_INSTALL_PATH"
+# This is the folder where datafed dependencies will be installed
+# by default it will install to:
+# /opt/datafed/dependencies
+export DATAFED_DEPENDENCIES_INSTALL_PATH="$local_DATAFED_DEPENDENCIES_INSTALL_PATH"
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************

@@ -9,12 +9,27 @@ apt_file_path="/tmp/apt_deps"
 # these are the dependencies to be installed and built via cmake
 ext_file_path="/tmp/ext_deps"
 
+if [ ! -e "${PROJECT_ROOT}/config/datafed.sh" ]
+then
+  echo "Please run generate_datafed.sh before installing dependencies"
+  exit 1
+fi
+
+source "${PROJECT_ROOT}/config/datafed.sh"
+
+if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_DEPENDENCIES_INSTALL_PATH" ]; then
+    mkdir -p "$DATAFED_DEPENDENCIES_INSTALL_PATH"
+fi
+
+LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib:$LD_LIBRARY_PATH"
+
+
 install_cmake() {
   if [ ! -e ".cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
     tar -xzvf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
-    cp -r cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin /usr/local
-    cp -r cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share /usr/local
+    cp -r cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cp -r cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 
     # Cleanup
     rm -rf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64 
@@ -39,13 +54,17 @@ install_protobuf() {
     cd "${PROJECT_ROOT}/external/protobuf"
     git checkout "v${DATAFED_PROTOBUF_VERSION}"
     git submodule update --init --recursive
-    cmake -S . -B build -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=ON 
+    cmake -S . -B build \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      -DBUILD_SHARED_LIBS=ON \
+      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
     sudo cmake --build build --target install
     cd python
-    python3 setup.py build
-    python3 setup.py test
-    python3 setup.py install --user
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -m pip install numpy
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py build
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py test
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py install --user
     cd ../
     # Cleanup build file with root ownership
     if [ -f build/install_manifest.txt ]
@@ -70,7 +89,7 @@ install_libsodium() {
     cd libsodium
     git checkout "$DATAFED_LIBSODIUM_VERSION"
     ./autogen.sh
-    ./configure
+    ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make check
     sudo make install
     sudo ldconfig
@@ -90,7 +109,10 @@ install_libzmq() {
     git clone https://github.com/zeromq/libzmq.git
     cd libzmq
     git checkout v${DATAFED_LIBZMQ_VERSION}
-    cmake -S. -B build -DBUILD_STATIC=ON -DBUILD_SHARED=ON
+    cmake -S. -B build \
+      -DBUILD_STATIC=ON \
+      -DBUILD_SHARED=ON \
+      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
     sudo cmake --build build --target install
     
@@ -109,7 +131,8 @@ install_nlohmann_json() {
     cd json
     git checkout v${DATAFED_NLOHMANN_JSON_VERSION}
     echo "FILE STRUCTURE $(ls)"
-    cmake -S . -B build
+    cmake -S . -B build \
+      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
     sudo cmake --build build --target install
     cd ../
@@ -128,7 +151,8 @@ install_json_schema_validator() {
     git clone https://github.com/pboettch/json-schema-validator
     cd json-schema-validator
     git checkout ${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}
-    cmake -S . -B build
+    cmake -S . -B build \
+      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
     sudo cmake --build build --target install
     cd ../
