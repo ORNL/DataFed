@@ -3,12 +3,12 @@ version: '3.9'
 
 services:
   datafed-web:
-    image: datafed/web:latest
+    image: datafed-web:latest
     ports:
       - 8080:443 
 
   datafed-core:
-    image: datafed/core:latest
+    image: datafed-core:latest
     environment:
       DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
     ports:

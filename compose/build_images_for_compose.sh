@@ -7,19 +7,26 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../)
 
 docker build \
-  -f "${PROJECT_ROOT}/dockerfiles/Dockerfile.dependencies" \
+  -f "${PROJECT_ROOT}/docker/Dockerfile.dependencies" \
   "${PROJECT_ROOT}" \
   -t datafed-dependencies:latest
 docker build \
-  -f "${PROJECT_ROOT}/dockerfiles/Dockerfile.runtime" \
+  -f "${PROJECT_ROOT}/docker/Dockerfile.runtime" \
   "${PROJECT_ROOT}" \
   -t datafed-runtime:latest
 docker build -f \
-  "${PROJECT_ROOT}/core/dockerfiles/Dockerfile" \
+  "${PROJECT_ROOT}/core/docker/Dockerfile" \
   --build-arg DEPENDENCIES="datafed-dependencies" \
   --build-arg RUNTIME="datafed-runtime" \
   "${PROJECT_ROOT}" \
   -t datafed-core:latest
+docker build -f \
+  "${PROJECT_ROOT}/web/docker/Dockerfile" \
+  --build-arg DEPENDENCIES="datafed-dependencies" \
+  --build-arg RUNTIME="datafed-runtime" \
+  "${PROJECT_ROOT}" \
+  -t datafed-web:latest
+
 
 
 ## Repository server and authz library
