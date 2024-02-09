@@ -5,7 +5,7 @@ stages:
   - clear-docker-cache
   - build-deploy-base
   - provision-client
-  - build-unit-main
+  - build
   - end-to-end-setup
   - end-to-end-test
   - end-to-end-teardown
@@ -196,11 +196,11 @@ provision-client:
 ################################################################################
 # Building containers for running services
 build-ws:
+  needs: ["build-ws-base"]
+  stage: build
   variables:
     IMAGE_TAG: "datafed/ws-"
     GIT_STRATEGY: clone
-  needs: ["build-ws-base"]
-  stage: build-unit-main
   tags:
     - ci-datafed-core
     - docker
@@ -224,11 +224,11 @@ build-ws:
     - docker push "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-core:
+  needs: ["build-core-base"]
+  stage: build
   variables:
     IMAGE_TAG: "datafed/core-"
     GIT_STRATEGY: clone
-  needs: ["build-core-base"]
-  stage: build-unit-main
   tags:
     - ci-datafed-core
     - docker
@@ -251,11 +251,11 @@ build-core:
     - docker push "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-foxx:
+  stage: build
   variables:
     GIT_STRATEGY: clone
     DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
     DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
-  stage: build-unit-main
   tags:
     - ci-datafed-arango
   rules:
@@ -311,11 +311,11 @@ build-repo:
     - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-gcs-authz:
+  needs: ["build-gcs-base"]
+  stage: build
   variables:
     IMAGE_TAG: "datafed/gcs-authz-"
     GIT_STRATEGY: clone
-  needs: ["build-gcs-base"]
-  stage: build-unit-main
   tags:
     - ci-datafed-globus
     - docker
