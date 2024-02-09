@@ -105,6 +105,7 @@ clear-repo-cache:
 # NOTE GitLab is set to remove images after a month, so they will be forced to
 # rebuild at least once a month.
 build-ws-base:
+  needs: ["clear-core-cache"]
   stage: build-deploy-base
   variables:
     IMAGE_TAG: "datafed/ws-base"
@@ -288,6 +289,7 @@ build-repo:
   variables:
     IMAGE_TAG: "datafed/repo-"
     GIT_STRATEGY: clone
+  needs: build-repo-base
   stage: build-unit-main
   tags:
     - ci-datafed-repo
@@ -312,6 +314,7 @@ build-gcs-authz:
   variables:
     IMAGE_TAG: "datafed/gcs-authz-"
     GIT_STRATEGY: clone
+  needs: build-gcs-base
   stage: build-unit-main
   tags:
     - ci-datafed-globus
