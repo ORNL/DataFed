@@ -289,7 +289,7 @@ build-repo:
   variables:
     IMAGE_TAG: "datafed/repo-"
     GIT_STRATEGY: clone
-  needs: build-repo-base
+  needs: ["build-repo-base"]
   stage: build-unit-main
   tags:
     - ci-datafed-repo
@@ -314,7 +314,7 @@ build-gcs-authz:
   variables:
     IMAGE_TAG: "datafed/gcs-authz-"
     GIT_STRATEGY: clone
-  needs: build-gcs-base
+  needs: ["build-gcs-base"]
   stage: build-unit-main
   tags:
     - ci-datafed-globus
