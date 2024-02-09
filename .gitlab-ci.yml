@@ -115,7 +115,7 @@ build-ws-base:
     - docker
   script:
     - docker system prune -f
-    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t ${REGISTRY}/${IMAGE_TAG} .
+    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker push "${REGISTRY}/${IMAGE_TAG}"
 
@@ -220,8 +220,8 @@ build-ws:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f web/docker/Dockerfile.web.ubuntu -t "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build -f web/docker/Dockerfile.web.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-core:
   needs: ["build-core-base"]
@@ -247,8 +247,8 @@ build-core:
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f core/docker/Dockerfile.core.ubuntu -t "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build -f core/docker/Dockerfile.core.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
 build-foxx:
   stage: build
@@ -445,7 +445,7 @@ end-to-end-repo-setup:
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
        </dev/null &>/dev/null &
-    - ./scripts/container_run_test.sh -e -c "1" -t "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 end-to-end-gcs-authz-setup:
   variables:
