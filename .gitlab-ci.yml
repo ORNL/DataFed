@@ -26,7 +26,7 @@ check-ci-infrastructure:
   script:
     - |
       BUILD_INFRASTRUCTURE="FALSE"
-			COMPUTE_INSTANCE_NAMES=("ci-datafed-arangodb" "ci-datafed-core" "ci-datafed-globus2" "ci-datafed-client")
+      COMPUTE_INSTANCE_NAMES=("ci-datafed-arangodb" "ci-datafed-core" "ci-datafed-globus2" "ci-datafed-client")
       for INSTANCE_NAME in "${COMPUTE_INSTANCE_NAMES[@]}"; do
         if ! ./scripts/ci_pipeline_setup.sh --compute-instance-name "$INSTANCE_NAME"; then
           BUILD_INFRASTRUCTURE="TRUE"
