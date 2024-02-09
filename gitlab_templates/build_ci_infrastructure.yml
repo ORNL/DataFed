@@ -3,6 +3,8 @@ stages:
 
 build-infrastructure-job:
   stage: build-infrastructure
+  tags:
+    - datafed-infrastructure
   trigger:
     project: dlsw/datafed/ci
     branch: main
