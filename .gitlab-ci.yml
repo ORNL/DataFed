@@ -290,7 +290,7 @@ build-repo:
     IMAGE_TAG: "datafed/repo-"
     GIT_STRATEGY: clone
   needs: ["build-repo-base"]
-  stage: build-unit-main
+  stage: build
   tags:
     - ci-datafed-repo
     - docker
