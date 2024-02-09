@@ -7,6 +7,5 @@ build-infrastructure-job:
     project: dlsw/datafed/ci
     branch: main
     strategy: depend
-  resource_group: infrastructure_build
 
 

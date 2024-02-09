@@ -5,7 +5,7 @@ stages:
   - clear-docker-cache
   - build-deploy-base
   - provision-client
-  - build-unit-test-deploy
+  - build-unit-main
   - end-to-end-setup
   - end-to-end-test
   - end-to-end-teardown
@@ -26,22 +26,12 @@ check-ci-infrastructure:
   script:
     - |
       BUILD_INFRASTRUCTURE="FALSE"
-      if ! ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-arangodb"
-      then
-        BUILD_INFRASTRUCTURE="TRUE"
-      fi
-      if ! ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-core"
-      then
-        BUILD_INFRASTRUCTURE="TRUE"
-      fi
-      if ! ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
-      then
-        BUILD_INFRASTRUCTURE="TRUE"
-      fi
-      if ! ./scripts/ci_pipeline_setup.sh --compute-instance-name "ci-datafed-client"
-      then
-        BUILD_INFRASTRUCTURE="TRUE"
-      fi
+      COMPUTE_INSTANCE_NAMES=("ci-datafed-arangodb" "ci-datafed-core" "ci-datafed-globus2" "ci-datafed-client")
+      for INSTANCE_NAME in "${COMPUTE_INSTANCE_NAMES[@]}"; do
+        if ! ./scripts/ci_pipeline_setup.sh --compute-instance-name "$INSTANCE_NAME"; then
+          BUILD_INFRASTRUCTURE="TRUE"
+        fi
+      done
       if [ "$BUILD_INFRASTRUCTURE" == "TRUE" ]
       then
         cp gitlab_templates/build_ci_infrastructure.yml ci_infrastructure.yml
@@ -91,7 +81,6 @@ clear-core-cache:
     - ci_1
   script:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    #    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN REGISTRY
     - docker system prune -f
     - ./scripts/ci_purge_images.sh
 
@@ -102,7 +91,6 @@ clear-repo-cache:
     - ci_3
   script:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN REGISTRY
     - docker system prune -f
     - ./scripts/ci_purge_images.sh
 
@@ -117,6 +105,7 @@ clear-repo-cache:
 # NOTE GitLab is set to remove images after a month, so they will be forced to
 # rebuild at least once a month.
 build-ws-base:
+  needs: ["clear-core-cache"]
   stage: build-deploy-base
   variables:
     IMAGE_TAG: "datafed/ws-base"
@@ -128,7 +117,6 @@ build-ws-base:
     - docker system prune -f
     - docker build -f web/docker/Dockerfile.web-base.ubuntu -t ${REGISTRY}/${IMAGE_TAG} .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN REGISTRY
     - docker push "${REGISTRY}/${IMAGE_TAG}"
 
 build-core-base:
@@ -144,7 +132,6 @@ build-core-base:
     - docker system prune -f
     - docker build -f core/docker/Dockerfile.core-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN REGISTRY
     - docker push "${REGISTRY}/${IMAGE_TAG}"
 
 build-repo-base:
@@ -160,7 +147,6 @@ build-repo-base:
     - docker system prune -f
     - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN REGISTRY
     - docker push "${REGISTRY}/${IMAGE_TAG}"
 
 build-gcs-base:
@@ -183,7 +169,6 @@ build-gcs-base:
     - LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
     - docker tag "$LATEST_IMAGE" "$GCS_TAG" 
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN REGISTRY
     - docker push "$GCS_TAG"
     - cd ../../../ # back too root of project
     - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG2}" .
@@ -226,7 +211,8 @@ build-ws:
   variables:
     IMAGE_TAG: "datafed/ws-"
     GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
+  needs: ["build-ws-base"]
+  stage: build-unit-main
   tags:
     - ci-datafed-core
     - docker
@@ -246,7 +232,6 @@ build-ws:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN REGISTRY
     - docker build -f web/docker/Dockerfile.web.ubuntu -t "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}"
 
@@ -254,7 +239,8 @@ build-core:
   variables:
     IMAGE_TAG: "datafed/core-"
     GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
+  needs: ["build-core-base"]
+  stage: build-unit-main
   tags:
     - ci-datafed-core
     - docker
@@ -273,7 +259,6 @@ build-core:
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN REGISTRY
     - docker build -f core/docker/Dockerfile.core.ubuntu -t "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "REGISTRY/${IMAGE_TAG}${BRANCH_LOWER}"
 
@@ -282,7 +267,7 @@ build-foxx:
     GIT_STRATEGY: clone
     DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
     DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
-  stage: build-unit-test-deploy
+  stage: build-unit-main
   tags:
     - ci-datafed-arango
   rules:
@@ -316,7 +301,8 @@ build-repo:
   variables:
     IMAGE_TAG: "datafed/repo-"
     GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
+  needs: ["build-repo-base"]
+  stage: build-unit-main
   tags:
     - ci-datafed-repo
     - docker
@@ -340,7 +326,8 @@ build-gcs-authz:
   variables:
     IMAGE_TAG: "datafed/gcs-authz-"
     GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
+  needs: ["build-gcs-base"]
+  stage: build-unit-main
   tags:
     - ci-datafed-globus
     - docker

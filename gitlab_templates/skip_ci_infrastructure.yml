@@ -3,8 +3,8 @@ stages:
 
 skip-build-infrastructure:
   stage: skip-infrastructure-build
+  tags:
+    - datafed-infrastructure
   script:
     - echo "Infrastructure is already running!"
-  resource_group: infrastructure_build
-
 
