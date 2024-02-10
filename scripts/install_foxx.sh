@@ -7,9 +7,9 @@ set -f -o pipefail
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
-source ${PROJECT_ROOT}/config/datafed.sh
-source ${SOURCE}/dependency_versions.sh
-source ${SOURCE}/dependency_install_functions.sh
+source "${PROJECT_ROOT}/config/datafed.sh"
+source "${SOURCE}/dependency_versions.sh"
+source "${SOURCE}/dependency_install_functions.sh"
 
 Help()
 {
