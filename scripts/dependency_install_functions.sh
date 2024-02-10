@@ -8,6 +8,18 @@ apt_file_path="/tmp/apt_deps"
 # these are the dependencies to be installed and built via cmake
 ext_file_path="/tmp/ext_deps"
 
+if [ ! -e "${PROJECT_ROOT}/config/datafed.sh" ]
+then
+  echo "Please run generate_datafed.sh before installing dependencies"
+  exit 1
+fi
+
+source "${PROJECT_ROOT}/config/datafed.sh"
+
+if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_DEPENDENCIES_INSTALL_PATH" ]; then
+    mkdir -p "$DATAFED_DEPENDENCIES_INSTALL_PATH"
+fi
+
 install_cmake() {
   if [ ! -e ".cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
@@ -146,6 +158,60 @@ install_gcs() {
     
     # Mark gcs as installed
     touch ".gcs_installed-${DATAFED_GLOBUS_VERSION}"
+  fi
+}
+
+install_nvm() {
+  # By default this will place NVM in $HOME/.nvm
+  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+    # By setting NVM_DIR beforehand when the scirpt is run it 
+    # will use it to set the install path
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
+    # Mark gcs as installed
+    touch ".nvm_installed-${DATAFED_NVM_VERSION}"
+  fi
+}
+
+install_node() {
+  # By default this will place NVM in $HOME/.nvm
+  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+    echo "You must first install nvm before installing node."
+    exit 1
+  fi
+  if [ ! -e ".node_installed-${DATAFED_NODE_VERSION}" ]; then
+
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    # Sets the "global" folder where the packages will be installed
+    export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+    nvm install "$DATAFED_NODE_VERSION"
+    # Mark gcs as installed
+    touch ".node_installed-${DATAFED_NODE_VERSION}"
+  fi
+}
+
+install_foxx_cli() {
+  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+    echo "You must first install nvm before installing foxx_cli."
+    exit 1
+  fi
+  if [ ! -e ".node_installed-${DATAFED_NODE_VERSION}" ]; then
+    echo "You must first install node before installing foxx_cli"
+    exit 1
+  fi
+  # By default this will place NVM in $HOME/.nvm
+  if [ ! -e ".foxx_cli_installed" ]; then
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    # Sets the "global" folder where the packages will be installed
+    export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+    nvm use "$DATAFED_NODE_VERSION"
+    "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+    # Mark gcs as installed
+    touch ".foxx_cli_installed"
   fi
 }
 

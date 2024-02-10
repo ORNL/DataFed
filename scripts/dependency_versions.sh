@@ -11,7 +11,7 @@ DATAFED_LIBZMQ_VERSION="4.3.4"
 # this version is different from above due to the fact libzmq names its shared library diffrently than the actual api version
 DATAFED_LIB_LIBZMQ_VERSION="5.2.4"
 DATAFED_NODE_VERSION="v14.21.3"
-DATAFED_NVM_VERSION="v13.14.0"
+DATAFED_NVM_VERSION="v0.39.7"
 DATAFED_PROTOBUF_VERSION="3.17.3"
 DATAFED_FULL_PROTOBUF_VERSION="3.17.3.0"
 DATAFED_LIBCURL="7.68.0"
