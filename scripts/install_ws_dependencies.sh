@@ -76,21 +76,25 @@ fi
 # but instead will install ourselves
 
 # 1. Install nvm which will allow us to update node
-if [[ -z "$NVM_DIR" ]];
-then
-  export NVM_DIR="$local_NODE_INSTALL"
-fi
+install_nvm
+#if [[ -z "$NVM_DIR" ]];
+#then
+#  export NVM_DIR="$local_NODE_INSTALL"
+#fi
+#
+#if [ ! -d "$NVM_DIR" ]
+#then
+#  echo "==========INSTALLING NVM============"
+#  mkdir -p "$NVM_DIR"
+#  curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
+#fi
+#
+#[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+#
+#nvm install $DATAFED_NODE_VERSION
+#nvm use $DATAFED_NODE_VERSION
+install_node
 
-if [ ! -d "$NVM_DIR" ]
-then
-  echo "==========INSTALLING NVM============"
-  mkdir -p "$NVM_DIR"
-  curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
-fi
-
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-
-nvm install $DATAFED_NODE_VERSION
-nvm use $DATAFED_NODE_VERSION
-
-npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web
+export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+"$NVM_DIR/nvm-exec" npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web 
+#npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web

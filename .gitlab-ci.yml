@@ -185,6 +185,7 @@ provision-client:
   variables:
     IMAGE_TAG: "datafed/repo-base"
     GIT_STRATEGY: clone
+    DATAFED_DEPENDENCIES_INSTALL_PATH: "${CI_PROJECT_DIR}/install"
   stage: provision-client
   tags:
     - ci-datafed-client
