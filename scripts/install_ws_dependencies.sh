@@ -77,29 +77,8 @@ fi
 
 # 1. Install nvm which will allow us to update node
 install_nvm
-#if [[ -z "$NVM_DIR" ]];
-#then
-#  export NVM_DIR="$local_NODE_INSTALL"
-#fi
-#
-#if [ ! -d "$NVM_DIR" ]
-#then
-#  echo "==========INSTALLING NVM============"
-#  mkdir -p "$NVM_DIR"
-#  curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
-#fi
-#
-#[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-#
-#nvm install $DATAFED_NODE_VERSION
-#nvm use $DATAFED_NODE_VERSION
-echo "NODE INSTALL STARTED"
 install_node
 
-echo "NODE INSTALL DONE"
-#nvm use "$DATAFED_NODE_VERSION"
-#export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
 export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 export NODE_VERSION="$DATAFED_NODE_VERSION"
 "$NVM_DIR/nvm-exec" npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web 
-#npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web

@@ -254,6 +254,7 @@ build-core:
 
 build-foxx:
   stage: build
+  needs: ["signal"]
   variables:
     GIT_STRATEGY: clone
     DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"

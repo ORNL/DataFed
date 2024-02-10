@@ -169,7 +169,7 @@ install_nvm() {
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
     curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
-    # Mark gcs as installed
+    # Mark nvm as installed
     touch ".nvm_installed-${DATAFED_NVM_VERSION}"
   fi
 }
@@ -183,13 +183,10 @@ install_node() {
   if [ ! -e ".node_installed-${DATAFED_NODE_VERSION}" ]; then
 
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
-    # Sets the "global" folder where the packages will be installed
-    #export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
-    #mkdir -p "${NPM_CONFIG_PREFIX}"
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm install "$DATAFED_NODE_VERSION"
-    # Mark gcs as installed
+    # Mark node as installed
     touch ".node_installed-${DATAFED_NODE_VERSION}"
   fi
 }
@@ -206,14 +203,10 @@ install_foxx_cli() {
   # By default this will place NVM in $HOME/.nvm
   if [ ! -e ".foxx_cli_installed" ]; then
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
-    # Sets the "global" folder where the packages will be installed
-    #export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
-
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-    #nvm use "$DATAFED_NODE_VERSION"
     export NODE_VERSION="$DATAFED_NODE_VERSION"
     "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
-    # Mark gcs as installed
+    # Mark foxx_cli as installed
     touch ".foxx_cli_installed"
   fi
 }
