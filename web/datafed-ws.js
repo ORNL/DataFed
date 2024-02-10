@@ -301,7 +301,7 @@ app.get('/ui/welcome', (a_req, a_resp) => {
 
 app.get('/ui/main', (a_req, a_resp) => {
     if ( a_req.session.uid && a_req.session.reg ){
-        logger.info('/ui/main', getCurrentLineNumber(), "Access main (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
+        logger.info('/ui/main', getCurrentLineNumber(), "Access main (" + a_req.session.uid + ") from " + a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
         const nonce = crypto.randomBytes(16).toString('base64');
@@ -327,7 +327,7 @@ app.get('/ui/register', (a_req, a_resp) => {
         logger.info('/ui/register', getCurrentLineNumber(), " - already registered, go to /ui/main");
         a_resp.redirect( '/ui/main' );
     } else {
-        logger.info('/ui/register', getCurrentLineNumber(), " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
+        logger.info('/ui/register', getCurrentLineNumber(), " - registration access (" + a_req.session.uid + ") from " + a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
         const clean = sanitizeHtml( a_req.session.name );
@@ -346,7 +346,7 @@ app.get('/ui/login', (a_req, a_resp) => {
     if ( a_req.session.uid && a_req.session.reg ){
         a_resp.redirect( '/ui/main' );
     } else {
-        logger.info('/ui/login', getCurrentLineNumber(), "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "log-in" );
+        logger.info('/ui/login', getCurrentLineNumber(), "User (" + a_req.session.uid + ") from " + a_req.connection.remoteAddress + "log-in" );
 
         var uri = g_globus_auth.code.getUri();
         a_resp.redirect(uri);
@@ -355,7 +355,7 @@ app.get('/ui/login', (a_req, a_resp) => {
 
 
 app.get('/ui/logout', (a_req, a_resp) => {
-    logger.info('/ui/logout', getCurrentLineNumber(), "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "logout" );
+    logger.info('/ui/logout', getCurrentLineNumber(), "User (" + a_req.session.uid + ") from " + a_req.connection.remoteAddress + " logout" );
 
     //a_resp.clearCookie( 'datafed-id' );
     //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
@@ -412,7 +412,7 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
                     var userinfo = JSON.parse( data ),
                         uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
-                    logger.info('/ui/authn', getCurrentLineNumber(), 'User', uid, 'authenticated, verifying DataFed account' );
+                    logger.info('/ui/authn', getCurrentLineNumber(), 'User: ' + uid + ' authenticated, verifying DataFed account' );
                     sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
                         if ( !reply  ) {
                             logger.error('/ui/authn', getCurrentLineNumber(),  "Error - Find user call failed." );
@@ -1774,7 +1774,7 @@ g_core_sock.on('message', function( delim, header, route_count, delim2, correlat
     var f = g_ctx[ctx];
     if ( f ) {
         g_ctx[ctx] = null;
-        logger.info("g_core_sock.on", getCurrentLineNumber(),"freed ctx: " + ctx + " for msg: " + msg_class.name + " correlation_id: " + correlation_id);
+        logger.info("g_core_sock.on", getCurrentLineNumber(),"freed ctx: " + ctx + " for msg: " + msg_class.name, correlation_id);
         g_ctx_next = ctx;
         f( msg );
     } else {
