@@ -211,7 +211,8 @@ install_foxx_cli() {
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     #nvm use "$DATAFED_NODE_VERSION"
-    "$NVM_DIR/nvm-exec" "$DATAFED_NODE_VERSION" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+    NODE_VERSION="$DATAFED_NODE_VERSION"
+    "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
     # Mark gcs as installed
     touch ".foxx_cli_installed"
   fi
