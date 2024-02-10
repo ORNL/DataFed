@@ -189,6 +189,7 @@ provision-client:
   tags:
     - ci-datafed-client
   script:
+    - ./scripts/generate_datafed.sh
     - ./scripts/install_client_dependencies.sh
 
 ################################################################################
