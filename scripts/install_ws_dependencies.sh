@@ -100,8 +100,6 @@ echo "NODE INSTALL DONE"
 #nvm use "$DATAFED_NODE_VERSION"
 #export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
 NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
-echo "listing contents"
-ls "${NVM_DIR}"
-echo "Node version Printing $DATAFED_NODE_VERSION"
-"$NVM_DIR/nvm-exec" "$DATAFED_NODE_VERSION" npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web 
+NODE_VERSION="$DATAFED_NODE_VERSION"
+"$NVM_DIR/nvm-exec" npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web 
 #npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web
