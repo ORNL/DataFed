@@ -7,8 +7,9 @@ set -f -o pipefail
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
-source ${PROJECT_ROOT}/config/datafed.sh
-source ${SOURCE}/dependency_versions.sh
+source "${PROJECT_ROOT}/config/datafed.sh"
+source "${SOURCE}/dependency_versions.sh"
+source "${SOURCE}/dependency_install_functions.sh"
 
 Help()
 {
@@ -240,34 +241,24 @@ actual_version=$(node --version)
 semantic_version_compatible "$actual_version" "$DATAFED_NODE_VERSION"
 compatible=$?
 
-if [ "$compatible" -eq "0" ]
-then
+#if [ "$compatible" -eq "0" ]
+#then
   # 1. Install nvm which will allow us to update node
-  if [ ! -d "$HOME/.nvm" ]
-  then
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
-  fi
-
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-
-  nvm install "$DATAFED_NODE_VERSION"
-  nvm use "$DATAFED_NODE_VERSION"
-
-  # Install foxx service node module
-  "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix ~/
-else 
+install_nvm
+install_node
+install_foxx_cli
+#else 
   # We are assuming that if the correct version of node is installed then the
   # correct version of npm is also installed
-  npm install --global foxx-cli --prefix ~/
-fi
+#  npm install --global foxx-cli --prefix ~/
+#fi
 
 FOXX_PREFIX=""
 {
 	# Determine if exists globally first
 	which foxx
 } || {
-	FOXX_PREFIX="~/bin/"
+	FOXX_PREFIX="${NPM_CONFIG_PREFIX}/bin/"
 }
 
 PATH_TO_PASSWD_FILE="${SOURCE}/database_temp.password"

@@ -178,7 +178,7 @@ Building the compiling the core service::
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
                     -DBUILD_FOXX=False
     cmake --build build --parallel 6
-    sudo cmake --build --target install
+    sudo cmake --build build --target install
 
 Example datafed-core.cfg file::
 
@@ -230,7 +230,7 @@ Building the web service::
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
                     -DBUILD_FOXX=False
     cmake --build build --parallel 6
-    sudo cmake --build --target install
+    sudo cmake --build build --target install
 
 It should start automatically with an install but to run the web service, you
 can also interact with it via systemctl::
@@ -278,7 +278,7 @@ Building the repo service::
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
                     -DBUILD_FOXX=False
     cmake --build build --parallel 6
-    sudo cmake --build --target install
+    sudo cmake --build build --target install
 
 It should start automatically with an install but to run the repo service, you
 can also interact with it via systemctl::
