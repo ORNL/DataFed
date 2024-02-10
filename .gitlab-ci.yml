@@ -213,10 +213,10 @@ build-ws:
         - web/*
         - common/proto/*
         - .gitlab-ci.yml
-      when: always
+      when: on_success
     - exists:
         - deploy-ws-base
-      when: always
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
@@ -241,7 +241,7 @@ build-core:
         - common/*
         - core/*
         - .gitlab-ci.yml
-      when: always
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
@@ -266,7 +266,7 @@ build-foxx:
         - scripts/*
         - core/database/*
         - .gitlab-ci.yml
-      when: always
+      when: on_success
   script:
     - arangod --version
     - sudo systemctl status arangodb3
@@ -303,7 +303,7 @@ build-repo:
         - common/*
         - repository/*
         - .gitlab-ci.yml
-      when: always
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
