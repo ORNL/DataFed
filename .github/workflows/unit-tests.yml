@@ -10,6 +10,7 @@ jobs:
         run: sudo apt-get update
       - name: Install dependencies
         run: |
+          ./scripts/generate_datafed.sh
           sudo ./scripts/install_core_dependencies.sh
           ./scripts/generate_datafed.sh
       - name: Build
