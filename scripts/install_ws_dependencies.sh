@@ -95,6 +95,7 @@ install_nvm
 #nvm use $DATAFED_NODE_VERSION
 install_node
 
-export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+nvm use "$DATAFED_NODE_VERSION"
+#export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
 "$NVM_DIR/nvm-exec" npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web 
 #npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web
