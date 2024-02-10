@@ -167,6 +167,7 @@ install_nvm() {
     # By setting NVM_DIR beforehand when the scirpt is run it 
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    mkdir -p "${NVM_DIR}"
     curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark gcs as installed
     touch ".nvm_installed-${DATAFED_NVM_VERSION}"
@@ -184,6 +185,7 @@ install_node() {
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     # Sets the "global" folder where the packages will be installed
     export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+    mkdir -p "${NPM_CONFIG_PREFIX}"
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm install "$DATAFED_NODE_VERSION"
