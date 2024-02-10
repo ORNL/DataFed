@@ -184,8 +184,8 @@ install_node() {
 
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     # Sets the "global" folder where the packages will be installed
-    export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
-    mkdir -p "${NPM_CONFIG_PREFIX}"
+    #export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+    #mkdir -p "${NPM_CONFIG_PREFIX}"
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm install "$DATAFED_NODE_VERSION"
@@ -207,7 +207,7 @@ install_foxx_cli() {
   if [ ! -e ".foxx_cli_installed" ]; then
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     # Sets the "global" folder where the packages will be installed
-    export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+    #export NPM_CONFIG_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm use "$DATAFED_NODE_VERSION"
