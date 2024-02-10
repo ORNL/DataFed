@@ -337,6 +337,7 @@ RequestWorker::procDataGetSizeRequest(std::unique_ptr<IMessage> &&msg_request) {
       data_sz->set_size(0);
       DL_ERROR(message_log_context,
                "DataGetSizeReq - path does not exist: " << item.path());
+      // This should through an error
     }
     DL_DEBUG(message_log_context,
              "FILE SIZE: " << data_sz->size() << ", path to collection: "
