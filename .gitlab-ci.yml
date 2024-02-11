@@ -373,6 +373,7 @@ end-to-end-ws-setup:
       -v "${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}"
       -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
        </dev/null &>/dev/null &
+    - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 # Note here we use network=host to run the docker container this is
@@ -413,9 +414,11 @@ end-to-end-core-setup:
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
       -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
        </dev/null &>/dev/null &
+    - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
-
+# Repo server currently will crash on startup if it cannot connect to the core
+# server.
 end-to-end-repo-setup:
   variables:
     IMAGE_TAG: "datafed/repo-"
@@ -423,6 +426,7 @@ end-to-end-repo-setup:
     HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
   stage: end-to-end-setup
+  needs: ["end-to-end-core-setup"]
   tags:
     - ci-datafed-globus
     - docker
@@ -448,6 +452,7 @@ end-to-end-repo-setup:
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
        </dev/null &>/dev/null &
+    - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 end-to-end-gcs-authz-setup:
@@ -482,6 +487,7 @@ end-to-end-gcs-authz-setup:
       -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
       -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
        </dev/null &>/dev/null &
+    - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 end-to-end-arango-setup:
