@@ -8,10 +8,14 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../..)
 
-source $NVM_DIR/nvm.sh
 ${PROJECT_ROOT}/scripts/generate_datafed.sh
 ${PROJECT_ROOT}/scripts/generate_ws_config.sh
 ${PROJECT_ROOT}/scripts/install_ws.sh
+${PROJECT_ROOT}/scripts/dependency_versions.sh
+
+export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+export NODE_VERSION="$DATAFED_NODE_VERSION"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
 # Send output to file as well as print to terminal
 log_path=$(grep "log-path" /datafed/install/web/datafed-ws.cfg | cut -d "=" -f 2 | tr -d ' ')
