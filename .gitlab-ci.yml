@@ -420,6 +420,7 @@ end-to-end-core-setup:
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
       -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
        </dev/null &>/dev/null &
+       EOF
     - chmod +x run_core.sh
     - ./run_core.sh
     - sleep 10
