@@ -173,9 +173,6 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BU
   endif()
 
   find_package(PkgConfig)
-  #pkg_check_modules(protobuf REQUIRED IMPORTED_TARGET protobuf=${PROTOBUF_LIBRARY_VERSION})
-  # REQUIRED VERSION "${PROTOBUF_VERSION}"
-  #message("Protobuf library ${Protobuf_LIBRARIES}")
 
   set( PROTOBUF_IMPORT_DIRS ${PROTOBUF_INCLUDE_DIRS})
 endif() 

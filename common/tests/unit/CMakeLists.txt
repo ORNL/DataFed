@@ -20,9 +20,6 @@ foreach(PROG
   add_executable(unit_${PROG} ${${PROG}_SOURCES})
   target_link_libraries(unit_${PROG} PUBLIC ${Boost_LIBRARIES}  
     common PkgConfig::PkgConfig_ZMQ protobuf::libprotobuf Threads::Threads ${ABSL_LIBS}) 
-  # ${Protobuf_LIBRARIES}
-  # protobuf::libprotobuf
-  #target_compile_options(unit_${PROG} PRIVATE -Wl,--copy-dt-needed-entries)
   target_compile_definitions(unit_${PROG} PRIVATE BOOST_TEST_DYN_LINK)
   add_test(unit_${PROG} unit_${PROG})
    

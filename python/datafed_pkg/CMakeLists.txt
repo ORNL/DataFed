@@ -1,5 +1,4 @@
 cmake_minimum_required (VERSION 3.17.0)
-	message("Protobuf libraries in unit test: ${Protobuf_LIBRARIES}")
 
 # Copy README file to python build dir
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/README ${CMAKE_CURRENT_BINARY_DIR} COPYONLY )
