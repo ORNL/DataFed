@@ -356,6 +356,8 @@ end-to-end-ws-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
+      cat <<EOF > run_web.sh
+      #!/bin/bash
       docker run -d
       --name "ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
       -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
@@ -373,6 +375,9 @@ end-to-end-ws-setup:
       -v "${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}"
       -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
        </dev/null &>/dev/null &
+       EOF
+    - chmod +x run_web.sh
+    - ./run_web.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
@@ -398,6 +403,7 @@ end-to-end-core-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
+      cat <<EOF > run_web.sh
       docker run -d
       --name "core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
       -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
@@ -414,6 +420,8 @@ end-to-end-core-setup:
       -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
       -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
        </dev/null &>/dev/null &
+    - chmod +x run_core.sh
+    - ./run_core.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
