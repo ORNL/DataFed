@@ -178,6 +178,56 @@ install_gcs() {
   fi
 }
 
+install_nvm() {
+  # By default this will place NVM in $HOME/.nvm
+  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+    # By setting NVM_DIR beforehand when the scirpt is run it 
+    # will use it to set the install path
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    mkdir -p "${NVM_DIR}"
+    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
+    # Mark nvm as installed
+    touch ".nvm_installed-${DATAFED_NVM_VERSION}"
+  fi
+}
+
+install_node() {
+  # By default this will place NVM in $HOME/.nvm
+  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+    echo "You must first install nvm before installing node."
+    exit 1
+  fi
+  if [ ! -e ".node_installed-${DATAFED_NODE_VERSION}" ]; then
+
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+    nvm install "$DATAFED_NODE_VERSION"
+    # Mark node as installed
+    touch ".node_installed-${DATAFED_NODE_VERSION}"
+  fi
+}
+
+install_foxx_cli() {
+  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+    echo "You must first install nvm before installing foxx_cli."
+    exit 1
+  fi
+  if [ ! -e ".node_installed-${DATAFED_NODE_VERSION}" ]; then
+    echo "You must first install node before installing foxx_cli"
+    exit 1
+  fi
+  # By default this will place NVM in $HOME/.nvm
+  if [ ! -e ".foxx_cli_installed" ]; then
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+    export NODE_VERSION="$DATAFED_NODE_VERSION"
+    "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
+    # Mark foxx_cli as installed
+    touch ".foxx_cli_installed"
+  fi
+}
+
 install_arangodb() {
   curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key
   sudo apt-key add - < Release.key

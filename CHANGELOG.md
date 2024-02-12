@@ -13,6 +13,9 @@
 4. [917] - Add additional files to .gitignore
 5. [915] - Refactor CI to use pipelines Gitlab feature along with pipelines 
 6. [927] - Add vim swp files to .gitignore
+7. [935] - Fixed CI branching with dynamic children, swiched to Harbor registry.
+   Moved Blake's files into the correct folders.
+8. [924] - Fix log messaging format in web server
 
 # v2023.10.23.15.50
 
