@@ -2,7 +2,7 @@
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 source "${SOURCE}/dependency_versions.sh"
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
 # these are the dependencies to be installed by apt
 apt_file_path="/tmp/apt_deps"
@@ -28,12 +28,12 @@ install_cmake() {
   if [ ! -e ".cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
     tar -xzvf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
-    cp -r cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    cp -r cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 
     # Cleanup
-    rm -rf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64 
-    rm -rf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64"
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz"
 
     # Mark cmake as installed
     touch ".cmake_installed-${DATAFED_CMAKE_VERSION}"
