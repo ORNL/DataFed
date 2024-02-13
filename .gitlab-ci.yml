@@ -4,7 +4,7 @@ stages:
   - signal
   - clear-docker-cache
   - build-deploy-base
-  - build-deploy-base-2
+    #  - build-deploy-base-2
   - provision-client
   - build
   - end-to-end-setup
