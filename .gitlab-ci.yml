@@ -155,7 +155,7 @@ build-gcs-base:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
-    DISTRO: "ubuntu:focal"
+    DISTRO: "ubuntu-20.04"
     GCS_TAG: "${REGISTRY}/datafed/gcs-ubuntu-focal"
     IMAGE_TAG2: "datafed/gcs-authz-base"
     IMAGE_TAG3: "datafed/gcs-authz"
@@ -168,7 +168,7 @@ build-gcs-base:
     - docker system prune -f
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - >
-      if ! docker pull "$GCS_TAG:${GCS_SUBMODULE_VERSION}"; then
+      if ! docker pull "${GCS_TAG}:${GCS_SUBMODULE_VERSION}"; then
         cd external/globus-connect-server-deploy/docker
         git checkout "${GCS_SUBMODULE_VERSION}"
         ./docker-build-gcs.sh "${DISTRO}"
