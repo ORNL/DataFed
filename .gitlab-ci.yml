@@ -168,14 +168,14 @@ build-gcs-base:
     - docker system prune -f
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - if ! docker pull "$GCS_TAG:${GCS_SUBMODULE_VERSION}"; then
-			  cd external/globus-connect-server-deploy/docker
-			  git checkout "${GCS_SUBMODULE_VERSION}"
-			  ./docker-build-gcs.sh "${DISTRO}"
-			  LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
-			  docker tag "$LATEST_IMAGE" "$GCS_TAG:${GCS_SUBMODULE_VERSION}" 
-			  docker push "$GCS_TAG:${GCS_SUBMODULE_VERSION}"
-			  docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "$GCS_TAG" 
-			  docker push "$GCS_TAG"
+        cd external/globus-connect-server-deploy/docker
+        git checkout "${GCS_SUBMODULE_VERSION}"
+        ./docker-build-gcs.sh "${DISTRO}"
+        LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
+        docker tag "$LATEST_IMAGE" "$GCS_TAG:${GCS_SUBMODULE_VERSION}" 
+        docker push "$GCS_TAG:${GCS_SUBMODULE_VERSION}"
+        docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "$GCS_TAG" 
+        docker push "$GCS_TAG"
         cd ../../../ # back too root of project
       else
         echo "Docker image already exists in the registry. Skipping build."
@@ -197,7 +197,7 @@ build-gcs-authz-base:
   script:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker pull "$GCS_TAG:${GCS_SUBMODULE_VERSION}"
-		- docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "$GCS_TAG" 
+    - docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "$GCS_TAG" 
     - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG2}" .
     - docker push "${REGISTRY}/${IMAGE_TAG2}"
     - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "${REGISTRY}/${IMAGE_TAG3}" .
