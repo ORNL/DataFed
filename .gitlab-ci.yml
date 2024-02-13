@@ -402,24 +402,24 @@ end-to-end-ws-setup:
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
       cat <<EOF > run_web.sh
-      #!/bin/bash
-      docker run -d
-      --name "ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
-      -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$GLOBUS_DATAFED_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$DATAFED_ZEROMQ_SYSTEM_SECRET"
-      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -e DATAFED_WEB_CERT_PATH="${CI_DATAFED_WEB_CERT_PATH}"
-      -e DATAFED_WEB_KEY_PATH="${CI_DATAFED_WEB_KEY_PATH}"
-      -e DATAFED_DEFAULT_LOG_PATH="$CONTAINER_LOG_FILE_PATH"
-      -p 443:443
-      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
-      -v "${CI_DATAFED_CORE_PUB_KEY}:/source/install/keys/datafed-core-key.pub"
-      -v "${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}"
-      -v "${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}"
-      -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
-       </dev/null &>/dev/null &
+      echo "#!/bin/bash" > run_web.sh
+      echo "docker run -d \\" >> run_web.sh
+      echo "--name \"ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_web.sh
+      echo "-e DATAFED_GLOBUS_APP_SECRET=\"GLOBUS_DATAFED_APP_SECRET\" \\" >> run_web.sh
+      echo "-e DATAFED_GLOBUS_APP_ID=\"$GLOBUS_DATAFED_APP_ID\" \\" >> run_web.sh
+      echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
+      echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
+      echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_web.sh
+      echo "-e DATAFED_WEB_CERT_PATH=\"${CI_DATAFED_WEB_CERT_PATH}\" \\" >> run_web.sh
+      echo "-e DATAFED_WEB_KEY_PATH=\"${CI_DATAFED_WEB_KEY_PATH}\" \\" >> run_web.sh
+      echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_web.sh
+      echo "-p 443:443 \\" >> run_web.sh
+      echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
+      echo "-v \"${CI_DATAFED_CORE_PUB_KEY}:/source/install/keys/datafed-core-key.pub\" \\" >> run_web.sh
+      echo "-v \"${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}\" \\" >> run_web.sh
+      echo "-v \"${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}\" \\" >> run_web.sh
+      echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\" \\" >> run_web.sh
+      echo " </dev/null &>/dev/null &" >> run_web.sh
        EOF
     - chmod +x run_web.sh
     - ./run_web.sh
@@ -448,25 +448,23 @@ end-to-end-core-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
-      cat <<EOF > run_web.sh
-      #!/bin/bash
-      docker run -d
-      --name "core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
-      -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
-      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -e DATAFED_DATABASE_PASSWORD="$CI_DATAFED_DATABASE_PASSWORD"
-      -e DATAFED_DATABASE_IP_ADDRESS_PORT="$CI_DATAFED_DATABASE_IP_ADDRESS_PORT"
-      -e DATAFED_DEFAULT_LOG_PATH="$CONTAINER_LOG_FILE_PATH"
-      --network host
-      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
-      -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
-      -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
-      -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
-       </dev/null &>/dev/null &
-       EOF
+      echo "#!/bin/bash" > run_core.sh
+      echo "docker run -d \\" >> run_core.sh
+      echo "--name \"core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_core.sh
+      echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_core.sh
+      echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_core.sh
+      echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_core.sh
+      echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_core.sh
+      echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_core.sh
+      echo "-e DATAFED_DATABASE_PASSWORD=\"$CI_DATAFED_DATABASE_PASSWORD\" \\" >> run_core.sh
+      echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> run_core.sh
+      echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_core.sh
+      echo "--network host \\" >> run_core.sh
+      echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_core.sh
+      echo "-v \"$CI_DATAFED_CORE_PUB_KEY\":/source/install/keys/datafed-core-key.pub \\" >> run_core.sh
+      echo "-v \"$CI_DATAFED_CORE_PRIV_KEY\":/source/install/keys/datafed-core-key.priv \\" >> run_core.sh
+      echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"  \\" >> run_core.sh
+      echo " </dev/null &>/dev/null &" >> run_core.sh
     - chmod +x run_core.sh
     - ./run_core.sh
     - sleep 10
@@ -495,21 +493,19 @@ end-to-end-repo-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
-      cat <<EOF > run_repo.sh
-      #!/bin/bash
-      docker run -d
-      --name "repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
-      -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
-      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
-      -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
-      -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
-      -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
-       </dev/null &>/dev/null &
-       EOF
+      echo "#!/bin/bash" > run_repo.sh
+      echo "docker run -d \\" >> run_repo.sh
+      echo "--name \"repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_repo.sh
+      echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_repo.sh
+      echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_repo.sh
+      echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_repo.sh
+      echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_repo.sh
+      echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_repo.sh
+      echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_repo.sh
+      echo "-v \"$CI_DATAFED_REPO_PUB_KEY\":/source/install/keys/datafed-repo-key.pub \\" >> run_repo.sh
+      echo "-v \"$CI_DATAFED_REPO_PRIV_KEY\":/source/install/keys/datafed-repo-key.priv \\" >> run_repo.sh
+      echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"  \\" >> run_repo.sh
+      echo " </dev/null &>/dev/null &" >> run_repo.sh
     - chmod +x run_repo.sh
     - ./run_repo.sh
     - sleep 10
@@ -535,21 +531,19 @@ end-to-end-gcs-authz-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - >
-      cat <<EOF > run_globus.sh
-      #!/bin/bash
-      docker run -d
-      --name "gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
-      -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
-      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
-      -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
-      -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
-      -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
-       </dev/null &>/dev/null &
-       EOF
+      echo "#!/bin/bash" > run_globus.sh
+      echo "docker run -d \\" >> run_globus.sh
+      echo "--name \"gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
+      echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
+      echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_globus.sh
+      echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_globus.sh
+      echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_globus.sh
+      echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_globus.sh
+      echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
+      echo "-v \"$CI_DATAFED_REPO_PUB_KEY\":/source/install/keys/datafed-repo-key.pub \\" >> run_globus.sh
+      echo "-v \"$CI_DATAFED_REPO_PRIV_KEY\":/source/install/keys/datafed-repo-key.priv \\" >> run_globus.sh
+      echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"  \\" >> run_globus.sh
+      echo " </dev/null &>/dev/null &" >> run_globus.sh
     - chmod +x run_globus.sh
     - ./run_globus.sh
     - sleep 10
