@@ -238,7 +238,13 @@ provision-client:
   script:
     - ./scripts/generate_datafed.sh
     - ./scripts/install_client_dependencies.sh
-
+  rules:
+    - changes:
+        - scripts/generate_datafed.sh
+        - scripts/install_client_dependencies.sh
+        - scripts/dependency_install_functions.sh
+        - scripts/dependency_versions.sh
+ 
 ################################################################################
 # STAGE: build
 ################################################################################

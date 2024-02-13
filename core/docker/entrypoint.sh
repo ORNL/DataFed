@@ -12,6 +12,11 @@ ${PROJECT_ROOT}/scripts/install_core.sh
 
 log_path="$DATAFED_DEFAULT_LOG_PATH"
 
+if [ ! -d "${log_path}" ]
+then
+  mkdir -p "${log_path}"
+fi
+
 if [ "$#" -eq 0 ]; then
   echo "No arguments were passed, running bash"
   exec "bash"

@@ -20,6 +20,11 @@ export NODE_VERSION="$DATAFED_NODE_VERSION"
 # Send output to file as well as print to terminal
 log_path=$(grep "log-path" /datafed/install/web/datafed-ws.cfg | cut -d "=" -f 2 | tr -d ' ')
 
+if [ ! -d "${log_path}" ]
+then
+  mkdir -p "${log_path}"
+fi
+
 if [ "$#" -eq 0 ]; then
   echo "No arguments were passed, running bash"
   exec "bash"
