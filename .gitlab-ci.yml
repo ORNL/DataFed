@@ -167,7 +167,8 @@ build-gcs-base:
   script:
     - docker system prune -f
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - if ! docker pull "$GCS_TAG:${GCS_SUBMODULE_VERSION}"; then
+    - >
+      if ! docker pull "$GCS_TAG:${GCS_SUBMODULE_VERSION}"; then
         cd external/globus-connect-server-deploy/docker
         git checkout "${GCS_SUBMODULE_VERSION}"
         ./docker-build-gcs.sh "${DISTRO}"
