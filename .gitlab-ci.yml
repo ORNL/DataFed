@@ -4,7 +4,7 @@ stages:
   - signal
   - clear-docker-cache
   - build-deploy-base
-  - build-deploy-base_2
+  - build-deploy-base-2
   - provision-client
   - build
   - end-to-end-setup
@@ -191,7 +191,7 @@ build-gcs-authz-base:
     IMAGE_TAG2: "datafed/gcs-authz-base"
     IMAGE_TAG3: "datafed/gcs-authz"
     GCS_SUBMODULE_VERSION: "v2.6.0"
-  stage: build-deploy-base_2
+  stage: build-deploy-base-2
   tags:
     - ci-datafed-globus
     - docker
