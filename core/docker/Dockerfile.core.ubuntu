@@ -52,7 +52,7 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
  cmake --build build -j 8
 RUN cmake --build build --target install
 
-WORKDIR ${DATAFED_INSTALL_PATHl}/core
+WORKDIR ${DATAFED_INSTALL_PATH}/core
 
 ENTRYPOINT ["/datafed/source/core/docker/entrypoint.sh"]
 

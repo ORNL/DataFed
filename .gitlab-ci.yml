@@ -399,6 +399,7 @@ end-to-end-ws-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
@@ -444,6 +445,7 @@ end-to-end-core-setup:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
@@ -489,6 +491,7 @@ end-to-end-repo-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
@@ -526,6 +529,7 @@ end-to-end-gcs-authz-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
