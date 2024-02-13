@@ -160,7 +160,7 @@ build-gcs-base:
     IMAGE_TAG2: "datafed/gcs-authz-base"
     IMAGE_TAG3: "datafed/gcs-authz"
     GCS_SUBMODULE_VERSION: "v2.6.0"
-  stage: pre-build-deploy-base
+  stage: build-deploy-base
   tags:
     - ci-datafed-globus
     - docker
