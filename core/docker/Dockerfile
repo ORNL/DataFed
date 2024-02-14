@@ -72,7 +72,7 @@ RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
 
 RUN ldconfig
 
-USER datafed
+USER root
 
 COPY --chown=datafed:root ./scripts/generate_datafed.sh     ${DATAFED_DIR}/scripts/generate_datafed.sh
 COPY --chown=datafed:root ./scripts/generate_core_config.sh ${DATAFED_DIR}/scripts/generate_core_config.sh

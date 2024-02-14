@@ -81,7 +81,7 @@ WORKDIR ${DATAFED_DIR}
 COPY --from=ws-build --chown=datafed:root "$NVM_DIR" "$NVM_DIR" 
 RUN ln -s ${DATAFED_INSTALL_PATH}/web ${DATAFED_DIR}/web
 
-USER datafed
+USER root
 
 COPY --chown=datafed:root ./web/docker/entrypoint.sh       ${BUILD_DIR}/web/entrypoint.sh
 COPY --chown=datafed:root ./scripts/generate_datafed.sh    ${DATAFED_DIR}/scripts/generate_datafed.sh
