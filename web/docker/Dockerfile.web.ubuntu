@@ -65,5 +65,7 @@ RUN cmake --build build --target install
 
 WORKDIR ${DATAFED_INSTALL_PATH}/web
 
+USER root
+
 ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh"]
 CMD ["/datafed/install/web/datafed-ws.js","/datafed/install/web/datafed-ws.cfg"]

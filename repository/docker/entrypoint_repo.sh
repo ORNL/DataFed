@@ -2,6 +2,11 @@
 
 set -euf -o pipefail
 
+if [ -n "$UID" ]; then
+    usermod -u $UID datafed
+		su datafed
+fi
+
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../..)

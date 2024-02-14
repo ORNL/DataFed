@@ -52,6 +52,8 @@ RUN cmake --build build --target install
 
 ENV LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 
+USER root
+
 ENTRYPOINT ["/datafed/source/repository/docker/entrypoint_repo.sh"]
 
 CMD ["/datafed/install/repo/datafed-repo","--cfg","/datafed/install/repo/datafed-repo.cfg"]

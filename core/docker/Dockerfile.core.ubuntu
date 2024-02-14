@@ -54,6 +54,8 @@ RUN cmake --build build --target install
 
 WORKDIR ${DATAFED_INSTALL_PATH}/core
 
+USER root
+
 ENTRYPOINT ["/datafed/source/core/docker/entrypoint.sh"]
 
 CMD ["/datafed/install/core/datafed-core","--cfg","/datafed/install/core/datafed-core.cfg"]
