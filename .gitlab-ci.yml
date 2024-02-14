@@ -410,9 +410,8 @@ end-to-end-ws-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_web.sh
-    - echo "docker run -d \\" >> run_web.sh
+    - echo "docker run \\" >> run_web.sh
     - echo "--name \"ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_web.sh
-    - echo "-u ${USER_ID}:${GROUP_ID} \\" >> run_web.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
@@ -426,13 +425,14 @@ end-to-end-ws-setup:
     - echo "-v \"${CI_DATAFED_CORE_PUB_KEY}:/source/install/keys/datafed-core-key.pub\" \\" >> run_web.sh
     - echo "-v \"${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}\" \\" >> run_web.sh
     - echo "-v \"${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}\" \\" >> run_web.sh
-    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\" \\" >> run_web.sh
-    - echo " </dev/null &>/dev/null &" >> run_web.sh
+    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\" " >> run_web.sh
     - chmod +x run_web.sh
     - ./run_web.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
+#- echo " </dev/null &>/dev/null &" >> run_web.sh
+#- echo "-u ${USER_ID}:${GROUP_ID} \\" >> run_web.sh
 # Note here we use network=host to run the docker container this is
 # because we do not need it to communicate with an external port 
 end-to-end-core-setup:
@@ -456,9 +456,8 @@ end-to-end-core-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_core.sh
-    - echo "docker run -d \\" >> run_core.sh
+    - echo "docker run \\" >> run_core.sh
     - echo "--name \"core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_core.sh
-    - echo "-u ${USER_ID}:${GROUP_ID} \\" >> run_core.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_core.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_core.sh
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_core.sh
@@ -471,13 +470,13 @@ end-to-end-core-setup:
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_core.sh
     - echo "-v \"$CI_DATAFED_CORE_PUB_KEY\":/source/install/keys/datafed-core-key.pub \\" >> run_core.sh
     - echo "-v \"$CI_DATAFED_CORE_PRIV_KEY\":/source/install/keys/datafed-core-key.priv \\" >> run_core.sh
-    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"  \\" >> run_core.sh
-    - echo " </dev/null &>/dev/null &" >> run_core.sh
+    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_core.sh
     - chmod +x run_core.sh
     - ./run_core.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
+#- echo " </dev/null &>/dev/null &" >> run_core.sh
 # Repo server currently will crash on startup if it cannot connect to the core
 # server.
 end-to-end-repo-setup:
@@ -502,9 +501,8 @@ end-to-end-repo-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_repo.sh
-    - echo "docker run -d \\" >> run_repo.sh
+    - echo "docker run \\" >> run_repo.sh
     - echo "--name \"repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_repo.sh
-    - echo "-u ${USER_ID}:${GROUP_ID} \\" >> run_repo.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_repo.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_repo.sh
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_repo.sh
@@ -513,13 +511,13 @@ end-to-end-repo-setup:
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_repo.sh
     - echo "-v \"$CI_DATAFED_REPO_PUB_KEY\":/source/install/keys/datafed-repo-key.pub \\" >> run_repo.sh
     - echo "-v \"$CI_DATAFED_REPO_PRIV_KEY\":/source/install/keys/datafed-repo-key.priv \\" >> run_repo.sh
-    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"  \\" >> run_repo.sh
-    - echo " </dev/null &>/dev/null &" >> run_repo.sh
+    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_repo.sh
     - chmod +x run_repo.sh
     - ./run_repo.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
+# - echo " </dev/null &>/dev/null &" >> run_repo.sh
 end-to-end-gcs-authz-setup:
   variables:
     IMAGE_TAG: "datafed/gcs-authz-"
@@ -541,9 +539,8 @@ end-to-end-gcs-authz-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_globus.sh
-    - echo "docker run -d \\" >> run_globus.sh
+    - echo "docker run \\" >> run_globus.sh
     - echo "--name \"gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
-    - echo "-u ${USER_ID}:${GROUP_ID} \\" >> run_globus.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_globus.sh
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_globus.sh
@@ -552,13 +549,13 @@ end-to-end-gcs-authz-setup:
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
     - echo "-v \"$CI_DATAFED_REPO_PUB_KEY\":/source/install/keys/datafed-repo-key.pub \\" >> run_globus.sh
     - echo "-v \"$CI_DATAFED_REPO_PRIV_KEY\":/source/install/keys/datafed-repo-key.priv \\" >> run_globus.sh
-    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"  \\" >> run_globus.sh
-    - echo " </dev/null &>/dev/null &" >> run_globus.sh
+    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_globus.sh
     - chmod +x run_globus.sh
     - ./run_globus.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
+# - echo " </dev/null &>/dev/null &" >> run_globus.sh
 end-to-end-arango-setup:
   variables:
     GIT_STRATEGY: clone
