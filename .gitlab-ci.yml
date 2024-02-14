@@ -410,10 +410,10 @@ end-to-end-ws-setup:
     - echo "#!/bin/bash" > run_web.sh
     - echo "docker run -d \\" >> run_web.sh
     - echo "--name \"ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_web.sh
-    - echo "-e DATAFED_GLOBUS_APP_SECRET=\"GLOBUS_DATAFED_APP_SECRET\" \\" >> run_web.sh
-    - echo "-e DATAFED_GLOBUS_APP_ID=\"$GLOBUS_DATAFED_APP_ID\" \\" >> run_web.sh
-    - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
-    - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
+    - echo "-e DATAFED_GLOBUS_APP_SECRET=\"CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
+    - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
+    - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
+    - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_web.sh
     - echo "-e DATAFED_WEB_CERT_PATH=\"${CI_DATAFED_WEB_CERT_PATH}\" \\" >> run_web.sh
     - echo "-e DATAFED_WEB_KEY_PATH=\"${CI_DATAFED_WEB_KEY_PATH}\" \\" >> run_web.sh
