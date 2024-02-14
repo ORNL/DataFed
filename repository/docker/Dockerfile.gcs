@@ -46,11 +46,13 @@ RUN adduser --disabled-password --gecos "" datafed
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 
+COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_versions.sh          ${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_authz_dependencies.sh   ${BUILD_DIR}/scripts/
 COPY ./scripts/copy_dependency.sh   ${BUILD_DIR}/scripts/
 
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh unify
 
 
@@ -59,7 +61,6 @@ RUN chown -R datafed:root ${DATAFED_DIR}
 
 COPY --chown=datafed:root ./scripts/dependency_versions.sh        ${BUILD_DIR}/scripts/
 COPY --chown=datafed:root ./scripts/generate_authz_config.sh      ${BUILD_DIR}/scripts/generate_authz_config.sh
-COPY --chown=datafed:root ./scripts/generate_datafed.sh           ${BUILD_DIR}/scripts/generate_datafed.sh
 COPY --chown=datafed:root ./CMakeLists.txt                        ${BUILD_DIR}
 COPY --chown=datafed:root ./cmake                                 ${BUILD_DIR}/cmake
 COPY --chown=datafed:root ./repository/CMakeLists.txt             ${BUILD_DIR}/repository/CMakeLists.txt
@@ -91,8 +92,6 @@ RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh protoc to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
-
-RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
 	cmake -S. -B build						\
