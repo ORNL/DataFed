@@ -4,7 +4,6 @@ set -euf -o pipefail
 
 if [ -n "$UID" ]; then
     usermod -u $UID datafed
-		su datafed
 fi
 
 SCRIPT=$(realpath "$0")
@@ -19,7 +18,7 @@ log_path="$DATAFED_DEFAULT_LOG_PATH"
 
 if [ ! -d "${log_path}" ]
 then
-  mkdir -p "${log_path}"
+  su -c "mkdir -p ${log_path}" datafed
 fi
 
-exec "$@"
+su datafed -c '"$@"' -- argv0 "$@"
