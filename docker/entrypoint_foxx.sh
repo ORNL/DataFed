@@ -11,8 +11,18 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../..)
 
 ${PROJECT_ROOT}/scripts/generate_datafed.sh
-${PROJECT_ROOT}/scripts/generate_core_config.sh
-${PROJECT_ROOT}/scripts/install_core.sh
+
+
+cmake -S. -B build						\
+  -DBUILD_REPO_SERVER=False		\
+  -DBUILD_AUTHZ=False					\
+  -DBUILD_CORE_SERVER=False		\
+  -DBUILD_WEB_SERVER=False		\
+  -DBUILD_DOCS=False					\
+  -DBUILD_PYTHON_CLIENT=False	\
+  -DBUILD_FOXX=True           \
+  -DINSTALL_FOXX=True
+
 
 log_path="$DATAFED_DEFAULT_LOG_PATH"
 

@@ -1,0 +1,46 @@
+# NOTE this image must be built with respect to the base of the project i.e.
+# cd ${PROJECT_ROOT} or cd DataFed
+# docker build -f core/docker/Dockerfile .
+
+ARG           BUILD_BASE="ubuntu:focal"
+ARG         DEPENDENCIES="dependencies"
+ARG              RUNTIME="runtime"
+ARG          DATAFED_DIR="/datafed"
+ARG DATAFED_INSTALL_PATH="/opt/datafed"
+ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
+ARG            BUILD_DIR="$DATAFED_DIR/source"
+ARG              NVM_DIR="$DATAFED_DIR/.nvm"
+ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
+ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
+ARG              LIB_DIR="/usr/local/lib"
+
+FROM ${DEPENDENCIES} AS foxx-build
+
+ARG DATAFED_DIR
+ARG BUILD_DIR
+ARG DATAFED_INSTALL_PATH
+
+COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
+COPY ./CMakeLists.txt                  ${BUILD_DIR}
+COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_datafed.sh     ${BUILD_DIR}/scripts/
+COPY ./cmake                           ${BUILD_DIR}/cmake
+COPY ./docker/entrypoint_foxx.sh       ${BUILD_DIR}/docker
+COPY ./core/database                   ${BUILD_DIR}/core/database
+COPY ./scripts/install_foxx.sh         ${BUILD_DIR}/scripts/
+
+ENV BUILD_DIR="${BUILD_DIR}"
+ENV DATAFED_DIR="${DATAFED_DIR}"
+
+# Create datafed user, prefer more secure login options than password
+# Recommended to mount ssh public key on run
+RUN adduser --disabled-password --gecos "" datafed
+
+RUN mkdir -p ${DATAFED_DIR}
+RUN mkdir -p /opt/datafed
+RUN mkdir -p /var/log/datafed
+RUN chown -R datafed:root /opt/datafed
+RUN chown -R datafed:root /var/log/datafed
+RUN chown -R datafed:root ${DATAFED_DIR}
+
+WORKDIR ${DATAFED_DIR}
