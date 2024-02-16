@@ -381,27 +381,27 @@ build-gcs-authz:
     - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
-build-python-client:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/python-client-"
-    GIT_STRATEGY: clone
-  stage: build
-  tags:
-    - docker
-  rules:
-    - changes:
-        - python/*
-        - scripts/*
-        - common/*
-        - .gitlab-ci.yml
-      when: always
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f python/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+      #build-python-client:
+      #  variables:
+      #    IMAGE_TAG: "dlsw/datafed/python-client-"
+      #    GIT_STRATEGY: clone
+      #  stage: build
+      #  tags:
+      #    - docker
+      #  rules:
+      #    - changes:
+      #        - python/*
+      #        - scripts/*
+      #        - common/*
+      #        - .gitlab-ci.yml
+      #      when: always
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - echo "$BRANCH_LOWER"
+      #    - ./scripts/generate_datafed.sh
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker build -f python/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
+      #    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
 ################################################################################
 # STAGE: Integration
