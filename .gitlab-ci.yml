@@ -400,7 +400,7 @@ build-python-client:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f repository/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
+    - docker build -f python/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
 ################################################################################
