@@ -254,12 +254,10 @@ install_foxx_cli
 #fi
 
 FOXX_PREFIX=""
-{
-	# Determine if exists globally first
-	which foxx
-} || {
-	FOXX_PREFIX="${NPM_CONFIG_PREFIX}/bin/"
-}
+if ! command -v foxx > /dev/null 2>&1; then
+    FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
+fi
+
 
 PATH_TO_PASSWD_FILE="${SOURCE}/database_temp.password"
 

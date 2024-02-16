@@ -10,6 +10,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../..)
 
+env
 ${PROJECT_ROOT}/scripts/generate_datafed.sh
 ${PROJECT_ROOT}/scripts/generate_core_config.sh
 ${PROJECT_ROOT}/scripts/install_core.sh
@@ -20,6 +21,9 @@ if [ ! -d "${log_path}" ]
 then
   su -c "mkdir -p ${log_path}" datafed
 fi
+
+echo "Number of arguments is $#"
+echo "arguments are $@"
 
 if [ "$#" -eq 0 ]; then
   echo "No arguments were passed, running bash"
@@ -38,3 +42,6 @@ else
   # If not do not by default send to log file
   su datafed -c '"$@"' -- argv0 "$@"
 fi
+
+echo "Give a few minutes to debug the problem"
+sleep 10000

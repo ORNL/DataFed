@@ -26,4 +26,10 @@ docker build -f \
   --build-arg RUNTIME="datafed-runtime" \
   "${PROJECT_ROOT}" \
   -t datafed-web:latest
+docker build -f \
+  "${PROJECT_ROOT}/docker/Dockerfile.foxx" \
+  --build-arg DEPENDENCIES="datafed-dependencies" \
+  --build-arg RUNTIME="datafed-runtime" \
+  "${PROJECT_ROOT}" \
+  -t datafed-foxx:latest
 

@@ -7,6 +7,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
+source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${SOURCE}/dependency_versions.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
@@ -62,10 +63,12 @@ while [ : ]; do
   esac
 done
 
+sudo_command
+
 if [[ $local_UNIFY = false ]]; then
-  sudo apt-get update
-  sudo dpkg --configure -a
-  sudo apt-get install -y "${packages[@]}"
+  "$SUDO_CMD" apt-get update
+  "$SUDO_CMD" dpkg --configure -a
+  "$SUDO_CMD" apt-get install -y "${packages[@]}"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"

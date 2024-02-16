@@ -45,4 +45,4 @@ then
   exit 1
 fi
 
-cp ${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub "$PROJECT_ROOT/web/static/"
+cp ${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub "$DATAFED_INSTALL_PATH/web/static/"
