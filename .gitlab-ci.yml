@@ -385,7 +385,7 @@ build-python-client:
   variables:
     IMAGE_TAG: "dlsw/datafed/python-client-"
     GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
+  stage: build
   tags:
     - docker
   rules:
