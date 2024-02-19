@@ -4,13 +4,13 @@
 set -euf -o pipefail
 
 if [ -n "$UID" ]; then
-    usermod -u $UID datafed
+    usermod -u "$UID" datafed
 fi
 
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../..)
+PROJECT_ROOT=$(realpath "${SOURCE}/../..")
 
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 "${PROJECT_ROOT}/scripts/generate_ws_config.sh"
@@ -21,8 +21,15 @@ export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 export NODE_VERSION="$DATAFED_NODE_VERSION"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
+echo "NODE VERSION $NODE_VERSION"
+echo "Which node"
+NODE_PATH=$(su datafed -c ". ${NVM_DIR}/nvm.sh; nvm which node")
+# Do this as root
+if [ ! -L "/usr/local/bin/node" ]; then
+  ln -s "$NODE_PATH" /usr/local/bin/node
+fi
 # Send output to file as well as print to terminal
-log_path=$(grep "log-path" /datafed/install/web/datafed-ws.cfg | cut -d "=" -f 2 | tr -d ' ')
+log_path=$(grep "log-path" "${BUILD_DIR}/config/datafed-ws.cfg" | cut -d "=" -f 2 | tr -d ' ')
 
 if [ ! -d "${log_path}" ]
 then
@@ -35,6 +42,7 @@ if [ "$#" -eq 0 ]; then
   exit 0
 fi
 
+cd "$DATAFED_INSTALL_PATH/web"
 datafed_ws_exec=$(basename "$1")
 if [ "${datafed_ws_exec}" = "datafed-ws.js" ]
 then
@@ -45,3 +53,4 @@ else
   # If not do not by default send to log file
   su datafed -c '"$@"' -- argv0 "$@"
 fi
+

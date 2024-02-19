@@ -3,8 +3,10 @@
 ## MAJOR Breaking changes
 
 ## MINOR Feature
-1. [909] - Added Support for Google Analytics
-2. [916] - Reworked Docker build process to be faster and produce simpler and smaller images
+1. [912] - Adds initial compose file and docker files for python-client
+2. [909] - Added Support for Google Analytics
+3. [916] - Reworked Docker build process to be faster and produce simpler and smaller images
+4. [912] - Adding working compose instance for core metadata services.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [914] - Improve GitHub template
