@@ -237,9 +237,9 @@ fi
 #
 # The web deployment requires manual interaction, and I could not figure out the 
 # syntax for the REST http endpoints with curl so we are going to try the node module
-actual_version=$(node --version)
-semantic_version_compatible "$actual_version" "$DATAFED_NODE_VERSION"
-compatible=$?
+#actual_version=$(node --version)
+#semantic_version_compatible "$actual_version" "$DATAFED_NODE_VERSION"
+#compatible=$?
 
 #if [ "$compatible" -eq "0" ]
 #then
@@ -254,12 +254,10 @@ install_foxx_cli
 #fi
 
 FOXX_PREFIX=""
-{
-	# Determine if exists globally first
-	which foxx
-} || {
-	FOXX_PREFIX="${NPM_CONFIG_PREFIX}/bin/"
-}
+if ! command -v foxx > /dev/null 2>&1; then
+    FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
+fi
+
 
 PATH_TO_PASSWD_FILE="${SOURCE}/database_temp.password"
 
