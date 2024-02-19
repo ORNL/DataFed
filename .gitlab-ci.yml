@@ -405,8 +405,8 @@ end-to-end-ws-setup:
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
   stage: end-to-end-setup
   needs: ["end-to-end-core-setup"]
-  dependencies: 
-    - end-to-end-core-setup
+  #  dependencies: 
+  #  - end-to-end-core-setup
   tags:
     - ci-datafed-core
     - docker
@@ -438,7 +438,7 @@ end-to-end-ws-setup:
     - echo "-e UID=\"$USER_ID\" \\" >> run_web.sh
     - echo "-p 443:443 \\" >> run_web.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
-    - echo "-v \"${CI_DATAFED_CORE_PUB_KEY}:/source/install/keys/datafed-core-key.pub\" \\" >> run_web.sh
+    - echo "-v \"${CI_DATAFED_CORE_PUB_KEY}:/datafed/install/keys/datafed-core-key.pub\" \\" >> run_web.sh
     - echo "-v \"${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}\" \\" >> run_web.sh
     - echo "-v \"${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}\" \\" >> run_web.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\" " >> run_web.sh
