@@ -16,7 +16,7 @@ establish_connection() {
 	local URL="http://${local_DATAFED_DATABASE_HOST}:${DATABASE_PORT}/_db/${DATAFED_DATABASE}/api/0/version" 	
 	local CONNECTION="FALSE"
 	local count=0
-	local max_count=20
+	local max_count=40
 	while [ "$CONNECTION" == "FALSE" ]
 	do
 		echo "Attempt $count - Checking Database Connection at: $URL"
@@ -51,12 +51,12 @@ foxx_provisioned() {
 		RESPONSE=$(curl -s "$URL")
 		local error=$(echo "$RESPONSE" | jq -r .error)
 		((count++))
-		if [ "$error" == "false" ]
+		if [ "$error" == "true" ]
 		then
+			sleep 5
+		else
 			echo "Endpoint exists!"
 			FOXX_PROVISIONED="TRUE"
-		else
-			sleep 5
 		fi
 
 		if [ "$count" -eq "$max_count" ]
