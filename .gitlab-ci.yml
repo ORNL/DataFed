@@ -404,6 +404,7 @@ end-to-end-ws-setup:
     HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
   stage: end-to-end-setup
+  needs: ["end-to-end-core-setup"]
   tags:
     - ci-datafed-core
     - docker
@@ -473,7 +474,7 @@ end-to-end-core-setup:
     - ./scripts/ci_database_health_check.sh
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_core.sh
-    - echo "docker run \\" >> run_core.sh
+    - echo "docker run -d \\" >> run_core.sh
     - echo "--name \"core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_core.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_core.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_core.sh
