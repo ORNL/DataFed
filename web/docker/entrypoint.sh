@@ -4,19 +4,19 @@
 set -euf -o pipefail
 
 if [ -n "$UID" ]; then
-    usermod -u $UID datafed
+    usermod -u "$UID" datafed
 fi
 
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../..)
+PROJECT_ROOT=$(realpath "${SOURCE}/../..")
 
 
-${PROJECT_ROOT}/scripts/generate_datafed.sh
-${PROJECT_ROOT}/scripts/generate_ws_config.sh
-${PROJECT_ROOT}/scripts/install_ws.sh
-. ${PROJECT_ROOT}/scripts/export_dependency_version.sh
+"${PROJECT_ROOT}/scripts/generate_datafed.sh"
+"${PROJECT_ROOT}/scripts/generate_ws_config.sh"
+"${PROJECT_ROOT}/scripts/install_ws.sh"
+. "${PROJECT_ROOT}/scripts/export_dependency_version.sh"
 
 export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 export NODE_VERSION="$DATAFED_NODE_VERSION"
@@ -30,7 +30,7 @@ if [ ! -L "/usr/local/bin/node" ]; then
   ln -s "$NODE_PATH" /usr/local/bin/node
 fi
 # Send output to file as well as print to terminal
-log_path=$(grep "log-path" ${BUILD_DIR}/config/datafed-ws.cfg | cut -d "=" -f 2 | tr -d ' ')
+log_path=$(grep "log-path" "${BUILD_DIR}/config/datafed-ws.cfg" | cut -d "=" -f 2 | tr -d ' ')
 
 if [ ! -d "${log_path}" ]
 then

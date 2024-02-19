@@ -3,7 +3,7 @@
 # Assumes sourcing not running
 SCRIPT=$( realpath "${BASH_SOURCE[0]}" )
 SCRIPT_DIR=$( dirname "${SCRIPT}" )
-PROJECT_ROOT=$(realpath ${SCRIPT_DIR}/..)
+PROJECT_ROOT=$(realpath "${SCRIPT_DIR}/..")
 
 echo "SCRIPT $SCRIPT"
 echo "SCRIPT_DIR $SCRIPT_DIR"

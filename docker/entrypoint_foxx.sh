@@ -8,7 +8,7 @@ fi
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../)
+PROJECT_ROOT=$(realpath "${SOURCE}/../")
 
 log_path="$DATAFED_DEFAULT_LOG_PATH"
 if [ ! -d "${log_path}" ]

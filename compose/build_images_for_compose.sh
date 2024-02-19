@@ -4,7 +4,7 @@ set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../)
+PROJECT_ROOT=$(realpath "${SOURCE}/../")
 
 docker build \
   -f "${PROJECT_ROOT}/docker/Dockerfile.dependencies" \

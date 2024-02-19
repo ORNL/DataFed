@@ -4,7 +4,7 @@ SOURCE=$(dirname "$SCRIPT")
 
 if [ -z "${PROJECT_ROOT}" ]
 then
-  PROJECT_ROOT=$(realpath ${SOURCE}/..)
+  PROJECT_ROOT=$(realpath "${SOURCE}/..")
 fi
 
 echo "PROJECT ROOT $PROJECT_ROOT"
