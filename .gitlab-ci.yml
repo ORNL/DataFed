@@ -405,6 +405,8 @@ end-to-end-ws-setup:
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
   stage: end-to-end-setup
   needs: ["end-to-end-core-setup"]
+  dependencies: 
+    - end-to-end-core-setup
   tags:
     - ci-datafed-core
     - docker
@@ -487,13 +489,16 @@ end-to-end-core-setup:
     - echo "-e UID=\"$USER_ID\" \\" >> run_core.sh
     - echo "--network host \\" >> run_core.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_core.sh
-    - echo "-v \"$CI_DATAFED_CORE_PUB_KEY\":/source/install/keys/datafed-core-key.pub \\" >> run_core.sh
-    - echo "-v \"$CI_DATAFED_CORE_PRIV_KEY\":/source/install/keys/datafed-core-key.priv \\" >> run_core.sh
+    - echo "-v \"${CI_DATAFED_CORE_PUB_KEY}\":/source/install/keys/datafed-core-key.pub \\" >> run_core.sh
+    - echo "-v \"${CI_DATAFED_CORE_PRIV_KEY}\":/source/install/keys/datafed-core-key.priv \\" >> run_core.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_core.sh
     - chmod +x run_core.sh
     - ./run_core.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+  artifacts:
+    paths:
+      - "${CI_DATAFED_CORE_PUB_KEY}"
 
 #- echo " </dev/null &>/dev/null &" >> run_core.sh
 # Repo server currently will crash on startup if it cannot connect to the core
