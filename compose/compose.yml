@@ -11,6 +11,7 @@ services:
       DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
       DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
       DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+      DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
       DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
       DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
       DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
@@ -18,7 +19,7 @@ services:
       UID: "${DATAFED_UID}"
     image: datafed-web:latest
     ports:
-      - 8080:443 
+      - 443:443 # This must be the same port that is mapped to the host for redirects to work
     volumes:
       - keys:/opt/datafed/keys
       - ./web_keys:/opt/datafed/web_keys

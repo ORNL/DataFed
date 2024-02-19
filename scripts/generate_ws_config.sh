@@ -45,8 +45,6 @@ Help()
 local_DATAFED_WEB_CERT_PATH="${DATAFED_INSTALL_PATH}/keys/datafed-server-test.ornl.gov.crt"
 local_DATAFED_WEB_KEY_PATH="${DATAFED_INSTALL_PATH}/keys/datafed-server-test.ornl.gov.key"
 
-local_DATAFED_HTTPS_SERVER_PORT="443"
-
 if [ ! -z "${DATAFED_WEB_KEY_PATH}" ]
 then
     local_DATAFED_WEB_KEY_PATH=$(printenv DATAFED_WEB_KEY_PATH)
@@ -62,6 +60,13 @@ then
   local_DATAFED_SERVER_DOMAIN_NAME="datafed.ornl.gov"
 else
   local_DATAFED_SERVER_DOMAIN_NAME=$(printenv DATAFED_DOMAIN)
+fi
+
+if [ -z "${DATAFED_HTTPS_SERVER_PORT}" ]
+then
+  local_DATAFED_HTTPS_SERVER_PORT="443"
+else
+  local_DATAFED_HTTPS_SERVER_PORT=$(printenv DATAFED_HTTPS_SERVER_PORT)
 fi
 
 if [ -z "${DATAFED_GLOBUS_APP_ID}" ]
