@@ -496,9 +496,6 @@ end-to-end-core-setup:
     - ./run_core.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
-  artifacts:
-    paths:
-      - "${CI_DATAFED_CORE_PUB_KEY}"
 
 #- echo " </dev/null &>/dev/null &" >> run_core.sh
 # Repo server currently will crash on startup if it cannot connect to the core
