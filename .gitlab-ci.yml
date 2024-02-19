@@ -416,6 +416,8 @@ end-to-end-ws-setup:
     - mkdir -p "$HOST_LOG_FILE_PATH"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
+    - chown gitlab-runner "${CI_DATAFED_WEB_CERT_PATH}"
+    - chown gitlab-runner "${CI_DATAFED_WEB_KEY_PATH}"
     - ./scripts/generate_datafed.sh
     - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - CERT_FILE_NAME=$(basename "${CI_DATAFED_WEB_CERT_PATH}")
