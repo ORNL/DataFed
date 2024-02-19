@@ -58,7 +58,7 @@ while [ : ]; do
   esac
 done
 
-if [ "$local_TAG_FLAG_DETECTED" = "1" ] && [ "$local_NAME_FLAG_DETECTED" = "1" ]
+if [ "$local_TAG_FLAG_DETECTED" == "1" ] && [ "$local_NAME_FLAG_DETECTED" == "1" ]
 then
   echo "ERROR can only specify -t or -n cannot specify both"
   exit 1
@@ -69,12 +69,12 @@ CONTAINER_IDS=($(docker container ls --format "{{.ID}}"))
 CONTAINER_IMAGES=($(docker container ls --format "{{.Image}}"))
 CONTAINER_NAMES=($(docker container ls --format "{{.Names}}"))
 
-if [ "$local_TAG_FLAG_DETECTED" = "1" ]
+if [ "$local_TAG_FLAG_DETECTED" == "1" ]
 then
 
   for (( i=0; i<${#CONTAINER_IDS[@]}; i++)); do
     IMAGE="${CONTAINER_IMAGES[$i]}"
-    if [ "$IMAGE" = "$local_CONTAINER_TAG" ]
+    if [ "$IMAGE" == "$local_CONTAINER_TAG" ]
     then
       echo "Stopping ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
       docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
@@ -117,7 +117,7 @@ then
 
   for (( i=0; i<${#CONTAINER_IDS[@]}; i++)); do
     IMAGE="${CONTAINER_IMAGES[$i]}"
-    if [ "$IMAGE" == "local_CONTAINER_TAG" ]
+    if [ "$IMAGE" == "$local_CONTAINER_TAG" ]
     then
       echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
       exit 1
@@ -129,7 +129,7 @@ then
 
   for (( i=0; i<${#CONTAINER_IDS[@]}; i++)); do
     NAME="${CONTAINER_NAMES[$i]}"
-    if [ "$NAME" == "local_CONTAINER_NAME" ]
+    if [ "$NAME" == "$local_CONTAINER_NAME" ]
     then
       echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} ${CONTAINER_IMAGES[$i]}"
       exit 1

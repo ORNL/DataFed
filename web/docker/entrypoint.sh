@@ -12,11 +12,10 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../..")
 
-
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 "${PROJECT_ROOT}/scripts/generate_ws_config.sh"
 "${PROJECT_ROOT}/scripts/install_ws.sh"
-. "${PROJECT_ROOT}/scripts/export_dependency_version.sh"
+. "${PROJECT_ROOT}/scripts/dependency_versions.sh"
 
 export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 export NODE_VERSION="$DATAFED_NODE_VERSION"
