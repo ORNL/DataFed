@@ -57,7 +57,7 @@ then
     local_DATAFED_WEB_CERT_PATH=$(printenv DATAFED_WEB_CERT_PATH)
 fi
 
-if [ -z "${DATAFED_GLOBUS_APP_ID}" ]
+if [ -z "${DATAFED_DOMAIN}" ]
 then
   local_DATAFED_SERVER_DOMAIN_NAME="datafed.ornl.gov"
 else

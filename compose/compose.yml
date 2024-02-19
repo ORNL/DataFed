@@ -3,14 +3,6 @@ version: '3.9'
 
 services:
 
-  keycloak:
-    image: jboss/keycloak:latest
-    environment:
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: admin
-    ports:
-      - "8888:8080"
-
   datafed-web:
     depends_on: ["datafed-core"]
     environment:
