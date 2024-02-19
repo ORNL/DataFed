@@ -39,7 +39,7 @@ datafed_ws_exec=$(basename "$1")
 if [ "${datafed_ws_exec}" = "datafed-ws.js" ]
 then
   # Send output to log file
-  su datafed -c '"$@"' -- argv0 "$@" 2>&1 | tee "$log_path/datafed-ws.log"
+  su datafed -c '"$@"' -- argv0 "$@" 2>&1 | su datafed -c "tee $log_path/datafed-ws.log"
 else
   echo "Not sending output to datafed-ws.log"
   # If not do not by default send to log file
