@@ -8,12 +8,12 @@ fi
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../..)
+PROJECT_ROOT=$(realpath "${SOURCE}/../..")
 
 env
-${PROJECT_ROOT}/scripts/generate_datafed.sh
-${PROJECT_ROOT}/scripts/generate_core_config.sh
-${PROJECT_ROOT}/scripts/install_core.sh
+"${PROJECT_ROOT}/scripts/generate_datafed.sh"
+"${PROJECT_ROOT}/scripts/generate_core_config.sh"
+"${PROJECT_ROOT}/scripts/install_core.sh"
 
 log_path="$DATAFED_DEFAULT_LOG_PATH"
 
