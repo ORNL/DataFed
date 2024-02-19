@@ -33,6 +33,7 @@ WORKDIR ${BUILD_DIR}
 COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_authz_config.sh ${BUILD_DIR}/scripts/generate_authz_config.sh
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/generate_datafed.sh
+COPY ./scripts/utils.sh ${BUILD_DIR}/scripts/
 COPY ./CMakeLists.txt ${BUILD_DIR}
 COPY ./cmake ${BUILD_DIR}/cmake
 COPY ./repository/CMakeLists.txt ${BUILD_DIR}/repository/CMakeLists.txt
