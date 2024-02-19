@@ -7,6 +7,7 @@ stages:
     #  - build-deploy-base-2
   - provision-client
   - build
+  - end-to-end-setup-arango
   - end-to-end-setup
   - end-to-end-test
   - end-to-end-teardown
@@ -385,6 +386,17 @@ build-gcs-authz:
 # STAGE: Integration
 ################################################################################
 
+# - echo " </dev/null &>/dev/null &" >> run_globus.sh
+end-to-end-arango-setup:
+  variables:
+    GIT_STRATEGY: clone
+  stage: end-to-end-setup-arango
+  tags:
+    - ci-datafed-arango
+  script:
+    - arangod --version
+    - ./scripts/run_arango_service.sh
+
 end-to-end-ws-setup:
   variables:
     IMAGE_TAG: "datafed/ws-"
@@ -444,6 +456,7 @@ end-to-end-core-setup:
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     DATAFED_DATABASE_HOST: "$CI_DATAFED_DATABASE_HOST"
   stage: end-to-end-setup
+  needs: ["end-to-end-arango-setup"]
   tags:
     - ci-datafed-core
     - docker
@@ -565,17 +578,6 @@ end-to-end-gcs-authz-setup:
     - ./run_globus.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
-
-# - echo " </dev/null &>/dev/null &" >> run_globus.sh
-end-to-end-arango-setup:
-  variables:
-    GIT_STRATEGY: clone
-  stage: end-to-end-setup
-  tags:
-    - ci-datafed-arango
-  script:
-    - arangod --version
-    - ./scripts/run_arango_service.sh
 
 ################################################################################
 # Actual Testing
