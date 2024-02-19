@@ -521,8 +521,10 @@ end-to-end-repo-setup:
     - ./run_repo.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
-
 # - echo " </dev/null &>/dev/null &" >> run_repo.sh
+
+# Requires setting up Globus Connect Server, requires firewall exceptions on
+# the machine running this.
 end-to-end-gcs-authz-setup:
   variables:
     IMAGE_TAG: "datafed/gcs-authz-"
