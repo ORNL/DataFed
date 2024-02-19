@@ -39,7 +39,7 @@ then
 
   # Give arango container a minute to initialize
   # should be replaced with health check at some point
-  sleep 10
+  sleep 5
   su datafed -c "cmake --build build --target install"
 
   #if [ "$#" -eq 0 ]; then
