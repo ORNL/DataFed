@@ -13,13 +13,6 @@ RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${DATAFED_INSTALL_PATH}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/keys
 
-# For communicating with repo server
-# EXPOSE 7512
-# For listening to web server
-# EXPOSE 7513
-# ArangoDB port
-# EXPOSE 8529
-
 # Create datafed user, prefer more secure login options than password
 # Recommended to mount ssh public key on run
 RUN adduser --disabled-password --gecos "" datafed
@@ -54,6 +47,5 @@ RUN python3 -m pip install .
 
 WORKDIR /home/datafed
 
-#ENTRYPOINT ["/bin/bash"]
 ENTRYPOINT ["/datafed/source/python/docker/entrypoint.sh"]
 

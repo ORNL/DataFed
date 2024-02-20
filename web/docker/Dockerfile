@@ -9,7 +9,6 @@ ARG DATAFED_INSTALL_PATH="/opt/datafed"
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
-#ARG              NVM_DIR="$DATAFED_DIR/.nvm"
 ARG              LIB_DIR="/usr/local/lib"
 
 FROM ${DEPENDENCIES} AS ws-build
@@ -47,12 +46,10 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
 RUN cmake --build build
 RUN cmake --build build --target install
 # Only part of the final install can be done here
-#RUN ${BUILD_DIR}/scripts/install_ws.sh
 
 FROM ${RUNTIME} AS ws
 
 SHELL ["/bin/bash", "-c"]
-#ARG DATAFED_NODE_VERSION=""
 ARG DATAFED_DIR
 ARG DATAFED_INSTALL_PATH
 ARG BUILD_DIR
@@ -68,12 +65,8 @@ RUN apt install -y python3 make g++
 
 WORKDIR ${DATAFED_DIR}
 
-#COPY --from=ws-build --chown=datafed:root "$NVM_DIR" "$NVM_DIR" 
-#RUN ln -s ${DATAFED_INSTALL_PATH}/web ${BUILD_DIR}/web
-
 USER datafed
 
-#COPY --chown=datafed:root ./web/docker/entrypoint.sh ${BUILD_DIR}/web/docker/entrypoint.sh
 COPY --chown=datafed:root ./scripts/generate_datafed.sh          ${BUILD_DIR}/scripts/generate_datafed.sh
 COPY --chown=datafed:root ./scripts/dependency_versions.sh       ${BUILD_DIR}/scripts/dependency_versions.sh
 COPY --chown=datafed:root ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/dependency_install_functions.sh
@@ -82,11 +75,8 @@ COPY --chown=datafed:root ./scripts/install_ws.sh                ${BUILD_DIR}/sc
 COPY --chown=datafed:root ./cmake/Version.cmake                  ${BUILD_DIR}/cmake/Version.cmake
 COPY --chown=datafed:root ./scripts/utils.sh                     ${BUILD_DIR}/scripts/utils.sh
 COPY --chown=datafed:root ./scripts/export_dependency_version.sh ${BUILD_DIR}/scripts/export_dependency_version.sh
-##COPY --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH} ${DATAFED_DEPENDENCIES_INSTALL_PATH}
-#
 COPY --from=ws-build --chown=datafed:root ${BUILD_DIR}/web ${BUILD_DIR}/web
 COPY --from=ws-build --chown=datafed:root ${DATAFED_INSTALL_PATH} ${DATAFED_INSTALL_PATH}
-#COPY --from=ws-build --chown=datafed:root ${BUILD_DIR}/web/package.json ${DATAFED_INSTALL_PATH}/web/package.json
 COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH} ${DATAFED_DEPENDENCIES_INSTALL_PATH}
 COPY --from=ws-build --chown=datafed:root /usr/bin/curl /usr/bin/curl
 
@@ -100,10 +90,6 @@ RUN . ${BUILD_DIR}/scripts/export_dependency_version.sh && \
   . ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/nvm.sh && \
 	npm --allow-root --unsafe-perm --prefix ${DATAFED_INSTALL_PATH}/web install
 
-#COPY --from=ws-build --chown=datafed:root ${BUILD_DIR}/web ${DATAFED_INSTALL_PATH}/web
-
 USER root
 
-#ENTRYPOINT ["sleep", "100000" ]
 ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh", "/opt/datafed/web/datafed-ws.js", "/datafed/source/config/datafed-ws.cfg" ]
-#WORKDIR ${DATAFED_INSTALL_PATH}/web

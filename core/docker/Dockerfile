@@ -10,9 +10,6 @@ ARG DATAFED_INSTALL_PATH="/opt/datafed"
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
-#ARG              NVM_DIR="$DATAFED_DIR/.nvm"
-#ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
-#ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG              LIB_DIR="/usr/local/lib"
 
 FROM ${DEPENDENCIES} AS core-build
@@ -96,4 +93,3 @@ RUN chown -R datafed:root /opt
 # NOTE docker does not recognize curly braces around variables in entrypoint
 # and CMD
 ENTRYPOINT [ "/datafed/source/core/entrypoint.sh", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]
-#CMD ["$DATAFED_INSTALL_PATH/core/datafed-core","--cfg","$DATAFED_INSTALL_PATH/core/datafed-core.cfg"]

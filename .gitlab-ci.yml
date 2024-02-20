@@ -4,7 +4,6 @@ stages:
   - signal
   - clear-docker-cache
   - build-deploy-base
-    #  - build-deploy-base-2
   - provision-client
   - build
   - end-to-end-setup-arango
@@ -182,47 +181,6 @@ build-gcs-base:
       else
         echo "Docker image already exists in the registry. Skipping build."
       fi 
-
-      #build-gcs-authz-base:
-      #  variables:
-      #    GIT_SUBMODULE_STRATEGY: recursive
-      #    GIT_STRATEGY: clone
-      #    DISTRO: "ubuntu:focal"
-      #    GCS_TAG: "${REGISTRY}/datafed/gcs-ubuntu-focal"
-      #    IMAGE_TAG2: "datafed/gcs-authz-base"
-      #    IMAGE_TAG3: "datafed/gcs-authz"
-      #    GCS_SUBMODULE_VERSION: "v2.6.0"
-      #  stage: build-deploy-base-2
-      #  tags:
-      #    - ci-datafed-globus
-      #    - docker
-      #  script:
-      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #    - docker pull "$GCS_TAG:${GCS_SUBMODULE_VERSION}"
-      #    - docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "$GCS_TAG" 
-      #    - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG2}" .
-      #    - docker push "${REGISTRY}/${IMAGE_TAG2}"
-      #    - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "${REGISTRY}/${IMAGE_TAG3}" .
-      #    - docker push "${REGISTRY}/${IMAGE_TAG3}"
-      #  rules:
-      #    - changes:
-      #        - scripts/generate_datafed.sh
-      #        - scripts/dependency_versions.sh
-      #        - scripts/dependency_install_functions.sh
-      #        - scripts/install_authz_dependencies.sh
-      #        - scripts/generate_authz_config.sh
-      #        - scripts/generate_datafed.sh
-      #        - scripts/globus/setup_globus.sh
-      #        - scripts/globus/generate_repo_form.sh
-      #        - repository/docker/entrypoint_authz.sh
-      #        - CMakeLists.txt
-      #        - cmake/*
-      #        - repository/CMakeLists.txt
-      #        - repository/gridftp/CMakeLists.txt
-      #        - repository/gridftp/globus5/**/*
-      #        - common/**/*
-      #        - .gitlab-ci.ym
- 
 
 ################################################################################
 # STAGE: provision client
