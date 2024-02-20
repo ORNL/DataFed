@@ -314,7 +314,7 @@ build-foxx:
       -DBUILD_TESTS=ON
       -DINSTALL_FOXX=ON
     - cmake --build build
-    - cmake --build build --target install
+    - sudo cmake --build build --target install # must be run with sudo
     - cmake --build build --target test
 
 build-repo:
