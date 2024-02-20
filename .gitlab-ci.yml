@@ -508,6 +508,7 @@ end-to-end-repo-setup:
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_repo.sh
     - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_repo.sh
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_repo.sh
+    - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_repo.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_repo.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_repo.sh
     - echo "-v \"$CI_DATAFED_REPO_PUB_KEY\":/source/install/keys/datafed-repo-key.pub \\" >> run_repo.sh
