@@ -5,7 +5,7 @@ set -e
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${SOURCE}/dependency_versions.sh"

@@ -150,8 +150,9 @@ install_gcs() {
   if [ ! -e ".gcs_installed-${DATAFED_GLOBUS_VERSION}" ]; then
     "$SUDO_CMD" apt update
     "$SUDO_CMD" apt install -y curl git gnupg
-    curl -LOs https://downloads.globus.org/globus-connect-server/stable/installers/repo/deb/globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb
-    "$SUDO_CMD" dpkg -i globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb
+    curl -LOs \
+    "https://downloads.globus.org/globus-connect-server/stable/installers/repo/deb/globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb"
+    "$SUDO_CMD" dpkg -i "globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb"
     "$SUDO_CMD" apt-key add /usr/share/globus-repo/RPM-GPG-KEY-Globus
     # Need a second update command after adding the globus GPG key
     "$SUDO_CMD" apt update
