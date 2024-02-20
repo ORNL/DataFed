@@ -340,33 +340,32 @@ build-gcs-authz:
     - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
     - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
-      #build-python-client:
-      #  variables:
-      #    IMAGE_TAG: "dlsw/datafed/python-client-"
-      #    GIT_STRATEGY: clone
-      #  stage: build
-      #  tags:
-      #    - docker
-      #  rules:
-      #    - changes:
-      #        - python/*
-      #        - scripts/*
-      #        - common/*
-      #        - .gitlab-ci.yml
-      #      when: always
-      #  script:
-      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      #    - echo "$BRANCH_LOWER"
-      #    - ./scripts/generate_datafed.sh
-      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #    - docker build -f python/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-      #    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+build-python-client:
+  variables:
+    IMAGE_TAG: "datafed/python-client-"
+    GIT_STRATEGY: clone
+  stage: build
+  tags:
+    - docker
+  rules:
+    - changes:
+        - python/*
+        - scripts/*
+        - common/*
+        - .gitlab-ci.yml
+      when: always
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker build -f python/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
 
 ################################################################################
 # STAGE: Integration
 ################################################################################
 
-# - echo " </dev/null &>/dev/null &" >> run_globus.sh
 end-to-end-arango-setup:
   variables:
     GIT_STRATEGY: clone
@@ -407,7 +406,7 @@ end-to-end-ws-setup:
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_web.sh
-    - echo "docker run \\" >> run_web.sh
+    - echo "docker run -d \\" >> run_web.sh
     - echo "--name \"ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_web.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
@@ -426,11 +425,9 @@ end-to-end-ws-setup:
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\" " >> run_web.sh
     - chmod +x run_web.sh
     - ./run_web.sh
-    - sleep 10
+    - sleep 30
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
-#- echo " </dev/null &>/dev/null &" >> run_web.sh
-#- echo "-u ${USER_ID}:${GROUP_ID} \\" >> run_web.sh
 # Note here we use network=host to run the docker container this is
 # because we do not need it to communicate with an external port 
 end-to-end-core-setup:
@@ -479,7 +476,6 @@ end-to-end-core-setup:
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
-#- echo " </dev/null &>/dev/null &" >> run_core.sh
 # Repo server currently will crash on startup if it cannot connect to the core
 # server.
 end-to-end-repo-setup:
@@ -521,7 +517,6 @@ end-to-end-repo-setup:
     - ./run_repo.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
-# - echo " </dev/null &>/dev/null &" >> run_repo.sh
 
 # Requires setting up Globus Connect Server, requires firewall exceptions on
 # the machine running this.
@@ -567,40 +562,40 @@ end-to-end-gcs-authz-setup:
 ################################################################################
 # Actual Testing
 ################################################################################
-#end-to-end-client-test:
-#  variables:
-#    GIT_STRATEGY: clone
-#    DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
-#    DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET}"
-#    DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
-#    DATAFED_USER89_PASSWORD: "${CI_DATAFED_USER89_PASSWORD}"
-#    DATAFED_USER89_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
-#    DATAFED_USER89_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER89_GLOBUS_ACCESS_TOKEN}"
-#    DATAFED_USER89_GLOBUS_UUID: "${CI_DATAFED_USER89_GLOBUS_UUID}"
-#    DATAFED_USER99_PASSWORD: "${CI_DATAFED_USER99_PASSWORD}"
-#    DATAFED_USER99_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER99_GLOBUS_REFRESH_TOKEN}"
-#    DATAFED_USER99_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER99_GLOBUS_ACCESS_TOKEN}"
-#    DATAFED_USER99_GLOBUS_UUID: "${CI_DATAFED_USER99_GLOBUS_UUID}"
-#    DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
-#  stage: end-to-end-test
-#  tags:
-#    - ci-datafed-client
-#  script:
-#    - ./scripts/generate_datafed.sh
-#    - env
-#    - cat ./config/datafed.sh
-#    - >
-#      cmake -S. -B build
-#      -DENABLE_FOXX_TESTS=OFF
-#      -DBUILD_CORE_SERVER=OFF
-#      -DBUILD_COMMON=OFF
-#      -DBUILD_WEB_SERVER=OFF
-#      -DBUILD_DOCS=OFF
-#      -DBUILD_PYTHON_CLIENT=ON
-#      -DBUILD_TESTS=ON
-#      -DENABLE_END_TO_END_TESTS=ON
-#      -DINSTALL_FOXX=OFF
-#    - cmake --build build
-#    - cmake --build build --target pydatafed
-#    - cmake --build build --target test
-#
+end-to-end-client-test:
+  variables:
+    GIT_STRATEGY: clone
+    DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
+    DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET}"
+    DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
+    DATAFED_USER89_PASSWORD: "${CI_DATAFED_USER89_PASSWORD}"
+    DATAFED_USER89_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
+    DATAFED_USER89_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER89_GLOBUS_ACCESS_TOKEN}"
+    DATAFED_USER89_GLOBUS_UUID: "${CI_DATAFED_USER89_GLOBUS_UUID}"
+    DATAFED_USER99_PASSWORD: "${CI_DATAFED_USER99_PASSWORD}"
+    DATAFED_USER99_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER99_GLOBUS_REFRESH_TOKEN}"
+    DATAFED_USER99_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER99_GLOBUS_ACCESS_TOKEN}"
+    DATAFED_USER99_GLOBUS_UUID: "${CI_DATAFED_USER99_GLOBUS_UUID}"
+    DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
+  stage: end-to-end-test
+  tags:
+    - ci-datafed-client
+  script:
+    - ./scripts/generate_datafed.sh
+    - env
+    - cat ./config/datafed.sh
+    - >
+      cmake -S. -B build
+      -DENABLE_FOXX_TESTS=OFF
+      -DBUILD_CORE_SERVER=OFF
+      -DBUILD_COMMON=OFF
+      -DBUILD_WEB_SERVER=OFF
+      -DBUILD_DOCS=OFF
+      -DBUILD_PYTHON_CLIENT=ON
+      -DBUILD_TESTS=ON
+      -DENABLE_END_TO_END_TESTS=ON
+      -DINSTALL_FOXX=OFF
+    - cmake --build build
+    - cmake --build build --target pydatafed
+    - cmake --build build --target test
+
