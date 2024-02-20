@@ -297,13 +297,6 @@ build-foxx:
     DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
   tags:
     - ci-datafed-arango
-  rules:
-    - changes:
-        - CMakeLists.txt
-        - scripts/*
-        - core/database/*
-        - .gitlab-ci.yml
-      when: on_success
   script:
     - arangod --version
     - sudo systemctl status arangodb3
