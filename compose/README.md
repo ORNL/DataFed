@@ -20,7 +20,7 @@ docker compose -f ./compose_core.yml up
 ```
 
 At this point you should be able to navigate in your browser to
-"https://localhost"
+<https://localhost>
 
 NOTE we are using a self signed certificate so you will have to force your
 browser to allow you to see the page.
