@@ -95,6 +95,17 @@ clear-repo-cache:
     - docker system prune -f
     - ./scripts/ci_purge_images.sh
 
+clear-python-client-cache:
+  stage: clear-docker-cache
+  needs: ["signal"]
+  tags:
+    - ci_5
+  script:
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker system prune -f
+    - ./scripts/ci_purge_images.sh
+
+
 ################################################################################
 # STAGE: build-deploy-base
 ################################################################################
@@ -150,6 +161,21 @@ build-repo-base:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker push "${REGISTRY}/${IMAGE_TAG}"
 
+build-python-client-base:
+  needs: ["clear-python-client-cache"]
+  variables:
+    IMAGE_TAG: "datafed/python-client-base"
+    GIT_STRATEGY: clone
+  stage: build-deploy-base
+  tags:
+    - ci-datafed-repo
+    - docker
+  script:
+    - docker system prune -f
+    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}"
+
 build-gcs-base:
   needs: ["clear-repo-cache"]
   variables:
@@ -188,7 +214,6 @@ build-gcs-base:
 provision-client:
   needs: ["signal"]
   variables:
-    IMAGE_TAG: "datafed/repo-base"
     GIT_STRATEGY: clone
     DATAFED_DEPENDENCIES_INSTALL_PATH: "${CI_PROJECT_DIR}/install"
   stage: provision-client
@@ -347,6 +372,7 @@ build-python-client:
   stage: build
   tags:
     - docker
+    - ci-datafed-client
   rules:
     - changes:
         - python/*
