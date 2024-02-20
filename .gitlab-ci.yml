@@ -14,6 +14,7 @@ stages:
 variables:
   HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry'
   REGISTRY: 'camden.ornl.gov'
+  DATAFED_DEPENDENCIES_INSTALL_PATH: "/tmp/install"
 ################################################################################
 # STAGE: ci-infrastructure-check
 ################################################################################
@@ -215,7 +216,6 @@ provision-client:
   needs: ["signal"]
   variables:
     GIT_STRATEGY: clone
-    DATAFED_DEPENDENCIES_INSTALL_PATH: "${CI_PROJECT_DIR}/install"
   stage: provision-client
   tags:
     - ci-datafed-client
@@ -314,7 +314,7 @@ build-foxx:
       -DBUILD_TESTS=ON
       -DINSTALL_FOXX=ON
     - cmake --build build
-    - sudo cmake --build build --target install # must be run with sudo
+    - cmake --build build --target install
     - cmake --build build --target test
 
 build-repo:
