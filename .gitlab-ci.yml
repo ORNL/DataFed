@@ -422,6 +422,7 @@ end-to-end-ws-setup:
     - KEY_FILE_NAME=$(basename "${CI_DATAFED_WEB_KEY_PATH}")
     - USER_ID=$(id -u)
     - GROUP_ID=$(id -g)
+    - env
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_web.sh
@@ -432,9 +433,9 @@ end-to-end-ws-setup:
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_web.sh
-    - echo "-e DATAFED_WEB_CERT_PATH=\"${CI_DATAFED_WEB_CERT_PATH}\" \\" >> run_web.sh
+    - echo "-e DATAFED_WEB_CERT_PATH=\"/datafed/install/keys/${CERT_FILE_NAME}\" \\" >> run_web.sh
     - echo "-e DATAFED_WEB_KEY_PATH=\"${CI_DATAFED_WEB_KEY_PATH}\" \\" >> run_web.sh
-    - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_web.sh
+    - echo "-e DATAFED_DEFAULT_LOG_PATH=\"/datafed/install/keys/${KEY_FILE_NAME}\" \\" >> run_web.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_web.sh
     - echo "-p 443:443 \\" >> run_web.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
