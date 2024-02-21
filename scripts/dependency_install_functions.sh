@@ -165,14 +165,14 @@ install_gcs() {
 
 install_nvm() {
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
     # By setting NVM_DIR beforehand when the scirpt is run it 
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
     curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark nvm as installed
-    touch ".nvm_installed-${DATAFED_NVM_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
   fi
@@ -180,7 +180,7 @@ install_nvm() {
 
 install_node() {
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
     echo "You must first install nvm before installing node."
     exit 1
   fi
@@ -191,7 +191,7 @@ install_node() {
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm install "$DATAFED_NODE_VERSION"
     # Mark node as installed
-    touch ".node_installed-${DATAFED_NODE_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
@@ -199,7 +199,7 @@ install_node() {
 }
 
 install_foxx_cli() {
-  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
     echo "You must first install nvm before installing foxx_cli."
     exit 1
   fi
@@ -214,7 +214,7 @@ install_foxx_cli() {
     export NODE_VERSION="$DATAFED_NODE_VERSION"
     "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
     # Mark foxx_cli as installed
-    touch ".foxx_cli_installed"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
