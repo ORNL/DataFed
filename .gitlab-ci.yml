@@ -401,6 +401,12 @@ end-to-end-ws-setup:
     GIT_STRATEGY: clone
     HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
+    DATAFED_WEB_KEY_DIR: "/tmp/keys"
+    DATAFED_WEB_CERT_NAME: "cert.crt"
+    DATAFED_WEB_KEY_NAME: "cert.key"
+    DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_CERT_NAME}"
+    DATAFED_WEB_CSR_PATH: "${DATAFED_WEB_KEY_DIR}/cert.csr"
+    DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_KEY_NAME}"
   stage: end-to-end-setup
   needs: ["end-to-end-core-setup"]
   #  dependencies: 
@@ -412,14 +418,35 @@ end-to-end-ws-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
+    - mkdir -p "${DATAFED_WEB_KEY_DIR}"
+    - >
+       if [ ! -e "$DATAFED_WEB_CERT_PATH" ] || [ ! -e "$DATAFED_WEB_KEY_PATH" ]
+       then
+         if [ -e "$DATAFED_WEB_CERT_PATH" ]
+         then
+           rm "${DATAFED_WEB_CERT_PATH}"
+         fi
+         if [ -e "$DATAFED_WEB_KEY_PATH" ]
+         then
+           rm "${DATAFED_WEB_KEY_PATH}"
+         fi
+         if [ -e "$DATAFED_WEB_CSR_PATH" ]
+         then
+           rm "${DATAFED_WEB_CSR_PATH}"
+         fi
+         openssl genrsa -out "$DATAFED_WEB_KEY_PATH" 2048
+         openssl req -new -key "$DATAFED_WEB_KEY_PATH" \
+           -out "${DATAFED_WEB_CSR_PATH}" \
+           -subj "/C=US/ST=TN/L=Oak Ridge/O=ORNL/OU=DLT/CN=${DATAFED_COMPOSE_DOMAIN}"
+         openssl x509 -req -days 3650 \
+            -in "${DATAFED_WEB_CSR_PATH}" \
+            -signkey "$DATAFED_WEB_KEY_PATH" \
+            -out "$DATAFED_WEB_CERT_PATH"
+       fi
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
-    - chown gitlab-runner "${CI_DATAFED_WEB_CERT_PATH}"
-    - chown gitlab-runner "${CI_DATAFED_WEB_KEY_PATH}"
     - ./scripts/generate_datafed.sh
     - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - CERT_FILE_NAME=$(basename "${CI_DATAFED_WEB_CERT_PATH}")
-    - KEY_FILE_NAME=$(basename "${CI_DATAFED_WEB_KEY_PATH}")
     - USER_ID=$(id -u)
     - GROUP_ID=$(id -g)
     - env
@@ -433,15 +460,15 @@ end-to-end-ws-setup:
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_web.sh
-    - echo "-e DATAFED_WEB_CERT_PATH=\"/datafed/install/keys/${CERT_FILE_NAME}\" \\" >> run_web.sh
-    - echo "-e DATAFED_WEB_KEY_PATH=\"${CI_DATAFED_WEB_KEY_PATH}\" \\" >> run_web.sh
-    - echo "-e DATAFED_DEFAULT_LOG_PATH=\"/datafed/install/keys/${KEY_FILE_NAME}\" \\" >> run_web.sh
+    - echo "-e DATAFED_WEB_CERT_PATH=\"/datafed/install/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
+    - echo "-e DATAFED_WEB_KEY_PATH=\"/datafed/install/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
+    - echo "-e DATAFED_DEFAULT_LOG_PATH=\"${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_web.sh
     - echo "-p 443:443 \\" >> run_web.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
     - echo "-v \"${CI_DATAFED_CORE_PUB_KEY}:/datafed/install/keys/datafed-core-key.pub\" \\" >> run_web.sh
-    - echo "-v \"${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}\" \\" >> run_web.sh
-    - echo "-v \"${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}\" \\" >> run_web.sh
+    - echo "-v \"${DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
+    - echo "-v \"${DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\" " >> run_web.sh
     - chmod +x run_web.sh
     - ./run_web.sh
