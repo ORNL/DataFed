@@ -426,6 +426,7 @@ end-to-end-ws-setup:
     - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - USER_ID=$(id -u)
     - GROUP_ID=$(id -g)
+    - cp "${CI_DATAFED_CORE_PUB_KEY}" /tmp/datafed-core-key.pub
     - env
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
@@ -443,7 +444,7 @@ end-to-end-ws-setup:
     - echo "-e UID=\"$USER_ID\" \\" >> run_web.sh
     - echo "-p 443:443 \\" >> run_web.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
-    - echo "-v \"${CI_DATAFED_CORE_PUB_KEY}:/datafed/install/keys/datafed-core-key.pub\" \\" >> run_web.sh
+    - echo "-v \"/tmp/datafed-core-key.pub:/datafed/install/keys/datafed-core-key.pub\" \\" >> run_web.sh
     - echo "-v \"${DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
     - echo "-v \"${DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\" " >> run_web.sh
