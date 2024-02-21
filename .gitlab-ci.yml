@@ -478,6 +478,8 @@ end-to-end-core-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - ./scripts/ci_database_health_check.sh
+    - cp "${CI_DATAFED_CORE_PUB_KEY}" /tmp/datafed-core-key.pub
+    - cp "${CI_DATAFED_CORE_PRIV_KEY}" /tmp/datafed-core-key.priv
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_core.sh
     - echo "docker run -d \\" >> run_core.sh
@@ -493,8 +495,8 @@ end-to-end-core-setup:
     - echo "-e UID=\"$USER_ID\" \\" >> run_core.sh
     - echo "--network host \\" >> run_core.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_core.sh
-    - echo "-v \"${CI_DATAFED_CORE_PUB_KEY}\":/source/install/keys/datafed-core-key.pub \\" >> run_core.sh
-    - echo "-v \"${CI_DATAFED_CORE_PRIV_KEY}\":/source/install/keys/datafed-core-key.priv \\" >> run_core.sh
+    - echo "-v \"/tmp/datafed-core-key.pub\":/source/install/keys/datafed-core-key.pub \\" >> run_core.sh
+    - echo "-v \"/tmp/datafed-core-key.priv\":/source/install/keys/datafed-core-key.priv \\" >> run_core.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_core.sh
     - chmod +x run_core.sh
     - ./run_core.sh
