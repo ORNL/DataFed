@@ -442,7 +442,7 @@ end-to-end-ws-setup:
     - echo "-e DATAFED_WEB_CERT_PATH=\"/datafed/install/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
     - echo "-e DATAFED_WEB_KEY_PATH=\"/datafed/install/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
-    - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"https://$CORE_ADDRESS:7513\" \\" >> run_web.sh
+    - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"tcp://$CORE_ADDRESS:7513\" \\" >> run_web.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_web.sh
     - echo "-p 443:443 \\" >> run_web.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
