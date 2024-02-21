@@ -399,7 +399,7 @@ end-to-end-ws-setup:
   variables:
     IMAGE_TAG: "datafed/ws-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    HOST_LOG_FILE_PATH: "/tmp/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     DATAFED_WEB_KEY_DIR: "/tmp/keys"
     DATAFED_WEB_CERT_NAME: "cert.crt"
@@ -461,7 +461,7 @@ end-to-end-core-setup:
   variables:
     IMAGE_TAG: "datafed/core-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    HOST_LOG_FILE_PATH: "/tmp/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     DATAFED_DATABASE_HOST: "$CI_DATAFED_DATABASE_HOST"
   stage: end-to-end-setup
@@ -511,7 +511,7 @@ end-to-end-repo-setup:
   variables:
     IMAGE_TAG: "datafed/repo-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    HOST_LOG_FILE_PATH: "/tmp/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
   stage: end-to-end-setup
   needs: ["end-to-end-core-setup"]
@@ -529,6 +529,8 @@ end-to-end-repo-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+    - cat $CI_DATAFED_CORE_PUB_KEY > /tmp/datafed-repo-key.pub
+    - cat $CI_DATAFED_CORE_PRIV_KEY > /tmp/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_repo.sh
     - echo "docker run \\" >> run_repo.sh
     - echo "--name \"repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_repo.sh
@@ -540,8 +542,8 @@ end-to-end-repo-setup:
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_repo.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_repo.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_repo.sh
-    - echo "-v \"$CI_DATAFED_REPO_PUB_KEY\":/source/install/keys/datafed-repo-key.pub \\" >> run_repo.sh
-    - echo "-v \"$CI_DATAFED_REPO_PRIV_KEY\":/source/install/keys/datafed-repo-key.priv \\" >> run_repo.sh
+    - echo "-v \"/tmp/datafed-repo-key.pub\":/source/install/keys/datafed-repo-key.pub \\" >> run_repo.sh
+    - echo "-v \"/tmp/datafed-repo-key.priv\":/source/install/keys/datafed-repo-key.priv \\" >> run_repo.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_repo.sh
     - chmod +x run_repo.sh
     - ./run_repo.sh
@@ -553,7 +555,7 @@ end-to-end-repo-setup:
 end-to-end-gcs-authz-setup:
   variables:
     IMAGE_TAG: "datafed/gcs-authz-"
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    HOST_LOG_FILE_PATH: "/tmp/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     GIT_STRATEGY: clone
   stage: end-to-end-setup
@@ -571,6 +573,8 @@ end-to-end-gcs-authz-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+    - cat $CI_DATAFED_CORE_PUB_KEY > /tmp/datafed-repo-key.pub
+    - cat $CI_DATAFED_CORE_PRIV_KEY > /tmp/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_globus.sh
     - echo "docker run \\" >> run_globus.sh
     - echo "--name \"gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
@@ -581,8 +585,8 @@ end-to-end-gcs-authz-setup:
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_globus.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
-    - echo "-v \"$CI_DATAFED_REPO_PUB_KEY\":/source/install/keys/datafed-repo-key.pub \\" >> run_globus.sh
-    - echo "-v \"$CI_DATAFED_REPO_PRIV_KEY\":/source/install/keys/datafed-repo-key.priv \\" >> run_globus.sh
+    - echo "-v \"/tmp/datafed-repo-key.pub\":/source/install/keys/datafed-repo-key.pub \\" >> run_globus.sh
+    - echo "-v \"/tmp/datafed-repo-key.priv\":/source/install/keys/datafed-repo-key.priv \\" >> run_globus.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_globus.sh
     - chmod +x run_globus.sh
     - ./run_globus.sh
