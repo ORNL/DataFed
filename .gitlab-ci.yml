@@ -426,7 +426,7 @@ end-to-end-ws-setup:
     - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - USER_ID=$(id -u)
     - GROUP_ID=$(id -g)
-    - cp "${CI_DATAFED_CORE_PUB_KEY}" /tmp/datafed-core-key.pub
+    - cat $CI_DATAFED_CORE_PUB_KEY > /tmp/datafed-core-key.pub
     - env
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
@@ -478,8 +478,8 @@ end-to-end-core-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - ./scripts/ci_database_health_check.sh
-    - cp "${CI_DATAFED_CORE_PUB_KEY}" /tmp/datafed-core-key.pub
-    - cp "${CI_DATAFED_CORE_PRIV_KEY}" /tmp/datafed-core-key.priv
+    - cat $CI_DATAFED_CORE_PUB_KEY > /tmp/datafed-core-key.pub
+    - cat $CI_DATAFED_CORE_PRIV_KEY > /tmp/datafed-core-key.priv
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_core.sh
     - echo "docker run -d \\" >> run_core.sh
