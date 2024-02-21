@@ -184,7 +184,7 @@ install_node() {
     echo "You must first install nvm before installing node."
     exit 1
   fi
-  if [ ! -e ".node_installed-${DATAFED_NODE_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}" ]; then
 
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 
@@ -203,12 +203,12 @@ install_foxx_cli() {
     echo "You must first install nvm before installing foxx_cli."
     exit 1
   fi
-  if [ ! -e ".node_installed-${DATAFED_NODE_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}" ]; then
     echo "You must first install node before installing foxx_cli"
     exit 1
   fi
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e ".foxx_cli_installed" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed" ]; then
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
