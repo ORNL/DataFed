@@ -20,7 +20,7 @@ fi
 
 # This is a build config variable
 local_DATAFED_DEPENDENCIES_INSTALL_PATH=""
-if [ -z "${DATAFED_INSTALL_PATH}" ]
+if [ -z "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]
 then
   local_DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 else
@@ -91,7 +91,7 @@ fi
 local_DATAFED_SERVER_PORT=""
 if [ -z "${DATAFED_SERVER_PORT}" ]
 then
-  local_DATAFED_SERVER_PORT=""
+  local_DATAFED_SERVER_PORT="7512"
 else
   local_DATAFED_SERVER_PORT=$(printenv DATAFED_SERVER_PORT)
 fi

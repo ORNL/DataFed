@@ -7,6 +7,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
+source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("libtool" "build-essential" "g++" "gcc" "libboost-all-dev" "autoconf" "automake" "make" "git" "python3-pkg-resources" "python3-pip" "pkg-config" "libglobus-common-dev" "wget" "libssl-dev" "libzmq3-dev")
@@ -33,9 +34,11 @@ if [ $# -eq 1 ]; then
   esac
 fi
 
-sudo apt-get update
-sudo dpkg --configure -a
-sudo apt-get install -y "${packages[@]}"
+sudo_command
+
+"$SUDO_CMD" apt-get update
+"$SUDO_CMD" dpkg --configure -a
+"$SUDO_CMD" apt-get install -y "${packages[@]}"
 
 cd ~
 install_cmake

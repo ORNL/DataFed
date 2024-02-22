@@ -5,8 +5,9 @@ set -e
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
+source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${SOURCE}/dependency_versions.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
@@ -20,11 +21,15 @@ Help()
   echo "Syntax: $(basename $0) [-h|n]"
   echo "options:"
   echo "-h, --help                        Print this help message"
-  echo "-n, --node_install_dir            Install directory, defaults to $HOME"
+  echo "-n, --node_install_dir            Install directory, defaults to"
+  echo "                                  whatever is defined in the datafed.sh file"
+  echo "                                  DATAFED_DEPENDENCIES_INSTALL_PATH"
+  echo "                                  ${DATAFED_DEPENDENCIES_INSTALL_PATH}"
   echo "-u, --unify                       Unifies install scripts to be used in docker builds"
 }
 
-local_NODE_INSTALL="$HOME"
+# Equivalent to the .nvm directory
+local_NODE_INSTALL="$DATAFED_DEPENDENCIES_INSTALL_PATH"
 local_UNIFY=false
 
 VALID_ARGS=$(getopt -o hn: --long 'help',node_install_dir: -- "$@")
@@ -58,10 +63,12 @@ while [ : ]; do
   esac
 done
 
+sudo_command
+
 if [[ $local_UNIFY = false ]]; then
-  sudo apt-get update
-  sudo dpkg --configure -a
-  sudo apt-get install -y "${packages[@]}"
+  "$SUDO_CMD" apt-get update
+  "$SUDO_CMD" dpkg --configure -a
+  "$SUDO_CMD" apt-get install -y "${packages[@]}"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
@@ -72,21 +79,9 @@ fi
 # but instead will install ourselves
 
 # 1. Install nvm which will allow us to update node
-if [[ -z "$NVM_DIR" ]];
-then
-  export NVM_DIR="$local_NODE_INSTALL/.nvm"
-fi
+install_nvm
+install_node
 
-if [ ! -d "$NVM_DIR" ]
-then
-  echo "==========INSTALLING NVM============"
-  mkdir -p "$NVM_DIR"
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
-fi
-
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-
-nvm install $DATAFED_NODE_VERSION
-nvm use $DATAFED_NODE_VERSION
-
-npm --prefix ${PROJECT_ROOT}/web install ${PROJECT_ROOT}/web
+export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+export NODE_VERSION="$DATAFED_NODE_VERSION"
+"$NVM_DIR/nvm-exec" npm --prefix "${PROJECT_ROOT}/web" install "${PROJECT_ROOT}/web"

@@ -7,6 +7,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
+source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("libtool" "wget" "build-essential" "g++" "gcc" "libboost-all-dev" "pkg-config" "autoconf" "automake" "make" "unzip" "git" "python3-pkg-resources" "libssl-dev" "libzmq3-dev" "python3-pip")
@@ -34,10 +35,12 @@ if [ $# -eq 1 ]; then
   esac
 fi
 
+sudo_command
+
 if [[ $local_UNIFY = false ]]; then
-  sudo apt-get update
-  sudo dpkg --configure -a
-  sudo apt-get install -y "${packages[@]}"
+  "$SUDO_CMD" apt-get update
+  "$SUDO_CMD" dpkg --configure -a
+  "$SUDO_CMD" apt-get install -y "${packages[@]}"
 
   python3 -m pip install --upgrade pip
   python3 -m pip install setuptools

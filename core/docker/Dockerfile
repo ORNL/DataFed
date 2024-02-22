@@ -1,16 +1,20 @@
+# NOTE this image must be built with respect to the base of the project i.e.
+# cd ${PROJECT_ROOT} or cd DataFed
+# docker build -f core/docker/Dockerfile .
+
 ARG           BUILD_BASE="ubuntu:focal"
 ARG         DEPENDENCIES="dependencies"
 ARG              RUNTIME="runtime"
 ARG          DATAFED_DIR="/datafed"
 ARG DATAFED_INSTALL_PATH="/opt/datafed"
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
-ARG              NVM_DIR="$DATAFED_DIR/.nvm"
-ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
-ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG              LIB_DIR="/usr/local/lib"
 
 FROM ${DEPENDENCIES} AS core-build
+
+SHELL ["/bin/bash", "-c"]
 
 ARG DATAFED_DIR
 ARG BUILD_DIR
@@ -45,6 +49,8 @@ RUN cmake --build build --target install
 
 FROM ${RUNTIME} AS core
 
+SHELL ["/bin/bash", "-c"]
+
 ARG DATAFED_DIR
 ARG DATAFED_INSTALL_PATH
 ARG BUILD_DIR
@@ -52,6 +58,7 @@ ARG LIB_DIR
 
 # The above should also be available at runtime
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV              LIB_DIR="$LIB_DIR"
@@ -77,5 +84,12 @@ COPY --chown=datafed:root ./cmake/Version.cmake             ${DATAFED_DIR}/cmake
 COPY --from=core-build --chown=datafed:root ${BUILD_DIR}/core/docker/entrypoint.sh    ${BUILD_DIR}/core/entrypoint.sh
 COPY --from=core-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/core/datafed-core ${DATAFED_INSTALL_PATH}/core/datafed-core
 
-ENTRYPOINT ["${BUILD_DIR}/core/entrypoint.sh"]
-CMD ["${DATAFED_INSTALL_PATH}/core/datafed-core","--cfg","${DATAFED_INSTALL_PATH}/core/datafed-core.cfg"]
+USER root
+
+RUN chown -R datafed:root /datafed
+RUN chown -R datafed:root /opt
+
+#SHELL ["/bin/bash"]
+# NOTE docker does not recognize curly braces around variables in entrypoint
+# and CMD
+ENTRYPOINT [ "/datafed/source/core/entrypoint.sh", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]
