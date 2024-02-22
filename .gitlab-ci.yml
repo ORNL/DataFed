@@ -434,7 +434,7 @@ end-to-end-ws-setup:
     - echo "#!/bin/bash" > run_web.sh
     - echo "docker run -d \\" >> run_web.sh
     - echo "--name \"ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_web.sh
-    - echo "-e DATAFED_GLOBUS_APP_SECRET=\"CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
+    - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
