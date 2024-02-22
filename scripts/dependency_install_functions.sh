@@ -2,11 +2,8 @@
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 source "${SOURCE}/dependency_versions.sh"
-<<<<<<< HEAD
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
-=======
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${SOURCE}/utils.sh"
->>>>>>> JoshuaSBrown-debug-container-run
 
 # these are the dependencies to be installed by apt
 apt_file_path="/tmp/apt_deps"
