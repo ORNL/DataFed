@@ -543,8 +543,8 @@ end-to-end-repo-setup:
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_repo.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_repo.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_repo.sh
-    - echo "-v \"/shared/datafed-repo-key.pub\":/source/install/keys/datafed-repo-key.pub \\" >> run_repo.sh
-    - echo "-v \"/shared/datafed-repo-key.priv\":/source/install/keys/datafed-repo-key.priv \\" >> run_repo.sh
+    - echo "-v \"/shared/datafed-repo-key.pub\":/datafed/install/keys/datafed-repo-key.pub \\" >> run_repo.sh
+    - echo "-v \"/shared/datafed-repo-key.priv\":/datafed/install/keys/datafed-repo-key.priv \\" >> run_repo.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_repo.sh
     - chmod +x run_repo.sh
     - ./run_repo.sh
@@ -586,8 +586,8 @@ end-to-end-gcs-authz-setup:
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_globus.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
-    - echo "-v \"/shared/datafed-repo-key.pub\":/source/install/keys/datafed-repo-key.pub \\" >> run_globus.sh
-    - echo "-v \"/shared/datafed-repo-key.priv\":/source/install/keys/datafed-repo-key.priv \\" >> run_globus.sh
+    - echo "-v \"/shared/datafed-repo-key.pub\":/datafed/install/keys/datafed-repo-key.pub \\" >> run_globus.sh
+    - echo "-v \"/shared/datafed-repo-key.priv\":/datafed/install/keys/datafed-repo-key.priv \\" >> run_globus.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_globus.sh
     - chmod +x run_globus.sh
     - ./run_globus.sh
