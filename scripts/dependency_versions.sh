@@ -10,6 +10,7 @@ DATAFED_LIB_LIBSODIUM_VERSION="23.3.0"
 DATAFED_LIBZMQ_VERSION="4.3.4"
 # this version is different from above due to the fact libzmq names its shared library diffrently than the actual api version
 DATAFED_LIB_LIBZMQ_VERSION="5.2.4"
+DATAFED_NVM_VERSION="v0.39.7"
 DATAFED_NODE_VERSION="v14.21.3"
 # Git tag
 DATAFED_PROTOBUF_VERSION="25.2"
