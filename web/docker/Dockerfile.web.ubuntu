@@ -1,4 +1,6 @@
-FROM camden.ornl.gov/datafed/ws-base:latest as build
+ARG BASE_WEB_IMAGE="camden.ornl.gov/datafed/ws-base:latest"
+
+FROM "$BASE_WEB_IMAGE" as build
 
 ARG DATAFED_DIR="/datafed"
 ARG BUILD_DIR="/datafed/source"
@@ -8,6 +10,7 @@ ARG DATAFED_INSTALL_PATH="/datafed/install"
 ENV DATAFED_DIR="$DATAFED_DIR"
 ENV BUILD_DIR="$BUILD_DIR"
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DIR}/dependenies"
 
 RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${BUILD_DIR}/common/proto
@@ -50,10 +53,10 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
                     -DBUILD_FOXX=False -DBUILD_COMMON=False &&\
  cmake --build build
 
-ENV NVM_DIR="$DATAFED_DIR/.nvm"
-ENV NVM_INC=$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node
-ENV PATH=$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV NVM_BIN=$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin
+#ENV NVM_DIR="$DATAFED_DIR/.nvm"
+#ENV NVM_INC=$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node
+#ENV PATH=$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+#ENV NVM_BIN=$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin
 
 # Note that building the web server this way assumes that a temporary core key 
 # has been passed in, this will need to be overwritten when the web server
@@ -61,6 +64,8 @@ ENV NVM_BIN=$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin
 RUN cmake --build build --target install
 
 WORKDIR ${DATAFED_INSTALL_PATH}/web
+
+USER root
 
 ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh"]
 CMD ["/datafed/install/web/datafed-ws.js","/datafed/install/web/datafed-ws.cfg"]

@@ -1660,6 +1660,7 @@ class API:
         offset=0,
         count=20,
     ):
+
         if coll_mode and (schema is not None or meta is not None or meta_err):
             raise Exception(
                 "Cannot specify metadata terms when searching for collection."
