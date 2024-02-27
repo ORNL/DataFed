@@ -84,10 +84,10 @@ COPY --from=dependencies /usr/local/lib/pkgconfig/libzmq.pc /usr/local/lib/pkgco
 COPY --from=dependencies /usr/local/lib/cmake								/usr/local/lib/cmake
 COPY --from=dependencies /usr/local/bin/protoc							/usr/local/bin/protoc
 
-COPY --from=dependencies /libraries/libprotobuf.so          /libraries/libprotobuf.so
-COPY --from=dependencies /libraries/libprotoc.so						/libraries/libprotoc.so
-COPY --from=dependencies /libraries/libzmq.so               /libraries/libzmq.so
-COPY --from=dependencies /libraries/libsodium.so            /libraries/libsodium.so
+COPY --from=dependencies /libraries/libprotobuf.a          /libraries/libprotobuf.a
+COPY --from=dependencies /libraries/libprotoc.a						/libraries/libprotoc.a
+COPY --from=dependencies /libraries/libzmq.a               /libraries/libzmq.a
+COPY --from=dependencies /libraries/libsodium.a            /libraries/libsodium.a
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh protoc to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to

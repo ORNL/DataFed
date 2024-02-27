@@ -64,9 +64,9 @@ ENV            BUILD_DIR="$BUILD_DIR"
 ENV              LIB_DIR="$LIB_DIR"
 
 # copy necessary shared libraries
-COPY --from=core-build /libraries/libprotobuf.so           /libraries/libprotobuf.so
-COPY --from=core-build /libraries/libzmq.so                /libraries/libzmq.so
-COPY --from=core-build /libraries/libsodium.so             /libraries/libsodium.so
+COPY --from=core-build /libraries/libprotobuf.a           /libraries/libprotobuf.a
+COPY --from=core-build /libraries/libzmq.a                /libraries/libzmq.a
+COPY --from=core-build /libraries/libsodium.a             /libraries/libsodium.a
 COPY --from=core-build /libraries/libboost_program_options.so /libraries/libboost_program_options.so
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to

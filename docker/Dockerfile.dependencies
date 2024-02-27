@@ -3,7 +3,7 @@ ARG DATAFED_INSTALL_PATH="/opt/datafed"
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
-ARG              LIB_DIR="/usr/local/lib"
+ARG              LIB_DIR="/opt/datafed/dependencies/lib"
 
 FROM ubuntu:focal
 
@@ -37,6 +37,8 @@ COPY ./scripts/install_repo_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_authz_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/generate_datafed.sh
+COPY ./.gitmodules ${BUILD_DIR}/.gitmodules
+COPY ./.git ${BUILD_DIR}/.git
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 
