@@ -11,13 +11,14 @@ source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 source "${SOURCE}/dependency_versions.sh"
 
+sudo_command
+
 touch "$apt_file_path"
 touch "$ext_file_path"
 
 # Defines SUDO_CMD which is empty if root
 # sudo path if exists
 # throws error otherwise
-sudo_command
 
 "$SUDO_CMD" apt-get update
 "$SUDO_CMD" apt install -y wget git curl
