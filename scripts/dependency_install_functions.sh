@@ -325,6 +325,38 @@ install_arangodb() {
   "$SUDO_CMD" apt-get install arangodb3
 }
 
+install_openssl() {
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}" ]; then
+    # git submodule update --init "${PROJECT_ROOT}/external/openssl"
+    # cd "${PROJECT_ROOT}/external/openssl"
+    # git checkout "OpenSSL_1_1_1w"
+    # git submodule update --init
+    git clone https://github.com/openssl/openssl
+    cd openssl
+    git checkout "$DATAFED_OPENSSL_COMMIT"
+    ./config --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    make
+    make install
+    cd ../
+    # Mark openssl as installed
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}"
+  fi
+}
+
+install_libcurl() {
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libcurl_installed-${DATAFED_LIBCURL}" ]; then
+    wget "${DATAFED_LIBCURL_URL}"
+    tar -xf "curl-${DATAFED_LIBCURL}.tar.gz"
+    cd "curl-${DATAFED_LIBCURL}"
+    PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" ./configure --with-openssl --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    make
+    make install
+    cd ../
+    # Mark libcurl as installed
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libcurl_installed-${DATAFED_LIBCURL}"
+  fi
+}
+
 install_dep_by_name() {
   case "$1" in
     "cmake")

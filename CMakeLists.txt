@@ -51,8 +51,6 @@ get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBCURL" LOCAL_CURL_VERS
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_BOOST" LOCAL_BOOST_VERSION)
 
 get_value_from_datafed_sh("DATAFED_DEPENDENCIES_INSTALL_PATH" DEPENDENCY_INSTALL_PATH)
-get_value_from_datafed_sh("DATAFED_INSTALL_PATH" DATAFED_INSTALL_PATH)
-
 set(CMAKE_PREFIX_PATH "${DEPENDENCY_INSTALL_PATH}")
 
 if ( BUILD_TESTS ) 
@@ -152,8 +150,10 @@ endif()
 if( BUILD_CORE_SERVER )
   include(./cmake/JSON.cmake)
   include(./cmake/JSONSchema.cmake)
-  find_package(OpenSSL "${LOCAL_OPENSSL_VERSION}" REQUIRED )
-  find_package(CURL "${LOCAL_CURL_VERSION}" REQUIRED )
+  #find_package(OpenSSL "${LOCAL_OPENSSL_VERSION}" REQUIRED )
+  #find_package(CURL "${LOCAL_CURL_VERSION}" REQUIRED )
+  include(./cmake/OpenSSL.cmake)
+  include(./cmake/CURL.cmake)
 endif()
 
 if( BUILD_FOXX OR BUILD_CORE_SERVER )
