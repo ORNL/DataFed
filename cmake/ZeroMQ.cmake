@@ -15,8 +15,6 @@ function(find_zeromq_library)
   get_target_property(ZEROMQ_LIBRARY_PATH libzmq-static LOCATION)
   get_target_property(ZEROMQ_DEPENDENCIES libzmq-static INTERFACE_LINK_LIBRARIES)
 
-  message("Zeromq depends ${ZEROMQ_DEPENDENCIES}")
-
   if(NOT "${LIBZMQ_VERSION}" STREQUAL "${ZeroMQ_VERSION}")
     message(FATAL_ERROR "Required ZeroMQ version ${LIBZMQ_VERSION}, not satisfied. Found version ${ZeroMQ_VERSION}")
   endif()
