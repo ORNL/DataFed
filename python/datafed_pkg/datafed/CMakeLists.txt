@@ -9,22 +9,6 @@ endforeach()
 # Collect top-level proto files as dependencies
 file( GLOB ProtoFiles ${DataFed_SOURCE_DIR}/common/proto/common/*.proto )
 
-#string(REPLACE ";" " " ProtoFiles "${ProtoFiles}")
-# Create proto target and rules to generate py proto files
-##PROTOBUF_GENERATE_PYTHON( ProtoFilesPy ${ProtoFiles} )
-#set( ProtoFilesPy "ProtoFilesPy")
-#message("ProtoFiles")
-#message(${ProtoFiles})
-#protobuf_generate(
-#   LANGUAGE python
-#   TARGET ProtoFilesPy
-#   PROTOS ${ProtoFiles})
-message("Import dir: ${DataFed_SOURCE_DIR}/common/proto/common")
-#protobuf_generate(
-#   LANGUAGE python
-#   TARGET ProtoFilesPy
-# IMPORT_DIRS "${DataFed_SOURCE_DIR}/common/proto/common"
-# PROTOC_OUT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 # OBJECT - is needed because we don't want to compile to a binary
 # because we are dealing with python
 add_library(protobuf-target-py OBJECT ${ProtoFiles})
@@ -35,12 +19,7 @@ protobuf_generate(
     OUT_VAR protobuf-generated-files-py
     PROTOC_OUT_DIR "${CMAKE_CURRENT_LIST_DIR}"
   )
-    #    PROTOC_OUT_DIR "${CMAKE_CURRENT_LIST_DIR}")
-#        PROTOS some.proto
-#          IMPORT_DIRS proto
-#        )
-message("Proto generated python files ${protobuf-generated-files-py}")
-#add_custom_target( pydatafed_src DEPENDS ${ProtoFilesPy}_generated_py )
+
 add_custom_target( pydatafed_src DEPENDS protobuf-target-py )
 
 add_custom_command( TARGET pydatafed_src POST_BUILD
