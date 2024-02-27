@@ -55,6 +55,7 @@ sudo_command() {
       # Check if sudo is available
       if command -v sudo &> /dev/null; then
           export SUDO_CMD=$(command -v sudo)
+          return 0
       else
           echo "Error: This script requires sudo but sudo is not installed." >&2
           echo "You are not running as root!" >&2
