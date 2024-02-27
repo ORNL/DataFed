@@ -76,15 +76,15 @@ if [ "$direction" == "from" ]; then
   # Copy from versioned to generic filename
   source_filename="$library_location/$library_name"
   destination_filename="$LIBRARIES_BASE_PATH/$library_name"
-  if [[ "$library_name" == *.so ]]; then
-    source_filename="$library_name.$library_version"
+  if [[ "$library_name" == *".so" ]]; then
+    source_filename="$source_filename.$library_version"
   fi
 elif [ "$direction" == "to" ]; then
   # Copy from generic to versioned filename
   source_filename="$LIBRARIES_BASE_PATH/$library_name"
   destination_filename="$LIB_DIR/$library_name"
-  if [[ "$library_name" == *.so ]]; then
-    destination_filename="$LIB_DIR/$library_name.$library_version"
+  if [[ "$library_name" == *".so" ]]; then
+    destination_filename="$destination_filename.$library_version"
   fi
 else
   echo "Invalid direction. Use 'to' or 'from'."
