@@ -13,6 +13,8 @@ COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/utils.sh ${BUILD_DIR}/scripts/
+COPY ./.gitmodules ${BUILD_DIR}/.gitmodules
+COPY ./.git ${BUILD_DIR}/.git
 
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DIR}/dependenies"
 
