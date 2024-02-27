@@ -76,8 +76,6 @@ if( NOT DEFINED ENABLE_END_TO_END_TESTS )
   set(ENABLE_END_TO_END_TESTS FALSE)
 endif()
 
-message( "Building for " ${CMAKE_BUILD_TYPE} )
-
 if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
     add_definitions( -Wall -Wextra )
 endif()
@@ -104,7 +102,6 @@ if( BUILD_WEB_SERVER )
   file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
 endif()
 
-message("Find protobuf library 0")
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT) 
   include(./cmake/Protobuf.cmake)
 endif() 
