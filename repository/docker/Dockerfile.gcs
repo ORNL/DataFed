@@ -94,7 +94,7 @@ RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
 
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
-	cmake -S. -B build						\
+	${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build						\
 		-DBUILD_REPO_SERVER=False		\
 		-DBUILD_AUTHZ=True					\
 		-DBUILD_CORE_SERVER=False		\
@@ -102,8 +102,8 @@ RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
 		-DBUILD_DOCS=False					\
 		-DBUILD_PYTHON_CLIENT=False	\
 		-DBUILD_FOXX=False
-RUN	cmake --build build
-RUN cmake --build build --target install
+RUN	${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 COPY --chown=datafed:root ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
 COPY --chown=datafed:root ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
