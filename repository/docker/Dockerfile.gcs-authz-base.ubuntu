@@ -1,4 +1,6 @@
-FROM camden.ornl.gov/datafed/gcs-ubuntu-focal
+ARG BASE_GCS_IMAGE="camden.ornl.gov/datafed/gcs-ubuntu-focal"
+
+FROM "$BASE_GCS_IMAGE" as build
 
 ARG DATAFED_DIR="/datafed"
 ARG BUILD_DIR="/datafed/source"
