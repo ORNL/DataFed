@@ -10,11 +10,12 @@ ARG DATAFED_INSTALL_PATH="/datafed/install"
 ENV DATAFED_DIR="$DATAFED_DIR"
 ENV BUILD_DIR="$BUILD_DIR"
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
-ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DIR}/dependenies"
+ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DIR}/dependencies"
 
 RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${BUILD_DIR}/common/proto
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/web
+RUN mkdir -p ${DATAFED_DEPENDENCIES_INSTALL_PATH}
 
 # vim and nc are for debugging
 RUN apt-get install vim netcat -y
@@ -47,11 +48,11 @@ RUN chown -R datafed:datafed ${DATAFED_DIR}
 USER datafed
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
- cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \
+ ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \
                     -DBUILD_CORE_SERVER=False -DBUILD_WEB_SERVER=True \
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
                     -DBUILD_FOXX=False -DBUILD_COMMON=False &&\
- cmake --build build
+ ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
 
 #ENV NVM_DIR="$DATAFED_DIR/.nvm"
 #ENV NVM_INC=$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node
@@ -61,7 +62,8 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
 # Note that building the web server this way assumes that a temporary core key 
 # has been passed in, this will need to be overwritten when the web server
 # is run.
-RUN cmake --build build --target install
+RUN cat "${BUILD_DIR}/config/datafed.sh"
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 WORKDIR ${DATAFED_INSTALL_PATH}/web
 

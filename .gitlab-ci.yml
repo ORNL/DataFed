@@ -249,14 +249,14 @@ build-ws:
     - docker
   rules:
     - changes:
-        - dockerfiles/*
-        - scripts/*
-        - web/*
-        - common/proto/*
+        - dockerfiles/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
         - .gitlab-ci.yml
       when: on_success
     - exists:
-        - deploy-ws-base
+      - "build-ws-base"
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
@@ -277,11 +277,16 @@ build-core:
     - docker
   rules:
     - changes:
-        - dockerfiles/*
-        - scripts/*
-        - common/*
-        - core/*
+        - dockerfiles/**/*
+        - scripts/**/*
+        - common/**/*
+        - core/**/*
+        - CMakeLists.txt
+        - cmake/**/*
         - .gitlab-ci.yml
+      when: on_success
+    - exists:
+      - "build-core-base"
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
@@ -333,11 +338,16 @@ build-repo:
     - docker
   rules:
     - changes:
-        - dockerfiles/*
-        - scripts/*
-        - common/*
-        - repository/*
+        - dockerfiles/**/*
+        - scripts/**/*
+        - common/**/*
+        - repository/**/*
+        - CMakeLists.txt
+        - cmake/**/*
         - .gitlab-ci.yml
+      when: on_success
+    - exists:
+      - "build-repo-base"
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
@@ -355,6 +365,10 @@ build-gcs-authz:
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - exists:
+      - "build-ws-base"
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
@@ -373,11 +387,16 @@ build-python-client:
     - ci-datafed-client
   rules:
     - changes:
-        - python/*
-        - scripts/*
-        - common/*
+        - python/**/*
+        - scripts/**/*
+        - common/**/*
         - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
       when: always
+    - exists:
+      - "build-python-client-base"
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
