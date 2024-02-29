@@ -261,8 +261,7 @@ build-ws:
         - .gitlab-ci.yml
       when: on_success
     - exists:
-      - job: build-ws-base 
-        artifacts: true
+      - "build-ws-base"
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
