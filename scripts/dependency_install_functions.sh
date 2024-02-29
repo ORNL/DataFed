@@ -336,7 +336,12 @@ install_openssl() {
     git checkout "$DATAFED_OPENSSL_COMMIT"
     ./config --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make
-    make install
+
+    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
+      make install
+    else
+      "$SUDO_CMD" make install 
+    fi
     cd ../
     # Mark openssl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}"
@@ -350,7 +355,13 @@ install_libcurl() {
     cd "curl-${DATAFED_LIBCURL}"
     PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" ./configure --with-openssl --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make
-    make install
+
+    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
+      make install
+    else
+      "$SUDO_CMD" make install 
+    fi
+
     cd ../
     # Mark libcurl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libcurl_installed-${DATAFED_LIBCURL}"
@@ -379,6 +390,12 @@ install_dep_by_name() {
       ;;
     "libzmq")
       install_libzmq
+      ;;
+    "libopenssl")
+      install_openssl
+      ;;
+    "libcurl")
+      install_libcurl
       ;;
   esac
   cd ~
