@@ -249,10 +249,10 @@ build-ws:
     - docker
   rules:
     - changes:
-        - dockerfiles/*
-        - scripts/*
-        - web/*
-        - common/proto/*
+        - dockerfiles/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
         - .gitlab-ci.yml
       when: on_success
     - exists:
@@ -277,10 +277,10 @@ build-core:
     - docker
   rules:
     - changes:
-        - dockerfiles/*
-        - scripts/*
-        - common/*
-        - core/*
+        - dockerfiles/**/*
+        - scripts/**/*
+        - common/**/*
+        - core/**/*
         - .gitlab-ci.yml
       when: on_success
   script:
@@ -333,10 +333,10 @@ build-repo:
     - docker
   rules:
     - changes:
-        - dockerfiles/*
-        - scripts/*
-        - common/*
-        - repository/*
+        - dockerfiles/**/*
+        - scripts/**/*
+        - common/**/*
+        - repository/**/*
         - .gitlab-ci.yml
       when: on_success
   script:
@@ -373,9 +373,9 @@ build-python-client:
     - ci-datafed-client
   rules:
     - changes:
-        - python/*
-        - scripts/*
-        - common/*
+        - python/**/*
+        - scripts/**/*
+        - common/**/*
         - .gitlab-ci.yml
       when: always
   script:
