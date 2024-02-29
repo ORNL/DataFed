@@ -340,7 +340,7 @@ install_openssl() {
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/openssl"
     fi
     git clone https://github.com/openssl/openssl "${PROJECT_ROOT}/external/openssl"
-    cd openssl "${PROJECT_ROOT}/external/openssl"
+    cd "${PROJECT_ROOT}/external/openssl"
     git checkout "$DATAFED_OPENSSL_COMMIT"
     ./config --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make
