@@ -61,6 +61,7 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
 # Note that building the web server this way assumes that a temporary core key 
 # has been passed in, this will need to be overwritten when the web server
 # is run.
+RUN cat "${BUILD_DIR}/config/datafed.sh"
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 WORKDIR ${DATAFED_INSTALL_PATH}/web
