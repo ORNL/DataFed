@@ -35,7 +35,11 @@ if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_DEPENDENCIE
     fi
 fi
 
-LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib:$LD_LIBRARY_PATH"
+if [[ -n "$LD_LIBRARY_PATH" ]]; then
+  LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib:$LD_LIBRARY_PATH"
+else
+  LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib"
+fi
 
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
@@ -384,6 +388,32 @@ install_libcurl() {
   fi
 }
 
+install_zlib() {
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.zlib_installed-${DATAFED_ZLIB_VERSION}" ]; then
+    local original_dir=$(pwd)
+    if [ -d "${PROJECT_ROOT}/external/zlib" ]
+    then
+      "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/zlib"
+    fi
+    wget "${DATAFED_ZLIB_URL}"
+    mkdir -p "${PROJECT_ROOT}/external/zlib"
+    tar -xf "zlib-${DATAFED_ZLIB_VERSION}.tar.gz" -C "${PROJECT_ROOT}/external/zlib"
+    cd "${PROJECT_ROOT}/external/zlib/zlib-${DATAFED_ZLIB_VERSION}"
+    PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    make
+
+    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
+      make install
+    else
+      "$SUDO_CMD" make install 
+    fi
+
+    # Mark libcurl as installed
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.zlib_installed-${DATAFED_ZLIB_VERSION}"
+    cd "$original_dir"
+  fi
+}
+
 install_dep_by_name() {
   case "$1" in
     "cmake")
@@ -412,6 +442,9 @@ install_dep_by_name() {
       ;;
     "libcurl")
       install_libcurl
+      ;;
+    "zlib")
+      install_zlib
       ;;
   esac
   cd ~
