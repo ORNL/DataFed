@@ -7,15 +7,14 @@ ARG         DEPENDENCIES="dependencies"
 ARG              RUNTIME="runtime"
 ARG          DATAFED_DIR="/datafed"
 ARG DATAFED_INSTALL_PATH="/opt/datafed"
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
-ARG              NVM_DIR="$DATAFED_DIR/.nvm"
-ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
-ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG              LIB_DIR="/usr/local/lib"
 
 FROM ${DEPENDENCIES} AS repo-build
 
+SHELL ["/bin/bash", "-c"]
 ARG DATAFED_DIR
 ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
@@ -50,6 +49,7 @@ RUN cmake --build build --target install
 
 FROM ${RUNTIME} AS repo
 
+SHELL ["/bin/bash", "-c"]
 ARG DATAFED_DIR
 ARG DATAFED_INSTALL_PATH
 ARG BUILD_DIR
@@ -57,6 +57,7 @@ ARG LIB_DIR
 
 # The above should also be available at runtime
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV              LIB_DIR="$LIB_DIR"
