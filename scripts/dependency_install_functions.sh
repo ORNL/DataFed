@@ -53,7 +53,6 @@ install_protobuf() {
     "$SUDO_CMD" cmake --build build --target install
     cd python
     python3 setup.py build
-    python3 setup.py test
     python3 setup.py install --user
     cd ../
     # Cleanup build file with root ownership
