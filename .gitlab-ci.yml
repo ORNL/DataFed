@@ -132,6 +132,11 @@ build-ws-base:
     - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+    - touch new_ws_base
+  artifacts:
+    paths:
+      - new_ws_base
+    expire_in: 1 week
 
 build-core-base:
   needs: ["clear-core-cache"]
@@ -256,7 +261,8 @@ build-ws:
         - .gitlab-ci.yml
       when: on_success
     - exists:
-        - deploy-ws-base
+        job: build-ws-base
+        artifacts: true
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
