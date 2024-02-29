@@ -260,7 +260,9 @@ build-ws:
         - common/proto/**/*
         - .gitlab-ci.yml
       when: on_success
-    - exists: ["new_ws_base-${CI_COMMIT_SHA}"]
+    - exists:
+      - job: build-ws-base 
+        artifacts: true
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
