@@ -263,7 +263,7 @@ build-ws:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build --build-arg BASE_WEB_IMAGE="camden.ornl.gov/datafed/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f web/docker/Dockerfile.web.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker build --build-arg BASE_WEB_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f web/docker/Dockerfile.web.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-core:
@@ -290,7 +290,7 @@ build-core:
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build --build-arg BASE_CORE_IMAGE="camden.ornl.gov/datafed/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f core/docker/Dockerfile.core.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker build --build-arg BASE_CORE_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f core/docker/Dockerfile.core.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-foxx:
@@ -344,7 +344,7 @@ build-repo:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build --build-arg BASE_REPO_IMAGE="camden.ornl.gov/datafed/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.repo.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker build --build-arg BASE_REPO_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.repo.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-gcs-authz:
