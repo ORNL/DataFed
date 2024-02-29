@@ -15,6 +15,7 @@ ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DIR}/dependenies"
 RUN mkdir -p "${BUILD_DIR}"
 RUN mkdir -p "${BUILD_DIR}/repository/server"
 RUN mkdir -p "${DATAFED_INSTALL_PATH}/keys"
+RUN mkdir -p ${DATAFED_DEPENDENCIES_INSTALL_PATH}
 
 # This port is needed to communicate with the DataFed core server
 EXPOSE 7512
