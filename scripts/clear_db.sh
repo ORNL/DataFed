@@ -56,7 +56,6 @@ then
 
   echo "Does it exist $exists"
 	if [ "$exists" = "true" ]; then
-    echo "Clearing database"
 	  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}" \
       --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
       --server.username "${local_DATABASE_USER}" \

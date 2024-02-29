@@ -41,12 +41,12 @@ install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
     tar -xzvf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
-    cp -r cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    cp -r cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 
     # Cleanup
-    rm -rf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64 
-    rm -rf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64"
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz"
 
     # Mark cmake as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}"
@@ -88,6 +88,8 @@ install_protobuf() {
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py build
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py test
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py install --user
+    python3 setup.py build
+    python3 setup.py install --user
     cd ../
     # Cleanup build file with root ownership
     if [ -f build/install_manifest.txt ]
