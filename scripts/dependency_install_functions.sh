@@ -55,16 +55,19 @@ install_cmake() {
 }
 
 install_protobuf() {
-  local original_dir=$(pwd)
-  cd "${PROJECT_ROOT}"
-  echo "PROJECT_ROOT $PROJECT_ROOT"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.protobuf_installed-${DATAFED_PROTOBUF_VERSION}" ]; then
+    local original_dir=$(pwd)
+    cd "${PROJECT_ROOT}"
     if [ -d "${PROJECT_ROOT}/external/protobuf" ]
     then
       # sudo required because of egg file
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/protobuf"
     fi
-    git submodule update --init --recursive "${PROJECT_ROOT}/external/protobuf"
+    # Here we are using clone instead of submodule update, because submodule
+    # requires the .git folder exist and the current folder be considered a repo
+    # this creates problems in docker because each time a commit is made the 
+    # .git folder contents are changed causing a fresh rebuild of all containers
+    git clone https://github.com/protocolbuffers/protobuf.git ${PROJECT_ROOT}/external/protobuf
     cd "${PROJECT_ROOT}/external/protobuf"
     git checkout "v${DATAFED_PROTOBUF_VERSION}"
     git submodule update --init --recursive
@@ -95,32 +98,24 @@ install_protobuf() {
 
     # Mark protobuf as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.protobuf_installed-${DATAFED_PROTOBUF_VERSION}"
+    cd "$original_dir"
   fi
-  cd "$original_dir"
 }
 
 install_libsodium() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libsodium_installed-${DATAFED_LIBSODIUM_VERSION}" ]; then
-    if [ -d libsodium ]
+    local original_dir=$(pwd)
+    if [ -d "${PROJECT_ROOT}/external/libsodium" ]
     then
-      rm -rf libsodium 
+      # sudo required because of egg file
+      "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libsodium"
     fi
-    #git clone --recursive https://github.com/robinlinden/libsodium-cmake.git
-    #cd libsodium-cmake/libsodium
-    #git checkout "$DATAFED_LIBSODIUM_VERSION"
-    #cd ../
-    #cmake -DBUILD_SHARED_LIBS=OFF -S. -B build \
-    #  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-    #  -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    #cmake --build build -j 8
-    #if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
-    #  cmake --build build --target install
-    #else
-    #  "$SUDO_CMD" cmake --build build --target install
-    #fi
-
-    git clone https://github.com/jedisct1/libsodium.git
-    cd libsodium
+    # Here we are using clone instead of submodule update, because submodule
+    # requires the .git folder exist and the current folder be considered a repo
+    # this creates problems in docker because each time a commit is made the 
+    # .git folder contents are changed causing a fresh rebuild of all containers
+    git clone https://github.com/jedisct1/libsodium.git "${PROJECT_ROOT}/external/libsodium"
+    cd "${PROJECT_ROOT}/external/libsodium"
     git checkout "$DATAFED_LIBSODIUM_VERSION"
     ./autogen.sh
     SODIUM_STATIC=1 ./configure --enable-static=yes --enable-shared=no --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
@@ -130,25 +125,30 @@ install_libsodium() {
     else
       "$SUDO_CMD" make install
     fi
-    cd ../
     
     # Mark libsodium as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libsodium_installed-${DATAFED_LIBSODIUM_VERSION}"
+    cd "$original_dir"
   fi
 }
 
 install_libzmq() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libzmq_installed-${DATAFED_LIBZMQ_VERSION}" ]; then
-    if [ -d libzmq ]
+    local original_dir=$(pwd)
+    if [ -d "${PROJECT_ROOT}/external/libzmq" ]
     then
-      rm -rf libzmq 
+      "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libzmq"
     fi
     if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libsodium_installed-${DATAFED_LIBSODIUM_VERSION}" ]; then
       echo "You must first install libsodium before installing libzmq"
       exit 1
     fi
-    git clone https://github.com/zeromq/libzmq.git
-    cd libzmq
+    # Here we are using clone instead of submodule update, because submodule
+    # requires the .git folder exist and the current folder be considered a repo
+    # this creates problems in docker because each time a commit is made the 
+    # .git folder contents are changed causing a fresh rebuild of all containers
+    git clone https://github.com/zeromq/libzmq.git "${PROJECT_ROOT}/external/libzmq"
+    cd "${PROJECT_ROOT}/external/libzmq"
     git checkout "v${DATAFED_LIBZMQ_VERSION}"
     cmake -S. -B build \
       -DBUILD_STATIC=ON \
@@ -164,14 +164,14 @@ install_libzmq() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    cd ../ 
 
-    if [ -d cppzmq ]
+    if [ -d "${PROJECT_ROOT}/external/cppzmq" ]
     then
-      rm -rf cppzmq
+      # sudo required because of egg file
+      "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/cppzmq"
     fi
-    git clone https://github.com/zeromq/cppzmq.git
-    cd cppzmq
+    git clone https://github.com/zeromq/cppzmq.git "${PROJECT_ROOT}/external/cppzmq"
+    cd "${PROJECT_ROOT}/external/cppzmq"
     git checkout v"${DATAFED_LIB_ZMQCPP_VERSION}"
     # Will will not build the unit tests because there are not enough controls
     # to link to the correct static library.
@@ -186,6 +186,7 @@ install_libzmq() {
       "$SUDO_CMD" cmake --build build --target install
     fi
     
+    cd "$original_dir"
     # Mark libzmq as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libzmq_installed-${DATAFED_LIBZMQ_VERSION}"
   fi
@@ -193,12 +194,13 @@ install_libzmq() {
 
 install_nlohmann_json() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nlohmann_json_installed-${DATAFED_NLOHMANN_JSON_VERSION}" ]; then
-    if [ -d json ]
+    local original_dir=$(pwd)
+    if [ -d "${PROJECT_ROOT}/external/json" ]
     then
-      rm -rf json
+      "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/json"
     fi
-    git clone https://github.com/nlohmann/json.git
-    cd json
+    git clone https://github.com/nlohmann/json.git "${PROJECT_ROOT}/external/json"
+    cd "${PROJECT_ROOT}/external/json"
     git checkout v${DATAFED_NLOHMANN_JSON_VERSION}
     echo "FILE STRUCTURE $(ls)"
     cmake -S . -B build \
@@ -209,21 +211,22 @@ install_nlohmann_json() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    cd ../
     
     # Mark nlohmann_json as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nlohmann_json_installed-${DATAFED_NLOHMANN_JSON_VERSION}"
+    cd "$original_dir"
   fi
 }
 
 install_json_schema_validator() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}" ]; then
-    if [ -d json-schema-validator ]
+    local original_dir=$(pwd)
+    if [ -d "${PROJECT_ROOT}/external/json-schema-validator" ]
     then
-      rm -rf json-schema-validator
+      "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/json-schema-validator"
     fi
-    git clone https://github.com/pboettch/json-schema-validator
-    cd json-schema-validator
+    git clone https://github.com/pboettch/json-schema-validator "${PROJECT_ROOT}/external/json-schema-validator"
+    cd "${PROJECT_ROOT}/external/json-schema-validator"
     git checkout ${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}
     cmake -S . -B build \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
@@ -233,10 +236,10 @@ install_json_schema_validator() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    cd ../
     
     # Mark json-schema-validator as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}"
+    cd "$original_dir"
   fi
 }
 
@@ -274,11 +277,12 @@ install_nvm() {
 
 install_node() {
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
-    echo "You must first install nvm before installing node."
-    exit 1
-  fi
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}" ]; then
+    local original_dir=$(pwd)
+    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+      echo "You must first install nvm before installing node."
+      exit 1
+    fi
 
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 
@@ -286,6 +290,7 @@ install_node() {
     nvm install "$DATAFED_NODE_VERSION"
     # Mark node as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}"
+    cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
@@ -303,12 +308,14 @@ install_foxx_cli() {
   fi
   # By default this will place NVM in $HOME/.nvm
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed" ]; then
+    local original_dir=$(pwd)
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
     "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
     # Mark foxx_cli as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed"
+    cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
@@ -327,12 +334,13 @@ install_arangodb() {
 
 install_openssl() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}" ]; then
-    # git submodule update --init "${PROJECT_ROOT}/external/openssl"
-    # cd "${PROJECT_ROOT}/external/openssl"
-    # git checkout "OpenSSL_1_1_1w"
-    # git submodule update --init
-    git clone https://github.com/openssl/openssl
-    cd openssl
+    local original_dir=$(pwd)
+    if [ -d "${PROJECT_ROOT}/external/openssl" ]
+    then
+      "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/openssl"
+    fi
+    git clone https://github.com/openssl/openssl "${PROJECT_ROOT}/external/openssl"
+    cd openssl "${PROJECT_ROOT}/external/openssl"
     git checkout "$DATAFED_OPENSSL_COMMIT"
     ./config --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make
@@ -342,17 +350,23 @@ install_openssl() {
     else
       "$SUDO_CMD" make install 
     fi
-    cd ../
     # Mark openssl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}"
+    cd "$original_dir"
   fi
 }
 
 install_libcurl() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libcurl_installed-${DATAFED_LIBCURL}" ]; then
+    local original_dir=$(pwd)
+    if [ -d "${PROJECT_ROOT}/external/libcurl" ]
+    then
+      "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libcurl"
+    fi
     wget "${DATAFED_LIBCURL_URL}"
-    tar -xf "curl-${DATAFED_LIBCURL}.tar.gz"
-    cd "curl-${DATAFED_LIBCURL}"
+    mkdir -p "${PROJECT_ROOT}/external/libcurl"
+    tar -xf "curl-${DATAFED_LIBCURL}.tar.gz" -C "${PROJECT_ROOT}/external/libcurl"
+    cd "${PROJECT_ROOT}/external/libcurl/curl-${DATAFED_LIBCURL}"
     PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" ./configure --with-openssl --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make
 
@@ -362,9 +376,9 @@ install_libcurl() {
       "$SUDO_CMD" make install 
     fi
 
-    cd ../
     # Mark libcurl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libcurl_installed-${DATAFED_LIBCURL}"
+    cd "$original_dir"
   fi
 }
 

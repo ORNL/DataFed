@@ -1,7 +1,9 @@
 /.idea/
 build
+cmake/sodium_version
 common/proto/common/Version.proto
 compose/.env
+compose/keys
 config/datafed.sh
 config/datafed-authz.cfg
 config/datafed-core.cfg
