@@ -132,10 +132,10 @@ build-ws-base:
     - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-    - touch new_ws_base
+    - touch "new_ws_base-${CI_COMMIT_SHA}"
   artifacts:
     paths:
-      - new_ws_base
+      - "new_ws_base-${CI_COMMIT_SHA}"
     expire_in: 1 week
 
 build-core-base:
@@ -260,8 +260,7 @@ build-ws:
         - common/proto/**/*
         - .gitlab-ci.yml
       when: on_success
-    - exists:
-        job: ["build-ws-base"]
+    - exists: ["new_ws_base-${CI_COMMIT_SHA}"]
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
