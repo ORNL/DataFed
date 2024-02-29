@@ -7,6 +7,7 @@ ARG         DEPENDENCIES="dependencies"
 ARG              RUNTIME="runtime"
 ARG          DATAFED_DIR="/datafed"
 ARG DATAFED_INSTALL_PATH="/opt/datafed"
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
 ARG              NVM_DIR="$DATAFED_DIR/.nvm"
@@ -22,6 +23,8 @@ ARG DATAFED_INSTALL_PATH
 
 ENV BUILD_DIR="${BUILD_DIR}"
 ENV DATAFED_DIR="${DATAFED_DIR}"
+ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+ENV PATH=${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:${PATH}
 
 COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt                  ${BUILD_DIR}
@@ -32,6 +35,7 @@ COPY ./docker/entrypoint_foxx.sh       ${BUILD_DIR}/docker/entrypoint_foxx.sh
 COPY ./core/database                   ${BUILD_DIR}/core/database
 COPY ./scripts/install_foxx.sh         ${BUILD_DIR}/scripts/
 
+COPY --from=foxx-build ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin
 # Create datafed user, prefer more secure login options than password
 # Recommended to mount ssh public key on run
 RUN adduser --disabled-password --gecos "" datafed
@@ -42,6 +46,7 @@ RUN mkdir -p /var/log/datafed
 RUN chown -R datafed:root /opt/datafed
 RUN chown -R datafed:root /var/log/datafed
 RUN chown -R datafed:root ${DATAFED_DIR}
+RUN chown -R datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}
 
 RUN curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key; apt-key add - < Release.key
 #RUN wget -q https://www.arangodb.com/repositories/arangodb38/DEBIAN/Release.key -O- | apt-key add -

@@ -9,6 +9,8 @@ endforeach()
 # Collect top-level proto files as dependencies
 file( GLOB ProtoFiles ${DataFed_SOURCE_DIR}/common/proto/common/*.proto )
 
+# OBJECT - is needed because we don't want to compile to a binary
+# because we are dealing with python
 add_library(protobuf-target-py OBJECT ${ProtoFiles})
 protobuf_generate(
     LANGUAGE python

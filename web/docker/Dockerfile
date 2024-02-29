@@ -18,6 +18,7 @@ ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 
+ENV DATAFED_INSTALL_PATH="${DATAFED_INSTALL_PATH}"
 # This port is needed to communicate with the DataFed core server
 EXPOSE 7513
 # For communication with the public
@@ -34,7 +35,7 @@ COPY ./common/proto                   ${BUILD_DIR}/common/proto
 COPY ./web                            ${BUILD_DIR}/web
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
-	cmake -S. -B build						\
+	${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build						\
 		-DBUILD_REPO_SERVER=False		\
 		-DBUILD_AUTHZ=False					\
 		-DBUILD_CORE_SERVER=False		\
@@ -43,8 +44,8 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
 		-DBUILD_PYTHON_CLIENT=False	\
 		-DBUILD_FOXX=False					\
 		-DBUILD_COMMON=False
-RUN cmake --build build
-RUN cmake --build build --target install
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 # Only part of the final install can be done here
 
 FROM ${RUNTIME} AS ws

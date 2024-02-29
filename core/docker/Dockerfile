@@ -19,7 +19,9 @@ SHELL ["/bin/bash", "-c"]
 ARG DATAFED_DIR
 ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 
+ENV DATAFED_INSTALL_PATH="${DATAFED_INSTALL_PATH}"
 # For communicating with repo server
 EXPOSE 7512
 # For listening to web server
@@ -36,7 +38,7 @@ COPY ./core/docker/entrypoint.sh       ${BUILD_DIR}/core/docker/
 COPY ./core/server                     ${BUILD_DIR}/core/server
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
-	cmake -S. -B build						\
+	${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build						\
 		-DBUILD_REPO_SERVER=False		\
 		-DBUILD_AUTHZ=False					\
 		-DBUILD_CORE_SERVER=True		\
@@ -44,8 +46,8 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
 		-DBUILD_DOCS=False					\
 		-DBUILD_PYTHON_CLIENT=False	\
 		-DBUILD_FOXX=False
-RUN cmake --build build -j 8
-RUN cmake --build build --target install
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 FROM ${RUNTIME} AS core
 
@@ -64,24 +66,24 @@ ENV            BUILD_DIR="$BUILD_DIR"
 ENV              LIB_DIR="$LIB_DIR"
 
 # copy necessary shared libraries
-COPY --from=core-build /libraries/libprotobuf.so           /libraries/libprotobuf.so
-COPY --from=core-build /libraries/libzmq.so                /libraries/libzmq.so
-COPY --from=core-build /libraries/libsodium.so             /libraries/libsodium.so
+#COPY --from=core-build /libraries/libprotobuf.a           /libraries/libprotobuf.a
+#COPY --from=core-build /libraries/libzmq.a                /libraries/libzmq.a
+#COPY --from=core-build /libraries/libsodium.a             /libraries/libsodium.a
 COPY --from=core-build /libraries/libboost_program_options.so /libraries/libboost_program_options.so
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
+#RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
+#RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
+#RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
 
 RUN ldconfig
 
 USER datafed
 
-COPY --chown=datafed:root ./scripts/generate_datafed.sh     ${DATAFED_DIR}/scripts/generate_datafed.sh
-COPY --chown=datafed:root ./scripts/generate_core_config.sh ${DATAFED_DIR}/scripts/generate_core_config.sh
-COPY --chown=datafed:root ./scripts/install_core.sh         ${DATAFED_DIR}/scripts/install_core.sh
-COPY --chown=datafed:root ./cmake/Version.cmake             ${DATAFED_DIR}/cmake/Version.cmake
-COPY --from=core-build --chown=datafed:root ${BUILD_DIR}/core/docker/entrypoint.sh    ${BUILD_DIR}/core/entrypoint.sh
+COPY --chown=datafed:root ./scripts/generate_datafed.sh     ${BUILD_DIR}/scripts/generate_datafed.sh
+COPY --chown=datafed:root ./scripts/generate_core_config.sh ${BUILD_DIR}/scripts/generate_core_config.sh
+COPY --chown=datafed:root ./scripts/install_core.sh         ${BUILD_DIR}/scripts/install_core.sh
+COPY --chown=datafed:root ./cmake/Version.cmake             ${BUILD_DIR}/cmake/Version.cmake
+COPY --from=core-build --chown=datafed:root ${BUILD_DIR}/core/docker/entrypoint.sh    ${BUILD_DIR}/core/docker/entrypoint.sh
 COPY --from=core-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/core/datafed-core ${DATAFED_INSTALL_PATH}/core/datafed-core
 
 USER root
@@ -92,4 +94,4 @@ RUN chown -R datafed:root /opt
 #SHELL ["/bin/bash"]
 # NOTE docker does not recognize curly braces around variables in entrypoint
 # and CMD
-ENTRYPOINT [ "/datafed/source/core/entrypoint.sh", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]
+ENTRYPOINT [ "/datafed/source/core/docker/entrypoint.sh", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]

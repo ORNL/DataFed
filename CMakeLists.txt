@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.17.0)
 project( DataFed CXX C )
 include(./cmake/Version.cmake)
+include(./cmake/Utils.cmake)
 
 set(DataFed_VERSION "${DATAFED_RELEASE_YEAR}.${DATAFED_RELEASE_MONTH}.${DATAFED_RELEASE_DAY}.${DATAFED_RELEASE_HOUR}.${DATAFED_RELEASE_MINUTE}")
 
@@ -30,19 +31,12 @@ set(INSTALL_AUTHZ ${BUILD_AUTHZ})
 set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
 set(INSTALL_WEB_SERVER ${BUILD_WEB_SERVER})
 
-# Needed by protobuf to correctly link library
-set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--copy-dt-needed-entries")
-set(CMAKE_MODULE_LINKER_FLAGS "-Wl,--copy-dt-needed-entries")
-
-function(get_version_from_script INPUT_STRING PATTERN_TO_MATCH OUTPUT_VERSION)
-    string(REGEX MATCH "${PATTERN_TO_MATCH}=(.*)" MATCHED_PART "${INPUT_STRING}")
-    if(MATCHED_PART)
-        string(STRIP "${CMAKE_MATCH_1}" SANITIZED_OUTPUT_VERSION)
-        string(REGEX REPLACE "\"\n.*" "" NEWLINE_REMOVED "${SANITIZED_OUTPUT_VERSION}")
-	string(REPLACE "\"" "" REMOVED_QUOTES "${NEWLINE_REMOVED}")
-	set(${OUTPUT_VERSION} "${REMOVED_QUOTES}" PARENT_SCOPE)
-    endif()
-endfunction()
+set(DATAFED_CONFIG_SH "${DataFed_SOURCE_DIR}/config/datafed.sh")
+if(NOT EXISTS ${DATAFED_CONFIG_SH})
+  message(FATAL_ERROR "Error: File '${DATAFED_CONFIG_SH}' does not exist. "
+    "Please run generate_datafed.sh first to populate defaults."
+    "${PROJECT_SOURCE_DIR}/scripts/generate_datafed.sh")
+endif()
 
 file(READ "${PROJECT_SOURCE_DIR}/scripts/dependency_versions.sh" DEPENDENCY_VERSIONS)
 
@@ -56,6 +50,11 @@ get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_OPENSSL" LOCAL_OPENSSL_V
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBCURL" LOCAL_CURL_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_BOOST" LOCAL_BOOST_VERSION)
 
+get_value_from_datafed_sh("DATAFED_DEPENDENCIES_INSTALL_PATH" DEPENDENCY_INSTALL_PATH)
+get_value_from_datafed_sh("DATAFED_INSTALL_PATH" DATAFED_INSTALL_PATH)
+
+set(CMAKE_PREFIX_PATH "${DEPENDENCY_INSTALL_PATH}")
+
 if ( BUILD_TESTS ) 
   include(CTest)
   ENABLE_TESTING()
@@ -64,11 +63,11 @@ endif()
 
 # Off by default because running it on production would overwrite things on the database
 if( NOT DEFINED ENABLE_FOXX_TESTS )
-	if( NOT DEFINED ENV{ENABLE_FOXX_TESTS} )
-		set(ENABLE_FOXX_TESTS FALSE)
-	else()
-		set(ENABLE_FOXX_TESTS ENV{ENABLE_FOXX_TESTS})
-	endif()
+  if( NOT DEFINED ENV{ENABLE_FOXX_TESTS} )
+    set(ENABLE_FOXX_TESTS FALSE)
+  else()
+    set(ENABLE_FOXX_TESTS ENV{ENABLE_FOXX_TESTS})
+  endif()
 else()
   # Avoid throwing warning by explicit set
   set(ENABLE_FOXX_TESTS ${ENABLE_FOXX_TESTS})
@@ -79,28 +78,9 @@ if( NOT DEFINED ENABLE_END_TO_END_TESTS )
   set(ENABLE_END_TO_END_TESTS FALSE)
 endif()
 
-message( "Building for " ${CMAKE_BUILD_TYPE} )
-
 if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
     add_definitions( -Wall -Wextra )
 endif()
-
-# Set the path to the shell script
-set(DATAFED_SH_PATH ${PROJECT_SOURCE_DIR}/config/datafed.sh)
-
-if ( NOT EXISTS ${DATAFED_SH_PATH} )
-  message(FATAL_ERROR "No datafed.sh config file was found at "
-    "${DATAFED_SH_PATH} make sure you first run "
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_datafed.sh")
-endif()
-
-
-# Use execute_process to source the shell script and get the value
-execute_process(
-  COMMAND bash -c "source ${DATAFED_SH_PATH} && echo \$DATAFED_INSTALL_PATH"
-  OUTPUT_VARIABLE DATAFED_INSTALL_PATH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto.in"
@@ -125,56 +105,7 @@ if( BUILD_WEB_SERVER )
 endif()
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT) 
-  if ( DEFINED ENV{PBUF_INC_DIR} AND DEFINED ENV{PBUF_LIB_DIR})
-          message( "PBUF_INC_DIR:" $ENV{PBUF_INC_DIR} )
-          message( "PBUF_LIB_DIR:" $ENV{PBUF_LIB_DIR} )
-          include_directories( $ENV{PBUF_INC_DIR} )
-          link_directories( $ENV{PBUF_LIB_DIR} )
-    set( Protobuf_LIBRARY $ENV{PBUF_LIB_DIR} )
-  endif()
-
-  find_package(Protobuf CONFIG REQUIRED ${PROTOBUF_LIBRARY_VERSION} PATHS ~/nfs/DataFed/install/lib/cmake )
-  # This is necessary because they decided to increment the protoc tool starting
-  # with the minor version number but kept the library incrementing with a major
-  # version cmake fails with using find_package with a REQUIRED statement
-  # because looks at both of these numbers which are different so here
-  # we compare the version of protoc differently from the library
-  if(NOT ${Protobuf_VERSION} STREQUAL ${PROTOBUF_LIBRARY_VERSION} )
-    message(FATAL_ERROR "Versions of proto library (${Protobuf_VERSION}) and the required version (${PROTOBUF_LIBRARY_VERSION}) do not match.")
-  endif()
-  message("main cmake Protobuf_LIBRARIES: ${Protobuf_LIBRARIES}")
-  message("main cmake Protobuf_INCLUDE_DIRS: ${Protobuf_INCLUDE_DIRS}")
-  message("main cmake PROTOBUF_INCLUDE_DIRS: ${PROTOBUF_INCLUDE_DIRS}")
-  message("main cmake PROTOBUF_LIBRARIES: ${PROTOBUF_LIBRARIES}")
-
-  include_directories(${PROTOBUF_INCLUDE_DIRS})
-  #find_package(Protobuf PATHS ~/nfs/DataFed/install/lib/cmake )
-  message("Protoc executable ${Protobuf_PROTOC_EXECUTABLE}") 
-  get_target_property(PROTOC_PATH protobuf::protoc IMPORTED_LOCATION_NOCONFIG)
-  message("Protoc executable ${PROTOC_PATH}") 
-  execute_process(
-    COMMAND ${PROTOC_PATH} --version
-    OUTPUT_VARIABLE PROTOBUF_COMPILER_VERSION_OUTPUT
-    ERROR_VARIABLE PROTOBUF_VERSION_ERROR
-    RESULT_VARIABLE PROTOBUF_VERSION_RESULT
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_STRIP_TRAILING_WHITESPACE
-  )
-
-  # Remove library name from output
-  # Regular expression to match the first word
-  set(regex "^[^ ]+ ")
-
-  # Remove the first word using string(REGEX REPLACE ...)
-  string(REGEX REPLACE "${regex}" "" PROTOBUF_COMPILER_VERSION_ACTUAL "${PROTOBUF_COMPILER_VERSION_OUTPUT}")
-
-  if(NOT ${PROTOBUF_COMPILER_VERSION_ACTUAL} STREQUAL ${PROTOBUF_COMPILER_VERSION} )
-    message(FATAL_ERROR "Versions of protoc compiler (${PROTOBUF_COMPILER_VERSION_ACTUAL}) and the required version (${PROTOBUF_COMPILER_VERSION}) do not match.")
-  endif()
-
-  find_package(PkgConfig)
-
-  set( PROTOBUF_IMPORT_DIRS ${PROTOBUF_INCLUDE_DIRS})
+  include(./cmake/Protobuf.cmake)
 endif() 
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON) 
@@ -187,7 +118,7 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
           include_directories( $ENV{BOOST_INC} )
           link_directories( $ENV{BOOST_LIB} )
   else()
-	  #set(Boost_USE_STATIC_LIBS   ON)
+    #set(Boost_USE_STATIC_LIBS   ON)
     find_package(Boost ${LOCAL_BOOST_VERSION} REQUIRED COMPONENTS date_time unit_test_framework system filesystem
       program_options)
   endif()
@@ -195,32 +126,8 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
   find_package(Threads REQUIRED)
   ## load in pkg-config support
   find_package(PkgConfig)
-  ## use pkg-config to get hints for 0mq locations
-  #pkg_check_modules(PC_ZeroMQ QUIET zmq)
-  pkg_check_modules(PkgConfig_ZMQ REQUIRED IMPORTED_TARGET libzmq)
-  #pkg_check_modules(PkgConfig_ZMQ_STATIC REQUIRED IMPORTED_TARGET libzmq-static)
 
-  if(NOT "${LIBZMQ_VERSION}" STREQUAL "${PkgConfig_ZMQ_VERSION}")
-	  message(FATAL_ERROR "Required ZeroMQ version ${LIBZMQ_VERSION}, not satisfied. Found version ${PkgConfig_ZMQ_VERSION}")
-  endif()
-
-  ## use the hint from above to find where 'zmq.h' is located
-  #find_path(ZeroMQ_INCLUDE_DIR
-          #NAMES zmq.h
-          #PATHS ${PC_ZeroMQ_INCLUDE_DIRS}
-          #)
-
-  ## use the hint from about to find the location of libzmq
-  #find_library(ZeroMQ_LIBRARY
-  #        NAMES zmq
-  #        PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
-  #        )
-
-  #include_directories( ${ZeroMQ_INCLUDE_DIR} )
-  #link_directories( ${PC_ZeroMQ_LIBRARY_DIRS} )
-
-  #message( TRACE "PROTOBUF_IMPORT_DIRS:" ${PROTOBUF_IMPORT_DIRS} )
-
+  include(./cmake/ZeroMQ.cmake)
   if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
   endif()
@@ -243,8 +150,8 @@ if( BUILD_COMMON )
 endif()
 
 if( BUILD_CORE_SERVER )
-  find_package(nlohmann_json CONFIG REQUIRED)
-  find_package(nlohmann_json_schema_validator CONFIG REQUIRED VERSION "${JSON_SCHEMA_VALIDATOR_VERSION}")
+  include(./cmake/JSON.cmake)
+  include(./cmake/JSONSchema.cmake)
   find_package(OpenSSL "${LOCAL_OPENSSL_VERSION}" REQUIRED )
   find_package(CURL "${LOCAL_CURL_VERSION}" REQUIRED )
 endif()
@@ -283,9 +190,6 @@ endif()
 
 if( INSTALL_CORE_SERVER )
   install( TARGETS datafed-core DESTINATION ${DATAFED_INSTALL_PATH}/core )
-  # The below steps should exist outside of the build steps
-  #install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_lego_and_certificates.sh )")
-  #  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_core_service.sh )")
 endif()
 
 if( INSTALL_WEB_SERVER )
@@ -293,8 +197,6 @@ if( INSTALL_WEB_SERVER )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( FILES ${PROJECT_SOURCE_DIR}/web/version.js DESTINATION ${DATAFED_INSTALL_PATH}/web )
-  #Installing services should be a separate step outside of the build
-  #install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_ws_service.sh )")
 endif()
 
 if( INSTALL_FOXX ) 
@@ -309,30 +211,47 @@ if( ENABLE_END_TO_END_TESTS )
   endif()
 endif()
 
+find_library(SODIUM NAMES libsodium.a PATHS ${DEPENDENCY_INSTALL_PATH}/lib)
+
 # This is not needed but it is used by zmq I think so we want to print what is found locally just in case
-if (PKG_CONFIG_FOUND)
-	pkg_check_modules(sodium_PKG QUIET libsodium)
-endif()
+#if (PKG_CONFIG_FOUND)
+#  pkg_check_modules(sodium_PKG QUIET libsodium)
+#endif()
 message("")
 message("Tested Dependency Versions")
 message("             protobuf Version: ${PROTOBUF_LIBRARY_VERSION}")
 message("               protoc Version: ${PROTOBUF_COMPILER_VERSION}")
-message("         nlohman json Version: ${NLOHMANN_JSON_VERSION}")
 message("               libzmq Version: ${LIBZMQ_VERSION}")
 message("            libsodium Version: ${LIBSODIUM_VERSION}")
+message("         nlohman json Version: ${NLOHMANN_JSON_VERSION}")
 message("json_schema_validator Version: ${JSON_SCHEMA_VALIDATOR_VERSION}")
 message("                 curl Version: ${LOCAL_CURL_VERSION}")
 message("              openssl Version: ${LOCAL_OPENSSL_VERSION}")
 message("                boost Version: ${LOCAL_BOOST_VERSION}")
 message("")
 message("Found Dependency Versions")
-message("             protobuf Version: ${Protobuf_VERSION}")
-message("               protoc Version: ${PROTOBUF_COMPILER_VERSION_ACTUAL}")
-message("         nlohman json Version: ${nlohmann_json_VERSION}")
-message("               libzmq Version: ${PkgConfig_ZMQ_VERSION}")
-message("            libsodium Version: ${sodium_PKG_VERSION}")
-message("json_schema_validator Version: ${nlohmann_json_schema_validator_VERSION}")
+message("             protobuf Version: ${DATAFED_PROTOBUF_VERSION_ACTUAL}")
+message("               protoc Version: ${DATAFED_PROTOBUF_COMPILER_VERSION_ACTUAL}")
+message("               libzmq Version: ${DATAFED_ZEROMQ_VERSION_ACTUAL}")
+message("            libsodium Version: ${DATAFED_ZEROMQ_SODIUM_VERSION}")
+message("         nlohman json Version: ${DATAFED_JSON_VERSION_ACTUAL}")
+message("json_schema_validator Version: ${DATAFED_JSON_SCHEMA_VERSION_ACTUAL}")
 message("                 curl Version: ${CURL_VERSION_STRING}")
 message("              openssl Version: ${OPENSSL_VERSION}")
 message("                boost Version: ${Boost_VERSION}")
 message("")
+message("Dependency Paths")
+message("                 protobuf Library: ${DATAFED_PROTOBUF_LIBRARY_PATH}")
+message("                protoc Executable: ${DATAFED_PROTOC_EXECUTABLE_PATH}")
+message("             protobuf Include Dir: ${DATAFED_PROTOBUF_INCLUDE_PATH}")
+message("                   libzmq Library: ${DATAFED_ZEROMQ_LIBRARY_PATH}")
+message("                libsodium Library: ${DATAFED_ZEROMQ_SODIUM_LIBRARY_PATH}")
+message("         nlohman json Include Dir: ${DATAFED_JSON_INCLUDE_PATH}")
+message("json_schema_validator Include Dir: ${DATAFED_JSON_SCHEMA_INCLUDE_PATH}")
+message("    json_schema_validator Library: ${DATAFED_JSON_SCHEMA_LIBRARY_PATH}")
+message("                     curl Library: ")
+message("                  openssl Library: ")
+message("                    boost Library: ")
+message("")
+
+

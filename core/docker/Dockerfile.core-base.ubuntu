@@ -2,7 +2,10 @@ FROM ubuntu:focal as build
 
 ARG DATAFED_DIR="/datafed"
 ARG BUILD_DIR="/datafed/source"
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 
+ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+ENV PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:${PATH}"
 RUN mkdir -p ${BUILD_DIR}
 
 WORKDIR ${BUILD_DIR}
@@ -12,6 +15,8 @@ COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_core_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/utils.sh ${BUILD_DIR}/scripts/
+COPY ./.gitmodules ${BUILD_DIR}/.gitmodules
+COPY ./.git ${BUILD_DIR}/.git
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
