@@ -132,11 +132,6 @@ build-ws-base:
     - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-    - touch "new_ws_base-${CI_COMMIT_SHA}"
-  artifacts:
-    paths:
-      - "new_ws_base-${CI_COMMIT_SHA}"
-    expire_in: 1 week
 
 build-core-base:
   needs: ["clear-core-cache"]
@@ -290,6 +285,9 @@ build-core:
         - cmake/**/*
         - .gitlab-ci.yml
       when: on_success
+    - exists:
+      - "build-core-base"
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
@@ -348,6 +346,9 @@ build-repo:
         - cmake/**/*
         - .gitlab-ci.yml
       when: on_success
+    - exists:
+      - "build-repo-base"
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
@@ -364,6 +365,10 @@ build-gcs-authz:
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - exists:
+      - "build-ws-base"
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
@@ -389,6 +394,9 @@ build-python-client:
         - CMakeLists.txt
         - cmake/**/*
       when: always
+    - exists:
+      - "build-python-client-base"
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
