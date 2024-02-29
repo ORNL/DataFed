@@ -9,6 +9,7 @@ ENV DATAFED_DIR="$DATAFED_DIR"
 ENV BUILD_DIR="$BUILD_DIR"
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV GCS_COLLECTION_ROOT_PATH="$DATAFED_DIR/collections/mapped"
+ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DIR}/dependenies"
 
 RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${BUILD_DIR}/common/proto
@@ -50,12 +51,12 @@ USER datafed
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&\
- cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=True \
+ ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=True \
                     -DBUILD_CORE_SERVER=False -DBUILD_WEB_SERVER=False \
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
                     -DBUILD_FOXX=False && \
- cmake --build build
-RUN cmake --build build --target install
+ ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 COPY ./scripts/globus/setup_globus.sh ${BUILD_DIR}/scripts/globus/setup_globus.sh
 COPY ./scripts/globus/generate_repo_form.sh ${BUILD_DIR}/scripts/globus/generate_repo_form.sh

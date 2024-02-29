@@ -10,6 +10,7 @@ ARG DATAFED_INSTALL_PATH="/datafed/install"
 ENV DATAFED_DIR="$DATAFED_DIR"
 ENV BUILD_DIR="$BUILD_DIR"
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DIR}/dependenies"
 
 RUN mkdir -p ${BUILD_DIR}/logs
 RUN mkdir -p ${DATAFED_INSTALL_PATH}
@@ -45,12 +46,12 @@ RUN chown -R datafed:datafed ${DATAFED_DIR}
 USER datafed
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh &&\
- cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \
+ ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=False \
                     -DBUILD_CORE_SERVER=True -DBUILD_WEB_SERVER=False \
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
                     -DBUILD_FOXX=False &&\
- cmake --build build -j 8
-RUN cmake --build build --target install
+ ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 WORKDIR ${DATAFED_INSTALL_PATH}/core
 
