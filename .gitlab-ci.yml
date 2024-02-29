@@ -281,6 +281,8 @@ build-core:
         - scripts/**/*
         - common/**/*
         - core/**/*
+        - CMakeLists.txt
+        - cmake/**/*
         - .gitlab-ci.yml
       when: on_success
   script:
@@ -337,6 +339,8 @@ build-repo:
         - scripts/**/*
         - common/**/*
         - repository/**/*
+        - CMakeLists.txt
+        - cmake/**/*
         - .gitlab-ci.yml
       when: on_success
   script:
@@ -377,6 +381,8 @@ build-python-client:
         - scripts/**/*
         - common/**/*
         - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
       when: always
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
