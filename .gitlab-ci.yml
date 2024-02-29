@@ -129,9 +129,9 @@ build-ws-base:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-core-base:
   needs: ["clear-core-cache"]
@@ -145,9 +145,9 @@ build-core-base:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-repo-base:
   needs: ["clear-repo-cache"]
@@ -161,9 +161,9 @@ build-repo-base:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-python-client-base:
   needs: ["clear-python-client-cache"]
@@ -177,9 +177,9 @@ build-python-client-base:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-gcs-base:
   needs: ["clear-repo-cache"]
@@ -200,15 +200,15 @@ build-gcs-base:
     - docker system prune -f
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - >
-      if ! docker pull "${GCS_TAG}:${GCS_SUBMODULE_VERSION}-${BRANCH_LOWER}"; then
+      if ! docker pull "${GCS_TAG}:${GCS_SUBMODULE_VERSION}-${BRANCH_LOWER}:latest"; then
         cd external/globus-connect-server-deploy/docker
         git checkout "${GCS_SUBMODULE_VERSION}"
         ./docker-build-gcs.sh "${DISTRO}"
         LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
         docker tag "$LATEST_IMAGE" "$GCS_TAG:${GCS_SUBMODULE_VERSION}" 
         docker push "$GCS_TAG:${GCS_SUBMODULE_VERSION}"
-        docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "$GCS_TAG" 
-        docker push "$GCS_TAG-${BRANCH_LOWER}"
+        docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "${GCS_TAG}-${BRANCH_LOWER}:latest" 
+        docker push "${GCS_TAG}-${BRANCH_LOWER}:latest"
         cd ../../../ # back too root of project
       else
         echo "Docker image already exists in the registry. Skipping build."
