@@ -11,6 +11,43 @@ source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 source "${SOURCE}/dependency_versions.sh"
 
+Help()
+{
+  echo "$(basename $0) Will install all datafed dependencies"
+  echo
+  echo "Syntax: $(basename $0) [-h|a]"
+  echo "options:"
+  echo "-h, --help                        Print this help message"
+  echo "-a, --disable-arango-install      Don't install arango"
+}
+
+local_INSTALL_ARANGO="TRUE"
+
+VALID_ARGS=$(getopt -o ha --long 'help',disable-arango-install -- "$@")
+if [[ $? -ne 0 ]]; then
+      exit 1;
+fi
+eval set -- "$VALID_ARGS"
+while [ : ]; do
+  case "$1" in
+    -h | --help)
+        Help
+        exit 0
+        ;;
+    -a | --disable-arango-install)
+        echo "Processing 'threads' option. Input argument is '$2'"
+        local_INSTALL_ARANGO="FALSE"
+        shift
+        ;;
+    --) shift; 
+        break 
+        ;;
+    \?) # incorrect option
+        echo "Error: Invalid option"
+        exit;;
+  esac
+done
+
 sudo_command
 
 touch "$apt_file_path"
@@ -56,4 +93,7 @@ rm $ext_file_path
 python3 -m pip install --upgrade pip
 python3 -m pip install setuptools sphinx sphinx-rtd-theme sphinx-autoapi
 
-install_arangodb
+if [ "$local_INSTALL_ARANGO" == "TRUE" ]
+then
+  install_arangodb
+fi

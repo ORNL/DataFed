@@ -37,14 +37,12 @@ COPY ./scripts/install_repo_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_authz_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/generate_datafed.sh
-COPY ./.gitmodules ${BUILD_DIR}/.gitmodules
-COPY ./.git ${BUILD_DIR}/.git
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 
 # run build scripts
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh --disable-arango-install
 
 COPY ./scripts/copy_dependency.sh ${BUILD_DIR}/scripts/
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf from

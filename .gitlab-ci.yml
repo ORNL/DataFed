@@ -14,7 +14,7 @@ stages:
 variables:
   HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry'
   REGISTRY: 'camden.ornl.gov'
-  DATAFED_DEPENDENCIES_INSTALL_PATH: "/tmp/install"
+  DATAFED_DEPENDENCIES_INSTALL_PATH: "/shared/install"
 ################################################################################
 # STAGE: ci-infrastructure-check
 ################################################################################
@@ -127,10 +127,11 @@ build-ws-base:
     - ci-datafed-core
     - docker
   script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
+    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-core-base:
   needs: ["clear-core-cache"]
@@ -142,10 +143,11 @@ build-core-base:
     - ci-datafed-core
     - docker
   script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
+    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-repo-base:
   needs: ["clear-repo-cache"]
@@ -157,10 +159,11 @@ build-repo-base:
     - ci-datafed-repo
     - docker
   script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
+    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-python-client-base:
   needs: ["clear-python-client-cache"]
@@ -172,10 +175,11 @@ build-python-client-base:
     - ci-datafed-repo
     - docker
   script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
+    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-gcs-base:
   needs: ["clear-repo-cache"]
@@ -192,18 +196,19 @@ build-gcs-base:
     - ci-datafed-globus
     - docker
   script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - >
-      if ! docker pull "${GCS_TAG}:${GCS_SUBMODULE_VERSION}"; then
+      if ! docker pull "${GCS_TAG}:${GCS_SUBMODULE_VERSION}-${BRANCH_LOWER}:latest"; then
         cd external/globus-connect-server-deploy/docker
         git checkout "${GCS_SUBMODULE_VERSION}"
         ./docker-build-gcs.sh "${DISTRO}"
         LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
         docker tag "$LATEST_IMAGE" "$GCS_TAG:${GCS_SUBMODULE_VERSION}" 
         docker push "$GCS_TAG:${GCS_SUBMODULE_VERSION}"
-        docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "$GCS_TAG" 
-        docker push "$GCS_TAG"
+        docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "${GCS_TAG}-${BRANCH_LOWER}:latest" 
+        docker push "${GCS_TAG}-${BRANCH_LOWER}:latest"
         cd ../../../ # back too root of project
       else
         echo "Docker image already exists in the registry. Skipping build."
@@ -237,7 +242,7 @@ build-ws:
   needs: ["build-ws-base"]
   stage: build
   variables:
-    IMAGE_TAG: "datafed/ws-"
+    IMAGE_TAG: "datafed/ws"
     GIT_STRATEGY: clone
   tags:
     - ci-datafed-core
@@ -258,14 +263,14 @@ build-ws:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f web/docker/Dockerfile.web.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_WEB_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f web/docker/Dockerfile.web.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-core:
   needs: ["build-core-base"]
   stage: build
   variables:
-    IMAGE_TAG: "datafed/core-"
+    IMAGE_TAG: "datafed/core"
     GIT_STRATEGY: clone
   tags:
     - ci-datafed-core
@@ -285,8 +290,8 @@ build-core:
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f core/docker/Dockerfile.core.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_CORE_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f core/docker/Dockerfile.core.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-foxx:
   stage: build
@@ -319,7 +324,7 @@ build-foxx:
 
 build-repo:
   variables:
-    IMAGE_TAG: "datafed/repo-"
+    IMAGE_TAG: "datafed/repo"
     GIT_STRATEGY: clone
   needs: ["build-repo-base"]
   stage: build
@@ -339,13 +344,13 @@ build-repo:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f repository/docker/Dockerfile.repo.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_REPO_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.repo.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-gcs-authz:
   stage: build
   variables:
-    IMAGE_TAG: "datafed/gcs-authz-"
+    IMAGE_TAG: "datafed/gcs-authz"
     GIT_STRATEGY: clone
   tags:
     - ci-datafed-globus
@@ -355,12 +360,12 @@ build-gcs-authz:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_GCS_IMAGE="${REGISTRY}/datafed/gcs-ubuntu-focal-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-python-client:
   variables:
-    IMAGE_TAG: "datafed/python-client-"
+    IMAGE_TAG: "datafed/python-client"
     GIT_STRATEGY: clone
   stage: build
   tags:
@@ -378,8 +383,8 @@ build-python-client:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f python/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_PYTHON_CLIENT_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f python/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 ################################################################################
 # STAGE: Integration
@@ -399,9 +404,9 @@ end-to-end-ws-setup:
   variables:
     IMAGE_TAG: "datafed/ws-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    HOST_LOG_FILE_PATH: "/shared/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
-    DATAFED_WEB_KEY_DIR: "/tmp/keys"
+    DATAFED_WEB_KEY_DIR: "/shared/keys"
     DATAFED_WEB_CERT_NAME: "cert.crt"
     DATAFED_WEB_KEY_NAME: "cert.key"
     DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_CERT_NAME}"
@@ -427,14 +432,14 @@ end-to-end-ws-setup:
     - USER_ID=$(id -u)
     - GROUP_ID=$(id -g)
     - CORE_ADDRESS=$(hostname -I | awk '{print $1}')
-    - cat $CI_DATAFED_CORE_PUB_KEY > /tmp/datafed-core-key.pub
+    - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-core-key.pub
     - env
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_web.sh
     - echo "docker run -d \\" >> run_web.sh
     - echo "--name \"ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_web.sh
-    - echo "-e DATAFED_GLOBUS_APP_SECRET=\"CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
+    - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
@@ -446,7 +451,7 @@ end-to-end-ws-setup:
     - echo "-e UID=\"$USER_ID\" \\" >> run_web.sh
     - echo "-p 443:443 \\" >> run_web.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
-    - echo "-v \"/tmp/datafed-core-key.pub:/datafed/install/keys/datafed-core-key.pub\" \\" >> run_web.sh
+    - echo "-v \"/shared/datafed-core-key.pub:/datafed/install/keys/datafed-core-key.pub\" \\" >> run_web.sh
     - echo "-v \"${DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
     - echo "-v \"${DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\" " >> run_web.sh
@@ -461,7 +466,7 @@ end-to-end-core-setup:
   variables:
     IMAGE_TAG: "datafed/core-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    HOST_LOG_FILE_PATH: "/shared/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     DATAFED_DATABASE_HOST: "$CI_DATAFED_DATABASE_HOST"
   stage: end-to-end-setup
@@ -480,8 +485,8 @@ end-to-end-core-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - ./scripts/ci_database_health_check.sh
-    - cat $CI_DATAFED_CORE_PUB_KEY > /tmp/datafed-core-key.pub
-    - cat $CI_DATAFED_CORE_PRIV_KEY > /tmp/datafed-core-key.priv
+    - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-core-key.pub
+    - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-core-key.priv
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_core.sh
     - echo "docker run -d \\" >> run_core.sh
@@ -495,10 +500,11 @@ end-to-end-core-setup:
     - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> run_core.sh
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_core.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_core.sh
-    - echo "--network host \\" >> run_core.sh
+    - echo "-p 7513:7513 \\" >> run_core.sh
+    - echo "-p 7512:7512 \\" >> run_core.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_core.sh
-    - echo "-v \"/tmp/datafed-core-key.pub\":/source/install/keys/datafed-core-key.pub \\" >> run_core.sh
-    - echo "-v \"/tmp/datafed-core-key.priv\":/source/install/keys/datafed-core-key.priv \\" >> run_core.sh
+    - echo "-v \"/shared/datafed-core-key.pub\":/datafed/install/keys/datafed-core-key.pub \\" >> run_core.sh
+    - echo "-v \"/shared/datafed-core-key.priv\":/datafed/install/keys/datafed-core-key.priv \\" >> run_core.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_core.sh
     - chmod +x run_core.sh
     - ./run_core.sh
@@ -511,7 +517,7 @@ end-to-end-repo-setup:
   variables:
     IMAGE_TAG: "datafed/repo-"
     GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    HOST_LOG_FILE_PATH: "/shared/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
   stage: end-to-end-setup
   needs: ["end-to-end-core-setup"]
@@ -529,6 +535,8 @@ end-to-end-repo-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+    - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
+    - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_repo.sh
     - echo "docker run \\" >> run_repo.sh
     - echo "--name \"repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_repo.sh
@@ -540,8 +548,8 @@ end-to-end-repo-setup:
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_repo.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_repo.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_repo.sh
-    - echo "-v \"$CI_DATAFED_REPO_PUB_KEY\":/source/install/keys/datafed-repo-key.pub \\" >> run_repo.sh
-    - echo "-v \"$CI_DATAFED_REPO_PRIV_KEY\":/source/install/keys/datafed-repo-key.priv \\" >> run_repo.sh
+    - echo "-v \"/shared/datafed-repo-key.pub\":/datafed/install/keys/datafed-repo-key.pub \\" >> run_repo.sh
+    - echo "-v \"/shared/datafed-repo-key.priv\":/datafed/install/keys/datafed-repo-key.priv \\" >> run_repo.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_repo.sh
     - chmod +x run_repo.sh
     - ./run_repo.sh
@@ -553,7 +561,7 @@ end-to-end-repo-setup:
 end-to-end-gcs-authz-setup:
   variables:
     IMAGE_TAG: "datafed/gcs-authz-"
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
+    HOST_LOG_FILE_PATH: "/shared/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     GIT_STRATEGY: clone
   stage: end-to-end-setup
@@ -571,6 +579,8 @@ end-to-end-gcs-authz-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+    - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
+    - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_globus.sh
     - echo "docker run \\" >> run_globus.sh
     - echo "--name \"gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
@@ -581,8 +591,8 @@ end-to-end-gcs-authz-setup:
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_globus.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
-    - echo "-v \"$CI_DATAFED_REPO_PUB_KEY\":/source/install/keys/datafed-repo-key.pub \\" >> run_globus.sh
-    - echo "-v \"$CI_DATAFED_REPO_PRIV_KEY\":/source/install/keys/datafed-repo-key.priv \\" >> run_globus.sh
+    - echo "-v \"/shared/datafed-repo-key.pub\":/datafed/install/keys/datafed-repo-key.pub \\" >> run_globus.sh
+    - echo "-v \"/shared/datafed-repo-key.priv\":/datafed/install/keys/datafed-repo-key.priv \\" >> run_globus.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_globus.sh
     - chmod +x run_globus.sh
     - ./run_globus.sh
