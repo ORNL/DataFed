@@ -34,74 +34,6 @@ Help()
   echo "NOTE: Do not run this script with sudo!"
 }
 
-# Only recognized x.x.x format where all "x" are integers
-# Returns true if first version is greater or equal to second version
-#
-# semantic_version_compatible "1.2.3" "1.1.8"
-# echo $? 
-# Should print 1
-#
-# semantic_version_compatible "1.2.3" "1.2.8"
-# echo $? 
-# Should print 0
-#
-#semantic_version_compatible "1.1.1" "1.1.1"
-#echo "Should return true 1.1.1 >= 1.1.1"
-#
-#semantic_version_compatible "1.2.1" "1.1.1"
-#echo "Should return true 1.2.1 >= 1.1.1"
-#
-#semantic_version_compatible "1.2.1" "3.1.1"
-#echo "Should return false 1.2.1 >= 3.1.1"
-#
-#semantic_version_compatible "v1.2.1" "v3.1.1"
-#echo "Should return false v1.2.1 >= v3.1.1"
-#
-#semantic_version_compatible "v1.2.1" "1.1.1"
-#echo "Should return true v1.2.1 >= 1.1.1"
-
-
-semantic_version_compatible() {
-  local VER1=$1
-  local VER2=$2
-
-  # Remove any preceding v from version i.e. v1.1.2
-  VER1=$(echo $VER1 | sed 's/v//g' )
-  VER2=$(echo $VER2 | sed 's/v//g' )
-
-  maj_1=$(echo $VER1 | sed 's/\./ /g' | awk '{print $1}')
-  min_1=$(echo $VER1 | sed 's/\./ /g' | awk '{print $2}')
-  patch_1=$(echo $VER1 | sed 's/\./ /g' | awk '{print $3}')
-  maj_2=$(echo $VER2 | sed 's/\./ /g' | awk '{print $1}')
-  min_2=$(echo $VER2 | sed 's/\./ /g' | awk '{print $2}')
-  patch_2=$(echo $VER2 | sed 's/\./ /g' | awk '{print $3}')
-
-  if [ "$maj_1" -gt "$maj_2" ]
-  then
-    return 1
-  elif [ "$maj_1" -lt "$maj_2" ]
-  then
-    return 0
-  fi
-
-  if [ "$min_1" -gt "$min_2" ]
-  then
-    return 1
-  elif [ "$min_1" -lt "$min_2" ]
-  then
-    return 0
-  fi
-
-  if [ "$patch_1" -gt "$patch_2" ]
-  then
-    return 1
-  elif [ "$patch_1" -lt "$patch_2" ]
-  then
-    return 0
-  fi
-  return 1
-}
-
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 local_DATABASE_PORT="8529"
@@ -203,11 +135,27 @@ then
   exit 1
 fi
 
+basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
+url="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
+code=$(curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
+
+if [[ "$code" != "200" ]]; then
+  echo "Error detected in attempting to connect to database at $url"
+  echo "HTTP code is: $code"
+  exit 1
+fi
+
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(curl --dump - \
-  --user "$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
-  "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user")
+output=$(curl -s -o /dev/null -i --dump - --user "$basic_auth" "$url")
+
+echo "Output: $output"
+
+if [[ "$output" == "" ]]; then
+  echo "curl command failed $url exiting"
+  exit 1
+fi
+
 
 if [[ "$output" =~ .*"sdms".* ]]; then
 	echo "SDMS already exists do nothing"
@@ -237,29 +185,17 @@ fi
 #
 # The web deployment requires manual interaction, and I could not figure out the 
 # syntax for the REST http endpoints with curl so we are going to try the node module
-actual_version=$(node --version)
-semantic_version_compatible "$actual_version" "$DATAFED_NODE_VERSION"
-compatible=$?
 
-#if [ "$compatible" -eq "0" ]
-#then
-  # 1. Install nvm which will allow us to update node
+# 1. Install nvm which will allow us to update node
 install_nvm
 install_node
 install_foxx_cli
-#else 
-  # We are assuming that if the correct version of node is installed then the
-  # correct version of npm is also installed
-#  npm install --global foxx-cli --prefix ~/
-#fi
 
 FOXX_PREFIX=""
-{
-	# Determine if exists globally first
-	which foxx
-} || {
-	FOXX_PREFIX="${NPM_CONFIG_PREFIX}/bin/"
-}
+if ! command -v foxx > /dev/null 2>&1; then
+    FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
+fi
+
 
 PATH_TO_PASSWD_FILE="${SOURCE}/database_temp.password"
 
@@ -295,9 +231,6 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
       "/api/${local_FOXX_MAJOR_API_VERSION}" "${PROJECT_ROOT}/core/database/foxx/"
     echo "foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx"
   fi
-
-  
-
   rm "${PATH_TO_PASSWD_FILE}"
 } || { # catch
   rm "${PATH_TO_PASSWD_FILE}"

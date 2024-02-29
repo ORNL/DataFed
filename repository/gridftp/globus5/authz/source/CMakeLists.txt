@@ -10,6 +10,6 @@ SET_TARGET_PROPERTIES( datafed-authz PROPERTIES LINKER_LANGUAGE CXX )
 set_target_properties(datafed-authz PROPERTIES POSITION_INDEPENDENT_CODE ON SOVERSION ${DATAFED_AUTHZ_MAJOR} VERSION ${DATAFED_AUTHZ_MAJOR}.${DATAFED_AUTHZ_MINOR}.${DATAFED_AUTHZ_PATCH})
 add_dependencies( datafed-authz common)
 
-target_link_libraries( datafed-authz common ${Protobuf_LIBRARIES} Threads::Threads ${PkgConfig_ZMQ_LIBRARIES} ${Boost_LIBRARIES} )
+target_link_libraries( datafed-authz common Threads::Threads libzmq-static datafed-protobuf ${Boost_LIBRARIES} )
 
 target_include_directories( datafed-authz PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )

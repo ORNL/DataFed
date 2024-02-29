@@ -7,15 +7,23 @@ foreach(file ${SrcFiles})
 endforeach()
 
 # Collect top-level proto files as dependencies
-file( GLOB ProtoFiles ${CMAKE_SOURCE_DIR}/common/proto/common/*.proto )
+file( GLOB ProtoFiles ${DataFed_SOURCE_DIR}/common/proto/common/*.proto )
 
-# Create proto target and rules to generate py proto files
-PROTOBUF_GENERATE_PYTHON( ProtoFilesPy ${ProtoFiles} )
+# OBJECT - is needed because we don't want to compile to a binary
+# because we are dealing with python
+add_library(protobuf-target-py OBJECT ${ProtoFiles})
+protobuf_generate(
+    LANGUAGE python
+    TARGET protobuf-target-py
+    IMPORT_DIRS "${DataFed_SOURCE_DIR}/common/proto/common"
+    OUT_VAR protobuf-generated-files-py
+    PROTOC_OUT_DIR "${CMAKE_CURRENT_LIST_DIR}"
+  )
 
-add_custom_target( pydatafed_src DEPENDS ${ProtoFilesPy} )
+add_custom_target( pydatafed_src DEPENDS protobuf-target-py )
 
 add_custom_command( TARGET pydatafed_src POST_BUILD
-    COMMAND sed -i -r 's:^import.*_pb2:from . \\0:' ${ProtoFilesPy}
+    COMMAND sed -i -r 's:^import.*_pb2:from . \\0:' ${protobuf-generated-files-py}
     COMMAND ${CMAKE_SOURCE_DIR}/python/pyproto_add_msg_idx.py
     ${CMAKE_SOURCE_DIR}/common/proto/common/SDMS_Anon.proto SDMS_Anon_pb2.py
     COMMAND ${CMAKE_SOURCE_DIR}/python/pyproto_add_msg_idx.py
