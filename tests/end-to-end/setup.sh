@@ -36,7 +36,6 @@ set -ef -o pipefail
 
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
-local_DATABASE_PORT="8529"
 
 if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
 then
@@ -147,32 +146,41 @@ else
   local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
 fi
 
+if [ -z "${DATAFED_DATABASE_PORT}" ]
+then
+  local_DATAFED_DATABASE_PORT="8529"
+else
+  local_DATAFED_DATABASE_PORT=$(printenv DATAFED_DATABASE_PORT)
+fi
+
+
 # If the database was set up correctly auth will be turned on
 basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
-#curl -X GET http://127.0.0.1:8529/_db/sdms/
 
 echo "IP is ${local_DATAFED_DATABASE_HOST}"
 echo "USER89 GLobud ID $DATAFED_USER89_GLOBUS_UUID"
 echo "Refresh is ${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
 # Chreate user datafed89 who is admin
-HTTP_CODE=$( curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
+HTTP_CODE=$( curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null -X GET
+"http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$( curl --user "${basic_auth}" -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
+  response=$( curl --user "${basic_auth}" -X GET
+  "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+HTTP_CODE=$(curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+  response=$(curl --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
@@ -180,24 +188,24 @@ then
 fi
 
 # Create user datafed99 who is not admin
-HTTP_CODE=$(curl  --user "${basic_auth}"  -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
+HTTP_CODE=$(curl  --user "${basic_auth}"  -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl  --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
+  response=$(curl  --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl --user "${basic_auth}"   -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+HTTP_CODE=$(curl --user "${basic_auth}"   -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl --user "${basic_auth}"  --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+  response=$(curl --user "${basic_auth}"  --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"

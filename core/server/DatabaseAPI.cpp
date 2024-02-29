@@ -1727,7 +1727,6 @@ void DatabaseAPI::queryCreate(const Auth::QueryCreateRequest &a_request,
   options.always_print_enums_as_ints = true;
   options.preserve_proto_field_names = true;
 
-  //google::protobuf::util::Status stat =
   auto stat =
       google::protobuf::util::MessageToJsonString(a_request.query(),
                                                   &query_json, options);
@@ -1768,7 +1767,6 @@ void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
     options.always_print_enums_as_ints = true;
     options.preserve_proto_field_names = true;
 
-    //google::protobuf::util::Status stat =
     auto stat =
         google::protobuf::util::MessageToJsonString(a_request.query(),
                                                     &query_json, options);
@@ -1846,7 +1844,6 @@ void DatabaseAPI::setQueryData(QueryDataReply &a_reply,
   a_reply.set_ct(obj.getNumber("ct"));
   a_reply.set_ut(obj.getNumber("ut"));
 
-  //google::protobuf::util::Status stat =
   auto stat =
       google::protobuf::util::JsonStringToMessage(
           obj.getValue("query").toString(), a_reply.mutable_query());
