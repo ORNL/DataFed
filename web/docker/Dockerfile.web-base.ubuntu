@@ -5,7 +5,11 @@ ARG BUILD_DIR="/datafed/source"
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-ENV PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:${PATH}"
+
+# NOTE - it does not look like using $PATH variable inside this definition
+# resolves correctly as such they system paths are included explicitly when
+# changes are made to ENV PATH
+ENV PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${BUILD_DIR}/common/proto
 
