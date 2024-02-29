@@ -3,6 +3,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 source "${SOURCE}/dependency_versions.sh"
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
+source "${SOURCE}/utils.sh"
 
 # these are the dependencies to be installed by apt
 apt_file_path="/tmp/apt_deps"
@@ -48,7 +49,7 @@ install_protobuf() {
     if [ -d "${PROJECT_ROOT}/external/protobuf" ]
     then
       # sudo required because of egg file
-      sudo rm -rf "${PROJECT_ROOT}/external/protobuf"
+      "$SUDO_CMD" rm -rf protobuf 
     fi
     git submodule update --init "${PROJECT_ROOT}/external/protobuf"
     cd "${PROJECT_ROOT}/external/protobuf"
@@ -59,17 +60,19 @@ install_protobuf() {
       -DBUILD_SHARED_LIBS=ON \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
-    sudo cmake --build build --target install
+    "$SUDO_CMD" cmake --build build --target install
     cd python
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -m pip install numpy
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py build
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py test
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py install --user
+    python3 setup.py build
+    python3 setup.py install --user
     cd ../
     # Cleanup build file with root ownership
     if [ -f build/install_manifest.txt ]
     then
-      sudo rm build/install_manifest.txt
+      "$SUDO_CMD" rm build/install_manifest.txt
     fi
     cd "${PROJECT_ROOT}"
 
@@ -91,8 +94,8 @@ install_libsodium() {
     ./autogen.sh
     ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make check
-    sudo make install
-    sudo ldconfig
+    "$SUDO_CMD" make install
+    "$SUDO_CMD" ldconfig
     cd ../
     
     # Mark libsodium as installed
@@ -114,7 +117,7 @@ install_libzmq() {
       -DBUILD_SHARED=ON \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
-    sudo cmake --build build --target install
+    "$SUDO_CMD" cmake --build build --target install
     
     # Mark libzmq as installed
     touch ".libzmq_installed-${DATAFED_LIBZMQ_VERSION}"
@@ -134,7 +137,7 @@ install_nlohmann_json() {
     cmake -S . -B build \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
-    sudo cmake --build build --target install
+    "$SUDO_CMD" cmake --build build --target install
     cd ../
     
     # Mark nlohmann_json as installed
@@ -154,7 +157,7 @@ install_json_schema_validator() {
     cmake -S . -B build \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
-    sudo cmake --build build --target install
+    "$SUDO_CMD" cmake --build build --target install
     cd ../
     
     # Mark json-schema-validator as installed
@@ -164,14 +167,15 @@ install_json_schema_validator() {
 
 install_gcs() {
   if [ ! -e ".gcs_installed-${DATAFED_GLOBUS_VERSION}" ]; then
-    sudo apt update
-    sudo apt install -y curl git gnupg
-    curl -LOs https://downloads.globus.org/globus-connect-server/stable/installers/repo/deb/globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb
-    sudo dpkg -i globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb
-    sudo apt-key add /usr/share/globus-repo/RPM-GPG-KEY-Globus
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt install -y curl git gnupg
+    curl -LOs \
+    "https://downloads.globus.org/globus-connect-server/stable/installers/repo/deb/globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb"
+    "$SUDO_CMD" dpkg -i "globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb"
+    "$SUDO_CMD" apt-key add /usr/share/globus-repo/RPM-GPG-KEY-Globus
     # Need a second update command after adding the globus GPG key
-    sudo apt update
-    sudo apt-get install globus-connect-server54 -y
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt-get install globus-connect-server54 -y
     
     # Mark gcs as installed
     touch ".gcs_installed-${DATAFED_GLOBUS_VERSION}"
@@ -180,61 +184,70 @@ install_gcs() {
 
 install_nvm() {
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
     # By setting NVM_DIR beforehand when the scirpt is run it 
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
     curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark nvm as installed
-    touch ".nvm_installed-${DATAFED_NVM_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}"
+  else
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
   fi
 }
 
 install_node() {
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
     echo "You must first install nvm before installing node."
     exit 1
   fi
-  if [ ! -e ".node_installed-${DATAFED_NODE_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}" ]; then
 
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm install "$DATAFED_NODE_VERSION"
     # Mark node as installed
-    touch ".node_installed-${DATAFED_NODE_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}"
+  else
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
   fi
 }
 
 install_foxx_cli() {
-  if [ ! -e ".nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
     echo "You must first install nvm before installing foxx_cli."
     exit 1
   fi
-  if [ ! -e ".node_installed-${DATAFED_NODE_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}" ]; then
     echo "You must first install node before installing foxx_cli"
     exit 1
   fi
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e ".foxx_cli_installed" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed" ]; then
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
     "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
     # Mark foxx_cli as installed
-    touch ".foxx_cli_installed"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed"
+  else
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+    export NODE_VERSION="$DATAFED_NODE_VERSION"
   fi
 }
 
 install_arangodb() {
   curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key
-  sudo apt-key add - < Release.key
-  echo 'deb https://download.arangodb.com/arangodb38/DEBIAN/ /' | sudo tee /etc/apt/sources.list.d/arangodb.list
-  sudo apt-get install apt-transport-https
-  sudo apt-get update
-  sudo apt-get install arangodb3
+  "$SUDO_CMD" apt-key add - < Release.key
+  echo 'deb https://download.arangodb.com/arangodb38/DEBIAN/ /' | "$SUDO_CMD" tee /etc/apt/sources.list.d/arangodb.list
+  "$SUDO_CMD" apt-get install apt-transport-https
+  "$SUDO_CMD" apt-get update
+  "$SUDO_CMD" apt-get install arangodb3
 }
 
 install_dep_by_name() {
