@@ -25,3 +25,5 @@ DATAFED_LIBCURL_URL="https://github.com/curl/curl/releases/download/curl-7_88_1/
 DATAFED_OPENSSL="1.1.1"
 DATAFED_OPENSSL_COMMIT="e04bd34"
 DATAFED_BOOST="1.71.0"
+DATAFED_ZLIB_VERSION="1.3.1"
+DATAFED_ZLIB_URL="https://zlib.net/zlib-1.3.1.tar.gz"

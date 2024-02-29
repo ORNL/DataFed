@@ -1,4 +1,3 @@
-
 function(find_openssl_library)
 
   if(EXISTS "${DEPENDENCY_INSTALL_PATH}/lib/libssl.a")
