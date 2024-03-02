@@ -31,15 +31,25 @@ function(find_zeromq_library)
     endif()
   endforeach()
 
+  set(version_file "${CMAKE_CURRENT_LIST_DIR}/sodium_version")
+  if(EXISTS "${version_file}")
+    file(REMOVE "${version_file}")
+  endif()
+
   execute_process(
-    COMMAND ${CMAKE_CXX_COMPILER} -o ${CMAKE_CURRENT_LIST_DIR}/sodium_version ${CMAKE_CURRENT_LIST_DIR}/sodium_version.cpp ${DEPENDENCY_INSTALL_PATH}/lib/libsodium.a 
-    COMMAND ${CMAKE_CURRENT_LIST_DIR}/sodium_version
+    COMMAND ${CMAKE_CXX_COMPILER} -o ${version_file}
+    ${version_file}.cpp ${DEPENDENCY_INSTALL_PATH}/lib/libsodium.a 
+    #COMMAND ${CMAKE_CURRENT_LIST_DIR}/sodium_version
     OUTPUT_VARIABLE SODIUM_VERSION_OUTPUT
     ERROR_VARIABLE SODIUM_VERSION_ERROR
     RESULT_VARIABLE SODIUM_VERSION_RESULT
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_STRIP_TRAILING_WHITESPACE
     )
+
+  message("sodium version output ${SODIUM_VERSION_OUTPUT}")
+  message("sodium version output ${SODIUM_VERSION_ERROR}")
+  message("sodium version output ${SODIUM_VERSION_RESULT}")
 
   set(DATAFED_ZEROMQ_INCLUDE_DIR "${ZEROMQ_INCLUDE_DIR}" PARENT_SCOPE)
   set(DATAFED_ZEROMQ_LIB_DIR "${ZEROMQ_LIB_DIR}"  PARENT_SCOPE)
