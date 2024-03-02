@@ -8,6 +8,7 @@ source "${SOURCE}/utils.sh"
 sudo_command
 # these are the dependencies to be installed by apt
 apt_file_path="${PROJECT_ROOT}/tmp/apt_deps"
+pip_file_path="${PROJECT_ROOT}/tmp/pip_deps"
 # these are the dependencies to be installed and built via cmake
 ext_file_path="${PROJECT_ROOT}/tmp/ext_deps"
 
@@ -44,7 +45,7 @@ fi
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
-    tar -xzvf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
+    tar -xzvf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz >/dev/null 2>&1
     cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 
@@ -281,6 +282,23 @@ install_nvm() {
   fi
 }
 
+install_ws_node_packages() {
+
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+    echo "You must first install nvm before installing ws node packages."
+    exit 1
+  fi
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}" ]; then
+    echo "You must first install node before installing ws node packages"
+    exit 1
+  fi
+
+  export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+  export NODE_VERSION="$DATAFED_NODE_VERSION"
+  "$NVM_DIR/nvm-exec" npm --prefix "${PROJECT_ROOT}/web" install "${PROJECT_ROOT}/web"
+}
+
+
 install_node() {
   # By default this will place NVM in $HOME/.nvm
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}" ]; then
@@ -445,6 +463,15 @@ install_dep_by_name() {
       ;;
     "zlib")
       install_zlib
+      ;;
+    "nvm")
+      install_nvm
+      ;;
+    "node")
+      install_node
+      ;;
+    "ws_node_packages")
+      install_ws_node_packages
       ;;
   esac
   cd ~

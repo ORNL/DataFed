@@ -256,8 +256,8 @@ message("                libsodium Library: ${DATAFED_ZEROMQ_SODIUM_LIBRARY_PATH
 message("         nlohman json Include Dir: ${DATAFED_JSON_INCLUDE_PATH}")
 message("json_schema_validator Include Dir: ${DATAFED_JSON_SCHEMA_INCLUDE_PATH}")
 message("    json_schema_validator Library: ${DATAFED_JSON_SCHEMA_LIBRARY_PATH}")
-message("                     curl Library: ")
-message("                  openssl Library: ")
+message("                     curl Library: ${OPENSSL_CRYPTO_LIBRARY}")
+message("                  openssl Library: ${OPENSSL_SSL_LIBRARY}")
 message("                    boost Library: ")
 message("")
 
