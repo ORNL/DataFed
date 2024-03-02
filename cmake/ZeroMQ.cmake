@@ -36,16 +36,20 @@ function(find_zeromq_library)
     file(REMOVE "${version_file}")
   endif()
 
+  # Keep the two processes separate, cmake seems to want to run them in parallel
+  # for some reason if they are in the same execute_process call.
   execute_process(
     COMMAND ${CMAKE_CXX_COMPILER} -o ${version_file}
-    ${version_file}.cpp ${DEPENDENCY_INSTALL_PATH}/lib/libsodium.a 
-    #COMMAND ${CMAKE_CURRENT_LIST_DIR}/sodium_version
+    "${version_file}.cpp" ${DEPENDENCY_INSTALL_PATH}/lib/libsodium.a 
+  )
+  execute_process(
+    COMMAND ${version_file}
     OUTPUT_VARIABLE SODIUM_VERSION_OUTPUT
     ERROR_VARIABLE SODIUM_VERSION_ERROR
     RESULT_VARIABLE SODIUM_VERSION_RESULT
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_STRIP_TRAILING_WHITESPACE
-    )
+  )
 
   message("sodium version output ${SODIUM_VERSION_OUTPUT}")
   message("sodium version output ${SODIUM_VERSION_ERROR}")

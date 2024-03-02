@@ -11,9 +11,13 @@ function(find_zlib_library)
     file(REMOVE "${version_file}")
   endif()
 
+  # Keep the two processes separate, cmake seems to want to run them in parallel
+  # for some reason if they are in the same execute_process call.
   execute_process(
-    COMMAND ${CMAKE_CXX_COMPILER} -o ${version_file} ${version_file}.cpp ${ZLIB_LIBRARIES} 
-    COMMAND ${CMAKE_CURRENT_LIST_DIR}/zlib_version
+    COMMAND ${CMAKE_CXX_COMPILER} -o ${version_file} "${version_file}.cpp" ${ZLIB_LIBRARIES} 
+  )
+  execute_process(
+    COMMAND ${version_file}
     OUTPUT_VARIABLE ZLIB_VERSION_OUTPUT
     ERROR_VARIABLE ZLIB_VERSION_ERROR
     RESULT_VARIABLE ZLIB_VERSION_RESULT

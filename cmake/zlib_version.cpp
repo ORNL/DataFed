@@ -2,6 +2,6 @@
 #include <zlib.h>
 
 int main() {
-  std::cout << "zlib version: " << zlibVersion() << std::endl;
+  std::cout << zlibVersion() << std::endl;
   return 0;
 }
