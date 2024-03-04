@@ -177,11 +177,10 @@ install_libzmq() {
     cd "${PROJECT_ROOT}/external/libzmq"
     git checkout "v${DATAFED_LIBZMQ_VERSION}"
     # Build static
-    # NOTE - static libraries must be built first
     cmake -S. -B build \
       -DBUILD_STATIC=ON \
-      -DBUILD_SHARED_LIBS=OFF \
-      -DBUILD_SHARED=OFF \
+      -DBUILD_SHARED_LIBS=ON \
+      -DBUILD_SHARED=ON \
       -DWITH_LIBSODIUM_STATIC=ON \
       -DBUILD_TESTS=OFF \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -193,23 +192,6 @@ install_libzmq() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    # Build shared
-    cmake -S. -B build \
-      -DBUILD_STATIC=OFF \
-      -DBUILD_SHARED_LIBS=ON \
-      -DBUILD_SHARED=ON \
-      -DWITH_LIBSODIUM_STATIC=OFF \
-      -DBUILD_TESTS=OFF \
-      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-      -DCMAKE_PREFIX_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib" \
-      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    cmake --build build -j 8
-    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
-      cmake --build build --target install
-    else
-      "$SUDO_CMD" cmake --build build --target install
-    fi
-
 
     if [ -d "${PROJECT_ROOT}/external/cppzmq" ]
     then
