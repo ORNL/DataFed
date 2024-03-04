@@ -145,6 +145,7 @@ install_libsodium() {
     SODIUM_STATIC=1 ./configure --enable-static=yes --with-pic=yes --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     # Build shared 
     SODIUM_STATIC=0 ./configure --enable-shared=yes --with-pic=yes --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    make -j 8
     make check
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
@@ -417,7 +418,7 @@ install_openssl() {
     cd "${PROJECT_ROOT}/external/openssl"
     git checkout "$DATAFED_OPENSSL_COMMIT"
     ./config --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    make
+    make -j 8
 
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
@@ -442,7 +443,7 @@ install_libcurl() {
     tar -xf "curl-${DATAFED_LIBCURL}.tar.gz" -C "${PROJECT_ROOT}/external/libcurl"
     cd "${PROJECT_ROOT}/external/libcurl/curl-${DATAFED_LIBCURL}"
     PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" ./configure --with-openssl --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    make
+    make -j 8
 
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
@@ -468,7 +469,7 @@ install_zlib() {
     tar -xf "zlib-${DATAFED_ZLIB_VERSION}.tar.gz" -C "${PROJECT_ROOT}/external/zlib"
     cd "${PROJECT_ROOT}/external/zlib/zlib-${DATAFED_ZLIB_VERSION}"
     PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    make
+    make -j 8
 
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
