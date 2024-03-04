@@ -1,10 +1,22 @@
 
 function(find_zlib_library)
   # Find zlib
-  set(ZLIB_INCLUDE_DIR "${DEPENDENCY_INSTALL_PATH}/include" )
-  set(ZLIB_LIBRARIES "${DEPENDENCY_INSTALL_PATH}/lib/libz.a" )
+  if(EXISTS ${DEPENDENCY_INSTALL_PATH})
+    if(EXISTS ${DEPENDENCY_INSTALL_PATH}/include)
+      set(ZLIB_INCLUDE_DIR "${DEPENDENCY_INSTALL_PATH}/include" )
+      include_directories(${ZLIB_INCLUDE_DIR})
+    endif()
+    if(EXISTS ${DEPENDENCY_INSTALL_PATH}/lib/libz.a)
+      set(ZLIB_LIBRARIES "${DEPENDENCY_INSTALL_PATH}/lib/libz.a" )
+    endif()
+  endif()
 
-  message("${CMAKE_CXX_COMPILER} -o ${CMAKE_CURRENT_LIST_DIR}/zlib_version ${CMAKE_CURRENT_LIST_DIR}/zlib_version.cpp ${ZLIB_LIBRARIES}")
+  if(NOT EXISTS ${ZLIB_LIBRARIES})
+    SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    find_package(ZLIB REQUIRED)
+  endif()
+
+  set(ZLIB_INCLUDE_DIR "${DEPENDENCY_INSTALL_PATH}/include" )
 
   set(version_file "${CMAKE_CURRENT_LIST_DIR}/zlib_version")
   if(EXISTS "${version_file}")
