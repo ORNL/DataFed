@@ -11,8 +11,14 @@ function(find_openssl_library)
     set(OPENSSL_VERSION "1.1.1w" PARENT_SCOPE)
   else()
     set(OPENSSL_ROOT_DIR "${DEPENDENCY_INSTALL_PATH}")
-    set(OPENSSL_USE_STATIC_LIBS TRUE)
-
+    
+    if(BUILD_SHARED_LIBS)
+      set(OPENSSL_USE_STATIC_LIBS FALSE)
+      SET(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
+    else()
+      set(OPENSSL_USE_STATIC_LIBS TRUE)
+      SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    endif()
     find_package(OpenSSL REQUIRED)
 
     set(OPENSSL_FOUND "${OPENSSL_FOUND}" PARENT_SCOPE)
