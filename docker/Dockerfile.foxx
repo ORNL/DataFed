@@ -20,6 +20,7 @@ FROM ${DEPENDENCIES} AS foxx-build
 ARG DATAFED_DIR
 ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 
 ENV BUILD_DIR="${BUILD_DIR}"
 ENV DATAFED_DIR="${DATAFED_DIR}"
@@ -35,7 +36,6 @@ COPY ./docker/entrypoint_foxx.sh       ${BUILD_DIR}/docker/entrypoint_foxx.sh
 COPY ./core/database                   ${BUILD_DIR}/core/database
 COPY ./scripts/install_foxx.sh         ${BUILD_DIR}/scripts/
 
-COPY --from=foxx-build ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin
 # Create datafed user, prefer more secure login options than password
 # Recommended to mount ssh public key on run
 RUN adduser --disabled-password --gecos "" datafed
@@ -49,7 +49,6 @@ RUN chown -R datafed:root ${DATAFED_DIR}
 RUN chown -R datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}
 
 RUN curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key; apt-key add - < Release.key
-#RUN wget -q https://www.arangodb.com/repositories/arangodb38/DEBIAN/Release.key -O- | apt-key add -
 RUN echo 'deb https://download.arangodb.com/arangodb38/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 RUN apt update
 RUN apt install arangodb3-client -y
