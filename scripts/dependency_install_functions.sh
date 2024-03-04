@@ -76,6 +76,20 @@ install_protobuf() {
     cd "${PROJECT_ROOT}/external/protobuf"
     git checkout "v${DATAFED_PROTOBUF_VERSION}"
     git submodule update --init --recursive
+    # Build Shared library 
+    cmake -S . -B build \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      -DBUILD_SHARED_LIBS=ON \
+      -Dprotobuf_BUILD_TESTS=OFF \
+      -DABSL_PROPAGATE_CXX_STD=ON \
+      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cmake --build build -j 8
+    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
+      cmake --build build --target install
+    else
+      "$SUDO_CMD" cmake --build build --target install
+    fi
+    # Build static library cannot build at same time apparently
     cmake -S . -B build \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DBUILD_SHARED_LIBS=OFF \
@@ -125,7 +139,10 @@ install_libsodium() {
     cd "${PROJECT_ROOT}/external/libsodium"
     git checkout "$DATAFED_LIBSODIUM_VERSION"
     ./autogen.sh
-    SODIUM_STATIC=1 ./configure --enable-static=yes --enable-shared=no --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    # Build static
+    SODIUM_STATIC=1 ./configure --enable-static=yes --with-pic=yes --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    # Build shared 
+    SODIUM_STATIC=0 ./configure --enable-shared=yes --with-pic=yes --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make check
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
@@ -157,12 +174,14 @@ install_libzmq() {
     git clone https://github.com/zeromq/libzmq.git "${PROJECT_ROOT}/external/libzmq"
     cd "${PROJECT_ROOT}/external/libzmq"
     git checkout "v${DATAFED_LIBZMQ_VERSION}"
+    # Build static
     cmake -S. -B build \
       -DBUILD_STATIC=ON \
       -DBUILD_SHARED_LIBS=OFF \
       -DBUILD_SHARED=OFF \
       -DWITH_LIBSODIUM_STATIC=ON \
       -DBUILD_TESTS=OFF \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DCMAKE_PREFIX_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib" \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
@@ -171,6 +190,23 @@ install_libzmq() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
+    # Build shared
+    cmake -S. -B build \
+      -DBUILD_STATIC=OFF \
+      -DBUILD_SHARED_LIBS=ON \
+      -DBUILD_SHARED=ON \
+      -DWITH_LIBSODIUM_STATIC=OFF \
+      -DBUILD_TESTS=OFF \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      -DCMAKE_PREFIX_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib" \
+      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cmake --build build -j 8
+    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
+      cmake --build build --target install
+    else
+      "$SUDO_CMD" cmake --build build --target install
+    fi
+
 
     if [ -d "${PROJECT_ROOT}/external/cppzmq" ]
     then
@@ -183,7 +219,8 @@ install_libzmq() {
     # Will will not build the unit tests because there are not enough controls
     # to link to the correct static library.
     cmake -S. -B build \
-      -DBUILD_SHARED_LIBS=OFF \
+      -DBUILD_SHARED_LIBS=ON \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DCPPZMQ_BUILD_TESTS=OFF \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
@@ -210,7 +247,10 @@ install_nlohmann_json() {
     cd "${PROJECT_ROOT}/external/json"
     git checkout v${DATAFED_NLOHMANN_JSON_VERSION}
     echo "FILE STRUCTURE $(ls)"
+    # Build shared
     cmake -S . -B build \
+      -DBUILD_SHARED_LIBS=ON \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
@@ -218,7 +258,18 @@ install_nlohmann_json() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    
+    # Build static
+    cmake -S . -B build \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cmake --build build -j 8
+    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
+      cmake --build build --target install
+    else
+      "$SUDO_CMD" cmake --build build --target install
+    fi
+
     # Mark nlohmann_json as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nlohmann_json_installed-${DATAFED_NLOHMANN_JSON_VERSION}"
     cd "$original_dir"
@@ -235,7 +286,10 @@ install_json_schema_validator() {
     git clone https://github.com/pboettch/json-schema-validator "${PROJECT_ROOT}/external/json-schema-validator"
     cd "${PROJECT_ROOT}/external/json-schema-validator"
     git checkout ${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}
+    # Build static 
     cmake -S . -B build \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
@@ -243,7 +297,17 @@ install_json_schema_validator() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    
+    # Build shared
+    cmake -S . -B build \
+      -DBUILD_SHARED_LIBS=ON \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cmake --build build -j 8
+    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
+      cmake --build build --target install
+    else
+      "$SUDO_CMD" cmake --build build --target install
+    fi
     # Mark json-schema-validator as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}"
     cd "$original_dir"
