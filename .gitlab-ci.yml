@@ -172,12 +172,12 @@ build-python-client-base:
     GIT_STRATEGY: clone
   stage: build-deploy-base
   tags:
-    - ci-datafed-repo
     - docker
+    - ci-datafed-client
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+    - docker build -f python/docker/Dockerfile.python-client-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
