@@ -1,6 +1,8 @@
 /.idea/
 build
 cmake/sodium_version
+cmake/curl_version
+cmake/zlib_version
 common/proto/common/Version.proto
 compose/.env
 compose/keys
@@ -15,6 +17,14 @@ core/server/Version.hpp
 docs/.buildinfo
 docs/.doctrees/
 docs/.nojekyll
+external/cppzmq/
+external/json-schema-validator/
+external/json/
+external/libcurl/
+external/libsodium/
+external/libzmq/
+external/openssl/
+external/zlib/
 python/datafed_pkg/datafed/VERSION.py
 python/datafed_pkg/datafed.egg-info/
 python/datafed_pkg/datafed/SDMS_Anon_pb2.py
@@ -32,6 +42,7 @@ scripts/globus/mapping.json
 scripts/admin_datafed_backup.sh
 scripts/admin_refresh_certs.sh
 services/
+tmp/
 web/SDMS.proto
 web/SDMS_Anon.proto
 web/SDMS_Auth.proto
@@ -39,6 +50,7 @@ web/version.js
 web/Version.proto
 web/datafed-core-key.pub
 web/node_modules/
+web/package-lock.json
 web/static/datafed-core-key.pub
 *.swp
 *.swo
