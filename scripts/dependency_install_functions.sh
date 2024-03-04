@@ -76,6 +76,20 @@ install_protobuf() {
     cd "${PROJECT_ROOT}/external/protobuf"
     git checkout "v${DATAFED_PROTOBUF_VERSION}"
     git submodule update --init --recursive
+    # Build static library cannot build at same time apparently
+    # NOTE - static libraries must be built first
+    cmake -S . -B build \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      -DBUILD_SHARED_LIBS=OFF \
+      -Dprotobuf_BUILD_TESTS=OFF \
+      -DABSL_PROPAGATE_CXX_STD=ON \
+      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cmake --build build -j 8
+    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
+      cmake --build build --target install
+    else
+      "$SUDO_CMD" cmake --build build --target install
+    fi
     # Build Shared library 
     cmake -S . -B build \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -89,19 +103,7 @@ install_protobuf() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    # Build static library cannot build at same time apparently
-    cmake -S . -B build \
-      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-      -DBUILD_SHARED_LIBS=OFF \
-      -Dprotobuf_BUILD_TESTS=OFF \
-      -DABSL_PROPAGATE_CXX_STD=ON \
-      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    cmake --build build -j 8
-    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
-      cmake --build build --target install
-    else
-      "$SUDO_CMD" cmake --build build --target install
-    fi
+
     cd python
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -m pip install numpy
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py build
@@ -175,6 +177,7 @@ install_libzmq() {
     cd "${PROJECT_ROOT}/external/libzmq"
     git checkout "v${DATAFED_LIBZMQ_VERSION}"
     # Build static
+    # NOTE - static libraries must be built first
     cmake -S. -B build \
       -DBUILD_STATIC=ON \
       -DBUILD_SHARED_LIBS=OFF \
@@ -218,6 +221,7 @@ install_libzmq() {
     git checkout v"${DATAFED_LIB_ZMQCPP_VERSION}"
     # Will will not build the unit tests because there are not enough controls
     # to link to the correct static library.
+    # NOTE - static libraries must be built first
     cmake -S. -B build \
       -DBUILD_SHARED_LIBS=ON \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -247,9 +251,9 @@ install_nlohmann_json() {
     cd "${PROJECT_ROOT}/external/json"
     git checkout v${DATAFED_NLOHMANN_JSON_VERSION}
     echo "FILE STRUCTURE $(ls)"
-    # Build shared
+    # Build static
     cmake -S . -B build \
-      -DBUILD_SHARED_LIBS=ON \
+      -DBUILD_SHARED_LIBS=OFF \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
@@ -258,9 +262,9 @@ install_nlohmann_json() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    # Build static
+    # Build shared
     cmake -S . -B build \
-      -DBUILD_SHARED_LIBS=OFF \
+      -DBUILD_SHARED_LIBS=ON \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cmake --build build -j 8
