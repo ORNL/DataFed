@@ -218,13 +218,15 @@ build-gcs-base:
 # STAGE: provision client
 ################################################################################
 provision-client:
+
   needs: ["signal"]
   variables:
     GIT_STRATEGY: clone
-    PATH: "/opt/datafed/dependencies/bin:${PATH}"
   stage: provision-client
   tags:
     - ci-datafed-client
+  before_script:
+    - export PATH=/opt/datafed/dependencies/bin:$PATH
   script:
     - ./scripts/generate_datafed.sh
     - ./scripts/install_client_dependencies.sh
