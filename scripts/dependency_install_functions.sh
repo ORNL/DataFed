@@ -76,7 +76,7 @@ install_protobuf() {
     cd "${PROJECT_ROOT}/external/protobuf"
     git checkout "v${DATAFED_PROTOBUF_VERSION}"
     git submodule update --init --recursive
-    # Build static library cannot build at same time apparently
+    # Build static library, cannot build shared library at same time apparently
     # NOTE - static libraries must be built first
     cmake -S . -B build \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -93,6 +93,7 @@ install_protobuf() {
     # Build Shared library 
     # Don't build shared, it messes up the static library linking because the
     # cmake file installed are not compatible
+    # WARNING - static library will break if build with shared options on
     #cmake -S . -B build \
     #  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     #  -DBUILD_SHARED_LIBS=ON \
