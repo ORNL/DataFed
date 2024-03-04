@@ -203,7 +203,7 @@ build-gcs-base:
       if ! docker pull "${GCS_TAG}:${GCS_SUBMODULE_VERSION}-${BRANCH_LOWER}:latest"; then
         cd external/globus-connect-server-deploy/docker
         git checkout "${GCS_SUBMODULE_VERSION}"
-        ./docker-build-gcs.sh "${DISTRO}"
+        docker=$(which docker) ./docker-build-gcs.sh "${DISTRO}"
         LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
         docker tag "$LATEST_IMAGE" "$GCS_TAG:${GCS_SUBMODULE_VERSION}" 
         docker push "$GCS_TAG:${GCS_SUBMODULE_VERSION}"
