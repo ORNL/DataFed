@@ -28,6 +28,16 @@ browser to allow you to see the page.
 Standing up the repo services has been separated because of Globus. You will
 need a machine with firewall exceptions to use it.
 
+
+## Running individual containers
+
+If you just want to run a single container at a time with the same configuration
+this can also be doen using commands like the following.
+
+```bash
+docker run -e UID=$(id -u) --env-file .env -it datafed-web:latest /bin/bash
+```
+
 ## Cleaning up
 
 ```bash
