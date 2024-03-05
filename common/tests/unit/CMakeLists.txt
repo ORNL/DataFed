@@ -18,7 +18,6 @@ foreach(PROG
   include_directories(${PROJECT_SOURCE_DIR}/common/source)
   file(GLOB ${PROG}_SOURCES ${PROG}.cpp)
   add_executable(unit_${PROG} ${${PROG}_SOURCES})
-  message("Boost libraries ${DATAFED_BOOST_LIBRARIES}")
   if(BUILD_SHARED_LIBS)
     target_link_libraries(unit_${PROG} PRIVATE ${DATAFED_BOOST_LIBRARIES}
       common libzmq protobuf::libprotobuf Threads::Threads) 
