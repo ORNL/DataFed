@@ -36,7 +36,10 @@ if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_DEPENDENCIE
     fi
 fi
 
-if [[ ! -v "$LD_LIBRARY_PATH" ]]; then
+# NOTE - LD_LIBRARY_PATH must not be a variable for this to work. You cannot
+# replace ! -v LD_LIBRARY_PATH with ! -v ${LD_LIBRARY_PATH} because this is
+# checking if the variable even exists.
+if [[ ! -v LD_LIBRARY_PATH ]]; then
   LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib"
 else
   if [[ -n "$LD_LIBRARY_PATH" ]]; then
