@@ -95,6 +95,10 @@ install_protobuf() {
     git checkout "v${DATAFED_PROTOBUF_VERSION}"
     git submodule update --init --recursive
     # Build static library, cannot build shared library at same time apparently
+    # there cannot be a shared libsodium file in the
+    # DATAFED_DEPENDENCIES_INSTALL_PREFIX if you want to have everything static
+    # libzmq picks up any shared file regardless of whether you have told it to 
+    # only use static libraries or not.
     # NOTE - static libraries must be built first
     cmake -S . -B build \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -160,10 +164,10 @@ install_libsodium() {
     cd "${PROJECT_ROOT}/external/libsodium"
     git checkout "$DATAFED_LIBSODIUM_VERSION"
     ./autogen.sh
-    # Build static
-    SODIUM_STATIC=1 ./configure --enable-static=yes --with-pic=yes --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    # Build shared 
-    SODIUM_STATIC=0 ./configure --enable-shared=yes --with-pic=yes --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    # Build static ONLY!!!!
+    # Note if zmq detects a shared sodium library it will grab it no matter what
+    # --enable-shared=no must be set here
+    SODIUM_STATIC=1 ./configure --enable-static=yes --enable-shared=no --with-pic=yes --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make -j 8
     make check
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
@@ -196,11 +200,11 @@ install_libzmq() {
     git clone https://github.com/zeromq/libzmq.git "${PROJECT_ROOT}/external/libzmq"
     cd "${PROJECT_ROOT}/external/libzmq"
     git checkout "v${DATAFED_LIBZMQ_VERSION}"
-    # Build static
+    # Build static only
     cmake -S. -B build \
       -DBUILD_STATIC=ON \
-      -DBUILD_SHARED_LIBS=ON \
-      -DBUILD_SHARED=ON \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DBUILD_SHARED=OFF \
       -DWITH_LIBSODIUM_STATIC=ON \
       -DBUILD_TESTS=OFF \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -225,7 +229,7 @@ install_libzmq() {
     # to link to the correct static library.
     # NOTE - static libraries must be built first
     cmake -S. -B build \
-      -DBUILD_SHARED_LIBS=ON \
+      -DBUILD_SHARED_LIBS=OFF \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DCPPZMQ_BUILD_TESTS=OFF \
       -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
