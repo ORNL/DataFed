@@ -49,6 +49,17 @@ else
   fi
 fi
 
+if [[ ! -v PATH ]]; then
+  PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin"
+else
+  if [[ -n "$PATH" ]]; then
+    PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin:$PATH"
+  else
+    PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin"
+  fi
+fi
+
+
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
@@ -115,12 +126,10 @@ install_protobuf() {
     #fi
 
     cd python
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -m pip install numpy
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py build
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py test
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 setup.py install --user
-    python3 setup.py build
-    python3 setup.py install --user
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 -m pip install numpy
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py build
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py test
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py install --user
     cd ../
     # Cleanup build file with root ownership
     if [ -f build/install_manifest.txt ]
