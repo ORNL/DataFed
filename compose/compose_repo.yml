@@ -5,18 +5,15 @@ services:
 
   datafed-repo:
     environment:
-      DATAFED_GLOBUS_APP_SECRET: "${DATAFED_GLOBUS_APP_SECRET}"
-      DATAFED_GLOBUS_APP_ID: "${DATAFED_GLOBUS_APP_ID}"
       DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
       DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
       DATAFED_DOMAIN: "datafed-core"
       DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
-      DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
-      DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
       DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
       DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
       UID: "${DATAFED_UID}"
       HOST_HOSTNAME: "localhost"
+    network_mode: host
     image: datafed-repo:latest
     volumes:
       - ./keys:/opt/datafed/keys

@@ -65,16 +65,6 @@ ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV              LIB_DIR="$LIB_DIR"
 
-# copy necessary shared libraries
-#COPY --from=core-build /libraries/libprotobuf.a           /libraries/libprotobuf.a
-#COPY --from=core-build /libraries/libzmq.a                /libraries/libzmq.a
-#COPY --from=core-build /libraries/libsodium.a             /libraries/libsodium.a
-COPY --from=core-build /libraries/libboost_program_options.so /libraries/libboost_program_options.so
-#RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
-#RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
-#RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
-
 RUN ldconfig
 
 USER datafed
@@ -91,7 +81,6 @@ USER root
 RUN chown -R datafed:root /datafed
 RUN chown -R datafed:root /opt
 
-#SHELL ["/bin/bash"]
 # NOTE docker does not recognize curly braces around variables in entrypoint
 # and CMD
 ENTRYPOINT [ "/datafed/source/core/docker/entrypoint.sh", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]
