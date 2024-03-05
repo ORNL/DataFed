@@ -85,12 +85,17 @@ router.get('/create', function(req, res) {
                     var lname = name.substr(idx + 1),
                         fname = name.substr(0, idx).trim();
 
+                    var is_admin = req.queryParams.is_admin;
+                    if ( g_db.u.count() === 0 ) {
+                      is_admin = true;
+                    }
+
                     var user_data = {
                         _key: req.queryParams.uid,
                         name: name.toLowerCase() + " " + req.queryParams.uid,
                         name_first: fname,
                         name_last: lname,
-                        is_admin: req.queryParams.is_admin,
+                        is_admin: is_admin,
                         max_coll: g_lib.DEF_MAX_COLL,
                         max_proj: g_lib.DEF_MAX_PROJ,
                         max_sav_qry: g_lib.DEF_MAX_SAV_QRY,
