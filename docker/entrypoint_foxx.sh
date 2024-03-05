@@ -23,7 +23,7 @@ if [ ! -f "$install_flag" ]
 then
   su datafed -c "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
-  su datafed -c "cmake -S. -B build						\
+  su datafed -c "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build						\
     -DBUILD_REPO_SERVER=False		\
     -DBUILD_COMMON=False        \
     -DBUILD_AUTHZ=False					\
@@ -34,12 +34,12 @@ then
     -DBUILD_FOXX=True           \
     -DINSTALL_FOXX=True"
 
-  su datafed -c "cmake --build build"
+  su datafed -c "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build"
 
   # Give arango container a minute to initialize
   # should be replaced with health check at some point
   sleep 5
-  su datafed -c "cmake --build build --target install"
+  su datafed -c "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install"
   
   touch "$install_flag"
 fi
