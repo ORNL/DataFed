@@ -36,10 +36,14 @@ if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_DEPENDENCIE
     fi
 fi
 
-if [[ -n "$LD_LIBRARY_PATH" ]]; then
-  LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib:$LD_LIBRARY_PATH"
-else
+if [[ ! -v "$LD_LIBRARY_PATH" ]]; then
   LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib"
+else
+  if [[ -n "$LD_LIBRARY_PATH" ]]; then
+    LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib:$LD_LIBRARY_PATH"
+  else
+    LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib"
+  fi
 fi
 
 install_cmake() {
@@ -287,17 +291,21 @@ install_json_schema_validator() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
+    # WARNING building shared library will overwrite cmake file for static
+    # library, does not appear to support both targets at the same time, similar
+    # to protobuf
+    # 
     # Build shared
-    cmake -S . -B build \
-      -DBUILD_SHARED_LIBS=ON \
-      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-      -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    cmake --build build -j 8
-    if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
-      cmake --build build --target install
-    else
-      "$SUDO_CMD" cmake --build build --target install
-    fi
+    #cmake -S . -B build \
+    #  -DBUILD_SHARED_LIBS=ON \
+    #  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    #  -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    #cmake --build build -j 8
+    #if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
+    #  cmake --build build --target install
+    #else
+    #  "$SUDO_CMD" cmake --build build --target install
+    #fi
     # Mark json-schema-validator as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}"
     cd "$original_dir"
