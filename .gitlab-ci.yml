@@ -381,6 +381,7 @@ build-gcs-authz:
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-python-client:
+  needs: ["build-python-client-base"]
   variables:
     IMAGE_TAG: "datafed/python-client"
     GIT_STRATEGY: clone
