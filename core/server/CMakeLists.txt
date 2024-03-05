@@ -19,7 +19,8 @@ else()
   add_library( datafed-core-lib STATIC ${Sources} )
   target_link_libraries( datafed-core-lib PRIVATE protobuf::libprotobuf Threads::Threads
     "${DATAFED_CURL_LIBRARIES}" "${OPENSSL_SSL_LIBRARY}" "${OPENSSL_CRYPTO_LIBRARY}"
-    "${DATAFED_ZLIB_LIBRARIES}"  ${DATAFED_BOOST_LIBRARIES} libzmq-static nlohmann_json_schema_validator -ldl )
+    "${DATAFED_ZLIB_LIBRARIES}"  "${DATAFED_BOOST_LIBRARIES}" libzmq-static
+    "${DATAFED_JSON_SCHEMA_LIBRARY_PATH}" -ldl )
 endif()
 target_include_directories( datafed-core-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} )
 set_target_properties(datafed-core-lib PROPERTIES POSITION_INDEPENDENT_CODE ON)
