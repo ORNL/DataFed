@@ -369,8 +369,16 @@ build-gcs-authz:
     - ci-datafed-globus
     - docker
   rules:
+    - changes:
+        - repository/gridftp/**/*
+        - scripts/**/*
+        - common/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
+      when: always
     - exists:
-      - "build-ws-base"
+      - "build-gcs-base"
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
