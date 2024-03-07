@@ -461,6 +461,14 @@ install_openssl() {
 install_libcurl() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libcurl_installed-${DATAFED_LIBCURL}" ]; then
     local original_dir=$(pwd)
+    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.zlib_installed-${DATAFED_ZLIB_VERSION}" ]; then
+      echo "You must first install zlib before installing libcurl packages"
+      exit 1
+    fi
+    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}" ]; then
+      echo "You must first install OpenSSL before installing libcurl packages"
+      exit 1
+    fi
     if [ -d "${PROJECT_ROOT}/external/libcurl" ]
     then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libcurl"
@@ -469,7 +477,23 @@ install_libcurl() {
     mkdir -p "${PROJECT_ROOT}/external/libcurl"
     tar -xf "curl-${DATAFED_LIBCURL}.tar.gz" -C "${PROJECT_ROOT}/external/libcurl"
     cd "${PROJECT_ROOT}/external/libcurl/curl-${DATAFED_LIBCURL}"
-    PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" ./configure --with-openssl --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" \
+
+    # Making third party features and dependencies explicit
+    # OpenSSL is needed for HTTPS encryption
+    # NSS - Network Security Services for HTTP support
+    # File - allows caching requires libc
+    # GNUTLS - HTTPS support session management certificate verification etc
+    ./configure --with-openssl --with-ssl --with-gnutls --with-nss --with-zlib \
+      --enable-file --disable-shared \
+      --disable-ldap --disable-ldaps --disable-rtsp --disable-dict \
+      --disable-telnet --disable-tftp --disable-pop3 --disable-imap \
+      --disable-smtp  --disable-gopher --disable-smb --disable-ftp \
+      --disable-file --disable-sspi --without-libidn2 --without-librtmp \
+      --without-winidn --without-libmetalink --without-libpsl \
+      --without-libssh2 --without-nghttp2 --without-brotli --without-libz \
+      --without-libidn --without-libbrotli \
+      --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}" 
     make -j 8
 
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
