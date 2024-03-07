@@ -100,16 +100,7 @@ configure_file(
 file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
 
 if( BUILD_WEB_SERVER )
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js"
-    @ONLY)
-
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/package.json.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/package.json"
-    @ONLY)
-
+  include(./cmake/Web.cmake)
   file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
 endif()
 
