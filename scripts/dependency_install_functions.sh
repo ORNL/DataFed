@@ -63,7 +63,7 @@ fi
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
-    tar -xzvf cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz >/dev/null 2>&1
+    tar -xzvf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz" >/dev/null 2>&1
     cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 
@@ -90,7 +90,9 @@ install_protobuf() {
     # requires the .git folder exist and the current folder be considered a repo
     # this creates problems in docker because each time a commit is made the 
     # .git folder contents are changed causing a fresh rebuild of all containers
-    git clone https://github.com/protocolbuffers/protobuf.git ${PROJECT_ROOT}/external/protobuf
+    git clone "https://github.com/protocolbuffers/protobuf.git" \
+      "${PROJECT_ROOT}/external/protobuf"
+
     cd "${PROJECT_ROOT}/external/protobuf"
     git checkout "v${DATAFED_PROTOBUF_VERSION}"
     git submodule update --init --recursive
