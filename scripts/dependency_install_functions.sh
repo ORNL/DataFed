@@ -496,9 +496,9 @@ install_libcurl() {
       --disable-ldap --disable-ldaps --disable-rtsp --disable-dict \
       --disable-telnet --disable-tftp --disable-pop3 --disable-imap \
       --disable-smtp  --disable-gopher --disable-smb --disable-ftp \
-      --disable-file --disable-sspi --without-libidn2 --without-librtmp \
+      --disable-file --disable-sspi --disable-zstd --without-libidn2 --without-librtmp \
       --without-winidn --without-libpsl \
-      --without-libssh2 --without-nghttp2 --without-brotli --without-libz \
+      --without-libssh2 --without-nghttp2 --without-brotli \
       --without-libidn --without-libbrotli \
       --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}" 
     make -j 8
