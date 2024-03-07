@@ -487,10 +487,10 @@ install_libcurl() {
 
     # Making third party features and dependencies explicit
     # OpenSSL is needed for HTTPS encryption
-    # NSS - Network Security Services for HTTP support
     # File - allows caching requires libc
     # GNUTLS - HTTPS support session management certificate verification etc
-    ./configure --with-openssl --with-ssl --with-gnutls --with-nss --with-zlib \
+    # NOTE: NSS - Network Security Services for HTTP support is deprecated
+    ./configure --with-openssl --with-ssl --with-gnutls --with-zlib \
       --enable-file --disable-shared \
       --disable-ldap --disable-ldaps --disable-rtsp --disable-dict \
       --disable-telnet --disable-tftp --disable-pop3 --disable-imap \
