@@ -490,13 +490,14 @@ install_libcurl() {
     # File - allows caching requires libc
     # GNUTLS - HTTPS support session management certificate verification etc
     # NOTE: NSS - Network Security Services for HTTP support is deprecated
+    # NOTE: metalink - is no longer supported and not a valid argument
     ./configure --with-openssl --with-ssl --with-gnutls --with-zlib \
       --enable-file --disable-shared \
       --disable-ldap --disable-ldaps --disable-rtsp --disable-dict \
       --disable-telnet --disable-tftp --disable-pop3 --disable-imap \
       --disable-smtp  --disable-gopher --disable-smb --disable-ftp \
       --disable-file --disable-sspi --without-libidn2 --without-librtmp \
-      --without-winidn --without-libmetalink --without-libpsl \
+      --without-winidn --without-libpsl \
       --without-libssh2 --without-nghttp2 --without-brotli --without-libz \
       --without-libidn --without-libbrotli \
       --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}" 
