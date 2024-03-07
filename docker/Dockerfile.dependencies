@@ -37,6 +37,10 @@ COPY ./scripts/install_docs_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_repo_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_authz_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
+COPY ./cmake/Web.cmake ${BUILD_DIR}/cmake/Web.cmake
+COPY ./cmake/Version.cmake ${BUILD_DIR}/cmake/Version.cmake
+COPY ./web/package.json.in ${BUILD_DIR}/web/package.json.in
+COPY ./web/version.js.in ${BUILD_DIR}/web/version.js.in
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/generate_datafed.sh
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
@@ -63,4 +67,4 @@ WORKDIR ${BUILD_DIR}
 
 COPY ./common ${BUILD_DIR}/common
 
-# RUN cp -R $HOME/.nvm ${NVM_DIR}
+ RUN cp -R $HOME/.nvm ${NVM_DIR}
