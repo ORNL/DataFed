@@ -491,7 +491,7 @@ install_libcurl() {
     # GNUTLS - HTTPS support session management certificate verification etc
     # NOTE: NSS - Network Security Services for HTTP support is deprecated
     # NOTE: metalink - is no longer supported and not a valid argument
-    ./configure --with-openssl --with-ssl --with-gnutls --with-zlib \
+    ./configure --with-ssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-gnutls --with-zlib \
       --enable-file --disable-shared \
       --disable-ldap --disable-ldaps --disable-rtsp --disable-dict \
       --disable-telnet --disable-tftp --disable-pop3 --disable-imap \
