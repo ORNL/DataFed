@@ -76,9 +76,9 @@ COPY --chown=datafed:root ./scripts/install_ws.sh                ${BUILD_DIR}/sc
 COPY --chown=datafed:root ./cmake/Version.cmake                  ${BUILD_DIR}/cmake/Version.cmake
 COPY --chown=datafed:root ./scripts/utils.sh                     ${BUILD_DIR}/scripts/utils.sh
 COPY --chown=datafed:root ./scripts/export_dependency_version.sh ${BUILD_DIR}/scripts/export_dependency_version.sh
+COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm
 COPY --from=ws-build --chown=datafed:root ${BUILD_DIR}/web ${BUILD_DIR}/web
-COPY --from=ws-build --chown=datafed:root ${DATAFED_INSTALL_PATH} ${DATAFED_INSTALL_PATH}
-COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH} ${DATAFED_DEPENDENCIES_INSTALL_PATH}
+COPY --from=ws-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/web ${DATAFED_INSTALL_PATH}/web
 COPY --from=ws-build --chown=datafed:root /usr/bin/curl /usr/bin/curl
 
 RUN chown -R datafed:root ${DATAFED_INSTALL_PATH}/web
@@ -87,10 +87,7 @@ RUN chown -R datafed:root ${BUILD_DIR}
 WORKDIR ${DATAFED_DIR}
 
 RUN echo "${DATAFED_DIR}"
-RUN . ${BUILD_DIR}/scripts/export_dependency_version.sh && \
-  . ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/nvm.sh && \
-	npm --allow-root --unsafe-perm --prefix ${DATAFED_INSTALL_PATH}/web install
 
 USER root
 
-ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh", "/opt/datafed/web/datafed-ws.js", "/datafed/source/config/datafed-ws.cfg" ]
+ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh", "/datafed/source/web/datafed-ws.js", "/datafed/source/config/datafed-ws.cfg" ]
