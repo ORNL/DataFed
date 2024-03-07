@@ -370,7 +370,13 @@ install_ws_node_packages() {
     echo "You must first install node before installing ws node packages"
     exit 1
   fi
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
+    echo "You must first install cmake before installing ws node packages"
+    exit 1
+  fi
 
+  # Configure the package.json.in file -> package.json
+  cmake -P "${PROJECT_ROOT}/cmake/Web.cmake" 
   export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
   export NODE_VERSION="$DATAFED_NODE_VERSION"
   "$NVM_DIR/nvm-exec" npm --prefix "${PROJECT_ROOT}/web" install "${PROJECT_ROOT}/web"

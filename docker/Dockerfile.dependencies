@@ -36,7 +36,6 @@ COPY ./scripts/install_core_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_docs_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_repo_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_authz_dependencies.sh ${BUILD_DIR}/scripts/
-COPY ./web/package.json ${BUILD_DIR}/web/package.json
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/generate_datafed.sh
 
