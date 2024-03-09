@@ -66,5 +66,3 @@ RUN mkdir -p ${DATAFED_INSTALL_PATH}/keys
 WORKDIR ${BUILD_DIR}
 
 COPY ./common ${BUILD_DIR}/common
-
- RUN cp -R $HOME/.nvm ${NVM_DIR}
