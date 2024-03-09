@@ -98,6 +98,8 @@ COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotoc.a		 
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libzmq.a       ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libzmq.a
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libsodium.a    ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libsodium.a
 
+RUN apt update
+
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
 	${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build	\
 		-DBUILD_REPO_SERVER=False		\
