@@ -25,6 +25,18 @@ then
   exit 1
 fi
 
+CRED_FILE_NAME="client_cred.json"
+if [ -f "$CRED_FILE_NAME" ]; then
+    echo "File exists! $CRED_FILE_NAME"
+else
+    echo "File does not exist. $CRED_FILE_NAME"
+		echo "run the Globus python script first"
+		exit 1
+fi
+
+GCS_CLI_CLIENT_ID=""
+GCS_CLI_CLIENT_SECRET=""
+
 GATEWAY_NAME="${DATAFED_GCS_ROOT_NAME} Storage Gateway"
 COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"

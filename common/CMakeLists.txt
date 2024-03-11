@@ -17,9 +17,15 @@ if( BUILD_COMMON )
     "source/servers/*.cpp"
     "source/support/zeromq/*.cpp"
     "source/sockets/*.cpp")
-  add_library( common STATIC ${Sources})
+  if(BUILD_SHARED_LIBS)
+    add_library( common SHARED ${Sources})
+    target_link_libraries( common PUBLIC ${DATAFED_BOOST_DATE_TIME_LIBRARY_PATH} protobuf::libprotobuf libzmq datafed-protobuf) 
+  else()
+    add_library( common STATIC ${Sources})
+    target_link_libraries( common PUBLIC ${DATAFED_BOOST_DATE_TIME_LIBRARY_PATH} protobuf::libprotobuf libzmq-static datafed-protobuf) 
+  endif()
+  
   set_target_properties(common PROPERTIES POSITION_INDEPENDENT_CODE ON SOVERSION ${DATAFED_COMMON_LIB_MAJOR} VERSION ${DATAFED_COMMON_LIB_MAJOR}.${DATAFED_COMMON_LIB_MINOR}.${DATAFED_COMMON_LIB_PATCH} )
-  target_link_libraries( common Boost::date_time ${Protobuf_LIBRARIES} datafed-protobuf) 
   target_include_directories( common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include )
   target_include_directories( common PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include )
   target_include_directories( common PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source )

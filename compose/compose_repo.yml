@@ -1,0 +1,28 @@
+version: '3.9'
+
+
+services:
+
+  datafed-repo:
+    environment:
+      DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
+      DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
+      DATAFED_DOMAIN: "datafed-core"
+      DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
+      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+      DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
+      UID: "${DATAFED_UID}"
+      HOST_HOSTNAME: "localhost"
+    network_mode: host
+    image: datafed-repo:latest
+    volumes:
+      - ./keys:/opt/datafed/keys
+    ports:
+      - 9000:9000 # Communication core server
+
+
+# External true indicates that the network is created by a
+# separate compose instance
+networks:
+  datafed-core-secure-api:
+    external: true

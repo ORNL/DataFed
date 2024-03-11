@@ -20,6 +20,7 @@ fi
 
 # This is a build config variable
 local_DATAFED_DEPENDENCIES_INSTALL_PATH=""
+
 if [ -z "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]
 then
   local_DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"

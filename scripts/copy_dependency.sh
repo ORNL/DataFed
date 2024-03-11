@@ -5,9 +5,27 @@
 source "$BUILD_DIR/scripts/dependency_versions.sh"
 
 # Define the list of supported libraries and their environment variable names
-supported_libraries=("protobuf" "protoc" "libsodium" "libzmq" "boost_program_options" "boost_filesystem")
-library_env_variables=("DATAFED_FULL_PROTOBUF_VERSION" "DATAFED_FULL_PROTOBUF_VERSION" "DATAFED_LIB_LIBSODIUM_VERSION" "DATAFED_LIB_LIBZMQ_VERSION" "DATAFED_BOOST" "DATAFED_BOOST")
-library_names=("libprotobuf.so" "libprotoc.so" "libsodium.so" "libzmq.so" "libboost_program_options.so" "libboost_filesystem.so")
+supported_libraries=("protobuf" \
+  "protoc" \
+  "libsodium" \
+  "libzmq" \
+  "boost_program_options" \
+  "boost_filesystem")
+
+library_env_variables=("DATAFED_DYNAMIC_LIBRARY_PROTOBUF_VERSION" \
+  "DATAFED_DYNAMIC_LIBRARY_PROTOBUF_VERSION" \
+  "DATAFED_LIB_LIBSODIUM_VERSION" \
+  "DATAFED_LIB_LIBZMQ_VERSION" \
+  "DATAFED_BOOST" \
+  "DATAFED_BOOST")
+
+library_names=("libprotobuf.a" \
+  "libprotoc.a" \
+  "libsodium.a" \
+  "libzmq.a" \
+  "libboost_program_options.so" \
+  "libboost_filesystem.so")
+
 library_locations=("$LIB_DIR" "$LIB_DIR" "$LIB_DIR" "$LIB_DIR" "/lib/x86_64-linux-gnu" "/lib/x86_64-linux-gnu")
 
 LIBRARIES_BASE_PATH="/libraries"
@@ -56,12 +74,18 @@ destination_filename=""
 
 if [ "$direction" == "from" ]; then
   # Copy from versioned to generic filename
-  source_filename="$library_location/$library_name.$library_version"
+  source_filename="$library_location/$library_name"
   destination_filename="$LIBRARIES_BASE_PATH/$library_name"
+  if [[ "$library_name" == *".so" ]]; then
+    source_filename="$source_filename.$library_version"
+  fi
 elif [ "$direction" == "to" ]; then
   # Copy from generic to versioned filename
   source_filename="$LIBRARIES_BASE_PATH/$library_name"
-  destination_filename="$LIB_DIR/$library_name.$library_version"
+  destination_filename="$LIB_DIR/$library_name"
+  if [[ "$library_name" == *".so" ]]; then
+    destination_filename="$destination_filename.$library_version"
+  fi
 else
   echo "Invalid direction. Use 'to' or 'from'."
   exit 1

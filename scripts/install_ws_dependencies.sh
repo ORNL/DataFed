@@ -12,7 +12,7 @@ source "${SOURCE}/dependency_versions.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("curl" "python3" "g++" "make" "wget")
-externals=("cmake")
+externals=("cmake" "nvm" "node" "ws_node_packages")
 
 Help()
 {
@@ -74,14 +74,3 @@ if [[ $local_UNIFY = false ]]; then
     install_dep_by_name "$ext"
   done
 fi
-
-# The foxx services need node version 12 or greater so we aren't going to use the package manager
-# but instead will install ourselves
-
-# 1. Install nvm which will allow us to update node
-install_nvm
-install_node
-
-export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
-export NODE_VERSION="$DATAFED_NODE_VERSION"
-"$NVM_DIR/nvm-exec" npm --prefix "${PROJECT_ROOT}/web" install "${PROJECT_ROOT}/web"

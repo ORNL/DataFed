@@ -15,21 +15,14 @@ docker build \
   "${PROJECT_ROOT}" \
   -t datafed-runtime:latest
 docker build -f \
-  "${PROJECT_ROOT}/core/docker/Dockerfile" \
+  "${PROJECT_ROOT}/repository/docker/Dockerfile" \
   --build-arg DEPENDENCIES="datafed-dependencies" \
   --build-arg RUNTIME="datafed-runtime" \
   "${PROJECT_ROOT}" \
-  -t datafed-core:latest
+  -t datafed-repo:latest
 docker build -f \
-  "${PROJECT_ROOT}/web/docker/Dockerfile" \
+  "${PROJECT_ROOT}/repository/docker/Dockerfile.gcs" \
   --build-arg DEPENDENCIES="datafed-dependencies" \
   --build-arg RUNTIME="datafed-runtime" \
   "${PROJECT_ROOT}" \
-  -t datafed-web:latest
-docker build -f \
-  "${PROJECT_ROOT}/docker/Dockerfile.foxx" \
-  --build-arg DEPENDENCIES="datafed-dependencies" \
-  --build-arg RUNTIME="datafed-runtime" \
-  "${PROJECT_ROOT}" \
-  -t datafed-foxx:latest
-
+  -t datafed-gcs:latest

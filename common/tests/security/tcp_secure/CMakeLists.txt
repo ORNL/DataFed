@@ -1,12 +1,23 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/common/source)
 add_executable(test_tcp_secure_client test_tcp_secure_client.cpp)
-target_link_libraries(test_tcp_secure_client ${Boost_LIBRARIES} common PkgConfig::PkgConfig_ZMQ ${Protobuf_LIBRARIES} Threads::Threads)
-target_compile_definitions(test_tcp_secure_client PRIVATE BOOST_TEST_DYN_LINK)
+
+# Only needed if boost is shared and not static
+if(BUILD_SHARED_LIBS)
+  target_compile_definitions(test_tcp_secure_client PRIVATE BOOST_TEST_DYN_LINK)
+  target_link_libraries(test_tcp_secure_client ${DATAFED_BOOST_LIBRARIES} common libzmq protobuf::libprotobuf Threads::Threads)
+else()
+  target_link_libraries(test_tcp_secure_client ${DATAFED_BOOST_LIBRARIES} common libzmq-static protobuf::libprotobuf Threads::Threads)
+endif()
 
 add_executable(test_tcp_secure_server test_tcp_secure_server.cpp)
-target_link_libraries(test_tcp_secure_server ${Boost_LIBRARIES} common PkgConfig::PkgConfig_ZMQ ${Protobuf_LIBRARIES} Threads::Threads)
-target_compile_definitions(test_tcp_secure_server PRIVATE BOOST_TEST_DYN_LINK)
+# Only needed if boost is shared and not static
+if(BUILD_SHARED_LIBS)
+  target_link_libraries(test_tcp_secure_server ${DATAFED_BOOST_LIBRARIES} common libzmq protobuf::libprotobuf Threads::Threads)
+  target_compile_definitions(test_tcp_secure_server PRIVATE BOOST_TEST_DYN_LINK)
+else()
+  target_link_libraries(test_tcp_secure_server ${DATAFED_BOOST_LIBRARIES} common libzmq-static protobuf::libprotobuf Threads::Threads)
+endif()
 
 find_program(TCPDUMP_CMD NAMES tcpdump)
 find_program(TIMEOUT_CMD NAMES timeout)
