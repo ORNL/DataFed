@@ -6,64 +6,27 @@ import json
 import os
 import sys
 
-
-# Hard coded Native Client ID
-CLIENT_ID = 'f8d0afca-7ac4-4a3c-ac05-f94f5d9afce8'
-# The Globus project the GCS endpoint will be created in
-PROJECT_NAME="Dev Testing"
-
-# This is for confidential client
-CLIENT_NAME = "DataFed Repo Setup Client"
-# Name of the client secret used by the confidential client
-CRED_NAME="DataFed Repo Cred"
-# Name of the file where we will store confidential client credentials
-CRED_FILE_NAME="client_cred.json"
-# Name to give to endpoint
-ENDPOINT_NAME="endpt-DataFed-CADES-test"
-# Path to deployment key
-DEPLOYMENT_KEY_PATH="./deployment-key.json"
-client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
-
-# manage_projects scope to create a project
-# view_identities to user information for creating GCS server
-client.oauth2_start_flow(requested_scopes="openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities", refresh_tokens=True)
-
-authorize_url = client.oauth2_get_authorize_url(query_params={"prompt": "login"})
-print("Please go to this URL and login: \n", authorize_url)
-auth_code = input("Please enter the authorization code: ")
-
-token_response = client.oauth2_exchange_code_for_tokens(auth_code)
-# Extract the token
-refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
-rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
-# auth_client_refresh_token
-ac_rt = AuthClient(authorizer=rt_authorizer)
-
-userinfo = ac_rt.oauth2_userinfo()
-# Will get the primary email and id
-identity_id = userinfo["sub"]
-email = userinfo["email"]
-username = userinfo["preferred_username"]
-organization = userinfo["identity_provider_display_name"]
-
 def getProjectId(projects, project_name):
     for project in projects:
         if project['display_name'] == project_name:
             return project['id']
     return None
 
-
-def createProject(auth_client, project_name, userinfo):
-
-    identity_id = userinfo["sub"]
-    email = userinfo["email"]
-
+def projectExists(auth_client, project_name):
     projects = auth_client.get_projects()
     project_id = getProjectId(projects, project_name)
 
     project_exists = True
     if project_id is None:
         project_exists = False
+    return project_exists
+
+def createProject(auth_client, project_name, userinfo):
+
+    identity_id = userinfo["sub"]
+    email = userinfo["email"]
+
+    project_exists = projectExists(auth_client, project_name)
 
     if project_exists is False:
         project_create_result = auth_client.create_project(
@@ -72,10 +35,11 @@ def createProject(auth_client, project_name, userinfo):
                 admin_ids=[identity_id])
         return project_create_result['project']['id']
 
-    return None
+    projects = auth_client.get_projects()
+    return getProjectId(projects, project_name)
 
 def countProjects(auth_client, project_name):
-    projects = ac_rt.get_projects()
+    projects = auth_client.get_projects()
     count = 0
     for project in projects:
         if project['display_name'] == project_name:
@@ -83,11 +47,19 @@ def countProjects(auth_client, project_name):
     return count
 
 def getClientId(auth_client, client_name, project_id):
-    get_client_result = ac_rt.get_clients()
+    get_client_result = auth_client.get_clients()
     for client in get_client_result['clients']:
         if client['name'] == client_name and client['project'] == project_id:
             return client['id']
     return None
+
+def getAllGCSClientIds(auth_client, project_id, endpoint_name):
+    clients_in_project = getClientsInProject(auth_client, project_id)
+    all_gcs_client_ids = []
+    for client in clients_in_project:
+        if client['client_type'] == "globus_connect_server" and client['name'] == endpoint_name:
+            all_gcs_client_ids.append(client['id'])
+    return all_gcs_client_ids
 
 
 def getClientsInProject(auth_client, project_id):
@@ -161,7 +133,13 @@ def createNewCredential(auth_client, client_id, cred_name, cred_file):
 
     return cred_result['credential']['secret']
 
-def getClientSecret(auth_client, client_id, cred_name, cred_file):
+def getClientSecret(
+        auth_client,
+        client_id,
+        cred_name,
+        cred_id,
+        cred_file):
+
     client_secret = getCredentialFromFile(cred_file, cred_id)
 
     create_new_credential = True
@@ -202,7 +180,7 @@ def createClient(auth_client, client_name, project_id, cred_name, cred_file):
 
     cred_exists_locally, cred_empty = validFile(cred_file)
 
-    client_secret = getClientSecret(auth_client, client_id, cred_name, cred_file)
+    client_secret = getClientSecret(auth_client, client_id, cred_name, cred_id, cred_file)
     return client_id, client_secret 
 
 def getGCSClientIDFromDeploymentFile(deployment_key_file):
@@ -232,7 +210,7 @@ def command_exists(command):
 
 def isGCSDeploymentKeyValid(auth_client, project_id, endpoint_name, gcs_id):
 
-    clients_in_project = getClientsInProject(auth_client, project_id):
+    clients_in_project = getClientsInProject(auth_client, project_id)
     # Check if the deployment key is valid for the project
     for client in clients_in_project:
         if client['client_type'] == "globus_connect_server" and client['name'] == endpoint_name:
@@ -248,6 +226,14 @@ def isGCSDeploymentKeyValid(auth_client, project_id, endpoint_name, gcs_id):
                     print("Found globus_connect_server already registered but did"
                           " not find deployment key locally.")
     return False
+
+
+def deleteAllNonGCSClients(auth_client, project_id):
+    clients = getClientsInProject(auth_client, project_id)
+    for client in clients:
+        if client['project'] == project_id and client['client_type'] != "globus_connect_server":
+            auth_client.delete_client(client['id'])
+
 
 
 def createGCSEndpoint(
@@ -266,7 +252,7 @@ def createGCSEndpoint(
 
     gcs_id_from_deployment_key = getGCSClientIDFromDeploymentFile(deployment_key_file)
 
-    valid_key = isGCSDeploymentKeyValid(auth_client, project_id, endpoint_name, gcs_id_from_deployment_key):
+    valid_key = isGCSDeploymentKeyValid(auth_client, project_id, endpoint_name, gcs_id_from_deployment_key)
 
     if valid_key is False and gcs_id_from_deployment_key:
         print("Looks like deployment key exists but does not contain credentials "
@@ -301,46 +287,10 @@ def createGCSEndpoint(
             for line in process.stdout:
                 print(line, end='')
 
-            deployment_key_exists, deployment_key_empty = valid_file(deployment_key_file)
+            deployment_key_exists, deployment_key_empty = validFile(deployment_key_file)
             if deployment_key_exists is False:
                 print(f"Something is wrong deployment key does not exist {deployment_key_file} ")
                 sys.exit(1)
             if deployment_key_empty:
                 print(f"Something is wrong deployment key is empty {deployment_key_file} ")
                 sys.exit(1)
-
-# Need to determine the project uuid
-project_id = createProject(ac_rt, PROJECT_NAME, userinfo)
-
-count = countProjects(ac_rt, PROJECT_NAME)
-
-if count != 1:
-    print("Something is wrong there should be at least one project with name"
-          f" {PROJECT_NAME} instead there are {count} with that name")
-    sys.exit(1)
-
-client_id, client_secret = createClient(
-        ac_rt,
-        CLIENT_NAME,
-        project_id,
-        CRED_NAME,
-        CRED_FILE_NAME)
-
-# Add the globus client as an admin to the project
-ac_rt.update_project(project_id,admin_ids=[identity_id, client_id])
-
-# Get clients in project
-clients_in_project = getClientsInProject(ac_rt, project_id)
-
-# Check if the deployment key exists if it does read it and verify that the
-# client exists for the globus connect server if it does not then we will
-# call the setup command
-createGCSEndpoint(
-        ac_rt,
-        client_id,
-        client_secret,
-        project_id,
-        DEPLOYMENT_KEY_PATH,
-        ENDPOINT_NAME,
-        userinfo)
-
