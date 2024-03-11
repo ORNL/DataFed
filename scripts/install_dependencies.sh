@@ -105,20 +105,20 @@ then
 fi
 "$SUDO_CMD" "$SOURCE/install_docs_dependencies.sh" unify
 
-all_packages=$(cat $apt_file_path)
+all_packages=$(cat "$apt_file_path")
 IFS=' ' read -r -a all_packages_array <<< "$all_packages"
 deduplicated_packages_array=($(printf "%s\n" "${all_packages_array[@]}" | sort -u))
 echo "DEPENDENCIES (${deduplicated_packages_array[@]})"
 "$SUDO_CMD" apt-get install -y "${deduplicated_packages_array[@]}"
 
-all_pip_packages=$(cat $pip_file_path)
+all_pip_packages=$(cat "$pip_file_path")
 IFS=' ' read -ra all_pip_packages_array <<< "$all_pip_packages"
 if [ ${#all_pip_packages_array[@]} -gt 0 ]; then
   echo "DEPENDENCIES (${all_pip_packages_array[@]})"
   python3 -m pip install "${all_pip_packages_array[@]}"
 fi
 
-all_externals=$(cat $ext_file_path)
+all_externals=$(cat "$ext_file_path")
 IFS=' ' read -r -a all_externals_array <<< "$all_externals"
 # Deduplication must preserve order
 deduplicated_externals_array=($(echo "${all_externals_array[@]}" | awk '{ for (i=1;i<=NF;i++) if (!seen[$i]++) printf("%s ", $i) }'))
@@ -128,9 +128,9 @@ for ext in "${deduplicated_externals_array[@]}"; do
   install_dep_by_name "$ext"
 done
 
-rm $apt_file_path
-rm $ext_file_path
-rm $pip_file_path
+rm "$apt_file_path"
+rm "$ext_file_path"
+rm "$pip_file_path"
 
 if [ "$local_INSTALL_ARANGO" == "TRUE" ]
 then

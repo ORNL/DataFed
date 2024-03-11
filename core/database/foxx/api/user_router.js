@@ -74,7 +74,7 @@ router.get('/create', function(req, res) {
                         throw [g_lib.ERR_AUTHN_FAILED, "Invalid system credentials"];
                     }
 
-                    var i, j, c,
+                    var i, c,
                         time = Math.floor(Date.now() / 1000),
                         name = req.queryParams.name.trim(),
                         idx = name.lastIndexOf(" ");
