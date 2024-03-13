@@ -64,7 +64,7 @@ fi
 
 if [ -z "${DATAFED_HTTPS_SERVER_PORT}" ]
 then
-  local_DATAFED_HTTPS_SERVER_PORT="443"
+  local_DATAFED_HTTPS_SERVER_PORT="8081" # This is not set to 443 since we have nginx in front of the webserver, and we want to be able to run the web server not as a superuser
 else
   local_DATAFED_HTTPS_SERVER_PORT=$(printenv DATAFED_HTTPS_SERVER_PORT)
 fi
