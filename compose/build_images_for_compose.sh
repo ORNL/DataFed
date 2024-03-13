@@ -32,4 +32,3 @@ docker build -f \
   --build-arg RUNTIME="datafed-runtime" \
   "${PROJECT_ROOT}" \
   -t datafed-foxx:latest
-

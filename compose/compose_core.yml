@@ -18,12 +18,11 @@ services:
       DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
       UID: "${DATAFED_UID}"
     image: datafed-web:latest
-    ports:
-      - 443:443 # This must be the same port that is mapped to the host for redirects to work
     volumes:
       - ./keys:/opt/datafed/keys
     networks:
-      - datafed-internal
+      datafed-internal:
+        ipv4_address: 172.16.0.10
 
   datafed-core:
     image: datafed-core:latest
@@ -80,6 +79,17 @@ services:
     networks:
       - datafed-internal
 
+  nginx:
+    image: nginx:latest
+    depends_on: ["datafed-web"]
+    volumes:
+      - ./keys:/keys
+      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
+    ports:
+      - 443:443 # this replaces the port that was open on the datafed-web service
+    networks:
+      - datafed-internal
+
 volumes:
   keys:
 
@@ -88,4 +98,7 @@ networks:
     driver: bridge
   datafed-internal:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.0.0/24
   
