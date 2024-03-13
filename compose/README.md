@@ -43,3 +43,11 @@ docker run -e UID=$(id -u) --env-file .env -it datafed-web:latest /bin/bash
 ```bash
 docker compose -f ./compose_core.yml down
 ```
+
+## Running gcs Docker container
+
+Make sure port 80 is not already bound
+
+```bash
+docker run --env-file .env --network=host --entrypoint /bin/bash -v /home/cloud/compose_collection:/mnt/datafed -v ./globus:/opt/datafed/globus -v ./keys:/opt/datafed/keys -it datafed-gcs:latest
+```
