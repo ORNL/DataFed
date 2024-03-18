@@ -20,6 +20,7 @@ services:
     ports:
       - 9000:9000 # Communication core server
 
+  # Needs host port 80
   datafed-gcs:
     environment:
       DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
@@ -31,10 +32,13 @@ services:
       UID: "${DATAFED_UID}"
       HOST_HOSTNAME: "localhost"
       DATAFED_AUTHZ_USER: "datafed"
+      GCS_COLLECTION_ROOT_PATH: "/mnt/datafed"
     network_mode: host
     image: datafed-gcs:latest
     volumes:
       - ./keys:/opt/datafed/keys
+      - ./globus:/opt/datafed/globus
+      - "${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}"
 
 # External true indicates that the network is created by a
 # separate compose instance
