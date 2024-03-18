@@ -146,8 +146,8 @@ fi
 if [ -z "${DATAFED_GLOBUS_CONTROL_PORT}" ]
 then
   # For compose will set by default to run on a port other than 443 because 
-  # the core metadata services use 443 for the web server
-  local_DATAFED_GLOBUS_CONTROL_PORT="7510"
+  # the core metadata services use 443 for the web server 7510
+  local_DATAFED_GLOBUS_CONTROL_PORT="443"
 else
   local_DATAFED_GLOBUS_CONTROL_PORT=$(printenv DATAFED_GLOBUS_CONTROL_PORT)
 fi
@@ -189,3 +189,15 @@ DATAFED_HOST_CRED_FILE_PATH=${local_DATAFED_HOST_CRED_FILE_PATH}
 DATAFED_GLOBUS_CONTROL_PORT=${local_DATAFED_GLOBUS_CONTROL_PORT}
 DATAFED_GLOBUS_SUBSCRIPTION=${local_DATAFED_GLOBUS_SUBSCRIPTION}
 EOF
+
+unset_env_file_name="unset_env.sh"
+echo "#!/bin/bash" > "${unset_env_file_name}"
+while IFS='=' read -r key value; do
+    # Check if the line contains the '=' sign
+    if [ -n "$value" ]; then
+        # Print the content before the '=' sign
+				echo "unset $key" >> "${unset_env_file_name}"
+    fi
+done < ".env"
+
+chmod +x "$unset_env_file_name"
