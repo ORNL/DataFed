@@ -194,6 +194,10 @@ build-gcs-base:
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - changes:
+        - scripts/dependency_versions.sh
+    - when: manual
   script:
     - version=$(cat ./scripts/dependency_versions.sh | grep DATAFED_GCS_SUBMODULE_VERSION)
     - version=${version//\"/}
@@ -383,6 +387,7 @@ build-gcs-authz:
     - exists:
       - "build-gcs-base"
       when: on_success
+    - when: manual
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
