@@ -364,6 +364,7 @@ build-repo:
 
 build-gcs-authz:
   stage: build
+  needs: ["build-gcs-base"]
   variables:
     IMAGE_TAG: "datafed/gcs-authz"
     GIT_STRATEGY: clone
