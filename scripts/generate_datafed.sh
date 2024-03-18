@@ -159,6 +159,28 @@ else
   local_DATAFED_GOOGLE_ANALYTICS_TAG=$(printenv DATAFED_GOOGLE_ANALYTICS_TAG)
 fi
 
+if [ -z "${DATAFED_GLOBUS_REPO_USER}" ]
+then
+  local_DATAFED_GLOBUS_REPO_USER=""
+else
+  local_DATAFED_GLOBUS_REPO_USER=$(printenv DATAFED_GLOBUS_REPO_USER)
+fi
+
+if [ -z "${DATAFED_CORE_USER}" ]
+then
+  local_DATAFED_CORE_USER=""
+else
+  local_DATAFED_CORE_USER=$(printenv DATAFED_CORE_USER)
+fi
+
+
+if [ -z "${DATAFED_GLOBUS_CONTROL_PORT}" ]
+then
+  local_DATAFED_GLOBUS_CONTROL_PORT="443"
+else
+  local_DATAFED_GLOBUS_CONTROL_PORT=$(printenv DATAFED_GLOBUS_CONTROL_PORT)
+fi
+
 if [ ! -d "$PATH_TO_CONFIG_DIR" ]
 then
   mkdir -p "$PATH_TO_CONFIG_DIR"
@@ -202,7 +224,7 @@ export DATAFED_SERVER_PORT="$local_DATAFED_SERVER_PORT"
 # ************************************************
 # DataFed Repository POSIX user account that DataFed users will be mapped too
 # from Globus, so the posix account all globus users will map too
-export DATAFED_GLOBUS_REPO_USER=""
+export DATAFED_GLOBUS_REPO_USER="$local_DATAFED_GLOBUS_REPO_USER"
 
 # ******************************************************************
 # Env Variables for Authz, Web, Repo Server & administrative scripts
@@ -215,7 +237,7 @@ export DATAFED_DOMAIN="$local_DATAFED_DOMAIN"
 # ************************************************
 export DATAFED_DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
 # The user account the datafed core application will run under
-export DATAFED_CORE_USER=""
+export DATAFED_CORE_USER="$local_DATAFED_CORE_USER"
 
 # ************************************************
 # Env Variables for Web Server
@@ -294,4 +316,7 @@ export DATAFED_REPO_ID_AND_DIR="$local_DATAFED_REPO_ID_AND_DIR"
 # will have the ability to store data on the repository.
 # i.e. ornl.gov, or cu.edu
 export DATAFED_GLOBUS_ALLOWED_DOMAINS=""
+# Globus control port default is 443, might want to change if hosting
+# a web server on the same machine.
+export DATAFED_GLOBUS_CONTROL_PORT="$local_DATAFED_GLOBUS_CONTROL_PORT"
 EOF
