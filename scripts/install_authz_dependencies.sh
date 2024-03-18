@@ -10,9 +10,11 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("libtool" "build-essential" "g++" "gcc" "libboost-all-dev" "autoconf" "automake" "make" "git" "python3-pkg-resources" "python3-pip" "pkg-config" "libglobus-common-dev" "wget" "libssl-dev")
-pip_packages=("setuptools")
-externals=("cmake" "protobuf" "libsodium" "libzmq")
+packages=("libtool" "build-essential" "g++" "gcc" "autoconf"
+  "automake" "make" "git" "python3-pkg-resources" "python3-pip" "pkg-config"
+  "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev")
+pip_packages=("setuptools" "distro" "jwt")
+externals=("cmake" "protobuf" "libsodium" "libzmq" )
 
 local_UNIFY=false
 
