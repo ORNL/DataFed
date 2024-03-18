@@ -190,24 +190,24 @@ build-gcs-base:
     GCS_TAG: "${REGISTRY}/datafed/gcs-ubuntu-focal"
     IMAGE_TAG2: "datafed/gcs-authz-base"
     IMAGE_TAG3: "datafed/gcs-authz"
-    GCS_SUBMODULE_VERSION: "v2.6.0"
   stage: build-deploy-base
   tags:
     - ci-datafed-globus
     - docker
   script:
+    - export $(cat ./scripts/dependency_versions.sh | grep DATAFED_GCS_SUBMODULE_VERSION)
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - >
-      if ! docker pull "${GCS_TAG}:${GCS_SUBMODULE_VERSION}-${BRANCH_LOWER}:latest"; then
+      if ! docker pull "${GCS_TAG}:${DATAFED_GCS_SUBMODULE_VERSION}-${BRANCH_LOWER}:latest"; then
         cd external/globus-connect-server-deploy/docker
-        git checkout "${GCS_SUBMODULE_VERSION}"
-        docker build --progress plain --tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" - < "./docker-files/Dockerfile.${DISTRO}"
+        git checkout "${DATAFED_GCS_SUBMODULE_VERSION}"
+        docker build --progress plain --tag "$GCS_TAG:${DATAFED_GCS_SUBMODULE_VERSION}" - < "./docker-files/Dockerfile.${DISTRO}"
         #LATEST_IMAGE=$(docker images | grep ${DISTRO} | head -n1 | awk '{print $3}')
-        #docker tag "$LATEST_IMAGE" "$GCS_TAG:${GCS_SUBMODULE_VERSION}" 
-        docker push "$GCS_TAG:${GCS_SUBMODULE_VERSION}"
-        docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "${GCS_TAG}-${BRANCH_LOWER}:latest" 
+        #docker tag "$LATEST_IMAGE" "$GCS_TAG:${DATAFED_GCS_SUBMODULE_VERSION}" 
+        docker push "$GCS_TAG:${DATAFED_GCS_SUBMODULE_VERSION}"
+        docker tag "$GCS_TAG:${DATAFED_GCS_SUBMODULE_VERSION}" "${GCS_TAG}-${BRANCH_LOWER}:latest" 
         docker push "${GCS_TAG}-${BRANCH_LOWER}:latest"
         cd ../../../ # back too root of project
       else
