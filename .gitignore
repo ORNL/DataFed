@@ -5,7 +5,9 @@ cmake/curl_version
 cmake/zlib_version
 common/proto/common/Version.proto
 compose/.env
+compose/globus
 compose/keys
+compose/unset_env.sh
 config/datafed.sh
 config/datafed-authz.cfg
 config/datafed-core.cfg
@@ -14,16 +16,19 @@ config/datafed-ws.cfg
 core/database/foxx/api/version_router.js
 core/database/foxx/manifest.json
 core/server/Version.hpp
+dependencies
 docs/.buildinfo
 docs/.doctrees/
 docs/.nojekyll
 external/cppzmq/
+external/globus-connect-server-deploy
 external/json-schema-validator/
 external/json/
 external/libcurl/
 external/libsodium/
 external/libzmq/
 external/openssl/
+external/protobuf/
 external/zlib/
 python/datafed_pkg/datafed/VERSION.py
 python/datafed_pkg/datafed.egg-info/
@@ -41,6 +46,7 @@ scripts/globus/datafed-home-repo-form.json
 scripts/globus/mapping.json
 scripts/admin_datafed_backup.sh
 scripts/admin_refresh_certs.sh
+scripts/globus/__pycache__
 services/
 tmp/
 web/SDMS.proto
