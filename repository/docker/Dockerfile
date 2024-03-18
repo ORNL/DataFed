@@ -46,7 +46,7 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
 	-DBUILD_DOCS=False					\
 	-DBUILD_PYTHON_CLIENT=False	\
 	-DBUILD_FOXX=False
-RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 FROM ${RUNTIME} AS repo
