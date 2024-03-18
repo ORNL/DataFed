@@ -10,15 +10,47 @@ import utils
 # Define your client ID and client secret
 CLIENT_ID = 'f8d0afca-7ac4-4a3c-ac05-f94f5d9afce8' # NATIVE
 
-PROJECT_NAME="Dev Testing"
+# The Globus project the GCS endpoint will be created in
+if os.getenv("DATAFED_GCS_ROOT_NAME") is not None:
+    DATAFED_GCS_ROOT_NAME = os.getenv("DATAFED_GCS_ROOT_NAME")
+else:
+    DATAFED_GCS_ROOT_NAME="DataFed Repo"
 
-CLIENT_NAME = "DataFed Repo Setup Client"
+if os.getenv("DATAFED_GLOBUS_PROJECT_NAME") is not None:
+    PROJECT_NAME=os.getenv("DATAFED_GLOBUS_PROJECT_NAME")
+else:
+    PROJECT_NAME=DATAFED_GCS_ROOT_NAME + " Project"
 
-ENDPOINT_NAME="endpt-DataFed-CADES-test"
-DEPLOYMENT_KEY_PATH="./deployment-key.json"
+# This is for confidential client
+if os.getenv("DATAFED_GLOBUS_CLIENT_NAME") is not None:
+    CLIENT_NAME = os.getenv("DATAFED_GLOBUS_CLIENT_NAME")
+else:
+    CLIENT_NAME = DATAFED_GCS_ROOT_NAME + " Setup Client"
 
-CRED_NAME="DataFed Repo Cred"
-CRED_FILE_NAME="client_cred.json"
+# Name of the client secret used by the confidential client
+if os.getenv("DATAFED_GLOBUS_CRED_NAME") is not None:
+    CRED_NAME=os.getenv("DATAFED_GLOBUS_CRED_NAME")
+else:
+    CRED_NAME= DATAFED_GCS_ROOT_NAME + " Cred"
+
+# Name of the file where we will store confidential client credentials
+if os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH") is not None:
+    CRED_FILE_PATH=os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH")
+else:
+    CRED_FILE_PATH="./client_cred.json"
+
+# Name to give to endpoint
+if os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME") is not None:
+    ENDPOINT_NAME = os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME")
+else:
+    ENDPOINT_NAME= DATAFED_GCS_ROOT_NAME + " Endpoint"
+
+# Path to deployment key
+if os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH") is not None:
+    DEPLOYMENT_KEY_PATH=os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH")
+else:
+    DEPLOYMENT_KEY_PATH="./deployment-key.json"
+
 
 client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
 # manage_projects scope to create a project
@@ -51,7 +83,7 @@ organization = userinfo["identity_provider_display_name"]
 project_exists = utils.projectExists(ac_rt, PROJECT_NAME)
 
 if project_exists is False:
-    print(f"No project with id {project_id} exists! No cleanup is necessary")
+    print(f"No project with name {PROJECT_NAME} exists! No cleanup is necessary")
     sys.exit(0)
 
 projects = ac_rt.get_projects()
@@ -107,7 +139,7 @@ else:
                     CLIENT_NAME,
                     project_id,
                     CRED_NAME,
-                    CRED_FILE_NAME)
+                    CRED_FILE_PATH)
 
 
             ac_rt.update_project(project_id,admin_ids=[identity_id, client_id])
@@ -115,14 +147,19 @@ else:
             bash_command=f"GCS_CLI_CLIENT_ID=\"{client_id}\" GCS_CLI_CLIENT_SECRET=\"{client_secret}\" "
             bash_command+="globus-connect-server endpoint cleanup "
             bash_command+=f" --deployment-key \"{DEPLOYMENT_KEY_PATH}\" "
-            bash_command+=f" --agree-to-delete-endpoint"
+            bash_command+=" --agree-to-delete-endpoint"
             print("Bash command to run")
             print(bash_command)
-           
-            process = subprocess.Popen(bash_command, shell=True,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-            # Print the output
-            for line in process.stdout:
-                print(line, end='')
+          
+            proc = subprocess.Popen(bash_command, stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    universal_newlines=True, shell=True, text=True)
+
+            output, error = proc.communicate(input="yes\n")
+
+            # Print the output and error, if any
+            print("Output:", output)
+            print("Error:", error)
 
 
     # Now we can try to delete the remaining clients that are in the project

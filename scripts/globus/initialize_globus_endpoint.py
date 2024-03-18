@@ -10,19 +10,59 @@ import sys
 
 # Hard coded Native Client ID
 CLIENT_ID = 'f8d0afca-7ac4-4a3c-ac05-f94f5d9afce8'
+
 # The Globus project the GCS endpoint will be created in
-PROJECT_NAME="Dev Testing"
+if os.getenv("DATAFED_GCS_ROOT_NAME") is not None:
+    DATAFED_GCS_ROOT_NAME = os.getenv("DATAFED_GCS_ROOT_NAME")
+else:
+    DATAFED_GCS_ROOT_NAME="DataFed Repo"
+
+if os.getenv("DATAFED_GLOBUS_PROJECT_NAME") is not None:
+    PROJECT_NAME=os.getenv("DATAFED_GLOBUS_PROJECT_NAME")
+else:
+    PROJECT_NAME=DATAFED_GCS_ROOT_NAME + " Project"
 
 # This is for confidential client
-CLIENT_NAME = "DataFed Repo Setup Client"
+if os.getenv("DATAFED_GLOBUS_CLIENT_NAME") is not None:
+    CLIENT_NAME = os.getenv("DATAFED_GLOBUS_CLIENT_NAME")
+else:
+    CLIENT_NAME = DATAFED_GCS_ROOT_NAME + " Setup Client"
+
 # Name of the client secret used by the confidential client
-CRED_NAME="DataFed Repo Cred"
+if os.getenv("DATAFED_GLOBUS_CRED_NAME") is not None:
+    CRED_NAME=os.getenv("DATAFED_GLOBUS_CRED_NAME")
+else:
+    CRED_NAME= DATAFED_GCS_ROOT_NAME + " Cred"
+
 # Name of the file where we will store confidential client credentials
-CRED_FILE_NAME="client_cred.json"
+if os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH") is not None:
+    CRED_FILE_PATH=os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH")
+else:
+    CRED_FILE_PATH="./client_cred.json"
+
 # Name to give to endpoint
-ENDPOINT_NAME="endpt-DataFed-CADES-test"
+if os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME") is not None:
+    ENDPOINT_NAME = os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME")
+else:
+    ENDPOINT_NAME= DATAFED_GCS_ROOT_NAME + " Endpoint"
+
 # Path to deployment key
-DEPLOYMENT_KEY_PATH="./deployment-key.json"
+if os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH") is not None:
+    DEPLOYMENT_KEY_PATH=os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH")
+else:
+    DEPLOYMENT_KEY_PATH="./deployment-key.json"
+
+# Path to deployment key
+if os.getenv("DATAFED_GLOBUS_CONTROL_PORT") is not None:
+    DATAFED_GLOBUS_CONTROL_PORT=os.getenv("DATAFED_GLOBUS_CONTROL_PORT")
+else:
+    DATAFED_GLOBUS_CONTROL_PORT="443"
+
+if os.getenv("DATAFED_GLOBUS_SUBSCRIPTION") is not None:
+    DATAFED_GLOBUS_SUBSCRIPTION=os.getenv("DATAFED_GLOBUS_SUBSCRIPTION")
+else:
+    DATAFED_GLOBUS_SUBSCRIPTION=""
+
 client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
 
 # manage_projects scope to create a project
@@ -63,7 +103,7 @@ client_id, client_secret = utils.createClient(
         CLIENT_NAME,
         project_id,
         CRED_NAME,
-        CRED_FILE_NAME)
+        CRED_FILE_PATH)
 
 # Add the globus client as an admin to the project
 ac_rt.update_project(project_id,admin_ids=[identity_id, client_id])
@@ -81,5 +121,7 @@ utils.createGCSEndpoint(
         project_id,
         DEPLOYMENT_KEY_PATH,
         ENDPOINT_NAME,
+        DATAFED_GLOBUS_CONTROL_PORT,
+        DATAFED_GLOBUS_SUBSCRIPTION,
         userinfo)
 

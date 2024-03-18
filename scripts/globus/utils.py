@@ -107,11 +107,34 @@ def validFile(file_name):
 def getCredentialFromFile(cred_file_name, cred_id):
     # Check to see if the local secret is the same id and not just the same
     # name
-    with open(cred_file_name, 'r') as f:
-        loaded_data = json.load(f)
-        if loaded_data['client'] == cred_id:
-            return loaded_data['secret']
+    cred_exists_locally, cred_empty = validFile(cred_file_name)
+    if cred_empty is False:
+        with open(cred_file_name, 'r') as f:
+            loaded_data = json.load(f)
+            if loaded_data['client'] == cred_id:
+                return loaded_data['secret']
     return None
+
+def getClientIdFromCredFile(cred_file_name):
+    # Check to see if the local secret is the same id and not just the same
+    # name
+    cred_exists_locally, cred_empty = validFile(cred_file_name)
+    if cred_empty is False:
+        with open(cred_file_name, 'r') as f:
+            loaded_data = json.load(f)
+            return loaded_data['client']
+    return None
+
+def getEndpointIdFromFile(deployment_key_file_path):
+    # Check to see if the local secret is the same id and not just the same
+    # name
+    exists_locally, empty = validFile(deployment_key_file_path)
+    if empty is False:
+        with open(deployment_key_file_path, 'r') as f:
+            loaded_data = json.load(f)
+            return loaded_data['client_id']
+    return None
+
 
 def createNewCredential(auth_client, client_id, cred_name, cred_file):
 
@@ -243,6 +266,8 @@ def createGCSEndpoint(
         project_id,
         deployment_key_file,
         endpoint_name,
+        control_port,
+        subscription_id,
         userinfo):
 
     identity_id = userinfo["sub"]
@@ -276,7 +301,7 @@ def createGCSEndpoint(
             bash_command+=f" --project-id \"{project_id}\"  "
             bash_command+=" --agree-to-letsencrypt-tos "
             bash_command+=f" --project-admin \"{username}\" "
-            bash_command+=f" --owner \"{username}\" "
+            bash_command+=f" --owner \"{client_id}@clients.auth.globus.org\" "
             bash_command+=f" --contact-email \"{email}\" "
             bash_command+=f" --deployment-key \"{deployment_key_file}\" "
             print("Bash command to run")
@@ -294,3 +319,27 @@ def createGCSEndpoint(
             if deployment_key_empty:
                 print(f"Something is wrong deployment key is empty {deployment_key_file} ")
                 sys.exit(1)
+
+    # WARNING!!!!!!
+    # This will not work if a node does not first exist, I think at least one
+    # node must be running.
+    #if len(subscription_id) != 0:
+    #    if command_exists("globus-connect-server") is False:
+    #        print("Cannot create deployment key, we require globus-connect-server to be installed")
+    #        sys.exit(1)
+    #    else:
+    #        endpoint_id = getEndpointIdFromFile(deployment_key_file)
+
+    #        bash_command=f"GCS_CLI_CLIENT_ID=\"{client_id}\" "
+    #        bash_command+=f" GCS_CLI_CLIENT_SECRET=\"{client_secret}\" "
+    #        bash_command+=f" GCS_CLI_ENDPOINT_ID=\"{endpoint_id}\" "
+    #        bash_command+=" globus-connect-server endpoint update "
+    #        bash_command+=f" --subscription-id \"{subscription_id}\" "
+    #        print(bash_command)
+    #        
+    #        process = subprocess.Popen(bash_command, shell=True,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    #        # Print the output
+    #        for line in process.stdout:
+    #            print(line, end='')
+
+
