@@ -360,20 +360,32 @@ class API:
     #
     # Prints all set settings with key, value, and source information
     #
-    def printSettingInfo(self):
+    def printSettingInfo(self, priority=None):
+        if priority:
+            if priority < 1 or priority > 5:
+                raise Exception(
+                    "Unsupported priority encountered cannot print "
+                    "settings for the provided priority."
+                )
+
         p = 0
         for k, v in self._opts.items():
             p = v["pri"]
-            if p == 5:
-                print('  {} = "{}" (assumed)'.format(k, v["val"]))
-            elif p == 4:
-                print('  {} = "{}" from {}'.format(k, v["val"], _opt_info[k][2]))
-            elif p == 3:
-                print('  {} = "{}" from server config file'.format(k, v["val"]))
-            elif p == 2:
-                print('  {} = "{}" from client config file'.format(k, v["val"]))
-            elif p == 1:
-                print('  {} = "{}" from CLI option'.format(k, v["val"]))
+            if priority is None:
+                # Print everything
+                if p == 5:
+                    print('  {} = "{}" (assumed)'.format(k, v["val"]))
+                elif p == 4:
+                    print('  {} = "{}" from {}'.format(k, v["val"], _opt_info[k][2]))
+                elif p == 3:
+                    print('  {} = "{}" from server config file'.format(k, v["val"]))
+                elif p == 2:
+                    print('  {} = "{}" from client config file'.format(k, v["val"]))
+                elif p == 1:
+                    print('  {} = "{}" from CLI option'.format(k, v["val"]))
+            else:
+                if p == priority:
+                    print('  {} = "{}" '.format(k, v["val"]))
 
     ##
     # @brief Get dictionary of all set configuration options.
