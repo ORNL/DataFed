@@ -63,7 +63,7 @@ else:
 if os.getenv("DATAFED_GLOBUS_SUBSCRIPTION") is not None:
     DATAFED_GLOBUS_SUBSCRIPTION=os.getenv("DATAFED_GLOBUS_SUBSCRIPTION")
 else:
-    DATAFED_GLOBUS_SUBSCRIPTION=""
+    DATAFED_GLOBUS_SUBSCRIPTION=None
 
 client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
 
@@ -139,45 +139,45 @@ utils.createGCSEndpoint(
         DEPLOYMENT_KEY_PATH,
         ENDPOINT_NAME,
         DATAFED_GLOBUS_CONTROL_PORT,
-        DATAFED_GLOBUS_SUBSCRIPTION,
         userinfo)
 
+if DATAFED_GLOBUS_SUBSCRIPTION is not None:
 # Create subscription subgroup
-results = gr_rt.get_group_by_subscription_id(DATAFED_GLOBUS_SUBSCRIPTION)
+    results = gr_rt.get_group_by_subscription_id(DATAFED_GLOBUS_SUBSCRIPTION)
 
-parent_group_id=results["group_id"]
-print("Groups by sub")
-print(results)
-group_name = f"{DATAFED_GCS_ROOT_NAME} Group Creator: {username}"
+    parent_group_id=results["group_id"]
+    print("Groups by sub")
+    print(results)
+    group_name = f"{DATAFED_GCS_ROOT_NAME} Group Creator: {username}"
 
-if groupExists(gr_rt, group_name):
-    group_id = getGroupId(gr_rt, group_name)
-else:
+    if utils.groupExists(gr_rt, group_name):
+        group_id = utils.getGroupId(gr_rt, group_name)
+    else:
+        package = {
+                "name": group_name,
+                "description": "DataFed Repository Subscription Group, used for"
+                "granting access to the application client to setup the repository in "
+                "Globus",
+                "parent_id": str(parent_group_id)
+                }
+
+
+        result = gr_rt.create_group(package)
+        group_id = result['id']
+
+    print("group id")
+    print(group_id)
+
+    batch = globus_sdk.BatchMembershipActions()
+    batch.add_members(client_id, role="admin")
+    result = gr_rt.batch_membership_action(group_id, batch)
+
+    print("membership_action")
+    print(result)
     package = {
-            "name": group_name,
-            "description": "DataFed Repository Subscription Group, used for"
-            "granting access to the application client to setup the repository in "
-            "Globus",
-            "parent_id": str(parent_group_id)
+        "subscription_id": DATAFED_GLOBUS_SUBSCRIPTION
             }
-
-
-    result = gr_rt.create_group(package)
-    group_id = result['id']
-
-print("group id")
-print(group_id)
-
-batch = globus_sdk.BatchMembershipActions()
-batch.add_members(client_id, role="admin")
-result = gr_rt.batch_membership_action(group_id, batch)
-
-print("membership_action")
-print(result)
-package = {
-    "subscription_id": DATAFED_GLOBUS_SUBSCRIPTION
-        }
-result = gr_rt.update_group(group_id, package)
-print("update group")
-print(result)
+    result = gr_rt.update_group(group_id, package)
+    print("update group")
+    print(result)
 
