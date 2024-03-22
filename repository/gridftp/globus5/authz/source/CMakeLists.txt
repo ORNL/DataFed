@@ -11,7 +11,9 @@ target_compile_options(datafed-authz PRIVATE -fPIC)
 SET_TARGET_PROPERTIES( datafed-authz PROPERTIES LINKER_LANGUAGE CXX )
 set_target_properties(datafed-authz PROPERTIES POSITION_INDEPENDENT_CODE ON SOVERSION ${DATAFED_AUTHZ_MAJOR} VERSION ${DATAFED_AUTHZ_MAJOR}.${DATAFED_AUTHZ_MINOR}.${DATAFED_AUTHZ_PATCH})
 add_dependencies( datafed-authz common)
-
+if ( NOT BUILD_AUTHZ_WITH_SYSLOG )
+  target_compile_definitions(datafed-authz PRIVATE DONT_USE_SYSLOG)
+endif()
 
 if(BUILD_SHARED_LIBS)
   target_link_libraries( datafed-authz common Threads::Threads libzmq
