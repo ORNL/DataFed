@@ -292,7 +292,6 @@ def createGCSEndpoint(
         deployment_key_file,
         endpoint_name,
         control_port,
-        subscription_id,
         userinfo):
 
     identity_id = userinfo["sub"]
