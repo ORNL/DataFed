@@ -33,6 +33,14 @@ else
   CRED_FILE_PATH="$DATAFED_GLOBUS_CRED_FILE_PATH"
 fi
 
+if [ -z "${DATAFED_GLOBUS_SUBSCRIPTION}" ]
+then
+  echo "DATAFED_GLOBUS_SUBSCRIPTION not defined"
+  DATAFED_GLOBUS_SUBSCRIPTION=""
+else
+  DATAFED_GLOBUS_SUBSCRIPTION=$(printenv DATAFED_GLOBUS_SUBSCRIPTION)
+fi
+
 if [ -f "$CRED_FILE_PATH" ]; then
     echo "File exists! $CRED_FILE_PATH"
 else
@@ -70,7 +78,9 @@ cat << EOF > mapping.json
 EOF
 
 #DOMAINS="--domain ornl.gov --domain clients.auth.globus.org --domain gmail.com"
-DOMAINS="--domain ornl.gov"
+# For the Globus client to create the guest collection need to allow client
+# from the domain
+DOMAINS="--domain ornl.gov --domain clients.auth.globus.org"
 
 echo "{" > path_restriction.json
 echo "  \"DATA_TYPE\": \"path_restrictions#1.0.0\"," >> path_restriction.json
@@ -110,28 +120,36 @@ spaces_in_name=$(echo $GATEWAY_NAME | awk '{print gsub("[ \t]",""); exit}')
 columns=$(( $spaces_in_name + 3 ))
 uuid_of_storage_gateway=$( globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" | awk -v col=$columns '{ print $col }')
 
+# If not empty
+extra_collection_arg=""
+if [ -n "${DATAFED_GLOBUS_SUBSCRIPTION}" ]
+then
+  globus-connect-server endpoint set-subscription-id "${DATAFED_GLOBUS_SUBSCRIPTION}"
+  extra_collection_arg="--allow-guest-collections"
+fi
+
 if [ -z "$collection_line" ]
 then
 
+  # NOTE enable-anonymous-writes is allowed without a subscription
+  # NOTE allow-guest-collections requires a subscription
   globus-connect-server collection create \
     "$uuid_of_storage_gateway" \
     "/" \
     "$COLLECTION_NAME" \
-    --enable-anonymous-writes \
-    --allow-guest-collections \
     --default-directory "${GCS_COLLECTION_ROOT_PATH}" \
-    --disable-https
+    --enable-anonymous-writes \
+    --disable-https "$extra_collection_arg"
 else
 
   uuid_of_collection=$( globus-connect-server collection list | grep "$COLLECTION_NAME" | awk '{ print $1 }')
-  
+  # NOTE enable-anonymous-writes is allowed without a subscription
+  # NOTE allow-guest-collections requires a subscription
   globus-connect-server collection update \
     "$uuid_of_collection" \
-    --enable-anonymous-writes \
-    --allow-guest-collections \
     --default-directory "${GCS_COLLECTION_ROOT_PATH}" \
-    --disable-https
-
+    --enable-anonymous-writes \
+    --disable-https "$extra_collection_arg"
 fi
 
 echo "When creating a guest collection it must be created in: $GCS_COLLECTION_ROOT_PATH"
