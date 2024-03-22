@@ -12,7 +12,7 @@ ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV GCS_COLLECTION_ROOT_PATH="/mnt/datafed"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 
-RUN mkdir -p ${BUILD_DIR}/logs
+RUN mkdir -p ${DATAFED_INSTALL_PATH}/logs
 RUN mkdir -p ${BUILD_DIR}/common/proto
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/authz
 RUN mkdir -p ${DATAFED_DIR}/collections/mapped
@@ -56,6 +56,7 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&\
  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build -DBUILD_REPO_SERVER=False -DBUILD_AUTHZ=True \
+                    -DBUILD_AUTHZ_WITH_SYSLOG=False   \
                     -DBUILD_CORE_SERVER=False -DBUILD_WEB_SERVER=False \
                     -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
                     -DBUILD_FOXX=False && \
