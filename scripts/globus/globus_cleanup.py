@@ -188,5 +188,5 @@ if project_exists:
 # Now trying to clean up groups
 group_display_name = f"{DATAFED_GCS_ROOT_NAME} Group Creator: {username}"
 
-deleteGroup(group_display_name)
+utils.deleteGroup(group_display_name)
 
