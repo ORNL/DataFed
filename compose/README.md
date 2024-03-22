@@ -50,5 +50,12 @@ Make sure port 80 is not already bound. Also note that the repo server keys
 should exist in the keys folder before running the gcs instance.
 
 ```bash
-docker run --env-file .env --network=host --entrypoint /bin/bash -v /home/cloud/compose_collection:/mnt/datafed -v ./globus:/opt/datafed/globus -v ./keys:/opt/datafed/keys -it datafed-gcs:latest
+docker run --env-file .env \
+  --network=host \
+  --entrypoint /bin/bash \ 
+  -v /home/cloud/compose_collection:/mnt/datafed \
+  -v ./globus:/opt/datafed/globus \
+  -v ./logs:/datafed/logs \
+  -v ./keys:/opt/datafed/keys \
+  -it datafed-gcs:latest
 ```
