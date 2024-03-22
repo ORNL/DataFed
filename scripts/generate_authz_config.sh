@@ -30,6 +30,13 @@ Help()
 
 REPO_ID="datafed-home"
 
+if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
+then
+  local_DATAFED_LOG_PATH="/var/log/datafed"
+else
+  local_DATAFED_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
+fi
+
 if [ -z "DATAFED_DOMAIN" ]
 then
   local_DATAFED_DOMAIN="datafed.ornl.gov"
@@ -115,6 +122,7 @@ server_key=${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub
 repo_id=repo/$DATAFED_REPO_ID_AND_DIR
 pub_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.pub
 priv_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.priv
+log_path=${local_DATAFED_LOG_PATH}/datafed-gsi-authz.log
 user=$local_DATAFED_AUTHZ_USER
 globus-collection-path=$local_GCS_COLLECTION_ROOT_PATH
 EOF
