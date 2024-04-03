@@ -194,8 +194,14 @@ build-gcs-base:
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - changes:
+        - scripts/dependency_versions.sh
+    - when: manual
   script:
-    - export $(cat ./scripts/dependency_versions.sh | grep DATAFED_GCS_SUBMODULE_VERSION)
+    - version=$(cat ./scripts/dependency_versions.sh | grep DATAFED_GCS_SUBMODULE_VERSION)
+    - version=${version//\"/}
+    - export $version
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
@@ -362,6 +368,7 @@ build-repo:
 
 build-gcs-authz:
   stage: build
+  needs: ["build-gcs-base"]
   variables:
     IMAGE_TAG: "datafed/gcs-authz"
     GIT_STRATEGY: clone
@@ -380,6 +387,7 @@ build-gcs-authz:
     - exists:
       - "build-gcs-base"
       when: on_success
+    - when: manual
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
