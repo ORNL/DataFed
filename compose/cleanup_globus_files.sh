@@ -31,6 +31,7 @@ fi
 
 sudo globus-connect-server node cleanup
 
+DATAFED_GCS_ROOT_NAME="$DATAFED_GCS_ROOT_NAME" \
 python3 "${PROJECT_ROOT}/scripts/globus/globus_cleanup.py"
 
 #rm -rf "${PROJECT_ROOT}/compose/globus"
