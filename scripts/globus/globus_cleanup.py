@@ -167,8 +167,8 @@ if project_exists:
                 output, error = proc.communicate(input="yes\n")
 
                 # Print the output and error, if any
-                print("Output:", output)
-                print("Error:", error)
+                print(output)
+                print(error)
 
 
         # Now we can try to delete the remaining clients that are in the project
@@ -186,7 +186,7 @@ if project_exists:
     print(project_remove)
 
 # Now trying to clean up groups
-group_display_name = f"{DATAFED_GCS_ROOT_NAME} Group Creator: {username}"
+group_display_name = f"{DATAFED_GCS_ROOT_NAME} Group"
 
-utils.deleteGroup(group_display_name)
+utils.deleteGroup(gr_rt, group_display_name)
 

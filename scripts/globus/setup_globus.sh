@@ -13,9 +13,9 @@ then
   exit 1
 fi
 
-if [ -z "$GCS_COLLECTION_ROOT_PATH" ]
+if [ -z "$DATAFED_GCS_COLLECTION_ROOT_PATH" ]
 then
-  echo "GCS_COLLECTION_ROOT_PATH is not defined cannot run $SCRIPT"
+  echo "DATAFED_GCS_COLLECTION_ROOT_PATH is not defined cannot run $SCRIPT"
   exit 1
 fi
 
@@ -84,7 +84,7 @@ DOMAINS="--domain ornl.gov --domain clients.auth.globus.org"
 
 echo "{" > path_restriction.json
 echo "  \"DATA_TYPE\": \"path_restrictions#1.0.0\"," >> path_restriction.json
-echo "  \"read_write\": [\"${GCS_COLLECTION_ROOT_PATH}\"]" >> path_restriction.json
+echo "  \"read_write\": [\"${DATAFED_GCS_COLLECTION_ROOT_PATH}\"]" >> path_restriction.json
 echo "}" >> path_restriction.json
 
 if [ -z "$gateway_line" ]
@@ -111,8 +111,8 @@ else
 fi
 
 # Create project/ and /user folders
-mkdir -p "${GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}/user"
-mkdir -p "${GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}/project"
+mkdir -p "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}/user"
+mkdir -p "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}/project"
 
 collection_line=$( globus-connect-server collection list | grep "$COLLECTION_NAME" )
 
@@ -137,7 +137,7 @@ then
     "$uuid_of_storage_gateway" \
     "/" \
     "$COLLECTION_NAME" \
-    --default-directory "${GCS_COLLECTION_ROOT_PATH}" \
+    --default-directory "${DATAFED_GCS_COLLECTION_ROOT_PATH}" \
     --enable-anonymous-writes \
     --disable-https "$extra_collection_arg"
 else
@@ -147,14 +147,14 @@ else
   # NOTE allow-guest-collections requires a subscription
   globus-connect-server collection update \
     "$uuid_of_collection" \
-    --default-directory "${GCS_COLLECTION_ROOT_PATH}" \
+    --default-directory "${DATAFED_GCS_COLLECTION_ROOT_PATH}" \
     --enable-anonymous-writes \
     --disable-https "$extra_collection_arg"
 fi
 
-echo "When creating a guest collection it must be created in: $GCS_COLLECTION_ROOT_PATH"
+echo "When creating a guest collection it must be created in: $DATAFED_GCS_COLLECTION_ROOT_PATH"
 echo "And the display name should be exactly: $GUEST_COLLECTION_NAME"
 echo "You will also need to add permissions for all Globus users so that they have write access."
 echo ""
 echo "When registering the repository with DataFed the ID must be: $DATAFED_REPO_ID_AND_DIR"
-echo "When registering the repository with DataFed path is abs to the mapped collection and must be listed as: ${GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
+echo "When registering the repository with DataFed path is abs to the mapped collection and must be listed as: ${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"

@@ -94,6 +94,8 @@ def getCredentialID(auth_client, client_id, cred_name):
 
 def groupExists(client, group_name):
     my_groups = client.get_my_groups()
+    print("My groups")
+    print(my_groups)
     for group in my_groups:
         if group["name"] == group_name:
             return True

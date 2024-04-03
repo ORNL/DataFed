@@ -105,7 +105,10 @@ print(userinfo)
 organization = userinfo["identity_provider_display_name"]
 
 # Need to determine the project uuid
-project_id = utils.createProject(ac_rt, PROJECT_NAME, userinfo)
+if utils.projectExists(ac_rt, PROJECT_NAME) == False:
+    project_id = utils.createProject(ac_rt, PROJECT_NAME, userinfo)
+else:
+    project_id = utils.getProjectId(ac_rt, PROJECT_NAME, userinfo)
 
 count = utils.countProjects(ac_rt, PROJECT_NAME)
 
@@ -148,11 +151,13 @@ if DATAFED_GLOBUS_SUBSCRIPTION is not None:
     parent_group_id=results["group_id"]
     print("Groups by sub")
     print(results)
-    group_name = f"{DATAFED_GCS_ROOT_NAME} Group Creator: {username}"
+    group_name = f"{DATAFED_GCS_ROOT_NAME} Group"
 
     if utils.groupExists(gr_rt, group_name):
+        print("Group exists already")
         group_id = utils.getGroupId(gr_rt, group_name)
     else:
+        print(f"Group does not exist {group_name}")
         package = {
                 "name": group_name,
                 "description": "DataFed Repository Subscription Group, used for"

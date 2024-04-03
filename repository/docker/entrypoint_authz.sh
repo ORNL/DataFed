@@ -9,7 +9,7 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../..)
 # Translate datafed env variables to globus env variables
 
-export GCS_COLLECTION_ROOT_PATH=/mnt/datafed
+export DATAFED_GCS_COLLECTION_ROOT_PATH=/mnt/datafed
 # This env variables are needed for running globus-connect-server without
 # logging in
 
@@ -23,7 +23,7 @@ export GLOBUS_CLIENT_ID=$(cat /opt/datafed/globus/client_cred.json  | jq -r .cli
 export GLOBUS_CLIENT_SECRET=$(cat /opt/datafed/globus/client_cred.json  | jq -r .secret)
 export DEPLOYMENT_KEY=$(cat "$DEPLOYMENT_KEY_PATH"  )
 
-chown -R datafed:root ${GCS_COLLECTION_ROOT_PATH}
+chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
 
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 

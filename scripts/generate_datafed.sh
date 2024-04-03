@@ -295,18 +295,18 @@ export DATAFED_GCS_ROOT_NAME="$local_DATAFED_GCS_ROOT_NAME"
 #
 # The path will be created if it does not exist
 # 
-# \$GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR"
+# \$DATAFED_GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR"
 #
 # So if these variables are defined as:
 # DATAFED_GCS_ROOT_NAME="datafed-home"
-# GCS_COLLECTION_ROOT_PATH="/home/cades/collections/mapped/"
+# DATAFED_GCS_COLLECTION_ROOT_PATH="/home/cades/collections/mapped/"
 # 
 # A folder named 
 #
 # "/home/cades/collections/mapped/datafed-home"
 #
 # Will be created
-export GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH"
+export DATAFED_GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH"
 # The DataFed repo id, this also must be the name
 # of the directory that will be placed in Globus 
 # collection, avoid using spaces in the name.
