@@ -11,6 +11,7 @@ services:
       DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
       DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
       DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
+      DATAFED_GCS_COLLECTION_ROOT_PATH: "/mnt/datafed"
       UID: "${DATAFED_UID}"
       HOST_HOSTNAME: "localhost"
     network_mode: host
@@ -32,7 +33,7 @@ services:
       UID: "${DATAFED_UID}"
       HOST_HOSTNAME: "localhost"
       DATAFED_AUTHZ_USER: "datafed"
-      GCS_COLLECTION_ROOT_PATH: "/mnt/datafed"
+      DATAFED_GCS_COLLECTION_ROOT_PATH: "/mnt/datafed"
     network_mode: host
     image: datafed-gcs:latest
     volumes:
