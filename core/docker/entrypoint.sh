@@ -20,8 +20,10 @@ log_path="$DATAFED_DEFAULT_LOG_PATH"
 
 if [ ! -d "${log_path}" ]
 then
-  su -c "mkdir -p ${log_path}" datafed
+  su datafed -c "mkdir -p ${log_path}"
 fi
+
+chown datafed:datafed "${log_path}"
 
 echo "Number of arguments is $#"
 echo "arguments are $@"
@@ -32,16 +34,20 @@ if [ "$#" -eq 0 ]; then
   exit 0
 fi
 
+# /usr/glibc-compat/bin/ldd $1
+
 datafed_core_exec=$(basename "$1")
 if [ "${datafed_core_exec}" = "datafed-core" ]
 then
   # Send output to log file
   # For this to work all commands must be passed in as a single string
-  su datafed -c '"$@"' -- argv0 "$@" 2>&1 | su datafed -c "tee $log_path/datafed-core.log"
+  # su datafed -c '"$@"' 2>&1 | su datafed -c "tee $log_path/datafed-core.log"
+  $@ 2>&1
+  # su datafed -c '"$@"' 2>&1 | su datafed -c "tee $log_path/datafed-core.log"
 else
   echo "Not sending output to datafed-core.log"
   # If not do not by default send to log file
-  su datafed -c '"$@"' -- argv0 "$@"
+  su datafed -c '"$@"'
 fi
 
 echo "Give a few minutes to debug the problem"

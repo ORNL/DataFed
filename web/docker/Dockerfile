@@ -50,11 +50,12 @@ RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target instal
 
 FROM ${RUNTIME} AS ws
 
-SHELL ["/bin/bash", "-c"]
+# SHELL ["/bin/bash", "-c"]
 ARG DATAFED_DIR
 ARG DATAFED_INSTALL_PATH
 ARG BUILD_DIR
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
+ARG PYTHON_VERSION=3.10.12
 
 # The above should also be available at runtime
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
@@ -62,24 +63,55 @@ ENV DATAFED_DEPENDENCIES_INSTALL_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH"
 ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 
-RUN apt install -y python3 make g++
+RUN apk add \
+    make \
+    build-base \
+    zlib-dev \
+    curl \
+    bzip2-dev \
+    openssl-dev \
+    linux-headers \
+    musl-dev \
+    libffi-dev
+
+# download and extract python sources
+RUN cd /opt \
+    && wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \                                              
+    && tar xzf Python-${PYTHON_VERSION}.tgz
+
+# build python and remove left-over sources
+RUN cd /opt/Python-${PYTHON_VERSION} \ 
+    && ./configure --prefix=/usr --enable-optimizations --with-ensurepip=install \
+    && make install \
+    && rm /opt/Python-${PYTHON_VERSION}.tgz /opt/Python-${PYTHON_VERSION} -rf
+
+
+COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm
+RUN rm -rf ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/versions/node
+# COPY ./scripts/install_node.sh ${BUILD_DIR}/scripts/install_node.sh
+COPY --chown=datafed:root ./scripts/dependency_versions.sh       ${BUILD_DIR}/scripts/dependency_versions.sh
+RUN . "${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/nvm.sh" && \
+    . ${BUILD_DIR}/scripts/dependency_versions.sh && \
+    nvm install $DATAFED_NODE_VERSION
+# RUN "${BUILD_DIR}/scripts/generate_datafed.sh"
+# RUN "${BUILD_DIR}/scripts/install_node.sh"
+
+# RUN apt install -y python3 make g++
 
 WORKDIR ${DATAFED_DIR}
 
 USER datafed
 
-COPY --chown=datafed:root ./scripts/generate_datafed.sh          ${BUILD_DIR}/scripts/generate_datafed.sh
-COPY --chown=datafed:root ./scripts/dependency_versions.sh       ${BUILD_DIR}/scripts/dependency_versions.sh
-COPY --chown=datafed:root ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/dependency_install_functions.sh
 COPY --chown=datafed:root ./scripts/generate_ws_config.sh        ${BUILD_DIR}/scripts/generate_ws_config.sh
+COPY --chown=datafed:root ./scripts/generate_datafed.sh          ${BUILD_DIR}/scripts/generate_datafed.sh
+COPY --chown=datafed:root ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/dependency_install_functions.sh
+COPY --chown=datafed:root ./scripts/utils.sh                     ${BUILD_DIR}/scripts/utils.sh
 COPY --chown=datafed:root ./scripts/install_ws.sh                ${BUILD_DIR}/scripts/install_ws.sh
 COPY --chown=datafed:root ./cmake/Version.cmake                  ${BUILD_DIR}/cmake/Version.cmake
-COPY --chown=datafed:root ./scripts/utils.sh                     ${BUILD_DIR}/scripts/utils.sh
 COPY --chown=datafed:root ./scripts/export_dependency_version.sh ${BUILD_DIR}/scripts/export_dependency_version.sh
-COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm
 COPY --from=ws-build --chown=datafed:root ${BUILD_DIR}/web ${BUILD_DIR}/web
 COPY --from=ws-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/web ${DATAFED_INSTALL_PATH}/web
-COPY --from=ws-build --chown=datafed:root /usr/bin/curl /usr/bin/curl
+# COPY --from=ws-build --chown=datafed:root /usr/bin/curl /usr/bin/curl
 
 RUN chown -R datafed:root ${DATAFED_INSTALL_PATH}/web
 RUN chown -R datafed:root ${BUILD_DIR}

@@ -185,7 +185,8 @@ then
   exit 1
 fi
 
-FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
+# FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
+FOXX_MAJOR_API_VERSION=$(sed -n 's/.*FOXX_API_MAJOR(\([0-9]*\)).*/\1/p' ${PROJECT_ROOT}/cmake/Version.cmake | xargs)
 local_DATABASE_API_URL="${local_DATAFED_DATABASE_IP_ADDRESS_PORT}/_db/sdms/api/${FOXX_MAJOR_API_VERSION}/"
 
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")

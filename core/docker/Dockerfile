@@ -51,7 +51,7 @@ RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target instal
 
 FROM ${RUNTIME} AS core
 
-SHELL ["/bin/bash", "-c"]
+# SHELL ["/bin/bash", "-c"]
 
 ARG DATAFED_DIR
 ARG DATAFED_INSTALL_PATH
@@ -65,7 +65,7 @@ ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV              LIB_DIR="$LIB_DIR"
 
-RUN ldconfig
+# RUN /sbin/ldconfig
 
 USER datafed
 

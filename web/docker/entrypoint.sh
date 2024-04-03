@@ -20,12 +20,18 @@ export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 export NODE_VERSION="$DATAFED_NODE_VERSION"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
+echo "$PATH"
+
 echo "NODE VERSION $NODE_VERSION"
 echo "Which node"
 NODE_PATH=$(su datafed -c ". ${NVM_DIR}/nvm.sh; nvm which node")
+echo "$NODE_PATH"
 # Do this as root
 if [ ! -L "/usr/local/bin/node" ]; then
+  echo "CREATING NODE LINK"
   ln -s "$NODE_PATH" /usr/local/bin/node
+  echo "LINKS"
+  ls /usr/local/bin
 fi
 # Send output to file as well as print to terminal
 log_path=$(grep "log-path" "${BUILD_DIR}/config/datafed-ws.cfg" | cut -d "=" -f 2 | tr -d ' ')

@@ -4,9 +4,8 @@ ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
 ARG              LIB_DIR="/usr/local/lib"
 
-FROM ubuntu:focal
+FROM alpine
 
-SHELL ["/bin/bash", "-c"]
 ARG DATAFED_DIR
 ARG DATAFED_INSTALL_PATH
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
@@ -14,6 +13,8 @@ ARG BUILD_DIR
 
 ENV BUILD_DIR="${BUILD_DIR}"
 ENV DATAFED_DIR="${DATAFED_DIR}"
+
+RUN apk update
 
 RUN echo $DATAFED_DIR
 
@@ -31,5 +32,30 @@ RUN chown -R datafed:root /var/log/datafed
 RUN chown -R datafed:root ${DATAFED_DIR}
 WORKDIR ${DATAFED_DIR}
 
-RUN apt update
-RUN apt install -y grep libcurl4
+# RUN apt update
+# RUN apt install -y grep libcurl4
+
+RUN apk add libcurl musl-utils bash shadow coreutils libstdc++ libgcc git make pkgconfig build-base
+
+# RUN git clone https://github.com/kaniini/libucontext && \
+# 		cd libucontext && \
+# 		make EXPORT_UNPREFIXED=yes && \
+# 		make EXPORT_UNPREFIXED=yes check && \
+# 		make EXPORT_UNPREFIXED=yes install && \
+# 		cd ../ && \
+# 		rm -rf libucontext
+#
+# RUN git clone https://git.adelielinux.org/adelie/gcompat && \
+# 		cd gcompat && \
+# 		make LINKER_PATH=/lib/ld-musl-x86_64.so.1 LOADER_NAME=ld-linux-x86-64.so.2 WITH_LIBUCONTEXT=1 && \
+# 		make LINKER_PATH=/lib/ld-musl-x86_64.so.1 LOADER_NAME=ld-linux-x86-64.so.2 WITH_LIBUCONTEXT=1 install && \
+# 		cd ../ && \
+# 		rm -rf gcompat
+ARG GLIBC="2.35-r1"
+RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub
+RUN wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC}/glibc-${GLIBC}.apk
+RUN wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC}/glibc-bin-${GLIBC}.apk
+RUN apk add --force-overwrite glibc-${GLIBC}.apk glibc-bin-${GLIBC}.apk
+# RUN rm glibc-2.34-r0.apk
+
+# SHELL ["/bin/bash", "-c"]
