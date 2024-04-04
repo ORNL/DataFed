@@ -207,6 +207,8 @@ export DATAFED_INSTALL_PATH="$local_DATAFED_INSTALL_PATH"
 # by default it will install to:
 # /opt/datafed/dependencies
 export DATAFED_DEPENDENCIES_INSTALL_PATH="$local_DATAFED_DEPENDENCIES_INSTALL_PATH"
+export DATAFED_PYTHON_DEPENDENCIES_DIR="${local_DATAFED_DEPENDENCIES_INSTALL_PATH}/python"
+export DATAFED_PYTHON_ENV="${local_DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed"
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************
