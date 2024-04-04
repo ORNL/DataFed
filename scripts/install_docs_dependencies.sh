@@ -10,7 +10,7 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("g++" "gcc" "make" "python3-pkg-resources" "python3-pip" "pkg-config")
+packages=("g++" "gcc" "make" "python3-pkg-resources" "python3-pip" "pkg-config" "python3-venv")
 externals=("cmake" "protobuf")
 pip_packages=("setuptools" "sphinx" "sphinx-rtd-theme" "sphinx-autoapi")
 
@@ -42,6 +42,8 @@ if [[ $local_UNIFY = false ]]; then
   "$SUDO_CMD" apt-get update
   "$SUDO_CMD" dpkg --configure -a
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
+  init_python
+  source "${DATAFED_PYTHON_ENV}/bin/activate"
   python3 -m pip install --upgrade pip
   python3 -m pip install "${pip_packages[@]}"
 
