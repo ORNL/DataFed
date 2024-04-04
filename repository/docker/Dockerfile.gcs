@@ -108,6 +108,8 @@ COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotobuf.a 
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotoc.a     ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotoc.a
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libzmq.a       ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libzmq.a
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libsodium.a    ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libsodium.a
+# Copy python env over
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed
 
 RUN apt update
 RUN apt-get install vim -y
@@ -141,3 +143,7 @@ USER root
 RUN sed -i '/--client-id/d' /entrypoint.sh
 
 WORKDIR ${DATAFED_INSTALL_PATH}/authz
+
+# NOTE If you do not overwrite the entrypoint file it will use the GCS instance
+# prorivded one
+ENTRYPOINT ["/datafed/source/repository/docker/entrypoint_authz.sh"]
