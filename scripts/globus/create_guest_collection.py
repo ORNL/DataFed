@@ -9,107 +9,37 @@ import sys
 
 
 # The Globus project the GCS endpoint will be created in
-if os.getenv("DATAFED_GCS_ROOT_NAME") is not None:
-    DATAFED_GCS_ROOT_NAME = os.getenv("DATAFED_GCS_ROOT_NAME")
-else:
-    DATAFED_GCS_ROOT_NAME="DataFed Repo"
-
-if os.getenv("DATAFED_GLOBUS_PROJECT_NAME") is not None:
-    PROJECT_NAME=os.getenv("DATAFED_GLOBUS_PROJECT_NAME")
-else:
-    PROJECT_NAME=DATAFED_GCS_ROOT_NAME + " Project"
-
+DATAFED_GCS_ROOT_NAME = os.getenv("DATAFED_GCS_ROOT_NAME", "DataFed Repo")
+PROJECT_NAME=os.getenv("DATAFED_GLOBUS_PROJECT_NAME", DATAFED_GCS_ROOT_NAME + " Project")
 # This is for confidential client
-if os.getenv("DATAFED_GLOBUS_CLIENT_NAME") is not None:
-    CLIENT_NAME = os.getenv("DATAFED_GLOBUS_CLIENT_NAME")
-else:
-    CLIENT_NAME = DATAFED_GCS_ROOT_NAME + " Setup Client"
-
+CLIENT_NAME = os.getenv("DATAFED_GLOBUS_CLIENT_NAME", DATAFED_GCS_ROOT_NAME + " Setup Client")
 # Name of the client secret used by the confidential client
-if os.getenv("DATAFED_GLOBUS_CRED_NAME") is not None:
-    CRED_NAME=os.getenv("DATAFED_GLOBUS_CRED_NAME")
-else:
-    CRED_NAME= DATAFED_GCS_ROOT_NAME + " Cred"
-
+CRED_NAME=os.getenv("DATAFED_GLOBUS_CRED_NAME",DATAFED_GCS_ROOT_NAME + " Cred")
 # Name of the file where we will store confidential client credentials
-if os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH") is not None:
-    CRED_FILE_PATH=os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH")
-else:
-    CRED_FILE_PATH="./client_cred.json"
-
-if os.getenv("GCS_CLI_ENDPOINT_ID") is not None:
-    ENDPOINT_ID = os.getenv("GCS_CLI_ENDPOINT_ID")
-else:
-    raise Exception("GCS_CLI_ENDPOINT_ID must be defined")
-
-# Name to give to endpoint
-if os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME") is not None:
-    ENDPOINT_NAME = os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME")
-else:
-    ENDPOINT_NAME= DATAFED_GCS_ROOT_NAME + " Endpoint"
+CRED_FILE_PATH=os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH","./client_cred.json")
+ENDPOINT_ID = os.getenv("GCS_CLI_ENDPOINT_ID")
+ENDPOINT_NAME = os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME",DATAFED_GCS_ROOT_NAME + " Endpoint")
+# Path to deployment key
+DEPLOYMENT_KEY_PATH=os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH","./deployment-key.json")
 
 # Path to deployment key
-if os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH") is not None:
-    DEPLOYMENT_KEY_PATH=os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH")
-else:
-    DEPLOYMENT_KEY_PATH="./deployment-key.json"
+DATAFED_GLOBUS_CONTROL_PORT=os.getenv("DATAFED_GLOBUS_CONTROL_PORT", "443")
+DATAFED_GCS_URL=os.getenv("DATAFED_GCS_URL")
+client_id = os.getenv("GCS_CLI_CLIENT_ID")
+client_secret = os.getenv("GCS_CLI_CLIENT_SECRET")
+mapped_collection_id = os.getenv("MAPPED_COLLECTION_ID")
+mapped_collection_name = os.getenv("DATAFED_GCS_COLLECTION_MAPPED", f"{DATAFED_GCS_ROOT_NAME} Collection Mapped")
+guest_collection_name = os.getenv("DATAFED_GCS_COLLECTION_GUEST",f"{DATAFED_GCS_ROOT_NAME} Collection Guest")
+storage_gateway_id = os.getenv("STORAGE_GATEWAY_ID")
+storage_gateway_name = os.getenv("DATAFED_GCS_STORAGE_GATEWAY",f"{DATAFED_GCS_ROOT_NAME} Storage Gateway")
+local_username = os.getenv("DATAFED_REPO_USER")
 
-# Path to deployment key
-if os.getenv("DATAFED_GLOBUS_CONTROL_PORT") is not None:
-    DATAFED_GLOBUS_CONTROL_PORT=os.getenv("DATAFED_GLOBUS_CONTROL_PORT")
-else:
-    DATAFED_GLOBUS_CONTROL_PORT="443"
-
-if os.getenv("DATAFED_GLOBUS_SUBSCRIPTION") is not None:
-    DATAFED_GLOBUS_SUBSCRIPTION=os.getenv("DATAFED_GLOBUS_SUBSCRIPTION")
-else:
-    DATAFED_GLOBUS_SUBSCRIPTION=""
-
-if os.getenv("DATAFED_GCS_URL") is not None:
-    DATAFED_GCS_URL=os.getenv("DATAFED_GCS_URL")
-else:
-    DATAFED_GCS_URL=""
-
-if os.getenv("GCS_CLI_CLIENT_ID") is not None:
-    client_id = os.getenv("GCS_CLI_CLIENT_ID")
-else:
-    client_id = None
-
-if os.getenv("GCS_CLI_CLIENT_SECRET") is not None:
-    client_secret = os.getenv("GCS_CLI_CLIENT_SECRET")
-else:
-    client_secret = None
-
-if os.getenv("MAPPED_COLLECTION_ID") is not None:
-    mapped_collection_id = os.getenv("MAPPED_COLLECTION_ID")
-else:
-    mapped_collection_id = None
-
-if os.getenv("DATAFED_GCS_COLLECTION_MAPPED") is not None:
-    mapped_collection_name = os.getenv("DATAFED_GCS_COLLECTION_MAPPED")
-else:
-    mapped_collection_name = f"{DATAFED_GCS_ROOT_NAME} Collection Mapped"
-
-if os.getenv("DATAFED_GCS_COLLECTION_GUEST") is not None:
-    guest_collection_name = os.getenv("DATAFED_GCS_COLLECTION_GUEST")
-else:
-    guest_collection_name = f"{DATAFED_GCS_ROOT_NAME} Collection Guest"
-
-if os.getenv("STORAGE_GATEWAY_ID") is not None:
-    storage_gateway_id = os.getenv("STORAGE_GATEWAY_ID")
-else:
-    storage_gateway_id = None
-
-
-if os.getenv("DATAFED_GCS_STORAGE_GATEWAY") is not None:
-    storage_gateway_name = os.getenv("DATAFED_GCS_STORAGE_GATEWAY")
-else:
-    storage_gateway_name = f"{DATAFED_GCS_ROOT_NAME} Storage Gateway"
-
-
-if os.getenv("DATAFED_REPO_USER") is not None:
-    local_username = os.getenv("DATAFED_REPO_USER")
-else:
+if ENDPOINT_ID is None:
+    raise Exception("GCS_CLI_ENDPOINT_ID must be defined as an env varaible")
+if DATAFED_GCS_URL is None:
+    raise Exception("Unable to create guest collection, DATAFED_GCS_URL is not"
+                    " defined.")
+if local_username is None:
     raise Exception("DATAFED_REPO_USER is not defined.")
 
 #client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
@@ -189,7 +119,7 @@ from globus_sdk import scopes
 confidential_client = globus_sdk.ConfidentialAppAuthClient(
     client_id=client_id, client_secret=client_secret
 )
-scope = scopes.GCSEndpointScopeBuilder(GCS_CLI_ENDPOINT_ID).make_mutable("manage_collections")
+scope = scopes.GCSEndpointScopeBuilder(ENDPOINT_ID).make_mutable("manage_collections")
 authorizer = globus_sdk.ClientCredentialsAuthorizer(confidential_client, scopes=scope)
 client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
 
@@ -199,11 +129,11 @@ print(collection_list)
 
 mapped_collection_found = False
 
-for item in collection_list["data"]
+for item in collection_list["data"]:
     print(item["display_name"])
     if mapped_collection_id is not None:
         if item["id"] == mapped_collection_id:
-	    mapped_collection_found = True
+            mapped_collection_found = True
             if item["display_name"] != mapped_collection_name:
                 raise Exception("Expected display name is different from what "
                                 "is expected for mapped collection "
@@ -214,20 +144,20 @@ for item in collection_list["data"]
                                 "set.")
             break
     elif item["display_name"] == mapped_collection_name:
-	    mapped_collection_found = True
-            mapped_collection_id = item["id"]
-            break
-	
+        mapped_collection_found = True
+        mapped_collection_id = item["id"]
+        break
+
 if mapped_collection_found == False:
     raise Exception("Missing required mapped collection")
 
 storage_gateway_found = False
 storage_gateway_list = client.get_storage_gateway_list()
-for item in storage_gateway_list["data"]
+for item in storage_gateway_list["data"]:
     print(item["display_name"])
     if storage_gateway_id is not None:
         if item["id"] == storage_gateway_id:
-	    storage_gateway_found = True
+            storage_gateway_found = True
             if item["display_name"] != storage_gateway_name:
                 raise Exception("Expected display name is different from what "
                                 "is expected for storage gateway "
@@ -238,10 +168,10 @@ for item in storage_gateway_list["data"]
                                 "set.")
             break
     elif item["display_name"] == storage_gateway_name:
-	    storage_gateway_found = True
-            storage_gateway_id = item["id"]
-            break
-	
+        storage_gateway_found = True
+        storage_gateway_id = item["id"]
+        break
+    
 if storage_gateway_found == False:
     raise Exception("Missing required storage gateway")
 
@@ -253,28 +183,28 @@ client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
 
 guest_collection_found = False
 
-for item in collection_list["data"]
+for item in collection_list["data"]:
     print(item["display_name"])
     if item["display_name"] == guest_collection_name:
-	    guest_collection_found = True
-            guest_collection_id = item["id"]
-            break
-	
+        guest_collection_found = True
+        guest_collection_id = item["id"]
+        break
+    
 # https://github.com/globus/globus-sdk-python/blob/main/docs/examples/guest_collection_creation.rst
 if guest_collection_found == False:
     credential_document = globus_sdk.UserCredentialDocument(
-	storage_gateway_id=storage_gateway_id,
-	identity_id=client_id,
-	username=local_username,
+        storage_gateway_id=storage_gateway_id,
+        identity_id=client_id,
+        username=local_username,
     )
     client.create_user_credential(credential_document)
 
 # Create the collection
     collection_document = globus_sdk.GuestCollectionDocument(
-	public="True",
-	collection_base_path="/",
-	display_name=guest_collection_name,
-	mapped_collection_id=mapped_collection_id,
+        public="True",
+        collection_base_path="/",
+        display_name=guest_collection_name,
+        mapped_collection_id=mapped_collection_id,
     )
     response = client.create_collection(collection_document)
     guest_collection_id = response["id"]
