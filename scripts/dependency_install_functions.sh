@@ -59,6 +59,12 @@ else
   fi
 fi
 
+init_python() {
+  if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
+      mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
+  fi
+  python3 -m venv "${DATAFED_PYTHON_ENV}"
+}
 
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
@@ -132,10 +138,14 @@ install_protobuf() {
     #fi
 
     cd python
+    init_python
+    source "${DATAFED_PYTHON_ENV}/bin/activate"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 -m pip install numpy
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py build
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py test
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py install --user
+    # Because we have activaited a venv we don't want to use the --user flag
+    # with the install command
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py install
     cd ../
     # Cleanup build file with root ownership
     if [ -f build/install_manifest.txt ]
