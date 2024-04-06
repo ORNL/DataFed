@@ -102,6 +102,7 @@ def getCredentialID(auth_client, client_id, cred_name):
             return cred["id"]
     return None
 
+
 def groupExists(client, group_name):
     my_groups = client.get_my_groups()
     print("My groups")
@@ -111,13 +112,13 @@ def groupExists(client, group_name):
             return True
     return False
 
+
 def getGroupId(client, group_name):
     my_groups = client.get_my_groups()
     for group in my_groups:
         if group["name"] == group_name:
             return group["id"]
     return None
-
 
 
 def deleteGroup(client, group_name):
@@ -127,6 +128,7 @@ def deleteGroup(client, group_name):
             result = client.delete_group(group["id"])
             print(f"Removing group: {group_name} with id: {group['id']}")
             print(result)
+
 
 def validFile(file_name):
     file_exists = False
@@ -302,14 +304,15 @@ def deleteAllNonGCSClients(auth_client, project_id):
 
 
 def createGCSEndpoint(
-        auth_client,
-        client_id,
-        client_secret,
-        project_id,
-        deployment_key_file,
-        endpoint_name,
-        control_port,
-        userinfo):
+    auth_client,
+    client_id,
+    client_secret,
+    project_id,
+    deployment_key_file,
+    endpoint_name,
+    control_port,
+    userinfo,
+):
 
     identity_id = userinfo["sub"]
     email = userinfo["email"]

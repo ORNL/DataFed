@@ -146,9 +146,9 @@ void RequestWorker::workerThread(LogContext log_context) {
 
       DL_TRACE(message_log_context, "Checking timeouts: " << response.time_out);
       if (response.time_out == false and response.error == false) {
-        if( not response.message) { 
+        if (not response.message) {
           DL_ERROR(log_context, "Error: No error or timeout occurred but the"
-              << " message does not exist.");
+                                    << " message does not exist.");
         } else {
           // May not have a correlation id if the message timed out
           DL_TRACE(log_context, "Getting correlation_id.");
@@ -165,18 +165,18 @@ void RequestWorker::workerThread(LogContext log_context) {
 
           if (m_msg_handlers.count(msg_type)) {
             map<uint16_t, msg_fun_t>::iterator handler =
-              m_msg_handlers.find(msg_type);
+                m_msg_handlers.find(msg_type);
             DL_TRACE(message_log_context, "Calling handler");
 
             auto send_message =
-              (this->*handler->second)(std::move(response.message));
+                (this->*handler->second)(std::move(response.message));
 
             client->send(*(send_message));
 
             DL_TRACE(message_log_context, "Reply sent.");
           } else {
             DL_ERROR(message_log_context,
-                "Received unregistered msg type: " << msg_type);
+                     "Received unregistered msg type: " << msg_type);
           }
         }
       } else if (response.error) {

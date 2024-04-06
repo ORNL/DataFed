@@ -101,7 +101,8 @@ void Server::run() {
 }
 
 void Server::checkServerVersion() {
-  DL_INFO(m_log_context, "Checking core server connection and version at " << m_config.core_server);
+  DL_INFO(m_log_context, "Checking core server connection and version at "
+                             << m_config.core_server);
 
   // Generate random security keys for anon version request to core server
   KeyGenerator generator;
@@ -148,7 +149,8 @@ void Server::checkServerVersion() {
 
   for (int i = 0; i < 10; i++) {
     DL_INFO(m_log_context, "Attempt " << i << " to initialize communication "
-        << " with core server at " << m_config.core_server);
+                                      << " with core server at "
+                                      << m_config.core_server);
     auto msg = std::make_unique<VersionRequest>();
     auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
     message->setPayload(std::move(msg));
@@ -166,14 +168,14 @@ void Server::checkServerVersion() {
       DL_ERROR(msg_log_context,
                "Timeout waiting for response from core server: "
                    << m_config.core_server);
-    } else if(response.error) {
-      DL_ERROR(msg_log_context,
-               "Error encountered waiting for core server: "
-                   << m_config.core_server << " msg " << response.error_msg);
+    } else if (response.error) {
+      DL_ERROR(msg_log_context, "Error encountered waiting for core server: "
+                                    << m_config.core_server << " msg "
+                                    << response.error_msg);
     } else {
-    
+
       msg_log_context.correlation_id = std::get<std::string>(
-        response.message->get(MessageAttribute::CORRELATION_ID));
+          response.message->get(MessageAttribute::CORRELATION_ID));
       auto payload =
           std::get<google::protobuf::Message *>(response.message->getPayload());
       VersionReply *ver_reply = dynamic_cast<VersionReply *>(payload);

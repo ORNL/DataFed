@@ -62,7 +62,7 @@ else:
 if os.getenv("DATAFED_GLOBUS_SUBSCRIPTION") is not None:
     DATAFED_GLOBUS_SUBSCRIPTION = os.getenv("DATAFED_GLOBUS_SUBSCRIPTION")
 else:
-    DATAFED_GLOBUS_SUBSCRIPTION=None
+    DATAFED_GLOBUS_SUBSCRIPTION = None
 
 client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
 
@@ -70,11 +70,12 @@ client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
 # view_identities to user information for creating GCS server
 
 group_scope = GroupsScopes.make_mutable("all")
-client.oauth2_start_flow(requested_scopes="openid profile email "
-        "urn:globus:auth:scope:auth.globus.org:manage_projects "
-        "urn:globus:auth:scope:auth.globus.org:view_identities " +
-        str(group_scope),
-        refresh_tokens=True)
+client.oauth2_start_flow(
+    requested_scopes="openid profile email "
+    "urn:globus:auth:scope:auth.globus.org:manage_projects "
+    "urn:globus:auth:scope:auth.globus.org:view_identities " + str(group_scope),
+    refresh_tokens=True,
+)
 
 authorize_url = client.oauth2_get_authorize_url(query_params={"prompt": "login"})
 print("Please go to this URL and login: \n", authorize_url)
@@ -82,12 +83,15 @@ auth_code = input("Please enter the authorization code: ")
 
 token_response = client.oauth2_exchange_code_for_tokens(auth_code)
 # Extract the token
-refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
-refresh_token_groups = token_response.by_resource_server['groups.api.globus.org']['refresh_token']
+refresh_token_auth = token_response.by_resource_server["auth.globus.org"][
+    "refresh_token"
+]
+refresh_token_groups = token_response.by_resource_server["groups.api.globus.org"][
+    "refresh_token"
+]
 rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
 
-rt_authorizer_groups = globus_sdk.RefreshTokenAuthorizer(refresh_token_groups,
-        client)
+rt_authorizer_groups = globus_sdk.RefreshTokenAuthorizer(refresh_token_groups, client)
 # auth_client_refresh_token
 ac_rt = AuthClient(authorizer=rt_authorizer)
 gr_rt = GroupsClient(authorizer=rt_authorizer_groups)
@@ -133,20 +137,21 @@ clients_in_project = utils.getClientsInProject(ac_rt, project_id)
 # client exists for the globus connect server if it does not then we will
 # call the setup command
 utils.createGCSEndpoint(
-        ac_rt,
-        client_id,
-        client_secret,
-        project_id,
-        DEPLOYMENT_KEY_PATH,
-        ENDPOINT_NAME,
-        DATAFED_GLOBUS_CONTROL_PORT,
-        userinfo)
+    ac_rt,
+    client_id,
+    client_secret,
+    project_id,
+    DEPLOYMENT_KEY_PATH,
+    ENDPOINT_NAME,
+    DATAFED_GLOBUS_CONTROL_PORT,
+    userinfo,
+)
 
 if DATAFED_GLOBUS_SUBSCRIPTION is not None:
-# Create subscription subgroup
+    # Create subscription subgroup
     results = gr_rt.get_group_by_subscription_id(DATAFED_GLOBUS_SUBSCRIPTION)
 
-    parent_group_id=results["group_id"]
+    parent_group_id = results["group_id"]
     print("Groups by sub")
     print(results)
     group_name = f"{DATAFED_GCS_ROOT_NAME} Group"
@@ -157,16 +162,15 @@ if DATAFED_GLOBUS_SUBSCRIPTION is not None:
     else:
         print(f"Group does not exist {group_name}")
         package = {
-                "name": group_name,
-                "description": "DataFed Repository Subscription Group, used for"
-                "granting access to the application client to setup the repository in "
-                "Globus",
-                "parent_id": str(parent_group_id)
-                }
-
+            "name": group_name,
+            "description": "DataFed Repository Subscription Group, used for"
+            "granting access to the application client to setup the repository in "
+            "Globus",
+            "parent_id": str(parent_group_id),
+        }
 
         result = gr_rt.create_group(package)
-        group_id = result['id']
+        group_id = result["id"]
 
     print("group id")
     print(group_id)
@@ -177,9 +181,7 @@ if DATAFED_GLOBUS_SUBSCRIPTION is not None:
 
     print("membership_action")
     print(result)
-    package = {
-        "subscription_id": DATAFED_GLOBUS_SUBSCRIPTION
-            }
+    package = {"subscription_id": DATAFED_GLOBUS_SUBSCRIPTION}
     result = gr_rt.update_group(group_id, package)
     print("update group")
     print(result)
