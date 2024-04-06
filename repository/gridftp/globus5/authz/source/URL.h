@@ -15,12 +15,13 @@ extern "C" {
  * ftp://domain Returns 1 for success
  *              else it will return 0 for failure
  **/
-int ftpExtractRelativePath(const char *url, char *relativePath, size_t maxLength);
+int ftpExtractRelativePath(const char *url, char *relativePath,
+                           size_t maxLength);
 
 /**
  * Will compare two strings and ensure that prefixes are equivalent
  *
- * On success will return the results of strncmp which will be 0 if they 
+ * On success will return the results of strncmp which will be 0 if they
  * match.
  **/
 int comparePrefix(const char *str1, const char *str2, size_t prefix_length);

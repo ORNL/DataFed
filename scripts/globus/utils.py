@@ -1,4 +1,3 @@
-
 import globus_sdk
 import subprocess
 from globus_sdk import AuthClient, AccessTokenAuthorizer
@@ -6,11 +5,13 @@ import json
 import os
 import sys
 
+
 def getProjectId(projects, project_name):
     for project in projects:
-        if project['display_name'] == project_name:
-            return project['id']
+        if project["display_name"] == project_name:
+            return project["id"]
     return None
+
 
 def projectExists(auth_client, project_name):
     projects = auth_client.get_projects()
@@ -21,6 +22,7 @@ def projectExists(auth_client, project_name):
         project_exists = False
     return project_exists
 
+
 def createProject(auth_client, project_name, userinfo):
 
     identity_id = userinfo["sub"]
@@ -30,35 +32,40 @@ def createProject(auth_client, project_name, userinfo):
 
     if project_exists is False:
         project_create_result = auth_client.create_project(
-                project_name,
-                contact_email=email,
-                admin_ids=[identity_id])
-        return project_create_result['project']['id']
+            project_name, contact_email=email, admin_ids=[identity_id]
+        )
+        return project_create_result["project"]["id"]
 
     projects = auth_client.get_projects()
     return getProjectId(projects, project_name)
+
 
 def countProjects(auth_client, project_name):
     projects = auth_client.get_projects()
     count = 0
     for project in projects:
-        if project['display_name'] == project_name:
+        if project["display_name"] == project_name:
             count += 1
     return count
 
+
 def getClientId(auth_client, client_name, project_id):
     get_client_result = auth_client.get_clients()
-    for client in get_client_result['clients']:
-        if client['name'] == client_name and client['project'] == project_id:
-            return client['id']
+    for client in get_client_result["clients"]:
+        if client["name"] == client_name and client["project"] == project_id:
+            return client["id"]
     return None
+
 
 def getAllGCSClientIds(auth_client, project_id, endpoint_name):
     clients_in_project = getClientsInProject(auth_client, project_id)
     all_gcs_client_ids = []
     for client in clients_in_project:
-        if client['client_type'] == "globus_connect_server" and client['name'] == endpoint_name:
-            all_gcs_client_ids.append(client['id'])
+        if (
+            client["client_type"] == "globus_connect_server"
+            and client["name"] == endpoint_name
+        ):
+            all_gcs_client_ids.append(client["id"])
     return all_gcs_client_ids
 
 
@@ -66,8 +73,8 @@ def getClientsInProject(auth_client, project_id):
     # Get clients in project
     get_client_result = auth_client.get_clients()
     clients_in_project = []
-    for client in get_client_result['clients']:
-        if client['project'] == project_id:
+    for client in get_client_result["clients"]:
+        if client["project"] == project_id:
             clients_in_project.append(client)
     return clients_in_project
 
@@ -80,17 +87,21 @@ def createNewClient(auth_client, client_name, project_id):
         client_exists = True
 
     if client_exists is False:
-        result = auth_client.create_client(client_name, project=project_id, public_client=False)
+        result = auth_client.create_client(
+            client_name, project=project_id, public_client=False
+        )
         client_id = result["client"]["id"]
 
     return client_id
 
+
 def getCredentialID(auth_client, client_id, cred_name):
     get_client_cred_result = auth_client.get_client_credentials(client_id)
-    for cred in get_client_cred_result['credentials']:
-        if cred['name'] == cred_name: 
-            return cred['id']
+    for cred in get_client_cred_result["credentials"]:
+        if cred["name"] == cred_name:
+            return cred["id"]
     return None
+
 
 def validFile(file_name):
     file_exists = False
@@ -109,59 +120,57 @@ def getCredentialFromFile(cred_file_name, cred_id):
     # name
     cred_exists_locally, cred_empty = validFile(cred_file_name)
     if cred_empty is False:
-        with open(cred_file_name, 'r') as f:
+        with open(cred_file_name, "r") as f:
             loaded_data = json.load(f)
-            if loaded_data['client'] == cred_id:
-                return loaded_data['secret']
+            if loaded_data["client"] == cred_id:
+                return loaded_data["secret"]
     return None
+
 
 def getClientIdFromCredFile(cred_file_name):
     # Check to see if the local secret is the same id and not just the same
     # name
     cred_exists_locally, cred_empty = validFile(cred_file_name)
     if cred_empty is False:
-        with open(cred_file_name, 'r') as f:
+        with open(cred_file_name, "r") as f:
             loaded_data = json.load(f)
-            return loaded_data['client']
+            return loaded_data["client"]
     return None
+
 
 def getEndpointIdFromFile(deployment_key_file_path):
     # Check to see if the local secret is the same id and not just the same
     # name
     exists_locally, empty = validFile(deployment_key_file_path)
     if empty is False:
-        with open(deployment_key_file_path, 'r') as f:
+        with open(deployment_key_file_path, "r") as f:
             loaded_data = json.load(f)
-            return loaded_data['client_id']
+            return loaded_data["client_id"]
     return None
 
 
 def createNewCredential(auth_client, client_id, cred_name, cred_file):
 
     get_client_cred_result = auth_client.get_client_credentials(client_id)
-    for cred in get_client_cred_result['credentials']:
+    for cred in get_client_cred_result["credentials"]:
         # Should have stored secret locally
-        auth_client.delete_client_credential(client_id, cred['id'])
+        auth_client.delete_client_credential(client_id, cred["id"])
 
     cred_result = auth_client.create_client_credential(client_id, cred_name)
-    # Have to change this to a dict 
+    # Have to change this to a dict
     obj = {
-            'client': cred_result['credential']['client'],
-            'id': cred_result['credential']['id'],
-            'name': cred_result['credential']['name'],
-            'secret': cred_result['credential']['secret']
-            }
-    with open(cred_file, 'w') as f:
+        "client": cred_result["credential"]["client"],
+        "id": cred_result["credential"]["id"],
+        "name": cred_result["credential"]["name"],
+        "secret": cred_result["credential"]["secret"],
+    }
+    with open(cred_file, "w") as f:
         json.dump(obj, f)
 
-    return cred_result['credential']['secret']
+    return cred_result["credential"]["secret"]
 
-def getClientSecret(
-        auth_client,
-        client_id,
-        cred_name,
-        cred_id,
-        cred_file):
+
+def getClientSecret(auth_client, client_id, cred_name, cred_id, cred_file):
 
     client_secret = getCredentialFromFile(cred_file, cred_id)
 
@@ -171,7 +180,7 @@ def getClientSecret(
     if client_secret:
         create_new_credential = False
         remove_cached_credential = False
-        remove_old_credential = True 
+        remove_old_credential = True
 
     if remove_old_credential:
         auth_client.delete_client_credential(client_id, cred_id)
@@ -183,11 +192,8 @@ def getClientSecret(
     if create_new_credential:
         # Remove credentials from cloud
         client_secret = createNewCredential(
-                auth_client,
-                client_id,
-                cred_name,
-                cred_file
-                )
+            auth_client, client_id, cred_name, cred_file
+        )
 
     return client_secret
 
@@ -203,8 +209,11 @@ def createClient(auth_client, client_name, project_id, cred_name, cred_file):
 
     cred_exists_locally, cred_empty = validFile(cred_file)
 
-    client_secret = getClientSecret(auth_client, client_id, cred_name, cred_id, cred_file)
-    return client_id, client_secret 
+    client_secret = getClientSecret(
+        auth_client, client_id, cred_name, cred_id, cred_file
+    )
+    return client_id, client_secret
+
 
 def getGCSClientIDFromDeploymentFile(deployment_key_file):
     deployment_key_exists, deployment_key_empty = validFile(deployment_key_file)
@@ -216,9 +225,9 @@ def getGCSClientIDFromDeploymentFile(deployment_key_file):
             os.remove(deployment_key_file)
     else:
         # If it is not empty get the client id
-        with open(deployment_key_file, 'r') as f:
+        with open(deployment_key_file, "r") as f:
             loaded_data = json.load(f)
-            return loaded_data['client_id']
+            return loaded_data["client_id"]
     return None
 
 
@@ -231,44 +240,53 @@ def command_exists(command):
         # 'which' command returns non-zero exit status if the command is not found
         return False
 
+
 def isGCSDeploymentKeyValid(auth_client, project_id, endpoint_name, gcs_id):
 
     clients_in_project = getClientsInProject(auth_client, project_id)
     # Check if the deployment key is valid for the project
     for client in clients_in_project:
-        if client['client_type'] == "globus_connect_server" and client['name'] == endpoint_name:
+        if (
+            client["client_type"] == "globus_connect_server"
+            and client["name"] == endpoint_name
+        ):
             if gcs_id:
                 # If gcs_id exists see if it is found remotely
-                if client['id'] == gcs_id:
+                if client["id"] == gcs_id:
                     print("Deployment key endpoint is still valid found in cloud")
                     return True
             else:
                 # Found a globus_connect_server but did not find local deployment
                 # key
                 if deployment_key_empty:
-                    print("Found globus_connect_server already registered but did"
-                          " not find deployment key locally.")
+                    print(
+                        "Found globus_connect_server already registered but did"
+                        " not find deployment key locally."
+                    )
     return False
 
 
 def deleteAllNonGCSClients(auth_client, project_id):
     clients = getClientsInProject(auth_client, project_id)
     for client in clients:
-        if client['project'] == project_id and client['client_type'] != "globus_connect_server":
-            auth_client.delete_client(client['id'])
-
+        if (
+            client["project"] == project_id
+            and client["client_type"] != "globus_connect_server"
+        ):
+            auth_client.delete_client(client["id"])
 
 
 def createGCSEndpoint(
-        auth_client,
-        client_id,
-        client_secret,
-        project_id,
-        deployment_key_file,
-        endpoint_name,
-        control_port,
-        subscription_id,
-        userinfo):
+    auth_client,
+    client_id,
+    client_secret,
+    project_id,
+    deployment_key_file,
+    endpoint_name,
+    control_port,
+    subscription_id,
+    userinfo,
+):
 
     identity_id = userinfo["sub"]
     email = userinfo["email"]
@@ -277,53 +295,69 @@ def createGCSEndpoint(
 
     gcs_id_from_deployment_key = getGCSClientIDFromDeploymentFile(deployment_key_file)
 
-    valid_key = isGCSDeploymentKeyValid(auth_client, project_id, endpoint_name, gcs_id_from_deployment_key)
+    valid_key = isGCSDeploymentKeyValid(
+        auth_client, project_id, endpoint_name, gcs_id_from_deployment_key
+    )
 
     if valid_key is False and gcs_id_from_deployment_key:
-        print("Looks like deployment key exists but does not contain credentials "
-                f"in the cloud for the project: {project_id}, please either "
-                "add the correct deployment key or remove the gcs instance"
-                "registered in the project")
+        print(
+            "Looks like deployment key exists but does not contain credentials "
+            f"in the cloud for the project: {project_id}, please either "
+            "add the correct deployment key or remove the gcs instance"
+            "registered in the project"
+        )
         sys.exit(1)
 
-# Create gcs_instance
+    # Create gcs_instance
     if valid_key is False:
 
         if command_exists("globus-connect-server") is False:
-            print("Cannot create deployment key, we require globus-connect-server to be installed")
+            print(
+                "Cannot create deployment key, we require globus-connect-server to be installed"
+            )
             sys.exit(1)
 
         else:
-            bash_command=f"GCS_CLI_CLIENT_ID=\"{client_id}\" "
-            bash_command+=f" GCS_CLI_CLIENT_SECRET=\"{client_secret}\" "
-            bash_command+=f" globus-connect-server endpoint setup \"{endpoint_name}\" "
-            bash_command+=f" --organization \"{organization}\"  "
-            bash_command+=f" --project-id \"{project_id}\"  "
-            bash_command+=" --agree-to-letsencrypt-tos "
-            bash_command+=f" --project-admin \"{username}\" "
-            bash_command+=f" --owner \"{client_id}@clients.auth.globus.org\" "
-            bash_command+=f" --contact-email \"{email}\" "
-            bash_command+=f" --deployment-key \"{deployment_key_file}\" "
+            bash_command = f'GCS_CLI_CLIENT_ID="{client_id}" '
+            bash_command += f' GCS_CLI_CLIENT_SECRET="{client_secret}" '
+            bash_command += f' globus-connect-server endpoint setup "{endpoint_name}" '
+            bash_command += f' --organization "{organization}"  '
+            bash_command += f' --project-id "{project_id}"  '
+            bash_command += " --agree-to-letsencrypt-tos "
+            bash_command += f' --project-admin "{username}" '
+            bash_command += f' --owner "{client_id}@clients.auth.globus.org" '
+            bash_command += f' --contact-email "{email}" '
+            bash_command += f' --deployment-key "{deployment_key_file}" '
             print("Bash command to run")
             print(bash_command)
-            
-            process = subprocess.Popen(bash_command, shell=True,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+
+            process = subprocess.Popen(
+                bash_command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+            )
             # Print the output
             for line in process.stdout:
-                print(line, end='')
+                print(line, end="")
 
             deployment_key_exists, deployment_key_empty = validFile(deployment_key_file)
             if deployment_key_exists is False:
-                print(f"Something is wrong deployment key does not exist {deployment_key_file} ")
+                print(
+                    f"Something is wrong deployment key does not exist {deployment_key_file} "
+                )
                 sys.exit(1)
             if deployment_key_empty:
-                print(f"Something is wrong deployment key is empty {deployment_key_file} ")
+                print(
+                    f"Something is wrong deployment key is empty {deployment_key_file} "
+                )
                 sys.exit(1)
 
     # WARNING!!!!!!
     # This will not work if a node does not first exist, I think at least one
     # node must be running.
-    #if len(subscription_id) != 0:
+    # if len(subscription_id) != 0:
     #    if command_exists("globus-connect-server") is False:
     #        print("Cannot create deployment key, we require globus-connect-server to be installed")
     #        sys.exit(1)
@@ -336,10 +370,8 @@ def createGCSEndpoint(
     #        bash_command+=" globus-connect-server endpoint update "
     #        bash_command+=f" --subscription-id \"{subscription_id}\" "
     #        print(bash_command)
-    #        
+    #
     #        process = subprocess.Popen(bash_command, shell=True,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     #        # Print the output
     #        for line in process.stdout:
     #            print(line, end='')
-
-
