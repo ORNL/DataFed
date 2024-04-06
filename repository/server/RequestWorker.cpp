@@ -146,33 +146,38 @@ void RequestWorker::workerThread(LogContext log_context) {
 
       DL_TRACE(message_log_context, "Checking timeouts: " << response.time_out);
       if (response.time_out == false and response.error == false) {
-        // May not have a correlation id if the message timed out
-        DL_TRACE(log_context, "Getting correlation_id.");
-        if (response.message->exists(MessageAttribute::CORRELATION_ID)) {
-          message_log_context.correlation_id = std::get<std::string>(
-              response.message->get(MessageAttribute::CORRELATION_ID));
-        }
+        if( not response.message) { 
+          DL_ERROR(log_context, "Error: No error or timeout occurred but the"
+              << " message does not exist.");
+        } else {
+          // May not have a correlation id if the message timed out
+          DL_TRACE(log_context, "Getting correlation_id.");
+          if (response.message->exists(MessageAttribute::CORRELATION_ID)) {
+            message_log_context.correlation_id = std::get<std::string>(
+                response.message->get(MessageAttribute::CORRELATION_ID));
+          }
 
-        IMessage &message = *response.message;
-        uint16_t msg_type = std::get<uint16_t>(
-            message.get(constants::message::google::MSG_TYPE));
+          IMessage &message = *response.message;
+          uint16_t msg_type = std::get<uint16_t>(
+              message.get(constants::message::google::MSG_TYPE));
 
-        DL_TRACE(message_log_context, "Received msg of type: " << msg_type);
+          DL_TRACE(message_log_context, "Received msg of type: " << msg_type);
 
-        if (m_msg_handlers.count(msg_type)) {
-          map<uint16_t, msg_fun_t>::iterator handler =
+          if (m_msg_handlers.count(msg_type)) {
+            map<uint16_t, msg_fun_t>::iterator handler =
               m_msg_handlers.find(msg_type);
-          DL_TRACE(message_log_context, "Calling handler");
+            DL_TRACE(message_log_context, "Calling handler");
 
-          auto send_message =
+            auto send_message =
               (this->*handler->second)(std::move(response.message));
 
-          client->send(*(send_message));
+            client->send(*(send_message));
 
-          DL_TRACE(message_log_context, "Reply sent.");
-        } else {
-          DL_ERROR(message_log_context,
-                   "Received unregistered msg type: " << msg_type);
+            DL_TRACE(message_log_context, "Reply sent.");
+          } else {
+            DL_ERROR(message_log_context,
+                "Received unregistered msg type: " << msg_type);
+          }
         }
       } else if (response.error) {
         DL_DEBUG(message_log_context, "Error detected: " << response.error_msg);
