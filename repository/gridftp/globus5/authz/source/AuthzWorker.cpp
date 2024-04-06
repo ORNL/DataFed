@@ -226,8 +226,10 @@ public:
                               << client->address());
 
     auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
-    log_context.correlation_id = std::get<std::string>(
-        response.message->get(MessageAttribute::CORRELATION_ID));
+    if (response.message ) { // Make sure the message exists before we try to access it
+      log_context.correlation_id = std::get<std::string>(
+          response.message->get(MessageAttribute::CORRELATION_ID));
+    }
     if (response.time_out) {
       std::string error_msg =
           "AuthWorker.cpp Core service did not respond within timeout.";
@@ -250,6 +252,11 @@ public:
                             "communicating with the core service: "
                                 << response.error_msg);
     } else {
+    
+      if( not response.message ) {
+        DL_ERROR(log_context, "No error was reported and no time out occured but message is not defined.");
+      }
+
       auto payload =
           std::get<google::protobuf::Message *>(response.message->getPayload());
       Anon::NackReply *nack = dynamic_cast<Anon::NackReply *>(payload);
