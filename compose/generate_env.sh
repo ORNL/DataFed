@@ -162,6 +162,8 @@ else
 fi
 
 
+# Make the logs folder if it doesn't exist
+mkdir -p "${PROJECT_ROOT}/compose/logs"
 
 # Do not put " around anything and do not add comments in the .env file
 cat << EOF > ".env"

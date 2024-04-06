@@ -25,20 +25,20 @@ ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 ARG LIB_DIR
 
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH"
-ENV          GCS_COLLECTION_ROOT_PATH="/mnt/datafed"
-ENV  DATAFED_GCS_COLLECTION_ROOT_PATH="$GCS_COLLECTION_ROOT_PATH"
+ENV  DATAFED_GCS_COLLECTION_ROOT_PATH="/mnt/datafed"
 ENV     DATAFED_GLOBUS_CRED_FILE_PATH=/opt/datafed/globus/client_cred.json
 ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
-ENV	                      DATAFED_DIR="$DATAFED_DIR"
+ENV                        DATAFED_DIR="$DATAFED_DIR"
 ENV                         BUILD_DIR="$BUILD_DIR"
 ENV                           LIB_DIR="$LIB_DIR"
 ENV          DATAFED_GLOBUS_REPO_USER="datafed"
+ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 
 RUN mkdir -p ${BUILD_DIR}
-RUN mkdir -p ${BUILD_DIR}/logs
+RUN mkdir -p ${DATAFED_INSTALL_PATH}/logs
 RUN mkdir -p ${BUILD_DIR}/common/proto
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/authz
-RUN mkdir -p ${DATAFED_DIR}/collections/mapped
+RUN mkdir -p /mnt/datafed
 
 # For communicating with public
 EXPOSE 443
@@ -73,6 +73,7 @@ COPY --chown=datafed:root ./cmake                                 ${BUILD_DIR}/c
 COPY --chown=datafed:root ./repository/CMakeLists.txt             ${BUILD_DIR}/repository/CMakeLists.txt
 COPY --chown=datafed:root ./repository/gridftp/CMakeLists.txt     ${BUILD_DIR}/repository/gridftp/CMakeLists.txt
 COPY --chown=datafed:root ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
+COPY --chown=datafed:root ./scripts/globus/clean_globus.sh        ${BUILD_DIR}/scripts/globus/clean_globus.sh
 COPY --chown=datafed:root ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
 COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
 COPY --chown=datafed:root ./common                                ${BUILD_DIR}/common
@@ -84,7 +85,7 @@ COPY --chown=datafed:root ./scripts/globus/__init__.py  ${BUILD_DIR}/scripts/glo
 # These extra copy statements are necessary as the authz binary is built in the GCS container
 # and not the dependencies container so we must copy the build dependencies as well as the
 # runtime depedencies
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}								${DATAFED_DEPENDENCIES_INSTALL_PATH}
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}                ${DATAFED_DEPENDENCIES_INSTALL_PATH}
 
 COPY --from=dependencies /usr/bin/make /usr/bin/make
 COPY --from=dependencies /usr/bin/g++  /usr/bin/g++
@@ -104,25 +105,29 @@ COPY --from=dependencies /usr/include /usr/include
 COPY --from=dependencies /usr/lib /usr/lib
 
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotobuf.a  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotobuf.a
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotoc.a		 ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotoc.a
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotoc.a     ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libprotoc.a
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libzmq.a       ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libzmq.a
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libsodium.a    ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libsodium.a
+# Copy python env over
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed
 
 RUN apt update
 RUN apt-get install vim -y
 RUN apt-get reinstall globus-connect-server54 -y
 
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
-RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&	\
-	${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build	\
-		-DBUILD_REPO_SERVER=False		\
-		-DBUILD_AUTHZ=True					\
-		-DBUILD_CORE_SERVER=False		\
-		-DBUILD_WEB_SERVER=False		\
-		-DBUILD_DOCS=False					\
-    -DBUILD_PYTHON_CLIENT=False	\
+# Don't build with syslog the container does not seem to support syslog
+RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
+  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build  \
+    -DBUILD_REPO_SERVER=False         \
+    -DBUILD_AUTHZ=True                \
+    -DBUILD_AUTHZ_WITH_SYSLOG=False   \
+    -DBUILD_CORE_SERVER=False         \
+    -DBUILD_WEB_SERVER=False          \
+    -DBUILD_DOCS=False                \
+    -DBUILD_PYTHON_CLIENT=False       \
     -DBUILD_FOXX=False
-RUN	${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
+RUN  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 # Get the file that is not a link and give it the right permissions
@@ -138,3 +143,7 @@ USER root
 RUN sed -i '/--client-id/d' /entrypoint.sh
 
 WORKDIR ${DATAFED_INSTALL_PATH}/authz
+
+# NOTE If you do not overwrite the entrypoint file it will use the GCS instance
+# prorivded one
+ENTRYPOINT ["/datafed/source/repository/docker/entrypoint_authz.sh"]

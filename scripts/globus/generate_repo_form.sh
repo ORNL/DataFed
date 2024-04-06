@@ -27,9 +27,9 @@ then
   exit 1
 fi
 
-if [ -z "$GCS_COLLECTION_ROOT_PATH" ]
+if [ -z "$DATAFED_GCS_COLLECTION_ROOT_PATH" ]
 then
-  echo "GCS_COLLECTION_ROOT_PATH is not defined cannot run $SCRIPT"
+  echo "DATAFED_GCS_COLLECTION_ROOT_PATH is not defined cannot run $SCRIPT"
   exit 1
 fi
 
@@ -93,7 +93,7 @@ public_key=$(cat ${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.pub)
 GATEWAY_NAME="${DATAFED_GCS_ROOT_NAME} Storage Gateway"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 MAPPED_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
-PATH_TO_GUEST_ROOT="${GCS_COLLECTION_ROOT_PATH}"
+PATH_TO_GUEST_ROOT="${DATAFED_GCS_COLLECTION_ROOT_PATH}"
 
 uuid_of_collection=$( globus-connect-server collection list | grep "$GUEST_COLLECTION_NAME" | awk '{ print $1 }')
 

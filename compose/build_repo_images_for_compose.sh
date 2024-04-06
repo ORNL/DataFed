@@ -8,7 +8,7 @@ PROJECT_ROOT=$(realpath "${SOURCE}/../")
 . "${PROJECT_ROOT}/scripts/dependency_versions.sh"
 
 cd ${PROJECT_ROOT}/external/globus-connect-server-deploy/docker
-git checkout "DATAFED_GCS_SUBMODULE_VERSION"
+git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
 docker build --progress plain --tag "gcs-ubuntu-base:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
 cd ${PROJECT_ROOT}
 docker build \

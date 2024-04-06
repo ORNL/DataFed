@@ -38,11 +38,11 @@ else
   local_DATAFED_DOMAIN=$(printenv DATAFED_DOMAIN)
 fi
 
-if [ -z "${GCS_COLLECTION_ROOT_PATH}" ]
+if [ -z "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
 then
-  local_GCS_COLLECTION_ROOT_PATH="/mnt/datafed-repo/mapped"
+  local_DATAFED_GCS_COLLECTION_ROOT_PATH="/mnt/datafed-repo/mapped"
 else
-  local_GCS_COLLECTION_ROOT_PATH=$(printenv GCS_COLLECTION_ROOT_PATH)
+  local_DATAFED_GCS_COLLECTION_ROOT_PATH=$(printenv DATAFED_GCS_COLLECTION_ROOT_PATH)
 fi
 
 local_DATAFED_LOG_PATH=""
@@ -91,7 +91,7 @@ while [ : ]; do
         ;;
     -g | --globus-collection-path)
         echo "Processing 'Globus Collection Path' option. Input argument is '$2'"
-        local_GCS_COLLECTION_ROOT_PATH=$2
+        local_DATAFED_GCS_COLLECTION_ROOT_PATH=$2
         shift 2
         ;;
     --) shift; 
@@ -116,7 +116,7 @@ cred-dir=$local_DATAFED_CRED_DIR
 server=tcp://$local_DATAFED_DOMAIN:${local_DATAFED_PORT}
 port=$local_DATAFED_REPO_PORT
 threads=$local_DATAFED_REPO_THREADS
-globus-collection-path=$local_GCS_COLLECTION_ROOT_PATH
+globus-collection-path=$local_DATAFED_GCS_COLLECTION_ROOT_PATH
 EOF
 
 echo
