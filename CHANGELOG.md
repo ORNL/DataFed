@@ -10,6 +10,7 @@
    smaller images
 4. [912] - Adding working compose instance for core metadata services.
 5. [937] - Working metadata services running together as part of CI
+6. [945] - Added C functions for comparing POSIX path in Authz module
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
