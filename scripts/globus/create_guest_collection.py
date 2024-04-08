@@ -96,12 +96,6 @@ gcs_client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
 import globus_sdk
 from globus_sdk import scopes
 
-# constants
-#endpoint_hostname = "https://ecf8ed.08cc.data.globus.org"
-#endpoint_id = "769c7ed0-744a-41b5-b4a8-db37b10b1ac9"
-#mapped_collection_id = "580ecb92-de56-42ee-a5ec-3d3886767b94"
-#storage_gateway_id = "3fdd7f41-4a05-4856-8fcd-2fb50066c590"
-
 # client credentials
 # This client identity must have the needed permissions to create a guest
 # collection on the mapped collection, and a valid mapping to a local account
@@ -119,6 +113,13 @@ from globus_sdk import scopes
 confidential_client = globus_sdk.ConfidentialAppAuthClient(
     client_id=client_id, client_secret=client_secret
 )
+
+token_response = confidential_client.oauth2_client_credentials_tokens()
+globus_transfer_data = token_response.by_resource_server["transfer.api.globus.org"]
+globus_transfer_token = globus_transfer_data["access_token"]
+authorizer_tc = globus_sdk.AccessTokenAuthorizer(globus_transfer_token)
+tc = globus_sdk.TransferClient(authorizer=authorizer_tc)
+
 scope = scopes.GCSEndpointScopeBuilder(ENDPOINT_ID).make_mutable("manage_collections")
 authorizer = globus_sdk.ClientCredentialsAuthorizer(confidential_client, scopes=scope)
 client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
@@ -211,4 +212,37 @@ if guest_collection_found == False:
     print(f"guest collection {guest_collection_id} created")
 
 
-# For guest collection creation see
+# Create ACL rule for Guest anonymous access
+acl_list = tc.endpoint_acl_list(endpoint_id=guest_collection_id)
+create_acl=True
+update_acl=False
+acl_id=None
+for item in acl_list["DATA"]:
+    if item["principal_type"] == "all_authenticated_users":
+        create_acl = False
+        acl_id = item["id"]
+        if item["permissions"] != "rw":
+            print("Need to update acl for all users permissions are incorrect")
+            update_acl = True
+        else:
+            print("ACL rule already exists for all users")
+        break
+
+rule_data = {
+        "DATA_TYPE": "access",
+        "path": "/",
+        "permissions": "rw",
+        "principal": "",
+        "principal_type": "all_authenticated_users",
+        "role_id": None,
+        "role_type": None
+        }
+if create_acl:
+    print(f"Creating acl rule for guest_collection {guest_collection_id}")
+    tc.add_endpoint_acl_rule(endpoint_id=guest_collection_id, rule_data=rule_data)
+elif update_acl:
+    print(f"Updating acl rule ({acl_id}) for guest_collection {guest_collection_id}")
+    tc.update_endpoint_acl_rule(endpoint_id=guest_collection_id, rule_id=acl_id, rule_data=rule_data)
+
+acl_list = tc.endpoint_acl_list(endpoint_id=guest_collection_id)
+print(acl_list)
