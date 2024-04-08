@@ -33,6 +33,8 @@ public:
 private:
   void setupMsgHandlers();
   void workerThread(LogContext log_context);
+  bool prefixesEqual(const std::string& str1, const std::string& str2, size_t length) const;
+	std::string createSanitizedPath(const std::string& path) const;
 
   std::unique_ptr<IMessage> procVersionRequest(std::unique_ptr<IMessage> &&);
   std::unique_ptr<IMessage> procDataDeleteRequest(std::unique_ptr<IMessage> &&);
