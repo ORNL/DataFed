@@ -1,4 +1,3 @@
-
 import globus_sdk
 import subprocess
 import utils
@@ -10,61 +9,76 @@ import sys
 
 # The Globus project the GCS endpoint will be created in
 DATAFED_GCS_ROOT_NAME = os.getenv("DATAFED_GCS_ROOT_NAME", "DataFed Repo")
-PROJECT_NAME=os.getenv("DATAFED_GLOBUS_PROJECT_NAME", DATAFED_GCS_ROOT_NAME + " Project")
+PROJECT_NAME = os.getenv(
+    "DATAFED_GLOBUS_PROJECT_NAME", DATAFED_GCS_ROOT_NAME + " Project"
+)
 # This is for confidential client
-CLIENT_NAME = os.getenv("DATAFED_GLOBUS_CLIENT_NAME", DATAFED_GCS_ROOT_NAME + " Setup Client")
+CLIENT_NAME = os.getenv(
+    "DATAFED_GLOBUS_CLIENT_NAME", DATAFED_GCS_ROOT_NAME + " Setup Client"
+)
 # Name of the client secret used by the confidential client
-CRED_NAME=os.getenv("DATAFED_GLOBUS_CRED_NAME",DATAFED_GCS_ROOT_NAME + " Cred")
+CRED_NAME = os.getenv("DATAFED_GLOBUS_CRED_NAME", DATAFED_GCS_ROOT_NAME + " Cred")
 # Name of the file where we will store confidential client credentials
-CRED_FILE_PATH=os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH","./client_cred.json")
+CRED_FILE_PATH = os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH", "./client_cred.json")
 ENDPOINT_ID = os.getenv("GCS_CLI_ENDPOINT_ID")
-ENDPOINT_NAME = os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME",DATAFED_GCS_ROOT_NAME + " Endpoint")
+ENDPOINT_NAME = os.getenv(
+    "DATAFED_GLOBUS_ENDPOINT_NAME", DATAFED_GCS_ROOT_NAME + " Endpoint"
+)
 # Path to deployment key
-DEPLOYMENT_KEY_PATH=os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH","./deployment-key.json")
+DEPLOYMENT_KEY_PATH = os.getenv(
+    "DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH", "./deployment-key.json"
+)
 
 # Path to deployment key
-DATAFED_GLOBUS_CONTROL_PORT=os.getenv("DATAFED_GLOBUS_CONTROL_PORT", "443")
-DATAFED_GCS_URL=os.getenv("DATAFED_GCS_URL")
+DATAFED_GLOBUS_CONTROL_PORT = os.getenv("DATAFED_GLOBUS_CONTROL_PORT", "443")
+DATAFED_GCS_URL = os.getenv("DATAFED_GCS_URL")
 client_id = os.getenv("GCS_CLI_CLIENT_ID")
 client_secret = os.getenv("GCS_CLI_CLIENT_SECRET")
 mapped_collection_id = os.getenv("MAPPED_COLLECTION_ID")
-mapped_collection_name = os.getenv("DATAFED_GCS_COLLECTION_MAPPED", f"{DATAFED_GCS_ROOT_NAME} Collection Mapped")
-guest_collection_name = os.getenv("DATAFED_GCS_COLLECTION_GUEST",f"{DATAFED_GCS_ROOT_NAME} Collection Guest")
+mapped_collection_name = os.getenv(
+    "DATAFED_GCS_COLLECTION_MAPPED", f"{DATAFED_GCS_ROOT_NAME} Collection Mapped"
+)
+guest_collection_name = os.getenv(
+    "DATAFED_GCS_COLLECTION_GUEST", f"{DATAFED_GCS_ROOT_NAME} Collection Guest"
+)
 storage_gateway_id = os.getenv("STORAGE_GATEWAY_ID")
-storage_gateway_name = os.getenv("DATAFED_GCS_STORAGE_GATEWAY",f"{DATAFED_GCS_ROOT_NAME} Storage Gateway")
+storage_gateway_name = os.getenv(
+    "DATAFED_GCS_STORAGE_GATEWAY", f"{DATAFED_GCS_ROOT_NAME} Storage Gateway"
+)
 local_username = os.getenv("DATAFED_REPO_USER")
 
 if ENDPOINT_ID is None:
     raise Exception("GCS_CLI_ENDPOINT_ID must be defined as an env varaible")
 if DATAFED_GCS_URL is None:
-    raise Exception("Unable to create guest collection, DATAFED_GCS_URL is not"
-                    " defined.")
+    raise Exception(
+        "Unable to create guest collection, DATAFED_GCS_URL is not" " defined."
+    )
 if local_username is None:
     raise Exception("DATAFED_REPO_USER is not defined.")
 
-#client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
+# client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
 
 # manage_projects scope to create a project
 # view_identities to user information for creating GCS server
-#client.oauth2_start_flow(requested_scopes="openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities", refresh_tokens=True)
+# client.oauth2_start_flow(requested_scopes="openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities", refresh_tokens=True)
 #
-#authorize_url = client.oauth2_get_authorize_url(query_params={"prompt": "login"})
-#print("Please go to this URL and login: \n", authorize_url)
-#auth_code = input("Please enter the authorization code: ")
+# authorize_url = client.oauth2_get_authorize_url(query_params={"prompt": "login"})
+# print("Please go to this URL and login: \n", authorize_url)
+# auth_code = input("Please enter the authorization code: ")
 #
-#token_response = client.oauth2_exchange_code_for_tokens(auth_code)
+# token_response = client.oauth2_exchange_code_for_tokens(auth_code)
 ## Extract the token
-#refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
-#rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
+# refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
+# rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
 ## auth_client_refresh_token
-#ac_rt = AuthClient(authorizer=rt_authorizer)
+# ac_rt = AuthClient(authorizer=rt_authorizer)
 #
-#userinfo = ac_rt.oauth2_userinfo()
+# userinfo = ac_rt.oauth2_userinfo()
 ## Will get the primary email and id
-#identity_id = userinfo["sub"]
-#email = userinfo["email"]
-#username = userinfo["preferred_username"]
-#organization = userinfo["identity_provider_display_name"]
+# identity_id = userinfo["sub"]
+# email = userinfo["email"]
+# username = userinfo["preferred_username"]
+# organization = userinfo["identity_provider_display_name"]
 
 if client_id is None:
     client_id = getClientIdFromCredFile(CRED_FILE_PATH)
@@ -74,21 +88,21 @@ if client_secret is None:
 
 client = globus_sdk.ConfidentialAppAuthClient(client_id, client_secret)
 
-scopes="openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities"
+scopes = "openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities"
 authorizer = globus_sdk.ClientCredentialsAuthorizer(client, scopes)
-#cc_authorizer = globus_sdk.ClientCredentialsAuthorizer(confidential_client,
+# cc_authorizer = globus_sdk.ClientCredentialsAuthorizer(confidential_client,
 #        scopes)
 
-#token_response = client.oauth2_client_credentials_tokens()
+# token_response = client.oauth2_client_credentials_tokens()
 
-#refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
-#rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
+# refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
+# rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
 # the useful values that you want at the end of this
-#globus_auth_data = token_response.by_resource_server["auth.globus.org"]
-#globus_transfer_data =
-#token_response.by_resource_server["transfer.api.globus.org"]
-#globus_auth_token = globus_auth_data["access_token"]
-#globus_transfer_token = globus_transfer_data["access_token"]
+# globus_auth_data = token_response.by_resource_server["auth.globus.org"]
+# globus_transfer_data =
+# token_response.by_resource_server["transfer.api.globus.org"]
+# globus_auth_token = globus_auth_data["access_token"]
+# globus_transfer_token = globus_transfer_data["access_token"]
 
 gcs_client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
 
@@ -102,9 +116,9 @@ from globus_sdk import scopes
 # on the storage gateway that matches the local_username
 # If using user tokens, the user must be the one with the correct permissions
 # and identity mapping.
-#client_id = "4de65cd7-4363-4510-b652-f8d15a43a0af"
-#client_secret = "*redacted*"
-#local_username = "datafed"
+# client_id = "4de65cd7-4363-4510-b652-f8d15a43a0af"
+# client_secret = "*redacted*"
+# local_username = "datafed"
 
 # The scope the client will need, note that primary scope is for the endpoint,
 # but it has a dependency on the mapped collection's data_access scope
@@ -136,13 +150,15 @@ for item in collection_list["data"]:
         if item["id"] == mapped_collection_id:
             mapped_collection_found = True
             if item["display_name"] != mapped_collection_name:
-                raise Exception("Expected display name is different from what "
-                                "is expected for mapped collection "
-                                f"{mapped_collection_id}, if using non standard"
-                                " display name for mapped collection "
-                                f"{mapped_collection_name} then the "
-                                "MAPPED_COLLECTION_NAME env variable must be "
-                                "set.")
+                raise Exception(
+                    "Expected display name is different from what "
+                    "is expected for mapped collection "
+                    f"{mapped_collection_id}, if using non standard"
+                    " display name for mapped collection "
+                    f"{mapped_collection_name} then the "
+                    "MAPPED_COLLECTION_NAME env variable must be "
+                    "set."
+                )
             break
     elif item["display_name"] == mapped_collection_name:
         mapped_collection_found = True
@@ -160,19 +176,21 @@ for item in storage_gateway_list["data"]:
         if item["id"] == storage_gateway_id:
             storage_gateway_found = True
             if item["display_name"] != storage_gateway_name:
-                raise Exception("Expected display name is different from what "
-                                "is expected for storage gateway "
-                                f"{storage_gateway_id}, if using non standard"
-                                " display name for storage gateway "
-                                f"{storage_gateway_name} then the "
-                                "DATAFED_GCS_STORAGE_GATEWAY env variable must be "
-                                "set.")
+                raise Exception(
+                    "Expected display name is different from what "
+                    "is expected for storage gateway "
+                    f"{storage_gateway_id}, if using non standard"
+                    " display name for storage gateway "
+                    f"{storage_gateway_name} then the "
+                    "DATAFED_GCS_STORAGE_GATEWAY env variable must be "
+                    "set."
+                )
             break
     elif item["display_name"] == storage_gateway_name:
         storage_gateway_found = True
         storage_gateway_id = item["id"]
         break
-    
+
 if storage_gateway_found == False:
     raise Exception("Missing required storage gateway")
 
@@ -190,7 +208,7 @@ for item in collection_list["data"]:
         guest_collection_found = True
         guest_collection_id = item["id"]
         break
-    
+
 # https://github.com/globus/globus-sdk-python/blob/main/docs/examples/guest_collection_creation.rst
 if guest_collection_found == False:
     credential_document = globus_sdk.UserCredentialDocument(
@@ -200,7 +218,7 @@ if guest_collection_found == False:
     )
     client.create_user_credential(credential_document)
 
-# Create the collection
+    # Create the collection
     collection_document = globus_sdk.GuestCollectionDocument(
         public="True",
         collection_base_path="/",
@@ -214,9 +232,9 @@ if guest_collection_found == False:
 
 # Create ACL rule for Guest anonymous access
 acl_list = tc.endpoint_acl_list(endpoint_id=guest_collection_id)
-create_acl=True
-update_acl=False
-acl_id=None
+create_acl = True
+update_acl = False
+acl_id = None
 for item in acl_list["DATA"]:
     if item["principal_type"] == "all_authenticated_users":
         create_acl = False
@@ -229,20 +247,22 @@ for item in acl_list["DATA"]:
         break
 
 rule_data = {
-        "DATA_TYPE": "access",
-        "path": "/",
-        "permissions": "rw",
-        "principal": "",
-        "principal_type": "all_authenticated_users",
-        "role_id": None,
-        "role_type": None
-        }
+    "DATA_TYPE": "access",
+    "path": "/",
+    "permissions": "rw",
+    "principal": "",
+    "principal_type": "all_authenticated_users",
+    "role_id": None,
+    "role_type": None,
+}
 if create_acl:
     print(f"Creating acl rule for guest_collection {guest_collection_id}")
     tc.add_endpoint_acl_rule(endpoint_id=guest_collection_id, rule_data=rule_data)
 elif update_acl:
     print(f"Updating acl rule ({acl_id}) for guest_collection {guest_collection_id}")
-    tc.update_endpoint_acl_rule(endpoint_id=guest_collection_id, rule_id=acl_id, rule_data=rule_data)
+    tc.update_endpoint_acl_rule(
+        endpoint_id=guest_collection_id, rule_id=acl_id, rule_data=rule_data
+    )
 
 acl_list = tc.endpoint_acl_list(endpoint_id=guest_collection_id)
 print(acl_list)

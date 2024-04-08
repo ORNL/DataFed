@@ -226,7 +226,8 @@ public:
                               << client->address());
 
     auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
-    if (response.message ) { // Make sure the message exists before we try to access it
+    if (response.message) { // Make sure the message exists before we try to
+                            // access it
       log_context.correlation_id = std::get<std::string>(
           response.message->get(MessageAttribute::CORRELATION_ID));
     }
@@ -252,9 +253,10 @@ public:
                             "communicating with the core service: "
                                 << response.error_msg);
     } else {
-    
-      if( not response.message ) {
-        DL_ERROR(log_context, "No error was reported and no time out occured but message is not defined.");
+
+      if (not response.message) {
+        DL_ERROR(log_context, "No error was reported and no time out occured "
+                              "but message is not defined.");
       }
 
       auto payload =

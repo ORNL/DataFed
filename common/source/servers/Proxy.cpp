@@ -123,10 +123,12 @@ void Proxy::run() {
       // public
       if (resp_from_client_socket.error == false and
           resp_from_client_socket.time_out == false) {
-        if(not resp_from_client_socket.message ) {
-          DL_ERROR(m_log_context, "Proxy::run - Something is wrong, message "
-              << "response is not defined but no timeouts or errors were "
-              << "triggered, unable to send to server.");
+        if (not resp_from_client_socket.message) {
+          DL_ERROR(
+              m_log_context,
+              "Proxy::run - Something is wrong, message "
+                  << "response is not defined but no timeouts or errors were "
+                  << "triggered, unable to send to server.");
         } else {
           m_communicators[SocketRole::SERVER]->send(
               *resp_from_client_socket.message);
@@ -143,10 +145,12 @@ void Proxy::run() {
       // ... - Serv Sock - Proxy ------ Client Sock - Serv Sock - Inter App
       if (resp_from_server_socket.error == false and
           resp_from_server_socket.time_out == false) {
-        if(not resp_from_server_socket.message ) {
-          DL_ERROR(m_log_context, "Proxy::run - Something is wrong, message "
-              << "response is not defined but no timeouts or errors were "
-              << "triggered, unable to operate and send to client.");
+        if (not resp_from_server_socket.message) {
+          DL_ERROR(
+              m_log_context,
+              "Proxy::run - Something is wrong, message "
+                  << "response is not defined but no timeouts or errors were "
+                  << "triggered, unable to operate and send to client.");
         } else {
           for (auto &in_operator : m_incoming_operators) {
             in_operator->execute(*resp_from_server_socket.message);

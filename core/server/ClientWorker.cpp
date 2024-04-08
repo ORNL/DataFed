@@ -346,8 +346,10 @@ void ClientWorker::workerThread(LogContext log_context) {
       ICommunicator::Response response =
           client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
       if (response.time_out == false and response.error == false) {
-        if ( not response.message ) {
-          DL_ERROR(message_log_context, "No timeout or error was reported but message is not defined.")
+        if (not response.message) {
+          DL_ERROR(
+              message_log_context,
+              "No timeout or error was reported but message is not defined.")
         }
 
         IMessage &message = *response.message;
