@@ -108,7 +108,7 @@ fi
 
 # Probably should grab this from the config file
 local_DATAFED_REPO_EGRESS_PORT="9000"
-repo_domain_name=$(domainname -A | xargs)
+repo_domain_name=$(domainname -A | awk '{print $1}')
 
 if [ -z "$repo_domain_name" ]
 then
@@ -125,7 +125,7 @@ then
   echo "export DATAFED_REPO_SERVER_ADDRESS=\"tcp://$repo_domain_name:$local_DATAFED_REPO_EGRESS_PORT\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_PUBLIC_KEY=\"$public_key\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_ENDPOINT_UUID=\"$uuid_of_collection\"" >> ${OUTPUT_SCRIPT_NAME}
-  echo "export DATAFED_REPO_RELATIVE_PATH=\"\\$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
+  echo "export DATAFED_REPO_RELATIVE_PATH=\"${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_DOMAIN=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_EXPORT_PATH=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_CAPACITY=\"\"" >> ${OUTPUT_SCRIPT_NAME}
@@ -141,7 +141,7 @@ then
   echo "address=\"tcp://$repo_domain_name:$local_DATAFED_REPO_EGRESS_PORT\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "pub_key=\"$public_key\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "endpoint=\"$uuid_of_collection\"" >> ${OUTPUT_SCRIPT_NAME}
-  echo "path=\"\\$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
+  echo "path=\"${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "domain=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "exp_path=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "capacity=\"\"" >> ${OUTPUT_SCRIPT_NAME}
@@ -159,7 +159,7 @@ then
   echo "  \"address\": \"tcp://$repo_domain_name:$local_DATAFED_REPO_EGRESS_PORT\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"pub_key\": \"$public_key\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"endpoint\": \"$uuid_of_collection\"," >> ${OUTPUT_SCRIPT_NAME}
-  echo "  \"path\": \"/$DATAFED_REPO_ID_AND_DIR\"," >> ${OUTPUT_SCRIPT_NAME}
+  echo "  \"path\": \"${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"domain\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"exp_path\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"capacity\": 0," >> ${OUTPUT_SCRIPT_NAME}
@@ -176,7 +176,7 @@ echo "Description: A description of the repository."
 echo "Srvr. Address: tcp://$repo_domain_name:$local_DATAFED_REPO_EGRESS_PORT"
 echo "Public Key: $public_key"
 echo "End-point ID: $uuid_of_collection"
-echo "Path: /$DATAFED_REPO_ID_AND_DIR"
+echo "Path: ${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR"
 echo "Domain: "
 # I don't know what this is
 echo "Export Path: "
