@@ -48,7 +48,7 @@ services:
     volumes:
       - ./keys:/opt/datafed/keys
     networks:
-      - datafed-core-secure-api
+      # - datafed-core-secure-api
       - datafed-internal
 
   datafed-foxx:

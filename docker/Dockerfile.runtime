@@ -35,7 +35,8 @@ WORKDIR ${DATAFED_DIR}
 # RUN apt update
 # RUN apt install -y grep libcurl4
 
-RUN apk add libcurl musl-utils bash shadow coreutils libstdc++ libgcc git make pkgconfig build-base
+RUN apk add shadow coreutils build-base
+#  libstdc++ libgcc bash libcurl git make musl-utils pkgconfig
 
 # RUN git clone https://github.com/kaniini/libucontext && \
 # 		cd libucontext && \

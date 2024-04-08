@@ -75,24 +75,24 @@ RUN apk add \
     libffi-dev
 
 # download and extract python sources
-RUN cd /opt \
-    && wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \                                              
-    && tar xzf Python-${PYTHON_VERSION}.tgz
-
-# build python and remove left-over sources
-RUN cd /opt/Python-${PYTHON_VERSION} \ 
-    && ./configure --prefix=/usr --enable-optimizations --with-ensurepip=install \
-    && make install \
-    && rm /opt/Python-${PYTHON_VERSION}.tgz /opt/Python-${PYTHON_VERSION} -rf
+# RUN cd /opt \
+#     && wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \                                              
+#     && tar xzf Python-${PYTHON_VERSION}.tgz
+#
+# # build python and remove left-over sources
+# RUN cd /opt/Python-${PYTHON_VERSION} \ 
+#     && ./configure --prefix=/usr --enable-optimizations --with-ensurepip=install \
+#     && make install \
+#     && rm /opt/Python-${PYTHON_VERSION}.tgz /opt/Python-${PYTHON_VERSION} -rf
 
 
 COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm
-RUN rm -rf ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/versions/node
+# RUN rm -rf ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/versions/node
 # COPY ./scripts/install_node.sh ${BUILD_DIR}/scripts/install_node.sh
 COPY --chown=datafed:root ./scripts/dependency_versions.sh       ${BUILD_DIR}/scripts/dependency_versions.sh
-RUN . "${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/nvm.sh" && \
-    . ${BUILD_DIR}/scripts/dependency_versions.sh && \
-    nvm install $DATAFED_NODE_VERSION
+# RUN . "${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/nvm.sh" && \
+#     . ${BUILD_DIR}/scripts/dependency_versions.sh && \
+#     nvm install $DATAFED_NODE_VERSION
 # RUN "${BUILD_DIR}/scripts/generate_datafed.sh"
 # RUN "${BUILD_DIR}/scripts/install_node.sh"
 
