@@ -79,6 +79,17 @@ browser to allow you to see the page.
 
 ### 5. Bringing down the compose file
 
+To completely remove the compose instance and all state the following should
+be run.
+
+```bash
+docker compose -f ./compose_core.yml down --volumes
+```
+
+NOTE the volumes will remove all cached state. If the '--volumes' flag is
+not added then on a subsequent "compose up" the database will not be a clean
+install but contain state from previous runs.
+
 ## Repo Compose Services
 
 The following steps are used to stand up the repo compose file. NOTE, that
@@ -200,6 +211,7 @@ include, ports
 50000-51000 for the datafed-gcs container
 9000 for the datafed-repo container
 80 for the datafed-gcs container
+8512 for arangodb web server interface
 
 Make sure port 80 is not already bound on the host. Also note that the repo server keys
 should exist in the keys folder before running the gcs instance.
