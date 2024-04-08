@@ -24,7 +24,11 @@ export GLOBUS_CLIENT_ID=$(cat /opt/datafed/globus/client_cred.json  | jq -r .cli
 export GLOBUS_CLIENT_SECRET=$(cat /opt/datafed/globus/client_cred.json  | jq -r .secret)
 export DEPLOYMENT_KEY=$(cat "$DEPLOYMENT_KEY_PATH"  )
 
-chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
+if [ -n "$UID" ]; then
+    echo "Switching datafed user to UID: ${UID}"
+    usermod -u $UID datafed
+    chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
+fi
 
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
@@ -114,6 +118,7 @@ fi
 if [ ! -d "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
 then
   mkdir -p "$DATAFED_GCS_COLLECTION_ROOT_PATH"
+  chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
 fi
 
 "${BUILD_DIR}/scripts/globus/setup_globus.sh"
@@ -126,6 +131,8 @@ GCS_CLI_CLIENT_ID="$GCS_CLI_CLIENT_ID" \
 GCS_CLI_CLIENT_SECRET="$GCS_CLI_CLIENT_SECRET" \
 DATAFED_REPO_USER="$DATAFED_REPO_USER" \
   python3 "${BUILD_DIR}/scripts/globus/create_guest_collection.py"
+
+"${BUILD_DIR}/scripts/globus/generate_repo_form.sh"
 
 echo "Container is running."
 sleep infinity
