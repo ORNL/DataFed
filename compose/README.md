@@ -1,30 +1,75 @@
 # Compose Dev environment
 
-## Generating configuration varaibles
+The compos Dev environment is split into two different compose files. The
+"core metadata services" which comprise the web server, core server and database
+and the "repo services" which comprise Globus Connect Server running with the
+authz library and the DataFed repo service.
+
+NOTE Standing up the repo services has been separated because of Globus. You will
+need a machine with firewall exceptions to use it.
+
+## Core Compose Services
+
+The following steps are used to stand up the core compose file from scratch.
+Some of steps you only have to do once.
+
+1. Generating the env variables.
+2. Opening the .env file and entering your configuration
+3. Building the images
+4. Running the compose file
+5. Bringing down the compose file. 
+
+Core services only need an external port 443 for https access. I have been 
+unable to get this to work with other ports due to the redirect URL required
+by Globus for authentication. It does not seem to support ports outside of 443.
+
+### 1. Generating .env configuration varaibles
 
 Create the .env file fill in the missing components that are required.
 
 ```bash
 ./generate_env.sh
 ```
+### 2. Generating .env configuration varaibles
 
-Both the repo compose file and the core compose file will use the .env file
-that is generated from this step.
+The .env file will be created in the DataFed/compose folder and will be hidden.
+The .env file variables can be changed at this point to your configuration.
 
-## Building Core Services 
+NOTE the .env file will be read verbatim by compose including any spaces or
+"#" comments so do not includ anything but the exact text that needs to be
+included in the variables.
 
-The files in this folder are incomplete but are the start for setting up a full
-docker compose instance of datafed.
+### 3. Building Core Services 
+
+The following command will build all the images to run the core metadata 
+services.
 
 ```bash
 ./build_images_for_compose.sh
 ```
 
+### 4. Running the compose file
+
 Stand up the core services.
 
 ```bash
+source ./unset_env.sh
 docker compose -f ./compose_core.yml up
 ```
+
+NOTE The unset_env.sh script is to make sure you are not accidentially overwriting
+what is in the .env with your local shell env. You can check the configuration
+before hand by running.
+
+```bash
+docker compose -f compose_core.yml config
+```
+
+WARNING - docker compose will prioritize env variables in the following priority
+1. From you shell env
+2. From the .env file
+3. Internally from winthin the image
+Be sure that you are not accidentally overwriting .env variables.
 
 At this point you should be able to navigate in your browser to
 <https://localhost>
@@ -32,30 +77,79 @@ At this point you should be able to navigate in your browser to
 NOTE we are using a self signed certificate so you will have to force your
 browser to allow you to see the page.
 
-Standing up the repo services has been separated because of Globus. You will
-need a machine with firewall exceptions to use it.
+### 5. Bringing down the compose file
 
-## Building Repo & Authz-Globus Services 
+## Repo Compose Services
+
+The following steps are used to stand up the repo compose file. NOTE, that
+because of how Globus is configured, there is an additional configuration 
+and teardown step.
+
+1. Generating the env variables.
+2. Opening the .env file and entering your configuration
+3. Running the generate_globus_files.sh script
+4. Building the images
+5. Running the compose file
+6. Bringing down the compose file.
+7. Running the cleanup_globus_files.sh if you 
+
+### 1. Generating .env configuration varaibles
+
+Create the .env file fill in the missing components that are required.
+
+```bash
+./generate_env.sh
+```
+
+### 2. Generating .env configuration varaibles
+
+The .env file will be created in the DataFed/compose folder and will be hidden.
+The .env file variables can be changed at this point to your configuration.
+
+NOTE the .env file will be read verbatim by compose including any spaces or
+"#" comments so do not includ anything but the exact text that needs to be
+included in the variables.
+
+### 3. Globus configuration
+
+This step is only required once, after which the necessary files should exist
+in DataFed/compose/globus. These files will contain the Globus configuration 
+needed for additional cycles of "docker compose up" and "docker compose down".
+
+### 4. Building Repo Services 
+
+The following command will build all the images to run the core metadata 
+services.
 
 ```bash
 ./build_repo_images_for_compose.sh
 ```
 
-Standing up the repo services. NOTE gcs-authz container will use host network
-due to the large numbers of ports that are needed by Globus.
+### 5. Running the compose file
+
+Stand up the repo services.
 
 ```bash
+source ./unset_env.sh
 docker compose -f ./compose_repo.yml up
 ```
 
-## Running individual containers
-
-If you just want to run a single container at a time with the same configuration
-this can also be doen using commands like the following.
+NOTE The unset_env.sh script is to make sure you are not accidentially overwriting
+what is in the .env with your local shell env. You can check the configuration
+before hand by running. Be aware, the 'source' is to apply changes to your 
+current terminal session.
 
 ```bash
-docker run -e UID=$(id -u) --env-file .env -it datafed-web:latest /bin/bash
+docker compose -f compose_repo.yml config
 ```
+
+WARNING - docker compose will prioritize env variables in the following priority
+1. From you shell env
+2. From the .env file
+3. Internally from winthin the image
+Be sure that you are not accidentally overwriting .env variables.
+
+### 6. Bringing down the compose file 
 
 ## Cleaning up
 
@@ -63,18 +157,51 @@ docker run -e UID=$(id -u) --env-file .env -it datafed-web:latest /bin/bash
 docker compose -f ./compose_core.yml down
 ```
 
-## Running gcs Docker container
+# Running isolated containers
 
-Make sure port 80 is not already bound. Also note that the repo server keys
-should exist in the keys folder before running the gcs instance.
+If you just want to run a single container at a time with the same configuration
+this can also be doen using commands like the following.
+
+## DataFed Web 
+
+```bash
+source ./unset_env.sh
+docker run --env-file .env \
+  -e UID=$(id -u) \
+  -p 443:443 \
+  -p 7513:7513 \
+  -t datafed-web:latest
+```
+
+## DataFed GCS
 
 ```bash
 docker run --env-file .env \
   --network=host \
-  --entrypoint /bin/bash \ 
   -v /home/cloud/compose_collection:/mnt/datafed \
   -v ./globus:/opt/datafed/globus \
   -v ./logs:/datafed/logs \
   -v ./keys:/opt/datafed/keys \
-  -it datafed-gcs:latest
+  -t datafed-gcs:latest
 ```
+
+To interact more directly with the container the '-i' flag can be added and the
+entrypoint file can be overwritten by including '--entrypoint /bin/bash'
+
+# Common Errors
+
+## Errors during compose up
+
+Make sure all the ports that are needed are open on the local host. These
+include, ports
+
+443 for the datafed-web and datafed-gcs container
+7512 for the datafed-core container
+50000-51000 for the datafed-gcs container
+9000 for the datafed-repo container
+80 for the datafed-gcs container
+
+Make sure port 80 is not already bound on the host. Also note that the repo server keys
+should exist in the keys folder before running the gcs instance.
+
+
