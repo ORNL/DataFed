@@ -146,8 +146,10 @@ void Server::checkServerVersion() {
 
   MessageFactory msg_factory;
 
-  for (int i = 0; i < 10; i++) {
-    DL_INFO(m_log_context, "Attempt " << i << " to initialize communication "
+  size_t attempt = 0;
+  while (true) {
+    ++attempt;
+    DL_INFO(m_log_context, "Attempt " << attempt << " to initialize communication "
         << " with core server at " << m_config.core_server);
     auto msg = std::make_unique<VersionRequest>();
     auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
