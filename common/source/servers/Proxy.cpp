@@ -123,7 +123,7 @@ void Proxy::run() {
       // public
       if (resp_from_client_socket.error == false and
           resp_from_client_socket.time_out == false) {
-        if(not resp_from_server_socket.message ) {
+        if(not resp_from_client_socket.message ) {
           DL_ERROR(m_log_context, "Proxy::run - Something is wrong, message "
               << "response is not defined but no timeouts or errors were "
               << "triggered, unable to send to server.");
