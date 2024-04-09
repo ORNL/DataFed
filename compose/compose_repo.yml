@@ -21,7 +21,7 @@ services:
     image: datafed-repo:latest
     volumes:
       - ./keys:/opt/datafed/keys
-      - ./logs:/datafed/logs
+      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
       - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}
     ports:
       - 9000:9000 # Communication core server
@@ -49,7 +49,7 @@ services:
     volumes:
       - ./keys:/opt/datafed/keys
       - ./globus:/opt/datafed/globus
-      - ./logs:/datafed/logs
+      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
       - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}
 
 # External true indicates that the network is created by a

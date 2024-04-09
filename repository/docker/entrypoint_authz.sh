@@ -49,7 +49,28 @@ cp "$PROJECT_ROOT/config/datafed-authz.cfg" ${DATAFED_INSTALL_PATH}/authz
 # the globus-connect-server node setup command attempts to use systemctl which
 # is not installed in the container
 
-# Run in background
+# Make sure files did not persist from a previous docker compose run
+# This code block is used for cleaning up files that might have been cached by
+# docker compose. These files are not always appropraitely removed when the 
+# Globus container exits.
+#
+# List of files to delete
+files=("/run/gcs_manager" "/run/gcs_manager/pid" "/var/run/apache2/apache2.pid"
+  "/var/run/httpd/httpd.pid" "/run/globus-gridftp-server.pid")
+# Loop over the list of files
+for file in "${files[@]}"; do
+  if [ -e "$file" ]; then
+    echo "Removing $file"
+    rm -rf "$file"
+  fi
+done
+link="/run/gcs_manager.sock"
+if [ -L "$link" ]; then
+  echo "Removing symbolic link $link"
+  rm "$link"
+fi
+
+# Run the GCS entrypoint file in the background
 /entrypoint.sh &
 
 # NOTE - can only change the tcp control port after setting up the end point
@@ -102,11 +123,9 @@ do
 	printf "\r${EraseToEOL}"
 
 	minutes=$((minutes + 1))
-  #sleep 60
   HTTP_CODE=$(${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
 done
 printf "\n"
-#export DATAFED_GCS_URL=$(globus-connect-server endpoint show --format json | jq -r .gcs_manager_url)
 
 log_path="$DATAFED_DEFAULT_LOG_PATH"
 
@@ -135,6 +154,7 @@ DATAFED_REPO_USER="$DATAFED_REPO_USER" \
 "${BUILD_DIR}/scripts/globus/generate_repo_form.sh"
 
 echo "Container is running."
-sleep infinity
 
-#"$@" -- argv0 "$@"
+# Return to last file
+tail -f "${DATAFED_DEFAULT_LOG_PATH}/datafed-gsi-authz.log"
+sleep infinity

@@ -137,8 +137,8 @@ then
     "$uuid_of_storage_gateway" \
     "/" \
     "$COLLECTION_NAME" \
-    --default-directory "${DATAFED_GCS_COLLECTION_ROOT_PATH}" \
     --enable-anonymous-writes \
+    --default-directory "/" \
     --disable-https "$extra_collection_arg"
 else
 
@@ -147,8 +147,8 @@ else
   # NOTE allow-guest-collections requires a subscription
   globus-connect-server collection update \
     "$uuid_of_collection" \
-    --default-directory "${DATAFED_GCS_COLLECTION_ROOT_PATH}" \
     --enable-anonymous-writes \
+    --default-directory "/" \
     --disable-https "$extra_collection_arg"
 fi
 
