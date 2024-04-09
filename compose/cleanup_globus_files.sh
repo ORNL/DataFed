@@ -13,20 +13,20 @@ then
   exit 1
 fi
 
-. ${PROJECT_ROOT}/compose/.env
+. "${PROJECT_ROOT}/compose/.env"
 
 export DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH="$DATAFED_HOST_DEPLOYMENT_KEY_PATH"
 export DATAFED_GLOBUS_CRED_FILE_PATH="$DATAFED_HOST_CRED_FILE_PATH"
 
 if [ -f "$DATAFED_HOST_CRED_FILE_PATH" ]
 then
-  export GCS_CLI_CLIENT_ID=$(cat ${DATAFED_HOST_CRED_FILE_PATH}  | jq -r .client)
-  export GCS_CLI_CLIENT_SECRET=$(cat ${DATAFED_HOST_CRED_FILE_PATH}  | jq -r .secret)
+  export GCS_CLI_CLIENT_ID=$(cat "${DATAFED_HOST_CRED_FILE_PATH}"  | jq -r .client)
+  export GCS_CLI_CLIENT_SECRET=$(cat "${DATAFED_HOST_CRED_FILE_PATH}"  | jq -r .secret)
 fi
 
 if [ -f "$DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH" ]
 then
-  export GCS_CLI_ENDPOINT_ID=$(cat ${DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH}  | jq -r .client_id)
+  export GCS_CLI_ENDPOINT_ID=$(cat "${DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH}"  | jq -r .client_id)
 fi
 
 sudo globus-connect-server node cleanup
