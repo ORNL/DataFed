@@ -159,6 +159,9 @@ public:
      * Changes will need to be made anywhere the path is used. And when a
      * transfer document is created it should be provided with a path relative
      * to the endpoint not to the absolute of the filesystem.
+     *
+     * Changes will also need to be made when entering information in the repo
+     * form if this is done.
      **/
     auto sanitized_path = local_path;
     std::unique_ptr<SDMS::ICredentials> m_sec_ctx;
