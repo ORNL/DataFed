@@ -12,8 +12,8 @@ PROJECT_ROOT=$(realpath "${SOURCE}/../..")
 # This is only part of the solution the other part is running chown
 if [ -n "$UID" ]; then
     echo "Switching datafed user to UID: ${UID}"
-    usermod -u $UID datafed
-    chown -R datafed:root ${PROJECT_ROOT}
+    usermod -u "$UID" datafed
+    chown -R datafed:root "${PROJECT_ROOT}"
     chown -R datafed:root /opt/datafed/repo/
     chown -R datafed:root /mnt/datafed
 fi

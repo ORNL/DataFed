@@ -1,8 +1,6 @@
 import globus_sdk
-from globus_sdk import AccessTokenAuthorizer
 import utils
 import os
-import sys
 
 
 # The Globus project the GCS endpoint will be created in

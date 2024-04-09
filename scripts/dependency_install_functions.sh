@@ -495,7 +495,6 @@ install_libcurl() {
     mkdir -p "${PROJECT_ROOT}/external/libcurl"
     tar -xf "curl-${DATAFED_LIBCURL}.tar.gz" -C "${PROJECT_ROOT}/external/libcurl"
     cd "${PROJECT_ROOT}/external/libcurl/curl-${DATAFED_LIBCURL}"
-    PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" \
 
     # Making third party features and dependencies explicit
     # OpenSSL is needed for HTTPS encryption
@@ -503,6 +502,7 @@ install_libcurl() {
     # GNUTLS - HTTPS support session management certificate verification etc
     # NOTE: NSS - Network Security Services for HTTP support is deprecated
     # NOTE: metalink - is no longer supported and not a valid argument
+    PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" \
     ./configure --with-ssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-gnutls --with-zlib \
       --enable-file --disable-shared \
       --disable-ldap --disable-ldaps --disable-rtsp --disable-dict \

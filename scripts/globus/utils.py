@@ -1,6 +1,4 @@
-import globus_sdk
 import subprocess
-from globus_sdk import AuthClient, AccessTokenAuthorizer
 import json
 import os
 import sys
@@ -145,7 +143,7 @@ def validFile(file_name):
 def getCredentialFromFile(cred_file_name, cred_id):
     # Check to see if the local secret is the same id and not just the same
     # name
-    cred_exists_locally, cred_empty = validFile(cred_file_name)
+    _, cred_empty = validFile(cred_file_name)
     if cred_empty is False:
         with open(cred_file_name, "r") as f:
             loaded_data = json.load(f)
@@ -157,7 +155,7 @@ def getCredentialFromFile(cred_file_name, cred_id):
 def getClientIdFromCredFile(cred_file_name):
     # Check to see if the local secret is the same id and not just the same
     # name
-    cred_exists_locally, cred_empty = validFile(cred_file_name)
+    _, cred_empty = validFile(cred_file_name)
     if cred_empty is False:
         with open(cred_file_name, "r") as f:
             loaded_data = json.load(f)
@@ -168,7 +166,7 @@ def getClientIdFromCredFile(cred_file_name):
 def getEndpointIdFromFile(deployment_key_file_path):
     # Check to see if the local secret is the same id and not just the same
     # name
-    exists_locally, empty = validFile(deployment_key_file_path)
+    _, empty = validFile(deployment_key_file_path)
     if empty is False:
         with open(deployment_key_file_path, "r") as f:
             loaded_data = json.load(f)
@@ -230,12 +228,6 @@ def createClient(auth_client, client_name, project_id, cred_name, cred_file):
 
     cred_id = getCredentialID(auth_client, client_id, cred_name)
 
-    cred_exists_on_cloud = False
-    if cred_id:
-        cred_exists_on_cloud = True
-
-    cred_exists_locally, cred_empty = validFile(cred_file)
-
     client_secret = getClientSecret(
         auth_client, client_id, cred_name, cred_id, cred_file
     )
@@ -285,11 +277,10 @@ def isGCSDeploymentKeyValid(auth_client, project_id, endpoint_name, gcs_id):
             else:
                 # Found a globus_connect_server but did not find local deployment
                 # key
-                if deployment_key_empty:
-                    print(
-                        "Found globus_connect_server already registered but did"
-                        " not find deployment key locally."
-                    )
+                print(
+                    "Found globus_connect_server already registered but did"
+                    " not find deployment key locally."
+                )
     return False
 
 
@@ -314,7 +305,6 @@ def createGCSEndpoint(
     userinfo,
 ):
 
-    identity_id = userinfo["sub"]
     email = userinfo["email"]
     username = userinfo["preferred_username"]
     organization = userinfo["identity_provider_display_name"]

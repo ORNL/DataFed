@@ -1,6 +1,6 @@
 import globus_sdk
 import utils
-from globus_sdk import AuthClient, GroupsClient 
+from globus_sdk import AuthClient, GroupsClient
 from globus_sdk.scopes import GroupsScopes
 
 import os

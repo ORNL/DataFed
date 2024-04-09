@@ -114,7 +114,7 @@ do
 			msg='.'
 			sleep 5
 	
-			HTTP_CODE=$(${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl -s -o /dev/null  -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
+			HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null  -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
 			if [ "$HTTP_CODE" == "200" ]
 			then
 				break

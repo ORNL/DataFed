@@ -1,5 +1,5 @@
 import globus_sdk
-from globus_sdk import AuthClient, GroupsClient 
+from globus_sdk import AuthClient, GroupsClient
 from globus_sdk.scopes import GroupsScopes
 import subprocess
 import sys

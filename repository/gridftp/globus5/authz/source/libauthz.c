@@ -222,7 +222,7 @@ bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
 
   if (len > a_max_len) {
     AUTHZ_LOG_ERROR(
-        "DataFed - '%s' value too long in authz config file (max %lu).\n",
+        "DataFed - '%s' value too long in authz config file (max %zu).\n",
         a_label, a_max_len);
     return true;
   }
@@ -483,6 +483,8 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
 
   AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
                   callout_ids1);
+  AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_MAPPED_USERNAME: %s\n",
+                  callout_username_mapped1);
   AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
                   callout_id_mapped1);
   AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
@@ -572,8 +574,6 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
               }
 
               char *callout_ids = getenv("GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS");
-              char *callout_username_mapped =
-                  getenv("GLOBUS_GRIDFTP_MAPPED_USERNAME");
               char *callout_id_mapped =
                   getenv("GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID");
 
