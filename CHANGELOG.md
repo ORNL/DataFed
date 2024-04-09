@@ -10,6 +10,7 @@
    smaller images
 4. [912] - Adding working compose instance for core metadata services.
 5. [937] - Working metadata services running together as part of CI
+6. [946] - Added docker compose for DataFed Repository and for Metadata Services
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
