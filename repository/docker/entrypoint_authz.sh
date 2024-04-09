@@ -13,15 +13,15 @@ export DATAFED_GCS_COLLECTION_ROOT_PATH=/mnt/datafed
 # This env variables are needed for running globus-connect-server without
 # logging in
 
-export GCS_CLI_CLIENT_ID=$(cat /opt/datafed/globus/client_cred.json  | jq -r .client)
-export GCS_CLI_CLIENT_SECRET=$(cat /opt/datafed/globus/client_cred.json  | jq -r .secret)
-export GCS_CLI_ENDPOINT_ID=$(cat /opt/datafed/globus/deployment-key.json  | jq -r .client_id)
+export GCS_CLI_CLIENT_ID=$(jq -r .client < /opt/datafed/globus/client_cred.json)
+export GCS_CLI_CLIENT_SECRET=$(jq -r .secret < /opt/datafed/globus/client_cred.json)
+export GCS_CLI_ENDPOINT_ID=$(jq -r .client_id < /opt/datafed/globus/deployment-key.json)
 
 export DEPLOYMENT_KEY_PATH="/opt/datafed/globus/deployment-key.json"
 # These env variables are for running the gcs entrypoint file
 
-export GLOBUS_CLIENT_ID=$(cat /opt/datafed/globus/client_cred.json  | jq -r .client)
-export GLOBUS_CLIENT_SECRET=$(cat /opt/datafed/globus/client_cred.json  | jq -r .secret)
+export GLOBUS_CLIENT_ID=$(jq -r .client < /opt/datafed/globus/client_cred.json)
+export GLOBUS_CLIENT_SECRET=$(jq -r .secret < /opt/datafed/globus/client_cred.json)
 export DEPLOYMENT_KEY=$(cat "$DEPLOYMENT_KEY_PATH"  )
 
 if [ -n "$UID" ]; then
@@ -32,18 +32,18 @@ fi
 
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
-source ${PROJECT_ROOT}/config/datafed.sh
+source "${PROJECT_ROOT}/config/datafed.sh"
 
 # After datafed.sh has been run created
 "${PROJECT_ROOT}/scripts/generate_authz_config.sh"
 
 # Make sure paths exist
-mkdir -p ${DATAFED_INSTALL_PATH}/keys
-mkdir -p ${DATAFED_DEFAULT_LOG_PATH}
+mkdir -p "${DATAFED_INSTALL_PATH}/keys"
+mkdir -p "${DATAFED_DEFAULT_LOG_PATH}"
 
 # Copy configuration files
 cp "$PROJECT_ROOT/config/gsi-authz.conf" /etc/grid-security
-cp "$PROJECT_ROOT/config/datafed-authz.cfg" ${DATAFED_INSTALL_PATH}/authz
+cp "$PROJECT_ROOT/config/datafed-authz.cfg" "${DATAFED_INSTALL_PATH}/authz"
 
 # Run node setup command we have to use the entrypoint file for this because
 # the globus-connect-server node setup command attempts to use systemctl which
@@ -96,9 +96,9 @@ done
 echo "globus-gridftp-server pid file found!"
 
 # Need to wait until the domain name is properly registered
-DATAFED_GCS_URL=$(cat /var/lib/globus-connect-server/info.json | jq -r .domain_name)
+DATAFED_GCS_URL=$(jq -r .domain_name < /var/lib/globus-connect-server/info.json)
 
-HTTP_CODE=$(${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
+HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
 echo "Waiting for domain name (https://${DATAFED_GCS_URL}) to be registered! Code: $HTTP_CODE"
 printf "\n"
 minutes=0
