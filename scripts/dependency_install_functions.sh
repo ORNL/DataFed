@@ -7,10 +7,10 @@ source "${SOURCE}/utils.sh"
 
 sudo_command
 # these are the dependencies to be installed by apt
-apt_file_path="${PROJECT_ROOT}/tmp/apt_deps"
-pip_file_path="${PROJECT_ROOT}/tmp/pip_deps"
+export apt_file_path="${PROJECT_ROOT}/tmp/apt_deps"
+export pip_file_path="${PROJECT_ROOT}/tmp/pip_deps"
 # these are the dependencies to be installed and built via cmake
-ext_file_path="${PROJECT_ROOT}/tmp/ext_deps"
+export ext_file_path="${PROJECT_ROOT}/tmp/ext_deps"
 
 if [ ! -d "${PROJECT_ROOT}/tmp" ]; then
     mkdir -p "${PROJECT_ROOT}/tmp" 

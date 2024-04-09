@@ -1,8 +1,6 @@
 import globus_sdk
-import subprocess
+from globus_sdk import AccessTokenAuthorizer
 import utils
-from globus_sdk import AuthClient, AccessTokenAuthorizer
-import json
 import os
 import sys
 
@@ -56,69 +54,20 @@ if DATAFED_GCS_URL is None:
 if local_username is None:
     raise Exception("DATAFED_REPO_USER is not defined.")
 
-# client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
-
-# manage_projects scope to create a project
-# view_identities to user information for creating GCS server
-# client.oauth2_start_flow(requested_scopes="openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities", refresh_tokens=True)
-#
-# authorize_url = client.oauth2_get_authorize_url(query_params={"prompt": "login"})
-# print("Please go to this URL and login: \n", authorize_url)
-# auth_code = input("Please enter the authorization code: ")
-#
-# token_response = client.oauth2_exchange_code_for_tokens(auth_code)
-## Extract the token
-# refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
-# rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
-## auth_client_refresh_token
-# ac_rt = AuthClient(authorizer=rt_authorizer)
-#
-# userinfo = ac_rt.oauth2_userinfo()
-## Will get the primary email and id
-# identity_id = userinfo["sub"]
-# email = userinfo["email"]
-# username = userinfo["preferred_username"]
-# organization = userinfo["identity_provider_display_name"]
-
 if client_id is None:
-    client_id = getClientIdFromCredFile(CRED_FILE_PATH)
+    client_id = utils.getClientIdFromCredFile(CRED_FILE_PATH)
 
 if client_secret is None:
-    client_secret = getCredentialFromFile(CRED_FILE_PATH, client_id)
+    client_secret = utils.getCredentialFromFile(CRED_FILE_PATH, client_id)
 
 client = globus_sdk.ConfidentialAppAuthClient(client_id, client_secret)
 
 scopes = "openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities"
 authorizer = globus_sdk.ClientCredentialsAuthorizer(client, scopes)
-# cc_authorizer = globus_sdk.ClientCredentialsAuthorizer(confidential_client,
-#        scopes)
-
-# token_response = client.oauth2_client_credentials_tokens()
-
-# refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
-# rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
-# the useful values that you want at the end of this
-# globus_auth_data = token_response.by_resource_server["auth.globus.org"]
-# globus_transfer_data =
-# token_response.by_resource_server["transfer.api.globus.org"]
-# globus_auth_token = globus_auth_data["access_token"]
-# globus_transfer_token = globus_transfer_data["access_token"]
 
 gcs_client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
 
-
-import globus_sdk
 from globus_sdk import scopes
-
-# client credentials
-# This client identity must have the needed permissions to create a guest
-# collection on the mapped collection, and a valid mapping to a local account
-# on the storage gateway that matches the local_username
-# If using user tokens, the user must be the one with the correct permissions
-# and identity mapping.
-# client_id = "4de65cd7-4363-4510-b652-f8d15a43a0af"
-# client_secret = "*redacted*"
-# local_username = "datafed"
 
 # The scope the client will need, note that primary scope is for the endpoint,
 # but it has a dependency on the mapped collection's data_access scope

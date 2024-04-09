@@ -1,13 +1,10 @@
 import globus_sdk
-import subprocess
 import utils
-from globus_sdk import AuthClient, GroupsClient, AccessTokenAuthorizer
+from globus_sdk import AuthClient, GroupsClient 
 from globus_sdk.scopes import GroupsScopes
 
-import json
 import os
 import sys
-
 
 # Hard coded Native Client ID
 CLIENT_ID = "f8d0afca-7ac4-4a3c-ac05-f94f5d9afce8"
