@@ -36,119 +36,123 @@ namespace Repo {
 
 map<uint16_t, RequestWorker::msg_fun_t> RequestWorker::m_msg_handlers;
 
-bool RequestWorker::prefixesEqual(const std::string& str1, const std::string& str2, size_t length) const {
-    // Check if either string is shorter than the specified length
-    if (str1.length() < length || str2.length() < length) {
-        return false;
-		}
-    
-    // Use std::equal to compare the prefixes
-    return std::equal(str1.begin(), str1.begin() + length, str2.begin());
+bool RequestWorker::prefixesEqual(const std::string &str1,
+                                  const std::string &str2,
+                                  size_t length) const {
+  // Check if either string is shorter than the specified length
+  if (str1.length() < length || str2.length() < length) {
+    return false;
+  }
+
+  // Use std::equal to compare the prefixes
+  return std::equal(str1.begin(), str1.begin() + length, str2.begin());
 }
 
-std::string RequestWorker::createSanitizedPath(const std::string& path) const {
+std::string RequestWorker::createSanitizedPath(const std::string &path) const {
 
-    string sanitized_request_path = path;
-    while (!sanitized_request_path.empty()) {
-      if (sanitized_request_path.back() == '/') {
-        sanitized_request_path.pop_back();
+  string sanitized_request_path = path;
+  while (!sanitized_request_path.empty()) {
+    if (sanitized_request_path.back() == '/') {
+      sanitized_request_path.pop_back();
+    } else {
+      break;
+    }
+  }
+  /**
+   * When item is provided it is allowed to be provided as
+   *
+   * path = '/relative_path/to/file'
+   *
+   * or
+   *
+   * path = 'globus_collection_path/relative_path/to/file
+   *
+   * If a relative path is applied then the config settings are used and
+   * the globus collection path is prepended. Otherwise if the the absolute
+   * path is provided then no change is made.
+   *
+   * E.g.
+   *
+   * Assuming
+   * path = "/datafed-home"
+   * globus_collection_path = "/mnt/datafed"
+   *
+   * Then
+   * local_path = "/mnt/datafed/datafed-home"
+   *
+   * Else if
+   *
+   * path = "/mnt/datafed/datafed-home"
+   * globus_collection_path = "/mnt/datafed"
+   *
+   * Then it won't prepend
+   * local_path = "/mnt/datafed/datafed-home"
+   **/
+  string local_path;
+  if (prefixesEqual(sanitized_request_path, m_config.globus_collection_path,
+                    m_config.globus_collection_path.length())) {
+
+    /**
+     * If both paths exist throw an error indicating there is ambiguity. I.e.
+     *
+     * If both
+     * /datafed/datafed/file1.txt
+     * /datafed/file1.txt
+     *
+     * exist and the variables are
+     *
+     * globus_collectin_path = "/datafed"
+     * path = "/datafed/file1.txt"
+     *
+     * First off something with the configuration is likely off and secondly
+     * It's impossible to determine which file is correct.
+     *
+     **/
+    std::string local_path_1 = m_config.globus_collection_path;
+    std::string local_path_2 = "";
+    if (sanitized_request_path.front() != '/') {
+      if (local_path_1.back() != '/') {
+        local_path_1 += "/" + sanitized_request_path;
       } else {
-        break;
+        local_path_1 += sanitized_request_path;
+      }
+      local_path_2 += "/" + sanitized_request_path;
+    } else {
+      local_path_1 += sanitized_request_path;
+      local_path_2 += sanitized_request_path;
+    }
+
+    boost::filesystem::path data_path_1(local_path_1); // long
+    boost::filesystem::path data_path_2(local_path_2); // shorter
+
+    if (boost::filesystem::exists(data_path_1) and
+        boost::filesystem::exists(data_path_2)) {
+      // If they are the exact same then ignore else throw an error
+      //
+      // i.e. if globus_collection_path is /
+      if (local_path_1 != local_path_2) {
+        DL_ERROR(m_log_context,
+                 "RequestWorker::createSanitizedPath, exception: something is "
+                 "really wrong both path "
+                     << local_path_1 << " and path " << local_path_2
+                     << " exists, which makes unambiguously determining the "
+                        "correct paths impossible.");
+        throw;
       }
     }
-    /** 
-     * When item is provided it is allowed to be provided as
-     *
-     * path = '/relative_path/to/file'
-     *
-     * or
-     *
-     * path = 'globus_collection_path/relative_path/to/file
-     *
-     * If a relative path is applied then the config settings are used and
-     * the globus collection path is prepended. Otherwise if the the absolute
-     * path is provided then no change is made.
-     * 
-     * E.g. 
-     * 
-     * Assuming 
-     * path = "/datafed-home"
-     * globus_collection_path = "/mnt/datafed"
-     *
-     * Then
-     * local_path = "/mnt/datafed/datafed-home"
-		 * 
-     * Else if
-     * 
-     * path = "/mnt/datafed/datafed-home"
-     * globus_collection_path = "/mnt/datafed"
-     *
-     * Then it won't prepend
-     * local_path = "/mnt/datafed/datafed-home"
-     **/
-		string local_path;
-   	if ( prefixesEqual(
-           sanitized_request_path,
-           m_config.globus_collection_path,
-           m_config.globus_collection_path.length()) ) {
 
-			/**
-			 * If both paths exist throw an error indicating there is ambiguity. I.e.
-       * 
-       * If both
-       * /datafed/datafed/file1.txt
-       * /datafed/file1.txt
-       *
-       * exist and the variables are 
-       * 
-       * globus_collectin_path = "/datafed"
-       * path = "/datafed/file1.txt" 
-       * 
-       * First off something with the configuration is likely off and secondly
-       * It's impossible to determine which file is correct.
-       *
-			 **/
-			std::string local_path_1 = m_config.globus_collection_path;
-			std::string local_path_2 = "";
-			if (sanitized_request_path.front() != '/') {
-			  if (local_path_1.back() != '/') {
-          local_path_1 += "/" + sanitized_request_path;
-        } else {
-          local_path_1 += sanitized_request_path;
-        }
-				local_path_2 += "/" + sanitized_request_path;
-			} else {
-				local_path_1 += sanitized_request_path;
-				local_path_2 += sanitized_request_path;
-			}
+    // Use the shorter path
+    local_path = local_path_2;
+  } else {
+    local_path = m_config.globus_collection_path;
+    if (sanitized_request_path.front() != '/') {
+      local_path += "/" + sanitized_request_path;
+    } else {
+      local_path += sanitized_request_path;
+    }
+  }
 
-    	boost::filesystem::path data_path_1(local_path_1); // long 
-    	boost::filesystem::path data_path_2(local_path_2); // shorter
-
-			if (boost::filesystem::exists(data_path_1) and boost::filesystem::exists(data_path_2) ){
-        // If they are the exact same then ignore else throw an error
-        //
-        // i.e. if globus_collection_path is /
-        if( local_path_1 != local_path_2 ){ 
-          DL_ERROR(m_log_context,
-              "RequestWorker::createSanitizedPath, exception: something is really wrong both path " << local_path_1 << " and path " << local_path_2 << " exists, which makes unambiguously determining the correct paths impossible.");
-          throw;
-        }
-
-			}
-
-			// Use the shorter path
-			local_path = local_path_2;	
-		} else {
-			local_path = m_config.globus_collection_path;
-			if (sanitized_request_path.front() != '/') {
-				local_path += "/" + sanitized_request_path;
-			} else {
-				local_path += sanitized_request_path;
-			}
-		}
-
-		return local_path;
+  return local_path;
 }
 
 RequestWorker::RequestWorker(size_t a_tid, LogContext log_context)
@@ -432,8 +436,8 @@ RequestWorker::procDataGetSizeRequest(std::unique_ptr<IMessage> &&msg_request) {
   for (int i = 0; i < request->loc_size(); i++) {
     const RecordDataLocation &item = request->loc(i);
 
-		std::string local_path = createSanitizedPath(item.path());
-    
+    std::string local_path = createSanitizedPath(item.path());
+
     boost::filesystem::path data_path(local_path);
 
     data_sz = reply.add_size();
@@ -460,7 +464,7 @@ std::unique_ptr<IMessage>
 RequestWorker::procPathCreateRequest(std::unique_ptr<IMessage> &&msg_request) {
   PROC_MSG_BEGIN(Auth::RepoPathCreateRequest, Anon::AckReply)
 
-	std::string local_path = createSanitizedPath(request->path());
+  std::string local_path = createSanitizedPath(request->path());
 
   boost::filesystem::path data_path(local_path);
   DL_DEBUG(message_log_context,
@@ -481,7 +485,7 @@ RequestWorker::procPathDeleteRequest(std::unique_ptr<IMessage> &&msg_request) {
   DL_DEBUG(message_log_context,
            "Relative path delete request: " << request->path());
 
-	std::string local_path = createSanitizedPath(request->path());
+  std::string local_path = createSanitizedPath(request->path());
 
   boost::filesystem::path data_path(local_path);
   DL_TRACE(message_log_context,

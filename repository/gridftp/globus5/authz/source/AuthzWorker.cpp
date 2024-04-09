@@ -142,7 +142,7 @@ public:
 
     /**
      * TODO Separation of Concerns Repo vs Core services
-     * 
+     *
      * The following line is currenctly commented out because it will require
      * some actual work and testing to get it working correctly.
      *
@@ -341,7 +341,7 @@ int checkAuthorization(char *client_id, char *object, char *action,
   SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
   SDMS::global_logger.addStream(std::cerr);
   auto log_path_authz = std::string(config->log_path);
-  if( log_path_authz.length() > 0 ) {
+  if (log_path_authz.length() > 0) {
     // Append to the existing path because we don't want the C++ and C code
     // trying to write to the same file
     log_path_authz.append("_authz");

@@ -73,7 +73,14 @@
 
 namespace SDMS {
 
-enum class LogLevel : unsigned int { CRITICAL, ERROR, WARNING, INFO, DEBUG, TRACE };
+enum class LogLevel : unsigned int {
+  CRITICAL,
+  ERROR,
+  WARNING,
+  INFO,
+  DEBUG,
+  TRACE
+};
 
 std::string toString(const LogLevel level);
 int toSysLog(const LogLevel level);

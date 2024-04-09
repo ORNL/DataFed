@@ -2507,7 +2507,9 @@ void DatabaseAPI::repoAuthz(const Auth::RepoAuthzRequest &a_request,
   (void)a_reply;
   Value result;
 
-  DL_INFO(log_context, "authz/gridftp repo: " << a_reply.repo() << " file " << a_request.file() << " act " << a_request.action());
+  DL_INFO(log_context, "authz/gridftp repo: " << a_reply.repo() << " file "
+                                              << a_request.file() << " act "
+                                              << a_request.action());
   dbGet("authz/gridftp",
         {{"repo", a_request.repo()},
          {"file", a_request.file()},
