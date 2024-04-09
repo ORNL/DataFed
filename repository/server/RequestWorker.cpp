@@ -137,8 +137,8 @@ std::string RequestWorker::createSanitizedPath(const std::string& path) const {
 
 			}
 
-			// Use the longer path
-			local_path = local_path_1;	
+			// Use the shorter path
+			local_path = local_path_2;	
 		} else {
 			local_path = m_config.globus_collection_path;
 			if (sanitized_request_path.front() != '/') {
@@ -408,7 +408,8 @@ RequestWorker::procDataDeleteRequest(std::unique_ptr<IMessage> &&msg_request) {
   if (request->loc_size()) {
 
     for (int i = 0; i < request->loc_size(); i++) {
-      string local_path = request->loc(i).path();
+      std::string local_path = createSanitizedPath(request->loc(i).path());
+
       DL_DEBUG(message_log_context, "Delete "
                                         << request->loc_size()
                                         << " file(s), path: " << local_path);
