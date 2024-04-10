@@ -75,14 +75,14 @@ namespace SDMS {
 
 /**
  * Here unsigned int is used so that we can compare the numeric values when
- * choosing whether to print a log message. 
+ * choosing whether to print a log message.
  *
  * CRITICAL = 0
  * ERROR    = 1
  * WARNING  = 2
  * INFO     = 3
  * DEBUG    = 4
- * TRACE    = 5 
+ * TRACE    = 5
  **/
 enum class LogLevel : unsigned int {
   CRITICAL,

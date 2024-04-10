@@ -79,8 +79,8 @@ public:
    **/
   virtual bool hasKey(const std::string &pub_key) const final;
 
-  void addKey(const PublicKeyType & pub_key_type, const std::string & public_key,
-              const std::string & uid);
+  void addKey(const PublicKeyType &pub_key_type, const std::string &public_key,
+              const std::string &uid);
 
   /**
    * Will the id or throw an error
