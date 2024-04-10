@@ -105,7 +105,7 @@ print(userinfo)
 organization = userinfo["identity_provider_display_name"]
 
 # Need to determine the project uuid
-if utils.projectExists(ac_rt, PROJECT_NAME) == False:
+if utils.projectExists(ac_rt, PROJECT_NAME) is False:
     project_id = utils.createProject(ac_rt, PROJECT_NAME, userinfo)
 else:
     project_id = utils.getProjectId(ac_rt, PROJECT_NAME, userinfo)

@@ -165,7 +165,8 @@ if project_exists:
 
                 ac_rt.update_project(project_id, admin_ids=[identity_id, client_id])
 
-                bash_command = f'GCS_CLI_CLIENT_ID="{client_id}" GCS_CLI_CLIENT_SECRET="{client_secret}" '
+                bash_command = f'GCS_CLI_CLIENT_ID="{client_id}" '
+                bash_command = f'GCS_CLI_CLIENT_SECRET="{client_secret}" '
                 bash_command += "globus-connect-server endpoint cleanup "
                 bash_command += f' --deployment-key "{DEPLOYMENT_KEY_PATH}" '
                 bash_command += " --agree-to-delete-endpoint"

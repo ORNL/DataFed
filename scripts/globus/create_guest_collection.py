@@ -1,4 +1,6 @@
 import globus_sdk
+from globus_sdk import scopes
+
 import utils
 import os
 
@@ -60,12 +62,13 @@ if client_secret is None:
 
 client = globus_sdk.ConfidentialAppAuthClient(client_id, client_secret)
 
-scopes = "openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities"
+scopes = ("openid profile email "
+          "urn:globus:auth:scope:auth.globus.org:manage_projects "
+          "urn:globus:auth:scope:auth.globus.org:view_identities")
+
 authorizer = globus_sdk.ClientCredentialsAuthorizer(client, scopes)
 
 gcs_client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
-
-from globus_sdk import scopes
 
 # The scope the client will need, note that primary scope is for the endpoint,
 # but it has a dependency on the mapped collection's data_access scope
@@ -112,7 +115,7 @@ for item in collection_list["data"]:
         mapped_collection_id = item["id"]
         break
 
-if mapped_collection_found == False:
+if mapped_collection_found is False:
     raise Exception("Missing required mapped collection")
 
 storage_gateway_found = False
@@ -138,7 +141,7 @@ for item in storage_gateway_list["data"]:
         storage_gateway_id = item["id"]
         break
 
-if storage_gateway_found == False:
+if storage_gateway_found is False:
     raise Exception("Missing required storage gateway")
 
 
@@ -157,7 +160,7 @@ for item in collection_list["data"]:
         break
 
 # https://github.com/globus/globus-sdk-python/blob/main/docs/examples/guest_collection_creation.rst
-if guest_collection_found == False:
+if guest_collection_found is False:
     credential_document = globus_sdk.UserCredentialDocument(
         storage_gateway_id=storage_gateway_id,
         identity_id=client_id,
