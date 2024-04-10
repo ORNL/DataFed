@@ -65,7 +65,7 @@ configuration before hand by running.
 docker compose -f compose_core.yml config
 ```
 
-WARNING - docker Compose will prioritize env variables in the following priority
+WARNING - Docker Compose will prioritize env variables in the following priority
 1. From you shell env
 2. From the .env file
 3. Internally from winthin the image
@@ -126,7 +126,7 @@ included in the variables.
 
 This step is only required once, after which the necessary files should exist
 in DataFed/Compose/globus. These files will contain the Globus configuration 
-needed for additional cycles of "docker Compose up" and "docker Compose down".
+needed for additional cycles of "docker compose up" and "docker compose down".
 
 ### 4. Building Repo Services 
 
@@ -157,7 +157,7 @@ configuration before hand by running.
 docker compose -f compose_repo.yml config
 ```
 
-WARNING - docker Compose will prioritize env variables in the following priority
+WARNING - Docker Compose will prioritize env variables in the following priority
 1. From you shell env
 2. From the .env file
 3. Internally from winthin the image
