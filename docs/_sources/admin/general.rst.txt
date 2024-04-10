@@ -98,7 +98,7 @@ of the configuration options:
 10. DATAFED_SERVER_PORT - Needed by repo server
 11. DATAFED_DOMAIN - Needed by repo, web and authz
 12. DATAFED_GCS_ROOT_NAME - Needed by repo and authz by Globus
-13. GCS_COLLECTION_ROOT_PATH - Needed by repo and authz for Globus 
+13. DATAFED_GCS_COLLECTION_ROOT_PATH - Needed by repo and authz for Globus 
 14. DATAFED_REPO_ID_AND_DIR - Needed for repo and authz
 
 Descriptions of what these variables are can also be found in the ./config/datafed.sh file. Once the 

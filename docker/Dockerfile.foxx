@@ -2,29 +2,32 @@
 # cd ${PROJECT_ROOT} or cd DataFed
 # docker build -f core/docker/Dockerfile .
 
-ARG           BUILD_BASE="ubuntu:focal"
-ARG         DEPENDENCIES="dependencies"
-ARG              RUNTIME="runtime"
-ARG          DATAFED_DIR="/datafed"
-ARG DATAFED_INSTALL_PATH="/opt/datafed"
+ARG                        BUILD_BASE="ubuntu:focal"
+ARG                      DEPENDENCIES="dependencies"
+ARG                           RUNTIME="runtime"
+ARG                       DATAFED_DIR="/datafed"
+ARG              DATAFED_INSTALL_PATH="/opt/datafed"
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
-ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
-ARG            BUILD_DIR="$DATAFED_DIR/source"
-ARG              NVM_DIR="$DATAFED_DIR/.nvm"
-ARG              NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
-ARG              NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
-ARG              LIB_DIR="/usr/local/lib"
+ARG                         GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
+ARG                         BUILD_DIR="$DATAFED_DIR/source"
+ARG                           NVM_DIR="$DATAFED_DIR/.nvm"
+ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
+ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
+ARG                           LIB_DIR="/usr/local/lib"
 
 FROM ${DEPENDENCIES} AS foxx-build
 
 ARG DATAFED_DIR
 ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 
-ENV BUILD_DIR="${BUILD_DIR}"
-ENV DATAFED_DIR="${DATAFED_DIR}"
+ENV                         BUILD_DIR="${BUILD_DIR}"
+ENV                       DATAFED_DIR="${DATAFED_DIR}"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-ENV PATH=${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:${PATH}
+ENV                              PATH=${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:${PATH}
+ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 
 COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt                  ${BUILD_DIR}
@@ -35,28 +38,26 @@ COPY ./docker/entrypoint_foxx.sh       ${BUILD_DIR}/docker/entrypoint_foxx.sh
 COPY ./core/database                   ${BUILD_DIR}/core/database
 COPY ./scripts/install_foxx.sh         ${BUILD_DIR}/scripts/
 
-COPY --from=foxx-build ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin
 # Create datafed user, prefer more secure login options than password
 # Recommended to mount ssh public key on run
 RUN adduser --disabled-password --gecos "" datafed
 
 RUN mkdir -p ${DATAFED_DIR}
-RUN mkdir -p /opt/datafed
-RUN mkdir -p /var/log/datafed
-RUN chown -R datafed:root /opt/datafed
-RUN chown -R datafed:root /var/log/datafed
-RUN chown -R datafed:root ${DATAFED_DIR}
-RUN chown -R datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}
+RUN mkdir -p ${DATAFED_INSTALL_PATH}
+RUN mkdir -p ${DATAFED_DEFAULT_LOG_PATH}
 
 RUN curl -OL https://download.arangodb.com/arangodb38/DEBIAN/Release.key; apt-key add - < Release.key
-#RUN wget -q https://www.arangodb.com/repositories/arangodb38/DEBIAN/Release.key -O- | apt-key add -
-RUN echo 'deb https://download.arangodb.com/arangodb38/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
+
+# RUN echo 'deb https://download.arangodb.com/arangodb38/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
+# If trust the site but the gpg key has expired can add [trusted=yes]
+# i.e.
+RUN echo 'deb [trusted=yes] https://download.arangodb.com/arangodb38/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 RUN apt update
 RUN apt install arangodb3-client -y
 RUN arangosh --version
 
 USER root
 
-WORKDIR ${DATAFED_DIR}
+WORKDIR ${BUILD_DIR}
 
 ENTRYPOINT ${BUILD_DIR}/docker/entrypoint_foxx.sh

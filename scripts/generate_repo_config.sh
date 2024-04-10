@@ -17,7 +17,7 @@ Help()
   echo "-c, --cred-dir                    The location of the credential directory where the"
   echo "                                  private keys of the repo server are and the public"
   echo "                                  key of the core server."
-  echo "-e, --egress-port                 The egress port that needs to be open on the repo"
+  echo "-p, --port                        The port that needs to be open on the repo"
   echo "                                  server so the repo server can communicate with "
   echo "                                  the datafed server."
   echo "-d, --domain                      The DataFed fully qualified domain name and port"
@@ -38,11 +38,11 @@ else
   local_DATAFED_DOMAIN=$(printenv DATAFED_DOMAIN)
 fi
 
-if [ -z "${GCS_COLLECTION_ROOT_PATH}" ]
+if [ -z "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
 then
-  local_GCS_COLLECTION_ROOT_PATH="/mnt/datafed-repo/mapped"
+  local_DATAFED_GCS_COLLECTION_ROOT_PATH="/mnt/datafed-repo/mapped"
 else
-  local_GCS_COLLECTION_ROOT_PATH=$(printenv GCS_COLLECTION_ROOT_PATH)
+  local_DATAFED_GCS_COLLECTION_ROOT_PATH=$(printenv DATAFED_GCS_COLLECTION_ROOT_PATH)
 fi
 
 local_DATAFED_LOG_PATH=""
@@ -55,10 +55,10 @@ else
 fi
 
 local_DATAFED_CRED_DIR="${DATAFED_INSTALL_PATH}/keys/"
-local_DATAFED_REPO_EGRESS_PORT="9000"
+local_DATAFED_REPO_PORT="9000"
 local_DATAFED_REPO_THREADS=2
 
-VALID_ARGS=$(getopt -o ht:c:e:d:g: --long 'help',threads:,cred-dir:,egress-port:,globus-collection-path:,datafed-domain-port: -- "$@")
+VALID_ARGS=$(getopt -o ht:c:e:d:g: --long 'help',threads:,cred-dir:,port:,globus-collection-path:,datafed-domain-port: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -79,9 +79,9 @@ while [ : ]; do
         local_DATAFED_CRED_DIR=$2
         shift 2
         ;;
-    -e | --egress-port)
-        echo "Processing 'egress port' option. Input argument is '$2'"
-        local_DATAFED_REPO_EGRESS_PORT=$2
+    -p | --port)
+        echo "Processing 'port' option. Input argument is '$2'"
+        local_DATAFED_REPO_PORT=$2
         shift 2
         ;;
     -d | --domain)
@@ -91,7 +91,7 @@ while [ : ]; do
         ;;
     -g | --globus-collection-path)
         echo "Processing 'Globus Collection Path' option. Input argument is '$2'"
-        local_GCS_COLLECTION_ROOT_PATH=$2
+        local_DATAFED_GCS_COLLECTION_ROOT_PATH=$2
         shift 2
         ;;
     --) shift; 
@@ -114,9 +114,9 @@ CONFIG_FILE_NAME="datafed-repo.cfg"
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 cred-dir=$local_DATAFED_CRED_DIR
 server=tcp://$local_DATAFED_DOMAIN:${local_DATAFED_PORT}
-port=$local_DATAFED_REPO_EGRESS_PORT
+port=$local_DATAFED_REPO_PORT
 threads=$local_DATAFED_REPO_THREADS
-globus-collection-path=$local_GCS_COLLECTION_ROOT_PATH
+globus-collection-path=$local_DATAFED_GCS_COLLECTION_ROOT_PATH
 EOF
 
 echo

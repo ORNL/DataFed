@@ -16,6 +16,7 @@ if( NOT DEFINED GLOBUS_VERSION )
   set(GLOBUS_VERSION  5)
 endif()
 OPTION(BUILD_AUTHZ "Build DataFed Authz library" FALSE)
+OPTION(BUILD_AUTHZ_WITH_SYSLOG "Build Authz without syslog" TRUE)
 OPTION(BUILD_CORE_SERVER "Build DataFed Core Server" TRUE)
 OPTION(BUILD_COMMON "Build DataFed common library" TRUE)
 OPTION(BUILD_DOCS "Build documentation" TRUE)
@@ -25,6 +26,13 @@ OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
 OPTION(BUILD_TESTS "Build Tests" TRUE)
 OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
 OPTION(ENABLE_UNIT_TESTS "Enable unit tests" TRUE)
+OPTION(BUILD_SHARED_LIBS "By default DataFed tries to build static libraries
+with the exception of libdatafed-authz which must always be a shared library,
+it will also try to link with as many static libraries as possible. However,
+building with static depencies is not completely possible because some system
+libraries must be shared libraries for DataFed to be interoperable. If this
+setting is turned on DataFed will build it's libraries as shared and try to
+link to shared libraries." OFF)
 
 set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
@@ -49,9 +57,15 @@ get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_JSON_SCHEMA_VALIDATOR_VE
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_OPENSSL" LOCAL_OPENSSL_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBCURL" LOCAL_CURL_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_BOOST" LOCAL_BOOST_VERSION)
+get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_ZLIB_VERSION" LOCAL_ZLIB_VERSION)
+# Prioritize the CMD line argument over config file
+if(NOT DEFINED DATAFED_INSTALL_PATH)
+  get_value_from_datafed_sh("DATAFED_INSTALL_PATH" DATAFED_INSTALL_PATH)
+endif()
 
-get_value_from_datafed_sh("DATAFED_DEPENDENCIES_INSTALL_PATH" DEPENDENCY_INSTALL_PATH)
-get_value_from_datafed_sh("DATAFED_INSTALL_PATH" DATAFED_INSTALL_PATH)
+if(NOT DEFINED DATAFED_DEPENDENCIES_INSTALL_PATH)
+  get_value_from_datafed_sh("DATAFED_DEPENDENCIES_INSTALL_PATH" DEPENDENCY_INSTALL_PATH)
+endif()
 
 set(CMAKE_PREFIX_PATH "${DEPENDENCY_INSTALL_PATH}")
 
@@ -91,16 +105,7 @@ configure_file(
 file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
 
 if( BUILD_WEB_SERVER )
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/version.js"
-    @ONLY)
-
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/package.json.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/package.json"
-    @ONLY)
-
+  include(./cmake/Web.cmake)
   file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
 endif()
 
@@ -112,16 +117,7 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
 
   include_directories( "/usr/include/globus" )
 
-  if ( DEFINED ENV{BOOST_INC} AND DEFINED ENV{BOOST_LIB} )
-          message( "BOOST_INC:" $ENV{BOOST_INC} )
-          message( "BOOST_LIB:" $ENV{BOOST_LIB} )
-          include_directories( $ENV{BOOST_INC} )
-          link_directories( $ENV{BOOST_LIB} )
-  else()
-    #set(Boost_USE_STATIC_LIBS   ON)
-    find_package(Boost ${LOCAL_BOOST_VERSION} REQUIRED COMPONENTS date_time unit_test_framework system filesystem
-      program_options)
-  endif()
+  include(./cmake/Boost.cmake)
 
   find_package(Threads REQUIRED)
   ## load in pkg-config support
@@ -152,8 +148,9 @@ endif()
 if( BUILD_CORE_SERVER )
   include(./cmake/JSON.cmake)
   include(./cmake/JSONSchema.cmake)
-  find_package(OpenSSL "${LOCAL_OPENSSL_VERSION}" REQUIRED )
-  find_package(CURL "${LOCAL_CURL_VERSION}" REQUIRED )
+  include(./cmake/Zlib.cmake)
+  include(./cmake/OpenSSL.cmake)
+  include(./cmake/CURL.cmake)
 endif()
 
 if( BUILD_FOXX OR BUILD_CORE_SERVER )
@@ -228,6 +225,7 @@ message("json_schema_validator Version: ${JSON_SCHEMA_VALIDATOR_VERSION}")
 message("                 curl Version: ${LOCAL_CURL_VERSION}")
 message("              openssl Version: ${LOCAL_OPENSSL_VERSION}")
 message("                boost Version: ${LOCAL_BOOST_VERSION}")
+message("                 zlib Version: ${LOCAL_ZLIB_VERSION}")
 message("")
 message("Found Dependency Versions")
 message("             protobuf Version: ${DATAFED_PROTOBUF_VERSION_ACTUAL}")
@@ -236,9 +234,10 @@ message("               libzmq Version: ${DATAFED_ZEROMQ_VERSION_ACTUAL}")
 message("            libsodium Version: ${DATAFED_ZEROMQ_SODIUM_VERSION}")
 message("         nlohman json Version: ${DATAFED_JSON_VERSION_ACTUAL}")
 message("json_schema_validator Version: ${DATAFED_JSON_SCHEMA_VERSION_ACTUAL}")
-message("                 curl Version: ${CURL_VERSION_STRING}")
+message("                 curl Version: ${DATAFED_CURL_VERSION_ACTUAL}")
 message("              openssl Version: ${OPENSSL_VERSION}")
-message("                boost Version: ${Boost_VERSION}")
+message("                boost Version: ${DATAFED_BOOST_VERSION_ACTUAL}")
+message("                 zlib Version: ${DATAFED_ZLIB_VERSION_ACTUAL}")
 message("")
 message("Dependency Paths")
 message("                 protobuf Library: ${DATAFED_PROTOBUF_LIBRARY_PATH}")
@@ -249,9 +248,14 @@ message("                libsodium Library: ${DATAFED_ZEROMQ_SODIUM_LIBRARY_PATH
 message("         nlohman json Include Dir: ${DATAFED_JSON_INCLUDE_PATH}")
 message("json_schema_validator Include Dir: ${DATAFED_JSON_SCHEMA_INCLUDE_PATH}")
 message("    json_schema_validator Library: ${DATAFED_JSON_SCHEMA_LIBRARY_PATH}")
-message("                     curl Library: ")
-message("                  openssl Library: ")
-message("                    boost Library: ")
+message("                   crypto Library: ${OPENSSL_CRYPTO_LIBRARY}")
+message("                     curl Library: ${DATAFED_CURL_LIBRARIES}")
+message("                  openssl Library: ${OPENSSL_SSL_LIBRARY}")
+message("          boost date_time Library: ${DATAFED_BOOST_DATE_TIME_LIBRARY_PATH}")
+message("boost unit_test_framework Library: ${DATAFED_BOOST_UNIT_TEST_FRAMEWORK_LIBRARY_PATH}")
+message("             boost system Library: ${DATAFED_BOOST_SYSTEM_LIBRARY_PATH}")
+message("         boost filesystem Library: ${DATAFED_BOOST_FILESYSTEM_LIBRARY_PATH}")
+message("    boost program_options Library: ${DATAFED_BOOST_PROGRAM_OPTIONS_LIBRARY_PATH}")
+message("                     zlib Library: ${DATAFED_ZLIB_LIBRARIES}")
 message("")
-
 

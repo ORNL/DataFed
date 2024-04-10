@@ -1727,9 +1727,8 @@ void DatabaseAPI::queryCreate(const Auth::QueryCreateRequest &a_request,
   options.always_print_enums_as_ints = true;
   options.preserve_proto_field_names = true;
 
-  auto stat =
-      google::protobuf::util::MessageToJsonString(a_request.query(),
-                                                  &query_json, options);
+  auto stat = google::protobuf::util::MessageToJsonString(a_request.query(),
+                                                          &query_json, options);
   if (!stat.ok()) {
     EXCEPT(1, "Invalid search request");
   }
@@ -1767,9 +1766,8 @@ void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
     options.always_print_enums_as_ints = true;
     options.preserve_proto_field_names = true;
 
-    auto stat =
-        google::protobuf::util::MessageToJsonString(a_request.query(),
-                                                    &query_json, options);
+    auto stat = google::protobuf::util::MessageToJsonString(
+        a_request.query(), &query_json, options);
     if (!stat.ok()) {
       EXCEPT(1, "Invalid search request");
     }
@@ -1844,9 +1842,8 @@ void DatabaseAPI::setQueryData(QueryDataReply &a_reply,
   a_reply.set_ct(obj.getNumber("ct"));
   a_reply.set_ut(obj.getNumber("ut"));
 
-  auto stat =
-      google::protobuf::util::JsonStringToMessage(
-          obj.getValue("query").toString(), a_reply.mutable_query());
+  auto stat = google::protobuf::util::JsonStringToMessage(
+      obj.getValue("query").toString(), a_reply.mutable_query());
   if (!stat.ok()) {
     EXCEPT(1, "Query data reply parse error!");
   }
@@ -2510,6 +2507,9 @@ void DatabaseAPI::repoAuthz(const Auth::RepoAuthzRequest &a_request,
   (void)a_reply;
   Value result;
 
+  DL_INFO(log_context, "authz/gridftp repo: " << a_request.repo() << " file "
+                                              << a_request.file() << " act "
+                                              << a_request.action());
   dbGet("authz/gridftp",
         {{"repo", a_request.repo()},
          {"file", a_request.file()},
@@ -3106,7 +3106,7 @@ void DatabaseAPI::taskAbort(const std::string &a_task_id,
                             const std::string &a_msg,
                             libjson::Value &a_task_reply,
                             LogContext log_context) {
-  libjson::Value doc = a_msg;
+  libjson::Value doc(a_msg);
   string body = doc.toString();
 
   dbPost("task/abort", {{"task_id", a_task_id}}, &body, a_task_reply,

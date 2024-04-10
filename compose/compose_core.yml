@@ -14,6 +14,7 @@ services:
       DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
       DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
       DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
+      DATAFED_WEB_USER: "datafed"
       DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
       DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
       UID: "${DATAFED_UID}"
@@ -22,6 +23,7 @@ services:
       - 443:443 # This must be the same port that is mapped to the host for redirects to work
     volumes:
       - ./keys:/opt/datafed/keys
+      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
     networks:
       - datafed-internal
 
@@ -45,11 +47,11 @@ services:
       DATAFED_DATABASE_IP_ADDRESS_PORT: "${DATAFED_DATABASE_IP_ADDRESS}:${DATAFED_DATABASE_PORT}"
     ports:
       - 7513 # Communication web server
-      - 7512 # Secure core server communication
+      - 7512:7512 # Secure core server communication must be exposed outside of the container
     volumes:
       - ./keys:/opt/datafed/keys
+      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
     networks:
-      - datafed-core-secure-api
       - datafed-internal
 
   datafed-foxx:
@@ -67,7 +69,9 @@ services:
       test: ["CMD", "/bin/bash", "-c", "[ -f /tmp/.foxx_is_installed ]"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
+    volumes:
+      - foxx_tmp:/tmp 
     networks:
       - datafed-internal
 
@@ -75,17 +79,24 @@ services:
     image: arangodb
     environment:
       ARANGO_ROOT_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
+    volumes:
+      - arango_db:/var/lib/arangodb3
     ports:
       - 8529:8529 # Arangodb web UI
     networks:
       - datafed-internal
 
+# Fox tmp is used so that if docker compose up is run a second time it won't
+# need to overwrite the database it will simply use the existing one hence
+# skipping some of the setup steps. The foxx entrypoint script will create
+# a file in tmp to indicate that this is the case.
+# 
+# arango_db is used to cache the state of the arangodb database
 volumes:
-  keys:
+  foxx_tmp:
+  arango_db:
 
 networks:
-  datafed-core-secure-api:
-    driver: bridge
   datafed-internal:
     driver: bridge
   

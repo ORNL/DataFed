@@ -127,10 +127,11 @@ build-ws-base:
     - ci-datafed-core
     - docker
   script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
+    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-core-base:
   needs: ["clear-core-cache"]
@@ -142,10 +143,11 @@ build-core-base:
     - ci-datafed-core
     - docker
   script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
+    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-repo-base:
   needs: ["clear-repo-cache"]
@@ -157,10 +159,11 @@ build-repo-base:
     - ci-datafed-repo
     - docker
   script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
+    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-python-client-base:
   needs: ["clear-python-client-cache"]
@@ -169,13 +172,14 @@ build-python-client-base:
     GIT_STRATEGY: clone
   stage: build-deploy-base
   tags:
-    - ci-datafed-repo
     - docker
+    - ci-datafed-client
   script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}" .
+    - docker build -f python/docker/Dockerfile.python-client-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-gcs-base:
   needs: ["clear-repo-cache"]
@@ -186,24 +190,31 @@ build-gcs-base:
     GCS_TAG: "${REGISTRY}/datafed/gcs-ubuntu-focal"
     IMAGE_TAG2: "datafed/gcs-authz-base"
     IMAGE_TAG3: "datafed/gcs-authz"
-    GCS_SUBMODULE_VERSION: "v2.6.0"
   stage: build-deploy-base
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - changes:
+        - scripts/dependency_versions.sh
+    - when: manual
   script:
+    - version=$(cat ./scripts/dependency_versions.sh | grep DATAFED_GCS_SUBMODULE_VERSION)
+    - version=${version//\"/}
+    - export $version
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - >
-      if ! docker pull "${GCS_TAG}:${GCS_SUBMODULE_VERSION}"; then
+      if ! docker pull "${GCS_TAG}:${DATAFED_GCS_SUBMODULE_VERSION}-${BRANCH_LOWER}:latest"; then
         cd external/globus-connect-server-deploy/docker
-        git checkout "${GCS_SUBMODULE_VERSION}"
-        ./docker-build-gcs.sh "${DISTRO}"
-        LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
-        docker tag "$LATEST_IMAGE" "$GCS_TAG:${GCS_SUBMODULE_VERSION}" 
-        docker push "$GCS_TAG:${GCS_SUBMODULE_VERSION}"
-        docker tag "$GCS_TAG:${GCS_SUBMODULE_VERSION}" "$GCS_TAG" 
-        docker push "$GCS_TAG"
+        git checkout "${DATAFED_GCS_SUBMODULE_VERSION}"
+        docker build --progress plain --tag "$GCS_TAG:${DATAFED_GCS_SUBMODULE_VERSION}" - < "./docker-files/Dockerfile.${DISTRO}"
+        #LATEST_IMAGE=$(docker images | grep ${DISTRO} | head -n1 | awk '{print $3}')
+        #docker tag "$LATEST_IMAGE" "$GCS_TAG:${DATAFED_GCS_SUBMODULE_VERSION}" 
+        docker push "$GCS_TAG:${DATAFED_GCS_SUBMODULE_VERSION}"
+        docker tag "$GCS_TAG:${DATAFED_GCS_SUBMODULE_VERSION}" "${GCS_TAG}-${BRANCH_LOWER}:latest" 
+        docker push "${GCS_TAG}-${BRANCH_LOWER}:latest"
         cd ../../../ # back too root of project
       else
         echo "Docker image already exists in the registry. Skipping build."
@@ -213,12 +224,15 @@ build-gcs-base:
 # STAGE: provision client
 ################################################################################
 provision-client:
+
   needs: ["signal"]
   variables:
     GIT_STRATEGY: clone
   stage: provision-client
   tags:
     - ci-datafed-client
+  before_script:
+    - export PATH=/opt/datafed/dependencies/bin:$PATH
   script:
     - ./scripts/generate_datafed.sh
     - ./scripts/install_client_dependencies.sh
@@ -237,46 +251,51 @@ build-ws:
   needs: ["build-ws-base"]
   stage: build
   variables:
-    IMAGE_TAG: "datafed/ws-"
+    IMAGE_TAG: "datafed/ws"
     GIT_STRATEGY: clone
   tags:
     - ci-datafed-core
     - docker
   rules:
     - changes:
-        - dockerfiles/*
-        - scripts/*
-        - web/*
-        - common/proto/*
+        - dockerfiles/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
         - .gitlab-ci.yml
       when: on_success
     - exists:
-        - deploy-ws-base
+      - "build-ws-base"
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f web/docker/Dockerfile.web.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_WEB_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f web/docker/Dockerfile.web.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-core:
   needs: ["build-core-base"]
   stage: build
   variables:
-    IMAGE_TAG: "datafed/core-"
+    IMAGE_TAG: "datafed/core"
     GIT_STRATEGY: clone
   tags:
     - ci-datafed-core
     - docker
   rules:
     - changes:
-        - dockerfiles/*
-        - scripts/*
-        - common/*
-        - core/*
+        - dockerfiles/**/*
+        - scripts/**/*
+        - common/**/*
+        - core/**/*
+        - CMakeLists.txt
+        - cmake/**/*
         - .gitlab-ci.yml
+      when: on_success
+    - exists:
+      - "build-core-base"
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
@@ -285,8 +304,8 @@ build-core:
     - ./scripts/generate_datafed.sh
     - cat ./config/datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f core/docker/Dockerfile.core.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_CORE_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f core/docker/Dockerfile.core.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-foxx:
   stage: build
@@ -319,7 +338,7 @@ build-foxx:
 
 build-repo:
   variables:
-    IMAGE_TAG: "datafed/repo-"
+    IMAGE_TAG: "datafed/repo"
     GIT_STRATEGY: clone
   needs: ["build-repo-base"]
   stage: build
@@ -328,39 +347,59 @@ build-repo:
     - docker
   rules:
     - changes:
-        - dockerfiles/*
-        - scripts/*
-        - common/*
-        - repository/*
+        - dockerfiles/**/*
+        - scripts/**/*
+        - common/**/*
+        - repository/**/*
+        - CMakeLists.txt
+        - cmake/**/*
         - .gitlab-ci.yml
+      when: on_success
+    - exists:
+      - "build-repo-base"
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f repository/docker/Dockerfile.repo.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_REPO_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.repo.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-gcs-authz:
   stage: build
+  needs: ["build-gcs-base"]
   variables:
-    IMAGE_TAG: "datafed/gcs-authz-"
+    IMAGE_TAG: "datafed/gcs-authz"
     GIT_STRATEGY: clone
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - changes:
+        - repository/gridftp/**/*
+        - scripts/**/*
+        - common/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
+      when: always
+    - exists:
+      - "build-gcs-base"
+      when: on_success
+    - when: manual
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_GCS_IMAGE="${REGISTRY}/datafed/gcs-ubuntu-focal-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-python-client:
+  needs: ["build-python-client-base"]
   variables:
-    IMAGE_TAG: "datafed/python-client-"
+    IMAGE_TAG: "datafed/python-client"
     GIT_STRATEGY: clone
   stage: build
   tags:
@@ -368,18 +407,23 @@ build-python-client:
     - ci-datafed-client
   rules:
     - changes:
-        - python/*
-        - scripts/*
-        - common/*
+        - python/**/*
+        - scripts/**/*
+        - common/**/*
         - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
       when: always
+    - exists:
+      - "build-python-client-base"
+      when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build -f python/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - docker build --build-arg BASE_PYTHON_CLIENT_IMAGE="${REGISTRY}/${IMAGE_TAG}-base-${BRANCH_LOWER}:latest" -f python/docker/Dockerfile.python-client.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 ################################################################################
 # STAGE: Integration

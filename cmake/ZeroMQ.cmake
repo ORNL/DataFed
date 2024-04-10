@@ -4,9 +4,13 @@ function(find_zeromq_library)
   set(ZEROMQ_LIB_CMAKE_DIR "" )
   set(ZEROMQ_LIBRARY_PATH "" )
 
-  if(EXISTS ${DEPENDENCY_INSTALL_PATH})
+  if(EXISTS ${DEPENDENCY_INSTALL_PATH}/lib/cmake)
     set(ZEROMQ_LIB_CMAKE_DIR "${DEPENDENCY_INSTALL_PATH}/lib/cmake")
+  endif()
+  if(EXISTS ${DEPENDENCY_INSTALL_PATH}/include)
     set(ZEROMQ_INCLUDE_DIR "${DEPENDENCY_INSTALL_PATH}/include")
+  endif()
+  if(EXISTS ${DEPENDENCY_INSTALL_PATH}/lib)
     set(ZEROMQ_LIB_DIR "${DEPENDENCY_INSTALL_PATH}/lib")
   endif()
 
@@ -31,15 +35,39 @@ function(find_zeromq_library)
     endif()
   endforeach()
 
+  set(version_file "${CMAKE_CURRENT_LIST_DIR}/sodium_version")
+  if(EXISTS "${version_file}")
+    file(REMOVE "${version_file}")
+  endif()
+
+  # Keep the two processes separate, cmake seems to want to run them in parallel
+  # for some reason if they are in the same execute_process call.
   execute_process(
-    COMMAND ${CMAKE_CXX_COMPILER} -o ${CMAKE_CURRENT_LIST_DIR}/sodium_version ${CMAKE_CURRENT_LIST_DIR}/sodium_version.cpp ${DEPENDENCY_INSTALL_PATH}/lib/libsodium.a 
-    COMMAND ${CMAKE_CURRENT_LIST_DIR}/sodium_version
+    COMMAND ${CMAKE_CXX_COMPILER} -o ${version_file}
+    "${version_file}.cpp" ${ZEROMQ_SODIUM_LIBRARY_PATH} -I${ZEROMQ_INCLUDE_DIR}
+    OUTPUT_VARIABLE SODIUM_BUILD_VERSION_OUTPUT
+    ERROR_VARIABLE SODIUM_BUILD_VERSION_ERROR
+    RESULT_VARIABLE SODIUM_BUILD_VERSION_RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_STRIP_TRAILING_WHITESPACE
+  )
+
+  # NOTE if the build was success the return code should be 0.
+  if(NOT ${SODIUM_BUILD_VERSION_RESULT} EQUAL 0 )
+    message(FATAL_ERROR "Unable to build with provided ZeroMQ sodium library:
+    ${ZEROMQ_SODIUM_LIBRARY_PATH} . Compiling test code fails.
+    ${SODIUM_BUILD_VERSION_ERROR}
+    ")
+  endif()
+
+  execute_process(
+    COMMAND ${version_file}
     OUTPUT_VARIABLE SODIUM_VERSION_OUTPUT
     ERROR_VARIABLE SODIUM_VERSION_ERROR
     RESULT_VARIABLE SODIUM_VERSION_RESULT
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_STRIP_TRAILING_WHITESPACE
-    )
+  )
 
   set(DATAFED_ZEROMQ_INCLUDE_DIR "${ZEROMQ_INCLUDE_DIR}" PARENT_SCOPE)
   set(DATAFED_ZEROMQ_LIB_DIR "${ZEROMQ_LIB_DIR}"  PARENT_SCOPE)

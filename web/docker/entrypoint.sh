@@ -7,6 +7,8 @@ if [ -n "$UID" ]; then
     usermod -u "$UID" datafed
 fi
 
+chown -R datafed:root "${DATAFED_INSTALL_PATH}/web"
+chown -R datafed:root "${BUILD_DIR}"
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
@@ -14,7 +16,6 @@ PROJECT_ROOT=$(realpath "${SOURCE}/../..")
 
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 "${PROJECT_ROOT}/scripts/generate_ws_config.sh"
-"${PROJECT_ROOT}/scripts/install_ws.sh"
 . "${PROJECT_ROOT}/scripts/dependency_versions.sh"
 
 export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"

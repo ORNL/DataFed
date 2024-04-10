@@ -46,7 +46,7 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
 	-DBUILD_DOCS=False					\
 	-DBUILD_PYTHON_CLIENT=False	\
 	-DBUILD_FOXX=False
-RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 FROM ${RUNTIME} AS repo
@@ -56,10 +56,12 @@ ARG DATAFED_DIR
 ARG DATAFED_INSTALL_PATH
 ARG BUILD_DIR
 ARG LIB_DIR
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 
 # The above should also be available at runtime
 ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+ENV DATAFED_GCS_COLLECTION_ROOT_PATH="/mnt/datafed"
 ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV              LIB_DIR="$LIB_DIR"
@@ -82,12 +84,16 @@ RUN ldconfig
 
 USER datafed
 
-COPY --chown=datafed:root ./repository/docker/entrypoint_repo.sh ${BUILD_DIR}/repository/docker/entrypoint.sh
-COPY --chown=datafed:root ./scripts/generate_datafed.sh          ${BUILD_DIR}/scripts/generate_datafed.sh
-COPY --chown=datafed:root ./scripts/generate_repo_config.sh      ${BUILD_DIR}/scripts/generate_repo_config.sh
-COPY --chown=datafed:root ./scripts/install_repo.sh              ${BUILD_DIR}/scripts/install_repo.sh
-COPY --chown=datafed:root ./cmake/Version.cmake                  ${BUILD_DIR}/cmake/Version.cmake
+COPY --chown=datafed:root ./scripts/generate_datafed.sh          ${DATAFED_DIR}/scripts/generate_datafed.sh
+COPY --chown=datafed:root ./scripts/generate_repo_config.sh      ${DATAFED_DIR}/scripts/generate_repo_config.sh
+COPY --chown=datafed:root ./scripts/install_repo.sh              ${DATAFED_DIR}/scripts/install_repo.sh
+COPY --chown=datafed:root ./cmake/Version.cmake                  ${DATAFED_DIR}/cmake/Version.cmake
+COPY --chown=datafed:root ./repository/docker/entrypoint_repo.sh ${BUILD_DIR}/repository/entrypoint.sh
 COPY --from=repo-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/repo/datafed-repo ${DATAFED_INSTALL_PATH}/repo/datafed-repo
 
-ENTRYPOINT ["${BUILD_DIR}/repository/docker/entrypoint.sh"]
-CMD ["${DATAFED_INSTALL_PATH}/repo/datafed-repo","--cfg","${DATAFED_INSTALL_PATH}/repo/datafed-repo.cfg"]
+USER root
+
+RUN chown -R datafed:root /datafed
+RUN chown -R datafed:root /opt
+
+ENTRYPOINT [ "/datafed/source/repository/entrypoint.sh", "/opt/datafed/repo/datafed-repo","--cfg","/opt/datafed/repo/datafed-repo.cfg"]
