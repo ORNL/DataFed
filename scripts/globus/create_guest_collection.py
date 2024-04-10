@@ -62,13 +62,13 @@ if client_secret is None:
 
 client = globus_sdk.ConfidentialAppAuthClient(client_id, client_secret)
 
-scopes = (
+auth_scopes = (
     "openid profile email "
     "urn:globus:auth:scope:auth.globus.org:manage_projects "
     "urn:globus:auth:scope:auth.globus.org:view_identities"
 )
 
-authorizer = globus_sdk.ClientCredentialsAuthorizer(client, scopes)
+authorizer = globus_sdk.ClientCredentialsAuthorizer(client, auth_scopes)
 
 gcs_client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
 
