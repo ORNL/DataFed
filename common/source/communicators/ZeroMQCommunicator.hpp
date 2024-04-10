@@ -25,7 +25,6 @@ namespace SDMS {
 class ZeroMQCommunicator : public ICommunicator {
 protected:
   std::unique_ptr<ISocket> m_socket;
-  uint16_t m_zmq_context;
   void *m_zmq_socket = nullptr;
   int m_zmq_socket_type;
   void *m_zmq_ctx = nullptr;
