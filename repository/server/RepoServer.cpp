@@ -155,7 +155,7 @@ void Server::checkServerVersion() {
    * The reasoning was that doing so would make the repo service dependent
    * on the core actually running. By continually looping the coupling between
    * the core services and the repo service is reduced.
-   **/ 
+   **/
   while (true) {
     ++attempt;
     DL_INFO(m_log_context,
