@@ -38,5 +38,6 @@ else
   su datafed -c '"$@"' -- argv0 "$@"
 fi
 
-echo "Give a few minutes to debug the problem"
+# Allow the container to exist for a bit in case we need to jump in and look 
+# around
 sleep 10000

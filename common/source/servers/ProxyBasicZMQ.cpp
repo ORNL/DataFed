@@ -19,8 +19,8 @@
 
 namespace SDMS {
 
-std::string sanitize(std::string val, const std::string pattern,
-                     const std::string replacement) {
+std::string sanitize(std::string val, const std::string & pattern,
+                     const std::string & replacement) {
   for (auto at = val.find(pattern, 0); at != std::string::npos;
        at = val.find(pattern, at + replacement.length())) {
 
@@ -186,7 +186,7 @@ void ProxyBasicZMQ::run() {
    * loop.
    **/
   auto terminate_call = [](std::chrono::duration<double> duration,
-                           const std::string address, int thread_id,
+                           const std::string & address, int thread_id,
                            LogContext log_context) {
     log_context.thread_name += "-terminate_after_timeout";
     log_context.thread_id = thread_id;

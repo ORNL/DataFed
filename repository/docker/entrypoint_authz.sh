@@ -123,7 +123,7 @@ do
 	printf "\r${EraseToEOL}"
 
 	minutes=$((minutes + 1))
-  HTTP_CODE=$(${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
+  HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
 done
 printf "\n"
 
@@ -157,4 +157,3 @@ echo "Container is running."
 
 # Return to last file
 tail -f "${DATAFED_DEFAULT_LOG_PATH}/datafed-gsi-authz.log"
-sleep infinity

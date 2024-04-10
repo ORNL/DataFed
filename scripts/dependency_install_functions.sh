@@ -124,18 +124,6 @@ install_protobuf() {
     # Don't build shared, it messes up the static library linking because the
     # cmake file installed are not compatible
     # WARNING - static library will break if build with shared options on
-    #cmake -S . -B build \
-    #  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-    #  -DBUILD_SHARED_LIBS=ON \
-    #  -Dprotobuf_BUILD_TESTS=OFF \
-    #  -DABSL_PROPAGATE_CXX_STD=ON \
-    #  -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    #cmake --build build -j 8
-    #if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
-    #  cmake --build build --target install
-    #else
-    #  "$SUDO_CMD" cmake --build build --target install
-    #fi
 
     cd python
     init_python
@@ -322,18 +310,6 @@ install_json_schema_validator() {
     # WARNING building shared library will overwrite cmake file for static
     # library, does not appear to support both targets at the same time, similar
     # to protobuf
-    # 
-    # Build shared
-    #cmake -S . -B build \
-    #  -DBUILD_SHARED_LIBS=ON \
-    #  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-    #  -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    #cmake --build build -j 8
-    #if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
-    #  cmake --build build --target install
-    #else
-    #  "$SUDO_CMD" cmake --build build --target install
-    #fi
     # Mark json-schema-validator as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}"
     cd "$original_dir"

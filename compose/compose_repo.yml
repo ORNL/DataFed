@@ -17,7 +17,6 @@ services:
       DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
       UID: "${DATAFED_UID}"
       HOST_HOSTNAME: "localhost"
-    network_mode: host
     image: datafed-repo:latest
     volumes:
       - ./keys:/opt/datafed/keys
@@ -26,7 +25,9 @@ services:
     ports:
       - 9000:9000 # Communication core server
 
-# Needs host port 80
+# Needs host port 80 for apache
+# Needs ports 50000 - 51000 for GridFTP
+# Needs port 443 for control port
   datafed-gcs:
     environment:
       DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
@@ -51,9 +52,3 @@ services:
       - ./globus:/opt/datafed/globus
       - ./logs:${DATAFED_CONTAINER_LOG_PATH}
       - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}
-
-# External true indicates that the network is created by a
-# separate compose instance
-#networks:
-#  datafed-core-secure-api:
-#    external: true

@@ -369,25 +369,3 @@ def createGCSEndpoint(
                     f"Something is wrong deployment key is empty {deployment_key_file} "
                 )
                 sys.exit(1)
-
-    # WARNING!!!!!!
-    # This will not work if a node does not first exist, I think at least one
-    # node must be running.
-    # if len(subscription_id) != 0:
-    #    if command_exists("globus-connect-server") is False:
-    #        print("Cannot create deployment key, we require globus-connect-server to be installed")
-    #        sys.exit(1)
-    #    else:
-    #        endpoint_id = getEndpointIdFromFile(deployment_key_file)
-
-    #        bash_command=f"GCS_CLI_CLIENT_ID=\"{client_id}\" "
-    #        bash_command+=f" GCS_CLI_CLIENT_SECRET=\"{client_secret}\" "
-    #        bash_command+=f" GCS_CLI_ENDPOINT_ID=\"{endpoint_id}\" "
-    #        bash_command+=" globus-connect-server endpoint update "
-    #        bash_command+=f" --subscription-id \"{subscription_id}\" "
-    #        print(bash_command)
-    #
-    #        process = subprocess.Popen(bash_command, shell=True,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-    #        # Print the output
-    #        for line in process.stdout:
-    #            print(line, end='')

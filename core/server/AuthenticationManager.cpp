@@ -104,9 +104,9 @@ std::string AuthenticationManager::getUID(const std::string &public_key) const {
   EXCEPT(1, "Unrecognized public_key during execution of getUID.");
 }
 
-void AuthenticationManager::addKey(const PublicKeyType pub_key_type,
-                                   const std::string public_key,
-                                   const std::string uid) {
+void AuthenticationManager::addKey(const PublicKeyType & pub_key_type,
+                                   const std::string & public_key,
+                                   const std::string & uid) {
   std::lock_guard<std::mutex> lock(m_lock);
   m_auth_mapper.addKey(pub_key_type, public_key, uid);
 }

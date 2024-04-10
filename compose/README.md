@@ -1,6 +1,6 @@
 # Compose Dev environment
 
-The compos Dev environment is split into two different compose files. The
+The compose Dev environment is split into two different compose files. The
 "core metadata services" which comprise the web server, core server and database
 and the "repo services" which comprise Globus Connect Server running with the
 authz library and the DataFed repo service.
@@ -102,7 +102,8 @@ and teardown step.
 4. Building the images
 5. Running the compose file
 6. Bringing down the compose file.
-7. Running the cleanup_globus_files.sh if you 
+7. Running the cleanup_globus_files.sh if you want to remove the deployment key
+   and start completely from scratch.
 
 ### 1. Generating .env configuration varaibles for the Repo Services
 
@@ -118,7 +119,7 @@ The .env file will be created in the DataFed/compose folder and will be hidden.
 The .env file variables can be changed at this point to your configuration.
 
 NOTE the .env file will be read verbatim by compose including any spaces or
-"#" comments so do not includ anything but the exact text that needs to be
+"#" comments so do not include anything but the exact text that needs to be
 included in the variables.
 
 ### 3. Globus configuration
@@ -145,10 +146,12 @@ source ./unset_env.sh
 docker compose -f ./compose_repo.yml up
 ```
 
+Be aware, the 'source' is to apply changes to the environment of your current
+terminal session.
+
 NOTE The unset_env.sh script is to make sure you are not accidentially
 overwriting what is in the .env with your local shell env. You can check the
-configuration before hand by running. Be aware, the 'source' is to apply
-changes to your current terminal session.
+configuration before hand by running. 
 
 ```bash
 docker compose -f compose_repo.yml config

@@ -6,7 +6,7 @@ import sys
 import os
 import utils
 
-# Define your client ID and client secret
+# Native Client ID for the DataFed Globus Setup Scripts
 CLIENT_ID = "f8d0afca-7ac4-4a3c-ac05-f94f5d9afce8"  # NATIVE
 
 # The Globus project the GCS endpoint will be created in

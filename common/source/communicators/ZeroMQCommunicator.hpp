@@ -43,7 +43,7 @@ protected:
 
 public:
   /** To be used by children*/
-  ZeroMQCommunicator(const LogContext &log_context)
+  explicit ZeroMQCommunicator(const LogContext &log_context)
       : m_log_context(log_context){};
 
   ZeroMQCommunicator(const SocketOptions &socket_options,

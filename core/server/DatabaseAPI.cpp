@@ -3106,7 +3106,7 @@ void DatabaseAPI::taskAbort(const std::string &a_task_id,
                             const std::string &a_msg,
                             libjson::Value &a_task_reply,
                             LogContext log_context) {
-  libjson::Value doc = a_msg;
+  libjson::Value doc(a_msg);
   string body = doc.toString();
 
   dbPost("task/abort", {{"task_id", a_task_id}}, &body, a_task_reply,
