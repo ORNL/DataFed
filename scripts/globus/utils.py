@@ -233,6 +233,7 @@ def createClient(auth_client, client_name, project_id, cred_name, cred_file):
     )
     return client_id, client_secret
 
+
 def getGCSClientIDFromDeploymentFile(deployment_key_file):
     deployment_key_exists, deployment_key_empty = validFile(deployment_key_file)
 
