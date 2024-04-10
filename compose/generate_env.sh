@@ -199,7 +199,7 @@ while IFS='=' read -r key value; do
     # Check if the line contains the '=' sign
     if [ -n "$value" ]; then
         # Print the content before the '=' sign
-				echo "unset $key" >> "${unset_env_file_name}"
+        echo "unset $key" >> "${unset_env_file_name}"
     fi
 done < ".env"
 

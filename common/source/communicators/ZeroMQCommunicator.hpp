@@ -25,7 +25,6 @@ namespace SDMS {
 class ZeroMQCommunicator : public ICommunicator {
 protected:
   std::unique_ptr<ISocket> m_socket;
-  uint16_t m_zmq_context;
   void *m_zmq_socket = nullptr;
   int m_zmq_socket_type;
   void *m_zmq_ctx = nullptr;
@@ -43,7 +42,7 @@ protected:
 
 public:
   /** To be used by children*/
-  ZeroMQCommunicator(const LogContext &log_context)
+  explicit ZeroMQCommunicator(const LogContext &log_context)
       : m_log_context(log_context){};
 
   ZeroMQCommunicator(const SocketOptions &socket_options,

@@ -181,6 +181,14 @@ else
   local_DATAFED_GLOBUS_CONTROL_PORT=$(printenv DATAFED_GLOBUS_CONTROL_PORT)
 fi
 
+if [ -z "${DATAFED_GLOBUS_ALLOWED_DOMAINS}" ]
+then
+  local_DATAFED_GLOBUS_ALLOWED_DOMAINS="globusid.org"
+else
+  local_DATAFED_GLOBUS_ALLOWED_DOMAINS=$(printenv DATAFED_GLOBUS_ALLOWED_DOMAINS)
+fi
+
+
 if [ ! -d "$PATH_TO_CONFIG_DIR" ]
 then
   mkdir -p "$PATH_TO_CONFIG_DIR"
@@ -316,8 +324,9 @@ export DATAFED_GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH
 export DATAFED_REPO_ID_AND_DIR="$local_DATAFED_REPO_ID_AND_DIR"
 # Institutionally allowed domains, users that have accounts in these domains
 # will have the ability to store data on the repository.
-# i.e. ornl.gov, or cu.edu
-export DATAFED_GLOBUS_ALLOWED_DOMAINS=""
+# i.e. ornl.gov or cu.edu or gmail.com by default clients.auth.globus.org
+# must be allowed to allow automatic setup.
+export DATAFED_GLOBUS_ALLOWED_DOMAINS="$local_DATAFED_GLOBUS_ALLOWED_DOMAINS"
 # Globus control port default is 443, might want to change if hosting
 # a web server on the same machine.
 export DATAFED_GLOBUS_CONTROL_PORT="$local_DATAFED_GLOBUS_CONTROL_PORT"

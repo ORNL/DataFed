@@ -114,37 +114,43 @@ void Logger::addStream(std::ostream &stream) {
 
 void Logger::trace(std::string file, std::string func, int line_num,
                    const LogContext &context, const std::string &message) {
-  if (m_log_level >= LogLevel::TRACE) {
+  if (static_cast<unsigned int>(m_log_level) >=
+      static_cast<unsigned int>(LogLevel::TRACE)) {
     output(LogLevel::TRACE, file, func, line_num, context, message);
   }
 }
 void Logger::debug(std::string file, std::string func, int line_num,
                    const LogContext &context, const std::string &message) {
-  if (m_log_level >= LogLevel::DEBUG) {
+  if (static_cast<unsigned int>(m_log_level) >=
+      static_cast<unsigned int>(LogLevel::DEBUG)) {
     output(LogLevel::DEBUG, file, func, line_num, context, message);
   }
 }
 void Logger::info(std::string file, std::string func, int line_num,
                   const LogContext &context, const std::string &message) {
-  if (m_log_level >= LogLevel::INFO) {
+  if (static_cast<unsigned int>(m_log_level) >=
+      static_cast<unsigned int>(LogLevel::INFO)) {
     output(LogLevel::INFO, file, func, line_num, context, message);
   }
 }
 void Logger::warning(std::string file, std::string func, int line_num,
                      const LogContext &context, const std::string &message) {
-  if (m_log_level >= LogLevel::WARNING) {
+  if (static_cast<unsigned int>(m_log_level) >=
+      static_cast<unsigned int>(LogLevel::WARNING)) {
     output(LogLevel::WARNING, file, func, line_num, context, message);
   }
 }
 void Logger::error(std::string file, std::string func, int line_num,
                    const LogContext &context, const std::string &message) {
-  if (m_log_level >= LogLevel::ERROR) {
+  if (static_cast<unsigned int>(m_log_level) >=
+      static_cast<unsigned int>(LogLevel::ERROR)) {
     output(LogLevel::ERROR, file, func, line_num, context, message);
   }
 }
 void Logger::critical(std::string file, std::string func, int line_num,
                       const LogContext &context, const std::string &message) {
-  if (m_log_level >= LogLevel::CRITICAL) {
+  if (static_cast<unsigned int>(m_log_level) >=
+      static_cast<unsigned int>(LogLevel::CRITICAL)) {
     output(LogLevel::CRITICAL, file, func, line_num, context, message);
   }
 }

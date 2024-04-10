@@ -21,21 +21,21 @@ public:
     m_gss_buf.length = 0;
   }
 
-  gssString(const std::string &a_src) {
+  explicit gssString(const std::string &a_src) {
     m_gss_buf.value = 0;
     m_gss_buf.length = 0;
 
     set(a_src);
   }
 
-  gssString(const char *a_src) {
+  explicit gssString(const char *a_src) {
     m_gss_buf.value = 0;
     m_gss_buf.length = 0;
 
     set(a_src);
   }
 
-  gssString(gss_name_t a_src) {
+  explicit gssString(gss_name_t a_src) {
     m_gss_buf.value = 0;
     m_gss_buf.length = 0;
 

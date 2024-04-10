@@ -147,10 +147,20 @@ void Server::checkServerVersion() {
 
   MessageFactory msg_factory;
 
-  for (int i = 0; i < 10; i++) {
-    DL_INFO(m_log_context, "Attempt " << i << " to initialize communication "
-                                      << " with core server at "
-                                      << m_config.core_server);
+  size_t attempt = 0;
+
+  /**
+   * Here the repo server will continually try to make a connection with the
+   * core services. This was changed from making a fixed number of attempts.
+   * The reasoning was that doing so would make the repo service dependent
+   * on the core actually running. By continually looping the coupling between
+   * the core services and the repo service is reduced.
+   **/
+  while (true) {
+    ++attempt;
+    DL_INFO(m_log_context,
+            "Attempt " << attempt << " to initialize communication "
+                       << " with core server at " << m_config.core_server);
     auto msg = std::make_unique<VersionRequest>();
     auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
     message->setPayload(std::move(msg));

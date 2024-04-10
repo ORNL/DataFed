@@ -1,6 +1,7 @@
 
 // Local private includes
 #include "AuthzWorker.h"
+#include "Config.h"
 
 // Globus third party includes
 #include <globus_error_hierarchy.h>
@@ -16,35 +17,38 @@
 
 // Define LOG_LEVEL and USE_SYSLOG
 #define LOG_LEVEL 1
+
+#ifndef DONT_USE_SYSLOG
 #define DONT_USE_SYSLOG
+#endif
 
 // Define logging macros
 #if defined(DONT_USE_SYSLOG)
 FILE *log_file = NULL;
-bool write_to_file = true;
+bool write_to_file = false;
 #define AUTHZ_LOG_DEBUG(fmt, ...)                                              \
   do {                                                                         \
-    if (LOG_LEVEL >= 1)                                                        \
+    if (LOG_LEVEL <= 1)                                                        \
       fprintf(stderr, "[DEBUG] " fmt "", ##__VA_ARGS__);                       \
   } while (0);                                                                 \
   do {                                                                         \
-    if (LOG_LEVEL >= 1 && write_to_file)                                       \
+    if (LOG_LEVEL <= 1 && write_to_file)                                       \
       fprintf(log_file, "[DEBUG] " fmt "", ##__VA_ARGS__);                     \
   } while (0)
 #define AUTHZ_LOG_INFO(fmt, ...)                                               \
   do {                                                                         \
-    if (LOG_LEVEL >= 2)                                                        \
+    if (LOG_LEVEL <= 2)                                                        \
       fprintf(stderr, "[INFO] " fmt "", ##__VA_ARGS__);                        \
   } while (0);                                                                 \
   do {                                                                         \
-    if (LOG_LEVEL >= 2 && write_to_file)                                       \
+    if (LOG_LEVEL <= 2 && write_to_file)                                       \
       fprintf(log_file, "[INFO] " fmt "", ##__VA_ARGS__);                      \
   } while (0)
 #define AUTHZ_LOG_ERROR(fmt, ...)                                              \
   do {                                                                         \
-    if (LOG_LEVEL >= 3)                                                        \
+    if (LOG_LEVEL <= 3)                                                        \
       fprintf(stderr, "[ERROR] " fmt "", ##__VA_ARGS__);                       \
-    if (LOG_LEVEL >= 3 && write_to_file)                                       \
+    if (LOG_LEVEL <= 3 && write_to_file)                                       \
       fprintf(log_file, "[ERROR] " fmt "", ##__VA_ARGS__);                     \
   } while (0)
 #define AUTHZ_LOG_INIT(file_path)                                              \
@@ -60,17 +64,17 @@ bool write_to_file = true;
 #include <syslog.h>
 #define AUTHZ_LOG_DEBUG(fmt, ...)                                              \
   do {                                                                         \
-    if (LOG_LEVEL >= 1)                                                        \
+    if (LOG_LEVEL <= 1)                                                        \
       syslog(LOG_DEBUG, "[DEBUG] " fmt, ##__VA_ARGS__);                        \
   } while (0)
 #define AUTHZ_LOG_INFO(fmt, ...)                                               \
   do {                                                                         \
-    if (LOG_LEVEL >= 2)                                                        \
+    if (LOG_LEVEL <= 2)                                                        \
       syslog(LOG_INFO, "[INFO] " fmt, ##__VA_ARGS__);                          \
   } while (0)
 #define AUTHZ_LOG_ERROR(fmt, ...)                                              \
   do {                                                                         \
-    if (LOG_LEVEL >= 3)                                                        \
+    if (LOG_LEVEL <= 3)                                                        \
       syslog(LOG_ERR, "[ERROR] " fmt, ##__VA_ARGS__);                          \
   } while (0)
 #define AUTHZ_LOG_INIT(file_path) openlog("gsi_authz", 0, LOG_AUTH);
@@ -218,7 +222,7 @@ bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
 
   if (len > a_max_len) {
     AUTHZ_LOG_ERROR(
-        "DataFed - '%s' value too long in authz config file (max %lu).\n",
+        "DataFed - '%s' value too long in authz config file (max %zu).\n",
         a_label, a_max_len);
     return true;
   }
@@ -302,6 +306,7 @@ bool loadConfig() {
 
       // Default values
       g_config.timeout = 10000;
+      g_config.log_path[0] = '\0';
 
       if (strcmp(buf, "repo_id") == 0)
         err = setConfigVal("repo_id", g_config.repo_id, val, MAX_ID_LEN);
@@ -478,6 +483,8 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
 
   AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
                   callout_ids1);
+  AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_MAPPED_USERNAME: %s\n",
+                  callout_username_mapped1);
   AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
                   callout_id_mapped1);
   AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
@@ -567,8 +574,6 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
               }
 
               char *callout_ids = getenv("GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS");
-              char *callout_username_mapped =
-                  getenv("GLOBUS_GRIDFTP_MAPPED_USERNAME");
               char *callout_id_mapped =
                   getenv("GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID");
 
@@ -629,7 +634,7 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
     AUTHZ_LOG_INFO("Authz: FAILED\n");
     result = globus_error_put(error);
   } else {
-    AUTHZ_LOG_ERROR("Authz: PASSED\n");
+    AUTHZ_LOG_DEBUG("Authz: PASSED\n");
     callback(callback_arg, handle, result);
   }
 

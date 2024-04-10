@@ -41,6 +41,12 @@ else
   DATAFED_GLOBUS_SUBSCRIPTION=$(printenv DATAFED_GLOBUS_SUBSCRIPTION)
 fi
 
+if [ -z "$DATAFED_GLOBUS_ALLOWED_DOMAINS" ]
+then
+  echo "DATAFED_GLOBUS_ALLOWED_DOMAINS is not defined shoudl be i.e. globusid.org or gmail.com or ornl.gov or cu.edu or something of the sort."
+  exit 1
+fi
+
 if [ -f "$CRED_FILE_PATH" ]; then
     echo "File exists! $CRED_FILE_PATH"
 else
@@ -54,13 +60,7 @@ COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 
 gateway_line=$( globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" )
-#    {
-#      "source": "{id}",
-#      "match": "${DATAFED_GLOBUS_APP_ID}@clients.auth.globus.org",
-#      "output": "${DATAFED_GLOBUS_REPO_USER}",
-#      "ignore_case": false,
-#      "literal": true
-#    }
+
 echo "$DATAFED_GLOBUS_REPO_USER"
 cat << EOF > mapping.json 
 {
@@ -77,10 +77,9 @@ cat << EOF > mapping.json
 }
 EOF
 
-#DOMAINS="--domain ornl.gov --domain clients.auth.globus.org --domain gmail.com"
 # For the Globus client to create the guest collection need to allow client
 # from the domain
-DOMAINS="--domain ornl.gov --domain clients.auth.globus.org"
+DOMAINS="--domain $DATAFED_GLOBUS_ALLOWED_DOMAINS --domain clients.auth.globus.org"
 
 echo "{" > path_restriction.json
 echo "  \"DATA_TYPE\": \"path_restrictions#1.0.0\"," >> path_restriction.json
@@ -137,8 +136,8 @@ then
     "$uuid_of_storage_gateway" \
     "/" \
     "$COLLECTION_NAME" \
-    --default-directory "${DATAFED_GCS_COLLECTION_ROOT_PATH}" \
     --enable-anonymous-writes \
+    --default-directory "/" \
     --disable-https "$extra_collection_arg"
 else
 
@@ -147,8 +146,8 @@ else
   # NOTE allow-guest-collections requires a subscription
   globus-connect-server collection update \
     "$uuid_of_collection" \
-    --default-directory "${DATAFED_GCS_COLLECTION_ROOT_PATH}" \
     --enable-anonymous-writes \
+    --default-directory "/" \
     --disable-https "$extra_collection_arg"
 fi
 

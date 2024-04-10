@@ -1,10 +1,8 @@
 import globus_sdk
-import subprocess
+from globus_sdk import scopes
+
 import utils
-from globus_sdk import AuthClient, AccessTokenAuthorizer
-import json
 import os
-import sys
 
 
 # The Globus project the GCS endpoint will be created in
@@ -56,75 +54,23 @@ if DATAFED_GCS_URL is None:
 if local_username is None:
     raise Exception("DATAFED_REPO_USER is not defined.")
 
-# client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
-
-# manage_projects scope to create a project
-# view_identities to user information for creating GCS server
-# client.oauth2_start_flow(requested_scopes="openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities", refresh_tokens=True)
-#
-# authorize_url = client.oauth2_get_authorize_url(query_params={"prompt": "login"})
-# print("Please go to this URL and login: \n", authorize_url)
-# auth_code = input("Please enter the authorization code: ")
-#
-# token_response = client.oauth2_exchange_code_for_tokens(auth_code)
-## Extract the token
-# refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
-# rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
-## auth_client_refresh_token
-# ac_rt = AuthClient(authorizer=rt_authorizer)
-#
-# userinfo = ac_rt.oauth2_userinfo()
-## Will get the primary email and id
-# identity_id = userinfo["sub"]
-# email = userinfo["email"]
-# username = userinfo["preferred_username"]
-# organization = userinfo["identity_provider_display_name"]
-
 if client_id is None:
-    client_id = getClientIdFromCredFile(CRED_FILE_PATH)
+    client_id = utils.getClientIdFromCredFile(CRED_FILE_PATH)
 
 if client_secret is None:
-    client_secret = getCredentialFromFile(CRED_FILE_PATH, client_id)
+    client_secret = utils.getCredentialFromFile(CRED_FILE_PATH, client_id)
 
 client = globus_sdk.ConfidentialAppAuthClient(client_id, client_secret)
 
-scopes = "openid profile email urn:globus:auth:scope:auth.globus.org:manage_projects urn:globus:auth:scope:auth.globus.org:view_identities"
-authorizer = globus_sdk.ClientCredentialsAuthorizer(client, scopes)
-# cc_authorizer = globus_sdk.ClientCredentialsAuthorizer(confidential_client,
-#        scopes)
+auth_scopes = (
+    "openid profile email "
+    "urn:globus:auth:scope:auth.globus.org:manage_projects "
+    "urn:globus:auth:scope:auth.globus.org:view_identities"
+)
 
-# token_response = client.oauth2_client_credentials_tokens()
-
-# refresh_token_auth = token_response.by_resource_server['auth.globus.org']['refresh_token']
-# rt_authorizer = globus_sdk.RefreshTokenAuthorizer(refresh_token_auth, client)
-# the useful values that you want at the end of this
-# globus_auth_data = token_response.by_resource_server["auth.globus.org"]
-# globus_transfer_data =
-# token_response.by_resource_server["transfer.api.globus.org"]
-# globus_auth_token = globus_auth_data["access_token"]
-# globus_transfer_token = globus_transfer_data["access_token"]
+authorizer = globus_sdk.ClientCredentialsAuthorizer(client, auth_scopes)
 
 gcs_client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
-
-
-import globus_sdk
-from globus_sdk import scopes
-
-# constants
-# endpoint_hostname = "https://ecf8ed.08cc.data.globus.org"
-# endpoint_id = "769c7ed0-744a-41b5-b4a8-db37b10b1ac9"
-# mapped_collection_id = "580ecb92-de56-42ee-a5ec-3d3886767b94"
-# storage_gateway_id = "3fdd7f41-4a05-4856-8fcd-2fb50066c590"
-
-# client credentials
-# This client identity must have the needed permissions to create a guest
-# collection on the mapped collection, and a valid mapping to a local account
-# on the storage gateway that matches the local_username
-# If using user tokens, the user must be the one with the correct permissions
-# and identity mapping.
-# client_id = "4de65cd7-4363-4510-b652-f8d15a43a0af"
-# client_secret = "*redacted*"
-# local_username = "datafed"
 
 # The scope the client will need, note that primary scope is for the endpoint,
 # but it has a dependency on the mapped collection's data_access scope
@@ -133,6 +79,13 @@ from globus_sdk import scopes
 confidential_client = globus_sdk.ConfidentialAppAuthClient(
     client_id=client_id, client_secret=client_secret
 )
+
+token_response = confidential_client.oauth2_client_credentials_tokens()
+globus_transfer_data = token_response.by_resource_server["transfer.api.globus.org"]
+globus_transfer_token = globus_transfer_data["access_token"]
+authorizer_tc = globus_sdk.AccessTokenAuthorizer(globus_transfer_token)
+tc = globus_sdk.TransferClient(authorizer=authorizer_tc)
+
 scope = scopes.GCSEndpointScopeBuilder(ENDPOINT_ID).make_mutable("manage_collections")
 authorizer = globus_sdk.ClientCredentialsAuthorizer(confidential_client, scopes=scope)
 client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
@@ -164,7 +117,7 @@ for item in collection_list["data"]:
         mapped_collection_id = item["id"]
         break
 
-if mapped_collection_found == False:
+if mapped_collection_found is False:
     raise Exception("Missing required mapped collection")
 
 storage_gateway_found = False
@@ -190,7 +143,7 @@ for item in storage_gateway_list["data"]:
         storage_gateway_id = item["id"]
         break
 
-if storage_gateway_found == False:
+if storage_gateway_found is False:
     raise Exception("Missing required storage gateway")
 
 
@@ -209,7 +162,7 @@ for item in collection_list["data"]:
         break
 
 # https://github.com/globus/globus-sdk-python/blob/main/docs/examples/guest_collection_creation.rst
-if guest_collection_found == False:
+if guest_collection_found is False:
     credential_document = globus_sdk.UserCredentialDocument(
         storage_gateway_id=storage_gateway_id,
         identity_id=client_id,
@@ -229,4 +182,39 @@ if guest_collection_found == False:
     print(f"guest collection {guest_collection_id} created")
 
 
-# For guest collection creation see
+# Create ACL rule for Guest anonymous access
+acl_list = tc.endpoint_acl_list(endpoint_id=guest_collection_id)
+create_acl = True
+update_acl = False
+acl_id = None
+for item in acl_list["DATA"]:
+    if item["principal_type"] == "all_authenticated_users":
+        create_acl = False
+        acl_id = item["id"]
+        if item["permissions"] != "rw":
+            print("Need to update acl for all users permissions are incorrect")
+            update_acl = True
+        else:
+            print("ACL rule already exists for all users")
+        break
+
+rule_data = {
+    "DATA_TYPE": "access",
+    "path": "/",
+    "permissions": "rw",
+    "principal": "",
+    "principal_type": "all_authenticated_users",
+    "role_id": None,
+    "role_type": None,
+}
+if create_acl:
+    print(f"Creating acl rule for guest_collection {guest_collection_id}")
+    tc.add_endpoint_acl_rule(endpoint_id=guest_collection_id, rule_data=rule_data)
+elif update_acl:
+    print(f"Updating acl rule ({acl_id}) for guest_collection {guest_collection_id}")
+    tc.update_endpoint_acl_rule(
+        endpoint_id=guest_collection_id, rule_id=acl_id, rule_data=rule_data
+    )
+
+acl_list = tc.endpoint_acl_list(endpoint_id=guest_collection_id)
+print(acl_list)

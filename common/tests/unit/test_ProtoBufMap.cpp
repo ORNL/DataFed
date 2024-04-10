@@ -22,7 +22,9 @@ BOOST_AUTO_TEST_CASE(testing_ProtoBufFactory_ProtocolID) {
 
   uint8_t proto_id =
       proto_map.getProtocolID(MessageProtocol::GOOGLE_ANONONYMOUS);
+  BOOST_CHECK(proto_id == 1);
   proto_id = proto_map.getProtocolID(MessageProtocol::GOOGLE_AUTHORIZED);
+  BOOST_CHECK(proto_id == 2);
 }
 
 BOOST_AUTO_TEST_CASE(testing_ProtoBufFactory) {

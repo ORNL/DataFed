@@ -26,9 +26,13 @@ OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
 OPTION(BUILD_TESTS "Build Tests" TRUE)
 OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
 OPTION(ENABLE_UNIT_TESTS "Enable unit tests" TRUE)
-OPTION(BUILD_SHARED_LIBS "Build using shared libraries. By default this is off.
-With the exception of the libdatafed-authz which must be a shared library. This
-includes also attempting to link with shared libraries instead of static ones" OFF)
+OPTION(BUILD_SHARED_LIBS "By default DataFed tries to build static libraries
+with the exception of libdatafed-authz which must always be a shared library,
+it will also try to link with as many static libraries as possible. However,
+building with static depencies is not completely possible because some system
+libraries must be shared libraries for DataFed to be interoperable. If this
+setting is turned on DataFed will build it's libraries as shared and try to
+link to shared libraries." OFF)
 
 set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
