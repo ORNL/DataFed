@@ -4,6 +4,8 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/Version.hpp.in"
   "${CMAKE_CURRENT_SOURCE_DIR}/Version.hpp"
   @ONLY)
+
+file( GLOB AUTHZ_Sources "URL.c" )
 file( GLOB Sources "*.cpp" "*.c" )
 add_library( datafed-authz SHARED ${Sources} )
 

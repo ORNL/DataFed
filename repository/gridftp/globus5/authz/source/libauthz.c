@@ -1,6 +1,7 @@
 
 // Local private includes
 #include "AuthzWorker.h"
+#include "URL.h"
 
 // Globus third party includes
 #include <globus_error_hierarchy.h>

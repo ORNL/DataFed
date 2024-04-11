@@ -6,11 +6,11 @@
 // Function to extract the relative path from an FTP URL
 // Returns 1 on success, 0 on failure
 int ftpExtractRelativePath(const char *url, char *relativePath, size_t maxLength) {
-  size_t len_of_prefix = strlen("ftp://");
+  size_t len_of_prefix = strlen("ftp://\0");
   size_t len_of_url = strlen(url);
 	
   // Step 1. Check that the URL starts with "ftp://"
-	if (strncmp(url, "ftp://", len_of_prefix) != 0) {
+	if (strncmp(url, "ftp://\0", len_of_prefix) != 0) {
 		fprintf(stderr, "Error: URL must start with 'ftp:// but you have provided %s'\n", url);
 		return 0;
 	}
