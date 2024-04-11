@@ -61,6 +61,7 @@ ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH"
 ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
+ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 
 RUN apt install -y python3 make g++
 
@@ -81,12 +82,7 @@ COPY --from=ws-build --chown=datafed:root ${BUILD_DIR}/web ${BUILD_DIR}/web
 COPY --from=ws-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/web ${DATAFED_INSTALL_PATH}/web
 COPY --from=ws-build --chown=datafed:root /usr/bin/curl /usr/bin/curl
 
-RUN chown -R datafed:root ${DATAFED_INSTALL_PATH}/web
-RUN chown -R datafed:root ${BUILD_DIR}
-
-WORKDIR ${DATAFED_DIR}
-
-RUN echo "${DATAFED_DIR}"
+WORKDIR ${BUILD_DIR}
 
 USER root
 

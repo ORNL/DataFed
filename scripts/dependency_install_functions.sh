@@ -7,10 +7,10 @@ source "${SOURCE}/utils.sh"
 
 sudo_command
 # these are the dependencies to be installed by apt
-apt_file_path="${PROJECT_ROOT}/tmp/apt_deps"
-pip_file_path="${PROJECT_ROOT}/tmp/pip_deps"
+export apt_file_path="${PROJECT_ROOT}/tmp/apt_deps"
+export pip_file_path="${PROJECT_ROOT}/tmp/pip_deps"
 # these are the dependencies to be installed and built via cmake
-ext_file_path="${PROJECT_ROOT}/tmp/ext_deps"
+export ext_file_path="${PROJECT_ROOT}/tmp/ext_deps"
 
 if [ ! -d "${PROJECT_ROOT}/tmp" ]; then
     mkdir -p "${PROJECT_ROOT}/tmp" 
@@ -59,6 +59,12 @@ else
   fi
 fi
 
+init_python() {
+  if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
+      mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
+  fi
+  python3 -m venv "${DATAFED_PYTHON_ENV}"
+}
 
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
@@ -118,24 +124,16 @@ install_protobuf() {
     # Don't build shared, it messes up the static library linking because the
     # cmake file installed are not compatible
     # WARNING - static library will break if build with shared options on
-    #cmake -S . -B build \
-    #  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-    #  -DBUILD_SHARED_LIBS=ON \
-    #  -Dprotobuf_BUILD_TESTS=OFF \
-    #  -DABSL_PROPAGATE_CXX_STD=ON \
-    #  -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    #cmake --build build -j 8
-    #if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
-    #  cmake --build build --target install
-    #else
-    #  "$SUDO_CMD" cmake --build build --target install
-    #fi
 
     cd python
+    init_python
+    source "${DATAFED_PYTHON_ENV}/bin/activate"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 -m pip install numpy
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py build
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py test
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py install --user
+    # Because we have activaited a venv we don't want to use the --user flag
+    # with the install command
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py install
     cd ../
     # Cleanup build file with root ownership
     if [ -f build/install_manifest.txt ]
@@ -312,18 +310,6 @@ install_json_schema_validator() {
     # WARNING building shared library will overwrite cmake file for static
     # library, does not appear to support both targets at the same time, similar
     # to protobuf
-    # 
-    # Build shared
-    #cmake -S . -B build \
-    #  -DBUILD_SHARED_LIBS=ON \
-    #  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-    #  -DCMAKE_INSTALL_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    #cmake --build build -j 8
-    #if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
-    #  cmake --build build --target install
-    #else
-    #  "$SUDO_CMD" cmake --build build --target install
-    #fi
     # Mark json-schema-validator as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}"
     cd "$original_dir"
@@ -485,7 +471,6 @@ install_libcurl() {
     mkdir -p "${PROJECT_ROOT}/external/libcurl"
     tar -xf "curl-${DATAFED_LIBCURL}.tar.gz" -C "${PROJECT_ROOT}/external/libcurl"
     cd "${PROJECT_ROOT}/external/libcurl/curl-${DATAFED_LIBCURL}"
-    PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" \
 
     # Making third party features and dependencies explicit
     # OpenSSL is needed for HTTPS encryption
@@ -493,6 +478,7 @@ install_libcurl() {
     # GNUTLS - HTTPS support session management certificate verification etc
     # NOTE: NSS - Network Security Services for HTTP support is deprecated
     # NOTE: metalink - is no longer supported and not a valid argument
+    PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" \
     ./configure --with-ssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-gnutls --with-zlib \
       --enable-file --disable-shared \
       --disable-ldap --disable-ldaps --disable-rtsp --disable-dict \

@@ -5,8 +5,8 @@ set -ef -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
-source ${PROJECT_ROOT}/config/datafed.sh
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
+source "${PROJECT_ROOT}/config/datafed.sh"
 
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 CONFIG_FILE_NAME="gsi-authz.conf"

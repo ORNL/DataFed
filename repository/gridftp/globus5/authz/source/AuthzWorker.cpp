@@ -29,7 +29,6 @@
 using namespace std;
 using namespace SDMS::Anon;
 using namespace SDMS::Auth;
-// using namespace SDMS::authz::version;
 
 namespace {
 std::string randomAlphaNumericCode() {
@@ -141,8 +140,30 @@ public:
       EXCEPT(1, "Path to data item is not within the collection");
     }
 
-    auto sanitized_path = local_path.substr(prefix.length());
-
+    /**
+     * TODO Separation of Concerns Repo vs Core services
+     *
+     * The following line is currenctly commented out because it will require
+     * some actual work and testing to get it working correctly.
+     *
+     * Ideally, when a DataFed repository is registered with the DataFed core
+     * services it should not need to know anything about the DataFed repository
+     * i.e. posix path to the actual collection. So when a user makes a request
+     * to do something on the DataFed managed endpoint the repo service should
+     * not need to send the full POSIX path back to the core service.
+     *
+     * This is not currently working but that is what the sanitized path should
+     * be.
+     * auto sanitized_path = local_path.substr(prefix.length());
+     *
+     * Changes will need to be made anywhere the path is used. And when a
+     * transfer document is created it should be provided with a path relative
+     * to the endpoint not to the absolute of the filesystem.
+     *
+     * Changes will also need to be made when entering information in the repo
+     * form if this is done.
+     **/
+    auto sanitized_path = local_path;
     std::unique_ptr<SDMS::ICredentials> m_sec_ctx;
 
     std::unordered_map<CredentialType, std::string> cred_options;
@@ -226,8 +247,11 @@ public:
                               << client->address());
 
     auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
-    log_context.correlation_id = std::get<std::string>(
-        response.message->get(MessageAttribute::CORRELATION_ID));
+    if (response.message) { // Make sure the message exists before we try to
+                            // access it
+      log_context.correlation_id = std::get<std::string>(
+          response.message->get(MessageAttribute::CORRELATION_ID));
+    }
     if (response.time_out) {
       std::string error_msg =
           "AuthWorker.cpp Core service did not respond within timeout.";
@@ -250,6 +274,12 @@ public:
                             "communicating with the core service: "
                                 << response.error_msg);
     } else {
+
+      if (not response.message) {
+        DL_ERROR(log_context, "No error was reported and no time out occured "
+                              "but message is not defined.");
+      }
+
       auto payload =
           std::get<google::protobuf::Message *>(response.message->getPayload());
       Anon::NackReply *nack = dynamic_cast<Anon::NackReply *>(payload);
@@ -303,9 +333,21 @@ const char *getReleaseVersion() {
 // The same
 int checkAuthorization(char *client_id, char *object, char *action,
                        struct Config *config) {
+#if defined(DONT_USE_SYSLOG)
+  SDMS::global_logger.setSysLog(false);
+#else
   SDMS::global_logger.setSysLog(true);
-  SDMS::global_logger.setLevel(SDMS::LogLevel::TRACE);
+#endif
+  SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
   SDMS::global_logger.addStream(std::cerr);
+  auto log_path_authz = std::string(config->log_path);
+  if (log_path_authz.length() > 0) {
+    // Append to the existing path because we don't want the C++ and C code
+    // trying to write to the same file
+    log_path_authz.append("_authz");
+    std::ofstream log_file_worker(log_path_authz);
+    SDMS::global_logger.addStream(log_file_worker);
+  }
 
   SDMS::LogContext log_context;
   log_context.thread_name = "authz_check";

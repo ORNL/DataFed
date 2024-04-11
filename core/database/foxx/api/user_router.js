@@ -74,7 +74,7 @@ router.get('/create', function(req, res) {
                         throw [g_lib.ERR_AUTHN_FAILED, "Invalid system credentials"];
                     }
 
-                    var i, c,
+                    var i,
                         time = Math.floor(Date.now() / 1000),
                         name = req.queryParams.name.trim(),
                         idx = name.lastIndexOf(" ");
@@ -86,6 +86,9 @@ router.get('/create', function(req, res) {
                         fname = name.substr(0, idx).trim();
 
                     var is_admin = req.queryParams.is_admin;
+                    // It is assumed that if this is the first user to ever log
+                    // into the database they are by default made the admin.
+                    // This will simplify the setup process.
                     if ( g_db.u.count() === 0 ) {
                       is_admin = true;
                     }

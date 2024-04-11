@@ -2,6 +2,7 @@
 // Local private includes
 #include "AuthzWorker.h"
 #include "URL.h"
+#include "Config.h"
 
 // Globus third party includes
 #include <globus_error_hierarchy.h>
@@ -11,9 +12,75 @@
 // Standard includes
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// Define LOG_LEVEL and USE_SYSLOG
+#define LOG_LEVEL 1
+
+#ifndef DONT_USE_SYSLOG
+#define DONT_USE_SYSLOG
+#endif
+
+// Define logging macros
+#if defined(DONT_USE_SYSLOG)
+FILE *log_file = NULL;
+bool write_to_file = false;
+#define AUTHZ_LOG_DEBUG(fmt, ...)                                              \
+  do {                                                                         \
+    if (LOG_LEVEL <= 1)                                                        \
+      fprintf(stderr, "[DEBUG] " fmt "", ##__VA_ARGS__);                       \
+  } while (0);                                                                 \
+  do {                                                                         \
+    if (LOG_LEVEL <= 1 && write_to_file)                                       \
+      fprintf(log_file, "[DEBUG] " fmt "", ##__VA_ARGS__);                     \
+  } while (0)
+#define AUTHZ_LOG_INFO(fmt, ...)                                               \
+  do {                                                                         \
+    if (LOG_LEVEL <= 2)                                                        \
+      fprintf(stderr, "[INFO] " fmt "", ##__VA_ARGS__);                        \
+  } while (0);                                                                 \
+  do {                                                                         \
+    if (LOG_LEVEL <= 2 && write_to_file)                                       \
+      fprintf(log_file, "[INFO] " fmt "", ##__VA_ARGS__);                      \
+  } while (0)
+#define AUTHZ_LOG_ERROR(fmt, ...)                                              \
+  do {                                                                         \
+    if (LOG_LEVEL <= 3)                                                        \
+      fprintf(stderr, "[ERROR] " fmt "", ##__VA_ARGS__);                       \
+    if (LOG_LEVEL <= 3 && write_to_file)                                       \
+      fprintf(log_file, "[ERROR] " fmt "", ##__VA_ARGS__);                     \
+  } while (0)
+#define AUTHZ_LOG_INIT(file_path)                                              \
+  log_file = fopen(file_path, "a");                                            \
+  if (log_file != NULL) {                                                      \
+    write_to_file = true;                                                      \
+  }
+#define AUTHZ_LOG_CLOSE()                                                      \
+  if (log_file != NULL) {                                                      \
+    fclose(log_file);                                                          \
+  }
+#else
 #include <syslog.h>
+#define AUTHZ_LOG_DEBUG(fmt, ...)                                              \
+  do {                                                                         \
+    if (LOG_LEVEL <= 1)                                                        \
+      syslog(LOG_DEBUG, "[DEBUG] " fmt, ##__VA_ARGS__);                        \
+  } while (0)
+#define AUTHZ_LOG_INFO(fmt, ...)                                               \
+  do {                                                                         \
+    if (LOG_LEVEL <= 2)                                                        \
+      syslog(LOG_INFO, "[INFO] " fmt, ##__VA_ARGS__);                          \
+  } while (0)
+#define AUTHZ_LOG_ERROR(fmt, ...)                                              \
+  do {                                                                         \
+    if (LOG_LEVEL <= 3)                                                        \
+      syslog(LOG_ERR, "[ERROR] " fmt, ##__VA_ARGS__);                          \
+  } while (0)
+#define AUTHZ_LOG_INIT(file_path) openlog("gsi_authz", 0, LOG_AUTH);
+#define AUTHZ_LOG_CLOSE() closelog();
+#endif
 
 typedef void *globus_gsi_authz_handle_t;
 typedef void (*globus_gsi_authz_cb_t)(void *callback_arg,
@@ -150,14 +217,14 @@ bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
   size_t len = strlen(a_src);
 
   if (len == 0) {
-    syslog(LOG_ERR, "DataFed - '%s' value not set.", a_label);
+    AUTHZ_LOG_ERROR("DataFed - '%s' value not set.\n", a_label);
     return true;
   }
 
   if (len > a_max_len) {
-    syslog(LOG_ERR,
-           "DataFed - '%s' value too long in authz config file (max %lu).",
-           a_label, a_max_len);
+    AUTHZ_LOG_ERROR(
+        "DataFed - '%s' value too long in authz config file (max %zu).\n",
+        a_label, a_max_len);
     return true;
   }
 
@@ -170,12 +237,12 @@ bool loadKeyFile(char *a_dest, char *a_filename) {
   FILE *inf = fopen(a_filename, "r");
 
   if (!inf) {
-    syslog(LOG_ERR, "DataFed - Could not open key file: %s", a_filename);
+    AUTHZ_LOG_ERROR("DataFed - Could not open key file: %s\n", a_filename);
     return true;
   }
 
   if (!fgets(a_dest, MAX_KEY_LEN, inf)) {
-    syslog(LOG_ERR, "DataFed - Error reading key from file: %s", a_filename);
+    AUTHZ_LOG_ERROR("DataFed - Error reading key from file: %s\n", a_filename);
     fclose(inf);
     return true;
   }
@@ -198,13 +265,13 @@ bool loadConfig() {
     // If env variable is not set check default location
     inf = fopen("/opt/datafed/authz/datafed-authz.cfg", "r");
     if (!inf) {
-      syslog(LOG_ERR, "DataFed - DATAFED_AUTHZ_CFG_FILE env variable not set, "
+      AUTHZ_LOG_ERROR("DataFed - DATAFED_AUTHZ_CFG_FILE env variable not set, "
                       "and datafed-authz.cfg is not located in default "
-                      "location /opt/datafed/authz");
+                      "location /opt/datafed/authz\n");
       return true;
     }
   } else {
-    syslog(LOG_INFO, "DataFed - Loading authz config file: %s", cfg_file);
+    AUTHZ_LOG_INFO("DataFed - Loading authz config file: %s\n", cfg_file);
     inf = fopen(cfg_file, "r");
   }
   if (inf) {
@@ -230,8 +297,8 @@ bool loadConfig() {
       // Content is formatted as "key=value" (no spaces)
       val = strchr(buf, '=');
       if (!val) {
-        syslog(LOG_ERR,
-               "DataFed - Syntax error in authz config file at line %i.", lc);
+        AUTHZ_LOG_ERROR(
+            "DataFed - Syntax error in authz config file at line %i.\n", lc);
         return true;
       } else {
         *val = 0;
@@ -240,6 +307,7 @@ bool loadConfig() {
 
       // Default values
       g_config.timeout = 10000;
+      g_config.log_path[0] = '\0';
 
       if (strcmp(buf, "repo_id") == 0)
         err = setConfigVal("repo_id", g_config.repo_id, val, MAX_ID_LEN);
@@ -248,9 +316,10 @@ bool loadConfig() {
                            MAX_ADDR_LEN);
       else if (strcmp(buf, "user") == 0)
         err = setConfigVal("user", g_config.user, val, MAX_ID_LEN);
-      else if (strcmp(buf, "log_path") == 0)
+      else if (strcmp(buf, "log_path") == 0) {
         err = setConfigVal("log_path", g_config.log_path, val, MAX_PATH_LEN);
-      else if (strcmp(buf, "test_path") == 0)
+        AUTHZ_LOG_INIT(g_config.log_path);
+      } else if (strcmp(buf, "test_path") == 0)
         err = setConfigVal("test_path", g_config.test_path, val, MAX_PATH_LEN);
       else if (strcmp(buf, "globus-collection-path") == 0)
         err = setConfigVal("globus-collection-path",
@@ -265,9 +334,9 @@ bool loadConfig() {
         g_config.timeout = atoi(val);
       else {
         err = true;
-        syslog(LOG_ERR,
-               "DataFed - Invalid key, '%s', in authz config file at line %i.",
-               buf, lc);
+        AUTHZ_LOG_ERROR(
+            "DataFed - Invalid key, '%s', in authz config file at line %i.\n",
+            buf, lc);
       }
 
       if (err) {
@@ -296,25 +365,40 @@ bool loadConfig() {
     if (g_config.server_key[0] == 0)
       strcat(miss, " server_key");
 
+    AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
+    AUTHZ_LOG_INFO("                         API, version %s\n",
+                   getAPIVersion());
+    AUTHZ_LOG_INFO("                     Release, version %s\n",
+                   getReleaseVersion());
+
     if (miss[0] != 0) {
-      syslog(LOG_ERR, "DataFed - Missing required authz config items:%s", miss);
+      AUTHZ_LOG_ERROR("DataFed - Missing required authz config items:%s\n",
+                      miss);
       return true;
     }
   } else {
-    syslog(LOG_ERR, "DataFed - Could not open authz config file.");
+
+    AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
+    AUTHZ_LOG_INFO("                         API, version %s\n",
+                   getAPIVersion());
+    AUTHZ_LOG_INFO("                     Release, version %s\n",
+                   getReleaseVersion());
+    AUTHZ_LOG_ERROR("DataFed - Could not open authz config file.\n");
+
     return true;
   }
+
+  AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
+  AUTHZ_LOG_INFO("                         API, version %s\n", getAPIVersion());
+  AUTHZ_LOG_INFO("                     Release, version %s\n",
+                 getReleaseVersion());
 
   return false;
 }
 
 // The same
 globus_result_t gsi_authz_init() {
-  openlog("gsi_authz", 0, LOG_AUTH);
-  syslog(LOG_INFO, "DataFed Authz module started, version %s", getVersion());
-  syslog(LOG_INFO, "                         API, version %s", getAPIVersion());
-  syslog(LOG_INFO, "                     Release, version %s",
-         getReleaseVersion());
+  // openlog("gsi_authz", 0, LOG_AUTH);
   memset(g_active_contexts, 0, sizeof(g_active_contexts));
 
   // This line is different
@@ -326,14 +410,14 @@ globus_result_t gsi_authz_init() {
 
 // The same
 globus_result_t gsi_authz_destroy() {
-  syslog(LOG_DEBUG, "gsi_authz_destroy");
-
+  AUTHZ_LOG_DEBUG("gsi_authz_destroy\n");
+  AUTHZ_LOG_CLOSE();
   return 0;
 }
 
 // The same
 globus_result_t gsi_authz_handle_init(va_list ap) {
-  syslog(LOG_DEBUG, "gsi_authz_handle_init");
+  AUTHZ_LOG_DEBUG("gsi_authz_handle_init\n");
 
   globus_result_t result = GLOBUS_FAILURE;
   globus_gsi_authz_handle_t *handle = va_arg(ap, globus_gsi_authz_handle_t *);
@@ -349,9 +433,10 @@ globus_result_t gsi_authz_handle_init(va_list ap) {
     if (setContext(*handle, context) == false)
       result = GLOBUS_SUCCESS;
     else
-      syslog(LOG_ERR, "gsi_authz_handle_init out of handle context space");
+      AUTHZ_LOG_ERROR("gsi_authz_handle_init out of handle context space\n");
   } else {
-    syslog(LOG_ERR, "gsi_authz_handle_init context handle already initialized");
+    AUTHZ_LOG_DEBUG(
+        "gsi_authz_handle_init context handle already initialized\n");
   }
 
   callback(callback_arg, callback_arg, result);
@@ -361,7 +446,7 @@ globus_result_t gsi_authz_handle_init(va_list ap) {
 
 // The same
 globus_result_t gsi_authz_handle_destroy(va_list ap) {
-  syslog(LOG_INFO, "gsi_authz_handle_destroy");
+  AUTHZ_LOG_INFO("gsi_authz_handle_destroy\n");
 
   globus_result_t result = GLOBUS_FAILURE;
   globus_gsi_authz_handle_t handle = va_arg(ap, globus_gsi_authz_handle_t);
@@ -374,7 +459,7 @@ globus_result_t gsi_authz_handle_destroy(va_list ap) {
   if (clearContext(handle) == false) {
     result = GLOBUS_SUCCESS;
   } else {
-    syslog(LOG_ERR, "gsi_authz_handle_destroy context handle lookup FAILED");
+    AUTHZ_LOG_ERROR("gsi_authz_handle_destroy context handle lookup FAILED\n");
   }
 
   callback(callback_arg, handle, result);
@@ -383,7 +468,7 @@ globus_result_t gsi_authz_handle_destroy(va_list ap) {
 }
 
 globus_result_t gsi_authz_authorize_async(va_list ap) {
-  syslog(LOG_INFO, "gsi_authz_authorize_async");
+  AUTHZ_LOG_INFO("gsi_authz_authorize_async\n");
 
   globus_result_t result = GLOBUS_FAILURE;
   globus_gsi_authz_handle_t handle = va_arg(ap, globus_gsi_authz_handle_t);
@@ -394,17 +479,27 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
   // void *                      authz_system_state  = va_arg(ap, void *);
 
   char *callout_ids1 = getenv("GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS");
+  char *callout_username_mapped1 = getenv("GLOBUS_GRIDFTP_MAPPED_USERNAME");
+  char *callout_id_mapped1 = getenv("GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID");
 
-  syslog(LOG_DEBUG, "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
-         callout_ids1);
+  AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
+                  callout_ids1);
+  AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_MAPPED_USERNAME: %s\n",
+                  callout_username_mapped1);
+  AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
+                  callout_id_mapped1);
+  AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
+                 g_config.globus_collection_path, action, object);
   if (strcmp(action, "lookup") == 0 || strcmp(action, "chdir") == 0) {
+    AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
+                   g_config.globus_collection_path, action, object);
     result = GLOBUS_SUCCESS;
     callback(callback_arg, handle, result);
     return result;
   }
 
-  syslog(LOG_ERR, "gsi_authz_authorize_async, handle: %p, act: %s, obj: %s",
-         handle, action, object);
+  AUTHZ_LOG_ERROR("gsi_authz_authorize_async, handle: %p, act: %s, obj: %s\n",
+                  handle, action, object);
 
   OM_uint32 min_stat;
   gss_name_t client = GSS_C_NO_NAME;
@@ -426,8 +521,8 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
         maj_stat =
             gss_display_name(&min_stat, target, &target_buf, &target_type);
         if (maj_stat == GSS_S_COMPLETE) {
-          syslog(LOG_INFO, "Auth client: %s, file: %s, action: %s",
-                 (char *)client_buf.value, object, action);
+          AUTHZ_LOG_INFO("Auth client: %s, file: %s, action: %s\n",
+                         (char *)client_buf.value, object, action);
 
 // Testing hack
 #if 0
@@ -443,8 +538,8 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
           // Consortium/OU=Globus Connect User/CN=", 52 ) != 0 )
           if (strncmp((char *)client_buf.value,
                       "/C=US/O=Globus Consortium/OU=Globus", 35) != 0) {
-            syslog(LOG_ERR, "Invalid certificate subject prefix: %s",
-                   (char *)client_buf.value);
+            AUTHZ_LOG_ERROR("Invalid certificate subject prefix: %s\n",
+                            (char *)client_buf.value);
           } else {
             /* Note: For some reason, globus will provide the CN as either a
              * UUID that is linked to the client's account and encoded in
@@ -458,37 +553,45 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
             // TODO Should check client uuid str len to make sure it won't
             // overflow
             if (strncmp((char *)client_buf.value + 52, "u_", 2) == 0) {
-              syslog(LOG_INFO, "Globus user prefix detected, decode UUID");
+              AUTHZ_LOG_INFO("Globus user prefix detected, decode UUID\n");
 
               client_id = malloc(40);
 
               if (!decodeUUID((char *)client_buf.value + 54, client_id)) {
-                syslog(LOG_ERR, "Failed to decode subject UUID: %s",
-                       (char *)client_buf.value + 54);
+                AUTHZ_LOG_ERROR("Failed to decode subject UUID: %s\n",
+                                (char *)client_buf.value + 54);
                 free(client_id);
                 client_id = 0;
               }
             } else {
-              syslog(LOG_INFO, "Using client CN for authz");
+              AUTHZ_LOG_INFO("Using client CN for authz\n");
 
               // Find "/CN=" in cert DN
               const char *cn = strstr(client_buf.value, "/CN=");
-              if (!cn)
-                syslog(LOG_ERR, "Common Name not found in client DN");
-              else
+              if (!cn) {
+                AUTHZ_LOG_ERROR("Common Name not found in client DN\n");
+              } else {
                 client_id = strdup((char *)cn + 4);
+              }
 
               char *callout_ids = getenv("GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS");
+              char *callout_id_mapped =
+                  getenv("GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID");
 
               if (callout_ids != NULL) {
-                syslog(LOG_DEBUG,
-                       "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
-                       callout_ids);
+                AUTHZ_LOG_DEBUG(
+                    "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
+                    callout_ids);
                 client_id = strdup(callout_ids);
-                syslog(LOG_INFO, "libauthz.c client_id(s): %s\n", client_id);
+                AUTHZ_LOG_INFO("libauthz.c client_id(s): %s\n", client_id);
+              } else if (callout_id_mapped != NULL) {
+                AUTHZ_LOG_DEBUG(
+                    "libauthz.c GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
+                    callout_id_mapped);
+                client_id = strdup(callout_id_mapped);
               } else {
-                syslog(LOG_ERR,
-                       "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS.\n");
+                AUTHZ_LOG_ERROR(
+                    "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS.\n");
               }
             }
 
@@ -498,10 +601,10 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
                 result = GLOBUS_SUCCESS;
               } else {
 
-                syslog(LOG_INFO,
-                       "libauthz.c Auth client_id: %s, file: %s, action: %s",
-                       client_id, object, action);
-                syslog(LOG_INFO, "libauthz.c checkAuthorization FAIL.\n");
+                AUTHZ_LOG_INFO(
+                    "libauthz.c Auth client_id: %s, file: %s, action: %s\n",
+                    client_id, object, action);
+                AUTHZ_LOG_INFO("libauthz.c checkAuthorization FAIL.\n");
               }
 
               free(client_id);
@@ -510,51 +613,51 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
 
           gss_release_buffer(&min_stat, &target_buf);
         } else {
-          syslog(LOG_ERR, "gss_display_name target FAILED, maj: %d, min: %d",
-                 maj_stat, min_stat);
+          AUTHZ_LOG_ERROR("gss_display_name target FAILED, maj: %d, min: %d\n",
+                          maj_stat, min_stat);
         }
 
         gss_release_buffer(&min_stat, &client_buf);
       } else {
-        syslog(LOG_ERR, "gss_display_name source FAILED, maj: %d, min: %d",
-               maj_stat, min_stat);
+        AUTHZ_LOG_ERROR("gss_display_name source FAILED, maj: %d, min: %d\n",
+                        maj_stat, min_stat);
       }
     } else {
-      syslog(LOG_ERR, "gss_inquire_context FAILED, maj: %d, min: %d", maj_stat,
-             min_stat);
+      AUTHZ_LOG_ERROR("gss_inquire_context FAILED, maj: %d, min: %d\n",
+                      maj_stat, min_stat);
     }
   } else {
-    syslog(LOG_ERR, "context handle lookup FAILED");
+    AUTHZ_LOG_ERROR("context handle lookup FAILED\n");
   }
 
   if (result != GLOBUS_SUCCESS) {
     globus_object_t *error = globus_error_construct_no_authentication(0, 0);
-    syslog(LOG_INFO, "Authz: FAILED");
+    AUTHZ_LOG_INFO("Authz: FAILED\n");
     result = globus_error_put(error);
   } else {
-    syslog(LOG_ERR, "Authz: PASSED");
+    AUTHZ_LOG_DEBUG("Authz: PASSED\n");
     callback(callback_arg, handle, result);
   }
 
-  syslog(LOG_ERR, "Authz returning");
+  AUTHZ_LOG_ERROR("Authz returning\n");
 
   return result;
 }
 
 // The same
 globus_result_t gsi_authz_cancel() {
-  syslog(LOG_DEBUG, "gsi_authz_cancel\n");
+  AUTHZ_LOG_DEBUG("gsi_authz_cancel\n");
   return 0;
 }
 
 // The same
 globus_result_t gsi_authz_identify() {
-  syslog(LOG_DEBUG, "gsi_authz_identify\n");
+  AUTHZ_LOG_DEBUG("gsi_authz_identify\n");
   return 0;
 }
 
 globus_result_t gsi_map_user(va_list Ap) {
-  syslog(LOG_DEBUG, "gsi_map_user");
+  AUTHZ_LOG_DEBUG("gsi_map_user\n");
 
   char *service = NULL;
   char *desired_identity = NULL;

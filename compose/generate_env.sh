@@ -162,6 +162,8 @@ else
 fi
 
 
+# Make the logs folder if it doesn't exist
+mkdir -p "${PROJECT_ROOT}/compose/logs"
 
 # Do not put " around anything and do not add comments in the .env file
 cat << EOF > ".env"
@@ -197,7 +199,7 @@ while IFS='=' read -r key value; do
     # Check if the line contains the '=' sign
     if [ -n "$value" ]; then
         # Print the content before the '=' sign
-				echo "unset $key" >> "${unset_env_file_name}"
+        echo "unset $key" >> "${unset_env_file_name}"
     fi
 done < ".env"
 

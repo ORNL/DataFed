@@ -7,6 +7,8 @@ if [ -n "$UID" ]; then
     usermod -u "$UID" datafed
 fi
 
+chown -R datafed:root "${DATAFED_INSTALL_PATH}/web"
+chown -R datafed:root "${BUILD_DIR}"
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")

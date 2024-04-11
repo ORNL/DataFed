@@ -7,6 +7,7 @@ common/proto/common/Version.proto
 compose/.env
 compose/globus
 compose/keys
+compose/logs
 compose/unset_env.sh
 config/datafed.sh
 config/datafed-authz.cfg

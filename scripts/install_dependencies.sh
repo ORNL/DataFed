@@ -115,6 +115,8 @@ all_pip_packages=$(cat "$pip_file_path")
 IFS=' ' read -ra all_pip_packages_array <<< "$all_pip_packages"
 if [ ${#all_pip_packages_array[@]} -gt 0 ]; then
   echo "DEPENDENCIES (${all_pip_packages_array[@]})"
+  init_python
+  source "${DATAFED_PYTHON_ENV}/bin/activate"
   python3 -m pip install "${all_pip_packages_array[@]}"
 fi
 
