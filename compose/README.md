@@ -128,6 +128,19 @@ This step is only required once, after which the necessary files should exist
 in DataFed/Compose/globus. These files will contain the Globus configuration 
 needed for additional cycles of "docker compose up" and "docker compose down".
 
+NOTE: You will need to have globus-connect-server54 installed to do this step.
+On ubuntu this can be done with.
+
+```bash
+sudo apt-get install globus-connect-server54
+```
+
+You will also need the Globus python developer kit globus_sdk.
+
+```bash
+pip install globus_sdk
+```
+
 ### 4. Building Repo Services 
 
 The following command will build all the images to run the core metadata 

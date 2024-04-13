@@ -4,7 +4,8 @@ import os
 import sys
 
 
-def getProjectId(projects, project_name):
+def getProjectId(auth_client, project_name):
+    projects = auth_client.get_projects()
     for project in projects:
         if project["display_name"] == project_name:
             return project["id"]
@@ -12,8 +13,7 @@ def getProjectId(projects, project_name):
 
 
 def projectExists(auth_client, project_name):
-    projects = auth_client.get_projects()
-    project_id = getProjectId(projects, project_name)
+    project_id = getProjectId(auth_client, project_name)
 
     project_exists = True
     if project_id is None:
