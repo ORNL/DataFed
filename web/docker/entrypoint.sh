@@ -37,6 +37,13 @@ then
   su -c "mkdir -p ${log_path}" datafed
 fi
 
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]
+then
+  echo "datafed-core-key.pub not found"
+  exit 1
+fi
+cp "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" "${BUILD_DIR}/web/static"
+
 if [ "$#" -eq 0 ]; then
   echo "No arguments were passed, running bash"
   exec "bash"
