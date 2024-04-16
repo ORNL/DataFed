@@ -23,7 +23,8 @@
 7. [935] - Fixed CI branching with dynamic children, swiched to Harbor registry.
    Moved Blake's files into the correct folders.
 8. [924] - Fix log messaging format in web server
-
+9. [948] - Bug in getProjectId fixed, better handling of env variables in
+   python.
 # v2023.10.23.15.50
 
 ## MINOR Feature
