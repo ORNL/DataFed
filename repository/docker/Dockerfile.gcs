@@ -112,7 +112,7 @@ COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libsodium.a   
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed
 
 RUN apt update
-RUN apt-get install vim -y
+RUN apt-get install vim wget -y
 RUN apt-get reinstall globus-connect-server54 -y
 
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
