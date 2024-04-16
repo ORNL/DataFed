@@ -189,6 +189,18 @@ def createNewCredential(auth_client, client_id, cred_name, cred_file):
         "name": cred_result["credential"]["name"],
         "secret": cred_result["credential"]["secret"],
     }
+
+    # Check that the folder exists
+    folder_path = os.path.dirname(cred_file)
+    if not os.path.exists(folder_path):
+        try:
+            os.makedirs(folder_path)
+            print(f"Folder '{folder_path}' created successfully.")
+        except OSError as e:
+            print(f"Failed to create folder '{folder_path}': {e}")
+
+    print(f"Creating cred file {cred_file}")
+
     with open(cred_file, "w") as f:
         json.dump(obj, f)
 
