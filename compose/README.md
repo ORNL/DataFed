@@ -141,6 +141,8 @@ You will also need the Globus python developer kit globus_sdk.
 pip install globus_sdk
 ```
 
+In addition, you will also need admin rights on the Globus subscription group.
+
 ### 4. Building Repo Services 
 
 The following command will build all the images to run the core metadata 
