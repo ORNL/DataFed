@@ -4,7 +4,8 @@ import os
 import sys
 
 
-def getProjectId(projects, project_name):
+def getProjectId(auth_client, project_name):
+    projects = auth_client.get_projects()
     for project in projects:
         if project["display_name"] == project_name:
             return project["id"]
@@ -12,8 +13,7 @@ def getProjectId(projects, project_name):
 
 
 def projectExists(auth_client, project_name):
-    projects = auth_client.get_projects()
-    project_id = getProjectId(projects, project_name)
+    project_id = getProjectId(auth_client, project_name)
 
     project_exists = True
     if project_id is None:
@@ -189,6 +189,18 @@ def createNewCredential(auth_client, client_id, cred_name, cred_file):
         "name": cred_result["credential"]["name"],
         "secret": cred_result["credential"]["secret"],
     }
+
+    # Check that the folder exists
+    folder_path = os.path.dirname(cred_file)
+    if not os.path.exists(folder_path):
+        try:
+            os.makedirs(folder_path)
+            print(f"Folder '{folder_path}' created successfully.")
+        except OSError as e:
+            print(f"Failed to create folder '{folder_path}': {e}")
+
+    print(f"Creating cred file {cred_file}")
+
     with open(cred_file, "w") as f:
         json.dump(obj, f)
 

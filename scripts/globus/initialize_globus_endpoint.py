@@ -10,55 +10,54 @@ import sys
 CLIENT_ID = "f8d0afca-7ac4-4a3c-ac05-f94f5d9afce8"
 
 # The Globus project the GCS endpoint will be created in
-if os.getenv("DATAFED_GCS_ROOT_NAME") is not None:
-    DATAFED_GCS_ROOT_NAME = os.getenv("DATAFED_GCS_ROOT_NAME")
-else:
-    DATAFED_GCS_ROOT_NAME = "DataFed Repo"
+default_DATAFED_GCS_ROOT_NAME = "DataFed Repo"
+DATAFED_GCS_ROOT_NAME = os.getenv("DATAFED_GCS_ROOT_NAME", default_DATAFED_GCS_ROOT_NAME)
+if len(DATAFED_GCS_ROOT_NAME) == 0:
+    CRED_FILE_PATH = default_DATAFED_GCS_ROOT_NAME
 
-if os.getenv("DATAFED_GLOBUS_PROJECT_NAME") is not None:
-    PROJECT_NAME = os.getenv("DATAFED_GLOBUS_PROJECT_NAME")
-else:
-    PROJECT_NAME = DATAFED_GCS_ROOT_NAME + " Project"
+default_PROJECT_NAME = DATAFED_GCS_ROOT_NAME + " Project"
+PROJECT_NAME = os.getenv("DATAFED_GLOBUS_PROJECT_NAME", default_PROJECT_NAME)
+if len(PROJECT_NAME) == 0:
+    PROJECT_NAME = default_PROJECT_NAME
 
 # This is for confidential client
-if os.getenv("DATAFED_GLOBUS_CLIENT_NAME") is not None:
-    CLIENT_NAME = os.getenv("DATAFED_GLOBUS_CLIENT_NAME")
-else:
-    CLIENT_NAME = DATAFED_GCS_ROOT_NAME + " Setup Client"
+default_CLIENT_NAME = DATAFED_GCS_ROOT_NAME + " Setup Client"
+CLIENT_NAME = os.getenv("DATAFED_GLOBUS_CLIENT_NAME", default_CLIENT_NAME)
+if len(CLIENT_NAME) == 0:
+    CLIENT_NAME = default_CLIENT_NAME
 
 # Name of the client secret used by the confidential client
-if os.getenv("DATAFED_GLOBUS_CRED_NAME") is not None:
-    CRED_NAME = os.getenv("DATAFED_GLOBUS_CRED_NAME")
-else:
-    CRED_NAME = DATAFED_GCS_ROOT_NAME + " Cred"
+default_CRED_NAME = DATAFED_GCS_ROOT_NAME + " Cred"
+CRED_NAME = os.getenv("DATAFED_GLOBUS_CRED_NAME", default_CRED_NAME)
+if len(CRED_NAME) == 0:
+    CRED_NAME = default_CRED_NAME
 
 # Name of the file where we will store confidential client credentials
-if os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH") is not None:
-    CRED_FILE_PATH = os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH")
-else:
-    CRED_FILE_PATH = "./client_cred.json"
+default_CRED_FILE_PATH = os.path.abspath("./globus/client_cred.json")
+CRED_FILE_PATH = os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH", default_CRED_FILE_PATH)
+if len(CRED_FILE_PATH) == 0:
+    CRED_FILE_PATH = default_CRED_FILE_PATH
 
 # Name to give to endpoint
-if os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME") is not None:
-    ENDPOINT_NAME = os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME")
-else:
-    ENDPOINT_NAME = DATAFED_GCS_ROOT_NAME + " Endpoint"
+default_ENDPOINT_NAME = DATAFED_GCS_ROOT_NAME + " Endpoint"
+ENDPOINT_NAME = os.getenv("DATAFED_GLOBUS_ENDPOINT_NAME", default_ENDPOINT_NAME)
+if len(ENDPOINT_NAME) == 0:
+    ENDPOINT_NAME = default_ENDPOINT_NAME
 
 # Path to deployment key
-if os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH") is not None:
-    DEPLOYMENT_KEY_PATH = os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH")
-else:
-    DEPLOYMENT_KEY_PATH = "./deployment-key.json"
+default_DEPLOYMENT_KEY_PATH = os.path.abspath("./globus/deployment-key.json")
+DEPLOYMENT_KEY_PATH = os.getenv("DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH", default_DEPLOYMENT_KEY_PATH)
+if len(DEPLOYMENT_KEY_PATH) == 0:
+    DEPLOYMENT_KEY_PATH = default_DEPLOYMENT_KEY_PATH
 
 # Path to deployment key
-if os.getenv("DATAFED_GLOBUS_CONTROL_PORT") is not None:
-    DATAFED_GLOBUS_CONTROL_PORT = os.getenv("DATAFED_GLOBUS_CONTROL_PORT")
-else:
-    DATAFED_GLOBUS_CONTROL_PORT = "443"
+default_DATAFED_GLOBUS_CONTROL_PORT = "443"
+DATAFED_GLOBUS_CONTROL_PORT = os.getenv("DATAFED_GLOBUS_CONTROL_PORT", default_DATAFED_GLOBUS_CONTROL_PORT)
+if len(DATAFED_GLOBUS_CONTROL_PORT) == 0:
+    DATAFED_GLOBUS_CONTROL_PORT = default_DATAFED_GLOBUS_CONTROL_PORT
 
-if os.getenv("DATAFED_GLOBUS_SUBSCRIPTION") is not None:
-    DATAFED_GLOBUS_SUBSCRIPTION = os.getenv("DATAFED_GLOBUS_SUBSCRIPTION")
-else:
+DATAFED_GLOBUS_SUBSCRIPTION = os.getenv("DATAFED_GLOBUS_SUBSCRIPTION")
+if len(DATAFED_GLOBUS_SUBSCRIPTION) == 0:
     DATAFED_GLOBUS_SUBSCRIPTION = None
 
 client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
@@ -108,7 +107,7 @@ organization = userinfo["identity_provider_display_name"]
 if utils.projectExists(ac_rt, PROJECT_NAME) is False:
     project_id = utils.createProject(ac_rt, PROJECT_NAME, userinfo)
 else:
-    project_id = utils.getProjectId(ac_rt, PROJECT_NAME, userinfo)
+    project_id = utils.getProjectId(ac_rt, PROJECT_NAME)
 
 count = utils.countProjects(ac_rt, PROJECT_NAME)
 
