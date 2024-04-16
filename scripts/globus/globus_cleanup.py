@@ -97,8 +97,7 @@ project_exists = utils.projectExists(ac_rt, PROJECT_NAME)
 
 if project_exists:
 
-    projects = ac_rt.get_projects()
-    project_id = utils.getProjectId(projects, PROJECT_NAME)
+    project_id = utils.getProjectId(ac_rt, PROJECT_NAME)
     print(f"project id is {project_id}")
     clients_in_project = utils.getClientsInProject(ac_rt, project_id)
 
