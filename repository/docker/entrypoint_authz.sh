@@ -30,6 +30,12 @@ if [ -n "$UID" ]; then
     chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
 fi
 
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]
+then
+  echo "datafed-core-key.pub not found, downloading from the core server"
+  wget --no-check-certificate "https://${DATAFED_DOMAIN}/datafed-core-key.pub" -P "${DATAFED_INSTALL_PATH}/keys/"
+fi
+
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
 source "${PROJECT_ROOT}/config/datafed.sh"

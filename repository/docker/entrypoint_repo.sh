@@ -26,6 +26,12 @@ then
   su -c "mkdir -p ${log_path}" datafed
 fi
 
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]
+then
+  echo "datafed-core-key.pub not found, downloading from the core server"
+  wget --no-check-certificate "https://${DATAFED_DOMAIN}/datafed-core-key.pub" -P "${DATAFED_INSTALL_PATH}/keys/"
+fi
+
 datafed_repo_exec=$(basename "$1")
 if [ "${datafed_repo_exec}" = "datafed-repo" ]
 then
