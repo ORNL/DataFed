@@ -127,21 +127,34 @@ included in the variables.
 This step is only required once, after which the necessary files should exist
 in DataFed/Compose/globus. These files will contain the Globus configuration 
 needed for additional cycles of "docker compose up" and "docker compose down".
+The following three things need to be done before the generate_globus_files.sh
+should be run.
 
-NOTE: You will need to have globus-connect-server54 installed to do this step.
-On ubuntu this can be done with.
+1. You will need to have globus-connect-server54 installed to do this step.
+2. You will also need the Globus python developer kit globus_sdk.
+3. In addition, your user account will need admin rights on the Globus subscription group.
+
+#### Step 1 
+On Ubuntu this can be done with.
 
 ```bash
 sudo apt-get install globus-connect-server54
 ```
 
-You will also need the Globus python developer kit globus_sdk.
+#### Step 2 
 
 ```bash
 pip install globus_sdk
 ```
 
-In addition, you will also need admin rights on the Globus subscription group.
+Finally, we can generate the globus files by running the script.
+
+```bash
+./generate_globus_files.sh
+```
+
+You will be required to paste a url into a browser and provide a code back in
+the terminal.
 
 ### 4. Building Repo Services 
 
@@ -153,6 +166,17 @@ services.
 ```
 
 ### 5. Running the Repo Compose file
+
+WARNING: Before running compose file make sure that port 80 is open you can do
+this using the command
+
+```bash
+sudo netstat -tlupn | grep ':80'
+```
+
+It is very likely that when we installed globus-connect-server54 with apt it 
+started apache2 and started it running. You should disable it on the host
+before launching the compose instance.
 
 Stand up the repo services.
 
