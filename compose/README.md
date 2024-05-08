@@ -39,6 +39,30 @@ NOTE the .env file will be read verbatim by Compose including any spaces or
 "#" comments so do not includ anything but the exact text that needs to be
 included in the variables.
 
+For the redirect url. if you are running the core services on your laptop you
+can use:
+
+https://localhost/ui/authn
+
+When registering a Globus Application for DataFed the domain used in
+the redirect must be consistent with the .env file for the "DATAFED_DOMAIN"
+variable.
+
+E.g. 
+
+redirect: https://localhost/ui/authn
+DATAFED_DOMAIN: localhost
+
+If a public IP is assigned
+
+redirect: https://192.83.46.54/ui/authn
+DATAFED_DOMAIN: 192.83.46.54
+
+If a domain is assigned such as "awesome_datafed.com"
+
+redirect: https://awesome_datafed.com/ui/authn
+DATAFED_DOMAIN: awesome_datafed.com
+
 ### 3. Building Core Services 
 
 The following command will build all the images to run the core metadata 
@@ -95,6 +119,10 @@ install but contain state from previous runs.
 The following steps are used to stand up the repo Compose file. NOTE, that
 because of how Globus is configured, there is an additional configuration 
 and teardown step.
+
+You need to have installed, globus_sdk for python, as well as the
+globus-connect-server54 package. See instructions for installing that here.
+https://docs.globus.org/globus-connect-server/v5/
 
 1. Generating the env variables.
 2. Opening the .env file and entering your configuration
@@ -175,6 +203,16 @@ WARNING - Docker Compose will prioritize env variables in the following priority
 2. From the .env file
 3. Internally from winthin the image
 Be sure that you are not accidentally overwriting .env variables.
+
+NOTE If you get an error from the repo server along the lines of
+
+```
+ERROR /datafed/source/repository/server/main.cpp:main:154 { "thread_name":
+"repo_server", "message": "Exception: Could not open file:
+/opt/datafed/keys/datafed-core-key.pub" }
+```
+
+it is possible that the DATAFED_DOMAIN name field is incorrect your .env file.
 
 ### 6. Bringing down the Compose file 
 
