@@ -13,9 +13,9 @@ source "${SOURCE}/dependency_versions.sh"
 
 Help()
 {
-  echo "$(basename $0) Will install all datafed dependencies"
+  echo $(basename "$0")" Will install all datafed dependencies"
   echo
-  echo "Syntax: $(basename $0) [-h|a|w|c|r]"
+  echo "Syntax: "$(basename "$0")" [-h|a|w|c|r]"
   echo "options:"
   echo "-h, --help                         Print this help message"
   echo "-a, --disable-arango-deps-install  Don't install arango"
