@@ -93,19 +93,19 @@ sudo_command() {
 
 
 semantic_version_compatible() {
-  local VER1=$1
-  local VER2=$2
+  local VER1="$1"
+  local VER2="$2"
 
   # Remove any preceding v from version i.e. v1.1.2
-  VER1=$(echo $VER1 | sed 's/v//g' )
-  VER2=$(echo $VER2 | sed 's/v//g' )
+  VER1=$(echo "$VER1" | sed 's/v//g' )
+  VER2=$(echo "$VER2" | sed 's/v//g' )
 
-  maj_1=$(echo $VER1 | sed 's/\./ /g' | awk '{print $1}')
-  min_1=$(echo $VER1 | sed 's/\./ /g' | awk '{print $2}')
-  patch_1=$(echo $VER1 | sed 's/\./ /g' | awk '{print $3}')
-  maj_2=$(echo $VER2 | sed 's/\./ /g' | awk '{print $1}')
-  min_2=$(echo $VER2 | sed 's/\./ /g' | awk '{print $2}')
-  patch_2=$(echo $VER2 | sed 's/\./ /g' | awk '{print $3}')
+  maj_1=$(echo "$VER1" | sed 's/\./ /g' | awk '{print $1}')
+  min_1=$(echo "$VER1" | sed 's/\./ /g' | awk '{print $2}')
+  patch_1=$(echo "$VER1" | sed 's/\./ /g' | awk '{print $3}')
+  maj_2=$(echo "$VER2" | sed 's/\./ /g' | awk '{print $1}')
+  min_2=$(echo "$VER2" | sed 's/\./ /g' | awk '{print $2}')
+  patch_2=$(echo "$VER2" | sed 's/\./ /g' | awk '{print $3}')
 
   if [ "$maj_1" -gt "$maj_2" ]
   then
