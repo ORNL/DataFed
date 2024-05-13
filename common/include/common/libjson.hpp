@@ -389,17 +389,17 @@ public:
 
   Value() : m_type(VT_NULL), m_value({0}) {}
 
-  Value(bool a_value) : m_type(VT_BOOL) { m_value.b = a_value; }
+  explicit Value(bool a_value) : m_type(VT_BOOL) { m_value.b = a_value; }
 
-  Value(double a_value) : m_type(VT_NUMBER) { m_value.n = a_value; }
+  explicit Value(double a_value) : m_type(VT_NUMBER) { m_value.n = a_value; }
 
-  Value(int a_value) : m_type(VT_NUMBER) { m_value.n = a_value; }
+  explicit Value(int a_value) : m_type(VT_NUMBER) { m_value.n = a_value; }
 
-  Value(const std::string &a_value) : m_type(VT_STRING) {
+  explicit Value(const std::string &a_value) : m_type(VT_STRING) {
     m_value.s = new String(a_value);
   }
 
-  Value(const char *a_value) : m_type(VT_STRING) {
+  explicit Value(const char *a_value) : m_type(VT_STRING) {
     m_value.s = new String(a_value);
   }
 
@@ -410,7 +410,7 @@ public:
     a_source.m_value.o = 0;
   }
 
-  Value(ValueType a_type) : m_type(a_type) {
+  explicit Value(ValueType a_type) : m_type(a_type) {
     if (m_type == VT_OBJECT) {
       m_value.o = new Object();
     } else if (m_type == VT_ARRAY) {
@@ -837,7 +837,7 @@ private:
     switch (m_type) {
     case VT_OBJECT:
       a_buffer.append("{");
-      for (ObjectIter i = m_value.o->begin(); i != m_value.o->end(); i++) {
+      for (ObjectIter i = m_value.o->begin(); i != m_value.o->end(); ++i) {
         if (i != m_value.o->begin())
           a_buffer.append(",\"");
         else
@@ -851,7 +851,7 @@ private:
       break;
     case VT_ARRAY:
       a_buffer.append("[");
-      for (ArrayIter i = m_value.a->begin(); i != m_value.a->end(); i++) {
+      for (ArrayIter i = m_value.a->begin(); i != m_value.a->end(); ++i) {
         if (i != m_value.a->begin())
           a_buffer.append(",");
         i->toStringRecurse(a_buffer);
@@ -883,7 +883,7 @@ private:
 
     a_buffer.append("\"");
 
-    for (c = a_value.begin(); c != a_value.end(); c++) {
+    for (c = a_value.begin(); c != a_value.end(); ++c) {
       if (*c < 0x20) {
         a_buffer.append(a, c);
         a = c + 1;

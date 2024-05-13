@@ -7,10 +7,14 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
+source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("libtool" "build-essential" "g++" "gcc" "libboost-all-dev" "autoconf" "automake" "make" "git" "python3-pkg-resources" "python3-pip" "pkg-config" "libglobus-common-dev" "wget" "libssl-dev" "libzmq3-dev")
-externals=("cmake" "protobuf" "libsodium" "libzmq")
+packages=("libtool" "build-essential" "g++" "gcc" "autoconf"
+  "automake" "make" "git" "python3-pkg-resources" "python3-pip" "pkg-config"
+  "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev" "python3-venv")
+pip_packages=("setuptools" "distro" "jwt" "globus_sdk")
+externals=("cmake" "protobuf" "libsodium" "libzmq" )
 
 local_UNIFY=false
 
@@ -24,6 +28,7 @@ if [ $# -eq 1 ]; then
       # If 'unify' is provided, print the packages
       # The extra space is necessary to not conflict with the other install scripts
       echo -n "${packages[@]} " >> "$apt_file_path"
+      echo -n "${pip_packages[@]} " >> "$pip_file_path"
       echo -n "${externals[@]} " >> "$ext_file_path"
       local_UNIFY=true
       ;;
@@ -33,17 +38,18 @@ if [ $# -eq 1 ]; then
   esac
 fi
 
-sudo apt-get update
-sudo dpkg --configure -a
-sudo apt-get install -y "${packages[@]}"
-
-cd ~
-install_cmake
-
-python3 -m pip install --upgrade pip
-python3 -m pip install setuptools
 
 if [[ $local_UNIFY = false ]]; then
+  sudo_command
+
+  "$SUDO_CMD" apt-get update
+  "$SUDO_CMD" dpkg --configure -a
+  "$SUDO_CMD" apt-get install -y "${packages[@]}"
+  init_python
+  source "${DATAFED_PYTHON_ENV}/bin/activate"
+  python3 -m pip install --upgrade pip
+  python3 -m pip install "${pip_packages[@]}"
+
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
   done

@@ -5,13 +5,14 @@ set -e
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
+source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${SOURCE}/dependency_versions.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("curl" "python3" "g++" "make" "wget")
-externals=("cmake")
+externals=("cmake" "nvm" "node" "ws_node_packages")
 
 Help()
 {
@@ -62,23 +63,14 @@ while [ : ]; do
   esac
 done
 
+sudo_command
+
 if [[ $local_UNIFY = false ]]; then
-  sudo apt-get update
-  sudo dpkg --configure -a
-  sudo apt-get install -y "${packages[@]}"
+  "$SUDO_CMD" apt-get update
+  "$SUDO_CMD" dpkg --configure -a
+  "$SUDO_CMD" apt-get install -y "${packages[@]}"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
   done
 fi
-
-# The foxx services need node version 12 or greater so we aren't going to use the package manager
-# but instead will install ourselves
-
-# 1. Install nvm which will allow us to update node
-install_nvm
-install_node
-
-export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
-export NODE_VERSION="$DATAFED_NODE_VERSION"
-"$NVM_DIR/nvm-exec" npm --prefix "${PROJECT_ROOT}/web" install "${PROJECT_ROOT}/web"

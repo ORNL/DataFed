@@ -20,6 +20,7 @@ fi
 
 # This is a build config variable
 local_DATAFED_DEPENDENCIES_INSTALL_PATH=""
+
 if [ -z "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]
 then
   local_DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
@@ -91,7 +92,7 @@ fi
 local_DATAFED_SERVER_PORT=""
 if [ -z "${DATAFED_SERVER_PORT}" ]
 then
-  local_DATAFED_SERVER_PORT=""
+  local_DATAFED_SERVER_PORT="7512"
 else
   local_DATAFED_SERVER_PORT=$(printenv DATAFED_SERVER_PORT)
 fi
@@ -158,6 +159,36 @@ else
   local_DATAFED_GOOGLE_ANALYTICS_TAG=$(printenv DATAFED_GOOGLE_ANALYTICS_TAG)
 fi
 
+if [ -z "${DATAFED_GLOBUS_REPO_USER}" ]
+then
+  local_DATAFED_GLOBUS_REPO_USER=""
+else
+  local_DATAFED_GLOBUS_REPO_USER=$(printenv DATAFED_GLOBUS_REPO_USER)
+fi
+
+if [ -z "${DATAFED_CORE_USER}" ]
+then
+  local_DATAFED_CORE_USER=""
+else
+  local_DATAFED_CORE_USER=$(printenv DATAFED_CORE_USER)
+fi
+
+
+if [ -z "${DATAFED_GLOBUS_CONTROL_PORT}" ]
+then
+  local_DATAFED_GLOBUS_CONTROL_PORT="443"
+else
+  local_DATAFED_GLOBUS_CONTROL_PORT=$(printenv DATAFED_GLOBUS_CONTROL_PORT)
+fi
+
+if [ -z "${DATAFED_GLOBUS_ALLOWED_DOMAINS}" ]
+then
+  local_DATAFED_GLOBUS_ALLOWED_DOMAINS="globusid.org"
+else
+  local_DATAFED_GLOBUS_ALLOWED_DOMAINS=$(printenv DATAFED_GLOBUS_ALLOWED_DOMAINS)
+fi
+
+
 if [ ! -d "$PATH_TO_CONFIG_DIR" ]
 then
   mkdir -p "$PATH_TO_CONFIG_DIR"
@@ -184,6 +215,8 @@ export DATAFED_INSTALL_PATH="$local_DATAFED_INSTALL_PATH"
 # by default it will install to:
 # /opt/datafed/dependencies
 export DATAFED_DEPENDENCIES_INSTALL_PATH="$local_DATAFED_DEPENDENCIES_INSTALL_PATH"
+export DATAFED_PYTHON_DEPENDENCIES_DIR="${local_DATAFED_DEPENDENCIES_INSTALL_PATH}/python"
+export DATAFED_PYTHON_ENV="${local_DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed"
 # ************************************************
 # Env Variables for Core & Web Server
 # ************************************************
@@ -201,7 +234,7 @@ export DATAFED_SERVER_PORT="$local_DATAFED_SERVER_PORT"
 # ************************************************
 # DataFed Repository POSIX user account that DataFed users will be mapped too
 # from Globus, so the posix account all globus users will map too
-export DATAFED_GLOBUS_REPO_USER=""
+export DATAFED_GLOBUS_REPO_USER="$local_DATAFED_GLOBUS_REPO_USER"
 
 # ******************************************************************
 # Env Variables for Authz, Web, Repo Server & administrative scripts
@@ -214,7 +247,7 @@ export DATAFED_DOMAIN="$local_DATAFED_DOMAIN"
 # ************************************************
 export DATAFED_DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
 # The user account the datafed core application will run under
-export DATAFED_CORE_USER=""
+export DATAFED_CORE_USER="$local_DATAFED_CORE_USER"
 
 # ************************************************
 # Env Variables for Web Server
@@ -272,18 +305,18 @@ export DATAFED_GCS_ROOT_NAME="$local_DATAFED_GCS_ROOT_NAME"
 #
 # The path will be created if it does not exist
 # 
-# \$GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR"
+# \$DATAFED_GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR"
 #
 # So if these variables are defined as:
 # DATAFED_GCS_ROOT_NAME="datafed-home"
-# GCS_COLLECTION_ROOT_PATH="/home/cades/collections/mapped/"
+# DATAFED_GCS_COLLECTION_ROOT_PATH="/home/cades/collections/mapped/"
 # 
 # A folder named 
 #
 # "/home/cades/collections/mapped/datafed-home"
 #
 # Will be created
-export GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH"
+export DATAFED_GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH"
 # The DataFed repo id, this also must be the name
 # of the directory that will be placed in Globus 
 # collection, avoid using spaces in the name.
@@ -291,6 +324,10 @@ export GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH"
 export DATAFED_REPO_ID_AND_DIR="$local_DATAFED_REPO_ID_AND_DIR"
 # Institutionally allowed domains, users that have accounts in these domains
 # will have the ability to store data on the repository.
-# i.e. ornl.gov, or cu.edu
-export DATAFED_GLOBUS_ALLOWED_DOMAINS=""
+# i.e. ornl.gov or cu.edu or gmail.com by default clients.auth.globus.org
+# must be allowed to allow automatic setup.
+export DATAFED_GLOBUS_ALLOWED_DOMAINS="$local_DATAFED_GLOBUS_ALLOWED_DOMAINS"
+# Globus control port default is 443, might want to change if hosting
+# a web server on the same machine.
+export DATAFED_GLOBUS_CONTROL_PORT="$local_DATAFED_GLOBUS_CONTROL_PORT"
 EOF

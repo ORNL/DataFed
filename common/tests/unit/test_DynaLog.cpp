@@ -16,6 +16,15 @@ using namespace SDMS;
 
 BOOST_AUTO_TEST_SUITE(LogTest)
 
+BOOST_AUTO_TEST_CASE(testing_Enum) {
+  BOOST_CHECK(static_cast<unsigned int>(SDMS::LogLevel::TRACE) == 5);
+  BOOST_CHECK(static_cast<unsigned int>(SDMS::LogLevel::DEBUG) == 4);
+  BOOST_CHECK(static_cast<unsigned int>(SDMS::LogLevel::INFO) == 3);
+  BOOST_CHECK(static_cast<unsigned int>(SDMS::LogLevel::WARNING) == 2);
+  BOOST_CHECK(static_cast<unsigned int>(SDMS::LogLevel::ERROR) == 1);
+  BOOST_CHECK(static_cast<unsigned int>(SDMS::LogLevel::CRITICAL) == 0);
+}
+
 BOOST_AUTO_TEST_CASE(testing_LogOutput) {
 
   std::string file_name = "./log_output_test1.txt";

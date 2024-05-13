@@ -101,9 +101,9 @@ void Server::run() {
 }
 
 void Server::checkServerVersion() {
-  DL_INFO(m_log_context, "Checking core server connection and version");
+  DL_INFO(m_log_context, "Checking core server connection and version at "
+                             << m_config.core_server);
 
-  auto msg = std::make_unique<VersionRequest>(); //      msg;
   // Generate random security keys for anon version request to core server
   KeyGenerator generator;
   auto local_keys =
@@ -147,7 +147,21 @@ void Server::checkServerVersion() {
 
   MessageFactory msg_factory;
 
-  for (int i = 0; i < 10; i++) {
+  size_t attempt = 0;
+
+  /**
+   * Here the repo server will continually try to make a connection with the
+   * core services. This was changed from making a fixed number of attempts.
+   * The reasoning was that doing so would make the repo service dependent
+   * on the core actually running. By continually looping the coupling between
+   * the core services and the repo service is reduced.
+   **/
+  while (true) {
+    ++attempt;
+    DL_INFO(m_log_context,
+            "Attempt " << attempt << " to initialize communication "
+                       << " with core server at " << m_config.core_server);
+    auto msg = std::make_unique<VersionRequest>();
     auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
     message->setPayload(std::move(msg));
     message->set(MessageAttribute::KEY,
@@ -159,14 +173,19 @@ void Server::checkServerVersion() {
     client->send(*message);
 
     auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
-    msg_log_context.correlation_id = std::get<std::string>(
-        response.message->get(MessageAttribute::CORRELATION_ID));
 
     if (response.time_out) {
       DL_ERROR(msg_log_context,
                "Timeout waiting for response from core server: "
                    << m_config.core_server);
+    } else if (response.error) {
+      DL_ERROR(msg_log_context, "Error encountered waiting for core server: "
+                                    << m_config.core_server << " msg "
+                                    << response.error_msg);
     } else {
+
+      msg_log_context.correlation_id = std::get<std::string>(
+          response.message->get(MessageAttribute::CORRELATION_ID));
       auto payload =
           std::get<google::protobuf::Message *>(response.message->getPayload());
       VersionReply *ver_reply = dynamic_cast<VersionReply *>(payload);

@@ -1,0 +1,54 @@
+
+# WARNING
+#
+# Any env variable that must be provided and overwrite what is in the container
+# Must be explicitly listed in the environment section of the specific service
+# --env file variables will not be default exist in the container.
+services:
+
+  datafed-repo:
+    environment:
+      DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
+      DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
+      DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+      DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
+      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+      DATAFED_CORE_ADDRESS_PORT_INTERNAL: "${DATAFED_DOMAIN}:7513"
+      DATAFED_GCS_COLLECTION_ROOT_PATH: "/mnt/datafed"
+      UID: "${DATAFED_UID}"
+      HOST_HOSTNAME: "localhost"
+    image: datafed-repo:latest
+    volumes:
+      - ./keys:/opt/datafed/keys
+      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
+      - ${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed
+    ports:
+      - 9000:9000 # Communication core server
+
+# Needs host port 80 for apache
+# Needs ports 50000 - 51000 for GridFTP
+# Needs port 443 for control port
+  datafed-gcs:
+    environment:
+      DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
+      DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
+      DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+      DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
+      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+      DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
+      DATAFED_GCS_ROOT_NAME: "${DATAFED_GCS_ROOT_NAME}"
+      DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
+      DATAFED_GLOBUS_SUBSCRIPTION: "${DATAFED_GLOBUS_SUBSCRIPTION}"
+      DATAFED_GLOBUS_CONTROL_PORT: "${DATAFED_GLOBUS_CONTROL_PORT}"
+      DATAFED_GCS_COLLECTION_ROOT_PATH: "/mnt/datafed"
+      DATAFED_REPO_USER: "${DATAFED_REPO_USER}"
+      UID: "${DATAFED_UID}"
+      HOST_HOSTNAME: "localhost"
+      DATAFED_AUTHZ_USER: "datafed"
+    network_mode: host
+    image: datafed-gcs:latest
+    volumes:
+      - ./keys:/opt/datafed/keys
+      - ./globus:/opt/datafed/globus
+      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
+      - ${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed
