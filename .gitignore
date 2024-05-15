@@ -4,11 +4,12 @@ cmake/sodium_version
 cmake/curl_version
 cmake/zlib_version
 common/proto/common/Version.proto
-compose/.env
-compose/globus
-compose/keys
-compose/logs
-compose/unset_env.sh
+compose/**/.env
+compose/**/.env*
+compose/**/globus
+compose/**/keys
+compose/**/logs
+compose/**/unset_env.sh
 config/datafed.sh
 config/datafed-authz.cfg
 config/datafed-core.cfg

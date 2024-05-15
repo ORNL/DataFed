@@ -92,7 +92,9 @@ services:
 
 
 
+  # Needs the datafed-core to be up so it doesn't fail when trying to connect
   datafed-repo:
+    depends_on: ["datafed-core"]
     environment:
       DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
       DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
@@ -114,7 +116,9 @@ services:
 # Needs host port 80 for apache
 # Needs ports 50000 - 51000 for GridFTP
 # Needs port 443 for control port
+# Needs the datafed-web server to be up so that it can download the public key
   datafed-gcs:
+    depends_on: ["datafed-web"]
     environment:
       DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
       DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
@@ -131,6 +135,7 @@ services:
       UID: "${DATAFED_UID}"
       HOST_HOSTNAME: "localhost"
       DATAFED_AUTHZ_USER: "datafed"
+      DATAFED_GCS_IP: "${DATAFED_GCS_IP}"
     network_mode: host
     image: datafed-gcs:latest
     volumes:

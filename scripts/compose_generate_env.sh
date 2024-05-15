@@ -3,13 +3,64 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
-if [ -f ".env" ]
+Help()
+{
+  echo "$(basename $0) Build .env file for compose."
+  echo
+  echo "Syntax: $(basename $0) [-h|d|r|m]"
+  echo "options:"
+  echo "-h, --help                        Print this help message"
+  echo "-d, --directory                   Directory where .env will be created."
+  echo "-r, --repo-images                 Create .env for just repo services."
+  echo "-m, --metadata-images             Create .env for just metadata services"
+}
+
+VALID_ARGS=$(getopt -o hd:mr --long 'help',directory:,repo-images,metadata-images -- "$@")
+
+BUILD_REPO="TRUE"
+BUILD_METADATA="TRUE"
+COMPOSE_ENV_DIR=""
+eval set -- "$VALID_ARGS"
+while [ : ]; do
+  case "$1" in
+    -h | --help)
+        Help
+        exit 0
+        ;;
+    -d | --directory)
+        COMPOSE_ENV_DIR="$2"
+        shift 2
+        ;;
+    -r | --repo-images)
+        BUILD_METADATA="FALSE"
+        shift 1
+        ;;
+    -m | --metadata-images)
+        BUILD_REPO="FALSE"
+        shift 1
+        ;;
+    --) shift; 
+        break 
+        ;;
+    \?) # incorrect option
+        echo "Error: Invalid option"
+        exit;;
+  esac
+done
+
+if [ ! -d "${COMPOSE_ENV_DIR}" ]
 then
-  echo ".env already exist! Will not overwrite!"
+  echo "Invalid folder for .env file specified ${COMPOSE_ENV_DIR}"
   exit 1
 fi
 
-local_DATAFED_WEB_KEY_DIR="${PROJECT_ROOT}/compose/keys"
+if [ -f "${COMPOSE_ENV_DIR}/.env" ]
+then
+  echo "${COMPOSE_ENV_DIR}/.env already exist! Will not overwrite!"
+  exit 1
+fi
+
+local_DATAFED_WEB_KEY_DIR="${COMPOSE_ENV_DIR}/keys"
 if [ ! -d "$local_DATAFED_WEB_KEY_DIR" ]
 then
   mkdir -p "$local_DATAFED_WEB_KEY_DIR"
@@ -79,7 +130,7 @@ else
 fi
 if [ -z "${DATAFED_GLOBUS_KEY_DIR}" ]
 then
-  local_DATAFED_GLOBUS_KEY_DIR="${PROJECT_ROOT}/compose/globus"
+  local_DATAFED_GLOBUS_KEY_DIR="${COMPOSE_ENV_DIR}/globus"
 else
   local_DATAFED_GLOBUS_KEY_DIR=$(printenv DATAFED_GLOBUS_KEY_DIR)
 fi
@@ -128,6 +179,13 @@ else
   local_DATAFED_COMPOSE_DATABASE_PORT=$(printenv DATAFED_COMPOSE_DATABASE_PORT)
 fi
 
+if [ -z "${DATAFED_COMPOSE_GCS_IP}" ]
+then
+  local_DATAFED_COMPOSE_GCS_IP=""
+else
+  local_DATAFED_COMPOSE_GCS_IP=$(printenv DATAFED_COMPOSE_GCS_IP)
+fi
+
 if [ -z "${DATAFED_COMPOSE_HOST_COLLECTION_MOUNT}" ]
 then
   local_DATAFED_HOST_COLLECTION_MOUNT="$HOME/compose_collection"
@@ -169,36 +227,58 @@ fi
 
 
 # Make the logs folder if it doesn't exist
-mkdir -p "${PROJECT_ROOT}/compose/logs"
+mkdir -p "${COMPOSE_ENV_DIR}/logs"
 
+if [ -f "${COMPOSE_ENV_DIR}/.env" ]
+then
+  rm "${COMPOSE_ENV_DIR}/.env"
+fi
+
+touch "${COMPOSE_ENV_DIR}/.env"
 # Do not put " around anything and do not add comments in the .env file
-cat << EOF > ".env"
-DATAFED_REPO_USER=datafed
-DATAFED_USER89_PASSWORD=${local_DATAFED_COMPOSE_USER89_PASSWORD}
-DATAFED_REPO_FORM_PATH=${local_DATAFED_COMPOSE_REPO_FORM_PATH}
+
+if [ "${BUILD_METADATA}" == "TRUE" ] || [ "${BUILD_REPO}" == "TRUE" ]
+then
+
+cat << EOF >> "${COMPOSE_ENV_DIR}/.env"
+DATAFED_HTTPS_SERVER_PORT=${local_DATAFED_COMPOSE_HTTPS_SERVER_PORT}
+DATAFED_DOMAIN=${local_DATAFED_COMPOSE_DOMAIN}
+DATAFED_UID=$(id -u)
+DATAFED_CONTAINER_LOG_PATH=${local_DATAFED_COMPOSE_CONTAINER_LOG_PATH}
+EOF
+fi
+
+if [ "${BUILD_METADATA}" == "TRUE" ]
+then
+cat << EOF >> "${COMPOSE_ENV_DIR}/.env"
 DATAFED_GLOBUS_APP_SECRET=${local_DATAFED_COMPOSE_GLOBUS_APP_SECRET}
 DATAFED_GLOBUS_APP_ID=${local_DATAFED_COMPOSE_GLOBUS_APP_ID}
 DATAFED_ZEROMQ_SESSION_SECRET=${local_DATAFED_COMPOSE_ZEROMQ_SESSION_SECRET}
 DATAFED_ZEROMQ_SYSTEM_SECRET=${local_DATAFED_COMPOSE_ZEROMQ_SYSTEM_SECRET}
-DATAFED_DOMAIN=${local_DATAFED_COMPOSE_DOMAIN}
-DATAFED_HTTPS_SERVER_PORT=${local_DATAFED_COMPOSE_HTTPS_SERVER_PORT}
 DATAFED_WEB_CERT_PATH=/opt/datafed/keys/${local_DATAFED_WEB_CERT_NAME}
 DATAFED_WEB_KEY_PATH=/opt/datafed/keys/${local_DATAFED_WEB_KEY_NAME}
-DATAFED_CONTAINER_LOG_PATH=${local_DATAFED_COMPOSE_CONTAINER_LOG_PATH}
 DATAFED_DATABASE_PASSWORD=${local_DATAFED_COMPOSE_DATABASE_PASSWORD}
 DATAFED_DATABASE_IP_ADDRESS=${local_DATAFED_COMPOSE_DATABASE_IP_ADDRESS}
 DATAFED_DATABASE_PORT=${local_DATAFED_COMPOSE_DATABASE_PORT}
+EOF
+fi
+
+if [ "${BUILD_REPO}" == "TRUE" ]
+then
+cat << EOF >> "${COMPOSE_ENV_DIR}/.env"
+DATAFED_REPO_USER=datafed
 DATAFED_GCS_ROOT_NAME=DataFed_Compose
+DATAFED_GCS_IP=${local_DATAFED_COMPOSE_GCS_IP}
 DATAFED_REPO_ID_AND_DIR=compose-home
-DATAFED_UID=$(id -u)
 DATAFED_HOST_COLLECTION_MOUNT=${local_DATAFED_HOST_COLLECTION_MOUNT}
 DATAFED_HOST_DEPLOYMENT_KEY_PATH=${local_DATAFED_COMPOSE_HOST_DEPLOYMENT_KEY_PATH}
 DATAFED_HOST_CRED_FILE_PATH=${local_DATAFED_HOST_CRED_FILE_PATH}
 DATAFED_GLOBUS_CONTROL_PORT=${local_DATAFED_GLOBUS_CONTROL_PORT}
 DATAFED_GLOBUS_SUBSCRIPTION=${local_DATAFED_GLOBUS_SUBSCRIPTION}
 EOF
+fi
 
-unset_env_file_name="unset_env.sh"
+unset_env_file_name="${COMPOSE_ENV_DIR}/unset_env.sh"
 echo "#!/bin/bash" > "${unset_env_file_name}"
 echo "# Was auto generated by $SCRIPT" >> "${unset_env_file_name}"
 while IFS='=' read -r key value; do
@@ -207,6 +287,6 @@ while IFS='=' read -r key value; do
         # Print the content before the '=' sign
         echo "unset $key" >> "${unset_env_file_name}"
     fi
-done < ".env"
+done < "${COMPOSE_ENV_DIR}/.env"
 
 chmod +x "$unset_env_file_name"

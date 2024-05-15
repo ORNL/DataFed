@@ -35,6 +35,8 @@ ENV          DATAFED_GLOBUS_REPO_USER="datafed"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 # Value needed so tput command doesn't crash
 ENV                              TERM="xterm"
+ENV                    DATAFED_GCS_IP=""
+
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/logs
 RUN mkdir -p ${BUILD_DIR}/common/proto
