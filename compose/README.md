@@ -296,4 +296,13 @@ include, ports
 Make sure port 80 is not already bound on the host. Also note that the repo
 server keys should exist in the keys folder before running the gcs instance.
 
+##### Repo server unable to connect to core server
 
+```
+datafed-repo-1  | 2024-05-15T11:41:23.406937Z ERROR /datafed/source/repository/server/RepoServer.cpp:checkServerVersion:178 {  "thread_name": "repo_server", "correlation_id":  "3fceb838-70f9-454d-94c4-4e2660dcc029", "message": "Timeout waiting for response from core server: tcp://localhost:7512" }
+  datafed-repo-1  | 2024-05-15T11:41:23.406992Z INFO /datafed/source/repository/server/RepoServer.cpp:checkServerVersion:161 { "thread_name": "repo_server", "message": "Attempt 4 to initialize communication  with core server at tcp://localhost:7512" }
+```
+
+Make sure that the domain is correct, it may be the case that if you are using
+localhost it is unable to resolve core service, traffic gets routed by apache
+to the registered domain name.

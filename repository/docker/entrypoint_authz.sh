@@ -76,7 +76,7 @@ if [ -L "$link" ]; then
   rm "$link"
 fi
 
-export NODE_SETUP_ARGS="--ip-address 128.219.184.185"
+export NODE_SETUP_ARGS="--ip-address ${DATAFED_GCS_IP}"
 # Run the GCS entrypoint file in the background
 /entrypoint.sh &
 
