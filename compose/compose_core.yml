@@ -1,10 +1,19 @@
 version: '3.9'
 
-
 services:
+  nginx:
+    depends_on: ["datafed_web"]
+    image: nginx:latest
+    ports:
+      - 443:443
+    volumes:
+      - ./keys:/keys
+      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
+    networks:
+      - datafed-internal
 
-  datafed-web:
-    depends_on: ["datafed-core"]
+  datafed_web:
+    depends_on: ["datafed_core"]
     environment:
       DATAFED_GLOBUS_APP_SECRET: "${DATAFED_GLOBUS_APP_SECRET}"
       DATAFED_GLOBUS_APP_ID: "${DATAFED_GLOBUS_APP_ID}"
@@ -19,18 +28,20 @@ services:
       DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
       UID: "${DATAFED_UID}"
     image: datafed-web:latest
-    ports:
-      - 443:443 # This must be the same port that is mapped to the host for redirects to work
+    # ports:
+    #   - 8081:443
+    # ports:
+    #  - 443:443 # This must be the same port that is mapped to the host for redirects to work
     volumes:
       - ./keys:/opt/datafed/keys
       - ./logs:${DATAFED_CONTAINER_LOG_PATH}
     networks:
       - datafed-internal
 
-  datafed-core:
+  datafed_core:
     image: datafed-core:latest
     depends_on:
-      datafed-foxx:
+      datafed_foxx:
         condition: service_healthy
     environment:
       DATAFED_GLOBUS_APP_SECRET: "${DATAFED_GLOBUS_APP_SECRET}"
@@ -54,7 +65,7 @@ services:
     networks:
       - datafed-internal
 
-  datafed-foxx:
+  datafed_foxx:
     image: datafed-foxx:latest
     depends_on: ["arango"]
     environment:
