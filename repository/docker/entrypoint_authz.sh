@@ -103,14 +103,11 @@ done
 echo "globus-gridftp-server pid file found!"
 
 # Need to wait until the domain name is properly registered
-echo "1"
 DATAFED_GCS_URL=$(jq -r .domain_name < /var/lib/globus-connect-server/info.json)
-echo "2"
 set +e
 HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
 echo "$?"
 set -e
-echo "3"
 echo "Waiting for domain name (https://${DATAFED_GCS_URL}) to be registered! Code: $HTTP_CODE"
 printf "\n"
 minutes=0
@@ -120,17 +117,14 @@ do
   EraseToEOL=$(tput el)
 
   msg="Minutes $minutes "
-  echo "$msg"
   for i in {1..12}
   do
-      echo "i $i"
       printf "%s" "${msg}"
       msg='.'
       sleep 5
   
       set +e
       HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null  -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
-      echo "$?"
       set -e
       if [ "$HTTP_CODE" == "200" ]
       then
@@ -142,7 +136,6 @@ do
   minutes=$((minutes + 1))
   set +e
   HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
-  echo "$?"
   set -e
 done
 printf "\n"
