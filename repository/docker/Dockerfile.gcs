@@ -152,4 +152,3 @@ WORKDIR ${DATAFED_INSTALL_PATH}/authz
 # NOTE If you do not overwrite the entrypoint file it will use the GCS instance
 # provided one
 ENTRYPOINT ["/datafed/source/repository/docker/entrypoint_authz.sh"]
-#ENTRYPOINT ["sleep", "infinity"]
