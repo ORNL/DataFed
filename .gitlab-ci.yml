@@ -6,7 +6,7 @@ stages:
   - build-base
   - provision-client
   - build
-    #  - end-to-end-setup-arango
+  - end-to-end-setup-arango
     #  - end-to-end-setup
 
 variables:
