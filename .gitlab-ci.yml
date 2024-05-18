@@ -310,6 +310,33 @@ build-python-client-base:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
+
+# Build foxx
+build-foxx:
+  needs: ["build-dependencies", "build-runtime"]
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/foxx"
+    GIT_STRATEGY: clone
+  tags:
+    - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
+        - .gitlab-ci.yml
+      when: on_success
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f docker/Dockerfile.foxx -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+
+
 ################################################################################
 # STAGE: End to end setup arango
 ################################################################################
@@ -324,6 +351,47 @@ end-to-end-arango-setup:
     - arangod --version
     - ./scripts/run_arango_service.sh
 
+end-to-end-foxx-setup:
+  variables:
+    IMAGE_TAG: "datafed/foxx-"
+    GIT_STRATEGY: clone
+    HOST_LOG_FILE_PATH: "/shared/logs"
+    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
+    DATAFED_DATABASE_HOST: "$CI_DATAFED_DATABASE_HOST"
+    RUN_FILE: "run_foxx.sh"
+  stage: end-to-end-setup-arango
+  needs: ["end-to-end-arango-setup"]
+  tags:
+    - docker
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - mkdir -p "$HOST_LOG_FILE_PATH"
+    - chmod o+w "${HOST_LOG_FILE_PATH}"
+    - USER_ID=$(id -u)
+    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - env > env_file
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+    - echo "#!/bin/bash" > "${RUN_FILE}"
+    - echo "docker run -d \\" >> "${RUN_FILE}"
+    - echo "--name \"foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> "${RUN_FILE}"
+    - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> "${RUN_FILE}"
+    - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> "${RUN_FILE}"
+    - echo "-e DATAFED_DATABASE_PASSWORD=\"$CI_DATAFED_DATABASE_PASSWORD\" \\" >> "${RUN_FILE}"
+    - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> "${RUN_FILE}"
+    - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> "${RUN_FILE}"
+    - echo "-e UID=\"$USER_ID\" \\" >> "${RUN_FILE}"
+    - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> "${RUN_FILE}"
+    - echo "-v \"foxx_tmp:/tmp\" \\" >> "${RUN_FILE}"
+    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> "${RUN_FILE}"
+    - chmod +x "${RUN_FILE}"
+    - "./${RUN_FILE}"
+    - sleep 10
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+
 ################################################################################
 # STAGE: End to end setup
 ################################################################################
@@ -336,7 +404,7 @@ end-to-end-core-setup:
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     DATAFED_DATABASE_HOST: "$CI_DATAFED_DATABASE_HOST"
   stage: end-to-end-setup
-  needs: ["end-to-end-arango-setup"]
+  needs: ["end-to-end-arango-setup", "end-to-end-foxx-setup"]
   tags:
     - ci-datafed-core
     - docker
