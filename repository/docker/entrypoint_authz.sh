@@ -76,6 +76,7 @@ if [ -L "$link" ]; then
   rm "$link"
 fi
 
+export NODE_SETUP_ARGS="--ip-address ${DATAFED_GCS_IP}"
 # Run the GCS entrypoint file in the background
 /entrypoint.sh &
 
@@ -103,33 +104,39 @@ echo "globus-gridftp-server pid file found!"
 
 # Need to wait until the domain name is properly registered
 DATAFED_GCS_URL=$(jq -r .domain_name < /var/lib/globus-connect-server/info.json)
-
+set +e
 HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
+echo "$?"
+set -e
 echo "Waiting for domain name (https://${DATAFED_GCS_URL}) to be registered! Code: $HTTP_CODE"
 printf "\n"
 minutes=0
 while [ "$HTTP_CODE" != "200" ]
 do
 
-	EraseToEOL=$(tput el)
+  EraseToEOL=$(tput el)
 
-	msg="Minutes $minutes "
-	for i in {1..12}
-	do
-			printf "%s" "${msg}"
-			msg='.'
-			sleep 5
-	
-			HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null  -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
-			if [ "$HTTP_CODE" == "200" ]
-			then
-				break
-			fi	
-	done
-	printf "\r${EraseToEOL}"
+  msg="Minutes $minutes "
+  for i in {1..12}
+  do
+      printf "%s" "${msg}"
+      msg='.'
+      sleep 5
+  
+      set +e
+      HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null  -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
+      set -e
+      if [ "$HTTP_CODE" == "200" ]
+      then
+        break
+      fi  
+  done
+  printf "\r${EraseToEOL}"
 
-	minutes=$((minutes + 1))
+  minutes=$((minutes + 1))
+  set +e
   HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
+  set -e
 done
 printf "\n"
 

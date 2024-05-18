@@ -1,16 +1,23 @@
 # Compose Dev environment
 
-The Compose Dev environment is split into two different Compose files. The
+The Compose Dev environment is split into three different Compose files. The
 "core metadata services" which comprise the web server, core server and database
 and the "repo services" which comprise Globus Connect Server running with the
-authz library and the DataFed repo service.
+authz library and the DataFed repo service. Finally, there is all services which
+will let you run DataFed with a repository on the same machine.
 
-NOTE Standing up the repo services has been separated because of Globus. You
-will need a machine with firewall exceptions to use it.
+1. Only Metadata Compose Services
+2. Only DataFed Repository Services
+3. Both Metadata and Repository services
 
-## Core Compose Services
+NOTE Standing up the repo services has been separated because in many cases
+you might have your repository on a different machine, or may have multiple
+repositories connected to a single metadata server. 
+NOTE You will need a machine with firewall exceptions to run the compose files.
 
-The following steps are used to stand up the core Compose file from scratch.
+## 1. Metadata Compose Services
+
+The following steps are used to stand up the metadata Compose file from scratch.
 Some of steps you only have to do once.
 
 1. Generating the env variables.
@@ -19,27 +26,27 @@ Some of steps you only have to do once.
 4. Running the Compose file
 5. Bringing down the Compose file. 
 
-Core services only need an external port 443 for https access. I have been 
-unable to get this to work with other ports due to the redirect URL required
-by Globus for authentication. It does not seem to support ports outside of 443.
 
-### 1. Generating .env configuration varaibles for Core Services
+If running the metadata services alone without the repository you will only 
+need a firewall exception for port 443.
+
+### 1. Generating .env configuration varaibles for Metadata Core Services
 
 Create the .env file fill in the missing components that are required.
 
 ```bash
 ./generate_env.sh
 ```
-### 2. Fill in the needed .env variables for the Core Services
+### 2. Fill in the needed .env variables for the Metadata Core Services
 
-The .env file will be created in the DataFed/Compose folder and will be hidden.
+The .env file will be created in the DataFed/compose/metadata folder and will be hidden.
 The .env file variables can be changed at this point to your configuration.
 
 NOTE the .env file will be read verbatim by Compose including any spaces or
 "#" comments so do not includ anything but the exact text that needs to be
 included in the variables.
 
-For the redirect url. if you are running the core services on your laptop you
+For the redirect url. if you are running the metadata core services on your laptop you
 can use:
 
 https://localhost/ui/authn
@@ -63,13 +70,14 @@ If a domain is assigned such as "awesome_datafed.com"
 redirect: https://awesome_datafed.com/ui/authn
 DATAFED_DOMAIN: awesome_datafed.com
 
-### 3. Building Core Services 
+### 3. Building Metadata Core Services 
 
 The following command will build all the images to run the core metadata 
 services.
 
 ```bash
-./build_images_for_compose.sh
+cd DataFed/compose/metadata
+./build_metadata_images_for_compose.sh
 ```
 
 ### 4. Running the core Compose file
@@ -77,8 +85,9 @@ services.
 Stand up the core services.
 
 ```bash
+cd DataFed/compose/metadata
 source ./unset_env.sh
-docker compose -f ./compose_core.yml up
+docker compose -f ./compose.yml up
 ```
 
 NOTE The unset_env.sh script is to make sure you are not accidentially
@@ -86,7 +95,8 @@ overwriting what is in the .env with your local shell env. You can check the
 configuration before hand by running.
 
 ```bash
-docker compose -f compose_core.yml config
+cd DataFed/compose/metadata
+docker compose -f compose.yml config
 ```
 
 WARNING - Docker Compose will prioritize env variables in the following priority
@@ -107,14 +117,15 @@ To completely remove the Compose instance and all state the following should
 be run.
 
 ```bash
-docker compose -f ./compose_core.yml down --volumes
+cd DataFed/compose/metadata
+docker compose -f ./compose.yml down --volumes
 ```
 
 NOTE the volumes will remove all cached state. If the '--volumes' flag is
 not added then on a subsequent "Compose up" the database will not be a clean
 install but contain state from previous runs.
 
-## Repo Compose Services
+## 2. Repo Compose Services
 
 The following steps are used to stand up the repo Compose file. NOTE, that
 because of how Globus is configured, there is an additional configuration 
@@ -138,6 +149,7 @@ https://docs.globus.org/globus-connect-server/v5/
 Create the .env file fill in the missing components that are required.
 
 ```bash
+cd DataFed/compose/repo
 ./generate_env.sh
 ```
 
@@ -152,11 +164,11 @@ included in the variables.
 
 ### 3. Globus configuration
 
-This step is only required once, after which the necessary files should exist
-in DataFed/Compose/globus. These files will contain the Globus configuration 
-needed for additional cycles of "docker compose up" and "docker compose down".
-The following three things need to be done before the generate_globus_files.sh
-should be run.
+This step is only required once, after which the necessary files should exist in
+DataFed/Compose/repo/globus. These files will contain the Globus
+configuration needed for additional cycles of "docker compose up" and "docker
+compose down".  The following three things need to be done before the
+generate_globus_files.sh should be run.
 
 1. You will need to have globus-connect-server54 installed to do this step.
 2. You will also need the Globus python developer kit globus_sdk.
@@ -178,6 +190,7 @@ pip install globus_sdk
 Finally, we can generate the globus files by running the script.
 
 ```bash
+cd DataFed/compose/repo
 ./generate_globus_files.sh
 ```
 
@@ -190,6 +203,7 @@ The following command will build all the images to run the core metadata
 services.
 
 ```bash
+cd DataFed/compose/repo
 ./build_repo_images_for_compose.sh
 ```
 
@@ -209,8 +223,9 @@ before launching the compose instance.
 Stand up the repo services.
 
 ```bash
+cd DataFed/compose/repo
 source ./unset_env.sh
-docker compose -f ./compose_repo.yml up
+docker compose -f ./compose.yml up
 ```
 
 Be aware, the 'source' is to apply changes to the environment of your current
@@ -221,7 +236,8 @@ overwriting what is in the .env with your local shell env. You can check the
 configuration before hand by running. 
 
 ```bash
-docker compose -f compose_repo.yml config
+cd DataFed/compose/repo
+docker compose -f compose.yml config
 ```
 
 WARNING - Docker Compose will prioritize env variables in the following priority
@@ -245,8 +261,16 @@ it is possible that the DATAFED_DOMAIN name field is incorrect your .env file.
 ## Cleaning up
 
 ```bash
-docker compose -f ./compose_core.yml down
+cd DataFed/compose/repo
+docker compose -f ./compose.yml down
 ```
+
+## 3. Running All Services
+
+For running all services, you will follow the same steps as for the getting the
+repository service up and running. The main difference from that set of steps, 
+is that there is additional configuration in the .env file that will need to
+be added.
 
 ## Running isolated containers
 
@@ -256,6 +280,7 @@ this can also be doen using commands like the following.
 ### DataFed Web 
 
 ```bash
+cd DataFed/compose/repo
 source ./unset_env.sh
 docker run --env-file .env \
   -e UID=$(id -u) \
@@ -267,6 +292,7 @@ docker run --env-file .env \
 ### DataFed GCS
 
 ```bash
+cd DataFed/compose/repo
 docker run --env-file .env \
   --network=host \
   -v /home/cloud/compose_collection:/mnt/datafed \
@@ -296,4 +322,13 @@ include, ports
 Make sure port 80 is not already bound on the host. Also note that the repo
 server keys should exist in the keys folder before running the gcs instance.
 
+##### Repo server unable to connect to core server
 
+```
+datafed-repo-1  | 2024-05-15T11:41:23.406937Z ERROR /datafed/source/repository/server/RepoServer.cpp:checkServerVersion:178 {  "thread_name": "repo_server", "correlation_id":  "3fceb838-70f9-454d-94c4-4e2660dcc029", "message": "Timeout waiting for response from core server: tcp://localhost:7512" }
+  datafed-repo-1  | 2024-05-15T11:41:23.406992Z INFO /datafed/source/repository/server/RepoServer.cpp:checkServerVersion:161 { "thread_name": "repo_server", "message": "Attempt 4 to initialize communication  with core server at tcp://localhost:7512" }
+```
+
+Make sure that the domain is correct, it may be the case that if you are using
+localhost it is unable to resolve core service, traffic gets routed by apache
+to the registered domain name.
