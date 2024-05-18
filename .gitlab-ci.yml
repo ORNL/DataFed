@@ -3,7 +3,7 @@ stages:
   - trigger-infrastructure
   - signal
   - clear-docker-cache
-    #  - build-base
+  - build-base
     #  - provision-client
     #  - build
     #  - end-to-end-setup-arango
@@ -104,39 +104,39 @@ clear-python-client-cache:
     - docker system prune -f
     - ./scripts/ci_purge_images.sh
 
-      #################################################################################
-      ## STAGE: build-base
-      #################################################################################
-      ## build runtime and depedencies containers
-      #build-dependencies:
-      #  stage: build-base
-      #  variables:
-      #    IMAGE_TAG: "datafed/dependencies"
-      #    GIT_STRATEGY: clone
-      #  tags:
-      #    - docker
-      #  script:
-      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      #    - docker system prune -f
-      #    - docker build -f docker/Dockerfile.dependencies -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      #
-      #build-runtime:
-      #  stage: build-base
-      #  variables:
-      #    IMAGE_TAG: "datafed/runtime"
-      #    GIT_STRATEGY: clone
-      #  tags:
-      #    - docker
-      #  script:
-      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      #    - docker system prune -f
-      #    - docker build -f docker/Dockerfile.runtime -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      #
-      #
+################################################################################
+# STAGE: build-base
+################################################################################
+# build runtime and depedencies containers
+build-dependencies:
+  stage: build-base
+  variables:
+    IMAGE_TAG: "datafed/dependencies"
+    GIT_STRATEGY: clone
+  tags:
+    - docker
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - docker system prune -f
+    - docker build -f docker/Dockerfile.dependencies -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+
+build-runtime:
+  stage: build-base
+  variables:
+    IMAGE_TAG: "datafed/runtime"
+    GIT_STRATEGY: clone
+  tags:
+    - docker
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - docker system prune -f
+    - docker build -f docker/Dockerfile.runtime -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+
+
       ##################################################################################
       ### STAGE: provision client
       ##################################################################################
