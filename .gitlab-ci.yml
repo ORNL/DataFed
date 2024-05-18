@@ -2,26 +2,12 @@ stages:
   - ci-infrastructure-check
   - trigger-infrastructure
   - signal
-  - clear-docker-cache
-  - build-base
-  - provision-client
-  - build
-  - end-to-end-setup-arango
-  - end-to-end-setup
-
-# stages:
-#   - ci-infrastructure-check
-#   - trigger-infrastructure
-#   - signal
-#   - clear-docker-cache
-#   - build-deploy-base
-#   - provision-client
-#   - build
-#   - end-to-end-setup-arango
-#   - end-to-end-setup
-#   - end-to-end-test
-#   - end-to-end-teardown
-
+    #  - clear-docker-cache
+    #  - build-base
+    #  - provision-client
+    #  - build
+    #  - end-to-end-setup-arango
+    #  - end-to-end-setup
 
 variables:
   HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry_2'
@@ -84,286 +70,286 @@ signal:
       - run-trigger-job
     - when: on_success
 
-################################################################################
-# STAGE: clear-docker-cache
-################################################################################
-# Used to clear out the cache on VMs where the images are being built
-clear-core-cache:
-  stage: clear-docker-cache
-  needs: ["signal"]
-  tags:
-    - ci_1
-  script:
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker system prune -f
-    - ./scripts/ci_purge_images.sh
-
-clear-repo-cache:
-  stage: clear-docker-cache
-  needs: ["signal"]
-  tags:
-    - ci_3
-  script:
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker system prune -f
-    - ./scripts/ci_purge_images.sh
-
-clear-python-client-cache:
-  stage: clear-docker-cache
-  needs: ["signal"]
-  tags:
-    - ci_5
-  script:
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker system prune -f
-    - ./scripts/ci_purge_images.sh
-
-################################################################################
-# STAGE: build-base
-################################################################################
-# build runtime and depedencies containers
-build-dependencies:
-  stage: build-base
-  variables:
-    IMAGE_TAG: "datafed/dependencies"
-    GIT_STRATEGY: clone
-  tags:
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker system prune -f
-    - docker build -f docker/Dockerfile.dependencies -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-
-build-runtime:
-  stage: build-base
-  variables:
-    IMAGE_TAG: "datafed/runtime"
-    GIT_STRATEGY: clone
-  tags:
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker system prune -f
-    - docker build -f docker/Dockerfile.runtime -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-
-
-#################################################################################
-## STAGE: provision client
-#################################################################################
-provision-client:
-
-  needs: ["signal"]
-  variables:
-    GIT_STRATEGY: clone
-  stage: provision-client
-  tags:
-    - ci-datafed-client
-  before_script:
-    - export PATH=/opt/datafed/dependencies/bin:$PATH
-  script:
-    - ./scripts/generate_datafed.sh
-    - ./scripts/install_client_dependencies.sh
-  rules:
-    - changes:
-        - scripts/generate_datafed.sh
-        - scripts/install_client_dependencies.sh
-        - scripts/dependency_install_functions.sh
-        - scripts/dependency_versions.sh
-
-################################################################################
-# STAGE: build
-################################################################################
-# Building containers for running services
-build-ws:
-  needs: ["build-dependencies", "build-runtime"]
-  stage: build
-  variables:
-    IMAGE_TAG: "datafed/ws"
-    GIT_STRATEGY: clone
-  tags:
-    - ci-datafed-core
-    - docker
-  rules:
-    - changes:
-        - docker/**/*
-        - scripts/**/*
-        - web/**/*
-        - common/proto/**/*
-        - .gitlab-ci.yml
-      when: on_success
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f web/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-
-build-core:
-  needs: ["build-dependencies", "build-runtime"]
-  stage: build
-  variables:
-    IMAGE_TAG: "datafed/core"
-    GIT_STRATEGY: clone
-  tags:
-    - ci-datafed-core
-    - docker
-  rules:
-    - changes:
-        - docker/**/*
-        - scripts/**/*
-        - core/**/*
-        - common/**/*
-        - CMakeLists.txt
-        - cmake/**/*
-        - .gitlab-ci.yml
-      when: on_success
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f core/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-
-build-repo:
-  needs: ["build-dependencies", "build-runtime"]
-  stage: build
-  variables:
-    IMAGE_TAG: "datafed/repo"
-    GIT_STRATEGY: clone
-  tags:
-    - ci-datafed-repo
-    - docker
-  rules:
-    - changes:
-        - docker/**/*
-        - scripts/**/*
-        - web/**/*
-        - common/proto/**/*
-        - .gitlab-ci.yml
-      when: on_success
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-
- build-gcs-base:
-  needs: ["build-dependencies", "build-runtime"]
-  stage: build
-  variables:
-    IMAGE_TAG: "datafed/gcs-base"
-    GIT_STRATEGY: clone
-  tags:
-    - ci-datafed-globus
-    - docker
-  rules:
-    - changes:
-        - docker/**/*
-        - scripts/**/*
-        - common/**/*
-        - .gitlab-ci.yml
-        - CMakeLists.txt
-        - cmake/**/*
-      when: on_success
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - source "scripts/dependency_versions.sh"
-    - cd "external/globus-connect-server-deploy/docker"
-    - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" - < "./docker-files/Dockerfile.ubuntu-20.04"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-
-build-gcs:
-  needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
-  stage: build
-  variables:
-    IMAGE_TAG: "datafed/gcs"
-    GIT_STRATEGY: clone
-  tags:
-    - ci-datafed-globus
-    - docker
-  rules:
-    - changes:
-        - docker/**/*
-        - scripts/**/*
-        - common/**/*
-        - .gitlab-ci.yml
-        - CMakeLists.txt
-        - cmake/**/*
-      when: on_success
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-
-build-python-client-base:
-  needs: ["clear-python-client-cache"]
-  variables:
-    IMAGE_TAG: "datafed/python-client-base"
-    GIT_STRATEGY: clone
-  stage: build
-  tags:
-    - docker
-    - ci-datafed-client
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker system prune -f
-    - docker build -f python/docker/Dockerfile.python-client-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-
-################################################################################
-# STAGE: End to end setup arango
-################################################################################
-
-end-to-end-arango-setup:
-  variables:
-    GIT_STRATEGY: clone
-  stage: end-to-end-setup-arango
-  tags:
-    - ci-datafed-arango
-  script:
-    - arangod --version
-    - ./scripts/run_arango_service.sh
-
-################################################################################
-# STAGE: End to end setup
-################################################################################
-
-end-to-end-core-setup:
-  variables:
-    IMAGE_TAG: "datafed/core-"
-    GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "/shared/logs"
-    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
-    DATAFED_DATABASE_HOST: "$CI_DATAFED_DATABASE_HOST"
-  stage: end-to-end-setup
-  needs: ["end-to-end-arango-setup"]
-  tags:
-    - ci-datafed-core
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - mkdir -p "$HOST_LOG_FILE_PATH"
-    - chmod o+w "${HOST_LOG_FILE_PATH}"
-    - USER_ID=$(id -u)
-    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - env > env_file
+      #################################################################################
+      ## STAGE: clear-docker-cache
+      #################################################################################
+      ## Used to clear out the cache on VMs where the images are being built
+      #clear-core-cache:
+      #  stage: clear-docker-cache
+      #  needs: ["signal"]
+      #  tags:
+      #    - ci_1
+      #  script:
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker system prune -f
+      #    - ./scripts/ci_purge_images.sh
+      #
+      #clear-repo-cache:
+      #  stage: clear-docker-cache
+      #  needs: ["signal"]
+      #  tags:
+      #    - ci_3
+      #  script:
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker system prune -f
+      #    - ./scripts/ci_purge_images.sh
+      #
+      #clear-python-client-cache:
+      #  stage: clear-docker-cache
+      #  needs: ["signal"]
+      #  tags:
+      #    - ci_5
+      #  script:
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker system prune -f
+      #    - ./scripts/ci_purge_images.sh
+      #
+      #################################################################################
+      ## STAGE: build-base
+      #################################################################################
+      ## build runtime and depedencies containers
+      #build-dependencies:
+      #  stage: build-base
+      #  variables:
+      #    IMAGE_TAG: "datafed/dependencies"
+      #    GIT_STRATEGY: clone
+      #  tags:
+      #    - docker
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - docker system prune -f
+      #    - docker build -f docker/Dockerfile.dependencies -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+      #
+      #build-runtime:
+      #  stage: build-base
+      #  variables:
+      #    IMAGE_TAG: "datafed/runtime"
+      #    GIT_STRATEGY: clone
+      #  tags:
+      #    - docker
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - docker system prune -f
+      #    - docker build -f docker/Dockerfile.runtime -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+      #
+      #
+      ##################################################################################
+      ### STAGE: provision client
+      ##################################################################################
+      #provision-client:
+      #
+      #  needs: ["signal"]
+      #  variables:
+      #    GIT_STRATEGY: clone
+      #  stage: provision-client
+      #  tags:
+      #    - ci-datafed-client
+      #  before_script:
+      #    - export PATH=/opt/datafed/dependencies/bin:$PATH
+      #  script:
+      #    - ./scripts/generate_datafed.sh
+      #    - ./scripts/install_client_dependencies.sh
+      #  rules:
+      #    - changes:
+      #        - scripts/generate_datafed.sh
+      #        - scripts/install_client_dependencies.sh
+      #        - scripts/dependency_install_functions.sh
+      #        - scripts/dependency_versions.sh
+      #
+      #################################################################################
+      ## STAGE: build
+      #################################################################################
+      ## Building containers for running services
+      #build-ws:
+      #  needs: ["build-dependencies", "build-runtime"]
+      #  stage: build
+      #  variables:
+      #    IMAGE_TAG: "datafed/ws"
+      #    GIT_STRATEGY: clone
+      #  tags:
+      #    - ci-datafed-core
+      #    - docker
+      #  rules:
+      #    - changes:
+      #        - docker/**/*
+      #        - scripts/**/*
+      #        - web/**/*
+      #        - common/proto/**/*
+      #        - .gitlab-ci.yml
+      #      when: on_success
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - echo "$BRANCH_LOWER"
+      #    - ./scripts/generate_datafed.sh
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f web/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+      #
+      #build-core:
+      #  needs: ["build-dependencies", "build-runtime"]
+      #  stage: build
+      #  variables:
+      #    IMAGE_TAG: "datafed/core"
+      #    GIT_STRATEGY: clone
+      #  tags:
+      #    - ci-datafed-core
+      #    - docker
+      #  rules:
+      #    - changes:
+      #        - docker/**/*
+      #        - scripts/**/*
+      #        - core/**/*
+      #        - common/**/*
+      #        - CMakeLists.txt
+      #        - cmake/**/*
+      #        - .gitlab-ci.yml
+      #      when: on_success
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - echo "$BRANCH_LOWER"
+      #    - ./scripts/generate_datafed.sh
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f core/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+      #
+      #build-repo:
+      #  needs: ["build-dependencies", "build-runtime"]
+      #  stage: build
+      #  variables:
+      #    IMAGE_TAG: "datafed/repo"
+      #    GIT_STRATEGY: clone
+      #  tags:
+      #    - ci-datafed-repo
+      #    - docker
+      #  rules:
+      #    - changes:
+      #        - docker/**/*
+      #        - scripts/**/*
+      #        - web/**/*
+      #        - common/proto/**/*
+      #        - .gitlab-ci.yml
+      #      when: on_success
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - echo "$BRANCH_LOWER"
+      #    - ./scripts/generate_datafed.sh
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+      #
+      # build-gcs-base:
+      #  needs: ["build-dependencies", "build-runtime"]
+      #  stage: build
+      #  variables:
+      #    IMAGE_TAG: "datafed/gcs-base"
+      #    GIT_STRATEGY: clone
+      #  tags:
+      #    - ci-datafed-globus
+      #    - docker
+      #  rules:
+      #    - changes:
+      #        - docker/**/*
+      #        - scripts/**/*
+      #        - common/**/*
+      #        - .gitlab-ci.yml
+      #        - CMakeLists.txt
+      #        - cmake/**/*
+      #      when: on_success
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - echo "$BRANCH_LOWER"
+      #    - source "scripts/dependency_versions.sh"
+      #    - cd "external/globus-connect-server-deploy/docker"
+      #    - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" - < "./docker-files/Dockerfile.ubuntu-20.04"
+      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+      #
+      #build-gcs:
+      #  needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
+      #  stage: build
+      #  variables:
+      #    IMAGE_TAG: "datafed/gcs"
+      #    GIT_STRATEGY: clone
+      #  tags:
+      #    - ci-datafed-globus
+      #    - docker
+      #  rules:
+      #    - changes:
+      #        - docker/**/*
+      #        - scripts/**/*
+      #        - common/**/*
+      #        - .gitlab-ci.yml
+      #        - CMakeLists.txt
+      #        - cmake/**/*
+      #      when: on_success
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - echo "$BRANCH_LOWER"
+      #    - ./scripts/generate_datafed.sh
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+      #
+      #build-python-client-base:
+      #  needs: ["clear-python-client-cache"]
+      #  variables:
+      #    IMAGE_TAG: "datafed/python-client-base"
+      #    GIT_STRATEGY: clone
+      #  stage: build
+      #  tags:
+      #    - docker
+      #    - ci-datafed-client
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - docker system prune -f
+      #    - docker build -f python/docker/Dockerfile.python-client-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+      #
+      #################################################################################
+      ## STAGE: End to end setup arango
+      #################################################################################
+      #
+      #end-to-end-arango-setup:
+      #  variables:
+      #    GIT_STRATEGY: clone
+      #  stage: end-to-end-setup-arango
+      #  tags:
+      #    - ci-datafed-arango
+      #  script:
+      #    - arangod --version
+      #    - ./scripts/run_arango_service.sh
+      #
+      #################################################################################
+      ## STAGE: End to end setup
+      #################################################################################
+      #
+      #end-to-end-core-setup:
+      #  variables:
+      #    IMAGE_TAG: "datafed/core-"
+      #    GIT_STRATEGY: clone
+      #    HOST_LOG_FILE_PATH: "/shared/logs"
+      #    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
+      #    DATAFED_DATABASE_HOST: "$CI_DATAFED_DATABASE_HOST"
+      #  stage: end-to-end-setup
+      #  needs: ["end-to-end-arango-setup"]
+      #  tags:
+      #    - ci-datafed-core
+      #    - docker
+      #  script:
+      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #    - mkdir -p "$HOST_LOG_FILE_PATH"
+      #    - chmod o+w "${HOST_LOG_FILE_PATH}"
+      #    - USER_ID=$(id -u)
+      #    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
+      #    - echo "$BRANCH_LOWER"
+      #    - ./scripts/generate_datafed.sh
+      #    - env > env_file
 
 #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 #    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
