@@ -244,6 +244,7 @@ build-gcs-base:
   stage: build
   variables:
     IMAGE_TAG: "datafed/gcs-base"
+    GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
   tags:
     - ci-datafed-globus
@@ -261,7 +262,6 @@ build-gcs-base:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - source "scripts/dependency_versions.sh"
-    - git submodule update --init --recursive
     - cd "external/globus-connect-server-deploy/docker"
     - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
