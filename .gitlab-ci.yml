@@ -309,20 +309,20 @@ build-python-client-base:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
-      #################################################################################
-      ## STAGE: End to end setup arango
-      #################################################################################
-      #
-      #end-to-end-arango-setup:
-      #  variables:
-      #    GIT_STRATEGY: clone
-      #  stage: end-to-end-setup-arango
-      #  tags:
-      #    - ci-datafed-arango
-      #  script:
-      #    - arangod --version
-      #    - ./scripts/run_arango_service.sh
-      #
+################################################################################
+# STAGE: End to end setup arango
+################################################################################
+
+end-to-end-arango-setup:
+  variables:
+    GIT_STRATEGY: clone
+  stage: end-to-end-setup-arango
+  tags:
+    - ci-datafed-arango
+  script:
+    - arangod --version
+    - ./scripts/run_arango_service.sh
+
       #################################################################################
       ## STAGE: End to end setup
       #################################################################################
