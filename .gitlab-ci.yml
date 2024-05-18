@@ -267,47 +267,47 @@ build-gcs-base:
     - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" - < "./docker-files/Dockerfile.ubuntu-20.04"
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
-          #build-gcs:
-          #  needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
-          #  stage: build
-          #  variables:
-          #    IMAGE_TAG: "datafed/gcs"
-          #    GIT_STRATEGY: clone
-          #  tags:
-          #    - ci-datafed-globus
-          #    - docker
-          #  rules:
-          #    - changes:
-          #        - docker/**/*
-          #        - scripts/**/*
-          #        - common/**/*
-          #        - .gitlab-ci.yml
-          #        - CMakeLists.txt
-          #        - cmake/**/*
-          #      when: on_success
-          #  script:
-          #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-          #    - echo "$BRANCH_LOWER"
-          #    - ./scripts/generate_datafed.sh
-          #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-          #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
-          #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-          #
-          #build-python-client-base:
-          #  needs: ["clear-python-client-cache"]
-          #  variables:
-          #    IMAGE_TAG: "datafed/python-client-base"
-          #    GIT_STRATEGY: clone
-          #  stage: build
-          #  tags:
-          #    - docker
-          #    - ci-datafed-client
-          #  script:
-          #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-          #    - docker system prune -f
-          #    - docker build -f python/docker/Dockerfile.python-client-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-          #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-          #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+build-gcs:
+  needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/gcs"
+    GIT_STRATEGY: clone
+  tags:
+    - ci-datafed-globus
+    - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - common/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
+      when: on_success
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+
+build-python-client-base:
+  needs: ["clear-python-client-cache"]
+  variables:
+    IMAGE_TAG: "datafed/python-client-base"
+    GIT_STRATEGY: clone
+  stage: build
+  tags:
+    - docker
+    - ci-datafed-client
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - docker system prune -f
+    - docker build -f python/docker/Dockerfile.python-client-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
       #################################################################################
       ## STAGE: End to end setup arango
