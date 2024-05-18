@@ -7,7 +7,7 @@ stages:
   - provision-client
   - build
   - end-to-end-setup-arango
-    #  - end-to-end-setup
+  - end-to-end-setup
 
 variables:
   HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry_2'
@@ -390,7 +390,7 @@ end-to-end-ws-setup:
     DATAFED_WEB_CSR_PATH: "${DATAFED_WEB_KEY_DIR}/cert.csr"
     DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_KEY_NAME}"
   stage: end-to-end-setup
-  needs: ["end-to-end-core-setup"]
+  needs : ["end-to-end-core-setup"]
   tags:
     - ci-datafed-core
     - docker
