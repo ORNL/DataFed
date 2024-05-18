@@ -4,8 +4,8 @@ stages:
   - signal
   - clear-docker-cache
   - build-base
-    #  - provision-client
-    #  - build
+  - provision-client
+  - build
     #  - end-to-end-setup-arango
     #  - end-to-end-setup
 
