@@ -524,7 +524,7 @@ end-to-end-repo-setup:
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     DATAFED_HOST_COLLECTION_MOUNT: "/shared/collections"
   stage: end-to-end-setup
-  needs: ["end-to-end-core-setup"]
+  needs: ["end-to-end-ws-setup"]
   tags:
     - ci-datafed-globus
     - docker
