@@ -382,7 +382,7 @@ end-to-end-foxx-setup:
     - mkdir foxx_tmp
     - if [ -f foxx_tmp/.foxx_is_installed ]; then rm foxx_tmp/.foxx_is_installed; fi
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > "${RUN_FILE}"
     - echo "docker run -d \\" >> "${RUN_FILE}"
@@ -428,7 +428,7 @@ end-to-end-core-setup:
     - ./scripts/generate_datafed.sh
     - env > env_file
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}" -p
     - ./scripts/ci_database_health_check.sh
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-core-key.pub
     - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-core-key.priv
@@ -488,7 +488,7 @@ end-to-end-ws-setup:
     - CORE_ADDRESS=$(hostname -I | awk '{print $1}')
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-core-key.pub
     - env
-    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}" -p 
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > run_web.sh
     - echo "docker run -d \\" >> run_web.sh
@@ -538,7 +538,7 @@ end-to-end-repo-setup:
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
     - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
