@@ -9,6 +9,13 @@ stages:
   - end-to-end-setup-arango
   - end-to-end-setup
 
+# WARNING
+#
+# Do not put if else statements without if and else, gitlab yaml does not like
+# this kind of scripting
+#
+# [ -f file_path ] && ok do this....
+
 variables:
   HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry_2'
   REGISTRY: 'camden.ornl.gov'
@@ -373,7 +380,7 @@ end-to-end-foxx-setup:
     - ./scripts/generate_datafed.sh
     - env > env_file
     - mkdir foxx_tmp
-      #    - [ -f foxx_tmp/.foxx_is_installed ] && rm foxx_tmp/.foxx_is_installed
+    - if [ -f foxx_tmp/.foxx_is_installed ]; then rm foxx_tmp/.foxx_is_installed; fi
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
