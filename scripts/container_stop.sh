@@ -88,7 +88,7 @@ then
         docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
       fi
     else
-      if [ "$IMAGE" == "$local_CONTAINER_TAG"* ]
+      if [[ "$IMAGE" == "$local_CONTAINER_TAG"* ]]
       then
         echo "Stopping ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
         docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
@@ -109,7 +109,7 @@ then
         docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
       fi
     else
-      if [ "$NAME" == "$local_CONTAINER_NAME"* ]
+      if [[ "$NAME" == "$local_CONTAINER_NAME"* ]]
       then
         echo "Stopping ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} ${CONTAINER_IMAGES[$i]}"
         docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
@@ -149,7 +149,7 @@ then
         exit 1
       fi
     else
-      if [ "$IMAGE" == "$local_CONTAINER_TAG"* ]
+      if [[ "$IMAGE" == "$local_CONTAINER_TAG"* ]]
       then
         echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
         exit 1
@@ -170,7 +170,7 @@ then
         exit 1
       fi
     else
-      if [ "$NAME" == "$local_CONTAINER_NAME"* ]
+      if [[ "$NAME" == "$local_CONTAINER_NAME"* ]]
       then
         echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} ${CONTAINER_IMAGES[$i]}"
         exit 1
