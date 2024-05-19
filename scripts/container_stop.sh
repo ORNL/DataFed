@@ -11,7 +11,7 @@ Help()
 {
   echo "$(basename $0) Will stop containers."
   echo
-  echo "Syntax: $(basename $0) [-h|n]"
+  echo "Syntax: $(basename $0) [-h|n|t|p]"
   echo
   echo "Default:"
   echo "If no arguments are provided will stop all running containers."
@@ -20,15 +20,17 @@ Help()
   echo "-h, --help                     Print this help message"
   echo "-n, --name                     Remove this particular container provide the name"
   echo "-t, --tag                      Remove all containers with this particular image"
+  echo "-p, --prefix                   Only require the prefix to match and not"
+  echo "                               an exact match"
 } 
 
 local_NAME_FLAG_DETECTED="0"
 local_TAG_FLAG_DETECTED="0"
-
+local_EXACT_MATCH="TRUE"
 # Time in seconds
 SLEEP_TIME=30
 
-VALID_ARGS=$(getopt -o hn:t: --long 'help',name:,tag: -- "$@")
+VALID_ARGS=$(getopt -o hn:t:p --long 'help',name:,tag:,prefix -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -48,6 +50,10 @@ while [ : ]; do
         local_CONTAINER_TAG=$2
         local_TAG_FLAG_DETECTED="1"
         shift 2
+        ;;
+    -p | --prefix)
+        local_EXACT_MATCH="FALSE"
+        shift 1
         ;;
     --) shift; 
         break 
@@ -74,10 +80,19 @@ then
 
   for (( i=0; i<${#CONTAINER_IDS[@]}; i++)); do
     IMAGE="${CONTAINER_IMAGES[$i]}"
-    if [ "$IMAGE" == "$local_CONTAINER_TAG" ]
+    if [ "${local_EXACT_MATCH}" == "TRUE" ]
     then
-      echo "Stopping ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
-      docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
+      if [ "$IMAGE" == "$local_CONTAINER_TAG" ]
+      then
+        echo "Stopping ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
+        docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
+      fi
+    else
+      if [ "$IMAGE" == "$local_CONTAINER_TAG"* ]
+      then
+        echo "Stopping ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
+        docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
+      fi
     fi
   done
 
@@ -86,10 +101,19 @@ then
 
   for (( i=0; i<${#CONTAINER_IDS[@]}; i++)); do
     NAME="${CONTAINER_NAMES[$i]}"
-    if [ "$NAME" == "$local_CONTAINER_NAME" ]
+    if [ "${local_EXACT_MATCH}" == "TRUE" ]
     then
-      echo "Stopping ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} ${CONTAINER_IMAGES[$i]}"
-      docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
+      if [ "$NAME" == "$local_CONTAINER_NAME" ]
+      then
+        echo "Stopping ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} ${CONTAINER_IMAGES[$i]}"
+        docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
+      fi
+    else
+      if [ "$NAME" == "$local_CONTAINER_NAME"* ]
+      then
+        echo "Stopping ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} ${CONTAINER_IMAGES[$i]}"
+        docker container stop --time "$SLEEP_TIME" "${CONTAINER_IDS[$i]}"
+      fi
     fi
   done
 
@@ -117,10 +141,19 @@ then
 
   for (( i=0; i<${#CONTAINER_IDS[@]}; i++)); do
     IMAGE="${CONTAINER_IMAGES[$i]}"
-    if [ "$IMAGE" == "$local_CONTAINER_TAG" ]
+    if [ "${local_EXACT_MATCH}" == "TRUE" ]
     then
-      echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
-      exit 1
+      if [ "$IMAGE" == "$local_CONTAINER_TAG" ]
+      then
+        echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
+        exit 1
+      fi
+    else
+      if [ "$IMAGE" == "$local_CONTAINER_TAG"* ]
+      then
+        echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} $IMAGE"
+        exit 1
+      fi
     fi
   done
 
@@ -129,10 +162,19 @@ then
 
   for (( i=0; i<${#CONTAINER_IDS[@]}; i++)); do
     NAME="${CONTAINER_NAMES[$i]}"
-    if [ "$NAME" == "$local_CONTAINER_NAME" ]
+    if [ "${local_EXACT_MATCH}" == "TRUE" ]
     then
-      echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} ${CONTAINER_IMAGES[$i]}"
-      exit 1
+      if [ "$NAME" == "$local_CONTAINER_NAME" ]
+      then
+        echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} ${CONTAINER_IMAGES[$i]}"
+        exit 1
+      fi
+    else
+      if [ "$NAME" == "$local_CONTAINER_NAME"* ]
+      then
+        echo "ERROR still running ${CONTAINER_IDS[$i]} ${CONTAINER_NAMES[$i]} ${CONTAINER_IMAGES[$i]}"
+        exit 1
+      fi
     fi
   done
 
