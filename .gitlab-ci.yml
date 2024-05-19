@@ -373,7 +373,7 @@ end-to-end-foxx-setup:
     - ./scripts/generate_datafed.sh
     - env > env_file
     - mkdir foxx_tmp
-    - [ -f foxx_tmp/.foxx_is_installed ] && rm foxx_tmp/.foxx_is_installed
+      #    - [ -f foxx_tmp/.foxx_is_installed ] && rm foxx_tmp/.foxx_is_installed
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
