@@ -380,6 +380,7 @@ end-to-end-foxx-setup:
     - ./scripts/generate_datafed.sh
     - env > env_file
     - mkdir foxx_tmp
+    - ls -la foxx_tmp
     - if [ -f foxx_tmp/.foxx_is_installed ]; then rm foxx_tmp/.foxx_is_installed; fi
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - ./scripts/container_stop.sh -t "${REGISTRY}/${IMAGE_TAG}" -p
@@ -617,6 +618,7 @@ end-to-end-gcs-authz-setup:
     - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
     - echo "-e ${DATAFED_GLOBUS_DIR}=/opt/datafed/globus \\" >> run_globus.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
+    - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> run_globus.sh
     - echo "-v \"/shared/datafed-repo-key.pub\":/opt/datafed/keys/datafed-repo-key.pub \\" >> run_globus.sh
     - echo "-v \"/shared/datafed-repo-key.priv\":/opt/datafed/keys/datafed-repo-key.priv \\" >> run_globus.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_globus.sh
