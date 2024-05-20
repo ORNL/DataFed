@@ -610,7 +610,7 @@ end-to-end-gcs-authz-setup:
     - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"${CI_DATAFED_DOMAIN}:7513\" \\" >> run_globus.sh
     - echo "-e DATAFED_GCS_ROOT_NAME=\"${CI_DATAFED_GCS_ROOT_NAME}\" \\" >> run_globus.sh
     - echo "-e DATAFED_GCS_COLLECTION_ROOT_PATH=\"/mnt/datafed\" \\" >> run_globus.sh
-      #    - echo "-e DATAFED_GLOBUS_SUBSCRIPTION=\"${CI_DATAFED_GLOBUS_SUBSCRIPTION}\" \\" >> run_globus.sh
+    - echo "-e DATAFED_GLOBUS_SUBSCRIPTION=\"${CI_DATAFED_GLOBUS_SUBSCRIPTION}\" \\" >> run_globus.sh
       #    - echo "-e DATAFED_GLOBUS_CONTROL_PORT=\"443\" \\" >> run_globus.sh
       #    - echo "-e DATAFED_REPO_USER: \"datafed\" \\" >> run_globus.sh
       #    - echo "-e DATAFED_AUTHZ_USER: \"datafed\" \\" >> run_globus.sh
