@@ -611,19 +611,19 @@ end-to-end-gcs-authz-setup:
     - echo "-e DATAFED_GCS_ROOT_NAME=\"${CI_DATAFED_GCS_ROOT_NAME}\" \\" >> run_globus.sh
     - echo "-e DATAFED_GCS_COLLECTION_ROOT_PATH=\"/mnt/datafed\" \\" >> run_globus.sh
     - echo "-e DATAFED_GLOBUS_SUBSCRIPTION=\"${CI_DATAFED_GLOBUS_SUBSCRIPTION}\" \\" >> run_globus.sh
-      #    - echo "-e DATAFED_GLOBUS_CONTROL_PORT=\"443\" \\" >> run_globus.sh
-      #    - echo "-e DATAFED_REPO_USER: \"datafed\" \\" >> run_globus.sh
-      #    - echo "-e DATAFED_AUTHZ_USER: \"datafed\" \\" >> run_globus.sh
-      #    - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
-      #    - echo "-e ${DATAFED_GLOBUS_DIR}:/opt/datafed/globus \\" >> run_globus.sh
-      #    - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
-      #    - echo "-v \"/shared/datafed-repo-key.pub\":/opt/datafed/keys/datafed-repo-key.pub \\" >> run_globus.sh
-      #    - echo "-v \"/shared/datafed-repo-key.priv\":/opt/datafed/keys/datafed-repo-key.priv \\" >> run_globus.sh
-      #    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_globus.sh
-      #    - chmod +x run_globus.sh
-      #    - ./run_globus.sh
-      #    - sleep 10
-      #    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - echo "-e DATAFED_GLOBUS_CONTROL_PORT=\"443\" \\" >> run_globus.sh
+    - echo "-e DATAFED_REPO_USER=\"datafed\" \\" >> run_globus.sh
+    - echo "-e DATAFED_AUTHZ_USER=\"datafed\" \\" >> run_globus.sh
+    - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
+    - echo "-e ${DATAFED_GLOBUS_DIR}=/opt/datafed/globus \\" >> run_globus.sh
+    - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
+    - echo "-v \"/shared/datafed-repo-key.pub\":/opt/datafed/keys/datafed-repo-key.pub \\" >> run_globus.sh
+    - echo "-v \"/shared/datafed-repo-key.priv\":/opt/datafed/keys/datafed-repo-key.priv \\" >> run_globus.sh
+    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_globus.sh
+    - chmod +x run_globus.sh
+    - ./run_globus.sh
+    - sleep 10
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
 
 
 #################################################################################
