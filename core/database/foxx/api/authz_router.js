@@ -114,7 +114,7 @@ router.get('/gridftp', function(req, res) {
                 console.log("alloc is ");
                 console.log(alloc);
                 if (!alloc || (alloc.path + data_key != path)) {
-                    throw g_lib.ERR_PERM_DENIED;
+                    throw [obj.ERR_PERM_DENIED, "Permission denied, DataFed registered path is '" + alloc.path + data_key + "' Globus path is '" + path "'"]
                 }
             }
 
