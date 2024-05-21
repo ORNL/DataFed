@@ -617,7 +617,7 @@ end-to-end-gcs-authz-setup:
     - echo "-e DATAFED_REPO_USER=\"datafed\" \\" >> run_globus.sh
     - echo "-e DATAFED_AUTHZ_USER=\"datafed\" \\" >> run_globus.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
-    - echo "-e \"${DATAFED_GLOBUS_DIR}:/opt/datafed/globus\" \\" >> run_globus.sh
+    - echo "-v \"${DATAFED_GLOBUS_DIR}:/opt/datafed/globus\" \\" >> run_globus.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
     - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> run_globus.sh
     - echo "-v \"/shared/datafed-repo-key.pub\":/opt/datafed/keys/datafed-repo-key.pub \\" >> run_globus.sh
