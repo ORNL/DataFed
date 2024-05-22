@@ -569,6 +569,10 @@ end-to-end-repo-setup:
 
 # Requires setting up Globus Connect Server, requires firewall exceptions on
 # the machine running this.
+# Note we need the certificates to be available on the gcs-authz container
+# if it is meant to be run on the same machine as the metadata services
+# because the Apache web server can then route traffic appropriately, if 
+# run separate from he metadata services it should not be needed.
 end-to-end-gcs-authz-setup:
   variables:
     IMAGE_TAG: "datafed/gcs-"
@@ -617,6 +621,7 @@ end-to-end-gcs-authz-setup:
     - echo "-e DATAFED_REPO_USER=\"datafed\" \\" >> run_globus.sh
     - echo "-e DATAFED_AUTHZ_USER=\"datafed\" \\" >> run_globus.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
+    - echo "-e BUILD_WITH_METADATA_SERVICES=\"FALSE\" \\" >> run_globus.sh
     - echo "-e DATAFED_GCS_IP=\"${CI_DATAFED_GCS_IP}\" \\" >> run_globus.sh
     - echo "-v \"${DATAFED_GLOBUS_DIR}:/opt/datafed/globus\" \\" >> run_globus.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
