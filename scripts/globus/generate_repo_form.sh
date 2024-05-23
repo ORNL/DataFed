@@ -87,6 +87,16 @@ while [ : ]; do
   esac
 done
 
+function validate_domain() {
+  local DOMAIN="$1"
+
+	if host "$DOMAIN" | grep -q "has address"; then
+	  echo "DEFINED"	
+	else
+		echo "UNDEFINED"
+	fi
+}
+
 
 public_key=$(cat ${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.pub)
 
@@ -110,9 +120,13 @@ fi
 local_DATAFED_REPO_EGRESS_PORT="9000"
 repo_domain_name=$(domainname -A | awk '{print $1}')
 
-if [ -z "$repo_domain_name" ]
+local_DEFINED=$(validate_domain "$repo_domain_name")
+if [ "${local_DEFINED}" == "UNDEFINED" ] || [ -z "$repo_domain_name" ]
 then
-  echo "Unable to identify domain name of server."
+  echo "domain name (${repo_domain_name}) is ${local_DEFINED} using local IP."
+  local_address=$(hostname -I | awk '{print $1}')
+else
+  local_address="$repo_domain_name"
 fi
 
 if [ "$local_GENERATE_REPO_FORM_SCRIPT" = "TRUE" ]
@@ -122,7 +136,7 @@ then
   echo "export DATAFED_REPO_ID=\"$DATAFED_REPO_ID_AND_DIR\"" > ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_TITLE=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_DESCRIPTION=\"\"" >> ${OUTPUT_SCRIPT_NAME}
-  echo "export DATAFED_REPO_SERVER_ADDRESS=\"tcp://$repo_domain_name:$local_DATAFED_REPO_EGRESS_PORT\"" >> ${OUTPUT_SCRIPT_NAME}
+  echo "export DATAFED_REPO_SERVER_ADDRESS=\"tcp://$local_address:$local_DATAFED_REPO_EGRESS_PORT\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_PUBLIC_KEY=\"$public_key\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_ENDPOINT_UUID=\"$uuid_of_collection\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_RELATIVE_PATH=\"${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
@@ -138,7 +152,7 @@ then
   echo "id=\"$DATAFED_REPO_ID_AND_DIR\"" > ${OUTPUT_SCRIPT_NAME}
   echo "title=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "desc=\"\"" >> ${OUTPUT_SCRIPT_NAME}
-  echo "address=\"tcp://$repo_domain_name:$local_DATAFED_REPO_EGRESS_PORT\"" >> ${OUTPUT_SCRIPT_NAME}
+  echo "address=\"tcp://$local_address:$local_DATAFED_REPO_EGRESS_PORT\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "pub_key=\"$public_key\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "endpoint=\"$uuid_of_collection\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "path=\"${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
@@ -156,7 +170,7 @@ then
   echo "  \"id\": \"$DATAFED_REPO_ID_AND_DIR\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"title\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"desc\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
-  echo "  \"address\": \"tcp://$repo_domain_name:$local_DATAFED_REPO_EGRESS_PORT\"," >> ${OUTPUT_SCRIPT_NAME}
+  echo "  \"address\": \"tcp://$local_address:$local_DATAFED_REPO_EGRESS_PORT\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"pub_key\": \"$public_key\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"endpoint\": \"$uuid_of_collection\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"path\": \"${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR\"," >> ${OUTPUT_SCRIPT_NAME}
@@ -173,7 +187,7 @@ echo "Title: Whatever you want to call it"
 echo "Description: A description of the repository."
 # Should be something like this: tcp://datafed-gcs-test.ornl.gov:9000
 # This is the domain name of the repository server
-echo "Srvr. Address: tcp://$repo_domain_name:$local_DATAFED_REPO_EGRESS_PORT"
+echo "Srvr. Address: tcp://$local_address:$local_DATAFED_REPO_EGRESS_PORT"
 echo "Public Key: $public_key"
 echo "End-point ID: $uuid_of_collection"
 echo "Path: ${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR"

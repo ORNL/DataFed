@@ -402,6 +402,7 @@ end-to-end-foxx-setup:
     - "./${RUN_FILE}"
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/ci_database_health_check.sh
 
 ################################################################################
 # STAGE: End to end setup
@@ -525,7 +526,7 @@ end-to-end-repo-setup:
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     DATAFED_HOST_COLLECTION_MOUNT: "/shared/collections"
   stage: end-to-end-setup
-  needs: ["end-to-end-gcs-authz-setup"]
+  needs: ["end-to-end-ws-setup"]
   tags:
     - ci-datafed-globus
     - docker
@@ -544,7 +545,7 @@ end-to-end-repo-setup:
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
     - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_repo.sh
-    - echo "docker run \\" >> run_repo.sh
+    - echo "docker run -d \\" >> run_repo.sh
     - echo "--name \"repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_repo.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_repo.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_repo.sh
@@ -572,7 +573,9 @@ end-to-end-repo-setup:
 # Note we need the certificates to be available on the gcs-authz container
 # if it is meant to be run on the same machine as the metadata services
 # because the Apache web server can then route traffic appropriately, if 
-# run separate from he metadata services it should not be needed.
+# run separate from the metadata services it should not be needed.
+# NOTE it should also run after the repo service because when the form is
+# generated, it requires the repo server public key.
 end-to-end-gcs-authz-setup:
   variables:
     IMAGE_TAG: "datafed/gcs-"
@@ -582,7 +585,7 @@ end-to-end-gcs-authz-setup:
     DATAFED_HOST_COLLECTION_MOUNT: "/shared/collections"
     DATAFED_GLOBUS_DIR: "/shared/globus"
   stage: end-to-end-setup
-  needs: ["end-to-end-ws-setup"]
+  needs: ["end-to-end-repo-setup"]
   tags:
     - ci-datafed-globus
     - docker
@@ -603,7 +606,7 @@ end-to-end-gcs-authz-setup:
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
     - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_globus.sh
-    - echo "docker run \\" >> run_globus.sh
+    - echo "docker run -d \\" >> run_globus.sh
     - echo "--name \"gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
     - echo "--network host \\" >> run_globus.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
@@ -632,9 +635,13 @@ end-to-end-gcs-authz-setup:
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_globus.sh
     - chmod +x run_globus.sh
     - ./run_globus.sh
-    - sleep 10
+    - while [ ! -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; do echo "Waiting for ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; sleep 10; done
+    - cat "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
-
+  artifacts:
+    paths:
+      - "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
+      - "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
 
 #################################################################################
 ## STAGE: build-deploy-base

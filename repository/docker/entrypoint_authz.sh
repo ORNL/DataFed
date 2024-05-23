@@ -202,9 +202,11 @@ GCS_CLI_CLIENT_SECRET="$GCS_CLI_CLIENT_SECRET" \
 DATAFED_REPO_USER="$DATAFED_REPO_USER" \
   python3 "${BUILD_DIR}/scripts/globus/create_guest_collection.py"
 
-"${BUILD_DIR}/scripts/globus/generate_repo_form.sh"
+"${BUILD_DIR}/scripts/globus/generate_repo_form.sh" -j -s
+mv *form.json *form.sh /opt/datafed/globus/
 
 echo "Container is running."
 
 # Return to last file
 tail -f "${DATAFED_DEFAULT_LOG_PATH}/datafed-gsi-authz.log"
+
