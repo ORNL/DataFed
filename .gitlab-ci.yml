@@ -638,10 +638,13 @@ end-to-end-gcs-authz-setup:
     - while [ ! -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; do echo "Waiting for ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; sleep 10; done
     - cat "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh .
+    - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json .
+      # Artifacts can only be uploaded from locations in the repository
   artifacts:
     paths:
-      - "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
-      - "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
+      - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
+      - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
 
 #################################################################################
 ## STAGE: build-deploy-base

@@ -99,6 +99,7 @@ COPY --from=dependencies /usr/bin/as   /usr/bin/as
 COPY --from=dependencies /usr/bin/ld   /usr/bin/ld
 COPY --from=dependencies /usr/bin/jq   /usr/bin/jq
 COPY --from=dependencies /usr/bin/sudo /usr/bin/sudo
+COPY --from=dependencies /usr/bin/host /usr/bin/host
 
 COPY --from=dependencies /etc/sudoers /etc/sudoers
 

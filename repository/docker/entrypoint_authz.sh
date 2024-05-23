@@ -203,6 +203,9 @@ DATAFED_REPO_USER="$DATAFED_REPO_USER" \
   python3 "${BUILD_DIR}/scripts/globus/create_guest_collection.py"
 
 "${BUILD_DIR}/scripts/globus/generate_repo_form.sh" -j -s
+echo "Listing contents of ${BUILD_DIR}"
+ls "${BUILD_DIR}"
+cd "${BUILD_DIR}"
 mv *form.json *form.sh /opt/datafed/globus/
 
 echo "Container is running."
