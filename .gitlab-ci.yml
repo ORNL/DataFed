@@ -646,6 +646,47 @@ end-to-end-gcs-authz-setup:
       - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
       - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
 
+################################################################################
+# Actual Testing
+################################################################################
+end-to-end-client-test:
+  variables:
+    GIT_STRATEGY: clone
+    DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
+    DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET}"
+    DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
+    DATAFED_USER89_PASSWORD: "${CI_DATAFED_USER89_PASSWORD}"
+    DATAFED_USER89_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
+    DATAFED_USER89_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER89_GLOBUS_ACCESS_TOKEN}"
+    DATAFED_USER89_GLOBUS_UUID: "${CI_DATAFED_USER89_GLOBUS_UUID}"
+    DATAFED_USER99_PASSWORD: "${CI_DATAFED_USER99_PASSWORD}"
+    DATAFED_USER99_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER99_GLOBUS_REFRESH_TOKEN}"
+    DATAFED_USER99_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER99_GLOBUS_ACCESS_TOKEN}"
+    DATAFED_USER99_GLOBUS_UUID: "${CI_DATAFED_USER99_GLOBUS_UUID}"
+    DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
+  stage: end-to-end-test
+  tags:
+    - ci-datafed-client
+  script:
+    - ./scripts/generate_datafed.sh
+    - env
+    - cat ./config/datafed.sh
+    - >
+      cmake -S. -B build
+      -DENABLE_FOXX_TESTS=OFF
+      -DBUILD_CORE_SERVER=OFF
+      -DBUILD_COMMON=OFF
+      -DBUILD_WEB_SERVER=OFF
+      -DBUILD_DOCS=OFF
+      -DBUILD_PYTHON_CLIENT=ON
+      -DBUILD_TESTS=ON
+      -DENABLE_END_TO_END_TESTS=ON
+      -DINSTALL_FOXX=OFF
+    - cmake --build build
+    - cmake --build build --target pydatafed
+    - cmake --build build --target test
+
+
 #################################################################################
 ## STAGE: build-deploy-base
 #################################################################################
