@@ -18,12 +18,13 @@ PROJECT_ROOT=$(realpath "${SOURCE}/../")
 install_flag="/tmp/.foxx_is_installed"
 if [ ! -f "$install_flag" ]
 then
+  echo "Installing foxx."
   log_path="$DATAFED_DEFAULT_LOG_PATH"
   if [ ! -d "${log_path}" ]
   then
     su -c "mkdir -p ${log_path}" datafed
   fi
-
+  
   # It should be fine to run this as root because it is an ephemeral container anyway
   cd "${PROJECT_ROOT}"
   # Check to see if foxx has previously been installed
@@ -49,7 +50,10 @@ then
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
   
   touch "$install_flag"
+else
+  echo "/tmp/.foxx_is_installed has been found skipping reinstall"
 fi
 
+echo "Sleeping"
 sleep 1000
 
