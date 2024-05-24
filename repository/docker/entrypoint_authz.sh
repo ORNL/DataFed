@@ -203,7 +203,15 @@ DATAFED_REPO_USER="$DATAFED_REPO_USER" \
   python3 "${BUILD_DIR}/scripts/globus/create_guest_collection.py"
 
 "${BUILD_DIR}/scripts/globus/generate_repo_form.sh" -j -s
-mv /opt/datafed/authz/*form.json /opt/datafed/authz/*form.sh /opt/datafed/globus/
+
+find /opt/datafed/authz/ -name '*form.json' -or -name '*form.sh' | while read -r file; do
+    if [ -e "$file" ]; then
+        echo "Moving $file to /opt/datafed/globus/"
+        mv "$file" /opt/datafed/globus/
+    else
+        echo "No matching files found for pattern: $file"
+    fi
+done
 
 echo "Container is running."
 
