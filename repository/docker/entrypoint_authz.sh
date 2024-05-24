@@ -204,6 +204,9 @@ DATAFED_REPO_USER="$DATAFED_REPO_USER" \
 
 "${BUILD_DIR}/scripts/globus/generate_repo_form.sh" -j -s
 
+# Why is this approach being used? 
+# 
+# Wild card expansion with *form was not working from within the script.
 find /opt/datafed/authz/ -name '*form.json' -or -name '*form.sh' | while read -r file; do
     if [ -e "$file" ]; then
         echo "Moving $file to /opt/datafed/globus/"
