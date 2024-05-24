@@ -648,8 +648,13 @@ end-to-end-gcs-authz-setup:
       - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
 
 
-end_to_end_client2:
+end_to_end_client-test:
+  variables:
+    GIT_STRATEGY: clone
   stage: end-to-end-test
+  needs: ["end-to-end-gcs-authz-setup"]
+  tags:
+    - ci-datafed-client
   script:
     - echo "Testing"
 ################################################################################
