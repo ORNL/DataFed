@@ -60,4 +60,4 @@ USER root
 
 WORKDIR ${BUILD_DIR}
 
-ENTRYPOINT ${BUILD_DIR}/docker/entrypoint_foxx.sh
+ENTRYPOINT /datafed/source/docker/entrypoint_foxx.sh
