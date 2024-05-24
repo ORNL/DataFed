@@ -404,8 +404,10 @@ end-to-end-foxx-setup:
     - chmod +x "${RUN_FILE}"
     - "./${RUN_FILE}"
     - sleep 10
-    - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do echo "Waiting for foxx_tmp/.foxx_is_installed"; sleep 10; done
+      # Make sure container is running immediately after because it is meant to
+      # be ephermal anyway, this is not the same for the other containers
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do echo "Waiting for foxx_tmp/.foxx_is_installed"; sleep 10; done
     - ./scripts/ci_database_health_check.sh
 
 ################################################################################
