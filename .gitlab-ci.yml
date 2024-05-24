@@ -630,6 +630,7 @@ end-to-end-gcs-authz-setup:
     - echo "-e BUILD_WITH_METADATA_SERVICES=\"FALSE\" \\" >> run_globus.sh
     - echo "-e DATAFED_REPO_ID_AND_DIR=\"${CI_DATAFED_REPO_ID_AND_DIR}\" \\" >> run_globus.sh
     - echo "-e DATAFED_GCS_IP=\"${CI_DATAFED_GCS_IP}\" \\" >> run_globus.sh
+    - echo "-e DATAFED_REPO_DOMAIN=\"${CI_DATAFED_REPO_DOMAIN}\" \\" >> run_globus.sh
     - echo "-v \"${DATAFED_GLOBUS_DIR}:/opt/datafed/globus\" \\" >> run_globus.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
     - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> run_globus.sh

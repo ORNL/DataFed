@@ -37,6 +37,8 @@ ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 ENV                              TERM="xterm"
 ENV                    DATAFED_GCS_IP=""
 ENV      BUILD_WITH_METADATA_SERVICES="TRUE"
+ENV                    DATAFED_DOMAIN="localhost"
+ENV               DATAFED_REPO_DOMAIN="localhost"
 
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/logs

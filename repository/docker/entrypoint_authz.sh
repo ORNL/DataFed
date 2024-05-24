@@ -30,8 +30,10 @@ then
 cat <<EOF >> /etc/apache2/sites-available/000-default.conf
 
 # vim: syntax=apache ts=4 sw=4 sts=4 sr noet
+# This block is needed if core web services are running on the same machine as
+# the GCS
 <VirtualHost *:443>
-		ServerName datafed-gcs-test.ornl.gov
+		ServerName ${DATAFED_DOMAIN}
  
     SSLEngine on
     SSLCertificateFile /opt/datafed/keys/cert.crt
@@ -58,6 +60,23 @@ cat <<EOF >> /etc/apache2/sites-available/000-default.conf
     SSLProxyVerifyDepth 2
     SSLProxyCACertificateFile /opt/datafed/keys/cert.crt
 
+</VirtualHost>
+
+# This block is needed so the core service can communicate with the repo service
+# this assumes the repo service is running on the same machine as GCS. 
+<VirtualHost *:9000>
+		ServerName ${DATAFED_REPO_DOMAIN}
+    # Other configurations...
+
+    # Proxy configurations
+		<Proxy *>
+			AllowConnect 9000
+		</Proxy>
+
+		ProxyRequests On
+    ProxyPass / tcp://localhost:9000/
+    ProxyPassReverse / tcp://localhost:9000/
+    ProxyPreserveHost On
 </VirtualHost>
 EOF
 fi

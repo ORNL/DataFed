@@ -118,7 +118,17 @@ fi
 
 # Probably should grab this from the config file
 local_DATAFED_REPO_EGRESS_PORT="9000"
-repo_domain_name=$(domainname -A | awk '{print $1}')
+if [ -z "${DATAFED_REPO_DOMAIN}" ]
+then
+  repo_domain_name=""
+else
+  repo_domain_name=$(printenv DATAFED_REPO_DOMAIN)
+fi
+
+if [ "${repo_domain_name}" == "" ]
+then
+  repo_domain_name=$(domainname -A | awk '{print $1}')
+fi
 
 local_DEFINED=$(validate_domain "$repo_domain_name")
 if [ "${local_DEFINED}" == "UNDEFINED" ] || [ -z "$repo_domain_name" ]
@@ -140,7 +150,7 @@ then
   echo "export DATAFED_REPO_PUBLIC_KEY=\"$public_key\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_ENDPOINT_UUID=\"$uuid_of_collection\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_RELATIVE_PATH=\"${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
-  echo "export DATAFED_REPO_DOMAIN=\"\"" >> ${OUTPUT_SCRIPT_NAME}
+  echo "export DATAFED_REPO_DOMAIN=\"${repo_domain_name}\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_EXPORT_PATH=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_CAPACITY=\"\"" >> ${OUTPUT_SCRIPT_NAME}
 fi
@@ -156,7 +166,7 @@ then
   echo "pub_key=\"$public_key\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "endpoint=\"$uuid_of_collection\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "path=\"${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
-  echo "domain=\"\"" >> ${OUTPUT_SCRIPT_NAME}
+  echo "domain=\"${repo_domain_name}\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "exp_path=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "capacity=\"\"" >> ${OUTPUT_SCRIPT_NAME}
 fi
@@ -174,7 +184,7 @@ then
   echo "  \"pub_key\": \"$public_key\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"endpoint\": \"$uuid_of_collection\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"path\": \"${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR\"," >> ${OUTPUT_SCRIPT_NAME}
-  echo "  \"domain\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
+  echo "  \"domain\": \"${repo_domain_name}\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"exp_path\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"capacity\": 0," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"admins\": [\"\"]" >> ${OUTPUT_SCRIPT_NAME}
@@ -191,7 +201,7 @@ echo "Srvr. Address: tcp://$local_address:$local_DATAFED_REPO_EGRESS_PORT"
 echo "Public Key: $public_key"
 echo "End-point ID: $uuid_of_collection"
 echo "Path: ${PATH_TO_GUEST_ROOT}/$DATAFED_REPO_ID_AND_DIR"
-echo "Domain: "
+echo "Domain: ${repo_domain_name}"
 # I don't know what this is
 echo "Export Path: "
 echo "Capacity: The capacity of the repository"
