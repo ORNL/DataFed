@@ -406,7 +406,7 @@ end-to-end-foxx-setup:
     - sleep 10
       # Make sure container is running immediately after because it is meant to
       # be ephermal anyway, this is not the same for the other containers
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest"
     - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do echo "Waiting for foxx_tmp/.foxx_is_installed"; sleep 10; done
     - ./scripts/ci_database_health_check.sh
 
@@ -462,7 +462,7 @@ end-to-end-core-setup:
     - chmod +x run_core.sh
     - ./run_core.sh
     - sleep 10
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
 
 end-to-end-ws-setup:
   variables:
@@ -520,7 +520,7 @@ end-to-end-ws-setup:
     - chmod +x run_web.sh
     - ./run_web.sh
     - sleep 30
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
 
 # Repo server currently will crash on startup if it cannot connect to the core
 # server.
@@ -572,7 +572,7 @@ end-to-end-repo-setup:
     - chmod +x run_repo.sh
     - ./run_repo.sh
     - sleep 10
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
 
 # Requires setting up Globus Connect Server, requires firewall exceptions on
 # the machine running this.
@@ -645,7 +645,7 @@ end-to-end-gcs-authz-setup:
     - ./run_globus.sh
     - while [ ! -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; do echo "Waiting for ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; sleep 10; done
     - cat "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest"
     - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh .
     - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json .
   artifacts:
