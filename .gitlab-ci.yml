@@ -399,7 +399,7 @@ end-to-end-foxx-setup:
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> "${RUN_FILE}"
     - echo "-e UID=\"$USER_ID\" \\" >> "${RUN_FILE}"
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> "${RUN_FILE}"
-    - echo "-v \"foxx_tmp:/tmp\" \\" >> "${RUN_FILE}"
+    - echo "-v \"./foxx_tmp:/tmp\" \\" >> "${RUN_FILE}"
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest\"" >> "${RUN_FILE}"
     - chmod +x "${RUN_FILE}"
     - "./${RUN_FILE}"
