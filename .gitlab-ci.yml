@@ -633,6 +633,7 @@ end-to-end-gcs-authz-setup:
     - echo "-v \"/shared/datafed-repo-key.pub\":/opt/datafed/keys/datafed-repo-key.pub \\" >> run_globus.sh
     - echo "-v \"/shared/datafed-repo-key.priv\":/opt/datafed/keys/datafed-repo-key.priv \\" >> run_globus.sh
     - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}\"" >> run_globus.sh
+    - if [ -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; then rm "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; fi
     - chmod +x run_globus.sh
     - ./run_globus.sh
     - while [ ! -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; do echo "Waiting for ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; sleep 10; done
