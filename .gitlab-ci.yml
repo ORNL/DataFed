@@ -409,6 +409,8 @@ end-to-end-foxx-setup:
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest"
     - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do echo "Waiting for foxx_tmp/.foxx_is_installed"; sleep 10; done
     - ./scripts/ci_database_health_check.sh
+  after_script:
+    - rm -rf foxx_tmp
 
 ################################################################################
 # STAGE: End to end setup

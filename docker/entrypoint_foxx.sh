@@ -50,6 +50,8 @@ then
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
   
   touch "$install_flag"
+  chown "$UID":"$UID" "$install_flag"
+
 else
   echo "/tmp/.foxx_is_installed has been found skipping reinstall"
 fi
