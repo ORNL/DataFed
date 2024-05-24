@@ -639,59 +639,63 @@ end-to-end-gcs-authz-setup:
     - ./run_globus.sh
     - while [ ! -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; do echo "Waiting for ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; sleep 10; done
     - cat "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}"
     - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh .
     - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json .
-      # Artifacts can only be uploaded from locations in the repository
   artifacts:
     paths:
       - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
       - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
 
+
+end_to_end_client2:
+  stage: end-to-end-test
+  script:
+    - echo "Testing"
 ################################################################################
 # Actual Testing
 ################################################################################
-
-end-to-end-client-test:
-  variables:
-    GIT_STRATEGY: clone
-  stage: end-to-end-test
-  needs: ["end-to-end-gcs-authz-setup"]
-  tags:
-    - ci-datafed-client
-  script:
-    - ./scripts/generate_datafed.sh
-    - env
-    - cat ./config/datafed.sh
-      #    DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
-      #    DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET}"
-      #    DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
-      #    DATAFED_USER89_PASSWORD: "${CI_DATAFED_USER89_PASSWORD}"
-      #    DATAFED_USER89_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
-      #    DATAFED_USER89_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER89_GLOBUS_ACCESS_TOKEN}"
-      #    DATAFED_USER89_GLOBUS_UUID: "${CI_DATAFED_USER89_GLOBUS_UUID}"
-      #    DATAFED_USER99_PASSWORD: "${CI_DATAFED_USER99_PASSWORD}"
-      #    DATAFED_USER99_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER99_GLOBUS_REFRESH_TOKEN}"
-      #    DATAFED_USER99_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER99_GLOBUS_ACCESS_TOKEN}"
-      #    DATAFED_USER99_GLOBUS_UUID: "${CI_DATAFED_USER99_GLOBUS_UUID}"
-      #    DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
-
-#    - >
-#      cmake -S. -B build
-#      -DENABLE_FOXX_TESTS=OFF
-#      -DBUILD_CORE_SERVER=OFF
-#      -DBUILD_COMMON=OFF
-#      -DBUILD_WEB_SERVER=OFF
-#      -DBUILD_DOCS=OFF
-#      -DBUILD_PYTHON_CLIENT=ON
-#      -DBUILD_TESTS=ON
-#      -DENABLE_END_TO_END_TESTS=ON
-#      -DINSTALL_FOXX=OFF
-#    - cmake --build build
-#    - cmake --build build --target pydatafed
-#    - cmake --build build --target test
-
-
+#
+#end-to-end-client-test:
+#  variables:
+#    GIT_STRATEGY: clone
+#  stage: end-to-end-test
+#  needs: ["end-to-end-gcs-authz-setup"]
+#  tags:
+#    - ci-datafed-client
+#  script:
+#    - ./scripts/generate_datafed.sh
+#    - env
+#    - cat ./config/datafed.sh
+#      #    DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
+#      #    DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET}"
+#      #    DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
+#      #    DATAFED_USER89_PASSWORD: "${CI_DATAFED_USER89_PASSWORD}"
+#      #    DATAFED_USER89_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
+#      #    DATAFED_USER89_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER89_GLOBUS_ACCESS_TOKEN}"
+#      #    DATAFED_USER89_GLOBUS_UUID: "${CI_DATAFED_USER89_GLOBUS_UUID}"
+#      #    DATAFED_USER99_PASSWORD: "${CI_DATAFED_USER99_PASSWORD}"
+#      #    DATAFED_USER99_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER99_GLOBUS_REFRESH_TOKEN}"
+#      #    DATAFED_USER99_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER99_GLOBUS_ACCESS_TOKEN}"
+#      #    DATAFED_USER99_GLOBUS_UUID: "${CI_DATAFED_USER99_GLOBUS_UUID}"
+#      #    DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
+#
+##    - >
+##      cmake -S. -B build
+##      -DENABLE_FOXX_TESTS=OFF
+##      -DBUILD_CORE_SERVER=OFF
+##      -DBUILD_COMMON=OFF
+##      -DBUILD_WEB_SERVER=OFF
+##      -DBUILD_DOCS=OFF
+##      -DBUILD_PYTHON_CLIENT=ON
+##      -DBUILD_TESTS=ON
+##      -DENABLE_END_TO_END_TESTS=ON
+##      -DINSTALL_FOXX=OFF
+##    - cmake --build build
+##    - cmake --build build --target pydatafed
+##    - cmake --build build --target test
+#
+#
 #################################################################################
 ## STAGE: build-deploy-base
 #################################################################################
