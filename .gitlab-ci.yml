@@ -614,7 +614,7 @@ end-to-end-gcs-authz-setup:
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
     - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_globus.sh
-    - echo "docker run \\" >> run_globus.sh
+    - echo "docker run -d \\" >> run_globus.sh
     - echo "--name \"gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
     - echo "--network host \\" >> run_globus.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
