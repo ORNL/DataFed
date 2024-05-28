@@ -39,7 +39,13 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
 
         print(df_ver)
 
-        opts = {"server_host": "datafed-server-test.ornl.gov"}
+        datafed_domain = os.environ.get("DATAFED_DOMAIN")
+        opts = {"server_host": datafed_domain}
+
+        if datafed_domain is None:
+            print("DATAFED_DOMAIN must be set before the end-to-end tests can be run")
+            sys.exit(1)
+
         self._df_api = API(opts)
 
         self._username = "datafed89"
@@ -72,6 +78,15 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         self._repo_form = {}
         with open(path_to_repo_form) as json_file:
             self._repo_form = json.load(json_file)
+
+
+        if len(self._repo_form["exp_path"]) == 0:
+            print("exp_path is empty, we will set it to / for the test. This is cruft and should be removed anyway")
+            self._repo_form["exp_path"] = "/"
+
+        self._repo_form["admins"] = ["u/" + self._username]
+
+
 
         # Create the repositories
         result = self._df_api.repoCreate(
@@ -171,16 +186,19 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         status = task_result[0].task[0].status
         count = 0
         while status < 3:
-            if count > 10:
+            if count > 20:
                 break
             time.sleep(1)
             task_result = self._df_api.taskView(task_id)
+            print("task Result **************")
+            print(task_result)
             status = task_result[0].task[0].status
             count = count + 1
 
         # if status < 3:
         #    data_put_esnet_pass = True
 
+        print(f"Status is {status}")
         assert status == 3
         print(task_result)
         print(f"Status is {status}")
@@ -190,7 +208,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         status = task_result[0].task[0].status
         count = 0
         while status < 3:
-            if count > 10:
+            if count > 20:
                 break
             time.sleep(1)
             task_result = self._df_api.taskView(task_id)
@@ -202,6 +220,9 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         # Try data from a different location
 
     def tearDown(self):
+
+
+
         result = self._df_api.repoAllocationDelete(
             repo_id=self._repo_id, subject="datafed89"
         )

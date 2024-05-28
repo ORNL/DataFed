@@ -28,6 +28,7 @@ _OPT_EAGER = 0x80
 
 _opt_info = {
     # key, cf-cat, cf-name, env-name, flags, opt-names, description
+
     "server_cfg_dir": [
         "server",
         "config_dir",
@@ -107,6 +108,14 @@ _opt_info = {
         _OPT_HIDE,
         ["--client-token"],
         "Client access token",
+    ],
+    "allow_self_signed_certs": [
+        "client",
+        "allow_self_signed_certs",
+        "DATAFED_PYTHON_CLIENT_ALLOW_SELF_SIGNED_CERTS",
+        _OPT_BOOL,
+        ["--allow-self-signed-certs"],
+        "Allows client download from DATAFED_DOMAIN if it is using self signed certs, needed when testing.",
     ],
     "default_ep": [
         "general",
