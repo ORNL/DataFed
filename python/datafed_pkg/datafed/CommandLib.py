@@ -2388,7 +2388,6 @@ class API:
         str
             The current user or project ID context string
         """
-        print(f"Current context is {self._cur_sel}")
         return self._cur_sel
 
     def timestampToStr(self, ts):

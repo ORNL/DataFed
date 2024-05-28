@@ -90,11 +90,11 @@ done
 function validate_domain() {
   local DOMAIN="$1"
 
-	if host "$DOMAIN" | grep -q "has address"; then
-	  echo "DEFINED"	
-	else
-		echo "UNDEFINED"
-	fi
+  if host "$DOMAIN" | grep -q "has address"; then
+    echo "DEFINED"  
+  else
+    echo "UNDEFINED"
+  fi
 }
 
 
