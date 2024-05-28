@@ -34,7 +34,13 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
 
         print(df_ver)
 
-        opts = {"server_host": "datafed-server-test.ornl.gov"}
+        datafed_domain = os.environ.get("DATAFED_DOMAIN")
+        opts = {"server_host": datafed_domain}
+
+        if datafed_domain is None:
+            print("DATAFED_DOMAIN must be set before the end-to-end tests can be run")
+            sys.exit(1)
+
         self._df_api = API(opts)
 
         username = "datafed89"

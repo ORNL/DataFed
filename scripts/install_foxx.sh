@@ -187,8 +187,11 @@ fi
 # syntax for the REST http endpoints with curl so we are going to try the node module
 
 # 1. Install nvm which will allow us to update node
+echo "Installing nvm"
 install_nvm
+echo "Installing node"
 install_node
+echo "Installing foxx_cli"
 install_foxx_cli
 
 FOXX_PREFIX=""
