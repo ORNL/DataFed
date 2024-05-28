@@ -28,7 +28,6 @@ _OPT_EAGER = 0x80
 
 _opt_info = {
     # key, cf-cat, cf-name, env-name, flags, opt-names, description
-
     "server_cfg_dir": [
         "server",
         "config_dir",

@@ -77,7 +77,7 @@ class API:
 
         self.cfg = Config.API(opts)
         _opts = self._setSaneDefaultOptions()
-    
+
         self._mapi = MessageLib.API(**_opts)
         self._mapi.setNackExceptionEnabled(True)
         auth, uid = self._mapi.getAuthStatus()
@@ -2728,7 +2728,6 @@ class API:
                 if not os.path.exists(serv_key_file):
                     # Make default server pub key file
                     url = "https://" + opts["server_host"] + "/datafed-core-key.pub"
-                    
 
                     # Path where the downloaded file will be saved
                     output_path = serv_key_file
@@ -2743,14 +2742,14 @@ class API:
                         response.raise_for_status()
 
                         # Open the file in binary write mode and write the response content
-                        with open(output_path, 'wb') as file:
+                        with open(output_path, "wb") as file:
                             for chunk in response.iter_content(chunk_size=8192):
                                 if chunk:  # Filter out keep-alive new chunks
                                     file.write(chunk)
-                        print('File downloaded successfully.')
+                        print("File downloaded successfully.")
 
                     except requests.exceptions.RequestException as e:
-                        print(f'Failed to download file: {e}')
+                        print(f"Failed to download file: {e}")
 
         if "client_pub_key_file" not in opts or "client_priv_key_file" not in opts:
             if "client_cfg_dir" not in opts:

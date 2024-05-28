@@ -77,7 +77,9 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             self._repo_form = json.load(json_file)
 
         if len(self._repo_form["exp_path"]) == 0:
-            print("exp_path is empty, we will set it to / for the test. This is cruft and should be removed anyway")
+            print(
+                "exp_path is empty, we will set it to / for the test. This is cruft and should be removed anyway"
+            )
             self._repo_form["exp_path"] = "/"
 
         self._repo_form["admins"] = ["u/" + self._username]
