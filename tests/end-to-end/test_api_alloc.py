@@ -76,7 +76,8 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
 
         if len(self._repo_form["exp_path"]) == 0:
             print(
-                "exp_path is empty, we will set it to / for the test. This is cruft and should be removed anyway"
+                "exp_path is empty, we will set it to / for the test. This is "
+                "cruft and should be removed anyway"
             )
             self._repo_form["exp_path"] = "/"
 
