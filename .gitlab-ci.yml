@@ -674,10 +674,13 @@ end_to_end_client-test:
     DATAFED_DOMAIN: "${CI_DATAFED_DOMAIN}"
     DATAFED_PYTHON_CLIENT_ALLOW_SELF_SIGNED_CERTS: "TRUE"
   stage: end-to-end-test
+  dependencies:
+    - end-to-end-gcs-authz-setup
   needs: ["end-to-end-gcs-authz-setup"]
   tags:
     - ci-datafed-client
   script:
+    - export DATAFED_REPO_FORM_PATH="${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
     - env > env_file
     - echo "Testing"
     - ./scripts/generate_datafed.sh
