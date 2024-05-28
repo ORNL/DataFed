@@ -680,7 +680,7 @@ end_to_end_client-test:
   tags:
     - ci-datafed-client
   script:
-    - export DATAFED_REPO_FORM_PATH="${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
+    - export DATAFED_REPO_FORM_PATH="$(pwd)/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
     - env > env_file
     - echo "Testing"
     - ./scripts/generate_datafed.sh
