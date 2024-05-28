@@ -114,8 +114,10 @@ _opt_info = {
         "DATAFED_PYTHON_CLIENT_ALLOW_SELF_SIGNED_CERTS",
         _OPT_BOOL,
         ["--allow-self-signed-certs"],
-        ("Allows client download from DATAFED_DOMAIN if it is using self signed"
-        " certs, needed when testing."),
+        (
+            "Allows client download from DATAFED_DOMAIN if it is using self signed"
+            " certs, needed when testing."
+        ),
     ],
     "default_ep": [
         "general",
