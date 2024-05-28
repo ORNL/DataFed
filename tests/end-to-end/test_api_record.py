@@ -186,9 +186,9 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         status = task_result[0].task[0].status
         count = 0
         while status < 3:
-            if count > 20:
+            if count > 30:
                 break
-            time.sleep(1)
+            time.sleep(4)
             task_result = self._df_api.taskView(task_id)
             print("task Result **************")
             print(task_result)
