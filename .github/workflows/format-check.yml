@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install -y python3-sphinx sphinx-rtd-theme-common
-          pip install sphinx_rtd_theme recommonmark flake8 black pytest pytest-cov
+          pip install sphinx_rtd_theme recommonmark flake8 black pytest pytest-cov black[jupyter]
       - name: Black formatting checks
         run: black --check .
       - name: Lint with flake8
