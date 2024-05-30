@@ -24,6 +24,47 @@ export GLOBUS_CLIENT_ID=$(jq -r .client < /opt/datafed/globus/client_cred.json)
 export GLOBUS_CLIENT_SECRET=$(jq -r .secret < /opt/datafed/globus/client_cred.json)
 export DEPLOYMENT_KEY=$(cat "$DEPLOYMENT_KEY_PATH"  )
 
+if [ "$BUILD_WITH_METADATA_SERVICES" == "TRUE" ]
+then
+
+cat <<EOF >> /etc/apache2/sites-available/000-default.conf
+
+# vim: syntax=apache ts=4 sw=4 sts=4 sr noet
+# This block is needed if core web services are running on the same machine as
+# the GCS
+<VirtualHost *:443>
+		ServerName ${DATAFED_DOMAIN}
+ 
+    SSLEngine on
+    SSLCertificateFile /opt/datafed/keys/cert.crt
+    SSLCertificateKeyFile /opt/datafed/keys/cert.key
+ 
+    # SSL configuration
+    SSLProtocol TLSv1.2 TLSv1.3
+    SSLCipherSuite EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH
+    SSLHonorCipherOrder on
+ 
+    # Proxy settings
+    ProxyPass / https://localhost:8080/
+    ProxyPassReverse / https://localhost:8080/
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto "https"
+ 
+    # Additional proxy SSL settings
+    SSLProxyEngine on
+    SSLProxyVerify none
+    SSLProxyCheckPeerCN off
+    SSLProxyCheckPeerName off
+    SSLProxyCheckPeerExpire off
+ 
+    SSLProxyVerifyDepth 2
+    SSLProxyCACertificateFile /opt/datafed/keys/cert.crt
+
+</VirtualHost>
+
+EOF
+fi
+
 if [ -n "$UID" ]; then
     echo "Switching datafed user to UID: ${UID}"
     usermod -u $UID datafed
@@ -164,9 +205,22 @@ GCS_CLI_CLIENT_SECRET="$GCS_CLI_CLIENT_SECRET" \
 DATAFED_REPO_USER="$DATAFED_REPO_USER" \
   python3 "${BUILD_DIR}/scripts/globus/create_guest_collection.py"
 
-"${BUILD_DIR}/scripts/globus/generate_repo_form.sh"
+"${BUILD_DIR}/scripts/globus/generate_repo_form.sh" -j -s
+
+# Why is this approach being used? 
+# 
+# Wild card expansion with *form was not working from within the script.
+find /opt/datafed/authz/ -name '*form.json' -or -name '*form.sh' | while read -r file; do
+    if [ -e "$file" ]; then
+        echo "Moving $file to /opt/datafed/globus/"
+        mv "$file" /opt/datafed/globus/
+    else
+        echo "No matching files found for pattern: $file"
+    fi
+done
 
 echo "Container is running."
 
 # Return to last file
 tail -f "${DATAFED_DEFAULT_LOG_PATH}/datafed-gsi-authz.log"
+
