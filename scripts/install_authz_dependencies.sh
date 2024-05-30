@@ -10,7 +10,7 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("libtool" "build-essential" "g++" "gcc" "autoconf"
+packages=("host" "libtool" "build-essential" "g++" "gcc" "autoconf"
   "automake" "make" "git" "python3-pkg-resources" "python3-pip" "pkg-config"
   "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev" "python3-venv")
 pip_packages=("setuptools" "distro" "jwt" "globus_sdk")
