@@ -100,9 +100,7 @@ _hdr_lev_char = ["-", "-", "^", ","]
 # command input and display human-readable output.
 #
 def run():
-    global _output_mode_sticky
     global _output_mode
-    global _verbosity_sticky
     global _verbosity
     global _interactive
 
@@ -309,7 +307,6 @@ def command(command):
         raise Exception("command() called before init().")
 
     global _return_val
-    global _devnull
     global _output_mode_sticky
     global _output_mode
 
@@ -363,7 +360,7 @@ class _AliasedGroup(click.Group):
 
     # This is to work-around a help bug in click production code
     def resolve_command(self, ctx, args):
-        cmd_name, cmd, args = super().resolve_command(ctx, args)
+        _, cmd, args = super().resolve_command(ctx, args)
         return cmd.name, cmd, args
 
 
@@ -523,7 +520,6 @@ def _genDoc(ctx):
 
 
 def _genDocHeader(cmd, level):
-    global _hdr_lev_char
     ul = ""
     ul = ul.rjust(len(cmd), _hdr_lev_char[level])
 
@@ -1265,8 +1261,6 @@ def _list(ctx, item_id, offset, count, context):
     project); whereas the '~' path always lists the root collection of the
     authenticated user, regardless of context.
     """
-
-    global _cur_coll
 
     if item_id is None:
         _id = _cur_coll
@@ -2333,7 +2327,6 @@ _listing_requests = {
 # Interactive and verbosity-aware print
 def _print_msg(level, message, err=False):
     global _verbosity
-    global _interactive
     if _interactive and level <= _verbosity:
         click.echo(message, err=err)
 
@@ -2801,7 +2794,7 @@ def _wrap_text(text, prefix, indent, compact=False):
     if len(text) == 0:
         click.echo("{0:<{1}}{2:<50}".format(prefix, indent, "(none)"))
 
-    w, h = shutil.get_terminal_size((80, 20))
+    w, _ = shutil.get_terminal_size((80, 20))
     if len(prefix) < indent:
         prefix = prefix + " " * (indent - len(prefix))
 
@@ -2830,7 +2823,6 @@ def _wrap_text(text, prefix, indent, compact=False):
 def _resolve_id(df_id):
     try:
         if len(df_id) <= 3:
-            global _list_items
             if df_id.endswith("."):
                 df_idx = int(df_id[:-1])
             else:
@@ -3071,7 +3063,6 @@ def _initialize(opts):
     global _capi
     global _uid
     global _output_mode_sticky
-    global _output_mode
     global _verbosity_sticky
     global _verbosity
     global _interactive
@@ -3159,7 +3150,7 @@ def _initialize(opts):
 
 
 def _addConfigOptions():
-    for k, v in Config._opt_info.items():
+    for _, v in Config._opt_info.items():
         if not v[3] & Config._OPT_NO_CL:
             if v[3] & Config._OPT_HIDE:
                 hide = True
