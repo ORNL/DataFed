@@ -29,6 +29,7 @@
 10. [952] - Bug in globus cleanup python script fixed, was trying to use projects
     instead of the auth_client.
 11. [953] - Refactored docker compose build scripts to address technical debt.
+12. [956] - Adds improved error message, when paths of repo don't align.
 
 # v2023.10.23.15.50
 
