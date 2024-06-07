@@ -374,6 +374,7 @@ end-to-end-foxx-setup:
   tags:
     - docker
   script:
+    - sudo apt-get install jq -y
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - mkdir -p "$HOST_LOG_FILE_PATH"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
