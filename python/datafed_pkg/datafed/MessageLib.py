@@ -12,6 +12,7 @@
 
 
 import xmlrpc.client
+import re
 import zmq
 from . import Version_pb2
 from . import SDMS_Anon_pb2 as anon
@@ -19,13 +20,29 @@ from . import SDMS_Auth_pb2 as auth
 from . import Connection
 from . import VERSION
 
+# Function to check if a string contains any letters
+def contains_letters(s):
+    return bool(re.search('[a-zA-Z]', s))
 
-# Check with pypi if a newer release is available
-def get_latest_version(package_name):
+def remove_after_prefix_with_numbers(s):
+    # Use regular expression to match the prefix with numbers
+    match = re.match(r'(\d+.*?)(\D.*)', s)
+    if match:
+        return match.group(1)  # Return the part before the remaining string
+    return s  # If no match is found, return the original string
+
+# Check with pypi if a newer release is available, only look for stable
+# versions
+def get_latest_stable_version(package_name):
     try:
         client = xmlrpc.client.ServerProxy("https://pypi.org/pypi")
         releases = client.package_releases(package_name)
 
+        # Filter the list to remove entries that contain any letters, we don't
+        # want to look at entries that could be a pre-release of some sort and
+        # recommend that the user use for instance a beta version.
+        releases = [release for release in releases if not 
+                    contains_letters(release)]
         if not releases:
             return None
 
@@ -185,11 +202,14 @@ class API:
 
         # Make a request to pypi
         package_name = "datafed"  # Replace with the package name you want to check
-        latest_version_on_pypi = get_latest_version(package_name)
+        latest_version_on_pypi = get_latest_stable_version(package_name)
 
         if latest_version_on_pypi:
             pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split(".")
             major, minor, patch = VERSION.__version__.split(".")
+
+            # Remove prerelease part from patch
+            patch = remove_after_prefix_with_numbers(patch)
 
             if pypi_major != major or pypi_minor > minor or pypi_patch > patch:
                 self.new_client_avail = latest_version_on_pypi
