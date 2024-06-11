@@ -9,6 +9,7 @@ stages:
   - end-to-end-setup-arango
   - end-to-end-setup
   - end-to-end-test
+  - deploy-pypi-package
 
 # WARNING
 #
@@ -699,3 +700,21 @@ end_to_end_client-test:
     - cmake --build build
     - cmake --build build --target pydatafed
     - cmake --build build --target test
+
+deploy-pypi-package-test:
+  variables:
+    GIT_STRATEGY: clone
+    DATAFED_PYPI_REPO: "datafed-test"
+  stage: deploy-pypi-package
+  dependencies:
+    - end-to-end-gcs-authz-setup
+  needs: ["end_to_end_client-test"]
+  tags:
+    - docker
+  when: manual
+  script:
+    - export TWINE_CONFIG_FILE="$(pwd)/.pypirc"
+    - ./scripts/ci_generate_pypirc.sh
+    - python setup.py sdist bdist_wheel
+    - twine upload dist/*
+ 
