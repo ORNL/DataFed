@@ -136,8 +136,9 @@ then
 fi
 
 basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
-url="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
-code=$(curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
+url="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
+# Do not output to /dev/null we need the output
+code=$(curl -s  -w "%{http_code}" --user "$basic_auth" "$url")
 
 if [[ "$code" != "200" ]]; then
   echo "Error detected in attempting to connect to database at $url"
