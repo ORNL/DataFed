@@ -223,7 +223,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
   echo "$FOUND_API"
 
-  RESULT=$(curl -s http://128.219.184.45:8529/_db/sdms/api/0/version)
+  RESULT=$(curl -s http://128.219.184.45:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
   CODE=$(echo "${RESULT}" | jq '.code' )
   echo "Code is $CODE"
   if [ -z "${FOUND_API}" ]
