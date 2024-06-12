@@ -24,7 +24,7 @@ else
   local_DATAFED_PYPI_REPO_TOKEN=$(printenv DATAFED_PYPI_REPO_TOKEN)
 fi
 
-cat << EOF > "TWINE_CONFIG_FILE"
+cat << EOF > "$local_TWINE_CONFIG_FILE"
 [distutils]
   index-servers = pypi
 
