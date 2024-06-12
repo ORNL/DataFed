@@ -1,5 +1,9 @@
 #!/bin/bash
 
+SCRIPT=$(realpath "$0")
+SOURCE=$(dirname "$SCRIPT")
+PROJECT_ROOT=$(realpath ${SOURCE}/..)
+
 DATABASE_PORT="8529"
 DATAFED_DATABASE="sdms"
 RESPONSE=""
