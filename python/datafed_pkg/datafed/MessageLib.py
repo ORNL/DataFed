@@ -228,9 +228,13 @@ class API:
 
         if reply.api_major != Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR:
             error_msg = (
-                "Incompatible server api detected {}.{}.{} consider "
+                "Incompatible server api detected {}.{}.{}, you are running
+                {}.{}.{} consider "
                 "upgrading the datafed python client.".format(
-                    reply.api_major, reply.api_minor, reply.api_patch
+                    reply.api_major, reply.api_minor, reply.api_patch,
+                    Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR,
+                    Version_pb2.DATAFED_COMMON_PROTOCOL_API_MINOR,
+                    Version_pb2.DATAFED_COMMON_PROTOCOL_API_PATCH,
                 )
             )
             if self.new_client_avail:
@@ -239,7 +243,7 @@ class API:
                     f" a new version is available {latest_version_on_pypi} that"
                     " should be compatible with the API."
                 )
-            raise Exception()
+            raise Exception(error_msg)
 
         if client_token:
             self.manualAuthByToken(client_token)
