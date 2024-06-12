@@ -706,12 +706,28 @@ deploy-pypi-package-test:
     GIT_STRATEGY: clone
     DATAFED_PYPI_REPO: "datafed-test"
   stage: deploy-pypi-package
-  tags:
-    - docker
   when: manual
+  tags:
+    - ci-datafed-client
   script:
+    - env > env_file
+    - echo "Testing"
+    - ./scripts/generate_datafed.sh
+    - >
+      cmake -S. -B build
+      -DENABLE_FOXX_TESTS=OFF
+      -DBUILD_CORE_SERVER=OFF
+      -DBUILD_COMMON=OFF
+      -DBUILD_WEB_SERVER=OFF
+      -DBUILD_DOCS=OFF
+      -DBUILD_PYTHON_CLIENT=ON
+      -DBUILD_TESTS=OFF
+      -DENABLE_END_TO_END_TESTS=OFF
+      -DINSTALL_FOXX=OFF
+    - cmake --build build
+    - cmake --build build --target pydatafed
     - export TWINE_CONFIG_FILE="$(pwd)/.pypirc"
     - ./scripts/ci_generate_pypirc.sh
-    - python setup.py sdist bdist_wheel
+    - python3 setup.py sdist bdist_wheel
     - twine upload dist/*
  
