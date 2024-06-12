@@ -706,9 +706,6 @@ deploy-pypi-package-test:
     GIT_STRATEGY: clone
     DATAFED_PYPI_REPO: "datafed-test"
   stage: deploy-pypi-package
-  dependencies:
-    - end-to-end-gcs-authz-setup
-  needs: ["end_to_end_client-test"]
   tags:
     - docker
   when: manual
