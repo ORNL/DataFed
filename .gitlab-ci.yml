@@ -710,8 +710,18 @@ deploy-pypi-package-test:
   tags:
     - ci-datafed-client
   script:
+    - PYPI_VER=$(curl -s https://pypi.org/pypi/datafed-test/json | jq -r .info.version)
+    - echo "Latest version $PYPI_VER"
+    - RELEASE_IDENTIFIER="${PYPI_VER#*b}" 
+    - export RELEASE_IDENTIFIER=$((10#$RELEASE_IDENTIFIER + 1))
+    - echo "Incremented release identifier $RELEASE_IDENTIFIER"
+    - export TWINE_CONFIG_FILE="$(pwd)/.pypirc"
+    - ./scripts/ci_generate_pypirc.sh
     - env > env_file
     - echo "Testing"
+    - sed -i 's/^set(DATAFED_PYTHON_CLIENT_RELEASE_TYPE.*/set(DATAFED_PYTHON_CLIENT_RELEASE_TYPE "b")/' ./cmake/Version.cmake
+    - sed -i "s/^set(DATAFED_PYTHON_CLIENT_PRE_RELEASE_IDENTIFER.*/set(DATAFED_PYTHON_CLIENT_PRE_RELEASE_IDENTIFER \"$RELEASE_IDENTIFIER\")/" ./cmake/Version.cmake
+    - cat ./cmake/Version.cmake
     - ./scripts/generate_datafed.sh
     - >
       cmake -S. -B build
@@ -726,8 +736,6 @@ deploy-pypi-package-test:
       -DINSTALL_FOXX=OFF
     - cmake --build build
     - cmake --build build --target pydatafed
-    - export TWINE_CONFIG_FILE="$(pwd)/.pypirc"
-    - ./scripts/ci_generate_pypirc.sh
     - python3 setup.py sdist bdist_wheel
     - twine upload dist/*
  
