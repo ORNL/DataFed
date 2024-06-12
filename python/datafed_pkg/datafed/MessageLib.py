@@ -204,19 +204,22 @@ class API:
         package_name = "datafed"  # Replace with the package name you want to check
         latest_version_on_pypi = get_latest_stable_version(package_name)
 
+        self.new_client_avail = False
         if latest_version_on_pypi:
             pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split(".")
-            major, minor, patch = VERSION.__version__.split(".")
+            major, minor, patch_w_prerelease = VERSION.__version__.split(".")
 
             # Remove prerelease part from patch
-            patch = remove_after_prefix_with_numbers(patch)
+            patch = remove_after_prefix_with_numbers(patch_w_prerelease)
 
-            if pypi_major != major or pypi_minor > minor or pypi_patch > patch:
+            if pypi_major > major:
                 self.new_client_avail = latest_version_on_pypi
-            else:
-                self.new_client_avail = False
-        else:
-            self.new_client_avail = False
+            elif pypi_major == major:
+                if pypi_minor > minor:
+                    self.new_client_avail = latest_version_on_pypi
+                elif pypi_minor == minor:
+                    if pypi_patch > patch:
+                        self.new_client_avail = latest_version_on_pypi
 
         # Check for compatible protocol versions
         reply, mt = self.sendRecv(anon.VersionRequest(), 10000)
@@ -228,8 +231,8 @@ class API:
 
         if reply.api_major != Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR:
             error_msg = (
-                "Incompatible server api detected {}.{}.{}, you are running
-                {}.{}.{} consider "
+                "Incompatible server api detected {}.{}.{}, you are running "
+                "{}.{}.{} consider "
                 "upgrading the datafed python client.".format(
                     reply.api_major, reply.api_minor, reply.api_patch,
                     Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR,
