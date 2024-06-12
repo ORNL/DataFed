@@ -737,7 +737,7 @@ deploy-pypi-package-test:
       -DINSTALL_FOXX=OFF
     - cmake --build build
     - cmake --build build --target pydatafed
-    - python/datafed_pkg/
+    - cd python/datafed_pkg/
     - python3 setup.py sdist bdist_wheel
     - twine upload dist/*
  
