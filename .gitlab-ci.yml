@@ -714,6 +714,7 @@ deploy-pypi-package-test:
     - PYPI_VER=$(curl -s https://pypi.org/pypi/datafed-test/json | jq -r .info.version)
     - echo "Latest version $PYPI_VER"
     - RELEASE_IDENTIFIER="${PYPI_VER#*b}" 
+    - python3 -m pip install twine
     - export RELEASE_IDENTIFIER=$((10#$RELEASE_IDENTIFIER + 1))
     - echo "Incremented release identifier $RELEASE_IDENTIFIER"
     - export TWINE_CONFIG_FILE="$(pwd)/.pypirc"
