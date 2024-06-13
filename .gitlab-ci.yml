@@ -707,6 +707,7 @@ deploy-pypi-package-test:
     GIT_STRATEGY: clone
     DATAFED_PYPI_REPO: "datafed-test"
     DATAFED_PYPI_REPO_TOKEN: "$CI_DATAFED_PYPI_REPO_TOKEN_TEST"
+    DATAFED_DEPENDENCIES_INSTALL_PATH: "/shared/install"
   stage: deploy-pypi-package
   when: manual
   tags:
