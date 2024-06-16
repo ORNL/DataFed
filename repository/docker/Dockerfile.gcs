@@ -36,6 +36,9 @@ ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 # Value needed so tput command doesn't crash
 ENV                              TERM="xterm"
 ENV                    DATAFED_GCS_IP=""
+ENV      BUILD_WITH_METADATA_SERVICES="TRUE"
+ENV                    DATAFED_DOMAIN="localhost"
+ENV               DATAFED_REPO_DOMAIN="localhost"
 
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/logs
@@ -98,6 +101,7 @@ COPY --from=dependencies /usr/bin/as   /usr/bin/as
 COPY --from=dependencies /usr/bin/ld   /usr/bin/ld
 COPY --from=dependencies /usr/bin/jq   /usr/bin/jq
 COPY --from=dependencies /usr/bin/sudo /usr/bin/sudo
+COPY --from=dependencies /usr/bin/host /usr/bin/host
 
 COPY --from=dependencies /etc/sudoers /etc/sudoers
 
@@ -142,8 +146,6 @@ COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/r
 
 USER root
 
-COPY ./repository/docker/000-default.conf    /etc/apache2/sites-available/000-default.conf
-RUN chmod 644 /etc/apache2/sites-available/000-default.conf
 # Remove --client-id from command because it was deprecated
 RUN sed -i '/--client-id/d' /entrypoint.sh
 

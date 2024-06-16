@@ -11,6 +11,7 @@
 4. [912] - Adding working compose instance for core metadata services.
 5. [937] - Working metadata services running together as part of CI
 6. [946] - Added docker compose for DataFed Repository and for Metadata Services
+7. [955] - Adds repo pieces to CI with working end-to-end tests
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
@@ -27,8 +28,9 @@
    python.
 10. [952] - Bug in globus cleanup python script fixed, was trying to use projects
     instead of the auth_client.
-11. [953] - Refactored docker compose build scripts to address technical debt.
+11. [953] - Refactored docker compose build scripts to address technical debt
 12. [957] - Updated ArangoDB version used in compose file.
+13. [956] - Adds improved error message, when paths of repo don't align.
 
 # v2023.10.23.15.50
 

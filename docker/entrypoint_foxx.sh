@@ -15,15 +15,19 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../")
 
+# Why is this flag used, it is used because the same container is used for 
+# compose as is for operations and ci. If you have a compose dev environment
+# we may want to keep the existing state and not overwrite the database.
 install_flag="/tmp/.foxx_is_installed"
 if [ ! -f "$install_flag" ]
 then
+  echo "Installing foxx."
   log_path="$DATAFED_DEFAULT_LOG_PATH"
   if [ ! -d "${log_path}" ]
   then
     su -c "mkdir -p ${log_path}" datafed
   fi
-
+  
   # It should be fine to run this as root because it is an ephemeral container anyway
   cd "${PROJECT_ROOT}"
   # Check to see if foxx has previously been installed
@@ -49,7 +53,12 @@ then
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
   
   touch "$install_flag"
+  chown -R "$UID":"$UID" "/tmp"
+
+else
+  echo "/tmp/.foxx_is_installed has been found skipping reinstall"
 fi
 
+echo "Sleeping"
 sleep 1000
 

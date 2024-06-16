@@ -46,4 +46,6 @@ fi
 
 # Allow the container to exist for a bit in case we need to jump in and look 
 # around
+echo "Container sleeping"
 sleep 10000
+echo "Container exiting after sleep"

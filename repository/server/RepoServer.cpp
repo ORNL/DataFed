@@ -177,7 +177,10 @@ void Server::checkServerVersion() {
     if (response.time_out) {
       DL_ERROR(msg_log_context,
                "Timeout waiting for response from core server: "
-                   << m_config.core_server);
+                   << m_config.core_server
+                   << " NOTE: The core server will be unable to communicate "
+                   << "with the repo server until it has been registered and"
+                   << " its public key is known.");
     } else if (response.error) {
       DL_ERROR(msg_log_context, "Error encountered waiting for core server: "
                                     << m_config.core_server << " msg "
