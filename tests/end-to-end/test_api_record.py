@@ -63,7 +63,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             assert count < 3
 
         print("\nAttempt to login result\n")
-        
+
         path_to_repo_form = os.environ.get("DATAFED_REPO_FORM_PATH")
         if path_to_repo_form is None:
             self.fail("DATAFED_REPO_FORM_PATH env variable is not defined")
