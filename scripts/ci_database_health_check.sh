@@ -24,8 +24,7 @@ fi
 
 establish_connection() {
 
-  local
-  URL="http://${local_DATAFED_DATABASE_HOST}:${DATABASE_PORT}/_db/${DATAFED_DATABASE}/api/${local_FOXX_MAJOR_API_VERSION}/version"   
+  local URL="http://${local_DATAFED_DATABASE_HOST}:${DATABASE_PORT}/_db/${DATAFED_DATABASE}/api/${local_FOXX_MAJOR_API_VERSION}/version"   
   local CONNECTION="FALSE"
   local count=0
   local max_count=40
@@ -53,8 +52,7 @@ establish_connection() {
 
 foxx_provisioned() {
 
-  local
-  URL="http://${local_DATAFED_DATABASE_HOST}:${DATABASE_PORT}/_db/${DATAFED_DATABASE}/api/${local_FOXX_MAJOR_API_VERSION}/version"   
+  local URL="http://${local_DATAFED_DATABASE_HOST}:${DATABASE_PORT}/_db/${DATAFED_DATABASE}/api/${local_FOXX_MAJOR_API_VERSION}/version"   
   local FOXX_PROVISIONED="FALSE"
   local count=0
   local max_count=20
