@@ -20,6 +20,7 @@ stages:
 variables:
   HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry_2'
   REGISTRY: 'camden.ornl.gov'
+  DATAFED_HARBOR_REGISTRY: 'camden.ornl.gov'
   DATAFED_DEPENDENCIES_INSTALL_PATH: "/shared/install"
 ################################################################################
 # STAGE: ci-infrastructure-check
@@ -121,6 +122,7 @@ build-dependencies:
   variables:
     IMAGE_TAG: "datafed/dependencies"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_IMAGE_TAG: "$CI_COMMIT_SHA"
   tags:
     - docker
   script:
@@ -129,8 +131,16 @@ build-dependencies:
     - docker build -f docker/Dockerfile.dependencies -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - |
+      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+        echo "Artifact missing from harbor..."
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
+      done
 
 build-runtime:
   stage: build-base
@@ -145,8 +155,16 @@ build-runtime:
     - docker build -f docker/Dockerfile.runtime -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - |
+      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+        echo "Artifact missing from harbor..."
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
+      done
 
 #################################################################################
 ## STAGE: provision client
@@ -198,8 +216,16 @@ build-ws:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:$CI_COMMIT_SHA" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:$CI_COMMIT_SHA" -f web/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - |
+      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+        echo "Artifact missing from harbor..."
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
+      done
 
 build-core:
   needs: ["build-dependencies", "build-runtime"]
@@ -227,8 +253,16 @@ build-core:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:$CI_COMMIT_SHA" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:$CI_COMMIT_SHA" -f core/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - |
+      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+        echo "Artifact missing from harbor..."
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
+      done
 
 build-repo:
   needs: ["build-dependencies", "build-runtime"]
@@ -254,8 +288,16 @@ build-repo:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:$CI_COMMIT_SHA" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:$CI_COMMIT_SHA" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - |
+      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+        echo "Artifact missing from harbor..."
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
+      done
 
 build-gcs-base:
   needs: ["build-dependencies", "build-runtime"]
@@ -285,8 +327,16 @@ build-gcs-base:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - |
+      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+        echo "Artifact missing from harbor..."
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
+      done
 
 build-gcs:
   needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
@@ -315,8 +365,16 @@ build-gcs:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:$CI_COMMIT_SHA" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:$CI_COMMIT_SHA" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:$CI_COMMIT_SHA" -f repository/docker/Dockerfile.gcs -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - |
+      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+        echo "Artifact missing from harbor..."
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
+      done
 
 build-python-client-base:
   needs: ["clear-python-client-cache"]
@@ -333,9 +391,16 @@ build-python-client-base:
     - docker build -f python/docker/Dockerfile.python-client-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-
+    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - |
+      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+        echo "Artifact missing from harbor..."
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
+      done
 
 # Build foxx
 build-foxx:
@@ -361,9 +426,16 @@ build-foxx:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:$CI_COMMIT_SHA" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:$CI_COMMIT_SHA" -f docker/Dockerfile.foxx -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-
+    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - |
+      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+        echo "Artifact missing from harbor..."
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
+      done
 
 ################################################################################
 # STAGE: End to end setup arango
