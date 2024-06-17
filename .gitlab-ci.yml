@@ -133,7 +133,7 @@ build-dependencies:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - |
       while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
@@ -141,6 +141,7 @@ build-dependencies:
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
         sleep 5  # Optional: Add a sleep to avoid busy waiting
       done
+    - cat "./harbor_check.log"
 
 build-runtime:
   stage: build-base
@@ -158,7 +159,7 @@ build-runtime:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - |
       while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
@@ -166,6 +167,7 @@ build-runtime:
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
         sleep 5  # Optional: Add a sleep to avoid busy waiting
       done
+    - cat "./harbor_check.log"
 
 #################################################################################
 ## STAGE: provision client
@@ -220,7 +222,7 @@ build-ws:
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - |
       while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
@@ -258,7 +260,7 @@ build-core:
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - |
       while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
@@ -294,7 +296,7 @@ build-repo:
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - |
       while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
@@ -334,7 +336,7 @@ build-gcs-base:
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - |
       while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
@@ -373,7 +375,7 @@ build-gcs:
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - |
       while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
@@ -400,7 +402,7 @@ build-python-client-base:
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - |
       while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
@@ -436,7 +438,7 @@ build-foxx:
     - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
+    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - |
       while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
