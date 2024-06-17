@@ -75,8 +75,8 @@ then
 fi
 
 URL="$local_DATAFED_HARBOR_URL/api/v2.0/projects/$local_DATAFED_HARBOR_PROJECT/repositories/$local_DATAFED_HARBOR_REPOSITORY/artifacts"
-echo "URL" >> "$LOG_FILE"
-data=$(curl -u $local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD -s "$URL?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" )
+echo "$URL" >> "$LOG_FILE"
+data=$(curl -u $local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD -s "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" )
 error_code=$(echo $?)
 if [ "$error_code" != "0" ]
 then
@@ -92,5 +92,6 @@ then
 	fi
 fi
 number_of_artifacts=$(echo "$data" | jq ' . | length')
+echo "Number of artifacts found: $number_of_artifacts" >> "$LOG_FILE"
 
 echo "$number_of_artifacts"
