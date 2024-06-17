@@ -147,6 +147,7 @@ build-runtime:
   variables:
     IMAGE_TAG: "datafed/runtime"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_IMAGE_TAG: "$CI_COMMIT_SHA"
   tags:
     - docker
   script:
@@ -198,6 +199,7 @@ build-ws:
   variables:
     IMAGE_TAG: "datafed/ws"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_IMAGE_TAG: "$CI_COMMIT_SHA"
   tags:
     - ci-datafed-core
     - docker
@@ -233,6 +235,7 @@ build-core:
   variables:
     IMAGE_TAG: "datafed/core"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_IMAGE_TAG: "$CI_COMMIT_SHA"
   tags:
     - ci-datafed-core
     - docker
@@ -270,6 +273,7 @@ build-repo:
   variables:
     IMAGE_TAG: "datafed/repo"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_IMAGE_TAG: "$CI_COMMIT_SHA"
   tags:
     - ci-datafed-repo
     - docker
@@ -306,6 +310,7 @@ build-gcs-base:
     IMAGE_TAG: "datafed/gcs-base"
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_IMAGE_TAG: "$CI_COMMIT_SHA"
   tags:
     - ci-datafed-globus
     - docker
@@ -344,6 +349,7 @@ build-gcs:
   variables:
     IMAGE_TAG: "datafed/gcs"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_IMAGE_TAG: "$CI_COMMIT_SHA"
   tags:
     - ci-datafed-globus
     - docker
@@ -381,6 +387,7 @@ build-python-client-base:
   variables:
     IMAGE_TAG: "datafed/python-client-base"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_IMAGE_TAG: "$CI_COMMIT_SHA"
   stage: build
   tags:
     - docker
@@ -409,6 +416,7 @@ build-foxx:
   variables:
     IMAGE_TAG: "datafed/foxx"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_IMAGE_TAG: "$CI_COMMIT_SHA"
   tags:
     - docker
   rules:
