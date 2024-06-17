@@ -91,6 +91,14 @@ then
 		echo "cURL error code 1, generic error code detected, make sure the password username combination is correct." >> "$LOG_FILE"
 	fi
 fi
+
+# if it is an object, this is not the expected result because we expect an
+# array if successful interaction with the API
+is_obj=$(echo "$data" | jq 'type == "object"')
+if [ "$is_obj" == "true" ]
+then
+	echo "$data" | jq >> "$LOG_FILE"
+fi
 number_of_artifacts=$(echo "$data" | jq ' . | length')
 echo "Number of artifacts found: $number_of_artifacts" >> "$LOG_FILE"
 
