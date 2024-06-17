@@ -135,7 +135,7 @@ build-dependencies:
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
     - |
-      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -159,7 +159,7 @@ build-runtime:
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
     - |
-      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -220,7 +220,7 @@ build-ws:
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
     - |
-      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -257,7 +257,7 @@ build-core:
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
     - |
-      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -292,7 +292,7 @@ build-repo:
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
     - |
-      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -331,7 +331,7 @@ build-gcs-base:
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
     - |
-      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -369,7 +369,7 @@ build-gcs:
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
     - |
-      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -395,7 +395,7 @@ build-python-client-base:
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
     - |
-      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -430,7 +430,7 @@ build-foxx:
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="HARBOR_DATAFED_GITLAB_CI_REGISTRY"
     - |
-      while [ "$(./ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
         echo "Artifact missing from harbor..."
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
         docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
