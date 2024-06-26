@@ -140,30 +140,7 @@ public:
       EXCEPT(1, "Path to data item is not within the collection");
     }
 
-    /**
-     * TODO Separation of Concerns Repo vs Core services
-     *
-     * The following line is currenctly commented out because it will require
-     * some actual work and testing to get it working correctly.
-     *
-     * Ideally, when a DataFed repository is registered with the DataFed core
-     * services it should not need to know anything about the DataFed repository
-     * i.e. posix path to the actual collection. So when a user makes a request
-     * to do something on the DataFed managed endpoint the repo service should
-     * not need to send the full POSIX path back to the core service.
-     *
-     * This is not currently working but that is what the sanitized path should
-     * be.
-     * auto sanitized_path = local_path.substr(prefix.length());
-     *
-     * Changes will need to be made anywhere the path is used. And when a
-     * transfer document is created it should be provided with a path relative
-     * to the endpoint not to the absolute of the filesystem.
-     *
-     * Changes will also need to be made when entering information in the repo
-     * form if this is done.
-     **/
-    auto sanitized_path = local_path;
+    auto sanitized_path = local_path.substr(prefix.length());
     std::unique_ptr<SDMS::ICredentials> m_sec_ctx;
 
     std::unordered_map<CredentialType, std::string> cred_options;
