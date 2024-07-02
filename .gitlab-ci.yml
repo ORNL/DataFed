@@ -658,7 +658,7 @@ end-to-end-gcs-authz-setup:
       - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
       - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
 
-
+#This is where the web test will go
 end_to_end_client-test:
   variables:
     GIT_STRATEGY: clone
