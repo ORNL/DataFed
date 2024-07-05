@@ -9,10 +9,11 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../..)
 # Translate datafed env variables to globus env variables
 
-export DATAFED_GCS_COLLECTION_ROOT_PATH=/mnt/datafed
-# This env variables are needed for running globus-connect-server without
-# logging in
+# Do not set DATAFED_GCS_COLLECTION_ROOT_PATH here, it should be defined in 
+# the Dockerfile as an env variable
 
+# The env variables below are needed for running globus-connect-server without
+# interactively logging in
 export GCS_CLI_CLIENT_ID=$(jq -r .client < /opt/datafed/globus/client_cred.json)
 export GCS_CLI_CLIENT_SECRET=$(jq -r .secret < /opt/datafed/globus/client_cred.json)
 export GCS_CLI_ENDPOINT_ID=$(jq -r .client_id < /opt/datafed/globus/deployment-key.json)
