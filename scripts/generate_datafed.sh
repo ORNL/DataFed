@@ -198,6 +198,14 @@ else
   local_DATAFED_GLOBUS_ALLOWED_DOMAINS=$(printenv DATAFED_GLOBUS_ALLOWED_DOMAINS)
 fi
 
+if [ -z "${DATAFED_GLOBUS_SUBSCRIPTION}" ]
+then
+  # For compose will set by default to run on a port other than 443 because 
+  # the core metadata services use 443 for the web server
+  local_DATAFED_GLOBUS_SUBSCRIPTION=""
+else
+  local_DATAFED_GLOBUS_SUBSCRIPTION=$(printenv DATAFED_GLOBUS_SUBSCRIPTION)
+fi
 
 if [ ! -d "$PATH_TO_CONFIG_DIR" ]
 then
@@ -343,4 +351,6 @@ export DATAFED_GLOBUS_ALLOWED_DOMAINS="$local_DATAFED_GLOBUS_ALLOWED_DOMAINS"
 # Globus control port default is 443, might want to change if hosting
 # a web server on the same machine.
 export DATAFED_GLOBUS_CONTROL_PORT="$local_DATAFED_GLOBUS_CONTROL_PORT"
+# Globus subscription ID
+export DATAFED_GLOBUS_SUBSCRIPTION="${local_DATAFED_GLOBUS_SUBSCRIPTION}"
 EOF
