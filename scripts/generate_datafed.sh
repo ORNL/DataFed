@@ -49,6 +49,16 @@ else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
+local_DATAFED_DATABASE_HOST=""
+if [[ -z "$DATAFED_DATABASE_HOST" ]]
+then
+  # Empty
+  local_DATAFED_DATABASE_HOST="localhost"
+else
+  local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
+fi
+
+
 local_DATAFED_ZEROMQ_SESSION_SECRET=""
 if [ -z "${DATAFED_ZEROMQ_SESSION_SECRET}" ]
 then
@@ -246,6 +256,9 @@ export DATAFED_DOMAIN="$local_DATAFED_DOMAIN"
 # Env Variables for Core Server
 # ************************************************
 export DATAFED_DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
+# Host of the metadata database, can be a domain name
+# or an IP address.
+export DATAFED_DATABASE_HOST="$local_DATAFED_DATABASE_HOST"
 # The user account the datafed core application will run under
 export DATAFED_CORE_USER="$local_DATAFED_CORE_USER"
 
