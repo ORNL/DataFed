@@ -11,26 +11,25 @@ export function show( a_mode, a_ids, a_cb ) {
     var rec_lab = a_mode == model.TT_DATA_GET?"Source":"Destination";
     var rec_tree;
 
-    frame.html( "<div class='ui-widget' style='height:95%'>" +
-        rec_lab + ": <span id='title'></span><br>\
-        <div class='col-flex' style='height:100%'>\
-        <div id='records' class='ui-widget ui-widget-content' style='flex: 1 1 auto;display:none;height:6em;overflow:auto'></div>\
-        <div style='flex:none'><br>" + ep_lab + " Endpoint:<br>\
-        <select id='matches' disabled><option disabled selected>No Matches</option></select><br>\
-        <div style='padding:.25em 2em'>\
-        <button class='btn small' id='refresh'>Refresh</button>&nbsp<button class='btn small' id='activate' disabled>(re)Activate</button>&nbsp<button class='btn small' id='browse' style='margin:0' disabled>Browse</button></div><br>" +
-        ep_lab + " Path:<br>\
-        <textarea class='ui-widget-content' id='path' rows=3 style='width:100%;resize:none'></textarea><br>\
-        <br>Transfer Encryption:&nbsp\
-        <input type='radio' id='encrypt_none' name='encrypt_mode' value='0'>\
-        <label for='encrypt_none'>None</label>&nbsp\
-        <input type='radio' id='encrypt_avail' name='encrypt_mode' value='1' checked/>\
-        <label for='encrypt_avail'>If Available</label>&nbsp\
-        <input type='radio' id='encrypt_req' name='encrypt_mode' value='2'/>\
-        <label for='encrypt_req'>Required</label>\
-        <br>" +
-        (a_mode == model.TT_DATA_PUT?"<br>File extension override: <input id='ext' type='text'></input><br>":"") +
-        (a_mode == model.TT_DATA_GET?"<br><label for='orig_fname'>Download to original filename(s)</label><input id='orig_fname' type='checkbox'></input>":"") +
+    frame.html("<div class='ui-widget' style='height:95%'>" +
+        rec_lab + ": <span id='title'></span><br>" +
+        "<div class='col-flex' style='height:100%'>" +
+        "<div id='records' class='ui-widget ui-widget-content' style='flex: 1 1 auto;display:none;height:6em;overflow:auto'></div>" +
+        "<div style='flex:none'><br>" + 
+        ep_lab + " Path:<br>" +
+        "<textarea class='ui-widget-content' id='path' rows=3 style='width:100%;resize:none'></textarea><br>" +
+        "<select id='matches' disabled;'><option disabled selected>No Matches</option></select><br>" + 
+        "<div style='padding:.25em 2em'>" +
+        //"<button class='btn small' id='refresh'>Refresh</button>&nbsp<button class='btn small' id='activate' disabled>(re)Activate</button>&nbsp<button class='btn small' id='browse' style='margin:0' disabled>Browse</button></div>" +
+        "<br>Transfer Encryption:&nbsp" +
+        "<input type='radio' id='encrypt_none' name='encrypt_mode' value='0'>" +
+        "<label for='encrypt_none'>None</label>&nbsp" +
+        "<input type='radio' id='encrypt_avail' name='encrypt_mode' value='1' checked/>" +
+        "<label for='encrypt_avail'>If Available</label>&nbsp" +
+        "<input type='radio' id='encrypt_req' name='encrypt_mode' value='2'/>" +
+        "<label for='encrypt_req'>Required</label><br>" +
+        (a_mode == model.TT_DATA_PUT ? "<br>File extension override: <input id='ext' type='text'></input><br>" : "") +
+        (a_mode == model.TT_DATA_GET ? "<br><label for='orig_fname'>Download to original filename(s)</label><input id='orig_fname' type='checkbox'></input>" : "") +
         "</div></div></div>");
 
     var dlg_title = (a_mode == model.TT_DATA_GET?"Download Raw Data":"Upload Raw Data");
