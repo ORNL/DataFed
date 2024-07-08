@@ -278,7 +278,13 @@ build-gcs-base:
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
 build-gcs:
-  needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
+  needs:
+    - job: "build-dependencies"
+      optional: true
+    - job: "build-runtime"
+      optional: true
+    - job: "build-gcs-base"
+      optional: true
   stage: build
   variables:
     IMAGE_TAG: "datafed/gcs"
