@@ -62,9 +62,9 @@ web/package-lock.json
 web/static/datafed-core-key.pub
 *.swp
 *.swo
-tests/end-to-end/playwright_tests/node_modules/
-tests/end-to-end/playwright_tests/test-results/
-tests/end-to-end/playwright_tests/playwright-report/
-tests/end-to-end/playwright_tests/blob-report/
-tests/end-to-end/playwright_tests/playwright/.cache/
-tests/end-to-end/playwright_tests/tests-examples
+tests/end-to-end/web-UI/node_modules/
+tests/end-to-end/web-UI/test-results/
+tests/end-to-end/web-UI/playwright-report/
+tests/end-to-end/web-UI/blob-report/
+tests/end-to-end/web-UI/playwright/.cache/
+tests/end-to-end/web-UI/tests-examples
