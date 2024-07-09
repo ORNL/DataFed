@@ -67,3 +67,4 @@ tests/end-to-end/playwright_tests/test-results/
 tests/end-to-end/playwright_tests/playwright-report/
 tests/end-to-end/playwright_tests/blob-report/
 tests/end-to-end/playwright_tests/playwright/.cache/
+tests/end-to-end/playwright_tests/tests-examples
