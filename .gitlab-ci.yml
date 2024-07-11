@@ -300,7 +300,7 @@ check-gcs-base-image:
     reports:
       dotenv: build.env
 
- check-gcs-image:
+check-gcs-image:
   stage: image-check
   variables:
     IMAGE_TAG: "datafed/gcs"
@@ -324,7 +324,6 @@ check-gcs-base-image:
       echo "REGISTRY=${REGISTRY}" >> build.env
       echo "HARBOR_USER=${HARBOR_USER}" >> build.env
       echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
-      echo "DATAFED_GCS_SUBMODULE_VERSION=${DATAFED_GCS_SUBMODULE_VERSION}" >> build.env
       sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
   artifacts:
     paths:
