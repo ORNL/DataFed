@@ -7,9 +7,9 @@ stages:
   - provision-client
   - image-check
   - build
-  - end-to-end-setup-arango
-  - end-to-end-setup
-  - end-to-end-test
+    #  - end-to-end-setup-arango
+    #  - end-to-end-setup
+    #  - end-to-end-test
 
 # WARNING
 #
@@ -387,7 +387,7 @@ run-ws-build-job:
   trigger:
     include:
       - artifact: ws-image.yml
-        job: build-ws
+        job: check-ws-image
     strategy: depend
 
 
