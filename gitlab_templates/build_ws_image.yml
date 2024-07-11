@@ -18,7 +18,6 @@ build-ws:
         - .gitlab-ci.yml
       when: on_success
   script:
-    - env
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
