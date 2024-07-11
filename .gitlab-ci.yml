@@ -395,6 +395,9 @@ run-ws-build-job:
       artifacts: true
   stage: build
   trigger:
+    include:
+      - artifact: ws_image.yml
+        job: check-ws-image
     strategy: depend
   variables:
     REGISTRY: "${REGISTRY}"
