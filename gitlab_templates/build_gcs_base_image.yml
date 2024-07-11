@@ -28,3 +28,12 @@ build-gcs-base:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+
+# Prevents downstream pipeline from being empty and triggering a failure
+placeholder:
+  stage: build
+  tags:
+    - docker
+  script:
+    - echo "placeholder"
+ 
