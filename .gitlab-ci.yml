@@ -199,6 +199,7 @@ check-ws-image:
       echo "REGISTRY=${REGISTRY}" >> build.env
       echo "HARBOR_USER=${HARBOR_USER}" >> build.env
       echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+      cat build.env
   artifacts:
     paths:
       - ws_image.yml 
