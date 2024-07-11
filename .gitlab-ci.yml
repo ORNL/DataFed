@@ -268,32 +268,6 @@ check-repo-image:
     reports:
       dotenv: build.env
 
-
-        #build-repo:
-        #  needs: ["build-dependencies", "build-runtime"]
-        #  stage: build
-        #  variables:
-        #    IMAGE_TAG: "datafed/repo"
-        #    GIT_STRATEGY: clone
-        #  tags:
-        #    - ci-datafed-repo
-        #    - docker
-        #  rules:
-        #    - changes:
-        #        - docker/**/*
-        #        - scripts/**/*
-        #        - web/**/*
-        #        - common/proto/**/*
-        #        - .gitlab-ci.yml
-        #      when: on_success
-        #  script:
-        #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-        #    - echo "$BRANCH_LOWER"
-        #    - ./scripts/generate_datafed.sh
-        #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-        #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-        #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-        #
         #build-gcs-base:
         #  needs: ["build-dependencies", "build-runtime"]
         #  stage: build
@@ -449,32 +423,6 @@ run-repo-build-job:
     HARBOR_USER: "${HARBOR_USER}"
     HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 
-
-      #build-repo:
-      #  needs: ["build-dependencies", "build-runtime"]
-      #  stage: build
-      #  variables:
-      #    IMAGE_TAG: "datafed/repo"
-      #    GIT_STRATEGY: clone
-      #  tags:
-      #    - ci-datafed-repo
-      #    - docker
-      #  rules:
-      #    - changes:
-      #        - docker/**/*
-      #        - scripts/**/*
-      #        - web/**/*
-      #        - common/proto/**/*
-      #        - .gitlab-ci.yml
-      #      when: on_success
-      #  script:
-      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      #    - echo "$BRANCH_LOWER"
-      #    - ./scripts/generate_datafed.sh
-      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-      #
       #build-gcs-base:
       #  needs: ["build-dependencies", "build-runtime"]
       #  stage: build
