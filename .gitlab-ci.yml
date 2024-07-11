@@ -383,6 +383,7 @@ check-ws-image:
 ################################################################################
 # Building containers for running services
 run-ws-build-job:
+  needs: ["build-dependencies", "build-runtime", "check-ws-image"]
   stage: build
   trigger:
     include:
