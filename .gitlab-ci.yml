@@ -331,34 +331,37 @@ check-gcs-image:
     reports:
       dotenv: build.env
 
-        #build-gcs:
-        #  needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
-        #  stage: build
-        #  variables:
-        #    IMAGE_TAG: "datafed/gcs"
-        #    GIT_STRATEGY: clone
-        #  tags:
-        #    - ci-datafed-globus
-        #    - docker
-        #  rules:
-        #    - changes:
-        #        - docker/**/*
-        #        - scripts/**/*
-        #        - common/**/*
-        #        - .gitlab-ci.yml
-        #        - CMakeLists.txt
-        #        - cmake/**/*
-        #        - repository/docker/entrypoint_authz.sh
-        #        - repository/docker/Dockerfile.gcs
-        #      when: on_success
-        #  script:
-        #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-        #    - echo "$BRANCH_LOWER"
-        #    - ./scripts/generate_datafed.sh
-        #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-        #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-        #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-        #
+check-foxx-image:
+  stage: image-check
+  variables:
+    IMAGE_TAG: "datafed/foxx"
+  tags:
+    - docker
+  script:
+    - |
+      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      FORCE_BUILD_FOXX="FALSE"
+      set +e
+      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_FOXX="TRUE"; fi;
+      set -e
+      if [ "$FORCE_BUILD_FOXX" == "TRUE" ]
+      then
+        cp gitlab_templates/force_build_foxx_image.yml foxx_image.yml
+      else
+        cp gitlab_templates/build_foxx_image.yml foxx_image.yml
+      fi
+      echo "REGISTRY=${REGISTRY}" >> build.env
+      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+  artifacts:
+    paths:
+      - foxx_image.yml 
+    reports:
+      dotenv: build.env
+
         #build-python-client-base:
         #  needs: ["clear-python-client-cache"]
         #  variables:
@@ -377,30 +380,6 @@ check-gcs-image:
         #
         #
         ## Build foxx
-        #build-foxx:
-        #  needs: ["build-dependencies", "build-runtime"]
-        #  stage: build
-        #  variables:
-        #    IMAGE_TAG: "datafed/foxx"
-        #    GIT_STRATEGY: clone
-        #  tags:
-        #    - docker
-        #  rules:
-        #    - changes:
-        #        - docker/**/*
-        #        - scripts/**/*
-        #        - web/**/*
-        #        - common/proto/**/*
-        #        - .gitlab-ci.yml
-        #      when: on_success
-        #  script:
-        #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-        #    - echo "$BRANCH_LOWER"
-        #    - ./scripts/generate_datafed.sh
-        #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-        #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f docker/Dockerfile.foxx -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-        #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-
 
 ################################################################################
 # STAGE: build
@@ -493,35 +472,25 @@ run-gcs-build-job:
     HARBOR_USER: "${HARBOR_USER}"
     HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 
+run-foxx-build-job:
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: check-foxx-image
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: foxx_image.yml
+        job: check-foxx-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 
-      #build-gcs:
-      #  needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
-      #  stage: build
-      #  variables:
-      #    IMAGE_TAG: "datafed/gcs"
-      #    GIT_STRATEGY: clone
-      #  tags:
-      #    - ci-datafed-globus
-      #    - docker
-      #  rules:
-      #    - changes:
-      #        - docker/**/*
-      #        - scripts/**/*
-      #        - common/**/*
-      #        - .gitlab-ci.yml
-      #        - CMakeLists.txt
-      #        - cmake/**/*
-      #        - repository/docker/entrypoint_authz.sh
-      #        - repository/docker/Dockerfile.gcs
-      #      when: on_success
-      #  script:
-      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      #    - echo "$BRANCH_LOWER"
-      #    - ./scripts/generate_datafed.sh
-      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-      #
+
+
       #build-python-client-base:
       #  needs: ["clear-python-client-cache"]
       #  variables:
@@ -537,34 +506,7 @@ run-gcs-build-job:
       #    - docker build -f python/docker/Dockerfile.python-client-base.ubuntu -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
       #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
       #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      #
-      #
-      ## Build foxx
-      #build-foxx:
-      #  needs: ["build-dependencies", "build-runtime"]
-      #  stage: build
-      #  variables:
-      #    IMAGE_TAG: "datafed/foxx"
-      #    GIT_STRATEGY: clone
-      #  tags:
-      #    - docker
-      #  rules:
-      #    - changes:
-      #        - docker/**/*
-      #        - scripts/**/*
-      #        - web/**/*
-      #        - common/proto/**/*
-      #        - .gitlab-ci.yml
-      #      when: on_success
-      #  script:
-      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      #    - echo "$BRANCH_LOWER"
-      #    - ./scripts/generate_datafed.sh
-      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f docker/Dockerfile.foxx -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-      #
-      #
+
       #################################################################################
       ## STAGE: End to end setup arango
       #################################################################################
