@@ -216,12 +216,12 @@ check-core-image:
     - |
       BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
       docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      FORCE_BUILD_WS="FALSE"
+      FORCE_BUILD_CORE="FALSE"
       set +e
       docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_WS="TRUE"; fi;
+      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_CORE="TRUE"; fi;
       set -e
-      if [ "$FORCE_BUILD_WS" == "TRUE" ]
+      if [ "$FORCE_BUILD_CORE" == "TRUE" ]
       then
         cp gitlab_templates/force_build_core_image.yml core_image.yml
       else
@@ -234,6 +234,37 @@ check-core-image:
   artifacts:
     paths:
       - core_image.yml 
+    reports:
+      dotenv: build.env
+
+check-repo-image:
+  stage: image-check
+  variables:
+    IMAGE_TAG: "datafed/repo"
+  tags:
+    - docker
+  script:
+    - |
+      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      FORCE_BUILD_REPO="FALSE"
+      set +e
+      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_REPO="TRUE"; fi;
+      set -e
+      if [ "$FORCE_BUILD_REPO" == "TRUE" ]
+      then
+        cp gitlab_templates/force_build_repo_image.yml repo_image.yml
+      else
+        cp gitlab_templates/build_repo_image.yml repo_image.yml
+      fi
+      echo "REGISTRY=${REGISTRY}" >> build.env
+      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+  artifacts:
+    paths:
+      - repo_image.yml 
     reports:
       dotenv: build.env
 
@@ -400,6 +431,24 @@ run-core-build-job:
     REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
     HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+
+run-repo-build-job:
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: check-repo-image
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: repo_image.yml
+        job: check-repo-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+
 
       #build-repo:
       #  needs: ["build-dependencies", "build-runtime"]
