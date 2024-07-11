@@ -196,9 +196,9 @@ check-ws-image:
       else
         cp gitlab_templates/build_ws_image.yml ws_image.yml
       fi
-      echo "${REGISTRY}" >> build.env
-      echo "${HARBOR_USER}" >> build.env
-      echo "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+      echo "REGISTRY=${REGISTRY}" >> build.env
+      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
   artifacts:
     paths:
       - ws_image.yml 
