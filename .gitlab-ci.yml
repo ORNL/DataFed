@@ -300,35 +300,38 @@ check-gcs-base-image:
     reports:
       dotenv: build.env
 
-        #build-gcs-base:
-        #  needs: ["build-dependencies", "build-runtime"]
-        #  stage: build
-        #  variables:
-        #    IMAGE_TAG: "datafed/gcs-base"
-        #    GIT_SUBMODULE_STRATEGY: recursive
-        #    GIT_STRATEGY: clone
-        #  tags:
-        #    - ci-datafed-globus
-        #    - docker
-        #  rules:
-        #    - changes:
-        #        - docker/**/*
-        #        - scripts/**/*
-        #        - common/**/*
-        #        - .gitlab-ci.yml
-        #        - CMakeLists.txt
-        #        - cmake/**/*
-        #      when: on_success
-        #  script:
-        #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-        #    - echo "$BRANCH_LOWER"
-        #    - source "scripts/dependency_versions.sh"
-        #    - cd "external/globus-connect-server-deploy/docker"
-        #    - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
-        #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-        #    - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
-        #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-        #
+ check-gcs-image:
+  stage: image-check
+  variables:
+    IMAGE_TAG: "datafed/gcs"
+  tags:
+    - docker
+  script:
+    - |
+      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      FORCE_BUILD_GCS="FALSE"
+      set +e
+      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_GCS="TRUE"; fi;
+      set -e
+      if [ "$FORCE_BUILD_GCS" == "TRUE" ]
+      then
+        cp gitlab_templates/force_build_gcs_image.yml gcs_image.yml
+      else
+        cp gitlab_templates/build_gcs_image.yml gcs_image.yml
+      fi
+      echo "REGISTRY=${REGISTRY}" >> build.env
+      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+      echo "DATAFED_GCS_SUBMODULE_VERSION=${DATAFED_GCS_SUBMODULE_VERSION}" >> build.env
+      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+  artifacts:
+    paths:
+      - gcs_image.yml 
+    reports:
+      dotenv: build.env
+
         #build-gcs:
         #  needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
         #  stage: build
@@ -473,35 +476,25 @@ run-gcs-base-build-job:
     HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     DATAFED_GCS_SUBMODULE_VERSION: "${DATAFED_GCS_SUBMODULE_VERSION}"
 
-      #build-gcs-base:
-      #  needs: ["build-dependencies", "build-runtime"]
-      #  stage: build
-      #  variables:
-      #    IMAGE_TAG: "datafed/gcs-base"
-      #    GIT_SUBMODULE_STRATEGY: recursive
-      #    GIT_STRATEGY: clone
-      #  tags:
-      #    - ci-datafed-globus
-      #    - docker
-      #  rules:
-      #    - changes:
-      #        - docker/**/*
-      #        - scripts/**/*
-      #        - common/**/*
-      #        - .gitlab-ci.yml
-      #        - CMakeLists.txt
-      #        - cmake/**/*
-      #      when: on_success
-      #  script:
-      #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      #    - echo "$BRANCH_LOWER"
-      #    - source "scripts/dependency_versions.sh"
-      #    - cd "external/globus-connect-server-deploy/docker"
-      #    - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
-      #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      #    - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
-      #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
-      #
+run-gcs-build-job:
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: run-gcs-base-build-job
+    - job: check-gcs-image
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: gcs_image.yml
+        job: check-gcs-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+
+
       #build-gcs:
       #  needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
       #  stage: build
