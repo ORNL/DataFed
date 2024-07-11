@@ -383,10 +383,10 @@ check-ws-image:
 ################################################################################
 # Building containers for running services
 run-ws-build-job:
-  stage: trigger-infrastructure
+  stage: build
   trigger:
     include:
-      - artifact: ws-image.yml
+      - artifact: ws_image.yml
         job: check-ws-image
     strategy: depend
 
