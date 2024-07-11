@@ -196,9 +196,14 @@ check-ws-image:
       else
         cp gitlab_templates/build_ws_image.yml ws_image.yml
       fi
+      echo "${REGISTRY}" >> build.env
+      echo "${HARBOR_USER}" >> build.env
+      echo "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
   artifacts:
     paths:
       - ws_image.yml 
+    reports:
+      dotenv: build.env
 
         #
         #build-ws:
@@ -383,12 +388,13 @@ check-ws-image:
 ################################################################################
 # Building containers for running services
 run-ws-build-job:
-  needs: ["build-dependencies", "build-runtime", "check-ws-image"]
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: check-ws-image
+      artifacts: true
   stage: build
   trigger:
-    include:
-      - artifact: ws_image.yml
-        job: check-ws-image
     strategy: depend
   variables:
     REGISTRY: "${REGISTRY}"
