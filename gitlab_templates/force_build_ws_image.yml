@@ -4,7 +4,6 @@ stages:
 # The only difference between this file and the build_ws_image.yml is that
 # it does not have a rules section
 build-ws:
-  needs: ["build-dependencies", "build-runtime", "check-ws-image"]
   stage: build
   variables:
     IMAGE_TAG: "datafed/ws"

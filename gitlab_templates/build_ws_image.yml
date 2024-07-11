@@ -2,7 +2,6 @@ stages:
   - build
 
 build-ws:
-  needs: ["build-dependencies", "build-runtime", "check-ws-image"]
   stage: build
   variables:
     IMAGE_TAG: "datafed/ws"
