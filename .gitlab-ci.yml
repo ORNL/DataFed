@@ -268,6 +268,38 @@ check-repo-image:
     reports:
       dotenv: build.env
 
+check-gcs-base-image:
+  stage: image-check
+  variables:
+    IMAGE_TAG: "datafed/gcs-base"
+  tags:
+    - docker
+  script:
+    - |
+      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      FORCE_BUILD_GCS_BASE="FALSE"
+      set +e
+      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_GCS_BASE="TRUE"; fi;
+      set -e
+      if [ "$FORCE_BUILD_GCS_BASE" == "TRUE" ]
+      then
+        cp gitlab_templates/force_build_gcs_base_image.yml gcs_base_image.yml
+      else
+        cp gitlab_templates/build_gcs_base_image.yml gcs_base_image.yml
+      fi
+      echo "REGISTRY=${REGISTRY}" >> build.env
+      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+      echo "DATAFED_GCS_SUBMODULE_VERSION=${DATAFED_GCS_SUBMODULE_VERSION}" >> build.env
+      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+  artifacts:
+    paths:
+      - gcs_base_image.yml 
+    reports:
+      dotenv: build.env
+
         #build-gcs-base:
         #  needs: ["build-dependencies", "build-runtime"]
         #  stage: build
@@ -422,6 +454,24 @@ run-repo-build-job:
     REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
     HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+
+run-gcs-base-build-job:
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: check-gcs-base-image
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: gcs_base_image.yml
+        job: check-gcs-base-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    DATAFED_GCS_SUBMODULE_VERSION: "${DATAFED_GCS_SUBMODULE_VERSION}"
 
       #build-gcs-base:
       #  needs: ["build-dependencies", "build-runtime"]
