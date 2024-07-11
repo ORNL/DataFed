@@ -391,7 +391,7 @@ run-ws-build-job:
         job: check-ws-image
     strategy: depend
   variables:
-    REGISTRY: "$REGISTRY"
+    REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
     HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 

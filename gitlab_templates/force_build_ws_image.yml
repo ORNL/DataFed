@@ -12,6 +12,7 @@ build-ws:
     - ci-datafed-core
     - docker
   script:
+    - env
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
