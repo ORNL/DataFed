@@ -1,31 +1,23 @@
 ---
+include:
+  - local: .gitlab/common.yml
 
 build-dependencies:
+  extends: .docker_base_build_script
   stage: build-base
   variables:
     IMAGE_TAG: "datafed/dependencies"
     GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "docker/Dockerfile.dependencies"
   tags:
     - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker system prune -f
-    - docker build -f docker/Dockerfile.dependencies -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-runtime:
+  extends: .docker_base_build_script
   stage: build-base
   variables:
     IMAGE_TAG: "datafed/runtime"
     GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "docker/Dockerfile.runtime"
   tags:
     - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker system prune -f
-    - docker build -f docker/Dockerfile.runtime -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-
-

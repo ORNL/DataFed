@@ -1,5 +1,13 @@
 ---
 
+.docker_base_build_script:
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - docker system prune -f
+    - docker build -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+
 .docker_build_script:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
