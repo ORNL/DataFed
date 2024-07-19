@@ -20,7 +20,7 @@ run-core-build-job:
   needs:
     - job: build-runtime
     - job: check-core-image
-    #    - job: build-dependencies
+    - job: build-dependencies
       artifacts: true
   stage: build
   trigger:
