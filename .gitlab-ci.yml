@@ -1,6 +1,7 @@
 
 include:
   - local: .gitlab/stage_build_base.yml
+  - local: .gitlab/stage_build.yml
 
 stages:
   - ci-infrastructure-check
@@ -389,8 +390,7 @@ check-core-image:
 # STAGE: build
 ################################################################################
 # Building containers for running services
-include:
-  - local: .gitlab/stage_build.yml
+#include:
 #run-ws-build-job:
 #  needs:
 #    - job: build-dependencies
