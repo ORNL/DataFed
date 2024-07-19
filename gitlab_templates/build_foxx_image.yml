@@ -24,11 +24,11 @@ build-foxx:
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f docker/Dockerfile.foxx -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
 
-# Prevents downstream pipeline from being empty and triggering a failure
-placeholder:
-  stage: build
-  tags:
-    - docker
-  script:
-    - echo "placeholder"
+      ## Prevents downstream pipeline from being empty and triggering a failure
+      #placeholder:
+      #  stage: build
+      #  tags:
+      #    - docker
+      #  script:
+      #    - echo "placeholder"
  

@@ -58,7 +58,7 @@ run-trigger-job:
     include:
       - artifact: ci_infrastructure.yml
         job: check-ci-infrastructure
-    strategy: depend
+    strategy: mirror
   resource_group: infrastructure_build
 
 ################################################################################
@@ -396,7 +396,7 @@ run-ws-build-job:
     include:
       - artifact: ws_image.yml
         job: check-ws-image
-    strategy: depend
+    strategy: mirror
   variables:
     REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
@@ -413,7 +413,7 @@ run-core-build-job:
     include:
       - artifact: core_image.yml
         job: check-core-image
-    strategy: depend
+    strategy: mirror
   variables:
     REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
@@ -430,7 +430,7 @@ run-repo-build-job:
     include:
       - artifact: repo_image.yml
         job: check-repo-image
-    strategy: depend
+    strategy: mirror
   variables:
     REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
@@ -447,7 +447,7 @@ run-gcs-base-build-job:
     include:
       - artifact: gcs_base_image.yml
         job: check-gcs-base-image
-    strategy: depend
+    strategy: mirror
   variables:
     REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
@@ -466,7 +466,7 @@ run-gcs-build-job:
     include:
       - artifact: gcs_image.yml
         job: check-gcs-image
-    strategy: depend
+    strategy: mirror
   variables:
     REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
@@ -483,7 +483,7 @@ run-foxx-build-job:
     include:
       - artifact: foxx_image.yml
         job: check-foxx-image
-    strategy: depend
+    strategy: mirror
   variables:
     REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
