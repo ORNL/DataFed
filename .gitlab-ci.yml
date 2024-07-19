@@ -175,36 +175,36 @@ provision-client:
 # This stage is needed to determine if the images exist in the registry and 
 # if they don't always be sure to build the image.
 #
-check-ws-image:
-  stage: image-check
-  variables:
-    IMAGE_TAG: "datafed/ws"
-  tags:
-    - docker
-  script:
-    - |
-      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      FORCE_BUILD_WS="FALSE"
-      set +e
-      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_WS="TRUE"; fi;
-      set -e
-      if [ "$FORCE_BUILD_WS" == "TRUE" ]
-      then
-        cp gitlab_templates/force_build_ws_image.yml ws_image.yml
-      else
-        cp gitlab_templates/build_ws_image.yml ws_image.yml
-      fi
-      echo "REGISTRY=${REGISTRY}" >> build.env
-      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
-      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
-      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
-  artifacts:
-    paths:
-      - ws_image.yml 
-    reports:
-      dotenv: build.env
+#check-ws-image:
+#  stage: image-check
+#  variables:
+#    IMAGE_TAG: "datafed/ws"
+#  tags:
+#    - docker
+#  script:
+#    - |
+#      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+#      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+#      FORCE_BUILD_WS="FALSE"
+#      set +e
+#      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+#      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_WS="TRUE"; fi;
+#      set -e
+#      if [ "$FORCE_BUILD_WS" == "TRUE" ]
+#      then
+#        cp gitlab_templates/force_build_ws_image.yml ws_image.yml
+#      else
+#        cp gitlab_templates/build_ws_image.yml ws_image.yml
+#      fi
+#      echo "REGISTRY=${REGISTRY}" >> build.env
+#      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+#      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+#      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+#  artifacts:
+#    paths:
+#      - ws_image.yml 
+#    reports:
+#      dotenv: build.env
 
 check-core-image:
   stage: image-check
@@ -237,130 +237,130 @@ check-core-image:
     reports:
       dotenv: build.env
 
-check-repo-image:
-  stage: image-check
-  variables:
-    IMAGE_TAG: "datafed/repo"
-  tags:
-    - docker
-  script:
-    - |
-      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      FORCE_BUILD_REPO="FALSE"
-      set +e
-      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_REPO="TRUE"; fi;
-      set -e
-      if [ "$FORCE_BUILD_REPO" == "TRUE" ]
-      then
-        cp gitlab_templates/force_build_repo_image.yml repo_image.yml
-      else
-        cp gitlab_templates/build_repo_image.yml repo_image.yml
-      fi
-      echo "REGISTRY=${REGISTRY}" >> build.env
-      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
-      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
-      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
-  artifacts:
-    paths:
-      - repo_image.yml 
-    reports:
-      dotenv: build.env
+        #check-repo-image:
+        #  stage: image-check
+        #  variables:
+        #    IMAGE_TAG: "datafed/repo"
+        #  tags:
+        #    - docker
+        #  script:
+        #    - |
+        #      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        #      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+        #      FORCE_BUILD_REPO="FALSE"
+        #      set +e
+        #      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+        #      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_REPO="TRUE"; fi;
+        #      set -e
+        #      if [ "$FORCE_BUILD_REPO" == "TRUE" ]
+        #      then
+        #        cp gitlab_templates/force_build_repo_image.yml repo_image.yml
+        #      else
+        #        cp gitlab_templates/build_repo_image.yml repo_image.yml
+        #      fi
+        #      echo "REGISTRY=${REGISTRY}" >> build.env
+        #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+        #      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+        #      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+        #  artifacts:
+        #    paths:
+        #      - repo_image.yml 
+        #    reports:
+        #      dotenv: build.env
 
-check-gcs-base-image:
-  stage: image-check
-  variables:
-    IMAGE_TAG: "datafed/gcs-base"
-  tags:
-    - docker
-  script:
-    - |
-      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      FORCE_BUILD_GCS_BASE="FALSE"
-      set +e
-      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_GCS_BASE="TRUE"; fi;
-      set -e
-      if [ "$FORCE_BUILD_GCS_BASE" == "TRUE" ]
-      then
-        cp gitlab_templates/force_build_gcs_base_image.yml gcs_base_image.yml
-      else
-        cp gitlab_templates/build_gcs_base_image.yml gcs_base_image.yml
-      fi
-      echo "REGISTRY=${REGISTRY}" >> build.env
-      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
-      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
-      echo "DATAFED_GCS_SUBMODULE_VERSION=${DATAFED_GCS_SUBMODULE_VERSION}" >> build.env
-      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
-  artifacts:
-    paths:
-      - gcs_base_image.yml 
-    reports:
-      dotenv: build.env
-
-check-gcs-image:
-  stage: image-check
-  variables:
-    IMAGE_TAG: "datafed/gcs"
-  tags:
-    - docker
-  script:
-    - |
-      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      FORCE_BUILD_GCS="FALSE"
-      set +e
-      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_GCS="TRUE"; fi;
-      set -e
-      if [ "$FORCE_BUILD_GCS" == "TRUE" ]
-      then
-        cp gitlab_templates/force_build_gcs_image.yml gcs_image.yml
-      else
-        cp gitlab_templates/build_gcs_image.yml gcs_image.yml
-      fi
-      echo "REGISTRY=${REGISTRY}" >> build.env
-      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
-      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
-      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
-  artifacts:
-    paths:
-      - gcs_image.yml 
-    reports:
-      dotenv: build.env
-
-check-foxx-image:
-  stage: image-check
-  variables:
-    IMAGE_TAG: "datafed/foxx"
-  tags:
-    - docker
-  script:
-    - |
-      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      FORCE_BUILD_FOXX="FALSE"
-      set +e
-      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_FOXX="TRUE"; fi;
-      set -e
-      if [ "$FORCE_BUILD_FOXX" == "TRUE" ]
-      then
-        cp gitlab_templates/force_build_foxx_image.yml foxx_image.yml
-      else
-        cp gitlab_templates/build_foxx_image.yml foxx_image.yml
-      fi
-      echo "REGISTRY=${REGISTRY}" >> build.env
-      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
-      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
-      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
-  artifacts:
-    paths:
-      - foxx_image.yml 
-    reports:
-      dotenv: build.env
+        #check-gcs-base-image:
+        #  stage: image-check
+        #  variables:
+        #    IMAGE_TAG: "datafed/gcs-base"
+        #  tags:
+        #    - docker
+        #  script:
+        #    - |
+        #      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        #      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+        #      FORCE_BUILD_GCS_BASE="FALSE"
+        #      set +e
+        #      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+        #      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_GCS_BASE="TRUE"; fi;
+        #      set -e
+        #      if [ "$FORCE_BUILD_GCS_BASE" == "TRUE" ]
+        #      then
+        #        cp gitlab_templates/force_build_gcs_base_image.yml gcs_base_image.yml
+        #      else
+        #        cp gitlab_templates/build_gcs_base_image.yml gcs_base_image.yml
+        #      fi
+        #      echo "REGISTRY=${REGISTRY}" >> build.env
+        #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+        #      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+        #      echo "DATAFED_GCS_SUBMODULE_VERSION=${DATAFED_GCS_SUBMODULE_VERSION}" >> build.env
+        #      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+        #  artifacts:
+        #    paths:
+        #      - gcs_base_image.yml 
+        #    reports:
+        #      dotenv: build.env
+        #
+        #check-gcs-image:
+        #  stage: image-check
+        #  variables:
+        #    IMAGE_TAG: "datafed/gcs"
+        #  tags:
+        #    - docker
+        #  script:
+        #    - |
+        #      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        #      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+        #      FORCE_BUILD_GCS="FALSE"
+        #      set +e
+        #      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+        #      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_GCS="TRUE"; fi;
+        #      set -e
+        #      if [ "$FORCE_BUILD_GCS" == "TRUE" ]
+        #      then
+        #        cp gitlab_templates/force_build_gcs_image.yml gcs_image.yml
+        #      else
+        #        cp gitlab_templates/build_gcs_image.yml gcs_image.yml
+        #      fi
+        #      echo "REGISTRY=${REGISTRY}" >> build.env
+        #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+        #      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+        #      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+        #  artifacts:
+        #    paths:
+        #      - gcs_image.yml 
+        #    reports:
+        #      dotenv: build.env
+        #
+        #check-foxx-image:
+        #  stage: image-check
+        #  variables:
+        #    IMAGE_TAG: "datafed/foxx"
+        #  tags:
+        #    - docker
+        #  script:
+        #    - |
+        #      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        #      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+        #      FORCE_BUILD_FOXX="FALSE"
+        #      set +e
+        #      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+        #      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_FOXX="TRUE"; fi;
+        #      set -e
+        #      if [ "$FORCE_BUILD_FOXX" == "TRUE" ]
+        #      then
+        #        cp gitlab_templates/force_build_foxx_image.yml foxx_image.yml
+        #      else
+        #        cp gitlab_templates/build_foxx_image.yml foxx_image.yml
+        #      fi
+        #      echo "REGISTRY=${REGISTRY}" >> build.env
+        #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+        #      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+        #      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+        #  artifacts:
+        #    paths:
+        #      - foxx_image.yml 
+        #    reports:
+        #      dotenv: build.env
 
         #build-python-client-base:
         #  needs: ["clear-python-client-cache"]
@@ -385,22 +385,22 @@ check-foxx-image:
 # STAGE: build
 ################################################################################
 # Building containers for running services
-run-ws-build-job:
-  needs:
-    - job: build-dependencies
-    - job: build-runtime
-    - job: check-ws-image
-      artifacts: true
-  stage: build
-  trigger:
-    include:
-      - artifact: ws_image.yml
-        job: check-ws-image
-    strategy: mirror
-  variables:
-    REGISTRY: "${REGISTRY}"
-    HARBOR_USER: "${HARBOR_USER}"
-    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+#run-ws-build-job:
+#  needs:
+#    - job: build-dependencies
+#    - job: build-runtime
+#    - job: check-ws-image
+#      artifacts: true
+#  stage: build
+#  trigger:
+#    include:
+#      - artifact: ws_image.yml
+#        job: check-ws-image
+#    strategy: mirror
+#  variables:
+#    REGISTRY: "${REGISTRY}"
+#    HARBOR_USER: "${HARBOR_USER}"
+#    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 
 run-core-build-job:
   needs:
@@ -419,75 +419,75 @@ run-core-build-job:
     HARBOR_USER: "${HARBOR_USER}"
     HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 
-run-repo-build-job:
-  needs:
-    - job: build-dependencies
-    - job: build-runtime
-    - job: check-repo-image
-      artifacts: true
-  stage: build
-  trigger:
-    include:
-      - artifact: repo_image.yml
-        job: check-repo-image
-    strategy: mirror
-  variables:
-    REGISTRY: "${REGISTRY}"
-    HARBOR_USER: "${HARBOR_USER}"
-    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-
-run-gcs-base-build-job:
-  needs:
-    - job: build-dependencies
-    - job: build-runtime
-    - job: check-gcs-base-image
-      artifacts: true
-  stage: build
-  trigger:
-    include:
-      - artifact: gcs_base_image.yml
-        job: check-gcs-base-image
-    strategy: mirror
-  variables:
-    REGISTRY: "${REGISTRY}"
-    HARBOR_USER: "${HARBOR_USER}"
-    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    DATAFED_GCS_SUBMODULE_VERSION: "${DATAFED_GCS_SUBMODULE_VERSION}"
-
-run-gcs-build-job:
-  needs:
-    - job: build-dependencies
-    - job: build-runtime
-    - job: run-gcs-base-build-job
-    - job: check-gcs-image
-      artifacts: true
-  stage: build
-  trigger:
-    include:
-      - artifact: gcs_image.yml
-        job: check-gcs-image
-    strategy: mirror
-  variables:
-    REGISTRY: "${REGISTRY}"
-    HARBOR_USER: "${HARBOR_USER}"
-    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-
-run-foxx-build-job:
-  needs:
-    - job: build-dependencies
-    - job: build-runtime
-    - job: check-foxx-image
-      artifacts: true
-  stage: build
-  trigger:
-    include:
-      - artifact: foxx_image.yml
-        job: check-foxx-image
-    strategy: mirror
-  variables:
-    REGISTRY: "${REGISTRY}"
-    HARBOR_USER: "${HARBOR_USER}"
-    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+#run-repo-build-job:
+#  needs:
+#    - job: build-dependencies
+#    - job: build-runtime
+#    - job: check-repo-image
+#      artifacts: true
+#  stage: build
+#  trigger:
+#    include:
+#      - artifact: repo_image.yml
+#        job: check-repo-image
+#    strategy: mirror
+#  variables:
+#    REGISTRY: "${REGISTRY}"
+#    HARBOR_USER: "${HARBOR_USER}"
+#    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+#
+#run-gcs-base-build-job:
+#  needs:
+#    - job: build-dependencies
+#    - job: build-runtime
+#    - job: check-gcs-base-image
+#      artifacts: true
+#  stage: build
+#  trigger:
+#    include:
+#      - artifact: gcs_base_image.yml
+#        job: check-gcs-base-image
+#    strategy: mirror
+#  variables:
+#    REGISTRY: "${REGISTRY}"
+#    HARBOR_USER: "${HARBOR_USER}"
+#    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+#    DATAFED_GCS_SUBMODULE_VERSION: "${DATAFED_GCS_SUBMODULE_VERSION}"
+#
+#run-gcs-build-job:
+#  needs:
+#    - job: build-dependencies
+#    - job: build-runtime
+#    - job: run-gcs-base-build-job
+#    - job: check-gcs-image
+#      artifacts: true
+#  stage: build
+#  trigger:
+#    include:
+#      - artifact: gcs_image.yml
+#        job: check-gcs-image
+#    strategy: mirror
+#  variables:
+#    REGISTRY: "${REGISTRY}"
+#    HARBOR_USER: "${HARBOR_USER}"
+#    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+#
+#run-foxx-build-job:
+#  needs:
+#    - job: build-dependencies
+#    - job: build-runtime
+#    - job: check-foxx-image
+#      artifacts: true
+#  stage: build
+#  trigger:
+#    include:
+#      - artifact: foxx_image.yml
+#        job: check-foxx-image
+#    strategy: mirror
+#  variables:
+#    REGISTRY: "${REGISTRY}"
+#    HARBOR_USER: "${HARBOR_USER}"
+#    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 
 
 
