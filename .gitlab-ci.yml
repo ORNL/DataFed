@@ -119,33 +119,35 @@ clear-python-client-cache:
 # STAGE: build-base
 ################################################################################
 # build runtime and depedencies containers
-build-dependencies:
-  stage: build-base
-  variables:
-    IMAGE_TAG: "datafed/dependencies"
-    GIT_STRATEGY: clone
-  tags:
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker system prune -f
-    - docker build -f docker/Dockerfile.dependencies -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-
-build-runtime:
-  stage: build-base
-  variables:
-    IMAGE_TAG: "datafed/runtime"
-    GIT_STRATEGY: clone
-  tags:
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker system prune -f
-    - docker build -f docker/Dockerfile.runtime -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+include:
+  - local: .gitlab/stage_build_base.yml
+    #build-dependencies:
+    #  stage: build-base
+    #  variables:
+    #    IMAGE_TAG: "datafed/dependencies"
+    #    GIT_STRATEGY: clone
+    #  tags:
+    #    - docker
+    #  script:
+    #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    #    - docker system prune -f
+    #    - docker build -f docker/Dockerfile.dependencies -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+    #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+    #
+    #build-runtime:
+    #  stage: build-base
+    #  variables:
+    #    IMAGE_TAG: "datafed/runtime"
+    #    GIT_STRATEGY: clone
+    #  tags:
+    #    - docker
+    #  script:
+    #    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    #    - docker system prune -f
+    #    - docker build -f docker/Dockerfile.runtime -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+    #    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    #    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 #################################################################################
 ## STAGE: provision client
@@ -385,6 +387,8 @@ check-core-image:
 # STAGE: build
 ################################################################################
 # Building containers for running services
+include:
+  - local: .gitlab/stage_build.yml
 #run-ws-build-job:
 #  needs:
 #    - job: build-dependencies
@@ -402,22 +406,22 @@ check-core-image:
 #    HARBOR_USER: "${HARBOR_USER}"
 #    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 
-run-core-build-job:
-  needs:
-    - job: build-dependencies
-    - job: build-runtime
-    - job: check-core-image
-      artifacts: true
-  stage: build
-  trigger:
-    include:
-      - artifact: core_image.yml
-        job: check-core-image
-    strategy: depend
-  variables:
-    REGISTRY: "${REGISTRY}"
-    HARBOR_USER: "${HARBOR_USER}"
-    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    #run-core-build-job:
+    #  needs:
+    #    - job: build-dependencies
+    #    - job: build-runtime
+    #    - job: check-core-image
+    #      artifacts: true
+    #  stage: build
+    #  trigger:
+    #    include:
+    #      - artifact: core_image.yml
+    #        job: check-core-image
+    #    strategy: depend
+    #  variables:
+    #    REGISTRY: "${REGISTRY}"
+    #    HARBOR_USER: "${HARBOR_USER}"
+    #    HARBOR_DATAFED_GITLAB_CI_REGISTRY: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
 
 #run-repo-build-job:
 #  needs:
