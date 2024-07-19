@@ -43,9 +43,9 @@ check-ci-infrastructure:
       done
       if [ "$BUILD_INFRASTRUCTURE" == "TRUE" ]
       then
-        cp gitlab_templates/build_ci_infrastructure.yml ci_infrastructure.yml
+        cp .gitlab/build_ci_infrastructure.yml ci_infrastructure.yml
       else
-        cp gitlab_templates/skip_ci_infrastructure.yml ci_infrastructure.yml
+        cp .gitlab/skip_ci_infrastructure.yml ci_infrastructure.yml
       fi
   resource_group: infrastructure_build
   artifacts:
@@ -192,9 +192,9 @@ provision-client:
 #      set -e
 #      if [ "$FORCE_BUILD_WS" == "TRUE" ]
 #      then
-#        cp gitlab_templates/force_build_ws_image.yml ws_image.yml
+#        cp .gitlab/force_build_ws_image.yml ws_image.yml
 #      else
-#        cp gitlab_templates/build_ws_image.yml ws_image.yml
+#        cp .gitlab/build_ws_image.yml ws_image.yml
 #      fi
 #      echo "REGISTRY=${REGISTRY}" >> build.env
 #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
@@ -223,9 +223,9 @@ check-core-image:
       set -e
       if [ "$FORCE_BUILD_CORE" == "TRUE" ]
       then
-        cp gitlab_templates/force_build_core_image.yml core_image.yml
+        cp .gitlab/force_build_core_image.yml core_image.yml
       else
-        cp gitlab_templates/build_core_image.yml core_image.yml
+        cp .gitlab/build_core_image.yml core_image.yml
       fi
       echo "REGISTRY=${REGISTRY}" >> build.env
       echo "HARBOR_USER=${HARBOR_USER}" >> build.env
@@ -254,9 +254,9 @@ check-core-image:
         #      set -e
         #      if [ "$FORCE_BUILD_REPO" == "TRUE" ]
         #      then
-        #        cp gitlab_templates/force_build_repo_image.yml repo_image.yml
+        #        cp .gitlab/force_build_repo_image.yml repo_image.yml
         #      else
-        #        cp gitlab_templates/build_repo_image.yml repo_image.yml
+        #        cp .gitlab/build_repo_image.yml repo_image.yml
         #      fi
         #      echo "REGISTRY=${REGISTRY}" >> build.env
         #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
@@ -285,9 +285,9 @@ check-core-image:
         #      set -e
         #      if [ "$FORCE_BUILD_GCS_BASE" == "TRUE" ]
         #      then
-        #        cp gitlab_templates/force_build_gcs_base_image.yml gcs_base_image.yml
+        #        cp .gitlab/force_build_gcs_base_image.yml gcs_base_image.yml
         #      else
-        #        cp gitlab_templates/build_gcs_base_image.yml gcs_base_image.yml
+        #        cp .gitlab/build_gcs_base_image.yml gcs_base_image.yml
         #      fi
         #      echo "REGISTRY=${REGISTRY}" >> build.env
         #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
@@ -317,9 +317,9 @@ check-core-image:
         #      set -e
         #      if [ "$FORCE_BUILD_GCS" == "TRUE" ]
         #      then
-        #        cp gitlab_templates/force_build_gcs_image.yml gcs_image.yml
+        #        cp .gitlab/force_build_gcs_image.yml gcs_image.yml
         #      else
-        #        cp gitlab_templates/build_gcs_image.yml gcs_image.yml
+        #        cp .gitlab/build_gcs_image.yml gcs_image.yml
         #      fi
         #      echo "REGISTRY=${REGISTRY}" >> build.env
         #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
@@ -348,9 +348,9 @@ check-core-image:
         #      set -e
         #      if [ "$FORCE_BUILD_FOXX" == "TRUE" ]
         #      then
-        #        cp gitlab_templates/force_build_foxx_image.yml foxx_image.yml
+        #        cp .gitlab/force_build_foxx_image.yml foxx_image.yml
         #      else
-        #        cp gitlab_templates/build_foxx_image.yml foxx_image.yml
+        #        cp .gitlab/build_foxx_image.yml foxx_image.yml
         #      fi
         #      echo "REGISTRY=${REGISTRY}" >> build.env
         #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env

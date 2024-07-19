@@ -1,6 +1,9 @@
 stages:
   - build
 
+include:
+  - local: .gitlab/common.yml
+
 # The only difference between this file and the build_ws_image.yml is that
 # it does not have a rules section
 build-ws:
@@ -8,6 +11,7 @@ build-ws:
   variables:
     IMAGE_TAG: "datafed/ws"
     GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "web/docker/Dockerfile"
   tags:
     - ci-datafed-core
     - docker

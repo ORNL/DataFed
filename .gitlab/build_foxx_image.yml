@@ -2,28 +2,25 @@ stages:
   - build
 
 include:
-  - local: gitlab_templates/common.yml
+  - local: .gitlab/common.yml
 
-build-core:
+build-foxx:
   extends: .docker_build_script
   stage: build
   variables:
-    IMAGE_TAG: "datafed/core"
+    IMAGE_TAG: "datafed/foxx"
     GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "docker/Dockerfile.foxx"
   tags:
-    - ci-datafed-core
     - docker
   rules:
     - changes:
         - docker/**/*
         - scripts/**/*
-        - core/**/*
-        - common/**/*
-        - CMakeLists.txt
-        - cmake/**/*
+        - web/**/*
+        - common/proto/**/*
         - .gitlab-ci.yml
       when: on_success
 
 placeholder:
   extends: .placeholder
-

@@ -1,0 +1,18 @@
+stages:
+  - build
+
+include:
+  - local: .gitlab/common.yml
+
+# The only difference between this file and the build_repo_image.yml is that
+# it does not have a rules section
+build-repo:
+  extends: .docker_build_script
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/repo"
+    GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "repository/docker/Dockerfile"
+  tags:
+    - ci-datafed-repo
+    - docker

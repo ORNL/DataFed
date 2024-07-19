@@ -1,0 +1,15 @@
+stages:
+  - build
+
+include:
+  - local: .gitlab/common.yml
+
+build-foxx:
+  extends: .docker_build_script
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/foxx"
+    GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "docker/Dockerfile.foxx"
+  tags:
+    - docker
