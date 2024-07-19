@@ -1,4 +1,19 @@
-
+# NOTE
+#
+# For the includes to be executed in the correct order when they 
+# have dependencies there must be one include statement. The 'needs'
+# keyword does not otherwise resolve a jobs in a different include 
+# file if it is in a different include block.
+# I.e. I cannot do this:
+#
+# include:
+#   - local: .gitlab/infrastructure.yml
+#
+# include:
+#   - local: .gitlab/stage_clear_cache.yml
+#
+# Particularly if stage_clear_cache.yml contains jobs with the needs 
+# keyword that names a job in infrastructure.yml
 include:
   - local: .gitlab/infrastructure.yml
   - local: .gitlab/stage_clear_cache.yml
