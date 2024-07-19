@@ -8,7 +8,7 @@ module.exports = defineConfig({
   //If the server is slow, consider increasing the timeout (in ms)
   timeout: 30000,
 
-  globalSetup: require.resolve('./auth.setup'),
+  // globalSetup: require.resolve('./auth.setup'),
   testDir: './scripts',
   /* Run tests in files in parallel */
   fullyParallel: false,
@@ -33,25 +33,25 @@ module.exports = defineConfig({
     launchOptions: {
       args: ['--ignore-certificate-errors'],
     },
-    storageState: 'tests/end-to-end/web-UI/.auth/user.json',
+    // storageState: 'tests/end-to-end/web-UI/.auth/user.json',
   },
   
 
 
   /* Configure projects for major browsers */
   projects: [
-    {
-      name: 'setup',
-      testMatch: 'auth.setup.js',
-    },
+    // {
+    //   name: 'setup',
+    //   testMatch: 'auth.setup.js',
+    // },
 
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: './tests/end-to-end/web-UI/.auth/user.json',
+        //storageState: './tests/end-to-end/web-UI/.auth/user.json',
       },
-       dependencies: ['setup'],
+       //dependencies: ['setup'],
     },
 
     {

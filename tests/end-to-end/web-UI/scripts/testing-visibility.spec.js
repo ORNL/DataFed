@@ -1,28 +1,22 @@
 import { test, expect } from '@playwright/test';
 const process = require('process');
+const authSetup = require('../auth.setup.js');
 
 
-// test.beforeEach(async ({ page }) => {
-//   // makes a new page object if none exist, also ensures page is linked to the test after this before hook.
-//   console.log("******Login in******")
-//   page = await authSetup({ page });
-// });
+test.beforeEach(async ({ page }) => {
+  // makes a new page object if none exist, also ensures page is linked to the test after this before hook.
+  console.log("******Login in******")
+  page = await authSetup({ page });
+});
 
  // checking visibility and expanding some dropdowns
-test('test visibility', async ({ browser }) => {
-  // TODO fix this later
+test('test visibility', async ({ page }) => {
 
-  console.log(process.cwd());
-  const context = await browser.newContext({ storageState: './tests/end-to-end/web-UI/.auth/user.json' });
-  const page = await context.newPage();
   try {
     console.log("******Begin test******");  
-     await page.goto('https://localhost/ui/welcome'); 
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
-      await page.getByRole('button', { name: 'Log In / Register' }).click();
-    } else {
       console.log("NOT LOGGED IN");
-    }
+    } 
 
     await expect(page.locator('.ui-icon').first()).toBeVisible();
     await expect(page.getByText('DataFed - Scientific Data')).toBeVisible();
