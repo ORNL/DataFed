@@ -1,5 +1,34 @@
 ---
 
+.image_check:
+  tags:
+    - docker
+  script:
+    - |
+      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      FORCE_BUILD="FALSE"
+      set +e
+      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
+      set -e
+      if [ "$FORCE_BUILD" == "TRUE" ]
+      then
+        cp .gitlab/build/force_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+      else
+        cp .gitlab/build/build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+      fi
+      echo "REGISTRY=${REGISTRY}" >> build.env
+      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+  artifacts:
+    paths:
+      - ${COMPONENT}_image.yml 
+    reports:
+      dotenv: build.env
+
+
 .docker_base_build_script:
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
