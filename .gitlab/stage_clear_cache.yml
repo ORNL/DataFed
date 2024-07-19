@@ -27,7 +27,7 @@ clear-python-client-cache:
   extends: .clear_cache
   stage: clear-docker-cache
   variables:
-    DATAFED_CI_PURGE_THRESHOLD: "10"
+    DATAFED_CI_PURGE_THRESHOLD: "9"
   needs: ["signal"]
   tags:
     - ci_5
