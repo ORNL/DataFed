@@ -1,7 +1,7 @@
 
-include:
-  - local: .gitlab/stage_build_base.yml
-  - local: .gitlab/stage_build.yml
+#include:
+#  - local: .gitlab/stage_build_base.yml
+#  - local: .gitlab/stage_build.yml
 
 stages:
   - ci-infrastructure-check
@@ -124,6 +124,8 @@ clear-python-client-cache:
 # STAGE: build-base
 ################################################################################
 # build runtime and depedencies containers
+include:
+  - local: .gitlab/stage_build_base.yml
     #build-dependencies:
     #  stage: build-base
     #  variables:
@@ -390,6 +392,8 @@ check-core-image:
 # STAGE: build
 ################################################################################
 # Building containers for running services
+include:
+  - local: .gitlab/stage_build.yml
 #include:
 #run-ws-build-job:
 #  needs:
