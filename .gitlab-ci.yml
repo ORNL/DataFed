@@ -1,3 +1,7 @@
+
+include:
+  - local: .gitlab/stage_build_base.yml
+
 stages:
   - ci-infrastructure-check
   - trigger-infrastructure
@@ -119,8 +123,6 @@ clear-python-client-cache:
 # STAGE: build-base
 ################################################################################
 # build runtime and depedencies containers
-include:
-  - local: .gitlab/stage_build_base.yml
     #build-dependencies:
     #  stage: build-base
     #  variables:
