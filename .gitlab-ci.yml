@@ -58,7 +58,7 @@ run-trigger-job:
     include:
       - artifact: ci_infrastructure.yml
         job: check-ci-infrastructure
-    strategy: mirror
+    strategy: depend
   resource_group: infrastructure_build
 
 ################################################################################
@@ -413,7 +413,7 @@ run-core-build-job:
     include:
       - artifact: core_image.yml
         job: check-core-image
-    strategy: mirror
+    strategy: depend
   variables:
     REGISTRY: "${REGISTRY}"
     HARBOR_USER: "${HARBOR_USER}"
