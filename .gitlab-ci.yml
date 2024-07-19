@@ -1,7 +1,8 @@
 
-#include:
-#  - local: .gitlab/stage_build_base.yml
-#  - local: .gitlab/stage_build.yml
+include:
+  - local: .gitlab/stage_build_base.yml
+  - local: .gitlab/stage_image_check.yml
+  - local: .gitlab/stage_build.yml
 
 stages:
   - ci-infrastructure-check
@@ -124,8 +125,8 @@ clear-python-client-cache:
 # STAGE: build-base
 ################################################################################
 # build runtime and depedencies containers
-include:
-  - local: .gitlab/stage_build_base.yml
+#include:
+#  - local: .gitlab/stage_build_base.yml
     #build-dependencies:
     #  stage: build-base
     #  variables:
@@ -213,36 +214,36 @@ provision-client:
 #    reports:
 #      dotenv: build.env
 
-check-core-image:
-  stage: image-check
-  variables:
-    IMAGE_TAG: "datafed/core"
-  tags:
-    - docker
-  script:
-    - |
-      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
-      FORCE_BUILD_CORE="FALSE"
-      set +e
-      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
-      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_CORE="TRUE"; fi;
-      set -e
-      if [ "$FORCE_BUILD_CORE" == "TRUE" ]
-      then
-        cp .gitlab/force_build_core_image.yml core_image.yml
-      else
-        cp .gitlab/build_core_image.yml core_image.yml
-      fi
-      echo "REGISTRY=${REGISTRY}" >> build.env
-      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
-      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
-      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
-  artifacts:
-    paths:
-      - core_image.yml 
-    reports:
-      dotenv: build.env
+      #check-core-image:
+      #  stage: image-check
+      #  variables:
+      #    IMAGE_TAG: "datafed/core"
+      #  tags:
+      #    - docker
+      #  script:
+      #    - |
+      #      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      #      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+      #      FORCE_BUILD_CORE="FALSE"
+      #      set +e
+      #      docker pull --quiet "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
+      #      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD_CORE="TRUE"; fi;
+      #      set -e
+      #      if [ "$FORCE_BUILD_CORE" == "TRUE" ]
+      #      then
+      #        cp .gitlab/force_build_core_image.yml core_image.yml
+      #      else
+      #        cp .gitlab/build_core_image.yml core_image.yml
+      #      fi
+      #      echo "REGISTRY=${REGISTRY}" >> build.env
+      #      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+      #      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY=${HARBOR_DATAFED_GITLAB_CI_REGISTRY}" >> build.env
+      #      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+      #  artifacts:
+      #    paths:
+      #      - core_image.yml 
+      #    reports:
+      #      dotenv: build.env
 
         #check-repo-image:
         #  stage: image-check
@@ -392,8 +393,8 @@ check-core-image:
 # STAGE: build
 ################################################################################
 # Building containers for running services
-include:
-  - local: .gitlab/stage_build.yml
+#include:
+#  - local: .gitlab/stage_build.yml
 #include:
 #run-ws-build-job:
 #  needs:
