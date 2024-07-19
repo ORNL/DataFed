@@ -21,9 +21,9 @@ check-ci-infrastructure:
       done
       if [ "$BUILD_INFRASTRUCTURE" == "TRUE" ]
       then
-        cp .gitlab/build/build_ci_infrastructure.yml ci_infrastructure.yml
+        cp .gitlab/build_ci_infrastructure.yml ci_infrastructure.yml
       else
-        cp .gitlab/build/skip_ci_infrastructure.yml ci_infrastructure.yml
+        cp .gitlab/skip_ci_infrastructure.yml ci_infrastructure.yml
       fi
   resource_group: infrastructure_build
   artifacts:
@@ -56,5 +56,3 @@ signal:
     - exists:
       - run-trigger-job
     - when: on_success
-
-
