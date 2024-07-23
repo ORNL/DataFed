@@ -105,6 +105,8 @@ clear-repo-cache:
 
 clear-python-client-cache:
   stage: clear-docker-cache
+  variables:
+    DATAFED_CI_PURGE_THRESHOLD: "10"
   needs: ["signal"]
   tags:
     - ci_5
