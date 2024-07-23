@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-const process = require('process');
+// const process = require('process');
 const authSetup = require('../auth.setup.js');
 
 
@@ -46,5 +46,16 @@ test('test visibility', async ({ page }) => {
     }
   }
   // click log out button
+  //await page.getByRole('button', { name: '' }).click();
+});
+
+test('Making a record', async ({ page }) => {
+  try {
+    
+  }
+  catch (error) {
+    
+  }
+
   await page.getByRole('button', { name: '' }).click();
 });
