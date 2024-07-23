@@ -123,6 +123,14 @@ else
   local_DATAFED_GCS_ROOT_NAME=$(printenv DATAFED_GCS_ROOT_NAME)
 fi
 
+local_DATAFED_GCS_COLLECTION_BASE_PATH=""
+if [ -z "${DATAFED_GCS_COLLECTION_BASE_PATH}" ]
+then
+  local_DATAFED_GCS_COLLECTION_BASE_PATH=""
+else
+  local_DATAFED_GCS_COLLECTION_BASE_PATH=$(printenv DATAFED_GCS_COLLECTION_BASE_PATH)
+fi
+
 local_DATAFED_GCS_COLLECTION_ROOT_PATH=""
 if [ -z "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
 then
@@ -337,6 +345,7 @@ export DATAFED_GCS_ROOT_NAME="$local_DATAFED_GCS_ROOT_NAME"
 # "/home/cades/collections/mapped/datafed-home"
 #
 # Will be created
+export DATAFED_GCS_COLLECTION_BASE_PATH="$local_DATAFED_GCS_COLLECTION_BASE_PATH"
 export DATAFED_GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH"
 # The DataFed repo id, this also must be the name
 # of the directory that will be placed in Globus 
