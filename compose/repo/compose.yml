@@ -45,6 +45,7 @@ services:
       UID: "${DATAFED_UID}"
       HOST_HOSTNAME: "localhost"
       DATAFED_AUTHZ_USER: "datafed"
+      DATAFED_REPO_DOMAIN: "${DATAFED_REPO_DOMAIN}"
     network_mode: host
     image: datafed-gcs:latest
     volumes:
