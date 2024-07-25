@@ -31,6 +31,7 @@
 11. [953] - Refactored docker compose build scripts to address technical debt
 12. [957] - Updated ArangoDB version used in compose file.
 13. [956] - Adds improved error message, when paths of repo don't align.
+14. [966] - CI refactor check that containers exist if not force build for branch.
 
 # v2023.10.23.15.50
 
