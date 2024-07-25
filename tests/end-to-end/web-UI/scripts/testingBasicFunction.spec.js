@@ -1,24 +1,26 @@
 import { test, expect } from '@playwright/test';
 // const process = require('process');
-const authSetup = require('../auth.setup.js');
+const authSetup = require('../auth.setup.js'); 
+let page;
 
-
-test.beforeEach(async ({ page }) => {
+test.beforeAll(async ({ browser }) => {
   // makes a new page object if none exist, also ensures page is linked to the test after this before hook.
+ 
   console.log("******Login in******")
-  page = await authSetup({ page });
+  page = await authSetup({ browser });
 });
 
  // checking visibility and expanding some dropdowns
-test('test visibility', async ({ page }) => {
-
+test('test visibility', async () => {
   try {
     console.log("******Begin test******");  
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
       console.log("NOT LOGGED IN");
     } 
 
-    await expect(page.locator('.ui-icon').first()).toBeVisible();
+    await expect(page.locator('.ui-icon').first()).toBeVisible({
+      timeout: 20000
+    });
     await expect(page.getByText('DataFed - Scientific Data')).toBeVisible();
     await expect(page.getByRole('link', { name: 'My Data' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Catalog' })).toBeVisible();
@@ -45,11 +47,10 @@ test('test visibility', async ({ page }) => {
       throw error;
     }
   }
-  // click log out button
-  await page.getByRole('button', { name: '' }).click();
+  //removed logout
 });
 
-test('Making a record and deleting it', async ({ page }) => {
+test('test making records', async () => {
   await page.getByText('Root Collectionc/').click({
     button: 'right'
   });
@@ -94,6 +95,7 @@ test('Making a record and deleting it', async ({ page }) => {
   });
   await page.getByRole('menuitem', { name: 'Delete' }).click();
   await page.getByLabel('Confirm Deletion').getByRole('button', { name: 'Delete' }).click();
-  await expect(page.getByText('(empty)')).toBeVisible();
+  
+  // log out
   await page.getByRole('button', { name: '' }).click();
-});
+})

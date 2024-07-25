@@ -5,20 +5,19 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 console.log("******Inside Setup file******");
 
-module.exports = async function ({ page }) {
+module.exports = async function ({ browser }) {
     // if a playwright page object doesn't exist, create one
-    if (!page) {
-        const browser = await chromium.launch({
-            args: ['--ignore-certificate-errors'],
-            timeout: 30000,
-        });
-        const context = await browser.newContext({
-            ignoreHTTPSErrors: true,
-        });
+    browser = await chromium.launch({
+        args: ['--ignore-certificate-errors'],
+        timeout: 30000,
+    });
+    const context = await browser.newContext({
+        ignoreHTTPSErrors: true,
+    });
 
-        page = await context.newPage();  
-        console.log("new page and browser object created");
-    }
+    const page = await context.newPage();  
+    console.log("new page object created");
+    
 
     // Go to the website and login through globus using a tester account
     await page.goto('https://localhost/ui/welcome');//TESTING
