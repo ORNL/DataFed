@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.17.0)
 # 3.7.0 requires to use test fixtures
 
-if( ENABLE_END_TO_END_TESTS )
+if( ENABLE_END_TO_END_API_TESTS )
   add_test(NAME end_to_end_setup COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/setup.sh")
   add_test(NAME end_to_end_user_login COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_user_login.py")
   add_test(NAME end_to_end_context COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_context.py")

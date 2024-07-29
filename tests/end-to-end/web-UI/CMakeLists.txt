@@ -4,8 +4,11 @@ cmake_minimum_required (VERSION 3.17.0)
 #FIXTHIS
 # For E2E web ui test
 if(ENABLE_END_TO_END_WEB_TESTS)
-  add_test(NAME end_to_end_web_test_1 COMMAND "${CMAKE_CURRENT_SOURCE_DIR} npx playwright test")
-
+  add_custom_target(end_to_end_web_tests 
+    COMMAND npx playwright test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Running Playwright tests"
+  )
 
   # Note because these tests are all using the same database we cannot run most of them concurrently
   # They must be run sequentially so that concurrent API calls do not create problems
