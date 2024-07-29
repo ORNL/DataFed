@@ -20,7 +20,7 @@ module.exports = async function ({ browser }) {
     
 
     // Go to the website and login through globus using a tester account
-    await page.goto('https://localhost/ui/welcome');//TESTING
+    await page.goto('https://@DATAFED_DOMAIN@/ui/welcome');//TESTING
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
         await page.getByRole('button', { name: 'Log In / Register' }).click();
         if (page.getByRole('link', { name: 'Globus globus' }).isVisible()) {

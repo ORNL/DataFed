@@ -1,6 +1,14 @@
 cmake_minimum_required (VERSION 3.17.0)
 # 3.7.0 requires to use test fixtures
 
+message("TESTING: DATAFED_DOMAIN : ${DATAFED_DOMAIN}")
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js"
+  @ONLY
+)
+
 #FIXTHIS
 # For E2E web ui test
 if(ENABLE_END_TO_END_WEB_TESTS)

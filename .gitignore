@@ -72,3 +72,4 @@ tests/end-to-end/web-UI/playwright/.cache/
 tests/end-to-end/web-UI/tests-examples
 tests/end-to-end/web-UI/.auth
 tests/end-to-end/web-UI/.env
+tests/end-to-end/web-UI/auth.setup.js
