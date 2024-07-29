@@ -1,7 +1,6 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const process = require('process');
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 console.log("******Inside Setup file******");
 
