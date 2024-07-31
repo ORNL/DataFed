@@ -115,7 +115,21 @@ export function show(a_mode, a_ids, a_cb) {
 
     util.inputTheme(path_in);
     util.inputTheme($("#ext", frame));
-
+    
+/**
+* Handles changes on the 'matches' select element.
+* When a selection is made, it retrieves the selected endpoint's ID from 'ep_list',
+* fetches detailed endpoint info via 'api.epView', and updates the UI accordingly.
+*
+* Expected Behavior:
+* User selects an option in 'matches'.
+* Retrieves the corresponding endpoint ID from 'ep_list'.
+* Calls 'api.epView' with the endpoint ID.
+* On success, updates 'cur_ep' and 'path_in' input field, then refreshes the UI with 'updateEndpointOptions'.
+* On failure, displays an error dialog.
+* When a new endpoint is selected in the 'matches' dropdown, the 'path_in' input field will be updated
+* with the selected endpoint's name and default directory, and the UI will be refreshed with the new options.
+*/
     matches.on('change', function (ev) {
         if (ep_list) {
             var ep = ep_list[$(this).prop('selectedIndex') - 1].id;
@@ -200,6 +214,19 @@ export function show(a_mode, a_ids, a_cb) {
 
         $(":radio").button("refresh");
     }
+
+/**
+* Handles the expiration of the input timer.
+* Retrieves the endpoint from 'path_in', validates it, and updates the endpoint options in the UI.
+*
+* Expected Behavior:
+* Trims and validates the input from 'path_in'.
+* If empty, clears 'ep_list' and disables 'matches'.
+* Retrieves the base endpoint if it contains a delimiter.
+* If the endpoint has changed, disables certain buttons and fetches endpoint details via 'api.epView'.
+* On success, updates 'cur_ep', populates 'matches', and enables it.
+* On failure, calls 'api.epAutocomplete' to fetch and display matching endpoints.
+*/
 
     var in_timer;
     function inTimerExpired() {
