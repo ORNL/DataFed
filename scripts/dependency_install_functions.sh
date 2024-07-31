@@ -416,6 +416,22 @@ install_foxx_cli() {
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
+    
+    # check that foxx can be found
+    if [ ! -d "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm" ]
+    then
+	echo "Something went wrong Foxx is supposed to be installed i.e. "
+	echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
+	echo "exists. But there is no npm folder in: ${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+	exit 1
+    fi
+    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx" ]
+    then
+	echo "Something went wrong Foxx is supposed to be installed i.e. "
+	echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
+	echo "exists. But there is no foxx binary here: ${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx"
+	exit 1
+    fi
   fi
 }
 
