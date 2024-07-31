@@ -375,8 +375,8 @@ end_to_end_web_test:
   tags:
     - ci-datafed-client
   script:
-    - export DATAFED_REPO_FORM_PATH="$(pwd)/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
-    - env > env_file
+    #    - export DATAFED_REPO_FORM_PATH="$(pwd)/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
+    #- env > env_file
     - cd tests/end-to-end/web-UI
     - npm install
     - npx playwright test
