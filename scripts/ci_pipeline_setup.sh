@@ -107,28 +107,28 @@ if [ -z "$local_OS_APP_ID" ]
 then
   echo "The open stack application credential id has not been defined this is"
   echo " a required parameter."
-  exit 1
+  exit 2
 fi
 
 if [ -z "$local_OS_APP_SECRET" ]
 then
   echo "The open stack application credential secret has not been defined this is"
   echo " a required parameter."
-  exit 1
+  exit 2
 fi
 
 if [[ -z "$COMPUTE_INSTANCE_ID" && -z "$COMPUTE_INSTANCE_NAME" ]]
 then
   echo "The open stack compute instance id or name has not been defined, at "
   echo "least one is required."
-  exit 1
+  exit 2
 fi
 
 if [ -z "$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" ]
 then
   echo "The GitLab token for accessing the API of the DataFed ci repo is missing."
   echo "It is a required parameter."
-  exit 1
+  exit 2
 fi
 
 data=$(curl -s --retry 5 -i -X POST \
@@ -150,7 +150,7 @@ if [ "$error_code" == "6" ]
 then
   echo "Unable to connect to Open Stack API endpoints, make sure you are"
   echo "connected to the network"
-  exit 1
+  exit 2
 fi
 
 # Make sure jq is installed
@@ -158,7 +158,7 @@ jq_path=$(which jq || true)
 if [ -z "$jq_path" ]
 then
   echo "jq command not found exiting!"
-  exit 1
+  exit 2
 fi
 
 wait_for_running_infrastructure_pipelines_to_finish() {
@@ -173,7 +173,7 @@ wait_for_running_infrastructure_pipelines_to_finish() {
   then
     echo "Error detected"
     echo "$all_other_pipelines"
-    exit 1
+    exit 2
   fi
 
   local count=0
@@ -317,7 +317,7 @@ then
       if [ "$count" == "$MAX_COUNT" ]
       then
         echo "Exceeded time limit!"
-        exit 1
+        exit 2
       fi
     done
 
@@ -344,7 +344,7 @@ then
 		if [ "$pipeline_status" == "failed" ]
 		then
 			echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
-			exit 1
+			exit 2
 		elif [ "$pipeline_status" == "success" ]
 		then
 			echo "Infrastructure triggered pipeline has passed. STATUS: $pipeline_status"
@@ -352,7 +352,7 @@ then
 		elif [ "$pipeline_status" == "canceled" ]
 		then
 			echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
-			exit 1
+			exit 2
     else
       echo "STATUS: $pipeline_status"
 		fi
