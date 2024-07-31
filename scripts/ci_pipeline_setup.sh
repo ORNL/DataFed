@@ -171,7 +171,7 @@ wait_for_running_infrastructure_pipelines_to_finish() {
 
   if [[ "$all_other_pipelines" == *"invalid_token"* ]]
   then
-    echo "Error detected"
+    echo "Error detected with GITLAB_DATAFEDCI_REPO_API_TOKEN"
     echo "$all_other_pipelines"
     exit 2
   fi
