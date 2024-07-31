@@ -30,29 +30,29 @@ check-ci-infrastructure:
     paths:
       - ci_infrastructure.yml 
 
-run-trigger-job:
-  stage: trigger-infrastructure
-  trigger:
-    include:
-      - artifact: ci_infrastructure.yml
-        job: check-ci-infrastructure
-    strategy: depend
-  resource_group: infrastructure_build
-
-################################################################################
-# STAGE: signal
-################################################################################
-# Stage is used to separte the trigger job from the remaining jobs and to act
-# as an anchor for setting up dependencies
-signal:
-  stage: signal
-  tags:
-    - runner
-  script:
-    - echo "Starting Build"
-  rules:
-    - exists:
-      - check-ci-infrastrucure
-    - exists:
-      - run-trigger-job
-    - when: on_success
+        #run-trigger-job:
+        #  stage: trigger-infrastructure
+        #  trigger:
+        #    include:
+        #      - artifact: ci_infrastructure.yml
+        #        job: check-ci-infrastructure
+        #    strategy: depend
+        #  resource_group: infrastructure_build
+        #
+        #################################################################################
+        ## STAGE: signal
+        #################################################################################
+        ## Stage is used to separte the trigger job from the remaining jobs and to act
+        ## as an anchor for setting up dependencies
+        #signal:
+        #  stage: signal
+        #  tags:
+        #    - runner
+        #  script:
+        #    - echo "Starting Build"
+        #  rules:
+        #    - exists:
+        #      - check-ci-infrastrucure
+        #    - exists:
+        #      - run-trigger-job
+        #    - when: on_success
