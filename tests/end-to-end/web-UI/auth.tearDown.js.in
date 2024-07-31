@@ -6,7 +6,9 @@ module.exports = async function () {
         args: ['--ignore-certificate-errors'],
         timeout: 30000,
     });
-    const page = await browser.newPage();  
+    const page = await browser.newPage({
+        storageState: './.auth/auth.json'
+    });  
     console.log("new page object created");
     
     // Go to the website and login through globus using a tester account
