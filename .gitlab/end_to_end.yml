@@ -346,7 +346,7 @@ end_to_end_client-test:
       -DBUILD_DOCS=OFF
       -DBUILD_PYTHON_CLIENT=ON
       -DBUILD_TESTS=ON
-      -DENABLE_END_TO_END_TESTS=ON
+      -DENABLE_END_TO_END_API_TESTS=ON
       -DINSTALL_FOXX=OFF
     - cmake --build build
     - cmake --build build --target pydatafed
