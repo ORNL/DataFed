@@ -1,7 +1,6 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const process = require('process');
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 console.log("******Inside Setup file******");
 
@@ -20,15 +19,15 @@ module.exports = async function ({ browser }) {
     
 
     // Go to the website and login through globus using a tester account
-    await page.goto('https://localhost/ui/welcome');//TESTING
+    await page.goto('https://@DATAFED_DOMAIN@/ui/welcome');//TESTING
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
         await page.getByRole('button', { name: 'Log In / Register' }).click();
         if (page.getByRole('link', { name: 'Globus globus' }).isVisible()) {
             page.getByRole('button', { name: 'Globus ID to sign in' }).click();
             if (page.getByLabel('Username @globusid.org').isEditable()) {
                 // changes the username and password in the .env file if needed
-                await page.getByLabel('Username @globusid.org').fill(process.env.TEST_USERNAME);
-                await page.getByLabel('Password').fill(process.env.TEST_PASSWORD);
+                await page.getByLabel('Username @globusid.org').fill(process.env.DATAFED_WEB_TEST_USERNAME);
+                await page.getByLabel('Password').fill(process.env.DATAFED_WEB_TEST_PASSWORD);
                 await page.getByRole('button', { name: 'Log In' }).click();
                 console.log("******PAST LOGIN******");
                 // await page.context().storageState({ path: './tests/end-to-end/web-UI/.auth/user.json'}); //TESTING

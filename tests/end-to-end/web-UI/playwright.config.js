@@ -48,6 +48,7 @@ module.exports = defineConfig({
         ...devices['Desktop Chrome'],
       },
     },
+<<<<<<< HEAD
 
     // {
     //   name: 'firefox',
@@ -62,6 +63,8 @@ module.exports = defineConfig({
     //     ...devices['Desktop Safari'],
     //    },
     // },
+=======
+>>>>>>> cmake-integration
   ],
 });
 
