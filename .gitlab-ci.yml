@@ -25,16 +25,16 @@ include:
 
 stages:
   - ci-infrastructure-check
-  - trigger-infrastructure
-  - signal
-  - clear-docker-cache
-  - build-base
-  - provision-client
-  - image-check
-  - build
-  - end-to-end-setup-arango
-  - end-to-end-setup
-  - end-to-end-test
+    #  - trigger-infrastructure
+    #  - signal
+    #  - clear-docker-cache
+    #  - build-base
+    #  - provision-client
+    #  - image-check
+    #  - build
+    #  - end-to-end-setup-arango
+    #  - end-to-end-setup
+    #  - end-to-end-test
 
 # WARNING
 #

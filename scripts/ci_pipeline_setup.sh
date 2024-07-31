@@ -168,13 +168,21 @@ wait_for_running_infrastructure_pipelines_to_finish() {
   then
     echo "No other running infrastructure provisioning pipelines detected!"
   fi
- 
+
+  if [[ "$all_other_pipelines" == *"invalid_token"* ]]
+  then
+    echo "Error detected"
+    echo "$all_other_pipelines"
+    exit 1
+  fi
+
   local count=0
   while [ ! -z "$all_other_pipelines" ] 
   do
     echo "Attempt $count, Other running infrastructure provisioning pipelines detected... waiting for them to complete."
     echo
     echo "Running Pipelines Are:"
+    echo "$all_other_pipelines"
     echo "$all_other_pipelines" | jq '.id'
     sleep 30s
     count=$(($count + 1))
