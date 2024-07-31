@@ -16,25 +16,25 @@
 # keyword that names a job in infrastructure.yml
 include:
   - local: .gitlab/infrastructure.yml
-    #  - local: .gitlab/stage_clear_cache.yml
-    #  - local: .gitlab/stage_build_base.yml
-    #  - local: .gitlab/stage_provision_client.yml
-    #  - local: .gitlab/stage_image_check.yml
-    #  - local: .gitlab/stage_build.yml
-    #  - local: .gitlab/end_to_end.yml
+  - local: .gitlab/stage_clear_cache.yml
+  - local: .gitlab/stage_build_base.yml
+  - local: .gitlab/stage_provision_client.yml
+  - local: .gitlab/stage_image_check.yml
+  - local: .gitlab/stage_build.yml
+  - local: .gitlab/end_to_end.yml
 
 stages:
   - ci-infrastructure-check
-    #  - trigger-infrastructure
-    #  - signal
-    #  - clear-docker-cache
-    #  - build-base
-    #  - provision-client
-    #  - image-check
-    #  - build
-    #  - end-to-end-setup-arango
-    #  - end-to-end-setup
-    #  - end-to-end-test
+  - trigger-infrastructure
+  - signal
+  - clear-docker-cache
+  - build-base
+  - provision-client
+  - image-check
+  - build
+  - end-to-end-setup-arango
+  - end-to-end-setup
+  - end-to-end-test
 
 # WARNING
 #
