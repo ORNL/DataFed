@@ -17,7 +17,7 @@ check-ci-infrastructure:
       for INSTANCE_NAME in "${COMPUTE_INSTANCE_NAMES[@]}"; do
         ./scripts/ci_pipeline_setup.sh --compute-instance-name "$INSTANCE_NAME"
         EXIT_CODE="$?"
-        if [ "${EXIT_CODE}" -eq 1 ]; then
+        if [ "${EXIT_CODE}" -eq 2 ]; then
           BUILD_INFRASTRUCTURE="TRUE"
         fi
       done
