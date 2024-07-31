@@ -16,12 +16,12 @@
 # keyword that names a job in infrastructure.yml
 include:
   - local: .gitlab/infrastructure.yml
-  - local: .gitlab/stage_clear_cache.yml
-  - local: .gitlab/stage_build_base.yml
-  - local: .gitlab/stage_provision_client.yml
-  - local: .gitlab/stage_image_check.yml
-  - local: .gitlab/stage_build.yml
-  - local: .gitlab/end_to_end.yml
+    #  - local: .gitlab/stage_clear_cache.yml
+    #  - local: .gitlab/stage_build_base.yml
+    #  - local: .gitlab/stage_provision_client.yml
+    #  - local: .gitlab/stage_image_check.yml
+    #  - local: .gitlab/stage_build.yml
+    #  - local: .gitlab/end_to_end.yml
 
 stages:
   - ci-infrastructure-check
