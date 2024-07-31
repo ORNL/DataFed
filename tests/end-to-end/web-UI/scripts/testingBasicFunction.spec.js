@@ -1,19 +1,20 @@
 import { test, expect } from '@playwright/test';
 // const process = require('process');
-const authSetup = require('../auth.setup.js'); 
-let page;
+//const authSetup = require('../auth.setup.js'); 
+//let page;
 
-test.beforeAll(async ({ browser }) => {
-  // makes a new page object if none exist, also ensures page is linked to the test after this before hook.
+// test.beforeAll(async ({ browser }) => {
+//   // makes a new page object if none exist, also ensures page is linked to the test after this before hook.
  
-  console.log("******Login in******")
-  page = await authSetup({ browser });
-});
+//   console.log("******Login in******")
+//   page = await authSetup({ browser });
+// });
 
  // checking visibility and expanding some dropdowns
-test('test visibility', async () => {
+test('test visibility', async ({page}) => {
   try {
     console.log("******Begin test******");  
+    await page.goto('https://localhost/')
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
       console.log("NOT LOGGED IN");
     } 
@@ -50,7 +51,8 @@ test('test visibility', async () => {
   //removed logout
 });
 
-test('test making records', async () => {
+test('test making records', async ({ page }) => {
+  await page.goto('https://localhost/')
   await page.getByText('Root Collectionc/').click({
     button: 'right'
   });
