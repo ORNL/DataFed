@@ -534,6 +534,9 @@ install_dep_by_name() {
     "cmake")
       install_cmake
       ;;
+    "foxx")
+      install_foxx_cli
+      ;;
     "protobuf")
       install_protobuf
       ;;
