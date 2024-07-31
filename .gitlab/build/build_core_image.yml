@@ -1,0 +1,36 @@
+---
+stages:
+  - build
+
+include:
+  - local: .gitlab/common.yml
+
+build-core:
+  extends: .docker_build_script
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/core"
+    GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "core/docker/Dockerfile"
+  tags:
+    - ci-datafed-core
+    - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - core/**/*
+        - common/**/*
+        - CMakeLists.txt
+        - cmake/**/*
+        - .gitlab-ci.yml
+      when: on_success
+
+retag-image:
+  extends: .docker_retag_image:
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/core"
+    GIT_STRATEGY: clone
+  tags:
+    - docker

@@ -6,7 +6,13 @@
 # the oldest one
 
 # Max allowed size of all images in GB
-THRESHOLD_IN_GB="15"
+if [ -z "${DATAFED_CI_PURGE_THRESHOLD}" ]
+then
+  local_DATAFED_CI_PURGE_THRESHOLD="15"
+else
+  local_DATAFED_CI_PURGE_THRESHOLD=$(printenv DATAFED_CI_PURGE_THRESHOLD)
+fi
+
 
 get_size_of_all_images_in_GB() {
 	declare -g total_image_size_number="0"
@@ -31,7 +37,7 @@ purge_oldest_image() {
 
 get_size_of_all_images_in_GB
 
-while [ "$total_image_size_number" -gt "$THRESHOLD_IN_GB" ]
+while [ "$total_image_size_number" -gt "$local_DATAFED_CI_PURGE_THRESHOLD" ]
 do
 	purge_oldest_image
 	get_size_of_all_images_in_GB
