@@ -15,8 +15,10 @@ check-ci-infrastructure:
       BUILD_INFRASTRUCTURE="FALSE"
       COMPUTE_INSTANCE_NAMES=("ci-datafed-arangodb" "ci-datafed-core" "ci-datafed-globus2" "ci-datafed-client")
       for INSTANCE_NAME in "${COMPUTE_INSTANCE_NAMES[@]}"; do
+        set +e
         ./scripts/ci_pipeline_setup.sh --compute-instance-name "$INSTANCE_NAME"
         EXIT_CODE="$?"
+        set -e
         if [ "${EXIT_CODE}" -eq 2 ]; then
           BUILD_INFRASTRUCTURE="TRUE"
         fi
