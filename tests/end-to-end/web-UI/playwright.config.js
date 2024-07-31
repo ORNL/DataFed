@@ -8,7 +8,8 @@ module.exports = defineConfig({
   //If the server is slow, consider increasing the timeout (in ms)
   timeout: 30000,
 
-  // globalSetup: require.resolve('./auth.setup'),
+  globalSetup: require.resolve('./auth.setup'),
+
   testDir: './scripts',
 
   /* Run tests in files in parallel */
@@ -36,6 +37,7 @@ module.exports = defineConfig({
     launchOptions: {
       args: ['--ignore-certificate-errors'],
     },
+    storageState: './.auth/auth.json'
   },
   
 
@@ -48,6 +50,20 @@ module.exports = defineConfig({
         ...devices['Desktop Chrome'],
       },
     },
+
+    // {
+    //   name: 'firefox',
+    //   use: {
+    //     ...devices['Desktop Firefox'],
+    //   },
+    // },
+
+    // {
+    //   name: 'webkit',
+    //   use: {
+    //     ...devices['Desktop Safari'],
+    //    },
+    // },
   ],
 });
 
