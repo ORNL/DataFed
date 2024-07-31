@@ -48,7 +48,6 @@ test('test visibility', async ({page}) => {
       throw error;
     }
   }
-  //removed logout
 });
 
 test('test making records', async ({ page }) => {
@@ -97,7 +96,4 @@ test('test making records', async ({ page }) => {
   });
   await page.getByRole('menuitem', { name: 'Delete' }).click();
   await page.getByLabel('Confirm Deletion').getByRole('button', { name: 'Delete' }).click();
-  
-  // log out
-  await page.getByRole('button', { name: '' }).click();
 })

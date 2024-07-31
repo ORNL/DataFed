@@ -10,6 +10,8 @@ module.exports = defineConfig({
 
   globalSetup: require.resolve('./auth.setup'),
 
+  globalTeardown: require.resolve('./auth.tearDown'),
+
   testDir: './scripts',
 
   /* Run tests in files in parallel */

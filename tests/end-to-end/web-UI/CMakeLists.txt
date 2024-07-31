@@ -8,6 +8,11 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js"
   @ONLY
 )
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/auth.tearDown.js.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/auth.tearDown.js"
+  @ONLY
+)
 
 #FIXTHIS
 # For E2E web ui test
