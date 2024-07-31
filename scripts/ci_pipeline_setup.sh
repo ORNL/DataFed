@@ -5,8 +5,8 @@ set -eu
 Help()
 {
   echo "$(basename $0) Will determine if a Open Stack VM exists if not it will"
-  echo " will exit with an error code. It requires that you "
-  echo "provide the Open Stack VM ID"
+  echo " will exit with an error code 1. If some other problem exists will exit"
+  echo " with error code 2. It requires that you provide the Open Stack VM ID"
   echo
   echo "Syntax: $(basename $0) [-h|i|s|c|a|n]"
   echo "options:"
@@ -63,7 +63,7 @@ COMPUTE_ID_PROVIDED="FALSE"
 
 VALID_ARGS=$(getopt -o hi:s:c:a:n: --long 'help',app-credential-id:,app-credential-secret:,compute-instance-id:,gitlab-api-token:,compute-instance-name: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+      exit 2;
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
@@ -335,32 +335,32 @@ if [ ! -z "$pipeline_id" ]
 then
 
   count=0
-	KEEP_RUNNING="TRUE"	
-	while [ "$KEEP_RUNNING" == "TRUE" ]
-	do
-		pipeline_status=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
+  KEEP_RUNNING="TRUE"  
+  while [ "$KEEP_RUNNING" == "TRUE" ]
+  do
+    pipeline_status=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
 
-		printf "Attempt $count, Waiting for triggered infrastructure provisioning pipeline: ${pipeline_id} to complete ... "
-		if [ "$pipeline_status" == "failed" ]
-		then
-			echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
-			exit 2
-		elif [ "$pipeline_status" == "success" ]
-		then
-			echo "Infrastructure triggered pipeline has passed. STATUS: $pipeline_status"
-			exit 0
-		elif [ "$pipeline_status" == "canceled" ]
-		then
-			echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
-			exit 2
+    printf "Attempt $count, Waiting for triggered infrastructure provisioning pipeline: ${pipeline_id} to complete ... "
+    if [ "$pipeline_status" == "failed" ]
+    then
+      echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
+      exit 2
+    elif [ "$pipeline_status" == "success" ]
+    then
+      echo "Infrastructure triggered pipeline has passed. STATUS: $pipeline_status"
+      exit 0
+    elif [ "$pipeline_status" == "canceled" ]
+    then
+      echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
+      exit 2
     else
       echo "STATUS: $pipeline_status"
-		fi
-    			
-		sleep 30s
+    fi
+          
+    sleep 30s
 
     count=$(($count + 1))
-	done
+  done
 fi
 
 ################################################################################
