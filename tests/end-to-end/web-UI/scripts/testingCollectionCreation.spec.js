@@ -8,7 +8,7 @@ test('create a collection', async ({page}) => {
   // 3. Create new collection
   // 4. Enter a title
   // 5. Press Create
-  await page.goto('/');
+  await page.goto('/'); // baseURL is in playwright.config
   await page.getByText('Root Collection').click();
   await page.getByText('Root Collectionc/').click({
     button: 'right'
@@ -22,5 +22,5 @@ test('create a collection', async ({page}) => {
   await page.getByRole('menuitem', { name: 'Delete' }).click();
   await page.getByLabel('Confirm Deletion').getByRole('button', { name: 'Delete' }).click();
   
-  //assert record is deleted
+  // TODO assert record is deleted
 });

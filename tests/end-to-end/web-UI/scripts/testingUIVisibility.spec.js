@@ -13,8 +13,7 @@ import { test, expect } from '@playwright/test';
  // checking visibility and expanding some dropdowns
 test('test visibility', async ({page}) => {
   try {
-    console.log("******Begin test******");  
-    await page.goto('/')
+    await page.goto('/'); // baseURL is in playwright.config
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
       console.log("NOT LOGGED IN");
     } 
