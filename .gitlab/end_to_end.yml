@@ -359,9 +359,6 @@ end_to_end_error_discovery_arango:
     - ci-datafed-arango
   script:
     - sudo journalctl --no-pager -u arangodb3.service
-  needs:
-    - job: end_to_end_client-test
-      artifacts: false
   rules:
     - when: always
 

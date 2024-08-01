@@ -51,9 +51,6 @@
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker logs $(docker ps --filter "ancestor=${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --format "{{.Names}}")
-  needs:
-    - job: end_to_end_client-test
-      artifacts: false
   rules:
     - when: always
 
