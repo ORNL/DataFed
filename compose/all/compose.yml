@@ -109,7 +109,7 @@ services:
     volumes:
       - ./keys:/opt/datafed/keys
       - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-      - ${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed
+      - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
     ports:
       - 9000:9000 # Communication core server
 
@@ -144,7 +144,7 @@ services:
       - ./keys:/opt/datafed/keys
       - ./globus:/opt/datafed/globus
       - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-      - ${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed
+      - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
 
         #    ports:
         #      - "8081:443" # This must be the same port that is mapped to the host for redirects to work
