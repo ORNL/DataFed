@@ -362,6 +362,8 @@ end_to_end_error_discovery_arango:
   needs:
     - job: end_to_end_client-test
       artifacts: false
+  rules:
+    - when: always
 
 end_to_end_error_discovery_gcs:
   extends: .error_logs_client_end_to_end

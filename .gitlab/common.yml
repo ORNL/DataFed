@@ -54,6 +54,8 @@
   needs:
     - job: end_to_end_client-test
       artifacts: false
+  rules:
+    - when: always
 
 
 
