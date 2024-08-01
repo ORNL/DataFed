@@ -39,7 +39,8 @@ module.exports = defineConfig({
     launchOptions: {
       args: ['--ignore-certificate-errors'],
     },
-    storageState: './.auth/auth.json'
+    storageState: './.auth/auth.json',
+    baseURL: 'https://@DATAFED_DOMAIN@', //TODO URL HERE 
   },
   
 

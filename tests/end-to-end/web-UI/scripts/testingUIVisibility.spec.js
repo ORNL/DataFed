@@ -14,7 +14,7 @@ import { test, expect } from '@playwright/test';
 test('test visibility', async ({page}) => {
   try {
     console.log("******Begin test******");  
-    await page.goto('https://localhost/')
+    await page.goto('./')
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
       console.log("NOT LOGGED IN");
     } 
