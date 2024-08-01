@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('test making records', async ({ page }) => {
-    await page.goto('./');
+    await page.goto('/');
     await page.getByText('Root Collectionc/').click({
       button: 'right'
     });

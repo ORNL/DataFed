@@ -8,7 +8,7 @@ test('create a collection', async ({page}) => {
     // 3. Create new collection
     // 4. Enter a title
     // 5. Press Create
-    await page.goto('https://localhost/');
+    await page.goto('/');
     await page.getByText('Root Collection').click();
     await page.getByText('Root Collectionc/').click({
       button: 'right'

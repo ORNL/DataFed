@@ -3,16 +3,16 @@ cmake_minimum_required (VERSION 3.17.0)
 
 message("TESTING: DATAFED_DOMAIN : ${DATAFED_DOMAIN}")
 
-# configure_file(
-#   "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js.in"
-#   "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js"
-#   @ONLY
-# )
-# configure_file(
-#   "${CMAKE_CURRENT_SOURCE_DIR}/auth.tearDown.js.in"
-#   "${CMAKE_CURRENT_SOURCE_DIR}/auth.tearDown.js"
-#   @ONLY
-# )
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js"
+  @ONLY
+)
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/auth.tearDown.js.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/auth.tearDown.js"
+  @ONLY
+)
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/playwright.config.js.in"
   "${CMAKE_CURRENT_SOURCE_DIR}/playwright.config.js"
