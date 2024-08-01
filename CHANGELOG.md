@@ -12,6 +12,7 @@
 5. [937] - Working metadata services running together as part of CI
 6. [946] - Added docker compose for DataFed Repository and for Metadata Services
 7. [955] - Adds repo pieces to CI with working end-to-end tests
+8. [973] - Adds log output at the end of CI test pipeline
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
