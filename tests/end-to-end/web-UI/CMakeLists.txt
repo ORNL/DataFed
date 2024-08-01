@@ -4,20 +4,11 @@ cmake_minimum_required (VERSION 3.17.0)
 message("TESTING: DATAFED_DOMAIN : ${DATAFED_DOMAIN}")
 
 configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js"
+  "${CMAKE_CURRENT_SOURCE_DIR}/DataFed_config.json.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/DataFed_config.json"
   @ONLY
 )
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/auth.tearDown.js.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/auth.tearDown.js"
-  @ONLY
-)
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/playwright.config.js.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/playwright.config.js"
-  @ONLY
-)
+
 #FIXTHIS
 # For E2E web ui test
 if(ENABLE_END_TO_END_WEB_TESTS)

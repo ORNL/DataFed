@@ -1,5 +1,10 @@
 // @ts-check
 const { defineConfig, devices } = require('@playwright/test');
+const fs = require('fs');
+
+const raw = fs.readFileSync('./DataFed_config.json', 'utf-8');
+const rawJSON = JSON.parse(raw);
+const DataFedDomain = "https://" + rawJSON.domain;
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -40,7 +45,7 @@ module.exports = defineConfig({
       args: ['--ignore-certificate-errors'],
     },
     storageState: './.auth/auth.json',
-    baseURL: "https://@DATAFED_DOMAIN@", //DOMAIN HERE make sure it's correct in the CI pipeline
+    baseURL: DataFedDomain, //DOMAIN HERE make sure it's correct in the CI pipeline
   },
   
 

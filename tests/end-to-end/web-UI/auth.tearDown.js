@@ -1,4 +1,9 @@
 const { chromium } = require('playwright');
+const fs = require('fs');
+
+const raw = fs.readFileSync('./DataFed_config.json', 'utf-8');
+const rawJSON = JSON.parse(raw);
+const DataFedDomain = "https://" + rawJSON.domain;
 
 module.exports = async function () {
     console.log("******Inside Tear Down File******");
@@ -12,7 +17,7 @@ module.exports = async function () {
     console.log("new page object created");
     
     // Go to the website and login through globus using a tester account
-    await page.goto('https://@DATAFED_DOMAIN@/');
+    await page.goto(DataFedDomain + '/');
     await page.getByRole('button', { name: '' }).click();
     await browser.close();
 };
