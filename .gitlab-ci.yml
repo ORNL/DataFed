@@ -35,6 +35,7 @@ stages:
   - end-to-end-setup-arango
   - end-to-end-setup
   - end-to-end-test
+  - log
   - deploy-pypi-package
 
 # WARNING
