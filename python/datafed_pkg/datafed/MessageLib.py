@@ -22,14 +22,16 @@ from . import VERSION
 
 # Function to check if a string contains any letters
 def contains_letters(s):
-    return bool(re.search('[a-zA-Z]', s))
+    return bool(re.search("[a-zA-Z]", s))
+
 
 def remove_after_prefix_with_numbers(s):
     # Use regular expression to match the prefix with numbers
-    match = re.match(r'(\d+.*?)(\D.*)', s)
+    match = re.match(r"(\d+.*?)(\D.*)", s)
     if match:
         return match.group(1)  # Return the part before the remaining string
     return s  # If no match is found, return the original string
+
 
 # Check with pypi if a newer release is available, only look for stable
 # versions
@@ -41,8 +43,7 @@ def get_latest_stable_version(package_name):
         # Filter the list to remove entries that contain any letters, we don't
         # want to look at entries that could be a pre-release of some sort and
         # recommend that the user use for instance a beta version.
-        releases = [release for release in releases if not 
-                    contains_letters(release)]
+        releases = [release for release in releases if not contains_letters(release)]
         if not releases:
             return None
 
@@ -234,7 +235,9 @@ class API:
                 "Incompatible server api detected {}.{}.{}, you are running "
                 "{}.{}.{} consider "
                 "upgrading the datafed python client.".format(
-                    reply.api_major, reply.api_minor, reply.api_patch,
+                    reply.api_major,
+                    reply.api_minor,
+                    reply.api_patch,
                     Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR,
                     Version_pb2.DATAFED_COMMON_PROTOCOL_API_MINOR,
                     Version_pb2.DATAFED_COMMON_PROTOCOL_API_PATCH,
