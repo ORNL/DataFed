@@ -44,4 +44,3 @@
     # go to the web_UI directory
     cd tests/end-to-end/web-UI
     npx playwright test
-
