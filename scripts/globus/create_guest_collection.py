@@ -27,6 +27,10 @@ DEPLOYMENT_KEY_PATH = os.getenv(
     "DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH", "./deployment-key.json"
 )
 
+BASE_PATH = os.getenv(
+    "DATAFED_GCS_COLLECTION_BASE_PATH", "/"
+)
+
 # Path to deployment key
 DATAFED_GLOBUS_CONTROL_PORT = os.getenv("DATAFED_GLOBUS_CONTROL_PORT", "443")
 DATAFED_GCS_URL = os.getenv("DATAFED_GCS_URL")
@@ -173,7 +177,7 @@ if guest_collection_found is False:
     # Create the collection
     collection_document = globus_sdk.GuestCollectionDocument(
         public="True",
-        collection_base_path="/",
+        collection_base_path=BASE_PATH,
         display_name=guest_collection_name,
         mapped_collection_id=mapped_collection_id,
     )
