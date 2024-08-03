@@ -294,7 +294,7 @@ then
   echo "export DATAFED_REPO_PUBLIC_KEY=\"$public_key\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_ENDPOINT_UUID=\"$uuid_of_collection\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_RELATIVE_PATH=\"${RELATIVE_PATH}/$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
-  echo "export DATAFED_REPO_DOMAIN=\"\"" >> ${OUTPUT_SCRIPT_NAME}
+  echo "export DATAFED_REPO_DOMAIN=\"placeholder\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_EXPORT_PATH=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "export DATAFED_REPO_CAPACITY=\"\"" >> ${OUTPUT_SCRIPT_NAME}
 fi
@@ -310,7 +310,7 @@ then
   echo "pub_key=\"$public_key\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "endpoint=\"$uuid_of_collection\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "path=\"${RELATIVE_PATH}/$DATAFED_REPO_ID_AND_DIR\"" >> ${OUTPUT_SCRIPT_NAME}
-  echo "domain=\"\"" >> ${OUTPUT_SCRIPT_NAME}
+  echo "domain=\"placeholder\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "exp_path=\"\"" >> ${OUTPUT_SCRIPT_NAME}
   echo "capacity=\"\"" >> ${OUTPUT_SCRIPT_NAME}
 fi
@@ -328,7 +328,7 @@ then
   echo "  \"pub_key\": \"$public_key\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"endpoint\": \"$uuid_of_collection\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"path\": \"${RELATIVE_PATH}/$DATAFED_REPO_ID_AND_DIR\"," >> ${OUTPUT_SCRIPT_NAME}
-  echo "  \"domain\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
+  echo "  \"domain\": \"placeholder\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"exp_path\": \"\"," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"capacity\": 0," >> ${OUTPUT_SCRIPT_NAME}
   echo "  \"admins\": [\"\"]" >> ${OUTPUT_SCRIPT_NAME}
@@ -345,7 +345,7 @@ echo "Srvr. Address: tcp://$local_address:$local_DATAFED_REPO_EGRESS_PORT"
 echo "Public Key: $public_key"
 echo "End-point ID: $uuid_of_collection"
 echo "Path: ${RELATIVE_PATH}/$DATAFED_REPO_ID_AND_DIR"
-echo "Domain: "
+echo "Domain: placeholder"
 # I don't know what this is
 echo "Export Path: "
 echo "Capacity: The capacity of the repository"
