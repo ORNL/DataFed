@@ -215,6 +215,7 @@ end-to-end-repo-setup:
     - echo "-e DATAFED_HTTPS_SERVER_PORT=\"443\" \\" >> run_repo.sh
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_repo.sh
     - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"${CI_DATAFED_DOMAIN}:7513\" \\" >> run_repo.sh
+    - echo "-e DATAFED_REPO_ID_AND_DIR=\"${CI_DATAFED_REPO_ID_AND_DIR}\" \\" >> run_globus.sh
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_repo.sh
     - echo "-e DATAFED_GCS_COLLECTION_BASE_PATH=\"/mnt\" \\" >> run_repo.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_repo.sh
