@@ -27,9 +27,7 @@ DEPLOYMENT_KEY_PATH = os.getenv(
     "DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH", "./deployment-key.json"
 )
 
-BASE_PATH = os.getenv(
-    "DATAFED_GCS_COLLECTION_BASE_PATH", "/"
-)
+BASE_PATH = os.getenv("DATAFED_GCS_COLLECTION_BASE_PATH", "/")
 
 # Path to deployment key
 DATAFED_GLOBUS_CONTROL_PORT = os.getenv("DATAFED_GLOBUS_CONTROL_PORT", "443")
