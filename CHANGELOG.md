@@ -13,6 +13,8 @@
 6. [946] - Added docker compose for DataFed Repository and for Metadata Services
 7. [955] - Adds repo pieces to CI with working end-to-end tests
 8. [973] - Adds log output at the end of CI test pipeline
+9. [968] - Adds the ability to specify both base and root path when creating
+   Globus collections.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
