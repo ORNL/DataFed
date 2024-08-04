@@ -56,7 +56,6 @@ services:
       DATAFED_REPO_DOMAIN: "${DATAFED_REPO_DOMAIN}"
       DATAFED_GCS_IP: "${DATAFED_GCS_IP}"
       BUILD_WITH_METADATA_SERVICES: "FALSE"
-      DATAFED_REPO_DOMAIN: "${DATAFED_REPO_DOMAIN}"
     network_mode: host
     image: datafed-gcs:latest
     volumes:
