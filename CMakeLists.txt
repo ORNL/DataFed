@@ -208,7 +208,7 @@ if( INSTALL_FOXX )
 endif()
 
 if (ENABLE_END_TO_END_TESTS)
-  if (NOT ENABLE_END_TO_END_API_TESTS OR NOT ENABLE_END_TO_END_WEB_TESTS)
+	if (NOT ENABLE_END_TO_END_API_TESTS AND NOT ENABLE_END_TO_END_WEB_TESTS)
     message (FATAL_ERROR "Cannot run end-to-end tests because one of the ENABLE_END_TO_END web or API flag is not on")
   else()
     add_subdirectory(tests/end-to-end)

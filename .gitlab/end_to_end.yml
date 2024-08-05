@@ -336,6 +336,7 @@ end_to_end_client-test:
     - export DATAFED_REPO_FORM_PATH="$(pwd)/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
     - env > env_file
     - echo "Testing"
+    - source /shared/install/python/datafed/bin/activate
     - ./scripts/generate_datafed.sh
     - >
       cmake -S. -B build
@@ -352,7 +353,6 @@ end_to_end_client-test:
     - cmake --build build --target pydatafed
     - cmake --build build --target test
 
-
 end_to_end_web_test:
   variables:
     GIT_STRATEGY: clone
@@ -365,8 +365,6 @@ end_to_end_web_test:
   tags:
     - ci-datafed-client
   script:
-    #    - export DATAFED_REPO_FORM_PATH="$(pwd)/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
-    #- env > env_file
     - cd tests/end-to-end/web-UI
     - npm install
     - sudo npx playwright install-deps
@@ -385,3 +383,44 @@ end_to_end_web_test:
       -DENABLE_END_TO_END_WEB_TESTS=ON
       -DINSTALL_FOXX=OFF
     - cmake --build build --target end_to_end_web_tests
+
+end_to_end_error_discovery_arango:
+  stage: log
+  tags:
+    - ci-datafed-arango
+  script:
+    - sudo journalctl --no-pager -u arangodb3.service
+  rules:
+    - when: always
+
+end_to_end_error_discovery_gcs:
+  extends: .error_logs_client_end_to_end
+  variables:
+    IMAGE_TAG: "datafed/gcs-"
+  tags:
+    - ci-datafed-globus
+    - docker
+
+end_to_end_error_discovery_repo:
+  extends: .error_logs_client_end_to_end
+  variables:
+    IMAGE_TAG: "datafed/repo-"
+  tags:
+    - ci-datafed-globus
+    - docker
+
+end_to_end_error_discovery_core:
+  extends: .error_logs_client_end_to_end
+  variables:
+    IMAGE_TAG: "datafed/core-"
+  tags:
+    - ci-datafed-core
+    - docker
+
+end_to_end_error_discovery_web:
+  extends: .error_logs_client_end_to_end
+  variables:
+    IMAGE_TAG: "datafed/ws-"
+  tags:
+    - ci-datafed-core
+    - docker

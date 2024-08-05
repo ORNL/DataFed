@@ -49,6 +49,16 @@ else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
+local_DATAFED_DATABASE_HOST=""
+if [[ -z "$DATAFED_DATABASE_HOST" ]]
+then
+  # Empty
+  local_DATAFED_DATABASE_HOST="localhost"
+else
+  local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
+fi
+
+
 local_DATAFED_ZEROMQ_SESSION_SECRET=""
 if [ -z "${DATAFED_ZEROMQ_SESSION_SECRET}" ]
 then
@@ -188,6 +198,14 @@ else
   local_DATAFED_GLOBUS_ALLOWED_DOMAINS=$(printenv DATAFED_GLOBUS_ALLOWED_DOMAINS)
 fi
 
+if [ -z "${DATAFED_GLOBUS_SUBSCRIPTION}" ]
+then
+  # For compose will set by default to run on a port other than 443 because 
+  # the core metadata services use 443 for the web server
+  local_DATAFED_GLOBUS_SUBSCRIPTION=""
+else
+  local_DATAFED_GLOBUS_SUBSCRIPTION=$(printenv DATAFED_GLOBUS_SUBSCRIPTION)
+fi
 
 if [ ! -d "$PATH_TO_CONFIG_DIR" ]
 then
@@ -246,6 +264,9 @@ export DATAFED_DOMAIN="$local_DATAFED_DOMAIN"
 # Env Variables for Core Server
 # ************************************************
 export DATAFED_DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
+# Host of the metadata database, can be a domain name
+# or an IP address.
+export DATAFED_DATABASE_HOST="$local_DATAFED_DATABASE_HOST"
 # The user account the datafed core application will run under
 export DATAFED_CORE_USER="$local_DATAFED_CORE_USER"
 
@@ -330,4 +351,6 @@ export DATAFED_GLOBUS_ALLOWED_DOMAINS="$local_DATAFED_GLOBUS_ALLOWED_DOMAINS"
 # Globus control port default is 443, might want to change if hosting
 # a web server on the same machine.
 export DATAFED_GLOBUS_CONTROL_PORT="$local_DATAFED_GLOBUS_CONTROL_PORT"
+# Globus subscription ID
+export DATAFED_GLOBUS_SUBSCRIPTION="${local_DATAFED_GLOBUS_SUBSCRIPTION}"
 EOF
