@@ -69,7 +69,6 @@ fi
 if [ -n "$UID" ]; then
     echo "Switching datafed user to UID: ${UID}"
     usermod -u $UID datafed
-    chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
 fi
 
 if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]
@@ -191,8 +190,8 @@ fi
 
 if [ ! -d "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
 then
-  mkdir -p "$DATAFED_GCS_COLLECTION_ROOT_PATH"
-  chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
+  mkdir -p ""${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}""
+  chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
 fi
 
 "${BUILD_DIR}/scripts/globus/setup_globus.sh"
@@ -200,6 +199,7 @@ fi
 source "${DATAFED_PYTHON_ENV}/bin/activate"
 # Must be passed in directly
 GCS_CLI_ENDPOINT_ID="$GCS_CLI_ENDPOINT_ID" \
+DATAFED_GCS_COLLECTION_BASE_PATH="$DATAFED_GCS_COLLECTION_BASE_PATH" \
 DATAFED_GCS_URL="$DATAFED_GCS_URL" \
 GCS_CLI_CLIENT_ID="$GCS_CLI_CLIENT_ID" \
 GCS_CLI_CLIENT_SECRET="$GCS_CLI_CLIENT_SECRET" \

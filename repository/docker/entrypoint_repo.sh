@@ -15,7 +15,7 @@ if [ -n "$UID" ]; then
     usermod -u "$UID" datafed
     chown -R datafed:root "${PROJECT_ROOT}"
     chown -R datafed:root "${DATAFED_INSTALL_PATH}/repo/"
-    chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
+    chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
 fi
 
 

@@ -20,6 +20,7 @@ from . import SDMS_Auth_pb2 as auth
 from . import Connection
 from . import VERSION
 
+
 # Function to check if a string contains any letters
 def contains_letters(s):
     return bool(re.search("[a-zA-Z]", s))
