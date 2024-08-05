@@ -15,6 +15,43 @@ using namespace SDMS;
 
 BOOST_AUTO_TEST_SUITE(MessageFactoryTest)
 
+BOOST_AUTO_TEST_CASE(testing_StringMessage) {
+
+  MessageFactory msg_factory;
+
+  auto message = msg_factory.create(MessageType::STRING); // Create StringMessage
+
+  std::string user_id = "hermes";
+  std::string key = "skeleton";
+
+  message->set(MessageAttribute::ID, user_id);
+  message->set(MessageAttribute::KEY, key);
+  message->set(MessageAttribute::STATE, MessageState::REQUEST);
+  //message->set("dynamic_attribute", static_cast<uint8_t>(42)); // Example dynamic attribute
+
+  std::string payload = "test_payload";
+  message->setPayload(payload); // Set payload as a string
+
+  std::string route = "MtOlympia";
+  message->addRoute(route);
+
+  BOOST_CHECK(message->type() == MessageType::STRING);
+  BOOST_CHECK(std::get<std::string>(message->get(MessageAttribute::ID)) == user_id);
+  BOOST_CHECK(std::get<std::string>(message->get(MessageAttribute::KEY)) == key);
+  BOOST_CHECK(std::get<MessageState>(message->get(MessageAttribute::STATE)) == MessageState::REQUEST);
+  //BOOST_CHECK(std::get<uint8_t>(message->get("dynamic_attribute")) == 42); // Check dynamic attribute
+
+  BOOST_CHECK(message->getRoutes().size() == 1);
+  std::cout << message->getRoutes().front().compare(route) << std::endl;  
+ // BOOST_CHECK(message->getRoutes().front().compare(route) == 0);
+
+  // Test response message
+  auto response_message = msg_factory.createResponseEnvelope(*message);
+
+  BOOST_CHECK(response_message->getRoutes().size() == 1);
+  BOOST_CHECK(message->getRoutes().front().compare(route) == 0);
+  BOOST_CHECK(std::get<MessageState>(response_message->get(MessageAttribute::STATE)) == MessageState::RESPONSE);
+}
 BOOST_AUTO_TEST_CASE(testing_MessageFactory) {
 
   MessageFactory msg_factory;

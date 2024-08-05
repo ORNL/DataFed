@@ -25,7 +25,7 @@ enum class MessageType { GOOGLE_PROTOCOL_BUFFER, STRING };
  **/
 enum class MessageState { REQUEST, RESPONSE };
 
-enum class MessageAttribute { ID, KEY, STATE, CORRELATION_ID };
+enum class MessageAttribute { ID, KEY, STATE, CORRELATION_ID, ENDPOINT, VERB, BODY };
 
 inline const std::string toString(const MessageAttribute attribute) {
   if (attribute == MessageAttribute::ID) {
@@ -46,7 +46,7 @@ const std::string PROTO_ID = "proto_id";
 const std::string MSG_ID = "msg_id";
 const std::string MSG_TYPE = "msg_type";
 const std::string CONTEXT = "context";
-} // namespace google
+} // namespace google 
 } // namespace message
 } // namespace constants
 

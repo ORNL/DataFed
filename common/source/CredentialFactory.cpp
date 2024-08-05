@@ -1,6 +1,7 @@
 
 // Local private includes
 #include "credentials/ZeroMQSocketCredentials.hpp"
+#include "credentials/HTTPCredentials.hpp"
 
 // Local public includes
 #include "common/CredentialFactory.hpp"
@@ -17,6 +18,11 @@ std::unique_ptr<ICredentials> CredentialFactory::create(
   if (protocol_type == ProtocolType::ZQTP) {
     return std::unique_ptr<ICredentials>(new ZeroMQSocketCredentials(options));
   }
+
+  else if (protocol_type == ProtocolType::HTTP) {
+    return std::unique_ptr<ICredentials>(new HTTPCredentials(options));
+  }
+
   return std::unique_ptr<ICredentials>();
 }
 

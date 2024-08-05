@@ -174,3 +174,69 @@ bool to_uint32(const char *a_str, uint32_t &a_out) {
   else
     return false;
 }
+
+// Function to split a string by a delimiter and return the parts
+std::vector<std::string> splitCurlMessage(const std::string& s, char delimiter) {
+    std::vector<std::string> tokens;
+    std::stringstream ss(s);
+    std::string item;
+
+    while (std::getline(ss, item, delimiter)) {
+        tokens.push_back(item);
+    }
+
+    return tokens;
+}
+
+// Function to trim whitespace from both ends of a string
+std::string trimCurlMessage(const std::string& str) {
+    const std::string whitespace = " \t";
+    const auto str_begin = str.find_first_not_of(whitespace);
+    if (str_begin == std::string::npos) return ""; // No content
+
+    const auto str_end = str.find_last_not_of(whitespace);
+    const auto str_range = str_end - str_begin + 1;
+
+    return str.substr(str_begin, str_range);
+}
+
+// Function to parse the formatted string and assign to variables
+void parseCurlMessage(const std::string& input, std::string& endpoint, std::string& verb, std::string& body) {
+    std::vector<std::string> parts = splitCurlMessage(input, ',');
+    for (const std::string& part : parts) {
+        size_t colon_pos = part.find(':');
+        if (colon_pos != std::string::npos) {
+            std::string label = part.substr(0, colon_pos);
+            std::string value = part.substr(colon_pos + 1);
+
+            // Trim leading and trailing whitespace from the value and label
+            label = trimCurlMessage(label);
+            //if statement to prevent editting whitespace in body
+            if (label != "Body"){
+              value = trimCurlMessage(value);
+            }
+            //Change the single quote to double quotes for the body as single quotes return errors
+            else{
+              value = replaceSingleQuotes(value);
+            }
+           
+            if (label == "Endpoint") {
+                endpoint = value;
+            } else if (label == "Verb") {
+                verb = value;
+            } else if (label == "Body") {
+                body = value;
+            }
+        }
+    }
+}
+
+std::string replaceSingleQuotes(const std::string& input) {
+    std::string result = input; // Copy input to result
+    for (char& c : result) {    // Iterate through each character in the string
+        if (c == '\'') {        // Check if the character is a single quote
+            c = '\"';           // Replace single quote with double quote
+        }
+    }
+    return result;              // Return the modified string
+}

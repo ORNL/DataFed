@@ -2,7 +2,6 @@
 
 #define BOOST_TEST_MODULE communication_factory
 #include <boost/test/unit_test.hpp>
-
 // Local public includes
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
@@ -44,6 +43,7 @@ SocketOptions generateCommonOptions(const std::string channel) {
   socket_options.host = channel;
   return socket_options;
 }
+
 
 BOOST_AUTO_TEST_SUITE(CommunicatorFactoryTest)
 
@@ -529,5 +529,141 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactoryReply) {
   // Client receive
   /************************CLIENT END****************/
 }
+////////////////////////////////////////
+///       START OF HTTP TESTING     ///
+//////////////////////////////////////
+BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory_HTTP) {
 
+  std::cout << "\n*****************************" << std::endl;
+  std::cout << "Starting HTTP insecure test" << std::endl;
+
+  LogContext log_context;
+  log_context.thread_name = "test_communicator_factory";
+  CommunicatorFactory factory(log_context);
+  // Create the client communicator
+  const std::string server_id = "overlord";
+  
+
+  const std::string client_id = "ClientID";
+  
+  auto client = [&]() {
+    /// Creating input parameters for constructing Communication Instance
+    ///
+    /// OVERWRITE THE OPTIONS AS DEFAULT IS MADE FOR ZMQ
+    SocketOptions socket_options = generateCommonOptions("localhost");
+    socket_options.scheme = URIScheme::HTTP;
+    socket_options.class_type = SocketClassType::CLIENT;
+    socket_options.connection_life = SocketConnectionLife::INTERMITTENT;
+    socket_options.port = 8080;
+    socket_options.protocol_type = ProtocolType::HTTP;
+    socket_options.local_id = client_id;
+
+    CredentialFactory cred_factory;
+
+    std::unordered_map<CredentialType, std::string> cred_options;
+
+    auto credentials = cred_factory.create(ProtocolType::HTTP, cred_options);
+
+    uint32_t timeout_on_receive = 10;
+    long timeout_on_poll = 10;
+
+    // When creating a communication channel with a server application we need
+    // to locally have a client socket. So though we have specified a client
+    // socket we will actually be communicating with the server.
+    return factory.create(socket_options, *credentials, timeout_on_receive,
+                          timeout_on_poll);
+  }();
+  
+
+  const std::string id = "Bob";
+  const std::string key = "skeleton";
+ //FLAG THIS IS CAUSING A MEMORY ISSUE
+  auto client_id_from_comm = client->id();
+  BOOST_CHECK(client_id_from_comm.compare(client_id) == 0);
+  
+  MessageFactory msg_factory;
+
+  const std::string token = "magic_token";
+  { // Client send post test
+    auto msg_from_client = msg_factory.create(MessageType::STRING);
+    msg_from_client->set(MessageAttribute::ID, id);
+    msg_from_client->set(MessageAttribute::KEY, key);
+    msg_from_client->set(MessageAttribute::ENDPOINT, "http://localhost:8080/api/post");
+    msg_from_client->set(MessageAttribute::VERB, "POST");
+    msg_from_client->set(MessageAttribute::BODY, "{'fruit': 'apple'}");
+
+    //Set the endpoint, verb, and body.
+    std::string endpoint = std::get<std::string>(msg_from_client->get(MessageAttribute::ENDPOINT)); 
+    std::string verb = std::get<std::string>(msg_from_client->get(MessageAttribute::VERB));
+    std::string body = std::get<std::string>(msg_from_client->get(MessageAttribute::BODY));
+
+    // Using string concatenation to set the payload  WHEN I GET BACK YOU NEED TO MAKE THIS INTO A FUNCTION
+    std::string payload = "Endpoint:" + endpoint + ", " +
+                          "Verb:" + verb + ", " +
+                          "Body:" + body;
+    
+    //std::cout << payload << std::endl;
+    //We need to ensure there is a standard so first off we give the endpoint, then the Verb then the message.
+    //We later want to break this up once we do the send function we should break up each of these into seperate pieces for proper curl usage.
+    msg_from_client->setPayload(std::string(payload)); 
+    client->send(*msg_from_client);
+  }
+{ // Client send get test
+    auto msg_from_client2 = msg_factory.create(MessageType::STRING);
+    msg_from_client2->set(MessageAttribute::ID, id);
+    msg_from_client2->set(MessageAttribute::KEY, key);
+    msg_from_client2->set(MessageAttribute::ENDPOINT, "http://localhost:8080/api/fruits");
+    msg_from_client2->set(MessageAttribute::VERB, "GET");
+    msg_from_client2->set(MessageAttribute::BODY, "{}");
+    
+    //Set the endpoint, verb, and body.
+    std::string endpoint = std::get<std::string>(msg_from_client2->get(MessageAttribute::ENDPOINT)); 
+    std::string verb = std::get<std::string>(msg_from_client2->get(MessageAttribute::VERB));
+    std::string body = std::get<std::string>(msg_from_client2->get(MessageAttribute::BODY));
+
+    // Using string concatenation to set the payload
+    std::string payload = "Endpoint:" + endpoint + ", " +
+                          "Verb:" + verb + ", " +
+                          "Body:" + body;
+    
+    //We need to ensure there is a standard so first off we give the endpoint, then the Verb then the message.
+    //We later want to break this up once we do the send function we should break up each of these into seperate pieces for proper curl usage.
+    msg_from_client2->setPayload(std::string(payload)); 
+    client->send(*msg_from_client2);
+  }
+  
+  { // Client receive
+    ICommunicator::Response response = 
+    client->receive(MessageType::STRING);
+    BOOST_CHECK(response.time_out == false);
+    BOOST_CHECK(response.error == false);
+    BOOST_CHECK(response.message->type()==MessageType::STRING);
+ 
+    auto string_msg_content =
+        std::get<std::string >(response.message->getPayload());
+
+    std::cout<< "String Msg Content:" << std::endl;
+    std::cout<< string_msg_content << std::endl;
+    std::string testResult = R"({
+  "data": {
+    "fruit": "apple"
+  },
+  "message": "POST request received"
+}
+)" ;
+       // std::cout << testResult << std::endl;
+        BOOST_CHECK(string_msg_content.compare(testResult) == 0);
+  }
+
+  std::cout << "Sending shutdown command to dummy server" << std::endl;
+  {
+    auto shutdown_from_client = msg_factory.create(MessageType::STRING);
+    //We need to ensure there is a standard so first off we give the endpoint, then the Verb then the message.
+    //We later want to break this up once we do the send function we should break up each of these into seperate pieces for proper curl usage.
+    shutdown_from_client->setPayload(std::string("Endpoint:http://127.0.0.1:8080/api/shutdown, Verb:POST, Body:{}")); 
+    client->send(*shutdown_from_client);
+  }
+
+}
 BOOST_AUTO_TEST_SUITE_END()
+

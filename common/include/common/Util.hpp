@@ -20,7 +20,10 @@ void hexDump(const char *a_buffer, const char *a_buffer_end,
 std::string escapeCSV(const std::string &a_value);
 std::string escapeJSON(const std::string &a_value);
 bool to_uint32(const char *a_str, uint32_t &a_out);
-
+std::vector<std::string> splitCurlMessage(const std::string& s, char delimiter);
+std::string trimCurlMessage(const std::string& str); 
+void parseCurlMessage(const std::string& input, std::string& endpoint, std::string& verb, std::string& body);
+std::string replaceSingleQuotes(const std::string& input);
 // std::vector<std::string> smartTokenize( const std::string & a_text, const
 // std::string & a_delim );
 
