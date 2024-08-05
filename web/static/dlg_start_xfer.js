@@ -229,7 +229,12 @@ export function show(a_mode, a_ids, a_cb) {
 */
 
     var in_timer;
-    function inTimerExpired() {
+    let searchCounter = 0;
+    let currentSearchToken = null;
+    function inTimerExpired(searchToken) {
+        // If this is not the latest search, ignore the result
+        if (searchToken !== currentSearchToken) return;
+
         var ep = path_in.val().trim();
 
         if (ep.length == 0) {
@@ -240,68 +245,85 @@ export function show(a_mode, a_ids, a_cb) {
         }
 
         var delim = ep.indexOf("/");
-        if (delim != -1)
-            ep = ep.substr(0, delim);
+        if (delim != -1) ep = ep.substr(0, delim);
 
         if (!cur_ep || ep != cur_ep.name) {
             $("#browse", frame).button("disable");
             $("#activate", frame).button("disable");
 
-            api.epView(ep, function (ok, data) {
-                if (ok && !data.code) {
-                    cur_ep = data;
-                    cur_ep.name = cur_ep.canonical_name || cur_ep.id;
-                    updateEndpointOptions(cur_ep);
+            // Wrap api.epView in a promise
+            new Promise((resolve, reject) => {
+                if (searchToken !== currentSearchToken) reject();
+                api.epView(ep, function (ok, data) {
+                    if (ok && !data.code) {
+                        resolve(data);
+                    } else {
+                        reject(data);
+                    }
+                });
+            }).then(data => {
+                cur_ep = data;
+                cur_ep.name = cur_ep.canonical_name || cur_ep.id;
+                updateEndpointOptions(cur_ep);
 
-                    var html = "<option title='" + (cur_ep.description ? util.escapeHTML(cur_ep.description) : "(no info)") + "'>" + util.escapeHTML(cur_ep.display_name || cur_ep.name) + " (";
+                var html = "<option title='" + (cur_ep.description ? util.escapeHTML(cur_ep.description) : "(no info)") + "'>" + util.escapeHTML(cur_ep.display_name || cur_ep.name) + " (";
 
-                    if (cur_ep.activated)
-                        html += Math.floor(cur_ep.expires_in / 3600) + " hrs";
-                    else if (cur_ep.expires_in == -1)
-                        html += "active";
-                    else
-                        html += "inactive";
+                if (cur_ep.activated)
+                    html += Math.floor(cur_ep.expires_in / 3600) + " hrs";
+                else if (cur_ep.expires_in == -1)
+                    html += "active";
+                else
+                    html += "inactive";
 
-                    html += ")</option>";
+                html += ")</option>";
 
-                    matches.html(html);
-                    matches.prop("disabled", false);
-                } else {
-                    cur_ep = null;
+                matches.html(html);
+                matches.prop("disabled", false);
+            }).catch(() => {
+                cur_ep = null;
+
+                // Wrap api.epAutocomplete in a promise
+                new Promise((resolve, reject) => {
                     api.epAutocomplete(ep, function (ok, data) {
+                        if (searchToken !== currentSearchToken) return;
                         if (ok) {
-                            if (data.DATA && data.DATA.length) {
-                                ep_list = data.DATA;
-                                var ep;
-                                var html = "<option disabled selected>" + data.DATA.length + " match" + (data.DATA.length > 1 ? "es" : "") + "</option>";
-                                for (var i in data.DATA) {
-                                    ep = data.DATA[i];
-                                    ep.name = ep.canonical_name || ep.id;
-                                    html += "<option title='" + util.escapeHTML(ep.description) + "'>" + util.escapeHTML(ep.display_name || ep.name) + " (";
-                                    if (!ep.activated && ep.expires_in == -1)
-                                        html += "active)</option>";
-                                    else
-                                        html += (ep.activated ? Math.floor(ep.expires_in / 3600) + " hrs" : "inactive") + ")</option>";
-                                }
-                                matches.html(html);
-                                matches.prop("disabled", false);
-                            } else {
-                                ep_list = null;
-                                matches.html("<option disabled selected>No Matches</option>");
-                                matches.prop("disabled", true);
-
-                                if (data.code) {
-                                    dialogs.dlgAlert("Globus Error", data.code);
-                                }
-                            }
+                            resolve(data);
                         } else {
-                            dialogs.dlgAlert("Globus Error", data);
+                            reject(data);
                         }
                     });
-                }
+                }).then(data => {
+                    if (data.DATA && data.DATA.length) {
+                        ep_list = data.DATA;
+                        var ep;
+                        var html = "<option disabled selected>" + data.DATA.length + " match" + (data.DATA.length > 1 ? "es" : "") + "</option>";
+                        for (var i in data.DATA) {
+                            ep = data.DATA[i];
+                            ep.name = ep.canonical_name || ep.id;
+                            html += "<option title='" + util.escapeHTML(ep.description) + "'>" + util.escapeHTML(ep.display_name || ep.name) + " (";
+                            if (!ep.activated && ep.expires_in == -1)
+                                html += "active)</option>";
+                            else
+                                html += (ep.activated ? Math.floor(ep.expires_in / 3600) + " hrs" : "inactive") + ")</option>";
+                        }
+                        matches.html(html);
+                        matches.prop("disabled", false);
+                    } else {
+                        ep_list = null;
+                        matches.html("<option disabled selected>No Matches</option>");
+                        matches.prop("disabled", true);
+
+                        if (data.code) {
+                            dialogs.dlgAlert("Globus Error", data.code);
+                        }
+                    }
+                }).catch(data => {
+                    dialogs.dlgAlert("Globus Error", data);
+                });
             });
         }
     }
+
 
     var options = {
         title: dlg_title,
@@ -375,29 +397,39 @@ export function show(a_mode, a_ids, a_cb) {
                     path_in.autocomplete({
                         source: settings.ep_recent,
                         select: function () {
-                            clearTimeout(in_timer);
-                            in_timer = setTimeout(inTimerExpired, 250);
+                            currentSearchToken = ++searchCounter;
+                            inTimerExpired(currentSearchToken);
                         }
                     });
-                    inTimerExpired();
+                    currentSearchToken = ++searchCounter;
+                    inTimerExpired(currentSearchToken);
                 }
             } else {
-                inTimerExpired();
+                currentSearchToken = ++searchCounter;
+                inTimerExpired(currentSearchToken);
             }
 
+            let lastValue = path_in.val();
+
             path_in.on('input', function () {
-                if (cur_ep && !path_in.val().startsWith(cur_ep.name)) {
+                let currentValue = path_in.val();
+
+                if (cur_ep && !currentValue.startsWith(cur_ep.name)) {
                     endpoint_ok = false;
                     updateGoBtn();
                 }
 
-                clearTimeout(in_timer);
-                in_timer = setTimeout(inTimerExpired, 750);
+                if (lastValue !== currentValue) {
+                    lastValue = currentValue;
+                    currentSearchToken = ++searchCounter;
+                    inTimerExpired(currentSearchToken);
+                }
             });
         },
         close: function (ev, ui) {
             $(this).dialog("destroy").remove();
         }
+
     };
 
     frame.dialog(options);
