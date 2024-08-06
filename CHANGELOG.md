@@ -30,6 +30,8 @@
     instead of the auth_client.
 11. [953] - Refactored docker compose build scripts to address technical debt.
 
+12. [977] - Created HTTPCommunicator, StringMessage, HTTPCredential, HTTPSocket, and unit test classes.
+
 # v2023.10.23.15.50
 
 ## MINOR Feature
