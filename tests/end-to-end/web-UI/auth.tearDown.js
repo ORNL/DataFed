@@ -19,5 +19,6 @@ module.exports = async function () {
     // Go to the website and login through globus using a tester account
     await page.goto(DataFedDomain + '/');
     await page.getByRole('button', { name: '' }).click();
+    console.log("******Logged out******");
     await browser.close();
 };

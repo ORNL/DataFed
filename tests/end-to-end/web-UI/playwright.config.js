@@ -2,7 +2,7 @@
 const { defineConfig, devices } = require('@playwright/test');
 const fs = require('fs');
 
-const raw = fs.readFileSync('./DataFed_config.json', 'utf-8'); // sometimes vscode will give an error even after creating the DataFed_config.json file, ignore it.
+const raw = fs.readFileSync('./DataFed_config.json'); // sometimes vscode will give an error even after creating the DataFed_config.json file, ignore it.
 const rawJSON = JSON.parse(raw);
 const DataFedDomain = "https://" + rawJSON.domain;
 
