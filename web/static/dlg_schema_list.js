@@ -51,7 +51,7 @@ function loadSchemas(){
                 for ( var i in data.schema ){
                     sch = data.schema[i];
                     //src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ownNm?" " + sch.ownNm:"") + (sch.ownId?" (" + sch.ownId +")":""), key: sch.id + ":" + sch.ver });
-                    src.push({ title: sch.id + ":" + sch.ver + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ref?" (R)":""), own_nm: sch.ownNm, own_id: sch.ownId.substr(2), id: sch.id, ver: sch.ver, cnt: sch.cnt, ref: sch.ref, key: sch.id + ":" + sch.ver });
+                    src.push({ title: sch.id + ":" + sch.ver + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ref?" (R)":""), own_nm: util.escapeHTML(sch.ownNm), own_id: sch.ownId.substr(2), id: sch.id, ver: sch.ver, cnt: sch.cnt, ref: sch.ref, key: sch.id + ":" + sch.ver });
                 }
             }else{
                 src.push({ title: "(no matches)" });
