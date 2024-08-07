@@ -1,0 +1,46 @@
+---
+
+include:
+  - local: .gitlab/common.yml
+
+check-ws-image:
+  extends: .image_check
+  stage: image-check
+  variables:
+    COMPONENT: "ws"
+    IMAGE_TAG: "datafed/ws"
+
+check-core-image:
+  extends: .image_check
+  stage: image-check
+  variables:
+    COMPONENT: "core"
+    IMAGE_TAG: "datafed/core"
+
+check-repo-image:
+  extends: .image_check
+  stage: image-check
+  variables:
+    COMPONENT: "repo"
+    IMAGE_TAG: "datafed/repo"
+
+check-gcs-base-image:
+  extends: .image_check
+  stage: image-check
+  variables:
+    COMPONENT: "gcs_base"
+    IMAGE_TAG: "datafed/gcs-base"
+
+check-gcs-image:
+  extends: .image_check
+  stage: image-check
+  variables:
+    COMPONENT: "gcs"
+    IMAGE_TAG: "datafed/gcs"
+
+check-foxx-image:
+  extends: .image_check
+  stage: image-check
+  variables:
+    COMPONENT: "foxx"
+    IMAGE_TAG: "datafed/foxx"

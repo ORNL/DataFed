@@ -1,0 +1,37 @@
+---
+stages:
+  - build
+
+include:
+  - local: .gitlab/common.yml
+
+build-gcs-base:
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/gcs-base"
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_STRATEGY: clone
+  tags:
+    - ci-datafed-globus
+    - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - common/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
+      when: on_success
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - source "scripts/dependency_versions.sh"
+    - cd "external/globus-connect-server-deploy/docker"
+    - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+
+placeholder:
+  extends: .placeholder
