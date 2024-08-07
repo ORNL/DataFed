@@ -27,6 +27,8 @@ DEPLOYMENT_KEY_PATH = os.getenv(
     "DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH", "./deployment-key.json"
 )
 
+BASE_PATH = os.getenv("DATAFED_GCS_COLLECTION_BASE_PATH", "/")
+
 # Path to deployment key
 DATAFED_GLOBUS_CONTROL_PORT = os.getenv("DATAFED_GLOBUS_CONTROL_PORT", "443")
 DATAFED_GCS_URL = os.getenv("DATAFED_GCS_URL")
@@ -161,8 +163,21 @@ for item in collection_list["data"]:
         guest_collection_id = item["id"]
         break
 
+if guest_collection_found:
+    print(f"Removing current guest collection {guest_collection_id}")
+    response = client.delete_collection(guest_collection_id)
+
+user_credential_list = client.get_user_credential_list(storage_gateway_id)
+user_credential_found = False
+
+for item in user_credential_list["data"]:
+    print(item["identity_id"])
+    if item["identity_id"] == client_id:
+        user_credential_found = True
+        break
+
 # https://github.com/globus/globus-sdk-python/blob/main/docs/examples/guest_collection_creation.rst
-if guest_collection_found is False:
+if user_credential_found is False:
     credential_document = globus_sdk.UserCredentialDocument(
         storage_gateway_id=storage_gateway_id,
         identity_id=client_id,
@@ -170,17 +185,18 @@ if guest_collection_found is False:
     )
     client.create_user_credential(credential_document)
 
-    # Create the collection
-    collection_document = globus_sdk.GuestCollectionDocument(
-        public="True",
-        collection_base_path="/",
-        display_name=guest_collection_name,
-        mapped_collection_id=mapped_collection_id,
-    )
-    response = client.create_collection(collection_document)
-    guest_collection_id = response["id"]
-    print(f"guest collection {guest_collection_id} created")
-
+# We are recreating the collection from scratch because we are unable to update
+# the base path once the collection has been made this is a limitation of Globus
+# Create the collection
+collection_document = globus_sdk.GuestCollectionDocument(
+    public="True",
+    collection_base_path=BASE_PATH,
+    display_name=guest_collection_name,
+    mapped_collection_id=mapped_collection_id,
+)
+response = client.create_collection(collection_document)
+guest_collection_id = response["id"]
+print(f"guest collection {guest_collection_id} created")
 
 # Create ACL rule for Guest anonymous access
 acl_list = tc.endpoint_acl_list(endpoint_id=guest_collection_id)

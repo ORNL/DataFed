@@ -83,7 +83,7 @@ DOMAINS="--domain $DATAFED_GLOBUS_ALLOWED_DOMAINS --domain clients.auth.globus.o
 
 echo "{" > path_restriction.json
 echo "  \"DATA_TYPE\": \"path_restrictions#1.0.0\"," >> path_restriction.json
-echo "  \"read_write\": [\"${DATAFED_GCS_COLLECTION_ROOT_PATH}\"]" >> path_restriction.json
+echo "  \"read_write\": [\"${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}\"]" >> path_restriction.json
 echo "}" >> path_restriction.json
 
 if [ -z "$gateway_line" ]
