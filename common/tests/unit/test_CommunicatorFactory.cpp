@@ -590,22 +590,16 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory_HTTP) {
     msg_from_client->set(MessageAttribute::KEY, key);
     msg_from_client->set(MessageAttribute::ENDPOINT, "http://localhost:8080/api/post");
     msg_from_client->set(MessageAttribute::VERB, "POST");
-    msg_from_client->set(MessageAttribute::BODY, "{'fruit': 'apple'}");
 
-    //Set the endpoint, verb, and body.
+    //Set the endpoint, verb.
     std::string endpoint = std::get<std::string>(msg_from_client->get(MessageAttribute::ENDPOINT)); 
     std::string verb = std::get<std::string>(msg_from_client->get(MessageAttribute::VERB));
-    std::string body = std::get<std::string>(msg_from_client->get(MessageAttribute::BODY));
-
-    // Using string concatenation to set the payload  WHEN I GET BACK YOU NEED TO MAKE THIS INTO A FUNCTION
-    std::string payload = "Endpoint:" + endpoint + ", " +
-                          "Verb:" + verb + ", " +
-                          "Body:" + body;
     
-    //std::cout << payload << std::endl;
+      
+
     //We need to ensure there is a standard so first off we give the endpoint, then the Verb then the message.
     //We later want to break this up once we do the send function we should break up each of these into seperate pieces for proper curl usage.
-    msg_from_client->setPayload(std::string(payload)); 
+    msg_from_client->setPayload(std::string("{\"fruit\": \"apple\"}")); 
     client->send(*msg_from_client);
   }
 { // Client send get test
@@ -614,21 +608,14 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory_HTTP) {
     msg_from_client2->set(MessageAttribute::KEY, key);
     msg_from_client2->set(MessageAttribute::ENDPOINT, "http://localhost:8080/api/fruits");
     msg_from_client2->set(MessageAttribute::VERB, "GET");
-    msg_from_client2->set(MessageAttribute::BODY, "{}");
     
     //Set the endpoint, verb, and body.
     std::string endpoint = std::get<std::string>(msg_from_client2->get(MessageAttribute::ENDPOINT)); 
     std::string verb = std::get<std::string>(msg_from_client2->get(MessageAttribute::VERB));
-    std::string body = std::get<std::string>(msg_from_client2->get(MessageAttribute::BODY));
 
-    // Using string concatenation to set the payload
-    std::string payload = "Endpoint:" + endpoint + ", " +
-                          "Verb:" + verb + ", " +
-                          "Body:" + body;
-    
     //We need to ensure there is a standard so first off we give the endpoint, then the Verb then the message.
     //We later want to break this up once we do the send function we should break up each of these into seperate pieces for proper curl usage.
-    msg_from_client2->setPayload(std::string(payload)); 
+    msg_from_client2->setPayload(std::string("{}")); 
     client->send(*msg_from_client2);
   }
   
@@ -651,16 +638,18 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory_HTTP) {
   "message": "POST request received"
 }
 )" ;
-       // std::cout << testResult << std::endl;
-        BOOST_CHECK(string_msg_content.compare(testResult) == 0);
+    // std::cout << testResult << std::endl;
+    BOOST_CHECK(string_msg_content.compare(testResult) == 0);
   }
 
   std::cout << "Sending shutdown command to dummy server" << std::endl;
   {
     auto shutdown_from_client = msg_factory.create(MessageType::STRING);
+    shutdown_from_client->set(MessageAttribute::ENDPOINT, "http://127.0.0.1:8080/api/shutdown");
+    shutdown_from_client->set(MessageAttribute::VERB, "POST");
     //We need to ensure there is a standard so first off we give the endpoint, then the Verb then the message.
     //We later want to break this up once we do the send function we should break up each of these into seperate pieces for proper curl usage.
-    shutdown_from_client->setPayload(std::string("Endpoint:http://127.0.0.1:8080/api/shutdown, Verb:POST, Body:{}")); 
+    shutdown_from_client->setPayload("{}"); 
     client->send(*shutdown_from_client);
   }
 
