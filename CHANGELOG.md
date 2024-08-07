@@ -36,6 +36,7 @@
 13. [956] - Adds improved error message, when paths of repo don't align.
 14. [966] - CI refactor check that containers exist if not force build for branch.
 15. [968] - Fixes bug by creating distinction between base and root path.
+16. [978] - Removed non-working subscribe function.
 
 # v2023.10.23.15.50
 
