@@ -42,6 +42,7 @@ test('test visibility', async ({page}) => {
     // try to log out, because if not logged out, future tests will fail due to globus being annoying
     if (await page.getByRole('button', { name: '' }).isVisible()) {
       await page.getByRole('button', { name: '' }).click();
+      throw error;
     } else {
       // if in here, check if you logged out properly
       throw error;

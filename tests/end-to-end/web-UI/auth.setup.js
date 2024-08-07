@@ -23,6 +23,7 @@ module.exports = async function () {
     
     // Go to the website and login through globus using a tester account
     await page.goto(DataFedDomain + '/ui/welcome');//TESTING
+    await page.waitForTimeout(2000);
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
         await page.getByRole('button', { name: 'Log In / Register' }).click();
         if (page.getByRole('link', { name: 'Globus globus' }).isVisible()) {
