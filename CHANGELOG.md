@@ -36,6 +36,7 @@
 13. [956] - Adds improved error message, when paths of repo don't align.
 14. [966] - CI refactor check that containers exist if not force build for branch.
 15. [968] - Fixes bug by creating distinction between base and root path.
+16. [981] - Fixes html injection that can occur from user name when displaying owner in schema dlg box.
 
 # v2023.10.23.15.50
 
