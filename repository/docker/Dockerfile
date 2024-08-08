@@ -59,24 +59,19 @@ ARG LIB_DIR
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 
 # The above should also be available at runtime
-ENV DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-ENV DATAFED_GCS_COLLECTION_ROOT_PATH="/mnt/datafed"
-ENV          DATAFED_DIR="$DATAFED_DIR"
-ENV            BUILD_DIR="$BUILD_DIR"
-ENV              LIB_DIR="$LIB_DIR"
+ENV  DATAFED_GCS_COLLECTION_BASE_PATH="/mnt/datafed"
+ENV  DATAFED_GCS_COLLECTION_ROOT_PATH="/mnt/datafed"
+ENV           DATAFED_REPO_ID_AND_DIR="home"
+ENV                       DATAFED_DIR="$DATAFED_DIR"
+ENV                         BUILD_DIR="$BUILD_DIR"
+ENV                           LIB_DIR="$LIB_DIR"
 
 WORKDIR /datafed
 
-# copy necessary shared libraries
-#COPY --from=repo-build /libraries/libprotobuf.a           /libraries/libprotobuf.a
-#COPY --from=repo-build /libraries/libzmq.a                /libraries/libzmq.a
-#COPY --from=repo-build /libraries/libsodium.a             /libraries/libsodium.a
 COPY --from=repo-build /libraries/libboost_program_options.so /libraries/libboost_program_options.so
 COPY --from=repo-build /libraries/libboost_filesystem.so      /libraries/libboost_filesystem.so
-#RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf to
-#RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq to
-#RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
 RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_filesystem to
 
