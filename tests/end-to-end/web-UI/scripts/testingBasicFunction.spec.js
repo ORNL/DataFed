@@ -4,7 +4,9 @@ import { test, expect } from '@playwright/test';
 test('test visibility', async ({page}) => {
   try {
     console.log("******Begin test******");  
-    await page.goto('https://localhost/')
+    // Temporary fix 
+    let domain = process.env.DATAFED_DOMAIN;
+    await page.goto('https://' + domain + '/');
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
       console.log("NOT LOGGED IN");
     } 
