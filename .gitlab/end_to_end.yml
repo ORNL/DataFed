@@ -360,8 +360,8 @@ end_to_end_web_test:
   variables:
     GIT_STRATEGY: clone
     DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
-    TEST_USERNAME: "datafed89"
-    TEST_PASSWORD: "${CI_DATAFED_USER89_GLOBUSID_PASSWORD}"
+    DATAFED_WEB_TEST_USERNAME: "datafed89"
+    DATAFED_WEB_TEST_PASSWORD: "${CI_DATAFED_USER89_GLOBUSID_PASSWORD}"
     DATAFED_DOMAIN: "${CI_DATAFED_DOMAIN}"
   stage: end-to-end-test
   needs: ["end_to_end_client-test"]
