@@ -1,19 +1,8 @@
-import { test, expect } from '@playwright/test';
-// const process = require('process');
-//const authSetup = require('../auth.setup.js'); 
-//let page;
+import { test, expect } from '@playwright/test'; //to write a test file, just follow this format
 
-// test.beforeAll(async ({ browser }) => {
-//   // makes a new page object if none exist, also ensures page is linked to the test after this before hook.
- 
-//   console.log("******Login in******")
-//   page = await authSetup({ browser });
-// });
-
- // checking visibility and expanding some dropdowns
 test('test visibility', async ({page}) => {
   try {
-    await page.goto('/'); // baseURL is in playwright.config
+    await page.goto('/'); // root URL, if needed, change baseURL in playwright.config.js
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
       console.log("NOT LOGGED IN");
     } 

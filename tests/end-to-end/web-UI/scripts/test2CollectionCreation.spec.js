@@ -1,6 +1,4 @@
 import { test, expect } from '@playwright/test';
-// const process = require('process');
-
 
 test('create a collection', async ({page}) => {
   // 1. Login to DataFed
@@ -21,6 +19,5 @@ test('create a collection', async ({page}) => {
   await page.getByRole('menuitem', { name: ' Actions' }).click();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
   await page.getByLabel('Confirm Deletion').getByRole('button', { name: 'Delete' }).click();
-  
-  // TODO assert record is deleted
+
 });
