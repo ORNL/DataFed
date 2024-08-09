@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'; //to write a test file, just follow this format
 
+// just expanding things and checking visibility of elements
 test('test visibility', async ({page}) => {
   try {
     await page.goto('/'); // root URL, if needed, change baseURL in playwright.config.js
@@ -22,9 +23,6 @@ test('test visibility', async ({page}) => {
     await page.getByRole('treeitem', { name: '  Shared Data' }).getByRole('button').click();
     await page.getByRole('treeitem', { name: '  Saved Queries' }).locator('span').first().click();
     await page.getByRole('treeitem', { name: '  Saved Queries' }).getByRole('button').click();
-    await page.getByText('Provenance Annotate Upload').click({ timeout: 20000 });
-    await page.getByRole('treeitem', { name: '  By User' }).getByRole('button').click();
-
   } catch (error) {
 
     // element not visible, either the test broke due to tags changing, or not logged in

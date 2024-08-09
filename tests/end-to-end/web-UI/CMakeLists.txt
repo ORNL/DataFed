@@ -18,13 +18,4 @@ if(ENABLE_END_TO_END_WEB_TESTS)
     COMMENT "Running Playwright tests"
   )
 
-  # Note because these tests are all using the same database we cannot run most of them concurrently
-  # They must be run sequentially so that concurrent API calls do not create problems
-  # set_tests_properties(end_to_end_setup PROPERTIES FIXTURES_SETUP FIX_SETUP)
-
-
-  # The following must be run sequentially
-  # set_tests_properties(end_to_end_repo PROPERTIES FIXTURES_REQUIRED FIX_LOGIN)
-
-
 endif()

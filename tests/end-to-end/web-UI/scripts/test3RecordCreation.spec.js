@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 
+// making a record
 test('test making records', async ({ page }) => {
     await page.goto('/'); // baseURL is in playwright.config
     await page.getByText('Root Collectionc/').click({

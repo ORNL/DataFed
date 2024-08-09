@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 
+// creating a schema
 test('test schema creation', async ({ page }) => {
     await page.goto('/'); // baseURL is in playwright.config
     await page.waitForTimeout(3000);

@@ -22,7 +22,9 @@ module.exports = async function () {
     console.log("new page object created");
     
     // Go to the website and login through globus using a tester account
-    await page.goto(DataFedDomain + '/ui/welcome');//TESTING
+    // if breaks here, check that DataFed_config.json is correct, if testing locally, use "localhost"
+    // if in CI, just let cmake generate the json file
+    await page.goto(DataFedDomain + '/ui/welcome');
     await page.waitForTimeout(2000);
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
         await page.getByRole('button', { name: 'Log In / Register' }).click();

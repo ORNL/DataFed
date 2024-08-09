@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+// 1. Login to DataFed
+// 2. Click on a Collection in user/project space
+// 3. Create new collection
+// 4. Enter a title
+// 5. Press Create
 test('create a collection', async ({page}) => {
-  // 1. Login to DataFed
-  // 2. Click on a Collection in user/project space
-  // 3. Create new collection
-  // 4. Enter a title
-  // 5. Press Create
   await page.goto('/'); // baseURL is in playwright.config
   await page.getByText('Root Collection').click();
   await page.getByText('Root Collectionc/').click({
