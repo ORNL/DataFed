@@ -7,6 +7,7 @@
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
+2. [989] - This creates HTTP communicator and associated classes in the common library
 
 # v2024.6.17.10.40
 
