@@ -80,5 +80,5 @@ private:
 #endif
 
 // NOTES:
-//-Taking suggestions from GPT on structure and better ideas of whats doing
-//what.
+// Taking suggestions from GPT on structure and better ideas of whats doing
+// what.
