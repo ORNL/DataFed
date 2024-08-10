@@ -5,7 +5,7 @@
 ## MINOR Feature
 
 ## PATCH Bug fixes/Technical Debt/Documentation
-
+1. [986] - Design improvdement to upload and download transfer box.
 
 # v2024.6.17.10.40
 
