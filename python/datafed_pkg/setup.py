@@ -1,7 +1,7 @@
 from datafed.VERSION import __version__
 import setuptools
 from os import path
-
+import os
 
 # read the contents of README file
 this_directory = path.abspath(path.dirname(__file__))
@@ -13,7 +13,7 @@ with open("requirements.txt", "r") as f:
     install_requires = [line.strip() for line in f]
 
 setuptools.setup(
-    name="datafed",
+    name=os.getenv("DATAFED_PYPI_REPO", "datafed"),
     version=__version__,
     author="Dale Stansberry, Joshua Brown",
     author_email="stansberrydv@ornl.gov, brownjs@ornl.gov",
