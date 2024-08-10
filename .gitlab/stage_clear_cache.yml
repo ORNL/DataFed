@@ -6,6 +6,7 @@
 .clear_cache:
   script:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker stop $(docker ps -q)
     - docker system prune -f
     - ./scripts/ci_purge_images.sh
 
