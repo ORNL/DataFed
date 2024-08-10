@@ -7,6 +7,7 @@
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
+2. [958] - Addresses issues raised by static code analyzer.
 
 # v2024.6.17.10.40
 
