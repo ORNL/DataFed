@@ -4,6 +4,15 @@
 
 ## MINOR Feature
 
+## PATCH Bug fixes/Technical Debt/Documentation
+
+
+# v2024.6.17.10.40
+
+## MAJOR Breaking changes
+
+## MINOR Feature
+
 1. [912] - Adds initial compose file and docker files for python-client
 2. [909] - Added Support for Google Analytics
 3. [916] - Reworked Docker build process to be faster and produce simpler and
