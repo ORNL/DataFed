@@ -3,9 +3,9 @@
 ## MAJOR Breaking changes
 
 ## MINOR Feature
+1. [987] - This implements serialized GitLab CI pipelines
 
-## PATCH Bug fixes/Technical Debt/Documentation
-
+## PATCH Bug fixes/Technical Debt/DocumentationA
 
 # v2024.6.17.10.40
 
