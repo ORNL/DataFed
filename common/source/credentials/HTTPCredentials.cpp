@@ -1,7 +1,7 @@
-//Local private includes
+// Local private includes
 #include "HTTPCredentials.hpp"
 
-//Local public includes
+// Local public includes
 #include "common/TraceException.hpp"
 
 namespace SDMS {
@@ -30,7 +30,8 @@ void HTTPCredentials::validate() {
   }
 }
 
-HTTPCredentials::HTTPCredentials(const std::unordered_map<CredentialType, std::string> &keys) {
+HTTPCredentials::HTTPCredentials(
+    const std::unordered_map<CredentialType, std::string> &keys) {
   if (keys.count(CredentialType::PRIVATE_KEY)) {
     m_private_key = keys.at(CredentialType::PRIVATE_KEY);
   }
@@ -42,8 +43,12 @@ HTTPCredentials::HTTPCredentials(const std::unordered_map<CredentialType, std::s
   };
   validate();
 }
-//THIS MAY NOT NEED TO EXIST DUE TO IT BEING SOCKET CREDS
-HTTPCredentials::HTTPCredentials(const std::string &public_key, const std::string &private_key, const std::string &server_key) : m_public_key(public_key), m_private_key(private_key), m_server_key(server_key) {
+// THIS MAY NOT NEED TO EXIST DUE TO IT BEING SOCKET CREDS
+HTTPCredentials::HTTPCredentials(const std::string &public_key,
+                                 const std::string &private_key,
+                                 const std::string &server_key)
+    : m_public_key(public_key), m_private_key(private_key),
+      m_server_key(server_key) {
   validate();
 }
 
@@ -52,9 +57,8 @@ std::string HTTPCredentials::get(const CredentialType credential_type) const {
     if (m_public_key) {
       return *m_public_key;
     }
-    EXCEPT(
-        1,
-        "Cannot grab public key from HTTP socket credentials it is not defined");
+    EXCEPT(1, "Cannot grab public key from HTTP socket credentials it is not "
+              "defined");
   } else if (credential_type == CredentialType::PRIVATE_KEY) {
     if (m_private_key) {
       return *m_private_key;
@@ -65,9 +69,8 @@ std::string HTTPCredentials::get(const CredentialType credential_type) const {
     if (m_server_key) {
       return *m_server_key;
     }
-    EXCEPT(
-        1,
-        "Cannot grab server key from HTTP socket credentials it is not defined");
+    EXCEPT(1, "Cannot grab server key from HTTP socket credentials it is not "
+              "defined");
   }
   EXCEPT(1, "Error unsupported credential_type encountered");
 }

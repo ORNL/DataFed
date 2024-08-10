@@ -60,7 +60,7 @@ HTTPSocket::HTTPSocket(const SocketOptions &socket_options)
 }
 
 HTTPSocket::HTTPSocket(const SocketOptions &socket_options,
-                           const ICredentials &socket_credentials)
+                       const ICredentials &socket_credentials)
     : m_scheme(socket_options.scheme),
       m_socket_class_type(socket_options.class_type),
       m_socket_communication_type(socket_options.communication_type),
@@ -82,7 +82,8 @@ HTTPSocket::HTTPSocket(const SocketOptions &socket_options,
   }
 
   if (m_socket_life != SocketConnectionLife::INTERMITTENT) {
-    EXCEPT(1, "Unsupported socket connection life type detected for HTTPSocket");
+    EXCEPT(1,
+           "Unsupported socket connection life type detected for HTTPSocket");
   }
 
   if (m_socket_class_type != SocketClassType::CLIENT) {
@@ -98,13 +99,11 @@ HTTPSocket::HTTPSocket(const SocketOptions &socket_options,
   }
 
   if (socket_credentials.getType() != ProtocolType::HTTP) {
-    EXCEPT(1,
-           "Unsupported Credential type provided when creating HTTPSocket");
+    EXCEPT(1, "Unsupported Credential type provided when creating HTTPSocket");
   }
   // Make sure that the credentials are expected
   try {
-    m_credentials =
-        dynamic_cast<const HTTPCredentials &>(socket_credentials);
+    m_credentials = dynamic_cast<const HTTPCredentials &>(socket_credentials);
 
   } catch (std::exception &e) {
     std::string error_msg = "Error in constructing HTTPSocket, unsuported "

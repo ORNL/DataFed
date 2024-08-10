@@ -27,7 +27,7 @@ private:
 
 public:
   HTTPSocket(const SocketOptions &socket_options,
-               const ICredentials &socket_credentials);
+             const ICredentials &socket_credentials);
 
   HTTPSocket(const SocketOptions &socket_options);
 
@@ -74,7 +74,7 @@ public:
       }
     }
     return false;
-   }
+  }
 };
 
 } // namespace SDMS

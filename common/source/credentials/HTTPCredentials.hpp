@@ -1,11 +1,11 @@
 #ifndef HTTP_CREDENTIALS_HPP
 #define HTTP_CREDENTIALS_HPP
- 
-//Local includes
+
+// Local includes
 #include "common/ICredentials.hpp"
 #include "common/ProtocolTypes.hpp"
 
-//Standard includes
+// Standard includes
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -17,16 +17,16 @@ private:
   std::optional<std::string> m_public_key;
   std::optional<std::string> m_private_key;
   std::optional<std::string> m_server_key;
-  
+
   void validate();
 
 public:
   HTTPCredentials() = default;
 
-  HTTPCredentials(
-      const std::unordered_map<CredentialType, std::string> &);
+  HTTPCredentials(const std::unordered_map<CredentialType, std::string> &);
 
-  HTTPCredentials(const std::string &public_key, const std::string &private_key, const std::string &server_key);
+  HTTPCredentials(const std::string &public_key, const std::string &private_key,
+                  const std::string &server_key);
 
   virtual ProtocolType getType() const noexcept final {
     return ProtocolType::HTTP;
@@ -51,8 +51,8 @@ public:
     }
     return false;
   }
-}; 
+};
 
 } // namespace SDMS
 
-#endif //HTTPCredentials_HPP
+#endif // HTTPCredentials_HPP
