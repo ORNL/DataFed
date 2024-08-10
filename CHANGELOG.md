@@ -7,7 +7,7 @@
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
-2. [978] - Removed non-working subscribe function.
+2. [988] - Removed non-working subscribe function.
 
 # v2024.6.17.10.40
 
