@@ -1,7 +1,7 @@
 
 // Local private includes
-#include "credentials/ZeroMQSocketCredentials.hpp"
 #include "credentials/HTTPCredentials.hpp"
+#include "credentials/ZeroMQSocketCredentials.hpp"
 
 // Local public includes
 #include "common/CredentialFactory.hpp"

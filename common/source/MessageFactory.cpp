@@ -17,8 +17,7 @@ MessageFactory::create(const MessageType msg_type) const {
 
   if (msg_type == MessageType::GOOGLE_PROTOCOL_BUFFER) {
     return std::unique_ptr<IMessage>(new GoogleProtoMessage());
-  }
-  else if (msg_type == MessageType::STRING){
+  } else if (msg_type == MessageType::STRING) {
     return std::unique_ptr<IMessage>(new StringMessage());
   }
   EXCEPT(1, "Unsupported MessageType specified in MessageFactory.");
@@ -51,8 +50,7 @@ MessageFactory::createResponseEnvelope(const IMessage &msg) const {
     }
     new_msg->set(constants::message::google::CONTEXT, context);
     return new_msg;
-  }
-  else if (msg.type() == MessageType::STRING) {
+  } else if (msg.type() == MessageType::STRING) {
     std::cout << 4 << std::endl;
     auto new_msg = std::unique_ptr<IMessage>(new StringMessage());
     std::cout << 5 << std::endl;
@@ -60,7 +58,9 @@ MessageFactory::createResponseEnvelope(const IMessage &msg) const {
     std::cout << 6 << std::endl;
     new_msg->set(MessageAttribute::STATE, MessageState::RESPONSE);
     std::cout << 7 << std::endl;
-    new_msg->set(MessageAttribute::CORRELATION_ID, std::get<std::string>(msg.get(MessageAttribute::CORRELATION_ID)));
+    new_msg->set(
+        MessageAttribute::CORRELATION_ID,
+        std::get<std::string>(msg.get(MessageAttribute::CORRELATION_ID)));
     std::cout << 8 << std::endl;
     return new_msg;
   }
