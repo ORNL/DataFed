@@ -1,0 +1,15 @@
+---
+
+################################################################################
+# STAGE: pipeline-serializer
+################################################################################
+# The whole purpose of this job is to finish one pipeline before executing
+# the next one.
+
+wait:
+  stage: pipeline-serialize
+  tags:
+    - datafed-infrastructure
+  script:
+    - chmod +x ./scripts/ci_pipeline_serializer.sh && ./scripts/ci_pipeline_serializer.sh
+  resource_group: pipeline_serializer
