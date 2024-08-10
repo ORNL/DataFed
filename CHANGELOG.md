@@ -4,6 +4,15 @@
 
 ## MINOR Feature
 
+## PATCH Bug fixes/Technical Debt/Documentation
+
+
+# v2024.6.17.10.40
+
+## MAJOR Breaking changes
+
+## MINOR Feature
+
 1. [912] - Adds initial compose file and docker files for python-client
 2. [909] - Added Support for Google Analytics
 3. [916] - Reworked Docker build process to be faster and produce simpler and
@@ -37,6 +46,8 @@
 13. [956] - Adds improved error message, when paths of repo don't align.
 14. [966] - CI refactor check that containers exist if not force build for branch.
 15. [968] - Fixes bug by creating distinction between base and root path.
+16. [981] - Fixes html injection that can occur from user name when displaying owner in schema dlg box.
+17. [983] - Fixes google analytics by adding nonce which was broken.
 
 # v2023.10.23.15.50
 
