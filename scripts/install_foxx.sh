@@ -137,6 +137,7 @@ fi
 
 basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
 url="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
+# Do not output to /dev/null we need the output
 code=$(curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
 
 if [[ "$code" != "200" ]]; then
@@ -145,14 +146,15 @@ if [[ "$code" != "200" ]]; then
   exit 1
 fi
 
+url2="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(curl -s -o /dev/null -i --dump - --user "$basic_auth" "$url")
+output=$(curl -s -i --dump - --user "$basic_auth" "$url2")
 
 echo "Output: $output"
 
 if [[ "$output" == "" ]]; then
-  echo "curl command failed $url exiting"
+  echo "curl command failed $url2 exiting"
   exit 1
 fi
 
@@ -199,7 +201,7 @@ if ! command -v foxx > /dev/null 2>&1; then
     FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
 fi
 
-
+echo "${local_DATAFED_DATABASE_PASSWORD}" > "${SOURCE}/database_temp.password"
 PATH_TO_PASSWD_FILE="${SOURCE}/database_temp.password"
 
 echo "Path to PASSWRD file ${PATH_TO_PASSWD_FILE} passwd is $local_DATAFED_DATABASE_PASSWORD"
@@ -215,7 +217,32 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
   FOUND_API=$(echo "$existing_services" | grep "/api/${local_FOXX_MAJOR_API_VERSION}")
 
+
+  INSTALL_API="FALSE"
+  FOUND_API=$(echo "$existing_services" | grep "/api/${local_FOXX_MAJOR_API_VERSION}")
+
+  echo "$FOUND_API"
+
+  RESULT=$(curl -s http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
+  CODE=$(echo "${RESULT}" | jq '.code' )
+  echo "Code is $CODE"
   if [ -z "${FOUND_API}" ]
+  then
+      INSTALL_API="TRUE"
+  elif [ "$CODE" == "503" ]
+  then
+      INSTALL_API="TRUE"
+    # Remove the api at this point
+    "${FOXX_PREFIX}foxx" remove \
+      "/api/${local_FOXX_MAJOR_API_VERSION}" \
+      --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+      -u "${local_DATABASE_USER}" \
+      -p "${PATH_TO_PASSWD_FILE}" \
+      --database "${local_DATABASE_NAME}"
+  fi
+
+  echo "$RESULT"
+  if [ "${INSTALL_API}" == "TRUE"  ]
   then
     "${FOXX_PREFIX}foxx" install \
       --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \

@@ -38,6 +38,7 @@ router.get('/gridftp', function(req, res) {
                         break;
                     case "write":
                         console.log("Client: ", client, " write permissions?");
+                        break;
                     case "create":
                         console.log("Client: ", client, " create permissions?");
                         req_perm = g_lib.PERM_WR_DATA;
@@ -47,6 +48,7 @@ router.get('/gridftp', function(req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                     case "chdir":
                         console.log("Client: ", client, " chdir permissions?");
+                        break;
                     case "lookup":
                         console.log("Client: ", client, " lookup permissions?");
                         // For TESTING, allow these actions
@@ -114,7 +116,7 @@ router.get('/gridftp', function(req, res) {
                 console.log("alloc is ");
                 console.log(alloc);
                 if (!alloc || (alloc.path + data_key != path)) {
-                    throw g_lib.ERR_PERM_DENIED;
+                    throw [obj.ERR_PERM_DENIED, "Permission denied, DataFed registered path is '" + alloc.path + data_key + "' Globus path is '" + path + "'"]
                 }
             }
 

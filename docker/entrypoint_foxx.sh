@@ -15,6 +15,9 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../")
 
+# Why is this flag used, it is used because the same container is used for 
+# compose as is for operations and ci. If you have a compose dev environment
+# we may want to keep the existing state and not overwrite the database.
 install_flag="/tmp/.foxx_is_installed"
 if [ ! -f "$install_flag" ]
 then
@@ -50,7 +53,7 @@ then
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
   
   touch "$install_flag"
-  chown "$UID":"$UID" "$install_flag"
+  chown -R "$UID":"$UID" "/tmp"
 
 else
   echo "/tmp/.foxx_is_installed has been found skipping reinstall"
