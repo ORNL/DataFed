@@ -7,6 +7,7 @@
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
+2. [989] - This creates HTTP communicator and associated classes in the common library
 
 # v2024.6.17.10.40
 
@@ -49,6 +50,8 @@
 15. [968] - Fixes bug by creating distinction between base and root path.
 16. [981] - Fixes html injection that can occur from user name when displaying owner in schema dlg box.
 17. [983] - Fixes google analytics by adding nonce which was broken.
+
+12. [977] - Created HTTPCommunicator, StringMessage, HTTPCredential, HTTPSocket, and unit test classes.
 
 # v2023.10.23.15.50
 

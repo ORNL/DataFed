@@ -19,10 +19,26 @@ if( BUILD_COMMON )
     "source/sockets/*.cpp")
   if(BUILD_SHARED_LIBS)
     add_library( common SHARED ${Sources})
-    target_link_libraries( common PUBLIC ${DATAFED_BOOST_DATE_TIME_LIBRARY_PATH} protobuf::libprotobuf libzmq datafed-protobuf) 
+    target_link_libraries( common PUBLIC 
+      ${DATAFED_BOOST_DATE_TIME_LIBRARY_PATH} 
+      protobuf::libprotobuf 
+      libzmq 
+      datafed-protobuf 
+      ${DATAFED_CURL_LIBRARIES}   
+      ${OPENSSL_SSL_LIBRARY}
+      curl) 
+
   else()
     add_library( common STATIC ${Sources})
-    target_link_libraries( common PUBLIC ${DATAFED_BOOST_DATE_TIME_LIBRARY_PATH} protobuf::libprotobuf libzmq-static datafed-protobuf) 
+    target_link_libraries( common PUBLIC 
+      ${DATAFED_BOOST_DATE_TIME_LIBRARY_PATH} 
+      protobuf::libprotobuf 
+      libzmq-static 
+      datafed-protobuf 
+      ${DATAFED_CURL_LIBRARIES} 
+      ${OPENSSL_SSL_LIBRARY}
+      curl
+    ) 
   endif()
   
   set_target_properties(common PROPERTIES POSITION_INDEPENDENT_CODE ON SOVERSION ${DATAFED_COMMON_LIB_MAJOR} VERSION ${DATAFED_COMMON_LIB_MAJOR}.${DATAFED_COMMON_LIB_MINOR}.${DATAFED_COMMON_LIB_PATCH} )

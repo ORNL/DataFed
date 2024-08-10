@@ -20,7 +20,6 @@ void hexDump(const char *a_buffer, const char *a_buffer_end,
 std::string escapeCSV(const std::string &a_value);
 std::string escapeJSON(const std::string &a_value);
 bool to_uint32(const char *a_str, uint32_t &a_out);
-
 // std::vector<std::string> smartTokenize( const std::string & a_text, const
 // std::string & a_delim );
 
