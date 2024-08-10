@@ -3,6 +3,17 @@
 ## MAJOR Breaking changes
 
 ## MINOR Feature
+1. [987] - This implements serialized GitLab CI pipelines
+
+## PATCH Bug fixes/Technical Debt/Documentation
+1. [984] - Fixes {server_default} from showing up in path.
+2. [978] - Removed non-working subscribe function.
+
+# v2024.6.17.10.40
+
+## MAJOR Breaking changes
+
+## MINOR Feature
 
 1. [912] - Adds initial compose file and docker files for python-client
 2. [909] - Added Support for Google Analytics
@@ -15,6 +26,7 @@
 8. [973] - Adds log output at the end of CI test pipeline
 9. [968] - Adds the ability to specify both base and root path when creating
    Globus collections.
+10. [970] - Adds Web UI testing to the CI pipeline.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
@@ -36,7 +48,8 @@
 13. [956] - Adds improved error message, when paths of repo don't align.
 14. [966] - CI refactor check that containers exist if not force build for branch.
 15. [968] - Fixes bug by creating distinction between base and root path.
-16. [978] - Removed non-working subscribe function.
+16. [981] - Fixes html injection that can occur from user name when displaying owner in schema dlg box.
+17. [983] - Fixes google analytics by adding nonce which was broken.
 
 # v2023.10.23.15.50
 

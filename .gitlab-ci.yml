@@ -15,6 +15,7 @@
 # Particularly if stage_clear_cache.yml contains jobs with the needs 
 # keyword that names a job in infrastructure.yml
 include:
+  - local: .gitlab/stage_pipeline_serialize.yml
   - local: .gitlab/infrastructure.yml
   - local: .gitlab/stage_clear_cache.yml
   - local: .gitlab/stage_build_base.yml
@@ -24,6 +25,7 @@ include:
   - local: .gitlab/end_to_end.yml
 
 stages:
+  - pipeline-serialize
   - ci-infrastructure-check
   - trigger-infrastructure
   - signal
@@ -48,3 +50,4 @@ variables:
   HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry_2'
   REGISTRY: 'camden.ornl.gov'
   DATAFED_DEPENDENCIES_INSTALL_PATH: "/shared/install"
+
