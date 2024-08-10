@@ -3,6 +3,7 @@
 ## MAJOR Breaking changes
 
 ## MINOR Feature
+1. [987] - This implements serialized GitLab CI pipelines
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
