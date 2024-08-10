@@ -350,11 +350,42 @@ end_to_end_client-test:
       -DBUILD_DOCS=OFF
       -DBUILD_PYTHON_CLIENT=ON
       -DBUILD_TESTS=ON
-      -DENABLE_END_TO_END_TESTS=ON
+      -DENABLE_END_TO_END_API_TESTS=ON
       -DINSTALL_FOXX=OFF
     - cmake --build build
     - cmake --build build --target pydatafed
     - cmake --build build --target test
+
+end_to_end_web_test:
+  variables:
+    GIT_STRATEGY: clone
+    DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
+    DATAFED_WEB_TEST_USERNAME: "datafed89"
+    DATAFED_WEB_TEST_PASSWORD: "${CI_DATAFED_USER89_GLOBUSID_PASSWORD}"
+    DATAFED_DOMAIN: "${CI_DATAFED_DOMAIN}"
+  stage: end-to-end-test
+  needs: ["end_to_end_client-test"]
+  tags:
+    - ci-datafed-client
+  script:
+    - cd tests/end-to-end/web-UI
+    - npm install
+    - sudo npx playwright install-deps
+    - npx playwright install
+    - cd ../../../
+    - ./scripts/generate_datafed.sh
+    - >
+      cmake -S. -B build
+      -DENABLE_FOXX_TESTS=OFF
+      -DBUILD_CORE_SERVER=OFF
+      -DBUILD_COMMON=OFF
+      -DBUILD_WEB_SERVER=OFF
+      -DBUILD_DOCS=OFF
+      -DBUILD_PYTHON_CLIENT=OFF
+      -DBUILD_TESTS=ON
+      -DENABLE_END_TO_END_WEB_TESTS=ON
+      -DINSTALL_FOXX=OFF
+    - cmake --build build --target end_to_end_web_tests
 
 end_to_end_error_discovery_arango:
   stage: log
