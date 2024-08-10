@@ -12,6 +12,10 @@
 5. [937] - Working metadata services running together as part of CI
 6. [946] - Added docker compose for DataFed Repository and for Metadata Services
 7. [955] - Adds repo pieces to CI with working end-to-end tests
+8. [973] - Adds log output at the end of CI test pipeline
+9. [968] - Adds the ability to specify both base and root path when creating
+   Globus collections.
+10. [970] - Adds Web UI testing to the CI pipeline.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
@@ -32,6 +36,7 @@
 12. [957] - Updated ArangoDB version used in compose file.
 13. [956] - Adds improved error message, when paths of repo don't align.
 14. [966] - CI refactor check that containers exist if not force build for branch.
+15. [968] - Fixes bug by creating distinction between base and root path.
 
 # v2023.10.23.15.50
 

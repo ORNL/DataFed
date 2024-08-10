@@ -14,8 +14,10 @@ if [ -n "$UID" ]; then
     echo "Switching datafed user to UID: ${UID}"
     usermod -u "$UID" datafed
     chown -R datafed:root "${PROJECT_ROOT}"
-    chown -R datafed:root /opt/datafed/repo/
-    chown -R datafed:root /mnt/datafed
+    chown -R datafed:root "${DATAFED_INSTALL_PATH}/repo/"
+    # Make sure the folder exists
+    mkdir -p "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
+    chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
 fi
 
 

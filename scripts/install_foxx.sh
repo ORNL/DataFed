@@ -137,6 +137,7 @@ fi
 
 basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
 url="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
+# Do not output to /dev/null we need the output
 code=$(curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
 
 if [[ "$code" != "200" ]]; then
@@ -145,14 +146,15 @@ if [[ "$code" != "200" ]]; then
   exit 1
 fi
 
+url2="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(curl -s -o /dev/null -i --dump - --user "$basic_auth" "$url")
+output=$(curl -s -i --dump - --user "$basic_auth" "$url2")
 
 echo "Output: $output"
 
 if [[ "$output" == "" ]]; then
-  echo "curl command failed $url exiting"
+  echo "curl command failed $url2 exiting"
   exit 1
 fi
 
@@ -221,7 +223,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
   echo "$FOUND_API"
 
-  RESULT=$(curl -s http://128.219.184.45:8529/_db/sdms/api/0/version)
+  RESULT=$(curl -s http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
   CODE=$(echo "${RESULT}" | jq '.code' )
   echo "Code is $CODE"
   if [ -z "${FOUND_API}" ]
