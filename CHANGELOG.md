@@ -4,10 +4,12 @@
 
 ## MINOR Feature
 1. [987] - This implements serialized GitLab CI pipelines
+2. [918] - Add admin script for making a user an admin
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
-2. [958] - Addresses issues raised by static code analyzer.
+2. [990] - Will stop running containers so that we can prune them.
+3. [958] - Addresses issues raised by static code analyzer.
 
 # v2024.6.17.10.40
 
