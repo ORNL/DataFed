@@ -1,5 +1,6 @@
-#!/bin/python3
-# import json
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import os
 import sys
 import unittest
@@ -33,15 +34,18 @@ class TestDataFedPythonAPILogin(unittest.TestCase):
 
         print(df_ver)
 
-        opts = {"server_host": "datafed-server-test.ornl.gov"}
+        datafed_domain = os.environ.get("DATAFED_DOMAIN")
+        opts = {"server_host": datafed_domain}
+        print("Creating API")
         df_api = API(opts)
-
+        print("API created")
         username = "datafed99"
         password = os.environ.get("DATAFED_USER99_PASSWORD")
 
         count = 0
         while True:
             try:
+                print(f"username: {username}, password: {password}")
                 df_api.loginByPassword(username, password)
                 break
             except BaseException:

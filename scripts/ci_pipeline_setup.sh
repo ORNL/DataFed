@@ -5,8 +5,8 @@ set -eu
 Help()
 {
   echo "$(basename $0) Will determine if a Open Stack VM exists if not it will"
-  echo " will exit with an error code. It requires that you "
-  echo "provide the Open Stack VM ID"
+  echo " will exit with an error code 1. If some other problem exists will exit"
+  echo " with error code 2. It requires that you provide the Open Stack VM ID"
   echo
   echo "Syntax: $(basename $0) [-h|i|s|c|a|n]"
   echo "options:"
@@ -63,7 +63,7 @@ COMPUTE_ID_PROVIDED="FALSE"
 
 VALID_ARGS=$(getopt -o hi:s:c:a:n: --long 'help',app-credential-id:,app-credential-secret:,compute-instance-id:,gitlab-api-token:,compute-instance-name: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+      exit 2;
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
@@ -107,28 +107,28 @@ if [ -z "$local_OS_APP_ID" ]
 then
   echo "The open stack application credential id has not been defined this is"
   echo " a required parameter."
-  exit 1
+  exit 2
 fi
 
 if [ -z "$local_OS_APP_SECRET" ]
 then
   echo "The open stack application credential secret has not been defined this is"
   echo " a required parameter."
-  exit 1
+  exit 2
 fi
 
 if [[ -z "$COMPUTE_INSTANCE_ID" && -z "$COMPUTE_INSTANCE_NAME" ]]
 then
   echo "The open stack compute instance id or name has not been defined, at "
   echo "least one is required."
-  exit 1
+  exit 2
 fi
 
 if [ -z "$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" ]
 then
   echo "The GitLab token for accessing the API of the DataFed ci repo is missing."
   echo "It is a required parameter."
-  exit 1
+  exit 2
 fi
 
 data=$(curl -s --retry 5 -i -X POST \
@@ -150,7 +150,7 @@ if [ "$error_code" == "6" ]
 then
   echo "Unable to connect to Open Stack API endpoints, make sure you are"
   echo "connected to the network"
-  exit 1
+  exit 2
 fi
 
 # Make sure jq is installed
@@ -158,7 +158,7 @@ jq_path=$(which jq || true)
 if [ -z "$jq_path" ]
 then
   echo "jq command not found exiting!"
-  exit 1
+  exit 2
 fi
 
 wait_for_running_infrastructure_pipelines_to_finish() {
@@ -168,13 +168,21 @@ wait_for_running_infrastructure_pipelines_to_finish() {
   then
     echo "No other running infrastructure provisioning pipelines detected!"
   fi
- 
+
+  if [[ "$all_other_pipelines" == *"invalid_token"* ]]
+  then
+    echo "Error detected with GITLAB_DATAFEDCI_REPO_API_TOKEN"
+    echo "$all_other_pipelines"
+    exit 2
+  fi
+
   local count=0
   while [ ! -z "$all_other_pipelines" ] 
   do
     echo "Attempt $count, Other running infrastructure provisioning pipelines detected... waiting for them to complete."
     echo
     echo "Running Pipelines Are:"
+    echo "$all_other_pipelines"
     echo "$all_other_pipelines" | jq '.id'
     sleep 30s
     count=$(($count + 1))
@@ -309,7 +317,7 @@ then
       if [ "$count" == "$MAX_COUNT" ]
       then
         echo "Exceeded time limit!"
-        exit 1
+        exit 2
       fi
     done
 
@@ -327,32 +335,32 @@ if [ ! -z "$pipeline_id" ]
 then
 
   count=0
-	KEEP_RUNNING="TRUE"	
-	while [ "$KEEP_RUNNING" == "TRUE" ]
-	do
-		pipeline_status=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
+  KEEP_RUNNING="TRUE"  
+  while [ "$KEEP_RUNNING" == "TRUE" ]
+  do
+    pipeline_status=$(curl -s --header "PRIVATE-TOKEN: ${local_GITLAB_DATAFEDCI_REPO_API_TOKEN}" "https://code.ornl.gov/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines/$pipeline_id" | jq .status | sed 's/\"//g')
 
-		printf "Attempt $count, Waiting for triggered infrastructure provisioning pipeline: ${pipeline_id} to complete ... "
-		if [ "$pipeline_status" == "failed" ]
-		then
-			echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
-			exit 1
-		elif [ "$pipeline_status" == "success" ]
-		then
-			echo "Infrastructure triggered pipeline has passed. STATUS: $pipeline_status"
-			exit 0
-		elif [ "$pipeline_status" == "canceled" ]
-		then
-			echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
-			exit 1
+    printf "Attempt $count, Waiting for triggered infrastructure provisioning pipeline: ${pipeline_id} to complete ... "
+    if [ "$pipeline_status" == "failed" ]
+    then
+      echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
+      exit 2
+    elif [ "$pipeline_status" == "success" ]
+    then
+      echo "Infrastructure triggered pipeline has passed. STATUS: $pipeline_status"
+      exit 0
+    elif [ "$pipeline_status" == "canceled" ]
+    then
+      echo "Infrastructure triggered pipeline has failed unable to execute CI. STATUS: $pipeline_status"
+      exit 2
     else
       echo "STATUS: $pipeline_status"
-		fi
-    			
-		sleep 30s
+    fi
+          
+    sleep 30s
 
     count=$(($count + 1))
-	done
+  done
 fi
 
 ################################################################################

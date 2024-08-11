@@ -1,0 +1,18 @@
+---
+
+#################################################################################
+# STAGE: provision client
+#################################################################################
+provision-client:
+  needs: ["signal"]
+  variables:
+    GIT_STRATEGY: clone
+  stage: provision-client
+  tags:
+    - ci-datafed-client
+  before_script:
+    - export PATH=/opt/datafed/dependencies/bin:$PATH
+  script:
+    - ./scripts/generate_datafed.sh
+    - ./scripts/install_client_dependencies.sh
+    - ./scripts/install_end_to_end_test_dependencies.sh

@@ -13,7 +13,7 @@ import re
 import json as jsonlib
 import time
 import pathlib
-import wget
+import requests
 from . import SDMS_Auth_pb2 as auth
 from . import SDMS_pb2 as sdms
 from . import MessageLib
@@ -1660,6 +1660,7 @@ class API:
         offset=0,
         count=20,
     ):
+
         if coll_mode and (schema is not None or meta is not None or meta_err):
             raise Exception(
                 "Cannot specify metadata terms when searching for collection."
@@ -2693,6 +2694,11 @@ class API:
             opts["server_port"] = 7512
             save = True
 
+        if "allow_self_signed_certs" not in opts:
+            self.cfg.set("allow_self_signed_certs", False)
+            opts["allow_self_signed_certs"] = False
+            save = True
+
         if "server_pub_key_file" not in opts:
             serv_key_file = None
 
@@ -2721,7 +2727,28 @@ class API:
                 if not os.path.exists(serv_key_file):
                     # Make default server pub key file
                     url = "https://" + opts["server_host"] + "/datafed-core-key.pub"
-                    wget.download(url, out=serv_key_file)
+
+                    # Path where the downloaded file will be saved
+                    output_path = serv_key_file
+
+                    try:
+                        # Make the request and allow self-signed certificates if needed
+                        if opts["allow_self_signed_certs"]:
+                            response = requests.get(url, verify=False, stream=True)
+                        else:
+                            response = requests.get(url, verify=True, stream=True)
+                        # Check if the request was successful
+                        response.raise_for_status()
+
+                        # Open the file in binary write mode and write the response content
+                        with open(output_path, "wb") as file:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                if chunk:  # Filter out keep-alive new chunks
+                                    file.write(chunk)
+                        print("File downloaded successfully.")
+
+                    except requests.exceptions.RequestException as e:
+                        print(f"Failed to download file: {e}")
 
         if "client_pub_key_file" not in opts or "client_priv_key_file" not in opts:
             if "client_cfg_dir" not in opts:

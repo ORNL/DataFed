@@ -1,5 +1,6 @@
-#!/bin/python3
-# import json
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import os
 import sys
 import unittest
@@ -34,7 +35,13 @@ class TestDataFedPythonAPIContext(unittest.TestCase):
 
         print(df_ver)
 
-        opts = {"server_host": "datafed-server-test.ornl.gov"}
+        datafed_domain = os.environ.get("DATAFED_DOMAIN")
+        opts = {"server_host": datafed_domain}
+
+        if datafed_domain is None:
+            print("DATAFED_DOMAIN must be set before the end-to-end tests can be run")
+            sys.exit(1)
+
         self._df_api = API(opts)
 
         self._username = "datafed99"
@@ -52,6 +59,7 @@ class TestDataFedPythonAPIContext(unittest.TestCase):
             assert count < 3
 
     def test_context(self):
+        print("Running getContext()")
         self._df_api.getContext()
         self.assertEqual(self._df_api.getContext(), f"u/{self._username}")
 

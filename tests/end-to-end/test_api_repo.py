@@ -1,4 +1,6 @@
-#!/bin/python3
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import json
 import os
 import sys
@@ -33,7 +35,8 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
 
         print(df_ver)
 
-        opts = {"server_host": "datafed-server-test.ornl.gov"}
+        datafed_domain = os.environ.get("DATAFED_DOMAIN")
+        opts = {"server_host": datafed_domain}
         self._df_api = API(opts)
 
         username = "datafed89"
@@ -67,6 +70,15 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
         self._repo_form = {}
         with open(path_to_repo_form) as json_file:
             self._repo_form = json.load(json_file)
+
+        if len(self._repo_form["exp_path"]) == 0:
+            print(
+                "exp_path is empty, we will set it to / for the test. This is "
+                "cruft and should be removed anyway"
+            )
+            self._repo_form["exp_path"] = "/"
+
+        self._repo_form["admins"] = ["u/" + username]
 
     def test_repo_list(self):
         result = self._df_api.repoList(list_all=True)

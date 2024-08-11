@@ -108,6 +108,17 @@ _opt_info = {
         ["--client-token"],
         "Client access token",
     ],
+    "allow_self_signed_certs": [
+        "client",
+        "allow_self_signed_certs",
+        "DATAFED_PYTHON_CLIENT_ALLOW_SELF_SIGNED_CERTS",
+        _OPT_BOOL,
+        ["--allow-self-signed-certs"],
+        (
+            "Allows client download from DATAFED_DOMAIN if it is using self signed"
+            " certs, needed when testing."
+        ),
+    ],
     "default_ep": [
         "general",
         "default_endpoint",
