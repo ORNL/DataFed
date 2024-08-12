@@ -9,6 +9,7 @@
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
 2. [990] - Will stop running containers so that we can prune them.
+3. [988] - Removed non-working subscribe function.
 
 # v2024.6.17.10.40
 
