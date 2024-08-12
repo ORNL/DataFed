@@ -347,7 +347,7 @@ then
   echo "  \"path\": \"${FULL_RELATIVE_PATH}\"," >> "${OUTPUT_SCRIPT_NAME}"
   echo "  \"domain\": \"placeholder\"," >> "${OUTPUT_SCRIPT_NAME}"
   echo "  \"exp_path\": \"\"," >> "${OUTPUT_SCRIPT_NAME}"
-  echo "  \"capacity\": 0," >> "${OUTPUT_SCRIPT_NAME}"
+  echo "  \"capacity\": 0" >> "${OUTPUT_SCRIPT_NAME}"
   echo "}" >> "${OUTPUT_SCRIPT_NAME}"
 fi
 
