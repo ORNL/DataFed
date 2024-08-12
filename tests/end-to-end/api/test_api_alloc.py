@@ -1,22 +1,22 @@
-#!/bin/python3
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import json
 import os
 import sys
 import time
 import unittest
 
-# Depends on the success of the following tests
-# 1. Login
-# 2. Repo
-# 3. Allocation
 
-
-class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
+# These tests should only be run after the repo tests have been validated
+class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
     def setUp(self):
         path_of_file = os.path.abspath(__file__)
         current_folder = os.path.dirname(path_of_file)
         path_to_python_datafed_module = os.path.normpath(
             current_folder
+            + os.sep
+            + ".."
             + os.sep
             + ".."
             + os.sep
@@ -47,13 +47,13 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
 
         self._df_api = API(opts)
 
-        self._username = "datafed89"
+        username = "datafed89"
         password = os.environ.get("DATAFED_USER89_PASSWORD")
 
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(self._username, password)
+                result = self._df_api.loginByPassword(username, password)
                 break
             except BaseException:
                 pass
@@ -61,6 +61,8 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             # Try three times to authenticate
             assert count < 3
 
+        print("Attempt to login result")
+        print(result)
         path_to_repo_form = os.environ.get("DATAFED_REPO_FORM_PATH")
         if path_to_repo_form is None:
             self.fail("DATAFED_REPO_FORM_PATH env variable is not defined")
@@ -83,10 +85,10 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             )
             self._repo_form["exp_path"] = "/"
 
-        self._repo_form["admins"] = ["u/" + self._username]
+        self._repo_form["admins"] = ["u/" + username]
 
         # Create the repositories
-        print("Creating repo")
+        print("Creating repository")
         result = self._df_api.repoCreate(
             repo_id=self._repo_form["id"],
             title=self._repo_form["title"],
@@ -100,6 +102,7 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             exp_path=self._repo_form["exp_path"],
             admins=self._repo_form["admins"],
         )
+        print(result)
 
         result = self._df_api.repoList(list_all=True)
         count = 0
@@ -110,17 +113,59 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             if count > 3:
                 self.fail("Setup failed with repo create")
 
-        self._repo_id = self._repo_form["id"]
-        if not self._repo_id.startswith("repo/"):
-            self._repo_id = "repo/" + self._repo_id
+        print("\nDoes repo exist!\n")
+        print(result)
+
+    def test_repo_alloc_list_create_delete(self):
+        repo_id = self._repo_form["id"]
+        if not repo_id.startswith("repo/"):
+            repo_id = "repo/" + repo_id
+
+        result = self._df_api.repoListAllocations(repo_id)
+
+        print("Allocations")
+        print(result)
+        self.assertEqual(len(result[0].alloc), 0)
 
         # Will return a task
+        print("Calling repoAllocationCreate")
         result = self._df_api.repoAllocationCreate(
-            repo_id=self._repo_id,
-            subject="datafed89",
-            data_limit=1000000000,
-            rec_limit=100,
+            repo_id=repo_id, subject="datafed89", data_limit=1000000000, rec_limit=100
         )
+
+        task_id = result[0].task[0].id
+
+        # Check the status of the task
+        print("Calling taskView")
+        task_result = self._df_api.taskView(task_id)
+
+        # If status is less than 3 it is in the works
+        status = task_result[0].task[0].status
+        count = 0
+        while status < 3:
+            if count > 2:
+                print(task_result)
+                self.fail(
+                    "Something went wrong task was unable to complete, attempt"
+                    " to create an allocation after 3 seconds failed, make sure"
+                    " all services are running."
+                )
+                break
+            time.sleep(1)
+            print("Calling taskView")
+            task_result = self._df_api.taskView(task_id)
+            status = task_result[0].task[0].status
+            count = count + 1
+
+        result = self._df_api.repoListAllocations(repo_id)
+
+        print("Allocations")
+        print(result)
+        self.assertEqual(len(result[0].alloc), 1)
+
+        self.assertEqual(status, 3)
+
+        result = self._df_api.repoAllocationDelete(repo_id=repo_id, subject="datafed89")
 
         task_id = result[0].task[0].id
 
@@ -135,118 +180,8 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
                 print(task_result)
                 self.fail(
                     "Something went wrong task was unable to complete, attempt"
-                    " to create an allocation after 3 seconds failed, make "
+                    " to delete an allocation after 3 seconds failed, make "
                     "sure all services are running."
-                )
-                break
-            time.sleep(1)
-            task_result = self._df_api.taskView(task_id)
-            status = task_result[0].task[0].status
-            count = count + 1
-
-    def test_collection_create_delete(self):
-        # collectionItemsList in "root" of context
-        list_response = self._df_api.collectionItemsList("root")
-        self.assertEqual(list_response[0].total, 0)
-
-        title = "Materials"
-        alias = "materials"
-        col_result = self._df_api.collectionCreate(
-            title=title, alias=alias, parent_id="root"
-        )
-        col_id = col_result[0].coll[0].id
-        print(col_result)
-
-        self.assertEqual(col_result[0].coll[0].owner, f"u/{self._username}")
-        self.assertEqual(col_result[0].coll[0].creator, f"u/{self._username}")
-        self.assertEqual(col_result[0].coll[0].title, title)
-        self.assertEqual(col_result[0].coll[0].alias, alias)
-
-        # collectionItemsList in "root" of context
-        list_response = self._df_api.collectionItemsList("root")
-        self.assertEqual(list_response[0].total, 1)
-
-        # Get parents of the new collection should be the root collection
-        result_parent = self._df_api.collectionGetParents(alias)
-        self.assertEqual(
-            result_parent[0].path[0].item[0].id, f"c/u_{self._username}_root"
-        )
-
-        # Use Alias
-        col_response = self._df_api.collectionView(alias)
-
-        self.assertEqual(col_response[0].coll[0].owner, f"u/{self._username}")
-        self.assertEqual(col_response[0].coll[0].creator, f"u/{self._username}")
-        self.assertEqual(col_response[0].coll[0].title, title)
-        self.assertEqual(col_response[0].coll[0].alias, alias)
-        self.assertEqual(col_response[0].coll[0].id, col_id)
-
-        # Use ID
-        col_response = self._df_api.collectionView(col_result[0].coll[0].id)
-
-        self.assertEqual(col_response[0].coll[0].owner, f"u/{self._username}")
-        self.assertEqual(col_response[0].coll[0].creator, f"u/{self._username}")
-        self.assertEqual(col_response[0].coll[0].title, title)
-        self.assertEqual(col_response[0].coll[0].alias, alias)
-        self.assertEqual(col_response[0].coll[0].id, col_id)
-
-        new_title = "Material(s)"
-        col_response = self._df_api.collectionUpdate(col_id, title=new_title)
-        self.assertEqual(col_response[0].coll[0].owner, f"u/{self._username}")
-        self.assertEqual(col_response[0].coll[0].creator, f"u/{self._username}")
-        self.assertEqual(col_response[0].coll[0].title, new_title)
-        self.assertEqual(col_response[0].coll[0].alias, alias)
-        self.assertEqual(col_response[0].coll[0].id, col_id)
-
-        # Collection Delete
-        task_response = self._df_api.collectionDelete(col_id)
-
-        task_id = task_response[0].task[0].id
-
-        # Check the status of the task
-        task_result = self._df_api.taskView(task_id)
-
-        # If status is less than 3 it is in the works
-        status = task_result[0].task[0].status
-        count = 0
-        while status < 3:
-            if count > 2:
-                print(task_result)
-                self.fail(
-                    "Something went wrong task was unable to complete, "
-                    "attempt to delete a colleciton after 3 seconds failed, "
-                    "make sure all services are running."
-                )
-                break
-            time.sleep(1)
-            task_result = self._df_api.taskView(task_id)
-            status = task_result[0].task[0].status
-            count = count + 1
-
-        # collectionItemsList in "root" of context
-        list_response = self._df_api.collectionItemsList("root")
-        self.assertEqual(list_response[0].total, 0)
-
-    def tearDown(self):
-        result = self._df_api.repoAllocationDelete(
-            repo_id=self._repo_id, subject="datafed89"
-        )
-
-        task_id = result[0].task[0].id
-
-        # Check the status of the task
-        task_result = self._df_api.taskView(task_id)
-
-        # If status is less than 3 it is in the works
-        status = task_result[0].task[0].status
-        count = 0
-        while status < 3:
-            if count > 2:
-                print(task_result)
-                self.fail(
-                    "Something went wrong task was unable to complete, "
-                    "attempt to delete an allocation after 3 seconds failed,"
-                    " make sure all services are running."
                 )
                 break
             time.sleep(1)
@@ -256,10 +191,26 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
 
         print("Delete Allocations")
         print(result)
+        self.assertEqual(status, 3)
 
+    def tearDown(self):
+        # Check all tasks
+        result = self._df_api.taskList(status="queued")
+        print("Queued tasks")
+        print(result)
+        result = self._df_api.taskList(status="ready")
+        print("Ready tasks")
+        print(result)
+        result = self._df_api.taskList(status="running")
+        print("Running tasks")
+        print(result)
+
+        print("Running Tear Down")
         repo_id = self._repo_form["id"]
         if not repo_id.startswith("repo/"):
             repo_id = "repo/" + repo_id
+
+        print("Deleting Repo")
         result = self._df_api.repoDelete(repo_id)
         result = self._df_api.repoList(list_all=True)
         self.assertEqual(len(result[0].repo), 0)
@@ -268,7 +219,7 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     # Add them in the order they should be executed
-    suite.addTest(TestDataFedPythonAPICollectionCRUD("test_collection_create_delete"))
+    suite.addTest(TestDataFedPythonAPIRepoAlloc("test_repo_alloc_list_create_delete"))
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     # wasSuccessful() return True which is not 0

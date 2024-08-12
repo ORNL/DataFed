@@ -1,5 +1,6 @@
-#!/bin/python3
-# import json
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import os
 import sys
 import unittest
@@ -11,6 +12,8 @@ class TestDataFedPythonAPILogin(unittest.TestCase):
         current_folder = os.path.dirname(path_of_file)
         path_to_python_datafed_module = os.path.normpath(
             current_folder
+            + os.sep
+            + ".."
             + os.sep
             + ".."
             + os.sep

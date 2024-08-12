@@ -9,10 +9,11 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../..)
 # Translate datafed env variables to globus env variables
 
-export DATAFED_GCS_COLLECTION_ROOT_PATH=/mnt/datafed
-# This env variables are needed for running globus-connect-server without
-# logging in
+# Do not set DATAFED_GCS_COLLECTION_ROOT_PATH here, it should be defined in 
+# the Dockerfile as an env variable
 
+# The env variables below are needed for running globus-connect-server without
+# interactively logging in
 export GCS_CLI_CLIENT_ID=$(jq -r .client < /opt/datafed/globus/client_cred.json)
 export GCS_CLI_CLIENT_SECRET=$(jq -r .secret < /opt/datafed/globus/client_cred.json)
 export GCS_CLI_ENDPOINT_ID=$(jq -r .client_id < /opt/datafed/globus/deployment-key.json)
@@ -68,7 +69,6 @@ fi
 if [ -n "$UID" ]; then
     echo "Switching datafed user to UID: ${UID}"
     usermod -u $UID datafed
-    chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
 fi
 
 if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]
@@ -190,8 +190,8 @@ fi
 
 if [ ! -d "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
 then
-  mkdir -p "$DATAFED_GCS_COLLECTION_ROOT_PATH"
-  chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
+  mkdir -p ""${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}""
+  chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
 fi
 
 "${BUILD_DIR}/scripts/globus/setup_globus.sh"
@@ -199,6 +199,7 @@ fi
 source "${DATAFED_PYTHON_ENV}/bin/activate"
 # Must be passed in directly
 GCS_CLI_ENDPOINT_ID="$GCS_CLI_ENDPOINT_ID" \
+DATAFED_GCS_COLLECTION_BASE_PATH="$DATAFED_GCS_COLLECTION_BASE_PATH" \
 DATAFED_GCS_URL="$DATAFED_GCS_URL" \
 GCS_CLI_CLIENT_ID="$GCS_CLI_CLIENT_ID" \
 GCS_CLI_CLIENT_SECRET="$GCS_CLI_CLIENT_SECRET" \
