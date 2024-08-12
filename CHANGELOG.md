@@ -5,6 +5,7 @@
 ## MINOR Feature
 1. [987] - This implements serialized GitLab CI pipelines
 2. [918] - Add admin script for making a user an admin
+3. [992] - Adds several web UI tests to existing login web test.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
