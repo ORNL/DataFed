@@ -77,6 +77,14 @@
       done
     - cat "./harbor_check.log"
 
+.error_logs_client_end_to_end:
+  stage: log
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - docker logs $(docker ps --filter "ancestor=${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --format "{{.Names}}")
+  rules:
+    - when: always
+
 # In the case that we are not needing to actually rebuild the image we want to retag the image that already exists
 # in harbor with the current commit, this is so that when we are running tests that are dependent on the  container
 # we know that it is the right container.

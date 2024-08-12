@@ -124,6 +124,7 @@ export function show( a_mode, a_ids, a_cb ) {
                     cur_ep = data;
                     cur_ep.name = cur_ep.canonical_name || cur_ep.id;
                     path_in.val( cur_ep.name + (cur_ep.default_directory?cur_ep.default_directory:"/"));
+                    path_in.val(path_in.val().replace("{server_default}/",''))
                     updateEndpointOptions( cur_ep );
                 }else{
                     dialogs.dlgAlert("Globus Error", data );

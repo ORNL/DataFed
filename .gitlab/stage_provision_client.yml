@@ -15,3 +15,4 @@ provision-client:
   script:
     - ./scripts/generate_datafed.sh
     - ./scripts/install_client_dependencies.sh
+    - ./scripts/install_end_to_end_test_dependencies.sh

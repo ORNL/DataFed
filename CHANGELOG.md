@@ -3,6 +3,19 @@
 ## MAJOR Breaking changes
 
 ## MINOR Feature
+1. [987] - This implements serialized GitLab CI pipelines
+2. [918] - Add admin script for making a user an admin
+
+## PATCH Bug fixes/Technical Debt/Documentation
+1. [984] - Fixes {server_default} from showing up in path.
+2. [990] - Will stop running containers so that we can prune them.
+3. [962] - Adds script that will check that docker image is in registry
+
+# v2024.6.17.10.40
+
+## MAJOR Breaking changes
+
+## MINOR Feature
 
 1. [912] - Adds initial compose file and docker files for python-client
 2. [909] - Added Support for Google Analytics
@@ -12,7 +25,10 @@
 5. [937] - Working metadata services running together as part of CI
 6. [946] - Added docker compose for DataFed Repository and for Metadata Services
 7. [955] - Adds repo pieces to CI with working end-to-end tests
-8. [962] - Adds script that will check that docker image is in registry
+8. [973] - Adds log output at the end of CI test pipeline
+9. [968] - Adds the ability to specify both base and root path when creating
+   Globus collections.
+10. [970] - Adds Web UI testing to the CI pipeline.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
@@ -33,6 +49,9 @@
 12. [957] - Updated ArangoDB version used in compose file.
 13. [956] - Adds improved error message, when paths of repo don't align.
 14. [966] - CI refactor check that containers exist if not force build for branch.
+15. [968] - Fixes bug by creating distinction between base and root path.
+16. [981] - Fixes html injection that can occur from user name when displaying owner in schema dlg box.
+17. [983] - Fixes google analytics by adding nonce which was broken.
 
 # v2023.10.23.15.50
 
