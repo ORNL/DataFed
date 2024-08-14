@@ -85,7 +85,7 @@ var tasks_func = function() {
         if (a_task.step < 0)
             return;
 
-        if (a_task.step == 0) {
+        if (a_task.step === 0) {
             reply = {
                 cmd: g_lib.TC_ALLOC_CREATE,
                 params: {
@@ -489,7 +489,7 @@ var tasks_func = function() {
                     }, [], ["d"], []);
                     break;
                 } catch (e) {
-                    if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
+                    if (--retry === 0 || !e.errorNum || e.errorNum != 1200) {
                         throw e;
                     }
                 }
@@ -592,7 +592,7 @@ var tasks_func = function() {
         result.rec_count = alloc.rec_count;
 
         // Stop if no record to process, or if this is just a check
-        if (rec_ids.length == 0 || a_check)
+        if (rec_ids.length === 0 || a_check)
             return result;
 
         var state = {
@@ -799,7 +799,7 @@ var tasks_func = function() {
             if ((owner_id.charAt(0) != 'p') || !g_lib.hasManagerPermProj(a_client, owner_id)) {
                 var coll = g_db.c.document(a_dst_coll_id);
 
-                if (g_lib.hasPermissions(a_client, coll, g_lib.PERM_CREATE) != true)
+                if (!g_lib.hasPermissions(a_client, coll, g_lib.PERM_CREATE))
                     throw [g_lib.ERR_PERM_DENIED, "Operation requires CREATE permission on destination collection '" + a_dst_coll_id + "'"];
             }
         }
@@ -877,7 +877,7 @@ var tasks_func = function() {
         }
 
         // Stop if no record to process, or if this is just a check
-        if (deps.length == 0 || a_check)
+        if (deps.length === 0 || a_check)
             return result;
 
         // Add additional dependencies for locks
@@ -975,7 +975,7 @@ var tasks_func = function() {
             }, ["repo", "loc"], ["task"]);
         }
 
-        if (a_task.step == 1) {
+        if (a_task.step === 1) {
             //console.log("taskRunRecOwnerChg - move unmanaged records");
             obj._transact(function() {
                 if (state.ext_data.length) {
@@ -1409,7 +1409,7 @@ var tasks_func = function() {
                 _from: dep
             }).toArray();
             // If blocked task has only one block, then it's this task being finalized and will be able to run now
-            if (dep_blocks.length == 1) {
+            if (dep_blocks.length === 1) {
                 ready_tasks.push(dep);
                 //console.log("taskComplete - task", dep, "ready");
                 g_db.task.update(dep, {
@@ -1453,7 +1453,7 @@ var tasks_func = function() {
                 g_db.task.update(a_task_id, doc);
                 break;
             } catch (e) {
-                if (e.errorNum == 1200) {
+                if (e.errorNum === 1200) {
                     if (delay > 64)
                         throw e;
 
@@ -1759,7 +1759,7 @@ var tasks_func = function() {
                 rm = repo_map[i];
 
                 if (a_mode == g_lib.TT_DATA_GET) {
-                    if (rm.repo_id == 0) {
+                    if (rm.repo_id === 0) {
                         xfr = {
                             src_repo_id: 0,
                             src_repo_ep: i,
