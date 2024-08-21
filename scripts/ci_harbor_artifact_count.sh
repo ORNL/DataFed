@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euf 
+
 # This script is created to determine if a harbor image exists in the repository
 # It will print the number of artifacts that exist for a particualar image.
 LOG_FILE="harbor_check.log"
