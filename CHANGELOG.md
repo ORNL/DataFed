@@ -47,6 +47,7 @@
 15. [968] - Fixes bug by creating distinction between base and root path.
 16. [981] - Fixes html injection that can occur from user name when displaying owner in schema dlg box.
 17. [983] - Fixes google analytics by adding nonce which was broken.
+18. [995] - Fixes user and project folder being created under root user account.
 
 # v2023.10.23.15.50
 
