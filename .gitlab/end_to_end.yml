@@ -196,7 +196,9 @@ end-to-end-repo-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
-    - if [ ! -d "${DATAFED_HOST_COLLECTION_MOUNT}" ]; then mkdir -p "${DATAFED_HOST_COLLECTION_MOUNT}"; fi
+      # Clean out previous collection to be safe
+    - if [ -d "${DATAFED_HOST_COLLECTION_MOUNT}" ]; then rm -rf "${DATAFED_HOST_COLLECTION_MOUNT}"; fi
+    - mkdir -p "${DATAFED_HOST_COLLECTION_MOUNT}"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - USER_ID=$(id -u)
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
