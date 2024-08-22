@@ -57,7 +57,7 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(self._username, password)
+                self._df_api.loginByPassword(self._username, password)
                 break
             except BaseException:
                 pass
