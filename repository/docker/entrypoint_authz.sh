@@ -196,7 +196,8 @@ fi
 
 # Run this as the dataflow user
 # setup globus command will also create the folders /proeject and user
-su -c "${BUILD_DIR}/scripts/globus/setup_globus.sh" dataflow
+# -m - is for preserving the environment
+su -m -c "${BUILD_DIR}/scripts/globus/setup_globus.sh" datafed
 
 source "${DATAFED_PYTHON_ENV}/bin/activate"
 # Must be passed in directly
