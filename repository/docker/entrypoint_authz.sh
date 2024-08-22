@@ -194,7 +194,9 @@ then
   chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
 fi
 
-"${BUILD_DIR}/scripts/globus/setup_globus.sh"
+# Run this as the dataflow user
+# setup globus command will also create the folders /proeject and user
+su -c "${BUILD_DIR}/scripts/globus/setup_globus.sh" dataflow
 
 source "${DATAFED_PYTHON_ENV}/bin/activate"
 # Must be passed in directly
