@@ -27,7 +27,7 @@ build-core:
       when: on_success
 
 retag-image:
-  extends: .docker_retag_image:
+  extends: .docker_retag_image
   stage: build
   variables:
     IMAGE_TAG: "datafed/core"

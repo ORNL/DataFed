@@ -46,7 +46,7 @@ build-gcs:
     - cat "./harbor_check.log"
 
 retag-image:
-  extends: .docker_retag_image:
+  extends: .docker_retag_image
   stage: build
   variables:
     IMAGE_TAG: "datafed/gcs"
